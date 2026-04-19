@@ -158,18 +158,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [_kNavy, _kNavyLight],
+          colors: [Color(0xFF2D2B8A), Color(0xFF1E1C5E), Color(0xFF12103A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      child: Stack(
+        children: [
+          // Decorative radial glow top-right
+          Positioned(
+            top: -40,
+            right: -40,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFE85D20).withValues(alpha: 0.25),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               // Top row
               Row(
                 children: [
@@ -187,9 +207,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             ),
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 20,
+                              fontSize: 24,
                               fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
+                              letterSpacing: -0.8,
                             ),
                           );
                         }),
@@ -320,27 +340,35 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
               const SizedBox(height: 16),
 
-              // Pills row — live data
-              Consumer(builder: (_, r, __) {
-                final s = r.watch(todayStatsProvider);
-                final orders   = s.value?.todayOrders ?? 0;
-                final customers = s.value?.todayCustomers ?? 0;
-                return Wrap(
-                  spacing: 8,
-                  children: [
-                    _Pill(icon: Icons.receipt_long_rounded,
-                        text: '$orders đơn'),
-                    _Pill(icon: Icons.people_rounded,
-                        text: '$customers khách'),
-                  ],
-                );
-              }),
-            ],
+                // Pills row — live data
+                Consumer(builder: (_, r, __) {
+                  final s = r.watch(todayStatsProvider);
+                  final orders    = s.value?.todayOrders ?? 0;
+                  final customers = s.value?.todayCustomers ?? 0;
+                  return Row(
+                    children: [
+                      _HeaderPill(
+                        icon: Icons.receipt_long_rounded,
+                        label: 'Số đơn',
+                        value: '$orders',
+                      ),
+                      const SizedBox(width: 8),
+                      _HeaderPill(
+                        icon: Icons.people_rounded,
+                        label: 'Khách',
+                        value: '$customers',
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 
   // ─────────────────────────────────────────────────────────────────────────
   // SECTION HEADER (Module Grid title + edit toggle)
@@ -642,58 +670,122 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TODAY STATS — Stat cards hàng ngang — LIVE DATA
+  // TODAY STATS — Premium Bento Cards — LIVE DATA
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildTodayStats(
     AsyncValue<DashboardStats> statsAsync,
     AsyncValue<List<dynamic>> lowStockAsync,
   ) {
-    final stats      = statsAsync.value ?? const DashboardStats(
-      todayRevenue: 0, todayOrders: 0, todayCustomers: 0, avgOrderValue: 0);
-    final outOfStock = (lowStockAsync.value ?? []).length;
+    final stats = statsAsync.value ?? const DashboardStats(
+        todayRevenue: 0, todayOrders: 0, todayCustomers: 0, avgOrderValue: 0);
+    final lowCount = (lowStockAsync.value ?? []).length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Hôm nay',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: _kInk,
-            letterSpacing: -0.3,
-          ),
+        // Section title
+        Row(
+          children: [
+            const Text(
+              'Hôm nay',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: _kInk,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: _kNavy.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                DateFormat('HH:mm').format(DateTime.now()),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: _kNavy,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
+
+        // Top row: 2 big cards
         Row(
           children: [
             Expanded(
-              child: _StatCard(
-                label: 'TB/đơn',
+              flex: 3,
+              child: _PremiumStatCard(
+                label: 'Giá TB / đơn',
                 value: _fmtShort(stats.avgOrderValue) + 'đ',
                 icon: Icons.trending_up_rounded,
-                bgColor: _kGreenBg,
-                textColor: _kGreen,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1B5E20), Color(0xFF388E3C)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                delay: 0,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _StatCard(
+              flex: 2,
+              child: _PremiumStatCard(
                 label: 'Số đơn',
                 value: '${stats.todayOrders}',
                 icon: Icons.receipt_long_rounded,
-                bgColor: const Color(0xFFE3F2FD),
-                textColor: const Color(0xFF1565C0),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                delay: 80,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        // Bottom row: 2 cards
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: _PremiumStatCard(
+                label: 'Khách hôm nay',
+                value: '${stats.todayCustomers}',
+                icon: Icons.people_rounded,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF4A148C), Color(0xFF7B1FA2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                delay: 160,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _StatCard(
-                label: 'Sắp hết',
-                value: '$outOfStock',
-                icon: Icons.warning_amber_rounded,
-                bgColor: _kRedBg,
-                textColor: _kRed,
+              flex: 3,
+              child: _PremiumStatCard(
+                label: 'Sắp hết hàng',
+                value: lowCount == 0 ? 'Ổn 👍' : '$lowCount SP',
+                icon: lowCount == 0
+                    ? Icons.check_circle_rounded
+                    : Icons.warning_amber_rounded,
+                gradient: LinearGradient(
+                  colors: lowCount == 0
+                      ? [const Color(0xFF004D40), const Color(0xFF00796B)]
+                      : [const Color(0xFFB71C1C), const Color(0xFFE53935)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                delay: 240,
               ),
             ),
           ],
@@ -792,21 +884,47 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TOP ITEMS — Sản phẩm bán chạy (placeholder cho đến khi POS hoạt động)
+  // TOP ITEMS — Sản phẩm với rank badges & progress bars
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildTopItems() {
+    // Rank badge colors: gold, silver, bronze, then navy
+    const rankColors = [
+      [Color(0xFFF9A825), Color(0xFFFBC02D)], // gold
+      [Color(0xFF78909C), Color(0xFF90A4AE)], // silver
+      [Color(0xFF8D6E63), Color(0xFFA1887F)], // bronze
+      [_kNavy,            Color(0xFF2D2B8A)], // navy
+      [_kNavy,            Color(0xFF2D2B8A)], // navy
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Section header
         Row(
           children: [
-            const Text(
-              'Sản phẩm',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: _kInk,
-                letterSpacing: -0.3,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFE85D20), Color(0xFFFF8F00)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('🔥', style: TextStyle(fontSize: 11)),
+                  SizedBox(width: 4),
+                  Text(
+                    'Top sản phẩm',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
               ),
             ),
             const Spacer(),
@@ -814,11 +932,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               final productsAsync = ref.watch(allProductsProvider);
               return productsAsync.when(
                 data: (p) => Text(
-                  '${p.length} mục',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: _kOrange,
-                    fontWeight: FontWeight.w600,
+                  '${p.length} sản phẩm',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _kMuted,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 loading: () => const SizedBox.shrink(),
@@ -841,12 +959,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             data: (products) {
               if (products.isEmpty) {
                 return Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: const Color(0xFFE0D8CC), width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: const Center(
                     child: Text(
@@ -858,42 +981,64 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               }
 
               final displayProducts = products.take(5).toList();
+              // max price for progress bars
+              final maxPrice = displayProducts
+                  .map((p) => p.sellPrice)
+                  .reduce((a, b) => a > b ? a : b);
+
               return Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: const Color(0xFFE0D8CC), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: displayProducts.asMap().entries.map((e) {
                     final p = e.value;
-                    final isLast = e.key == displayProducts.length - 1;
-                    final isLow =
-                        p.minStock > 0 && p.stockQty <= p.minStock;
+                    final rank = e.key;
+                    final isLast = rank == displayProducts.length - 1;
+                    final isLow = p.minStock > 0 && p.stockQty <= p.minStock;
+                    final colors = rankColors[rank.clamp(0, rankColors.length - 1)];
+                    final progress = maxPrice > 0 ? p.sellPrice / maxPrice : 0.0;
 
                     return Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
                           child: Row(
                             children: [
-                              // Number badge
+                              // Rank badge with gradient
                               Container(
-                                width: 32,
-                                height: 32,
+                                width: 36,
+                                height: 36,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF2EDE4),
-                                  borderRadius: BorderRadius.circular(10),
+                                  gradient: LinearGradient(
+                                    colors: colors,
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colors[0].withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
                                 ),
                                 child: Center(
                                   child: Text(
-                                    '${e.key + 1}',
-                                    style: const TextStyle(
+                                    rank == 0 ? '🥇' : rank == 1 ? '🥈' : rank == 2 ? '🥉' : '${rank + 1}',
+                                    style: TextStyle(
+                                      fontSize: rank <= 2 ? 16 : 13,
                                       fontWeight: FontWeight.w800,
-                                      fontSize: 13,
-                                      color: _kNavy,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ),
@@ -913,6 +1058,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                               fontWeight: FontWeight.w700,
                                               color: _kInk,
                                             ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                         if (isLow)
@@ -920,9 +1066,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFFFFEBEE),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
+                                              color: _kRedBg,
+                                              borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: const Text(
                                               '⚠️ Hết',
@@ -935,16 +1080,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                           ),
                                       ],
                                     ),
+                                    const SizedBox(height: 4),
+                                    // Progress bar
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: LinearProgressIndicator(
+                                        value: progress,
+                                        minHeight: 4,
+                                        backgroundColor: const Color(0xFFF0ECE6),
+                                        valueColor: AlwaysStoppedAnimation(
+                                          colors[0],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
                                     Text(
                                       'Tồn: ${p.stockQty.toStringAsFixed(0)} ${p.unit}',
                                       style: const TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 11,
                                         color: _kMuted,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
+                              const SizedBox(width: 10),
                               Text(
                                 '${_formatCurrency(p.sellPrice)}đ',
                                 style: const TextStyle(
@@ -1043,29 +1203,43 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 // SMALL WIDGETS
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _Pill extends StatelessWidget {
+class _HeaderPill extends StatelessWidget {
   final IconData icon;
-  final String text;
-  const _Pill({required this.icon, required this.text});
+  final String label;
+  final String value;
+  const _HeaderPill({required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: const BoxDecoration(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
           color: _kWhite20,
-          borderRadius: BorderRadius.all(Radius.circular(30)),
+          borderRadius: const BorderRadius.all(Radius.circular(30)),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.12),
+            width: 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 12, color: _kWhite60),
-            const SizedBox(width: 5),
+            Icon(icon, size: 14, color: _kWhite60),
+            const SizedBox(width: 7),
             Text(
-              text,
+              value,
               style: const TextStyle(
-                color: _kWhite85,
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: _kWhite60,
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],
@@ -1073,19 +1247,19 @@ class _Pill extends StatelessWidget {
       );
 }
 
-class _StatCard extends StatelessWidget {
+class _PremiumStatCard extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  final Color bgColor;
-  final Color textColor;
+  final LinearGradient gradient;
+  final int delay;
 
-  const _StatCard({
+  const _PremiumStatCard({
     required this.label,
     required this.value,
     required this.icon,
-    required this.bgColor,
-    required this.textColor,
+    required this.gradient,
+    required this.delay,
   });
 
   @override
@@ -1093,35 +1267,56 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(16),
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.colors.first.withValues(alpha: 0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: textColor),
-          const SizedBox(height: 8),
+          // Icon circle
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: Colors.white),
+          ),
+          const SizedBox(height: 10),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 18,
+            style: const TextStyle(
+              fontSize: 20,
               fontWeight: FontWeight.w900,
-              color: textColor,
+              color: Colors.white,
               letterSpacing: -0.5,
+              height: 1.1,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
             label,
             style: TextStyle(
               fontSize: 11,
-              color: textColor.withValues(alpha: 0.7),
+              color: Colors.white.withValues(alpha: 0.75),
               fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
             ),
           ),
         ],
       ),
-    );
+    )
+        .animate(delay: Duration(milliseconds: delay))
+        .fadeIn(duration: 300.ms)
+        .slideY(begin: 0.15, end: 0, duration: 300.ms, curve: Curves.easeOutCubic);
   }
 }
 
