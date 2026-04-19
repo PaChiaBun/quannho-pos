@@ -963,26 +963,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   void _navigateTo(String? route) {
     if (route == null) return;
-    // Navigate thông qua bottom nav (index)
-    switch (route) {
-      case '/pos':
-        _goToTab(1);
-        break;
-      case '/kho':
-        _goToTab(2);
-        break;
-      case '/finance':
-        _goToTab(3);
-        break;
-      default:
-        break;
+    final tabMap = {
+      '/pos':     1,
+      '/kho':     2,
+      '/finance': 3,
+      '/loyalty': 4,
+      '/report':  5,
+    };
+    final idx = tabMap[route];
+    if (idx != null) {
+      ref.read(navTabProvider.notifier).goTo(idx);
     }
   }
 
   void _goToTab(int index) {
-    // Tìm MainShell state và chuyển tab
-    // Sử dụng callback từ parent nếu có
-    // Tạm thời dùng MediaQuery để detect và route
+    ref.read(navTabProvider.notifier).goTo(index);
   }
 
   // ─────────────────────────────────────────────────────────────────────────

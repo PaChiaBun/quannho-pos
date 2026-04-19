@@ -6,6 +6,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_text_styles.dart';
 import 'core/services/event_bridge_service.dart';
+import 'core/providers/app_providers.dart';
 
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -17,6 +18,8 @@ import 'screens/finance_screen.dart';
 import 'screens/loyalty_screen.dart';
 import 'screens/report_screen.dart';
 import 'screens/settings_screen.dart';
+
+
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -84,35 +87,33 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
-  int _currentIndex = 0;
+  int get _currentIndex => ref.watch(navTabProvider);
+  void _setTab(int i) => ref.read(navTabProvider.notifier).goTo(i);
 
   @override
   void initState() {
     super.initState();
-    // Khởi động Event Bridge — lắng nghe SaleCompletedEvent
-    // để tự động ghi Finance + cộng điểm Loyalty
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(eventBridgeProvider); // trigger singleton start
+      ref.read(eventBridgeProvider);
     });
   }
 
-  void switchTab(int index) {
-    setState(() => _currentIndex = index);
-  }
+  void switchTab(int index) => _setTab(index);
 
   @override
   Widget build(BuildContext context) {
+    final idx = ref.watch(navTabProvider);
     return Scaffold(
-      // IndexedStack giữ nguyên state khi chuyển tab
       body: IndexedStack(
-        index: _currentIndex,
+        index: idx,
         children: const [
           DashboardScreen(),   // 0
           PosScreen(),         // 1
           InventoryScreen(),   // 2
           FinanceScreen(),     // 3
-          ReportScreen(),      // 4
-          SettingsScreen(),    // 5
+          LoyaltyScreen(),     // 4
+          ReportScreen(),      // 5
+          SettingsScreen(),    // 6
         ],
       ),
       bottomNavigationBar: Container(
@@ -132,41 +133,47 @@ class _MainShellState extends ConsumerState<MainShell> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _NavItem(
+                  _NavItem(
                   icon: Icons.home_rounded,
                   label: 'Trang chủ',
-                  isActive: _currentIndex == 0,
-                  onTap: () => setState(() => _currentIndex = 0),
+                  isActive: _currentIndex == NavTab.home,
+                  onTap: () => _setTab(NavTab.home),
                 ),
                 _NavItem(
                   icon: Icons.shopping_cart_rounded,
                   label: 'Bán hàng',
-                  isActive: _currentIndex == 1,
-                  onTap: () => setState(() => _currentIndex = 1),
+                  isActive: _currentIndex == NavTab.pos,
+                  onTap: () => _setTab(NavTab.pos),
                 ),
                 _NavItem(
                   icon: Icons.inventory_2_rounded,
                   label: 'Kho',
-                  isActive: _currentIndex == 2,
-                  onTap: () => setState(() => _currentIndex = 2),
+                  isActive: _currentIndex == NavTab.inventory,
+                  onTap: () => _setTab(NavTab.inventory),
                 ),
                 _NavItem(
                   icon: Icons.account_balance_wallet_rounded,
                   label: 'Thu Chi',
-                  isActive: _currentIndex == 3,
-                  onTap: () => setState(() => _currentIndex = 3),
+                  isActive: _currentIndex == NavTab.finance,
+                  onTap: () => _setTab(NavTab.finance),
+                ),
+                _NavItem(
+                  icon: Icons.loyalty_rounded,
+                  label: 'Điểm thưởng',
+                  isActive: _currentIndex == NavTab.loyalty,
+                  onTap: () => _setTab(NavTab.loyalty),
                 ),
                 _NavItem(
                   icon: Icons.bar_chart_rounded,
                   label: 'Báo cáo',
-                  isActive: _currentIndex == 4,
-                  onTap: () => setState(() => _currentIndex = 4),
+                  isActive: _currentIndex == NavTab.report,
+                  onTap: () => _setTab(NavTab.report),
                 ),
                 _NavItem(
                   icon: Icons.settings_rounded,
                   label: 'Cài đặt',
-                  isActive: _currentIndex == 5,
-                  onTap: () => setState(() => _currentIndex = 5),
+                  isActive: _currentIndex == NavTab.settings,
+                  onTap: () => _setTab(NavTab.settings),
                 ),
               ],
             ),

@@ -101,3 +101,30 @@ final taxRateProvider = FutureProvider<double>((ref) {
 final loyaltyRateProvider = FutureProvider<double>((ref) {
   return ref.watch(settingsRepositoryProvider).loyaltyRate;
 });
+
+/// PIN khoá ứng dụng — FutureProvider, invalidate sau khi thay đổi
+final pinEnabledProvider = FutureProvider<bool>((ref) async {
+  final val = await ref.watch(settingsRepositoryProvider).get('pin_enabled');
+  return val == 'true';
+});
+
+/// Global tab index — shared between DashboardScreen and MainShell
+class _NavTabNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  void goTo(int index) => state = index;
+}
+
+final navTabProvider = NotifierProvider<_NavTabNotifier, int>(
+  _NavTabNotifier.new);
+
+/// Tab index constants
+class NavTab {
+  static const home      = 0;
+  static const pos       = 1;
+  static const inventory = 2;
+  static const finance   = 3;
+  static const loyalty   = 4;
+  static const report    = 5;
+  static const settings  = 6;
+}
