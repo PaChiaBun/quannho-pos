@@ -1,15 +1,17 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/providers/app_providers.dart';
-
+// lib/screens/pin_lock_screen.dart
 // ─────────────────────────────────────────────────────────────────────────────
 // PIN LOCK SCREEN — Màn hình khoá ứng dụng bằng PIN 4 số
 // Mode: 'verify' = nhập PIN để vào app
 //       'set'    = đặt PIN mới (từ Settings)
 //       'change' = đổi PIN (xác minh cũ → nhập mới)
 // ─────────────────────────────────────────────────────────────────────────────
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/providers/app_providers.dart';
+import 'forgot_pin_screen.dart';
+
 enum PinMode { verify, set, change }
 
 class PinLockScreen extends ConsumerStatefulWidget {
@@ -29,8 +31,8 @@ class PinLockScreen extends ConsumerStatefulWidget {
 class _PinLockScreenState extends ConsumerState<PinLockScreen>
     with TickerProviderStateMixin {
   String _input    = '';
-  String _firstPin = ''; // dùng khi mode = set (confirm step)
-  int    _step     = 0;  // 0 = nhập pin / 1 = confirm (set mode)
+  String _firstPin = '';
+  int    _step     = 0;
   String _topLabel = '';
   int    _failCount = 0;
   bool   _saving   = false;
@@ -41,9 +43,8 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
   static const _kNavy   = Color(0xFF1E1C5E);
   static const _kNavyL  = Color(0xFF2D2B8A);
   static const _kOrange = Color(0xFFE85D20);
-  static const _kBg     = Color(0xFF131128);  // dark background
-  static const _kDot    = Color(0xFF3D3A7A);  // empty dot
-  static const _kRed    = Color(0xFFEF5350);
+  static const _kBg     = Color(0xFF131128);
+  static const _kDot    = Color(0xFF3D3A7A);
 
   @override
   void initState() {
@@ -98,7 +99,6 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
 
   Future<void> _handleComplete() async {
     final settings = ref.read(settingsRepositoryProvider);
-
     switch (widget.mode) {
       case PinMode.verify:
         await _handleVerify(settings);
@@ -139,12 +139,12 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
         _updateLabel();
       });
     } else {
-      // Confirm step
       if (_input == _firstPin) {
         setState(() => _saving = true);
         final settings = ref.read(settingsRepositoryProvider);
-        await settings.set('app_pin', _input);
+        await settings.set('app_pin',     _input);
         await settings.set('pin_enabled', 'true');
+        ref.invalidate(pinEnabledProvider);
         HapticFeedback.heavyImpact();
         if (mounted) {
           Navigator.pop(context);
@@ -152,6 +152,8 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
             const SnackBar(
               content: Text('✅ Đã đặt PIN thành công!'),
               behavior: SnackBarBehavior.floating));
+          // Nhắc user đặt recovery email ngay sau khi set PIN
+          _promptRecoveryEmail();
         }
       } else {
         await _shakeCtrl.forward(from: 0);
@@ -171,7 +173,6 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
 
   Future<void> _handleChange(dynamic settings) async {
     if (_step == 0) {
-      // Verify old PIN
       final savedPin = await settings.get('app_pin') ?? '';
       if (_input == savedPin) {
         setState(() { _input = ''; _step = 1; _updateLabel(); });
@@ -231,6 +232,91 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
     );
   }
 
+  /// Sau khi set PIN xong → nhắc nhở đặt email khôi phục
+  void _promptRecoveryEmail() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final emailCtrl = TextEditingController();
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1B48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
+          title: const Row(children: [
+            Icon(Icons.mail_outline_rounded,
+              color: Color(0xFF4F9EFF), size: 20),
+            SizedBox(width: 8),
+            Text('Đặt email khôi phục',
+              style: TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w800,
+                fontSize: 16)),
+          ]),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Thêm email để lấy lại PIN khi quên.\n(Bạn có thể bỏ qua và đặt sau trong Cài đặt)',
+                style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'your@email.com',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.07),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none),
+                  prefixIcon: const Icon(Icons.email_rounded,
+                    color: Color(0xFF4F9EFF), size: 18),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Bỏ qua',
+                style: TextStyle(color: Colors.white38))),
+            ElevatedButton(
+              onPressed: () async {
+                final email = emailCtrl.text.trim();
+                if (email.isNotEmpty && email.contains('@')) {
+                  final repo = ref.read(settingsRepositoryProvider);
+                  await repo.set('recovery_email', email);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✅ Email khôi phục đã lưu'),
+                      behavior: SnackBarBehavior.floating));
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4F9EFF),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12))),
+              child: const Text('Lưu email'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _goToForgotPin() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ForgotPinScreen()),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -295,9 +381,7 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
                     width: filled ? 20 : 16,
                     height: filled ? 20 : 16,
                     decoration: BoxDecoration(
-                      color: filled
-                          ? _kOrange
-                          : _kDot,
+                      color: filled ? _kOrange : _kDot,
                       shape: BoxShape.circle,
                       boxShadow: filled ? [
                         BoxShadow(
@@ -347,53 +431,16 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
             if (widget.mode == PinMode.verify) ...[
               const SizedBox(height: 8),
               TextButton(
-                onPressed: _showForgotPinDialog,
+                onPressed: _goToForgotPin,
                 child: Text('Quên PIN?',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.4),
-                    fontSize: 13)),
+                    color: Colors.white.withValues(alpha: 0.45),
+                    fontSize: 13, fontWeight: FontWeight.w500)),
               ),
             ],
             const SizedBox(height: 24),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showForgotPinDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1B48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Quên mã PIN?',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-        content: const Text(
-          'Nếu quên PIN, bạn có thể tắt tính năng khoá bằng cách gỡ và cài lại ứng dụng. Dữ liệu sẽ không bị mất.',
-          style: TextStyle(color: Colors.white70, height: 1.5)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Đóng',
-              style: TextStyle(color: Colors.white54))),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              // Disable PIN (emergency bypass)
-              final settings = ref.read(settingsRepositoryProvider);
-              await settings.set('pin_enabled', 'false');
-              if (ctx.mounted) {
-                Navigator.of(context).pushReplacementNamed('/home');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kOrange, foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12))),
-            child: const Text('Tắt PIN & Vào app'),
-          ),
-        ],
       ),
     );
   }
@@ -403,9 +450,9 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
 // NUMPAD KEY
 // ─────────────────────────────────────────────────────────────────────────────
 class _NumKey extends StatefulWidget {
-  final String label;
+  final String       label;
   final VoidCallback onTap;
-  final bool isDelete;
+  final bool         isDelete;
 
   const _NumKey({
     required this.label,
@@ -420,7 +467,7 @@ class _NumKey extends StatefulWidget {
 class _NumKeyState extends State<_NumKey>
     with SingleTickerProviderStateMixin {
   late AnimationController _pressCtrl;
-  late Animation<double> _scaleAnim;
+  late Animation<double>   _scaleAnim;
 
   @override
   void initState() {

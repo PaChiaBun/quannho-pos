@@ -155,6 +155,7 @@ class SettingsScreen extends ConsumerWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 _PinToggleTile(),
+                _RecoveryEmailTile(),
               ]),
             ),
           ),
@@ -924,5 +925,133 @@ class _PinToggleTile extends ConsumerWidget {
           ),
         ),
     ]);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RECOVERY EMAIL TILE — Hiển thị + chỉnh sửa email khôi phục PIN
+// ─────────────────────────────────────────────────────────────────────────────
+class _RecoveryEmailTile extends ConsumerWidget {
+  const _RecoveryEmailTile();
+
+  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kBlue   = Color(0xFF4F9EFF);
+  static const _kMuted  = Color(0xFF9E9085);
+  static const _kBorder = Color(0xFFE0D8CC);
+  static const _kBg     = Color(0xFFFAF7F2);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FutureBuilder<String?>(
+      future: ref.read(settingsRepositoryProvider).get('recovery_email'),
+      builder: (_, snapshot) {
+        final email = snapshot.data ?? '';
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          elevation: 0,
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(color: _kBorder)),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16, vertical: 4),
+            leading: Container(
+              width: 38, height: 38,
+              decoration: BoxDecoration(
+                color: _kBlue.withValues(alpha: 0.12),
+                shape: BoxShape.circle),
+              child: const Icon(Icons.mail_outline_rounded,
+                color: _kBlue, size: 20),
+            ),
+            title: const Text('Email khôi phục PIN',
+              style: TextStyle(
+                fontSize: 14, fontWeight: FontWeight.w700,
+                color: _kNavy)),
+            subtitle: Text(
+              email.isEmpty ? 'Chưa đặt — Nhấn để thêm' : email,
+              style: TextStyle(
+                fontSize: 12,
+                color: email.isEmpty ? _kMuted : _kBlue,
+                fontStyle: email.isEmpty
+                    ? FontStyle.italic : FontStyle.normal)),
+            trailing: const Icon(Icons.edit_rounded,
+              color: _kMuted, size: 18),
+            onTap: () => _showEditDialog(context, ref, email),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditDialog(
+      BuildContext context, WidgetRef ref, String currentEmail) {
+    final ctrl = TextEditingController(text: currentEmail);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20)),
+        title: const Text('Email khôi phục PIN',
+          style: TextStyle(
+            fontWeight: FontWeight.w800, fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Dùng để nhận mã OTP khi quên PIN.\nNên dùng email bạn thường xuyên kiểm tra.',
+              style: TextStyle(fontSize: 13, color: Colors.black54,
+                height: 1.5)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              decoration: InputDecoration(
+                hintText: 'your@email.com',
+                prefixIcon: const Icon(Icons.email_rounded,
+                  color: _kBlue, size: 18),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: _kBlue, width: 2)),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy',
+              style: TextStyle(color: _kMuted))),
+          ElevatedButton(
+            onPressed: () async {
+              final email = ctrl.text.trim();
+              if (email.isEmpty || email.contains('@')) {
+                await ref.read(settingsRepositoryProvider)
+                    .set('recovery_email', email);
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(email.isEmpty
+                        ? '✅ Đã xóa email khôi phục'
+                        : '✅ Email khôi phục: $email'),
+                    behavior: SnackBarBehavior.floating));
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12))),
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
   }
 }
