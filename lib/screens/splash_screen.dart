@@ -1,10 +1,13 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/providers/app_providers.dart';
-import '../core/theme/app_colors.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SPLASH SCREEN — Premium animated intro
+// ─────────────────────────────────────────────────────────────────────────────
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -14,233 +17,394 @@ class SplashScreen extends ConsumerStatefulWidget {
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
-  // Controller cho logo bounce
-  late AnimationController _logoController;
+
+  // ── Logo ─────────────────────────────────────────────────────────────────
+  late AnimationController _logoCtrl;
   late Animation<double> _logoScale;
   late Animation<double> _logoOpacity;
 
-  // Controller cho text nảy tưng
-  late AnimationController _textController;
-  late Animation<double> _textSlide;
-  late Animation<double> _textOpacity;
+  // ── Glow ring pulse ───────────────────────────────────────────────────────
+  late AnimationController _glowCtrl;
+  late Animation<double> _glowRadius;
+  late Animation<double> _glowOpacity;
 
-  // Controller cho tagline
-  late AnimationController _tagController;
+  // ── Text reveal ───────────────────────────────────────────────────────────
+  late AnimationController _textCtrl;
+  late Animation<double> _textOpacity;
+  late Animation<double> _textSlide;
+
+  // ── Tagline ───────────────────────────────────────────────────────────────
+  late AnimationController _tagCtrl;
   late Animation<double> _tagOpacity;
-  late Animation<double> _tagSlide;
+
+  // ── Loading bar ───────────────────────────────────────────────────────────
+  late AnimationController _barCtrl;
+  late Animation<double> _barProgress;
+
+  // ── Background shimmer ────────────────────────────────────────────────────
+  late AnimationController _bgCtrl;
+  late Animation<double> _bgAnim;
+
+  static const _navy   = Color(0xFF1E1C5E);
+  static const _deep   = Color(0xFF12103A);
+  static const _orange = Color(0xFFFF6B35);
+  static const _amber  = Color(0xFFFFB347);
 
   @override
   void initState() {
     super.initState();
-
-    // Remove native splash ngay khi Flutter screen ready
     FlutterNativeSplash.remove();
 
-    // 1. Logo bounce in
-    _logoController = AnimationController(
+    // Background slow pulse
+    _bgCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 3000),
+    )..repeat(reverse: true);
+    _bgAnim = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _bgCtrl, curve: Curves.easeInOut),
+    );
+
+    // Logo scale in with elastic
+    _logoCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
     );
     _logoScale = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
+      CurvedAnimation(parent: _logoCtrl, curve: Curves.elasticOut),
     );
     _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: _logoController,
-        curve: const Interval(0.0, 0.4, curve: Curves.easeIn),
+        parent: _logoCtrl,
+        curve: const Interval(0.0, 0.35, curve: Curves.easeIn),
       ),
     );
 
-    // 2. Text "Quán Nhỏ POS" nảy lên
-    _textController = AnimationController(
+    // Glow ring: repeating pulse
+    _glowCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+    _glowRadius = Tween<double>(begin: 88, end: 110).animate(
+      CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut),
     );
-    _textSlide = Tween<double>(begin: 40.0, end: 0.0).animate(
-      CurvedAnimation(parent: _textController, curve: Curves.elasticOut),
+    _glowOpacity = Tween<double>(begin: 0.28, end: 0.60).animate(
+      CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut),
+    );
+
+    // Text slide up + fade
+    _textCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
     );
     _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: _textController,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
+        parent: _textCtrl,
+        curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
       ),
     );
+    _textSlide = Tween<double>(begin: 28.0, end: 0.0).animate(
+      CurvedAnimation(parent: _textCtrl, curve: Curves.easeOutCubic),
+    );
 
-    // 3. Tagline fade + slide nhẹ
-    _tagController = AnimationController(
+    // Tagline
+    _tagCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
     _tagOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _tagController, curve: Curves.easeIn),
-    );
-    _tagSlide = Tween<double>(begin: 16.0, end: 0.0).animate(
-      CurvedAnimation(parent: _tagController, curve: Curves.easeOut),
+      CurvedAnimation(parent: _tagCtrl, curve: Curves.easeOut),
     );
 
-    _startAnimation();
+    // Loading bar
+    _barCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
+    _barProgress = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _barCtrl, curve: Curves.easeInOut),
+    );
+
+    _runSequence();
   }
 
-  Future<void> _startAnimation() async {
-    // Logo bounce
-    await Future.delayed(const Duration(milliseconds: 100));
-    _logoController.forward();
+  Future<void> _runSequence() async {
+    await Future.delayed(const Duration(milliseconds: 80));
+    _logoCtrl.forward();
 
-    // Text nảy vào sau logo 400ms
-    await Future.delayed(const Duration(milliseconds: 400));
-    _textController.forward();
+    await Future.delayed(const Duration(milliseconds: 420));
+    _textCtrl.forward();
+    _barCtrl.forward();
 
-    // Tagline fade sau text 300ms
-    await Future.delayed(const Duration(milliseconds: 300));
-    _tagController.forward();
+    await Future.delayed(const Duration(milliseconds: 280));
+    _tagCtrl.forward();
 
-    // Chờ rồi check onboarding + PIN + navigate
-    await Future.delayed(const Duration(milliseconds: 1200));
-    if (mounted) {
-      // Check onboarding — dùng SharedPreferences (nhanh hơn)
-      final prefs   = await SharedPreferences.getInstance();
-      final obDone  = prefs.getBool('onboarding_complete') ?? false;
+    // Wait for bar to finish then navigate (min 2.2s so animations complete)
+    await Future.delayed(const Duration(milliseconds: 2200));
+    if (!mounted) return;
 
-      // Backward compat: check DB key cũ nếu chưa có SP flag
-      final settings    = ref.read(settingsRepositoryProvider);
-      final obDoneOld   = await settings.get('onboarding_done');
-      final pinEnabled  = await settings.get('pin_enabled');
+    final prefs      = await SharedPreferences.getInstance();
+    final obDone     = prefs.getBool('onboarding_complete') ?? false;
+    final settings   = ref.read(settingsRepositoryProvider);
+    final obDoneOld  = await settings.get('onboarding_done');
+    final pinEnabled = await settings.get('pin_enabled');
+    final isOnboarded = obDone || obDoneOld == 'true';
 
-      final isOnboarded = obDone || obDoneOld == 'true';
-
-      if (!mounted) return;
-      if (!isOnboarded) {
-        Navigator.of(context).pushReplacementNamed('/onboarding');
-      } else if (pinEnabled == 'true') {
-        Navigator.of(context).pushReplacementNamed('/pin');
-      } else {
-        Navigator.of(context).pushReplacementNamed('/home');
-      }
+    if (!mounted) return;
+    if (!isOnboarded) {
+      Navigator.of(context).pushReplacementNamed('/onboarding');
+    } else if (pinEnabled == 'true') {
+      Navigator.of(context).pushReplacementNamed('/pin');
+    } else {
+      Navigator.of(context).pushReplacementNamed('/home');
     }
   }
 
   @override
   void dispose() {
-    _logoController.dispose();
-    _textController.dispose();
-    _tagController.dispose();
+    _logoCtrl.dispose();
+    _glowCtrl.dispose();
+    _textCtrl.dispose();
+    _tagCtrl.dispose();
+    _barCtrl.dispose();
+    _bgCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lpmNavy,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo bounce
-            AnimatedBuilder(
-              animation: _logoController,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _logoOpacity.value,
-                  child: Transform.scale(
-                    scale: _logoScale.value,
-                    child: child,
-                  ),
-                );
-              },
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/branding/app_icon.png',
-                  width: 140,
-                  height: 140,
-                  fit: BoxFit.cover,
-                ),
+      body: AnimatedBuilder(
+        animation: _bgAnim,
+        builder: (_, child) {
+          // Subtle background shift
+          final bg = Color.lerp(_deep, _navy, _bgAnim.value)!;
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.topLeft,
+                radius: 1.6,
+                colors: [
+                  Color.lerp(const Color(0xFF2D2B8A), _deep, _bgAnim.value)!,
+                  bg,
+                  _deep,
+                ],
+                stops: const [0.0, 0.5, 1.0],
               ),
             ),
+            child: child,
+          );
+        },
+        child: Stack(
+          children: [
+            // ── Decorative particles ───────────────────────────────────
+            const _ParticleField(),
 
-            const SizedBox(height: 32),
-
-            // "Quán Nhỏ POS" text nảy tưng
-            AnimatedBuilder(
-              animation: _textController,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _textOpacity.value,
-                  child: Transform.translate(
-                    offset: Offset(0, _textSlide.value),
-                    child: child,
-                  ),
-                );
-              },
+            // ── Main content ───────────────────────────────────────────
+            SafeArea(
               child: Column(
                 children: [
-                  RichText(
-                    text: const TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'Quán Nhỏ',
-                          style: TextStyle(
-                            fontFamily: 'Outfit',
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                          ),
+                  const Spacer(flex: 2),
+
+                  // ── Logo area ────────────────────────────────────────
+                  AnimatedBuilder(
+                    animation: Listenable.merge([_logoCtrl, _glowCtrl]),
+                    builder: (_, child) {
+                      return Opacity(
+                        opacity: _logoOpacity.value,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Outer glow ring
+                            Container(
+                              width: _glowRadius.value * 2,
+                              height: _glowRadius.value * 2,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: _orange.withValues(
+                                        alpha: _glowOpacity.value),
+                                    blurRadius: 40,
+                                    spreadRadius: 8,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Ring border
+                            Container(
+                              width: 172,
+                              height: 172,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: _orange.withValues(alpha: 0.30),
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            // Logo — no ClipOval, no white border
+                            Transform.scale(
+                              scale: _logoScale.value,
+                              child: child,
+                            ),
+                          ],
                         ),
-                        TextSpan(
-                          text: ' POS',
-                          style: TextStyle(
-                            fontFamily: 'Outfit',
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFFFF6B35), // orange accent
-                            letterSpacing: -0.5,
+                      );
+                    },
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/branding/app_icon.png',
+                        width: 160,
+                        height: 160,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 36),
+
+                  // ── App name ─────────────────────────────────────────
+                  AnimatedBuilder(
+                    animation: _textCtrl,
+                    builder: (_, child) => Opacity(
+                      opacity: _textOpacity.value,
+                      child: Transform.translate(
+                        offset: Offset(0, _textSlide.value),
+                        child: child,
+                      ),
+                    ),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: const TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Quán Nhỏ',
+                            style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize: 38,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: -1.0,
+                              height: 1.1,
+                            ),
                           ),
+                          TextSpan(
+                            text: ' POS',
+                            style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize: 38,
+                              fontWeight: FontWeight.w800,
+                              color: _orange,
+                              letterSpacing: -1.0,
+                              height: 1.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // ── Tagline ───────────────────────────────────────────
+                  AnimatedBuilder(
+                    animation: _tagCtrl,
+                    builder: (_, child) => Opacity(
+                      opacity: _tagOpacity.value,
+                      child: child,
+                    ),
+                    child: const Text(
+                      'Quản lý cửa hàng, đơn giản hơn',
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w400,
+                        color: _amber,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+
+                  const Spacer(flex: 3),
+
+                  // ── Loading bar + version ─────────────────────────────
+                  AnimatedBuilder(
+                    animation: _barCtrl,
+                    builder: (_, __) => Opacity(
+                      opacity: (_barCtrl.value * 3).clamp(0.0, 1.0),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(48, 0, 48, 8),
+                        child: Column(
+                          children: [
+                            // Progress bar track
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: Container(
+                                height: 3,
+                                color: Colors.white.withValues(alpha: 0.10),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: FractionallySizedBox(
+                                    widthFactor: _barProgress.value,
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [_orange, _amber],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ── Bottom branding — LPM.VN ─────────────────────
+                  AnimatedBuilder(
+                    animation: _tagCtrl,
+                    builder: (_, child) => Opacity(
+                      opacity: _tagOpacity.value,
+                      child: child,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 28),
+                      child: Column(
+                        children: [
+                          // Divider line
+                          Container(
+                            width: 40,
+                            height: 1,
+                            color: Colors.white.withValues(alpha: 0.12),
+                            margin: const EdgeInsets.only(bottom: 14),
+                          ),
+                          // "Sản phẩm của" label
+                          Text(
+                            'Sản phẩm của',
+                            style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white.withValues(alpha: 0.38),
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // LPM.VN logo badge
+                          _LpmBadge(),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Tagline fade in
-            AnimatedBuilder(
-              animation: _tagController,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _tagOpacity.value,
-                  child: Transform.translate(
-                    offset: Offset(0, _tagSlide.value),
-                    child: child,
-                  ),
-                );
-              },
-              child: const Text(
-                'Quản lý cửa hàng, đơn giản hơn',
-                style: TextStyle(
-                  fontFamily: 'Outfit',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFFFFB347),
-                  letterSpacing: 0.2,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 80),
-
-            // Loading dots nhỏ phía dưới
-            AnimatedBuilder(
-              animation: _tagController,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _tagOpacity.value,
-                  child: child,
-                );
-              },
-              child: const _LoadingDots(),
             ),
           ],
         ),
@@ -249,86 +413,184 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 }
 
-/// 3 chấm nhấp nháy loading
-class _LoadingDots extends StatefulWidget {
-  const _LoadingDots();
+// ─────────────────────────────────────────────────────────────────────────────
+// PARTICLE FIELD — subtle floating dots in background
+// ─────────────────────────────────────────────────────────────────────────────
+class _ParticleField extends StatefulWidget {
+  const _ParticleField();
 
   @override
-  State<_LoadingDots> createState() => _LoadingDotsState();
+  State<_ParticleField> createState() => _ParticleFieldState();
 }
 
-class _LoadingDotsState extends State<_LoadingDots>
-    with TickerProviderStateMixin {
-  late List<AnimationController> _controllers;
-  late List<Animation<double>> _anims;
+class _ParticleFieldState extends State<_ParticleField>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late List<_Particle> _particles;
+  final _rng = math.Random(42); // fixed seed → consistent layout
 
   @override
   void initState() {
     super.initState();
-    _controllers = List.generate(
-      3,
-      (i) => AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 400),
-      ),
-    );
-    _anims = _controllers
-        .map(
-          (c) => Tween<double>(begin: 0.0, end: 1.0).animate(
-            CurvedAnimation(parent: c, curve: Curves.easeInOut),
-          ),
-        )
-        .toList();
+    // Generate 18 particles at random positions
+    _particles = List.generate(18, (i) => _Particle(_rng));
 
-    _startDots();
-  }
-
-  void _startDots() async {
-    while (mounted) {
-      for (int i = 0; i < 3; i++) {
-        if (!mounted) return;
-        _controllers[i].forward();
-        await Future.delayed(const Duration(milliseconds: 150));
-      }
-      await Future.delayed(const Duration(milliseconds: 300));
-      for (var c in _controllers) {
-        if (!mounted) return;
-        c.reverse();
-      }
-      await Future.delayed(const Duration(milliseconds: 400));
-    }
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat();
   }
 
   @override
   void dispose() {
-    for (var c in _controllers) {
-      c.dispose();
-    }
+    _ctrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(3, (i) {
-        return AnimatedBuilder(
-          animation: _anims[i],
-          builder: (_, __) => Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) {
+        return CustomPaint(
+          size: Size.infinite,
+          painter: _ParticlePainter(_particles, _ctrl.value),
+        );
+      },
+    );
+  }
+}
+
+class _Particle {
+  final double x, y, size, speed, phase;
+
+  _Particle(math.Random rng)
+      : x = rng.nextDouble(),
+        y = rng.nextDouble(),
+        size = rng.nextDouble() * 3 + 1,
+        speed = rng.nextDouble() * 0.3 + 0.1,
+        phase = rng.nextDouble() * math.pi * 2;
+}
+
+class _ParticlePainter extends CustomPainter {
+  final List<_Particle> particles;
+  final double t;
+
+  const _ParticlePainter(this.particles, this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final p in particles) {
+      // Gentle float upward, wrapping
+      final yPos = (p.y - t * p.speed) % 1.0;
+      final opacity = (math.sin(t * 2 * math.pi * p.speed + p.phase) * 0.5 + 0.5)
+          * 0.35;
+
+      canvas.drawCircle(
+        Offset(p.x * size.width, yPos * size.height),
+        p.size,
+        Paint()
+          ..color = Colors.white.withValues(alpha: opacity)
+          ..style = PaintingStyle.fill,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ParticlePainter old) => old.t != t;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LPM BADGE — Company branding at splash bottom
+// ─────────────────────────────────────────────────────────────────────────────
+class _LpmBadge extends StatelessWidget {
+  const _LpmBadge();
+
+  static const _orange = Color(0xFFFF6B35);
+  static const _navy   = Color(0xFF1E1C5E);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(40),
+        color: Colors.white.withValues(alpha: 0.10),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.18),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // LPM Logo mark — stylized monogram
+          Container(
+            width: 34,
+            height: 34,
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Color.lerp(
-                Colors.white.withValues(alpha: 0.2),
-                const Color(0xFFFF6B35),
-                _anims[i].value,
+              color: Colors.white,
+            ),
+            child: Center(
+              child: RichText(
+                text: const TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'L',
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: _navy,
+                        height: 1,
+                      ),
+                    ),
+                    TextSpan(
+                      text: '·',
+                      style: TextStyle(
+                        fontFamily: 'Outfit',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: _orange,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        );
-      }),
+          const SizedBox(width: 12),
+          // Company name
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'LPM',
+                  style: const TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                TextSpan(
+                  text: '.vn',
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 19,
+                    fontWeight: FontWeight.w500,
+                    color: _orange.withValues(alpha: 0.90),
+                    letterSpacing: 0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
