@@ -184,38 +184,142 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   // SEARCH BAR
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildSearchBar() {
+    final cart = ref.watch(cartProvider);
     return Container(
       color: _kNavy,
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
-      child: Container(
-        height: 44,
-        decoration: BoxDecoration(
-          color: const Color(0x1AFFFFFF),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: TextField(
-          controller: _searchCtrl,
-          onChanged: (v) => setState(() => _searchQuery = v),
-          style: const TextStyle(color: Colors.white, fontSize: 14),
-          decoration: InputDecoration(
-            hintText: 'Tìm món, mã SKU...',
-            hintStyle: const TextStyle(color: Color(0x80FFFFFF), fontSize: 14),
-            prefixIcon: const Icon(Icons.search_rounded,
-                color: Color(0x80FFFFFF), size: 20),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.close_rounded,
-                        color: Color(0x80FFFFFF), size: 18),
-                    onPressed: () {
-                      _searchCtrl.clear();
-                      setState(() => _searchQuery = '');
-                    },
-                  )
-                : null,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      child: Column(
+        children: [
+          // Search field
+          Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0x1AFFFFFF),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _searchQuery = v),
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'Tìm món, mã SKU...',
+                hintStyle: const TextStyle(color: Color(0x80FFFFFF), fontSize: 14),
+                prefixIcon: const Icon(Icons.search_rounded,
+                    color: Color(0x80FFFFFF), size: 20),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close_rounded,
+                            color: Color(0x80FFFFFF), size: 18),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
           ),
-        ),
+          const SizedBox(height: 8),
+          // Customer chip row
+          Row(
+            children: [
+              GestureDetector(
+                onTap: _openCustomerPicker,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: cart.customerId != null
+                        ? const Color(0xFF2E7D32).withValues(alpha: 0.25)
+                        : Colors.white.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: cart.customerId != null
+                          ? const Color(0xFF66BB6A)
+                          : Colors.white.withValues(alpha: 0.25)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        cart.customerId != null
+                            ? Icons.person_rounded
+                            : Icons.person_add_rounded,
+                        color: cart.customerId != null
+                            ? const Color(0xFF66BB6A)
+                            : Colors.white60,
+                        size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        cart.customerId != null
+                            ? (cart.customerName ?? 'Khách')
+                            : 'Chọn khách',
+                        style: TextStyle(
+                          color: cart.customerId != null
+                              ? const Color(0xFF66BB6A)
+                              : Colors.white60,
+                          fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (cart.customerId != null) ...[  
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: () => ref.read(cartProvider.notifier).clearCustomer(),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.10),
+                      shape: BoxShape.circle),
+                    child: const Icon(Icons.close_rounded,
+                      color: Colors.white54, size: 14),
+                  ),
+                ),
+              ],
+              if (cart.customerId != null && (cart.loyaltyPtsAvailable) > 0) ...[  
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9A825).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFF9A825).withValues(alpha: 0.5))),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.stars_rounded,
+                        color: Color(0xFFF9A825), size: 13),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${cart.loyaltyPtsAvailable.toInt()} điểm',
+                        style: const TextStyle(
+                          color: Color(0xFFF9A825),
+                          fontSize: 11, fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openCustomerPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _CustomerPickerSheet(
+        onSelect: (id, name, pts) {
+          ref.read(cartProvider.notifier).setCustomer(id, name, pts);
+          Navigator.pop(ctx);
+        },
       ),
     );
   }
@@ -1296,4 +1400,195 @@ class _FormField extends StatelessWidget {
         horizontal: 14, vertical: 12),
     ),
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CUSTOMER PICKER SHEET — Chọn khách hàng cho đơn POS
+// ─────────────────────────────────────────────────────────────────────────────
+class _CustomerPickerSheet extends ConsumerStatefulWidget {
+  final void Function(String id, String name, double pts) onSelect;
+
+  const _CustomerPickerSheet({required this.onSelect});
+
+  @override
+  ConsumerState<_CustomerPickerSheet> createState() =>
+      _CustomerPickerSheetState();
+}
+
+class _CustomerPickerSheetState
+    extends ConsumerState<_CustomerPickerSheet> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kGold   = Color(0xFFF9A825);
+  static const _kMuted  = Color(0xFF9E9085);
+  static const _kBorder = Color(0xFFE0D8CC);
+  static const _kBg     = Color(0xFFFAF7F2);
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final customersAsync = ref.watch(allCustomersProvider);
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+            decoration: const BoxDecoration(
+              color: _kNavy,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(children: [
+              Center(child: Container(
+                width: 36, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2)),
+              )),
+              const SizedBox(height: 12),
+              Row(children: [
+                const Icon(Icons.person_search_rounded,
+                  color: Colors.white, size: 22),
+                const SizedBox(width: 10),
+                const Text('Chọn khách hàng',
+                  style: TextStyle(color: Colors.white,
+                    fontSize: 16, fontWeight: FontWeight.w800)),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded,
+                    color: Colors.white70, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ]),
+              const SizedBox(height: 12),
+              // Search
+              Container(
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12)),
+                child: TextField(
+                  controller: _searchCtrl,
+                  onChanged: (v) => setState(() => _query = v),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Tìm tên, số điện thoại...',
+                    hintStyle: const TextStyle(
+                      color: Colors.white54, fontSize: 13),
+                    prefixIcon: const Icon(Icons.search_rounded,
+                      color: Colors.white54, size: 18),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+
+          // Customer list
+          Expanded(
+            child: customersAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, __) => const Center(
+                child: Text('Không thể tải danh sách')),
+              data: (customers) {
+                final filtered = _query.isEmpty
+                    ? customers
+                    : customers.where((c) {
+                        final q = _query.toLowerCase();
+                        return c.name.toLowerCase().contains(q) ||
+                            (c.phone ?? '').contains(q);
+                      }).toList();
+
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.person_off_rounded,
+                          size: 48, color: _kMuted.withValues(alpha: 0.5)),
+                        const SizedBox(height: 12),
+                        const Text('Không tìm thấy khách hàng',
+                          style: TextStyle(color: _kMuted, fontSize: 14)),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8, horizontal: 16),
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) =>
+                    const Divider(height: 1, color: _kBorder),
+                  itemBuilder: (_, i) {
+                    final c = filtered[i];
+                    final pts = c.loyaltyPts;
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 4, vertical: 4),
+                      leading: CircleAvatar(
+                        backgroundColor: _kNavy.withValues(alpha: 0.1),
+                        child: Text(
+                          c.name.isNotEmpty
+                              ? c.name[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: _kNavy,
+                            fontWeight: FontWeight.w800)),
+                      ),
+                      title: Text(c.name,
+                        style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w700,
+                          color: _kNavy)),
+                      subtitle: Text(
+                        c.phone ?? 'Chưa có SĐT',
+                        style: const TextStyle(fontSize: 12, color: _kMuted)),
+                      trailing: pts > 0
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _kGold.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8)),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.stars_rounded,
+                                    color: _kGold, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text('${pts.toInt()}đ',
+                                    style: const TextStyle(
+                                      color: _kGold, fontSize: 12,
+                                      fontWeight: FontWeight.w700)),
+                                ],
+                              ),
+                            )
+                          : null,
+                      onTap: () => widget.onSelect(c.id, c.name, pts),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
