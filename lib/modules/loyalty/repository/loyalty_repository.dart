@@ -54,6 +54,28 @@ class LoyaltyRepository {
         .watch();
   }
 
+  Future<void> createReward({
+    required String name,
+    required double ptsRequired,
+    double? discountAmount,
+  }) async {
+    await _db.into(_db.loyaltyRewards).insert(
+      LoyaltyRewardsCompanion(
+        id:             Value(_uuid.v4()),
+        name:           Value(name),
+        ptsRequired:    Value(ptsRequired),
+        discountAmount: Value(discountAmount),
+        isActive:       const Value(true),
+      ),
+    );
+  }
+
+  Future<void> deleteReward(String id) async {
+    await (_db.update(_db.loyaltyRewards)
+          ..where((r) => r.id.equals(id)))
+        .write(const LoyaltyRewardsCompanion(isActive: Value(false)));
+  }
+
   // ── Mutations ─────────────────────────────────────────────────────────────
 
   /// Cộng điểm sau khi bán (gọi từ SaleCompletedEvent)

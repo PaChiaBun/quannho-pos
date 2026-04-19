@@ -359,10 +359,25 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
   }
 
   void _openAddReward() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('💡 Thêm phần thưởng — sắp ra mắt'),
-        behavior: SnackBarBehavior.floating,
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _AddRewardSheet(
+        onSaved: (name, pts, desc) async {
+          final repo = LoyaltyRepository(
+            ref.read(appDatabaseProvider),
+            ref.read(appEventBusProvider),
+          );
+          await repo.createReward(
+            name: name, ptsRequired: pts);
+          if (ctx.mounted) {
+            Navigator.pop(ctx);
+            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+              content: Text('✅ Đã thêm phần thưởng "$name"'),
+              behavior: SnackBarBehavior.floating));
+          }
+        },
       ),
     );
   }
@@ -1337,4 +1352,224 @@ class _EditCustomerSheetState extends State<_EditCustomerSheet> {
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADD REWARD SHEET
+// ─────────────────────────────────────────────────────────────────────────────
+class _AddRewardSheet extends StatefulWidget {
+  final Future<void> Function(
+      String name, double ptsRequired, String description) onSaved;
+
+  const _AddRewardSheet({required this.onSaved});
+
+  @override
+  State<_AddRewardSheet> createState() => _AddRewardSheetState();
+}
+
+class _AddRewardSheetState extends State<_AddRewardSheet> {
+  final _formKey   = GlobalKey<FormState>();
+  final _nameCtrl  = TextEditingController();
+  final _ptsCtrl   = TextEditingController();
+  final _descCtrl  = TextEditingController();
+  bool _saving     = false;
+  double _ptsPreview = 0;
+
+  static const _kPurple = Color(0xFF7B1FA2);
+  static const _kGold   = Color(0xFFF9A825);
+  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kBorder = Color(0xFFE0D8CC);
+  static const _kMuted  = Color(0xFF9E9085);
+  static const _kBg     = Color(0xFFFAF7F2);
+
+  // Quick presets mẫu
+  static const _presets = [
+    _RewardPreset('☕ Cà phê miễn phí', 50),
+    _RewardPreset('🥤 Nước uống miễn phí', 30),
+    _RewardPreset('🎁 Giảm 10%', 100),
+    _RewardPreset('🍜 Phần ăn miễn phí', 200),
+    _RewardPreset('🎂 Bánh sinh nhật', 150),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _ptsCtrl.addListener(() {
+      final v = double.tryParse(_ptsCtrl.text) ?? 0;
+      setState(() => _ptsPreview = v);
+    });
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose(); _ptsCtrl.dispose(); _descCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF4A148C), _kPurple],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Column(children: [
+                Center(child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2)),
+                )),
+                const SizedBox(height: 14),
+                Row(children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.card_giftcard_rounded,
+                      color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(child: Text('Thêm phần thưởng',
+                    style: TextStyle(color: Colors.white,
+                      fontSize: 17, fontWeight: FontWeight.w800))),
+                  if (_ptsPreview > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: _kGold,
+                        borderRadius: BorderRadius.circular(10)),
+                      child: Text('${_ptsPreview.toStringAsFixed(0)} điểm',
+                        style: const TextStyle(
+                          color: Colors.white, fontSize: 13,
+                          fontWeight: FontWeight.w800)),
+                    ),
+                ]),
+              ]),
+            ),
+
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Quick presets
+                      const Text('Chọn mẫu nhanh:',
+                        style: TextStyle(fontSize: 12, color: _kMuted,
+                          fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8, runSpacing: 8,
+                        children: _presets.map((p) => GestureDetector(
+                          onTap: () {
+                            _nameCtrl.text = p.name;
+                            _ptsCtrl.text = p.pts.toString();
+                            setState(() => _ptsPreview = p.pts.toDouble());
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: _kBorder)),
+                            child: Text(p.name,
+                              style: const TextStyle(
+                                fontSize: 12, color: _kNavy,
+                                fontWeight: FontWeight.w600)),
+                          ),
+                        )).toList(),
+                      ),
+                      const SizedBox(height: 16),
+                      const Divider(height: 1),
+                      const SizedBox(height: 16),
+
+                      // Tên phần thưởng
+                      _Field(ctrl: _nameCtrl, label: 'Tên phần thưởng *',
+                        icon: Icons.card_giftcard_rounded,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Vui lòng nhập tên' : null),
+                      const SizedBox(height: 12),
+
+                      // Điểm yêu cầu
+                      _Field(ctrl: _ptsCtrl, label: 'Điểm yêu cầu *',
+                        icon: Icons.stars_rounded,
+                        keyboard: TextInputType.number,
+                        validator: (v) {
+                          final n = double.tryParse(v ?? '');
+                          return (n == null || n <= 0) ? 'Nhập điểm > 0' : null;
+                        }),
+                      const SizedBox(height: 12),
+
+                      // Mô tả
+                      _Field(ctrl: _descCtrl, label: 'Mô tả (tuỳ chọn)',
+                        icon: Icons.description_rounded, maxLines: 2),
+                      const SizedBox(height: 20),
+
+                      SizedBox(
+                        width: double.infinity, height: 52,
+                        child: ElevatedButton.icon(
+                          onPressed: _saving ? null : _save,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kPurple,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14))),
+                          icon: _saving
+                              ? const SizedBox(width: 18, height: 18,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2))
+                              : const Icon(Icons.add_circle_rounded),
+                          label: Text(
+                            _saving ? 'Đang lưu...' : 'Thêm phần thưởng',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 15)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    final pts = double.tryParse(_ptsCtrl.text) ?? 0;
+    await widget.onSaved(_nameCtrl.text.trim(), pts, _descCtrl.text.trim());
+    if (mounted) setState(() => _saving = false);
+  }
+}
+
+class _RewardPreset {
+  final String name;
+  final int pts;
+  const _RewardPreset(this.name, this.pts);
 }
