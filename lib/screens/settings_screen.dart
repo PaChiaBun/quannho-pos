@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/database/app_database.dart';
 import '../core/providers/app_providers.dart';
 import '../core/theme/app_colors.dart';
+import 'pin_lock_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS SCREEN — Cài đặt Quán Nhỏ POS
@@ -137,6 +138,23 @@ class SettingsScreen extends ConsumerWidget {
                   color: _kGreen,
                   onTap: () => _comingSoon(context),
                 ),
+              ]),
+            ),
+          ),
+
+          // ── Bảo mật ─────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: _SectionHeader(
+              icon: Icons.lock_rounded,
+              title: 'Bảo mật',
+              color: const Color(0xFF1565C0),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _PinToggleTile(),
               ]),
             ),
           ),
@@ -794,5 +812,138 @@ class _EditShopSheetState extends State<_EditShopSheet> {
           behavior: SnackBarBehavior.floating),
       );
     }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PIN TOGGLE TILE — Bật/Tắt khoá PIN trong Settings
+// ─────────────────────────────────────────────────────────────────────────────
+class _PinToggleTile extends ConsumerWidget {
+  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kBlue   = Color(0xFF1565C0);
+  static const _kMuted  = Color(0xFF9E9085);
+  static const _kBorder = Color(0xFFE0D8CC);
+  static const _kBg     = Color(0xFFFAF7F2);
+
+  const _PinToggleTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsRepo = ref.watch(settingsRepositoryProvider);
+
+    return FutureBuilder<String?>(
+      future: settingsRepo.get('pin_enabled'),
+      builder: (context, snap) {
+        final enabled = snap.data == 'true';
+        final hasPin  = enabled; // same flag
+
+        return Column(
+          children: [
+            // Toggle row
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: _kBorder),
+              ),
+              child: SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 4),
+                secondary: Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: _kBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.lock_rounded,
+                    color: _kBlue, size: 20),
+                ),
+                title: const Text('Khoá bằng PIN',
+                  style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w700,
+                    color: _kNavy)),
+                subtitle: Text(
+                  enabled
+                      ? 'Yêu cầu PIN khi mở ứng dụng'
+                      : 'Tắt — không cần PIN khi mở app',
+                  style: const TextStyle(
+                    fontSize: 12, color: _kMuted)),
+                value: enabled,
+                activeColor: _kBlue,
+                onChanged: (v) async {
+                  HapticFeedback.selectionClick();
+                  if (v) {
+                    // Bật PIN → mở màn hình đặt PIN
+                    await showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.92,
+                        child: PinLockScreen(mode: PinMode.set),
+                      ),
+                    );
+                  } else {
+                    // Tắt PIN
+                    await settingsRepo.set('pin_enabled', 'false');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('🔓 Đã tắt khoá PIN'),
+                          behavior: SnackBarBehavior.floating));
+                    }
+                  }
+                  // Rebuild FutureBuilder (hacky but works)
+                  (context as Element).markNeedsBuild();
+                },
+              ),
+            ),
+
+            // Change PIN button (only when enabled)
+            if (hasPin)
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _kBorder),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 4),
+                  leading: Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(
+                      color: _kBlue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.edit_rounded,
+                      color: _kBlue, size: 20),
+                  ),
+                  title: const Text('Đổi mã PIN',
+                    style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700,
+                      color: _kNavy)),
+                  subtitle: const Text('Thay đổi mã PIN hiện tại',
+                    style: TextStyle(fontSize: 12, color: _kMuted)),
+                  trailing: const Icon(Icons.chevron_right_rounded,
+                    color: _kMuted),
+                  onTap: () async {
+                    await showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.92,
+                        child: PinLockScreen(mode: PinMode.change),
+                      ),
+                    );
+                    (context as Element).markNeedsBuild();
+                  },
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 }

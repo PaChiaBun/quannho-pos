@@ -93,14 +93,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 300));
     _tagController.forward();
 
-    // Chờ rồi check onboarding + navigate
+    // Chờ rồi check onboarding + PIN + navigate
     await Future.delayed(const Duration(milliseconds: 1200));
     if (mounted) {
       final settings = ref.read(settingsRepositoryProvider);
-      final done = await settings.get('onboarding_done');
-      final route = (done == 'true') ? '/home' : '/onboarding';
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed(route);
+      final done       = await settings.get('onboarding_done');
+      final pinEnabled = await settings.get('pin_enabled');
+
+      if (!mounted) return;
+      if (done != 'true') {
+        Navigator.of(context).pushReplacementNamed('/onboarding');
+      } else if (pinEnabled == 'true') {
+        Navigator.of(context).pushReplacementNamed('/pin');
+      } else {
+        Navigator.of(context).pushReplacementNamed('/home');
       }
     }
   }

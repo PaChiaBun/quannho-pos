@@ -9,6 +9,7 @@ import 'core/services/event_bridge_service.dart';
 
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/pin_lock_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/pos_screen.dart';
 import 'screens/inventory_screen.dart';
@@ -49,6 +50,7 @@ class QuanNhoPOSApp extends StatelessWidget {
       routes: {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
+        '/pin': (context) => const PinLockScreen(mode: PinMode.verify),
         '/home': (context) => const MainShell(),
       },
     );
