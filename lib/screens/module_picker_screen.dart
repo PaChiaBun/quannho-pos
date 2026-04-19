@@ -14,10 +14,14 @@ class ModulePickerScreen extends ConsumerWidget {
 
   const ModulePickerScreen({super.key, required this.activeModuleIds});
 
-  static const _navy   = Color(0xFF1E1C5E);
+  static const _navy = Color(0xFF1E1C5E);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // ⚡ Capture outer context for Navigator — ctx in SliverChildBuilderDelegate
+    //    does NOT carry a Navigator, so we must use this outer context.
+    final navContext = context;
+
     final inactiveModules = kModuleConfigs.entries
         .where((e) => !activeModuleIds.contains(e.key))
         .toList();
@@ -149,7 +153,10 @@ class ModulePickerScreen extends ConsumerWidget {
                             HapticFeedback.mediumImpact();
                             final repo = ref.read(moduleRepositoryProvider);
                             await repo.activate(d.id);
-                            if (ctx.mounted) Navigator.of(ctx).pop(d.id);
+                            // Use outer navContext — NOT ctx (builder context)
+                            if (navContext.mounted) {
+                              Navigator.of(navContext).pop(d.id);
+                            }
                           },
                         );
                       },
