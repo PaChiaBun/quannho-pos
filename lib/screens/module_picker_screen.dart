@@ -75,7 +75,7 @@ class ModulePickerScreen extends ConsumerWidget {
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: d.colors),
+                              color: d.baseColor,
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Icon(d.icon,
@@ -109,12 +109,12 @@ class ModulePickerScreen extends ConsumerWidget {
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: d.colors.first.withValues(alpha: 0.1),
+                              color: d.baseColor.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.add_rounded,
-                              color: d.colors.first,
+                              color: d.baseColor,
                               size: 20,
                             ),
                           ),

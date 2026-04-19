@@ -292,6 +292,7 @@ class _LoadingDotsState extends State<_LoadingDots>
       }
       await Future.delayed(const Duration(milliseconds: 300));
       for (var c in _controllers) {
+        if (!mounted) return;
         c.reverse();
       }
       await Future.delayed(const Duration(milliseconds: 400));

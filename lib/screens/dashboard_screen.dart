@@ -220,21 +220,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Avatar
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: _kOrange,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'QN',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
+                  // Avatar → Settings
+                  GestureDetector(
+                    onTap: () => ref.read(navTabProvider.notifier).goTo(NavTab.settings),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _kOrange,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'QN',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ),
@@ -358,54 +361,113 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
             ),
             Text(
-              '${activeModules.length} đang bật • Giữ để sắp xếp',
-              style: const TextStyle(
-                fontSize: 12,
-                color: _kMuted,
+              _isEditMode
+                  ? 'Nhấn  –  để xoá · Nhấn  +  để thêm'
+                  : '${activeModules.length} đang bật • Giữ để sắp xếp',
+              style: TextStyle(
+                fontSize: 11.5,
+                color: _isEditMode
+                    ? _kOrange.withValues(alpha: 0.85)
+                    : _kMuted,
+                fontWeight: _isEditMode ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ],
         ),
         const Spacer(),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          child: GestureDetector(
-            onTap: _toggleEditMode,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: _isEditMode ? _kOrange : _kNavy,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                _isEditMode ? 'Xong' : 'Sửa',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+        // Sửa / Xong pill button
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: _isEditMode ? 1.0 : 0.0),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          builder: (context, t, _) {
+            final bgColor = Color.lerp(
+              const Color(0xFF1E1C5E), // navy
+              const Color(0xFFE85D20), // orange
+              t,
+            )!;
+            final glowColor = Color.lerp(
+              const Color(0x661E1C5E),
+              const Color(0x66E85D20),
+              t,
+            )!;
+            return GestureDetector(
+              onTap: _toggleEditMode,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: glowColor,
+                      blurRadius: 12,
+                      spreadRadius: -2,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      transitionBuilder: (child, anim) => ScaleTransition(
+                        scale: anim,
+                        child: FadeTransition(opacity: anim, child: child),
+                      ),
+                      child: Icon(
+                        _isEditMode ? Icons.check_rounded : Icons.tune_rounded,
+                        key: ValueKey(_isEditMode),
+                        color: Colors.white,
+                        size: 15,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      transitionBuilder: (child, anim) => FadeTransition(
+                        opacity: anim,
+                        child: SlideTransition(
+                          position: Tween(
+                            begin: const Offset(0, 0.3),
+                            end: Offset.zero,
+                          ).animate(anim),
+                          child: child,
+                        ),
+                      ),
+                      child: Text(
+                        _isEditMode ? 'Xong' : 'Sửa',
+                        key: ValueKey(_isEditMode),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.1,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ],
     );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // LEGO GRID — ReorderableWrap for drag & drop
+  // LEGO GRID — 2-column grid, equal-height tiles
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildLegoGrid(List<dynamic> activeModules) {
     if (_moduleOrder.isEmpty) {
       return _buildEmptyModules();
     }
 
-    // Build tiles list theo _moduleOrder (local)
     final tiles = _moduleOrder.map((id) {
       final config = kModuleConfigs[id];
       if (config == null) return const SizedBox.shrink();
-
       final idx = _moduleOrder.indexOf(id);
       return KeyedSubtree(
         key: ValueKey(id),
@@ -413,7 +475,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           data: config,
           isEditMode: _isEditMode,
           isEven: idx.isEven,
-          height: 130,
+          // entryDelay: -1 (default) → no animation wrapper → GridView controls size
           onTap: () => _navigateTo(config.route),
           onRemove: () => _removeModule(id),
         ),
@@ -421,94 +483,49 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }).toList();
 
     if (_isEditMode) {
-      // Thêm tile "+" ở cuối
       tiles.add(KeyedSubtree(
         key: const ValueKey('__add__'),
-        child: AddModuleTile(
-          height: 130,
-          onTap: _openModulePicker,
-        ),
+        child: AddModuleTile(onTap: _openModulePicker),
       ));
     }
 
-    // Layout grid: 2 cột, cuộn nếu nhiều module
-    // Dùng ReorderableListView theo grid pattern
     return _isEditMode
         ? _buildReorderableGrid(tiles)
         : _buildStaticGrid(tiles);
   }
 
-  /// Static grid (view mode) — 2 cột
+  /// Static grid — GridView 2 cột, aspect ratio cố định
   Widget _buildStaticGrid(List<Widget> tiles) {
-    final rows = <Widget>[];
-    for (int i = 0; i < tiles.length; i += 2) {
-      rows.add(
-        Row(
-          children: [
-            Expanded(
-              child: tiles[i]
-                  .animate(delay: (i * 80).ms)
-                  .slideY(begin: 0.2, end: 0, duration: 350.ms, curve: Curves.easeOutCubic)
-                  .fadeIn(duration: 300.ms),
-            ),
-            if (i + 1 < tiles.length) ...[
-              const SizedBox(width: 10),
-              Expanded(
-                child: tiles[i + 1]
-                    .animate(delay: ((i + 1) * 80).ms)
-                    .slideY(begin: 0.2, end: 0, duration: 350.ms, curve: Curves.easeOutCubic)
-                    .fadeIn(duration: 300.ms),
-              ),
-            ] else
-              const Expanded(child: SizedBox()),
-          ],
-        ),
-      );
-      if (i + 2 < tiles.length) rows.add(const SizedBox(height: 10));
-    }
-    return Column(children: rows);
+    return GridView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.0, // vuông hoàn toàn
+      ),
+      itemCount: tiles.length,
+      itemBuilder: (_, i) => tiles[i],
+    );
   }
 
-  /// Edit/Reorder grid — dùng drag handle per row
+  /// Reorder/Edit grid — same GridView as static, tiles are jiggable
   Widget _buildReorderableGrid(List<Widget> tiles) {
-    // Group vào pairs (2 cột)
-    final rows = <Widget>[];
-    for (int i = 0; i < tiles.length; i += 2) {
-      rows.add(
-        Row(
-          children: [
-            Expanded(child: tiles[i]),
-            if (i + 1 < tiles.length) ...[
-              const SizedBox(width: 10),
-              Expanded(child: tiles[i + 1]),
-            ] else
-              const Expanded(child: SizedBox()),
-          ],
-        ),
-      );
-      if (i + 2 < tiles.length) rows.add(const SizedBox(height: 10));
-    }
-
-    return Column(children: [
-      ...rows,
-      const SizedBox(height: 8),
-      // Drag helper hint
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.drag_indicator_rounded,
-              size: 14, color: _kMuted.withValues(alpha: 0.6)),
-          const SizedBox(width: 4),
-          Text(
-            'Kéo tile để sắp xếp',
-            style: TextStyle(
-              fontSize: 11,
-              color: _kMuted.withValues(alpha: 0.6),
-            ),
-          ),
-        ],
+    return GridView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.0,
       ),
-    ]);
+      itemCount: tiles.length,
+      itemBuilder: (_, i) => tiles[i],
+    );
   }
 
   Widget _buildEmptyModules() {
@@ -565,34 +582,63 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildEditModeHint() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: _kOrange.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [
+            _kOrange.withValues(alpha: 0.10),
+            _kOrange.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: _kOrange.withValues(alpha: 0.2),
-          width: 1,
+          color: _kOrange.withValues(alpha: 0.28),
+          width: 1.2,
         ),
       ),
       child: Row(
         children: [
-          Icon(Icons.edit_rounded,
-              size: 14, color: _kOrange.withValues(alpha: 0.8)),
-          const SizedBox(width: 8),
-          Text(
-            'Đang chỉnh sửa — nhấn [✕] để tháo module',
-            style: TextStyle(
-              fontSize: 12,
-              color: _kOrange.withValues(alpha: 0.9),
-              fontWeight: FontWeight.w500,
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: _kOrange.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(Icons.touch_app_rounded,
+                size: 17, color: _kOrange.withValues(alpha: 0.9)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Đang chỉnh sửa modules',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: _kOrange.withValues(alpha: 0.95),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Nhấn – đỏ để xoá  •  Nhấn + để thêm',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: _kOrange.withValues(alpha: 0.70),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     )
         .animate()
-        .slideY(begin: -0.5, end: 0, duration: 250.ms)
-        .fadeIn(duration: 200.ms);
+        .slideY(begin: -0.3, end: 0, duration: 280.ms, curve: Curves.easeOutCubic)
+        .fadeIn(duration: 220.ms);
   }
 
   // ─────────────────────────────────────────────────────────────────────────

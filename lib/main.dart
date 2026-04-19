@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_text_styles.dart';
@@ -25,6 +26,9 @@ import 'screens/settings_screen.dart';
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  // Khởi tạo locale cho intl (fix LocaleDataException)
+  await initializeDateFormatting('vi', null);
 
   // Khởi tạo Supabase (background, không block app)
   SupabaseService.initialize();
