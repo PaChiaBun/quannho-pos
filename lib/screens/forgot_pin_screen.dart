@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/providers/app_providers.dart';
 import '../core/services/otp_service.dart';
 
@@ -492,10 +493,12 @@ class _ForgotPinScreenState extends ConsumerState<ForgotPinScreen> {
 
     setState(() { _loading = true; _errorMsg = ''; });
 
-    final shopName = await repo.shopName;
+    // Lấy tên chủ quán từ SharedPreferences (lưu lúc onboarding)
+    final prefs    = await SharedPreferences.getInstance();
+    final ownerName = prefs.getString('owner_name') ?? 'Bạn';
     final result   = await _otpService.sendOtp(
-      toEmail:  email,
-      shopName: shopName,
+      toEmail: email,
+      toName:  ownerName,
     );
 
     setState(() => _loading = false);
