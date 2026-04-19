@@ -46,6 +46,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   List<String> _moduleOrder = [];
   bool _orderInitialized = false;
 
+  // ✨ Animation state
+  String? _newlyAddedModuleId; // tile vừa được thêm → play entrance anim
+  final Set<String> _removingIds = {}; // tiles đang fade-out để xóa
+
   @override
   Widget build(BuildContext context) {
     final modulesAsync  = ref.watch(allModulesProvider);
@@ -485,29 +489,73 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
   // LEGO GRID — 2-column grid, equal-height tiles
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildLegoGrid(List<dynamic> activeModules) {
-    if (_moduleOrder.isEmpty) {
+    if (_moduleOrder.isEmpty && _removingIds.isEmpty) {
       return _buildEmptyModules();
     }
 
-    final tiles = _moduleOrder.map((id) {
+    // Hiển thị cả tiles đang bị xóa (để animation chạy xong)
+    final displayOrder = [
+      ..._removingIds.where((id) => !_moduleOrder.contains(id)),
+      ..._moduleOrder,
+    ];
+
+    final tiles = displayOrder.map((id) {
       final config = kModuleConfigs[id];
       if (config == null) return const SizedBox.shrink();
       final idx = _moduleOrder.indexOf(id);
-      return KeyedSubtree(
-        key: ValueKey(id),
-        child: ModuleTile(
-          data: config,
-          isEditMode: _isEditMode,
-          isEven: idx.isEven,
-          // entryDelay: -1 (default) → no animation wrapper → GridView controls size
-          onTap: () => _navigateTo(config.route),
-          onRemove: () => _removeModule(id),
-        ),
+      final isRemoving = _removingIds.contains(id);
+      final isNew = id == _newlyAddedModuleId;
+
+      Widget tile = ModuleTile(
+        data: config,
+        isEditMode: _isEditMode,
+        isEven: idx.isEven,
+        onTap: () => _navigateTo(config.route),
+        onRemove: () => _removeModule(id),
       );
+
+      // ✨ Entrance animation — module vừa được thêm
+      if (isNew) {
+        tile = tile
+            .animate()
+            .scale(
+              begin: const Offset(0.6, 0.6),
+              end: const Offset(1.0, 1.0),
+              duration: 500.ms,
+              curve: Curves.elasticOut,
+            )
+            .fadeIn(duration: 250.ms)
+            .slideY(
+              begin: 0.2,
+              end: 0,
+              duration: 380.ms,
+              curve: Curves.easeOutCubic,
+            );
+      }
+
+      // 💨 Exit animation — module đang bị xóa
+      if (isRemoving) {
+        tile = tile
+            .animate()
+            .scale(
+              begin: const Offset(1.0, 1.0),
+              end: const Offset(0.65, 0.65),
+              duration: 300.ms,
+              curve: Curves.easeInBack,
+            )
+            .fadeOut(duration: 260.ms)
+            .slideY(
+              begin: 0,
+              end: 0.15,
+              duration: 300.ms,
+              curve: Curves.easeIn,
+            );
+      }
+
+      return KeyedSubtree(key: ValueKey(id), child: tile);
     }).toList();
 
     if (_isEditMode) {
@@ -521,6 +569,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ? _buildReorderableGrid(tiles)
         : _buildStaticGrid(tiles);
   }
+
 
   /// Static grid — GridView 2 cột, aspect ratio cố định
   Widget _buildStaticGrid(List<Widget> tiles) {
@@ -1271,10 +1320,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     if (confirmed != true) return; // User cancelled
 
-    // Optimistic update — xóa khỏi list trước
-    setState(() => _moduleOrder.remove(moduleId));
+    // 💨 Bước 1: thêm vào _removingIds → trigger exit animation
+    setState(() => _removingIds.add(moduleId));
 
-    // Ghi vào DB
+    // ⏳ Đợi animation chạy xong (300ms)
+    await Future.delayed(const Duration(milliseconds: 320));
+
+    // 🗽 Bước 2: xóa khỏi list và clear removing state
+    if (mounted) {
+      setState(() {
+        _moduleOrder.remove(moduleId);
+        _removingIds.remove(moduleId);
+      });
+    }
+
+    // 💾 Ghi vào DB
     await ref.read(moduleRepositoryProvider).deactivate(moduleId);
   }
 
@@ -1288,7 +1348,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
 
     if (result != null && !_moduleOrder.contains(result)) {
-      setState(() => _moduleOrder.add(result));
+      // ✨ Bước 1: thêm vào list và đánh dấu là "newly added"
+      setState(() {
+        _moduleOrder.add(result);
+        _newlyAddedModuleId = result;
+      });
+
+      // ⏳ Clear flag sau khi entrance animation xong (~600ms)
+      await Future.delayed(const Duration(milliseconds: 620));
+      if (mounted) {
+        setState(() => _newlyAddedModuleId = null);
+      }
     }
   }
 

@@ -238,6 +238,7 @@ class _PickerCardState extends State<_PickerCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _pressCtrl;
   late Animation<double> _scaleAnim;
+  bool _isAdded = false;
 
   @override
   void initState() {
@@ -257,6 +258,26 @@ class _PickerCardState extends State<_PickerCard>
     super.dispose();
   }
 
+  Future<void> _handleTap() async {
+    HapticFeedback.mediumImpact();
+
+    // Hiệu ứng nhấn
+    await _pressCtrl.forward();
+    await _pressCtrl.reverse();
+
+    // Chuyển sang trạng thái "đã thêm" với checkmark
+    setState(() => _isAdded = true);
+
+    // Haptic success
+    await Future.delayed(const Duration(milliseconds: 80));
+    HapticFeedback.heavyImpact();
+
+    // Đợi animation success rồi mới pop
+    await Future.delayed(const Duration(milliseconds: 380));
+
+    widget.onTap();
+  }
+
   @override
   Widget build(BuildContext context) {
     final d = widget.config;
@@ -274,32 +295,41 @@ class _PickerCardState extends State<_PickerCard>
       onTapDown: (_) => _pressCtrl.forward(),
       onTapUp: (_) => _pressCtrl.reverse(),
       onTapCancel: () => _pressCtrl.reverse(),
-      onTap: widget.onTap,
+      onTap: _isAdded ? null : _handleTap,
       child: AnimatedBuilder(
         animation: _scaleAnim,
         builder: (_, child) => Transform.scale(
           scale: _scaleAnim.value,
           child: child,
         ),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [base, darker],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            gradient: _isAdded
+                ? const LinearGradient(
+                    colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : LinearGradient(
+                    colors: [base, darker],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
             borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
-                color: base.withValues(alpha: 0.40),
-                blurRadius: 16,
+                color: (_isAdded ? const Color(0xFF2E7D32) : base)
+                    .withValues(alpha: _isAdded ? 0.55 : 0.40),
+                blurRadius: _isAdded ? 24 : 16,
                 offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Stack(
             children: [
-              // Decorative pattern circle (top-right)
+              // Decorative circles
               Positioned(
                 top: -18,
                 right: -18,
@@ -330,15 +360,30 @@ class _PickerCardState extends State<_PickerCard>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Icon
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.20),
-                        borderRadius: BorderRadius.circular(14),
+                    // Icon — đổi thành checkmark khi added
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      switchInCurve: Curves.elasticOut,
+                      transitionBuilder: (child, anim) => ScaleTransition(
+                        scale: anim,
+                        child: child,
                       ),
-                      child: Icon(d.icon, color: Colors.white, size: 26),
+                      child: Container(
+                        key: ValueKey(_isAdded),
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.20),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          _isAdded
+                              ? Icons.check_rounded
+                              : d.icon,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
                     ),
                     const Spacer(),
                     // Title
@@ -354,44 +399,60 @@ class _PickerCardState extends State<_PickerCard>
                     ),
                     const SizedBox(height: 4),
                     // Subtitle
-                    Text(
-                      d.subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.70),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Text(
+                        _isAdded ? 'Đã thêm vào dashboard!' : d.subtitle,
+                        key: ValueKey(_isAdded),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.80),
+                          fontSize: 12,
+                          fontWeight: _isAdded ? FontWeight.w600 : FontWeight.w400,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 12),
-                    // Add button pill
-                    Container(
+                    // Add button pill — đổi thành "Đã thêm ✓" khi added
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.20),
+                        color: _isAdded
+                            ? Colors.white.withValues(alpha: 0.30)
+                            : Colors.white.withValues(alpha: 0.20),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.30),
+                          color: Colors.white.withValues(alpha: 0.40),
                           width: 1,
                         ),
                       ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.add_rounded,
-                              size: 14, color: Colors.white),
-                          SizedBox(width: 4),
-                          Text(
-                            'Thêm vào',
-                            style: TextStyle(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          key: ValueKey(_isAdded),
+                          children: [
+                            Icon(
+                              _isAdded
+                                  ? Icons.check_rounded
+                                  : Icons.add_rounded,
+                              size: 14,
                               color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Text(
+                              _isAdded ? 'Đã thêm!' : 'Thêm vào',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
