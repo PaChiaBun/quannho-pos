@@ -253,12 +253,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         ),
                       );
                     },
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/branding/app_icon.png',
-                        width: 160,
-                        height: 160,
-                        fit: BoxFit.cover,
+                    child: Container(
+                      width: 160,
+                      height: 160,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFF1C2151), // match splash bg — no white ring
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/branding/logo_head.png',
+                          width: 160,
+                          height: 160,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),
@@ -506,91 +514,27 @@ class _ParticlePainter extends CustomPainter {
 class _LpmBadge extends StatelessWidget {
   const _LpmBadge();
 
-  static const _orange = Color(0xFFFF6B35);
-  static const _navy   = Color(0xFF1E1C5E);
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(40),
-        color: Colors.white.withValues(alpha: 0.10),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.18),
-          width: 1.2,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // LPM Logo mark — stylized monogram
-          Container(
-            width: 34,
-            height: 34,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-            ),
-            child: Center(
-              child: RichText(
-                text: const TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'L',
-                      style: TextStyle(
-                        fontFamily: 'Outfit',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: _navy,
-                        height: 1,
-                      ),
-                    ),
-                    TextSpan(
-                      text: '·',
-                      style: TextStyle(
-                        fontFamily: 'Outfit',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        color: _orange,
-                        height: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Company name
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'LPM',
-                  style: const TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                TextSpan(
-                  text: '.vn',
-                  style: TextStyle(
-                    fontFamily: 'Outfit',
-                    fontSize: 19,
-                    fontWeight: FontWeight.w500,
-                    color: _orange.withValues(alpha: 0.90),
-                    letterSpacing: 0,
-                  ),
-                ),
-              ],
-            ),
+        color: Colors.white,                   // white bg vì logo có nền trắng
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: Image.asset(
+        'assets/branding/lpm_logo.png',
+        height: 34,
+        fit: BoxFit.contain,
       ),
     );
   }
 }
+
