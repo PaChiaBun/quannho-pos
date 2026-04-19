@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/providers/app_providers.dart';
 import '../core/theme/app_colors.dart';
 
@@ -96,12 +97,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // Chờ rồi check onboarding + PIN + navigate
     await Future.delayed(const Duration(milliseconds: 1200));
     if (mounted) {
-      final settings = ref.read(settingsRepositoryProvider);
-      final done       = await settings.get('onboarding_done');
-      final pinEnabled = await settings.get('pin_enabled');
+      // Check onboarding — dùng SharedPreferences (nhanh hơn)
+      final prefs   = await SharedPreferences.getInstance();
+      final obDone  = prefs.getBool('onboarding_complete') ?? false;
+
+      // Backward compat: check DB key cũ nếu chưa có SP flag
+      final settings    = ref.read(settingsRepositoryProvider);
+      final obDoneOld   = await settings.get('onboarding_done');
+      final pinEnabled  = await settings.get('pin_enabled');
+
+      final isOnboarded = obDone || obDoneOld == 'true';
 
       if (!mounted) return;
-      if (done != 'true') {
+      if (!isOnboarded) {
         Navigator.of(context).pushReplacementNamed('/onboarding');
       } else if (pinEnabled == 'true') {
         Navigator.of(context).pushReplacementNamed('/pin');

@@ -6,6 +6,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_text_styles.dart';
 import 'core/services/event_bridge_service.dart';
+import 'core/services/supabase_service.dart';
 import 'core/providers/app_providers.dart';
 
 import 'screens/splash_screen.dart';
@@ -24,6 +25,9 @@ import 'screens/settings_screen.dart';
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  // Khởi tạo Supabase (background, không block app)
+  SupabaseService.initialize();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

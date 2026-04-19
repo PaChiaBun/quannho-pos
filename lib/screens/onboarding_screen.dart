@@ -1,45 +1,53 @@
+// lib/screens/onboarding_screen.dart
+// ─────────────────────────────────────────────────────────────────────────────
+// ONBOARDING SCREEN — Hiển thị lần đầu cài app
+// Page 1: Welcome hero
+// Page 2: Thông tin quán (name, owner, phone, email, city)
+// Page 3: Hoàn tất → sync Supabase + email chào mừng
+// ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/providers/app_providers.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../core/services/brevo_service.dart';
+import '../core/services/supabase_service.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ONBOARDING SCREEN — Wizard lần đầu mở app
-// ─────────────────────────────────────────────────────────────────────────────
-class OnboardingScreen extends ConsumerStatefulWidget {
+class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
-    with TickerProviderStateMixin {
-  final PageController _pageCtrl = PageController();
-  int _page = 0;
-
-  // Step 2 — Tên quán
-  final _shopNameCtrl = TextEditingController(text: 'Quán Nhỏ');
-
-  // Step 3 — Modules
-  final _selectedModules = <String>{
-    'pos', 'kho', 'finance', 'loyalty', 'report'
-  };
-
-  bool _saving = false;
-
-  // Colors
+class _OnboardingScreenState extends State<OnboardingScreen> {
   static const _kNavy   = Color(0xFF1E1C5E);
   static const _kNavyL  = Color(0xFF2D2B8A);
   static const _kOrange = Color(0xFFE85D20);
-  static const _kBg     = Color(0xFFFAF7F2);
-  static const _kBorder = Color(0xFFE0D8CC);
-  static const _kMuted  = Color(0xFF9E9085);
+  static const _kBg     = Color(0xFF0F0E1A);
+  static const _kCard   = Color(0xFF1A1930);
+  static const _kMuted  = Color(0xFF8B8FA8);
+  static const _kBorder = Color(0xFF2A2840);
+
+  final _pageCtrl      = PageController();
+  int  _currentPage    = 0;
+  bool _loading        = false;
+  bool _done           = false;
+
+  final _shopNameCtrl  = TextEditingController();
+  final _ownerNameCtrl = TextEditingController();
+  final _phoneCtrl     = TextEditingController();
+  final _emailCtrl     = TextEditingController();
+  final _cityCtrl      = TextEditingController();
+  final _formKey       = GlobalKey<FormState>();
 
   @override
   void dispose() {
     _pageCtrl.dispose();
     _shopNameCtrl.dispose();
+    _ownerNameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
+    _cityCtrl.dispose();
     super.dispose();
   }
 
@@ -47,153 +55,58 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _kBg,
-      body: Stack(
-        children: [
-          // Background gradient blob
-          Positioned(
-            top: -80, right: -80,
-            child: Container(
-              width: 260, height: 260,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _kNavy.withValues(alpha: 0.07),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 100, left: -60,
-            child: Container(
-              width: 200, height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _kOrange.withValues(alpha: 0.06),
-              ),
-            ),
-          ),
-
-          Column(
-            children: [
-              const SizedBox(height: 56),
-
-              // ── Progress dots ──────────────────────────────────────
-              _buildProgressDots(),
-
-              // ── Pages ─────────────────────────────────────────────
-              Expanded(
-                child: PageView(
-                  controller: _pageCtrl,
-                  physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: (i) => setState(() => _page = i),
-                  children: [
-                    _buildPage0(),
-                    _buildPage1(),
-                    _buildPage2(),
-                    _buildPage3(),
-                  ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            if (_currentPage == 0)
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 12, 16, 0),
+                  child: TextButton(
+                    onPressed: _skip,
+                    child: Text('Bỏ qua',
+                      style: TextStyle(color: _kMuted, fontSize: 13)),
+                  ),
                 ),
               ),
-
-              // ── Bottom action ──────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _saving ? null : _nextPage,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _kNavy,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18)),
-                          elevation: 0,
-                        ),
-                        child: _saving
-                            ? const SizedBox(
-                                width: 22, height: 22,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2))
-                            : Text(
-                                _page == 3
-                                    ? '🚀 Bắt đầu dùng app!'
-                                    : _page == 0
-                                        ? 'Bắt đầu thiết lập'
-                                        : 'Tiếp theo   →',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.2,
-                                ),
-                              ),
-                      ),
-                    ),
-                    if (_page > 0 && _page < 3) ...[
-                      const SizedBox(height: 10),
-                      TextButton(
-                        onPressed: _prevPage,
-                        child: Text('← Quay lại',
-                          style: TextStyle(
-                            color: _kMuted, fontSize: 14,
-                            fontWeight: FontWeight.w600)),
-                      ),
-                    ],
-                  ],
-                ),
+            Expanded(
+              child: PageView(
+                controller: _pageCtrl,
+                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (i) => setState(() => _currentPage = i),
+                children: [
+                  _buildWelcomePage(),
+                  _buildFormPage(),
+                  _buildSuccessPage(),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+            if (!_done) _buildBottomBar(),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // PROGRESS DOTS
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildProgressDots() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(4, (i) => AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: _page == i ? 24 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: _page == i ? _kNavy : _kBorder,
-            borderRadius: BorderRadius.circular(4),
-          ),
-        )),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // PAGE 0 — Welcome
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildPage0() {
+  Widget _buildWelcomePage() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Logo + glow
           Container(
-            width: 120, height: 120,
+            width: 110, height: 110,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [_kNavy, _kNavyL],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+                begin: Alignment.topLeft, end: Alignment.bottomRight),
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: _kNavy.withValues(alpha: 0.3),
-                  blurRadius: 32, offset: const Offset(0, 12)),
+                  color: _kNavy.withValues(alpha: 0.6),
+                  blurRadius: 40, offset: const Offset(0, 16)),
               ],
             ),
             child: ClipRRect(
@@ -201,482 +114,330 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               child: Image.asset('assets/branding/app_icon.png',
                 fit: BoxFit.cover),
             ),
-          ),
+          )
+              .animate()
+              .scale(duration: 600.ms, curve: Curves.elasticOut)
+              .fadeIn(duration: 400.ms),
           const SizedBox(height: 36),
-
-          const Text('Chào mừng đến',
+          const Text('Quán Nhỏ POS',
             style: TextStyle(
-              fontSize: 16, color: _kMuted,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.5)),
-          const SizedBox(height: 8),
-          RichText(
-            textAlign: TextAlign.center,
-            text: const TextSpan(
-              children: [
-                TextSpan(text: 'Quán Nhỏ',
-                  style: TextStyle(
-                    fontSize: 34, fontWeight: FontWeight.w900,
-                    color: _kNavy, letterSpacing: -0.5)),
-                TextSpan(text: ' POS',
-                  style: TextStyle(
-                    fontSize: 34, fontWeight: FontWeight.w900,
-                    color: _kOrange, letterSpacing: -0.5)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Hệ thống quản lý cửa hàng\nđơn giản, mạnh mẽ, offline-first.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16, color: _kMuted, height: 1.5)),
-          const SizedBox(height: 40),
-
-          // Feature pills
-          _FeaturePill(
-            emoji: '⚡', text: 'Bán hàng cực nhanh'),
-          const SizedBox(height: 10),
-          _FeaturePill(
-            emoji: '📦', text: 'Quản lý kho thông minh'),
-          const SizedBox(height: 10),
-          _FeaturePill(
-            emoji: '💰', text: 'Theo dõi thu chi tự động'),
-          const SizedBox(height: 10),
-          _FeaturePill(
-            emoji: '🏅', text: 'Chương trình điểm thưởng'),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // PAGE 1 — Tên quán
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildPage1() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: _kOrange.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16)),
-            child: const Icon(Icons.storefront_rounded,
-              color: _kOrange, size: 32),
-          ),
-          const SizedBox(height: 20),
-          const Text('Quán của bạn\ntên là gì?',
-            style: TextStyle(
-              fontSize: 28, fontWeight: FontWeight.w900,
-              color: _kNavy, height: 1.2, letterSpacing: -0.5)),
-          const SizedBox(height: 8),
-          Text(
-            'Tên này sẽ xuất hiện trên màn hình chính và hoá đơn.',
-            style: const TextStyle(fontSize: 15, color: _kMuted, height: 1.4)),
-          const SizedBox(height: 32),
-
-          // Shop name field
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _kBorder),
-              boxShadow: [
-                BoxShadow(
-                  color: _kNavy.withValues(alpha: 0.06),
-                  blurRadius: 12, offset: const Offset(0, 4)),
-              ],
-            ),
-            child: TextField(
-              controller: _shopNameCtrl,
-              autofocus: false,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 22, fontWeight: FontWeight.w800,
-                color: _kNavy, letterSpacing: -0.3),
-              decoration: const InputDecoration(
-                hintText: 'Ví dụ: Snack Trà Sữa 88',
-                hintStyle: TextStyle(
-                  fontSize: 16, color: _kMuted,
-                  fontWeight: FontWeight.w400),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 18),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Quick presets
-          const Text('Gợi ý nhanh:',
-            style: TextStyle(fontSize: 12, color: _kMuted,
-              fontWeight: FontWeight.w600)),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8, runSpacing: 8,
-            children: [
-              'Quán Nhỏ', 'Trà Sữa Nhà Làm',
-              'Snack Corner', 'Coffee & More', 'Bếp Nhà Mình',
-            ].map((name) => GestureDetector(
-              onTap: () {
-                _shopNameCtrl.text = name;
-                _shopNameCtrl.selection = TextSelection.fromPosition(
-                  TextPosition(offset: name.length));
-                HapticFeedback.selectionClick();
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _kBorder),
-                ),
-                child: Text(name,
-                  style: const TextStyle(
-                    fontSize: 13, color: _kNavy,
-                    fontWeight: FontWeight.w600)),
-              ),
-            )).toList(),
-          ),
-          const SizedBox(height: 40),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // PAGE 2 — Chọn modules
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildPage2() {
-    final modules = [
-      _ModuleInfo('pos',     '🛒', 'Bán hàng',     'POS nhanh, giỏ hàng, thanh toán', required: true),
-      _ModuleInfo('kho',     '📦', 'Kho hàng',     'Theo dõi tồn kho, nhập xuất'),
-      _ModuleInfo('finance', '💰', 'Thu Chi',       'Ghi thu, ghi chi, báo cáo lợi nhuận'),
-      _ModuleInfo('loyalty', '🏅', 'Điểm thưởng',  'Tích điểm, đổi thưởng cho khách'),
-      _ModuleInfo('report',  '📊', 'Báo cáo',      'Biểu đồ doanh thu, top sản phẩm'),
-    ];
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: _kNavy.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(16)),
-            child: const Icon(Icons.extension_rounded,
-              color: _kNavy, size: 32),
-          ),
-          const SizedBox(height: 20),
-          const Text('Chọn tính năng\nbạn muốn dùng',
-            style: TextStyle(
-              fontSize: 28, fontWeight: FontWeight.w900,
-              color: _kNavy, height: 1.2, letterSpacing: -0.5)),
-          const SizedBox(height: 8),
-          const Text(
-            'Có thể bật/tắt bất kỳ lúc nào trong Cài đặt.',
-            style: TextStyle(fontSize: 15, color: _kMuted)),
-          const SizedBox(height: 24),
-
-          ...modules.map((m) {
-            final selected = _selectedModules.contains(m.id);
-            return GestureDetector(
-              onTap: () {
-                if (m.required) return; // POS luôn bật
-                HapticFeedback.selectionClick();
-                setState(() {
-                  if (selected) {
-                    _selectedModules.remove(m.id);
-                  } else {
-                    _selectedModules.add(m.id);
-                  }
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: selected ? _kNavy : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: selected ? _kNavy : _kBorder,
-                    width: selected ? 0 : 1),
-                  boxShadow: selected ? [
-                    BoxShadow(
-                      color: _kNavy.withValues(alpha: 0.2),
-                      blurRadius: 12, offset: const Offset(0, 4)),
-                  ] : [],
-                ),
-                child: Row(
-                  children: [
-                    Text(m.emoji,
-                      style: const TextStyle(fontSize: 26)),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(m.name,
-                                style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.w700,
-                                  color: selected ? Colors.white : _kNavy)),
-                              if (m.required) ...[
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(6)),
-                                  child: Text('Bắt buộc',
-                                    style: TextStyle(
-                                      fontSize: 9, fontWeight: FontWeight.w700,
-                                      color: selected
-                                          ? Colors.white70
-                                          : _kNavy.withValues(alpha: 0.5))),
-                                ),
-                              ],
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(m.desc,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: selected
-                                  ? Colors.white70
-                                  : _kMuted)),
-                        ],
-                      ),
-                    ),
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 24, height: 24,
-                      decoration: BoxDecoration(
-                        color: selected
-                            ? Colors.white
-                            : _kBorder.withValues(alpha: 0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: selected
-                          ? const Icon(Icons.check_rounded,
-                              size: 16, color: _kNavy)
-                          : null,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // PAGE 3 — Tất cả xong!
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildPage3() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Checkmark container
-          Container(
-            width: 120, height: 120,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2E7D32), Color(0xFF66BB6A)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
-                  blurRadius: 32, offset: const Offset(0, 12)),
-              ],
-            ),
-            child: const Icon(Icons.check_rounded,
-              color: Colors.white, size: 64),
-          ),
-          const SizedBox(height: 32),
-
-          const Text('Sẵn sàng rồi! 🎉',
-            style: TextStyle(
-              fontSize: 30, fontWeight: FontWeight.w900,
-              color: _kNavy, letterSpacing: -0.5)),
+              color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900,
+              letterSpacing: -1))
+              .animate()
+              .slideY(begin: 0.3, duration: 500.ms, delay: 200.ms)
+              .fadeIn(duration: 400.ms, delay: 200.ms),
           const SizedBox(height: 12),
-
-          // Shop name display
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-              color: _kNavy,
-              borderRadius: BorderRadius.circular(14)),
-            child: Text(
-              _shopNameCtrl.text.isEmpty
-                  ? 'Quán Nhỏ' : _shopNameCtrl.text,
-              style: const TextStyle(
-                color: Colors.white, fontSize: 18,
-                fontWeight: FontWeight.w800)),
-          ),
-          const SizedBox(height: 16),
-
-          const Text(
-            'Đã thiết lập xong! Bạn có thể\nbắt đầu bán hàng ngay bây giờ.',
+          Text(
+            'Quản lý quán café, trà sữa, quán ăn\nđơn giản — đẹp — hiệu quả',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16, color: _kMuted, height: 1.5)),
-          const SizedBox(height: 32),
-
-          // Summary chips
+            style: TextStyle(color: _kMuted, fontSize: 15, height: 1.6))
+              .animate().fadeIn(duration: 400.ms, delay: 400.ms),
+          const SizedBox(height: 48),
           Wrap(
             alignment: WrapAlignment.center,
-            spacing: 8, runSpacing: 8,
-            children: _selectedModules.map((id) {
-              final info = {
-                'pos': '🛒 Bán hàng',
-                'kho': '📦 Kho hàng',
-                'finance': '💰 Thu Chi',
-                'loyalty': '🏅 Điểm thưởng',
-                'report': '📊 Báo cáo',
-              }[id] ?? id;
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _kNavy.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _kBorder),
+            spacing: 10, runSpacing: 10,
+            children: const [
+              _FeaturePill('🛒 Bán hàng offline'),
+              _FeaturePill('📦 Quản lý kho'),
+              _FeaturePill('⭐ Loyalty points'),
+              _FeaturePill('📊 Báo cáo'),
+              _FeaturePill('💰 Thu chi'),
+            ],
+          ).animate().fadeIn(duration: 500.ms, delay: 500.ms),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Thông tin quán của bạn',
+              style: TextStyle(
+                color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 4),
+            Text('Điền để chúng tôi hỗ trợ bạn tốt hơn',
+              style: TextStyle(color: _kMuted, fontSize: 13)),
+            const SizedBox(height: 24),
+            _buildField(ctrl: _shopNameCtrl, label: 'Tên quán *',
+              hint: 'VD: Café Góc Phố', icon: Icons.store_rounded,
+              color: const Color(0xFF4F9EFF),
+              validator: (v) => v!.trim().isEmpty ? 'Vui lòng nhập tên quán' : null),
+            const SizedBox(height: 14),
+            _buildField(ctrl: _ownerNameCtrl, label: 'Tên chủ quán *',
+              hint: 'Họ và tên của bạn', icon: Icons.person_rounded,
+              color: const Color(0xFF7C4DFF),
+              validator: (v) => v!.trim().isEmpty ? 'Vui lòng nhập tên' : null),
+            const SizedBox(height: 14),
+            _buildField(ctrl: _phoneCtrl, label: 'Số điện thoại *',
+              hint: '0901 234 567', icon: Icons.phone_rounded,
+              color: const Color(0xFF00BCD4),
+              keyboard: TextInputType.phone,
+              validator: (v) =>
+                  v!.trim().length < 9 ? 'Số điện thoại không hợp lệ' : null),
+            const SizedBox(height: 14),
+            _buildField(ctrl: _emailCtrl,
+              label: 'Email (nhận thông báo & khôi phục PIN)',
+              hint: 'your@email.com', icon: Icons.mail_outline_rounded,
+              color: const Color(0xFF66BB6A),
+              keyboard: TextInputType.emailAddress,
+              validator: (v) {
+                if (v!.trim().isEmpty) return null;
+                if (!v.contains('@')) return 'Email không hợp lệ';
+                return null;
+              }),
+            const SizedBox(height: 14),
+            _buildField(ctrl: _cityCtrl, label: 'Tỉnh / Thành phố',
+              hint: 'VD: Hồ Chí Minh', icon: Icons.location_city_rounded,
+              color: const Color(0xFFF9A825)),
+            const SizedBox(height: 8),
+            Text('* Bắt buộc', style: TextStyle(color: _kMuted, fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuccessPage() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 100, height: 100,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2ECC71).withValues(alpha: 0.15),
+                shape: BoxShape.circle),
+              child: const Icon(Icons.check_circle_rounded,
+                color: Color(0xFF2ECC71), size: 56),
+            )
+                .animate()
+                .scale(
+                    begin: const Offset(0.5, 0.5),
+                    duration: 600.ms,
+                    curve: Curves.elasticOut)
+                .fadeIn(duration: 400.ms),
+            const SizedBox(height: 24),
+            const Text('Thiết lập thành công! 🎉',
+              style: TextStyle(
+                color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900),
+              textAlign: TextAlign.center)
+                .animate().fadeIn(delay: 300.ms),
+            const SizedBox(height: 8),
+            Text(
+              'Email chào mừng đã được gửi.\nBạn đã sẵn sàng sử dụng Quán Nhỏ POS!',
+              style: TextStyle(color: _kMuted, fontSize: 14, height: 1.6),
+              textAlign: TextAlign.center)
+                .animate().fadeIn(delay: 500.ms),
+            const SizedBox(height: 40),
+            SizedBox(
+              width: double.infinity, height: 56,
+              child: ElevatedButton(
+                onPressed: _enterApp,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kOrange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18)),
+                  elevation: 0),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Vào ứng dụng',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward_rounded, size: 20),
+                  ],
                 ),
-                child: Text(info,
-                  style: const TextStyle(
-                    fontSize: 13, color: _kNavy,
-                    fontWeight: FontWeight.w600)),
-              );
-            }).toList(),
+              ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.3, delay: 700.ms),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        children: [
+          Row(
+            children: List.generate(3, (i) => AnimatedContainer(
+              duration: 300.ms,
+              margin: const EdgeInsets.only(right: 6),
+              width: i == _currentPage ? 24 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: i == _currentPage ? _kOrange : _kBorder,
+                borderRadius: BorderRadius.circular(4)),
+            )),
+          ),
+          const Spacer(),
+          SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _loading ? null : _handleNext,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kOrange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 28)),
+              child: _loading
+                  ? const SizedBox(
+                      width: 22, height: 22,
+                      child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2.5))
+                  : Row(children: [
+                      Text(
+                        _currentPage == 0 ? 'Bắt đầu' : 'Hoàn tất',
+                        style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w800)),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.arrow_forward_rounded, size: 18),
+                    ]),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // NAVIGATION
-  // ─────────────────────────────────────────────────────────────────────────
-  void _nextPage() async {
-    if (_page < 2) {
-      _pageCtrl.nextPage(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
-      );
-    } else if (_page == 2) {
-      // Trang summary
-      _pageCtrl.nextPage(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
-      );
+  void _handleNext() {
+    HapticFeedback.lightImpact();
+    if (_currentPage == 0) {
+      _pageCtrl.animateToPage(1, duration: 400.ms, curve: Curves.easeInOut);
     } else {
-      // Trang cuối — lưu và vào app
-      await _finishSetup();
+      _submitForm();
     }
   }
 
-  void _prevPage() {
-    _pageCtrl.previousPage(
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
+  Future<void> _submitForm() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _loading = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('shop_name',  _shopNameCtrl.text.trim());
+      await prefs.setString('owner_name', _ownerNameCtrl.text.trim());
+      await prefs.setString('shop_phone', _phoneCtrl.text.trim());
+      await prefs.setString('shop_email', _emailCtrl.text.trim());
+      await prefs.setString('shop_city',  _cityCtrl.text.trim());
+      await prefs.setBool  ('onboarding_complete', true);
+
+      // Email làm recovery PIN luôn
+      if (_emailCtrl.text.trim().isNotEmpty) {
+        await prefs.setString('recovery_email', _emailCtrl.text.trim());
+      }
+
+      // Sync Supabase (best effort)
+      await SupabaseService.registerShop(
+        shopName:  _shopNameCtrl.text.trim(),
+        ownerName: _ownerNameCtrl.text.trim(),
+        email:     _emailCtrl.text.trim(),
+        phone:     _phoneCtrl.text.trim(),
+        city:      _cityCtrl.text.trim(),
+        appVersion: '1.0.0',
+      );
+
+      // Email chào mừng (best effort)
+      if (_emailCtrl.text.trim().isNotEmpty) {
+        await BrevoService.sendWelcomeEmail(
+          toEmail:  _emailCtrl.text.trim(),
+          toName:   _ownerNameCtrl.text.trim(),
+          shopName: _shopNameCtrl.text.trim(),
+        );
+      }
+
+      setState(() { _loading = false; _done = true; });
+      _pageCtrl.animateToPage(2, duration: 400.ms, curve: Curves.easeInOut);
+    } catch (_) {
+      setState(() => _loading = false);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Có lỗi, vui lòng thử lại')));
+    }
+  }
+
+  Future<void> _enterApp() async {
+    if (mounted) Navigator.of(context).pushReplacementNamed('/home');
+  }
+
+  Future<void> _skip() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_complete', true);
+    if (mounted) Navigator.of(context).pushReplacementNamed('/home');
+  }
+
+  Widget _buildField({
+    required TextEditingController ctrl,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required Color color,
+    TextInputType? keyboard,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+          style: TextStyle(
+            color: _kMuted, fontSize: 12, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: ctrl,
+          keyboardType: keyboard,
+          validator: validator,
+          style: const TextStyle(color: Colors.white, fontSize: 15),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: _kMuted.withValues(alpha: 0.6)),
+            prefixIcon: Icon(icon, color: color, size: 20),
+            filled: true, fillColor: _kCard,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: _kBorder)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: _kBorder)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: color, width: 2)),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Color(0xFFE74C3C))),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14, vertical: 14),
+          ),
+        ),
+      ],
     );
   }
-
-  Future<void> _finishSetup() async {
-    setState(() => _saving = true);
-    try {
-      final settings = ref.read(settingsRepositoryProvider);
-      final moduleRepo = ref.read(moduleRepositoryProvider);
-
-      // Lưu tên quán
-      final name = _shopNameCtrl.text.trim();
-      await settings.set('shop_name', name.isEmpty ? 'Quán Nhỏ' : name);
-
-      // Đánh dấu onboarding done
-      await settings.set('onboarding_done', 'true');
-
-      // Bật/tắt modules theo lựa chọn
-      final allModules = await moduleRepo.getAll();
-      for (final m in allModules) {
-        if (_selectedModules.contains(m.id)) {
-          await moduleRepo.activate(m.id);
-        } else {
-          await moduleRepo.deactivate(m.id);
-        }
-      }
-
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/home');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e'),
-            behavior: SnackBarBehavior.floating));
-      }
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
 class _FeaturePill extends StatelessWidget {
-  final String emoji, text;
-  static const _kNavy   = Color(0xFF1E1C5E);
-  static const _kBorder = Color(0xFFE0D8CC);
-
-  const _FeaturePill({required this.emoji, required this.text});
+  final String label;
+  const _FeaturePill(this.label);
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: _kBorder),
-    ),
-    child: Row(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 20)),
-        const SizedBox(width: 12),
-        Text(text,
-          style: const TextStyle(
-            fontSize: 14, fontWeight: FontWeight.w600,
-            color: _kNavy)),
-      ],
-    ),
-  );
-}
-
-class _ModuleInfo {
-  final String id, emoji, name, desc;
-  final bool required;
-  const _ModuleInfo(this.id, this.emoji, this.name, this.desc,
-      {this.required = false});
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1930),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF2A2840))),
+      child: Text(label,
+        style: const TextStyle(
+          color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+    );
+  }
 }
