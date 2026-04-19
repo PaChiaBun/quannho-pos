@@ -149,11 +149,10 @@ class ModulePickerScreen extends ConsumerWidget {
                         return _PickerCard(
                           config: d,
                           index: i,
+                          // Pass raw DB activate + pop as async callback
                           onTap: () async {
-                            HapticFeedback.mediumImpact();
                             final repo = ref.read(moduleRepositoryProvider);
                             await repo.activate(d.id);
-                            // Use outer navContext — NOT ctx (builder context)
                             if (navContext.mounted) {
                               Navigator.of(navContext).pop(d.id);
                             }
@@ -222,7 +221,8 @@ class ModulePickerScreen extends ConsumerWidget {
 class _PickerCard extends StatefulWidget {
   final ModuleTileData config;
   final int index;
-  final VoidCallback onTap;
+  // 🔑 AsyncCallback — phải là Future<void> để _handleTap có thể await đúng cách
+  final Future<void> Function() onTap;
 
   const _PickerCard({
     required this.config,
@@ -259,23 +259,24 @@ class _PickerCardState extends State<_PickerCard>
   }
 
   Future<void> _handleTap() async {
+    if (_isAdded) return; // chống double tap
     HapticFeedback.mediumImpact();
 
-    // Hiệu ứng nhấn
-    await _pressCtrl.forward();
-    await _pressCtrl.reverse();
+    // Hiệu ứng nhấn nhanh (non-blocking)
+    _pressCtrl.forward().then((_) => _pressCtrl.reverse());
 
-    // Chuyển sang trạng thái "đã thêm" với checkmark
+    // Chuyển sang trạng thái "đã thêm" ngay
     setState(() => _isAdded = true);
 
-    // Haptic success
+    // Haptic success sau 80ms
     await Future.delayed(const Duration(milliseconds: 80));
     HapticFeedback.heavyImpact();
 
-    // Đợi animation success rồi mới pop
-    await Future.delayed(const Duration(milliseconds: 380));
+    // ⏳ Đợi hiệu ứng xanh lá chạy (350ms)
+    await Future.delayed(const Duration(milliseconds: 350));
 
-    widget.onTap();
+    // ⚡ Gọi async callback (được await đúng cách vì type là Future<void>)
+    await widget.onTap();
   }
 
   @override

@@ -536,21 +536,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             );
       }
 
-      // 💨 Exit animation — module đang bị xóa
+      // 💨 Exit animation — module đang bị xóa (chậm hơn)
       if (isRemoving) {
         tile = tile
             .animate()
             .scale(
               begin: const Offset(1.0, 1.0),
-              end: const Offset(0.65, 0.65),
-              duration: 300.ms,
+              end: const Offset(0.60, 0.60),
+              duration: 550.ms,
               curve: Curves.easeInBack,
             )
-            .fadeOut(duration: 260.ms)
+            .fadeOut(duration: 450.ms)
             .slideY(
               begin: 0,
-              end: 0.15,
-              duration: 300.ms,
+              end: 0.2,
+              duration: 550.ms,
               curve: Curves.easeIn,
             );
       }
@@ -1323,8 +1323,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     // 💨 Bước 1: thêm vào _removingIds → trigger exit animation
     setState(() => _removingIds.add(moduleId));
 
-    // ⏳ Đợi animation chạy xong (300ms)
-    await Future.delayed(const Duration(milliseconds: 320));
+    // ⏳ Đợi animation chạy xong (550ms)
+    await Future.delayed(const Duration(milliseconds: 560));
 
     // 🗽 Bước 2: xóa khỏi list và clear removing state
     if (mounted) {
