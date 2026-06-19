@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tải Quán Nhỏ POS — Quản lý quán ăn đơn giản</title>
+  <meta name="description" content="Tải ứng dụng Quán Nhỏ POS miễn phí cho Android, iOS, macOS, Windows. Quản lý bán hàng, kho, nhân viên, tài chính.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #1E1C5E;
+      --navy-light: #2D2B8A;
+      --orange: #E85D20;
+      --orange-light: #FF6B35;
+      --cream: #FFF8F0;
+      --bg: #FAF7F2;
+      --ink: #1A1207;
+      --muted: #9E9085;
+      --border: #E0D8CC;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Outfit', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    /* ── Hero Section ─────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 50%, #3D3BAA 100%);
+      padding: 60px 20px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 70%, rgba(232, 93, 32, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 30%, rgba(45, 43, 138, 0.3) 0%, transparent 50%);
+      animation: float 15s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(-20px, -10px) rotate(2deg); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 900;
+      color: var(--navy);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      color: white;
+      font-size: 2.5rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .hero p {
+      color: rgba(255,255,255,0.7);
+      font-size: 1.1rem;
+      font-weight: 500;
+      line-height: 1.6;
+    }
+
+    .version-badge {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 6px 16px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 20px;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.85rem;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+    }
+
+    /* ── Download Cards ───────────────────────────── */
+    .downloads {
+      max-width: 800px;
+      margin: -40px auto 40px;
+      padding: 0 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .download-card {
+      background: white;
+      border-radius: 20px;
+      padding: 28px 24px;
+      text-align: center;
+      border: 1.5px solid var(--border);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .download-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(30, 28, 94, 0.12);
+      border-color: var(--orange);
+    }
+
+    .download-card .icon-wrap {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 14px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .download-card.android .icon-wrap { background: #E8F5E9; }
+    .download-card.ios .icon-wrap { background: #E3F2FD; }
+    .download-card.macos .icon-wrap { background: #F3E5F5; }
+    .download-card.windows .icon-wrap { background: #FFF3E0; }
+
+    .download-card h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .download-card .size {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 14px;
+    }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      background: var(--navy);
+      color: white;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      transition: background 0.2s;
+    }
+
+    .download-card:hover .download-btn {
+      background: var(--orange);
+    }
+
+    .download-card.coming-soon {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .download-card.coming-soon .download-btn {
+      background: var(--muted);
+    }
+
+    /* ── Features ──────────────────────────────────── */
+    .features {
+      max-width: 800px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+    }
+
+    .features h2 {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 24px;
+      color: var(--navy);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+    }
+
+    .feature-item {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .feature-item .emoji {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .feature-item h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .feature-item p {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── Changelog ─────────────────────────────────── */
+    .changelog {
+      max-width: 800px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+    }
+
+    .changelog h2 {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      color: var(--navy);
+    }
+
+    .changelog-item {
+      background: white;
+      border-radius: 16px;
+      padding: 20px 24px;
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    .changelog-item .ver {
+      display: inline-block;
+      padding: 3px 10px;
+      background: var(--orange);
+      color: white;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-right: 8px;
+    }
+
+    .changelog-item .date {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .changelog-item .desc {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: #5A5260;
+      line-height: 1.6;
+    }
+
+    /* ── Footer ────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .footer a {
+      color: var(--orange);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* ── Responsive ────────────────────────────────── */
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.8rem; }
+      .hero { padding: 40px 16px 60px; }
+      .download-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="logo">Q</div>
+      <h1>Quán Nhỏ POS</h1>
+      <p>Quản lý quán ăn đơn giản — POS, kho hàng, nhân viên, tài chính, tất cả trong một app</p>
+      <span class="version-badge" id="versionBadge">v1.0.0 • Build 1</span>
+    </div>
+  </section>
+
+  <!-- Downloads -->
+  <section class="downloads">
+    <div class="download-grid">
+      <a class="download-card android" id="androidCard" href="#" onclick="downloadAndroid()">
+        <div class="icon-wrap">🤖</div>
+        <h3>Android</h3>
+        <p class="size">APK • 89.6 MB</p>
+        <span class="download-btn">⬇ Tải APK</span>
+      </a>
+
+      <a class="download-card ios coming-soon" href="#">
+        <div class="icon-wrap">🍎</div>
+        <h3>iOS</h3>
+        <p class="size">Sắp ra mắt</p>
+        <span class="download-btn">Đang chờ duyệt</span>
+      </a>
+
+      <a class="download-card macos coming-soon" href="#">
+        <div class="icon-wrap">💻</div>
+        <h3>macOS</h3>
+        <p class="size">Sắp ra mắt</p>
+        <span class="download-btn">Đang chờ duyệt</span>
+      </a>
+
+      <a class="download-card windows coming-soon" href="#">
+        <div class="icon-wrap">🪟</div>
+        <h3>Windows</h3>
+        <p class="size">Sắp ra mắt</p>
+        <span class="download-btn">Đang phát triển</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <h2>✨ Tính năng nổi bật</h2>
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="emoji">🛒</div>
+        <h4>Bán hàng POS</h4>
+        <p>Tạo đơn nhanh, quản lý bàn, in bill nhiệt</p>
+      </div>
+      <div class="feature-item">
+        <div class="emoji">📦</div>
+        <h4>Quản lý Kho</h4>
+        <p>Tồn kho realtime, nhập xuất, cảnh báo hết hàng</p>
+      </div>
+      <div class="feature-item">
+        <div class="emoji">👥</div>
+        <h4>Nhân viên</h4>
+        <p>Phân quyền, chấm công, tính lương tự động</p>
+      </div>
+      <div class="feature-item">
+        <div class="emoji">💰</div>
+        <h4>Thu Chi</h4>
+        <p>Theo dõi dòng tiền, báo cáo doanh thu</p>
+      </div>
+      <div class="feature-item">
+        <div class="emoji">🎯</div>
+        <h4>Điểm thưởng</h4>
+        <p>Chương trình khách hàng thân thiết</p>
+      </div>
+      <div class="feature-item">
+        <div class="emoji">📊</div>
+        <h4>Báo cáo</h4>
+        <p>Dashboard trực quan, biểu đồ chi tiết</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Changelog -->
+  <section class="changelog" id="changelog">
+    <h2>📋 Lịch sử cập nhật</h2>
+    <div id="changelogList">
+      <div class="changelog-item">
+        <span class="ver">v1.0.0</span>
+        <span class="date">20/05/2026</span>
+        <p class="desc">Phiên bản đầu tiên 🚀 — POS, Kho, Thu Chi, Nhân viên, Báo cáo, Quản lý Bàn, Bếp, Chấm công, Tính lương</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Made with ❤️ by <a href="#">LPM Digital</a></p>
+    <p style="margin-top:6px;">© 2026 Quán Nhỏ POS. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // ── Config — Thay đổi khi có bản mới ──
+    const CONFIG = {
+      version: '1.0.0',
+      build: 1,
+      android: {
+        url: '', // Paste link Google Drive / direct APK URL ở đây
+        size: '89.6 MB',
+      },
+    };
+
+    // Cập nhật badge
+    document.getElementById('versionBadge').textContent =
+      `v${CONFIG.version} • Build ${CONFIG.build}`;
+
+    function downloadAndroid() {
+      if (!CONFIG.android.url) {
+        alert('Link tải đang được cập nhật. Liên hệ admin để nhận APK trực tiếp.');
+        return;
+      }
+      window.location.href = CONFIG.android.url;
+    }
+  </script>
+</body>
+</html>

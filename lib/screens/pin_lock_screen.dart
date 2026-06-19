@@ -9,6 +9,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+<<<<<<< HEAD
+import 'package:google_fonts/google_fonts.dart';
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 import '../core/providers/app_providers.dart';
 import 'forgot_pin_screen.dart';
 
@@ -35,16 +39,25 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
   int    _step     = 0;
   String _topLabel = '';
   int    _failCount = 0;
+<<<<<<< HEAD
+=======
   bool   _saving   = false;
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   late AnimationController _shakeCtrl;
   late Animation<double>   _shakeAnim;
 
+<<<<<<< HEAD
+  static const _kNavy   = Color(0xFF1C2151);
+  static const _kNavyL  = Color(0xFF2A3A8F);
+  static const _kOrange = Color(0xFFFF6B35);
+=======
   static const _kNavy   = Color(0xFF1E1C5E);
   static const _kNavyL  = Color(0xFF2D2B8A);
   static const _kOrange = Color(0xFFE85D20);
   static const _kBg     = Color(0xFF131128);
   static const _kDot    = Color(0xFF3D3A7A);
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   @override
   void initState() {
@@ -117,7 +130,12 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
     if (_input == savedPin) {
       HapticFeedback.heavyImpact();
       widget.onSuccess?.call();
+<<<<<<< HEAD
+      // PIN m\u00e1y \u0111\u00fang \u2192 chuy\u1ec3n sang ch\u1ecdn nh\u00e2n vi\u00ean (clockIn)
+      if (mounted) Navigator.of(context).pushReplacementNamed('/staff_login');
+=======
       if (mounted) Navigator.of(context).pushReplacementNamed('/home');
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     } else {
       _failCount++;
       await _shakeCtrl.forward(from: 0);
@@ -140,7 +158,10 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
       });
     } else {
       if (_input == _firstPin) {
+<<<<<<< HEAD
+=======
         setState(() => _saving = true);
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         final settings = ref.read(settingsRepositoryProvider);
         await settings.set('app_pin',     _input);
         await settings.set('pin_enabled', 'true');
@@ -319,12 +340,39 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
   // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
+    final isTablet = MediaQuery.of(context).size.width > 600;
+
+    Widget content = Container(
+      decoration: BoxDecoration(
+        borderRadius: isTablet ? BorderRadius.circular(28) : null,
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF0A091A), // Pure obsidian black
+            Color(0xFF1B1A3F), // Deep royal indigo
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        border: isTablet
+            ? Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
+                width: 1.5,
+              )
+            : null,
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            const Spacer(flex: 3),
+=======
     return Scaffold(
       backgroundColor: _kBg,
       body: SafeArea(
         child: Column(
           children: [
             const Spacer(flex: 2),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
             // ── Logo & Label ─────────────────────────────────────────
             Container(
@@ -335,8 +383,13 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
+<<<<<<< HEAD
+                    color: _kNavy.withValues(alpha: 0.4),
+                    blurRadius: 20, offset: const Offset(0, 6)),
+=======
                     color: _kNavy.withValues(alpha: 0.5),
                     blurRadius: 24, offset: const Offset(0, 8)),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 ],
               ),
               child: ClipRRect(
@@ -346,21 +399,37 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
               ),
             ),
             const SizedBox(height: 20),
+<<<<<<< HEAD
+            Text('Quán Nhỏ POS',
+              style: GoogleFonts.outfit(
+                color: Colors.white54, fontSize: 13,
+                fontWeight: FontWeight.w600, letterSpacing: 0.8)),
+=======
             const Text('Quán Nhỏ POS',
               style: TextStyle(
                 color: Colors.white70, fontSize: 14,
                 fontWeight: FontWeight.w500)),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
             const SizedBox(height: 8),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: Text(_topLabel,
                 key: ValueKey(_topLabel),
+<<<<<<< HEAD
+                style: GoogleFonts.outfit(
+                  color: Colors.white, fontSize: 24,
+                  fontWeight: FontWeight.w800, letterSpacing: -0.4)),
+            ),
+
+            const Spacer(flex: 2),
+=======
                 style: const TextStyle(
                   color: Colors.white, fontSize: 22,
                   fontWeight: FontWeight.w800, letterSpacing: -0.3)),
             ),
 
             const Spacer(),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
             // ── PIN Dots ─────────────────────────────────────────────
             AnimatedBuilder(
@@ -377,6 +446,26 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
                   final filled = i < _input.length;
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
+<<<<<<< HEAD
+                    margin: const EdgeInsets.symmetric(horizontal: 12),
+                    width: filled ? 18 : 16,
+                    height: filled ? 18 : 16,
+                    decoration: BoxDecoration(
+                      color: filled ? _kOrange : Colors.transparent,
+                      shape: BoxShape.circle,
+                      border: filled
+                          ? null
+                          : Border.all(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              width: 2,
+                            ),
+                      boxShadow: filled ? [
+                        BoxShadow(
+                          color: _kOrange.withValues(alpha: 0.6),
+                          blurRadius: 14,
+                          spreadRadius: 1,
+                        ),
+=======
                     margin: const EdgeInsets.symmetric(horizontal: 10),
                     width: filled ? 20 : 16,
                     height: filled ? 20 : 16,
@@ -387,6 +476,7 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
                         BoxShadow(
                           color: _kOrange.withValues(alpha: 0.5),
                           blurRadius: 10),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                       ] : [],
                     ),
                   );
@@ -394,7 +484,11 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
               ),
             ),
 
+<<<<<<< HEAD
+            const Spacer(flex: 3),
+=======
             const Spacer(),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
             // ── Numpad ───────────────────────────────────────────────
             Padding(
@@ -408,11 +502,19 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
                     ['','0','⌫'],
                   ])
                     Padding(
+<<<<<<< HEAD
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: row.map((key) {
+                          if (key.isEmpty) return const SizedBox(width: 76);
+=======
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: row.map((key) {
                           if (key.isEmpty) return const SizedBox(width: 80);
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                           return _NumKey(
                             label: key,
                             onTap: key == '⌫'
@@ -433,9 +535,15 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
               TextButton(
                 onPressed: _goToForgotPin,
                 child: Text('Quên PIN?',
+<<<<<<< HEAD
+                  style: GoogleFonts.outfit(
+                    color: Colors.white.withValues(alpha: 0.45),
+                    fontSize: 14, fontWeight: FontWeight.w600)),
+=======
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.45),
                     fontSize: 13, fontWeight: FontWeight.w500)),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               ),
             ],
             const SizedBox(height: 24),
@@ -443,6 +551,22 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen>
         ),
       ),
     );
+<<<<<<< HEAD
+
+    return Scaffold(
+      backgroundColor: Colors.transparent, // Let Container handle background
+      body: isTablet
+          ? Center(
+              child: SizedBox(
+                width: 420,
+                height: 680,
+                child: content,
+              ),
+            )
+          : content,
+    );
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 }
 
@@ -496,26 +620,50 @@ class _NumKeyState extends State<_NumKey>
           scale: _scaleAnim.value,
           child: child),
         child: Container(
+<<<<<<< HEAD
+          width: 76, height: 76,
+=======
           width: 80, height: 80,
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           decoration: BoxDecoration(
             color: widget.isDelete
                 ? Colors.transparent
                 : Colors.white.withValues(alpha: 0.08),
             shape: BoxShape.circle,
+<<<<<<< HEAD
+            boxShadow: widget.isDelete
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+=======
             border: widget.isDelete
                 ? null
                 : Border.all(
                     color: Colors.white.withValues(alpha: 0.06),
                     width: 1),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           ),
           child: Center(
             child: widget.isDelete
                 ? Icon(Icons.backspace_rounded,
+<<<<<<< HEAD
+                    color: Colors.white.withValues(alpha: 0.7), size: 24)
+                : Text(widget.label,
+                    style: GoogleFonts.outfit(
+                      color: Colors.white, fontSize: 30,
+                      fontWeight: FontWeight.w600, letterSpacing: -0.2)),
+=======
                     color: Colors.white.withValues(alpha: 0.6), size: 24)
                 : Text(widget.label,
                     style: const TextStyle(
                       color: Colors.white, fontSize: 26,
                       fontWeight: FontWeight.w600)),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           ),
         ),
       ),

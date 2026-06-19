@@ -103,6 +103,60 @@ class _ReceiveStockSheetState extends ConsumerState<ReceiveStockSheet> {
             const Divider(height: 1, color: _kBorder),
 
             // Form
+<<<<<<< HEAD
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.65 -
+                    MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Current stock info
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: _kBg,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.inventory_2_rounded,
+                              color: _kNavy, size: 20),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Tồn hiện tại: ${widget.product.stockQty.toStringAsFixed(0)} ${widget.product.unit}',
+                            style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w700,
+                              color: _kNavy,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Số lượng + đơn giá
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildField(
+                            label: 'Số lượng (${widget.product.unit})',
+                            ctrl: _qtyCtrl,
+                            keyboard: TextInputType.number,
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildField(
+                            label: 'Đơn giá nhập (đ)',
+                            ctrl: _costCtrl,
+                            keyboard: TextInputType.number,
+                            onChanged: (_) => setState(() {}),
+=======
             SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -125,10 +179,117 @@ class _ReceiveStockSheetState extends ConsumerState<ReceiveStockSheet> {
                           style: const TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w700,
                             color: _kNavy,
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                           ),
                         ),
                       ],
                     ),
+<<<<<<< HEAD
+                    const SizedBox(height: 12),
+
+                    // Tổng tiền
+                    if (totalCost > 0) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Text('Tổng tiền: ',
+                              style: TextStyle(
+                                fontSize: 14, color: Color(0xFF2E7D32))),
+                            Text(_formatMoney(totalCost.toInt()) + 'đ',
+                              style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w800,
+                                color: Color(0xFF2E7D32))),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // Nhà cung cấp
+                    suppliersAsync.when(
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                      data: (suppliers) => suppliers.isEmpty
+                          ? const SizedBox.shrink()
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _label('Nhà cung cấp'),
+                                const SizedBox(height: 6),
+                                DropdownButtonFormField<String>(
+                                  value: _selectedSupplierId,
+                                  decoration: _inputDecor(null),
+                                  hint: const Text('Chọn NCC (tuỳ chọn)',
+                                    style: TextStyle(
+                                      color: _kMuted, fontSize: 14)),
+                                  items: [
+                                    const DropdownMenuItem(
+                                      value: null,
+                                      child: Text('Không chọn')),
+                                    ...suppliers.map((s) => DropdownMenuItem(
+                                      value: s.id,
+                                      child: Text(s.name),
+                                    )),
+                                  ],
+                                  onChanged: (v) =>
+                                      setState(() => _selectedSupplierId = v),
+                                ),
+                                const SizedBox(height: 12),
+                              ],
+                            ),
+                    ),
+
+
+                    // Ghi chú
+                    _buildField(
+                      label: 'Ghi chú',
+                      ctrl: _noteCtrl,
+                      keyboard: TextInputType.text,
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Submit
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: qty > 0 && !_loading ? _submit : null,
+                        icon: _loading
+                            ? const SizedBox(
+                                width: 18, height: 18,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.check_rounded),
+                        label: Text(
+                          qty > 0
+                              ? 'Nhập ${qty.toStringAsFixed(0)} ${widget.product.unit}'
+                              : 'Nhập hàng',
+                          style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w800),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _kNavy,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ),
+
+=======
                   ),
                   const SizedBox(height: 16),
 
@@ -263,6 +424,7 @@ class _ReceiveStockSheetState extends ConsumerState<ReceiveStockSheet> {
                 ],
               ),
             ),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           ],
         ),
       ),

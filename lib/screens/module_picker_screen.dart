@@ -5,6 +5,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers/app_providers.dart';
 import '../shared/widgets/module_tile.dart';
+<<<<<<< HEAD
+import '../core/utils/responsive.dart';
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULE PICKER SCREEN — Bento Grid 2 cột, premium design
@@ -26,6 +30,12 @@ class ModulePickerScreen extends ConsumerWidget {
         .where((e) => !activeModuleIds.contains(e.key))
         .toList();
 
+<<<<<<< HEAD
+    final w = MediaQuery.sizeOf(context).width;
+    final cols = w > 1200 ? 6 : w > 900 ? 5 : w > 600 ? 4 : 2;
+
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     return Scaffold(
       backgroundColor: const Color(0xFFFAF7F2),
       body: CustomScrollView(
@@ -153,7 +163,11 @@ class ModulePickerScreen extends ConsumerWidget {
                           onTap: () async {
                             final repo = ref.read(moduleRepositoryProvider);
                             await repo.activate(d.id);
+<<<<<<< HEAD
+                            if (navContext.mounted && Navigator.of(navContext).canPop()) {
+=======
                             if (navContext.mounted) {
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                               Navigator.of(navContext).pop(d.id);
                             }
                           },
@@ -161,11 +175,19 @@ class ModulePickerScreen extends ConsumerWidget {
                       },
                       childCount: inactiveModules.length,
                     ),
+<<<<<<< HEAD
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: cols,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: cols >= 5 ? 1.2 : cols >= 4 ? 1.15 : cols >= 3 ? 1.1 : 0.88,
+=======
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                       childAspectRatio: 0.88,
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                     ),
                   ),
                 ),
@@ -356,6 +378,117 @@ class _PickerCardState extends State<_PickerCard>
                 ),
               ),
               // Content
+<<<<<<< HEAD
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Icon — đổi thành checkmark khi added
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        switchInCurve: Curves.elasticOut,
+                        transitionBuilder: (child, anim) => ScaleTransition(
+                          scale: anim,
+                          child: child,
+                        ),
+                        child: Container(
+                          key: ValueKey(_isAdded),
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.20),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            _isAdded ? Icons.check_rounded : d.icon,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Title
+                          Text(
+                            d.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.2,
+                              height: 1.1,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          // Subtitle
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: Text(
+                              _isAdded ? 'Đã thêm vào dashboard!' : d.subtitle,
+                              key: ValueKey(_isAdded),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.80),
+                                fontSize: 11,
+                                fontWeight: _isAdded ? FontWeight.w600 : FontWeight.w400,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Add button pill — đổi thành "Đã thêm ✓" khi added
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _isAdded
+                                  ? Colors.white.withValues(alpha: 0.30)
+                                  : Colors.white.withValues(alpha: 0.20),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.40),
+                                width: 1,
+                              ),
+                            ),
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                key: ValueKey(_isAdded),
+                                children: [
+                                  Icon(
+                                    _isAdded
+                                        ? Icons.check_rounded
+                                        : Icons.add_rounded,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _isAdded ? 'Đã thêm' : 'Thêm',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+=======
               Padding(
                 padding: const EdgeInsets.all(18),
                 child: Column(
@@ -457,6 +590,7 @@ class _PickerCardState extends State<_PickerCard>
                       ),
                     ),
                   ],
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 ),
               ),
             ],

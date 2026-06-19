@@ -76,14 +76,74 @@ const Map<String, ModuleTileData> kModuleConfigs = {
     baseColor: Color(0xFF0D9488), // teal
     route: '/table',
   ),
+<<<<<<< HEAD
+  'kitchen': ModuleTileData(
+    id: 'kitchen',
+    title: 'Phiếu bếp',
+    subtitle: 'Kanban bếp',
+    icon: Icons.local_fire_department_rounded,
+    baseColor: Color(0xFFEA580C), // warm orange-red
+    route: '/kitchen',
+  ),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   'staff': ModuleTileData(
     id: 'staff',
     title: 'Nhân viên',
     subtitle: 'Ca làm việc',
     icon: Icons.badge_rounded,
+<<<<<<< HEAD
+    baseColor: Color(0xFFDC2626),
+    route: '/staff',
+  ),
+  'chamcong': ModuleTileData(
+    id: 'chamcong',
+    title: 'Chấm công',
+    subtitle: 'Vào / Ra ca',
+    icon: Icons.fingerprint_rounded,
+    baseColor: Color(0xFF0284C7),
+    route: '/chamcong',
+  ),
+  'kho_pro': ModuleTileData(
+    id: 'kho_pro',
+    title: 'Kho Chuyên Nghiệp',
+    subtitle: 'Định lượng nhà hàng',
+    icon: Icons.restaurant_menu_rounded,
+    baseColor: Color(0xFF9333EA),
+    badge: '⭐',
+    route: '/kho_pro',
+  ),
+  'tinhluong': ModuleTileData(
+    id: 'tinhluong',
+    title: 'Tính Lương',
+    subtitle: 'Kỳ lương & phiếu',
+    icon: Icons.payments_rounded,
+    baseColor: Color(0xFF0F766E), // teal-700
+    badge: '💰',
+    route: '/tinhluong',
+  ),
+  'kay_ops': ModuleTileData(
+    id: 'kay_ops',
+    title: 'Vận Hành',
+    subtitle: 'Checklist công việc',
+    icon: Icons.checklist_rounded,
+    baseColor: Color(0xFF7C3AED), // violet—phân biệt với Kho
+    badge: '📋',
+    route: '/kay_ops',
+  ),
+  'bill_printer': ModuleTileData(
+    id: 'bill_printer',
+    title: 'In Hoá Đơn',
+    subtitle: 'Thiết kế & in bill',
+    icon: Icons.print_rounded,
+    baseColor: Color(0xFF4338CA), // indigo-700
+    route: '/bill_printer',
+  ),
+=======
     baseColor: Color(0xFFDC2626), // fire red
     route: '/staff',
   ),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -114,6 +174,19 @@ class ModuleTile extends StatefulWidget {
 }
 
 class _ModuleTileState extends State<ModuleTile>
+<<<<<<< HEAD
+    with TickerProviderStateMixin {
+  late final AnimationController _jiggle;
+  late final AnimationController _pressCtrl;
+  late final AnimationController _rippleCtrl;
+  late final Animation<double> _scaleAnim;
+  late final Animation<double> _rippleAnim;
+  bool _flashing = false;
+  Offset _tapPosition = Offset.zero;
+
+  // ── Jiggle params ────────────────────────────────────────────────────────
+  static const double _amp = 0.048;
+=======
     with SingleTickerProviderStateMixin {
   late final AnimationController _jiggle;
   bool _pressed = false;
@@ -122,6 +195,7 @@ class _ModuleTileState extends State<ModuleTile>
   // One full sine cycle per 380ms → smooth, iOS-like feel
   // Even tiles: +sin, Odd tiles: -sin → naturally opposed phase
   static const double _amp = 0.048; // ~2.75°
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   static const int _cycleDurationMs = 380;
 
   @override
@@ -131,12 +205,44 @@ class _ModuleTileState extends State<ModuleTile>
       vsync: this,
       duration: const Duration(milliseconds: _cycleDurationMs),
     );
+<<<<<<< HEAD
+    _pressCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      reverseDuration: const Duration(milliseconds: 300),
+    );
+    _scaleAnim = Tween<double>(begin: 1.0, end: 0.84).animate(
+      CurvedAnimation(parent: _pressCtrl, curve: Curves.easeInOut),
+    );
+    _rippleCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _rippleAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _rippleCtrl, curve: Curves.easeOut),
+    );
+    if (widget.isEditMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.isEditMode) {
+          if (!widget.isEven) _jiggle.value = 0.5;
+          _jiggle.repeat();
+        }
+      });
+    }
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   @override
   void didUpdateWidget(ModuleTile old) {
     super.didUpdateWidget(old);
     if (widget.isEditMode && !old.isEditMode) {
+<<<<<<< HEAD
+      if (!widget.isEven) _jiggle.value = 0.5;
+      _jiggle.repeat();
+    } else if (!widget.isEditMode && old.isEditMode) {
+      _jiggle.stop();
+=======
       // Start odd tiles at 0.5 (half-cycle offset) so they are always
       // in opposite phase from even tiles without any delay or jump.
       if (!widget.isEven) {
@@ -146,6 +252,7 @@ class _ModuleTileState extends State<ModuleTile>
     } else if (!widget.isEditMode && old.isEditMode) {
       _jiggle.stop();
       // Ease back to zero rotation gently
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       _jiggle.animateTo(
         _jiggle.value < 0.5 ? 0.0 : 1.0,
         duration: const Duration(milliseconds: 200),
@@ -159,9 +266,36 @@ class _ModuleTileState extends State<ModuleTile>
   @override
   void dispose() {
     _jiggle.dispose();
+<<<<<<< HEAD
+    _pressCtrl.dispose();
+    _rippleCtrl.dispose();
     super.dispose();
   }
 
+  void _onTapDown(TapDownDetails details) {
+    _pressCtrl.forward();
+    _rippleCtrl.forward(from: 0);
+    setState(() {
+      _flashing = true;
+      _tapPosition = details.localPosition;
+    });
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (mounted) setState(() => _flashing = false);
+    });
+  }
+
+  void _onTapUp(TapUpDetails _) => _pressCtrl.reverse();
+  void _onTapCancel() {
+    _pressCtrl.reverse();
+    _rippleCtrl.stop();
+    if (mounted) setState(() => _flashing = false);
+  }
+
+=======
+    super.dispose();
+  }
+
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   @override
   Widget build(BuildContext context) {
     Widget child = _buildTile();
@@ -204,6 +338,18 @@ class _ModuleTileState extends State<ModuleTile>
     return GestureDetector(
       onTap: widget.isEditMode ? null : () {
         HapticFeedback.lightImpact();
+<<<<<<< HEAD
+        // Delay navigation 160ms → user sees animation before screen changes
+        Future.delayed(const Duration(milliseconds: 160), () {
+          widget.onTap?.call();
+        });
+      },
+      onTapDown: widget.isEditMode ? null : _onTapDown,
+      onTapUp:   widget.isEditMode ? null : _onTapUp,
+      onTapCancel: widget.isEditMode ? null : _onTapCancel,
+      child: ScaleTransition(
+        scale: _scaleAnim,
+=======
         widget.onTap?.call();
       },
       onTapDown: widget.isEditMode ? null : (_) => setState(() => _pressed = true),
@@ -213,6 +359,7 @@ class _ModuleTileState extends State<ModuleTile>
         scale: _pressed ? 0.93 : 1.0,
         duration: const Duration(milliseconds: 90),
         curve: Curves.easeInOut,
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -318,6 +465,28 @@ class _ModuleTileState extends State<ModuleTile>
                         ],
                       ),
                     ),
+<<<<<<< HEAD
+
+                    // ── Ripple từ điểm chạm ──────────────────────────────
+                    AnimatedBuilder(
+                      animation: _rippleAnim,
+                      builder: (_, __) => CustomPaint(
+                        painter: _RipplePainter(
+                          progress: _rippleAnim.value,
+                          center: _tapPosition,
+                        ),
+                        child: const SizedBox.expand(),
+                      ),
+                    ),
+
+                    // ── Flash trắng overlay ───────────────────────────────
+                    AnimatedOpacity(
+                      opacity: _flashing ? 0.32 : 0.0,
+                      duration: const Duration(milliseconds: 60),
+                      child: Container(color: Colors.white),
+                    ),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   ],
                 ),
               ),
@@ -391,6 +560,35 @@ class _ModuleTileState extends State<ModuleTile>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+<<<<<<< HEAD
+// RIPPLE PAINTER — vòng tròn trắng lan toa từ điểm chạm
+// ─────────────────────────────────────────────────────────────────────────────
+class _RipplePainter extends CustomPainter {
+  final double progress;  // 0.0 → 1.0
+  final Offset center;
+
+  const _RipplePainter({required this.progress, required this.center});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress <= 0) return;
+    final maxRadius = size.longestSide * 0.85;
+    final radius = maxRadius * progress;
+    final opacity = (1.0 - progress).clamp(0.0, 1.0) * 0.35;
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: opacity)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center.isFinite ? center : Offset(size.width / 2, size.height / 2), radius, paint);
+  }
+
+  @override
+  bool shouldRepaint(_RipplePainter old) =>
+      old.progress != progress || old.center != center;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 // ADD MODULE TILE
 // ─────────────────────────────────────────────────────────────────────────────
 class AddModuleTile extends StatefulWidget {

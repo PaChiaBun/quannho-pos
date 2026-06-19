@@ -2,8 +2,13 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+<<<<<<< HEAD
+import '../core/services/user_auth_service.dart';
+import '../core/providers/session_provider.dart';
+=======
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/providers/app_providers.dart';
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SPLASH SCREEN — Premium animated intro
@@ -142,6 +147,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 2200));
     if (!mounted) return;
 
+<<<<<<< HEAD
+    // Kiểm tra session đăng nhập
+    final session = await UserAuthService.getCurrentSession();
+    if (!mounted) return;
+
+    if (session != null) {
+      ref.read(sessionProvider.notifier).setSession(session);
+      Navigator.of(context).pushReplacementNamed('/home');
+    } else {
+      Navigator.of(context).pushReplacementNamed('/auth');
+=======
     final prefs      = await SharedPreferences.getInstance();
     final obDone     = prefs.getBool('onboarding_complete') ?? false;
     final settings   = ref.read(settingsRepositoryProvider);
@@ -156,6 +172,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       Navigator.of(context).pushReplacementNamed('/pin');
     } else {
       Navigator.of(context).pushReplacementNamed('/home');
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     }
   }
 

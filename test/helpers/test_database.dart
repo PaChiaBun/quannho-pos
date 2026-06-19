@@ -1,5 +1,11 @@
 // test/helpers/test_database.dart
 // ─────────────────────────────────────────────────────────────────────────────
+<<<<<<< HEAD
+// ⚠️ DEPRECATED — không còn dùng sau khi migrate sang Supabase
+// File này được giữ lại để tham khảo nhưng không được import từ test nào.
+// Khi viết integration tests mới, dùng Supabase test client.
+// ─────────────────────────────────────────────────────────────────────────────
+=======
 // Test helper — tạo AppDatabase in-memory (không dùng file)
 // Dùng NativeDatabase.memory() của Drift
 // ─────────────────────────────────────────────────────────────────────────────
@@ -11,3 +17,4 @@ import 'package:quannho_pos/core/database/app_database.dart';
 AppDatabase createTestDatabase() {
   return AppDatabase.forTesting(NativeDatabase.memory());
 }
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
