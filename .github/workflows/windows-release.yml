@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           ls -la release-builds/
-          ls -la build/windows/runner/Release/
+          ls -la build/windows/x64/Release/
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -52,7 +52,7 @@ jobs:
           name: Windows-Installers
           path: |
             release-builds/*.exe
-            build/windows/runner/Release/*.msix
+            build/windows/x64/Release/*.msix
             windows/*.appinstaller
 
       - name: Create Release
@@ -61,7 +61,7 @@ jobs:
         with:
           files: |
             release-builds/*.exe
-            build/windows/runner/Release/*.msix
+            build/windows/x64/Release/*.msix
             windows/*.appinstaller
           draft: false
           prerelease: false
