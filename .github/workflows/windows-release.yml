@@ -1,0 +1,69 @@
+name: Windows Release Builder
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java (for msix tools if needed, though usually not mandatory, good practice)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.2'
+          channel: 'stable'
+          cache: false
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows App (Release)
+        run: flutter build windows --release
+
+      - name: Build MSIX Package
+        run: flutter pub run msix:create
+
+      - name: Compile Inno Setup Installer (EXE)
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" windows/installer.iss
+
+      - name: Verify generated installers
+        shell: bash
+        run: |
+          ls -la release-builds/
+          ls -la build/windows/runner/Release/
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Installers
+          path: |
+            release-builds/*.exe
+            build/windows/runner/Release/*.msix
+            windows/*.appinstaller
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-builds/*.exe
+            build/windows/runner/Release/*.msix
+            windows/*.appinstaller
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

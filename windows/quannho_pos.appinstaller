@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AppInstaller
+    xmlns="http://schemas.microsoft.com/appx/appinstaller/2017/2"
+    Version="1.0.1.3"
+    Uri="https://quannho.lpm.vn/download/quannho_pos.appinstaller"
+    Publisher="CN=Quán Nhỏ, O=Quán Nhỏ, L=Ho Chi Minh, C=VN">
+    
+    <MainPackage
+        Name="com.quannho.pos"
+        Publisher="CN=Quán Nhỏ, O=Quán Nhỏ, L=Ho Chi Minh, C=VN"
+        Version="1.0.1.3"
+        Uri="https://quannho.lpm.vn/download/quannho_pos.msix"
+        ProcessorArchitecture="x64"/>
+        
+    <UpdateSettings>
+        <!-- Kiểm tra cập nhật mỗi khi khởi chạy ứng dụng -->
+        <OnLaunch
+            HoursBetweenUpdateChecks="0"
+            ShowPrompt="true"
+            UpdateBlocksActivation="false"/>
+        <AutomaticBackgroundTask/>
+    </UpdateSettings>
+</AppInstaller>
