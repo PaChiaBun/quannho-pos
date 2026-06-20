@@ -31,7 +31,7 @@ WizardStyle=modern
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{hint:CreateDesktopIcon}"; GroupDescription: "{x}"; Flags: unchecked
+Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "{x}"; Flags: unchecked
 
 [Files]
 Source: "..\build\windows\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
