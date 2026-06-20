@@ -36,6 +36,7 @@ dev_dependencies:
   build_runner: ^2.13.1
   drift_dev: ^2.32.1
   mocktail: ^1.0.4
+  msix: ^3.16.2
 
 flutter_native_splash:
   color: "#1C2151"
@@ -71,3 +72,12 @@ flutter:
     - assets/lottie/
     - assets/i18n/
     - assets/branding/
+
+msix_config:
+  display_name: "Quán Nhỏ POS"
+  publisher_display_name: "Quán Nhỏ"
+  identity_name: "com.quannho.pos"
+  publisher: "CN=Quán Nhỏ, O=Quán Nhỏ, L=Ho Chi Minh, C=VN"
+  logo_path: "assets/branding/app_icon.png"
+  capabilities: "internetClient"
+  architecture: "x64"
