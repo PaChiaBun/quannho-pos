@@ -1,0 +1,11 @@
+# Quán Nhỏ POS — Android Release Signing
+# Copy file này thành key.properties và điền thông tin thực
+# KHÔNG COMMIT key.properties lên Git (đã có trong .gitignore)
+#
+# Tạo keystore bằng lệnh:
+# keytool -genkey -v -keystore ~/quannho-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias quannho
+#
+storePassword=<mật khẩu keystore>
+keyPassword=<mật khẩu key>
+keyAlias=quannho
+storeFile=/Users/banhbao/quannho-release-key.jks

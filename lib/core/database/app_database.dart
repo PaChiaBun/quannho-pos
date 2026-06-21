@@ -6,6 +6,12 @@ import 'tables/pos_tables.dart';
 import 'tables/kho_tables.dart';
 import 'tables/finance_tables.dart';
 import 'tables/loyalty_tables.dart';
+<<<<<<< HEAD
+import 'tables/ban_tables.dart';
+import 'tables/kitchen_tables.dart';
+import 'tables/staff_tables.dart';
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 part 'app_database.g.dart';
 
@@ -37,6 +43,21 @@ part 'app_database.g.dart';
   // LOYALTY
   LoyaltyTransactions,
   LoyaltyRewards,
+<<<<<<< HEAD
+  // BAN MANAGEMENT
+  BanZones,
+  BanDiningTables,
+  BanSessions,
+  BanSessionItems,
+  // KITCHEN — Module Phíu bếp
+  KitchenStations,
+  ProductModifiers,
+  SessionItemModifiers,
+  KitchenTickets,
+  KitchenTicketItems,
+  // STAFF — Bảng local đã xóa (v13). Xem Supabase: staff_shifts, store_members, store_roles
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -45,7 +66,11 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(QueryExecutor e) : super(e);
 
   @override
+<<<<<<< HEAD
+  int get schemaVersion => 13;
+=======
   int get schemaVersion => 1;
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   @override
   MigrationStrategy get migration {
@@ -54,12 +79,225 @@ class AppDatabase extends _$AppDatabase {
         await m.createAll();
         await _seedInitialData();
       },
+<<<<<<< HEAD
+      beforeOpen: (details) async {
+        // Đảm bảo module kitchen luôn tồn tại trong DB
+        final existingKitchen = await (select(moduleConfigs)
+              ..where((m) => m.id.equals('kitchen')))
+            .getSingleOrNull();
+        if (existingKitchen == null) {
+          await into(moduleConfigs).insert(ModuleConfigsCompanion(
+            id: const Value('kitchen'),
+            isActive: const Value(true),
+            position: const Value(11),
+            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          ));
+        }
+        // Đảm bảo module staff luôn tồn tại trong DB
+        final existingStaff = await (select(moduleConfigs)
+              ..where((m) => m.id.equals('staff')))
+            .getSingleOrNull();
+        if (existingStaff == null) {
+          await into(moduleConfigs).insert(ModuleConfigsCompanion(
+            id: const Value('staff'),
+            isActive: const Value(true),
+            position: const Value(12),
+            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          ));
+        }
+        // Xóa row 'nhan_vien' cũ (tên sai từ migration v11 ban đầu)
+        // → tránh ô trống vô hình trong module grid
+        await (delete(moduleConfigs)
+              ..where((m) => m.id.equals('nhan_vien')))
+            .go();
+
+        // Đảm bảo module chamcong luôn tồn tại trong DB
+        final existingChamCong = await (select(moduleConfigs)
+              ..where((m) => m.id.equals('chamcong')))
+            .getSingleOrNull();
+        if (existingChamCong == null) {
+          await into(moduleConfigs).insert(ModuleConfigsCompanion(
+            id: const Value('chamcong'),
+            isActive: const Value(false), // mặc định tắt — chủ quán bật thủ công
+            position: const Value(13),
+            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          ));
+        }
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        // v1 → v2: Tạo bảng module Quản lý Bàn
+        if (from < 2) {
+          await m.createTable(banZones);
+          await m.createTable(banDiningTables);
+          await m.createTable(banSessions);
+          await m.createTable(banSessionItems);
+          await into(moduleConfigs).insertOnConflictUpdate(
+            ModuleConfigsCompanion(
+              id: const Value('ban'), // sẽ được đổi ở v3
+              isActive: const Value(false),
+              position: const Value(10),
+              updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
+          );
+        }
+        // v2 → v3: Sửa lỗi module id 'ban' → 'table' khớp với kModuleConfigs
+        if (from < 3) {
+          await (delete(moduleConfigs)
+                ..where((t) => t.id.equals('ban')))
+              .go();
+          await into(moduleConfigs).insertOnConflictUpdate(
+            ModuleConfigsCompanion(
+              id: const Value('table'),
+              isActive: const Value(false),
+              position: const Value(10),
+              updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
+          );
+        }
+        // v3 → v4: Thêm cột canvas & shape cho Lego floor plan
+        if (from < 4) {
+          // BanZones: thêm canvas boundary + đổi icon sang iconCode
+          await m.addColumn(banZones, banZones.iconCode);
+          await m.addColumn(banZones, banZones.canvasX);
+          await m.addColumn(banZones, banZones.canvasY);
+          await m.addColumn(banZones, banZones.canvasWidth);
+          await m.addColumn(banZones, banZones.canvasHeight);
+          // BanDiningTables: thêm vị trí tự do + hình dạng
+          await m.addColumn(banDiningTables, banDiningTables.posX);
+          await m.addColumn(banDiningTables, banDiningTables.posY);
+          await m.addColumn(banDiningTables, banDiningTables.shape);
+          await m.addColumn(banDiningTables, banDiningTables.tableWidth);
+          await m.addColumn(banDiningTables, banDiningTables.tableHeight);
+        }
+        // v4 → v5: Universal source link trong PosOrders (extensible architecture)
+        if (from < 5) {
+          await m.addColumn(posOrders, posOrders.sourceType);
+          await m.addColumn(posOrders, posOrders.sourceId);
+        }
+        // v5 → v6: Module Phíu bếp
+        if (from < 6) {
+          // Thêm trạng thái bếp vào bảng món gọi
+          await m.addColumn(banSessionItems, banSessionItems.kitchenStatus);
+          // Tạo 5 bảng mới của module bếp
+          await m.createTable(kitchenStations);
+          await m.createTable(productModifiers);
+          await m.createTable(sessionItemModifiers);
+          await m.createTable(kitchenTickets);
+          await m.createTable(kitchenTicketItems);
+          // Seed: Tạo khu bếp mặc định
+          final now = DateTime.now().millisecondsSinceEpoch;
+          await into(kitchenStations).insert(KitchenStationsCompanion(
+            id: const Value('station-default'),
+            name: const Value('Bếp chính'),
+            color: const Value('#FF6B35'),
+            sortOrder: const Value(0),
+            createdAt: Value(now),
+          ));
+          // Đăng ký module phíu bếp
+          await into(moduleConfigs).insertOnConflictUpdate(
+            ModuleConfigsCompanion(
+              id: const Value('kitchen'),
+              isActive: const Value(true),
+              position: const Value(11),
+              updatedAt: Value(now),
+            ),
+          );
+        }
+        // v6 → v7: Bật module kitchen cho user đã có DB
+        if (from < 7) {
+          await (update(moduleConfigs)
+                ..where((m) => m.id.equals('kitchen')))
+              .write(ModuleConfigsCompanion(
+            isActive: const Value(true),
+            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          ));
+        }
+        // v7 → v8: Thêm ghi chú bếp + lịch sử sửa món
+        if (from < 8) {
+          await m.addColumn(kitchenTicketItems, kitchenTicketItems.kitchenNote);
+          await m.addColumn(kitchenTicketItems, kitchenTicketItems.editHistoryJson);
+        }
+        // v8 → v9: Thêm stationCode để phân loại bếp nóng/bếp nước
+        if (from < 9) {
+          // Dùng try/catch: nếu column đã tồn tại (DB state không nhất quán) thì bỏ qua
+          try {
+            await m.addColumn(kitchenTicketItems, kitchenTicketItems.stationCode);
+          } catch (_) {
+            // Column station_code đã có rồi → không cần thêm
+          }
+          // Ép tất cả rows cũ về 'nong' (SQLite ALTER TABLE không tự set DEFAULT cho existing rows)
+          await customStatement(
+            "UPDATE kitchen_ticket_items SET station_code = 'nong' WHERE station_code IS NULL OR station_code = ''"
+          );
+          // Seed 2 trạm mặc định nếu chưa có
+          final now9 = DateTime.now().millisecondsSinceEpoch;
+          await into(kitchenStations).insertOnConflictUpdate(KitchenStationsCompanion(
+            id: const Value('bep-nong'),
+            name: const Value('Bếp nóng'),
+            color: const Value('#FF6B35'),
+            sortOrder: const Value(0),
+            createdAt: Value(now9),
+          ));
+          await into(kitchenStations).insertOnConflictUpdate(KitchenStationsCompanion(
+            id: const Value('bep-nuoc'),
+            name: const Value('Bếp nước'),
+            color: const Value('#3B82F6'),
+            sortOrder: const Value(1),
+            createdAt: Value(now9),
+          ));
+        }
+        // v9 → v10: ép stationCode cũ về 'nong' (fix SQLite DEFAULT không apply cho existing rows)
+        if (from < 10) {
+          await customStatement(
+            "UPDATE kitchen_ticket_items SET station_code = 'nong' WHERE station_code IS NULL OR station_code = ''"
+          );
+        }
+        // v10 → v11: Module Nhân viên — bảng SQLite đã xóa ở v13
+        // Chỉ giữ addColumn staffId (cần cho pos_orders) và seed module config
+        if (from < 11) {
+          // Bỏ qua createTable staff_members/staff_shifts/staff_permissions (xóa v13)
+          // Thêm staffId (nullable) vào pos_orders — vẫn cần
+          try { await m.addColumn(posOrders, posOrders.staffId); } catch (_) {}
+          // Đăng ký module staff
+          await into(moduleConfigs).insertOnConflictUpdate(
+            ModuleConfigsCompanion(
+              id: const Value('staff'),
+              isActive: const Value(true),
+              position: const Value(12),
+              updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
+          );
+        }
+        // v11 → v12: Module Chấm công
+        if (from < 12) {
+          await into(moduleConfigs).insertOnConflictUpdate(
+            ModuleConfigsCompanion(
+              id: const Value('chamcong'),
+              isActive: const Value(false),
+              position: const Value(13),
+              updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
+          );
+        }
+        // v12 → v13: Xóa 3 bảng legacy (dùng Supabase thay thế)
+        if (from < 13) {
+          await customStatement('DROP TABLE IF EXISTS staff_members');
+          await customStatement('DROP TABLE IF EXISTS staff_shifts');
+          await customStatement('DROP TABLE IF EXISTS staff_permissions');
+        }
+=======
       onUpgrade: (Migrator m, int from, int to) async {
         // Migration tương lai — thêm bảng/cột ở đây
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       },
     );
   }
 
+<<<<<<< HEAD
+
+
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   // ─────────────────────────────────────────────────────────────────────────
   // SEED DATA — Dữ liệu ban đầu khi cài app lần đầu
   // ─────────────────────────────────────────────────────────────────────────
@@ -74,11 +312,22 @@ class AppDatabase extends _$AppDatabase {
       ('finance', 2),
       ('report', 3),
       ('loyalty', 4),
+<<<<<<< HEAD
+      ('table', 10),    // Module Quản lý Bàn — mặc định inactive
+      ('kitchen', 11),  // Module Phiếu bếp
+      ('staff', 12),    // Module Nhân viên
+      ('chamcong', 13), // Module Chấm công — mặc định inactive
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     ];
     for (final (id, position) in modules) {
       await into(moduleConfigs).insert(ModuleConfigsCompanion(
         id: Value(id),
+<<<<<<< HEAD
+        isActive: Value(id != 'table'), // chỉ table mặc định tắt
+=======
         isActive: const Value(true),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         position: Value(position),
         updatedAt: Value(now),
       ));

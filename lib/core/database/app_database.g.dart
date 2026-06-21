@@ -3183,6 +3183,42 @@ class $PosOrdersTable extends PosOrders
     ),
     defaultValue: const Constant(false),
   );
+<<<<<<< HEAD
+  static const VerificationMeta _sourceTypeMeta = const VerificationMeta(
+    'sourceType',
+  );
+  @override
+  late final GeneratedColumn<String> sourceType = GeneratedColumn<String>(
+    'source_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _staffIdMeta = const VerificationMeta(
+    'staffId',
+  );
+  @override
+  late final GeneratedColumn<String> staffId = GeneratedColumn<String>(
+    'staff_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -3210,6 +3246,12 @@ class $PosOrdersTable extends PosOrders
     status,
     note,
     receiptPrinted,
+<<<<<<< HEAD
+    sourceType,
+    sourceId,
+    staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     createdAt,
   ];
   @override
@@ -3334,6 +3376,27 @@ class $PosOrdersTable extends PosOrders
         ),
       );
     }
+<<<<<<< HEAD
+    if (data.containsKey('source_type')) {
+      context.handle(
+        _sourceTypeMeta,
+        sourceType.isAcceptableOrUnknown(data['source_type']!, _sourceTypeMeta),
+      );
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    }
+    if (data.containsKey('staff_id')) {
+      context.handle(
+        _staffIdMeta,
+        staffId.isAcceptableOrUnknown(data['staff_id']!, _staffIdMeta),
+      );
+    }
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3407,6 +3470,21 @@ class $PosOrdersTable extends PosOrders
         DriftSqlType.bool,
         data['${effectivePrefix}receipt_printed'],
       )!,
+<<<<<<< HEAD
+      sourceType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_type'],
+      ),
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      ),
+      staffId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}staff_id'],
+      ),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}created_at'],
@@ -3435,6 +3513,12 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
   final String status;
   final String? note;
   final bool receiptPrinted;
+<<<<<<< HEAD
+  final String? sourceType;
+  final String? sourceId;
+  final String? staffId;
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   final int createdAt;
   const PosOrder({
     required this.id,
@@ -3451,6 +3535,12 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
     required this.status,
     this.note,
     required this.receiptPrinted,
+<<<<<<< HEAD
+    this.sourceType,
+    this.sourceId,
+    this.staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     required this.createdAt,
   });
   @override
@@ -3476,6 +3566,18 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
       map['note'] = Variable<String>(note);
     }
     map['receipt_printed'] = Variable<bool>(receiptPrinted);
+<<<<<<< HEAD
+    if (!nullToAbsent || sourceType != null) {
+      map['source_type'] = Variable<String>(sourceType);
+    }
+    if (!nullToAbsent || sourceId != null) {
+      map['source_id'] = Variable<String>(sourceId);
+    }
+    if (!nullToAbsent || staffId != null) {
+      map['staff_id'] = Variable<String>(staffId);
+    }
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     map['created_at'] = Variable<int>(createdAt);
     return map;
   }
@@ -3500,6 +3602,18 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
       status: Value(status),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       receiptPrinted: Value(receiptPrinted),
+<<<<<<< HEAD
+      sourceType: sourceType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceType),
+      sourceId: sourceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceId),
+      staffId: staffId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(staffId),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       createdAt: Value(createdAt),
     );
   }
@@ -3524,6 +3638,12 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
       status: serializer.fromJson<String>(json['status']),
       note: serializer.fromJson<String?>(json['note']),
       receiptPrinted: serializer.fromJson<bool>(json['receiptPrinted']),
+<<<<<<< HEAD
+      sourceType: serializer.fromJson<String?>(json['sourceType']),
+      sourceId: serializer.fromJson<String?>(json['sourceId']),
+      staffId: serializer.fromJson<String?>(json['staffId']),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       createdAt: serializer.fromJson<int>(json['createdAt']),
     );
   }
@@ -3545,6 +3665,12 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
       'status': serializer.toJson<String>(status),
       'note': serializer.toJson<String?>(note),
       'receiptPrinted': serializer.toJson<bool>(receiptPrinted),
+<<<<<<< HEAD
+      'sourceType': serializer.toJson<String?>(sourceType),
+      'sourceId': serializer.toJson<String?>(sourceId),
+      'staffId': serializer.toJson<String?>(staffId),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       'createdAt': serializer.toJson<int>(createdAt),
     };
   }
@@ -3564,6 +3690,12 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
     String? status,
     Value<String?> note = const Value.absent(),
     bool? receiptPrinted,
+<<<<<<< HEAD
+    Value<String?> sourceType = const Value.absent(),
+    Value<String?> sourceId = const Value.absent(),
+    Value<String?> staffId = const Value.absent(),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     int? createdAt,
   }) => PosOrder(
     id: id ?? this.id,
@@ -3580,6 +3712,12 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
     status: status ?? this.status,
     note: note.present ? note.value : this.note,
     receiptPrinted: receiptPrinted ?? this.receiptPrinted,
+<<<<<<< HEAD
+    sourceType: sourceType.present ? sourceType.value : this.sourceType,
+    sourceId: sourceId.present ? sourceId.value : this.sourceId,
+    staffId: staffId.present ? staffId.value : this.staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     createdAt: createdAt ?? this.createdAt,
   );
   PosOrder copyWithCompanion(PosOrdersCompanion data) {
@@ -3614,6 +3752,14 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
       receiptPrinted: data.receiptPrinted.present
           ? data.receiptPrinted.value
           : this.receiptPrinted,
+<<<<<<< HEAD
+      sourceType: data.sourceType.present
+          ? data.sourceType.value
+          : this.sourceType,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      staffId: data.staffId.present ? data.staffId.value : this.staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3635,6 +3781,12 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
           ..write('status: $status, ')
           ..write('note: $note, ')
           ..write('receiptPrinted: $receiptPrinted, ')
+<<<<<<< HEAD
+          ..write('sourceType: $sourceType, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('staffId: $staffId, ')
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -3656,6 +3808,12 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
     status,
     note,
     receiptPrinted,
+<<<<<<< HEAD
+    sourceType,
+    sourceId,
+    staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     createdAt,
   );
   @override
@@ -3676,6 +3834,12 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
           other.status == this.status &&
           other.note == this.note &&
           other.receiptPrinted == this.receiptPrinted &&
+<<<<<<< HEAD
+          other.sourceType == this.sourceType &&
+          other.sourceId == this.sourceId &&
+          other.staffId == this.staffId &&
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           other.createdAt == this.createdAt);
 }
 
@@ -3694,6 +3858,12 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
   final Value<String> status;
   final Value<String?> note;
   final Value<bool> receiptPrinted;
+<<<<<<< HEAD
+  final Value<String?> sourceType;
+  final Value<String?> sourceId;
+  final Value<String?> staffId;
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   final Value<int> createdAt;
   final Value<int> rowid;
   const PosOrdersCompanion({
@@ -3711,6 +3881,12 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
     this.status = const Value.absent(),
     this.note = const Value.absent(),
     this.receiptPrinted = const Value.absent(),
+<<<<<<< HEAD
+    this.sourceType = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.staffId = const Value.absent(),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -3729,6 +3905,12 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
     this.status = const Value.absent(),
     this.note = const Value.absent(),
     this.receiptPrinted = const Value.absent(),
+<<<<<<< HEAD
+    this.sourceType = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.staffId = const Value.absent(),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     required int createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -3751,6 +3933,12 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
     Expression<String>? status,
     Expression<String>? note,
     Expression<bool>? receiptPrinted,
+<<<<<<< HEAD
+    Expression<String>? sourceType,
+    Expression<String>? sourceId,
+    Expression<String>? staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     Expression<int>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -3769,6 +3957,12 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
       if (status != null) 'status': status,
       if (note != null) 'note': note,
       if (receiptPrinted != null) 'receipt_printed': receiptPrinted,
+<<<<<<< HEAD
+      if (sourceType != null) 'source_type': sourceType,
+      if (sourceId != null) 'source_id': sourceId,
+      if (staffId != null) 'staff_id': staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -3789,6 +3983,12 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
     Value<String>? status,
     Value<String?>? note,
     Value<bool>? receiptPrinted,
+<<<<<<< HEAD
+    Value<String?>? sourceType,
+    Value<String?>? sourceId,
+    Value<String?>? staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     Value<int>? createdAt,
     Value<int>? rowid,
   }) {
@@ -3807,6 +4007,12 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
       status: status ?? this.status,
       note: note ?? this.note,
       receiptPrinted: receiptPrinted ?? this.receiptPrinted,
+<<<<<<< HEAD
+      sourceType: sourceType ?? this.sourceType,
+      sourceId: sourceId ?? this.sourceId,
+      staffId: staffId ?? this.staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -3857,6 +4063,18 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
     if (receiptPrinted.present) {
       map['receipt_printed'] = Variable<bool>(receiptPrinted.value);
     }
+<<<<<<< HEAD
+    if (sourceType.present) {
+      map['source_type'] = Variable<String>(sourceType.value);
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (staffId.present) {
+      map['staff_id'] = Variable<String>(staffId.value);
+    }
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     if (createdAt.present) {
       map['created_at'] = Variable<int>(createdAt.value);
     }
@@ -3883,6 +4101,12 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
           ..write('status: $status, ')
           ..write('note: $note, ')
           ..write('receiptPrinted: $receiptPrinted, ')
+<<<<<<< HEAD
+          ..write('sourceType: $sourceType, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('staffId: $staffId, ')
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -8650,6 +8874,5312 @@ class LoyaltyRewardsCompanion extends UpdateCompanion<LoyaltyReward> {
   }
 }
 
+<<<<<<< HEAD
+class $BanZonesTable extends BanZones with TableInfo<$BanZonesTable, BanZone> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BanZonesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('#1C2151'),
+  );
+  static const VerificationMeta _iconCodeMeta = const VerificationMeta(
+    'iconCode',
+  );
+  @override
+  late final GeneratedColumn<int> iconCode = GeneratedColumn<int>(
+    'icon_code',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0xe318),
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _canvasXMeta = const VerificationMeta(
+    'canvasX',
+  );
+  @override
+  late final GeneratedColumn<double> canvasX = GeneratedColumn<double>(
+    'canvas_x',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(40.0),
+  );
+  static const VerificationMeta _canvasYMeta = const VerificationMeta(
+    'canvasY',
+  );
+  @override
+  late final GeneratedColumn<double> canvasY = GeneratedColumn<double>(
+    'canvas_y',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(40.0),
+  );
+  static const VerificationMeta _canvasWidthMeta = const VerificationMeta(
+    'canvasWidth',
+  );
+  @override
+  late final GeneratedColumn<double> canvasWidth = GeneratedColumn<double>(
+    'canvas_width',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(220.0),
+  );
+  static const VerificationMeta _canvasHeightMeta = const VerificationMeta(
+    'canvasHeight',
+  );
+  @override
+  late final GeneratedColumn<double> canvasHeight = GeneratedColumn<double>(
+    'canvas_height',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(160.0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    color,
+    iconCode,
+    sortOrder,
+    isActive,
+    createdAt,
+    canvasX,
+    canvasY,
+    canvasWidth,
+    canvasHeight,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ban_zones';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BanZone> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
+    if (data.containsKey('icon_code')) {
+      context.handle(
+        _iconCodeMeta,
+        iconCode.isAcceptableOrUnknown(data['icon_code']!, _iconCodeMeta),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('canvas_x')) {
+      context.handle(
+        _canvasXMeta,
+        canvasX.isAcceptableOrUnknown(data['canvas_x']!, _canvasXMeta),
+      );
+    }
+    if (data.containsKey('canvas_y')) {
+      context.handle(
+        _canvasYMeta,
+        canvasY.isAcceptableOrUnknown(data['canvas_y']!, _canvasYMeta),
+      );
+    }
+    if (data.containsKey('canvas_width')) {
+      context.handle(
+        _canvasWidthMeta,
+        canvasWidth.isAcceptableOrUnknown(
+          data['canvas_width']!,
+          _canvasWidthMeta,
+        ),
+      );
+    }
+    if (data.containsKey('canvas_height')) {
+      context.handle(
+        _canvasHeightMeta,
+        canvasHeight.isAcceptableOrUnknown(
+          data['canvas_height']!,
+          _canvasHeightMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BanZone map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BanZone(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      )!,
+      iconCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}icon_code'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      canvasX: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}canvas_x'],
+      )!,
+      canvasY: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}canvas_y'],
+      )!,
+      canvasWidth: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}canvas_width'],
+      )!,
+      canvasHeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}canvas_height'],
+      )!,
+    );
+  }
+
+  @override
+  $BanZonesTable createAlias(String alias) {
+    return $BanZonesTable(attachedDatabase, alias);
+  }
+}
+
+class BanZone extends DataClass implements Insertable<BanZone> {
+  final String id;
+  final String name;
+  final String color;
+  final int iconCode;
+  final int sortOrder;
+  final bool isActive;
+  final int createdAt;
+  final double canvasX;
+  final double canvasY;
+  final double canvasWidth;
+  final double canvasHeight;
+  const BanZone({
+    required this.id,
+    required this.name,
+    required this.color,
+    required this.iconCode,
+    required this.sortOrder,
+    required this.isActive,
+    required this.createdAt,
+    required this.canvasX,
+    required this.canvasY,
+    required this.canvasWidth,
+    required this.canvasHeight,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['color'] = Variable<String>(color);
+    map['icon_code'] = Variable<int>(iconCode);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['is_active'] = Variable<bool>(isActive);
+    map['created_at'] = Variable<int>(createdAt);
+    map['canvas_x'] = Variable<double>(canvasX);
+    map['canvas_y'] = Variable<double>(canvasY);
+    map['canvas_width'] = Variable<double>(canvasWidth);
+    map['canvas_height'] = Variable<double>(canvasHeight);
+    return map;
+  }
+
+  BanZonesCompanion toCompanion(bool nullToAbsent) {
+    return BanZonesCompanion(
+      id: Value(id),
+      name: Value(name),
+      color: Value(color),
+      iconCode: Value(iconCode),
+      sortOrder: Value(sortOrder),
+      isActive: Value(isActive),
+      createdAt: Value(createdAt),
+      canvasX: Value(canvasX),
+      canvasY: Value(canvasY),
+      canvasWidth: Value(canvasWidth),
+      canvasHeight: Value(canvasHeight),
+    );
+  }
+
+  factory BanZone.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BanZone(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      color: serializer.fromJson<String>(json['color']),
+      iconCode: serializer.fromJson<int>(json['iconCode']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      canvasX: serializer.fromJson<double>(json['canvasX']),
+      canvasY: serializer.fromJson<double>(json['canvasY']),
+      canvasWidth: serializer.fromJson<double>(json['canvasWidth']),
+      canvasHeight: serializer.fromJson<double>(json['canvasHeight']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'color': serializer.toJson<String>(color),
+      'iconCode': serializer.toJson<int>(iconCode),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'isActive': serializer.toJson<bool>(isActive),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'canvasX': serializer.toJson<double>(canvasX),
+      'canvasY': serializer.toJson<double>(canvasY),
+      'canvasWidth': serializer.toJson<double>(canvasWidth),
+      'canvasHeight': serializer.toJson<double>(canvasHeight),
+    };
+  }
+
+  BanZone copyWith({
+    String? id,
+    String? name,
+    String? color,
+    int? iconCode,
+    int? sortOrder,
+    bool? isActive,
+    int? createdAt,
+    double? canvasX,
+    double? canvasY,
+    double? canvasWidth,
+    double? canvasHeight,
+  }) => BanZone(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    color: color ?? this.color,
+    iconCode: iconCode ?? this.iconCode,
+    sortOrder: sortOrder ?? this.sortOrder,
+    isActive: isActive ?? this.isActive,
+    createdAt: createdAt ?? this.createdAt,
+    canvasX: canvasX ?? this.canvasX,
+    canvasY: canvasY ?? this.canvasY,
+    canvasWidth: canvasWidth ?? this.canvasWidth,
+    canvasHeight: canvasHeight ?? this.canvasHeight,
+  );
+  BanZone copyWithCompanion(BanZonesCompanion data) {
+    return BanZone(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      color: data.color.present ? data.color.value : this.color,
+      iconCode: data.iconCode.present ? data.iconCode.value : this.iconCode,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      canvasX: data.canvasX.present ? data.canvasX.value : this.canvasX,
+      canvasY: data.canvasY.present ? data.canvasY.value : this.canvasY,
+      canvasWidth: data.canvasWidth.present
+          ? data.canvasWidth.value
+          : this.canvasWidth,
+      canvasHeight: data.canvasHeight.present
+          ? data.canvasHeight.value
+          : this.canvasHeight,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BanZone(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('iconCode: $iconCode, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('canvasX: $canvasX, ')
+          ..write('canvasY: $canvasY, ')
+          ..write('canvasWidth: $canvasWidth, ')
+          ..write('canvasHeight: $canvasHeight')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    name,
+    color,
+    iconCode,
+    sortOrder,
+    isActive,
+    createdAt,
+    canvasX,
+    canvasY,
+    canvasWidth,
+    canvasHeight,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BanZone &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.color == this.color &&
+          other.iconCode == this.iconCode &&
+          other.sortOrder == this.sortOrder &&
+          other.isActive == this.isActive &&
+          other.createdAt == this.createdAt &&
+          other.canvasX == this.canvasX &&
+          other.canvasY == this.canvasY &&
+          other.canvasWidth == this.canvasWidth &&
+          other.canvasHeight == this.canvasHeight);
+}
+
+class BanZonesCompanion extends UpdateCompanion<BanZone> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> color;
+  final Value<int> iconCode;
+  final Value<int> sortOrder;
+  final Value<bool> isActive;
+  final Value<int> createdAt;
+  final Value<double> canvasX;
+  final Value<double> canvasY;
+  final Value<double> canvasWidth;
+  final Value<double> canvasHeight;
+  final Value<int> rowid;
+  const BanZonesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.color = const Value.absent(),
+    this.iconCode = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.canvasX = const Value.absent(),
+    this.canvasY = const Value.absent(),
+    this.canvasWidth = const Value.absent(),
+    this.canvasHeight = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BanZonesCompanion.insert({
+    required String id,
+    required String name,
+    this.color = const Value.absent(),
+    this.iconCode = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isActive = const Value.absent(),
+    required int createdAt,
+    this.canvasX = const Value.absent(),
+    this.canvasY = const Value.absent(),
+    this.canvasWidth = const Value.absent(),
+    this.canvasHeight = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       createdAt = Value(createdAt);
+  static Insertable<BanZone> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? color,
+    Expression<int>? iconCode,
+    Expression<int>? sortOrder,
+    Expression<bool>? isActive,
+    Expression<int>? createdAt,
+    Expression<double>? canvasX,
+    Expression<double>? canvasY,
+    Expression<double>? canvasWidth,
+    Expression<double>? canvasHeight,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (color != null) 'color': color,
+      if (iconCode != null) 'icon_code': iconCode,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (isActive != null) 'is_active': isActive,
+      if (createdAt != null) 'created_at': createdAt,
+      if (canvasX != null) 'canvas_x': canvasX,
+      if (canvasY != null) 'canvas_y': canvasY,
+      if (canvasWidth != null) 'canvas_width': canvasWidth,
+      if (canvasHeight != null) 'canvas_height': canvasHeight,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BanZonesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? color,
+    Value<int>? iconCode,
+    Value<int>? sortOrder,
+    Value<bool>? isActive,
+    Value<int>? createdAt,
+    Value<double>? canvasX,
+    Value<double>? canvasY,
+    Value<double>? canvasWidth,
+    Value<double>? canvasHeight,
+    Value<int>? rowid,
+  }) {
+    return BanZonesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      color: color ?? this.color,
+      iconCode: iconCode ?? this.iconCode,
+      sortOrder: sortOrder ?? this.sortOrder,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      canvasX: canvasX ?? this.canvasX,
+      canvasY: canvasY ?? this.canvasY,
+      canvasWidth: canvasWidth ?? this.canvasWidth,
+      canvasHeight: canvasHeight ?? this.canvasHeight,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    if (iconCode.present) {
+      map['icon_code'] = Variable<int>(iconCode.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (canvasX.present) {
+      map['canvas_x'] = Variable<double>(canvasX.value);
+    }
+    if (canvasY.present) {
+      map['canvas_y'] = Variable<double>(canvasY.value);
+    }
+    if (canvasWidth.present) {
+      map['canvas_width'] = Variable<double>(canvasWidth.value);
+    }
+    if (canvasHeight.present) {
+      map['canvas_height'] = Variable<double>(canvasHeight.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BanZonesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('iconCode: $iconCode, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('canvasX: $canvasX, ')
+          ..write('canvasY: $canvasY, ')
+          ..write('canvasWidth: $canvasWidth, ')
+          ..write('canvasHeight: $canvasHeight, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BanDiningTablesTable extends BanDiningTables
+    with TableInfo<$BanDiningTablesTable, BanDiningTable> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BanDiningTablesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _zoneIdMeta = const VerificationMeta('zoneId');
+  @override
+  late final GeneratedColumn<String> zoneId = GeneratedColumn<String>(
+    'zone_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES ban_zones (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _capacityMeta = const VerificationMeta(
+    'capacity',
+  );
+  @override
+  late final GeneratedColumn<int> capacity = GeneratedColumn<int>(
+    'capacity',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(4),
+  );
+  static const VerificationMeta _posXMeta = const VerificationMeta('posX');
+  @override
+  late final GeneratedColumn<double> posX = GeneratedColumn<double>(
+    'pos_x',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(100.0),
+  );
+  static const VerificationMeta _posYMeta = const VerificationMeta('posY');
+  @override
+  late final GeneratedColumn<double> posY = GeneratedColumn<double>(
+    'pos_y',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(100.0),
+  );
+  static const VerificationMeta _shapeMeta = const VerificationMeta('shape');
+  @override
+  late final GeneratedColumn<String> shape = GeneratedColumn<String>(
+    'shape',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('rect'),
+  );
+  static const VerificationMeta _tableWidthMeta = const VerificationMeta(
+    'tableWidth',
+  );
+  @override
+  late final GeneratedColumn<double> tableWidth = GeneratedColumn<double>(
+    'table_width',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(90.0),
+  );
+  static const VerificationMeta _tableHeightMeta = const VerificationMeta(
+    'tableHeight',
+  );
+  @override
+  late final GeneratedColumn<double> tableHeight = GeneratedColumn<double>(
+    'table_height',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(65.0),
+  );
+  static const VerificationMeta _qrTokenMeta = const VerificationMeta(
+    'qrToken',
+  );
+  @override
+  late final GeneratedColumn<String> qrToken = GeneratedColumn<String>(
+    'qr_token',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    zoneId,
+    name,
+    capacity,
+    posX,
+    posY,
+    shape,
+    tableWidth,
+    tableHeight,
+    qrToken,
+    sortOrder,
+    isActive,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ban_dining_tables';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BanDiningTable> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('zone_id')) {
+      context.handle(
+        _zoneIdMeta,
+        zoneId.isAcceptableOrUnknown(data['zone_id']!, _zoneIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_zoneIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('capacity')) {
+      context.handle(
+        _capacityMeta,
+        capacity.isAcceptableOrUnknown(data['capacity']!, _capacityMeta),
+      );
+    }
+    if (data.containsKey('pos_x')) {
+      context.handle(
+        _posXMeta,
+        posX.isAcceptableOrUnknown(data['pos_x']!, _posXMeta),
+      );
+    }
+    if (data.containsKey('pos_y')) {
+      context.handle(
+        _posYMeta,
+        posY.isAcceptableOrUnknown(data['pos_y']!, _posYMeta),
+      );
+    }
+    if (data.containsKey('shape')) {
+      context.handle(
+        _shapeMeta,
+        shape.isAcceptableOrUnknown(data['shape']!, _shapeMeta),
+      );
+    }
+    if (data.containsKey('table_width')) {
+      context.handle(
+        _tableWidthMeta,
+        tableWidth.isAcceptableOrUnknown(data['table_width']!, _tableWidthMeta),
+      );
+    }
+    if (data.containsKey('table_height')) {
+      context.handle(
+        _tableHeightMeta,
+        tableHeight.isAcceptableOrUnknown(
+          data['table_height']!,
+          _tableHeightMeta,
+        ),
+      );
+    }
+    if (data.containsKey('qr_token')) {
+      context.handle(
+        _qrTokenMeta,
+        qrToken.isAcceptableOrUnknown(data['qr_token']!, _qrTokenMeta),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BanDiningTable map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BanDiningTable(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      zoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}zone_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      capacity: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}capacity'],
+      )!,
+      posX: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}pos_x'],
+      )!,
+      posY: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}pos_y'],
+      )!,
+      shape: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}shape'],
+      )!,
+      tableWidth: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}table_width'],
+      )!,
+      tableHeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}table_height'],
+      )!,
+      qrToken: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}qr_token'],
+      ),
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $BanDiningTablesTable createAlias(String alias) {
+    return $BanDiningTablesTable(attachedDatabase, alias);
+  }
+}
+
+class BanDiningTable extends DataClass implements Insertable<BanDiningTable> {
+  final String id;
+  final String zoneId;
+  final String name;
+  final int capacity;
+  final double posX;
+  final double posY;
+  final String shape;
+  final double tableWidth;
+  final double tableHeight;
+  final String? qrToken;
+  final int sortOrder;
+  final bool isActive;
+  final int createdAt;
+  const BanDiningTable({
+    required this.id,
+    required this.zoneId,
+    required this.name,
+    required this.capacity,
+    required this.posX,
+    required this.posY,
+    required this.shape,
+    required this.tableWidth,
+    required this.tableHeight,
+    this.qrToken,
+    required this.sortOrder,
+    required this.isActive,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['zone_id'] = Variable<String>(zoneId);
+    map['name'] = Variable<String>(name);
+    map['capacity'] = Variable<int>(capacity);
+    map['pos_x'] = Variable<double>(posX);
+    map['pos_y'] = Variable<double>(posY);
+    map['shape'] = Variable<String>(shape);
+    map['table_width'] = Variable<double>(tableWidth);
+    map['table_height'] = Variable<double>(tableHeight);
+    if (!nullToAbsent || qrToken != null) {
+      map['qr_token'] = Variable<String>(qrToken);
+    }
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['is_active'] = Variable<bool>(isActive);
+    map['created_at'] = Variable<int>(createdAt);
+    return map;
+  }
+
+  BanDiningTablesCompanion toCompanion(bool nullToAbsent) {
+    return BanDiningTablesCompanion(
+      id: Value(id),
+      zoneId: Value(zoneId),
+      name: Value(name),
+      capacity: Value(capacity),
+      posX: Value(posX),
+      posY: Value(posY),
+      shape: Value(shape),
+      tableWidth: Value(tableWidth),
+      tableHeight: Value(tableHeight),
+      qrToken: qrToken == null && nullToAbsent
+          ? const Value.absent()
+          : Value(qrToken),
+      sortOrder: Value(sortOrder),
+      isActive: Value(isActive),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory BanDiningTable.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BanDiningTable(
+      id: serializer.fromJson<String>(json['id']),
+      zoneId: serializer.fromJson<String>(json['zoneId']),
+      name: serializer.fromJson<String>(json['name']),
+      capacity: serializer.fromJson<int>(json['capacity']),
+      posX: serializer.fromJson<double>(json['posX']),
+      posY: serializer.fromJson<double>(json['posY']),
+      shape: serializer.fromJson<String>(json['shape']),
+      tableWidth: serializer.fromJson<double>(json['tableWidth']),
+      tableHeight: serializer.fromJson<double>(json['tableHeight']),
+      qrToken: serializer.fromJson<String?>(json['qrToken']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'zoneId': serializer.toJson<String>(zoneId),
+      'name': serializer.toJson<String>(name),
+      'capacity': serializer.toJson<int>(capacity),
+      'posX': serializer.toJson<double>(posX),
+      'posY': serializer.toJson<double>(posY),
+      'shape': serializer.toJson<String>(shape),
+      'tableWidth': serializer.toJson<double>(tableWidth),
+      'tableHeight': serializer.toJson<double>(tableHeight),
+      'qrToken': serializer.toJson<String?>(qrToken),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'isActive': serializer.toJson<bool>(isActive),
+      'createdAt': serializer.toJson<int>(createdAt),
+    };
+  }
+
+  BanDiningTable copyWith({
+    String? id,
+    String? zoneId,
+    String? name,
+    int? capacity,
+    double? posX,
+    double? posY,
+    String? shape,
+    double? tableWidth,
+    double? tableHeight,
+    Value<String?> qrToken = const Value.absent(),
+    int? sortOrder,
+    bool? isActive,
+    int? createdAt,
+  }) => BanDiningTable(
+    id: id ?? this.id,
+    zoneId: zoneId ?? this.zoneId,
+    name: name ?? this.name,
+    capacity: capacity ?? this.capacity,
+    posX: posX ?? this.posX,
+    posY: posY ?? this.posY,
+    shape: shape ?? this.shape,
+    tableWidth: tableWidth ?? this.tableWidth,
+    tableHeight: tableHeight ?? this.tableHeight,
+    qrToken: qrToken.present ? qrToken.value : this.qrToken,
+    sortOrder: sortOrder ?? this.sortOrder,
+    isActive: isActive ?? this.isActive,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  BanDiningTable copyWithCompanion(BanDiningTablesCompanion data) {
+    return BanDiningTable(
+      id: data.id.present ? data.id.value : this.id,
+      zoneId: data.zoneId.present ? data.zoneId.value : this.zoneId,
+      name: data.name.present ? data.name.value : this.name,
+      capacity: data.capacity.present ? data.capacity.value : this.capacity,
+      posX: data.posX.present ? data.posX.value : this.posX,
+      posY: data.posY.present ? data.posY.value : this.posY,
+      shape: data.shape.present ? data.shape.value : this.shape,
+      tableWidth: data.tableWidth.present
+          ? data.tableWidth.value
+          : this.tableWidth,
+      tableHeight: data.tableHeight.present
+          ? data.tableHeight.value
+          : this.tableHeight,
+      qrToken: data.qrToken.present ? data.qrToken.value : this.qrToken,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BanDiningTable(')
+          ..write('id: $id, ')
+          ..write('zoneId: $zoneId, ')
+          ..write('name: $name, ')
+          ..write('capacity: $capacity, ')
+          ..write('posX: $posX, ')
+          ..write('posY: $posY, ')
+          ..write('shape: $shape, ')
+          ..write('tableWidth: $tableWidth, ')
+          ..write('tableHeight: $tableHeight, ')
+          ..write('qrToken: $qrToken, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    zoneId,
+    name,
+    capacity,
+    posX,
+    posY,
+    shape,
+    tableWidth,
+    tableHeight,
+    qrToken,
+    sortOrder,
+    isActive,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BanDiningTable &&
+          other.id == this.id &&
+          other.zoneId == this.zoneId &&
+          other.name == this.name &&
+          other.capacity == this.capacity &&
+          other.posX == this.posX &&
+          other.posY == this.posY &&
+          other.shape == this.shape &&
+          other.tableWidth == this.tableWidth &&
+          other.tableHeight == this.tableHeight &&
+          other.qrToken == this.qrToken &&
+          other.sortOrder == this.sortOrder &&
+          other.isActive == this.isActive &&
+          other.createdAt == this.createdAt);
+}
+
+class BanDiningTablesCompanion extends UpdateCompanion<BanDiningTable> {
+  final Value<String> id;
+  final Value<String> zoneId;
+  final Value<String> name;
+  final Value<int> capacity;
+  final Value<double> posX;
+  final Value<double> posY;
+  final Value<String> shape;
+  final Value<double> tableWidth;
+  final Value<double> tableHeight;
+  final Value<String?> qrToken;
+  final Value<int> sortOrder;
+  final Value<bool> isActive;
+  final Value<int> createdAt;
+  final Value<int> rowid;
+  const BanDiningTablesCompanion({
+    this.id = const Value.absent(),
+    this.zoneId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.capacity = const Value.absent(),
+    this.posX = const Value.absent(),
+    this.posY = const Value.absent(),
+    this.shape = const Value.absent(),
+    this.tableWidth = const Value.absent(),
+    this.tableHeight = const Value.absent(),
+    this.qrToken = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BanDiningTablesCompanion.insert({
+    required String id,
+    required String zoneId,
+    required String name,
+    this.capacity = const Value.absent(),
+    this.posX = const Value.absent(),
+    this.posY = const Value.absent(),
+    this.shape = const Value.absent(),
+    this.tableWidth = const Value.absent(),
+    this.tableHeight = const Value.absent(),
+    this.qrToken = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isActive = const Value.absent(),
+    required int createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       zoneId = Value(zoneId),
+       name = Value(name),
+       createdAt = Value(createdAt);
+  static Insertable<BanDiningTable> custom({
+    Expression<String>? id,
+    Expression<String>? zoneId,
+    Expression<String>? name,
+    Expression<int>? capacity,
+    Expression<double>? posX,
+    Expression<double>? posY,
+    Expression<String>? shape,
+    Expression<double>? tableWidth,
+    Expression<double>? tableHeight,
+    Expression<String>? qrToken,
+    Expression<int>? sortOrder,
+    Expression<bool>? isActive,
+    Expression<int>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (zoneId != null) 'zone_id': zoneId,
+      if (name != null) 'name': name,
+      if (capacity != null) 'capacity': capacity,
+      if (posX != null) 'pos_x': posX,
+      if (posY != null) 'pos_y': posY,
+      if (shape != null) 'shape': shape,
+      if (tableWidth != null) 'table_width': tableWidth,
+      if (tableHeight != null) 'table_height': tableHeight,
+      if (qrToken != null) 'qr_token': qrToken,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (isActive != null) 'is_active': isActive,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BanDiningTablesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? zoneId,
+    Value<String>? name,
+    Value<int>? capacity,
+    Value<double>? posX,
+    Value<double>? posY,
+    Value<String>? shape,
+    Value<double>? tableWidth,
+    Value<double>? tableHeight,
+    Value<String?>? qrToken,
+    Value<int>? sortOrder,
+    Value<bool>? isActive,
+    Value<int>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return BanDiningTablesCompanion(
+      id: id ?? this.id,
+      zoneId: zoneId ?? this.zoneId,
+      name: name ?? this.name,
+      capacity: capacity ?? this.capacity,
+      posX: posX ?? this.posX,
+      posY: posY ?? this.posY,
+      shape: shape ?? this.shape,
+      tableWidth: tableWidth ?? this.tableWidth,
+      tableHeight: tableHeight ?? this.tableHeight,
+      qrToken: qrToken ?? this.qrToken,
+      sortOrder: sortOrder ?? this.sortOrder,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (zoneId.present) {
+      map['zone_id'] = Variable<String>(zoneId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (capacity.present) {
+      map['capacity'] = Variable<int>(capacity.value);
+    }
+    if (posX.present) {
+      map['pos_x'] = Variable<double>(posX.value);
+    }
+    if (posY.present) {
+      map['pos_y'] = Variable<double>(posY.value);
+    }
+    if (shape.present) {
+      map['shape'] = Variable<String>(shape.value);
+    }
+    if (tableWidth.present) {
+      map['table_width'] = Variable<double>(tableWidth.value);
+    }
+    if (tableHeight.present) {
+      map['table_height'] = Variable<double>(tableHeight.value);
+    }
+    if (qrToken.present) {
+      map['qr_token'] = Variable<String>(qrToken.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BanDiningTablesCompanion(')
+          ..write('id: $id, ')
+          ..write('zoneId: $zoneId, ')
+          ..write('name: $name, ')
+          ..write('capacity: $capacity, ')
+          ..write('posX: $posX, ')
+          ..write('posY: $posY, ')
+          ..write('shape: $shape, ')
+          ..write('tableWidth: $tableWidth, ')
+          ..write('tableHeight: $tableHeight, ')
+          ..write('qrToken: $qrToken, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BanSessionsTable extends BanSessions
+    with TableInfo<$BanSessionsTable, BanSession> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BanSessionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tableIdMeta = const VerificationMeta(
+    'tableId',
+  );
+  @override
+  late final GeneratedColumn<String> tableId = GeneratedColumn<String>(
+    'table_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES ban_dining_tables (id)',
+    ),
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('open'),
+  );
+  static const VerificationMeta _guestCountMeta = const VerificationMeta(
+    'guestCount',
+  );
+  @override
+  late final GeneratedColumn<int> guestCount = GeneratedColumn<int>(
+    'guest_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _staffIdMeta = const VerificationMeta(
+    'staffId',
+  );
+  @override
+  late final GeneratedColumn<String> staffId = GeneratedColumn<String>(
+    'staff_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _posOrderIdMeta = const VerificationMeta(
+    'posOrderId',
+  );
+  @override
+  late final GeneratedColumn<String> posOrderId = GeneratedColumn<String>(
+    'pos_order_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _openedAtMeta = const VerificationMeta(
+    'openedAt',
+  );
+  @override
+  late final GeneratedColumn<int> openedAt = GeneratedColumn<int>(
+    'opened_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _closedAtMeta = const VerificationMeta(
+    'closedAt',
+  );
+  @override
+  late final GeneratedColumn<int> closedAt = GeneratedColumn<int>(
+    'closed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    tableId,
+    status,
+    guestCount,
+    staffId,
+    posOrderId,
+    note,
+    openedAt,
+    closedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ban_sessions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BanSession> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('table_id')) {
+      context.handle(
+        _tableIdMeta,
+        tableId.isAcceptableOrUnknown(data['table_id']!, _tableIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tableIdMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('guest_count')) {
+      context.handle(
+        _guestCountMeta,
+        guestCount.isAcceptableOrUnknown(data['guest_count']!, _guestCountMeta),
+      );
+    }
+    if (data.containsKey('staff_id')) {
+      context.handle(
+        _staffIdMeta,
+        staffId.isAcceptableOrUnknown(data['staff_id']!, _staffIdMeta),
+      );
+    }
+    if (data.containsKey('pos_order_id')) {
+      context.handle(
+        _posOrderIdMeta,
+        posOrderId.isAcceptableOrUnknown(
+          data['pos_order_id']!,
+          _posOrderIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('opened_at')) {
+      context.handle(
+        _openedAtMeta,
+        openedAt.isAcceptableOrUnknown(data['opened_at']!, _openedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_openedAtMeta);
+    }
+    if (data.containsKey('closed_at')) {
+      context.handle(
+        _closedAtMeta,
+        closedAt.isAcceptableOrUnknown(data['closed_at']!, _closedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BanSession map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BanSession(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      tableId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}table_id'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      guestCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}guest_count'],
+      )!,
+      staffId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}staff_id'],
+      ),
+      posOrderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pos_order_id'],
+      ),
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      openedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}opened_at'],
+      )!,
+      closedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}closed_at'],
+      ),
+    );
+  }
+
+  @override
+  $BanSessionsTable createAlias(String alias) {
+    return $BanSessionsTable(attachedDatabase, alias);
+  }
+}
+
+class BanSession extends DataClass implements Insertable<BanSession> {
+  final String id;
+  final String tableId;
+  final String status;
+  final int guestCount;
+  final String? staffId;
+  final String? posOrderId;
+  final String? note;
+  final int openedAt;
+  final int? closedAt;
+  const BanSession({
+    required this.id,
+    required this.tableId,
+    required this.status,
+    required this.guestCount,
+    this.staffId,
+    this.posOrderId,
+    this.note,
+    required this.openedAt,
+    this.closedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['table_id'] = Variable<String>(tableId);
+    map['status'] = Variable<String>(status);
+    map['guest_count'] = Variable<int>(guestCount);
+    if (!nullToAbsent || staffId != null) {
+      map['staff_id'] = Variable<String>(staffId);
+    }
+    if (!nullToAbsent || posOrderId != null) {
+      map['pos_order_id'] = Variable<String>(posOrderId);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['opened_at'] = Variable<int>(openedAt);
+    if (!nullToAbsent || closedAt != null) {
+      map['closed_at'] = Variable<int>(closedAt);
+    }
+    return map;
+  }
+
+  BanSessionsCompanion toCompanion(bool nullToAbsent) {
+    return BanSessionsCompanion(
+      id: Value(id),
+      tableId: Value(tableId),
+      status: Value(status),
+      guestCount: Value(guestCount),
+      staffId: staffId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(staffId),
+      posOrderId: posOrderId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(posOrderId),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      openedAt: Value(openedAt),
+      closedAt: closedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(closedAt),
+    );
+  }
+
+  factory BanSession.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BanSession(
+      id: serializer.fromJson<String>(json['id']),
+      tableId: serializer.fromJson<String>(json['tableId']),
+      status: serializer.fromJson<String>(json['status']),
+      guestCount: serializer.fromJson<int>(json['guestCount']),
+      staffId: serializer.fromJson<String?>(json['staffId']),
+      posOrderId: serializer.fromJson<String?>(json['posOrderId']),
+      note: serializer.fromJson<String?>(json['note']),
+      openedAt: serializer.fromJson<int>(json['openedAt']),
+      closedAt: serializer.fromJson<int?>(json['closedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'tableId': serializer.toJson<String>(tableId),
+      'status': serializer.toJson<String>(status),
+      'guestCount': serializer.toJson<int>(guestCount),
+      'staffId': serializer.toJson<String?>(staffId),
+      'posOrderId': serializer.toJson<String?>(posOrderId),
+      'note': serializer.toJson<String?>(note),
+      'openedAt': serializer.toJson<int>(openedAt),
+      'closedAt': serializer.toJson<int?>(closedAt),
+    };
+  }
+
+  BanSession copyWith({
+    String? id,
+    String? tableId,
+    String? status,
+    int? guestCount,
+    Value<String?> staffId = const Value.absent(),
+    Value<String?> posOrderId = const Value.absent(),
+    Value<String?> note = const Value.absent(),
+    int? openedAt,
+    Value<int?> closedAt = const Value.absent(),
+  }) => BanSession(
+    id: id ?? this.id,
+    tableId: tableId ?? this.tableId,
+    status: status ?? this.status,
+    guestCount: guestCount ?? this.guestCount,
+    staffId: staffId.present ? staffId.value : this.staffId,
+    posOrderId: posOrderId.present ? posOrderId.value : this.posOrderId,
+    note: note.present ? note.value : this.note,
+    openedAt: openedAt ?? this.openedAt,
+    closedAt: closedAt.present ? closedAt.value : this.closedAt,
+  );
+  BanSession copyWithCompanion(BanSessionsCompanion data) {
+    return BanSession(
+      id: data.id.present ? data.id.value : this.id,
+      tableId: data.tableId.present ? data.tableId.value : this.tableId,
+      status: data.status.present ? data.status.value : this.status,
+      guestCount: data.guestCount.present
+          ? data.guestCount.value
+          : this.guestCount,
+      staffId: data.staffId.present ? data.staffId.value : this.staffId,
+      posOrderId: data.posOrderId.present
+          ? data.posOrderId.value
+          : this.posOrderId,
+      note: data.note.present ? data.note.value : this.note,
+      openedAt: data.openedAt.present ? data.openedAt.value : this.openedAt,
+      closedAt: data.closedAt.present ? data.closedAt.value : this.closedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BanSession(')
+          ..write('id: $id, ')
+          ..write('tableId: $tableId, ')
+          ..write('status: $status, ')
+          ..write('guestCount: $guestCount, ')
+          ..write('staffId: $staffId, ')
+          ..write('posOrderId: $posOrderId, ')
+          ..write('note: $note, ')
+          ..write('openedAt: $openedAt, ')
+          ..write('closedAt: $closedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    tableId,
+    status,
+    guestCount,
+    staffId,
+    posOrderId,
+    note,
+    openedAt,
+    closedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BanSession &&
+          other.id == this.id &&
+          other.tableId == this.tableId &&
+          other.status == this.status &&
+          other.guestCount == this.guestCount &&
+          other.staffId == this.staffId &&
+          other.posOrderId == this.posOrderId &&
+          other.note == this.note &&
+          other.openedAt == this.openedAt &&
+          other.closedAt == this.closedAt);
+}
+
+class BanSessionsCompanion extends UpdateCompanion<BanSession> {
+  final Value<String> id;
+  final Value<String> tableId;
+  final Value<String> status;
+  final Value<int> guestCount;
+  final Value<String?> staffId;
+  final Value<String?> posOrderId;
+  final Value<String?> note;
+  final Value<int> openedAt;
+  final Value<int?> closedAt;
+  final Value<int> rowid;
+  const BanSessionsCompanion({
+    this.id = const Value.absent(),
+    this.tableId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.guestCount = const Value.absent(),
+    this.staffId = const Value.absent(),
+    this.posOrderId = const Value.absent(),
+    this.note = const Value.absent(),
+    this.openedAt = const Value.absent(),
+    this.closedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BanSessionsCompanion.insert({
+    required String id,
+    required String tableId,
+    this.status = const Value.absent(),
+    this.guestCount = const Value.absent(),
+    this.staffId = const Value.absent(),
+    this.posOrderId = const Value.absent(),
+    this.note = const Value.absent(),
+    required int openedAt,
+    this.closedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       tableId = Value(tableId),
+       openedAt = Value(openedAt);
+  static Insertable<BanSession> custom({
+    Expression<String>? id,
+    Expression<String>? tableId,
+    Expression<String>? status,
+    Expression<int>? guestCount,
+    Expression<String>? staffId,
+    Expression<String>? posOrderId,
+    Expression<String>? note,
+    Expression<int>? openedAt,
+    Expression<int>? closedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tableId != null) 'table_id': tableId,
+      if (status != null) 'status': status,
+      if (guestCount != null) 'guest_count': guestCount,
+      if (staffId != null) 'staff_id': staffId,
+      if (posOrderId != null) 'pos_order_id': posOrderId,
+      if (note != null) 'note': note,
+      if (openedAt != null) 'opened_at': openedAt,
+      if (closedAt != null) 'closed_at': closedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BanSessionsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? tableId,
+    Value<String>? status,
+    Value<int>? guestCount,
+    Value<String?>? staffId,
+    Value<String?>? posOrderId,
+    Value<String?>? note,
+    Value<int>? openedAt,
+    Value<int?>? closedAt,
+    Value<int>? rowid,
+  }) {
+    return BanSessionsCompanion(
+      id: id ?? this.id,
+      tableId: tableId ?? this.tableId,
+      status: status ?? this.status,
+      guestCount: guestCount ?? this.guestCount,
+      staffId: staffId ?? this.staffId,
+      posOrderId: posOrderId ?? this.posOrderId,
+      note: note ?? this.note,
+      openedAt: openedAt ?? this.openedAt,
+      closedAt: closedAt ?? this.closedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (tableId.present) {
+      map['table_id'] = Variable<String>(tableId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (guestCount.present) {
+      map['guest_count'] = Variable<int>(guestCount.value);
+    }
+    if (staffId.present) {
+      map['staff_id'] = Variable<String>(staffId.value);
+    }
+    if (posOrderId.present) {
+      map['pos_order_id'] = Variable<String>(posOrderId.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (openedAt.present) {
+      map['opened_at'] = Variable<int>(openedAt.value);
+    }
+    if (closedAt.present) {
+      map['closed_at'] = Variable<int>(closedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BanSessionsCompanion(')
+          ..write('id: $id, ')
+          ..write('tableId: $tableId, ')
+          ..write('status: $status, ')
+          ..write('guestCount: $guestCount, ')
+          ..write('staffId: $staffId, ')
+          ..write('posOrderId: $posOrderId, ')
+          ..write('note: $note, ')
+          ..write('openedAt: $openedAt, ')
+          ..write('closedAt: $closedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BanSessionItemsTable extends BanSessionItems
+    with TableInfo<$BanSessionItemsTable, BanSessionItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BanSessionItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<String> sessionId = GeneratedColumn<String>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES ban_sessions (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _productIdMeta = const VerificationMeta(
+    'productId',
+  );
+  @override
+  late final GeneratedColumn<String> productId = GeneratedColumn<String>(
+    'product_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _productNameMeta = const VerificationMeta(
+    'productName',
+  );
+  @override
+  late final GeneratedColumn<String> productName = GeneratedColumn<String>(
+    'product_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unitPriceMeta = const VerificationMeta(
+    'unitPrice',
+  );
+  @override
+  late final GeneratedColumn<double> unitPrice = GeneratedColumn<double>(
+    'unit_price',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _quantityMeta = const VerificationMeta(
+    'quantity',
+  );
+  @override
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
+    'quantity',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _subtotalMeta = const VerificationMeta(
+    'subtotal',
+  );
+  @override
+  late final GeneratedColumn<double> subtotal = GeneratedColumn<double>(
+    'subtotal',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _addedByMeta = const VerificationMeta(
+    'addedBy',
+  );
+  @override
+  late final GeneratedColumn<String> addedBy = GeneratedColumn<String>(
+    'added_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _addedAtMeta = const VerificationMeta(
+    'addedAt',
+  );
+  @override
+  late final GeneratedColumn<int> addedAt = GeneratedColumn<int>(
+    'added_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kitchenStatusMeta = const VerificationMeta(
+    'kitchenStatus',
+  );
+  @override
+  late final GeneratedColumn<String> kitchenStatus = GeneratedColumn<String>(
+    'kitchen_status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('chua_gui'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sessionId,
+    productId,
+    productName,
+    unitPrice,
+    quantity,
+    subtotal,
+    note,
+    addedBy,
+    addedAt,
+    kitchenStatus,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ban_session_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BanSessionItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('product_id')) {
+      context.handle(
+        _productIdMeta,
+        productId.isAcceptableOrUnknown(data['product_id']!, _productIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productIdMeta);
+    }
+    if (data.containsKey('product_name')) {
+      context.handle(
+        _productNameMeta,
+        productName.isAcceptableOrUnknown(
+          data['product_name']!,
+          _productNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_productNameMeta);
+    }
+    if (data.containsKey('unit_price')) {
+      context.handle(
+        _unitPriceMeta,
+        unitPrice.isAcceptableOrUnknown(data['unit_price']!, _unitPriceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_unitPriceMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(
+        _quantityMeta,
+        quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta),
+      );
+    }
+    if (data.containsKey('subtotal')) {
+      context.handle(
+        _subtotalMeta,
+        subtotal.isAcceptableOrUnknown(data['subtotal']!, _subtotalMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_subtotalMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('added_by')) {
+      context.handle(
+        _addedByMeta,
+        addedBy.isAcceptableOrUnknown(data['added_by']!, _addedByMeta),
+      );
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(
+        _addedAtMeta,
+        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addedAtMeta);
+    }
+    if (data.containsKey('kitchen_status')) {
+      context.handle(
+        _kitchenStatusMeta,
+        kitchenStatus.isAcceptableOrUnknown(
+          data['kitchen_status']!,
+          _kitchenStatusMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BanSessionItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BanSessionItem(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}session_id'],
+      )!,
+      productId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_id'],
+      )!,
+      productName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_name'],
+      )!,
+      unitPrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}unit_price'],
+      )!,
+      quantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}quantity'],
+      )!,
+      subtotal: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}subtotal'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      addedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}added_by'],
+      ),
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}added_at'],
+      )!,
+      kitchenStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kitchen_status'],
+      )!,
+    );
+  }
+
+  @override
+  $BanSessionItemsTable createAlias(String alias) {
+    return $BanSessionItemsTable(attachedDatabase, alias);
+  }
+}
+
+class BanSessionItem extends DataClass implements Insertable<BanSessionItem> {
+  final String id;
+  final String sessionId;
+  final String productId;
+  final String productName;
+  final double unitPrice;
+  final double quantity;
+  final double subtotal;
+  final String? note;
+  final String? addedBy;
+  final int addedAt;
+  final String kitchenStatus;
+  const BanSessionItem({
+    required this.id,
+    required this.sessionId,
+    required this.productId,
+    required this.productName,
+    required this.unitPrice,
+    required this.quantity,
+    required this.subtotal,
+    this.note,
+    this.addedBy,
+    required this.addedAt,
+    required this.kitchenStatus,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['session_id'] = Variable<String>(sessionId);
+    map['product_id'] = Variable<String>(productId);
+    map['product_name'] = Variable<String>(productName);
+    map['unit_price'] = Variable<double>(unitPrice);
+    map['quantity'] = Variable<double>(quantity);
+    map['subtotal'] = Variable<double>(subtotal);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    if (!nullToAbsent || addedBy != null) {
+      map['added_by'] = Variable<String>(addedBy);
+    }
+    map['added_at'] = Variable<int>(addedAt);
+    map['kitchen_status'] = Variable<String>(kitchenStatus);
+    return map;
+  }
+
+  BanSessionItemsCompanion toCompanion(bool nullToAbsent) {
+    return BanSessionItemsCompanion(
+      id: Value(id),
+      sessionId: Value(sessionId),
+      productId: Value(productId),
+      productName: Value(productName),
+      unitPrice: Value(unitPrice),
+      quantity: Value(quantity),
+      subtotal: Value(subtotal),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      addedBy: addedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(addedBy),
+      addedAt: Value(addedAt),
+      kitchenStatus: Value(kitchenStatus),
+    );
+  }
+
+  factory BanSessionItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BanSessionItem(
+      id: serializer.fromJson<String>(json['id']),
+      sessionId: serializer.fromJson<String>(json['sessionId']),
+      productId: serializer.fromJson<String>(json['productId']),
+      productName: serializer.fromJson<String>(json['productName']),
+      unitPrice: serializer.fromJson<double>(json['unitPrice']),
+      quantity: serializer.fromJson<double>(json['quantity']),
+      subtotal: serializer.fromJson<double>(json['subtotal']),
+      note: serializer.fromJson<String?>(json['note']),
+      addedBy: serializer.fromJson<String?>(json['addedBy']),
+      addedAt: serializer.fromJson<int>(json['addedAt']),
+      kitchenStatus: serializer.fromJson<String>(json['kitchenStatus']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'sessionId': serializer.toJson<String>(sessionId),
+      'productId': serializer.toJson<String>(productId),
+      'productName': serializer.toJson<String>(productName),
+      'unitPrice': serializer.toJson<double>(unitPrice),
+      'quantity': serializer.toJson<double>(quantity),
+      'subtotal': serializer.toJson<double>(subtotal),
+      'note': serializer.toJson<String?>(note),
+      'addedBy': serializer.toJson<String?>(addedBy),
+      'addedAt': serializer.toJson<int>(addedAt),
+      'kitchenStatus': serializer.toJson<String>(kitchenStatus),
+    };
+  }
+
+  BanSessionItem copyWith({
+    String? id,
+    String? sessionId,
+    String? productId,
+    String? productName,
+    double? unitPrice,
+    double? quantity,
+    double? subtotal,
+    Value<String?> note = const Value.absent(),
+    Value<String?> addedBy = const Value.absent(),
+    int? addedAt,
+    String? kitchenStatus,
+  }) => BanSessionItem(
+    id: id ?? this.id,
+    sessionId: sessionId ?? this.sessionId,
+    productId: productId ?? this.productId,
+    productName: productName ?? this.productName,
+    unitPrice: unitPrice ?? this.unitPrice,
+    quantity: quantity ?? this.quantity,
+    subtotal: subtotal ?? this.subtotal,
+    note: note.present ? note.value : this.note,
+    addedBy: addedBy.present ? addedBy.value : this.addedBy,
+    addedAt: addedAt ?? this.addedAt,
+    kitchenStatus: kitchenStatus ?? this.kitchenStatus,
+  );
+  BanSessionItem copyWithCompanion(BanSessionItemsCompanion data) {
+    return BanSessionItem(
+      id: data.id.present ? data.id.value : this.id,
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      productId: data.productId.present ? data.productId.value : this.productId,
+      productName: data.productName.present
+          ? data.productName.value
+          : this.productName,
+      unitPrice: data.unitPrice.present ? data.unitPrice.value : this.unitPrice,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      subtotal: data.subtotal.present ? data.subtotal.value : this.subtotal,
+      note: data.note.present ? data.note.value : this.note,
+      addedBy: data.addedBy.present ? data.addedBy.value : this.addedBy,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+      kitchenStatus: data.kitchenStatus.present
+          ? data.kitchenStatus.value
+          : this.kitchenStatus,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BanSessionItem(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('productId: $productId, ')
+          ..write('productName: $productName, ')
+          ..write('unitPrice: $unitPrice, ')
+          ..write('quantity: $quantity, ')
+          ..write('subtotal: $subtotal, ')
+          ..write('note: $note, ')
+          ..write('addedBy: $addedBy, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('kitchenStatus: $kitchenStatus')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    sessionId,
+    productId,
+    productName,
+    unitPrice,
+    quantity,
+    subtotal,
+    note,
+    addedBy,
+    addedAt,
+    kitchenStatus,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BanSessionItem &&
+          other.id == this.id &&
+          other.sessionId == this.sessionId &&
+          other.productId == this.productId &&
+          other.productName == this.productName &&
+          other.unitPrice == this.unitPrice &&
+          other.quantity == this.quantity &&
+          other.subtotal == this.subtotal &&
+          other.note == this.note &&
+          other.addedBy == this.addedBy &&
+          other.addedAt == this.addedAt &&
+          other.kitchenStatus == this.kitchenStatus);
+}
+
+class BanSessionItemsCompanion extends UpdateCompanion<BanSessionItem> {
+  final Value<String> id;
+  final Value<String> sessionId;
+  final Value<String> productId;
+  final Value<String> productName;
+  final Value<double> unitPrice;
+  final Value<double> quantity;
+  final Value<double> subtotal;
+  final Value<String?> note;
+  final Value<String?> addedBy;
+  final Value<int> addedAt;
+  final Value<String> kitchenStatus;
+  final Value<int> rowid;
+  const BanSessionItemsCompanion({
+    this.id = const Value.absent(),
+    this.sessionId = const Value.absent(),
+    this.productId = const Value.absent(),
+    this.productName = const Value.absent(),
+    this.unitPrice = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.subtotal = const Value.absent(),
+    this.note = const Value.absent(),
+    this.addedBy = const Value.absent(),
+    this.addedAt = const Value.absent(),
+    this.kitchenStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BanSessionItemsCompanion.insert({
+    required String id,
+    required String sessionId,
+    required String productId,
+    required String productName,
+    required double unitPrice,
+    this.quantity = const Value.absent(),
+    required double subtotal,
+    this.note = const Value.absent(),
+    this.addedBy = const Value.absent(),
+    required int addedAt,
+    this.kitchenStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       sessionId = Value(sessionId),
+       productId = Value(productId),
+       productName = Value(productName),
+       unitPrice = Value(unitPrice),
+       subtotal = Value(subtotal),
+       addedAt = Value(addedAt);
+  static Insertable<BanSessionItem> custom({
+    Expression<String>? id,
+    Expression<String>? sessionId,
+    Expression<String>? productId,
+    Expression<String>? productName,
+    Expression<double>? unitPrice,
+    Expression<double>? quantity,
+    Expression<double>? subtotal,
+    Expression<String>? note,
+    Expression<String>? addedBy,
+    Expression<int>? addedAt,
+    Expression<String>? kitchenStatus,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sessionId != null) 'session_id': sessionId,
+      if (productId != null) 'product_id': productId,
+      if (productName != null) 'product_name': productName,
+      if (unitPrice != null) 'unit_price': unitPrice,
+      if (quantity != null) 'quantity': quantity,
+      if (subtotal != null) 'subtotal': subtotal,
+      if (note != null) 'note': note,
+      if (addedBy != null) 'added_by': addedBy,
+      if (addedAt != null) 'added_at': addedAt,
+      if (kitchenStatus != null) 'kitchen_status': kitchenStatus,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BanSessionItemsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? sessionId,
+    Value<String>? productId,
+    Value<String>? productName,
+    Value<double>? unitPrice,
+    Value<double>? quantity,
+    Value<double>? subtotal,
+    Value<String?>? note,
+    Value<String?>? addedBy,
+    Value<int>? addedAt,
+    Value<String>? kitchenStatus,
+    Value<int>? rowid,
+  }) {
+    return BanSessionItemsCompanion(
+      id: id ?? this.id,
+      sessionId: sessionId ?? this.sessionId,
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      unitPrice: unitPrice ?? this.unitPrice,
+      quantity: quantity ?? this.quantity,
+      subtotal: subtotal ?? this.subtotal,
+      note: note ?? this.note,
+      addedBy: addedBy ?? this.addedBy,
+      addedAt: addedAt ?? this.addedAt,
+      kitchenStatus: kitchenStatus ?? this.kitchenStatus,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (sessionId.present) {
+      map['session_id'] = Variable<String>(sessionId.value);
+    }
+    if (productId.present) {
+      map['product_id'] = Variable<String>(productId.value);
+    }
+    if (productName.present) {
+      map['product_name'] = Variable<String>(productName.value);
+    }
+    if (unitPrice.present) {
+      map['unit_price'] = Variable<double>(unitPrice.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<double>(quantity.value);
+    }
+    if (subtotal.present) {
+      map['subtotal'] = Variable<double>(subtotal.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (addedBy.present) {
+      map['added_by'] = Variable<String>(addedBy.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<int>(addedAt.value);
+    }
+    if (kitchenStatus.present) {
+      map['kitchen_status'] = Variable<String>(kitchenStatus.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BanSessionItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('productId: $productId, ')
+          ..write('productName: $productName, ')
+          ..write('unitPrice: $unitPrice, ')
+          ..write('quantity: $quantity, ')
+          ..write('subtotal: $subtotal, ')
+          ..write('note: $note, ')
+          ..write('addedBy: $addedBy, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('kitchenStatus: $kitchenStatus, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $KitchenStationsTable extends KitchenStations
+    with TableInfo<$KitchenStationsTable, KitchenStation> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $KitchenStationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('#1C2151'),
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    color,
+    sortOrder,
+    isActive,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'kitchen_stations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<KitchenStation> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  KitchenStation map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return KitchenStation(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $KitchenStationsTable createAlias(String alias) {
+    return $KitchenStationsTable(attachedDatabase, alias);
+  }
+}
+
+class KitchenStation extends DataClass implements Insertable<KitchenStation> {
+  final String id;
+  final String name;
+  final String color;
+  final int sortOrder;
+  final bool isActive;
+  final int createdAt;
+  const KitchenStation({
+    required this.id,
+    required this.name,
+    required this.color,
+    required this.sortOrder,
+    required this.isActive,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['color'] = Variable<String>(color);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['is_active'] = Variable<bool>(isActive);
+    map['created_at'] = Variable<int>(createdAt);
+    return map;
+  }
+
+  KitchenStationsCompanion toCompanion(bool nullToAbsent) {
+    return KitchenStationsCompanion(
+      id: Value(id),
+      name: Value(name),
+      color: Value(color),
+      sortOrder: Value(sortOrder),
+      isActive: Value(isActive),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory KitchenStation.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return KitchenStation(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      color: serializer.fromJson<String>(json['color']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'color': serializer.toJson<String>(color),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'isActive': serializer.toJson<bool>(isActive),
+      'createdAt': serializer.toJson<int>(createdAt),
+    };
+  }
+
+  KitchenStation copyWith({
+    String? id,
+    String? name,
+    String? color,
+    int? sortOrder,
+    bool? isActive,
+    int? createdAt,
+  }) => KitchenStation(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    color: color ?? this.color,
+    sortOrder: sortOrder ?? this.sortOrder,
+    isActive: isActive ?? this.isActive,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  KitchenStation copyWithCompanion(KitchenStationsCompanion data) {
+    return KitchenStation(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      color: data.color.present ? data.color.value : this.color,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KitchenStation(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, name, color, sortOrder, isActive, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is KitchenStation &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.color == this.color &&
+          other.sortOrder == this.sortOrder &&
+          other.isActive == this.isActive &&
+          other.createdAt == this.createdAt);
+}
+
+class KitchenStationsCompanion extends UpdateCompanion<KitchenStation> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> color;
+  final Value<int> sortOrder;
+  final Value<bool> isActive;
+  final Value<int> createdAt;
+  final Value<int> rowid;
+  const KitchenStationsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.color = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  KitchenStationsCompanion.insert({
+    required String id,
+    required String name,
+    this.color = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isActive = const Value.absent(),
+    required int createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       createdAt = Value(createdAt);
+  static Insertable<KitchenStation> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? color,
+    Expression<int>? sortOrder,
+    Expression<bool>? isActive,
+    Expression<int>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (color != null) 'color': color,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (isActive != null) 'is_active': isActive,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  KitchenStationsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? color,
+    Value<int>? sortOrder,
+    Value<bool>? isActive,
+    Value<int>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return KitchenStationsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      color: color ?? this.color,
+      sortOrder: sortOrder ?? this.sortOrder,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KitchenStationsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ProductModifiersTable extends ProductModifiers
+    with TableInfo<$ProductModifiersTable, ProductModifier> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProductModifiersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _productIdMeta = const VerificationMeta(
+    'productId',
+  );
+  @override
+  late final GeneratedColumn<String> productId = GeneratedColumn<String>(
+    'product_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES core_products (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _groupNameMeta = const VerificationMeta(
+    'groupName',
+  );
+  @override
+  late final GeneratedColumn<String> groupName = GeneratedColumn<String>(
+    'group_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Khác'),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _priceAdjustMeta = const VerificationMeta(
+    'priceAdjust',
+  );
+  @override
+  late final GeneratedColumn<double> priceAdjust = GeneratedColumn<double>(
+    'price_adjust',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    productId,
+    groupName,
+    name,
+    priceAdjust,
+    sortOrder,
+    isActive,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'product_modifiers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ProductModifier> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('product_id')) {
+      context.handle(
+        _productIdMeta,
+        productId.isAcceptableOrUnknown(data['product_id']!, _productIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productIdMeta);
+    }
+    if (data.containsKey('group_name')) {
+      context.handle(
+        _groupNameMeta,
+        groupName.isAcceptableOrUnknown(data['group_name']!, _groupNameMeta),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('price_adjust')) {
+      context.handle(
+        _priceAdjustMeta,
+        priceAdjust.isAcceptableOrUnknown(
+          data['price_adjust']!,
+          _priceAdjustMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ProductModifier map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProductModifier(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      productId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_id'],
+      )!,
+      groupName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_name'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      priceAdjust: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}price_adjust'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ProductModifiersTable createAlias(String alias) {
+    return $ProductModifiersTable(attachedDatabase, alias);
+  }
+}
+
+class ProductModifier extends DataClass implements Insertable<ProductModifier> {
+  final String id;
+  final String productId;
+  final String groupName;
+  final String name;
+  final double priceAdjust;
+  final int sortOrder;
+  final bool isActive;
+  final int createdAt;
+  const ProductModifier({
+    required this.id,
+    required this.productId,
+    required this.groupName,
+    required this.name,
+    required this.priceAdjust,
+    required this.sortOrder,
+    required this.isActive,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['product_id'] = Variable<String>(productId);
+    map['group_name'] = Variable<String>(groupName);
+    map['name'] = Variable<String>(name);
+    map['price_adjust'] = Variable<double>(priceAdjust);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['is_active'] = Variable<bool>(isActive);
+    map['created_at'] = Variable<int>(createdAt);
+    return map;
+  }
+
+  ProductModifiersCompanion toCompanion(bool nullToAbsent) {
+    return ProductModifiersCompanion(
+      id: Value(id),
+      productId: Value(productId),
+      groupName: Value(groupName),
+      name: Value(name),
+      priceAdjust: Value(priceAdjust),
+      sortOrder: Value(sortOrder),
+      isActive: Value(isActive),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ProductModifier.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProductModifier(
+      id: serializer.fromJson<String>(json['id']),
+      productId: serializer.fromJson<String>(json['productId']),
+      groupName: serializer.fromJson<String>(json['groupName']),
+      name: serializer.fromJson<String>(json['name']),
+      priceAdjust: serializer.fromJson<double>(json['priceAdjust']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'productId': serializer.toJson<String>(productId),
+      'groupName': serializer.toJson<String>(groupName),
+      'name': serializer.toJson<String>(name),
+      'priceAdjust': serializer.toJson<double>(priceAdjust),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'isActive': serializer.toJson<bool>(isActive),
+      'createdAt': serializer.toJson<int>(createdAt),
+    };
+  }
+
+  ProductModifier copyWith({
+    String? id,
+    String? productId,
+    String? groupName,
+    String? name,
+    double? priceAdjust,
+    int? sortOrder,
+    bool? isActive,
+    int? createdAt,
+  }) => ProductModifier(
+    id: id ?? this.id,
+    productId: productId ?? this.productId,
+    groupName: groupName ?? this.groupName,
+    name: name ?? this.name,
+    priceAdjust: priceAdjust ?? this.priceAdjust,
+    sortOrder: sortOrder ?? this.sortOrder,
+    isActive: isActive ?? this.isActive,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ProductModifier copyWithCompanion(ProductModifiersCompanion data) {
+    return ProductModifier(
+      id: data.id.present ? data.id.value : this.id,
+      productId: data.productId.present ? data.productId.value : this.productId,
+      groupName: data.groupName.present ? data.groupName.value : this.groupName,
+      name: data.name.present ? data.name.value : this.name,
+      priceAdjust: data.priceAdjust.present
+          ? data.priceAdjust.value
+          : this.priceAdjust,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProductModifier(')
+          ..write('id: $id, ')
+          ..write('productId: $productId, ')
+          ..write('groupName: $groupName, ')
+          ..write('name: $name, ')
+          ..write('priceAdjust: $priceAdjust, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    productId,
+    groupName,
+    name,
+    priceAdjust,
+    sortOrder,
+    isActive,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProductModifier &&
+          other.id == this.id &&
+          other.productId == this.productId &&
+          other.groupName == this.groupName &&
+          other.name == this.name &&
+          other.priceAdjust == this.priceAdjust &&
+          other.sortOrder == this.sortOrder &&
+          other.isActive == this.isActive &&
+          other.createdAt == this.createdAt);
+}
+
+class ProductModifiersCompanion extends UpdateCompanion<ProductModifier> {
+  final Value<String> id;
+  final Value<String> productId;
+  final Value<String> groupName;
+  final Value<String> name;
+  final Value<double> priceAdjust;
+  final Value<int> sortOrder;
+  final Value<bool> isActive;
+  final Value<int> createdAt;
+  final Value<int> rowid;
+  const ProductModifiersCompanion({
+    this.id = const Value.absent(),
+    this.productId = const Value.absent(),
+    this.groupName = const Value.absent(),
+    this.name = const Value.absent(),
+    this.priceAdjust = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ProductModifiersCompanion.insert({
+    required String id,
+    required String productId,
+    this.groupName = const Value.absent(),
+    required String name,
+    this.priceAdjust = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.isActive = const Value.absent(),
+    required int createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       productId = Value(productId),
+       name = Value(name),
+       createdAt = Value(createdAt);
+  static Insertable<ProductModifier> custom({
+    Expression<String>? id,
+    Expression<String>? productId,
+    Expression<String>? groupName,
+    Expression<String>? name,
+    Expression<double>? priceAdjust,
+    Expression<int>? sortOrder,
+    Expression<bool>? isActive,
+    Expression<int>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (productId != null) 'product_id': productId,
+      if (groupName != null) 'group_name': groupName,
+      if (name != null) 'name': name,
+      if (priceAdjust != null) 'price_adjust': priceAdjust,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (isActive != null) 'is_active': isActive,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ProductModifiersCompanion copyWith({
+    Value<String>? id,
+    Value<String>? productId,
+    Value<String>? groupName,
+    Value<String>? name,
+    Value<double>? priceAdjust,
+    Value<int>? sortOrder,
+    Value<bool>? isActive,
+    Value<int>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return ProductModifiersCompanion(
+      id: id ?? this.id,
+      productId: productId ?? this.productId,
+      groupName: groupName ?? this.groupName,
+      name: name ?? this.name,
+      priceAdjust: priceAdjust ?? this.priceAdjust,
+      sortOrder: sortOrder ?? this.sortOrder,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (productId.present) {
+      map['product_id'] = Variable<String>(productId.value);
+    }
+    if (groupName.present) {
+      map['group_name'] = Variable<String>(groupName.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (priceAdjust.present) {
+      map['price_adjust'] = Variable<double>(priceAdjust.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProductModifiersCompanion(')
+          ..write('id: $id, ')
+          ..write('productId: $productId, ')
+          ..write('groupName: $groupName, ')
+          ..write('name: $name, ')
+          ..write('priceAdjust: $priceAdjust, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SessionItemModifiersTable extends SessionItemModifiers
+    with TableInfo<$SessionItemModifiersTable, SessionItemModifier> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SessionItemModifiersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sessionItemIdMeta = const VerificationMeta(
+    'sessionItemId',
+  );
+  @override
+  late final GeneratedColumn<String> sessionItemId = GeneratedColumn<String>(
+    'session_item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES ban_session_items (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _modifierNameMeta = const VerificationMeta(
+    'modifierName',
+  );
+  @override
+  late final GeneratedColumn<String> modifierName = GeneratedColumn<String>(
+    'modifier_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _priceAdjustMeta = const VerificationMeta(
+    'priceAdjust',
+  );
+  @override
+  late final GeneratedColumn<double> priceAdjust = GeneratedColumn<double>(
+    'price_adjust',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sessionItemId,
+    modifierName,
+    priceAdjust,
+    sortOrder,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'session_item_modifiers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SessionItemModifier> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('session_item_id')) {
+      context.handle(
+        _sessionItemIdMeta,
+        sessionItemId.isAcceptableOrUnknown(
+          data['session_item_id']!,
+          _sessionItemIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionItemIdMeta);
+    }
+    if (data.containsKey('modifier_name')) {
+      context.handle(
+        _modifierNameMeta,
+        modifierName.isAcceptableOrUnknown(
+          data['modifier_name']!,
+          _modifierNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_modifierNameMeta);
+    }
+    if (data.containsKey('price_adjust')) {
+      context.handle(
+        _priceAdjustMeta,
+        priceAdjust.isAcceptableOrUnknown(
+          data['price_adjust']!,
+          _priceAdjustMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SessionItemModifier map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SessionItemModifier(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      sessionItemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}session_item_id'],
+      )!,
+      modifierName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}modifier_name'],
+      )!,
+      priceAdjust: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}price_adjust'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+    );
+  }
+
+  @override
+  $SessionItemModifiersTable createAlias(String alias) {
+    return $SessionItemModifiersTable(attachedDatabase, alias);
+  }
+}
+
+class SessionItemModifier extends DataClass
+    implements Insertable<SessionItemModifier> {
+  final String id;
+  final String sessionItemId;
+  final String modifierName;
+  final double priceAdjust;
+  final int sortOrder;
+  const SessionItemModifier({
+    required this.id,
+    required this.sessionItemId,
+    required this.modifierName,
+    required this.priceAdjust,
+    required this.sortOrder,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['session_item_id'] = Variable<String>(sessionItemId);
+    map['modifier_name'] = Variable<String>(modifierName);
+    map['price_adjust'] = Variable<double>(priceAdjust);
+    map['sort_order'] = Variable<int>(sortOrder);
+    return map;
+  }
+
+  SessionItemModifiersCompanion toCompanion(bool nullToAbsent) {
+    return SessionItemModifiersCompanion(
+      id: Value(id),
+      sessionItemId: Value(sessionItemId),
+      modifierName: Value(modifierName),
+      priceAdjust: Value(priceAdjust),
+      sortOrder: Value(sortOrder),
+    );
+  }
+
+  factory SessionItemModifier.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SessionItemModifier(
+      id: serializer.fromJson<String>(json['id']),
+      sessionItemId: serializer.fromJson<String>(json['sessionItemId']),
+      modifierName: serializer.fromJson<String>(json['modifierName']),
+      priceAdjust: serializer.fromJson<double>(json['priceAdjust']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'sessionItemId': serializer.toJson<String>(sessionItemId),
+      'modifierName': serializer.toJson<String>(modifierName),
+      'priceAdjust': serializer.toJson<double>(priceAdjust),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+    };
+  }
+
+  SessionItemModifier copyWith({
+    String? id,
+    String? sessionItemId,
+    String? modifierName,
+    double? priceAdjust,
+    int? sortOrder,
+  }) => SessionItemModifier(
+    id: id ?? this.id,
+    sessionItemId: sessionItemId ?? this.sessionItemId,
+    modifierName: modifierName ?? this.modifierName,
+    priceAdjust: priceAdjust ?? this.priceAdjust,
+    sortOrder: sortOrder ?? this.sortOrder,
+  );
+  SessionItemModifier copyWithCompanion(SessionItemModifiersCompanion data) {
+    return SessionItemModifier(
+      id: data.id.present ? data.id.value : this.id,
+      sessionItemId: data.sessionItemId.present
+          ? data.sessionItemId.value
+          : this.sessionItemId,
+      modifierName: data.modifierName.present
+          ? data.modifierName.value
+          : this.modifierName,
+      priceAdjust: data.priceAdjust.present
+          ? data.priceAdjust.value
+          : this.priceAdjust,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SessionItemModifier(')
+          ..write('id: $id, ')
+          ..write('sessionItemId: $sessionItemId, ')
+          ..write('modifierName: $modifierName, ')
+          ..write('priceAdjust: $priceAdjust, ')
+          ..write('sortOrder: $sortOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, sessionItemId, modifierName, priceAdjust, sortOrder);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SessionItemModifier &&
+          other.id == this.id &&
+          other.sessionItemId == this.sessionItemId &&
+          other.modifierName == this.modifierName &&
+          other.priceAdjust == this.priceAdjust &&
+          other.sortOrder == this.sortOrder);
+}
+
+class SessionItemModifiersCompanion
+    extends UpdateCompanion<SessionItemModifier> {
+  final Value<String> id;
+  final Value<String> sessionItemId;
+  final Value<String> modifierName;
+  final Value<double> priceAdjust;
+  final Value<int> sortOrder;
+  final Value<int> rowid;
+  const SessionItemModifiersCompanion({
+    this.id = const Value.absent(),
+    this.sessionItemId = const Value.absent(),
+    this.modifierName = const Value.absent(),
+    this.priceAdjust = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SessionItemModifiersCompanion.insert({
+    required String id,
+    required String sessionItemId,
+    required String modifierName,
+    this.priceAdjust = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       sessionItemId = Value(sessionItemId),
+       modifierName = Value(modifierName);
+  static Insertable<SessionItemModifier> custom({
+    Expression<String>? id,
+    Expression<String>? sessionItemId,
+    Expression<String>? modifierName,
+    Expression<double>? priceAdjust,
+    Expression<int>? sortOrder,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sessionItemId != null) 'session_item_id': sessionItemId,
+      if (modifierName != null) 'modifier_name': modifierName,
+      if (priceAdjust != null) 'price_adjust': priceAdjust,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SessionItemModifiersCompanion copyWith({
+    Value<String>? id,
+    Value<String>? sessionItemId,
+    Value<String>? modifierName,
+    Value<double>? priceAdjust,
+    Value<int>? sortOrder,
+    Value<int>? rowid,
+  }) {
+    return SessionItemModifiersCompanion(
+      id: id ?? this.id,
+      sessionItemId: sessionItemId ?? this.sessionItemId,
+      modifierName: modifierName ?? this.modifierName,
+      priceAdjust: priceAdjust ?? this.priceAdjust,
+      sortOrder: sortOrder ?? this.sortOrder,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (sessionItemId.present) {
+      map['session_item_id'] = Variable<String>(sessionItemId.value);
+    }
+    if (modifierName.present) {
+      map['modifier_name'] = Variable<String>(modifierName.value);
+    }
+    if (priceAdjust.present) {
+      map['price_adjust'] = Variable<double>(priceAdjust.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SessionItemModifiersCompanion(')
+          ..write('id: $id, ')
+          ..write('sessionItemId: $sessionItemId, ')
+          ..write('modifierName: $modifierName, ')
+          ..write('priceAdjust: $priceAdjust, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $KitchenTicketsTable extends KitchenTickets
+    with TableInfo<$KitchenTicketsTable, KitchenTicket> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $KitchenTicketsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<String> sessionId = GeneratedColumn<String>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES ban_sessions (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _tableLabelMeta = const VerificationMeta(
+    'tableLabel',
+  );
+  @override
+  late final GeneratedColumn<String> tableLabel = GeneratedColumn<String>(
+    'table_label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _zoneLabelMeta = const VerificationMeta(
+    'zoneLabel',
+  );
+  @override
+  late final GeneratedColumn<String> zoneLabel = GeneratedColumn<String>(
+    'zone_label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _roundMeta = const VerificationMeta('round');
+  @override
+  late final GeneratedColumn<int> round = GeneratedColumn<int>(
+    'round',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _stationIdMeta = const VerificationMeta(
+    'stationId',
+  );
+  @override
+  late final GeneratedColumn<String> stationId = GeneratedColumn<String>(
+    'station_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES kitchen_stations (id)',
+    ),
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('cho'),
+  );
+  static const VerificationMeta _sentAtMeta = const VerificationMeta('sentAt');
+  @override
+  late final GeneratedColumn<int> sentAt = GeneratedColumn<int>(
+    'sent_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<int> startedAt = GeneratedColumn<int>(
+    'started_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _doneAtMeta = const VerificationMeta('doneAt');
+  @override
+  late final GeneratedColumn<int> doneAt = GeneratedColumn<int>(
+    'done_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sessionId,
+    tableLabel,
+    zoneLabel,
+    round,
+    stationId,
+    status,
+    sentAt,
+    startedAt,
+    doneAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'kitchen_tickets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<KitchenTicket> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionIdMeta);
+    }
+    if (data.containsKey('table_label')) {
+      context.handle(
+        _tableLabelMeta,
+        tableLabel.isAcceptableOrUnknown(data['table_label']!, _tableLabelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tableLabelMeta);
+    }
+    if (data.containsKey('zone_label')) {
+      context.handle(
+        _zoneLabelMeta,
+        zoneLabel.isAcceptableOrUnknown(data['zone_label']!, _zoneLabelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_zoneLabelMeta);
+    }
+    if (data.containsKey('round')) {
+      context.handle(
+        _roundMeta,
+        round.isAcceptableOrUnknown(data['round']!, _roundMeta),
+      );
+    }
+    if (data.containsKey('station_id')) {
+      context.handle(
+        _stationIdMeta,
+        stationId.isAcceptableOrUnknown(data['station_id']!, _stationIdMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('sent_at')) {
+      context.handle(
+        _sentAtMeta,
+        sentAt.isAcceptableOrUnknown(data['sent_at']!, _sentAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sentAtMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    }
+    if (data.containsKey('done_at')) {
+      context.handle(
+        _doneAtMeta,
+        doneAt.isAcceptableOrUnknown(data['done_at']!, _doneAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  KitchenTicket map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return KitchenTicket(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}session_id'],
+      )!,
+      tableLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}table_label'],
+      )!,
+      zoneLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}zone_label'],
+      )!,
+      round: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}round'],
+      )!,
+      stationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}station_id'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      sentAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sent_at'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}started_at'],
+      ),
+      doneAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}done_at'],
+      ),
+    );
+  }
+
+  @override
+  $KitchenTicketsTable createAlias(String alias) {
+    return $KitchenTicketsTable(attachedDatabase, alias);
+  }
+}
+
+class KitchenTicket extends DataClass implements Insertable<KitchenTicket> {
+  final String id;
+  final String sessionId;
+  final String tableLabel;
+  final String zoneLabel;
+  final int round;
+  final String? stationId;
+  final String status;
+  final int sentAt;
+  final int? startedAt;
+  final int? doneAt;
+  const KitchenTicket({
+    required this.id,
+    required this.sessionId,
+    required this.tableLabel,
+    required this.zoneLabel,
+    required this.round,
+    this.stationId,
+    required this.status,
+    required this.sentAt,
+    this.startedAt,
+    this.doneAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['session_id'] = Variable<String>(sessionId);
+    map['table_label'] = Variable<String>(tableLabel);
+    map['zone_label'] = Variable<String>(zoneLabel);
+    map['round'] = Variable<int>(round);
+    if (!nullToAbsent || stationId != null) {
+      map['station_id'] = Variable<String>(stationId);
+    }
+    map['status'] = Variable<String>(status);
+    map['sent_at'] = Variable<int>(sentAt);
+    if (!nullToAbsent || startedAt != null) {
+      map['started_at'] = Variable<int>(startedAt);
+    }
+    if (!nullToAbsent || doneAt != null) {
+      map['done_at'] = Variable<int>(doneAt);
+    }
+    return map;
+  }
+
+  KitchenTicketsCompanion toCompanion(bool nullToAbsent) {
+    return KitchenTicketsCompanion(
+      id: Value(id),
+      sessionId: Value(sessionId),
+      tableLabel: Value(tableLabel),
+      zoneLabel: Value(zoneLabel),
+      round: Value(round),
+      stationId: stationId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stationId),
+      status: Value(status),
+      sentAt: Value(sentAt),
+      startedAt: startedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startedAt),
+      doneAt: doneAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(doneAt),
+    );
+  }
+
+  factory KitchenTicket.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return KitchenTicket(
+      id: serializer.fromJson<String>(json['id']),
+      sessionId: serializer.fromJson<String>(json['sessionId']),
+      tableLabel: serializer.fromJson<String>(json['tableLabel']),
+      zoneLabel: serializer.fromJson<String>(json['zoneLabel']),
+      round: serializer.fromJson<int>(json['round']),
+      stationId: serializer.fromJson<String?>(json['stationId']),
+      status: serializer.fromJson<String>(json['status']),
+      sentAt: serializer.fromJson<int>(json['sentAt']),
+      startedAt: serializer.fromJson<int?>(json['startedAt']),
+      doneAt: serializer.fromJson<int?>(json['doneAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'sessionId': serializer.toJson<String>(sessionId),
+      'tableLabel': serializer.toJson<String>(tableLabel),
+      'zoneLabel': serializer.toJson<String>(zoneLabel),
+      'round': serializer.toJson<int>(round),
+      'stationId': serializer.toJson<String?>(stationId),
+      'status': serializer.toJson<String>(status),
+      'sentAt': serializer.toJson<int>(sentAt),
+      'startedAt': serializer.toJson<int?>(startedAt),
+      'doneAt': serializer.toJson<int?>(doneAt),
+    };
+  }
+
+  KitchenTicket copyWith({
+    String? id,
+    String? sessionId,
+    String? tableLabel,
+    String? zoneLabel,
+    int? round,
+    Value<String?> stationId = const Value.absent(),
+    String? status,
+    int? sentAt,
+    Value<int?> startedAt = const Value.absent(),
+    Value<int?> doneAt = const Value.absent(),
+  }) => KitchenTicket(
+    id: id ?? this.id,
+    sessionId: sessionId ?? this.sessionId,
+    tableLabel: tableLabel ?? this.tableLabel,
+    zoneLabel: zoneLabel ?? this.zoneLabel,
+    round: round ?? this.round,
+    stationId: stationId.present ? stationId.value : this.stationId,
+    status: status ?? this.status,
+    sentAt: sentAt ?? this.sentAt,
+    startedAt: startedAt.present ? startedAt.value : this.startedAt,
+    doneAt: doneAt.present ? doneAt.value : this.doneAt,
+  );
+  KitchenTicket copyWithCompanion(KitchenTicketsCompanion data) {
+    return KitchenTicket(
+      id: data.id.present ? data.id.value : this.id,
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      tableLabel: data.tableLabel.present
+          ? data.tableLabel.value
+          : this.tableLabel,
+      zoneLabel: data.zoneLabel.present ? data.zoneLabel.value : this.zoneLabel,
+      round: data.round.present ? data.round.value : this.round,
+      stationId: data.stationId.present ? data.stationId.value : this.stationId,
+      status: data.status.present ? data.status.value : this.status,
+      sentAt: data.sentAt.present ? data.sentAt.value : this.sentAt,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      doneAt: data.doneAt.present ? data.doneAt.value : this.doneAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KitchenTicket(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('tableLabel: $tableLabel, ')
+          ..write('zoneLabel: $zoneLabel, ')
+          ..write('round: $round, ')
+          ..write('stationId: $stationId, ')
+          ..write('status: $status, ')
+          ..write('sentAt: $sentAt, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('doneAt: $doneAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    sessionId,
+    tableLabel,
+    zoneLabel,
+    round,
+    stationId,
+    status,
+    sentAt,
+    startedAt,
+    doneAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is KitchenTicket &&
+          other.id == this.id &&
+          other.sessionId == this.sessionId &&
+          other.tableLabel == this.tableLabel &&
+          other.zoneLabel == this.zoneLabel &&
+          other.round == this.round &&
+          other.stationId == this.stationId &&
+          other.status == this.status &&
+          other.sentAt == this.sentAt &&
+          other.startedAt == this.startedAt &&
+          other.doneAt == this.doneAt);
+}
+
+class KitchenTicketsCompanion extends UpdateCompanion<KitchenTicket> {
+  final Value<String> id;
+  final Value<String> sessionId;
+  final Value<String> tableLabel;
+  final Value<String> zoneLabel;
+  final Value<int> round;
+  final Value<String?> stationId;
+  final Value<String> status;
+  final Value<int> sentAt;
+  final Value<int?> startedAt;
+  final Value<int?> doneAt;
+  final Value<int> rowid;
+  const KitchenTicketsCompanion({
+    this.id = const Value.absent(),
+    this.sessionId = const Value.absent(),
+    this.tableLabel = const Value.absent(),
+    this.zoneLabel = const Value.absent(),
+    this.round = const Value.absent(),
+    this.stationId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.sentAt = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.doneAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  KitchenTicketsCompanion.insert({
+    required String id,
+    required String sessionId,
+    required String tableLabel,
+    required String zoneLabel,
+    this.round = const Value.absent(),
+    this.stationId = const Value.absent(),
+    this.status = const Value.absent(),
+    required int sentAt,
+    this.startedAt = const Value.absent(),
+    this.doneAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       sessionId = Value(sessionId),
+       tableLabel = Value(tableLabel),
+       zoneLabel = Value(zoneLabel),
+       sentAt = Value(sentAt);
+  static Insertable<KitchenTicket> custom({
+    Expression<String>? id,
+    Expression<String>? sessionId,
+    Expression<String>? tableLabel,
+    Expression<String>? zoneLabel,
+    Expression<int>? round,
+    Expression<String>? stationId,
+    Expression<String>? status,
+    Expression<int>? sentAt,
+    Expression<int>? startedAt,
+    Expression<int>? doneAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sessionId != null) 'session_id': sessionId,
+      if (tableLabel != null) 'table_label': tableLabel,
+      if (zoneLabel != null) 'zone_label': zoneLabel,
+      if (round != null) 'round': round,
+      if (stationId != null) 'station_id': stationId,
+      if (status != null) 'status': status,
+      if (sentAt != null) 'sent_at': sentAt,
+      if (startedAt != null) 'started_at': startedAt,
+      if (doneAt != null) 'done_at': doneAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  KitchenTicketsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? sessionId,
+    Value<String>? tableLabel,
+    Value<String>? zoneLabel,
+    Value<int>? round,
+    Value<String?>? stationId,
+    Value<String>? status,
+    Value<int>? sentAt,
+    Value<int?>? startedAt,
+    Value<int?>? doneAt,
+    Value<int>? rowid,
+  }) {
+    return KitchenTicketsCompanion(
+      id: id ?? this.id,
+      sessionId: sessionId ?? this.sessionId,
+      tableLabel: tableLabel ?? this.tableLabel,
+      zoneLabel: zoneLabel ?? this.zoneLabel,
+      round: round ?? this.round,
+      stationId: stationId ?? this.stationId,
+      status: status ?? this.status,
+      sentAt: sentAt ?? this.sentAt,
+      startedAt: startedAt ?? this.startedAt,
+      doneAt: doneAt ?? this.doneAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (sessionId.present) {
+      map['session_id'] = Variable<String>(sessionId.value);
+    }
+    if (tableLabel.present) {
+      map['table_label'] = Variable<String>(tableLabel.value);
+    }
+    if (zoneLabel.present) {
+      map['zone_label'] = Variable<String>(zoneLabel.value);
+    }
+    if (round.present) {
+      map['round'] = Variable<int>(round.value);
+    }
+    if (stationId.present) {
+      map['station_id'] = Variable<String>(stationId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (sentAt.present) {
+      map['sent_at'] = Variable<int>(sentAt.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<int>(startedAt.value);
+    }
+    if (doneAt.present) {
+      map['done_at'] = Variable<int>(doneAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KitchenTicketsCompanion(')
+          ..write('id: $id, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('tableLabel: $tableLabel, ')
+          ..write('zoneLabel: $zoneLabel, ')
+          ..write('round: $round, ')
+          ..write('stationId: $stationId, ')
+          ..write('status: $status, ')
+          ..write('sentAt: $sentAt, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('doneAt: $doneAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $KitchenTicketItemsTable extends KitchenTicketItems
+    with TableInfo<$KitchenTicketItemsTable, KitchenTicketItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $KitchenTicketItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ticketIdMeta = const VerificationMeta(
+    'ticketId',
+  );
+  @override
+  late final GeneratedColumn<String> ticketId = GeneratedColumn<String>(
+    'ticket_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES kitchen_tickets (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _sessionItemIdMeta = const VerificationMeta(
+    'sessionItemId',
+  );
+  @override
+  late final GeneratedColumn<String> sessionItemId = GeneratedColumn<String>(
+    'session_item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES ban_session_items (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _productNameMeta = const VerificationMeta(
+    'productName',
+  );
+  @override
+  late final GeneratedColumn<String> productName = GeneratedColumn<String>(
+    'product_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _quantityMeta = const VerificationMeta(
+    'quantity',
+  );
+  @override
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
+    'quantity',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _modifiersJsonMeta = const VerificationMeta(
+    'modifiersJson',
+  );
+  @override
+  late final GeneratedColumn<String> modifiersJson = GeneratedColumn<String>(
+    'modifiers_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _freeNoteMeta = const VerificationMeta(
+    'freeNote',
+  );
+  @override
+  late final GeneratedColumn<String> freeNote = GeneratedColumn<String>(
+    'free_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _kitchenNoteMeta = const VerificationMeta(
+    'kitchenNote',
+  );
+  @override
+  late final GeneratedColumn<String> kitchenNote = GeneratedColumn<String>(
+    'kitchen_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _editHistoryJsonMeta = const VerificationMeta(
+    'editHistoryJson',
+  );
+  @override
+  late final GeneratedColumn<String> editHistoryJson = GeneratedColumn<String>(
+    'edit_history_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('cho'),
+  );
+  static const VerificationMeta _stationCodeMeta = const VerificationMeta(
+    'stationCode',
+  );
+  @override
+  late final GeneratedColumn<String> stationCode = GeneratedColumn<String>(
+    'station_code',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('nong'),
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<int> startedAt = GeneratedColumn<int>(
+    'started_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _doneAtMeta = const VerificationMeta('doneAt');
+  @override
+  late final GeneratedColumn<int> doneAt = GeneratedColumn<int>(
+    'done_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    ticketId,
+    sessionItemId,
+    productName,
+    quantity,
+    modifiersJson,
+    freeNote,
+    kitchenNote,
+    editHistoryJson,
+    status,
+    stationCode,
+    startedAt,
+    doneAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'kitchen_ticket_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<KitchenTicketItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('ticket_id')) {
+      context.handle(
+        _ticketIdMeta,
+        ticketId.isAcceptableOrUnknown(data['ticket_id']!, _ticketIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ticketIdMeta);
+    }
+    if (data.containsKey('session_item_id')) {
+      context.handle(
+        _sessionItemIdMeta,
+        sessionItemId.isAcceptableOrUnknown(
+          data['session_item_id']!,
+          _sessionItemIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sessionItemIdMeta);
+    }
+    if (data.containsKey('product_name')) {
+      context.handle(
+        _productNameMeta,
+        productName.isAcceptableOrUnknown(
+          data['product_name']!,
+          _productNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_productNameMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(
+        _quantityMeta,
+        quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_quantityMeta);
+    }
+    if (data.containsKey('modifiers_json')) {
+      context.handle(
+        _modifiersJsonMeta,
+        modifiersJson.isAcceptableOrUnknown(
+          data['modifiers_json']!,
+          _modifiersJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('free_note')) {
+      context.handle(
+        _freeNoteMeta,
+        freeNote.isAcceptableOrUnknown(data['free_note']!, _freeNoteMeta),
+      );
+    }
+    if (data.containsKey('kitchen_note')) {
+      context.handle(
+        _kitchenNoteMeta,
+        kitchenNote.isAcceptableOrUnknown(
+          data['kitchen_note']!,
+          _kitchenNoteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('edit_history_json')) {
+      context.handle(
+        _editHistoryJsonMeta,
+        editHistoryJson.isAcceptableOrUnknown(
+          data['edit_history_json']!,
+          _editHistoryJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('station_code')) {
+      context.handle(
+        _stationCodeMeta,
+        stationCode.isAcceptableOrUnknown(
+          data['station_code']!,
+          _stationCodeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    }
+    if (data.containsKey('done_at')) {
+      context.handle(
+        _doneAtMeta,
+        doneAt.isAcceptableOrUnknown(data['done_at']!, _doneAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  KitchenTicketItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return KitchenTicketItem(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      ticketId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ticket_id'],
+      )!,
+      sessionItemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}session_item_id'],
+      )!,
+      productName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_name'],
+      )!,
+      quantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}quantity'],
+      )!,
+      modifiersJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}modifiers_json'],
+      )!,
+      freeNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}free_note'],
+      ),
+      kitchenNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kitchen_note'],
+      ),
+      editHistoryJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}edit_history_json'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      stationCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}station_code'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}started_at'],
+      ),
+      doneAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}done_at'],
+      ),
+    );
+  }
+
+  @override
+  $KitchenTicketItemsTable createAlias(String alias) {
+    return $KitchenTicketItemsTable(attachedDatabase, alias);
+  }
+}
+
+class KitchenTicketItem extends DataClass
+    implements Insertable<KitchenTicketItem> {
+  final String id;
+  final String ticketId;
+  final String sessionItemId;
+  final String productName;
+  final double quantity;
+  final String modifiersJson;
+  final String? freeNote;
+  final String? kitchenNote;
+  final String? editHistoryJson;
+  final String status;
+  final String stationCode;
+  final int? startedAt;
+  final int? doneAt;
+  const KitchenTicketItem({
+    required this.id,
+    required this.ticketId,
+    required this.sessionItemId,
+    required this.productName,
+    required this.quantity,
+    required this.modifiersJson,
+    this.freeNote,
+    this.kitchenNote,
+    this.editHistoryJson,
+    required this.status,
+    required this.stationCode,
+    this.startedAt,
+    this.doneAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['ticket_id'] = Variable<String>(ticketId);
+    map['session_item_id'] = Variable<String>(sessionItemId);
+    map['product_name'] = Variable<String>(productName);
+    map['quantity'] = Variable<double>(quantity);
+    map['modifiers_json'] = Variable<String>(modifiersJson);
+    if (!nullToAbsent || freeNote != null) {
+      map['free_note'] = Variable<String>(freeNote);
+    }
+    if (!nullToAbsent || kitchenNote != null) {
+      map['kitchen_note'] = Variable<String>(kitchenNote);
+    }
+    if (!nullToAbsent || editHistoryJson != null) {
+      map['edit_history_json'] = Variable<String>(editHistoryJson);
+    }
+    map['status'] = Variable<String>(status);
+    map['station_code'] = Variable<String>(stationCode);
+    if (!nullToAbsent || startedAt != null) {
+      map['started_at'] = Variable<int>(startedAt);
+    }
+    if (!nullToAbsent || doneAt != null) {
+      map['done_at'] = Variable<int>(doneAt);
+    }
+    return map;
+  }
+
+  KitchenTicketItemsCompanion toCompanion(bool nullToAbsent) {
+    return KitchenTicketItemsCompanion(
+      id: Value(id),
+      ticketId: Value(ticketId),
+      sessionItemId: Value(sessionItemId),
+      productName: Value(productName),
+      quantity: Value(quantity),
+      modifiersJson: Value(modifiersJson),
+      freeNote: freeNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(freeNote),
+      kitchenNote: kitchenNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(kitchenNote),
+      editHistoryJson: editHistoryJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(editHistoryJson),
+      status: Value(status),
+      stationCode: Value(stationCode),
+      startedAt: startedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startedAt),
+      doneAt: doneAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(doneAt),
+    );
+  }
+
+  factory KitchenTicketItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return KitchenTicketItem(
+      id: serializer.fromJson<String>(json['id']),
+      ticketId: serializer.fromJson<String>(json['ticketId']),
+      sessionItemId: serializer.fromJson<String>(json['sessionItemId']),
+      productName: serializer.fromJson<String>(json['productName']),
+      quantity: serializer.fromJson<double>(json['quantity']),
+      modifiersJson: serializer.fromJson<String>(json['modifiersJson']),
+      freeNote: serializer.fromJson<String?>(json['freeNote']),
+      kitchenNote: serializer.fromJson<String?>(json['kitchenNote']),
+      editHistoryJson: serializer.fromJson<String?>(json['editHistoryJson']),
+      status: serializer.fromJson<String>(json['status']),
+      stationCode: serializer.fromJson<String>(json['stationCode']),
+      startedAt: serializer.fromJson<int?>(json['startedAt']),
+      doneAt: serializer.fromJson<int?>(json['doneAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'ticketId': serializer.toJson<String>(ticketId),
+      'sessionItemId': serializer.toJson<String>(sessionItemId),
+      'productName': serializer.toJson<String>(productName),
+      'quantity': serializer.toJson<double>(quantity),
+      'modifiersJson': serializer.toJson<String>(modifiersJson),
+      'freeNote': serializer.toJson<String?>(freeNote),
+      'kitchenNote': serializer.toJson<String?>(kitchenNote),
+      'editHistoryJson': serializer.toJson<String?>(editHistoryJson),
+      'status': serializer.toJson<String>(status),
+      'stationCode': serializer.toJson<String>(stationCode),
+      'startedAt': serializer.toJson<int?>(startedAt),
+      'doneAt': serializer.toJson<int?>(doneAt),
+    };
+  }
+
+  KitchenTicketItem copyWith({
+    String? id,
+    String? ticketId,
+    String? sessionItemId,
+    String? productName,
+    double? quantity,
+    String? modifiersJson,
+    Value<String?> freeNote = const Value.absent(),
+    Value<String?> kitchenNote = const Value.absent(),
+    Value<String?> editHistoryJson = const Value.absent(),
+    String? status,
+    String? stationCode,
+    Value<int?> startedAt = const Value.absent(),
+    Value<int?> doneAt = const Value.absent(),
+  }) => KitchenTicketItem(
+    id: id ?? this.id,
+    ticketId: ticketId ?? this.ticketId,
+    sessionItemId: sessionItemId ?? this.sessionItemId,
+    productName: productName ?? this.productName,
+    quantity: quantity ?? this.quantity,
+    modifiersJson: modifiersJson ?? this.modifiersJson,
+    freeNote: freeNote.present ? freeNote.value : this.freeNote,
+    kitchenNote: kitchenNote.present ? kitchenNote.value : this.kitchenNote,
+    editHistoryJson: editHistoryJson.present
+        ? editHistoryJson.value
+        : this.editHistoryJson,
+    status: status ?? this.status,
+    stationCode: stationCode ?? this.stationCode,
+    startedAt: startedAt.present ? startedAt.value : this.startedAt,
+    doneAt: doneAt.present ? doneAt.value : this.doneAt,
+  );
+  KitchenTicketItem copyWithCompanion(KitchenTicketItemsCompanion data) {
+    return KitchenTicketItem(
+      id: data.id.present ? data.id.value : this.id,
+      ticketId: data.ticketId.present ? data.ticketId.value : this.ticketId,
+      sessionItemId: data.sessionItemId.present
+          ? data.sessionItemId.value
+          : this.sessionItemId,
+      productName: data.productName.present
+          ? data.productName.value
+          : this.productName,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      modifiersJson: data.modifiersJson.present
+          ? data.modifiersJson.value
+          : this.modifiersJson,
+      freeNote: data.freeNote.present ? data.freeNote.value : this.freeNote,
+      kitchenNote: data.kitchenNote.present
+          ? data.kitchenNote.value
+          : this.kitchenNote,
+      editHistoryJson: data.editHistoryJson.present
+          ? data.editHistoryJson.value
+          : this.editHistoryJson,
+      status: data.status.present ? data.status.value : this.status,
+      stationCode: data.stationCode.present
+          ? data.stationCode.value
+          : this.stationCode,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      doneAt: data.doneAt.present ? data.doneAt.value : this.doneAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KitchenTicketItem(')
+          ..write('id: $id, ')
+          ..write('ticketId: $ticketId, ')
+          ..write('sessionItemId: $sessionItemId, ')
+          ..write('productName: $productName, ')
+          ..write('quantity: $quantity, ')
+          ..write('modifiersJson: $modifiersJson, ')
+          ..write('freeNote: $freeNote, ')
+          ..write('kitchenNote: $kitchenNote, ')
+          ..write('editHistoryJson: $editHistoryJson, ')
+          ..write('status: $status, ')
+          ..write('stationCode: $stationCode, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('doneAt: $doneAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    ticketId,
+    sessionItemId,
+    productName,
+    quantity,
+    modifiersJson,
+    freeNote,
+    kitchenNote,
+    editHistoryJson,
+    status,
+    stationCode,
+    startedAt,
+    doneAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is KitchenTicketItem &&
+          other.id == this.id &&
+          other.ticketId == this.ticketId &&
+          other.sessionItemId == this.sessionItemId &&
+          other.productName == this.productName &&
+          other.quantity == this.quantity &&
+          other.modifiersJson == this.modifiersJson &&
+          other.freeNote == this.freeNote &&
+          other.kitchenNote == this.kitchenNote &&
+          other.editHistoryJson == this.editHistoryJson &&
+          other.status == this.status &&
+          other.stationCode == this.stationCode &&
+          other.startedAt == this.startedAt &&
+          other.doneAt == this.doneAt);
+}
+
+class KitchenTicketItemsCompanion extends UpdateCompanion<KitchenTicketItem> {
+  final Value<String> id;
+  final Value<String> ticketId;
+  final Value<String> sessionItemId;
+  final Value<String> productName;
+  final Value<double> quantity;
+  final Value<String> modifiersJson;
+  final Value<String?> freeNote;
+  final Value<String?> kitchenNote;
+  final Value<String?> editHistoryJson;
+  final Value<String> status;
+  final Value<String> stationCode;
+  final Value<int?> startedAt;
+  final Value<int?> doneAt;
+  final Value<int> rowid;
+  const KitchenTicketItemsCompanion({
+    this.id = const Value.absent(),
+    this.ticketId = const Value.absent(),
+    this.sessionItemId = const Value.absent(),
+    this.productName = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.modifiersJson = const Value.absent(),
+    this.freeNote = const Value.absent(),
+    this.kitchenNote = const Value.absent(),
+    this.editHistoryJson = const Value.absent(),
+    this.status = const Value.absent(),
+    this.stationCode = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.doneAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  KitchenTicketItemsCompanion.insert({
+    required String id,
+    required String ticketId,
+    required String sessionItemId,
+    required String productName,
+    required double quantity,
+    this.modifiersJson = const Value.absent(),
+    this.freeNote = const Value.absent(),
+    this.kitchenNote = const Value.absent(),
+    this.editHistoryJson = const Value.absent(),
+    this.status = const Value.absent(),
+    this.stationCode = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.doneAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       ticketId = Value(ticketId),
+       sessionItemId = Value(sessionItemId),
+       productName = Value(productName),
+       quantity = Value(quantity);
+  static Insertable<KitchenTicketItem> custom({
+    Expression<String>? id,
+    Expression<String>? ticketId,
+    Expression<String>? sessionItemId,
+    Expression<String>? productName,
+    Expression<double>? quantity,
+    Expression<String>? modifiersJson,
+    Expression<String>? freeNote,
+    Expression<String>? kitchenNote,
+    Expression<String>? editHistoryJson,
+    Expression<String>? status,
+    Expression<String>? stationCode,
+    Expression<int>? startedAt,
+    Expression<int>? doneAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (ticketId != null) 'ticket_id': ticketId,
+      if (sessionItemId != null) 'session_item_id': sessionItemId,
+      if (productName != null) 'product_name': productName,
+      if (quantity != null) 'quantity': quantity,
+      if (modifiersJson != null) 'modifiers_json': modifiersJson,
+      if (freeNote != null) 'free_note': freeNote,
+      if (kitchenNote != null) 'kitchen_note': kitchenNote,
+      if (editHistoryJson != null) 'edit_history_json': editHistoryJson,
+      if (status != null) 'status': status,
+      if (stationCode != null) 'station_code': stationCode,
+      if (startedAt != null) 'started_at': startedAt,
+      if (doneAt != null) 'done_at': doneAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  KitchenTicketItemsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? ticketId,
+    Value<String>? sessionItemId,
+    Value<String>? productName,
+    Value<double>? quantity,
+    Value<String>? modifiersJson,
+    Value<String?>? freeNote,
+    Value<String?>? kitchenNote,
+    Value<String?>? editHistoryJson,
+    Value<String>? status,
+    Value<String>? stationCode,
+    Value<int?>? startedAt,
+    Value<int?>? doneAt,
+    Value<int>? rowid,
+  }) {
+    return KitchenTicketItemsCompanion(
+      id: id ?? this.id,
+      ticketId: ticketId ?? this.ticketId,
+      sessionItemId: sessionItemId ?? this.sessionItemId,
+      productName: productName ?? this.productName,
+      quantity: quantity ?? this.quantity,
+      modifiersJson: modifiersJson ?? this.modifiersJson,
+      freeNote: freeNote ?? this.freeNote,
+      kitchenNote: kitchenNote ?? this.kitchenNote,
+      editHistoryJson: editHistoryJson ?? this.editHistoryJson,
+      status: status ?? this.status,
+      stationCode: stationCode ?? this.stationCode,
+      startedAt: startedAt ?? this.startedAt,
+      doneAt: doneAt ?? this.doneAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (ticketId.present) {
+      map['ticket_id'] = Variable<String>(ticketId.value);
+    }
+    if (sessionItemId.present) {
+      map['session_item_id'] = Variable<String>(sessionItemId.value);
+    }
+    if (productName.present) {
+      map['product_name'] = Variable<String>(productName.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<double>(quantity.value);
+    }
+    if (modifiersJson.present) {
+      map['modifiers_json'] = Variable<String>(modifiersJson.value);
+    }
+    if (freeNote.present) {
+      map['free_note'] = Variable<String>(freeNote.value);
+    }
+    if (kitchenNote.present) {
+      map['kitchen_note'] = Variable<String>(kitchenNote.value);
+    }
+    if (editHistoryJson.present) {
+      map['edit_history_json'] = Variable<String>(editHistoryJson.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (stationCode.present) {
+      map['station_code'] = Variable<String>(stationCode.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<int>(startedAt.value);
+    }
+    if (doneAt.present) {
+      map['done_at'] = Variable<int>(doneAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KitchenTicketItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('ticketId: $ticketId, ')
+          ..write('sessionItemId: $sessionItemId, ')
+          ..write('productName: $productName, ')
+          ..write('quantity: $quantity, ')
+          ..write('modifiersJson: $modifiersJson, ')
+          ..write('freeNote: $freeNote, ')
+          ..write('kitchenNote: $kitchenNote, ')
+          ..write('editHistoryJson: $editHistoryJson, ')
+          ..write('status: $status, ')
+          ..write('stationCode: $stationCode, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('doneAt: $doneAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -8677,6 +14207,28 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LoyaltyTransactionsTable loyaltyTransactions =
       $LoyaltyTransactionsTable(this);
   late final $LoyaltyRewardsTable loyaltyRewards = $LoyaltyRewardsTable(this);
+<<<<<<< HEAD
+  late final $BanZonesTable banZones = $BanZonesTable(this);
+  late final $BanDiningTablesTable banDiningTables = $BanDiningTablesTable(
+    this,
+  );
+  late final $BanSessionsTable banSessions = $BanSessionsTable(this);
+  late final $BanSessionItemsTable banSessionItems = $BanSessionItemsTable(
+    this,
+  );
+  late final $KitchenStationsTable kitchenStations = $KitchenStationsTable(
+    this,
+  );
+  late final $ProductModifiersTable productModifiers = $ProductModifiersTable(
+    this,
+  );
+  late final $SessionItemModifiersTable sessionItemModifiers =
+      $SessionItemModifiersTable(this);
+  late final $KitchenTicketsTable kitchenTickets = $KitchenTicketsTable(this);
+  late final $KitchenTicketItemsTable kitchenTicketItems =
+      $KitchenTicketItemsTable(this);
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -8700,6 +14252,18 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     financeRecords,
     loyaltyTransactions,
     loyaltyRewards,
+<<<<<<< HEAD
+    banZones,
+    banDiningTables,
+    banSessions,
+    banSessionItems,
+    kitchenStations,
+    productModifiers,
+    sessionItemModifiers,
+    kitchenTickets,
+    kitchenTicketItems,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -8731,6 +14295,58 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ),
       result: [TableUpdate('kho_purchase_items', kind: UpdateKind.delete)],
     ),
+<<<<<<< HEAD
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'ban_zones',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('ban_dining_tables', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'ban_sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('ban_session_items', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'core_products',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('product_modifiers', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'ban_session_items',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('session_item_modifiers', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'ban_sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('kitchen_tickets', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'kitchen_tickets',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('kitchen_ticket_items', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'ban_session_items',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('kitchen_ticket_items', kind: UpdateKind.delete)],
+    ),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   ]);
 }
 
@@ -9027,6 +14643,32 @@ final class $$CoreProductsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+<<<<<<< HEAD
+
+  static MultiTypedResultKey<$ProductModifiersTable, List<ProductModifier>>
+  _productModifiersRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.productModifiers,
+    aliasName: $_aliasNameGenerator(
+      db.coreProducts.id,
+      db.productModifiers.productId,
+    ),
+  );
+
+  $$ProductModifiersTableProcessedTableManager get productModifiersRefs {
+    final manager = $$ProductModifiersTableTableManager(
+      $_db,
+      $_db.productModifiers,
+    ).filter((f) => f.productId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _productModifiersRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }
 
 class $$CoreProductsTableFilterComposer
@@ -9197,6 +14839,34 @@ class $$CoreProductsTableFilterComposer
     );
     return f(composer);
   }
+<<<<<<< HEAD
+
+  Expression<bool> productModifiersRefs(
+    Expression<bool> Function($$ProductModifiersTableFilterComposer f) f,
+  ) {
+    final $$ProductModifiersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.productModifiers,
+      getReferencedColumn: (t) => t.productId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductModifiersTableFilterComposer(
+            $db: $db,
+            $table: $db.productModifiers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }
 
 class $$CoreProductsTableOrderingComposer
@@ -9433,6 +15103,34 @@ class $$CoreProductsTableAnnotationComposer
     );
     return f(composer);
   }
+<<<<<<< HEAD
+
+  Expression<T> productModifiersRefs<T extends Object>(
+    Expression<T> Function($$ProductModifiersTableAnnotationComposer a) f,
+  ) {
+    final $$ProductModifiersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.productModifiers,
+      getReferencedColumn: (t) => t.productId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductModifiersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.productModifiers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }
 
 class $$CoreProductsTableTableManager
@@ -9452,6 +15150,10 @@ class $$CoreProductsTableTableManager
             bool khoStockMovementsRefs,
             bool khoRecipesRefs,
             bool khoRecipeItemsRefs,
+<<<<<<< HEAD
+            bool productModifiersRefs,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           })
         > {
   $$CoreProductsTableTableManager(_$AppDatabase db, $CoreProductsTable table)
@@ -9558,6 +15260,10 @@ class $$CoreProductsTableTableManager
                 khoStockMovementsRefs = false,
                 khoRecipesRefs = false,
                 khoRecipeItemsRefs = false,
+<<<<<<< HEAD
+                productModifiersRefs = false,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -9565,6 +15271,10 @@ class $$CoreProductsTableTableManager
                     if (khoStockMovementsRefs) db.khoStockMovements,
                     if (khoRecipesRefs) db.khoRecipes,
                     if (khoRecipeItemsRefs) db.khoRecipeItems,
+<<<<<<< HEAD
+                    if (productModifiersRefs) db.productModifiers,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -9632,6 +15342,30 @@ class $$CoreProductsTableTableManager
                               ),
                           typedResults: items,
                         ),
+<<<<<<< HEAD
+                      if (productModifiersRefs)
+                        await $_getPrefetchedData<
+                          CoreProduct,
+                          $CoreProductsTable,
+                          ProductModifier
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CoreProductsTableReferences
+                              ._productModifiersRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CoreProductsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).productModifiersRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.productId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                     ];
                   },
                 );
@@ -9656,6 +15390,10 @@ typedef $$CoreProductsTableProcessedTableManager =
         bool khoStockMovementsRefs,
         bool khoRecipesRefs,
         bool khoRecipeItemsRefs,
+<<<<<<< HEAD
+        bool productModifiersRefs,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       })
     >;
 typedef $$CoreCustomersTableCreateCompanionBuilder =
@@ -11042,6 +16780,12 @@ typedef $$PosOrdersTableCreateCompanionBuilder =
       Value<String> status,
       Value<String?> note,
       Value<bool> receiptPrinted,
+<<<<<<< HEAD
+      Value<String?> sourceType,
+      Value<String?> sourceId,
+      Value<String?> staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       required int createdAt,
       Value<int> rowid,
     });
@@ -11061,6 +16805,12 @@ typedef $$PosOrdersTableUpdateCompanionBuilder =
       Value<String> status,
       Value<String?> note,
       Value<bool> receiptPrinted,
+<<<<<<< HEAD
+      Value<String?> sourceType,
+      Value<String?> sourceId,
+      Value<String?> staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       Value<int> createdAt,
       Value<int> rowid,
     });
@@ -11181,6 +16931,24 @@ class $$PosOrdersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+<<<<<<< HEAD
+  ColumnFilters<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get staffId => $composableBuilder(
+    column: $table.staffId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   ColumnFilters<int> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
@@ -11309,6 +17077,24 @@ class $$PosOrdersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+<<<<<<< HEAD
+  ColumnOrderings<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get staffId => $composableBuilder(
+    column: $table.staffId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   ColumnOrderings<int> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -11400,6 +17186,20 @@ class $$PosOrdersTableAnnotationComposer
     builder: (column) => column,
   );
 
+<<<<<<< HEAD
+  GeneratedColumn<String> get sourceType => $composableBuilder(
+    column: $table.sourceType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
+
+  GeneratedColumn<String> get staffId =>
+      $composableBuilder(column: $table.staffId, builder: (column) => column);
+
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   GeneratedColumn<int> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -11494,6 +17294,12 @@ class $$PosOrdersTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> receiptPrinted = const Value.absent(),
+<<<<<<< HEAD
+                Value<String?> sourceType = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
+                Value<String?> staffId = const Value.absent(),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 Value<int> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PosOrdersCompanion(
@@ -11511,6 +17317,12 @@ class $$PosOrdersTableTableManager
                 status: status,
                 note: note,
                 receiptPrinted: receiptPrinted,
+<<<<<<< HEAD
+                sourceType: sourceType,
+                sourceId: sourceId,
+                staffId: staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -11530,6 +17342,12 @@ class $$PosOrdersTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> receiptPrinted = const Value.absent(),
+<<<<<<< HEAD
+                Value<String?> sourceType = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
+                Value<String?> staffId = const Value.absent(),
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 required int createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => PosOrdersCompanion.insert(
@@ -11547,6 +17365,12 @@ class $$PosOrdersTableTableManager
                 status: status,
                 note: note,
                 receiptPrinted: receiptPrinted,
+<<<<<<< HEAD
+                sourceType: sourceType,
+                sourceId: sourceId,
+                staffId: staffId,
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -15709,6 +21533,4555 @@ typedef $$LoyaltyRewardsTableProcessedTableManager =
       LoyaltyReward,
       PrefetchHooks Function()
     >;
+<<<<<<< HEAD
+typedef $$BanZonesTableCreateCompanionBuilder =
+    BanZonesCompanion Function({
+      required String id,
+      required String name,
+      Value<String> color,
+      Value<int> iconCode,
+      Value<int> sortOrder,
+      Value<bool> isActive,
+      required int createdAt,
+      Value<double> canvasX,
+      Value<double> canvasY,
+      Value<double> canvasWidth,
+      Value<double> canvasHeight,
+      Value<int> rowid,
+    });
+typedef $$BanZonesTableUpdateCompanionBuilder =
+    BanZonesCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String> color,
+      Value<int> iconCode,
+      Value<int> sortOrder,
+      Value<bool> isActive,
+      Value<int> createdAt,
+      Value<double> canvasX,
+      Value<double> canvasY,
+      Value<double> canvasWidth,
+      Value<double> canvasHeight,
+      Value<int> rowid,
+    });
+
+final class $$BanZonesTableReferences
+    extends BaseReferences<_$AppDatabase, $BanZonesTable, BanZone> {
+  $$BanZonesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$BanDiningTablesTable, List<BanDiningTable>>
+  _banDiningTablesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.banDiningTables,
+    aliasName: $_aliasNameGenerator(db.banZones.id, db.banDiningTables.zoneId),
+  );
+
+  $$BanDiningTablesTableProcessedTableManager get banDiningTablesRefs {
+    final manager = $$BanDiningTablesTableTableManager(
+      $_db,
+      $_db.banDiningTables,
+    ).filter((f) => f.zoneId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _banDiningTablesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$BanZonesTableFilterComposer
+    extends Composer<_$AppDatabase, $BanZonesTable> {
+  $$BanZonesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get iconCode => $composableBuilder(
+    column: $table.iconCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get canvasX => $composableBuilder(
+    column: $table.canvasX,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get canvasY => $composableBuilder(
+    column: $table.canvasY,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get canvasWidth => $composableBuilder(
+    column: $table.canvasWidth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get canvasHeight => $composableBuilder(
+    column: $table.canvasHeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> banDiningTablesRefs(
+    Expression<bool> Function($$BanDiningTablesTableFilterComposer f) f,
+  ) {
+    final $$BanDiningTablesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.banDiningTables,
+      getReferencedColumn: (t) => t.zoneId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanDiningTablesTableFilterComposer(
+            $db: $db,
+            $table: $db.banDiningTables,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BanZonesTableOrderingComposer
+    extends Composer<_$AppDatabase, $BanZonesTable> {
+  $$BanZonesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get iconCode => $composableBuilder(
+    column: $table.iconCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get canvasX => $composableBuilder(
+    column: $table.canvasX,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get canvasY => $composableBuilder(
+    column: $table.canvasY,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get canvasWidth => $composableBuilder(
+    column: $table.canvasWidth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get canvasHeight => $composableBuilder(
+    column: $table.canvasHeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BanZonesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BanZonesTable> {
+  $$BanZonesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<int> get iconCode =>
+      $composableBuilder(column: $table.iconCode, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<double> get canvasX =>
+      $composableBuilder(column: $table.canvasX, builder: (column) => column);
+
+  GeneratedColumn<double> get canvasY =>
+      $composableBuilder(column: $table.canvasY, builder: (column) => column);
+
+  GeneratedColumn<double> get canvasWidth => $composableBuilder(
+    column: $table.canvasWidth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get canvasHeight => $composableBuilder(
+    column: $table.canvasHeight,
+    builder: (column) => column,
+  );
+
+  Expression<T> banDiningTablesRefs<T extends Object>(
+    Expression<T> Function($$BanDiningTablesTableAnnotationComposer a) f,
+  ) {
+    final $$BanDiningTablesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.banDiningTables,
+      getReferencedColumn: (t) => t.zoneId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanDiningTablesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.banDiningTables,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BanZonesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BanZonesTable,
+          BanZone,
+          $$BanZonesTableFilterComposer,
+          $$BanZonesTableOrderingComposer,
+          $$BanZonesTableAnnotationComposer,
+          $$BanZonesTableCreateCompanionBuilder,
+          $$BanZonesTableUpdateCompanionBuilder,
+          (BanZone, $$BanZonesTableReferences),
+          BanZone,
+          PrefetchHooks Function({bool banDiningTablesRefs})
+        > {
+  $$BanZonesTableTableManager(_$AppDatabase db, $BanZonesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BanZonesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BanZonesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BanZonesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> color = const Value.absent(),
+                Value<int> iconCode = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<double> canvasX = const Value.absent(),
+                Value<double> canvasY = const Value.absent(),
+                Value<double> canvasWidth = const Value.absent(),
+                Value<double> canvasHeight = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BanZonesCompanion(
+                id: id,
+                name: name,
+                color: color,
+                iconCode: iconCode,
+                sortOrder: sortOrder,
+                isActive: isActive,
+                createdAt: createdAt,
+                canvasX: canvasX,
+                canvasY: canvasY,
+                canvasWidth: canvasWidth,
+                canvasHeight: canvasHeight,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                Value<String> color = const Value.absent(),
+                Value<int> iconCode = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                required int createdAt,
+                Value<double> canvasX = const Value.absent(),
+                Value<double> canvasY = const Value.absent(),
+                Value<double> canvasWidth = const Value.absent(),
+                Value<double> canvasHeight = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BanZonesCompanion.insert(
+                id: id,
+                name: name,
+                color: color,
+                iconCode: iconCode,
+                sortOrder: sortOrder,
+                isActive: isActive,
+                createdAt: createdAt,
+                canvasX: canvasX,
+                canvasY: canvasY,
+                canvasWidth: canvasWidth,
+                canvasHeight: canvasHeight,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$BanZonesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({banDiningTablesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (banDiningTablesRefs) db.banDiningTables,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (banDiningTablesRefs)
+                    await $_getPrefetchedData<
+                      BanZone,
+                      $BanZonesTable,
+                      BanDiningTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$BanZonesTableReferences
+                          ._banDiningTablesRefsTable(db),
+                      managerFromTypedResult: (p0) => $$BanZonesTableReferences(
+                        db,
+                        table,
+                        p0,
+                      ).banDiningTablesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.zoneId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$BanZonesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BanZonesTable,
+      BanZone,
+      $$BanZonesTableFilterComposer,
+      $$BanZonesTableOrderingComposer,
+      $$BanZonesTableAnnotationComposer,
+      $$BanZonesTableCreateCompanionBuilder,
+      $$BanZonesTableUpdateCompanionBuilder,
+      (BanZone, $$BanZonesTableReferences),
+      BanZone,
+      PrefetchHooks Function({bool banDiningTablesRefs})
+    >;
+typedef $$BanDiningTablesTableCreateCompanionBuilder =
+    BanDiningTablesCompanion Function({
+      required String id,
+      required String zoneId,
+      required String name,
+      Value<int> capacity,
+      Value<double> posX,
+      Value<double> posY,
+      Value<String> shape,
+      Value<double> tableWidth,
+      Value<double> tableHeight,
+      Value<String?> qrToken,
+      Value<int> sortOrder,
+      Value<bool> isActive,
+      required int createdAt,
+      Value<int> rowid,
+    });
+typedef $$BanDiningTablesTableUpdateCompanionBuilder =
+    BanDiningTablesCompanion Function({
+      Value<String> id,
+      Value<String> zoneId,
+      Value<String> name,
+      Value<int> capacity,
+      Value<double> posX,
+      Value<double> posY,
+      Value<String> shape,
+      Value<double> tableWidth,
+      Value<double> tableHeight,
+      Value<String?> qrToken,
+      Value<int> sortOrder,
+      Value<bool> isActive,
+      Value<int> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$BanDiningTablesTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $BanDiningTablesTable, BanDiningTable> {
+  $$BanDiningTablesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $BanZonesTable _zoneIdTable(_$AppDatabase db) =>
+      db.banZones.createAlias(
+        $_aliasNameGenerator(db.banDiningTables.zoneId, db.banZones.id),
+      );
+
+  $$BanZonesTableProcessedTableManager get zoneId {
+    final $_column = $_itemColumn<String>('zone_id')!;
+
+    final manager = $$BanZonesTableTableManager(
+      $_db,
+      $_db.banZones,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_zoneIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$BanSessionsTable, List<BanSession>>
+  _banSessionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.banSessions,
+    aliasName: $_aliasNameGenerator(
+      db.banDiningTables.id,
+      db.banSessions.tableId,
+    ),
+  );
+
+  $$BanSessionsTableProcessedTableManager get banSessionsRefs {
+    final manager = $$BanSessionsTableTableManager(
+      $_db,
+      $_db.banSessions,
+    ).filter((f) => f.tableId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_banSessionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$BanDiningTablesTableFilterComposer
+    extends Composer<_$AppDatabase, $BanDiningTablesTable> {
+  $$BanDiningTablesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get capacity => $composableBuilder(
+    column: $table.capacity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get posX => $composableBuilder(
+    column: $table.posX,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get posY => $composableBuilder(
+    column: $table.posY,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get shape => $composableBuilder(
+    column: $table.shape,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get tableWidth => $composableBuilder(
+    column: $table.tableWidth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get tableHeight => $composableBuilder(
+    column: $table.tableHeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get qrToken => $composableBuilder(
+    column: $table.qrToken,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BanZonesTableFilterComposer get zoneId {
+    final $$BanZonesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.zoneId,
+      referencedTable: $db.banZones,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanZonesTableFilterComposer(
+            $db: $db,
+            $table: $db.banZones,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> banSessionsRefs(
+    Expression<bool> Function($$BanSessionsTableFilterComposer f) f,
+  ) {
+    final $$BanSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.banSessions,
+      getReferencedColumn: (t) => t.tableId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.banSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BanDiningTablesTableOrderingComposer
+    extends Composer<_$AppDatabase, $BanDiningTablesTable> {
+  $$BanDiningTablesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get capacity => $composableBuilder(
+    column: $table.capacity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get posX => $composableBuilder(
+    column: $table.posX,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get posY => $composableBuilder(
+    column: $table.posY,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get shape => $composableBuilder(
+    column: $table.shape,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get tableWidth => $composableBuilder(
+    column: $table.tableWidth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get tableHeight => $composableBuilder(
+    column: $table.tableHeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get qrToken => $composableBuilder(
+    column: $table.qrToken,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BanZonesTableOrderingComposer get zoneId {
+    final $$BanZonesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.zoneId,
+      referencedTable: $db.banZones,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanZonesTableOrderingComposer(
+            $db: $db,
+            $table: $db.banZones,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BanDiningTablesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BanDiningTablesTable> {
+  $$BanDiningTablesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get capacity =>
+      $composableBuilder(column: $table.capacity, builder: (column) => column);
+
+  GeneratedColumn<double> get posX =>
+      $composableBuilder(column: $table.posX, builder: (column) => column);
+
+  GeneratedColumn<double> get posY =>
+      $composableBuilder(column: $table.posY, builder: (column) => column);
+
+  GeneratedColumn<String> get shape =>
+      $composableBuilder(column: $table.shape, builder: (column) => column);
+
+  GeneratedColumn<double> get tableWidth => $composableBuilder(
+    column: $table.tableWidth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get tableHeight => $composableBuilder(
+    column: $table.tableHeight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get qrToken =>
+      $composableBuilder(column: $table.qrToken, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$BanZonesTableAnnotationComposer get zoneId {
+    final $$BanZonesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.zoneId,
+      referencedTable: $db.banZones,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanZonesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.banZones,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> banSessionsRefs<T extends Object>(
+    Expression<T> Function($$BanSessionsTableAnnotationComposer a) f,
+  ) {
+    final $$BanSessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.banSessions,
+      getReferencedColumn: (t) => t.tableId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.banSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BanDiningTablesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BanDiningTablesTable,
+          BanDiningTable,
+          $$BanDiningTablesTableFilterComposer,
+          $$BanDiningTablesTableOrderingComposer,
+          $$BanDiningTablesTableAnnotationComposer,
+          $$BanDiningTablesTableCreateCompanionBuilder,
+          $$BanDiningTablesTableUpdateCompanionBuilder,
+          (BanDiningTable, $$BanDiningTablesTableReferences),
+          BanDiningTable,
+          PrefetchHooks Function({bool zoneId, bool banSessionsRefs})
+        > {
+  $$BanDiningTablesTableTableManager(
+    _$AppDatabase db,
+    $BanDiningTablesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BanDiningTablesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BanDiningTablesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BanDiningTablesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> zoneId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<int> capacity = const Value.absent(),
+                Value<double> posX = const Value.absent(),
+                Value<double> posY = const Value.absent(),
+                Value<String> shape = const Value.absent(),
+                Value<double> tableWidth = const Value.absent(),
+                Value<double> tableHeight = const Value.absent(),
+                Value<String?> qrToken = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BanDiningTablesCompanion(
+                id: id,
+                zoneId: zoneId,
+                name: name,
+                capacity: capacity,
+                posX: posX,
+                posY: posY,
+                shape: shape,
+                tableWidth: tableWidth,
+                tableHeight: tableHeight,
+                qrToken: qrToken,
+                sortOrder: sortOrder,
+                isActive: isActive,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String zoneId,
+                required String name,
+                Value<int> capacity = const Value.absent(),
+                Value<double> posX = const Value.absent(),
+                Value<double> posY = const Value.absent(),
+                Value<String> shape = const Value.absent(),
+                Value<double> tableWidth = const Value.absent(),
+                Value<double> tableHeight = const Value.absent(),
+                Value<String?> qrToken = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                required int createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => BanDiningTablesCompanion.insert(
+                id: id,
+                zoneId: zoneId,
+                name: name,
+                capacity: capacity,
+                posX: posX,
+                posY: posY,
+                shape: shape,
+                tableWidth: tableWidth,
+                tableHeight: tableHeight,
+                qrToken: qrToken,
+                sortOrder: sortOrder,
+                isActive: isActive,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$BanDiningTablesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({zoneId = false, banSessionsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (banSessionsRefs) db.banSessions],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (zoneId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.zoneId,
+                                referencedTable:
+                                    $$BanDiningTablesTableReferences
+                                        ._zoneIdTable(db),
+                                referencedColumn:
+                                    $$BanDiningTablesTableReferences
+                                        ._zoneIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (banSessionsRefs)
+                    await $_getPrefetchedData<
+                      BanDiningTable,
+                      $BanDiningTablesTable,
+                      BanSession
+                    >(
+                      currentTable: table,
+                      referencedTable: $$BanDiningTablesTableReferences
+                          ._banSessionsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$BanDiningTablesTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).banSessionsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.tableId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$BanDiningTablesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BanDiningTablesTable,
+      BanDiningTable,
+      $$BanDiningTablesTableFilterComposer,
+      $$BanDiningTablesTableOrderingComposer,
+      $$BanDiningTablesTableAnnotationComposer,
+      $$BanDiningTablesTableCreateCompanionBuilder,
+      $$BanDiningTablesTableUpdateCompanionBuilder,
+      (BanDiningTable, $$BanDiningTablesTableReferences),
+      BanDiningTable,
+      PrefetchHooks Function({bool zoneId, bool banSessionsRefs})
+    >;
+typedef $$BanSessionsTableCreateCompanionBuilder =
+    BanSessionsCompanion Function({
+      required String id,
+      required String tableId,
+      Value<String> status,
+      Value<int> guestCount,
+      Value<String?> staffId,
+      Value<String?> posOrderId,
+      Value<String?> note,
+      required int openedAt,
+      Value<int?> closedAt,
+      Value<int> rowid,
+    });
+typedef $$BanSessionsTableUpdateCompanionBuilder =
+    BanSessionsCompanion Function({
+      Value<String> id,
+      Value<String> tableId,
+      Value<String> status,
+      Value<int> guestCount,
+      Value<String?> staffId,
+      Value<String?> posOrderId,
+      Value<String?> note,
+      Value<int> openedAt,
+      Value<int?> closedAt,
+      Value<int> rowid,
+    });
+
+final class $$BanSessionsTableReferences
+    extends BaseReferences<_$AppDatabase, $BanSessionsTable, BanSession> {
+  $$BanSessionsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $BanDiningTablesTable _tableIdTable(_$AppDatabase db) =>
+      db.banDiningTables.createAlias(
+        $_aliasNameGenerator(db.banSessions.tableId, db.banDiningTables.id),
+      );
+
+  $$BanDiningTablesTableProcessedTableManager get tableId {
+    final $_column = $_itemColumn<String>('table_id')!;
+
+    final manager = $$BanDiningTablesTableTableManager(
+      $_db,
+      $_db.banDiningTables,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_tableIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$BanSessionItemsTable, List<BanSessionItem>>
+  _banSessionItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.banSessionItems,
+    aliasName: $_aliasNameGenerator(
+      db.banSessions.id,
+      db.banSessionItems.sessionId,
+    ),
+  );
+
+  $$BanSessionItemsTableProcessedTableManager get banSessionItemsRefs {
+    final manager = $$BanSessionItemsTableTableManager(
+      $_db,
+      $_db.banSessionItems,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _banSessionItemsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$KitchenTicketsTable, List<KitchenTicket>>
+  _kitchenTicketsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.kitchenTickets,
+    aliasName: $_aliasNameGenerator(
+      db.banSessions.id,
+      db.kitchenTickets.sessionId,
+    ),
+  );
+
+  $$KitchenTicketsTableProcessedTableManager get kitchenTicketsRefs {
+    final manager = $$KitchenTicketsTableTableManager(
+      $_db,
+      $_db.kitchenTickets,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_kitchenTicketsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$BanSessionsTableFilterComposer
+    extends Composer<_$AppDatabase, $BanSessionsTable> {
+  $$BanSessionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get guestCount => $composableBuilder(
+    column: $table.guestCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get staffId => $composableBuilder(
+    column: $table.staffId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get posOrderId => $composableBuilder(
+    column: $table.posOrderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get openedAt => $composableBuilder(
+    column: $table.openedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get closedAt => $composableBuilder(
+    column: $table.closedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BanDiningTablesTableFilterComposer get tableId {
+    final $$BanDiningTablesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tableId,
+      referencedTable: $db.banDiningTables,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanDiningTablesTableFilterComposer(
+            $db: $db,
+            $table: $db.banDiningTables,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> banSessionItemsRefs(
+    Expression<bool> Function($$BanSessionItemsTableFilterComposer f) f,
+  ) {
+    final $$BanSessionItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.banSessionItems,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.banSessionItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> kitchenTicketsRefs(
+    Expression<bool> Function($$KitchenTicketsTableFilterComposer f) f,
+  ) {
+    final $$KitchenTicketsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.kitchenTickets,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenTicketsTableFilterComposer(
+            $db: $db,
+            $table: $db.kitchenTickets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BanSessionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $BanSessionsTable> {
+  $$BanSessionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get guestCount => $composableBuilder(
+    column: $table.guestCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get staffId => $composableBuilder(
+    column: $table.staffId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get posOrderId => $composableBuilder(
+    column: $table.posOrderId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get openedAt => $composableBuilder(
+    column: $table.openedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get closedAt => $composableBuilder(
+    column: $table.closedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BanDiningTablesTableOrderingComposer get tableId {
+    final $$BanDiningTablesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tableId,
+      referencedTable: $db.banDiningTables,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanDiningTablesTableOrderingComposer(
+            $db: $db,
+            $table: $db.banDiningTables,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BanSessionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BanSessionsTable> {
+  $$BanSessionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get guestCount => $composableBuilder(
+    column: $table.guestCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get staffId =>
+      $composableBuilder(column: $table.staffId, builder: (column) => column);
+
+  GeneratedColumn<String> get posOrderId => $composableBuilder(
+    column: $table.posOrderId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<int> get openedAt =>
+      $composableBuilder(column: $table.openedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get closedAt =>
+      $composableBuilder(column: $table.closedAt, builder: (column) => column);
+
+  $$BanDiningTablesTableAnnotationComposer get tableId {
+    final $$BanDiningTablesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.tableId,
+      referencedTable: $db.banDiningTables,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanDiningTablesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.banDiningTables,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> banSessionItemsRefs<T extends Object>(
+    Expression<T> Function($$BanSessionItemsTableAnnotationComposer a) f,
+  ) {
+    final $$BanSessionItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.banSessionItems,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.banSessionItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> kitchenTicketsRefs<T extends Object>(
+    Expression<T> Function($$KitchenTicketsTableAnnotationComposer a) f,
+  ) {
+    final $$KitchenTicketsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.kitchenTickets,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenTicketsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.kitchenTickets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BanSessionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BanSessionsTable,
+          BanSession,
+          $$BanSessionsTableFilterComposer,
+          $$BanSessionsTableOrderingComposer,
+          $$BanSessionsTableAnnotationComposer,
+          $$BanSessionsTableCreateCompanionBuilder,
+          $$BanSessionsTableUpdateCompanionBuilder,
+          (BanSession, $$BanSessionsTableReferences),
+          BanSession,
+          PrefetchHooks Function({
+            bool tableId,
+            bool banSessionItemsRefs,
+            bool kitchenTicketsRefs,
+          })
+        > {
+  $$BanSessionsTableTableManager(_$AppDatabase db, $BanSessionsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BanSessionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BanSessionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BanSessionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> tableId = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> guestCount = const Value.absent(),
+                Value<String?> staffId = const Value.absent(),
+                Value<String?> posOrderId = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<int> openedAt = const Value.absent(),
+                Value<int?> closedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BanSessionsCompanion(
+                id: id,
+                tableId: tableId,
+                status: status,
+                guestCount: guestCount,
+                staffId: staffId,
+                posOrderId: posOrderId,
+                note: note,
+                openedAt: openedAt,
+                closedAt: closedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String tableId,
+                Value<String> status = const Value.absent(),
+                Value<int> guestCount = const Value.absent(),
+                Value<String?> staffId = const Value.absent(),
+                Value<String?> posOrderId = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                required int openedAt,
+                Value<int?> closedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BanSessionsCompanion.insert(
+                id: id,
+                tableId: tableId,
+                status: status,
+                guestCount: guestCount,
+                staffId: staffId,
+                posOrderId: posOrderId,
+                note: note,
+                openedAt: openedAt,
+                closedAt: closedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$BanSessionsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({
+                tableId = false,
+                banSessionItemsRefs = false,
+                kitchenTicketsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (banSessionItemsRefs) db.banSessionItems,
+                    if (kitchenTicketsRefs) db.kitchenTickets,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (tableId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.tableId,
+                                    referencedTable:
+                                        $$BanSessionsTableReferences
+                                            ._tableIdTable(db),
+                                    referencedColumn:
+                                        $$BanSessionsTableReferences
+                                            ._tableIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (banSessionItemsRefs)
+                        await $_getPrefetchedData<
+                          BanSession,
+                          $BanSessionsTable,
+                          BanSessionItem
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BanSessionsTableReferences
+                              ._banSessionItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BanSessionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).banSessionItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sessionId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (kitchenTicketsRefs)
+                        await $_getPrefetchedData<
+                          BanSession,
+                          $BanSessionsTable,
+                          KitchenTicket
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BanSessionsTableReferences
+                              ._kitchenTicketsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BanSessionsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).kitchenTicketsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sessionId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$BanSessionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BanSessionsTable,
+      BanSession,
+      $$BanSessionsTableFilterComposer,
+      $$BanSessionsTableOrderingComposer,
+      $$BanSessionsTableAnnotationComposer,
+      $$BanSessionsTableCreateCompanionBuilder,
+      $$BanSessionsTableUpdateCompanionBuilder,
+      (BanSession, $$BanSessionsTableReferences),
+      BanSession,
+      PrefetchHooks Function({
+        bool tableId,
+        bool banSessionItemsRefs,
+        bool kitchenTicketsRefs,
+      })
+    >;
+typedef $$BanSessionItemsTableCreateCompanionBuilder =
+    BanSessionItemsCompanion Function({
+      required String id,
+      required String sessionId,
+      required String productId,
+      required String productName,
+      required double unitPrice,
+      Value<double> quantity,
+      required double subtotal,
+      Value<String?> note,
+      Value<String?> addedBy,
+      required int addedAt,
+      Value<String> kitchenStatus,
+      Value<int> rowid,
+    });
+typedef $$BanSessionItemsTableUpdateCompanionBuilder =
+    BanSessionItemsCompanion Function({
+      Value<String> id,
+      Value<String> sessionId,
+      Value<String> productId,
+      Value<String> productName,
+      Value<double> unitPrice,
+      Value<double> quantity,
+      Value<double> subtotal,
+      Value<String?> note,
+      Value<String?> addedBy,
+      Value<int> addedAt,
+      Value<String> kitchenStatus,
+      Value<int> rowid,
+    });
+
+final class $$BanSessionItemsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $BanSessionItemsTable, BanSessionItem> {
+  $$BanSessionItemsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $BanSessionsTable _sessionIdTable(_$AppDatabase db) =>
+      db.banSessions.createAlias(
+        $_aliasNameGenerator(db.banSessionItems.sessionId, db.banSessions.id),
+      );
+
+  $$BanSessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<String>('session_id')!;
+
+    final manager = $$BanSessionsTableTableManager(
+      $_db,
+      $_db.banSessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $SessionItemModifiersTable,
+    List<SessionItemModifier>
+  >
+  _sessionItemModifiersRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.sessionItemModifiers,
+        aliasName: $_aliasNameGenerator(
+          db.banSessionItems.id,
+          db.sessionItemModifiers.sessionItemId,
+        ),
+      );
+
+  $$SessionItemModifiersTableProcessedTableManager
+  get sessionItemModifiersRefs {
+    final manager = $$SessionItemModifiersTableTableManager(
+      $_db,
+      $_db.sessionItemModifiers,
+    ).filter((f) => f.sessionItemId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _sessionItemModifiersRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$KitchenTicketItemsTable, List<KitchenTicketItem>>
+  _kitchenTicketItemsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.kitchenTicketItems,
+        aliasName: $_aliasNameGenerator(
+          db.banSessionItems.id,
+          db.kitchenTicketItems.sessionItemId,
+        ),
+      );
+
+  $$KitchenTicketItemsTableProcessedTableManager get kitchenTicketItemsRefs {
+    final manager = $$KitchenTicketItemsTableTableManager(
+      $_db,
+      $_db.kitchenTicketItems,
+    ).filter((f) => f.sessionItemId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _kitchenTicketItemsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$BanSessionItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $BanSessionItemsTable> {
+  $$BanSessionItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get productId => $composableBuilder(
+    column: $table.productId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get productName => $composableBuilder(
+    column: $table.productName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get unitPrice => $composableBuilder(
+    column: $table.unitPrice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get subtotal => $composableBuilder(
+    column: $table.subtotal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get addedBy => $composableBuilder(
+    column: $table.addedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kitchenStatus => $composableBuilder(
+    column: $table.kitchenStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BanSessionsTableFilterComposer get sessionId {
+    final $$BanSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.banSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.banSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> sessionItemModifiersRefs(
+    Expression<bool> Function($$SessionItemModifiersTableFilterComposer f) f,
+  ) {
+    final $$SessionItemModifiersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sessionItemModifiers,
+      getReferencedColumn: (t) => t.sessionItemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionItemModifiersTableFilterComposer(
+            $db: $db,
+            $table: $db.sessionItemModifiers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> kitchenTicketItemsRefs(
+    Expression<bool> Function($$KitchenTicketItemsTableFilterComposer f) f,
+  ) {
+    final $$KitchenTicketItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.kitchenTicketItems,
+      getReferencedColumn: (t) => t.sessionItemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenTicketItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.kitchenTicketItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$BanSessionItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $BanSessionItemsTable> {
+  $$BanSessionItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get productId => $composableBuilder(
+    column: $table.productId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get productName => $composableBuilder(
+    column: $table.productName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get unitPrice => $composableBuilder(
+    column: $table.unitPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get subtotal => $composableBuilder(
+    column: $table.subtotal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get addedBy => $composableBuilder(
+    column: $table.addedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kitchenStatus => $composableBuilder(
+    column: $table.kitchenStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BanSessionsTableOrderingComposer get sessionId {
+    final $$BanSessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.banSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.banSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BanSessionItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BanSessionItemsTable> {
+  $$BanSessionItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get productId =>
+      $composableBuilder(column: $table.productId, builder: (column) => column);
+
+  GeneratedColumn<String> get productName => $composableBuilder(
+    column: $table.productName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get unitPrice =>
+      $composableBuilder(column: $table.unitPrice, builder: (column) => column);
+
+  GeneratedColumn<double> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<double> get subtotal =>
+      $composableBuilder(column: $table.subtotal, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<String> get addedBy =>
+      $composableBuilder(column: $table.addedBy, builder: (column) => column);
+
+  GeneratedColumn<int> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get kitchenStatus => $composableBuilder(
+    column: $table.kitchenStatus,
+    builder: (column) => column,
+  );
+
+  $$BanSessionsTableAnnotationComposer get sessionId {
+    final $$BanSessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.banSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.banSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> sessionItemModifiersRefs<T extends Object>(
+    Expression<T> Function($$SessionItemModifiersTableAnnotationComposer a) f,
+  ) {
+    final $$SessionItemModifiersTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.sessionItemModifiers,
+          getReferencedColumn: (t) => t.sessionItemId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$SessionItemModifiersTableAnnotationComposer(
+                $db: $db,
+                $table: $db.sessionItemModifiers,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<T> kitchenTicketItemsRefs<T extends Object>(
+    Expression<T> Function($$KitchenTicketItemsTableAnnotationComposer a) f,
+  ) {
+    final $$KitchenTicketItemsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.kitchenTicketItems,
+          getReferencedColumn: (t) => t.sessionItemId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$KitchenTicketItemsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.kitchenTicketItems,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+}
+
+class $$BanSessionItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BanSessionItemsTable,
+          BanSessionItem,
+          $$BanSessionItemsTableFilterComposer,
+          $$BanSessionItemsTableOrderingComposer,
+          $$BanSessionItemsTableAnnotationComposer,
+          $$BanSessionItemsTableCreateCompanionBuilder,
+          $$BanSessionItemsTableUpdateCompanionBuilder,
+          (BanSessionItem, $$BanSessionItemsTableReferences),
+          BanSessionItem,
+          PrefetchHooks Function({
+            bool sessionId,
+            bool sessionItemModifiersRefs,
+            bool kitchenTicketItemsRefs,
+          })
+        > {
+  $$BanSessionItemsTableTableManager(
+    _$AppDatabase db,
+    $BanSessionItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BanSessionItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BanSessionItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BanSessionItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> sessionId = const Value.absent(),
+                Value<String> productId = const Value.absent(),
+                Value<String> productName = const Value.absent(),
+                Value<double> unitPrice = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
+                Value<double> subtotal = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<String?> addedBy = const Value.absent(),
+                Value<int> addedAt = const Value.absent(),
+                Value<String> kitchenStatus = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BanSessionItemsCompanion(
+                id: id,
+                sessionId: sessionId,
+                productId: productId,
+                productName: productName,
+                unitPrice: unitPrice,
+                quantity: quantity,
+                subtotal: subtotal,
+                note: note,
+                addedBy: addedBy,
+                addedAt: addedAt,
+                kitchenStatus: kitchenStatus,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String sessionId,
+                required String productId,
+                required String productName,
+                required double unitPrice,
+                Value<double> quantity = const Value.absent(),
+                required double subtotal,
+                Value<String?> note = const Value.absent(),
+                Value<String?> addedBy = const Value.absent(),
+                required int addedAt,
+                Value<String> kitchenStatus = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BanSessionItemsCompanion.insert(
+                id: id,
+                sessionId: sessionId,
+                productId: productId,
+                productName: productName,
+                unitPrice: unitPrice,
+                quantity: quantity,
+                subtotal: subtotal,
+                note: note,
+                addedBy: addedBy,
+                addedAt: addedAt,
+                kitchenStatus: kitchenStatus,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$BanSessionItemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({
+                sessionId = false,
+                sessionItemModifiersRefs = false,
+                kitchenTicketItemsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (sessionItemModifiersRefs) db.sessionItemModifiers,
+                    if (kitchenTicketItemsRefs) db.kitchenTicketItems,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (sessionId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.sessionId,
+                                    referencedTable:
+                                        $$BanSessionItemsTableReferences
+                                            ._sessionIdTable(db),
+                                    referencedColumn:
+                                        $$BanSessionItemsTableReferences
+                                            ._sessionIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (sessionItemModifiersRefs)
+                        await $_getPrefetchedData<
+                          BanSessionItem,
+                          $BanSessionItemsTable,
+                          SessionItemModifier
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BanSessionItemsTableReferences
+                              ._sessionItemModifiersRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BanSessionItemsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).sessionItemModifiersRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sessionItemId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (kitchenTicketItemsRefs)
+                        await $_getPrefetchedData<
+                          BanSessionItem,
+                          $BanSessionItemsTable,
+                          KitchenTicketItem
+                        >(
+                          currentTable: table,
+                          referencedTable: $$BanSessionItemsTableReferences
+                              ._kitchenTicketItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$BanSessionItemsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).kitchenTicketItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sessionItemId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$BanSessionItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BanSessionItemsTable,
+      BanSessionItem,
+      $$BanSessionItemsTableFilterComposer,
+      $$BanSessionItemsTableOrderingComposer,
+      $$BanSessionItemsTableAnnotationComposer,
+      $$BanSessionItemsTableCreateCompanionBuilder,
+      $$BanSessionItemsTableUpdateCompanionBuilder,
+      (BanSessionItem, $$BanSessionItemsTableReferences),
+      BanSessionItem,
+      PrefetchHooks Function({
+        bool sessionId,
+        bool sessionItemModifiersRefs,
+        bool kitchenTicketItemsRefs,
+      })
+    >;
+typedef $$KitchenStationsTableCreateCompanionBuilder =
+    KitchenStationsCompanion Function({
+      required String id,
+      required String name,
+      Value<String> color,
+      Value<int> sortOrder,
+      Value<bool> isActive,
+      required int createdAt,
+      Value<int> rowid,
+    });
+typedef $$KitchenStationsTableUpdateCompanionBuilder =
+    KitchenStationsCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String> color,
+      Value<int> sortOrder,
+      Value<bool> isActive,
+      Value<int> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$KitchenStationsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $KitchenStationsTable, KitchenStation> {
+  $$KitchenStationsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$KitchenTicketsTable, List<KitchenTicket>>
+  _kitchenTicketsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.kitchenTickets,
+    aliasName: $_aliasNameGenerator(
+      db.kitchenStations.id,
+      db.kitchenTickets.stationId,
+    ),
+  );
+
+  $$KitchenTicketsTableProcessedTableManager get kitchenTicketsRefs {
+    final manager = $$KitchenTicketsTableTableManager(
+      $_db,
+      $_db.kitchenTickets,
+    ).filter((f) => f.stationId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_kitchenTicketsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$KitchenStationsTableFilterComposer
+    extends Composer<_$AppDatabase, $KitchenStationsTable> {
+  $$KitchenStationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> kitchenTicketsRefs(
+    Expression<bool> Function($$KitchenTicketsTableFilterComposer f) f,
+  ) {
+    final $$KitchenTicketsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.kitchenTickets,
+      getReferencedColumn: (t) => t.stationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenTicketsTableFilterComposer(
+            $db: $db,
+            $table: $db.kitchenTickets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$KitchenStationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $KitchenStationsTable> {
+  $$KitchenStationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$KitchenStationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $KitchenStationsTable> {
+  $$KitchenStationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> kitchenTicketsRefs<T extends Object>(
+    Expression<T> Function($$KitchenTicketsTableAnnotationComposer a) f,
+  ) {
+    final $$KitchenTicketsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.kitchenTickets,
+      getReferencedColumn: (t) => t.stationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenTicketsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.kitchenTickets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$KitchenStationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $KitchenStationsTable,
+          KitchenStation,
+          $$KitchenStationsTableFilterComposer,
+          $$KitchenStationsTableOrderingComposer,
+          $$KitchenStationsTableAnnotationComposer,
+          $$KitchenStationsTableCreateCompanionBuilder,
+          $$KitchenStationsTableUpdateCompanionBuilder,
+          (KitchenStation, $$KitchenStationsTableReferences),
+          KitchenStation,
+          PrefetchHooks Function({bool kitchenTicketsRefs})
+        > {
+  $$KitchenStationsTableTableManager(
+    _$AppDatabase db,
+    $KitchenStationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$KitchenStationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$KitchenStationsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$KitchenStationsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> color = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KitchenStationsCompanion(
+                id: id,
+                name: name,
+                color: color,
+                sortOrder: sortOrder,
+                isActive: isActive,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                Value<String> color = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                required int createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => KitchenStationsCompanion.insert(
+                id: id,
+                name: name,
+                color: color,
+                sortOrder: sortOrder,
+                isActive: isActive,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$KitchenStationsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({kitchenTicketsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (kitchenTicketsRefs) db.kitchenTickets,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (kitchenTicketsRefs)
+                    await $_getPrefetchedData<
+                      KitchenStation,
+                      $KitchenStationsTable,
+                      KitchenTicket
+                    >(
+                      currentTable: table,
+                      referencedTable: $$KitchenStationsTableReferences
+                          ._kitchenTicketsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$KitchenStationsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).kitchenTicketsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.stationId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$KitchenStationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $KitchenStationsTable,
+      KitchenStation,
+      $$KitchenStationsTableFilterComposer,
+      $$KitchenStationsTableOrderingComposer,
+      $$KitchenStationsTableAnnotationComposer,
+      $$KitchenStationsTableCreateCompanionBuilder,
+      $$KitchenStationsTableUpdateCompanionBuilder,
+      (KitchenStation, $$KitchenStationsTableReferences),
+      KitchenStation,
+      PrefetchHooks Function({bool kitchenTicketsRefs})
+    >;
+typedef $$ProductModifiersTableCreateCompanionBuilder =
+    ProductModifiersCompanion Function({
+      required String id,
+      required String productId,
+      Value<String> groupName,
+      required String name,
+      Value<double> priceAdjust,
+      Value<int> sortOrder,
+      Value<bool> isActive,
+      required int createdAt,
+      Value<int> rowid,
+    });
+typedef $$ProductModifiersTableUpdateCompanionBuilder =
+    ProductModifiersCompanion Function({
+      Value<String> id,
+      Value<String> productId,
+      Value<String> groupName,
+      Value<String> name,
+      Value<double> priceAdjust,
+      Value<int> sortOrder,
+      Value<bool> isActive,
+      Value<int> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$ProductModifiersTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $ProductModifiersTable, ProductModifier> {
+  $$ProductModifiersTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CoreProductsTable _productIdTable(_$AppDatabase db) =>
+      db.coreProducts.createAlias(
+        $_aliasNameGenerator(db.productModifiers.productId, db.coreProducts.id),
+      );
+
+  $$CoreProductsTableProcessedTableManager get productId {
+    final $_column = $_itemColumn<String>('product_id')!;
+
+    final manager = $$CoreProductsTableTableManager(
+      $_db,
+      $_db.coreProducts,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_productIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ProductModifiersTableFilterComposer
+    extends Composer<_$AppDatabase, $ProductModifiersTable> {
+  $$ProductModifiersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupName => $composableBuilder(
+    column: $table.groupName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get priceAdjust => $composableBuilder(
+    column: $table.priceAdjust,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CoreProductsTableFilterComposer get productId {
+    final $$CoreProductsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.coreProducts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CoreProductsTableFilterComposer(
+            $db: $db,
+            $table: $db.coreProducts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProductModifiersTableOrderingComposer
+    extends Composer<_$AppDatabase, $ProductModifiersTable> {
+  $$ProductModifiersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupName => $composableBuilder(
+    column: $table.groupName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get priceAdjust => $composableBuilder(
+    column: $table.priceAdjust,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CoreProductsTableOrderingComposer get productId {
+    final $$CoreProductsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.coreProducts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CoreProductsTableOrderingComposer(
+            $db: $db,
+            $table: $db.coreProducts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProductModifiersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ProductModifiersTable> {
+  $$ProductModifiersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get groupName =>
+      $composableBuilder(column: $table.groupName, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<double> get priceAdjust => $composableBuilder(
+    column: $table.priceAdjust,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$CoreProductsTableAnnotationComposer get productId {
+    final $$CoreProductsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productId,
+      referencedTable: $db.coreProducts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CoreProductsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.coreProducts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProductModifiersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ProductModifiersTable,
+          ProductModifier,
+          $$ProductModifiersTableFilterComposer,
+          $$ProductModifiersTableOrderingComposer,
+          $$ProductModifiersTableAnnotationComposer,
+          $$ProductModifiersTableCreateCompanionBuilder,
+          $$ProductModifiersTableUpdateCompanionBuilder,
+          (ProductModifier, $$ProductModifiersTableReferences),
+          ProductModifier,
+          PrefetchHooks Function({bool productId})
+        > {
+  $$ProductModifiersTableTableManager(
+    _$AppDatabase db,
+    $ProductModifiersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProductModifiersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProductModifiersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProductModifiersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> productId = const Value.absent(),
+                Value<String> groupName = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<double> priceAdjust = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ProductModifiersCompanion(
+                id: id,
+                productId: productId,
+                groupName: groupName,
+                name: name,
+                priceAdjust: priceAdjust,
+                sortOrder: sortOrder,
+                isActive: isActive,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String productId,
+                Value<String> groupName = const Value.absent(),
+                required String name,
+                Value<double> priceAdjust = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                required int createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ProductModifiersCompanion.insert(
+                id: id,
+                productId: productId,
+                groupName: groupName,
+                name: name,
+                priceAdjust: priceAdjust,
+                sortOrder: sortOrder,
+                isActive: isActive,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ProductModifiersTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({productId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (productId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.productId,
+                                referencedTable:
+                                    $$ProductModifiersTableReferences
+                                        ._productIdTable(db),
+                                referencedColumn:
+                                    $$ProductModifiersTableReferences
+                                        ._productIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ProductModifiersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ProductModifiersTable,
+      ProductModifier,
+      $$ProductModifiersTableFilterComposer,
+      $$ProductModifiersTableOrderingComposer,
+      $$ProductModifiersTableAnnotationComposer,
+      $$ProductModifiersTableCreateCompanionBuilder,
+      $$ProductModifiersTableUpdateCompanionBuilder,
+      (ProductModifier, $$ProductModifiersTableReferences),
+      ProductModifier,
+      PrefetchHooks Function({bool productId})
+    >;
+typedef $$SessionItemModifiersTableCreateCompanionBuilder =
+    SessionItemModifiersCompanion Function({
+      required String id,
+      required String sessionItemId,
+      required String modifierName,
+      Value<double> priceAdjust,
+      Value<int> sortOrder,
+      Value<int> rowid,
+    });
+typedef $$SessionItemModifiersTableUpdateCompanionBuilder =
+    SessionItemModifiersCompanion Function({
+      Value<String> id,
+      Value<String> sessionItemId,
+      Value<String> modifierName,
+      Value<double> priceAdjust,
+      Value<int> sortOrder,
+      Value<int> rowid,
+    });
+
+final class $$SessionItemModifiersTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $SessionItemModifiersTable,
+          SessionItemModifier
+        > {
+  $$SessionItemModifiersTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $BanSessionItemsTable _sessionItemIdTable(_$AppDatabase db) =>
+      db.banSessionItems.createAlias(
+        $_aliasNameGenerator(
+          db.sessionItemModifiers.sessionItemId,
+          db.banSessionItems.id,
+        ),
+      );
+
+  $$BanSessionItemsTableProcessedTableManager get sessionItemId {
+    final $_column = $_itemColumn<String>('session_item_id')!;
+
+    final manager = $$BanSessionItemsTableTableManager(
+      $_db,
+      $_db.banSessionItems,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionItemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SessionItemModifiersTableFilterComposer
+    extends Composer<_$AppDatabase, $SessionItemModifiersTable> {
+  $$SessionItemModifiersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get modifierName => $composableBuilder(
+    column: $table.modifierName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get priceAdjust => $composableBuilder(
+    column: $table.priceAdjust,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BanSessionItemsTableFilterComposer get sessionItemId {
+    final $$BanSessionItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionItemId,
+      referencedTable: $db.banSessionItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.banSessionItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SessionItemModifiersTableOrderingComposer
+    extends Composer<_$AppDatabase, $SessionItemModifiersTable> {
+  $$SessionItemModifiersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get modifierName => $composableBuilder(
+    column: $table.modifierName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get priceAdjust => $composableBuilder(
+    column: $table.priceAdjust,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BanSessionItemsTableOrderingComposer get sessionItemId {
+    final $$BanSessionItemsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionItemId,
+      referencedTable: $db.banSessionItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionItemsTableOrderingComposer(
+            $db: $db,
+            $table: $db.banSessionItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SessionItemModifiersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SessionItemModifiersTable> {
+  $$SessionItemModifiersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get modifierName => $composableBuilder(
+    column: $table.modifierName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get priceAdjust => $composableBuilder(
+    column: $table.priceAdjust,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  $$BanSessionItemsTableAnnotationComposer get sessionItemId {
+    final $$BanSessionItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionItemId,
+      referencedTable: $db.banSessionItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.banSessionItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SessionItemModifiersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SessionItemModifiersTable,
+          SessionItemModifier,
+          $$SessionItemModifiersTableFilterComposer,
+          $$SessionItemModifiersTableOrderingComposer,
+          $$SessionItemModifiersTableAnnotationComposer,
+          $$SessionItemModifiersTableCreateCompanionBuilder,
+          $$SessionItemModifiersTableUpdateCompanionBuilder,
+          (SessionItemModifier, $$SessionItemModifiersTableReferences),
+          SessionItemModifier,
+          PrefetchHooks Function({bool sessionItemId})
+        > {
+  $$SessionItemModifiersTableTableManager(
+    _$AppDatabase db,
+    $SessionItemModifiersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SessionItemModifiersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SessionItemModifiersTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$SessionItemModifiersTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> sessionItemId = const Value.absent(),
+                Value<String> modifierName = const Value.absent(),
+                Value<double> priceAdjust = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SessionItemModifiersCompanion(
+                id: id,
+                sessionItemId: sessionItemId,
+                modifierName: modifierName,
+                priceAdjust: priceAdjust,
+                sortOrder: sortOrder,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String sessionItemId,
+                required String modifierName,
+                Value<double> priceAdjust = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SessionItemModifiersCompanion.insert(
+                id: id,
+                sessionItemId: sessionItemId,
+                modifierName: modifierName,
+                priceAdjust: priceAdjust,
+                sortOrder: sortOrder,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$SessionItemModifiersTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({sessionItemId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sessionItemId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.sessionItemId,
+                                referencedTable:
+                                    $$SessionItemModifiersTableReferences
+                                        ._sessionItemIdTable(db),
+                                referencedColumn:
+                                    $$SessionItemModifiersTableReferences
+                                        ._sessionItemIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SessionItemModifiersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SessionItemModifiersTable,
+      SessionItemModifier,
+      $$SessionItemModifiersTableFilterComposer,
+      $$SessionItemModifiersTableOrderingComposer,
+      $$SessionItemModifiersTableAnnotationComposer,
+      $$SessionItemModifiersTableCreateCompanionBuilder,
+      $$SessionItemModifiersTableUpdateCompanionBuilder,
+      (SessionItemModifier, $$SessionItemModifiersTableReferences),
+      SessionItemModifier,
+      PrefetchHooks Function({bool sessionItemId})
+    >;
+typedef $$KitchenTicketsTableCreateCompanionBuilder =
+    KitchenTicketsCompanion Function({
+      required String id,
+      required String sessionId,
+      required String tableLabel,
+      required String zoneLabel,
+      Value<int> round,
+      Value<String?> stationId,
+      Value<String> status,
+      required int sentAt,
+      Value<int?> startedAt,
+      Value<int?> doneAt,
+      Value<int> rowid,
+    });
+typedef $$KitchenTicketsTableUpdateCompanionBuilder =
+    KitchenTicketsCompanion Function({
+      Value<String> id,
+      Value<String> sessionId,
+      Value<String> tableLabel,
+      Value<String> zoneLabel,
+      Value<int> round,
+      Value<String?> stationId,
+      Value<String> status,
+      Value<int> sentAt,
+      Value<int?> startedAt,
+      Value<int?> doneAt,
+      Value<int> rowid,
+    });
+
+final class $$KitchenTicketsTableReferences
+    extends BaseReferences<_$AppDatabase, $KitchenTicketsTable, KitchenTicket> {
+  $$KitchenTicketsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $BanSessionsTable _sessionIdTable(_$AppDatabase db) =>
+      db.banSessions.createAlias(
+        $_aliasNameGenerator(db.kitchenTickets.sessionId, db.banSessions.id),
+      );
+
+  $$BanSessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<String>('session_id')!;
+
+    final manager = $$BanSessionsTableTableManager(
+      $_db,
+      $_db.banSessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $KitchenStationsTable _stationIdTable(_$AppDatabase db) =>
+      db.kitchenStations.createAlias(
+        $_aliasNameGenerator(
+          db.kitchenTickets.stationId,
+          db.kitchenStations.id,
+        ),
+      );
+
+  $$KitchenStationsTableProcessedTableManager? get stationId {
+    final $_column = $_itemColumn<String>('station_id');
+    if ($_column == null) return null;
+    final manager = $$KitchenStationsTableTableManager(
+      $_db,
+      $_db.kitchenStations,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_stationIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$KitchenTicketItemsTable, List<KitchenTicketItem>>
+  _kitchenTicketItemsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.kitchenTicketItems,
+        aliasName: $_aliasNameGenerator(
+          db.kitchenTickets.id,
+          db.kitchenTicketItems.ticketId,
+        ),
+      );
+
+  $$KitchenTicketItemsTableProcessedTableManager get kitchenTicketItemsRefs {
+    final manager = $$KitchenTicketItemsTableTableManager(
+      $_db,
+      $_db.kitchenTicketItems,
+    ).filter((f) => f.ticketId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _kitchenTicketItemsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$KitchenTicketsTableFilterComposer
+    extends Composer<_$AppDatabase, $KitchenTicketsTable> {
+  $$KitchenTicketsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tableLabel => $composableBuilder(
+    column: $table.tableLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get zoneLabel => $composableBuilder(
+    column: $table.zoneLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get round => $composableBuilder(
+    column: $table.round,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get doneAt => $composableBuilder(
+    column: $table.doneAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$BanSessionsTableFilterComposer get sessionId {
+    final $$BanSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.banSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.banSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$KitchenStationsTableFilterComposer get stationId {
+    final $$KitchenStationsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.stationId,
+      referencedTable: $db.kitchenStations,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenStationsTableFilterComposer(
+            $db: $db,
+            $table: $db.kitchenStations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> kitchenTicketItemsRefs(
+    Expression<bool> Function($$KitchenTicketItemsTableFilterComposer f) f,
+  ) {
+    final $$KitchenTicketItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.kitchenTicketItems,
+      getReferencedColumn: (t) => t.ticketId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenTicketItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.kitchenTicketItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$KitchenTicketsTableOrderingComposer
+    extends Composer<_$AppDatabase, $KitchenTicketsTable> {
+  $$KitchenTicketsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tableLabel => $composableBuilder(
+    column: $table.tableLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get zoneLabel => $composableBuilder(
+    column: $table.zoneLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get round => $composableBuilder(
+    column: $table.round,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get doneAt => $composableBuilder(
+    column: $table.doneAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$BanSessionsTableOrderingComposer get sessionId {
+    final $$BanSessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.banSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.banSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$KitchenStationsTableOrderingComposer get stationId {
+    final $$KitchenStationsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.stationId,
+      referencedTable: $db.kitchenStations,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenStationsTableOrderingComposer(
+            $db: $db,
+            $table: $db.kitchenStations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$KitchenTicketsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $KitchenTicketsTable> {
+  $$KitchenTicketsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get tableLabel => $composableBuilder(
+    column: $table.tableLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get zoneLabel =>
+      $composableBuilder(column: $table.zoneLabel, builder: (column) => column);
+
+  GeneratedColumn<int> get round =>
+      $composableBuilder(column: $table.round, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get sentAt =>
+      $composableBuilder(column: $table.sentAt, builder: (column) => column);
+
+  GeneratedColumn<int> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get doneAt =>
+      $composableBuilder(column: $table.doneAt, builder: (column) => column);
+
+  $$BanSessionsTableAnnotationComposer get sessionId {
+    final $$BanSessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.banSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.banSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$KitchenStationsTableAnnotationComposer get stationId {
+    final $$KitchenStationsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.stationId,
+      referencedTable: $db.kitchenStations,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenStationsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.kitchenStations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> kitchenTicketItemsRefs<T extends Object>(
+    Expression<T> Function($$KitchenTicketItemsTableAnnotationComposer a) f,
+  ) {
+    final $$KitchenTicketItemsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.kitchenTicketItems,
+          getReferencedColumn: (t) => t.ticketId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$KitchenTicketItemsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.kitchenTicketItems,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+}
+
+class $$KitchenTicketsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $KitchenTicketsTable,
+          KitchenTicket,
+          $$KitchenTicketsTableFilterComposer,
+          $$KitchenTicketsTableOrderingComposer,
+          $$KitchenTicketsTableAnnotationComposer,
+          $$KitchenTicketsTableCreateCompanionBuilder,
+          $$KitchenTicketsTableUpdateCompanionBuilder,
+          (KitchenTicket, $$KitchenTicketsTableReferences),
+          KitchenTicket,
+          PrefetchHooks Function({
+            bool sessionId,
+            bool stationId,
+            bool kitchenTicketItemsRefs,
+          })
+        > {
+  $$KitchenTicketsTableTableManager(
+    _$AppDatabase db,
+    $KitchenTicketsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$KitchenTicketsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$KitchenTicketsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$KitchenTicketsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> sessionId = const Value.absent(),
+                Value<String> tableLabel = const Value.absent(),
+                Value<String> zoneLabel = const Value.absent(),
+                Value<int> round = const Value.absent(),
+                Value<String?> stationId = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> sentAt = const Value.absent(),
+                Value<int?> startedAt = const Value.absent(),
+                Value<int?> doneAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KitchenTicketsCompanion(
+                id: id,
+                sessionId: sessionId,
+                tableLabel: tableLabel,
+                zoneLabel: zoneLabel,
+                round: round,
+                stationId: stationId,
+                status: status,
+                sentAt: sentAt,
+                startedAt: startedAt,
+                doneAt: doneAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String sessionId,
+                required String tableLabel,
+                required String zoneLabel,
+                Value<int> round = const Value.absent(),
+                Value<String?> stationId = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                required int sentAt,
+                Value<int?> startedAt = const Value.absent(),
+                Value<int?> doneAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KitchenTicketsCompanion.insert(
+                id: id,
+                sessionId: sessionId,
+                tableLabel: tableLabel,
+                zoneLabel: zoneLabel,
+                round: round,
+                stationId: stationId,
+                status: status,
+                sentAt: sentAt,
+                startedAt: startedAt,
+                doneAt: doneAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$KitchenTicketsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({
+                sessionId = false,
+                stationId = false,
+                kitchenTicketItemsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (kitchenTicketItemsRefs) db.kitchenTicketItems,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (sessionId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.sessionId,
+                                    referencedTable:
+                                        $$KitchenTicketsTableReferences
+                                            ._sessionIdTable(db),
+                                    referencedColumn:
+                                        $$KitchenTicketsTableReferences
+                                            ._sessionIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (stationId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.stationId,
+                                    referencedTable:
+                                        $$KitchenTicketsTableReferences
+                                            ._stationIdTable(db),
+                                    referencedColumn:
+                                        $$KitchenTicketsTableReferences
+                                            ._stationIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (kitchenTicketItemsRefs)
+                        await $_getPrefetchedData<
+                          KitchenTicket,
+                          $KitchenTicketsTable,
+                          KitchenTicketItem
+                        >(
+                          currentTable: table,
+                          referencedTable: $$KitchenTicketsTableReferences
+                              ._kitchenTicketItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$KitchenTicketsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).kitchenTicketItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.ticketId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$KitchenTicketsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $KitchenTicketsTable,
+      KitchenTicket,
+      $$KitchenTicketsTableFilterComposer,
+      $$KitchenTicketsTableOrderingComposer,
+      $$KitchenTicketsTableAnnotationComposer,
+      $$KitchenTicketsTableCreateCompanionBuilder,
+      $$KitchenTicketsTableUpdateCompanionBuilder,
+      (KitchenTicket, $$KitchenTicketsTableReferences),
+      KitchenTicket,
+      PrefetchHooks Function({
+        bool sessionId,
+        bool stationId,
+        bool kitchenTicketItemsRefs,
+      })
+    >;
+typedef $$KitchenTicketItemsTableCreateCompanionBuilder =
+    KitchenTicketItemsCompanion Function({
+      required String id,
+      required String ticketId,
+      required String sessionItemId,
+      required String productName,
+      required double quantity,
+      Value<String> modifiersJson,
+      Value<String?> freeNote,
+      Value<String?> kitchenNote,
+      Value<String?> editHistoryJson,
+      Value<String> status,
+      Value<String> stationCode,
+      Value<int?> startedAt,
+      Value<int?> doneAt,
+      Value<int> rowid,
+    });
+typedef $$KitchenTicketItemsTableUpdateCompanionBuilder =
+    KitchenTicketItemsCompanion Function({
+      Value<String> id,
+      Value<String> ticketId,
+      Value<String> sessionItemId,
+      Value<String> productName,
+      Value<double> quantity,
+      Value<String> modifiersJson,
+      Value<String?> freeNote,
+      Value<String?> kitchenNote,
+      Value<String?> editHistoryJson,
+      Value<String> status,
+      Value<String> stationCode,
+      Value<int?> startedAt,
+      Value<int?> doneAt,
+      Value<int> rowid,
+    });
+
+final class $$KitchenTicketItemsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $KitchenTicketItemsTable,
+          KitchenTicketItem
+        > {
+  $$KitchenTicketItemsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $KitchenTicketsTable _ticketIdTable(_$AppDatabase db) =>
+      db.kitchenTickets.createAlias(
+        $_aliasNameGenerator(
+          db.kitchenTicketItems.ticketId,
+          db.kitchenTickets.id,
+        ),
+      );
+
+  $$KitchenTicketsTableProcessedTableManager get ticketId {
+    final $_column = $_itemColumn<String>('ticket_id')!;
+
+    final manager = $$KitchenTicketsTableTableManager(
+      $_db,
+      $_db.kitchenTickets,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_ticketIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $BanSessionItemsTable _sessionItemIdTable(_$AppDatabase db) =>
+      db.banSessionItems.createAlias(
+        $_aliasNameGenerator(
+          db.kitchenTicketItems.sessionItemId,
+          db.banSessionItems.id,
+        ),
+      );
+
+  $$BanSessionItemsTableProcessedTableManager get sessionItemId {
+    final $_column = $_itemColumn<String>('session_item_id')!;
+
+    final manager = $$BanSessionItemsTableTableManager(
+      $_db,
+      $_db.banSessionItems,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionItemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$KitchenTicketItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $KitchenTicketItemsTable> {
+  $$KitchenTicketItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get productName => $composableBuilder(
+    column: $table.productName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get modifiersJson => $composableBuilder(
+    column: $table.modifiersJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get freeNote => $composableBuilder(
+    column: $table.freeNote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kitchenNote => $composableBuilder(
+    column: $table.kitchenNote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get editHistoryJson => $composableBuilder(
+    column: $table.editHistoryJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stationCode => $composableBuilder(
+    column: $table.stationCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get doneAt => $composableBuilder(
+    column: $table.doneAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$KitchenTicketsTableFilterComposer get ticketId {
+    final $$KitchenTicketsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ticketId,
+      referencedTable: $db.kitchenTickets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenTicketsTableFilterComposer(
+            $db: $db,
+            $table: $db.kitchenTickets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BanSessionItemsTableFilterComposer get sessionItemId {
+    final $$BanSessionItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionItemId,
+      referencedTable: $db.banSessionItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.banSessionItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$KitchenTicketItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $KitchenTicketItemsTable> {
+  $$KitchenTicketItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get productName => $composableBuilder(
+    column: $table.productName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get modifiersJson => $composableBuilder(
+    column: $table.modifiersJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get freeNote => $composableBuilder(
+    column: $table.freeNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kitchenNote => $composableBuilder(
+    column: $table.kitchenNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get editHistoryJson => $composableBuilder(
+    column: $table.editHistoryJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stationCode => $composableBuilder(
+    column: $table.stationCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get doneAt => $composableBuilder(
+    column: $table.doneAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$KitchenTicketsTableOrderingComposer get ticketId {
+    final $$KitchenTicketsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ticketId,
+      referencedTable: $db.kitchenTickets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenTicketsTableOrderingComposer(
+            $db: $db,
+            $table: $db.kitchenTickets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BanSessionItemsTableOrderingComposer get sessionItemId {
+    final $$BanSessionItemsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionItemId,
+      referencedTable: $db.banSessionItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionItemsTableOrderingComposer(
+            $db: $db,
+            $table: $db.banSessionItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$KitchenTicketItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $KitchenTicketItemsTable> {
+  $$KitchenTicketItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get productName => $composableBuilder(
+    column: $table.productName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<String> get modifiersJson => $composableBuilder(
+    column: $table.modifiersJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get freeNote =>
+      $composableBuilder(column: $table.freeNote, builder: (column) => column);
+
+  GeneratedColumn<String> get kitchenNote => $composableBuilder(
+    column: $table.kitchenNote,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get editHistoryJson => $composableBuilder(
+    column: $table.editHistoryJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get stationCode => $composableBuilder(
+    column: $table.stationCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get doneAt =>
+      $composableBuilder(column: $table.doneAt, builder: (column) => column);
+
+  $$KitchenTicketsTableAnnotationComposer get ticketId {
+    final $$KitchenTicketsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ticketId,
+      referencedTable: $db.kitchenTickets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$KitchenTicketsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.kitchenTickets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BanSessionItemsTableAnnotationComposer get sessionItemId {
+    final $$BanSessionItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionItemId,
+      referencedTable: $db.banSessionItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanSessionItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.banSessionItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$KitchenTicketItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $KitchenTicketItemsTable,
+          KitchenTicketItem,
+          $$KitchenTicketItemsTableFilterComposer,
+          $$KitchenTicketItemsTableOrderingComposer,
+          $$KitchenTicketItemsTableAnnotationComposer,
+          $$KitchenTicketItemsTableCreateCompanionBuilder,
+          $$KitchenTicketItemsTableUpdateCompanionBuilder,
+          (KitchenTicketItem, $$KitchenTicketItemsTableReferences),
+          KitchenTicketItem,
+          PrefetchHooks Function({bool ticketId, bool sessionItemId})
+        > {
+  $$KitchenTicketItemsTableTableManager(
+    _$AppDatabase db,
+    $KitchenTicketItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$KitchenTicketItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$KitchenTicketItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$KitchenTicketItemsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> ticketId = const Value.absent(),
+                Value<String> sessionItemId = const Value.absent(),
+                Value<String> productName = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
+                Value<String> modifiersJson = const Value.absent(),
+                Value<String?> freeNote = const Value.absent(),
+                Value<String?> kitchenNote = const Value.absent(),
+                Value<String?> editHistoryJson = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> stationCode = const Value.absent(),
+                Value<int?> startedAt = const Value.absent(),
+                Value<int?> doneAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KitchenTicketItemsCompanion(
+                id: id,
+                ticketId: ticketId,
+                sessionItemId: sessionItemId,
+                productName: productName,
+                quantity: quantity,
+                modifiersJson: modifiersJson,
+                freeNote: freeNote,
+                kitchenNote: kitchenNote,
+                editHistoryJson: editHistoryJson,
+                status: status,
+                stationCode: stationCode,
+                startedAt: startedAt,
+                doneAt: doneAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String ticketId,
+                required String sessionItemId,
+                required String productName,
+                required double quantity,
+                Value<String> modifiersJson = const Value.absent(),
+                Value<String?> freeNote = const Value.absent(),
+                Value<String?> kitchenNote = const Value.absent(),
+                Value<String?> editHistoryJson = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> stationCode = const Value.absent(),
+                Value<int?> startedAt = const Value.absent(),
+                Value<int?> doneAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KitchenTicketItemsCompanion.insert(
+                id: id,
+                ticketId: ticketId,
+                sessionItemId: sessionItemId,
+                productName: productName,
+                quantity: quantity,
+                modifiersJson: modifiersJson,
+                freeNote: freeNote,
+                kitchenNote: kitchenNote,
+                editHistoryJson: editHistoryJson,
+                status: status,
+                stationCode: stationCode,
+                startedAt: startedAt,
+                doneAt: doneAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$KitchenTicketItemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({ticketId = false, sessionItemId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (ticketId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.ticketId,
+                                referencedTable:
+                                    $$KitchenTicketItemsTableReferences
+                                        ._ticketIdTable(db),
+                                referencedColumn:
+                                    $$KitchenTicketItemsTableReferences
+                                        ._ticketIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+                    if (sessionItemId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.sessionItemId,
+                                referencedTable:
+                                    $$KitchenTicketItemsTableReferences
+                                        ._sessionItemIdTable(db),
+                                referencedColumn:
+                                    $$KitchenTicketItemsTableReferences
+                                        ._sessionItemIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$KitchenTicketItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $KitchenTicketItemsTable,
+      KitchenTicketItem,
+      $$KitchenTicketItemsTableFilterComposer,
+      $$KitchenTicketItemsTableOrderingComposer,
+      $$KitchenTicketItemsTableAnnotationComposer,
+      $$KitchenTicketItemsTableCreateCompanionBuilder,
+      $$KitchenTicketItemsTableUpdateCompanionBuilder,
+      (KitchenTicketItem, $$KitchenTicketItemsTableReferences),
+      KitchenTicketItem,
+      PrefetchHooks Function({bool ticketId, bool sessionItemId})
+    >;
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -15749,4 +26122,25 @@ class $AppDatabaseManager {
       $$LoyaltyTransactionsTableTableManager(_db, _db.loyaltyTransactions);
   $$LoyaltyRewardsTableTableManager get loyaltyRewards =>
       $$LoyaltyRewardsTableTableManager(_db, _db.loyaltyRewards);
+<<<<<<< HEAD
+  $$BanZonesTableTableManager get banZones =>
+      $$BanZonesTableTableManager(_db, _db.banZones);
+  $$BanDiningTablesTableTableManager get banDiningTables =>
+      $$BanDiningTablesTableTableManager(_db, _db.banDiningTables);
+  $$BanSessionsTableTableManager get banSessions =>
+      $$BanSessionsTableTableManager(_db, _db.banSessions);
+  $$BanSessionItemsTableTableManager get banSessionItems =>
+      $$BanSessionItemsTableTableManager(_db, _db.banSessionItems);
+  $$KitchenStationsTableTableManager get kitchenStations =>
+      $$KitchenStationsTableTableManager(_db, _db.kitchenStations);
+  $$ProductModifiersTableTableManager get productModifiers =>
+      $$ProductModifiersTableTableManager(_db, _db.productModifiers);
+  $$SessionItemModifiersTableTableManager get sessionItemModifiers =>
+      $$SessionItemModifiersTableTableManager(_db, _db.sessionItemModifiers);
+  $$KitchenTicketsTableTableManager get kitchenTickets =>
+      $$KitchenTicketsTableTableManager(_db, _db.kitchenTickets);
+  $$KitchenTicketItemsTableTableManager get kitchenTicketItems =>
+      $$KitchenTicketItemsTableTableManager(_db, _db.kitchenTicketItems);
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }

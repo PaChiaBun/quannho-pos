@@ -1,9 +1,24 @@
+<<<<<<< HEAD
+import 'dart:async';
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+<<<<<<< HEAD
+import '../providers/pos_providers.dart'; // posTodayStatsProvider
+import '../../../core/providers/app_providers.dart';
+import '../../../core/providers/dashboard_providers.dart'; // invalidate sau checkout
+import '../../../modules/finance/providers/finance_providers.dart'; // invalidate financeStats
+import '../../../modules/loyalty/repository/loyalty_repository.dart';
+import '../../../modules/bill_printer/screens/bill_preview_screen.dart';
+import '../../../core/utils/money_formatter.dart';
+import '../../../screens/pos_screen.dart' show billPrinterModuleActiveProvider;
+=======
 import '../providers/pos_providers.dart';
 import '../../../core/providers/app_providers.dart';
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CHECKOUT BOTTOM SHEET
@@ -20,6 +35,10 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   String _selectedPayment = 'cash';
   bool _success = false;
   String? _orderNumber;
+<<<<<<< HEAD
+  BillData? _billData; // lưu để in sau khi thanh toán
+=======
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   static const _kNavy   = Color(0xFF1E1C5E);
   static const _kInk    = Color(0xFF1A1207);
@@ -93,8 +112,15 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                   const SizedBox(height: 20),
 
                   // ── Loyalty section ────────────────────────────────────
+<<<<<<< HEAD
+                  // FIX #2: ẩn khi dùng ví (tránh double discount)
+                  if (cart.customerId != null &&
+                      cart.loyaltyPtsAvailable > 0 &&
+                      _selectedPayment != 'wallet')
+=======
                   if (cart.customerId != null &&
                       cart.loyaltyPtsAvailable > 0)
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                     _buildLoyaltySection(cart),
 
                   // ── Total breakdown ────────────────────────────────────
@@ -106,7 +132,13 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
+<<<<<<< HEAD
+                      onPressed: (cart.isProcessing || _isWalletInsufficient(cart))
+                          ? null
+                          : _doCheckout,
+=======
                       onPressed: cart.isProcessing ? null : _doCheckout,
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _kNavy,
                         foregroundColor: Colors.white,
@@ -120,8 +152,20 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                               width: 24, height: 24,
                               child: CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2.5))
+<<<<<<< HEAD
+                          : _isWalletInsufficient(cart)
+                          ? Text(
+                              '⚠️ Ví không đủ — cần thêm tiền mặt',
+                              style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w700,
+                                color: Color(0xFFFFA000)),
+                            )
+                          : Text(
+                              'Xác nhận • ${fmtVnd(cart.total.toInt())}',
+=======
                           : Text(
                               'Xác nhận • ${_formatMoney(cart.total.toInt())}đ',
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                               style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w800),
                             ),
@@ -170,7 +214,11 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                       ),
                     ),
                     Text(
+<<<<<<< HEAD
+                      fmtVnd(line.subtotal.toInt()),
+=======
                       '${_formatMoney(line.subtotal.toInt())}đ',
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                       style: const TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w700,
                         color: _kInk,
@@ -189,6 +237,209 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   }
 
   Widget _buildPaymentMethods() {
+<<<<<<< HEAD
+    final cart = ref.watch(cartProvider);
+    final methods = [
+      ('cash',     Icons.payments_rounded,          'Tiền mặt'),
+      ('transfer', Icons.account_balance_rounded,   'Chuyển khoản'),
+      ('card',     Icons.credit_card_rounded,       'Thẻ'),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Các phương thức chuẩn
+        Row(
+          children: methods.map((m) {
+            final isSelected = _selectedPayment == m.$1;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _selectedPayment = m.$1);
+                  ref.read(cartProvider.notifier).setPaymentMethod(m.$1);
+                },
+                child: AnimatedContainer(
+                  duration: 200.ms,
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isSelected ? _kNavy : _kBg,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isSelected ? _kNavy : const Color(0xFFE0D8CC),
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(m.$2,
+                        color: isSelected ? Colors.white : _kMuted, size: 22),
+                      const SizedBox(height: 4),
+                      Text(m.$3,
+                        style: TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w700,
+                          color: isSelected ? Colors.white : _kMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+
+        // Nút ví — chỉ hiện khi khách có balance
+        if (cart.hasWallet) ...
+          [
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () {
+                setState(() => _selectedPayment = 'wallet');
+                ref.read(cartProvider.notifier).setPaymentMethod('wallet');
+              },
+              child: AnimatedContainer(
+                duration: 200.ms,
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  gradient: _selectedPayment == 'wallet'
+                    ? const LinearGradient(
+                        colors: [Color(0xFF1E1C5E), Color(0xFF4A148C)],
+                        begin: Alignment.centerLeft, end: Alignment.centerRight)
+                    : null,
+                  color: _selectedPayment == 'wallet' ? null : _kBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: _selectedPayment == 'wallet'
+                      ? const Color(0xFF1E1C5E) : const Color(0xFFE0D8CC),
+                    width: _selectedPayment == 'wallet' ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.account_balance_wallet_rounded,
+                      color: _selectedPayment == 'wallet' ? Colors.white : _kMuted,
+                      size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Thanh toán bằng Ví',
+                            style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w700,
+                              color: _selectedPayment == 'wallet'
+                                ? Colors.white : _kMuted)),
+                          Text(
+                            'Ví: ${fmtVnd(cart.walletRealAvailable.toInt())} thật'
+                            ' + ${fmtVnd(cart.walletBonusAvailable.toInt())} bonus',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: _selectedPayment == 'wallet'
+                                ? Colors.white60 : _kMuted)),
+                        ],
+                      ),
+                    ),
+                    if (_selectedPayment == 'wallet')
+                      const Icon(Icons.check_circle_rounded,
+                        color: Color(0xFFF9A825), size: 20),
+                  ],
+                ),
+              ),
+            ),
+
+            // Preview wallet breakdown khi chọn
+            if (_selectedPayment == 'wallet')
+              _buildWalletPreview(cart),
+          ],
+      ],
+    );
+  }
+
+  /// FIX #3: Kiểm tra ví không đủ (chỉ block khi chọn wallet mode)
+  bool _isWalletInsufficient(CartState cart) {
+    if (_selectedPayment != 'wallet') return false;
+    final bill = cart.total;
+    final bonusCap = (bill * cart.walletBonusCapPct / 100).floorToDouble();
+    final bonusExpired = cart.walletBonusExpiresAt != null &&
+        cart.walletBonusExpiresAt!.isBefore(DateTime.now());
+    final bonusUsed = bonusExpired ? 0.0
+        : cart.walletBonusAvailable.clamp(0.0, bonusCap);
+    final realUsed = (bill - bonusUsed).clamp(0.0, cart.walletRealAvailable);
+    return (bill - bonusUsed - realUsed) >= 1;
+  }
+
+  Widget _buildWalletPreview(CartState cart) {
+    final bill = cart.total;
+    // FIX #4: dùng floor (đồng bộ với computeWalletUsage trong repo)
+    final bonusCap = (bill * cart.walletBonusCapPct / 100).floorToDouble();
+    final bonusExpired = cart.walletBonusExpiresAt != null &&
+        cart.walletBonusExpiresAt!.isBefore(DateTime.now());
+    final bonusUsed = bonusExpired ? 0.0
+        : cart.walletBonusAvailable.clamp(0.0, bonusCap);
+    final remaining = (bill - bonusUsed).clamp(0.0, double.infinity);
+    final realUsed  = remaining.clamp(0.0, cart.walletRealAvailable);
+    final stillNeed = (bill - bonusUsed - realUsed).clamp(0.0, double.infinity);
+    final isEnough  = stillNeed < 1;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isEnough
+          ? const Color(0xFFE8F5E9)
+          : const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('🎁 Bonus dùng (≤${cart.walletBonusCapPct}%)',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF1B5E20))),
+              Text('- ${fmtVnd(bonusUsed.toInt())}',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                  color: Color(0xFF2E7D32))),
+            ],
+          ),
+          if (realUsed > 0) ...[
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('💵 Ví thật dùng',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF1B5E20))),
+                Text('- ${fmtVnd(realUsed.toInt())}',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                    color: Color(0xFF2E7D32))),
+              ],
+            ),
+          ],
+          if (!isEnough) ...[
+            const Divider(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('⚠️ Cần thêm tiền mặt',
+                  style: TextStyle(fontSize: 12, color: Color(0xFFE65100),
+                    fontWeight: FontWeight.w700)),
+                Text(fmtVnd(stillNeed.toInt()),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900,
+                    color: Color(0xFFE65100))),
+              ],
+            ),
+          ],
+          if (isEnough)
+            const Padding(
+              padding: EdgeInsets.only(top: 6),
+              child: Text('✅ Số dư ví đủ thanh toán toàn bộ đơn',
+                style: TextStyle(fontSize: 11, color: Color(0xFF2E7D32))),
+            ),
+        ],
+      ),
+=======
     final methods = [
       ('cash', Icons.payments_rounded, 'Tiền mặt'),
       ('transfer', Icons.account_balance_rounded, 'Chuyển khoản'),
@@ -232,6 +483,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
           ),
         );
       }).toList(),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     );
   }
 
@@ -272,7 +524,11 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                       ),
                     ),
                     Text(
+<<<<<<< HEAD
+                      used > 0 ? 'Đang dùng $used điểm (-${fmtVnd(used)})'
+=======
                       used > 0 ? 'Đang dùng $used điểm (-${_formatMoney(used)}đ)'
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                                : 'Có thể dùng tối đa $maxUse điểm',
                       style: const TextStyle(fontSize: 12, color: Color(0xFF2E7D32)),
                     ),
@@ -327,7 +583,11 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                   color: _kInk, letterSpacing: 0.5,
                 )),
               Text(
+<<<<<<< HEAD
+                fmtVnd(cart.total.toInt()),
+=======
                 '${_formatMoney(cart.total.toInt())}đ',
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 style: const TextStyle(
                   fontSize: 22, fontWeight: FontWeight.w900,
                   color: _kNavy, letterSpacing: -0.5,
@@ -353,8 +613,13 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
         children: [
           Container(
             width: 80, height: 80,
+<<<<<<< HEAD
+            decoration: const BoxDecoration(
+              color: Color(0xFFE8F5E9),
+=======
             decoration: BoxDecoration(
               color: const Color(0xFFE8F5E9),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -374,7 +639,30 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             Text('Đơn $_orderNumber',
               style: const TextStyle(fontSize: 14, color: _kMuted)),
           ],
+<<<<<<< HEAD
+          const SizedBox(height: 24),
+          // Nút in hoá đơn — chỉ hiện khi module In Hoá Đơn active
+          if (_billData != null && ref.watch(billPrinterModuleActiveProvider))
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.print_outlined, size: 20),
+                label: const Text('In hoá đơn',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _kNavy,
+                  side: const BorderSide(color: _kNavy, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: () => showBillPreview(context, _billData!),
+              ),
+            ),
+          const SizedBox(height: 12),
+=======
           const SizedBox(height: 32),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           SizedBox(
             width: double.infinity,
             height: 52,
@@ -397,6 +685,153 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
     );
   }
 
+<<<<<<< HEAD
+
+  // ‼️ FIX #V5: Guard chống double-tap — bổ sung ngoài cart.isProcessing
+  // cart.isProcessing có thể bị frame lag, guard local chắc chắn hơn
+  bool _isProcessingLocal = false;
+
+  // ── Checkout action ────────────────────────────────────────────────────────
+  Future<void> _doCheckout() async {
+    if (_isProcessingLocal) return;
+    _isProcessingLocal = true;
+    HapticFeedback.mediumImpact();
+    try {
+      final cartSnapshot = ref.read(cartProvider);
+      final sRepo        = ref.read(settingsRepositoryProvider);
+
+      // Song song hóa việc lấy thông tin cấu hình và loyalty rate với timeout 2 giây
+      final results = await Future.wait([
+        sRepo.shopName.timeout(const Duration(seconds: 2), onTimeout: () => 'Quán Nhỏ'),
+        sRepo.shopPhone.timeout(const Duration(seconds: 2), onTimeout: () => ''),
+        sRepo.shopAddress.timeout(const Duration(seconds: 2), onTimeout: () => ''),
+        sRepo.billFooter.timeout(const Duration(seconds: 2), onTimeout: () => 'Cảm ơn quý khách!'),
+        ref.read(loyaltyRateProvider.future).timeout(const Duration(seconds: 2), onTimeout: () => 10000.0),
+      ]);
+
+      final shopName     = results[0] as String;
+      final shopPhone    = results[1] as String;
+      final shopAddress  = results[2] as String;
+      final billFooter   = results[3] as String;
+      final loyaltyRate  = results[4] as double;
+
+      // Thực hiện giao dịch checkout với timeout 15 giây
+      final orderId = await ref
+          .read(cartProvider.notifier)
+          .checkout(
+            ref.read(posRepositoryProvider),
+            loyaltyRate: loyaltyRate,
+            moduleRepo: ref.read(moduleRepositoryProvider),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      // Đánh dấu thành công ngay lập tức để chuyển sang màn hình success!
+      // Tránh việc bất kỳ tác vụ phụ nào sau đó (lấy thông tin, invalidation) bị lỗi/timeout làm sập màn hình thanh toán về 0đ.
+      if (mounted) {
+        setState(() {
+          _success = true;
+          _orderNumber = orderId.substring(0, 8); // số đơn mặc định ban đầu
+          _billData = BillData(
+            shopName:      shopName,
+            shopPhone:     shopPhone.isNotEmpty ? shopPhone : null,
+            shopAddress:   shopAddress.isNotEmpty ? shopAddress : null,
+            footer:        billFooter.isNotEmpty ? billFooter : null,
+            orderNumber:   orderId.substring(0, 8),
+            createdAt:     DateTime.now(),
+            items:         cartSnapshot.lines.map((l) => BillItem(
+              name:  l.productName,
+              qty:   l.quantity.toInt(),
+              price: l.unitPrice,
+            )).toList(),
+            subtotal:      cartSnapshot.subtotal,
+            discount:      cartSnapshot.discount,
+            total:         cartSnapshot.total,
+            paymentMethod: cartSnapshot.paymentMethod,
+            customerName:  cartSnapshot.customerName,
+            loyaltyPoints: cartSnapshot.loyaltyPtsUsed > 0
+                ? cartSnapshot.loyaltyPtsUsed.round() : null,
+          );
+        });
+        HapticFeedback.heavyImpact();
+      }
+
+      // Chạy các tác vụ phụ âm thầm & bảo vệ
+      try {
+        String walletPayLabel = cartSnapshot.paymentMethod;
+        if (cartSnapshot.paymentMethod == 'wallet' &&
+            cartSnapshot.customerId != null) {
+          try {
+            final loyaltyRepo = ref.read(loyaltyRepositoryProvider);
+            final result = await loyaltyRepo.spendWallet(
+              customerId: cartSnapshot.customerId!,
+              bill:       cartSnapshot.total,
+              orderId:    orderId,
+            ).timeout(const Duration(seconds: 10));
+            
+            final realUsed  = result['realUsed']  ?? 0;
+            final bonusUsed = result['bonusUsed'] ?? 0;
+            walletPayLabel  = 'Ví (${realUsed.toInt()}đ thật + ${bonusUsed.toInt()}đ bonus)';
+          } catch (e) {
+            debugPrint('[Wallet] spendWallet error: $e');
+          }
+        }
+
+        // Lấy thông tin đơn hàng vừa tạo với timeout 5 giây
+        final order = await ref
+            .read(posRepositoryProvider)
+            .getOrderById(orderId)
+            .timeout(const Duration(seconds: 5), onTimeout: () => null);
+
+        try {
+          ref.invalidate(todayStatsProvider);
+          ref.invalidate(financeRecordsProvider);
+          ref.invalidate(financeStatsProvider);
+          ref.invalidate(todayFinanceStatsProvider);
+        } catch (e) {
+          debugPrint('[POS Invalidation] error: $e');
+        }
+
+        if (mounted) {
+          setState(() {
+            _orderNumber = order?.orderNumber ?? orderId.substring(0, 8);
+            _billData = BillData(
+              shopName:      shopName,
+              shopPhone:     shopPhone.isNotEmpty ? shopPhone : null,
+              shopAddress:   shopAddress.isNotEmpty ? shopAddress : null,
+              footer:        billFooter.isNotEmpty ? billFooter : null,
+              orderNumber:   order?.orderNumber ?? orderId.substring(0, 8),
+              createdAt:     DateTime.now(),
+              items:         cartSnapshot.lines.map((l) => BillItem(
+                name:  l.productName,
+                qty:   l.quantity.toInt(),
+                price: l.unitPrice,
+              )).toList(),
+              subtotal:      cartSnapshot.subtotal,
+              discount:      cartSnapshot.discount,
+              total:         cartSnapshot.total,
+              paymentMethod: walletPayLabel,
+              customerName:  cartSnapshot.customerName,
+              loyaltyPoints: cartSnapshot.loyaltyPtsUsed > 0
+                  ? cartSnapshot.loyaltyPtsUsed.round() : null,
+            );
+          });
+        }
+      } catch (e) {
+        debugPrint('[POS Checkout] Tác vụ phụ thất bại nhưng giao dịch chính đã thành công: $e');
+      }
+    } catch (e) {
+      _isProcessingLocal = false; // Giải phóng trạng thái chống nhấn đúp
+      if (mounted) {
+        String userFriendlyError = 'Lỗi: $e';
+        if (e is TimeoutException) {
+          userFriendlyError = 'Kết nối mạng chậm hoặc không ổn định. Vui lòng kiểm tra và thử lại!';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(userFriendlyError),
+            backgroundColor: const Color(0xFFC62828),
+            duration: const Duration(seconds: 5),
+=======
   // ── Checkout action ────────────────────────────────────────────────────────
   Future<void> _doCheckout() async {
     HapticFeedback.mediumImpact();
@@ -423,12 +858,15 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
           SnackBar(
             content: Text('Lỗi: $e'),
             backgroundColor: const Color(0xFFC62828),
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           ),
         );
       }
     }
   }
 
+<<<<<<< HEAD
+=======
   String _formatMoney(int amount) {
     if (amount < 0) {
       return '-${_formatMoney(-amount)}';
@@ -438,6 +876,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
       (m) => '${m[1]},',
     );
   }
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }
 
 class _TotalRow extends StatelessWidget {
@@ -453,7 +892,11 @@ class _TotalRow extends StatelessWidget {
       children: [
         Text(label, style: const TextStyle(fontSize: 14, color: Color(0xFF9E9085))),
         Text(
+<<<<<<< HEAD
+          fmtVnd(amount),
+=======
           '${amount < 0 ? '-' : ''}${_fmt(amount.abs())}đ',
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           style: TextStyle(
             fontSize: 14, fontWeight: FontWeight.w700,
             color: color ?? const Color(0xFF1A1207),
@@ -462,7 +905,10 @@ class _TotalRow extends StatelessWidget {
       ],
     );
   }
+<<<<<<< HEAD
+=======
 
   String _fmt(int v) => v.toString().replaceAllMapped(
     RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }

@@ -367,13 +367,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _enterApp() async {
+<<<<<<< HEAD
+    if (mounted) Navigator.of(context).pushReplacementNamed('/auth');
+=======
     if (mounted) Navigator.of(context).pushReplacementNamed('/home');
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   Future<void> _skip() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
+<<<<<<< HEAD
+    if (mounted) Navigator.of(context).pushReplacementNamed('/auth');
+=======
     if (mounted) Navigator.of(context).pushReplacementNamed('/home');
+>>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   Widget _buildField({
