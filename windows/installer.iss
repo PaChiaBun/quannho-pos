@@ -68,6 +68,12 @@ begin
   end;
 end;
 
+// Hàm callback theo dõi tiến trình tải xuống
+function OnDownloadProgress(const Url, Filename: String; const Progress, ProgressMax: Int64): Boolean;
+begin
+  Result := True;
+end;
+
 // Sự kiện tải các thư viện bổ sung trước khi cài đặt
 procedure InitializeWizard;
 var
@@ -75,7 +81,7 @@ var
 begin
   if VCRedistNeedsInstall then
   begin
-    DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), 'Ứng dụng cần tải và cài đặt thư viện bổ sung từ Microsoft để hoạt động.', @InitializeWizard);
+    DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), 'Ứng dụng cần tải và cài đặt thư viện bổ sung từ Microsoft để hoạt động.', @OnDownloadProgress);
     DownloadPage.Clear;
     // Tải trực tiếp file redistributable từ link chính thức của Microsoft vào thư mục tạm {tmp}
     DownloadPage.Add('https://aka.ms/vs/17/release/vc_redist.x64.exe', 'vc_redist.x64.exe', '');
