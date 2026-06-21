@@ -69,15 +69,16 @@ class StationPrintersState {
       );
 }
 
-class PrinterSettingsNotifier extends StateNotifier<StationPrintersState> {
-  PrinterSettingsNotifier()
-      : super(const StationPrintersState(
-          cashier: PrinterConfig(name: '', type: 'system', enabled: true),
-          bepNong: PrinterConfig(name: '', type: 'system', enabled: false),
-          bepBar: PrinterConfig(name: '', type: 'system', enabled: false),
-          barLabel: PrinterConfig(name: '', type: 'system', enabled: false),
-        )) {
+class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
+  @override
+  StationPrintersState build() {
     _loadSettings();
+    return const StationPrintersState(
+      cashier: PrinterConfig(name: '', type: 'system', enabled: true),
+      bepNong: PrinterConfig(name: '', type: 'system', enabled: false),
+      bepBar: PrinterConfig(name: '', type: 'system', enabled: false),
+      barLabel: PrinterConfig(name: '', type: 'system', enabled: false),
+    );
   }
 
   Future<void> _loadSettings() async {
@@ -99,7 +100,6 @@ class PrinterSettingsNotifier extends StateNotifier<StationPrintersState> {
   }
 
   Future<void> saveConfig(String station, PrinterConfig config) async {
-    final prefs = await SharedPreferences.getInstance();
     state = state.copyWith(
       cashier: station == 'cashier' ? config : null,
       bepNong: station == 'bepNong' ? config : null,
@@ -132,9 +132,7 @@ class PrinterSettingsNotifier extends StateNotifier<StationPrintersState> {
 }
 
 final printerSettingsProvider =
-    StateNotifierProvider<PrinterSettingsNotifier, StationPrintersState>((ref) {
-  return PrinterSettingsNotifier();
-});
+    NotifierProvider<PrinterSettingsNotifier, StationPrintersState>(PrinterSettingsNotifier.new);
 
 final systemPrintersProvider = FutureProvider<List<Printer>>((ref) async {
   return Printing.listPrinters();
