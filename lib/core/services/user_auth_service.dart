@@ -115,11 +115,9 @@ class UserAuthService {
     // ── FALLBACK CHO GOOGLE PLAY REVIEW ────────────────────────────────────────
     // Cho phép các tài khoản test đăng nhập offline ngay cả khi không có internet
     final isReviewerPhone = (normalizedPhone == '+849999996666' || normalizedPhone == '9999996666');
-    final isNewTestPhone   = (normalizedPhone == '+8490112233' || normalizedPhone == '90112233');
-
-    if ((isReviewerPhone || isNewTestPhone) && password == '112233') {
-      final userId = isReviewerPhone ? '99999966-6666-6666-6666-999999666666' : '90112233-2233-2233-2233-901122332233';
-      final displayName = isReviewerPhone ? 'Quản Nhỏ POS' : 'test';
+    if (isReviewerPhone && password == '112233') {
+      final userId = '99999966-6666-6666-6666-999999666666';
+      final displayName = 'Quản Nhỏ POS';
       final store = StoreMembership(
         storeId: '00000000-0000-0000-0000-000000009999',
         storeName: 'Quán Nhỏ POS',
