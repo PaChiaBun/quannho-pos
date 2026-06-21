@@ -118,10 +118,10 @@ class UserAuthService {
     final isNewTestPhone   = (normalizedPhone == '+8490112233' || normalizedPhone == '90112233');
 
     if ((isReviewerPhone || isNewTestPhone) && password == '112233') {
-      final userId = isReviewerPhone ? 'demo-user-id-9999996666' : 'demo-user-id-90112233';
+      final userId = isReviewerPhone ? '99999966-6666-6666-6666-999999666666' : '90112233-2233-2233-2233-901122332233';
       final displayName = isReviewerPhone ? 'Quản Nhỏ POS' : 'test';
       final store = StoreMembership(
-        storeId: 'demo-store-id-9999',
+        storeId: '00000000-0000-0000-0000-000000009999',
         storeName: 'Quán Nhỏ POS',
         storeCode: 'DEMO99',
         role: 'owner',
@@ -134,7 +134,7 @@ class UserAuthService {
         membership: store,
       );
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('store_id', 'demo-store-id-9999');
+      await prefs.setString('store_id', '00000000-0000-0000-0000-000000009999');
       await prefs.setString('store_code', 'DEMO99');
       await prefs.setString('store_name', 'Quán Nhỏ POS');
       await prefs.setString('device_role', 'owner');
