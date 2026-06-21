@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-<<<<<<< HEAD
 import 'package:shared_preferences/shared_preferences.dart';
 import 'session_provider.dart';
 import '../repositories/core_product_repository.dart';
@@ -62,55 +61,6 @@ final loyaltyRepositoryProvider = Provider<LoyaltyRepository>((ref) {
 
 final banRepositoryProvider = Provider<BanRepository>((ref) {
   return BanRepository();
-=======
-import '../database/app_database.dart';
-import '../event_bus/app_event_bus.dart';
-import '../repositories/core_product_repository.dart';
-import '../repositories/core_customer_repository.dart';
-import '../repositories/module_repository.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DATABASE PROVIDER — Singleton database, dispose khi app tắt
-// ─────────────────────────────────────────────────────────────────────────────
-final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  final db = AppDatabase();
-  ref.onDispose(db.close);
-  return db;
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// EVENT BUS PROVIDER — Singleton EventBus
-// ─────────────────────────────────────────────────────────────────────────────
-final appEventBusProvider = Provider<AppEventBus>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  final bus = AppEventBus(db);
-  ref.onDispose(bus.dispose);
-  return bus;
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// REPOSITORY PROVIDERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-final productRepositoryProvider = Provider<CoreProductRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return CoreProductRepository(db);
-});
-
-final customerRepositoryProvider = Provider<CoreCustomerRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return CoreCustomerRepository(db);
-});
-
-final moduleRepositoryProvider = Provider<ModuleRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return ModuleRepository(db);
-});
-
-final settingsRepositoryProvider = Provider<AppSettingsRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return AppSettingsRepository(db);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -118,16 +68,11 @@ final settingsRepositoryProvider = Provider<AppSettingsRepository>((ref) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Tất cả sản phẩm (reactive)
-<<<<<<< HEAD
 final allProductsProvider = StreamProvider<List<ProductModel>>((ref) {
-=======
-final allProductsProvider = StreamProvider<List<CoreProduct>>((ref) {
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   return ref.watch(productRepositoryProvider).watchAll();
 });
 
 /// Sản phẩm cho POS (chỉ active + available)
-<<<<<<< HEAD
 final posProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) {
   return ref.watch(allProductsProvider).whenData((products) => products
       .where((p) =>
@@ -158,47 +103,12 @@ final activeModulesProvider = StreamProvider<List<ModuleConfig>>((ref) async* {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS PROVIDERS
-=======
-final posProductsProvider = StreamProvider<List<CoreProduct>>((ref) {
-  return ref.watch(productRepositoryProvider).watchAvailableForPos();
-});
-
-/// Sản phẩm tồn kho thấp
-final lowStockProductsProvider = StreamProvider<List<CoreProduct>>((ref) {
-  return ref.watch(productRepositoryProvider).watchLowStock();
-});
-
-/// Tất cả khách hàng (reactive)
-final allCustomersProvider = StreamProvider<List<CoreCustomer>>((ref) {
-  return ref.watch(customerRepositoryProvider).watchAll();
-});
-
-/// Tất cả modules (sorted by position)
-final allModulesProvider = StreamProvider<List<ModuleConfig>>((ref) {
-  return ref.watch(moduleRepositoryProvider).watchAll();
-});
-
-/// Chỉ active modules
-final activeModulesProvider = StreamProvider<List<ModuleConfig>>((ref) {
-  return ref.watch(moduleRepositoryProvider).watchActive();
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SETTINGS PROVIDERS — Future-based, không reactive (thường không thay đổi)
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 // ─────────────────────────────────────────────────────────────────────────────
 
 final shopNameProvider = FutureProvider<String>((ref) {
   return ref.watch(settingsRepositoryProvider).shopName;
 });
 
-<<<<<<< HEAD
-=======
-final receiptEnabledProvider = FutureProvider<bool>((ref) {
-  return ref.watch(settingsRepositoryProvider).receiptEnabled;
-});
-
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 final taxRateProvider = FutureProvider<double>((ref) {
   return ref.watch(settingsRepositoryProvider).taxRate;
 });
@@ -207,23 +117,15 @@ final loyaltyRateProvider = FutureProvider<double>((ref) {
   return ref.watch(settingsRepositoryProvider).loyaltyRate;
 });
 
-<<<<<<< HEAD
-=======
-/// PIN khoá ứng dụng — FutureProvider, invalidate sau khi thay đổi
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 final pinEnabledProvider = FutureProvider<bool>((ref) async {
   final val = await ref.watch(settingsRepositoryProvider).get('pin_enabled');
   return val == 'true';
 });
 
-<<<<<<< HEAD
 // ─────────────────────────────────────────────────────────────────────────────
 // NAVIGATION PROVIDERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-=======
-/// Global tab index — shared between DashboardScreen and MainShell
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 class _NavTabNotifier extends Notifier<int> {
   @override
   int build() => 0;
@@ -233,10 +135,6 @@ class _NavTabNotifier extends Notifier<int> {
 final navTabProvider = NotifierProvider<_NavTabNotifier, int>(
   _NavTabNotifier.new);
 
-<<<<<<< HEAD
-=======
-/// Tab index constants
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 class NavTab {
   static const home      = 0;
   static const pos       = 1;
@@ -245,7 +143,6 @@ class NavTab {
   static const loyalty   = 4;
   static const report    = 5;
   static const settings  = 6;
-<<<<<<< HEAD
   static const table     = 7;
   static const kitchen   = 8;
   static const staff     = 9;
@@ -286,6 +183,3 @@ class NavSlotsNotifier extends AsyncNotifier<List<int>> {
 
 final navSlotsProvider =
     AsyncNotifierProvider<NavSlotsNotifier, List<int>>(NavSlotsNotifier.new);
-=======
-}
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df

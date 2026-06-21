@@ -1491,3 +1491,38 @@ Phát hiện lỗi nghiêm trọng khi gọi món nháp (Chưa gửi bếp):
 | `lib/core/services/user_auth_service.dart` | Bổ sung logic bypass local login khi thông tin đăng nhập khớp với tài khoản demo Google Play Review. |
 | `.docs/nhat-ky.md` | Ghi nhận tài khoản kiểm thử và nhật ký cập nhật hôm nay. |
 
+---
+
+## 2026-06-20 & 2026-06-21 — Đóng Gói Windows & Phân Trạm In Bếp
+
+### Đã làm
+- ✅ **Đóng gói Windows & Cấu hình C++ Runtime**:
+  - Sửa lỗi cú pháp trong `installer.iss` và workflows của GitHub Actions.
+  - Tích hợp tự động tải và cài đặt ngầm Microsoft VC++ Redistributable (`vc_redist.x64.exe`) khi cài đặt trên Windows.
+  - Merge khôi phục thành công giao diện Tablet Sidebar UI.
+- ✅ **Phân chia và điều hướng in cho từng bếp**:
+  - Cập nhật Giao diện Sửa/Thêm sản phẩm cho phép cấu hình "Bộ phận chế biến": **Bếp Nóng** (`bep_nong`), **Bếp Bar** (`bep_bar`), và **Thu Ngân** (`thu_ngan`).
+  - Lưu trữ cấu hình máy in trạm riêng biệt cho từng vai trò (Thu ngân, Bếp nóng, Bếp bar, Tem dán ly) qua SharedPreferences.
+  - Hỗ trợ 2 kiểu kết nối máy in: **Máy in Hệ thống** (OS Printer) và **Mạng IP LAN/Wifi**.
+  - Tự động tách đơn hàng gốc thành các phiếu in riêng biệt và đẩy thẳng tới máy in tương ứng khi thanh toán thành công hoặc in thủ công.
+  - Xây dựng template in tem dán ly (Bar Label) kích thước nhỏ `50x30mm` (in lẻ từng ly) phục vụ đóng cốc quầy Bar.
+
+### Files đã sửa
+| File | Thay đổi |
+|------|----------|
+| `lib/screens/inventory_screen.dart` | Thêm selector chọn trạm chế biến (`stationCode`) cho sản phẩm. |
+| `lib/modules/kho/repository/kho_repository.dart` | Thêm `stationCode` vào model `StockItem`. |
+| `lib/modules/pos/repository/pos_repository.dart` | Thêm `stationCode` vào model `CartLine`. |
+| `lib/modules/pos/providers/pos_providers.dart` | Gán `stationCode` khi tạo `CartLine`. |
+| `lib/modules/bill_printer/screens/bill_preview_screen.dart` | Thêm logic tạo tem dán ly `generateBarLabels` và bộ điều phối in `StationPrinterDispatcher.printBill`. |
+| `lib/modules/pos/screens/checkout_sheet.dart` | Tự động in phân trạm khi thanh toán thành công và in trực tiếp khi bấm nút thủ công. |
+| `lib/modules/bill_printer/providers/printer_settings_provider.dart` | [NEW] Provider lưu trữ cấu hình máy in trạm và quét máy in hệ thống. |
+| `lib/modules/bill_printer/screens/bill_printer_hub.dart` | Thêm card và sheet giao diện cấu hình máy in trạm, in thử nghiệm. |
+| `windows/installer.iss` | Cấu hình cài đặt C++ Runtime và cập nhật đường dẫn đầu ra. |
+| `.github/workflows/windows-release.yml` | Cập nhật đường dẫn lưu trữ đầu ra build Windows. |
+
+### Tiếp theo
+- ➡️ Bàn giao cho người dùng Push mã nguồn sạch lên GitHub.
+- ➡️ Chạy build bản phát hành Windows trên GitHub Actions và tải bản cài đặt mới về trải nghiệm.
+
+

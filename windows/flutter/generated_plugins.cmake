@@ -4,14 +4,11 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
-<<<<<<< HEAD
   audioplayers_windows
   file_selector_windows
   geolocator_windows
   printing
   share_plus
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   url_launcher_windows
 )
 

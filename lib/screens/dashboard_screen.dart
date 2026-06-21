@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import '../core/utils/money_formatter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -22,19 +21,6 @@ import '../shared/widgets/module_tile.dart';
 import 'module_picker_screen.dart';
 import '../modules/bill_printer/screens/bill_printer_hub.dart';
 import '../modules/ops/screens/ops_screen.dart';
-=======
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-
-import '../core/providers/app_providers.dart';
-import '../core/providers/dashboard_providers.dart';
-import '../core/repositories/dashboard_repository.dart';
-import '../modules/kho/providers/kho_providers.dart';
-import '../shared/widgets/module_tile.dart';
-import 'module_picker_screen.dart';
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MÀU LOCAL
@@ -54,7 +40,6 @@ const _kWhite60   = Color(0x99FFFFFF);
 const _kWhite85   = Color(0xD9FFFFFF);
 
 // ─────────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
 // PROVIDER: Fetch quyền module của staff từ Supabase
 // ─────────────────────────────────────────────────────────────────────────────
 class StoreRoleKey {
@@ -83,8 +68,6 @@ final _staffPermsProvider = FutureProvider.family<List<String>, StoreRoleKey>(
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 // DASHBOARD SCREEN — Lego Dashboard với Riverpod
 // ─────────────────────────────────────────────────────────────────────────────
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -101,7 +84,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   // Local order của modules (để drag & drop)
   List<String> _moduleOrder = [];
   bool _orderInitialized = false;
-<<<<<<< HEAD
   String? _lastSessionRole; // Track role để reset order khi role thay đổi
 
   // ✨ Animation state
@@ -178,17 +160,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       debugPrint('[Dashboard] _silentRoleRefresh error: $e');
     }
   }
-=======
-
-  // ✨ Animation state
-  String? _newlyAddedModuleId; // tile vừa được thêm → play entrance anim
-  final Set<String> _removingIds = {}; // tiles đang fade-out để xóa
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   @override
   Widget build(BuildContext context) {
     final modulesAsync  = ref.watch(allModulesProvider);
-<<<<<<< HEAD
     final lowStockAsync = ref.watch(lowStockKhoProvider);
     final todayStats    = ref.watch(todayStatsProvider);
     final session       = ref.watch(sessionProvider); // Watch để rebuild khi session update
@@ -200,10 +175,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             role: session.role,
           )))
         : null;
-=======
-    final lowStockAsync = ref.watch(lowStockProductsProvider);
-    final todayStats    = ref.watch(todayStatsProvider);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -213,7 +184,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ),
         error: (e, _) => Center(child: Text('Lỗi: $e')),
         data: (modules) {
-<<<<<<< HEAD
           // Map: local module id → permission key (tương ứng kAllModules)
           const permMap = {
             'pos': 'pos', 'kho': 'kho', 'finance': 'finance',
@@ -262,14 +232,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             _orderInitialized = false;
           }
 
-=======
-          // Lấy các module đang active, sort theo position từ DB
-          final activeModules = modules
-              .where((m) => m.isActive)
-              .toList()
-            ..sort((a, b) => a.position.compareTo(b.position));
-
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           // Khởi tạo local order lần đầu
           if (!_orderInitialized || _moduleOrder.isEmpty) {
             _moduleOrder = activeModules.map((m) => m.id).toList();
@@ -279,7 +241,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             final activeIds = activeModules.map((m) => m.id).toSet();
             _moduleOrder.removeWhere((id) => !activeIds.contains(id));
             for (final m in activeModules) {
-<<<<<<< HEAD
               // Không re-add module đã bị xóa trong session edit này
               if (!_moduleOrder.contains(m.id) && !_editRemovedIds.contains(m.id)) {
                 _moduleOrder.add(m.id);
@@ -288,13 +249,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           }
 
           final mainContent = CustomScrollView(
-=======
-              if (!_moduleOrder.contains(m.id)) _moduleOrder.add(m.id);
-            }
-          }
-
-          return CustomScrollView(
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
             physics: const ClampingScrollPhysics(),
             slivers: [
               // ── HEADER ─────────────────────────────────────────────
@@ -340,13 +294,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   .toList()),
                         ),
 
-<<<<<<< HEAD
-=======
-                        // ── Top items ──────────────────────────────
-                        const SizedBox(height: 20),
-                        _buildTopItems(),
-
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                         const SizedBox(height: 80),
                       ] else ...[
                         const SizedBox(height: 80),
@@ -357,7 +304,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
             ],
           );
-<<<<<<< HEAD
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -376,8 +322,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               return mainContent;
             },
           );
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         },
       ),
     );
@@ -438,7 +382,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       children: [
                         Consumer(builder: (_, ref, __) {
                           final nameAsync = ref.watch(shopNameProvider);
-<<<<<<< HEAD
                           final session = ref.watch(sessionProvider);
                           final isOwner = session?.isOwner ?? true;
 
@@ -465,14 +408,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 );
                           return Text(
                             displayName,
-=======
-                          return Text(
-                            nameAsync.when(
-                              data: (n) => n,
-                              loading: () => 'Quán Nhỏ',
-                              error: (_, __) => 'Quán Nhỏ',
-                            ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
@@ -481,7 +416,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             ),
                           );
                         }),
-<<<<<<< HEAD
                         const SizedBox(height: 3),
                         Row(
                           children: [
@@ -565,21 +499,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               ),
                             ),
                           ],
-=======
-                        const SizedBox(height: 2),
-                        Text(
-                          dateStr,
-                          style: const TextStyle(
-                            color: _kWhite60,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                          ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                         ),
                       ],
                     ),
                   ),
-<<<<<<< HEAD
                    // Notification bell → hiện hàng sắp hết khi bấm
                   Consumer(builder: (ctx, r, __) {
                     final lowStockAsync = r.watch(lowStockKhoProvider);
@@ -722,22 +645,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       ),
                     );
                   }),
-=======
-                  // Notification bell
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: _kWhite20,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.notifications_outlined,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   const SizedBox(width: 8),
                   // Avatar → Settings
                   GestureDetector(
@@ -765,7 +672,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
               const SizedBox(height: 20),
 
-<<<<<<< HEAD
               // Revenue display — hoặc CTA tạo quán nếu chưa có quán
               Consumer(builder: (ctx, r, __) {
                 final hasStore = r.watch(hasStoreProvider);
@@ -846,52 +752,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 ),
                               ),
                             ],
-=======
-              // Revenue display
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'DOANH THU HÔM NAY',
-                          style: TextStyle(
-                            color: _kWhite60,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        // LIVE revenue
-                        Consumer(builder: (_, r, __) {
-                          final s   = r.watch(todayStatsProvider);
-                          final rev = s.value?.todayRevenue ?? 0;
-                          return Text(
-                            _fmtRevenue(rev),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 42,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -2,
-                              height: 1.0,
-                            ),
-                          );
-                        }),
-                        const Text(
-                          'đồng',
-                          style: TextStyle(
-                            color: _kWhite60,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                           ),
                         ),
                       ],
                     ),
-<<<<<<< HEAD
                     const SizedBox(height: 16),
                     // Pills row — live data
                     Builder(builder: (_) {
@@ -917,60 +781,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   ],
                 );
               }),
-=======
-                  ),
-                  // Quick badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0x334CAF50),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: const Color(0x664CAF50)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.store_rounded,
-                            size: 12, color: Color(0xFF81C784)),
-                        SizedBox(width: 4),
-                        Text(
-                          'Sẵn sàng',
-                          style: TextStyle(
-                            color: Color(0xFF81C784),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-                // Pills row — live data
-                Consumer(builder: (_, r, __) {
-                  final s = r.watch(todayStatsProvider);
-                  final orders    = s.value?.todayOrders ?? 0;
-                  final customers = s.value?.todayCustomers ?? 0;
-                  return Row(
-                    children: [
-                      _HeaderPill(
-                        icon: Icons.receipt_long_rounded,
-                        label: 'Số đơn',
-                        value: '$orders',
-                      ),
-                      const SizedBox(width: 8),
-                      _HeaderPill(
-                        icon: Icons.people_rounded,
-                        label: 'Khách',
-                        value: '$customers',
-                      ),
-                    ],
-                  );
-                }),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               ],
             ),
           ),
@@ -984,11 +794,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   // SECTION HEADER (Module Grid title + edit toggle)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildSectionHeader(List<dynamic> activeModules) {
-<<<<<<< HEAD
     final sessionSnap = ref.read(sessionProvider);
     final isOwner = sessionSnap?.isOwner ?? true;
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     return Row(
       children: [
         Column(
@@ -1018,7 +825,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ],
         ),
         const Spacer(),
-<<<<<<< HEAD
         // Chủ quán: nút Sửa / Xong | Staff: text không có quyền
         if (!isOwner && (sessionSnap?.hasStore ?? false))
           Container(
@@ -1124,86 +930,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               );
             },
           ),
-=======
-        // Sửa / Xong pill button
-        TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0, end: _isEditMode ? 1.0 : 0.0),
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-          builder: (context, t, _) {
-            final bgColor = Color.lerp(
-              const Color(0xFF1E1C5E), // navy
-              const Color(0xFFE85D20), // orange
-              t,
-            )!;
-            final glowColor = Color.lerp(
-              const Color(0x661E1C5E),
-              const Color(0x66E85D20),
-              t,
-            )!;
-            return GestureDetector(
-              onTap: _toggleEditMode,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: glowColor,
-                      blurRadius: 12,
-                      spreadRadius: -2,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      transitionBuilder: (child, anim) => ScaleTransition(
-                        scale: anim,
-                        child: FadeTransition(opacity: anim, child: child),
-                      ),
-                      child: Icon(
-                        _isEditMode ? Icons.check_rounded : Icons.tune_rounded,
-                        key: ValueKey(_isEditMode),
-                        color: Colors.white,
-                        size: 15,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      transitionBuilder: (child, anim) => FadeTransition(
-                        opacity: anim,
-                        child: SlideTransition(
-                          position: Tween(
-                            begin: const Offset(0, 0.3),
-                            end: Offset.zero,
-                          ).animate(anim),
-                          child: child,
-                        ),
-                      ),
-                      child: Text(
-                        _isEditMode ? 'Xong' : 'Sửa',
-                        key: ValueKey(_isEditMode),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.1,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       ],
     );
   }
@@ -1290,19 +1016,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
 
-<<<<<<< HEAD
   /// Static grid — GridView responsive (2/3/4 cột tuỳ màn hình)
   Widget _buildStaticGrid(List<Widget> tiles) {
     final cols = Responsive.gridColumns(context);
-=======
-  /// Static grid — GridView 2 cột, aspect ratio cố định
-  Widget _buildStaticGrid(List<Widget> tiles) {
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       padding: EdgeInsets.zero,
-<<<<<<< HEAD
       // Force render tất cả tiles để animation entry chạy đúng
       cacheExtent: 9999,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -1310,32 +1030,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
         childAspectRatio: cols >= 4 ? 1.4 : cols >= 3 ? 1.25 : 1.0,
-=======
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.0, // vuông hoàn toàn
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       ),
       itemCount: tiles.length,
       itemBuilder: (_, i) => tiles[i],
     );
   }
 
-<<<<<<< HEAD
   /// Reorder/Edit grid — responsive columns
   Widget _buildReorderableGrid(List<Widget> tiles) {
     final cols = Responsive.gridColumns(context);
-=======
-  /// Reorder/Edit grid — same GridView as static, tiles are jiggable
-  Widget _buildReorderableGrid(List<Widget> tiles) {
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       padding: EdgeInsets.zero,
-<<<<<<< HEAD
       // Force render tất cả tiles để jiggle animation chạy đều trên mọi tile
       cacheExtent: 9999,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -1343,13 +1050,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
         childAspectRatio: cols >= 4 ? 1.4 : cols >= 3 ? 1.25 : 1.0,
-=======
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.0,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       ),
       itemCount: tiles.length,
       itemBuilder: (_, i) => tiles[i],
@@ -1479,20 +1179,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final stats = statsAsync.value ?? const DashboardStats(
         todayRevenue: 0, todayOrders: 0, todayCustomers: 0, avgOrderValue: 0);
     final lowCount = (lowStockAsync.value ?? []).length;
-<<<<<<< HEAD
     final isLoading = statsAsync.isLoading && !statsAsync.hasValue;
 
     final voidAsync = ref.watch(todayVoidStatsProvider);
     final voidStats = voidAsync.value ?? {'amount': 0.0, 'count': 0};
     final double voidAmount = voidStats['amount'] as double;
     final int voidCount = voidStats['count'] as int;
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-<<<<<<< HEAD
         // Section header
         Row(children: [
           const Text(
@@ -1570,114 +1266,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     const Expanded(child: SizedBox()),
                   ]),
                 ]),
-=======
-        // Section title
-        Row(
-          children: [
-            const Text(
-              'Hôm nay',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: _kInk,
-                letterSpacing: -0.3,
-              ),
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: _kNavy.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                DateFormat('HH:mm').format(DateTime.now()),
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: _kNavy,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // Top row: 2 big cards
-        Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: _PremiumStatCard(
-                label: 'Giá TB / đơn',
-                value: _fmtShort(stats.avgOrderValue) + 'đ',
-                icon: Icons.trending_up_rounded,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1B5E20), Color(0xFF388E3C)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                delay: 0,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              flex: 2,
-              child: _PremiumStatCard(
-                label: 'Số đơn',
-                value: '${stats.todayOrders}',
-                icon: Icons.receipt_long_rounded,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                delay: 80,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-
-        // Bottom row: 2 cards
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: _PremiumStatCard(
-                label: 'Khách hôm nay',
-                value: '${stats.todayCustomers}',
-                icon: Icons.people_rounded,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF4A148C), Color(0xFF7B1FA2)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                delay: 160,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              flex: 3,
-              child: _PremiumStatCard(
-                label: 'Sắp hết hàng',
-                value: lowCount == 0 ? 'Ổn 👍' : '$lowCount SP',
-                icon: lowCount == 0
-                    ? Icons.check_circle_rounded
-                    : Icons.warning_amber_rounded,
-                gradient: LinearGradient(
-                  colors: lowCount == 0
-                      ? [const Color(0xFF004D40), const Color(0xFF00796B)]
-                      : [const Color(0xFFB71C1C), const Color(0xFFE53935)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                delay: 240,
-              ),
-            ),
-          ],
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         ),
       ],
     );
@@ -1995,11 +1583,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               ),
                               const SizedBox(width: 10),
                               Text(
-<<<<<<< HEAD
                                 '${_formatCurrency(p.sellPrice)}',
-=======
-                                '${_formatCurrency(p.sellPrice)}đ',
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
@@ -2033,7 +1617,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   void _toggleEditMode() {
     HapticFeedback.lightImpact();
-<<<<<<< HEAD
     final wasEditing = _isEditMode;
     setState(() => _isEditMode = !_isEditMode);
     // Khi thoát edit mode → sync lại provider từ SharedPreferences
@@ -2041,9 +1624,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       _editRemovedIds.clear(); // Reset sau khi thoát edit
       ref.invalidate(allModulesProvider); // Sync lại provider với DB
     }
-=======
-    setState(() => _isEditMode = !_isEditMode);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   Future<void> _removeModule(String moduleId) async {
@@ -2175,14 +1755,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     if (confirmed != true) return; // User cancelled
 
     // 💨 Bước 1: thêm vào _removingIds → trigger exit animation
-<<<<<<< HEAD
     setState(() {
       _removingIds.add(moduleId);
       _editRemovedIds.add(moduleId); // Đánh dấu để tránh sync re-add
     });
-=======
-    setState(() => _removingIds.add(moduleId));
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
     // ⏳ Đợi animation chạy xong (550ms)
     await Future.delayed(const Duration(milliseconds: 560));
@@ -2197,11 +1773,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     // 💾 Ghi vào DB
     await ref.read(moduleRepositoryProvider).deactivate(moduleId);
-<<<<<<< HEAD
     // ⚠️ Không invalidate allModulesProvider ở đây — tránh gây loading flash làm remount tiles
     // Provider sẽ được sync khi thoát edit mode (nút Xong)
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   Future<void> _openModulePicker() async {
@@ -2214,12 +1787,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
 
     if (result != null && !_moduleOrder.contains(result)) {
-<<<<<<< HEAD
       // 🔄 Invalidate provider để dashboard đọc lại SharedPreferences mới nhất
       ref.invalidate(allModulesProvider);
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       // ✨ Bước 1: thêm vào list và đánh dấu là "newly added"
       setState(() {
         _moduleOrder.add(result);
@@ -2236,7 +1806,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   void _navigateTo(String? route) {
     if (route == null) return;
-<<<<<<< HEAD
     // bill_printer → push screen riêng (không dùng tab index)
     if (route == '/bill_printer') {
       Navigator.push(context, _smoothRoute(const _BillPrinterHubWrapper()));
@@ -2260,14 +1829,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       '/kho_pro':  11, // Module Kho Hàng Chuyên Nghiệp — KhoProScreen tại index 11
       '/tinhluong': 12, // Module Tính Lương — TinhLuongScreen tại index 12
       '/kay_ops':   13, // Module Vận Hành — OpsScreen tại index 13
-=======
-    final tabMap = {
-      '/pos':     1,
-      '/kho':     2,
-      '/finance': 3,
-      '/loyalty': 4,
-      '/report':  5,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     };
     final idx = tabMap[route];
     if (idx != null) {
@@ -2282,7 +1843,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   // ─────────────────────────────────────────────────────────────────────────
   // UTILS
   // ─────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
   String _formatCurrency(double amount) => fmtMoney(amount);
 
   /// Smooth fade + slide-up route thay cho MaterialPageRoute cứng
@@ -2309,15 +1869,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         );
       },
     );
-=======
-  String _formatCurrency(double amount) {
-    if (amount >= 1000000) {
-      return '${(amount / 1000000).toStringAsFixed(1)}M';
-    } else if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(0)}k';
-    }
-    return amount.toStringAsFixed(0);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 }
 
@@ -2369,7 +1920,6 @@ class _HeaderPill extends StatelessWidget {
       );
 }
 
-<<<<<<< HEAD
 // ─────────────────────────────────────────────────────────────────────────────
 // TODAY STAT ROW ITEM
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2401,8 +1951,6 @@ class _TodayStat extends StatelessWidget {
   );
 }
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 class _PremiumStatCard extends StatelessWidget {
   final String label;
   final String value;
@@ -2477,7 +2025,6 @@ class _PremiumStatCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
 // CREATE STORE / CHECK MEMBERSHIP CTA
 // ─────────────────────────────────────────────────────────────────────────────
 class _CreateStoreCta extends ConsumerStatefulWidget {
@@ -2769,18 +2316,4 @@ class _DStatRow extends StatelessWidget {
       Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
     ]),
   );
-=======
-// FORMAT HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-String _fmtRevenue(double v) {
-  if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
-  if (v >= 1000)    return '${(v / 1000).toStringAsFixed(0)}K';
-  return v.toStringAsFixed(0);
-}
-
-String _fmtShort(double v) {
-  if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
-  if (v >= 1000)    return '${(v / 1000).toStringAsFixed(0)}K';
-  return v.toStringAsFixed(0);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }

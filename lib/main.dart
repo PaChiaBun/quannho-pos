@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,21 +15,6 @@ import 'core/services/user_auth_service.dart' show SessionData;
 
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
-=======
-import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'core/theme/app_theme.dart';
-import 'core/theme/app_colors.dart';
-import 'core/theme/app_text_styles.dart';
-import 'core/services/event_bridge_service.dart';
-import 'core/services/supabase_service.dart';
-import 'core/providers/app_providers.dart';
-
-import 'screens/splash_screen.dart';
-import 'screens/onboarding_screen.dart';
-import 'screens/pin_lock_screen.dart';
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 import 'screens/dashboard_screen.dart';
 import 'screens/pos_screen.dart';
 import 'screens/inventory_screen.dart';
@@ -38,7 +22,6 @@ import 'screens/finance_screen.dart';
 import 'screens/loyalty_screen.dart';
 import 'screens/report_screen.dart';
 import 'screens/settings_screen.dart';
-<<<<<<< HEAD
 import 'screens/ban_screen.dart';
 import 'screens/kitchen_screen.dart';
 import 'screens/nhan_vien_screen.dart';
@@ -77,25 +60,13 @@ const _kTabMeta = [
 const _kNavy  = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
 const _kCream  = Color(0xFFFFF8F0);
-=======
-
-
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-<<<<<<< HEAD
   await initializeDateFormatting('vi', null);
   await SupabaseService.initialize(); // ⚠️ PHẢI await — Supabase cần sẵn sàng trước khi dùng
-=======
-  // Khởi tạo locale cho intl (fix LocaleDataException)
-  await initializeDateFormatting('vi', null);
-
-  // Khởi tạo Supabase (background, không block app)
-  SupabaseService.initialize();
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -121,7 +92,6 @@ class QuanNhoPOSApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       scrollBehavior: const _SmoothScrollBehavior(),
-<<<<<<< HEAD
       // ── Tiếng Việt cho date picker & các widget hệ thống ──
       locale: const Locale('vi', 'VN'),
       localizationsDelegates: const [
@@ -140,20 +110,11 @@ class QuanNhoPOSApp extends StatelessWidget {
         '/auth':          (context) => const AuthScreen(),
         '/store_picker':  (context) => const StorePickerScreen(),
         '/home':          (context) => const MainShell(),
-=======
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/onboarding': (context) => const OnboardingScreen(),
-        '/pin': (context) => const PinLockScreen(mode: PinMode.verify),
-        '/home': (context) => const MainShell(),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       },
     );
   }
 }
 
-<<<<<<< HEAD
 /// Scroll mượt toàn app
 class _SmoothScrollBehavior extends MaterialScrollBehavior {
   const _SmoothScrollBehavior();
@@ -164,27 +125,12 @@ class _SmoothScrollBehavior extends MaterialScrollBehavior {
     return child;
   }
 
-=======
-/// Scroll mượt toàn app — tắt stretch Android, dùng physics không nảy
-class _SmoothScrollBehavior extends MaterialScrollBehavior {
-  const _SmoothScrollBehavior();
-
-  // Tắt hoàn toàn hiệu ứng stretch/glow khi kéo quá đầu
-  @override
-  Widget buildOverscrollIndicator(
-    BuildContext context, Widget child, ScrollableDetails details) {
-    return child;
-  }
-
-  // Dùng ClampingScrollPhysics — cuốn mượt, dừng đạt ngưỡng, không nảy
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
     return const ClampingScrollPhysics();
   }
 }
 
-<<<<<<< HEAD
 // ─────────────────────────────────────────────────────────────────────────────
 // ✅ FIX #4 — Cache GoogleFonts TextStyle thành static const
 // Tránh tạo TextStyle object mới 28 lần mỗi khi sidebar rebuild
@@ -198,9 +144,6 @@ final _kSidebarFooterStyle     = GoogleFonts.outfit(fontSize: 10, fontWeight: Fo
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN SHELL — 4 slot tuỳ chỉnh + Bum AI ở giữa
 // ─────────────────────────────────────────────────────────────────────────────
-=======
-/// Shell chính — chứa Bottom Navigation + các màn hình
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
 
@@ -208,7 +151,6 @@ class MainShell extends ConsumerStatefulWidget {
   ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-<<<<<<< HEAD
 class _MainShellState extends ConsumerState<MainShell>
     with SingleTickerProviderStateMixin {
   int get _currentIndex => ref.watch(navTabProvider);
@@ -226,16 +168,10 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 
   RealtimeChannel? _roleChannel;
-=======
-class _MainShellState extends ConsumerState<MainShell> {
-  int get _currentIndex => ref.watch(navTabProvider);
-  void _setTab(int i) => ref.read(navTabProvider.notifier).goTo(i);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   @override
   void initState() {
     super.initState();
-<<<<<<< HEAD
 
     // Lightweight fade controller — 150ms thay vì 240ms
     _tabFadeCtrl = AnimationController(
@@ -480,178 +416,11 @@ class _MainShellState extends ConsumerState<MainShell> {
               width: 1, thickness: 1, color: Color(0xFFEEEBE6)),
             // ── Nội dung chính ──────────────────────────────────
             Expanded(child: _buildBody(idx)),
-=======
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(eventBridgeProvider);
-    });
-  }
-
-  void switchTab(int index) => _setTab(index);
-
-  @override
-  Widget build(BuildContext context) {
-    final idx = ref.watch(navTabProvider);
-    return Scaffold(
-      body: IndexedStack(
-        index: idx,
-        children: const [
-          DashboardScreen(),   // 0
-          PosScreen(),         // 1
-          InventoryScreen(),   // 2
-          FinanceScreen(),     // 3
-          LoyaltyScreen(),     // 4
-          ReportScreen(),      // 5
-          SettingsScreen(),    // 6
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.inkFaded.withValues(alpha: 0.15),
-              blurRadius: 12,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                  _NavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Trang chủ',
-                  isActive: _currentIndex == NavTab.home,
-                  onTap: () => _setTab(NavTab.home),
-                ),
-                _NavItem(
-                  icon: Icons.shopping_cart_rounded,
-                  label: 'Bán hàng',
-                  isActive: _currentIndex == NavTab.pos,
-                  onTap: () => _setTab(NavTab.pos),
-                ),
-                _NavItem(
-                  icon: Icons.inventory_2_rounded,
-                  label: 'Kho',
-                  isActive: _currentIndex == NavTab.inventory,
-                  onTap: () => _setTab(NavTab.inventory),
-                ),
-                _NavItem(
-                  icon: Icons.account_balance_wallet_rounded,
-                  label: 'Thu Chi',
-                  isActive: _currentIndex == NavTab.finance,
-                  onTap: () => _setTab(NavTab.finance),
-                ),
-                _NavItem(
-                  icon: Icons.loyalty_rounded,
-                  label: 'Điểm thưởng',
-                  isActive: _currentIndex == NavTab.loyalty,
-                  onTap: () => _setTab(NavTab.loyalty),
-                ),
-                _NavItem(
-                  icon: Icons.bar_chart_rounded,
-                  label: 'Báo cáo',
-                  isActive: _currentIndex == NavTab.report,
-                  onTap: () => _setTab(NavTab.report),
-                ),
-                _NavItem(
-                  icon: Icons.settings_rounded,
-                  label: 'Cài đặt',
-                  isActive: _currentIndex == NavTab.settings,
-                  onTap: () => _setTab(NavTab.settings),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Item trong Bottom Navigation — có animation + badge
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-  final String? badge;
-
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-    this.badge,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.lpmNavy.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  icon,
-                  size: 26,
-                  color: isActive ? AppColors.lpmNavy : AppColors.inkLight,
-                ),
-                if (badge != null)
-                  Positioned(
-                    right: -8,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: AppColors.lpmOrange,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        badge!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: AppTextStyles.fontFamily,
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
-                color: isActive ? AppColors.lpmNavy : AppColors.inkLight,
-              ),
-            ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           ],
         ),
       ),
     );
   }
-<<<<<<< HEAD
 
   /// Custom sidebar thay thế NavigationRail — scrollable, không bị overflow
   Widget _buildCustomSidebar(
@@ -1615,6 +1384,3 @@ class _TinhLuongRouteScreen extends ConsumerWidget {
   }
 }
 
-=======
-}
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df

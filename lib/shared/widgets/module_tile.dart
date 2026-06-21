@@ -76,7 +76,6 @@ const Map<String, ModuleTileData> kModuleConfigs = {
     baseColor: Color(0xFF0D9488), // teal
     route: '/table',
   ),
-<<<<<<< HEAD
   'kitchen': ModuleTileData(
     id: 'kitchen',
     title: 'Phiếu bếp',
@@ -85,14 +84,11 @@ const Map<String, ModuleTileData> kModuleConfigs = {
     baseColor: Color(0xFFEA580C), // warm orange-red
     route: '/kitchen',
   ),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   'staff': ModuleTileData(
     id: 'staff',
     title: 'Nhân viên',
     subtitle: 'Ca làm việc',
     icon: Icons.badge_rounded,
-<<<<<<< HEAD
     baseColor: Color(0xFFDC2626),
     route: '/staff',
   ),
@@ -139,11 +135,6 @@ const Map<String, ModuleTileData> kModuleConfigs = {
     baseColor: Color(0xFF4338CA), // indigo-700
     route: '/bill_printer',
   ),
-=======
-    baseColor: Color(0xFFDC2626), // fire red
-    route: '/staff',
-  ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -174,7 +165,6 @@ class ModuleTile extends StatefulWidget {
 }
 
 class _ModuleTileState extends State<ModuleTile>
-<<<<<<< HEAD
     with TickerProviderStateMixin {
   late final AnimationController _jiggle;
   late final AnimationController _pressCtrl;
@@ -186,16 +176,6 @@ class _ModuleTileState extends State<ModuleTile>
 
   // ── Jiggle params ────────────────────────────────────────────────────────
   static const double _amp = 0.048;
-=======
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _jiggle;
-  bool _pressed = false;
-
-  // ── Jiggle params ────────────────────────────────────────────────────────
-  // One full sine cycle per 380ms → smooth, iOS-like feel
-  // Even tiles: +sin, Odd tiles: -sin → naturally opposed phase
-  static const double _amp = 0.048; // ~2.75°
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   static const int _cycleDurationMs = 380;
 
   @override
@@ -205,7 +185,6 @@ class _ModuleTileState extends State<ModuleTile>
       vsync: this,
       duration: const Duration(milliseconds: _cycleDurationMs),
     );
-<<<<<<< HEAD
     _pressCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 100),
@@ -229,30 +208,16 @@ class _ModuleTileState extends State<ModuleTile>
         }
       });
     }
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   @override
   void didUpdateWidget(ModuleTile old) {
     super.didUpdateWidget(old);
     if (widget.isEditMode && !old.isEditMode) {
-<<<<<<< HEAD
       if (!widget.isEven) _jiggle.value = 0.5;
       _jiggle.repeat();
     } else if (!widget.isEditMode && old.isEditMode) {
       _jiggle.stop();
-=======
-      // Start odd tiles at 0.5 (half-cycle offset) so they are always
-      // in opposite phase from even tiles without any delay or jump.
-      if (!widget.isEven) {
-        _jiggle.value = 0.5;
-      }
-      _jiggle.repeat(); // full cycle, no reverse — perfectly smooth
-    } else if (!widget.isEditMode && old.isEditMode) {
-      _jiggle.stop();
-      // Ease back to zero rotation gently
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       _jiggle.animateTo(
         _jiggle.value < 0.5 ? 0.0 : 1.0,
         duration: const Duration(milliseconds: 200),
@@ -266,7 +231,6 @@ class _ModuleTileState extends State<ModuleTile>
   @override
   void dispose() {
     _jiggle.dispose();
-<<<<<<< HEAD
     _pressCtrl.dispose();
     _rippleCtrl.dispose();
     super.dispose();
@@ -291,11 +255,6 @@ class _ModuleTileState extends State<ModuleTile>
     if (mounted) setState(() => _flashing = false);
   }
 
-=======
-    super.dispose();
-  }
-
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   @override
   Widget build(BuildContext context) {
     Widget child = _buildTile();
@@ -338,7 +297,6 @@ class _ModuleTileState extends State<ModuleTile>
     return GestureDetector(
       onTap: widget.isEditMode ? null : () {
         HapticFeedback.lightImpact();
-<<<<<<< HEAD
         // Delay navigation 160ms → user sees animation before screen changes
         Future.delayed(const Duration(milliseconds: 160), () {
           widget.onTap?.call();
@@ -349,17 +307,6 @@ class _ModuleTileState extends State<ModuleTile>
       onTapCancel: widget.isEditMode ? null : _onTapCancel,
       child: ScaleTransition(
         scale: _scaleAnim,
-=======
-        widget.onTap?.call();
-      },
-      onTapDown: widget.isEditMode ? null : (_) => setState(() => _pressed = true),
-      onTapUp:   widget.isEditMode ? null : (_) => setState(() => _pressed = false),
-      onTapCancel: widget.isEditMode ? null : () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.93 : 1.0,
-        duration: const Duration(milliseconds: 90),
-        curve: Curves.easeInOut,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -465,7 +412,6 @@ class _ModuleTileState extends State<ModuleTile>
                         ],
                       ),
                     ),
-<<<<<<< HEAD
 
                     // ── Ripple từ điểm chạm ──────────────────────────────
                     AnimatedBuilder(
@@ -485,8 +431,6 @@ class _ModuleTileState extends State<ModuleTile>
                       duration: const Duration(milliseconds: 60),
                       child: Container(color: Colors.white),
                     ),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   ],
                 ),
               ),
@@ -560,7 +504,6 @@ class _ModuleTileState extends State<ModuleTile>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
 // RIPPLE PAINTER — vòng tròn trắng lan toa từ điểm chạm
 // ─────────────────────────────────────────────────────────────────────────────
 class _RipplePainter extends CustomPainter {
@@ -587,8 +530,6 @@ class _RipplePainter extends CustomPainter {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 // ADD MODULE TILE
 // ─────────────────────────────────────────────────────────────────────────────
 class AddModuleTile extends StatefulWidget {

@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import '../core/utils/money_formatter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-=======
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../core/database/app_database.dart';
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 import '../modules/finance/providers/finance_providers.dart';
 import '../modules/finance/repository/finance_repository.dart';
 import '../modules/finance/screens/add_transaction_sheet.dart';
@@ -43,29 +35,20 @@ class FinanceScreen extends ConsumerStatefulWidget {
 
 class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
-<<<<<<< HEAD
   Future<void> _openAddSheet({String type = 'income'}) async {
     HapticFeedback.selectionClick();
     final result = await showModalBottomSheet<bool>(
-=======
-  void _openAddSheet({String type = 'income'}) {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet(
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => AddTransactionSheet(initialType: type),
     );
-<<<<<<< HEAD
     // Nếu ghi thành công → invalidate tất cả finance providers
     if (result == true) {
       ref.invalidate(financeRecordsProvider);     // list giao dịch
       ref.invalidate(financeStatsProvider);       // stats header kỳ đang chọn
       ref.invalidate(todayFinanceStatsProvider);  // stats header hôm nay
     }
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   @override
@@ -75,7 +58,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     final filterType  = ref.watch(financeFilterProvider);
     final recordsAsync = ref.watch(filteredRecordsProvider);
 
-<<<<<<< HEAD
     final mainContent = Column(
       children: [
         _buildHeader(statsAsync, periodState),
@@ -105,71 +87,21 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           }
           return mainContent;
         },
-=======
-    return Scaffold(
-      backgroundColor: _kBg,
-      body: Column(
-        children: [
-          // ── Header gradient ─────────────────────────────────────────
-          _buildHeader(statsAsync, periodState),
-
-          // ── Period chips ────────────────────────────────────────────
-          _buildPeriodChips(periodState),
-
-          // ── Filter tabs ─────────────────────────────────────────────
-          _buildFilterTabs(filterType),
-
-          // ── Transaction list ────────────────────────────────────────
-          Expanded(child: _buildList(recordsAsync)),
-        ],
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            heroTag: 'finance_fab_expense',
-            mini: true,
-            onPressed: () => _openAddSheet(type: 'expense'),
-            backgroundColor: _kRed,
-            foregroundColor: _kWhite,
-            elevation: 2,
-            child: const Icon(Icons.trending_down_rounded, size: 20),
-          ),
-          const SizedBox(height: 8),
-          FloatingActionButton.extended(
-            heroTag: 'finance_fab_income',
-            onPressed: () => _openAddSheet(type: 'income'),
-            backgroundColor: _kGreen,
-            foregroundColor: _kWhite,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Ghi thu',
-              style: TextStyle(fontWeight: FontWeight.w700)),
-            elevation: 4,
-          ),
-        ],
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       ),
     );
   }
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   // ─────────────────────────────────────────────────────────────────────────
   // HEADER
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildHeader(AsyncValue<FinanceStats> statsAsync, DateRange period) {
-<<<<<<< HEAD
     final periods = [
       ('today', 'Hôm nay'),
       ('week',  'Tuần'),
       ('month', 'Tháng'),
     ];
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -181,7 +113,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       child: SafeArea(
         bottom: false,
         child: Padding(
-<<<<<<< HEAD
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,26 +165,10 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               const SizedBox(height: 18),
 
               // ── Stats ──
-=======
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title
-              const Text('Thu Chi',
-                style: TextStyle(
-                  color: _kWhite, fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.3,
-                )),
-              const SizedBox(height: 16),
-
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               statsAsync.when(
                 loading: () => const _HeaderSkeleton(),
                 error: (_, __) => const SizedBox.shrink(),
                 data: (stats) => Column(
-<<<<<<< HEAD
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Lợi nhuận hero
@@ -311,73 +226,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                         onTap: () => _openAddSheet(type: 'expense'),
                       )),
                     ]),
-=======
-                  children: [
-                    // Profit card chính
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: const Color(0x1AFFFFFF),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                            color: const Color(0x33FFFFFF)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Text('Lợi nhuận',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13, fontWeight: FontWeight.w500,
-                                )),
-                              const Spacer(),
-                              if (stats.prevIncome > 0)
-                                _GrowthBadge(pct: stats.incomeGrowth),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${stats.profit >= 0 ? '' : '-'}${_fmtMoney(stats.profit.abs().toInt())}đ',
-                            style: TextStyle(
-                              color: stats.profit >= 0
-                                  ? const Color(0xFF81C784)
-                                  : const Color(0xFFEF9A9A),
-                              fontSize: 30, fontWeight: FontWeight.w900,
-                              letterSpacing: -1,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Biên lợi nhuận: ${stats.profitMargin.toStringAsFixed(1)}%',
-                            style: const TextStyle(
-                              color: Colors.white54, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Thu / Chi tiles
-                    Row(
-                      children: [
-                        _StatTile(
-                          label: 'Tổng thu',
-                          value: stats.income,
-                          icon: Icons.trending_up_rounded,
-                          color: const Color(0xFF81C784),
-                        ),
-                        const SizedBox(width: 10),
-                        _StatTile(
-                          label: 'Tổng chi',
-                          value: stats.expense,
-                          icon: Icons.trending_down_rounded,
-                          color: const Color(0xFFEF9A9A),
-                        ),
-                      ],
-                    ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   ],
                 ),
               ),
@@ -388,68 +236,11 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     );
   }
 
-<<<<<<< HEAD
 
   // ─────────────────────────────────────────────────────────────────────────
   // PERIOD CHIPS — đã merge vào header, giữ lại để không break provider
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildPeriodChips(DateRange current) => const SizedBox.shrink();
-=======
-  // ─────────────────────────────────────────────────────────────────────────
-  // PERIOD CHIPS
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildPeriodChips(DateRange current) {
-    final periods = [
-      ('today',   'Hôm nay'),
-      ('week',    'Tuần này'),
-      ('month',   'Tháng này'),
-    ];
-
-    return Container(
-      color: _kNavy,
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      child: Row(
-        children: periods.map((p) {
-          final active = current.label == p.$2;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                switch (p.$1) {
-                  case 'today': ref.read(periodProvider.notifier).setToday(); break;
-                  case 'week':  ref.read(periodProvider.notifier).setThisWeek(); break;
-                  case 'month': ref.read(periodProvider.notifier).setThisMonth(); break;
-                }
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 7),
-                decoration: BoxDecoration(
-                  color: active
-                      ? _kOrange
-                      : const Color(0x1AFFFFFF),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: active
-                        ? _kOrange
-                        : const Color(0x33FFFFFF),
-                  ),
-                ),
-                child: Text(p.$2,
-                  style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600,
-                    color: active ? _kWhite : Colors.white60,
-                  )),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   // ─────────────────────────────────────────────────────────────────────────
   // FILTER TABS
@@ -473,22 +264,14 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           ),
           const SizedBox(width: 6),
           _FilterChip(
-<<<<<<< HEAD
             label: '↑ Thu',
-=======
-            label: '↓ Thu',
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
             active: filterType == 'income',
             color: _kGreen,
             onTap: () => ref.read(financeFilterProvider.notifier).showIncome(),
           ),
           const SizedBox(width: 6),
           _FilterChip(
-<<<<<<< HEAD
             label: '↓ Chi',
-=======
-            label: '↑ Chi',
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
             active: filterType == 'expense',
             color: _kRed,
             onTap: () =>
@@ -502,7 +285,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   // ─────────────────────────────────────────────────────────────────────────
   // TRANSACTION LIST
   // ─────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
   Widget _buildList(AsyncValue<List<FinanceRecordModel>> recordsAsync) {
     return recordsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator(color: _kNavy)),
@@ -530,28 +312,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               onDelete: r.isAuto ? null : () => _confirmDelete(r),
             )
                 .animate(delay: (i * 25).ms)
-=======
-  Widget _buildList(AsyncValue<List<FinanceRecord>> recordsAsync) {
-    return recordsAsync.when(
-      loading: () => const Center(
-          child: CircularProgressIndicator(color: _kNavy)),
-      error: (e, _) => Center(child: Text('Lỗi: $e')),
-      data: (records) {
-        if (records.isEmpty) {
-          return _buildEmpty();
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-          itemCount: records.length,
-          itemBuilder: (_, i) {
-            return _TransactionCard(
-              record:   records[i],
-              onDelete: records[i].isAuto
-                  ? null
-                  : () => _confirmDelete(records[i]),
-            )
-                .animate(delay: (i * 35).ms)
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 .fadeIn(duration: 200.ms)
                 .slideY(begin: 0.04, end: 0, duration: 200.ms);
           },
@@ -578,11 +338,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     ),
   );
 
-<<<<<<< HEAD
   void _confirmDelete(FinanceRecordModel record) {
-=======
-  void _confirmDelete(FinanceRecord record) {
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -599,7 +355,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             child: const Text('Huỷ'),
           ),
           ElevatedButton(
-<<<<<<< HEAD
             onPressed: () async {
               Navigator.pop(ctx);
               // ‼️ FIX: await + invalidate để UI refresh ngay sau khi xóa
@@ -607,11 +362,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               ref.invalidate(financeRecordsProvider);
               ref.invalidate(financeStatsProvider);
               ref.invalidate(todayFinanceStatsProvider);
-=======
-            onPressed: () {
-              Navigator.pop(ctx);
-              ref.read(financeRepositoryProvider).deleteRecord(record.id);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _kRed,
@@ -631,11 +381,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 // TRANSACTION CARD
 // ─────────────────────────────────────────────────────────────────────────────
 class _TransactionCard extends StatelessWidget {
-<<<<<<< HEAD
   final FinanceRecordModel record;
-=======
-  final FinanceRecord record;
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   final VoidCallback? onDelete;
 
   const _TransactionCard({required this.record, this.onDelete});
@@ -644,11 +390,7 @@ class _TransactionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isIncome = record.type == 'income';
     final color    = isIncome ? _kGreen : _kRed;
-<<<<<<< HEAD
     final dt = record.recordedAt.toLocal();
-=======
-    final dt = DateTime.fromMillisecondsSinceEpoch(record.recordedAt);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     final timeStr =
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
 
@@ -710,7 +452,6 @@ class _TransactionCard extends StatelessWidget {
           subtitle: Row(
             children: [
               if (record.isAuto)
-<<<<<<< HEAD
                 GestureDetector(
                   onTap: () {
                     final desc = record.description ?? 'giao dịch';
@@ -753,20 +494,6 @@ class _TransactionCard extends StatelessWidget {
                       ],
                     ),
                   ),
-=======
-                Container(
-                  margin: const EdgeInsets.only(right: 6),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: _kNavy.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text('Auto',
-                    style: TextStyle(
-                      fontSize: 10, fontWeight: FontWeight.w700,
-                      color: _kNavy)),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 ),
               Text(
                 '$timeStr  •  ${_dayLabel(dt)}',
@@ -775,11 +502,7 @@ class _TransactionCard extends StatelessWidget {
             ],
           ),
           trailing: Text(
-<<<<<<< HEAD
             '${isIncome ? '+' : '-'}${_fmtMoney(record.amount.toInt())}',
-=======
-            '${isIncome ? '+' : '-'}${_fmtMoney(record.amount.toInt())}đ',
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
             style: TextStyle(
               fontSize: 15, fontWeight: FontWeight.w800,
               color: color),
@@ -833,11 +556,7 @@ class _StatTile extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 11, color: Colors.white54,
                     fontWeight: FontWeight.w500)),
-<<<<<<< HEAD
                 Text('${_fmtShort(value)}',
-=======
-                Text('${_fmtShort(value)}đ',
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   style: TextStyle(
                     fontSize: 15, fontWeight: FontWeight.w800,
                     color: color)),
@@ -918,7 +637,6 @@ class _FilterChip extends StatelessWidget {
   );
 }
 
-<<<<<<< HEAD
 // ─────────────────────────────────────────────────────────────────────────────
 // ACTION BUTTON — nút solid đồng nhất (Ghi thu / Ghi chi)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -966,8 +684,6 @@ class _ActionBtnState extends State<_ActionBtn> with SingleTickerProviderStateMi
 // ─────────────────────────────────────────────────────────────────────────────
 // HEADER SKELETON
 // ─────────────────────────────────────────────────────────────────────────────
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 class _HeaderSkeleton extends StatelessWidget {
   const _HeaderSkeleton();
 
@@ -979,7 +695,6 @@ class _HeaderSkeleton extends StatelessWidget {
   );
 }
 
-<<<<<<< HEAD
 // ─────────────────────────────────────────────────────────────────────────────
 // DATE HEADER — phân nhóm giao dịch theo ngày
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1208,14 +923,4 @@ class _FStatRow extends StatelessWidget {
       Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
     ]),
   );
-=======
-// Helpers
-String _fmtMoney(int v) => v.toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
-
-String _fmtShort(double v) {
-  if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
-  if (v >= 1000)    return '${(v / 1000).toStringAsFixed(0)}K';
-  return v.toStringAsFixed(0);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }

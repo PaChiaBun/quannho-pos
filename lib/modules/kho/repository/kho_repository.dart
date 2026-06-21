@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart'; // debugPrint
@@ -115,51 +114,10 @@ class KhoRepository {
         return sorted.take(limit).toList();
       }
     );
-=======
-import 'package:drift/drift.dart';
-import 'package:uuid/uuid.dart';
-import '../../../core/database/app_database.dart';
-import '../../../core/event_bus/app_event_bus.dart';
-import '../../../core/event_bus/app_events.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// KHO REPOSITORY — Tuân thủ schema thực tế
-// KhoStockMovements: id, productId, delta (+nhập/-xuất), reason, referenceId,
-//                    eventId, note, createdAt
-// CoreProducts: isDeleted (không có trackStock/deletedAt)
-// ─────────────────────────────────────────────────────────────────────────────
-class KhoRepository {
-  final AppDatabase _db;
-  final AppEventBus _bus;
-  final _uuid = const Uuid();
-
-  KhoRepository(this._db, this._bus);
-
-  // ── Stock movements ───────────────────────────────────────────────────────
-
-  /// Lịch sử biến động của 1 sản phẩm (delta = +nhập / -xuất)
-  Stream<List<KhoStockMovement>> watchMovements(String productId) {
-    return (_db.select(_db.khoStockMovements)
-          ..where((m) => m.productId.equals(productId))
-          ..orderBy([(m) => OrderingTerm.desc(m.createdAt)]))
-        .watch();
-  }
-
-  /// Tất cả biến động gần đây
-  Stream<List<KhoStockMovement>> watchRecentMovements({int limit = 50}) {
-    return (_db.select(_db.khoStockMovements)
-          ..orderBy([(m) => OrderingTerm.desc(m.createdAt)])
-          ..limit(limit))
-        .watch();
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   // ── Nhập hàng ─────────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
-=======
-  /// Nhập kho — delta dương (append-only)
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   Future<void> receiveStock({
     required String productId,
     required String productName,
@@ -167,7 +125,6 @@ class KhoRepository {
     required double unitCost,
     String? supplierId,
     String? supplierName,
-<<<<<<< HEAD
     String? reference,
     String? note,
   }) async {
@@ -245,133 +202,10 @@ class KhoRepository {
     });
 
     await _productRepo.updateStockQty(productId, quantity);
-=======
-    String? reference,   // số phiếu
-    String? note,
-  }) async {
-    assert(quantity > 0);
-    final eventId = _uuid.v4();
-    final now     = DateTime.now().millisecondsSinceEpoch;
-
-    await _db.transaction(() async {
-      // 1. Ghi movement (append-only, delta dương = nhập)
-      await _db.into(_db.khoStockMovements).insert(
-        KhoStockMovementsCompanion(
-          id:          Value(_uuid.v4()),
-          productId:   Value(productId),
-          delta:       Value(quantity),       // + nhập
-          reason:      const Value('purchase'),
-          referenceId: Value(reference),
-          note:        Value(supplierName != null
-              ? '${supplierName}${note != null ? ' — $note' : ''}'
-              : note),
-          createdAt:   Value(now),
-        ),
-      );
-
-      // 2. Cập nhật stockQty
-      await _db.customUpdate(
-        'UPDATE core_products SET stock_qty = stock_qty + ?, updated_at = ? WHERE id = ?',
-        variables: [
-          Variable.withReal(quantity),
-          Variable.withInt(now),
-          Variable.withString(productId),
-        ],
-        updates: {_db.coreProducts},
-      );
-
-      // 3. Emit event
-      final newLevel = await _getCurrentStock(productId);
-      await _bus.emit(
-        StockAdjustedEvent(
-          id:        eventId,
-          createdAt: DateTime.fromMillisecondsSinceEpoch(now),
-          productId: productId,
-          delta:     quantity,
-          reason:    'purchase',
-        ),
-        targetModules: const ['pos', 'finance'],
-      );
-    });
-  }
-
-  /// Điều chỉnh kho thủ công (delta âm = xuất)
-  Future<void> adjustStock({
-    required String productId,
-    required String productName,
-    required double quantity,   // âm = xuất, dương = thêm
-    required String reason,     // 'adjust','waste','damage','transfer'
-    String? note,
-  }) async {
-    final now = DateTime.now().millisecondsSinceEpoch;
-
-    await _db.transaction(() async {
-      await _db.into(_db.khoStockMovements).insert(
-        KhoStockMovementsCompanion(
-          id:        Value(_uuid.v4()),
-          productId: Value(productId),
-          delta:     Value(quantity),   // có thể âm
-          reason:    Value(reason),
-          note:      Value(note),
-          createdAt: Value(now),
-        ),
-      );
-
-      await _db.customUpdate(
-        'UPDATE core_products SET stock_qty = stock_qty + ?, updated_at = ? WHERE id = ?',
-        variables: [
-          Variable.withReal(quantity),
-          Variable.withInt(now),
-          Variable.withString(productId),
-        ],
-        updates: {_db.coreProducts},
-      );
-    });
-  }
-
-  Future<double> _getCurrentStock(String productId) async {
-    final r = await (_db.select(_db.coreProducts)
-          ..where((p) => p.id.equals(productId)))
-        .getSingleOrNull();
-    return r?.stockQty ?? 0;
-  }
-
-  // ── Products (Kho view) ───────────────────────────────────────────────────
-
-  Stream<List<StockItem>> watchAllStock() {
-    return (_db.select(_db.coreProducts)
-          ..where((p) => p.isDeleted.equals(false))
-          ..orderBy([(p) => OrderingTerm.asc(p.name)]))
-        .watch()
-        .map((rows) => rows.map(StockItem.fromProduct).toList());
-  }
-
-  Stream<List<StockItem>> watchLowStock() {
-    return (_db.select(_db.coreProducts)
-          ..where((p) => p.isDeleted.equals(false))
-          ..orderBy([(p) => OrderingTerm.asc(p.stockQty)]))
-        .watch()
-        .map((rows) => rows
-            .where((p) => p.minStock > 0 && p.stockQty <= p.minStock)
-            .map(StockItem.fromProduct)
-            .toList());
-  }
-
-  Stream<List<StockItem>> watchOutOfStock() {
-    return (_db.select(_db.coreProducts)
-          ..where((p) => p.isDeleted.equals(false))
-          ..orderBy([(p) => OrderingTerm.asc(p.name)]))
-        .watch()
-        .map((rows) => rows
-            .where((p) => p.stockQty <= 0)
-            .map(StockItem.fromProduct)
-            .toList());
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   // ── Suppliers ─────────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
   Stream<List<SupplierModel>> watchSuppliers() async* {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
@@ -395,13 +229,6 @@ class KhoRepository {
         .eq('is_deleted', false)
         .order('name');
     return rows.map(SupplierModel.fromMap).toList();
-=======
-  Stream<List<KhoSupplier>> watchSuppliers() {
-    return (_db.select(_db.khoSuppliers)
-          ..where((s) => s.isDeleted.equals(false))
-          ..orderBy([(s) => OrderingTerm.asc(s.name)]))
-        .watch();
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   Future<String> addSupplier({
@@ -409,7 +236,6 @@ class KhoRepository {
     String? phone,
     String? address,
     String? note,
-<<<<<<< HEAD
     String? contactPerson,
     String? email,
     String? category,
@@ -910,53 +736,6 @@ class KhoRepository {
       totalValue:      totalValue,
       todayInQty:      todayInQty,
       todayInCost:     todayInCost,
-=======
-  }) async {
-    final id = _uuid.v4();
-    await _db.into(_db.khoSuppliers).insert(KhoSuppliersCompanion(
-          id:      Value(id),
-          name:    Value(name),
-          phone:   Value(phone),
-          address: Value(address),
-          note:    Value(note),
-        ));
-    return id;
-  }
-
-  // ── Stats ─────────────────────────────────────────────────────────────────
-
-  Future<KhoStats> getStats() async {
-    final products = await (_db.select(_db.coreProducts)
-          ..where((p) => p.isDeleted.equals(false)))
-        .get();
-
-    final lowStockItems =
-        products.where((p) => p.minStock > 0 && p.stockQty <= p.minStock).length;
-    final outOfStock = products.where((p) => p.stockQty <= 0).length;
-    final totalValue = products.fold<double>(
-      0, (s, p) => s + (p.stockQty * p.costPrice));
-
-    // Nhập kho trong ngày (delta dương)
-    final todayStart = DateTime.now()
-        .copyWith(hour: 0, minute: 0, second: 0, millisecond: 0)
-        .millisecondsSinceEpoch;
-
-    final todayIn = await (_db.select(_db.khoStockMovements)
-          ..where((m) =>
-              m.createdAt.isBiggerOrEqualValue(todayStart) &
-              m.reason.equals('purchase')))
-        .get();
-
-    final todayInQty = todayIn.fold<double>(0, (s, m) => s + m.delta);
-
-    return KhoStats(
-      totalItems:      products.length,
-      lowStockItems:   lowStockItems,
-      outOfStockItems: outOfStock,
-      totalValue:      totalValue,
-      todayInQty:      todayInQty,
-      todayInCost:     0, // cần purchase_orders để tính chính xác
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     );
   }
 }
@@ -971,7 +750,6 @@ class StockItem {
   final String unit;
   final String? sku;
   final String? category;
-<<<<<<< HEAD
   final String? imageUrl;
   final double stockQty;
   final double minStock;
@@ -981,12 +759,7 @@ class StockItem {
   final String productType;
   final bool isTopping;
   final String toppingUnit;
-=======
-  final double stockQty;
-  final double minStock;
-  final double costPrice;
-  final double sellPrice;
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
+  final String stationCode;
 
   const StockItem({
     required this.id,
@@ -994,7 +767,6 @@ class StockItem {
     required this.unit,
     this.sku,
     this.category,
-<<<<<<< HEAD
     this.imageUrl,
     required this.stockQty,
     required this.minStock,
@@ -1004,6 +776,7 @@ class StockItem {
     this.productType = 'finished',
     this.isTopping = false,
     this.toppingUnit = 'phần',
+    this.stationCode = 'bep_nong',
   });
 
   factory StockItem.fromProduct(ProductModel p) => StockItem(
@@ -1021,29 +794,11 @@ class StockItem {
         productType:      p.productType,
         isTopping:        p.isTopping,
         toppingUnit:      p.toppingUnit,
-=======
-    required this.stockQty,
-    required this.minStock,
-    required this.costPrice,
-    required this.sellPrice,
-  });
-
-  factory StockItem.fromProduct(CoreProduct p) => StockItem(
-        id:        p.id,
-        name:      p.name,
-        unit:      p.unit,
-        sku:       p.sku,
-        category:  p.category,
-        stockQty:  p.stockQty,
-        minStock:  p.minStock,
-        costPrice: p.costPrice,
-        sellPrice: p.sellPrice,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
+        stationCode:      p.stationCode,
       );
 
   StockStatus get status {
     if (stockQty <= 0) return StockStatus.outOfStock;
-<<<<<<< HEAD
     if (minStock <= 0) return StockStatus.untracked;
     if (stockQty <= minStock) return StockStatus.low;
     return StockStatus.ok;
@@ -1214,16 +969,6 @@ class PurchaseItemModel {
         subtotal:    (m['subtotal'] as num?)?.toDouble() ?? 0,
       );
 }
-=======
-    if (minStock > 0 && stockQty <= minStock) return StockStatus.low;
-    return StockStatus.ok;
-  }
-
-  double get stockValue => stockQty * costPrice;
-}
-
-enum StockStatus { ok, low, outOfStock, notTracked }
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 class KhoStats {
   final int totalItems;
@@ -1234,18 +979,9 @@ class KhoStats {
   final double todayInCost;
 
   const KhoStats({
-<<<<<<< HEAD
     required this.totalItems, required this.lowStockItems,
     required this.outOfStockItems, required this.totalValue,
     required this.todayInQty, required this.todayInCost,
-=======
-    required this.totalItems,
-    required this.lowStockItems,
-    required this.outOfStockItems,
-    required this.totalValue,
-    required this.todayInQty,
-    required this.todayInCost,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   });
 
   static const empty = KhoStats(

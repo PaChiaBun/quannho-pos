@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,14 +11,6 @@ import '../features/backup/backup_screen.dart';
 import 'bug_report_screen.dart';
 import 'pin_lock_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
-=======
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/database/app_database.dart';
-import '../core/providers/app_providers.dart';
-import '../core/theme/app_colors.dart';
-import 'pin_lock_screen.dart';
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS SCREEN — Cài đặt Quán Nhỏ POS
@@ -31,23 +22,12 @@ class SettingsScreen extends ConsumerWidget {
   static const _kNavyL  = Color(0xFF2D2B8A);
   static const _kOrange = Color(0xFFE85D20);
   static const _kGreen  = Color(0xFF2E7D32);
-<<<<<<< HEAD
   static const _kMuted  = Color(0xFF9E9085);
   static const _kBg     = Color(0xFFFAF7F2);
-=======
-  static const _kInk    = Color(0xFF1A1207);
-  static const _kMuted  = Color(0xFF9E9085);
-  static const _kBg     = Color(0xFFFAF7F2);
-  static const _kBorder = Color(0xFFE0D8CC);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final shopNameAsync  = ref.watch(shopNameProvider);
-<<<<<<< HEAD
-=======
-    final modulesAsync   = ref.watch(allModulesProvider);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -88,86 +68,6 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
-<<<<<<< HEAD
-=======
-          // ── Modules Toggle ─────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              icon: Icons.extension_rounded,
-              title: 'Modules',
-              color: _kOrange,
-            ),
-          ),
-          modulesAsync.when(
-            loading: () => const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: LinearProgressIndicator(),
-              ),
-            ),
-            error: (_, __) => const SliverToBoxAdapter(child: SizedBox.shrink()),
-            data: (modules) => SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (_, i) {
-                    final m = modules[i];
-                    return _ModuleTile(
-                      module: m,
-                      onToggle: (v) {
-                      final repo = ref.read(moduleRepositoryProvider);
-                      if (v) {
-                        repo.activate(m.id);
-                      } else {
-                        repo.deactivate(m.id);
-                      }
-                    },
-                    );
-                  },
-                  childCount: modules.length,
-                ),
-              ),
-            ),
-          ),
-
-          // ── Tài khoản & Quản lý ────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              icon: Icons.manage_accounts_rounded,
-              title: 'Quản lý',
-              color: _kNavy,
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _SettingsTile(
-                  icon: Icons.people_rounded,
-                  label: 'Nhân viên',
-                  subtitle: 'Quản lý ca và quyền truy cập',
-                  color: _kNavy,
-                  onTap: () => _comingSoon(context),
-                ),
-                _SettingsTile(
-                  icon: Icons.loyalty_rounded,
-                  label: 'Điểm thưởng',
-                  subtitle: 'Tỷ lệ quy đổi & quà tặng',
-                  color: const Color(0xFF7B1FA2),
-                  onTap: () => _showLoyaltySettings(context, ref),
-                ),
-                _SettingsTile(
-                  icon: Icons.receipt_long_rounded,
-                  label: 'In hoá đơn',
-                  subtitle: 'Máy in Bluetooth & nhiệt',
-                  color: _kGreen,
-                  onTap: () => _comingSoon(context),
-                ),
-              ]),
-            ),
-          ),
-
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           // ── Bảo mật ─────────────────────────────────────────────
           SliverToBoxAdapter(
             child: _SectionHeader(
@@ -182,10 +82,7 @@ class SettingsScreen extends ConsumerWidget {
               delegate: SliverChildListDelegate([
                 _PinToggleTile(),
                 _RecoveryEmailTile(),
-<<<<<<< HEAD
                 _QuickPinTile(),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               ]),
             ),
           ),
@@ -205,16 +102,10 @@ class SettingsScreen extends ConsumerWidget {
                 _SettingsTile(
                   icon: Icons.backup_rounded,
                   label: 'Sao lưu',
-<<<<<<< HEAD
                   subtitle: 'Xuất CSV — Đơn hàng, Lương, Tồn kho...',
                   color: _kGreen,
                   onTap: () => Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const BackupScreen())),
-=======
-                  subtitle: 'Google Drive & file cục bộ',
-                  color: _kGreen,
-                  onTap: () => _comingSoon(context),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 ),
                 _SettingsTile(
                   icon: Icons.restore_rounded,
@@ -258,18 +149,13 @@ class SettingsScreen extends ConsumerWidget {
                   label: 'Gửi phản hồi',
                   subtitle: 'Báo lỗi & đề xuất tính năng',
                   color: _kMuted,
-<<<<<<< HEAD
                   onTap: () => Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const BugReportScreen())),
-=======
-                  onTap: () => _comingSoon(context),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 ),
               ]),
             ),
           ),
 
-<<<<<<< HEAD
           // ── Tài khoản ───────────────────────────────────────────────
           SliverToBoxAdapter(
             child: _SectionHeader(
@@ -287,8 +173,6 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           // ── App Footer ─────────────────────────────────────────────
           SliverToBoxAdapter(
             child: _buildFooter(),
@@ -298,7 +182,6 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-<<<<<<< HEAD
   Widget _buildFooter() => FutureBuilder(
     future: _getVersionString(),
     builder: (context, snapshot) {
@@ -364,58 +247,6 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-=======
-  Widget _buildFooter() => Container(
-    margin: const EdgeInsets.fromLTRB(16, 24, 16, 40),
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [_kNavy, _kNavyL],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(24),
-    ),
-    child: Column(
-      children: [
-        Container(
-          width: 56, height: 56,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(Icons.store_rounded,
-            color: Colors.white, size: 30),
-        ),
-        const SizedBox(height: 12),
-        const Text('Quán Nhỏ POS',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18, fontWeight: FontWeight.w900,
-            letterSpacing: -0.3,
-          )),
-        const SizedBox(height: 4),
-        const Text('Phiên bản 1.0.0 • Build 2026',
-          style: TextStyle(
-            color: Colors.white54, fontSize: 12)),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(
-              horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Text('Made with ❤️ by LPM Digital',
-            style: TextStyle(
-              color: Colors.white70, fontSize: 12,
-              fontWeight: FontWeight.w500)),
-        ),
-      ],
-    ),
-  );
-
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   void _comingSoon(BuildContext context) {
     HapticFeedback.selectionClick();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -460,23 +291,10 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-<<<<<<< HEAD
   void _showLoyaltySettings(BuildContext context, WidgetRef ref) {}
 }
 
 
-=======
-  void _showLoyaltySettings(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _LoyaltySettingsSheet(),
-    );
-  }
-}
-
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 // ─────────────────────────────────────────────────────────────────────────────
 // SHOP INFO CARD
 // ─────────────────────────────────────────────────────────────────────────────
@@ -486,7 +304,6 @@ class _ShopInfoCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-<<<<<<< HEAD
     final session = ref.watch(sessionProvider);
 
     return Column(
@@ -901,73 +718,6 @@ class _StoreCodeCard extends StatelessWidget {
                       height: 1.4)),
                 ],
               ),
-=======
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Avatar gradient
-          Container(
-            width: 58, height: 58,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1E1C5E), Color(0xFFE85D20)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Center(
-              child: Text(
-                shopName.isEmpty ? '?' : shopName[0].toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24, fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(shopName,
-                  style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w800,
-                    color: Color(0xFF1A1207),
-                    letterSpacing: -0.3,
-                  )),
-                const SizedBox(height: 2),
-                const Text('123 Nguyễn Huệ, Q.1, TP.HCM',
-                  style: TextStyle(
-                    fontSize: 12, color: Color(0xFF9E9085))),
-                const Text('0901 234 567',
-                  style: TextStyle(
-                    fontSize: 12, color: Color(0xFF9E9085))),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit_rounded,
-              color: Color(0xFFE85D20), size: 20),
-            onPressed: () => _openEditShop(context, ref, shopName),
-            style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFFFF3E0),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
             ),
           ),
         ],
@@ -1035,12 +785,8 @@ class _ModuleTile extends StatelessWidget {
             HapticFeedback.selectionClick();
             onToggle(v);
           },
-<<<<<<< HEAD
           activeThumbColor: color,
           activeTrackColor: color.withValues(alpha: 0.5),
-=======
-          activeColor: color,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         ),
       ),
     );
@@ -1048,7 +794,6 @@ class _ModuleTile extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
 // LOYALTY SETTINGS SHEET — Đầy đủ: preset + custom + save
 // ─────────────────────────────────────────────────────────────────────────────
 class _LoyaltySettingsSheet extends ConsumerStatefulWidget {
@@ -1410,100 +1155,12 @@ class _AccountTile extends ConsumerWidget {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             child: const Text('Đăng xuất'),
-=======
-// LOYALTY SETTINGS SHEET
-// ─────────────────────────────────────────────────────────────────────────────
-class _LoyaltySettingsSheet extends ConsumerWidget {
-  const _LoyaltySettingsSheet();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final loyaltyRate = ref.watch(loyaltyRateProvider).value ?? 0.01;
-
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(width: 40, height: 4,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE0D8CC),
-              borderRadius: BorderRadius.circular(2)),
-          ),
-          const SizedBox(height: 16),
-          const Text('Cài đặt điểm thưởng',
-            style: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.w900,
-              color: Color(0xFF1A1207))),
-          const SizedBox(height: 20),
-
-          // Rate info
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3E5F5),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.loyalty_rounded,
-                  color: Color(0xFF7B1FA2), size: 28),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Tỷ lệ tích điểm hiện tại',
-                        style: TextStyle(
-                          fontSize: 13, color: Color(0xFF7B1FA2),
-                          fontWeight: FontWeight.w600)),
-                      Text(
-                        '${(loyaltyRate * 100).toStringAsFixed(0)}đ = 1 điểm',
-                        style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w800,
-                          color: Color(0xFF7B1FA2))),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          const Text('Cài đặt chi tiết sẽ được mở trong bản cập nhật tiếp theo.',
-            style: TextStyle(fontSize: 13, color: Color(0xFF9E9085))),
-          const SizedBox(height: 20),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7B1FA2),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: const Text('Đóng',
-                style: TextStyle(fontWeight: FontWeight.w700)),
-            ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           ),
         ],
       ),
     );
   }
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1587,19 +1244,13 @@ void _openEditShop(BuildContext context, WidgetRef ref, String currentName) {
     builder: (_) => _EditShopSheet(
       currentName: currentName,
       onSaved: (name) async {
-<<<<<<< HEAD
         await ref.read(settingsRepositoryProvider).set('shop_name', name);
         ref.invalidate(shopNameProvider);
-=======
-        await ref.read(settingsRepositoryProvider).set(
-          'shop_name', name);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       },
     ),
   );
 }
 
-<<<<<<< HEAD
 // ignore: unused_element
 void _openBillSettings(BuildContext context, WidgetRef ref) {
   showModalBottomSheet(
@@ -1610,8 +1261,6 @@ void _openBillSettings(BuildContext context, WidgetRef ref) {
   );
 }
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 // ─────────────────────────────────────────────────────────────────────────────
 // EDIT SHOP SHEET
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1761,7 +1410,6 @@ class _EditShopSheetState extends State<_EditShopSheet> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
 // BILL SETTINGS SHEET — SĐT, địa chỉ, footer hoá đơn
 // ─────────────────────────────────────────────────────────────────────────────
 class _BillSettingsSheet extends ConsumerStatefulWidget {
@@ -1933,8 +1581,6 @@ class _BillSettingsSheetState extends ConsumerState<_BillSettingsSheet> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 // PIN TOGGLE TILE — Bật/Tắt khoá PIN trong Settings
 // ─────────────────────────────────────────────────────────────────────────────
 class _PinToggleTile extends ConsumerWidget {
@@ -1975,11 +1621,7 @@ class _PinToggleTile extends ConsumerWidget {
             enabled ? 'Yêu cầu PIN khi mở ứng dụng' : 'Tắt — không cần PIN khi mở app',
             style: const TextStyle(fontSize: 12, color: _kMuted)),
           value: enabled,
-<<<<<<< HEAD
           activeColor: _kBlue,  // ignore: deprecated_member_use
-=======
-          activeColor: _kBlue,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           onChanged: (v) async {
             HapticFeedback.selectionClick();
             if (v) {
@@ -2060,10 +1702,6 @@ class _RecoveryEmailTile extends ConsumerWidget {
   static const _kBlue   = Color(0xFF4F9EFF);
   static const _kMuted  = Color(0xFF9E9085);
   static const _kBorder = Color(0xFFE0D8CC);
-<<<<<<< HEAD
-=======
-  static const _kBg     = Color(0xFFFAF7F2);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -2180,7 +1818,6 @@ class _RecoveryEmailTile extends ConsumerWidget {
     );
   }
 }
-<<<<<<< HEAD
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QUICK PIN TILE — Cấu hình mã PIN duyệt nhanh 4 số
@@ -2476,5 +2113,3 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
   }
 }
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df

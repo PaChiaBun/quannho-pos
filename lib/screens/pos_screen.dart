@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import '../core/utils/money_formatter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -19,17 +18,6 @@ import '../core/providers/session_provider.dart';
 import '../core/repositories/core_product_repository.dart';
 import '../core/repositories/ban_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-=======
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../core/providers/app_providers.dart';
-import '../core/database/app_database.dart';
-import '../modules/pos/providers/pos_providers.dart';
-import '../modules/pos/repository/pos_repository.dart';
-import '../modules/pos/screens/checkout_sheet.dart';
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 // Màu local
 const _kNavy      = Color(0xFF1E1C5E);
@@ -41,7 +29,6 @@ const _kBg        = Color(0xFFFAF7F2);
 const _kRed       = Color(0xFFC62828);
 const _kBorder    = Color(0xFFE0D8CC);
 
-<<<<<<< HEAD
 /// Provider kiểm tra module Bàn có đang bật không
 /// Dùng allModulesProvider — tự refresh khi module config thay đổi
 final tableModuleActiveProvider = Provider<bool>((ref) {
@@ -74,8 +61,6 @@ final _loyaltyCustomersForPickerProvider =
   return ref.watch(loyaltyRepositoryProvider).watchCustomers();
 });
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 // ─────────────────────────────────────────────────────────────────────────────
 // POS SCREEN — Màn hình bán hàng chính
 // ─────────────────────────────────────────────────────────────────────────────
@@ -90,7 +75,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'Tất cả';
   final _searchCtrl = TextEditingController();
-<<<<<<< HEAD
   // Hướng 1: lưu tất cả sessionIds của đơn hiện tại — close hết sau checkout
   final List<String> _kitchenSessionIds = [];
 
@@ -107,8 +91,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     } catch (_) {}
     return Offset(MediaQuery.of(context).size.width - 50, 40);
   }
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   @override
   void dispose() {
@@ -121,7 +103,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final productsAsync = ref.watch(posProductsProvider);
     final cart = ref.watch(cartProvider);
 
-<<<<<<< HEAD
     // ── Desktop/Tablet: layout 2 cột ──────────────────────────────
     if (Responsive.isLargeScreen(context)) {
       return Scaffold(
@@ -154,13 +135,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
 
     // ── Mobile: layout đơn cột ──────────────────────────────
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     return Scaffold(
       backgroundColor: _kBg,
       body: Column(
         children: [
-<<<<<<< HEAD
           _buildTopBar(),
           _buildSearchBar(),
           Expanded(
@@ -169,22 +147,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   child: CircularProgressIndicator(color: _kNavy)),
               error: (e, _) => Center(child: Text('Lỗi: $e')),
               data: (products) {
-=======
-          // ── App bar ──────────────────────────────────────────────────
-          _buildTopBar(),
-
-          // ── Search + category ─────────────────────────────────────────
-          _buildSearchBar(),
-
-          // ── Product grid + cart ───────────────────────────────────────
-          Expanded(
-            child: productsAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: _kNavy)),
-              error: (e, _) => Center(child: Text('Lỗi: $e')),
-              data: (products) {
-                // Lọc theo search + category
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 final filtered = products.where((p) {
                   final matchSearch = _searchQuery.isEmpty ||
                       p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -195,10 +157,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   return matchSearch && matchCat;
                 }).toList();
 
-<<<<<<< HEAD
-=======
-                // Danh mục duy nhất
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 final categories = ['Tất cả',
                   ...products
                       .map((p) => p.category ?? '')
@@ -210,30 +168,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   children: [
                     Column(
                       children: [
-<<<<<<< HEAD
                         _buildCategoryRow(categories),
-=======
-                        // Category chips
-                        _buildCategoryRow(categories),
-                        // Product grid
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                         Expanded(
                           child: filtered.isEmpty
                               ? _buildEmptyProducts()
                               : _buildProductGrid(filtered),
                         ),
-<<<<<<< HEAD
-=======
-                        // Spacer for cart panel
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                         if (!cart.isEmpty)
                           const SizedBox(height: 90),
                       ],
                     ),
-<<<<<<< HEAD
-=======
-                    // ── Floating cart panel ──────────────────────────
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                     if (!cart.isEmpty)
                       Positioned(
                         left: 0, right: 0, bottom: 0,
@@ -249,7 +193,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
-<<<<<<< HEAD
   // Helper dùng cho desktop layout
   Widget _buildProductArea(AsyncValue productsAsync) {
     return productsAsync.when(
@@ -289,13 +232,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
 
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   // ─────────────────────────────────────────────────────────────────────────
   // TOP BAR
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildTopBar() {
-<<<<<<< HEAD
     final cart  = ref.watch(cartProvider);
     final now   = DateTime.now();
     final timeStr  = '${now.hour.toString().padLeft(2,'0')}:${now.minute.toString().padLeft(2,'0')}';
@@ -422,62 +362,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     child: const Icon(Icons.delete_sweep_rounded,
                         color: Color(0x99FFFFFF), size: 20),
                   ),
-=======
-    final cart = ref.watch(cartProvider);
-    return Container(
-      color: _kNavy,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 8, 12),
-          child: Row(
-            children: [
-              const Text(
-                'Bán hàng',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const Spacer(),
-              // Giỏ hàng badge
-              Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.shopping_cart_rounded,
-                        color: Colors.white, size: 26),
-                    onPressed: cart.isEmpty ? null : _openCart,
-                  ),
-                  if (cart.itemCount > 0)
-                    Positioned(
-                      right: 4, top: 4,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: _kOrange,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '${cart.itemCount}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              // Clear cart
-              if (!cart.isEmpty)
-                IconButton(
-                  icon: const Icon(Icons.delete_sweep_rounded,
-                      color: Color(0x80FFFFFF), size: 22),
-                  onPressed: _confirmClearCart,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 ),
             ],
           ),
@@ -488,7 +372,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   // ─────────────────────────────────────────────────────────────────────────
   // SEARCH BAR
-<<<<<<< HEAD
   Widget _buildSearchBar() {
     final cart = ref.watch(cartProvider);
     return Container(
@@ -516,27 +399,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   offset: const Offset(0, 4),
                 ),
               ],
-=======
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildSearchBar() {
-    final cart = ref.watch(cartProvider);
-    return Container(
-      color: _kNavy,
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-      child: Column(
-        children: [
-          // Search field
-          Container(
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0x1AFFFFFF),
-              borderRadius: BorderRadius.circular(14),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
             ),
             child: TextField(
               controller: _searchCtrl,
               onChanged: (v) => setState(() => _searchQuery = v),
-<<<<<<< HEAD
               style: const TextStyle(color: _kInk, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Tim mon, ma SKU...',
@@ -545,18 +411,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: Icon(Icons.close_rounded, color: _kMuted, size: 18),
-=======
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'Tìm món, mã SKU...',
-                hintStyle: const TextStyle(color: Color(0x80FFFFFF), fontSize: 14),
-                prefixIcon: const Icon(Icons.search_rounded,
-                    color: Color(0x80FFFFFF), size: 20),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close_rounded,
-                            color: Color(0x80FFFFFF), size: 18),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                         onPressed: () {
                           _searchCtrl.clear();
                           setState(() => _searchQuery = '');
@@ -564,7 +418,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       )
                     : null,
                 border: InputBorder.none,
-<<<<<<< HEAD
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
@@ -597,102 +450,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             // Kitchen send status hint (if module active)
             _PosKitchenSendHint(),
           ]),
-=======
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Customer chip row
-          Row(
-            children: [
-              GestureDetector(
-                onTap: _openCustomerPicker,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: cart.customerId != null
-                        ? const Color(0xFF2E7D32).withValues(alpha: 0.25)
-                        : Colors.white.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: cart.customerId != null
-                          ? const Color(0xFF66BB6A)
-                          : Colors.white.withValues(alpha: 0.25)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        cart.customerId != null
-                            ? Icons.person_rounded
-                            : Icons.person_add_rounded,
-                        color: cart.customerId != null
-                            ? const Color(0xFF66BB6A)
-                            : Colors.white60,
-                        size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        cart.customerId != null
-                            ? (cart.customerName ?? 'Khách')
-                            : 'Chọn khách',
-                        style: TextStyle(
-                          color: cart.customerId != null
-                              ? const Color(0xFF66BB6A)
-                              : Colors.white60,
-                          fontSize: 12, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (cart.customerId != null) ...[  
-                const SizedBox(width: 6),
-                GestureDetector(
-                  onTap: () => ref.read(cartProvider.notifier).clearCustomer(),
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.10),
-                      shape: BoxShape.circle),
-                    child: const Icon(Icons.close_rounded,
-                      color: Colors.white54, size: 14),
-                  ),
-                ),
-              ],
-              if (cart.customerId != null && (cart.loyaltyPtsAvailable) > 0) ...[  
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF9A825).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFF9A825).withValues(alpha: 0.5))),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.stars_rounded,
-                        color: Color(0xFFF9A825), size: 13),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${cart.loyaltyPtsAvailable.toInt()} điểm',
-                        style: const TextStyle(
-                          color: Color(0xFFF9A825),
-                          fontSize: 11, fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         ],
       ),
     );
   }
 
-<<<<<<< HEAD
   void _openRecentOrders() {
     HapticFeedback.selectionClick();
     showModalBottomSheet(
@@ -705,15 +467,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
 
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   void _openCustomerPicker() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _CustomerPickerSheet(
-<<<<<<< HEAD
         onSelect: (id, name, pts, {double walletReal = 0,
             double walletBonus = 0, int bonusCapPct = 15,
             DateTime? bonusExpiresAt}) {
@@ -724,17 +483,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             bonusCapPct: bonusCapPct,
             bonusExpiresAt: bonusExpiresAt,
           );
-=======
-        onSelect: (id, name, pts) {
-          ref.read(cartProvider.notifier).setCustomer(id, name, pts);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           Navigator.pop(ctx);
         },
       ),
     );
   }
 
-<<<<<<< HEAD
   void _openTablePicker() {
     showModalBottomSheet(
       context: context,
@@ -748,13 +502,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       ),
     );
   }
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   // ─────────────────────────────────────────────────────────────────────────
   // CATEGORY CHIPS
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildCategoryRow(List<String> categories) {
-<<<<<<< HEAD
     return Container(
       height: 62,
       decoration: BoxDecoration(
@@ -770,13 +521,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-=======
-    return SizedBox(
-      height: 48,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         itemCount: categories.length,
         itemBuilder: (_, i) {
           final cat = categories[i];
@@ -786,7 +530,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             child: AnimatedContainer(
               duration: 180.ms,
               margin: const EdgeInsets.only(right: 8),
-<<<<<<< HEAD
               padding: const EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
                 gradient: selected
@@ -800,28 +543,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 borderRadius: BorderRadius.circular(20),
                 border: selected ? null : Border.all(
                     color: _kNavy.withValues(alpha: 0.12), width: 1),
-=======
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: selected ? _kNavy : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: selected ? _kNavy : _kBorder,
-                  width: selected ? 1.5 : 1,
-                ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               ),
               child: Center(
                 child: Text(
                   cat,
                   style: TextStyle(
-<<<<<<< HEAD
                     fontSize: 17,
                     fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-=======
-                    fontSize: 13,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                     color: selected ? Colors.white : _kInk,
                   ),
                 ),
@@ -836,7 +564,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   // ─────────────────────────────────────────────────────────────────────────
   // PRODUCT GRID
   // ─────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
   Widget _buildProductGrid(List<ProductModel> products) {
     return LayoutBuilder(builder: (context, constraints) {
       // Dùng width thực của khu vực (không phải width màn hình tổng)
@@ -943,28 +670,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       ],
     );
     }); // end LayoutBuilder
-=======
-  Widget _buildProductGrid(List<CoreProduct> products) {
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 1.05,
-      ),
-      itemCount: products.length,
-      itemBuilder: (_, i) {
-        return _ProductCard(
-          product: products[i],
-          onTap: () => _addToCart(products[i]),
-        )
-            .animate(delay: (i * 40).ms)
-            .fadeIn(duration: 250.ms)
-            .slideY(begin: 0.1, end: 0, duration: 200.ms);
-      },
-    );
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   Widget _buildEmptyProducts() {
@@ -1038,19 +743,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => _QuickAddProductSheet(
         prefillName: prefillName,
-<<<<<<< HEAD
         onSaved: (name, price, costPrice, category, unit) async {
-=======
-        onSaved: (name, price, category, unit) async {
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           try {
             await ref.read(productRepositoryProvider).create(
               name: name,
               sellPrice: price,
-<<<<<<< HEAD
               costPrice: costPrice,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               category: category.isEmpty ? null : category,
               unit: unit.isEmpty ? 'phần' : unit,
               isAvailable: true,
@@ -1082,30 +780,18 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     return GestureDetector(
       onTap: _openCart,
       child: Container(
-<<<<<<< HEAD
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 18),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-=======
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [_kNavy, _kNavyLight],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-<<<<<<< HEAD
           borderRadius: BorderRadius.circular(26),
           boxShadow: [
             BoxShadow(
               color: _kNavy.withValues(alpha: 0.5),
-=======
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: _kNavy.withValues(alpha: 0.4),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -1115,11 +801,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           children: [
             // Count badge
             Container(
-<<<<<<< HEAD
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-=======
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               decoration: BoxDecoration(
                 color: _kOrange,
                 borderRadius: BorderRadius.circular(20),
@@ -1128,11 +810,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 '${cart.itemCount} món',
                 style: const TextStyle(
                   color: Colors.white,
-<<<<<<< HEAD
                   fontSize: 14,
-=======
-                  fontSize: 12,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -1145,23 +823,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     : '${cart.lines.length} loại món',
                 style: const TextStyle(
                   color: Color(0xD9FFFFFF),
-<<<<<<< HEAD
                   fontSize: 15,
-=======
-                  fontSize: 13,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-<<<<<<< HEAD
             // Gui bep (dim khi module tat)
             _PosKitchenSendBtn(onPressed: () => _openKitchenConfirm(cart)),
             const SizedBox(width: 6),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
             // Total + checkout
             GestureDetector(
               onTap: _openCheckout,
@@ -1172,11 +843,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-<<<<<<< HEAD
                   fmtVnd(cart.total.toInt()),
-=======
-                  '${_fmt(cart.total.toInt())}đ',
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
@@ -1207,10 +874,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   void _openCheckout() {
-<<<<<<< HEAD
     final sessionsToClose = List<String>.from(_kitchenSessionIds);
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1218,7 +882,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       isDismissible: false,
       enableDrag: false,
       builder: (_) => const CheckoutSheet(),
-<<<<<<< HEAD
     ).then((_) async {
       // Đóng tất cả ban_sessions Mang đi của đơn này
       for (final sid in sessionsToClose) {
@@ -1448,26 +1111,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             Text('${product.name} đã hết hàng'),
           ]),
           backgroundColor: _kRed,
-=======
-    );
-  }
-
-  void _addToCart(CoreProduct product) {
-    HapticFeedback.selectionClick();
-    ref.read(cartProvider.notifier).addProduct(product);
-
-    // Cảnh báo nếu hết hàng
-    if (product.stockQty <= 0 && product.minStock > 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('⚠️ ${product.name} đã hết hàng — vẫn thêm vào giỏ'),
-          backgroundColor: const Color(0xFFE65100),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(12, 0, 12, 100),
           shape: RoundedRectangleBorder(
-<<<<<<< HEAD
               borderRadius: BorderRadius.circular(12)),
         ),
       );
@@ -1490,12 +1137,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
 
     ref.read(cartProvider.notifier).addProduct(product);
-=======
-            borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-    }
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   void _confirmClearCart() {
@@ -1523,19 +1164,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
-<<<<<<< HEAD
     String _fmt(int v) => fmtMoney(v.toDouble());
-=======
-  String _fmt(int v) => v.toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRODUCT CARD WIDGET
 // ─────────────────────────────────────────────────────────────────────────────
 class _ProductCard extends ConsumerWidget {
-<<<<<<< HEAD
   final ProductModel product;
   final Function(TapDownDetails) onTapWithDetails;
 
@@ -1865,144 +1500,6 @@ class _ProductCard extends ConsumerWidget {
   }
 
     String _fmt(int v) => fmtMoney(v.toDouble());
-=======
-  final CoreProduct product;
-  final VoidCallback onTap;
-
-  const _ProductCard({required this.product, required this.onTap});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cart = ref.watch(cartProvider);
-    final inCartLine = cart.lines
-        .where((l) => l.productId == product.id)
-        .toList();
-    final inCartQty = inCartLine.isEmpty ? 0 : inCartLine.first.quantity.toInt();
-    final isLowStock = product.minStock > 0 && product.stockQty <= product.minStock;
-    final isOutOfStock = product.stockQty <= 0;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: 150.ms,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: inCartQty > 0 ? _kNavy : _kBorder,
-            width: inCartQty > 0 ? 2 : 1,
-          ),
-          boxShadow: inCartQty > 0
-              ? [
-                  BoxShadow(
-                    color: _kNavy.withValues(alpha: 0.12),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  )
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  )
-                ],
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Icon / Emoji area
-                  Container(
-                    height: 44,
-                    width: 44,
-                    decoration: BoxDecoration(
-                      color: _kBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.fastfood_rounded,
-                          color: _kMuted, size: 22),
-                    ),
-                  ),
-                  const Spacer(),
-                  // Name
-                  Text(
-                    product.name,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: _kInk,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  // Price + stock
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${_fmt(product.sellPrice.toInt())}đ',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: _kOrange,
-                          ),
-                        ),
-                      ),
-                      if (isOutOfStock)
-                        _StockBadge('Hết', _kRed, const Color(0xFFFFEBEE))
-                      else if (isLowStock)
-                        _StockBadge(
-                          '${product.stockQty.toInt()}',
-                          const Color(0xFFE65100),
-                          const Color(0xFFFFF3E0),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // In-cart qty badge (top-right)
-            if (inCartQty > 0)
-              Positioned(
-                right: 8, top: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _kNavy,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '$inCartQty',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                )
-                    .animate()
-                    .scale(
-                      begin: const Offset(0.5, 0.5),
-                      duration: 200.ms,
-                      curve: Curves.elasticOut,
-                    ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _fmt(int v) => v.toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }
 
 class _StockBadge extends StatelessWidget {
@@ -2027,20 +1524,16 @@ class _StockBadge extends StatelessWidget {
 // CART PANEL — Bottom sheet giỏ hàng đầy đủ
 // ─────────────────────────────────────────────────────────────────────────────
 class _CartPanel extends ConsumerWidget {
-<<<<<<< HEAD
   /// [isPanel] = true khi dùng làm side panel (desktop)
   /// [isPanel] = false khi dùng làm modal bottom sheet (mobile)
   final bool isPanel;
   const _CartPanel({this.isPanel = false});
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(cartProvider);
 
     return Container(
-<<<<<<< HEAD
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: isPanel
@@ -2069,29 +1562,6 @@ class _CartPanel extends ConsumerWidget {
                   ),
                   const SizedBox(height: 14),
                 ],
-=======
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle + header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 16, 4),
-            child: Column(
-              children: [
-                Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(
-                    color: _kBorder, borderRadius: BorderRadius.circular(2)),
-                ),
-                const SizedBox(height: 14),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 Row(
                   children: [
                     const Text('Giỏ hàng',
@@ -2114,7 +1584,6 @@ class _CartPanel extends ConsumerWidget {
                         )),
                     ),
                     const Spacer(),
-<<<<<<< HEAD
                     // Permission guard: chỉ owner/manager mới được xoá giỏ hàng
                     PermissionGuard(
                       action: 'pos.cancel_bill',
@@ -2128,15 +1597,6 @@ class _CartPanel extends ConsumerWidget {
                         child: const Text('Xóa hết',
                           style: TextStyle(color: _kRed, fontSize: 13)),
                       ),
-=======
-                    TextButton(
-                      onPressed: () {
-                        ref.read(cartProvider.notifier).clearCart();
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Xóa hết',
-                        style: TextStyle(color: _kRed, fontSize: 13)),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                     ),
                   ],
                 ),
@@ -2158,21 +1618,17 @@ class _CartPanel extends ConsumerWidget {
             ),
           ),
 
-<<<<<<< HEAD
           // ── Ghi chú đơn hàng ──────────────────────────────────────────
           _OrderNoteRow(cart: cart),
 
           // ── Chọn khách hàng ──────────────────────────────────────────
           _CustomerPickerRow(cart: cart),
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           // Total + checkout
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             decoration: BoxDecoration(
               color: Colors.white,
-<<<<<<< HEAD
               boxShadow: [BoxShadow(
                 color: _kInk.withValues(alpha: 0.06),
                 blurRadius: 8, offset: const Offset(0, -2))]),
@@ -2186,46 +1642,15 @@ class _CartPanel extends ConsumerWidget {
                     fontSize: 18, fontWeight: FontWeight.w900,
                     color: _kNavy, letterSpacing: -0.5)),
               ]),
-=======
-              boxShadow: [
-                BoxShadow(
-                  color: _kInk.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Tổng cộng',
-                      style: TextStyle(fontSize: 15, color: _kMuted,
-                        fontWeight: FontWeight.w600)),
-                    Text(
-                      '${_fmtStatic(cart.subtotal.toInt())}đ',
-                      style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.w900,
-                        color: _kNavy, letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
-                ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton.icon(
                     onPressed: () {
-<<<<<<< HEAD
                       // Chỉ pop sheet khi đang nhúc sheet (mobile)
                       // Panel: mở checkout trực tiếp không cần pop
                       if (!isPanel) Navigator.pop(context);
-=======
-                      Navigator.pop(context);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
@@ -2256,7 +1681,6 @@ class _CartPanel extends ConsumerWidget {
   }
 }
 
-<<<<<<< HEAD
 // ─────────────────────────────────────────────────────────────────────────────
 // ORDER NOTE ROW — Ghi chú cả đơn hàng
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2428,35 +1852,24 @@ class _OrderNoteSheetState extends State<_OrderNoteSheet> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 class _CartLineRow extends ConsumerWidget {
   final CartLine line;
   const _CartLineRow({required this.line});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-<<<<<<< HEAD
     final notifier  = ref.read(cartProvider.notifier);
     final isSent    = ref.watch(cartProvider).isLineSent(line.lineId);
-=======
-    final notifier = ref.read(cartProvider.notifier);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-<<<<<<< HEAD
           // Product info + note
-=======
-          // Product info
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-<<<<<<< HEAD
                 // Tên món
                 Row(children: [
                   if (isSent) Container(
@@ -2527,17 +1940,6 @@ class _CartLineRow extends ConsumerWidget {
             ),
           ),
           // Qty controls — ẨN -/+ khi đã gửi bếp
-=======
-                Text(line.productName,
-                  style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700, color: _kInk)),
-                Text('${_fmtStatic(line.unitPrice.toInt())}đ / 1',
-                  style: const TextStyle(fontSize: 12, color: _kMuted)),
-              ],
-            ),
-          ),
-          // Qty controls
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           Container(
             decoration: BoxDecoration(
               color: _kBg,
@@ -2545,20 +1947,12 @@ class _CartLineRow extends ConsumerWidget {
             ),
             child: Row(
               children: [
-<<<<<<< HEAD
                 if (!isSent) _QBtn(
-=======
-                _QBtn(
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   icon: line.quantity <= 1
                       ? Icons.delete_outline_rounded
                       : Icons.remove_rounded,
                   color: line.quantity <= 1 ? _kRed : _kMuted,
-<<<<<<< HEAD
                   onTap: () => notifier.decreaseQty(line.lineId),
-=======
-                  onTap: () => notifier.decreaseQty(line.productId),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -2566,29 +1960,17 @@ class _CartLineRow extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 15, fontWeight: FontWeight.w800, color: _kInk)),
                 ),
-<<<<<<< HEAD
                 if (!isSent) _QBtn(
                   icon: Icons.add_rounded,
                   color: _kNavy,
                   onTap: () => notifier.increaseQty(line.lineId),
-=======
-                _QBtn(
-                  icon: Icons.add_rounded,
-                  color: _kNavy,
-                  onTap: () => notifier.increaseQty(line.productId),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
-<<<<<<< HEAD
           // Subtotal (tổng tiền dòng = đơn giá × số lượng)
           Text(fmtVnd(line.subtotal.toInt()),
-=======
-          // Subtotal
-          Text('${_fmtStatic(line.subtotal.toInt())}đ',
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
             style: const TextStyle(
               fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy)),
         ],
@@ -2597,7 +1979,6 @@ class _CartLineRow extends ConsumerWidget {
   }
 }
 
-<<<<<<< HEAD
 // ─────────────────────────────────────────────────────────────────────────────
 // ITEM NOTE SHEET — Ghi chú per-item (bottom sheet thay AlertDialog)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2776,8 +2157,6 @@ class _ItemNoteSheetState extends State<_ItemNoteSheet> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 class _QBtn extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -2802,7 +2181,6 @@ class _QBtn extends StatelessWidget {
       );
 }
 
-<<<<<<< HEAD
 String _fmtStatic(int v) => fmtMoney(v.toDouble());
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2991,10 +2369,6 @@ class _CustomerPickerRowState extends ConsumerState<_CustomerPickerRow> {
   );
 }
 
-=======
-String _fmtStatic(int v) => v.toString().replaceAllMapped(
-  RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QUICK ADD PRODUCT SHEET
@@ -3002,12 +2376,8 @@ String _fmtStatic(int v) => v.toString().replaceAllMapped(
 class _QuickAddProductSheet extends StatefulWidget {
   final String prefillName;
   final Future<void> Function(
-<<<<<<< HEAD
       String name, double price, double costPrice,
       String category, String unit) onSaved;
-=======
-      String name, double price, String category, String unit) onSaved;
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   const _QuickAddProductSheet({
     required this.prefillName,
@@ -3117,11 +2487,7 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
                             color: _kOrange,
                             borderRadius: BorderRadius.circular(10)),
                           child: Text(
-<<<<<<< HEAD
                             '${_fmtPrice(_previewPrice)}',
-=======
-                            '${_fmtPrice(_previewPrice)}đ',
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                             style: const TextStyle(
                               color: Colors.white, fontSize: 13,
                               fontWeight: FontWeight.w800)),
@@ -3294,35 +2660,19 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-<<<<<<< HEAD
     final price     = double.tryParse(_priceCtrl.text.replaceAll(',', '')) ?? 0;
     final costPrice = double.tryParse(_costCtrl.text.replaceAll(',', '')) ?? 0;
     await widget.onSaved(
       _nameCtrl.text.trim(),
       price,
       costPrice,
-=======
-    final price = double.tryParse(
-        _priceCtrl.text.replaceAll(',', '')) ?? 0;
-    await widget.onSaved(
-      _nameCtrl.text.trim(),
-      price,
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       _catCtrl.text.trim(),
       _unitCtrl.text.trim(),
     );
     if (mounted) setState(() => _saving = false);
   }
 
-<<<<<<< HEAD
     String _fmtPrice(double v) => fmtMoney(v);
-=======
-  String _fmtPrice(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
-    return v.toStringAsFixed(0);
-  }
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3375,7 +2725,6 @@ class _FormField extends StatelessWidget {
 // CUSTOMER PICKER SHEET — Chọn khách hàng cho đơn POS
 // ─────────────────────────────────────────────────────────────────────────────
 class _CustomerPickerSheet extends ConsumerStatefulWidget {
-<<<<<<< HEAD
   final void Function(
     String id,
     String name,
@@ -3385,9 +2734,6 @@ class _CustomerPickerSheet extends ConsumerStatefulWidget {
     int bonusCapPct,
     DateTime? bonusExpiresAt,
   }) onSelect;
-=======
-  final void Function(String id, String name, double pts) onSelect;
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   const _CustomerPickerSheet({required this.onSelect});
 
@@ -3415,12 +2761,8 @@ class _CustomerPickerSheetState
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
     // Dùng provider cố định (không tạo inline) để tránh rebuild vô hạn
     final customersAsync = ref.watch(_loyaltyCustomersForPickerProvider);
-=======
-    final customersAsync = ref.watch(allCustomersProvider);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
@@ -3516,11 +2858,7 @@ class _CustomerPickerSheetState
                   );
                 }
 
-<<<<<<< HEAD
                  return ListView.separated(
-=======
-                return ListView.separated(
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   padding: const EdgeInsets.symmetric(
                     vertical: 8, horizontal: 16),
                   itemCount: filtered.length,
@@ -3529,10 +2867,7 @@ class _CustomerPickerSheetState
                   itemBuilder: (_, i) {
                     final c = filtered[i];
                     final pts = c.loyaltyPts;
-<<<<<<< HEAD
                     final hasWallet = c.realBalance > 0 || c.bonusBalance > 0;
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 4, vertical: 4),
@@ -3550,7 +2885,6 @@ class _CustomerPickerSheetState
                         style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w700,
                           color: _kNavy)),
-<<<<<<< HEAD
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -3562,11 +2896,6 @@ class _CustomerPickerSheetState
                                 color: Color(0xFF1E1C5E), fontWeight: FontWeight.w600)),
                         ],
                       ),
-=======
-                      subtitle: Text(
-                        c.phone ?? 'Chưa có SĐT',
-                        style: const TextStyle(fontSize: 12, color: _kMuted)),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                       trailing: pts > 0
                           ? Container(
                               padding: const EdgeInsets.symmetric(
@@ -3588,7 +2917,6 @@ class _CustomerPickerSheetState
                               ),
                             )
                           : null,
-<<<<<<< HEAD
                       onTap: () => widget.onSelect(
                         c.id, c.name, pts,
                         walletReal: c.realBalance,
@@ -3596,9 +2924,6 @@ class _CustomerPickerSheetState
                         bonusCapPct: c.bonusCapPct,
                         bonusExpiresAt: c.bonusExpiresAt,
                       ),
-=======
-                      onTap: () => widget.onSelect(c.id, c.name, pts),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                     );
                   },
                 );
@@ -3610,7 +2935,6 @@ class _CustomerPickerSheetState
     );
   }
 }
-<<<<<<< HEAD
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TABLE CHIP — Dim + tooltip khi module Bàn chưa bật
@@ -4899,5 +4223,3 @@ String _fmtV(int v) {
   return '${v.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} đ';
 }
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df

@@ -36,15 +36,13 @@ class StoreAuthService {
     return storeId != null && storeId.isNotEmpty;
   }
 
-  /// Lấy thông tin quán đã đăng ký
   static Future<Map<String, String?>> getStoreInfo() async {
     final prefs = await SharedPreferences.getInstance();
-    // Fallback: đọc từ UserAuthService keys nếu StoreAuthService keys null
-    // UserAuthService dùng 'auth_store_id', StoreAuthService dùng 'store_id'
-    final storeId   = prefs.getString(_kStoreId)   ?? prefs.getString(_kAuthStoreId);
-    final storeCode = prefs.getString(_kStoreCode) ?? prefs.getString(_kAuthStoreCode);
-    final storeName = prefs.getString(_kStoreName) ?? prefs.getString(_kAuthStoreName);
-    final role      = prefs.getString(_kDeviceRole) ?? prefs.getString(_kAuthRole);
+    // Prioritize active user session store key ('auth_store_id') over legacy device-based key ('store_id')
+    final storeId   = prefs.getString(_kAuthStoreId)   ?? prefs.getString(_kStoreId);
+    final storeCode = prefs.getString(_kAuthStoreCode) ?? prefs.getString(_kStoreCode);
+    final storeName = prefs.getString(_kAuthStoreName) ?? prefs.getString(_kStoreName);
+    final role      = prefs.getString(_kAuthRole)      ?? prefs.getString(_kDeviceRole);
     return {
       'store_id':    storeId,
       'store_code':  storeCode,

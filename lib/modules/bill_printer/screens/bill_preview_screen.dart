@@ -1,5 +1,6 @@
 // lib/modules/bill_printer/screens/bill_preview_screen.dart
 // ignore_for_file: use_build_context_synchronously
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +10,7 @@ import 'package:printing/printing.dart';
 import '../models/bill_block.dart';
 import '../models/bill_block_template.dart';
 import '../providers/kitchen_ticket_template_provider.dart';
+import '../providers/printer_settings_provider.dart';
 
 // ─── Model hoá đơn ───────────────────────────────────────────────────────────
 
@@ -57,18 +59,20 @@ class BillItem {
   final int    qty;
   final double price;
   final String? note;
+  final String stationCode;
 
   const BillItem({
     required this.name,
     required this.qty,
     required this.price,
     this.note,
+    this.stationCode = 'bep_nong',
   });
 
   double get total => qty * price;
 }
 
-enum BillType { receipt, kitchen, order }
+enum BillType { receipt, kitchen, order, label }
 
 // ─── PDF Generator ────────────────────────────────────────────────────────────
 
@@ -480,6 +484,181 @@ class BillPdfGenerator {
       case 'momo':     return 'MoMo';
       case 'transfer': return 'Chuyển khoản';
       default:         return m;
+    }
+  }
+
+  // ── generateBarLabels: In tem nhãn dán ly cho trạm Bar ──────────────────────────────
+  static Future<List<Uint8List>> generateBarLabels(BillData bill) async {
+    final List<Uint8List> results = [];
+    final font = await PdfGoogleFonts.notoSansRegular();
+    final fontBold = await PdfGoogleFonts.notoSansBold();
+
+    // Filter drinks (stationCode == 'bep_bar' || stationCode == 'bar')
+    final barItems = bill.items.where((i) => i.stationCode == 'bep_bar' || i.stationCode == 'bar').toList();
+    if (barItems.isEmpty) return [];
+
+    for (final item in barItems) {
+      // In từng nhãn dán cho mỗi số lượng ly
+      for (int q = 1; q <= item.qty; q++) {
+        final pdf = pw.Document();
+        pdf.addPage(pw.Page(
+          pageFormat: const PdfPageFormat(
+            50 * PdfPageFormat.mm,
+            30 * PdfPageFormat.mm,
+            marginAll: 2 * PdfPageFormat.mm,
+          ),
+          build: (ctx) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    '#${bill.orderNumber}${bill.tableName != null ? ' - ${bill.tableName}' : ''}',
+                    style: pw.TextStyle(font: fontBold, fontSize: 8),
+                  ),
+                  pw.Text(
+                    '$q/${item.qty}',
+                    style: pw.TextStyle(font: fontBold, fontSize: 8),
+                  ),
+                ],
+              ),
+              pw.Divider(thickness: 0.5, height: 4),
+              pw.SizedBox(height: 1),
+              pw.Text(
+                item.name,
+                style: pw.TextStyle(font: fontBold, fontSize: 10),
+                maxLines: 1,
+                overflow: pw.TextOverflow.clip,
+              ),
+              if (item.note != null && item.note!.isNotEmpty) ...[
+                pw.SizedBox(height: 1),
+                pw.Text(
+                  item.note!,
+                  style: pw.TextStyle(
+                    font: font,
+                    fontSize: 7,
+                    fontStyle: pw.FontStyle.italic,
+                    color: PdfColors.grey700,
+                  ),
+                  maxLines: 1,
+                  overflow: pw.TextOverflow.clip,
+                ),
+              ],
+              pw.Spacer(),
+              pw.Align(
+                alignment: pw.Alignment.bottomRight,
+                child: pw.Text(
+                  _fmtDate(bill.createdAt).split(' ').last, // chỉ giờ:phút
+                  style: pw.TextStyle(font: font, fontSize: 6, color: PdfColors.grey500),
+                ),
+              ),
+            ],
+          ),
+        ));
+        results.add(await pdf.save());
+      }
+    }
+    return results;
+  }
+}
+
+// ─── Station Printer Dispatcher ──────────────────────────────────────────────
+
+class StationPrinterDispatcher {
+  static Future<void> printBill(BillData bill, StationPrintersState settings) async {
+    // 1. In hoá đơn thu ngân
+    if (settings.cashier.enabled) {
+      final bytes = await BillPdfGenerator.generateReceipt(bill);
+      await _dispatchPrint(bytes, settings.cashier, 'hoa_don_${bill.orderNumber}');
+    }
+
+    // 2. In phiếu bếp nóng
+    if (settings.bepNong.enabled) {
+      final hotItems = bill.items
+          .where((i) => i.stationCode == 'bep_nong' || i.stationCode == 'nong')
+          .toList();
+      if (hotItems.isNotEmpty) {
+        final hotBill = BillData(
+          shopName: bill.shopName,
+          shopAddress: bill.shopAddress,
+          shopPhone: bill.shopPhone,
+          orderNumber: bill.orderNumber,
+          createdAt: bill.createdAt,
+          tableName: bill.tableName,
+          items: hotItems,
+          subtotal: 0,
+          total: 0,
+          type: BillType.kitchen,
+          note: bill.note,
+        );
+        final bytes = await BillPdfGenerator.generateKitchenTicket(hotBill);
+        await _dispatchPrint(bytes, settings.bepNong, 'phieu_bep_nong_${bill.orderNumber}');
+      }
+    }
+
+    // 3. In phiếu bếp bar
+    if (settings.bepBar.enabled) {
+      final barItems = bill.items
+          .where((i) => i.stationCode == 'bep_bar' || i.stationCode == 'bar')
+          .toList();
+      if (barItems.isNotEmpty) {
+        final barBill = BillData(
+          shopName: bill.shopName,
+          shopAddress: bill.shopAddress,
+          shopPhone: bill.shopPhone,
+          orderNumber: bill.orderNumber,
+          createdAt: bill.createdAt,
+          tableName: bill.tableName,
+          items: barItems,
+          subtotal: 0,
+          total: 0,
+          type: BillType.kitchen,
+          note: bill.note,
+        );
+        final bytes = await BillPdfGenerator.generateKitchenTicket(barBill);
+        await _dispatchPrint(bytes, settings.bepBar, 'phieu_bep_bar_${bill.orderNumber}');
+      }
+    }
+
+    // 4. In nhãn dán ly (Bar Label)
+    if (settings.barLabel.enabled) {
+      final labelBytesList = await BillPdfGenerator.generateBarLabels(bill);
+      for (int i = 0; i < labelBytesList.length; i++) {
+        await _dispatchPrint(
+          labelBytesList[i],
+          settings.barLabel,
+          'tem_bar_${bill.orderNumber}_$i',
+        );
+      }
+    }
+  }
+
+  static Future<void> _dispatchPrint(
+    Uint8List bytes,
+    PrinterConfig config,
+    String jobName,
+  ) async {
+    if (config.type == 'system') {
+      if (config.name.isEmpty) {
+        await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
+      } else {
+        await Printing.directPrintPdf(
+          printer: Printer(url: config.name),
+          onLayout: (_) async => bytes,
+          name: jobName,
+        );
+      }
+    } else {
+      // Mạng IP (LAN/Wifi) - Hộp thoại in hệ thống làm dự phòng nếu không kết nối được trực tiếp
+      try {
+        final socket = await Socket.connect(config.name, 9100, timeout: const Duration(seconds: 3));
+        // Đóng cổng vì direct pdf qua socket cần parser đặc biệt. Fallback sang layoutPdf.
+        await socket.close();
+        await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
+      } catch (_) {
+        await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
+      }
     }
   }
 }

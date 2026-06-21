@@ -3183,7 +3183,6 @@ class $PosOrdersTable extends PosOrders
     ),
     defaultValue: const Constant(false),
   );
-<<<<<<< HEAD
   static const VerificationMeta _sourceTypeMeta = const VerificationMeta(
     'sourceType',
   );
@@ -3217,8 +3216,6 @@ class $PosOrdersTable extends PosOrders
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -3246,12 +3243,9 @@ class $PosOrdersTable extends PosOrders
     status,
     note,
     receiptPrinted,
-<<<<<<< HEAD
     sourceType,
     sourceId,
     staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     createdAt,
   ];
   @override
@@ -3376,7 +3370,6 @@ class $PosOrdersTable extends PosOrders
         ),
       );
     }
-<<<<<<< HEAD
     if (data.containsKey('source_type')) {
       context.handle(
         _sourceTypeMeta,
@@ -3395,8 +3388,6 @@ class $PosOrdersTable extends PosOrders
         staffId.isAcceptableOrUnknown(data['staff_id']!, _staffIdMeta),
       );
     }
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3470,7 +3461,6 @@ class $PosOrdersTable extends PosOrders
         DriftSqlType.bool,
         data['${effectivePrefix}receipt_printed'],
       )!,
-<<<<<<< HEAD
       sourceType: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}source_type'],
@@ -3483,8 +3473,6 @@ class $PosOrdersTable extends PosOrders
         DriftSqlType.string,
         data['${effectivePrefix}staff_id'],
       ),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}created_at'],
@@ -3513,12 +3501,9 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
   final String status;
   final String? note;
   final bool receiptPrinted;
-<<<<<<< HEAD
   final String? sourceType;
   final String? sourceId;
   final String? staffId;
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   final int createdAt;
   const PosOrder({
     required this.id,
@@ -3535,12 +3520,9 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
     required this.status,
     this.note,
     required this.receiptPrinted,
-<<<<<<< HEAD
     this.sourceType,
     this.sourceId,
     this.staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     required this.createdAt,
   });
   @override
@@ -3566,7 +3548,6 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
       map['note'] = Variable<String>(note);
     }
     map['receipt_printed'] = Variable<bool>(receiptPrinted);
-<<<<<<< HEAD
     if (!nullToAbsent || sourceType != null) {
       map['source_type'] = Variable<String>(sourceType);
     }
@@ -3576,8 +3557,6 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
     if (!nullToAbsent || staffId != null) {
       map['staff_id'] = Variable<String>(staffId);
     }
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     map['created_at'] = Variable<int>(createdAt);
     return map;
   }
@@ -3602,7 +3581,6 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
       status: Value(status),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       receiptPrinted: Value(receiptPrinted),
-<<<<<<< HEAD
       sourceType: sourceType == null && nullToAbsent
           ? const Value.absent()
           : Value(sourceType),
@@ -3612,8 +3590,6 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
       staffId: staffId == null && nullToAbsent
           ? const Value.absent()
           : Value(staffId),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       createdAt: Value(createdAt),
     );
   }
@@ -3638,12 +3614,9 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
       status: serializer.fromJson<String>(json['status']),
       note: serializer.fromJson<String?>(json['note']),
       receiptPrinted: serializer.fromJson<bool>(json['receiptPrinted']),
-<<<<<<< HEAD
       sourceType: serializer.fromJson<String?>(json['sourceType']),
       sourceId: serializer.fromJson<String?>(json['sourceId']),
       staffId: serializer.fromJson<String?>(json['staffId']),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       createdAt: serializer.fromJson<int>(json['createdAt']),
     );
   }
@@ -3665,12 +3638,9 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
       'status': serializer.toJson<String>(status),
       'note': serializer.toJson<String?>(note),
       'receiptPrinted': serializer.toJson<bool>(receiptPrinted),
-<<<<<<< HEAD
       'sourceType': serializer.toJson<String?>(sourceType),
       'sourceId': serializer.toJson<String?>(sourceId),
       'staffId': serializer.toJson<String?>(staffId),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       'createdAt': serializer.toJson<int>(createdAt),
     };
   }
@@ -3690,12 +3660,9 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
     String? status,
     Value<String?> note = const Value.absent(),
     bool? receiptPrinted,
-<<<<<<< HEAD
     Value<String?> sourceType = const Value.absent(),
     Value<String?> sourceId = const Value.absent(),
     Value<String?> staffId = const Value.absent(),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     int? createdAt,
   }) => PosOrder(
     id: id ?? this.id,
@@ -3712,12 +3679,9 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
     status: status ?? this.status,
     note: note.present ? note.value : this.note,
     receiptPrinted: receiptPrinted ?? this.receiptPrinted,
-<<<<<<< HEAD
     sourceType: sourceType.present ? sourceType.value : this.sourceType,
     sourceId: sourceId.present ? sourceId.value : this.sourceId,
     staffId: staffId.present ? staffId.value : this.staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     createdAt: createdAt ?? this.createdAt,
   );
   PosOrder copyWithCompanion(PosOrdersCompanion data) {
@@ -3752,14 +3716,11 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
       receiptPrinted: data.receiptPrinted.present
           ? data.receiptPrinted.value
           : this.receiptPrinted,
-<<<<<<< HEAD
       sourceType: data.sourceType.present
           ? data.sourceType.value
           : this.sourceType,
       sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
       staffId: data.staffId.present ? data.staffId.value : this.staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3781,12 +3742,9 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
           ..write('status: $status, ')
           ..write('note: $note, ')
           ..write('receiptPrinted: $receiptPrinted, ')
-<<<<<<< HEAD
           ..write('sourceType: $sourceType, ')
           ..write('sourceId: $sourceId, ')
           ..write('staffId: $staffId, ')
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -3808,12 +3766,9 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
     status,
     note,
     receiptPrinted,
-<<<<<<< HEAD
     sourceType,
     sourceId,
     staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     createdAt,
   );
   @override
@@ -3834,12 +3789,9 @@ class PosOrder extends DataClass implements Insertable<PosOrder> {
           other.status == this.status &&
           other.note == this.note &&
           other.receiptPrinted == this.receiptPrinted &&
-<<<<<<< HEAD
           other.sourceType == this.sourceType &&
           other.sourceId == this.sourceId &&
           other.staffId == this.staffId &&
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           other.createdAt == this.createdAt);
 }
 
@@ -3858,12 +3810,9 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
   final Value<String> status;
   final Value<String?> note;
   final Value<bool> receiptPrinted;
-<<<<<<< HEAD
   final Value<String?> sourceType;
   final Value<String?> sourceId;
   final Value<String?> staffId;
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   final Value<int> createdAt;
   final Value<int> rowid;
   const PosOrdersCompanion({
@@ -3881,12 +3830,9 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
     this.status = const Value.absent(),
     this.note = const Value.absent(),
     this.receiptPrinted = const Value.absent(),
-<<<<<<< HEAD
     this.sourceType = const Value.absent(),
     this.sourceId = const Value.absent(),
     this.staffId = const Value.absent(),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -3905,12 +3851,9 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
     this.status = const Value.absent(),
     this.note = const Value.absent(),
     this.receiptPrinted = const Value.absent(),
-<<<<<<< HEAD
     this.sourceType = const Value.absent(),
     this.sourceId = const Value.absent(),
     this.staffId = const Value.absent(),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     required int createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -3933,12 +3876,9 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
     Expression<String>? status,
     Expression<String>? note,
     Expression<bool>? receiptPrinted,
-<<<<<<< HEAD
     Expression<String>? sourceType,
     Expression<String>? sourceId,
     Expression<String>? staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     Expression<int>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -3957,12 +3897,9 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
       if (status != null) 'status': status,
       if (note != null) 'note': note,
       if (receiptPrinted != null) 'receipt_printed': receiptPrinted,
-<<<<<<< HEAD
       if (sourceType != null) 'source_type': sourceType,
       if (sourceId != null) 'source_id': sourceId,
       if (staffId != null) 'staff_id': staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -3983,12 +3920,9 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
     Value<String>? status,
     Value<String?>? note,
     Value<bool>? receiptPrinted,
-<<<<<<< HEAD
     Value<String?>? sourceType,
     Value<String?>? sourceId,
     Value<String?>? staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     Value<int>? createdAt,
     Value<int>? rowid,
   }) {
@@ -4007,12 +3941,9 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
       status: status ?? this.status,
       note: note ?? this.note,
       receiptPrinted: receiptPrinted ?? this.receiptPrinted,
-<<<<<<< HEAD
       sourceType: sourceType ?? this.sourceType,
       sourceId: sourceId ?? this.sourceId,
       staffId: staffId ?? this.staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -4063,7 +3994,6 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
     if (receiptPrinted.present) {
       map['receipt_printed'] = Variable<bool>(receiptPrinted.value);
     }
-<<<<<<< HEAD
     if (sourceType.present) {
       map['source_type'] = Variable<String>(sourceType.value);
     }
@@ -4073,8 +4003,6 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
     if (staffId.present) {
       map['staff_id'] = Variable<String>(staffId.value);
     }
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     if (createdAt.present) {
       map['created_at'] = Variable<int>(createdAt.value);
     }
@@ -4101,12 +4029,9 @@ class PosOrdersCompanion extends UpdateCompanion<PosOrder> {
           ..write('status: $status, ')
           ..write('note: $note, ')
           ..write('receiptPrinted: $receiptPrinted, ')
-<<<<<<< HEAD
           ..write('sourceType: $sourceType, ')
           ..write('sourceId: $sourceId, ')
           ..write('staffId: $staffId, ')
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -8874,7 +8799,6 @@ class LoyaltyRewardsCompanion extends UpdateCompanion<LoyaltyReward> {
   }
 }
 
-<<<<<<< HEAD
 class $BanZonesTable extends BanZones with TableInfo<$BanZonesTable, BanZone> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -14178,8 +14102,6 @@ class KitchenTicketItemsCompanion extends UpdateCompanion<KitchenTicketItem> {
   }
 }
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -14207,7 +14129,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LoyaltyTransactionsTable loyaltyTransactions =
       $LoyaltyTransactionsTable(this);
   late final $LoyaltyRewardsTable loyaltyRewards = $LoyaltyRewardsTable(this);
-<<<<<<< HEAD
   late final $BanZonesTable banZones = $BanZonesTable(this);
   late final $BanDiningTablesTable banDiningTables = $BanDiningTablesTable(
     this,
@@ -14227,8 +14148,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $KitchenTicketsTable kitchenTickets = $KitchenTicketsTable(this);
   late final $KitchenTicketItemsTable kitchenTicketItems =
       $KitchenTicketItemsTable(this);
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -14252,7 +14171,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     financeRecords,
     loyaltyTransactions,
     loyaltyRewards,
-<<<<<<< HEAD
     banZones,
     banDiningTables,
     banSessions,
@@ -14262,8 +14180,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     sessionItemModifiers,
     kitchenTickets,
     kitchenTicketItems,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -14295,7 +14211,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ),
       result: [TableUpdate('kho_purchase_items', kind: UpdateKind.delete)],
     ),
-<<<<<<< HEAD
     WritePropagation(
       on: TableUpdateQuery.onTableName(
         'ban_zones',
@@ -14345,8 +14260,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ),
       result: [TableUpdate('kitchen_ticket_items', kind: UpdateKind.delete)],
     ),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   ]);
 }
 
@@ -14643,7 +14556,6 @@ final class $$CoreProductsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
-<<<<<<< HEAD
 
   static MultiTypedResultKey<$ProductModifiersTable, List<ProductModifier>>
   _productModifiersRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
@@ -14667,8 +14579,6 @@ final class $$CoreProductsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }
 
 class $$CoreProductsTableFilterComposer
@@ -14839,7 +14749,6 @@ class $$CoreProductsTableFilterComposer
     );
     return f(composer);
   }
-<<<<<<< HEAD
 
   Expression<bool> productModifiersRefs(
     Expression<bool> Function($$ProductModifiersTableFilterComposer f) f,
@@ -14865,8 +14774,6 @@ class $$CoreProductsTableFilterComposer
     );
     return f(composer);
   }
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }
 
 class $$CoreProductsTableOrderingComposer
@@ -15103,7 +15010,6 @@ class $$CoreProductsTableAnnotationComposer
     );
     return f(composer);
   }
-<<<<<<< HEAD
 
   Expression<T> productModifiersRefs<T extends Object>(
     Expression<T> Function($$ProductModifiersTableAnnotationComposer a) f,
@@ -15129,8 +15035,6 @@ class $$CoreProductsTableAnnotationComposer
     );
     return f(composer);
   }
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }
 
 class $$CoreProductsTableTableManager
@@ -15150,10 +15054,7 @@ class $$CoreProductsTableTableManager
             bool khoStockMovementsRefs,
             bool khoRecipesRefs,
             bool khoRecipeItemsRefs,
-<<<<<<< HEAD
             bool productModifiersRefs,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           })
         > {
   $$CoreProductsTableTableManager(_$AppDatabase db, $CoreProductsTable table)
@@ -15260,10 +15161,7 @@ class $$CoreProductsTableTableManager
                 khoStockMovementsRefs = false,
                 khoRecipesRefs = false,
                 khoRecipeItemsRefs = false,
-<<<<<<< HEAD
                 productModifiersRefs = false,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -15271,10 +15169,7 @@ class $$CoreProductsTableTableManager
                     if (khoStockMovementsRefs) db.khoStockMovements,
                     if (khoRecipesRefs) db.khoRecipes,
                     if (khoRecipeItemsRefs) db.khoRecipeItems,
-<<<<<<< HEAD
                     if (productModifiersRefs) db.productModifiers,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -15342,7 +15237,6 @@ class $$CoreProductsTableTableManager
                               ),
                           typedResults: items,
                         ),
-<<<<<<< HEAD
                       if (productModifiersRefs)
                         await $_getPrefetchedData<
                           CoreProduct,
@@ -15364,8 +15258,6 @@ class $$CoreProductsTableTableManager
                               ),
                           typedResults: items,
                         ),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                     ];
                   },
                 );
@@ -15390,10 +15282,7 @@ typedef $$CoreProductsTableProcessedTableManager =
         bool khoStockMovementsRefs,
         bool khoRecipesRefs,
         bool khoRecipeItemsRefs,
-<<<<<<< HEAD
         bool productModifiersRefs,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       })
     >;
 typedef $$CoreCustomersTableCreateCompanionBuilder =
@@ -16780,12 +16669,9 @@ typedef $$PosOrdersTableCreateCompanionBuilder =
       Value<String> status,
       Value<String?> note,
       Value<bool> receiptPrinted,
-<<<<<<< HEAD
       Value<String?> sourceType,
       Value<String?> sourceId,
       Value<String?> staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       required int createdAt,
       Value<int> rowid,
     });
@@ -16805,12 +16691,9 @@ typedef $$PosOrdersTableUpdateCompanionBuilder =
       Value<String> status,
       Value<String?> note,
       Value<bool> receiptPrinted,
-<<<<<<< HEAD
       Value<String?> sourceType,
       Value<String?> sourceId,
       Value<String?> staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       Value<int> createdAt,
       Value<int> rowid,
     });
@@ -16931,7 +16814,6 @@ class $$PosOrdersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-<<<<<<< HEAD
   ColumnFilters<String> get sourceType => $composableBuilder(
     column: $table.sourceType,
     builder: (column) => ColumnFilters(column),
@@ -16947,8 +16829,6 @@ class $$PosOrdersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   ColumnFilters<int> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
@@ -17077,7 +16957,6 @@ class $$PosOrdersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-<<<<<<< HEAD
   ColumnOrderings<String> get sourceType => $composableBuilder(
     column: $table.sourceType,
     builder: (column) => ColumnOrderings(column),
@@ -17093,8 +16972,6 @@ class $$PosOrdersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   ColumnOrderings<int> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -17186,7 +17063,6 @@ class $$PosOrdersTableAnnotationComposer
     builder: (column) => column,
   );
 
-<<<<<<< HEAD
   GeneratedColumn<String> get sourceType => $composableBuilder(
     column: $table.sourceType,
     builder: (column) => column,
@@ -17198,8 +17074,6 @@ class $$PosOrdersTableAnnotationComposer
   GeneratedColumn<String> get staffId =>
       $composableBuilder(column: $table.staffId, builder: (column) => column);
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   GeneratedColumn<int> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -17294,12 +17168,9 @@ class $$PosOrdersTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> receiptPrinted = const Value.absent(),
-<<<<<<< HEAD
                 Value<String?> sourceType = const Value.absent(),
                 Value<String?> sourceId = const Value.absent(),
                 Value<String?> staffId = const Value.absent(),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 Value<int> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PosOrdersCompanion(
@@ -17317,12 +17188,9 @@ class $$PosOrdersTableTableManager
                 status: status,
                 note: note,
                 receiptPrinted: receiptPrinted,
-<<<<<<< HEAD
                 sourceType: sourceType,
                 sourceId: sourceId,
                 staffId: staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -17342,12 +17210,9 @@ class $$PosOrdersTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> receiptPrinted = const Value.absent(),
-<<<<<<< HEAD
                 Value<String?> sourceType = const Value.absent(),
                 Value<String?> sourceId = const Value.absent(),
                 Value<String?> staffId = const Value.absent(),
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 required int createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => PosOrdersCompanion.insert(
@@ -17365,12 +17230,9 @@ class $$PosOrdersTableTableManager
                 status: status,
                 note: note,
                 receiptPrinted: receiptPrinted,
-<<<<<<< HEAD
                 sourceType: sourceType,
                 sourceId: sourceId,
                 staffId: staffId,
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -21533,7 +21395,6 @@ typedef $$LoyaltyRewardsTableProcessedTableManager =
       LoyaltyReward,
       PrefetchHooks Function()
     >;
-<<<<<<< HEAD
 typedef $$BanZonesTableCreateCompanionBuilder =
     BanZonesCompanion Function({
       required String id,
@@ -26080,8 +25941,6 @@ typedef $$KitchenTicketItemsTableProcessedTableManager =
       KitchenTicketItem,
       PrefetchHooks Function({bool ticketId, bool sessionItemId})
     >;
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -26122,7 +25981,6 @@ class $AppDatabaseManager {
       $$LoyaltyTransactionsTableTableManager(_db, _db.loyaltyTransactions);
   $$LoyaltyRewardsTableTableManager get loyaltyRewards =>
       $$LoyaltyRewardsTableTableManager(_db, _db.loyaltyRewards);
-<<<<<<< HEAD
   $$BanZonesTableTableManager get banZones =>
       $$BanZonesTableTableManager(_db, _db.banZones);
   $$BanDiningTablesTableTableManager get banDiningTables =>
@@ -26141,6 +25999,4 @@ class $AppDatabaseManager {
       $$KitchenTicketsTableTableManager(_db, _db.kitchenTickets);
   $$KitchenTicketItemsTableTableManager get kitchenTicketItems =>
       $$KitchenTicketItemsTableTableManager(_db, _db.kitchenTicketItems);
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 }

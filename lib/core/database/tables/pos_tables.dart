@@ -25,16 +25,12 @@ class PosOrders extends Table {
   TextColumn get note => text().nullable()();
   BoolColumn get receiptPrinted =>
       boolean().withDefault(const Constant(false))();
-<<<<<<< HEAD
   // Universal source link — extensible cho mọi module
   // sourceType: 'ban' | 'phong_tro' | 'ban_bia' | 'qr' | null (direct POS)
   TextColumn get sourceType => text().nullable()();
   TextColumn get sourceId   => text().nullable()(); // UUID của session bất kỳ
   TextColumn get staffId    => text().nullable()(); // nhân viên thực hiện bán
   IntColumn  get createdAt  => integer()();
-=======
-  IntColumn get createdAt => integer()();
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   @override
   Set<Column> get primaryKey => {id};

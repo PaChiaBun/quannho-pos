@@ -6,12 +6,9 @@ import 'tables/pos_tables.dart';
 import 'tables/kho_tables.dart';
 import 'tables/finance_tables.dart';
 import 'tables/loyalty_tables.dart';
-<<<<<<< HEAD
 import 'tables/ban_tables.dart';
 import 'tables/kitchen_tables.dart';
 import 'tables/staff_tables.dart';
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
 part 'app_database.g.dart';
 
@@ -43,7 +40,6 @@ part 'app_database.g.dart';
   // LOYALTY
   LoyaltyTransactions,
   LoyaltyRewards,
-<<<<<<< HEAD
   // BAN MANAGEMENT
   BanZones,
   BanDiningTables,
@@ -56,8 +52,6 @@ part 'app_database.g.dart';
   KitchenTickets,
   KitchenTicketItems,
   // STAFF — Bảng local đã xóa (v13). Xem Supabase: staff_shifts, store_members, store_roles
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -66,11 +60,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(QueryExecutor e) : super(e);
 
   @override
-<<<<<<< HEAD
   int get schemaVersion => 13;
-=======
-  int get schemaVersion => 1;
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   @override
   MigrationStrategy get migration {
@@ -79,7 +69,6 @@ class AppDatabase extends _$AppDatabase {
         await m.createAll();
         await _seedInitialData();
       },
-<<<<<<< HEAD
       beforeOpen: (details) async {
         // Đảm bảo module kitchen luôn tồn tại trong DB
         final existingKitchen = await (select(moduleConfigs)
@@ -285,19 +274,12 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('DROP TABLE IF EXISTS staff_shifts');
           await customStatement('DROP TABLE IF EXISTS staff_permissions');
         }
-=======
-      onUpgrade: (Migrator m, int from, int to) async {
-        // Migration tương lai — thêm bảng/cột ở đây
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       },
     );
   }
 
-<<<<<<< HEAD
 
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   // ─────────────────────────────────────────────────────────────────────────
   // SEED DATA — Dữ liệu ban đầu khi cài app lần đầu
   // ─────────────────────────────────────────────────────────────────────────
@@ -312,22 +294,15 @@ class AppDatabase extends _$AppDatabase {
       ('finance', 2),
       ('report', 3),
       ('loyalty', 4),
-<<<<<<< HEAD
       ('table', 10),    // Module Quản lý Bàn — mặc định inactive
       ('kitchen', 11),  // Module Phiếu bếp
       ('staff', 12),    // Module Nhân viên
       ('chamcong', 13), // Module Chấm công — mặc định inactive
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     ];
     for (final (id, position) in modules) {
       await into(moduleConfigs).insert(ModuleConfigsCompanion(
         id: Value(id),
-<<<<<<< HEAD
         isActive: Value(id != 'table'), // chỉ table mặc định tắt
-=======
-        isActive: const Value(true),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         position: Value(position),
         updatedAt: Value(now),
       ));

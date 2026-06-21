@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../core/utils/money_formatter.dart';
@@ -8,14 +7,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-=======
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart' show Value;
-
-import '../core/database/app_database.dart';
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 import '../core/providers/app_providers.dart';
 import '../modules/loyalty/repository/loyalty_repository.dart';
 
@@ -23,7 +14,6 @@ import '../modules/loyalty/repository/loyalty_repository.dart';
 // LOYALTY PROVIDERS — local trong file này
 // ─────────────────────────────────────────────────────────────────────────────
 final _loyaltyRepoProvider = Provider<LoyaltyRepository>((ref) {
-<<<<<<< HEAD
   return LoyaltyRepository();
 });
 
@@ -32,19 +22,6 @@ final _topCustomersProvider = StreamProvider<List<LoyaltyCustomerModel>>((ref) {
 });
 
 final _allCustomersProvider = StreamProvider<List<LoyaltyCustomerModel>>((ref) {
-=======
-  return LoyaltyRepository(
-    ref.watch(appDatabaseProvider),
-    ref.watch(appEventBusProvider),
-  );
-});
-
-final _topCustomersProvider = StreamProvider<List<CoreCustomer>>((ref) {
-  return ref.watch(_loyaltyRepoProvider).watchTopCustomers(limit: 30);
-});
-
-final _allCustomersProvider = StreamProvider<List<CoreCustomer>>((ref) {
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   return ref.watch(_loyaltyRepoProvider).watchCustomers();
 });
 
@@ -53,7 +30,6 @@ final _loyaltyStatsProvider = FutureProvider<LoyaltyStats>((ref) {
   return ref.read(_loyaltyRepoProvider).getStats();
 });
 
-<<<<<<< HEAD
 final _rewardsProvider = StreamProvider<List<LoyaltyRewardModel>>((ref) {
   return ref.watch(_loyaltyRepoProvider).watchRewards();
 });
@@ -62,12 +38,6 @@ final _packagesProvider = FutureProvider<List<TopupPackageModel>>((ref) async {
   return ref.read(_loyaltyRepoProvider).getPackages();
 });
 
-=======
-final _rewardsProvider = StreamProvider<List<LoyaltyReward>>((ref) {
-  return ref.watch(_loyaltyRepoProvider).watchRewards();
-});
-
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 // ─────────────────────────────────────────────────────────────────────────────
 // LOYALTY SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,10 +52,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
   final _searchCtrl = TextEditingController();
-<<<<<<< HEAD
   int _tabIndex = 0;
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
   static const _kNavy   = Color(0xFF1E1C5E);
   static const _kNavyL  = Color(0xFF2D2B8A);
@@ -99,7 +66,6 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
   @override
   void initState() {
     super.initState();
-<<<<<<< HEAD
     _tab = TabController(length: 4, vsync: this);
     _tab.addListener(() {
       if (_tab.indexIsChanging || _tab.index != _tabIndex) {
@@ -111,9 +77,6 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
       await ref.read(_loyaltyRepoProvider).seedDefaultPackagesIfEmpty();
       ref.refresh(_packagesProvider);
     });
-=======
-    _tab = TabController(length: 2, vsync: this);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   @override
@@ -127,22 +90,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
   Widget build(BuildContext context) {
     final statsAsync = ref.watch(_loyaltyStatsProvider);
 
-<<<<<<< HEAD
     final mainBody = Column(
-=======
-    return Scaffold(
-      backgroundColor: _kBg,
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'loyalty_fab',
-        onPressed: _openAddCustomer,
-        backgroundColor: _kPurple,
-        icon: const Icon(Icons.person_add_rounded, color: Colors.white),
-        label: const Text('Thêm khách',
-          style: TextStyle(
-            color: Colors.white, fontWeight: FontWeight.w700)),
-      ),
-      body: Column(
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         children: [
           // ── Header ────────────────────────────────────────────────
           _buildHeader(statsAsync),
@@ -158,29 +106,19 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
               labelStyle: const TextStyle(
                 fontWeight: FontWeight.w700, fontSize: 13),
               tabs: const [
-<<<<<<< HEAD
                 Tab(text: 'Khách'),
                 Tab(text: 'Ví'),
                 Tab(text: 'Thưởng'),
                 Tab(text: 'Gói nạp'),
-=======
-                Tab(text: 'Khách hàng'),
-                Tab(text: 'Phần thưởng'),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               ],
             ),
           ),
 
-<<<<<<< HEAD
           // ── Search (chỉ tab Khách hàng) ───────────────────────────
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
             child: _tabIndex == 0 ? _buildSearch() : const SizedBox.shrink(),
           ),
-=======
-          // ── Search (only on customers tab) ────────────────────────
-          _buildSearch(),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 
           // ── Content ───────────────────────────────────────────────
           Expanded(
@@ -188,18 +126,13 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
               controller: _tab,
               children: [
                 _buildCustomerList(),
-<<<<<<< HEAD
                 _buildWalletSummary(),
                 _buildRewardsList(),
                 _buildPackagesTab(),
-=======
-                _buildRewardsList(),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               ],
             ),
           ),
         ],
-<<<<<<< HEAD
       );
 
     return Scaffold(
@@ -239,8 +172,6 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
           }
           return mainBody;
         },
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
       ),
     );
   }
@@ -252,11 +183,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-<<<<<<< HEAD
           colors: [Color(0xFF1E1C5E), Color(0xFF4A148C)],
-=======
-          colors: [Color(0xFF4A148C), _kPurple],
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -264,7 +191,6 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
       child: SafeArea(
         bottom: false,
         child: Padding(
-<<<<<<< HEAD
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,59 +238,6 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
                   _StatPill(value: _fmtPts(stats.totalPtsRedeemed),
                     label: 'Đã đổi', icon: Icons.redeem_rounded),
                 ]),
-=======
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Text('Điểm thưởng',
-                    style: TextStyle(
-                      color: Colors.white, fontSize: 20,
-                      fontWeight: FontWeight.w900, letterSpacing: -0.3,
-                    )),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.card_giftcard_rounded,
-                      color: Colors.white, size: 26),
-                    onPressed: _openAddReward,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              statsAsync.when(
-                loading: () => const SizedBox(height: 72,
-                  child: Center(child: CircularProgressIndicator(
-                    color: Colors.white54, strokeWidth: 2))),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (stats) => Row(
-                  children: [
-                    _HeaderStatTile(
-                      value: '${stats.totalCustomers}',
-                      label: 'Khách hàng',
-                      icon: Icons.people_rounded,
-                    ),
-                    _HeaderStatTile(
-                      value: '${stats.customersWithPts}',
-                      label: 'Có điểm',
-                      icon: Icons.stars_rounded,
-                      highlight: true,
-                    ),
-                    _HeaderStatTile(
-                      value: _fmtPts(stats.totalActivePts),
-                      label: 'Tổng điểm',
-                      icon: Icons.loyalty_rounded,
-                    ),
-                    _HeaderStatTile(
-                      value: _fmtPts(stats.totalPtsRedeemed),
-                      label: 'Đã dùng',
-                      icon: Icons.redeem_rounded,
-                    ),
-                  ],
-                ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               ),
             ],
           ),
@@ -426,11 +299,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
           child: CircularProgressIndicator(color: _kPurple)),
       error: (e, _) => Center(child: Text('Lỗi: $e')),
       data: (customers) {
-<<<<<<< HEAD
     final q = _searchCtrl.text.toLowerCase();
-=======
-        final q = _searchCtrl.text.toLowerCase();
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         final filtered = q.isEmpty
             ? customers
             : customers.where((c) =>
@@ -485,7 +354,6 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
     );
   }
 
-<<<<<<< HEAD
   // ─────────────────────────────────────────────────────────────────────────
   // WALLET SUMMARY TAB
   // ─────────────────────────────────────────────────────────────────────────
@@ -863,8 +731,6 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
   }
 
 
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   Widget _emptyState(IconData icon, String msg) => Center(
     child: Column(
       mainAxisSize: MainAxisSize.min,
@@ -880,11 +746,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
     ),
   );
 
-<<<<<<< HEAD
   void _openCustomerDetail(LoyaltyCustomerModel customer) {
-=======
-  void _openCustomerDetail(CoreCustomer customer) {
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -925,17 +787,8 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => _AddRewardSheet(
         onSaved: (name, pts, desc) async {
-<<<<<<< HEAD
           final repo = ref.read(_loyaltyRepoProvider);
           await repo.createReward(name: name, ptsRequired: pts);
-=======
-          final repo = LoyaltyRepository(
-            ref.read(appDatabaseProvider),
-            ref.read(appEventBusProvider),
-          );
-          await repo.createReward(
-            name: name, ptsRequired: pts);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
           if (ctx.mounted) {
             Navigator.pop(ctx);
             ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
@@ -952,11 +805,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
 // CUSTOMER CARD
 // ─────────────────────────────────────────────────────────────────────────────
 class _CustomerCard extends StatelessWidget {
-<<<<<<< HEAD
   final LoyaltyCustomerModel customer;
-=======
-  final CoreCustomer customer;
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   final int rank;
   final VoidCallback onTap;
 
@@ -1080,11 +929,7 @@ class _CustomerCard extends StatelessWidget {
                       color: _kInk)),
                 ],
               ),
-<<<<<<< HEAD
               Text('Chi: ${_fmtShort(customer.totalSpent)}',
-=======
-              Text('Chi: ${_fmtShort(customer.totalSpent)}đ',
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                 style: const TextStyle(
                   fontSize: 11, color: _kMuted)),
             ],
@@ -1112,11 +957,7 @@ class _TierInfo {
 // REWARD CARD
 // ─────────────────────────────────────────────────────────────────────────────
 class _RewardCard extends StatelessWidget {
-<<<<<<< HEAD
   final LoyaltyRewardModel reward;
-=======
-  final LoyaltyReward reward;
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   static const _kPurple = Color(0xFF7B1FA2);
   static const _kGold   = Color(0xFFF9A825);
   static const _kInk    = Color(0xFF1A1207);
@@ -1186,11 +1027,7 @@ class _RewardCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-<<<<<<< HEAD
               '-${_fmtShort(reward.discountAmount!)}',
-=======
-              '-${_fmtShort(reward.discountAmount!)}đ',
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
               style: const TextStyle(
                 color: Colors.white, fontSize: 12,
                 fontWeight: FontWeight.w800)),
@@ -1204,11 +1041,7 @@ class _RewardCard extends StatelessWidget {
 // CUSTOMER DETAIL SHEET
 // ─────────────────────────────────────────────────────────────────────────────
 class _CustomerDetailSheet extends ConsumerWidget {
-<<<<<<< HEAD
   final LoyaltyCustomerModel customer;
-=======
-  final CoreCustomer customer;
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   static const _kPurple = Color(0xFF7B1FA2);
   static const _kGold   = Color(0xFFF9A825);
   static const _kInk    = Color(0xFF1A1207);
@@ -1220,14 +1053,7 @@ class _CustomerDetailSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-<<<<<<< HEAD
     final repo = ref.watch(_loyaltyRepoProvider);
-=======
-    final repo  = LoyaltyRepository(
-      ref.watch(appDatabaseProvider),
-      ref.watch(appEventBusProvider),
-    );
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     final txAsync = ref.watch(
       StreamProvider.autoDispose((r) =>
           repo.watchTransactions(customer.id)));
@@ -1325,11 +1151,7 @@ class _CustomerDetailSheet extends ConsumerWidget {
               children: [
                 _InfoTile(
                   label: 'Tổng chi',
-<<<<<<< HEAD
                   value: '${_fmtShort(customer.totalSpent)}',
-=======
-                  value: '${_fmtShort(customer.totalSpent)}đ',
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                   icon: Icons.payments_rounded,
                 ),
                 _InfoTile(
@@ -1378,13 +1200,7 @@ class _CustomerDetailSheet extends ConsumerWidget {
                   itemBuilder: (_, i) {
                     final t = txs[i];
                     final isEarn = t.ptsEarned > 0;
-<<<<<<< HEAD
                     final dt = DateTime.tryParse(t.createdAt) ?? DateTime.now();
-=======
-                    final dt = t.createdAt != null
-                        ? DateTime.fromMillisecondsSinceEpoch(t.createdAt!)
-                        : DateTime.now();
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
                     return ListTile(
                       dense: true,
                       leading: Container(
@@ -1453,68 +1269,7 @@ class _InfoTile extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // HEADER STAT TILE
 // ─────────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
 
-=======
-class _HeaderStatTile extends StatelessWidget {
-  final String value, label;
-  final IconData icon;
-  final bool highlight;
-  const _HeaderStatTile({
-    required this.value, required this.label, required this.icon,
-    this.highlight = false,
-  });
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Container(
-      padding: const EdgeInsets.all(10),
-      margin: const EdgeInsets.only(right: 8),
-      decoration: BoxDecoration(
-        color: highlight
-            ? const Color(0x33F9A825)
-            : const Color(0x1AFFFFFF),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          Icon(icon,
-            color: highlight ? const Color(0xFFF9A825) : Colors.white70,
-            size: 18),
-          const SizedBox(height: 4),
-          Text(value,
-            style: const TextStyle(
-              color: Colors.white, fontSize: 16,
-              fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-          Text(label,
-            style: const TextStyle(
-              color: Colors.white54, fontSize: 9,
-              fontWeight: FontWeight.w500),
-            textAlign: TextAlign.center),
-        ],
-      ),
-    ),
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-String _fmtPts(double v) {
-  if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-  return v.toStringAsFixed(0);
-}
-
-String _fmtShort(double v) {
-  if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
-  if (v >= 1000)    return '${(v / 1000).toStringAsFixed(0)}K';
-  return v.toStringAsFixed(0);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ADD CUSTOMER SHEET
-// ─────────────────────────────────────────────────────────────────────────────
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 class _AddCustomerSheet extends StatefulWidget {
   final Future<void> Function(String name, String phone, String email, String note) onSaved;
   const _AddCustomerSheet({required this.onSaved});
@@ -1712,11 +1467,7 @@ class _Field extends StatelessWidget {
 // OPEN EDIT CUSTOMER
 // ─────────────────────────────────────────────────────────────────────────────
 void _openEditCustomerSheet(
-<<<<<<< HEAD
     BuildContext context, WidgetRef ref, LoyaltyCustomerModel customer) {
-=======
-    BuildContext context, WidgetRef ref, CoreCustomer customer) {
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -1724,7 +1475,6 @@ void _openEditCustomerSheet(
     builder: (ctx) => _EditCustomerSheet(
       customer: customer,
       onSaved: (name, phone, email, note) async {
-<<<<<<< HEAD
         // ‼️ FIX: chỉ update email/note khi user thực sự điền vào
         // Tránh override dữ liệu cũ trong DB khi field bị bỏ trống
         final updateMap = <String, dynamic>{
@@ -1737,16 +1487,6 @@ void _openEditCustomerSheet(
         await ref.read(customerRepositoryProvider).update(
           customer.id,
           updateMap,
-=======
-        await ref.read(customerRepositoryProvider).update(
-          customer.id,
-          CoreCustomersCompanion(
-            name:  Value(name),
-            phone: Value(phone.isEmpty ? null : phone),
-            email: Value(email.isEmpty ? null : email),
-            note:  Value(note.isEmpty  ? null : note),
-          ),
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
         );
         if (ctx.mounted) {
           Navigator.pop(ctx);
@@ -1765,11 +1505,7 @@ void _openEditCustomerSheet(
 // EDIT CUSTOMER SHEET
 // ─────────────────────────────────────────────────────────────────────────────
 class _EditCustomerSheet extends StatefulWidget {
-<<<<<<< HEAD
   final LoyaltyCustomerModel customer;
-=======
-  final CoreCustomer customer;
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   final Future<void> Function(
       String name, String phone, String email, String note) onSaved;
 
@@ -1799,16 +1535,11 @@ class _EditCustomerSheetState extends State<_EditCustomerSheet> {
     super.initState();
     _nameCtrl  = TextEditingController(text: widget.customer.name);
     _phoneCtrl = TextEditingController(text: widget.customer.phone ?? '');
-<<<<<<< HEAD
     // ‼️ FIX: email & note không có trong LoyaltyCustomerModel (lightweight model)
     // Giữ '' để tránh override dữ liệu cũ nếu user không điền
     // onSaved callback chỉ gửi email/note khi isNotEmpty — tránh clear dữ liệu DB
     _emailCtrl = TextEditingController(text: '');
     _noteCtrl  = TextEditingController(text: '');
-=======
-    _emailCtrl = TextEditingController(text: widget.customer.email ?? '');
-    _noteCtrl  = TextEditingController(text: widget.customer.note  ?? '');
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   @override
@@ -1953,12 +1684,9 @@ class _EditCustomerSheetState extends State<_EditCustomerSheet> {
   }
 
   void _confirmDelete(BuildContext context) {
-<<<<<<< HEAD
     // Lấy ref từ context — cần trong StatefulWidget của ConsumerStatefulWidget
     // _EditCustomerSheet là StatefulWidget thường, không có ref trực tiếp
     // Dùng Builder để lấy ref từ Consumer widget cha
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -1973,7 +1701,6 @@ class _EditCustomerSheetState extends State<_EditCustomerSheet> {
           TextButton(onPressed: () => Navigator.pop(ctx),
             child: const Text('Huỷ')),
           ElevatedButton(
-<<<<<<< HEAD
             onPressed: () async {
               Navigator.pop(ctx);    // đóng dialog confirm
               // ‼️ FIX: gọi softDelete thực sự — customerRepositoryProvider từ app_providers
@@ -1985,12 +1712,6 @@ class _EditCustomerSheetState extends State<_EditCustomerSheet> {
                     .eq('id', widget.customer.id);
               } catch (_) {}
               if (context.mounted) Navigator.pop(context); // đóng bottomsheet
-=======
-            onPressed: () {
-              Navigator.pop(ctx);
-              // TODO: call softDelete from ref
-              Navigator.pop(context);
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _kRed,
@@ -2225,7 +1946,6 @@ class _RewardPreset {
   final int pts;
   const _RewardPreset(this.name, this.pts);
 }
-<<<<<<< HEAD
 
 // ─────────────────────────────────────────────────────────────────────────────
 // _StatPill — Compact stat badge cho header
@@ -2819,5 +2539,3 @@ class _LRRow extends StatelessWidget {
     ]),
   );
 }
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df

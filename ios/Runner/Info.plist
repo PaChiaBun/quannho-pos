@@ -7,11 +7,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-<<<<<<< HEAD
 		<string>Quán Nhỏ-POS</string>
-=======
-		<string>Quannho Pos</string>
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -70,15 +66,12 @@
 			<string>UIInterfaceOrientationLandscapeLeft</string>
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
-<<<<<<< HEAD
 		<key>NSCameraUsageDescription</key>
 		<string>Ứng dụng cần sử dụng máy ảnh để chụp ảnh chân dung selfie của nhân viên khi thực hiện chấm công vào ca và ra ca.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Ứng dụng cần truy cập vị trí của bạn để xác minh toạ độ GPS của nhân viên tại thời điểm chấm công.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Ứng dụng cần truy cập thư viện ảnh để bạn có thể tải lên ảnh sản phẩm và ảnh thực đơn của quán.</string>
-=======
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
 		<key>UIStatusBarHidden</key>
 		<false/>
 	</dict>

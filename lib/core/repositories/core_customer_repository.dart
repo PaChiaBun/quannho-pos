@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -72,33 +71,10 @@ class CoreCustomerRepository {
         .toList()
       ..sort((a, b) => b.totalSpent.compareTo(a.totalSpent))
     );
-=======
-import 'package:drift/drift.dart';
-import 'package:uuid/uuid.dart';
-import '../database/app_database.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CORE CUSTOMER REPOSITORY
-// ─────────────────────────────────────────────────────────────────────────────
-class CoreCustomerRepository {
-  final AppDatabase _db;
-  final _uuid = const Uuid();
-
-  CoreCustomerRepository(this._db);
-
-  // ── Streams ───────────────────────────────────────────────────────────────
-
-  Stream<List<CoreCustomer>> watchAll() {
-    return (_db.select(_db.coreCustomers)
-          ..where((c) => c.isDeleted.equals(false))
-          ..orderBy([(c) => OrderingTerm.desc(c.totalSpent)]))
-        .watch();
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   // ── CRUD ──────────────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
   Future<CustomerModel?> getById(String id) async {
     final row = await _sb.from('customers').select().eq('id', id).maybeSingle();
     return row != null ? CustomerModel.fromMap(row) : null;
@@ -115,18 +91,6 @@ class CoreCustomerRepository {
         .eq('is_deleted', false)
         .maybeSingle();
     return row != null ? CustomerModel.fromMap(row) : null;
-=======
-  Future<CoreCustomer?> getById(String id) {
-    return (_db.select(_db.coreCustomers)
-          ..where((c) => c.id.equals(id)))
-        .getSingleOrNull();
-  }
-
-  Future<CoreCustomer?> getByPhone(String phone) {
-    return (_db.select(_db.coreCustomers)
-          ..where((c) => c.phone.equals(phone) & c.isDeleted.equals(false)))
-        .getSingleOrNull();
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   Future<String> create({
@@ -135,7 +99,6 @@ class CoreCustomerRepository {
     String? email,
     String? note,
   }) async {
-<<<<<<< HEAD
     final storeId = await _storeId();
     if (storeId == null) throw Exception('Chưa chọn quán');
     final id  = _uuid.v4();
@@ -162,30 +125,6 @@ class CoreCustomerRepository {
       ...data,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     }).eq('id', id);
-=======
-    final id = _uuid.v4();
-    final now = DateTime.now().millisecondsSinceEpoch;
-    await _db.into(_db.coreCustomers).insert(CoreCustomersCompanion(
-          id: Value(id),
-          name: Value(name),
-          phone: Value(phone),
-          email: Value(email),
-          loyaltyPts: const Value(0),
-          totalSpent: const Value(0),
-          visitCount: const Value(0),
-          note: Value(note),
-          isDeleted: const Value(false),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
-    return id;
-  }
-
-  Future<void> update(String id, CoreCustomersCompanion companion) async {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    await (_db.update(_db.coreCustomers)..where((c) => c.id.equals(id)))
-        .write(companion.copyWith(updatedAt: Value(now)));
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
   }
 
   /// Cộng điểm và cập nhật total_spent sau mỗi đơn hàng
@@ -197,7 +136,6 @@ class CoreCustomerRepository {
   }) async {
     final customer = await getById(customerId);
     if (customer == null) return;
-<<<<<<< HEAD
     await update(customerId, {
       'loyalty_pts': (customer.loyaltyPts + ptsEarned - ptsUsed).clamp(0, double.infinity), // ‼️ FIX: clamp(0) — tránh điểm âm nếu dùng điểm vượt
       'total_spent': customer.totalSpent + amount,
@@ -279,29 +217,3 @@ class CustomerModel {
         isDeleted:   m['is_deleted'] as bool? ?? false,
       );
 }
-=======
-
-    await update(
-        customerId,
-        CoreCustomersCompanion(
-          loyaltyPts:
-              Value(customer.loyaltyPts + ptsEarned - ptsUsed),
-          totalSpent: Value(customer.totalSpent + amount),
-          visitCount: Value(customer.visitCount + 1),
-        ));
-  }
-
-  Future<void> softDelete(String id) async {
-    await update(id, const CoreCustomersCompanion(isDeleted: Value(true)));
-  }
-
-  Future<List<CoreCustomer>> searchByNameOrPhone(String query) {
-    return (_db.select(_db.coreCustomers)
-          ..where((c) =>
-              c.isDeleted.equals(false) &
-              (c.name.like('%$query%') | c.phone.like('%$query%')))
-          ..limit(20))
-        .get();
-  }
-}
->>>>>>> 4bec718df870807743eeb9abb9ea162ca4d749df
