@@ -198,6 +198,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                   onHistory: _openHistorySheet,
                   onEdit: _openEditProduct,
                   onTopping: _openToppingSheet, // ✅ thêm nút Topping
+                  onOption: _openOptionSheet, // ✅ thêm nút Tùy chọn (Modifiers)
                   emptyMsg: 'Chưa có hàng hoá/menu nào',
                   emptyIcon: Icons.shopping_bag_rounded,
                   emptyColor: _kMuted,
@@ -239,6 +240,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                   onHistory: _openHistorySheet,
                   onEdit: _openEditProduct,
                   onTopping: _openToppingSheet,
+                  onOption: _openOptionSheet, // ✅ thêm nút Tùy chọn (Modifiers)
                   emptyMsg: 'Tất cả sản phẩm đang đủ hàng 🎉',
                   emptyIcon: Icons.check_circle_rounded,
                   emptyColor: _kGreen,
@@ -508,6 +510,36 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     );
   }
 
+  void _openOptionSheet(StockItem item) {
+    // Chuyển đổi StockItem sang ProductModel tạm thời vì _ModifierManagerSheet dùng ProductModel
+    final productModel = ProductModel(
+      id: item.id,
+      storeId: '', // Sẽ được tự load bên trong sheet qua StoreAuthService
+      name: item.name,
+      sku: item.sku,
+      category: item.category,
+      unit: item.unit,
+      productType: item.productType,
+      stockQty: item.stockQty,
+      minStock: item.minStock,
+      sellPrice: item.sellPrice,
+      costPrice: item.costPrice,
+      imageUrl: item.imageUrl,
+      stationCode: item.stationCode,
+      isAvailable: true,
+      isActive: true,
+      isDeleted: false,
+      isTopping: item.isTopping,
+      toppingUnit: item.toppingUnit,
+    );
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ModifierManagerSheet(product: productModel),
+    );
+  }
+
   void _openEditProduct(StockItem item) {
     showModalBottomSheet(
       context: context,
@@ -568,6 +600,7 @@ class _StockList extends ConsumerWidget {
   final void Function(StockItem) onHistory;
   final void Function(StockItem) onEdit;
   final void Function(StockItem)? onTopping; // Sheet cấu hình topping riêng
+  final void Function(StockItem)? onOption;  // Sheet cấu hình modifier/tùy chọn riêng
   final String emptyMsg;
   final IconData emptyIcon;
   final Color emptyColor;
@@ -581,6 +614,7 @@ class _StockList extends ConsumerWidget {
     required this.onHistory,
     required this.onEdit,
     this.onTopping,
+    this.onOption,
     this.emptyMsg = 'Không có sản phẩm nào',
     this.emptyIcon = Icons.inventory_2_rounded,
     this.emptyColor = _kMuted,
@@ -635,6 +669,7 @@ class _StockList extends ConsumerWidget {
               onHistory: onHistory,
               onEdit: onEdit,
               onTopping: onTopping,
+              onOption: onOption,
             )
                 .animate(delay: (i * 40).ms)
                 .fadeIn(duration: 200.ms)
@@ -1407,6 +1442,7 @@ class _StockCard extends StatelessWidget {
   final void Function(StockItem) onHistory;
   final void Function(StockItem) onEdit;
   final void Function(StockItem)? onTopping;
+  final void Function(StockItem)? onOption;
 
   const _StockCard({
     required this.item,
@@ -1415,6 +1451,7 @@ class _StockCard extends StatelessWidget {
     required this.onHistory,
     required this.onEdit,
     this.onTopping,
+    this.onOption,
   });
 
   // Map danh mục → icon + màu (đồng bộ với Modules Bán hàng)
@@ -1582,6 +1619,16 @@ class _StockCard extends StatelessWidget {
                     label: 'Topping',
                     color: const Color(0xFFE85D20),
                     onTap: () => onTopping!(item),
+                  ),
+                  Container(width: 0.5, height: 36, color: _kBorder),
+                ],
+                // Nút Tùy Chọn (Modifiers) — chỉ hiện cho món chính
+                if (onOption != null && !item.isTopping) ...[
+                  _ActionBtn(
+                    icon: Icons.tune_rounded,
+                    label: 'Tùy chọn',
+                    color: const Color(0xFF7C3AED),
+                    onTap: () => onOption!(item),
                   ),
                   Container(width: 0.5, height: 36, color: _kBorder),
                 ],

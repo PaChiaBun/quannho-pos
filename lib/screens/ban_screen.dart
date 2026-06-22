@@ -2580,16 +2580,17 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     // ‼️ FIX #2: Batch lookup station code — 1 query thay vì N queries
     final productIds = unsent.map((i) => i.productId).toList();
     final productRows = await Supabase.instance.client
-        .from('products').select('id, category').inFilter('id', productIds);
-    final categoryMap = <String, String>{
-      for (final r in productRows) r['id'] as String: r['category'] as String? ?? '',
+        .from('products').select('id, category, station_code').inFilter('id', productIds);
+    final productInfoMap = <String, Map<String, dynamic>>{
+      for (final r in productRows) r['id'] as String: r,
     };
 
     // 2. Tạo KitchenTicketItems + cập nhật kitchenStatus (BATCHED)
     try {
       final List<Map<String, dynamic>> itemRows = [];
       for (final item in unsent) {
-        final stationCode = (categoryMap[item.productId] == 'Đồ uống') ? 'nuoc' : 'nong';
+        final pInfo = productInfoMap[item.productId];
+        final stationCode = pInfo?['station_code'] as String? ?? 'bep_nong';
         itemRows.add({
           'id':              const Uuid().v4(),
           'store_id':        storeId,
@@ -2628,13 +2629,43 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       rethrow; // đẩy lỗi lên wrapper để hiện SnackBar
     }
 
-    _autoPrintTicket(
-      tableLabel: widget.table.label,
-      zoneLabel: widget.zone.name,
-      round: round,
-      items: unsent,
-      sentAt: DateTime.now().millisecondsSinceEpoch,
-    );
+    // Tự động in bếp bằng StationPrinterDispatcher (hỗ trợ phân chia 4 trạm in mới)
+    try {
+      final settings = ref.read(printerSettingsProvider);
+      if (settings.autoPrintKitchen) {
+        final List<BillItem> billItems = [];
+        for (final item in unsent) {
+          final pInfo = productInfoMap[item.productId];
+          final stationCode = pInfo?['station_code'] as String? ?? 'bep_nong';
+          billItems.add(BillItem(
+            name: item.productName,
+            quantity: item.quantity,
+            price: 0, // In bếp không hiển thị giá
+            note: item.note,
+            stationCode: stationCode,
+            modifiersJson: item.modifiersJson,
+          ));
+        }
+
+        final billData = BillData(
+          shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
+          shopAddress: storeInfo['address'] ?? '',
+          shopPhone: storeInfo['phone'] ?? '',
+          orderNumber: 'Bep-$round',
+          createdAt: DateTime.now().toIso8601String(),
+          tableName: widget.table.label,
+          items: billItems,
+          subtotal: 0,
+          total: 0,
+          type: BillType.kitchen,
+          note: '',
+        );
+        
+        await StationPrinterDispatcher.printBill(billData, settings);
+      }
+    } catch (e) {
+      debugPrint('[Kitchen] ❌ Lỗi in bếp qua StationPrinterDispatcher: $e');
+    }
 
     HapticFeedback.heavyImpact();
     if (mounted) {
