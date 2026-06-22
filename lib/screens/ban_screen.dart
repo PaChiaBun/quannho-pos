@@ -2619,6 +2619,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           .from('ban_session_items')
           .update({'kitchen_status': 'da_gui'})
           .inFilter('id', unsentIds);
+
+      // Invalidate stream provider immediately so UI updates to 'da_gui' without waiting for realtime/poll
+      ref.invalidate(sessionItemsProvider(widget.session.id));
     } catch (e) {
       debugPrint('[Kitchen] ❌ Lỗi insert items: $e');
       // Rollback: xóa ticket để tránh phiếu rỗng

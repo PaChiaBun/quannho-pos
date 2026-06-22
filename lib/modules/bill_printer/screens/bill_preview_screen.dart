@@ -567,8 +567,8 @@ class BillPdfGenerator {
 
 class StationPrinterDispatcher {
   static Future<void> printBill(BillData bill, StationPrintersState settings) async {
-    // 1. In hoá đơn thu ngân
-    if (settings.cashier.enabled) {
+    // 1. In hoá đơn thu ngân (chỉ in khi là hóa đơn thanh toán, không in khi là phiếu bếp)
+    if (settings.cashier.enabled && bill.type == BillType.receipt) {
       final bytes = await BillPdfGenerator.generateReceipt(bill);
       await _dispatchPrint(bytes, settings.cashier, 'hoa_don_${bill.orderNumber}');
     }
