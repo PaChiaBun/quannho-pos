@@ -32,12 +32,14 @@ Chúng ta đã nâng cấp module in bill để hỗ trợ chia và điều hư�
      * **Bếp Bar** (Sinh tố, trà sữa, cafe).
      * **Thu Ngân** (Các mặt hàng đóng gói sẵn không cần làm, chỉ in hoá đơn thanh toán).
 2. **Thiết lập Máy In**:
-   * Vào **Cài đặt** -> **In Hoá Đơn** -> Chọn **Cấu Hình Máy In & Tem Dán Ly**.
+   * Vào **Cài đặt** (trên thanh Sidebar) -> Chọn **Cấu hình máy in & Tem nhãn** (hoặc vào thông qua trạm in phụ trên Dashboard). Giao diện mới hỗ trợ hiển thị 2 cột trực quan tối ưu cho Tablet & PC.
    * Bật các máy in trạm tương ứng.
    * Chọn hình thức kết nối:
      * **Máy in Hệ thống**: Chọn tên máy in đã cài trên hệ điều hành (USB, Bluetooth, LAN Wifi đã add).
-     * **Mạng IP LAN/Wifi**: Điền trực tiếp địa chỉ IP máy in trạm (cổng 9100).
-   * Nhấn **"In thử nghiệm"** để kiểm tra ngay tại chỗ.
+     * **Mạng IP LAN/Wifi**: Có 2 lựa chọn:
+       * Nhập trực tiếp địa chỉ IP máy in trạm (ví dụ: `192.168.1.100`, cổng mặc định 9100).
+       * Nhấn nút **"Quét" (Auto LAN scan)** để ứng dụng tự động dò tìm và liệt kê các máy in đang hoạt động trong mạng nội bộ, chỉ cần chạm để chọn.
+   * Nhấn **"In thử nghiệm"** (nút bấm chuẩn 52px dễ thao tác) để kiểm tra ngay tại chỗ kèm Live Preview thời gian thực hóa đơn hoặc tem dán ly.
 
 ### Nguyên lý hoạt động khi Thanh toán:
 * **Hóa đơn Khách**: In đầy đủ toàn bộ món tại quầy **Thu Ngân**.
@@ -48,9 +50,22 @@ Chúng ta đã nâng cấp module in bill để hỗ trợ chia và điều hư�
 
 ---
 
-## 🚀 3. Các bước tiếp theo dành cho chủ quán
+## 🔄 3. Tự Động Cập Nhật Ứng Dụng (Windows Auto-update)
+
+Ứng dụng hiện tại đã được tích hợp module kiểm tra và cập nhật phiên bản Windows tự động từ GitHub Releases:
+
+1. **Tự động kiểm tra cập nhật**: 
+   * Khi ứng dụng khởi động thành công và truy cập Dashboard, hệ thống sẽ tự động gọi đến GitHub Releases API để kiểm tra xem có phiên bản mới hơn phiên bản đang chạy hay không.
+   * Người dùng cũng có thể kiểm tra thủ công bằng cách vào **Cài đặt** -> chọn **Kiểm tra cập nhật**.
+2. **Tự động tải về và nâng cấp**: 
+   * Nếu có phiên bản mới, app sẽ hiển thị một hộp thoại thông báo. Khi chọn **Cập nhật ngay**, app sẽ tiến hành tải ngầm bản cài đặt `QuanNhoPOS-Setup.exe` mới nhất về máy.
+   * Khi tải xong 100%, app tự động khởi chạy bản cài đặt mới ghi đè lên thư mục hiện tại, đồng thời tự động đóng app cũ lại để hoàn tất nâng cấp mà không làm mất dữ liệu của quán.
+
+---
+
+## 🚀 4. Các bước tiếp theo dành cho chủ quán
 
 1. Mở **GitHub Desktop** và kiểm tra các thay đổi mã nguồn đã được dọn dẹp sạch sẽ.
-2. Tiến hành **Push** (đẩy) các thay đổi này lên repository GitHub của bạn.
-3. GitHub Actions sẽ tự động kích hoạt build bản Windows mới nhất đi kèm giao diện Tablet Sidebar UI và toàn bộ tính năng trạm in bếp thông minh này.
-4. Tải bộ cài từ mục Releases của GitHub về cài đặt và trải nghiệm!
+2. Tiến hành **Push** (đẩy) các thay đổi này lên repository GitHub của bạn (bao gồm cả các commit tự động cập nhật).
+3. GitHub Actions sẽ tự động kích hoạt build bản Windows mới nhất đi kèm giao diện Tablet Sidebar UI, tính năng quét máy in IP thông minh và cơ chế Tự động cập nhật này.
+4. Tải bộ cài từ mục Releases của GitHub về cài đặt (đây là lần cài thủ công cuối cùng). Từ phiên bản tiếp theo, app sẽ tự động hiển thị cập nhật khi có bản mới!

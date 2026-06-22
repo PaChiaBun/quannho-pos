@@ -1522,7 +1522,41 @@ Phát hiện lỗi nghiêm trọng khi gọi món nháp (Chưa gửi bếp):
 | `.github/workflows/windows-release.yml` | Cập nhật đường dẫn lưu trữ đầu ra build Windows. |
 
 ### Tiếp theo
-- ➡️ Bàn giao cho người dùng Push mã nguồn sạch lên GitHub.
-- ➡️ Chạy build bản phát hành Windows trên GitHub Actions và tải bản cài đặt mới về trải nghiệm.
+- ✅ Bàn giao cho người dùng Push mã nguồn sạch lên GitHub.
+- ✅ Chạy build bản phát hành Windows trên GitHub Actions và tải bản cài đặt mới về trải nghiệm.
+
+---
+
+## 2026-06-22 — Thiết Kế Lại Giao Diện In Bill Responsive & Tự Động Cập Nhật
+
+### Đã làm
+- ✅ **Thiết kế lại giao diện cấu hình in ấn thích ứng (Responsive)**:
+  - Chuyển đổi hộp thoại cấu hình máy in cũ thành một màn hình độc lập [printer_settings_screen.dart](file:///Users/banhbao/Quan%20Nho/quan_nho/lib/modules/bill_printer/screens/printer_settings_screen.dart).
+  - Bố cục 2 cột trên Tablet/PC: cột trái hiển thị danh sách trạm in và các nút chức năng; cột phải hiển thị cấu hình chi tiết & Live Preview thời gian thực của hoá đơn/tem dán ly tương ứng giúp dễ dàng căn chỉnh.
+  - Thiết lập các nút bấm và Switch điều hướng với chiều cao chuẩn tối thiểu `52px` tối ưu cho cảm ứng và bấm chuột.
+- ✅ **Tự động dò tìm máy in IP trong mạng nội bộ (LAN Scan)**:
+  - Tạo [network_printer_search_service.dart](file:///Users/banhbao/Quan%20Nho/quan_nho/lib/core/services/network_printer_search_service.dart) tự động nhận diện IP của máy và quét dải IP subnet song song trên cổng `9100`.
+  - Tích hợp cơ chế Hard Timeout (400ms ở cấp độ Future) để tránh kẹt thanh tiến trình tại 99%.
+- ✅ **Lối vào cấu hình & Tích hợp**:
+  - Thêm mục **"Cài đặt máy in & Tem nhãn"** trực tiếp trên tab Cài đặt chính [settings_screen.dart](file:///Users/banhbao/Quan%20Nho/quan_nho/lib/screens/settings_screen.dart).
+  - Cập nhật [bill_printer_hub.dart](file:///Users/banhbao/Quan%20Nho/quan_nho/lib/modules/bill_printer/screens/bill_printer_hub.dart) chuyển hướng đến màn hình cấu hình responsive mới.
+- ✅ **Tự động cập nhật ứng dụng Windows (Auto-update)**:
+  - Tạo [auto_update_service.dart](file:///Users/banhbao/Quan%20Nho/quan_nho/lib/core/services/auto_update_service.dart) tự động kiểm tra phiên bản mới từ GitHub Release API (`PaChiaBun/quannho-pos`).
+  - Cho phép tải xuống và cài đặt ngầm file setup ghi đè phiên bản cũ cực kỳ an toàn, sau đó tự tắt ứng dụng để nâng cấp.
+  - Tích hợp kiểm tra cập nhật khi ứng dụng khởi chạy (`initState` ở [dashboard_screen.dart](file:///Users/banhbao/Quan%20Nho/quan_nho/lib/screens/dashboard_screen.dart)) và thêm nút kiểm tra cập nhật thủ công trong màn hình Cài đặt.
+
+### Files đã sửa/tạo mới
+| File | Thay đổi |
+|------|----------|
+| `lib/core/services/network_printer_search_service.dart` | [NEW] Service dò tìm máy in IP trong mạng nội bộ port 9100 với hard timeout. |
+| `lib/modules/bill_printer/screens/printer_settings_screen.dart` | [NEW] Màn hình cấu hình máy in độc lập và responsive cho Tablet/PC & Mobile. |
+| `lib/core/services/auto_update_service.dart` | [NEW] Service kiểm tra phiên bản mới trên GitHub và tải về, cài đặt đè tự động. |
+| `lib/screens/settings_screen.dart` | Thêm lối vào cài đặt in ấn và nút kiểm tra cập nhật thủ công. |
+| `lib/screens/dashboard_screen.dart` | Thêm lời gọi tự động kiểm tra cập nhật khi ứng dụng khởi chạy thành công. |
+| `lib/modules/bill_printer/screens/bill_printer_hub.dart` | Cập nhật chuyển hướng đến màn hình cấu hình responsive mới. |
+
+### Tiếp theo
+- ➡️ Đẩy mã nguồn sạch lên GitHub qua GitHub Desktop.
+- ➡️ Chờ GitHub Actions build hoàn tất, chạy thử ứng dụng Windows để trải nghiệm tính năng in ấn mới và cơ chế tự động cập nhật.
 
 
