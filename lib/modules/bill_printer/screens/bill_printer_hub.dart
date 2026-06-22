@@ -11,6 +11,7 @@ import '../widgets/bill_preview_widget.dart';
 import 'bill_designer_v2.dart';
 import 'kitchen_ticket_designer.dart';
 import 'template_gallery_screen.dart';
+import 'printer_settings_screen.dart';
 
 const _kIndigo = Color(0xFF1C2151);
 
@@ -42,7 +43,8 @@ class BillPrinterHub extends ConsumerWidget {
               color: const Color(0xFFD97706),
               title: 'Cấu Hình Máy In & Tem Dán Ly',
               subtitle: 'Phân trạm: Thu Ngân, Bếp Nóng, Bếp Bar, và Tem Nhãn Dán Ly',
-              onTap: () => _openPrinterSettings(context),
+              onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const PrinterSettingsScreen())),
             ),
 
             const SizedBox(height: 12),
