@@ -12,6 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/providers/app_providers.dart';
+import '../core/repositories/core_product_repository.dart';
+import 'ban_screen.dart';
 import '../modules/kho/providers/kho_providers.dart';
 import '../modules/kho/repository/kho_repository.dart';
 import '../modules/kho/screens/receive_stock_sheet.dart';
@@ -536,7 +538,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _ModifierManagerSheet(product: productModel),
+      builder: (_) => ModifierManagerSheet(product: productModel),
     );
   }
 

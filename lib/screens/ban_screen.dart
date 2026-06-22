@@ -27,7 +27,8 @@ import '../core/theme/app_colors.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
 import '../modules/bill_printer/screens/bill_preview_screen.dart'
-    show BillData, BillItem, showBillPreview;
+    show BillData, BillItem, showBillPreview, BillType, StationPrinterDispatcher;
+import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import 'kitchen_screen.dart' show kitchenReadyStreamProvider;
 import '../core/utils/responsive.dart';
 
@@ -2639,11 +2640,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           final stationCode = pInfo?['station_code'] as String? ?? 'bep_nong';
           billItems.add(BillItem(
             name: item.productName,
-            quantity: item.quantity,
+            qty: item.quantity.toInt(),
             price: 0, // In bếp không hiển thị giá
             note: item.note,
             stationCode: stationCode,
-            modifiersJson: item.modifiersJson,
           ));
         }
 
@@ -2652,7 +2652,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           shopAddress: storeInfo['address'] ?? '',
           shopPhone: storeInfo['phone'] ?? '',
           orderNumber: 'Bep-$round',
-          createdAt: DateTime.now().toIso8601String(),
+          createdAt: DateTime.now(),
           tableName: widget.table.label,
           items: billItems,
           subtotal: 0,
@@ -5844,14 +5844,14 @@ class _ToppingPickerSheetState extends State<_ToppingPickerSheet> {
 // ─────────────────────────────────────────────────────────────────────────────
 // MODIFIER MANAGER SHEET — Quản lý tùy chọn cho từng sản phẩm
 // ─────────────────────────────────────────────────────────────────────────────
-class _ModifierManagerSheet extends StatefulWidget {
+class ModifierManagerSheet extends StatefulWidget {
   final ProductModel product;
-  const _ModifierManagerSheet({required this.product});
+  const ModifierManagerSheet({required this.product});
   @override
-  State<_ModifierManagerSheet> createState() => _ModifierManagerSheetState();
+  State<ModifierManagerSheet> createState() => _ModifierManagerSheetState();
 }
 
-class _ModifierManagerSheetState extends State<_ModifierManagerSheet>
+class _ModifierManagerSheetState extends State<ModifierManagerSheet>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
   // Tab 0: Tùy chọn

@@ -31,7 +31,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Windows App (Release)
-        run: flutter build windows --release
+        run: flutter build windows --release --no-tree-shake-icons
 
       - name: Build MSIX Package
         run: flutter pub run msix:create
