@@ -12,6 +12,7 @@ import 'bug_report_screen.dart';
 import 'pin_lock_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../modules/bill_printer/screens/printer_settings_screen.dart';
+import '../core/services/auto_update_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS SCREEN — Cài đặt Quán Nhỏ POS
@@ -178,6 +179,13 @@ class SettingsScreen extends ConsumerWidget {
                   color: _kMuted,
                   onTap: () => Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const BugReportScreen())),
+                ),
+                _SettingsTile(
+                  icon: Icons.system_update_rounded,
+                  label: 'Kiểm tra cập nhật',
+                  subtitle: 'Cập nhật phiên bản Windows tự động',
+                  color: const Color(0xFFE85D20),
+                  onTap: () => AutoUpdateService.checkForUpdates(context, showNoUpdateDialog: true),
                 ),
               ]),
             ),

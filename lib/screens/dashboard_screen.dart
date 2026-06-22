@@ -21,6 +21,7 @@ import '../shared/widgets/module_tile.dart';
 import 'module_picker_screen.dart';
 import '../modules/bill_printer/screens/bill_printer_hub.dart';
 import '../modules/ops/screens/ops_screen.dart';
+import '../core/services/auto_update_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MÀU LOCAL
@@ -100,6 +101,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _silentRoleRefresh();
       _subscribeStoreRolesRealtime();
+      AutoUpdateService.checkForUpdates(context);
     });
   }
 
