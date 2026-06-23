@@ -841,8 +841,8 @@ class _ActiveTableRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final itemsAsync = ref.watch(sessionItemsProvider(session.id));
-    final total = itemsAsync.value?.fold<double>(
-          0, (s, item) => s + item.subtotal) ?? 0;
+    final activeItems = itemsAsync.value?.where((i) => i.kitchenStatus != 'huy') ?? [];
+    final total = activeItems.fold<double>(0, (s, item) => s + item.subtotal);
 
     final elapsed = DateTime.now()
         .difference(DateTime.fromMillisecondsSinceEpoch(session.openedAt));
@@ -1199,11 +1199,8 @@ class _TableCard extends ConsumerWidget {
         ? ref.watch(sessionItemsProvider(session!.id))
         : null;
 
-    final totalAmount = itemsAsync?.value?.fold<double>(
-          0,
-          (sum, item) => sum + item.subtotal,
-        ) ??
-        0;
+    final activeItems = itemsAsync?.value?.where((i) => i.kitchenStatus != 'huy') ?? [];
+    final totalAmount = activeItems.fold<double>(0, (sum, item) => sum + item.subtotal);
 
     return GestureDetector(
       onTap: onTap,
@@ -3600,7 +3597,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
                                   onPressed: total > 0
-                                      ? () => _openCheckout(total, items)
+                                      ? () => _openCheckout(total, activeItems)
                                       : null,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: zoneColor,

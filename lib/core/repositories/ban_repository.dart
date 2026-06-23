@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../services/store_auth_service.dart';
@@ -166,6 +167,38 @@ class BanRepository {
     final info = await StoreAuthService.getStoreInfo();
     _cachedStoreId = info['store_id'] as String?;
     return _cachedStoreId;
+  }
+
+  bool _areModifiersEqual(String? json1, String? json2) {
+    final clean1 = json1 == null || json1.trim().isEmpty;
+    final clean2 = json2 == null || json2.trim().isEmpty;
+    if (clean1 && clean2) return true;
+    if (clean1 || clean2) return false;
+
+    try {
+      final List<dynamic> list1 = jsonDecode(json1);
+      final List<dynamic> list2 = jsonDecode(json2);
+
+      if (list1.length != list2.length) return false;
+
+      String canonicalString(dynamic item) {
+        if (item is! Map) return '';
+        final id = item['id'] ?? '';
+        final type = item['type'] ?? 'modifier';
+        final qty = item['qty'] ?? 1;
+        return '$type:$id:$qty';
+      }
+
+      final keys1 = list1.map(canonicalString).toList()..sort();
+      final keys2 = list2.map(canonicalString).toList()..sort();
+
+      for (int i = 0; i < keys1.length; i++) {
+        if (keys1[i] != keys2[i]) return false;
+      }
+      return true;
+    } catch (_) {
+      return json1.trim() == json2.trim();
+    }
   }
 
   // Module active state quản lý bởi ModuleRepository (app_settings)
@@ -375,24 +408,19 @@ class BanRepository {
     String? note,
     String? modifiersJson,
   }) async {
-    final storeId = await _storeId();                // store_id bắt buộc
-    if (storeId == null) throw Exception('Chưa chọn quán');
-    final id  = const Uuid().v4();                   // UUID hợp lệ
-    final now = DateTime.now().toUtc().toIso8601String();
-    await _sb.from('ban_session_items').insert({
-      'id':             id,
-      'store_id':       storeId,                    // NOT NULL
-      'session_id':     sessionId,
-      'product_id':     productId,
-      'product_name':   productName,                 // NOT NULL
-      'unit_price':     price,                       // DB dùng 'unit_price'
-      'quantity':       quantity,
-      'subtotal':       price * quantity,            // NOT NULL
-      'note':           note,
-      'modifiers_json': modifiersJson,
-      'added_at':       now,
-      'kitchen_status': 'chua_gui',                 // đúng enum theo docs
-    });
+    await addSessionItems(
+      sessionId: sessionId,
+      items: [
+        {
+          'productId': productId,
+          'productName': productName,
+          'price': price,
+          'quantity': quantity,
+          'note': note,
+          'modifiersJson': modifiersJson,
+        }
+      ],
+    );
   }
 
   Future<void> addSessionItems({
@@ -441,11 +469,13 @@ class BanRepository {
             : (extNote != null && extNote.trim() == note.trim());
             
         final extMods = ext['modifiers_json'] as String?;
-        final sameMods = (modifiersJson == null || modifiersJson.trim().isEmpty)
-            ? (extMods == null || extMods.trim().isEmpty)
-            : (extMods != null && extMods.trim() == modifiersJson.trim());
+        final sameMods = _areModifiersEqual(extMods, modifiersJson);
 
-        if (sameProduct && sameNote && sameMods) {
+        final extPrice = (ext['unit_price'] as num?)?.toDouble() ??
+                         (ext['price'] as num?)?.toDouble() ?? 0.0;
+        final samePrice = (extPrice - price).abs() < 0.01;
+
+        if (sameProduct && samePrice && sameNote && sameMods) {
           match = ext as Map<String, dynamic>;
           break;
         }

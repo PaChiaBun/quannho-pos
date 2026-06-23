@@ -998,6 +998,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         sessionItemIds.add(itemId);
         await sb.from('ban_session_items').insert({
           'id': itemId,
+          'store_id': storeId,
           'session_id': sessionId,
           'product_id': line.productId,
           'product_name': line.productName,
