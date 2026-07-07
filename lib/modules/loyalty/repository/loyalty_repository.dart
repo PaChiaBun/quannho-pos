@@ -270,6 +270,7 @@ class LoyaltyRepository {
     int? bonusMonths,
     String? note,
     String? customerName, // dùng cho mô tả finance_records
+    String fundType = 'cash',
   }) async {
     if (realAmount <= 0) throw Exception('Số tiền nạp phải lớn hơn 0');
     final storeId = await _storeId();
@@ -344,6 +345,7 @@ class LoyaltyRepository {
         'reference_id': customerId,
         'is_auto':      true,
         'recorded_at':  now,
+        'fund_type':    fundType,
       });
       debugPrint('[LoyaltyRepo] ✅ finance_records inserted OK — $label $realAmount');
     } catch (e, st) {

@@ -8,6 +8,7 @@ import '../core/utils/money_formatter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 // topping_group_repository.dart - đã deprecated, được thay bằng product_topping_links
 import 'package:uuid/uuid.dart';
@@ -91,28 +92,29 @@ const _kZoneIconCodes = <int>[
 // ─────────────────────────────────────────────────────────────────────────────
 // PROVIDERS
 // ─────────────────────────────────────────────────────────────────────────────
-final banZonesProvider = StreamProvider<List<BanZoneModel>>((ref) {
+final banZonesProvider = StreamProvider.autoDispose<List<BanZoneModel>>((ref) {
   return ref.watch(banRepositoryProvider).watchZones();
 });
 
 final banTablesForZoneProvider =
-    StreamProvider.family<List<BanTableModel>, String>((ref, zoneId) {
+    StreamProvider.autoDispose.family<List<BanTableModel>, String>((ref, zoneId) {
   return ref.watch(banRepositoryProvider).watchTablesForZone(zoneId);
 });
 
-final allBanTablesProvider = StreamProvider<List<BanTableModel>>((ref) {
+final allBanTablesProvider = StreamProvider.autoDispose<List<BanTableModel>>((ref) {
   return ref.watch(banRepositoryProvider).watchAllTables();
 });
 
 final activeSessionsProvider =
-    StreamProvider<Map<String, BanSessionModel>>((ref) {
+    StreamProvider.autoDispose<Map<String, BanSessionModel>>((ref) {
   return ref.watch(banRepositoryProvider).watchActiveSessions();
 });
 
 final sessionItemsProvider =
-    StreamProvider.family<List<BanSessionItemModel>, String>((ref, sessionId) {
+    StreamProvider.autoDispose.family<List<BanSessionItemModel>, String>((ref, sessionId) {
   return ref.watch(banRepositoryProvider).watchSessionItems(sessionId);
 });
+
 
 
 
@@ -204,6 +206,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
   int _selectedZoneIndex = 0;
   List<BanZoneModel> _cachedZones = [];
   String? _syncedStoreId;
+  String _statusFilter = 'all'; // 'all' | 'occupied' | 'empty'
 
   BanRepository get _banRepo => ref.read(banRepositoryProvider);
 
@@ -316,32 +319,40 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     }
   }
 
+  bool _isOpeningTable = false;
+
   Future<void> _openTable(BanTableModel table, BanZoneModel zone) async {
-    final session = await showModalBottomSheet<BanSessionModel>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _OpenTableSheet(
-        table: table,
-        zone: zone,
-        onOpen: (count) => _banRepo.openSession(table.id, guestCount: count),
-      ),
-    );
-    if (session == null) return;
-    ref.invalidate(activeSessionsProvider);
-    HapticFeedback.mediumImpact();
-    if (!mounted) return;
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      enableDrag: false,
-      builder: (_) => _TableSessionSheet(
-        table: table,
-        session: session,
-        zone: zone,
-        autoOpenOrder: true,
-      ),
-    );
+    if (_isOpeningTable) return;
+    _isOpeningTable = true;
+    try {
+      final session = await showModalBottomSheet<BanSessionModel>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (_) => _OpenTableSheet(
+          table: table,
+          zone: zone,
+          onOpen: (count) => _banRepo.openSession(table.id, guestCount: count),
+        ),
+      );
+      if (session == null) return;
+      ref.invalidate(activeSessionsProvider);
+      HapticFeedback.mediumImpact();
+      if (!mounted) return;
+      await showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        enableDrag: false,
+        builder: (_) => _TableSessionSheet(
+          table: table,
+          session: session,
+          zone: zone,
+          autoOpenOrder: true,
+        ),
+      );
+    } finally {
+      _isOpeningTable = false;
+    }
   }
 
   Future<void> _manageSession(
@@ -562,6 +573,68 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     );
   }
 
+  Widget _buildFilterChip({required String label, required String value, required Color color}) {
+    final isSelected = _statusFilter == value;
+    return GestureDetector(
+      onTap: () => setState(() => _statusFilter = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.transparent : const Color(0xFFEEEBE6),
+            width: 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (value == 'occupied') ...[
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : _kRed,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+            ] else if (value == 'empty') ...[
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : _kGreen,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? Colors.white : const Color(0xFF1C2151),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Helper: Grid bàn tách ra để dùng lại ─────────────────────────────────
   Widget _buildTableGrid(List<BanZoneModel> zones) {
     final activeSessionsAsync = ref.watch(activeSessionsProvider);
@@ -575,6 +648,20 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         onLongPress: (zone) => _editZone(zone),
         onAddZone: _addZone,
       ),
+      Container(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        color: Colors.white,
+        child: Row(
+          children: [
+            _buildFilterChip(label: 'Tất cả bàn', value: 'all', color: _kNavy),
+            const SizedBox(width: 8),
+            _buildFilterChip(label: 'Đang có khách', value: 'occupied', color: _kRed),
+            const SizedBox(width: 8),
+            _buildFilterChip(label: 'Bàn trống', value: 'empty', color: _kGreen),
+          ],
+        ),
+      ),
+      const Divider(height: 1, color: Color(0xFFEEEBE6)),
       Expanded(
         child: activeSessionsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -590,7 +677,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                     onAddTable: () => _addTable(null),
                   );
                 }
-                final filtered = _selectedZoneIndex == 0
+                final zoneFiltered = _selectedZoneIndex == 0
                     ? allTables
                     : zones.isNotEmpty &&
                             _selectedZoneIndex - 1 < zones.length
@@ -601,7 +688,37 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                             .toList()
                         : allTables;
 
+                var filtered = zoneFiltered;
+                if (_statusFilter == 'occupied') {
+                  filtered = zoneFiltered.where((t) => activeSessions.containsKey(t.id)).toList();
+                } else if (_statusFilter == 'empty') {
+                  filtered = zoneFiltered.where((t) => !activeSessions.containsKey(t.id)).toList();
+                }
+
                 if (filtered.isEmpty) {
+                  if (_statusFilter != 'all') {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _statusFilter == 'occupied' ? Icons.people_outline_rounded : Icons.check_circle_outline_rounded,
+                              size: 48,
+                              color: const Color(0xFF9E9085),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _statusFilter == 'occupied' ? 'Hiện tại không có bàn nào có khách' : 'Không có bàn nào trống',
+                              style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF9E9085), fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
                   return _EmptyState(
                     onAddZone: _addZone,
                     onAddTable: () => _addTable(
@@ -1483,16 +1600,14 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                       onTap: _isLoading
                           ? () {}
                           : () {
-                              if (_count < widget.table.seats) {
-                                setState(() => _count++);
-                              }
+                              setState(() => _count++);
                             },
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Tối đa ${widget.table.seats} người',
+                  'Sức chứa tiêu chuẩn: ${widget.table.seats} người (Có thể thêm ghế)',
                   style: GoogleFonts.outfit(
                     fontSize: 11,
                     color: _kNavy.withValues(alpha: 0.4),
@@ -2171,6 +2286,41 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ptsEarned = (total / rate).floorToDouble();
         } catch (_) {}
       }
+      String? cashierRecordId;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final currentUserId = prefs.getString('auth_user_id');
+        if (currentUserId != null) {
+          final memberRow = await sb
+              .from('store_members')
+              .select('id, role, user_accounts(display_name, phone)')
+              .eq('store_id', storeId)
+              .eq('user_id', currentUserId)
+              .maybeSingle();
+          if (memberRow != null) {
+            cashierRecordId = memberRow['id'] as String?;
+            final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
+            final displayName = userAcc?['display_name'] as String? ?? 'Cashier';
+            final phone = userAcc?['phone'] as String?;
+            final role = memberRow['role'] as String? ?? 'cashier';
+            
+            if (cashierRecordId != null) {
+              await sb.from('staff_members').upsert({
+                'id': cashierRecordId,
+                'store_id': storeId,
+                'name': displayName,
+                'role': role,
+                'phone': phone,
+                'is_active': true,
+                'updated_at': DateTime.now().millisecondsSinceEpoch,
+              });
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[Checkout] Sync cashier failed: $e');
+      }
+
       await sb.from('orders').insert({
         'id': orderId,
         'store_id': storeId,
@@ -2188,6 +2338,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         'loyalty_pts_earned': ptsEarned,
         'loyalty_pts_used':   ptsUsed.toDouble(),
         'created_at': now,
+        if (cashierRecordId != null) 'staff_id': cashierRecordId,
+        if (widget.session.waiterId != null) 'waiter_id': widget.session.waiterId,
       });
 
       // 2. Core: Tạo order_items
@@ -2201,7 +2353,31 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       } catch (e) { debugPrint('[Checkout] cost_price fetch err: $e'); }
 
       final List<Map<String, dynamic>> orderItemRows = [];
+      final Map<String, BanSessionItemModel> groupedItems = {};
       for (final item in items) {
+        final cleanNote = item.note?.trim() ?? '';
+        final cleanMods = item.modifiersJson?.trim() ?? '';
+        final key = '${item.productId}_${item.price.toStringAsFixed(2)}_${cleanNote}_$cleanMods';
+        if (groupedItems.containsKey(key)) {
+          final prev = groupedItems[key]!;
+          groupedItems[key] = BanSessionItemModel(
+            id: prev.id,
+            sessionId: prev.sessionId,
+            productId: prev.productId,
+            productName: prev.productName,
+            price: prev.price,
+            quantity: prev.quantity + item.quantity,
+            note: prev.note,
+            modifiersJson: prev.modifiersJson,
+            addedAt: prev.addedAt,
+            kitchenStatus: prev.kitchenStatus,
+          );
+        } else {
+          groupedItems[key] = item;
+        }
+      }
+
+      for (final item in groupedItems.values) {
         orderItemRows.add({
           'id': const Uuid().v4(),
           'order_id': orderId,
@@ -2319,6 +2495,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 .eq('is_auto', true)
                 .maybeSingle();
             if (existIncome == null) {
+              final fundType = (payMethod == 'transfer' || payMethod == 'card') ? 'bank' : 'cash';
               await sb.from('finance_records').insert({
                 'id':           const Uuid().v4(),
                 'store_id':     storeId,
@@ -2328,6 +2505,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 'reference_id': orderId,
                 'is_auto':      true,
                 'recorded_at':  now,
+                'fund_type':    fundType,
               });
             }
           } catch (e) { debugPrint('[Checkout] finance silent err: $e'); }
@@ -3287,8 +3465,36 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                             ),
                           );
                         }
+                        print('[UI DEBUG] TableSessionSheet received items length: ${items.length}');
                         // ‼️ FIX #R3: Exclude món đã hủy khỏi tổng — tránh tính tiền món đã cancel
-                        final activeItems = items.where((i) => i.kitchenStatus != 'huy').toList();
+                        final rawActiveItems = items.where((i) => i.kitchenStatus != 'huy').toList();
+                        final Map<String, BanSessionItemModel> groupedActiveMap = {};
+                        for (final item in rawActiveItems) {
+                          final cleanNote = item.note?.trim() ?? '';
+                          final cleanMods = item.modifiersJson?.trim() ?? '';
+                          // Gộp theo key = product_id + price + note + modifiers + kitchenStatus
+                          final key = '${item.productId}_${item.price.toStringAsFixed(2)}_${cleanNote}_${cleanMods}_${item.kitchenStatus}';
+                          if (groupedActiveMap.containsKey(key)) {
+                            final prev = groupedActiveMap[key]!;
+                            groupedActiveMap[key] = BanSessionItemModel(
+                              id: prev.id,
+                              sessionId: prev.sessionId,
+                              productId: prev.productId,
+                              productName: prev.productName,
+                              price: prev.price,
+                              quantity: prev.quantity + item.quantity,
+                              note: prev.note,
+                              modifiersJson: prev.modifiersJson,
+                              addedAt: prev.addedAt,
+                              kitchenStatus: prev.kitchenStatus,
+                            );
+                          } else {
+                            groupedActiveMap[key] = item;
+                          }
+                        }
+                        final activeItems = groupedActiveMap.values.toList()
+                          ..sort((a, b) => a.addedAt.compareTo(b.addedAt));
+                        print('[UI DEBUG] TableSessionSheet activeItems length: ${activeItems.length}');
                         final total = activeItems.fold<double>(0, (s, i) => s + i.subtotal);
 
                         return CustomScrollView(
@@ -3820,37 +4026,64 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
                 controller: scrollCtrl,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 children: [
-                  ...widget.items.map((item) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                item.productName,
+                  ...(() {
+                    final Map<String, BanSessionItemModel> grouped = {};
+                    for (final item in widget.items) {
+                      final cleanNote = item.note?.trim() ?? '';
+                      final cleanMods = item.modifiersJson?.trim() ?? '';
+                      // Gộp theo key = product_id + price + note + modifiers
+                      final key = '${item.productId}_${item.price.toStringAsFixed(2)}_${cleanNote}_$cleanMods';
+                      
+                      if (grouped.containsKey(key)) {
+                        final prev = grouped[key]!;
+                        grouped[key] = BanSessionItemModel(
+                          id: prev.id, // giữ lại id của dòng đầu
+                          sessionId: prev.sessionId,
+                          productId: prev.productId,
+                          productName: prev.productName,
+                          price: prev.price,
+                          quantity: prev.quantity + item.quantity,
+                          note: prev.note,
+                          modifiersJson: prev.modifiersJson,
+                          addedAt: prev.addedAt,
+                          kitchenStatus: prev.kitchenStatus,
+                        );
+                      } else {
+                        grouped[key] = item;
+                      }
+                    }
+                    return grouped.values.map((item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.productName,
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w500,
+                                    color: _kNavy,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${item.quantity.toInt()} × ${fmtVnd(item.price)}',
                                 style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                  color: _kNavy.withValues(alpha: 0.55),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                fmtVnd(item.subtotal),
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w700,
                                   color: _kNavy,
                                 ),
                               ),
-                            ),
-                            Text(
-                              '${item.quantity.toInt()} × ${fmtVnd(item.price)}',
-                              style: GoogleFonts.outfit(
-                                fontSize: 13,
-                                color: _kNavy.withValues(alpha: 0.55),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              fmtVnd(item.subtotal),
-                              style: GoogleFonts.outfit(
-                                fontWeight: FontWeight.w700,
-                                color: _kNavy,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )),
+                            ],
+                          ),
+                        ));
+                  })(),
                   const Divider(height: 24),
                   // ── Tổng tiền + giảm giá ────────────────────────────
                   Row(
@@ -4286,7 +4519,9 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
   Future<void> _confirm(List<ProductModel> products) async {
     if (_selected.isEmpty) { Navigator.pop(context); return; }
     if (_isConfirming) return;
-    setState(() => _isConfirming = true);
+    setState(() {
+      _isConfirming = true;
+    });
     try {
       final List<Map<String, dynamic>> itemsList = [];
       for (final entry in _selected.entries) {

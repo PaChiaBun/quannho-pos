@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../services/store_auth_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -96,11 +98,12 @@ class BanSessionModel {
   final int? closedAt;
   final double totalAmount;
   final int guestCount;
+  final String? waiterId;
 
   const BanSessionModel({
     required this.id, required this.tableId, required this.storeId,
     required this.status, required this.openedAt, this.closedAt,
-    required this.totalAmount, required this.guestCount,
+    required this.totalAmount, required this.guestCount, this.waiterId,
   });
 
   factory BanSessionModel.fromMap(Map<String, dynamic> m) => BanSessionModel(
@@ -112,6 +115,7 @@ class BanSessionModel {
     closedAt: m['closed_at'] != null ? _toMs(m['closed_at']) : null,
     totalAmount: (m['total_amount'] as num?)?.toDouble() ?? 0,
     guestCount: m['guest_count'] as int? ?? 1,
+    waiterId: m['waiter_id'] as String?,
   );
 }
 
@@ -209,41 +213,79 @@ class BanRepository {
     String columnFilter,
     String valueFilter,
     T Function(List<Map<String, dynamic>>) mapper,
-  ) async* {
-    Future<T> fetch() async {
-      final rows = await _sb.from(table).select().eq(columnFilter, valueFilter);
-      return mapper(rows);
-    }
+  ) {
+    StreamController<T>? controller;
+    StreamSubscription? subscription;
 
-    // Initial fetch
-    try {
-      yield await fetch();
-    } catch (e) {
-      print('[RobustStream] Initial fetch err on $table: $e');
-    }
-
-    // Realtime connection with fallback to polling on async errors (e.g. RealtimeSubscribeException)
-    while (true) {
+    void startListen() {
       try {
         final stream = _sb.from(table).stream(primaryKey: ['id']).eq(columnFilter, valueFilter);
-        await for (final rows in stream) {
-          yield mapper(rows);
-        }
+        subscription = stream.listen(
+          (rows) {
+            // Loại bỏ trùng lặp id ở client nếu Supabase stream phát duplicate rows
+            final uniqueRows = <String, Map<String, dynamic>>{};
+            for (final r in rows) {
+              final id = r['id'] as String?;
+              if (id != null) {
+                uniqueRows[id] = r;
+              }
+            }
+            final cleanRows = uniqueRows.values.toList();
+
+            print('[RobustStream DEBUG] table=$table rows_count=${cleanRows.length} (original=${rows.length})');
+            for (int i = 0; i < cleanRows.length; i++) {
+              print('  [$i] id=${cleanRows[i]['id']} product_name=${cleanRows[i]['product_name'] ?? cleanRows[i]['name']} qty=${cleanRows[i]['quantity'] ?? cleanRows[i]['qty']}');
+            }
+            if (controller != null && !controller.isClosed) {
+              controller.add(mapper(cleanRows));
+            }
+          },
+          onError: (e) async {
+            print('[RobustStream] Realtime err on $table: $e. Falling back to poll.');
+            if (controller == null || controller.isClosed) return;
+            
+            // Fallback immediately
+            try {
+              final rows = await _sb.from(table).select().eq(columnFilter, valueFilter);
+              final uniqueRows = <String, Map<String, dynamic>>{};
+              for (final r in rows) {
+                final id = r['id'] as String?;
+                if (id != null) {
+                  uniqueRows[id] = r;
+                }
+              }
+              final cleanRows = uniqueRows.values.toList();
+              if (controller != null && !controller.isClosed) {
+                controller.add(mapper(cleanRows));
+              }
+            } catch (_) {}
+
+            // Reconnect after 10 seconds if not disposed
+            await Future.delayed(const Duration(seconds: 10));
+            if (controller != null && !controller.isClosed) {
+              subscription?.cancel();
+              startListen();
+            }
+          },
+          cancelOnError: false,
+        );
       } catch (e) {
-        print('[RobustStream] Realtime err on $table: $e. Falling back to poll 10s.');
-        
-        // Polling âm thầm 10 giây (chia làm 2 lần 5s) trước khi thử kết nối lại Realtime
-        await Future.delayed(const Duration(seconds: 5));
-        try {
-          yield await fetch();
-        } catch (_) {}
-        
-        await Future.delayed(const Duration(seconds: 5));
-        try {
-          yield await fetch();
-        } catch (_) {}
+        print('[RobustStream] Connection err: $e');
       }
     }
+
+    controller = StreamController<T>.broadcast(
+      onListen: () {
+        startListen();
+      },
+      onCancel: () {
+        subscription?.cancel();
+        subscription = null;
+        controller?.close();
+      },
+    );
+
+    return controller.stream;
   }
 
   // ── Zones ─────────────────────────────────────────────────────────────────
@@ -360,12 +402,49 @@ class BanRepository {
     // Tránh double-tap hoặc network retry tạo 2 session cùng 1 bàn
     final existing = await _sb
         .from('ban_sessions')
-        .select('id, table_id, store_id, status, opened_at, closed_at, total_amount, guest_count')
+        .select('id, table_id, store_id, status, opened_at, closed_at, total_amount, guest_count, waiter_id')
         .eq('store_id', storeId)
         .eq('table_id', tableId)
         .eq('status', 'open')
         .maybeSingle();
     if (existing != null) return BanSessionModel.fromMap(existing);
+
+    // Tìm store_members.id và đồng bộ sang staff_members để làm khoá ngoại cho ban_sessions.waiter_id
+    String? waiterRecordId;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentUserId = prefs.getString('auth_user_id');
+      if (currentUserId != null) {
+        final memberRow = await _sb
+            .from('store_members')
+            .select('id, role, user_accounts(display_name, phone)')
+            .eq('store_id', storeId)
+            .eq('user_id', currentUserId)
+            .maybeSingle();
+
+        if (memberRow != null) {
+          waiterRecordId = memberRow['id'] as String?;
+          final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
+          final displayName = userAcc?['display_name'] as String? ?? 'Waiter';
+          final phone = userAcc?['phone'] as String?;
+          final role = memberRow['role'] as String? ?? 'waiter';
+
+          if (waiterRecordId != null) {
+            await _sb.from('staff_members').upsert({
+              'id': waiterRecordId,
+              'store_id': storeId,
+              'name': displayName,
+              'role': role,
+              'phone': phone,
+              'is_active': true,
+              'updated_at': DateTime.now().millisecondsSinceEpoch,
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[BanRepository] Sync waiter record failed: $e');
+    }
 
     final id  = const Uuid().v4();          // UUID hợp lệ cho ban_sessions.id
     final now = DateTime.now().toUtc().toIso8601String();
@@ -373,11 +452,13 @@ class BanRepository {
       'id': id, 'table_id': tableId, 'store_id': storeId,
       'status': 'open', 'opened_at': now,
       'total_amount': 0, 'guest_count': guestCount,
+      if (waiterRecordId != null) 'waiter_id': waiterRecordId,
     });
     return BanSessionModel(
       id: id, tableId: tableId, storeId: storeId,
       status: 'open', openedAt: DateTime.now().millisecondsSinceEpoch,
       totalAmount: 0, guestCount: guestCount,
+      waiterId: waiterRecordId,
     );
   }
 
@@ -423,6 +504,9 @@ class BanRepository {
     );
   }
 
+  // Khóa chống Race Condition cho mỗi session_id khi thêm món
+  static final Set<String> _activeSessionWrites = {};
+
   Future<void> addSessionItems({
     required String sessionId,
     required List<Map<String, dynamic>> items,
@@ -430,98 +514,120 @@ class BanRepository {
     final storeId = await _storeId();
     if (storeId == null) throw Exception('Chưa chọn quán');
 
-    final now = DateTime.now().toUtc().toIso8601String();
+    // Chờ nếu có tác vụ ghi khác đang diễn ra cho session này
+    while (_activeSessionWrites.contains(sessionId)) {
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+    _activeSessionWrites.add(sessionId);
 
-    // 1. Lấy tất cả items của session để thực hiện gộp trùng
-    final List<dynamic> allRows = await _sb
-        .from('ban_session_items')
-        .select()
-        .eq('session_id', sessionId);
+    try {
+      // 1. Thử gọi RPC add_session_items để đảm bảo tính nguyên tử ở tầng database
+      try {
+        await _sb.rpc('add_session_items', params: {
+          'p_store_id': storeId,
+          'p_session_id': sessionId,
+          'p_items': items,
+        });
+        return; // Thành công thì kết thúc luôn
+      } catch (rpcError) {
+        print('[BanRepository] RPC add_session_items failed, falling back to client-side. Error: $rpcError');
+      }
 
-    // Lọc ra các món nháp chưa gửi bếp (bao gồm chua_gui, pending, null)
-    final List<Map<String, dynamic>> existingRows = allRows
-        .map((r) => r as Map<String, dynamic>)
-        .where((r) {
-          final status = r['kitchen_status'];
-          return status == null || status == 'chua_gui' || status == 'pending';
-        })
-        .toList();
+      final now = DateTime.now().toUtc().toIso8601String();
 
-    final List<Map<String, dynamic>> insertRows = [];
-    final List<Future<void>> updateFutures = [];
+      // 2. Fallback: Lấy tất cả items của session để thực hiện gộp trùng ở client
+      final List<dynamic> allRows = await _sb
+          .from('ban_session_items')
+          .select()
+          .eq('session_id', sessionId);
 
-    for (final item in items) {
-      final productId = item['productId'] as String;
-      final productName = item['productName'] as String;
-      final price = (item['price'] as num).toDouble();
-      final quantity = (item['quantity'] as num).toDouble();
-      final note = item['note'] as String?;
-      final modifiersJson = item['modifiersJson'] as String?;
+      // Lọc ra các món nháp chưa gửi bếp (bao gồm chua_gui, pending, null)
+      final List<Map<String, dynamic>> existingRows = allRows
+          .map((r) => r as Map<String, dynamic>)
+          .where((r) {
+            final status = r['kitchen_status'];
+            return status == null || status == 'chua_gui' || status == 'pending';
+          })
+          .toList();
 
-      // Kiểm tra xem sản phẩm có cùng thuộc tính (note, modifiers) đã tồn tại chưa gửi bếp hay chưa
-      Map<String, dynamic>? match;
-      for (final ext in existingRows) {
-        final sameProduct = ext['product_id'] == productId;
-        
-        final extNote = ext['note'] as String?;
-        final sameNote = (note == null || note.trim().isEmpty)
-            ? (extNote == null || extNote.trim().isEmpty)
-            : (extNote != null && extNote.trim() == note.trim());
-            
-        final extMods = ext['modifiers_json'] as String?;
-        final sameMods = _areModifiersEqual(extMods, modifiersJson);
+      final List<Map<String, dynamic>> insertRows = [];
+      final List<Future<void>> updateFutures = [];
 
-        final extPrice = (ext['unit_price'] as num?)?.toDouble() ??
-                         (ext['price'] as num?)?.toDouble() ?? 0.0;
-        final samePrice = (extPrice - price).abs() < 0.01;
+      for (final item in items) {
+        final productId = item['productId'] as String;
+        final productName = item['productName'] as String;
+        final price = (item['price'] as num).toDouble();
+        final quantity = (item['quantity'] as num).toDouble();
+        final note = item['note'] as String?;
+        final modifiersJson = item['modifiersJson'] as String?;
 
-        if (sameProduct && samePrice && sameNote && sameMods) {
-          match = ext as Map<String, dynamic>;
-          break;
+        // Kiểm tra xem sản phẩm có cùng thuộc tính (note, modifiers) đã tồn tại chưa gửi bếp hay chưa
+        Map<String, dynamic>? match;
+        for (final ext in existingRows) {
+          final sameProduct = ext['product_id'] == productId;
+          
+          final extNote = ext['note'] as String?;
+          final sameNote = (note == null || note.trim().isEmpty)
+              ? (extNote == null || extNote.trim().isEmpty)
+              : (extNote != null && extNote.trim() == note.trim());
+              
+          final extMods = ext['modifiers_json'] as String?;
+          final sameMods = _areModifiersEqual(extMods, modifiersJson);
+
+          final extPrice = (ext['unit_price'] as num?)?.toDouble() ??
+                           (ext['price'] as num?)?.toDouble() ?? 0.0;
+          final samePrice = (extPrice - price).abs() < 0.01;
+
+          if (sameProduct && samePrice && sameNote && sameMods) {
+            match = ext as Map<String, dynamic>;
+            break;
+          }
+        }
+
+        if (match != null) {
+          // Gộp số lượng
+          final currentQty = (match['quantity'] as num).toDouble();
+          final newQty = currentQty + quantity;
+          final newSubtotal = price * newQty;
+          final itemId = match['id'] as String;
+
+          updateFutures.add(
+            _sb.from('ban_session_items').update({
+              'quantity': newQty,
+              'subtotal': newSubtotal,
+            }).eq('id', itemId)
+          );
+        } else {
+          // Tạo dòng mới
+          final id = const Uuid().v4();
+          insertRows.add({
+            'id':             id,
+            'store_id':       storeId,
+            'session_id':     sessionId,
+            'product_id':     productId,
+            'product_name':   productName,
+            'unit_price':     price,
+            'quantity':       quantity,
+            'subtotal':       price * quantity,
+            'note':           (note == null || note.trim().isEmpty) ? null : note.trim(),
+            'modifiers_json': (modifiersJson == null || modifiersJson.trim().isEmpty) ? null : modifiersJson.trim(),
+            'added_at':       now,
+            'kitchen_status': 'chua_gui',
+          });
         }
       }
 
-      if (match != null) {
-        // Gộp số lượng
-        final currentQty = (match['quantity'] as num).toDouble();
-        final newQty = currentQty + quantity;
-        final newSubtotal = price * newQty;
-        final itemId = match['id'] as String;
-
-        updateFutures.add(
-          _sb.from('ban_session_items').update({
-            'quantity': newQty,
-            'subtotal': newSubtotal,
-          }).eq('id', itemId)
-        );
-      } else {
-        // Tạo dòng mới
-        final id = const Uuid().v4();
-        insertRows.add({
-          'id':             id,
-          'store_id':       storeId,
-          'session_id':     sessionId,
-          'product_id':     productId,
-          'product_name':   productName,
-          'unit_price':     price,
-          'quantity':       quantity,
-          'subtotal':       price * quantity,
-          'note':           (note == null || note.trim().isEmpty) ? null : note.trim(),
-          'modifiers_json': (modifiersJson == null || modifiersJson.trim().isEmpty) ? null : modifiersJson.trim(),
-          'added_at':       now,
-          'kitchen_status': 'chua_gui',
-        });
+      // 3. Thực thi Batch Insert các món mới
+      if (insertRows.isNotEmpty) {
+        await _sb.from('ban_session_items').insert(insertRows);
       }
-    }
 
-    // 2. Thực thi Batch Insert các món mới
-    if (insertRows.isNotEmpty) {
-      await _sb.from('ban_session_items').insert(insertRows);
-    }
-
-    // 3. Thực thi Parallel Updates các món được gộp
-    if (updateFutures.isNotEmpty) {
-      await Future.wait(updateFutures);
+      // 4. Thực thi Parallel Updates các món được gộp
+      if (updateFutures.isNotEmpty) {
+        await Future.wait(updateFutures);
+      }
+    } finally {
+      _activeSessionWrites.remove(sessionId);
     }
   }
 

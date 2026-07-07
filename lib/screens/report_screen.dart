@@ -8,6 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../core/providers/app_providers.dart';
 import '../core/providers/dashboard_providers.dart';
@@ -109,17 +112,22 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 700) {
-            return Row(children: [
-              Expanded(flex: 3, child: mainContent),
-              SizedBox(
-                width: 280,
-                child: _ReportRightPanel(
-                  todayStats: todayStats,
-                  todayFin: todayFin,
-                  monthRev: monthRev,
-                ),
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: Row(children: [
+                  Expanded(flex: 3, child: mainContent),
+                  SizedBox(
+                    width: 280,
+                    child: _ReportRightPanel(
+                      todayStats: todayStats,
+                      todayFin: todayFin,
+                      monthRev: monthRev,
+                    ),
+                  ),
+                ]),
               ),
-            ]);
+            );
           }
           return mainContent;
         },
@@ -391,10 +399,202 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
     }
   }
 
+  Future<void> _printReport(BuildContext context) async {
+    final nowStr = DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now());
+    final moneyFormatter = NumberFormat('#,###', 'vi_VN');
+    String formatVnd(double v) => '${moneyFormatter.format(v)} đ';
+
+    final String titleStr;
+    if (_period == ReportPeriod.week) {
+      titleStr = 'BÁO CÁO DOANH THU TUẦN';
+    } else if (_period == ReportPeriod.month) {
+      titleStr = 'BÁO CÁO DOANH THU THÁNG';
+    } else {
+      titleStr = 'BÁO CÁO DOANH THU CA';
+    }
+
+    try {
+      final doc = pw.Document();
+      
+      // Load Google fonts that support Vietnamese characters
+      final font = await PdfGoogleFonts.robotoRegular();
+      final fontBold = await PdfGoogleFonts.robotoBold();
+
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.roll80, // Định dạng cuộn nhiệt 80mm
+          margin: const pw.EdgeInsets.all(10),
+          build: (pw.Context ctx) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Center(
+                  child: pw.Text(titleStr, style: pw.TextStyle(font: fontBold, fontSize: 13, fontWeight: pw.FontWeight.bold)),
+                ),
+                pw.Center(
+                  child: pw.Text('Kỳ báo cáo: ${_period.label}', style: pw.TextStyle(font: font, fontSize: 9)),
+                ),
+                pw.Center(
+                  child: pw.Text('Giờ in: $nowStr', style: pw.TextStyle(font: font, fontSize: 8)),
+                ),
+                pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
+                
+                // Tóm tắt
+                pw.Text('TÓM TẮT DOANH THU', style: pw.TextStyle(font: fontBold, fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 4),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Doanh thu:', style: pw.TextStyle(font: font, fontSize: 9)),
+                    pw.Text(formatVnd(_stats.todayRevenue), style: pw.TextStyle(font: fontBold, fontSize: 9)),
+                  ],
+                ),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Số đơn:', style: pw.TextStyle(font: font, fontSize: 9)),
+                    pw.Text('${_stats.todayOrders} đơn', style: pw.TextStyle(font: font, fontSize: 9)),
+                  ],
+                ),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('TB/đơn:', style: pw.TextStyle(font: font, fontSize: 9)),
+                    pw.Text(formatVnd(_stats.avgOrderValue), style: pw.TextStyle(font: font, fontSize: 9)),
+                  ],
+                ),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Lượng khách:', style: pw.TextStyle(font: font, fontSize: 9)),
+                    pw.Text('${_stats.todayCustomers}', style: pw.TextStyle(font: font, fontSize: 9)),
+                  ],
+                ),
+                pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
+
+                // Phương thức thanh toán
+                pw.Text('PHƯƠNG THỨC THANH TOÁN', style: pw.TextStyle(font: fontBold, fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 4),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Tiền mặt:', style: pw.TextStyle(font: font, fontSize: 9)),
+                    pw.Text(formatVnd(_stats.cashRevenue), style: pw.TextStyle(font: font, fontSize: 9)),
+                  ],
+                ),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Chuyển khoản:', style: pw.TextStyle(font: font, fontSize: 9)),
+                    pw.Text(formatVnd(_stats.transferRevenue), style: pw.TextStyle(font: font, fontSize: 9)),
+                  ],
+                ),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Thẻ ngân hàng:', style: pw.TextStyle(font: font, fontSize: 9)),
+                    pw.Text(formatVnd(_stats.cardRevenue), style: pw.TextStyle(font: font, fontSize: 9)),
+                  ],
+                ),
+                pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
+
+                // Nhân viên thu ngân
+                pw.Text('DOANH THU THEO THU NGÂN', style: pw.TextStyle(font: fontBold, fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 4),
+                if (_stats.cashierRevenue.isEmpty)
+                  pw.Text('Chưa có thông tin nhân viên', style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.grey))
+                else
+                  ..._stats.cashierRevenue.entries.map((e) {
+                    final detail = _stats.cashierDetails[e.key];
+                    return pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text('${e.key}:', style: pw.TextStyle(font: font, fontSize: 9)),
+                            pw.Text(formatVnd(e.value), style: pw.TextStyle(font: fontBold, fontSize: 9)),
+                          ],
+                        ),
+                        if (detail != null) ...[
+                          pw.SizedBox(height: 2),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.only(left: 8),
+                            child: pw.Text('Tiền mặt: ${formatVnd(detail.cash)} | CK: ${formatVnd(detail.transfer)}', 
+                                style: pw.TextStyle(font: font, fontSize: 7, color: PdfColors.grey700)),
+                          ),
+                          pw.SizedBox(height: 4),
+                        ],
+                      ],
+                    );
+                  }),
+
+                // Chi tiết các ngày (nếu là Tuần/Tháng)
+                if (_period != ReportPeriod.today && _days.isNotEmpty) ...[
+                  pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
+                  pw.Text('CHI TIẾT DOANH THU HÀNG NGÀY', style: pw.TextStyle(font: fontBold, fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 4),
+                  ..._days.where((d) => d.revenue > 0).map((d) {
+                    final dStr = DateFormat('dd/MM').format(d.date);
+                    return pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text('$dStr (${d.orders} đơn):', style: pw.TextStyle(font: font, fontSize: 9)),
+                        pw.Text(formatVnd(d.revenue), style: pw.TextStyle(font: font, fontSize: 9)),
+                      ],
+                    );
+                  }),
+                ],
+                pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
+                
+                pw.Center(
+                  child: pw.Text('Powered by Quan Nho POS', style: pw.TextStyle(font: font, fontSize: 7, color: PdfColors.grey)),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => doc.save(),
+        name: 'Bao_cao_doanh_thu_${_period.label}',
+      );
+    } catch (e) {
+      debugPrint('[PrintReport] Error generating PDF: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi in báo cáo: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(padding: const EdgeInsets.fromLTRB(16, 20, 16, 80), children: [
-      _PeriodPills(current: _period, onChanged: (p) { setState(() => _period = p); _load(); }),
+      Row(
+        children: [
+          Expanded(
+            child: _PeriodPills(current: _period, onChanged: (p) { setState(() => _period = p); _load(); }),
+          ),
+          const SizedBox(width: 16),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kNavy,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+            ),
+            onPressed: () => _printReport(context),
+            icon: const Icon(Icons.print_rounded, size: 18),
+            label: const Text('In báo cáo', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
       // ── Nav tuần / tháng
       if (_period == ReportPeriod.week) ...[
         const SizedBox(height: 8),
@@ -433,7 +633,74 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
       _SectionHeader(icon: Icons.summarize_rounded, color: _kNavy, title: 'Tóm tắt kỳ này'),
       const SizedBox(height: 12),
       _buildSummary(),
+      _buildDailySalesTable(),
     ]);
+  }
+
+  Widget _buildDailySalesTable() {
+    if (_period == ReportPeriod.today || _days.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final moneyFormatter = NumberFormat('#,###', 'vi_VN');
+    String formatVnd(double v) => v > 0 ? '${moneyFormatter.format(v)} đ' : '0đ';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        const _SectionHeader(icon: Icons.table_chart_rounded, color: _kNavy, title: 'Tổng hợp bán hàng theo ngày'),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _kBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowColor: WidgetStateProperty.all(const Color(0xFFFAF7F2)),
+                dataRowMinHeight: 48,
+                dataRowMaxHeight: 48,
+                columnSpacing: 24,
+                horizontalMargin: 16,
+                columns: const [
+                  DataColumn(label: Text('Ngày', style: TextStyle(fontWeight: FontWeight.w800, color: _kNavy))),
+                  DataColumn(label: Text('Số đơn', style: TextStyle(fontWeight: FontWeight.w800, color: _kNavy)), numeric: true),
+                  DataColumn(label: Text('Doanh thu', style: TextStyle(fontWeight: FontWeight.w800, color: _kNavy)), numeric: true),
+                  DataColumn(label: Text('Tiền mặt', style: TextStyle(fontWeight: FontWeight.w800, color: _kNavy)), numeric: true),
+                  DataColumn(label: Text('Chuyển khoản', style: TextStyle(fontWeight: FontWeight.w800, color: _kNavy)), numeric: true),
+                  DataColumn(label: Text('Khuyến mại', style: TextStyle(fontWeight: FontWeight.w800, color: _kNavy)), numeric: true),
+                ],
+                rows: _days.map((d) {
+                  final dateStr = DateFormat('dd/MM/yyyy').format(d.date);
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(dateStr, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+                      DataCell(Text('${d.orders}', style: const TextStyle(fontSize: 13))),
+                      DataCell(Text(formatVnd(d.revenue), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _kNavy))),
+                      DataCell(Text(formatVnd(d.cashRevenue), style: const TextStyle(fontSize: 13))),
+                      DataCell(Text(formatVnd(d.transferRevenue), style: const TextStyle(fontSize: 13))),
+                      DataCell(Text(formatVnd(d.discount), style: const TextStyle(fontSize: 13, color: Colors.red))),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _pickWeek(BuildContext ctx) async {
@@ -532,7 +799,7 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
     final maxV       = bars.fold<double>(1, (m, b) => b.value > m ? b.value : m);
     final milestones = _computeMilestones(maxV);
     final chartMax   = milestones.last;
-    const chartH     = 180.0;
+    final chartH     = MediaQuery.of(context).size.width >= 750 ? 230.0 : 180.0;
     const yAxisW     = 44.0;
 
     return Container(
@@ -568,6 +835,15 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
                   final isLast   = i == bars.length - 1;
                   final barH     = (chartH * (bar.value / chartMax)).clamp(2.0, chartH);
                   final isEmpty  = bar.value == 0;
+                  final double barWidth;
+                  if (bars.length <= 7) {
+                    barWidth = 36.0;
+                  } else if (bars.length <= 15) {
+                    barWidth = 24.0;
+                  } else {
+                    barWidth = 14.0;
+                  }
+
                   return Expanded(
                     child: GestureDetector(
                       onTap: isEmpty ? null
@@ -581,20 +857,24 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
                             // Touch area đầy đủ chiều cao
                             Container(height: chartH, color: Colors.transparent),
                             // Cột bar
-                            AnimatedContainer(
-                              duration: Duration(milliseconds: 300 + i * 15),
-                              curve: Curves.easeOutCubic,
-                              height: isEmpty ? 2 : barH,
-                              decoration: BoxDecoration(
-                                gradient: isEmpty ? null : LinearGradient(
-                                  colors: sel
-                                    ? [_kOrange.withValues(alpha: 0.5), _kOrange]
-                                    : isLast
-                                      ? [_kNavy.withValues(alpha: 0.35), _kNavy.withValues(alpha: 0.85)]
-                                      : [_kNavy.withValues(alpha: 0.2), _kNavy.withValues(alpha: 0.65)],
-                                  begin: Alignment.bottomCenter, end: Alignment.topCenter),
-                                color: isEmpty ? _kBorder.withValues(alpha: 0.4) : null,
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(5)))),
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: AnimatedContainer(
+                                duration: Duration(milliseconds: 300 + i * 15),
+                                curve: Curves.easeOutCubic,
+                                width: barWidth,
+                                height: isEmpty ? 2 : barH,
+                                decoration: BoxDecoration(
+                                  gradient: isEmpty ? null : LinearGradient(
+                                    colors: sel
+                                      ? [_kOrange.withValues(alpha: 0.5), _kOrange]
+                                      : isLast
+                                        ? [_kNavy.withValues(alpha: 0.35), _kNavy.withValues(alpha: 0.85)]
+                                        : [_kNavy.withValues(alpha: 0.2), _kNavy.withValues(alpha: 0.65)],
+                                    begin: Alignment.bottomCenter, end: Alignment.topCenter),
+                                  color: isEmpty ? _kBorder.withValues(alpha: 0.4) : null,
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(5)))),
+                            ),
                             // Tooltip khi tap
                             if (sel && !isEmpty)
                               Positioned(
@@ -659,10 +939,291 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
       (label: 'TB/đơn',    icon: Icons.trending_up_rounded, value: _fmtShort(_stats.avgOrderValue),       color: _kOrange),
       (label: 'Khách',     icon: Icons.people_rounded,       value: '${_stats.todayCustomers}',          color: const Color(0xFF7B1FA2)),
     ];
-    return GridView.count(crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 2.2, mainAxisSpacing: 10, crossAxisSpacing: 10,
-      children: items.map((it) => _SummaryCard(
-        label: it.label, icon: it.icon, value: it.value, color: it.color)).toList());
+
+    final moneyFormatter = NumberFormat('#,###', 'vi_VN');
+    String formatVnd(double v) => '${moneyFormatter.format(v)} đ';
+
+    Widget buildProgressRow({
+      required String label,
+      required double amount,
+      required Color color,
+      String? leadingIcon,
+    }) {
+      final pct = _stats.todayRevenue > 0 ? (amount / _stats.todayRevenue) * 100 : 0.0;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (leadingIcon != null) ...[
+                Text(leadingIcon, style: const TextStyle(fontSize: 14)),
+                const SizedBox(width: 6),
+              ],
+              Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _kInk)),
+              const Spacer(),
+              Text(formatVnd(amount), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: pct / 100,
+              backgroundColor: const Color(0xFFFAF7F2),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 6,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text('${pct.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kMuted)),
+            ],
+          ),
+        ],
+      );
+    }
+
+    final isWide = MediaQuery.of(context).size.width >= 750;
+
+    final paymentMethodsWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(icon: Icons.account_balance_wallet_rounded, color: _kNavy, title: 'Theo phương thức thanh toán'),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _kBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              buildProgressRow(label: 'Tiền mặt', amount: _stats.cashRevenue, color: const Color(0xFF2E7D32), leadingIcon: '💵'),
+              const SizedBox(height: 14),
+              buildProgressRow(label: 'Chuyển khoản', amount: _stats.transferRevenue, color: const Color(0xFF1976D2), leadingIcon: '🏦'),
+              const SizedBox(height: 14),
+              buildProgressRow(label: 'Thẻ ngân hàng', amount: _stats.cardRevenue, color: const Color(0xFF8E24AA), leadingIcon: '💳'),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    final cashiersWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(icon: Icons.badge_rounded, color: _kNavy, title: 'Doanh thu theo thu ngân'),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _kBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: _stats.cashierRevenue.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text('Chưa có thông tin ca thu của nhân viên',
+                        style: TextStyle(fontSize: 13, color: _kMuted)),
+                  ),
+                )
+              : Column(
+                  children: _stats.cashierRevenue.entries.map((e) {
+                    final isLast = e.key == _stats.cashierRevenue.keys.last;
+                    final detail = _stats.cashierDetails[e.key];
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        buildProgressRow(label: e.key, amount: e.value, color: const Color(0xFFEF6C00), leadingIcon: '👤'),
+                        if (detail != null) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            margin: const EdgeInsets.only(left: 22),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFAF9F6),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFEEEBE6)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Tiền mặt', style: TextStyle(fontSize: 10, color: _kMuted, fontWeight: FontWeight.w600)),
+                                      const SizedBox(height: 2),
+                                      Text(formatVnd(detail.cash), style: const TextStyle(fontSize: 12, color: _kInk, fontWeight: FontWeight.w800)),
+                                    ],
+                                  ),
+                                ),
+                                Container(width: 1, height: 20, color: const Color(0xFFEEEBE6)),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Chuyển khoản', style: TextStyle(fontSize: 10, color: _kMuted, fontWeight: FontWeight.w600)),
+                                      const SizedBox(height: 2),
+                                      Text(formatVnd(detail.transfer), style: const TextStyle(fontSize: 12, color: _kInk, fontWeight: FontWeight.w800)),
+                                    ],
+                                  ),
+                                ),
+                                if (detail.card > 0) ...[
+                                  const SizedBox(width: 12),
+                                  Container(width: 1, height: 20, color: const Color(0xFFEEEBE6)),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('Thẻ', style: TextStyle(fontSize: 10, color: _kMuted, fontWeight: FontWeight.w600)),
+                                        const SizedBox(height: 2),
+                                        Text(formatVnd(detail.card), style: const TextStyle(fontSize: 12, color: _kInk, fontWeight: FontWeight.w800)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                        if (!isLast) const SizedBox(height: 14),
+                      ],
+                    );
+                  }).toList(),
+                ),
+        ),
+      ],
+    );
+
+    final waitersWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(icon: Icons.restaurant_menu_rounded, color: _kNavy, title: 'Số bàn phục vụ theo nhân viên'),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _kBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: _stats.waiterOrders.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text('Chưa có thông tin bàn phục vụ của nhân viên',
+                        style: TextStyle(fontSize: 13, color: _kMuted)),
+                  ),
+                )
+              : Column(
+                  children: _stats.waiterOrders.entries.map((e) {
+                    final isLast = e.key == _stats.waiterOrders.keys.last;
+                    final pct = _stats.todayOrders > 0 ? (e.value / _stats.todayOrders) * 100 : 0.0;
+                    return Column(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Text('👤 ', style: TextStyle(fontSize: 14)),
+                                Text(e.key, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _kInk)),
+                                const Spacer(),
+                                Text('${e.value} bàn', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: pct / 100,
+                                backgroundColor: const Color(0xFFFAF7F2),
+                                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8E24AA)),
+                                minHeight: 6,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text('${pct.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kMuted)),
+                              ],
+                            ),
+                          ],
+                        ),
+                        if (!isLast) const SizedBox(height: 14),
+                      ],
+                    );
+                  }).toList(),
+                ),
+        ),
+      ],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GridView.count(
+          crossAxisCount: isWide ? 4 : 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: isWide ? 3.0 : 2.2,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          children: items.map((it) => _SummaryCard(
+            label: it.label, icon: it.icon, value: it.value, color: it.color)).toList(),
+        ),
+        const SizedBox(height: 24),
+        if (isWide)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: paymentMethodsWidget),
+              const SizedBox(width: 16),
+              Expanded(child: cashiersWidget),
+              const SizedBox(width: 16),
+              Expanded(child: waitersWidget),
+            ],
+          )
+        else ...[
+          paymentMethodsWidget,
+          const SizedBox(height: 24),
+          cashiersWidget,
+          const SizedBox(height: 24),
+          waitersWidget,
+        ],
+      ],
+    );
   }
 }
 
@@ -893,10 +1454,72 @@ class _CatPill extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════
 class _FinanceTab extends ConsumerWidget {
   const _FinanceTab();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final period = ref.watch(periodProvider);
     final statsA = ref.watch(financeStatsProvider);
+
+    final moneyFormatter = NumberFormat('#,###', 'vi_VN');
+    String formatVnd(double v) => '${moneyFormatter.format(v)} đ';
+
+    TableRow buildTableRow({
+      required String name,
+      required String value,
+      required String pct,
+      bool isBold = false,
+      bool indent = false,
+      Color? color,
+    }) {
+      final style = TextStyle(
+        fontSize: 13,
+        fontWeight: isBold ? FontWeight.w800 : FontWeight.w500,
+        color: isBold ? _kInk : _kInk.withValues(alpha: 0.8),
+      );
+      return TableRow(
+        decoration: color != null ? BoxDecoration(color: color) : null,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: indent ? 28.0 : 16.0, right: 16.0, top: 12.0, bottom: 12.0),
+            child: Text(name, style: style),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Text(value, style: style.copyWith(color: isBold ? _kNavy : null), textAlign: TextAlign.right),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Text(pct, style: style, textAlign: TextAlign.right),
+          ),
+        ],
+      );
+    }
+
+    List<TableRow> buildExpenseSubRows(Map<String, double> categories, double totalIncome) {
+      if (categories.isEmpty) {
+        return [
+          buildTableRow(
+            name: '  1. Chi phí khác',
+            value: formatVnd(0),
+            pct: '0%',
+            indent: true,
+          )
+        ];
+      }
+      int index = 1;
+      return categories.entries.map((e) {
+        final pct = totalIncome > 0 ? (e.value / totalIncome * 100) : 0.0;
+        final name = '  $index. ${e.key}';
+        index++;
+        return buildTableRow(
+          name: name,
+          value: formatVnd(e.value),
+          pct: '${pct.toStringAsFixed(1)}%',
+          indent: true,
+        );
+      }).toList();
+    }
+
     return statsA.when(
       loading: () => const Center(child: CircularProgressIndicator(color: _kNavy)),
       error: (e, _) => Center(child: Text('Lỗi: $e')),
@@ -947,40 +1570,96 @@ class _FinanceTab extends ConsumerWidget {
                 value: '${stats.income > 0 ? (stats.profit / stats.income * 100).toStringAsFixed(1) : 0}%'),
             ]),
           ])).animate().fadeIn(duration: 350.ms).slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
-        if (stats.expenseByCategory.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          _SectionHeader(icon: Icons.pie_chart_rounded, color: _kRed, title: 'Phân tích chi phí'),
-          const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(color: _kCard, borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: _kNavy.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))]),
-            child: Column(children: stats.expenseByCategory.entries.toList().asMap().entries.map((e) {
-              final isLast = e.key == stats.expenseByCategory.length - 1;
-              final cat = e.value.key; final amt = e.value.value;
-              final pct = stats.expense > 0 ? amt / stats.expense : 0.0;
-              return Column(children: [
-                Padding(padding: const EdgeInsets.fromLTRB(16, 14, 16, 14), child: Column(children: [
-                  Row(children: [
-                    Expanded(child: Text(cat, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _kInk))),
-                    Text(_fmtShort(amt), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: _kRed)),
-                    const SizedBox(width: 8),
-                    Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(color: _kRed.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                      child: Text('${(pct * 100).toStringAsFixed(0)}%',
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: _kRed))),
-                  ]),
-                  const SizedBox(height: 8),
-                  ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(
-                    value: pct, minHeight: 6, backgroundColor: _kBg,
-                    valueColor: AlwaysStoppedAnimation(_kRed.withValues(alpha: 0.7)))),
-                ])),
-                if (!isLast) Divider(height: 1, color: _kBorder, indent: 16, endIndent: 16),
-              ]);
-            }).toList()),
+        
+        const SizedBox(height: 24),
+        const _SectionHeader(icon: Icons.assignment_rounded, color: _kNavy, title: 'Kết quả kinh doanh'),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _kBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
+          child: Table(
+            columnWidths: const {
+              0: FlexColumnWidth(4.5), // Khoản mục
+              1: FlexColumnWidth(3.0), // Giá trị
+              2: FlexColumnWidth(1.8), // Tỷ trọng
+            },
+            border: TableBorder.symmetric(
+              inside: BorderSide(color: _kBorder.withValues(alpha: 0.5), width: 1),
+            ),
+            children: [
+              // Header row
+              const TableRow(
+                decoration: BoxDecoration(
+                  color: Color(0xFFFAF7F2),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Text('Khoản mục', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kNavy)),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Text('Giá trị', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kNavy), textAlign: TextAlign.right),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Text('Tỷ trọng', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kNavy), textAlign: TextAlign.right),
+                  ),
+                ],
+              ),
+              // I. Doanh thu từ bán hàng
+              buildTableRow(
+                name: 'I. Doanh thu từ bán hàng',
+                value: formatVnd(stats.income),
+                pct: '100%',
+                isBold: true,
+              ),
+              buildTableRow(
+                name: '  1. Tiền hàng',
+                value: formatVnd(stats.income),
+                pct: '100%',
+                indent: true,
+              ),
+              buildTableRow(
+                name: '  2. Tiền thuế GTGT',
+                value: formatVnd(0),
+                pct: '0%',
+                indent: true,
+              ),
+              // II. Chi phí
+              buildTableRow(
+                name: 'II. Chi phí',
+                value: formatVnd(stats.expense),
+                pct: '${stats.income > 0 ? (stats.expense / stats.income * 100).toStringAsFixed(1) : 0}%',
+                isBold: true,
+                color: _kRed.withValues(alpha: 0.05),
+              ),
+              ...buildExpenseSubRows(stats.expenseByCategory, stats.income),
+              // III. Lợi nhuận từ bán hàng
+              buildTableRow(
+                name: 'III. Lợi nhuận từ bán hàng (I - II)',
+                value: formatVnd(stats.profit),
+                pct: '${stats.income > 0 ? (stats.profit / stats.income * 100).toStringAsFixed(1) : 0}%',
+                isBold: true,
+                color: _kGreen.withValues(alpha: 0.05),
+              ),
+            ],
+          ),
+        ),
+
         if (stats.incomeGrowth != 0) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Container(padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: stats.incomeGrowth > 0 ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),

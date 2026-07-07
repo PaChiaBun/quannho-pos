@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 class DiscoveredPrinter {
   final String ip;
@@ -22,6 +23,7 @@ class NetworkPrinterSearchService {
 
   /// Tìm địa chỉ IP IPv4 cục bộ của thiết bị
   static Future<String?> getLocalIP() async {
+    if (kIsWeb) return null;
     try {
       final interfaces = await NetworkInterface.list(
         includeLoopback: false,

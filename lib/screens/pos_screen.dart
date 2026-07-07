@@ -1891,52 +1891,56 @@ class _CartLineRow extends ConsumerWidget {
                   ),
                 ]),
                 const SizedBox(height: 2),
-                // Giá đơn vị + nút ghi chú (cùng hàng, đủ lớn để bấm)
-                Row(children: [
-                  Text(fmtVnd(line.unitPrice.toInt()),
-                    style: const TextStyle(fontSize: 12, color: _kMuted)),
-                  const SizedBox(width: 8),
-                  // Nút ghi chú — luôn hiển thị, đủ target size
-                  GestureDetector(
-                    onTap: () => _openItemNoteSheet(context, notifier, line),
-                    child: line.note != null && line.note!.isNotEmpty
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: _kOrange.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: _kOrange.withValues(alpha: 0.40))),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            const Icon(Icons.edit_note_rounded,
-                              size: 13, color: _kOrange),
-                            const SizedBox(width: 4),
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 80),
-                              child: Text(line.note!,
-                                style: const TextStyle(
-                                  fontSize: 11, color: _kOrange,
-                                  fontWeight: FontWeight.w700),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis)),
-                          ]))
-                      : Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: _kBg,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: _kBorder)),
-                          child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                            Icon(Icons.add_rounded, size: 12, color: _kMuted),
-                            SizedBox(width: 4),
-                            Text('Ghi chú',
-                              style: TextStyle(fontSize: 11, color: _kMuted,
-                                fontWeight: FontWeight.w600)),
-                          ])),
-                  ),
-                ]),
+                // Giá đơn vị + nút ghi chú (tự động xuống dòng khi màn hình hẹp)
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    Text(fmtVnd(line.unitPrice.toInt()),
+                      style: const TextStyle(fontSize: 12, color: _kMuted)),
+                    // Nút ghi chú — luôn hiển thị, đủ target size
+                    GestureDetector(
+                      onTap: () => _openItemNoteSheet(context, notifier, line),
+                      child: line.note != null && line.note!.isNotEmpty
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: _kOrange.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _kOrange.withValues(alpha: 0.40))),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              const Icon(Icons.edit_note_rounded,
+                                size: 13, color: _kOrange),
+                              const SizedBox(width: 4),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 80),
+                                child: Text(line.note!,
+                                  style: const TextStyle(
+                                    fontSize: 11, color: _kOrange,
+                                    fontWeight: FontWeight.w700),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis)),
+                            ]))
+                        : Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: _kBg,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: _kBorder)),
+                            child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                              Icon(Icons.add_rounded, size: 12, color: _kMuted),
+                              SizedBox(width: 4),
+                              Text('Ghi chú',
+                                style: TextStyle(fontSize: 11, color: _kMuted,
+                                  fontWeight: FontWeight.w600)),
+                            ])),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

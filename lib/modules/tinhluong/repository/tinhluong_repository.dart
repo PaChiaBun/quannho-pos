@@ -899,6 +899,7 @@ class TinhLuongRepository {
     required String periodId,
     required String periodName,
     required double totalAmount,
+    String fundType = 'transfer',
   }) async {
     final storeId = await _storeId();
     if (storeId == null) return;
@@ -926,6 +927,7 @@ class TinhLuongRepository {
         'reference_id': periodId,
         'is_auto':      true,
         'recorded_at':  DateTime.now().toUtc().toIso8601String(),
+        'fund_type':    fundType,
       });
     } catch (e) {
       debugPrint('[TinhLuong] recordPayrollExpense silent fail: $e');

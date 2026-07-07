@@ -25,30 +25,51 @@ final periodProvider = NotifierProvider<PeriodNotifier, DateRange>(
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SELECTED FUND STATE — Chọn Quỹ xem báo cáo ('cash' hoặc 'bank')
+// ─────────────────────────────────────────────────────────────────────────────
+class FundNotifier extends Notifier<String> {
+  @override
+  String build() => 'all'; // mặc định là xem tất cả
+
+  void setAll()  => state = 'all';
+  void setCash() => state = 'cash';
+  void setBank() => state = 'bank';
+  void setFund(String val) => state = val;
+}
+
+final selectedFundProvider = NotifierProvider<FundNotifier, String>(
+  FundNotifier.new,
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
 // RECORDS PROVIDERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Tất cả records trong kỳ đang chọn (reactive khi period thay đổi)
+/// Tất cả records trong kỳ đang chọn (reactive khi period thay đổi và fund thay đổi)
 final financeRecordsProvider =
     StreamProvider<List<FinanceRecordModel>>((ref) {
   final range = ref.watch(periodProvider);
+  final fund  = ref.watch(selectedFundProvider);
   return ref.watch(financeRepositoryProvider).watchRecords(
     from: range.from,
     to:   range.to,
+    fundType: fund == 'all' ? null : fund,
   );
 });
 
 /// Finance stats của kỳ đang chọn
 final financeStatsProvider = FutureProvider<FinanceStats>((ref) async {
   final range = ref.watch(periodProvider);
+  final fund  = ref.watch(selectedFundProvider);
   ref.watch(financeRecordsProvider); // depend để auto-refresh
-  return ref.read(financeRepositoryProvider).getStats(range);
+  return ref.read(financeRepositoryProvider).getStats(range, fundType: fund == 'all' ? null : fund);
 });
 
 /// Finance stats luôn là hôm nay — dùng cho header
 final todayFinanceStatsProvider = FutureProvider<FinanceStats>((ref) async {
+  final fund  = ref.watch(selectedFundProvider);
   ref.watch(financeRecordsProvider);
-  return ref.read(financeRepositoryProvider).getStats(DateRange.today());
+  return ref.read(financeRepositoryProvider).getStats(DateRange.today(), fundType: fund == 'all' ? null : fund);
 });
 
 /// Danh mục theo loại — Future-based (ít thay đổi)

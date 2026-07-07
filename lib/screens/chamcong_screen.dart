@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -340,6 +341,7 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
     try {
       // 1. Chụp ảnh selfie — timeout 60s để tránh ANR nếu camera chậm mở
       File? file;
+      Uint8List? bytes;
       try {
         final picker = ImagePicker();
         final xfile = await picker.pickImage(
@@ -349,7 +351,10 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
           maxWidth: 800,
         ).timeout(const Duration(seconds: 60));
         if (xfile == null) { setState(() => _loading = false); return; }
-        file = File(xfile.path);
+        bytes = await xfile.readAsBytes();
+        if (!kIsWeb) {
+          file = File(xfile.path);
+        }
       } on TimeoutException {
         if (mounted) setState(() => _loading = false);
         return;
@@ -379,28 +384,36 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
 
       final session = ref.read(sessionProvider)!;
       final ts = DateFormat('yyyy-MM-dd_HH-mm').format(DateTime.now());
-      final name = session.displayName?.replaceAll(' ', '_') ?? 'nv';
+      final name = session.displayName.replaceAll(' ', '_');
       final fileName = '${ts}_$name.jpg';
       final subFolder = DateFormat('yyyy-MM').format(DateTime.now());
 
       // 3. Upload ảnh
       String? photoUrl;
       String? driveFileId;
-      final driveResult = await DriveService.uploadPhoto(
-        storeId: session.storeId ?? '',
-        photoFile: file,
-        fileName: fileName,
-        subFolder: subFolder,
-      );
-      if (driveResult != null) {
-        driveFileId = driveResult.fileId;
-        photoUrl    = driveResult.viewLink;
-      } else {
+      if (kIsWeb) {
         photoUrl = await SupabaseStorageFallback.uploadPhoto(
           storeId: session.storeId ?? '',
-          photoFile: file,
+          photoBytes: bytes,
           fileName: fileName,
         );
+      } else {
+        final driveResult = await DriveService.uploadPhoto(
+          storeId: session.storeId ?? '',
+          photoFile: file!,
+          fileName: fileName,
+          subFolder: subFolder,
+        );
+        if (driveResult != null) {
+          driveFileId = driveResult.fileId;
+          photoUrl    = driveResult.viewLink;
+        } else {
+          photoUrl = await SupabaseStorageFallback.uploadPhoto(
+            storeId: session.storeId ?? '',
+            photoBytes: bytes,
+            fileName: fileName,
+          );
+        }
       }
 
       // 4. Ghi DB vào ca

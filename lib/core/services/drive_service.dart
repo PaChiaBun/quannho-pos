@@ -66,6 +66,7 @@ class DriveService {
     required String fileName,        // VD: "2024-01-15_08-30_NVA.jpg"
     required String subFolder,       // VD: "2024-01" (YYYY-MM)
   }) async {
+    if (kIsWeb) return null;
     try {
       // 1. Load credentials
       final creds = await _loadCredentials();
@@ -271,15 +272,15 @@ class DriveService {
 class SupabaseStorageFallback {
   static Future<String?> uploadPhoto({
     required String storeId,
-    required File photoFile,
+    required Uint8List photoBytes,
     required String fileName,
   }) async {
     try {
       final db = Supabase.instance.client;
       final path = 'staff-photos/$storeId/$fileName';
-      await db.storage.from('staff-photos').upload(
+      await db.storage.from('staff-photos').uploadBinary(
         path,
-        photoFile,
+        photoBytes,
         fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
       );
       return db.storage.from('staff-photos').getPublicUrl(path);

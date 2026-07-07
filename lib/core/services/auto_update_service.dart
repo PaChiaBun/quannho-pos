@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AutoUpdateService {
   static const String _githubRepo = 'PaChiaBun/quannho-pos';
@@ -12,6 +12,7 @@ class AutoUpdateService {
 
   /// Kiểm tra xem có bản cập nhật mới hay không
   static Future<void> checkForUpdates(BuildContext context, {bool showNoUpdateDialog = false}) async {
+    if (kIsWeb) return;
     // Chỉ chạy tính năng tự cập nhật trên Windows
     if (!Platform.isWindows) return;
 

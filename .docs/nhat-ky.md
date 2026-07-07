@@ -1559,4 +1559,52 @@ Phát hiện lỗi nghiêm trọng khi gọi món nháp (Chưa gửi bếp):
 - ➡️ Đẩy mã nguồn sạch lên GitHub qua GitHub Desktop.
 - ➡️ Chờ GitHub Actions build hoàn tất, chạy thử ứng dụng Windows để trải nghiệm tính năng in ấn mới và cơ chế tự động cập nhật.
 
+---
+
+## 2026-06-23 — Sửa Triệt Để Lỗi Nhân Đôi (x2) Món Module Bàn
+
+### Đã làm
+- ✅ **Khắc phục triệt để tranh chấp (race condition) gây x2 món**:
+  - Viết file SQL Migration `/Users/banhbao/Quan Nho/quan_nho/.docs/sql_fix_x2_ban_items.sql` tạo hàm RPC `add_session_items` và Partial Unique Index nhằm khóa hàng (`FOR UPDATE`) và ngăn chặn trùng lặp ở tầng database.
+  - Sửa đổi [ban_repository.dart](file:///Users/banhbao/Quan%20Nho/quan_nho/lib/core/repositories/ban_repository.dart) thực hiện gọi hàm RPC gộp món nguyên tử trên Supabase trước, nếu chưa chạy migration thì tự động fallback về luồng so khớp client-side cũ để đảm bảo tính liên tục của hệ thống.
+
+### Files đã sửa/tạo mới
+| File | Thay đổi |
+|------|----------|
+| `.docs/sql_fix_x2_ban_items.sql` | [NEW] Migration script tạo RPC `add_session_items` và partial unique index. |
+| `lib/core/repositories/ban_repository.dart` | Tích hợp gọi RPC `add_session_items` với cơ chế fallback client-side. |
+
+---
+
+## 2026-07-06 — Thống Kê Số Bàn Theo Phục Vụ, Bộ Lọc Trạng Thái Bàn & Bảo Mật RLS
+
+### Đã làm
+- ✅ **Đếm số bàn phục vụ theo nhân viên (Tab Báo Cáo)**:
+  - Thêm tệp SQL di cư [add_waiter_tracking.sql](file:///Users/banhbao/Quan%20Nho/quan_nho/supabase/add_waiter_tracking.sql) để bổ sung cột `waiter_id` (tham chiếu đến bảng nhân viên `staff_members`) vào bảng `ban_sessions` và `orders`.
+  - Cập nhật `BanRepository` và logic checkout bàn tự động đọc thông tin đăng nhập từ bộ nhớ đệm `SharedPreferences` (`auth_user_id`) để gán chính xác `waiter_id` và `staff_id` cho phiên và hóa đơn.
+  - Tinh chỉnh `DashboardRepository` và `report_screen.dart` hiển thị bảng xếp hạng số bàn phục vụ dạng thanh tiến trình màu tím trực quan, cân đối 3 cột trên màn hình rộng PC/Tablet.
+- ✅ **Bộ lọc trạng thái bàn & Gỡ bỏ giới hạn số khách (Màn hình Bàn)**:
+  - Thêm thanh lọc trạng thái (Tất cả bàn, Đang có khách 🔴, Bàn trống 🟢) giúp thu ngân dễ dàng kiểm soát các bàn ăn đang hoạt động.
+  - Sửa đổi logic mở bàn cho phép cộng tăng số lượng khách không giới hạn (gỡ bỏ chặn giới hạn số ghế tiêu chuẩn của bàn), cập nhật nhãn phụ thành "Sức chứa tiêu chuẩn".
+- ✅ **Nâng cấp bảo mật cách ly quán tuyệt đối (Row Level Security)**:
+  - Tự động gắn động HTTP Header `x-store-id` tại `session_provider.dart` cho mọi truy vấn database dựa theo phiên đăng nhập hoạt động.
+  - Viết tệp di cư SQL [apply_rls_policies.sql](file:///Users/banhbao/Quan%20Nho/quan_nho/supabase/apply_rls_policies.sql) tạo hàm SQL an toàn `public.current_store_id()` đọc Header và thiết lập chính sách RLS phân ngăn cách biệt vật lý tuyệt đối giữa các quán.
+
+### Files đã sửa/tạo mới
+| File | Thay đổi |
+|------|----------|
+| `supabase/add_waiter_tracking.sql` | [NEW] Script SQL thêm cột waiter_id và tạo index tối ưu hóa thống kê. |
+| `supabase/apply_rls_policies.sql` | [NEW] Script SQL tạo hàm đọc header và thiết lập chính sách cách ly RLS cho các bảng chính. |
+| `lib/core/repositories/dashboard_repository.dart` | Cấu trúc lại DashboardStats để thu thập và ánh xạ tên nhân viên phục vụ dựa theo số bàn. |
+| `lib/core/repositories/ban_repository.dart` | Sửa logic lấy ID nhân viên từ bộ nhớ đệm SharedPreferences khi mở bàn. |
+| `lib/screens/ban_screen.dart` | Sửa logic checkout để đồng bộ ID, tích hợp thanh lọc trạng thái bàn và gỡ bỏ giới hạn khách khi mở bàn. |
+| `lib/screens/report_screen.dart` | Thiết kế giao diện báo cáo phục vụ theo nhân viên dạng cột responsive. |
+| `lib/core/providers/session_provider.dart` | Tự động chèn/gỡ bỏ Header x-store-id động khi thay đổi trạng thái đăng nhập. |
+| `.docs/qn.md` | Cập nhật tóm tắt công việc và hướng dẫn bảo mật mới. |
+
+### Tiếp theo
+- ➡️ Đẩy toàn bộ thay đổi mã nguồn lên GitHub.
+- ➡️ Đóng gói bản dựng App mới để trải nghiệm đồng bộ trên mọi thiết bị.
+
+
 

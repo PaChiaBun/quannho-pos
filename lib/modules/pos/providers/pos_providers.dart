@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/core_product_repository.dart';
+import '../../../core/providers/session_provider.dart';
 import '../repository/pos_repository.dart';
 
 // posRepositoryProvider đã khai báo trong app_providers.dart
@@ -278,6 +279,7 @@ class CartNotifier extends Notifier<CartState> {
     state = state.copyWith(isProcessing: true);
     final lines = List<CartLine>.from(state.lines); // snapshot trước khi clear
     try {
+      final session = ref.read(sessionProvider);
       final orderId = await repo.completeSale(
         lines: lines,
         paymentMethod: state.paymentMethod,
@@ -287,6 +289,7 @@ class CartNotifier extends Notifier<CartState> {
         loyaltyPtsUsed: state.loyaltyPtsUsed,
         loyaltyRate: loyaltyRate,
         note: state.orderNote,
+        staffId: session?.userId,
       );
       state = const CartState(); // clear sau khi thành công
       return orderId;

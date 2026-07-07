@@ -1,5 +1,6 @@
 // lib/modules/tinhluong/screens/record_detail_screen.dart
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1080,6 +1081,11 @@ class _ExportPdfSheetState extends State<_ExportPdfSheet> {
         ));
       } else {
         setState(() => _loading = false);
+        if (kIsWeb) {
+          await Printing.sharePdf(bytes: bytes, filename: fileName);
+          if (mounted) Navigator.pop(context);
+          return;
+        }
         // Share trực tiếp qua hệ thống
         final dir  = await getApplicationDocumentsDirectory();
         final file = File('${dir.path}/$fileName');
@@ -1297,6 +1303,10 @@ class _PdfPreviewScreen extends StatelessWidget {
             icon: const Icon(Icons.share_rounded),
             tooltip: 'Chia sẻ PDF',
             onPressed: () async {
+              if (kIsWeb) {
+                await Printing.sharePdf(bytes: pdfBytes, filename: fileName);
+                return;
+              }
               final dir  = await getApplicationDocumentsDirectory();
               final file = File('${dir.path}/$fileName');
               await file.writeAsBytes(pdfBytes);

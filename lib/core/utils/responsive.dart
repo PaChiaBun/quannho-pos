@@ -31,17 +31,16 @@ class Responsive {
   static bool isMobile(BuildContext context) =>
       MediaQuery.sizeOf(context).width < kBreakpointTablet;
 
-  /// 600–1024px — tablet bếp treo tường
+  /// Trên 600px — Điện thoại xoay ngang, Tablet, PC/Desktop (theo thống nhất hiển thị Tablet trên máy tính)
   static bool isTablet(BuildContext context) {
     final w = MediaQuery.sizeOf(context).width;
-    return w >= kBreakpointTablet && w < kBreakpointDesktop;
+    return w >= kBreakpointTablet;
   }
 
-  /// Trên 1024px — máy tính tiền POS, laptop
-  static bool isDesktop(BuildContext context) =>
-      MediaQuery.sizeOf(context).width >= kBreakpointDesktop;
+  /// Trả về false để luôn dùng giao diện Tablet trên máy tính/PC
+  static bool isDesktop(BuildContext context) => false;
 
-  /// Tablet HOẶC Desktop (không phải mobile)
+  /// Màn hình lớn (Tablet hoặc Desktop)
   static bool isLargeScreen(BuildContext context) =>
       MediaQuery.sizeOf(context).width >= kBreakpointTablet;
 

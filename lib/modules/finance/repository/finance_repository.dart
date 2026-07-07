@@ -51,6 +51,7 @@ class FinanceRepository {
     String? description,
     String? referenceId,
     bool isAuto = false,
+    String fundType = 'cash',
   }) async {
     final storeId = await _storeId();
     if (storeId == null) throw Exception('Chưa chọn quán');
@@ -66,6 +67,7 @@ class FinanceRepository {
       'reference_id': referenceId,
       'is_auto':      isAuto,
       'recorded_at':  now,
+      'fund_type':    fundType,
     });
     return id;
   }
@@ -126,6 +128,7 @@ class FinanceRepository {
     required DateTime from,
     required DateTime to,
     String? type,
+    String? fundType,
   }) async* {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
@@ -133,12 +136,12 @@ class FinanceRepository {
     // ⚠️ Supabase stream() không hỗ trợ .gte()/.lt() trực tiếp —
     // Dùng polling + emit ngay lần đầu để giảm bandwidth.
     // Tải 1 lần đầu
-    yield await _fetchRecords(storeId: storeId, from: from, to: to, type: type);
+    yield await _fetchRecords(storeId: storeId, from: from, to: to, type: type, fundType: fundType);
 
     // Sau đó listen realtime (không filter date ở DB được) — chỉ emit khi có change
     // Dùng stream bắt signal, rồi refetch server-side để đúng range
     await for (final _ in _robustStream('finance_records', 'store_id', storeId, (rows) => rows)) {
-      yield await _fetchRecords(storeId: storeId, from: from, to: to, type: type);
+      yield await _fetchRecords(storeId: storeId, from: from, to: to, type: type, fundType: fundType);
     }
   }
 
@@ -148,6 +151,7 @@ class FinanceRepository {
     required DateTime from,
     required DateTime to,
     String? type,
+    String? fundType,
   }) async {
     var query = _sb
         .from('finance_records')
@@ -156,6 +160,7 @@ class FinanceRepository {
         .gte('recorded_at', from.toUtc().toIso8601String())
         .lt('recorded_at', to.toUtc().toIso8601String());
     if (type != null) query = query.eq('type', type);
+    if (fundType != null) query = query.eq('fund_type', fundType);
     final rows = await query.order('recorded_at', ascending: false);
     return rows.map(FinanceRecordModel.fromMap).toList();
   }
@@ -164,17 +169,19 @@ class FinanceRepository {
 
   // ── Stats ─────────────────────────────────────────────────────────────────
 
-  Future<FinanceStats> getStats(DateRange range) async {
+  Future<FinanceStats> getStats(DateRange range, {String? fundType}) async {
     final storeId = await _storeId();
     if (storeId == null) return FinanceStats.empty;
 
-    final rows = await _sb
+    var query = _sb
         .from('finance_records')
         // ‼️ FIX Bug #34: chỉ chọn cột cần thiết — tính thẳng từ raw rows, không parse qua model
         .select('type, amount, category_id')
         .eq('store_id', storeId)
         .gte('recorded_at', range.from.toUtc().toIso8601String())
         .lt('recorded_at', range.to.toUtc().toIso8601String());
+    if (fundType != null) query = query.eq('fund_type', fundType);
+    final rows = await query;
 
     double income = 0, expense = 0;
     for (final r in rows) {
@@ -196,13 +203,15 @@ class FinanceRepository {
     // So sánh kỳ trước
     final periodLen = range.to.difference(range.from);
     final prevFrom  = range.from.subtract(periodLen);
-    final prevRows  = await _sb
+    var prevQuery = _sb
         .from('finance_records')
         // ‼️ FIX Bug #34: chỉ cần type + amount cho so sánh kỳ trước
         .select('type, amount')
         .eq('store_id', storeId)
         .gte('recorded_at', prevFrom.toUtc().toIso8601String())
         .lt('recorded_at', range.from.toUtc().toIso8601String());
+    if (fundType != null) prevQuery = prevQuery.eq('fund_type', fundType);
+    final prevRows = await prevQuery;
     final prevIncome = prevRows
         .where((r) => r['type'] == 'income')
         .fold<double>(0, (s, r) => s + ((r['amount'] as num?)?.toDouble() ?? 0));
@@ -302,6 +311,7 @@ class FinanceRecordModel {
   final String? description;
   final bool isAuto;
   final DateTime recordedAt;
+  final String fundType;
 
   const FinanceRecordModel({
     required this.id,
@@ -311,6 +321,7 @@ class FinanceRecordModel {
     this.description,
     required this.isAuto,
     required this.recordedAt,
+    required this.fundType,
   });
 
   factory FinanceRecordModel.fromMap(Map<String, dynamic> m) =>
@@ -323,6 +334,7 @@ class FinanceRecordModel {
         isAuto:      m['is_auto'] as bool? ?? false,
         // Parse UTC rồi giữ UTC — UI dùng .toLocal() khi hiển thị (finance_screen.dart line 278, 369)
         recordedAt:  (DateTime.tryParse(m['recorded_at'] as String? ?? '') ?? DateTime.now()).toUtc(),
+        fundType:    m['fund_type'] as String? ?? 'cash',
       );
 }
 

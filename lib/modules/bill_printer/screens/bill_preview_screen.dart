@@ -1,6 +1,7 @@
 // lib/modules/bill_printer/screens/bill_preview_screen.dart
 // ignore_for_file: use_build_context_synchronously
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -651,6 +652,10 @@ class StationPrinterDispatcher {
       }
     } else {
       // Mạng IP (LAN/Wifi) - Hộp thoại in hệ thống làm dự phòng nếu không kết nối được trực tiếp
+      if (kIsWeb) {
+        await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
+        return;
+      }
       try {
         final socket = await Socket.connect(config.name, 9100, timeout: const Duration(seconds: 3));
         // Đóng cổng vì direct pdf qua socket cần parser đặc biệt. Fallback sang layoutPdf.

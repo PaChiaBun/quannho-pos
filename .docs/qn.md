@@ -63,9 +63,26 @@ Chúng ta đã nâng cấp module in bill để hỗ trợ chia và điều hư�
 
 ---
 
-## 🚀 4. Các bước tiếp theo dành cho chủ quán
+## 🚀 4. Thống Kê Số Bàn Theo Phục Vụ & Bộ Lọc Trạng Thái Bàn Trực Quan
 
-1. Mở **GitHub Desktop** và kiểm tra các thay đổi mã nguồn đã được dọn dẹp sạch sẽ.
-2. Tiến hành **Push** (đẩy) các thay đổi này lên repository GitHub của bạn (bao gồm cả các commit tự động cập nhật).
-3. GitHub Actions sẽ tự động kích hoạt build bản Windows mới nhất đi kèm giao diện Tablet Sidebar UI, tính năng quét máy in IP thông minh và cơ chế Tự động cập nhật này.
-4. Tải bộ cài từ mục Releases của GitHub về cài đặt (đây là lần cài thủ công cuối cùng). Từ phiên bản tiếp theo, app sẽ tự động hiển thị cập nhật khi có bản mới!
+Chúng ta đã hoàn thành nâng cấp module Quản Lý Bàn và Báo Cáo Doanh Thu với các tính năng:
+
+### 1. Thống Kê Số Bàn Theo Phục Vụ (Tab Báo Cáo):
+* Tích hợp theo dõi `waiter_id` (nhân viên order/mở bàn) đồng bộ xuyên suốt từ phiên bàn ăn (`ban_sessions`) đến hóa đơn thanh toán (`orders`).
+* Hiển thị bảng **"Số bàn phục vụ theo nhân viên"** kế bên bảng xếp hạng thu ngân, hiển thị dạng thanh phần trăm tiến trình màu tím trực quan.
+* Giao diện Responsive chia thành 3 cột cân đối trên màn hình lớn PC/Tablet.
+
+### 2. Bộ Lọc Trạng Thái Bàn Trực Quan (Màn hình Quản Lý Bàn):
+* Thêm thanh bộ lọc trạng thái viên thuốc (Filter Chips) với các tùy chọn: **Tất cả bàn**, **Đang có khách 🔴**, **Bàn trống 🟢** để thu ngân dễ dàng lọc và nắm bắt toàn diện tình hình quán chỉ với 1 chạm.
+* Gỡ bỏ giới hạn số khách tiêu chuẩn khi mở bàn, cho phép tăng số lượng khách thoải mái và tự do thêm ghế phụ.
+
+### 3. Tối Ưu Bảo Mật RLS (Row Level Security):
+* Tích hợp Header động `x-store-id` tự động gửi từ Client App bất cứ khi nào đăng nhập/chuyển quán.
+* Cấu hình các luật bảo mật dòng cách ly quán tuyệt đối trên cơ sở dữ liệu Supabase qua hàm SQL an toàn `public.current_store_id()`.
+
+---
+
+## 🚀 5. Các bước tiếp theo dành cho chủ quán
+
+1. Tiến hành **Push** các thay đổi mã nguồn này lên repository GitHub của bạn.
+2. Bản nâng cấp này sẽ tự động cập nhật đồng bộ lên cả phiên bản Web và App di động khi đóng gói bản dựng tiếp theo!

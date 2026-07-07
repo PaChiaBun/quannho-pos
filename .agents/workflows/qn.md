@@ -17,11 +17,12 @@ Khi user gọi `/qn`, thực hiện các bước sau **theo thứ tự**:
 Đây là tài liệu quan trọng nhất về luồng data — đọc kỹ trước khi dev bất kỳ module nào.
 Bao gồm: schema Supabase, luồng từng module, quy tắc vàng, thông tin kết nối.
 
-> **⚠️ Lưu ý kiến trúc (cập nhật 2026-05-02):**
+> **⚠️ Lưu ý kiến trúc (cập nhật 2026-05-02 & 2026-07-06):**
 > Toàn bộ UI layer đã migration **100% sang Supabase** — không còn Drift/SQLite trong screens.
 > - `pos_screen`, `ban_screen`, `inventory_screen` → dùng Repository pattern (Supabase)
 > - Timestamp: **ISO 8601 String** (không phải epoch int) — luôn dùng `DateTime.parse()`
 > - Các file dead code: `ban_sync_service.dart`, `product_sync_service.dart`, `app_event_bus.dart` — đã deprecated, có thể xóa
+> - **Phân giải màn hình (Thống nhất 2026-07-06):** Thiết bị điện thoại hiển thị UI Mobile (< 600px). Máy tính/PC hiển thị UI Tablet (>= 600px). Cấu hình `Responsive.isDesktop` luôn trả về `false`.
 
 ## Bước 4 — Đọc tính năng & modules
 Đọc file: `/Users/banhbao/Quan Nho/quan_nho/.docs/tinh-nang.md`

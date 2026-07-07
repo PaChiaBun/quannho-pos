@@ -4,6 +4,7 @@
 // Query bảng app_versions trên Supabase → hiện dialog nếu có bản mới
 // ─────────────────────────────────────────────────────────────────────────────
 import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,6 +18,7 @@ class UpdateCheckerService {
 
   /// Gọi 1 lần sau khi MainShell hiển thị
   static Future<void> checkForUpdate(BuildContext context) async {
+    if (kIsWeb) return;
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentBuild = int.tryParse(packageInfo.buildNumber) ?? 0;

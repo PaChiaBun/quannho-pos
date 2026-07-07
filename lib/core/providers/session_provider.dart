@@ -3,6 +3,7 @@
 // Session Provider — Quản lý trạng thái đăng nhập toàn app
 // ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/user_auth_service.dart';
 
 // ── Session state ─────────────────────────────────────────────────────────────
@@ -10,7 +11,17 @@ class _SessionNotifier extends Notifier<SessionData?> {
   @override
   SessionData? build() => null;
 
-  void setSession(SessionData? session) => state = session;
+  void setSession(SessionData? session) {
+    state = session;
+    try {
+      final client = Supabase.instance.client;
+      if (session != null && session.storeId != null) {
+        client.rest.headers['x-store-id'] = session.storeId!;
+      } else {
+        client.rest.headers.remove('x-store-id');
+      }
+    } catch (_) {}
+  }
 
   void updateStore(StoreMembership membership) {
     if (state == null) return;
@@ -24,9 +35,17 @@ class _SessionNotifier extends Notifier<SessionData?> {
       role:        membership.role,
       isOwner:     membership.isOwner,
     );
+    try {
+      Supabase.instance.client.rest.headers['x-store-id'] = membership.storeId;
+    } catch (_) {}
   }
 
-  void clear() => state = null;
+  void clear() {
+    state = null;
+    try {
+      Supabase.instance.client.rest.headers.remove('x-store-id');
+    } catch (_) {}
+  }
 }
 
 final sessionProvider =

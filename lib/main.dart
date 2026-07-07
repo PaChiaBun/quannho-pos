@@ -554,7 +554,7 @@ class _MainShellState extends ConsumerState<MainShell>
                     highlightColor: _kNavy.withValues(alpha: 0.04),
                     // ✅ PERF: plain Container — no implicit animation
                     child: Container(
-                      height: isDesktop ? 48 : 52,
+                      height: isDesktop ? 48 : 64,
                       padding: isDesktop
                           ? const EdgeInsets.symmetric(horizontal: 10, vertical: 4)
                           : const EdgeInsets.symmetric(vertical: 4),

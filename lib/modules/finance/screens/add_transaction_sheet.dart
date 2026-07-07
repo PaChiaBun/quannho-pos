@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../providers/finance_providers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -21,6 +22,7 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
 
 class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   late String _type;
+  late String _fundType;
   final _amountCtrl = TextEditingController();
   final _descCtrl   = TextEditingController();
   String? _selectedCategoryId;
@@ -38,6 +40,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   void initState() {
     super.initState();
     _type = widget.initialType;
+    _fundType = ref.read(selectedFundProvider);
   }
 
   @override
@@ -129,6 +132,30 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                     ctrl: _amountCtrl,
                     accentColor: _accentColor,
                     onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Quỹ Giao Dịch
+                  _label('Quỹ giao dịch'),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _FundSelector(
+                          label: 'Tiền mặt',
+                          selected: _fundType == 'cash',
+                          onTap: () => setState(() => _fundType = 'cash'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _FundSelector(
+                          label: 'Tiền gửi (NH)',
+                          selected: _fundType == 'bank',
+                          onTap: () => setState(() => _fundType = 'bank'),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
 
@@ -277,6 +304,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         amount:      amount,
         categoryId:  _selectedCategoryId,
         description: _descCtrl.text.isEmpty ? null : _descCtrl.text,
+        fundType:    _fundType,
       );
 
       if (mounted) {
@@ -364,6 +392,7 @@ class _AmountInput extends StatelessWidget {
               controller: ctrl,
               keyboardType: TextInputType.number,
               onChanged: onChanged,
+              inputFormatters: [ThousandsSeparatorInputFormatter()],
               style: TextStyle(
                 fontSize: 32, fontWeight: FontWeight.w900,
                 color: accentColor, letterSpacing: -1),
@@ -382,4 +411,88 @@ class _AmountInput extends StatelessWidget {
         thickness: 2),
     ],
   );
+}
+
+class _FundSelector extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FundSelector({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF1E1C5E) : const Color(0xFFFAF7F2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? const Color(0xFF1E1C5E) : const Color(0xFFE0D8CC),
+            width: selected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: selected ? Colors.white : const Color(0xFF1A1207),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ThousandsSeparatorInputFormatter extends TextInputFormatter {
+  static const separator = ',';
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    String newValueText = newValue.text.replaceAll(separator, '');
+    newValueText = newValueText.replaceAll(RegExp(r'[^0-9]'), '');
+
+    if (newValueText.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    double? value = double.tryParse(newValueText);
+    if (value == null) {
+      return oldValue;
+    }
+
+    final formatter = NumberFormat('#,###', 'en_US');
+    String newText = formatter.format(value);
+
+    int selectionIndex = newValue.selection.end;
+    int commasBefore = oldValue.text.split(separator).length - 1;
+    int commasAfter = newText.split(separator).length - 1;
+    selectionIndex += (commasAfter - commasBefore);
+
+    if (selectionIndex > newText.length) {
+      selectionIndex = newText.length;
+    }
+    if (selectionIndex < 0) {
+      selectionIndex = 0;
+    }
+
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: selectionIndex),
+    );
+  }
 }

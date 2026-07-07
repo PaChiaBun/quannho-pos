@@ -134,6 +134,42 @@ class PosRepository {
     final totalAmount = (subtotal - discount - loyaltyPtsUsed).clamp(0.0, double.infinity);
     final ptsEarned   = (totalAmount / loyaltyRate).floorToDouble();
 
+    // Tìm store_members.id và đồng bộ sang staff_members để làm khoá ngoại cho orders.staff_id
+    String? memberRecordId;
+    if (staffId != null && staffId.isNotEmpty) {
+      try {
+        final memberRow = await _sb
+            .from('store_members')
+            .select('id, role, user_accounts(display_name, phone)')
+            .eq('store_id', storeId)
+            .eq('user_id', staffId)
+            .maybeSingle();
+
+        if (memberRow != null) {
+          memberRecordId = memberRow['id'] as String?;
+          final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
+          final displayName = userAcc?['display_name'] as String? ?? 'Thu ngân';
+          final phone = userAcc?['phone'] as String?;
+          final role = memberRow['role'] as String? ?? 'cashier';
+
+          if (memberRecordId != null) {
+            // Đồng bộ bản ghi sang staff_members để thoả mãn khoá ngoại
+            await _sb.from('staff_members').upsert({
+              'id': memberRecordId,
+              'store_id': storeId,
+              'name': displayName,
+              'role': role,
+              'phone': phone,
+              'is_active': true,
+              'updated_at': DateTime.now().millisecondsSinceEpoch,
+            });
+          }
+        }
+      } catch (e) {
+        debugPrint('[PosRepository] Sync staff_members record failed: $e');
+      }
+    }
+
     // 1. Ghi order — map cả cột gốc schema lẫn cột mở rộng
     await _sb.from('orders').insert({
       'id':                 orderId,
@@ -152,7 +188,7 @@ class PosRepository {
       'status':             'completed',
       'source_type':        sourceType ?? 'pos',
       'source_id':          sourceId,
-      'staff_id':           staffId,
+      'staff_id':           memberRecordId,
       'note':               note,
       'receipt_printed':    false,
       'created_at':         now,
@@ -227,6 +263,7 @@ class PosRepository {
           .eq('is_auto', true)
           .maybeSingle();
       if (existIncome == null) {
+        final fundType = (paymentMethod == 'transfer' || paymentMethod == 'card') ? 'bank' : 'cash';
         await _sb.from('finance_records').insert({
           'id':           _uuid.v4(),
           'store_id':     storeId,
@@ -236,6 +273,7 @@ class PosRepository {
           'reference_id': orderId,
           'is_auto':      true,
           'recorded_at':  now,
+          'fund_type':    fundType,
         });
       }
     } catch (e) {

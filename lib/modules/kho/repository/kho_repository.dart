@@ -173,6 +173,7 @@ class KhoRepository {
         'reference_id': movementId,  // ← audit trail: trace về stock_movement
         'is_auto':      true,
         'recorded_at':  now,
+        'fund_type':    'cash',
       });
     } catch (e) {
       debugPrint('[Kho] ⚠️ receiveStock finance_record failed: $e');
@@ -430,6 +431,7 @@ class KhoRepository {
     String? note,
     DateTime? importDate,
     String? invoiceImagePath,
+    String fundType = 'cash',
   }) async {
     assert(lines.isNotEmpty);
     final storeId = await _storeId();
@@ -541,6 +543,7 @@ class KhoRepository {
         'reference_id': poId,
         'is_auto':     true,
         'recorded_at': importAt,
+        'fund_type':   fundType,
       });
     } catch (e) {
       debugPrint('[Kho] ⚠️ PO finance_record insert failed: $e');
@@ -633,6 +636,20 @@ class KhoRepository {
 
     // 6. Finance hoàn tiền (silent fail)
     try {
+      String fundType = 'cash';
+      try {
+        final origFinance = await _sb
+            .from('finance_records')
+            .select('fund_type')
+            .eq('store_id', storeId)
+            .eq('reference_id', poId)
+            .eq('type', 'expense')
+            .maybeSingle();
+        if (origFinance != null) {
+          fundType = origFinance['fund_type'] as String? ?? 'cash';
+        }
+      } catch (_) {}
+
       await _sb.from('finance_records').insert({
         'id':           _uuid.v4(),
         'store_id':     storeId,
@@ -642,6 +659,7 @@ class KhoRepository {
         'reference_id': poId,
         'is_auto':      true,
         'recorded_at':  now,
+        'fund_type':    fundType,
       });
     } catch (e) {
       debugPrint('[Kho] ⚠️ cancel finance_record insert failed: $e');

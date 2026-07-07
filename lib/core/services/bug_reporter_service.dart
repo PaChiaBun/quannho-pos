@@ -4,6 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -99,10 +100,15 @@ class BugReporterService {
     };
 
     try {
-      info['os'] = Platform.operatingSystem;
-      info['os_version'] = Platform.operatingSystemVersion;
-      // localHostname có thể chứa model name trên một số thiết bị
-      info['locale'] = Platform.localeName;
+      if (kIsWeb) {
+        info['os'] = 'web';
+        info['os_version'] = 'browser';
+        info['locale'] = 'unknown';
+      } else {
+        info['os'] = Platform.operatingSystem;
+        info['os_version'] = Platform.operatingSystemVersion;
+        info['locale'] = Platform.localeName;
+      }
     } catch (_) {}
 
     return info;

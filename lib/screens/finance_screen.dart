@@ -1,10 +1,16 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/utils/money_formatter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/services/store_auth_service.dart';
 import '../modules/finance/providers/finance_providers.dart';
 import '../modules/finance/repository/finance_repository.dart';
 import '../modules/finance/screens/add_transaction_sheet.dart';
@@ -57,12 +63,14 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     final statsAsync  = ref.watch(financeStatsProvider);
     final filterType  = ref.watch(financeFilterProvider);
     final recordsAsync = ref.watch(filteredRecordsProvider);
+    final selectedFund = ref.watch(selectedFundProvider);
 
     final mainContent = Column(
       children: [
         _buildHeader(statsAsync, periodState),
+        _buildFundTabs(selectedFund),
         _buildPeriodChips(periodState),
-        _buildFilterTabs(filterType),
+        _buildFilterTabs(filterType, recordsAsync),
         Expanded(child: _buildList(recordsAsync)),
       ],
     );
@@ -245,7 +253,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   // ─────────────────────────────────────────────────────────────────────────
   // FILTER TABS
   // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildFilterTabs(String? filterType) {
+  Widget _buildFilterTabs(String? filterType, AsyncValue<List<FinanceRecordModel>> recordsAsync) {
     return Container(
       color: _kWhite,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -277,9 +285,182 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             onTap: () =>
                 ref.read(financeFilterProvider.notifier).showExpense(),
           ),
+          const SizedBox(width: 10),
+          // Nút xuất báo cáo Excel/CSV cho kế toán kiểm soát
+          IconButton(
+            onPressed: _exporting ? null : () => _exportToCSV(recordsAsync),
+            icon: _exporting
+                ? const SizedBox(
+                    width: 16, height: 16,
+                    child: CircularProgressIndicator(color: _kNavy, strokeWidth: 2))
+                : const Icon(Icons.download_rounded, color: _kNavy, size: 22),
+            tooltip: 'Xuất tệp CSV cho kế toán',
+            style: IconButton.styleFrom(
+              backgroundColor: _kBg,
+              padding: const EdgeInsets.all(8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: const BorderSide(color: _kBorder),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Widget _buildFundTabs(String selectedFund) {
+    return Container(
+      color: _kBg,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: _FundTabButton(
+              label: 'Tất cả',
+              active: selectedFund == 'all',
+              onTap: () {
+                HapticFeedback.selectionClick();
+                ref.read(selectedFundProvider.notifier).setAll();
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _FundTabButton(
+              label: 'Tiền mặt',
+              active: selectedFund == 'cash',
+              onTap: () {
+                HapticFeedback.selectionClick();
+                ref.read(selectedFundProvider.notifier).setCash();
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _FundTabButton(
+              label: 'Tiền gửi',
+              active: selectedFund == 'bank',
+              onTap: () {
+                HapticFeedback.selectionClick();
+                ref.read(selectedFundProvider.notifier).setBank();
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _exporting = false;
+
+  Future<void> _exportToCSV(AsyncValue<List<FinanceRecordModel>> recordsAsync) async {
+    final records = recordsAsync.asData?.value;
+    if (records == null || records.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Không có dữ liệu để xuất file!'),
+        backgroundColor: _kRed,
+      ));
+      return;
+    }
+
+    setState(() => _exporting = true);
+
+    try {
+      final periodState = ref.read(periodProvider);
+      final selectedFund = ref.read(selectedFundProvider);
+      final info = await StoreAuthService.getStoreInfo();
+      final storeId = info['store_id'] as String?;
+      if (storeId == null) throw 'Không tìm thấy thông tin cửa hàng';
+
+      // 1. Fetch all previous records to calculate the starting balance (Số tồn đầu kỳ)
+      final sb = Supabase.instance.client;
+      final prevRows = await sb
+          .from('finance_records')
+          .select('type, amount')
+          .eq('store_id', storeId)
+          .eq('fund_type', selectedFund)
+          .lt('recorded_at', periodState.from.toUtc().toIso8601String());
+
+      double startingBalance = 0;
+      for (final r in prevRows) {
+        final amt = (r['amount'] as num?)?.toDouble() ?? 0;
+        if (r['type'] == 'income') startingBalance += amt;
+        if (r['type'] == 'expense') startingBalance -= amt;
+      }
+
+      // 2. Sort current period records ascendingly to calculate correct running balances
+      final sortedRecords = List<FinanceRecordModel>.from(records)
+        ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+
+      // 3. Build CSV string
+      final csvBuffer = StringBuffer();
+      
+      // UTF-8 BOM so Excel opens with Vietnamese characters properly formatted
+      csvBuffer.write('\uFEFF');
+
+      // Title & metadata
+      final fundName = selectedFund == 'cash' ? 'TIỀN MẶT' : 'TIỀN GỬI NGÂN HÀNG';
+      csvBuffer.writeln('SỔ CHI TIẾT QUỸ $fundName');
+      csvBuffer.writeln('Kỳ báo cáo: ${periodState.label}');
+      csvBuffer.writeln('Thời gian xuất: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}');
+      csvBuffer.writeln();
+
+      // Headers
+      csvBuffer.writeln('Ngày chứng từ,Số phiếu thu,Số phiếu chi,Diễn giải,Số tiền thu,Số tiền chi,Số tiền còn lại');
+
+      // Row 1: Starting balance (Số tồn đầu kỳ)
+      csvBuffer.writeln(',,,Số tồn đầu kỳ,,,${startingBalance.toStringAsFixed(0)}');
+
+      double currentBalance = startingBalance;
+      for (final r in sortedRecords) {
+        final dateStr = DateFormat('dd/MM/yyyy HH:mm').format(r.recordedAt.toLocal());
+        final isIncome = r.type == 'income';
+        final amt = r.amount;
+
+        if (isIncome) {
+          currentBalance += amt;
+        } else {
+          currentBalance -= amt;
+        }
+
+        final receiptNo = isIncome ? 'PT-${r.id.substring(0, 8).toUpperCase()}' : '';
+        final paymentNo = !isIncome ? 'PC-${r.id.substring(0, 8).toUpperCase()}' : '';
+        
+        // Clean description to avoid CSV breaking on commas
+        final cleanDesc = (r.description ?? '').replaceAll(',', ' ').replaceAll('\n', ' ');
+
+        final thuAmt = isIncome ? amt.toStringAsFixed(0) : '0';
+        final chiAmt = !isIncome ? amt.toStringAsFixed(0) : '0';
+        final tonAmt = currentBalance.toStringAsFixed(0);
+
+        csvBuffer.writeln('$dateStr,$receiptNo,$paymentNo,$cleanDesc,$thuAmt,$chiAmt,$tonAmt');
+      }
+
+      // 4. Write to temp file and share/download
+      final stamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+      final filename = 'So_Chi_Tiet_Quy_${selectedFund}_$stamp.csv';
+      
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/$filename');
+      await file.writeAsString(csvBuffer.toString());
+
+      await SharePlus.instance.share(
+        ShareParams(
+          text: 'Báo cáo Sổ chi tiết quỹ $fundName',
+          files: [XFile(file.path, mimeType: 'text/csv', name: filename)],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Lỗi xuất file: $e'),
+          backgroundColor: _kRed,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -924,3 +1105,53 @@ class _FStatRow extends StatelessWidget {
     ]),
   );
 }
+
+class _FundTabButton extends StatelessWidget {
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _FundTabButton({
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFF1E1C5E) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: active ? const Color(0xFF1E1C5E) : const Color(0xFFE0D8CC),
+            width: active ? 1.5 : 1.0,
+          ),
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF1E1C5E).withValues(alpha: 0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  )
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: active ? Colors.white : const Color(0xFF1A1207),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
