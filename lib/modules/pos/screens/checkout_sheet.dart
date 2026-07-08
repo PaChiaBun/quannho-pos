@@ -668,7 +668,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
         // Tự động in bill phân trạm
         try {
           final settings = ref.read(printerSettingsProvider);
-          if (_billData != null) {
+          if (_billData != null && !settings.autoPrintServer) {
             if (settings.autoPrintCheckout && settings.autoPrintKitchen) {
               StationPrinterDispatcher.printBill(_billData!, settings);
             } else if (settings.autoPrintCheckout) {

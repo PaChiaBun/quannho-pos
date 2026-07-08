@@ -75,3 +75,5 @@ CREATE POLICY "ban_dining_tables: owner/manager write"
 -- Chạy lệnh này để bật Realtime (hoặc enable qua Dashboard > Database > Replication)
 ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_zones;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_dining_tables;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_sessions;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_session_items;

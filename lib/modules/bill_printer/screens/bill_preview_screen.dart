@@ -590,21 +590,31 @@ class StationPrinterDispatcher {
           .where((i) => i.stationCode == 'bep_nong' || i.stationCode == 'nong')
           .toList();
       if (hotItems.isNotEmpty) {
-        final hotBill = BillData(
-          shopName: bill.shopName,
-          shopAddress: bill.shopAddress,
-          shopPhone: bill.shopPhone,
-          orderNumber: bill.orderNumber,
-          createdAt: bill.createdAt,
-          tableName: bill.tableName,
-          items: hotItems,
-          subtotal: 0,
-          total: 0,
-          type: BillType.kitchen,
-          note: bill.note,
-        );
-        final bytes = await BillPdfGenerator.generateKitchenTicket(hotBill);
-        await _dispatchPrint(bytes, settings.bepNong, 'phieu_bep_nong_${bill.orderNumber}');
+        if (!kIsWeb && settings.bepNong.type == 'network' && settings.bepNong.name.isNotEmpty) {
+          // In trực tiếp không qua hộp thoại trên app native
+          await _printRawKitchenDirect(
+            printerIp: settings.bepNong.name,
+            tableName: bill.tableName,
+            orderNumber: bill.orderNumber,
+            items: hotItems,
+          );
+        } else {
+          final hotBill = BillData(
+            shopName: bill.shopName,
+            shopAddress: bill.shopAddress,
+            shopPhone: bill.shopPhone,
+            orderNumber: bill.orderNumber,
+            createdAt: bill.createdAt,
+            tableName: bill.tableName,
+            items: hotItems,
+            subtotal: 0,
+            total: 0,
+            type: BillType.kitchen,
+            note: bill.note,
+          );
+          final bytes = await BillPdfGenerator.generateKitchenTicket(hotBill);
+          await _dispatchPrint(bytes, settings.bepNong, 'phieu_bep_nong_${bill.orderNumber}');
+        }
       }
     }
 
@@ -614,21 +624,31 @@ class StationPrinterDispatcher {
           .where((i) => i.stationCode == 'bep_bar' || i.stationCode == 'bar')
           .toList();
       if (barItems.isNotEmpty) {
-        final barBill = BillData(
-          shopName: bill.shopName,
-          shopAddress: bill.shopAddress,
-          shopPhone: bill.shopPhone,
-          orderNumber: bill.orderNumber,
-          createdAt: bill.createdAt,
-          tableName: bill.tableName,
-          items: barItems,
-          subtotal: 0,
-          total: 0,
-          type: BillType.kitchen,
-          note: bill.note,
-        );
-        final bytes = await BillPdfGenerator.generateKitchenTicket(barBill);
-        await _dispatchPrint(bytes, settings.bepBar, 'phieu_bep_bar_${bill.orderNumber}');
+        if (!kIsWeb && settings.bepBar.type == 'network' && settings.bepBar.name.isNotEmpty) {
+          // In trực tiếp không qua hộp thoại trên app native
+          await _printRawKitchenDirect(
+            printerIp: settings.bepBar.name,
+            tableName: bill.tableName,
+            orderNumber: bill.orderNumber,
+            items: barItems,
+          );
+        } else {
+          final barBill = BillData(
+            shopName: bill.shopName,
+            shopAddress: bill.shopAddress,
+            shopPhone: bill.shopPhone,
+            orderNumber: bill.orderNumber,
+            createdAt: bill.createdAt,
+            tableName: bill.tableName,
+            items: barItems,
+            subtotal: 0,
+            total: 0,
+            type: BillType.kitchen,
+            note: bill.note,
+          );
+          final bytes = await BillPdfGenerator.generateKitchenTicket(barBill);
+          await _dispatchPrint(bytes, settings.bepBar, 'phieu_bep_bar_${bill.orderNumber}');
+        }
       }
     }
 
@@ -642,6 +662,49 @@ class StationPrinterDispatcher {
           'tem_bar_${bill.orderNumber}_$i',
         );
       }
+    }
+  }
+
+  // ── In trực tiếp qua Socket không cần qua hộp thoại PDF (Dành cho Native & Mạng IP) ──
+  static Future<void> _printRawKitchenDirect({
+    required String printerIp,
+    String? tableName,
+    String? orderNumber,
+    required List<BillItem> items,
+  }) async {
+    try {
+      final ticketItems = items.map((i) {
+        final List<String> modifiers = [];
+        if (i.note != null && i.note!.isNotEmpty) {
+          modifiers.addAll(i.note!.split(', ').map((s) => s.trim()));
+        }
+        return TicketItemData(
+          name: i.name,
+          quantity: i.qty.toDouble(),
+          modifiers: modifiers,
+          note: null,
+        );
+      }).toList();
+
+      int round = 1;
+      final safeOrderNumber = orderNumber ?? '';
+      final roundRegex = RegExp(r'Đợt\s*(\d+)', caseSensitive: false);
+      final match = roundRegex.firstMatch(safeOrderNumber);
+      if (match != null) {
+        round = int.tryParse(match.group(1) ?? '1') ?? 1;
+      }
+
+      await ThermalPrinterService.printKitchenTicket(
+        printerIp: printerIp,
+        tableLabel: tableName ?? 'Mang về',
+        zoneLabel: 'Khu Vực',
+        round: round,
+        items: ticketItems,
+        sentAt: DateTime.now().millisecondsSinceEpoch,
+      );
+      debugPrint('[DirectPrint] In thành công qua socket tới: $printerIp');
+    } catch (e) {
+      debugPrint('[DirectPrint] Lỗi in qua socket tới $printerIp: $e');
     }
   }
 

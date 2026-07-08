@@ -713,20 +713,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 42,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -2,
+                                    letterSpacing: -0.5,
                                     height: 1.0,
                                   ),
                                 );
                               }),
-                              const Text(
-                                'đồng',
-                                style: TextStyle(
-                                  color: _kWhite60,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
                             ],
                           ),
                         ),
@@ -1031,7 +1022,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         crossAxisCount: cols,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: cols >= 4 ? 1.4 : cols >= 3 ? 1.25 : 1.0,
+        childAspectRatio: cols >= 4 ? 1.75 : cols >= 3 ? 1.55 : 1.35,
       ),
       itemCount: tiles.length,
       itemBuilder: (_, i) => tiles[i],
@@ -1051,7 +1042,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         crossAxisCount: cols,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: cols >= 4 ? 1.4 : cols >= 3 ? 1.25 : 1.0,
+        childAspectRatio: cols >= 4 ? 1.75 : cols >= 3 ? 1.55 : 1.35,
       ),
       itemCount: tiles.length,
       itemBuilder: (_, i) => tiles[i],
@@ -2186,7 +2177,7 @@ class _CreateStoreCtaState extends ConsumerState<_CreateStoreCta> {
 // ─────────────────────────────────────────────────────────────────────────────
 // FORMAT HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
-String _fmtRevenue(double v) => fmtMoney(v);
+String _fmtRevenue(double v) => fmtVnd(v);
 String _fmtShort(double v) => fmtMoney(v);
 
 // ─── Bill Printer Hub Wrapper (ProviderScope đã bao ngoài) ────────────────────

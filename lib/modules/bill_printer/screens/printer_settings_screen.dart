@@ -33,6 +33,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
   final List<DiscoveredPrinter> _discoveredPrinters = [];
   StreamSubscription<DiscoveredPrinter>? _scanSubscription;
   final Map<String, TextEditingController> _ipControllers = {};
+  final Map<String, FocusNode> _ipFocusNodes = {};
 
   @override
   void initState() {
@@ -42,6 +43,36 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
     _ipControllers['bepNong'] = TextEditingController(text: settings.bepNong.type == 'network' ? settings.bepNong.name : '');
     _ipControllers['bepBar'] = TextEditingController(text: settings.bepBar.type == 'network' ? settings.bepBar.name : '');
     _ipControllers['barLabel'] = TextEditingController(text: settings.barLabel.type == 'network' ? settings.barLabel.name : '');
+
+    for (final key in ['cashier', 'bepNong', 'bepBar', 'barLabel']) {
+      _ipFocusNodes[key] = FocusNode();
+      _ipFocusNodes[key]!.addListener(() {
+        if (mounted && !_ipFocusNodes[key]!.hasFocus) {
+          _saveIpAddress(key);
+        }
+      });
+    }
+  }
+
+  void _saveIpAddress(String stationKey) {
+    final ip = _ipControllers[stationKey]?.text.trim() ?? '';
+    final settings = ref.read(printerSettingsProvider);
+    final config = _getConfigByKey(settings, stationKey);
+    if (config != null && config.name != ip) {
+      ref.read(printerSettingsProvider.notifier).saveConfig(
+            stationKey,
+            config.copyWith(name: ip),
+          );
+      debugPrint('[PrinterSettings] Auto-saved IP for $stationKey: $ip');
+    }
+  }
+
+  PrinterConfig? _getConfigByKey(StationPrintersState settings, String key) {
+    if (key == 'cashier') return settings.cashier;
+    if (key == 'bepNong') return settings.bepNong;
+    if (key == 'bepBar') return settings.bepBar;
+    if (key == 'barLabel') return settings.barLabel;
+    return null;
   }
 
   @override
@@ -49,6 +80,9 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
     _scanSubscription?.cancel();
     for (final ctrl in _ipControllers.values) {
       ctrl.dispose();
+    }
+    for (final node in _ipFocusNodes.values) {
+      node.dispose();
     }
     super.dispose();
   }
@@ -155,16 +189,16 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
   Widget build(BuildContext context) {
     // Tự động cập nhật nội dung TextControllers khi state thay đổi từ db
     ref.listen<StationPrintersState>(printerSettingsProvider, (previous, next) {
-      if (next.cashier.type == 'network' && _ipControllers['cashier']?.text != next.cashier.name) {
+      if (next.cashier.type == 'network' && _ipControllers['cashier']?.text != next.cashier.name && _ipFocusNodes['cashier']?.hasFocus == false) {
         _ipControllers['cashier']?.text = next.cashier.name;
       }
-      if (next.bepNong.type == 'network' && _ipControllers['bepNong']?.text != next.bepNong.name) {
+      if (next.bepNong.type == 'network' && _ipControllers['bepNong']?.text != next.bepNong.name && _ipFocusNodes['bepNong']?.hasFocus == false) {
         _ipControllers['bepNong']?.text = next.bepNong.name;
       }
-      if (next.bepBar.type == 'network' && _ipControllers['bepBar']?.text != next.bepBar.name) {
+      if (next.bepBar.type == 'network' && _ipControllers['bepBar']?.text != next.bepBar.name && _ipFocusNodes['bepBar']?.hasFocus == false) {
         _ipControllers['bepBar']?.text = next.bepBar.name;
       }
-      if (next.barLabel.type == 'network' && _ipControllers['barLabel']?.text != next.barLabel.name) {
+      if (next.barLabel.type == 'network' && _ipControllers['barLabel']?.text != next.barLabel.name && _ipFocusNodes['barLabel']?.hasFocus == false) {
         _ipControllers['barLabel']?.text = next.barLabel.name;
       }
     });
@@ -557,7 +591,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
                   if (selected) {
                     ref.read(printerSettingsProvider.notifier).saveConfig(
                           stationKey,
-                          config.copyWith(type: 'system', name: ''),
+                          config.copyWith(type: 'system'),
                         );
                   }
                 },
@@ -638,6 +672,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
               Expanded(
                 child: TextField(
                   controller: _ipControllers[stationKey],
+                  focusNode: _ipFocusNodes[stationKey],
                   decoration: InputDecoration(
                     labelText: 'Địa chỉ IP máy in (ví dụ: 192.168.1.100)',
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -712,42 +747,59 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
             ),
           ),
         ),
-        if (stationKey == 'cashier' && config.type == 'network') ...[
+        if (stationKey == 'cashier') ...[
           const SizedBox(height: 12),
           SizedBox(
             height: 52,
             child: TextButton.icon(
               onPressed: () async {
-                if (config.name.isNotEmpty) {
-                  try {
-                    await ThermalPrinterService.openCashDrawer(printerIp: config.name);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Đã gửi lệnh mở két tiền.'),
-                        behavior: SnackBarBehavior.floating,
-                        duration: Duration(seconds: 1),
-                      ));
+                if (config.type == 'network') {
+                  if (config.name.isNotEmpty) {
+                    try {
+                      await ThermalPrinterService.openCashDrawer(printerIp: config.name);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('Đã gửi lệnh mở két tiền.'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 1),
+                        ));
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Lỗi Kết Nối'),
+                            content: Text('Không thể mở két: $e'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đồng ý')),
+                            ],
+                          ),
+                        );
+                      }
                     }
-                  } catch (e) {
-                    if (context.mounted) {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Lỗi Kết Nối'),
-                          content: Text('Không thể mở két: $e'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đồng ý')),
-                          ],
-                        ),
-                      );
-                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Vui lòng nhập IP máy in trước.'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 1),
+                    ));
                   }
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Vui lòng nhập IP máy in trước.'),
-                    behavior: SnackBarBehavior.floating,
-                    duration: Duration(seconds: 1),
-                  ));
+                  // Đối với máy in hệ thống (local USB)
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Mở Két Máy In Hệ Thống'),
+                      content: const Text(
+                        'Đối với máy in hệ thống (local USB), lệnh mở két tiền được điều khiển tự động bởi Driver máy in của hệ điều hành Windows.\n\n'
+                        'Để kích hoạt, bạn vui lòng cấu hình "Device Settings -> Cash Drawer" trong Driver máy in của Windows, hoặc bấm nút "In thử nghiệm" phía trên để gửi lệnh in kích mở két.',
+                      ),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đồng ý')),
+                      ],
+                    ),
+                  );
                 }
               },
               icon: const Icon(Icons.vpn_key_rounded, size: 18),

@@ -108,6 +108,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     ref.onDispose(() {
       _subscription?.cancel();
       _kitchenTicketsSubscription?.unsubscribe();
+      _ordersSubscription?.unsubscribe();
+      _pollTimer?.cancel();
     });
 
     return const StationPrintersState(
@@ -120,18 +122,36 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     );
   }
 
-  Future<void> _loadLocalSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonStr = prefs.getString('qn_station_printers');
-    if (jsonStr != null) {
-      _applyJson(jsonStr);
+  Future<String> _getSettingsKey() async {
+    final info = await StoreAuthService.getStoreInfo();
+    var deviceId = info['device_id'];
+    if (deviceId == null || deviceId.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      deviceId = prefs.getString('device_id');
+      if (deviceId == null || deviceId.isEmpty) {
+        deviceId = const Uuid().v4();
+        await prefs.setString('device_id', deviceId);
+      }
     }
+    return 'qn_station_printers_$deviceId';
+  }
+
+  Future<void> _loadLocalSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = await _getSettingsKey();
+      final jsonStr = prefs.getString(key);
+      if (jsonStr != null) {
+        _applyJson(jsonStr);
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadSettings(String storeId) async {
     await _loadLocalSettings();
 
     try {
+      final key = await _getSettingsKey();
       // Đảm bảo x-store-id tồn tại trong Header REST của Supabase cho chính sách RLS
       Supabase.instance.client.rest.headers['x-store-id'] = storeId;
 
@@ -139,17 +159,17 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .from('app_settings')
           .select('value')
           .eq('store_id', storeId)
-          .eq('key', 'qn_station_printers')
+          .eq('key', key)
           .maybeSingle();
 
       final prefs = await SharedPreferences.getInstance();
-      final jsonStr = prefs.getString('qn_station_printers');
+      final jsonStr = prefs.getString(key);
 
       if (res != null && res['value'] != null) {
         final cloudJson = res['value'] as String;
         if (cloudJson != jsonStr) {
           _applyJson(cloudJson);
-          await prefs.setString('qn_station_printers', cloudJson);
+          await prefs.setString(key, cloudJson);
         }
       }
 
@@ -163,18 +183,19 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .stream(primaryKey: ['id'])
           .eq('store_id', storeId)
           .listen((List<Map<String, dynamic>> rows) async {
+            final settingsKey = await _getSettingsKey();
             final row = rows.firstWhere(
-              (r) => r['key'] == 'qn_station_printers',
+              (r) => r['key'] == settingsKey,
               orElse: () => {},
             );
             if (row.isNotEmpty) {
               final newValue = row['value'] as String?;
               if (newValue != null) {
                 final currentPrefs = await SharedPreferences.getInstance();
-                final currentLocalJson = currentPrefs.getString('qn_station_printers');
+                final currentLocalJson = currentPrefs.getString(settingsKey);
                 if (newValue != currentLocalJson) {
                   _applyJson(newValue);
-                  await currentPrefs.setString('qn_station_printers', newValue);
+                  await currentPrefs.setString(settingsKey, newValue);
                   
                   // Thiết lập lại listener in ngầm khi có cập nhật cấu hình từ Cloud
                   _setupPrintServerListener(storeId);
@@ -198,6 +219,25 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         autoOpenDrawer: map['autoOpenDrawer'] ?? true,
         autoPrintServer: map['autoPrintServer'] ?? false,
       );
+      _saveLocalOnly();
+    } catch (_) {}
+  }
+
+  Future<void> _saveLocalOnly() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = await _getSettingsKey();
+      final data = {
+        'cashier': state.cashier.toMap(),
+        'bepNong': state.bepNong.toMap(),
+        'bepBar': state.bepBar.toMap(),
+        'barLabel': state.barLabel.toMap(),
+        'autoPrintCheckout': state.autoPrintCheckout,
+        'autoPrintKitchen': state.autoPrintKitchen,
+        'autoOpenDrawer': state.autoOpenDrawer,
+        'autoPrintServer': state.autoPrintServer,
+      };
+      await prefs.setString(key, jsonEncode(data));
     } catch (_) {}
   }
 
@@ -220,7 +260,6 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     );
     await _persist();
     
-    // Khởi động hoặc dừng realtime listener ngay lập tức khi thay đổi setting
     final session = ref.read(sessionProvider);
     final storeId = session?.storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
     if (storeId != null) {
@@ -229,35 +268,36 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   }
 
   Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
-    final data = {
-      'cashier': state.cashier.toMap(),
-      'bepNong': state.bepNong.toMap(),
-      'bepBar': state.bepBar.toMap(),
-      'barLabel': state.barLabel.toMap(),
-      'autoPrintCheckout': state.autoPrintCheckout,
-      'autoPrintKitchen': state.autoPrintKitchen,
-      'autoOpenDrawer': state.autoOpenDrawer,
-      'autoPrintServer': state.autoPrintServer,
-    };
-    final jsonStr = jsonEncode(data);
-    await prefs.setString('qn_station_printers', jsonStr);
-
     try {
+      final key = await _getSettingsKey();
+      final data = {
+        'cashier': state.cashier.toMap(),
+        'bepNong': state.bepNong.toMap(),
+        'bepBar': state.bepBar.toMap(),
+        'barLabel': state.barLabel.toMap(),
+        'autoPrintCheckout': state.autoPrintCheckout,
+        'autoPrintKitchen': state.autoPrintKitchen,
+        'autoOpenDrawer': state.autoOpenDrawer,
+        'autoPrintServer': state.autoPrintServer,
+      };
+      final jsonStr = jsonEncode(data);
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(key, jsonStr);
+
       final session = ref.read(sessionProvider);
       final storeId = session?.storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
-      print('[_persist] storeId: $storeId');
+      print('[_persist] storeId: $storeId, key: $key');
       if (storeId != null) {
-        // Đảm bảo x-store-id tồn tại trong Header
         Supabase.instance.client.rest.headers['x-store-id'] = storeId;
 
         await Supabase.instance.client.from('app_settings').upsert({
           'id': const Uuid().v4(),
           'store_id': storeId,
-          'key': 'qn_station_printers',
+          'key': key,
           'value': jsonStr,
-        }, onConflict: 'store_id,key'); // Sửa khoảng trắng ở onConflict để trùng khớp unique constraint 100%
-        print('[_persist] Supabase upsert success');
+        }, onConflict: 'store_id,key');
+        print('[_persist] Supabase upsert success for key: $key');
       } else {
         print('[_persist] storeId is null!');
       }
@@ -267,146 +307,310 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   }
 
   RealtimeChannel? _kitchenTicketsSubscription;
+  RealtimeChannel? _ordersSubscription;
   final Set<String> _printedTicketIds = {};
+  final Set<String> _printedOrderIds = {};
+  Timer? _pollTimer;
 
   void _setupPrintServerListener(String storeId) {
     _kitchenTicketsSubscription?.unsubscribe();
     _kitchenTicketsSubscription = null;
+    _ordersSubscription?.unsubscribe();
+    _ordersSubscription = null;
+    _pollTimer?.cancel();
+    _pollTimer = null;
 
     if (!state.autoPrintServer) {
       print('[PrintServer] Chế độ máy chủ in ấn (Print Server) hiện đang TẮT.');
       return;
     }
 
-    print('[PrintServer] Khởi chạy dịch vụ lắng nghe phiếu bếp realtime cho store: $storeId');
+    print('[PrintServer] Khởi chạy dịch vụ lắng nghe in ấn realtime (Bếp & Hóa đơn) cho store: $storeId');
     
-    // Đăng ký nhận sự kiện realtime INSERT trên bảng kitchen_tickets
+    // 1. WebSocket Realtime - Lắng nghe kitchen_tickets
     _kitchenTicketsSubscription = Supabase.instance.client
         .channel('print_server_tickets')
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
           schema: 'public',
           table: 'kitchen_tickets',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'store_id',
-            value: storeId,
-          ),
           callback: (payload) async {
             final newRow = payload.newRecord;
             if (newRow.isEmpty) return;
-
+            final ticketStoreId = newRow['store_id'] as String? ?? '';
+            if (ticketStoreId != storeId) return;
             final ticketId = newRow['id'] as String?;
-            if (ticketId == null) return;
-
-            if (_printedTicketIds.contains(ticketId)) return;
-            _printedTicketIds.add(ticketId);
-
-            print('[PrintServer] Phát hiện phiếu bếp mới: $ticketId. Đang tải chi tiết món để in...');
-            
-            try {
-              // Chờ 800ms để đảm bảo các items liên kết đã kịp lưu vào database
-              await Future.delayed(const Duration(milliseconds: 800));
-
-              // Tải thông tin ticket
-              final ticketData = await Supabase.instance.client
-                  .from('kitchen_tickets')
-                  .select()
-                  .eq('id', ticketId)
-                  .maybeSingle();
-
-              if (ticketData == null) return;
-
-              // Tải thông tin items của ticket
-              final itemsData = await Supabase.instance.client
-                  .from('kitchen_ticket_items')
-                  .select()
-                  .eq('ticket_id', ticketId);
-
-              if (itemsData.isEmpty) return;
-
-              // Tải tên bàn từ ban_sessions
-              String tableName = 'Mang về';
-              final sessionId = ticketData['order_id'] as String?;
-              if (sessionId != null) {
-                final sessionData = await Supabase.instance.client
-                    .from('ban_sessions')
-                    .select('label')
-                    .eq('id', sessionId)
-                    .maybeSingle();
-                if (sessionData != null) {
-                  tableName = sessionData['label'] as String? ?? 'Mang về';
-                }
-              }
-
-              // Build BillData cho phiếu bếp
-              final note = ticketData['note'] as String? ?? '';
-              final orderNumber = note.isNotEmpty ? note : ticketId.substring(0, 8).toUpperCase();
-
-              final List<BillItem> billItems = [];
-              for (final item in itemsData) {
-                final name = (item['product_name'] as String?) ?? (item['name'] as String?) ?? '';
-                final qty = ((item['quantity'] as num?) ?? (item['qty'] as num?) ?? 1).toInt();
-                final stationCode = (item['station_code'] as String?) ?? 'bep_nong';
-
-                String? noteText;
-                final rawNote = (item['modifiers_json'] as String?) ?? (item['kitchen_note'] as String?) ?? (item['free_note'] as String?);
-                if (rawNote != null && rawNote.isNotEmpty) {
-                  try {
-                    final decoded = jsonDecode(rawNote);
-                    if (decoded is List) {
-                      noteText = decoded.map<String>((m) {
-                        if (m is Map) {
-                          final nameVal = m['name'] as String? ?? '';
-                          final qtyVal  = (m['qty'] as num?)?.toInt() ?? 1;
-                          final typeVal = m['type'] as String? ?? '';
-                          if (typeVal == 'topping') {
-                            return qtyVal > 1 ? '+$nameVal ×$qtyVal' : '+$nameVal';
-                          }
-                          return nameVal;
-                        }
-                        return '$m';
-                      }).where((s) => s.isNotEmpty).join(', ');
-                    } else {
-                      noteText = rawNote;
-                    }
-                  } catch (_) {
-                    noteText = rawNote;
-                  }
-                }
-
-                billItems.add(BillItem(
-                  name: name,
-                  qty: qty,
-                  price: 0,
-                  note: noteText,
-                  stationCode: stationCode,
-                ));
-              }
-
-              final billData = BillData(
-                shopName: 'QUÁN NHỎ POS',
-                shopAddress: '',
-                shopPhone: '',
-                orderNumber: orderNumber,
-                createdAt: DateTime.now(),
-                tableName: tableName,
-                items: billItems,
-                subtotal: 0,
-                total: 0,
-                type: BillType.kitchen,
-                note: '',
-              );
-
-              print('[PrintServer] Bắt đầu đẩy in phiếu bếp $orderNumber...');
-              await StationPrinterDispatcher.printBill(billData, this.state, onlyKitchen: true);
-              print('[PrintServer] Đã đẩy in thành công!');
-            } catch (e) {
-              print('[PrintServer] Lỗi xử lý in: $e');
+            if (ticketId != null) {
+              _processTicket(ticketId, storeId);
             }
           },
         );
-    _kitchenTicketsSubscription!.subscribe();
+    _kitchenTicketsSubscription!.subscribe((status, [error]) {
+      print('[PrintServer] Kênh Realtime phiếu bếp: $status ${error != null ? "- Lỗi: $error" : ""}');
+    });
+
+    // 2. WebSocket Realtime - Lắng nghe orders (đã thanh toán)
+    _ordersSubscription = Supabase.instance.client
+        .channel('print_server_orders')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'orders',
+          callback: (payload) async {
+            final newRow = payload.newRecord;
+            if (newRow.isEmpty) return;
+            final orderStoreId = newRow['store_id'] as String? ?? '';
+            if (orderStoreId != storeId) return;
+            final orderId = newRow['id'] as String?;
+            if (orderId != null) {
+              _processOrder(orderId, storeId);
+            }
+          },
+        );
+    _ordersSubscription!.subscribe((status, [error]) {
+      print('[PrintServer] Kênh Realtime đơn hàng: $status ${error != null ? "- Lỗi: $error" : ""}');
+    });
+
+    // 3. Polling Fallback - Tự động quét in bù mỗi 12 giây đề phòng mất mạng / socket lỗi
+    _pollTimer = Timer.periodic(const Duration(seconds: 12), (timer) async {
+      _pollActiveTicketsAndOrders(storeId);
+    });
+  }
+
+  Future<void> _processTicket(String ticketId, String storeId) async {
+    if (_printedTicketIds.contains(ticketId)) return;
+    _printedTicketIds.add(ticketId);
+
+    print('[PrintServer] Xử lý phiếu bếp mới: $ticketId. Đang tải chi tiết món...');
+    try {
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      final ticketData = await Supabase.instance.client
+          .from('kitchen_tickets')
+          .select()
+          .eq('id', ticketId)
+          .maybeSingle();
+
+      if (ticketData == null) return;
+
+      final itemsData = await Supabase.instance.client
+          .from('kitchen_ticket_items')
+          .select()
+          .eq('ticket_id', ticketId);
+
+      if (itemsData.isEmpty) return;
+
+      String tableName = 'Mang về';
+      final sessionId = ticketData['session_id'] as String?;
+      if (sessionId != null) {
+        final sessionData = await Supabase.instance.client
+            .from('ban_sessions')
+            .select('label')
+            .eq('id', sessionId)
+            .maybeSingle();
+        if (sessionData != null) {
+          tableName = sessionData['label'] as String? ?? 'Mang về';
+        }
+      }
+
+      final note = ticketData['note'] as String? ?? '';
+      final round = ticketData['round'] as int? ?? 1;
+      final orderNumber = 'Bep-$round';
+
+      final List<BillItem> billItems = [];
+      for (final item in itemsData) {
+        final name = (item['product_name'] as String?) ?? (item['name'] as String?) ?? '';
+        final qty = ((item['quantity'] as num?) ?? (item['qty'] as num?) ?? 1).toInt();
+        final stationCode = (item['station_code'] as String?) ?? 'bep_nong';
+
+        String? noteText;
+        final rawNote = (item['modifiers_json'] as String?) ?? (item['kitchen_note'] as String?) ?? (item['free_note'] as String?);
+        if (rawNote != null && rawNote.isNotEmpty) {
+          try {
+            final decoded = jsonDecode(rawNote);
+            if (decoded is List) {
+              noteText = decoded.map<String>((m) {
+                if (m is Map) {
+                  final nameVal = m['name'] as String? ?? '';
+                  final qtyVal  = (m['qty'] as num?)?.toInt() ?? 1;
+                  final typeVal = m['type'] as String? ?? '';
+                  if (typeVal == 'topping') {
+                    return qtyVal > 1 ? '+$nameVal ×$qtyVal' : '+$nameVal';
+                  }
+                  return nameVal;
+                }
+                return '$m';
+              }).where((s) => s.isNotEmpty).join(', ');
+            } else {
+              noteText = rawNote;
+            }
+          } catch (_) {
+            noteText = rawNote;
+          }
+        }
+
+        billItems.add(BillItem(
+          name: name,
+          qty: qty,
+          price: 0,
+          note: noteText,
+          stationCode: stationCode,
+        ));
+      }
+
+      final billData = BillData(
+        shopName: 'QUÁN NHỎ POS',
+        shopAddress: '',
+        shopPhone: '',
+        orderNumber: orderNumber,
+        createdAt: DateTime.now(),
+        tableName: tableName,
+        items: billItems,
+        subtotal: 0,
+        total: 0,
+        type: BillType.kitchen,
+        note: '',
+      );
+
+      print('[PrintServer] Bắt đầu đẩy in phiếu bếp $orderNumber...');
+      await StationPrinterDispatcher.printBill(billData, this.state, onlyKitchen: true);
+      print('[PrintServer] Đã đẩy in thành công!');
+    } catch (e) {
+      print('[PrintServer] Lỗi xử lý in bếp: $e');
+    }
+  }
+
+  Future<void> _processOrder(String orderId, String storeId) async {
+    if (_printedOrderIds.contains(orderId)) return;
+    _printedOrderIds.add(orderId);
+
+    print('[PrintServer] Xử lý đơn hàng mới: $orderId. Đang tải chi tiết để in bill thanh toán...');
+    try {
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      final orderData = await Supabase.instance.client
+          .from('orders')
+          .select()
+          .eq('id', orderId)
+          .maybeSingle();
+
+      if (orderData == null) return;
+
+      final status = orderData['status'] as String? ?? 'open';
+      if (status != 'paid') {
+        print('[PrintServer] Đơn hàng $orderId chưa được thanh toán (status=$status). Bỏ qua.');
+        return;
+      }
+
+      final itemsData = await Supabase.instance.client
+          .from('order_items')
+          .select()
+          .eq('order_id', orderId);
+
+      if (itemsData.isEmpty) return;
+
+      final storeRow = await Supabase.instance.client
+          .from('stores')
+          .select('name, phone, address')
+          .eq('id', storeId)
+          .maybeSingle();
+
+      final shopName = storeRow?['name'] as String? ?? 'QUÁN NHỎ POS';
+      final shopPhone = storeRow?['phone'] as String?;
+      final shopAddress = storeRow?['address'] as String?;
+
+      String tableName = 'Mang về';
+      final sourceId = orderData['source_id'] as String?;
+      final sourceType = orderData['source_type'] as String?;
+      if (sourceType == 'table' && sourceId != null) {
+        final tableRow = await Supabase.instance.client
+            .from('ban_dining_tables')
+            .select('label')
+            .eq('id', sourceId)
+            .maybeSingle();
+        if (tableRow != null) {
+          tableName = tableRow['label'] as String? ?? 'Mang về';
+        }
+      }
+
+      final orderNumber = orderId.substring(0, 8).toUpperCase();
+      final totalAmount = ((orderData['total'] as num?) ?? 0).toDouble();
+
+      final List<BillItem> billItems = [];
+      for (final item in itemsData) {
+        final name = item['name'] as String? ?? '';
+        final qty = ((item['qty'] as num?) ?? 1).toInt();
+        final price = ((item['unit_price'] as num?) ?? 0).toDouble();
+        final note = item['note'] as String?;
+
+        billItems.add(BillItem(
+          name: name,
+          qty: qty,
+          price: price,
+          note: note,
+          stationCode: 'thu_ngan',
+        ));
+      }
+
+      final billData = BillData(
+        shopName: shopName,
+        shopAddress: shopAddress,
+        shopPhone: shopPhone,
+        orderNumber: orderNumber,
+        createdAt: DateTime.now(),
+        tableName: tableName,
+        items: billItems,
+        subtotal: totalAmount,
+        total: totalAmount,
+        type: BillType.receipt,
+        note: orderData['note'] as String? ?? '',
+      );
+
+      print('[PrintServer] Bắt đầu đẩy in hoá đơn thanh toán $orderNumber...');
+      await StationPrinterDispatcher.printBill(billData, this.state, onlyReceipt: true);
+      print('[PrintServer] Đã đẩy in hoá đơn thành công!');
+    } catch (e) {
+      print('[PrintServer] Lỗi xử lý in hoá đơn: $e');
+    }
+  }
+
+  Future<void> _pollActiveTicketsAndOrders(String storeId) async {
+    try {
+      // 1. Quét 10 phiếu bếp mới nhất
+      final tickets = await Supabase.instance.client
+          .from('kitchen_tickets')
+          .select('id')
+          .eq('store_id', storeId)
+          .order('sent_at', ascending: false)
+          .limit(10);
+      
+      for (final row in tickets) {
+        final ticketId = row['id'] as String?;
+        if (ticketId != null && !_printedTicketIds.contains(ticketId)) {
+          print('[PrintServer Polling] Phát hiện phiếu bếp chưa in qua WebSocket: $ticketId');
+          _processTicket(ticketId, storeId);
+        }
+      }
+
+      // 2. Quét 10 đơn hàng thanh toán mới nhất
+      final orders = await Supabase.instance.client
+          .from('orders')
+          .select('id')
+          .eq('store_id', storeId)
+          .eq('status', 'paid')
+          .order('created_at', ascending: false)
+          .limit(10);
+
+      for (final row in orders) {
+        final orderId = row['id'] as String?;
+        if (orderId != null && !_printedOrderIds.contains(orderId)) {
+          print('[PrintServer Polling] Phát hiện đơn hàng chưa in qua WebSocket: $orderId');
+          _processOrder(orderId, storeId);
+        }
+      }
+    } catch (e) {
+      print('[PrintServer Polling] Lỗi quét dữ liệu in: $e');
+    }
   }
 }
 

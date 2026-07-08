@@ -207,6 +207,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
   List<BanZoneModel> _cachedZones = [];
   String? _syncedStoreId;
   String _statusFilter = 'all'; // 'all' | 'occupied' | 'empty'
+  String _tableCardSize = 'vua'; // 'to' | 'vua' | 'nho'
 
   BanRepository get _banRepo => ref.read(banRepositoryProvider);
 
@@ -635,6 +636,55 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     );
   }
 
+  Widget _buildSizeToggleItem(String size, String label) {
+    final isSelected = _tableCardSize == size;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _tableCardSize = size);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected ? _kNavy : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: isSelected ? Colors.white : _kNavy.withValues(alpha: 0.6),
+          ),
+        ),
+      ),
+    );
+  }
+
+  int _getCrossAxisCount(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+    final isTablet = Responsive.isTablet(context);
+    if (_tableCardSize == 'nho') {
+      return isMobile ? 4 : isTablet ? 5 : 6;
+    } else if (_tableCardSize == 'vua') {
+      return isMobile ? 3 : isTablet ? 4 : 5;
+    } else { // 'to'
+      return isMobile ? 2 : isTablet ? 3 : 4;
+    }
+  }
+
+  double _getAspectRatio(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+    if (_tableCardSize == 'nho') {
+      return isMobile ? 1.05 : 1.15;
+    } else if (_tableCardSize == 'vua') {
+      return isMobile ? 1.18 : 1.3;
+    } else { // 'to'
+      return isMobile ? 1.22 : 1.45;
+    }
+  }
+
   // ── Helper: Grid bàn tách ra để dùng lại ─────────────────────────────────
   Widget _buildTableGrid(List<BanZoneModel> zones) {
     final activeSessionsAsync = ref.watch(activeSessionsProvider);
@@ -658,6 +708,22 @@ class _BanScreenState extends ConsumerState<BanScreen> {
             _buildFilterChip(label: 'Đang có khách', value: 'occupied', color: _kRed),
             const SizedBox(width: 8),
             _buildFilterChip(label: 'Bàn trống', value: 'empty', color: _kGreen),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade300.withValues(alpha: 0.8)),
+              ),
+              child: Row(
+                children: [
+                  _buildSizeToggleItem('to', 'To'),
+                  _buildSizeToggleItem('vua', 'Vừa'),
+                  _buildSizeToggleItem('nho', 'Nhỏ'),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -774,10 +840,10 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           sliver: SliverGrid(
                             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: Responsive.isMobile(context) ? 2 : Responsive.isTablet(context) ? 3 : 4,
+                              crossAxisCount: _getCrossAxisCount(context),
                               crossAxisSpacing: 12,
                               mainAxisSpacing: 12,
-                              childAspectRatio: 1.1,
+                              childAspectRatio: _getAspectRatio(context),
                             ),
                             delegate: SliverChildBuilderDelegate(
                               (ctx, i) {
@@ -785,6 +851,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                                 final session = activeSessions[table.id];
                                 return _TableCard(
                                   table: table, session: session, zone: zone,
+                                  cardSize: _tableCardSize,
                                   onTap: () => session != null
                                       ? _manageSession(table, session, zone)
                                       : _openTable(table, zone),
@@ -811,10 +878,10 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                 return GridView.builder(
                   padding: const EdgeInsets.all(16),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: Responsive.isMobile(context) ? 2 : Responsive.isTablet(context) ? 3 : 4,
+                    crossAxisCount: _getCrossAxisCount(context),
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: 1.1,
+                    childAspectRatio: _getAspectRatio(context),
                   ),
                   itemCount: filtered.length,
                   itemBuilder: (ctx, i) {
@@ -826,6 +893,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                     );
                     return _TableCard(
                       table: table, session: session, zone: zone,
+                      cardSize: _tableCardSize,
                       onTap: () => session != null
                           ? _manageSession(table, session, zone)
                           : _openTable(table, zone),
@@ -1296,6 +1364,7 @@ class _TableCard extends ConsumerWidget {
   final BanTableModel table;
   final BanSessionModel? session;
   final BanZoneModel zone;
+  final String cardSize; // 'to' | 'vua' | 'nho'
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
@@ -1303,6 +1372,7 @@ class _TableCard extends ConsumerWidget {
     required this.table,
     required this.session,
     required this.zone,
+    required this.cardSize,
     required this.onTap,
     required this.onLongPress,
   });
@@ -1319,6 +1389,14 @@ class _TableCard extends ConsumerWidget {
     final activeItems = itemsAsync?.value?.where((i) => i.kitchenStatus != 'huy') ?? [];
     final totalAmount = activeItems.fold<double>(0, (sum, item) => sum + item.subtotal);
 
+    // Kích thước động theo cardSize
+    final double paddingVal = cardSize == 'nho' ? 8.0 : cardSize == 'vua' ? 11.0 : 14.0;
+    final double iconSizeVal = cardSize == 'nho' ? 16.0 : cardSize == 'vua' ? 20.0 : 24.0;
+    final double statusFontSize = cardSize == 'nho' ? 9.0 : cardSize == 'vua' ? 10.0 : 11.0;
+    final double labelFontSize = cardSize == 'nho' ? 15.0 : cardSize == 'vua' ? 18.5 : 22.0;
+    final double infoFontSize = cardSize == 'nho' ? 10.5 : cardSize == 'vua' ? 11.5 : 13.0;
+    final double amountFontSize = cardSize == 'nho' ? 13.0 : cardSize == 'vua' ? 15.5 : 18.0;
+
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
@@ -1327,7 +1405,7 @@ class _TableCard extends ConsumerWidget {
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
           color: isOccupied ? zoneColor : Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(cardSize == 'nho' ? 12 : 16),
           border: Border.all(
             color: isOccupied
                 ? zoneColor
@@ -1345,7 +1423,7 @@ class _TableCard extends ConsumerWidget {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(paddingVal),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1355,24 +1433,26 @@ class _TableCard extends ConsumerWidget {
                 children: [
                   Icon(
                     IconData(zone.iconCode, fontFamily: 'MaterialIcons'),
-                    size: 20,
+                    size: iconSizeVal,
                     color: isOccupied
                         ? Colors.white.withValues(alpha: 0.8)
                         : Color(zone.colorValue),
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: cardSize == 'nho' ? 6 : cardSize == 'vua' ? 8 : 10,
+                      vertical: cardSize == 'nho' ? 2 : cardSize == 'vua' ? 3 : 4,
+                    ),
                     decoration: BoxDecoration(
                       color: isOccupied
                           ? Colors.white.withValues(alpha: 0.2)
                           : _kGreen.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(cardSize == 'nho' ? 6 : 8),
                     ),
                     child: Text(
                       isOccupied ? '● Có khách' : '○ Trống',
                       style: GoogleFonts.outfit(
-                        fontSize: 10,
+                        fontSize: statusFontSize,
                         fontWeight: FontWeight.w600,
                         color: isOccupied ? Colors.white : _kGreen,
                       ),
@@ -1386,35 +1466,37 @@ class _TableCard extends ConsumerWidget {
                   Text(
                     table.label,
                     style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
+                      fontSize: labelFontSize,
+                      fontWeight: FontWeight.w900,
                       color: isOccupied ? Colors.white : _kNavy,
                     ),
                   ),
+                  SizedBox(height: cardSize == 'nho' ? 0 : 2),
                   if (isOccupied) ...[
-                    const SizedBox(height: 2),
                     Text(
                       '${session!.guestCount} khách',
                       style: GoogleFonts.outfit(
-                        fontSize: 11,
-                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: infoFontSize,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.85),
                       ),
                     ),
                   ] else
                     Text(
                       '${table.seats} chỗ',
                       style: GoogleFonts.outfit(
-                        fontSize: 11,
-                        color: _kNavy.withValues(alpha: 0.45),
+                        fontSize: infoFontSize,
+                        fontWeight: FontWeight.w500,
+                        color: _kNavy.withValues(alpha: 0.55),
                       ),
                     ),
                   if (isOccupied && totalAmount > 0) ...[
-                    const SizedBox(height: 6),
+                    SizedBox(height: cardSize == 'nho' ? 2 : 6),
                     Text(
-                    fmtVnd(totalAmount),
+                      fmtVnd(totalAmount),
                       style: GoogleFonts.outfit(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                        fontSize: amountFontSize,
+                        fontWeight: FontWeight.w900,
                         color: Colors.white,
                       ),
                     ),
@@ -2579,7 +2661,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       
       // Tự động in hóa đơn thu ngân khi thanh toán tại bàn (nếu bật cấu hình)
       try {
-        if (printerSettingsCached.autoPrintCheckout) {
+        if (printerSettingsCached.autoPrintCheckout && !printerSettingsCached.autoPrintServer) {
           final List<BillItem> billItems = [];
           for (final item in items) {
             billItems.add(BillItem(

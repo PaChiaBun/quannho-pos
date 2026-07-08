@@ -123,10 +123,29 @@ Chúng ta đã hoàn thành nâng cấp module Quản Lý Bàn và Báo Cáo Doa
   }
   ```
 
+
 ---
 
-## 🚀 7. Các bước tiếp theo dành cho chủ quán
+## 🗄️ 8. Đồng Bộ Hoá Thiết Lập Máy In Thiết Bị Độc Lập Lên Supabase (Device-isolated Cloud Sync)
+
+Để giải quyết triệt để lỗi không in được và xung đột cấu hình giữa nhiều thiết bị, toàn bộ mô-đun thiết lập máy in đã được nâng cấp lưu trữ lên đám mây 100%:
+
+### 1. Phân tách theo UUID Thiết bị:
+* Cấu hình máy in của từng máy (PC Thu ngân, Tablet, Điện thoại) được lưu trữ riêng biệt trên Supabase bảng `app_settings` dưới định dạng khóa: `qn_station_printers_<device_id>`.
+* Việc này giúp mỗi máy có một cấu hình độc lập hoàn toàn, không bao giờ bị ghi đè chéo hoặc làm mất tên máy in của nhau.
+
+### 2. Tự động lưu không cần nút bấm (Smart Auto-save):
+* Hệ thống tích hợp `FocusNode` tự động phát hiện khi ô nhập IP mất focus (người dùng gõ xong và bấm ra ngoài hoặc chuyển sang trạm in khác) để tự động đẩy lệnh lưu `upsert` lên Supabase.
+* Tránh tình trạng spam request lên database khi người dùng đang gõ phím.
+
+### 3. Sửa lỗi Realtime in ngầm (Print Server):
+* Chuyển đổi bộ lọc dữ liệu Realtime in ấn từ database filter (`PostgresChangeFilter` vốn lỗi khi so khớp UUID của store) sang bộ lọc Client-side của Dart. Đảm bảo 100% nhận diện lệnh in ngầm ngay lập tức khi nhân viên gửi đơn từ điện thoại/máy tính bảng.
+
+---
+
+## 🚀 9. Các bước tiếp theo dành cho chủ quán
 
 1. Tiến hành **Push** các thay đổi mã nguồn này lên repository GitHub của bạn.
 2. Bản nâng cấp này sẽ tự động cập nhật đồng bộ lên cả phiên bản Web và App di động khi đóng gói bản dựng tiếp theo!
+
 

@@ -839,80 +839,12 @@ class _BlinkingBadgeState extends State<_BlinkingBadge>
 // ─────────────────────────────────────────────────────────────────────────────
 // STATS DRAWER — Bước 10: Thống kê + Bước 9: Cài đặt máy in
 // ─────────────────────────────────────────────────────────────────────────────
-class _StatsDrawer extends ConsumerStatefulWidget {
-  @override
-  ConsumerState<_StatsDrawer> createState() => _StatsDrawerState();
-}
-
-class _StatsDrawerState extends ConsumerState<_StatsDrawer> {
-  late TextEditingController _ipCtrl;
-  late TextEditingController _portCtrl;
-  bool _testing = false;
-  String? _testResult;
-  bool _testOk = false;
+class _StatsDrawer extends ConsumerWidget {
+  const _StatsDrawer();
 
   @override
-  void initState() {
-    super.initState();
-    final config = ref.read(printerConfigProvider);
-    _ipCtrl = TextEditingController(text: config.ip);
-    _portCtrl =
-        TextEditingController(text: config.port.toString());
-  }
-
-  @override
-  void dispose() {
-    _ipCtrl.dispose();
-    _portCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _testConnection() async {
-    final ip = _ipCtrl.text.trim();
-    if (ip.isEmpty) return;
-    setState(() {
-      _testing = true;
-      _testResult = null;
-    });
-    final port = int.tryParse(_portCtrl.text.trim()) ?? 9100;
-    final result = await ThermalPrinterService.testConnection(
-      printerIp: ip,
-      port: port,
-    );
-    if (mounted) {
-      setState(() {
-        _testing = false;
-        _testOk = result.ok;
-        _testResult = result.ok ? 'Kết nối thành công! Đã in test.' : result.error;
-      });
-    }
-  }
-
-  Future<void> _save() async {
-    final ip = _ipCtrl.text.trim();
-    final port = int.tryParse(_portCtrl.text.trim()) ?? 9100;
-    final current = ref.read(printerConfigProvider);
-    await ref
-        .read(printerConfigProvider.notifier)
-        .update(current.copyWith(ip: ip, port: port));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Đã lưu cài đặt máy in',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(kitchenStatsProvider);
-    final printerConfig = ref.watch(printerConfigProvider);
 
     return Drawer(
       backgroundColor: _kCard,
@@ -956,7 +888,7 @@ class _StatsDrawerState extends ConsumerState<_StatsDrawer> {
                         ),
                       ),
                       Text(
-                        'Thống kê & Cài đặt',
+                        'Thống kê hiệu suất',
                         style: GoogleFonts.outfit(
                           fontSize: 12,
                           color: Colors.white38,
@@ -1070,132 +1002,6 @@ class _StatsDrawerState extends ConsumerState<_StatsDrawer> {
                       ],
                     );
                   }),
-
-                  const SizedBox(height: 24),
-                  Divider(height: 1, color: Colors.white.withValues(alpha: 0.08)),
-                  const SizedBox(height: 20),
-
-                  // ── Máy in nhiệt ──
-                  Row(
-                    children: [
-                      _StatSection(title: 'MÁY IN NHIỆT Wi-Fi'),
-                      const Spacer(),
-                      // Toggle bật/tắt in tự động
-                      Transform.scale(
-                        scale: 0.8,
-                        child: Switch(
-                          value: printerConfig.enabled,
-                          activeColor: _kGreen,
-                          onChanged: (v) async {
-                            await ref
-                                .read(printerConfigProvider.notifier)
-                                .update(printerConfig.copyWith(enabled: v));
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  // IP
-                  _PrinterField(
-                    label: 'Địa chỉ IP',
-                    hint: 'Ví dụ: 192.168.1.100',
-                    controller: _ipCtrl,
-                    keyboardType: TextInputType.number,
-                    icon: Icons.router_rounded,
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Port
-                  _PrinterField(
-                    label: 'Port',
-                    hint: '9100',
-                    controller: _portCtrl,
-                    keyboardType: TextInputType.number,
-                    icon: Icons.settings_ethernet_rounded,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Buttons: Lưu + Test
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _OutlineBtn(
-                          label: 'Lưu cài đặt',
-                          icon: Icons.save_rounded,
-                          color: _kOrange,
-                          onTap: _save,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _OutlineBtn(
-                          label: _testing ? 'Đang test...' : 'In test',
-                          icon: Icons.print_rounded,
-                          color: _kGreen,
-                          onTap: _testing ? null : _testConnection,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Kết quả test
-                  if (_testResult != null) ...
-                  [
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: (_testOk ? _kGreen : _kRed)
-                            .withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: (_testOk ? _kGreen : _kRed)
-                              .withValues(alpha: 0.35),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _testOk
-                                ? Icons.check_circle_rounded
-                                : Icons.error_rounded,
-                            size: 15,
-                            color: _testOk ? _kGreen : _kRed,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _testResult!,
-                              style: GoogleFonts.outfit(
-                                fontSize: 12,
-                                color: _testOk ? _kGreen : _kRed,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 12),
-                  // Ghi chú
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.03),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '💡 Hỗ trợ máy in ESC/POS qua Wi-Fi (Xprinter, Epson, SNBC...). Kết nối máy in và điện thoại cùng mạng Wi-Fi nội bộ.',
-                      style: GoogleFonts.outfit(
-                        fontSize: 11,
-                        color: Colors.white30,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),

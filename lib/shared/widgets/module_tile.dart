@@ -363,23 +363,23 @@ class _ModuleTileState extends State<ModuleTile>
 
                     // ── Content ──────────────────────────────────────────
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 18),
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Icon pill
                           Container(
-                            width: 52,
-                            height: 52,
+                            width: 62,
+                            height: 62,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
+                              borderRadius: BorderRadius.circular(18),
                               color: Colors.white.withValues(alpha: 0.20),
                               border: Border.all(
                                 color: Colors.white.withValues(alpha: 0.35),
                                 width: 1.5,
                               ),
                             ),
-                            child: Icon(d.icon, color: Colors.white, size: 28),
+                            child: Icon(d.icon, color: Colors.white, size: 36),
                           ),
 
                           const Spacer(),
@@ -389,22 +389,22 @@ class _ModuleTileState extends State<ModuleTile>
                             d.title,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.5,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900, // Dày và đậm hơn
+                              letterSpacing: -0.3,
                               height: 1.1,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 4),
                           // Subtitle
                           Text(
                             d.subtitle,
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.70),
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700, // Đậm hơn
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
