@@ -112,22 +112,17 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 700) {
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
-                child: Row(children: [
-                  Expanded(flex: 3, child: mainContent),
-                  SizedBox(
-                    width: 280,
-                    child: _ReportRightPanel(
-                      todayStats: todayStats,
-                      todayFin: todayFin,
-                      monthRev: monthRev,
-                    ),
-                  ),
-                ]),
+            return Row(children: [
+              Expanded(flex: 3, child: mainContent),
+              SizedBox(
+                width: 280,
+                child: _ReportRightPanel(
+                  todayStats: todayStats,
+                  todayFin: todayFin,
+                  monthRev: monthRev,
+                ),
               ),
-            );
+            ]);
           }
           return mainContent;
         },

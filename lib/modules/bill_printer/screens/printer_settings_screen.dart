@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../providers/printer_settings_provider.dart';
 import '../providers/bill_template_provider.dart';
+import '../../../core/services/thermal_printer_service.dart';
 import '../widgets/bill_preview_widget.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/services/network_printer_search_service.dart';
@@ -96,6 +98,16 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
       if (config.name.isEmpty) {
         throw Exception('Vui lòng chọn máy in hoặc nhập IP trước.');
       }
+      if (kIsWeb) {
+        final pdf = pw.Document();
+        pdf.addPage(pw.Page(
+          build: (context) => pw.Center(
+            child: pw.Text('Quan Nho POS\nTEST PRINTER (WEB MODE)\nStation: $stationName\nTarget: ${config.name}'),
+          ),
+        ));
+        await Printing.layoutPdf(onLayout: (_) async => pdf.save());
+        return;
+      }
       if (config.type == 'system') {
         final pdf = pw.Document();
         pdf.addPage(pw.Page(
@@ -141,6 +153,22 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Tự động cập nhật nội dung TextControllers khi state thay đổi từ db
+    ref.listen<StationPrintersState>(printerSettingsProvider, (previous, next) {
+      if (next.cashier.type == 'network' && _ipControllers['cashier']?.text != next.cashier.name) {
+        _ipControllers['cashier']?.text = next.cashier.name;
+      }
+      if (next.bepNong.type == 'network' && _ipControllers['bepNong']?.text != next.bepNong.name) {
+        _ipControllers['bepNong']?.text = next.bepNong.name;
+      }
+      if (next.bepBar.type == 'network' && _ipControllers['bepBar']?.text != next.bepBar.name) {
+        _ipControllers['bepBar']?.text = next.bepBar.name;
+      }
+      if (next.barLabel.type == 'network' && _ipControllers['barLabel']?.text != next.barLabel.name) {
+        _ipControllers['barLabel']?.text = next.barLabel.name;
+      }
+    });
+
     final isWide = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
@@ -207,6 +235,24 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
                     value: settings.autoPrintKitchen,
                     onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(kitchen: v),
                   ),
+                  SwitchListTile(
+                    activeColor: _kIndigo,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Tự động mở két tiền', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    subtitle: const Text('Mở két khi in hoá đơn thanh toán', style: TextStyle(fontSize: 11)),
+                    value: settings.autoOpenDrawer,
+                    onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(openDrawer: v),
+                  ),
+                  SwitchListTile(
+                    activeColor: _kIndigo,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Máy chủ in ấn (Print Server)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    subtitle: const Text('Tự động in hộ các thiết bị di động/web khác', style: TextStyle(fontSize: 11)),
+                    value: settings.autoPrintServer,
+                    onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(printServer: v),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildHelpSection(),
                 ],
               ),
             ),
@@ -304,11 +350,27 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
                     value: settings.autoPrintKitchen,
                     onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(kitchen: v),
                   ),
+                  const Divider(height: 1),
+                  SwitchListTile(
+                    activeColor: _kIndigo,
+                    title: const Text('Tự động mở két tiền khi thanh toán', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    value: settings.autoOpenDrawer,
+                    onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(openDrawer: v),
+                  ),
+                  const Divider(height: 1),
+                  SwitchListTile(
+                    activeColor: _kIndigo,
+                    title: const Text('Máy chủ in ấn (In hộ thiết bị khác)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    value: settings.autoPrintServer,
+                    onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(printServer: v),
+                  ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          _buildHelpSection(),
+          const SizedBox(height: 20),
 
           Text('Các trạm in cấu hình:',
               style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 14, color: _kIndigo)),
@@ -378,13 +440,30 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                title,
-                style: GoogleFonts.outfit(
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  fontSize: 13.5,
-                  color: isSelected ? _kIndigo : Colors.grey.shade800,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.outfit(
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 13.5,
+                      color: isSelected ? _kIndigo : Colors.grey.shade800,
+                    ),
+                  ),
+                  if (config.enabled && config.type == 'network' && config.name.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        'Đã lưu IP: ${config.name}',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             Icon(Icons.arrow_forward_ios_rounded, size: 12, color: isSelected ? _kIndigo : Colors.grey),
@@ -506,46 +585,111 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
         const SizedBox(height: 16),
 
         if (config.type == 'system') ...[
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              labelText: 'Chọn Máy In',
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            value: systemPrinters.any((p) => p.url == config.name) ? config.name : null,
-            hint: const Text('Chọn máy in hệ thống được phát hiện...'),
-            items: systemPrinters.map((p) {
-              return DropdownMenuItem<String>(
-                value: p.url,
-                child: Text(p.name, style: const TextStyle(fontSize: 13)),
-              );
-            }).toList(),
-            onChanged: (val) {
-              if (val != null) {
-                ref.read(printerSettingsProvider.notifier).saveConfig(
-                      stationKey,
-                      config.copyWith(name: val),
-                    );
-              }
-            },
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: 'Chọn Máy In',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  value: config.name.isNotEmpty ? config.name : null,
+                  hint: const Text('Chọn máy in hệ thống được phát hiện...'),
+                  items: (() {
+                    final list = systemPrinters.map((p) {
+                      return DropdownMenuItem<String>(
+                        value: p.url,
+                        child: Text(p.name, style: const TextStyle(fontSize: 13)),
+                      );
+                    }).toList();
+                    if (config.name.isNotEmpty && !systemPrinters.any((p) => p.url == config.name)) {
+                      list.add(DropdownMenuItem<String>(
+                        value: config.name,
+                        child: Text('${config.name} (Đồng bộ đám mây)', 
+                            style: const TextStyle(fontSize: 13, color: Colors.blueGrey)),
+                      ));
+                    }
+                    return list;
+                  })(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      ref.read(printerSettingsProvider.notifier).saveConfig(
+                            stationKey,
+                            config.copyWith(name: val),
+                          );
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.refresh, color: _kIndigo),
+                tooltip: 'Dò lại máy in',
+                onPressed: () {
+                  ref.invalidate(systemPrintersProvider);
+                },
+              ),
+            ],
           ),
         ] else ...[
-          TextField(
-            controller: _ipControllers[stationKey],
-            decoration: InputDecoration(
-              labelText: 'Địa chỉ IP máy in (ví dụ: 192.168.1.100)',
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.wifi_tethering_rounded, size: 20),
-            ),
-            keyboardType: TextInputType.url,
-            onChanged: (val) {
-              ref.read(printerSettingsProvider.notifier).saveConfig(
-                    stationKey,
-                    config.copyWith(name: val.trim()),
-                  );
-            },
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _ipControllers[stationKey],
+                  decoration: InputDecoration(
+                    labelText: 'Địa chỉ IP máy in (ví dụ: 192.168.1.100)',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.wifi_tethering_rounded, size: 20),
+                  ),
+                  keyboardType: TextInputType.url,
+                  onSubmitted: (val) {
+                    ref.read(printerSettingsProvider.notifier).saveConfig(
+                          stationKey,
+                          config.copyWith(name: val.trim()),
+                        );
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final ip = _ipControllers[stationKey]?.text ?? '';
+                    ref.read(printerSettingsProvider.notifier).saveConfig(
+                          stationKey,
+                          config.copyWith(name: ip.trim()),
+                        );
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Đã lưu cấu hình IP máy in.'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 1),
+                    ));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kIndigo,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  child: const Text('Lưu IP', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
           ),
+          if (config.type == 'network' && config.name.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                'Đã lưu IP: ${config.name}',
+                style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
 
           // LAN Scan Section
@@ -568,11 +712,62 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
             ),
           ),
         ),
+        if (stationKey == 'cashier' && config.type == 'network') ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 52,
+            child: TextButton.icon(
+              onPressed: () async {
+                if (config.name.isNotEmpty) {
+                  try {
+                    await ThermalPrinterService.openCashDrawer(printerIp: config.name);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Đã gửi lệnh mở két tiền.'),
+                        behavior: SnackBarBehavior.floating,
+                        duration: Duration(seconds: 1),
+                      ));
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Lỗi Kết Nối'),
+                          content: Text('Không thể mở két: $e'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đồng ý')),
+                          ],
+                        ),
+                      );
+                    }
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Vui lòng nhập IP máy in trước.'),
+                    behavior: SnackBarBehavior.floating,
+                    duration: Duration(seconds: 1),
+                  ));
+                }
+              },
+              icon: const Icon(Icons.vpn_key_rounded, size: 18),
+              label: Text('Mở két tiền', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 14)),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: _kOrange,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
 
   Widget _buildLanScanWidget(String stationKey, PrinterConfig config) {
+    if (kIsWeb) {
+      return const SizedBox.shrink();
+    }
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -703,6 +898,47 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHelpSection() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: Colors.amber.shade800, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                'Hướng Dẫn Kết Nối Két Tiền',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
+                  color: Colors.amber.shade900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '• Két tiền (Hộp đựng tiền thu ngân) phải được cắm dây kết nối (cổng RJ11) trực tiếp vào cổng phía sau máy in hóa đơn Thu Ngân.\n'
+            '• Khi hoàn tất thanh toán hóa đơn hoặc khi nhấn nút "Mở két tiền", máy in sẽ truyền lệnh điện áp để tự động kích hoạt két tiền tự động nhảy ra.\n'
+            '• Khổ giấy khuyên dùng cho máy in Thu Ngân: 80mm.',
+            style: GoogleFonts.outfit(
+              fontSize: 11,
+              color: Colors.amber.shade900,
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1606,5 +1606,48 @@ Phát hiện lỗi nghiêm trọng khi gọi món nháp (Chưa gửi bếp):
 - ➡️ Đẩy toàn bộ thay đổi mã nguồn lên GitHub.
 - ➡️ Đóng gói bản dựng App mới để trải nghiệm đồng bộ trên mọi thiết bị.
 
+---
+
+## 2026-07-07 — Phân Tách Quỹ Tiền Mặt & Tiền Gửi (Chuẩn CUKCUK), Xuất Excel/CSV Kế Toán & Deploy VPS
+
+### Đã làm
+- ✅ **Phân Tách Quỹ Tiền Mặt & Tiền Gửi**:
+  - Tạo tệp SQL di cư [add_fund_type_to_finance.sql](file:///Users/banhbao/Quan%20Nho/quan_nho/supabase/add_fund_type_to_finance.sql) thêm cột `fund_type` (`cash` hoặc `bank`) vào bảng `finance_records`.
+  - Cập nhật model và `FinanceRepository` để hỗ trợ lọc và lấy thống kê độc lập theo quỹ.
+  - Phân bổ dòng tiền tự động: Hóa đơn POS & Bàn (Tiền mặt $\rightarrow$ Quỹ `cash`, Chuyển khoản/Thẻ $\rightarrow$ Quỹ `bank`), Lương (mặc định Quỹ `bank`), Chi nhập kho (lưu theo quỹ thực tế, tự động hoàn trả đúng quỹ khi hủy đơn).
+- ✅ **Nâng Cấp Giao Diện Thu Chi & Nhập Liệu**:
+  - Thiết kế bộ lọc 3 Tab: **Tất cả**, **Tiền mặt**, và **Tiền gửi** để quản lý độc lập.
+  - Tích hợp tự động định dạng phân tách hàng nghìn bằng dấu phẩy (ví dụ: `150,000`) trực tiếp khi nhập số tiền trong popup tạo phiếu.
+- ✅ **Xuất Excel/CSV Kế Toán (Running Balance)**:
+  - Tích hợp nút xuất báo cáo dòng tiền của từng quỹ dưới dạng CSV UTF-8 tương thích tốt với Excel/Google Sheets.
+  - Tính năng tự động truy vấn tính **Số dư đầu kỳ** và hiển thị cột **Tồn quỹ chạy lũy kế** theo từng dòng giao dịch chuẩn nghiệp vụ kế toán.
+- ✅ **Triển khai Web Lên VPS (`quannho.lpm.vn/pos`)**:
+  - Build bản production Flutter Web với cấu hình con `/pos/`: `flutter build web --release --base-href "/pos/" --no-tree-shake-icons`.
+  - Nén và upload code tĩnh lên VPS `45.32.104.228` tại thư mục `/var/www/quannho/pos`.
+  - Cấu hình lại Nginx `/etc/nginx/sites-available/lpm.vn` để tách biệt định tuyến SSL subdomain `quannho.lpm.vn`, trỏ riêng biệt thư mục `/pos` hỗ trợ SPA (Single Page Application) reload mà không bị lỗi 404.
+- ✅ **Khắc Phục & Tối Ưu In Ấn & Đồng Bộ Cấu Hình**:
+  - **Khung Báo Cáo:** Loại bỏ `ConstrainedBox(maxWidth: 1200)` trong `report_screen.dart` giúp trang Báo Cáo co giãn 100% chiều rộng màn hình PC/Tablet.
+  - **Phân tách In Ấn:** Tách lệnh in bill POS và bàn (Chỉ in hóa đơn thu ngân `onlyReceipt: true`), tự động in hóa đơn khi thanh toán Bàn (nếu bật cấu hình) và phân loại in bếp/bar chính xác dựa theo cấu hình thiết lập.
+  - **Môi trường Web Browser:** Chuyển hướng toàn bộ cuộc gọi in trên Flutter Web (`kIsWeb`) sang hộp thoại in mặc định của Trình duyệt (`layoutPdf`) để tránh lỗi do sandbox trình duyệt chặn cổng máy in.
+  - **Đồng bộ Đám mây (Cloud Sync):** Nâng cấp `printer_settings_provider.dart`, `bill_block_template.dart`, `kitchen_ticket_template_provider.dart` để tự động đồng bộ (lưu/tải) mọi cấu hình máy in và thiết kế mẫu hóa đơn, mẫu bếp lên bảng `app_settings` của Supabase, giúp đồng bộ hóa tức thì giữa App Windows và Web.
+
+### Files đã sửa/tạo mới
+| File | Thay đổi |
+|------|----------|
+| `supabase/add_fund_type_to_finance.sql` | [NEW] SQL di cư thêm cột fund_type và backfill hóa đơn chuyển khoản cũ. |
+| `lib/modules/finance/repository/finance_repository.dart` | Cập nhật CRUD và hàm query watchRecords, getStats hỗ trợ fund_type. |
+| `lib/modules/finance/providers/finance_providers.dart` | Cập nhật selectedFundProvider mặc định là 'all' và tối ưu hóa reactive streams. |
+| `lib/screens/finance_screen.dart` | Thiết kế lại 3 Tab lọc quỹ, tích hợp nút tải báo cáo CSV và tính số dư lũy kế dòng tiền. |
+| `lib/modules/finance/screens/add_transaction_sheet.dart` | Loại bỏ emoji, tích hợp bộ chọn quỹ thủ công và định dạng số tiền nhập liêu ThousandsSeparatorInputFormatter. |
+| `lib/modules/pos/repository/pos_repository.dart` & `lib/screens/ban_screen.dart` | Tự động phân loại dòng tiền POS/Bàn và thêm in hóa đơn thu ngân tự động khi thanh toán bàn. |
+| `lib/modules/kho/repository/kho_repository.dart` & `lib/modules/tinhluong/repository/tinhluong_repository.dart` | Tự động phân loại dòng tiền Nhập kho (Hỗ trợ hoàn tiền đúng quỹ khi hủy đơn) & Trả lương. |
+| `lib/modules/bill_printer/screens/bill_preview_screen.dart` | Thêm tham số `onlyReceipt`/`onlyKitchen` và xử lý in an toàn trên môi trường Web browser. |
+| `lib/modules/bill_printer/providers/printer_settings_provider.dart` & `lib/modules/bill_printer/models/bill_block_template.dart` & `lib/modules/bill_printer/providers/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync cấu hình và mẫu thiết kế lên Supabase app_settings. |
+| `web/index.html` | Cập nhật placeholder `$FLUTTER_BASE_HREF` hỗ trợ build subfolder. |
+| `.docs/qn.md` | Cập nhật hướng dẫn tính năng phân tách quỹ và deploy VPS. |
+
+### Tiếp theo
+- ➡️ Bàn giao tài liệu hướng dẫn nghiệm thu và link kiểm thử live cho chủ quán.
+- ➡️ Chuẩn bị nâng cấp các tính năng quản lý chuỗi nếu chủ quán có yêu cầu thêm.
 
 

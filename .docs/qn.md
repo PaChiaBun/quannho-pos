@@ -82,7 +82,51 @@ Chúng ta đã hoàn thành nâng cấp module Quản Lý Bàn và Báo Cáo Doa
 
 ---
 
-## 🚀 5. Các bước tiếp theo dành cho chủ quán
+---
+
+## 🏦 5. Phân Tách Quỹ Tiền Mặt & Tiền Gửi (Chuẩn CUKCUK) & Xuất Excel Kế Toán
+
+Ứng dụng hiện tại hỗ trợ quản lý tài chính thông minh theo chuẩn mực quản trị dòng tiền kế toán thực tế:
+
+### 1. Phân Tách 3 Tab Quản Lý:
+* **Tất cả**: Thống kê doanh thu, chi phí, lợi nhuận gộp chung của cả quán.
+* **Tiền mặt**: Quản lý dòng tiền mặt két tại quầy thu ngân.
+* **Tiền gửi**: Quản lý tài khoản ngân hàng nhận chuyển khoản và thanh toán thẻ.
+
+### 2. Tự Động Phân Bổ Dòng Tiền:
+* Mọi hóa đơn bán hàng POS và tại Bàn được tự động ghi nhận vào Quỹ Tiền mặt (nếu trả tiền mặt) hoặc Quỹ Tiền gửi (nếu chuyển khoản/thẻ).
+* Logic trả lương nhân viên mặc định chuyển khoản (Quỹ tiền gửi), chi nhập kho được ghi nhận đúng quỹ chi trả thực tế (và tự động hoàn lại đúng quỹ đó khi đơn nhập kho bị hủy bỏ).
+
+### 3. Xuất Báo Cáo CSV Kiểm Soát Lũy Kế (Running Balance):
+* Nút **Tải báo cáo** ở góc phải danh sách giao dịch cho phép xuất Excel/CSV UTF-8.
+* Tự động tính toán số tiền **Tồn đầu kỳ** (số tiền dư trước ngày bắt đầu bộ lọc) và điền cột **Số tiền còn lại** (Tồn quỹ lũy kế tăng/giảm chạy liên tục theo từng giao dịch) chuẩn kế toán để thủ quỹ và kế toán đối soát 100%.
+
+---
+
+## 🌐 6. Quy Trình Deploy Web Bản Sản Xuất (VPS `quannho.lpm.vn/pos`)
+
+Ứng dụng web đã được đưa lên VPS chạy trực tiếp:
+
+### 1. Biên Dịch Web:
+* Lệnh build Flutter Web hỗ trợ thư mục con `/pos/`:
+  ```bash
+  flutter build web --release --base-href "/pos/" --no-tree-shake-icons
+  ```
+
+### 2. Cấu Hình Nginx trên VPS (`45.32.104.228`):
+* Cấu hình Nginx tách biệt subdomain `quannho.lpm.vn` tại `/etc/nginx/sites-available/lpm.vn` để phục vụ thư mục con `/pos` và hỗ trợ SPA routing (tránh lỗi 404 khi tải lại trang F5):
+  ```nginx
+  location /pos {
+      root /var/www/quannho;
+      index index.html;
+      try_files $uri $uri/ /pos/index.html;
+  }
+  ```
+
+---
+
+## 🚀 7. Các bước tiếp theo dành cho chủ quán
 
 1. Tiến hành **Push** các thay đổi mã nguồn này lên repository GitHub của bạn.
 2. Bản nâng cấp này sẽ tự động cập nhật đồng bộ lên cả phiên bản Web và App di động khi đóng gói bản dựng tiếp theo!
+

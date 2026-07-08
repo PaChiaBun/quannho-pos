@@ -1,7 +1,9 @@
-// lib/modules/bill_printer/providers/kitchen_ticket_template_provider.dart
-// Model & Provider cho phiếu bếp — lưu SharedPreferences riêng biệt với hoá đơn khách
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
+import '../../../core/services/store_auth_service.dart';
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 class KitchenTicketTemplate {
@@ -34,40 +36,98 @@ class KitchenTicketTemplate {
   });
 
   // ── Serialization ───────────────────────────────────────────────────────────
-  static const _kPrefix = 'kitch_tpl_';
+  static const _kPrefsKey = 'qn_kitchen_ticket_template';
+
+  Map<String, dynamic> toMap() => {
+    'paper':       paperSize,
+    'header':      headerText,
+    'orderNo':     showOrderNumber,
+    'datetime':    showDateTime,
+    'table':       showTableName,
+    'note':        showNote,
+    'divider':     showDivider,
+    'hfont':       headerFontSize,
+    'tfont':       tableFontSize,
+    'ifont':       itemFontSize,
+    'qfont':       qtyFontSize,
+    'bold':        boldItemName,
+  };
+
+  factory KitchenTicketTemplate.fromMap(Map<String, dynamic> m) => KitchenTicketTemplate(
+    paperSize:      m['paper']   ?? '80mm',
+    headerText:     m['header']  ?? 'PHIẾU BẾP',
+    showOrderNumber: m['orderNo'] ?? true,
+    showDateTime:   m['datetime']  ?? true,
+    showTableName:  m['table']     ?? true,
+    showNote:       m['note']      ?? true,
+    showDivider:    m['divider']   ?? true,
+    headerFontSize: m['hfont']     ?? 18,
+    tableFontSize:  m['tfont']     ?? 16,
+    itemFontSize:   m['ifont']     ?? 14,
+    qtyFontSize:    m['qfont']     ?? 22,
+    boldItemName:   m['bold']      ?? true,
+  );
 
   Future<void> save() async {
     final p = await SharedPreferences.getInstance();
-    await p.setString('${_kPrefix}paper',       paperSize);
-    await p.setString('${_kPrefix}header',      headerText);
-    await p.setBool  ('${_kPrefix}orderNo',     showOrderNumber);
-    await p.setBool  ('${_kPrefix}datetime',    showDateTime);
-    await p.setBool  ('${_kPrefix}table',       showTableName);
-    await p.setBool  ('${_kPrefix}note',        showNote);
-    await p.setBool  ('${_kPrefix}divider',     showDivider);
-    await p.setInt   ('${_kPrefix}hfont',       headerFontSize);
-    await p.setInt   ('${_kPrefix}tfont',       tableFontSize);
-    await p.setInt   ('${_kPrefix}ifont',       itemFontSize);
-    await p.setInt   ('${_kPrefix}qfont',       qtyFontSize);
-    await p.setBool  ('${_kPrefix}bold',        boldItemName);
+    final json = jsonEncode(toMap());
+    await p.setString(_kPrefsKey, json);
+
+    try {
+      final info = await StoreAuthService.getStoreInfo();
+      final storeId = info['store_id'];
+      if (storeId != null) {
+        // Đảm bảo x-store-id tồn tại trong Header REST cho RLS
+        Supabase.instance.client.rest.headers['x-store-id'] = storeId;
+
+        await Supabase.instance.client.from('app_settings').upsert({
+          'id': const Uuid().v4(),
+          'store_id': storeId,
+          'key': _kPrefsKey,
+          'value': json,
+        }, onConflict: 'store_id,key');
+      }
+    } catch (_) {}
   }
 
   static Future<KitchenTicketTemplate> load() async {
-    final p = await SharedPreferences.getInstance();
-    return KitchenTicketTemplate(
-      paperSize:      p.getString('${_kPrefix}paper')   ?? '80mm',
-      headerText:     p.getString('${_kPrefix}header')  ?? 'PHIẾU BẾP',
-      showOrderNumber: p.getBool ('${_kPrefix}orderNo') ?? true,
-      showDateTime:   p.getBool  ('${_kPrefix}datetime')  ?? true,
-      showTableName:  p.getBool  ('${_kPrefix}table')     ?? true,
-      showNote:       p.getBool  ('${_kPrefix}note')      ?? true,
-      showDivider:    p.getBool  ('${_kPrefix}divider')   ?? true,
-      headerFontSize: p.getInt   ('${_kPrefix}hfont')     ?? 18,
-      tableFontSize:  p.getInt   ('${_kPrefix}tfont')     ?? 16,
-      itemFontSize:   p.getInt   ('${_kPrefix}ifont')     ?? 14,
-      qtyFontSize:    p.getInt   ('${_kPrefix}qfont')     ?? 22,
-      boldItemName:   p.getBool  ('${_kPrefix}bold')      ?? true,
-    );
+    String? raw;
+    try {
+      final p = await SharedPreferences.getInstance();
+      raw = p.getString(_kPrefsKey);
+    } catch (_) {}
+
+    try {
+      final info = await StoreAuthService.getStoreInfo();
+      final storeId = info['store_id'];
+      if (storeId != null) {
+        // Đảm bảo x-store-id tồn tại trong Header REST cho RLS
+        Supabase.instance.client.rest.headers['x-store-id'] = storeId;
+
+        final res = await Supabase.instance.client
+            .from('app_settings')
+            .select('value')
+            .eq('store_id', storeId)
+            .eq('key', _kPrefsKey)
+            .maybeSingle();
+        if (res != null && res['value'] != null) {
+          final cloudJson = res['value'] as String;
+          if (cloudJson != raw) {
+            raw = cloudJson;
+            final p = await SharedPreferences.getInstance();
+            await p.setString(_kPrefsKey, cloudJson);
+          }
+        }
+      }
+    } catch (_) {}
+
+    if (raw != null) {
+      try {
+        final map = jsonDecode(raw) as Map<String, dynamic>;
+        return KitchenTicketTemplate.fromMap(map);
+      } catch (_) {}
+    }
+    return const KitchenTicketTemplate();
   }
 
   KitchenTicketTemplate copyWith({

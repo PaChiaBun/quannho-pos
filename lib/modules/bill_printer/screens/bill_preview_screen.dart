@@ -12,6 +12,7 @@ import '../models/bill_block.dart';
 import '../models/bill_block_template.dart';
 import '../providers/kitchen_ticket_template_provider.dart';
 import '../providers/printer_settings_provider.dart';
+import '../../../core/services/thermal_printer_service.dart';
 
 // ─── Model hoá đơn ───────────────────────────────────────────────────────────
 
@@ -567,15 +568,24 @@ class BillPdfGenerator {
 // ─── Station Printer Dispatcher ──────────────────────────────────────────────
 
 class StationPrinterDispatcher {
-  static Future<void> printBill(BillData bill, StationPrintersState settings) async {
+  static Future<void> printBill(
+    BillData bill,
+    StationPrintersState settings, {
+    bool onlyReceipt = false,
+    bool onlyKitchen = false,
+  }) async {
     // 1. In hoá đơn thu ngân (chỉ in khi là hóa đơn thanh toán, không in khi là phiếu bếp)
-    if (settings.cashier.enabled && bill.type == BillType.receipt) {
+    if (!onlyKitchen && settings.cashier.enabled && bill.type == BillType.receipt) {
       final bytes = await BillPdfGenerator.generateReceipt(bill);
+      if (settings.autoOpenDrawer && settings.cashier.type == 'network' && settings.cashier.name.isNotEmpty) {
+        // Tự động gửi lệnh mở két tiền kết nối với máy in thu ngân
+        ThermalPrinterService.openCashDrawer(printerIp: settings.cashier.name).catchError((_) => null);
+      }
       await _dispatchPrint(bytes, settings.cashier, 'hoa_don_${bill.orderNumber}');
     }
 
     // 2. In phiếu bếp nóng
-    if (settings.bepNong.enabled) {
+    if (!onlyReceipt && settings.bepNong.enabled) {
       final hotItems = bill.items
           .where((i) => i.stationCode == 'bep_nong' || i.stationCode == 'nong')
           .toList();
@@ -599,7 +609,7 @@ class StationPrinterDispatcher {
     }
 
     // 3. In phiếu bếp bar
-    if (settings.bepBar.enabled) {
+    if (!onlyReceipt && settings.bepBar.enabled) {
       final barItems = bill.items
           .where((i) => i.stationCode == 'bep_bar' || i.stationCode == 'bar')
           .toList();
@@ -623,7 +633,7 @@ class StationPrinterDispatcher {
     }
 
     // 4. In nhãn dán ly (Bar Label)
-    if (settings.barLabel.enabled) {
+    if (!onlyReceipt && settings.barLabel.enabled) {
       final labelBytesList = await BillPdfGenerator.generateBarLabels(bill);
       for (int i = 0; i < labelBytesList.length; i++) {
         await _dispatchPrint(
@@ -640,6 +650,10 @@ class StationPrinterDispatcher {
     PrinterConfig config,
     String jobName,
   ) async {
+    if (kIsWeb) {
+      await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
+      return;
+    }
     if (config.type == 'system') {
       if (config.name.isEmpty) {
         await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
@@ -652,10 +666,6 @@ class StationPrinterDispatcher {
       }
     } else {
       // Mạng IP (LAN/Wifi) - Hộp thoại in hệ thống làm dự phòng nếu không kết nối được trực tiếp
-      if (kIsWeb) {
-        await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
-        return;
-      }
       try {
         final socket = await Socket.connect(config.name, 9100, timeout: const Duration(seconds: 3));
         // Đóng cổng vì direct pdf qua socket cần parser đặc biệt. Fallback sang layoutPdf.

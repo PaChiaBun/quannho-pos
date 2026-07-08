@@ -3,6 +3,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/bill_block.dart';
 import '../models/bill_block_template.dart';
+import '../../../core/providers/session_provider.dart';
+import '../../../core/services/store_auth_service.dart';
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 final billTemplateProvider =
@@ -81,19 +83,25 @@ class BillTemplateNotifier extends AsyncNotifier<BillBlockTemplate> {
   Future<void> save() async {
     final tpl = _tpl;
     if (tpl == null) return;
-    await tpl.save();
+    final session = ref.read(sessionProvider);
+    final storeId = session?.storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
+    await tpl.save(storeId: storeId);
   }
 
   // ── Reset về default ──────────────────────────────────────────────────────
   Future<void> reset() async {
     final tpl = BillBlockTemplate.defaultTemplate();
     state = AsyncData(tpl);
-    await tpl.save();
+    final session = ref.read(sessionProvider);
+    final storeId = session?.storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
+    await tpl.save(storeId: storeId);
   }
 
   // ── Áp dụng mẫu dựng sẵn từ Gallery ─────────────────────────────────────
   Future<void> applyPreset(BillBlockTemplate preset) async {
     state = AsyncData(preset);
-    await preset.save();
+    final session = ref.read(sessionProvider);
+    final storeId = session?.storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
+    await preset.save(storeId: storeId);
   }
 }

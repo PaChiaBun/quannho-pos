@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -193,6 +194,16 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
     try {
       if (config.name.isEmpty) {
         throw Exception('Vui lòng chọn máy in hoặc nhập IP trước.');
+      }
+      if (kIsWeb) {
+        final pdf = pw.Document();
+        pdf.addPage(pw.Page(
+          build: (context) => pw.Center(
+            child: pw.Text('Quan Nho POS\nTEST PRINTER (WEB MODE)\nStation: $station\nTarget: ${config.name}'),
+          ),
+        ));
+        await Printing.layoutPdf(onLayout: (_) async => pdf.save());
+        return;
       }
       if (config.type == 'system') {
         final pdf = pw.Document();
@@ -418,14 +429,24 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  value: systemPrinters.any((p) => p.url == config.name) ? config.name : null,
+                  value: config.name.isNotEmpty ? config.name : null,
                   hint: const Text('Chọn máy in phát hiện được...'),
-                  items: systemPrinters.map((p) {
-                    return DropdownMenuItem<String>(
-                      value: p.url,
-                      child: Text(p.name, style: const TextStyle(fontSize: 13)),
-                    );
-                  }).toList(),
+                  items: (() {
+                    final list = systemPrinters.map((p) {
+                      return DropdownMenuItem<String>(
+                        value: p.url,
+                        child: Text(p.name, style: const TextStyle(fontSize: 13)),
+                      );
+                    }).toList();
+                    if (config.name.isNotEmpty && !systemPrinters.any((p) => p.url == config.name)) {
+                      list.add(DropdownMenuItem<String>(
+                        value: config.name,
+                        child: Text('${config.name} (Đồng bộ đám mây)', 
+                            style: const TextStyle(fontSize: 13, color: Colors.blueGrey)),
+                      ));
+                    }
+                    return list;
+                  })(),
                   onChanged: (val) {
                     if (val != null) {
                       ref.read(printerSettingsProvider.notifier).saveConfig(
@@ -436,20 +457,51 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
                   },
                 ),
               ] else ...[
-                TextField(
-                  controller: _ipControllers[stationKey],
-                  decoration: InputDecoration(
-                    labelText: 'Nhập địa chỉ IP máy in (ví dụ: 192.168.1.100)',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  keyboardType: TextInputType.url,
-                  onChanged: (val) {
-                    ref.read(printerSettingsProvider.notifier).saveConfig(
-                      stationKey,
-                      config.copyWith(name: val.trim()),
-                    );
-                  },
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _ipControllers[stationKey],
+                        decoration: InputDecoration(
+                          labelText: 'Nhập địa chỉ IP máy in (ví dụ: 192.168.1.100)',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        keyboardType: TextInputType.url,
+                        onSubmitted: (val) {
+                          ref.read(printerSettingsProvider.notifier).saveConfig(
+                            stationKey,
+                            config.copyWith(name: val.trim()),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 40,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final ip = _ipControllers[stationKey]?.text ?? '';
+                          ref.read(printerSettingsProvider.notifier).saveConfig(
+                            stationKey,
+                            config.copyWith(name: ip.trim()),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text('✅ Đã lưu cấu hình IP máy in.'),
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 1),
+                          ));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _kIndigo,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                        ),
+                        child: const Text('Lưu IP', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
                 ),
               ],
               const SizedBox(height: 12),

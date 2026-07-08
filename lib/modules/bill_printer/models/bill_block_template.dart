@@ -4,7 +4,9 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import '../../../core/services/store_auth_service.dart';
 import 'bill_block.dart';
 
 const _kPrefsKey = 'bill_blocks_v2';
@@ -25,8 +27,8 @@ class BillBlockTemplate {
         paperSize: paperSize ?? this.paperSize,
       );
 
-  // ── Lưu vào SharedPreferences ──────────────────────────────────────────────
-  Future<void> save() async {
+  // ── Lưu vào SharedPreferences & Supabase ──────────────────────────────────────
+  Future<void> save({String? storeId}) async {
     final prefs = await SharedPreferences.getInstance();
     final json = jsonEncode({
       'paper':  paperSize,
@@ -34,14 +36,63 @@ class BillBlockTemplate {
     });
     await prefs.setString(_kPrefsKey, json);
     debugPrint('[BillTemplate] saved ${blocks.length} blocks');
+
+    try {
+      final resolvedStoreId = storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
+      if (resolvedStoreId != null) {
+        // Đảm bảo x-store-id tồn tại trong Header REST cho RLS
+        Supabase.instance.client.rest.headers['x-store-id'] = resolvedStoreId;
+
+        await Supabase.instance.client.from('app_settings').upsert({
+          'id': const Uuid().v4(),
+          'store_id': resolvedStoreId,
+          'key': _kPrefsKey,
+          'value': json,
+        }, onConflict: 'store_id,key');
+      } else {
+        debugPrint('[BillTemplate] save failed: storeId is null!');
+      }
+    } catch (e) {
+      debugPrint('[BillTemplate] save Supabase error: $e');
+    }
   }
 
-  // ── Tải từ SharedPreferences ───────────────────────────────────────────────
+  // ── Tải từ SharedPreferences & Supabase ───────────────────────────────────────
   static Future<BillBlockTemplate> load() async {
+    String? raw;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw   = prefs.getString(_kPrefsKey);
-      if (raw != null) {
+      raw = prefs.getString(_kPrefsKey);
+    } catch (_) {}
+
+    try {
+      final info = await StoreAuthService.getStoreInfo();
+      final storeId = info['store_id'];
+      if (storeId != null) {
+        // Đảm bảo x-store-id tồn tại trong Header REST cho RLS
+        Supabase.instance.client.rest.headers['x-store-id'] = storeId;
+
+        final res = await Supabase.instance.client
+            .from('app_settings')
+            .select('value')
+            .eq('store_id', storeId)
+            .eq('key', _kPrefsKey)
+            .maybeSingle();
+        if (res != null && res['value'] != null) {
+          final cloudJson = res['value'] as String;
+          if (cloudJson != raw) {
+            raw = cloudJson;
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString(_kPrefsKey, cloudJson);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[BillTemplate] load Supabase error: $e');
+    }
+
+    if (raw != null) {
+      try {
         final data   = jsonDecode(raw) as Map<String, dynamic>;
         final paper  = data['paper'] as String? ?? '80mm';
         final bList  = (data['blocks'] as List? ?? [])
@@ -51,9 +102,9 @@ class BillBlockTemplate {
         if (bList.isNotEmpty) {
           return BillBlockTemplate(blocks: bList, paperSize: paper);
         }
+      } catch (e) {
+        debugPrint('[BillTemplate] parse error: $e');
       }
-    } catch (e) {
-      debugPrint('[BillTemplate] load error: $e');
     }
     // Trả về template mặc định
     return BillBlockTemplate.defaultTemplate();

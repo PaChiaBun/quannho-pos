@@ -570,7 +570,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                 ),
                 onPressed: () {
                   final settings = ref.read(printerSettingsProvider);
-                  StationPrinterDispatcher.printBill(_billData!, settings);
+                  StationPrinterDispatcher.printBill(_billData!, settings, onlyReceipt: true);
                 },
               ),
             ),
@@ -668,9 +668,14 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
         // Tự động in bill phân trạm
         try {
           final settings = ref.read(printerSettingsProvider);
-          if (_billData != null && (settings.autoPrintCheckout || settings.autoPrintKitchen)) {
-            // Tách và in đến từng trạm in đã cấu hình
-            StationPrinterDispatcher.printBill(_billData!, settings);
+          if (_billData != null) {
+            if (settings.autoPrintCheckout && settings.autoPrintKitchen) {
+              StationPrinterDispatcher.printBill(_billData!, settings);
+            } else if (settings.autoPrintCheckout) {
+              StationPrinterDispatcher.printBill(_billData!, settings, onlyReceipt: true);
+            } else if (settings.autoPrintKitchen) {
+              StationPrinterDispatcher.printBill(_billData!, settings, onlyKitchen: true);
+            }
           }
         } catch (e) {
           debugPrint('[POS AutoPrint] Tự động in bill phân trạm lỗi: $e');

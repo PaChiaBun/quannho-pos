@@ -2234,10 +2234,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     int ptsUsed = 0,
     double discount = 0,
   }) async {
-    // ‼️ CACHE ALL REPOSITORIES AT THE START (before any async gap) to avoid unmounted ref errors
     final banRepoCached = ref.read(banRepositoryProvider);
     final khoProRepoCached = ref.read(khoProRepositoryProvider);
     final productRepoCached = ref.read(productRepositoryProvider);
+    final printerSettingsCached = ref.read(printerSettingsProvider);
 
     try {
       final orderId = const Uuid().v4();
@@ -2576,6 +2576,40 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
       // 6. Đóng session
       await banRepoCached.closeSession(widget.session.id, total);
+      
+      // Tự động in hóa đơn thu ngân khi thanh toán tại bàn (nếu bật cấu hình)
+      try {
+        if (printerSettingsCached.autoPrintCheckout) {
+          final List<BillItem> billItems = [];
+          for (final item in items) {
+            billItems.add(BillItem(
+              name: item.productName,
+              qty: item.quantity.toInt(),
+              price: item.price,
+              note: item.note,
+            ));
+          }
+
+          final billData = BillData(
+            shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
+            shopAddress: storeInfo['address'] ?? '',
+            shopPhone: storeInfo['phone'] ?? '',
+            orderNumber: orderNumber,
+            createdAt: DateTime.now(),
+            tableName: widget.table.label,
+            items: billItems,
+            subtotal: total + discount,
+            total: total,
+            type: BillType.receipt,
+            note: '',
+          );
+
+          await StationPrinterDispatcher.printBill(billData, printerSettingsCached, onlyReceipt: true);
+        }
+      } catch (e) {
+        debugPrint('[Checkout Print] ❌ Lỗi in hóa đơn thanh toán bàn: $e');
+      }
+
       // Option C: KHÔNG tự đóng kitchen_tickets → bếp tự bấm Xong khi hoàn tất
       // (Trước đây set status='xong' ngay khi thanh toán → bếp mất phiếu đột ngột)
 
@@ -2811,7 +2845,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     // Tự động in bếp bằng StationPrinterDispatcher (hỗ trợ phân chia 4 trạm in mới)
     try {
       final settings = ref.read(printerSettingsProvider);
-      if (settings.autoPrintKitchen) {
+      if (settings.autoPrintKitchen && !settings.autoPrintServer) {
         final List<BillItem> billItems = [];
         for (final item in unsent) {
           final pInfo = productInfoMap[item.productId];
