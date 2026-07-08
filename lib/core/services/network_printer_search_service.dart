@@ -69,14 +69,13 @@ class NetworkPrinterSearchService {
     final deviceLastOctet = int.tryParse(parts[3]) ?? 0;
 
     int scannedCount = 0;
-    const totalHosts = 254;
-
     final List<String> ipsToScan = [];
     for (int i = 1; i <= 254; i++) {
       if (i != deviceLastOctet) {
         ipsToScan.add('$subnet.$i');
       }
     }
+    final totalHosts = ipsToScan.length;
 
     final controller = StreamController<DiscoveredPrinter>();
 

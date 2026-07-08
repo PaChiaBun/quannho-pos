@@ -379,7 +379,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
   Future<void> _processTicket(String ticketId, String storeId) async {
     if (_printedTicketIds.contains(ticketId)) return;
-    _printedTicketIds.add(ticketId);
+    _printedTicketIds.add(ticketId); // Đánh dấu đang xử lý ngay lập tức để tránh trùng lặp song song
 
     print('[PrintServer] Xử lý phiếu bếp mới: $ticketId. Đang tải chi tiết món...');
     try {
@@ -391,14 +391,20 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .eq('id', ticketId)
           .maybeSingle();
 
-      if (ticketData == null) return;
+      if (ticketData == null) {
+        _printedTicketIds.remove(ticketId); // Rollback nếu không tìm thấy bản ghi
+        return;
+      }
 
       final itemsData = await Supabase.instance.client
           .from('kitchen_ticket_items')
           .select()
           .eq('ticket_id', ticketId);
 
-      if (itemsData.isEmpty) return;
+      if (itemsData.isEmpty) {
+        _printedTicketIds.remove(ticketId); // Rollback nếu món ăn chưa kịp lưu
+        return;
+      }
 
       String tableName = 'Mang về';
       final sessionId = ticketData['session_id'] as String?;
@@ -477,12 +483,13 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       print('[PrintServer] Đã đẩy in thành công!');
     } catch (e) {
       print('[PrintServer] Lỗi xử lý in bếp: $e');
+      _printedTicketIds.remove(ticketId); // Rollback nếu in lỗi để chu kỳ sau quét in lại
     }
   }
 
   Future<void> _processOrder(String orderId, String storeId) async {
     if (_printedOrderIds.contains(orderId)) return;
-    _printedOrderIds.add(orderId);
+    _printedOrderIds.add(orderId); // Đánh dấu đang xử lý ngay lập tức để tránh trùng lặp song song
 
     print('[PrintServer] Xử lý đơn hàng mới: $orderId. Đang tải chi tiết để in bill thanh toán...');
     try {
@@ -494,7 +501,10 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .eq('id', orderId)
           .maybeSingle();
 
-      if (orderData == null) return;
+      if (orderData == null) {
+        _printedOrderIds.remove(orderId); // Rollback nếu không tìm thấy
+        return;
+      }
 
       final status = orderData['status'] as String? ?? 'open';
       if (status != 'paid') {
@@ -507,7 +517,10 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .select()
           .eq('order_id', orderId);
 
-      if (itemsData.isEmpty) return;
+      if (itemsData.isEmpty) {
+        _printedOrderIds.remove(orderId); // Rollback nếu món ăn chưa kịp lưu
+        return;
+      }
 
       final storeRow = await Supabase.instance.client
           .from('stores')
@@ -571,6 +584,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       print('[PrintServer] Đã đẩy in hoá đơn thành công!');
     } catch (e) {
       print('[PrintServer] Lỗi xử lý in hoá đơn: $e');
+      _printedOrderIds.remove(orderId); // Rollback nếu in lỗi để chu kỳ sau quét in lại
     }
   }
 
