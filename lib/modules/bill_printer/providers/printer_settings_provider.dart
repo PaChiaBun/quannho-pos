@@ -322,7 +322,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   final Set<String> _printedOrderIds = {};
   Timer? _pollTimer;
 
-  void _setupPrintServerListener(String storeId) {
+  Future<void> _setupPrintServerListener(String storeId) async {
     _kitchenTicketsSubscription?.unsubscribe();
     _kitchenTicketsSubscription = null;
     _ordersSubscription?.unsubscribe();
@@ -335,6 +335,44 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     if (!state.autoPrintServer) {
       print('[PrintServer] Chế độ máy chủ in ấn (Print Server) hiện đang TẮT.');
       return;
+    }
+
+    _printedTicketIds.clear();
+    _printedOrderIds.clear();
+
+    // Nạp lịch sử phiếu bếp đã có trên cloud để tránh in lại khi khởi động
+    try {
+      final oldTickets = await Supabase.instance.client
+          .from('kitchen_tickets')
+          .select('id')
+          .eq('store_id', storeId)
+          .order('sent_at', ascending: false)
+          .limit(50);
+      for (final row in oldTickets) {
+        final id = row['id'] as String?;
+        if (id != null) _printedTicketIds.add(id);
+      }
+      writePrintLog('[PrintServer] Da nap ${_printedTicketIds.length} phieu bep lich su.');
+    } catch (e) {
+      writePrintLog('[PrintServer Error] Loi nap phieu bep lich su: $e');
+    }
+
+    // Nạp lịch sử hoá đơn đã có trên cloud để tránh in lại khi khởi động
+    try {
+      final oldOrders = await Supabase.instance.client
+          .from('orders')
+          .select('id')
+          .eq('store_id', storeId)
+          .inFilter('status', ['paid', 'completed'])
+          .order('created_at', ascending: false)
+          .limit(50);
+      for (final row in oldOrders) {
+        final id = row['id'] as String?;
+        if (id != null) _printedOrderIds.add(id);
+      }
+      writePrintLog('[PrintServer] Da nap ${_printedOrderIds.length} hoa don lich su.');
+    } catch (e) {
+      writePrintLog('[PrintServer Error] Loi nap hoa don lich su: $e');
     }
 
     print('[PrintServer] Khởi chạy dịch vụ lắng nghe in ấn realtime (Bếp & Hóa đơn) cho store: $storeId');
