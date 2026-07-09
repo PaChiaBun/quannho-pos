@@ -58,7 +58,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
     final ip = _ipControllers[stationKey]?.text.trim() ?? '';
     final settings = ref.read(printerSettingsProvider);
     final config = _getConfigByKey(settings, stationKey);
-    if (config != null && config.name != ip) {
+    if (config != null && config.type == 'network' && config.name != ip) {
       ref.read(printerSettingsProvider.notifier).saveConfig(
             stationKey,
             config.copyWith(name: ip),

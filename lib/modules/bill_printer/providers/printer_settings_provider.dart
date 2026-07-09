@@ -507,7 +507,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       }
 
       final status = orderData['status'] as String? ?? 'open';
-      if (status != 'paid') {
+      if (status != 'paid' && status != 'completed') {
         print('[PrintServer] Đơn hàng $orderId chưa được thanh toán (status=$status). Bỏ qua.');
         return;
       }
@@ -611,7 +611,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .from('orders')
           .select('id')
           .eq('store_id', storeId)
-          .eq('status', 'paid')
+          .inFilter('status', ['paid', 'completed'])
           .order('created_at', ascending: false)
           .limit(10);
 
