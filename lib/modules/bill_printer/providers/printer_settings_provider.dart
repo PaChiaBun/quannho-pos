@@ -557,13 +557,13 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
       final storeRow = await Supabase.instance.client
           .from('stores')
-          .select('name, phone, address')
+          .select('name')
           .eq('id', storeId)
           .maybeSingle();
 
       final shopName = storeRow?['name'] as String? ?? 'QUÁN NHỎ POS';
-      final shopPhone = storeRow?['phone'] as String?;
-      final shopAddress = storeRow?['address'] as String?;
+      const String? shopPhone = null;
+      const String? shopAddress = null;
 
       String tableName = 'Mang về';
       final sourceId = orderData['source_id'] as String?;
