@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/services/store_auth_service.dart';
+import '../../../core/utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FINANCE REPOSITORY — 100% Supabase
@@ -69,6 +70,7 @@ class FinanceRepository {
       'recorded_at':  now,
       'fund_type':    fundType,
     });
+    AppLogger.info('checkout', 'Tao phieu ${type == "income" ? "Thu" : "Chi"} moi: $description - So tien: ${amount.toInt()}d.');
     return id;
   }
 
@@ -78,6 +80,7 @@ class FinanceRepository {
         .delete()
         .eq('id', id)
         .eq('is_auto', false);
+    AppLogger.info('checkout', 'Xoa phieu thu/chi (ID: $id) thanh cong.');
   }
 
   // ── Records — Queries ─────────────────────────────────────────────────────

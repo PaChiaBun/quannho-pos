@@ -34,6 +34,7 @@ import 'modules/tinhluong/screens/my_payslip_screen.dart';
 import 'modules/ops/screens/ops_screen.dart';
 import 'core/providers/session_provider.dart';
 import 'screens/role_manager_screen.dart' show storeRolesProvider;
+import 'screens/log_viewer_screen.dart';
 import 'core/utils/responsive.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,6 +55,7 @@ const _kTabMeta = [
   (icon: Icons.restaurant_menu_rounded,          label: 'Kho CN'),    // 11 — Module Kho Chuyên Nghiệp
   (icon: Icons.payments_rounded,                 label: 'Tính lương'),// 12 — Module Tính Lương
   (icon: Icons.checklist_rounded,                label: 'Vận Hành'),   // 13 — Module KAY Ops
+  (icon: Icons.history_edu_rounded,              label: 'Nhật ký'),   // 14 — Module Nhật ký Hệ thống
 ];
 
 // Brand colors từ Quán Nhỏ Identity Sheet
@@ -379,6 +381,7 @@ class _MainShellState extends ConsumerState<MainShell>
     KhoProScreen(),             // 11
     _TinhLuongRouteScreen(),    // 12
     OpsScreen(),                // 13
+    const LogViewerScreen(),    // 14
   ];
 
 
@@ -692,7 +695,7 @@ class _MainShellState extends ConsumerState<MainShell>
   Set<int> _navBarTabsForRole(String? role, List<dynamic> storeRoles, bool isOwner) {
     // Owner/manager luôn có tất cả
     if (isOwner || role == 'owner' || role == 'manager') {
-      return {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+      return {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
     }
 
     // Map module ID → tab index

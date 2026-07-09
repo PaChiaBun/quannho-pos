@@ -143,9 +143,28 @@ Chúng ta đã hoàn thành nâng cấp module Quản Lý Bàn và Báo Cáo Doa
 
 ---
 
-## 🚀 9. Các bước tiếp theo dành cho chủ quán
+## 📊 10. Hệ Thống Nhật Ký Log Hoạt Động Toàn Diện (Audit Log & Errors Cloud Tracker)
+
+Hệ thống ghi nhận toàn bộ hoạt động nghiệp vụ của nhân viên và các lỗi kỹ thuật phát sinh theo thời gian thực trực tiếp lên đám mây Supabase:
+
+### 1. Cách truy cập & Giao diện:
+* Module được tách biệt thành một Tab độc lập tên **`Nhật ký`** (📝) ngay ngoài menu điều hướng chính (Chỉ tài khoản **Chủ quán/Quản lý** mới nhìn thấy).
+* Thiết kế dạng dòng thời gian (Timeline) trực quan kèm biểu tượng: Đặt món (🍽️), Thanh toán (💳), Chấm công (🖐️), Cài đặt máy in (⚙️), Lỗi (❌).
+
+### 2. Bộ lọc tối ưu:
+* **Bộ lọc khoảng ngày** & **Bộ lọc theo từng Nhân viên** cụ thể.
+* **Nút "Truy xuất Log" thủ công**: Chỉ tải dữ liệu khi bấm nút để tránh làm nặng hệ thống.
+
+### 3. QUY TẮC XỬ LÝ SỰ CỐ (KHÔNG ĐOÁN MÒ):
+* **Bắt buộc**: Bất cứ khi nào app xảy ra lỗi (ví dụ: máy in bill không chạy, không đặt được món, lỗi đồng bộ...), chủ quán hoặc kỹ thuật viên **chỉ cần vào trực tiếp tab Nhật ký log** này để kiểm tra.
+* Bảng log hiển thị rõ ràng nội dung lỗi kỹ thuật chi tiết (Technical Details / StackTrace) và thông tin thiết bị lỗi, giúp định vị chính xác nguyên nhân để sửa ngay lập tức mà không cần phỏng đoán.
+
+---
+
+## 🚀 11. Các bước tiếp theo dành cho chủ quán
 
 1. Tiến hành **Push** các thay đổi mã nguồn này lên repository GitHub của bạn.
 2. Bản nâng cấp này sẽ tự động cập nhật đồng bộ lên cả phiên bản Web và App di động khi đóng gói bản dựng tiếp theo!
+
 
 

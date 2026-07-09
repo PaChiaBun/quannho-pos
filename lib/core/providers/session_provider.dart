@@ -5,6 +5,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/user_auth_service.dart';
+import '../utils/app_logger.dart';
 
 // ── Session state ─────────────────────────────────────────────────────────────
 class _SessionNotifier extends Notifier<SessionData?> {
@@ -13,6 +14,10 @@ class _SessionNotifier extends Notifier<SessionData?> {
 
   void setSession(SessionData? session) {
     state = session;
+    AppLogger.updateSession(
+      storeId: session?.storeId,
+      staffName: session?.displayName,
+    );
     try {
       final client = Supabase.instance.client;
       if (session != null && session.storeId != null) {
@@ -35,6 +40,10 @@ class _SessionNotifier extends Notifier<SessionData?> {
       role:        membership.role,
       isOwner:     membership.isOwner,
     );
+    AppLogger.updateSession(
+      storeId: membership.storeId,
+      staffName: state?.displayName,
+    );
     try {
       Supabase.instance.client.rest.headers['x-store-id'] = membership.storeId;
     } catch (_) {}
@@ -42,6 +51,7 @@ class _SessionNotifier extends Notifier<SessionData?> {
 
   void clear() {
     state = null;
+    AppLogger.updateSession(storeId: null, staffName: null);
     try {
       Supabase.instance.client.rest.headers.remove('x-store-id');
     } catch (_) {}

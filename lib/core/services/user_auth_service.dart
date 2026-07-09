@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'store_auth_service.dart' show StoreAuthService;
+import '../utils/app_logger.dart';
 
 // ── Session keys ──────────────────────────────────────────────────────────────
 const _kUserId      = 'auth_user_id';
@@ -197,6 +198,8 @@ class UserAuthService {
         await _saveSession(userId: userId, phone: normalizedPhone, name: displayName);
       }
 
+      AppLogger.info('auth', 'Dang nhap he thong thanh cong.');
+
       return AuthResult.success(
         userId:      userId,
         phone:       normalizedPhone,
@@ -328,6 +331,7 @@ class UserAuthService {
   }
 
   static Future<void> logout() async {
+    AppLogger.info('auth', 'Dang xuat khoi he thong.');
     final prefs = await SharedPreferences.getInstance();
     // UserAuth keys
     await prefs.remove(_kUserId);

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +10,12 @@ import '../../../core/services/store_auth_service.dart';
 import '../../../core/providers/session_provider.dart';
 import '../../../core/services/user_auth_service.dart';
 import 'package:uuid/uuid.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../../core/utils/app_logger.dart';
+
+Future<void> writePrintLog(String message) async {
+  AppLogger.info('printer', message);
+}
 
 class PrinterConfig {
   final String name; // printer name or IP
@@ -133,6 +140,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         await prefs.setString('device_id', deviceId);
       }
     }
+    AppLogger.setDeviceId(deviceId);
     return 'qn_station_printers_$deviceId';
   }
 
@@ -248,6 +256,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       bepBar: station == 'bepBar' ? config : null,
       barLabel: station == 'barLabel' ? config : null,
     );
+    AppLogger.info('settings', 'Thay doi cau hinh may in tram $station: enabled=${config.enabled}, name=${config.name}, type=${config.type}');
     await _persist();
   }
 
@@ -258,6 +267,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       autoOpenDrawer: openDrawer ?? state.autoOpenDrawer,
       autoPrintServer: printServer ?? state.autoPrintServer,
     );
+    AppLogger.info('settings', 'Thay doi tuy chon in tu dong: PrintCheckout=$checkout, PrintKitchen=$kitchen, OpenDrawer=$openDrawer, PrintServer=$printServer');
     await _persist();
     
     final session = ref.read(sessionProvider);
@@ -320,6 +330,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     _pollTimer?.cancel();
     _pollTimer = null;
 
+    writePrintLog('[Setup] storeId: $storeId, autoPrintServer: ${state.autoPrintServer}');
+
     if (!state.autoPrintServer) {
       print('[PrintServer] Chế độ máy chủ in ấn (Print Server) hiện đang TẮT.');
       return;
@@ -340,12 +352,14 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
             final ticketStoreId = newRow['store_id'] as String? ?? '';
             if (ticketStoreId != storeId) return;
             final ticketId = newRow['id'] as String?;
+            writePrintLog('[WS Ticket] Nhận ticket: $ticketId');
             if (ticketId != null) {
               _processTicket(ticketId, storeId);
             }
           },
         );
     _kitchenTicketsSubscription!.subscribe((status, [error]) {
+      writePrintLog('[WS Ticket Status] Kênh: $status. Error: $error');
       print('[PrintServer] Kênh Realtime phiếu bếp: $status ${error != null ? "- Lỗi: $error" : ""}');
     });
 
@@ -362,12 +376,14 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
             final orderStoreId = newRow['store_id'] as String? ?? '';
             if (orderStoreId != storeId) return;
             final orderId = newRow['id'] as String?;
+            writePrintLog('[WS Order] Nhận order: $orderId');
             if (orderId != null) {
               _processOrder(orderId, storeId);
             }
           },
         );
     _ordersSubscription!.subscribe((status, [error]) {
+      writePrintLog('[WS Order Status] Kênh: $status. Error: $error');
       print('[PrintServer] Kênh Realtime đơn hàng: $status ${error != null ? "- Lỗi: $error" : ""}');
     });
 
@@ -378,9 +394,13 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   }
 
   Future<void> _processTicket(String ticketId, String storeId) async {
-    if (_printedTicketIds.contains(ticketId)) return;
+    if (_printedTicketIds.contains(ticketId)) {
+      writePrintLog('[Process Ticket] Ticket $ticketId đã được in. Bỏ qua.');
+      return;
+    }
     _printedTicketIds.add(ticketId); // Đánh dấu đang xử lý ngay lập tức để tránh trùng lặp song song
 
+    writePrintLog('[Process Ticket] Đang tải chi tiết cho ticket: $ticketId');
     print('[PrintServer] Xử lý phiếu bếp mới: $ticketId. Đang tải chi tiết món...');
     try {
       await Future.delayed(const Duration(milliseconds: 800));
@@ -392,6 +412,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .maybeSingle();
 
       if (ticketData == null) {
+        writePrintLog('[Process Ticket] Không tìm thấy ticket: $ticketId trên DB. Rollback.');
         _printedTicketIds.remove(ticketId); // Rollback nếu không tìm thấy bản ghi
         return;
       }
@@ -402,6 +423,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .eq('ticket_id', ticketId);
 
       if (itemsData.isEmpty) {
+        writePrintLog('[Process Ticket] Ticket $ticketId trống món (itemsData empty). Rollback.');
         _printedTicketIds.remove(ticketId); // Rollback nếu món ăn chưa kịp lưu
         return;
       }
@@ -478,19 +500,26 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         note: '',
       );
 
+      writePrintLog('[Process Ticket] Đẩy in: $orderNumber. Bàn: $tableName, số món: ${billItems.length}');
       print('[PrintServer] Bắt đầu đẩy in phiếu bếp $orderNumber...');
       await StationPrinterDispatcher.printBill(billData, this.state, onlyKitchen: true);
+      writePrintLog('[Process Ticket] In thành công!');
       print('[PrintServer] Đã đẩy in thành công!');
     } catch (e) {
+      writePrintLog('[Process Ticket ERROR] Lỗi in ticket $ticketId: $e');
       print('[PrintServer] Lỗi xử lý in bếp: $e');
       _printedTicketIds.remove(ticketId); // Rollback nếu in lỗi để chu kỳ sau quét in lại
     }
   }
 
   Future<void> _processOrder(String orderId, String storeId) async {
-    if (_printedOrderIds.contains(orderId)) return;
+    if (_printedOrderIds.contains(orderId)) {
+      writePrintLog('[Process Order] Order $orderId đã in. Bỏ qua.');
+      return;
+    }
     _printedOrderIds.add(orderId); // Đánh dấu đang xử lý ngay lập tức để tránh trùng lặp song song
 
+    writePrintLog('[Process Order] Đang tải chi tiết cho order: $orderId');
     print('[PrintServer] Xử lý đơn hàng mới: $orderId. Đang tải chi tiết để in bill thanh toán...');
     try {
       await Future.delayed(const Duration(milliseconds: 800));
@@ -502,12 +531,15 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .maybeSingle();
 
       if (orderData == null) {
+        writePrintLog('[Process Order] Không tìm thấy order: $orderId trên DB. Rollback.');
         _printedOrderIds.remove(orderId); // Rollback nếu không tìm thấy
         return;
       }
 
       final status = orderData['status'] as String? ?? 'open';
+      writePrintLog('[Process Order] Order status: $status');
       if (status != 'paid' && status != 'completed') {
+        writePrintLog('[Process Order] Đơn hàng $orderId chưa thanh toán (status=$status). Bỏ qua.');
         print('[PrintServer] Đơn hàng $orderId chưa được thanh toán (status=$status). Bỏ qua.');
         return;
       }
@@ -518,6 +550,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .eq('order_id', orderId);
 
       if (itemsData.isEmpty) {
+        writePrintLog('[Process Order] Order $orderId trống món (itemsData empty). Rollback.');
         _printedOrderIds.remove(orderId); // Rollback nếu món ăn chưa kịp lưu
         return;
       }
@@ -535,7 +568,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       String tableName = 'Mang về';
       final sourceId = orderData['source_id'] as String?;
       final sourceType = orderData['source_type'] as String?;
-      if (sourceType == 'table' && sourceId != null) {
+      writePrintLog('[Process Order] sourceType: $sourceType, sourceId: $sourceId');
+      if ((sourceType == 'table' || sourceType == 'ban') && sourceId != null) {
         final tableRow = await Supabase.instance.client
             .from('ban_dining_tables')
             .select('label')
@@ -579,10 +613,13 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         note: orderData['note'] as String? ?? '',
       );
 
+      writePrintLog('[Process Order] Đẩy in hoá đơn: $orderNumber. Bàn: $tableName, số món: ${billItems.length}');
       print('[PrintServer] Bắt đầu đẩy in hoá đơn thanh toán $orderNumber...');
       await StationPrinterDispatcher.printBill(billData, this.state, onlyReceipt: true);
+      writePrintLog('[Process Order] In hoá đơn thành công!');
       print('[PrintServer] Đã đẩy in hoá đơn thành công!');
     } catch (e) {
+      writePrintLog('[Process Order ERROR] Lỗi in hoá đơn $orderId: $e');
       print('[PrintServer] Lỗi xử lý in hoá đơn: $e');
       _printedOrderIds.remove(orderId); // Rollback nếu in lỗi để chu kỳ sau quét in lại
     }
@@ -598,9 +635,13 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .order('sent_at', ascending: false)
           .limit(10);
       
+      if (tickets.isNotEmpty) {
+        writePrintLog('[Polling Tickets] Tìm thấy ${tickets.length} tickets.');
+      }
       for (final row in tickets) {
         final ticketId = row['id'] as String?;
         if (ticketId != null && !_printedTicketIds.contains(ticketId)) {
+          writePrintLog('[Polling Ticket] Phát hiện ticket chưa in: $ticketId');
           print('[PrintServer Polling] Phát hiện phiếu bếp chưa in qua WebSocket: $ticketId');
           _processTicket(ticketId, storeId);
         }
@@ -615,14 +656,19 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .order('created_at', ascending: false)
           .limit(10);
 
+      if (orders.isNotEmpty) {
+        writePrintLog('[Polling Orders] Tìm thấy ${orders.length} orders.');
+      }
       for (final row in orders) {
         final orderId = row['id'] as String?;
         if (orderId != null && !_printedOrderIds.contains(orderId)) {
+          writePrintLog('[Polling Order] Phát hiện order chưa in: $orderId');
           print('[PrintServer Polling] Phát hiện đơn hàng chưa in qua WebSocket: $orderId');
           _processOrder(orderId, storeId);
         }
       }
     } catch (e) {
+      writePrintLog('[Polling ERROR] Lỗi quét db: $e');
       print('[PrintServer Polling] Lỗi quét dữ liệu in: $e');
     }
   }

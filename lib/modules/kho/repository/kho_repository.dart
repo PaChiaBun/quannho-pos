@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../../../core/repositories/core_product_repository.dart';
 import 'package:intl/intl.dart';
+import '../../../core/utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // KHO REPOSITORY — 100% Supabase
@@ -178,6 +179,7 @@ class KhoRepository {
     } catch (e) {
       debugPrint('[Kho] ⚠️ receiveStock finance_record failed: $e');
     }
+    AppLogger.info('kho', 'Nhap kho nhanh san pham $productName - So luong: $quantity.');
   } // end receiveStock
 
   /// Điều chỉnh kho thủ công
@@ -203,6 +205,12 @@ class KhoRepository {
     });
 
     await _productRepo.updateStockQty(productId, quantity);
+
+    try {
+      final prod = await _productRepo.getById(productId);
+      final prodName = prod?.name ?? productId;
+      AppLogger.info('kho', 'Dieu chinh ton kho san pham $prodName. Ly do: $reason. Thay doi: $quantity.');
+    } catch (_) {}
   }
 
   // ── Suppliers ─────────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import '../core/widgets/create_store_sheet.dart';
 import '../features/backup/backup_screen.dart';
 import 'bug_report_screen.dart';
 import 'pin_lock_screen.dart';
+import 'log_viewer_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../modules/bill_printer/screens/printer_settings_screen.dart';
 import '../core/services/auto_update_service.dart';
@@ -89,31 +90,6 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
-          // ── Thiết bị & In ấn ─────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              icon: Icons.print_rounded,
-              title: 'In ấn & Thiết bị',
-              color: _kOrange,
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _SettingsTile(
-                  icon: Icons.print_rounded,
-                  label: 'Cấu hình máy in & Tem nhãn',
-                  subtitle: 'Phân trạm: Thu ngân, Bếp nóng, Bếp Bar, Stickers',
-                  color: _kOrange,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const PrinterSettingsScreen()),
-                  ),
-                ),
-              ]),
-            ),
-          ),
 
           // ── Dữ liệu ────────────────────────────────────────────────
           SliverToBoxAdapter(

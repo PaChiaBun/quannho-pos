@@ -3,6 +3,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../core/utils/app_logger.dart';
 import '../core/utils/cart_animation_helper.dart';
 import '../core/utils/money_formatter.dart';
 import 'package:flutter/services.dart';
@@ -2658,6 +2659,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
       // 6. Đóng session
       await banRepoCached.closeSession(widget.session.id, total);
+
+      // LOG HOẠT ĐỘNG
+      AppLogger.info('checkout', 'Thanh toan hoa don thanh cong tai ${widget.zone.name} - ${widget.table.label}. Tong: ${total.toInt()}d, Hinh thuc: ${payMethod.toUpperCase()}');
       
       // Tự động in hóa đơn thu ngân khi thanh toán tại bàn (nếu bật cấu hình)
       try {
@@ -2913,6 +2917,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
       // Invalidate stream provider immediately so UI updates to 'da_gui' without waiting for realtime/poll
       ref.invalidate(sessionItemsProvider(widget.session.id));
+
+      final itemsSummary = unsent.map((i) => '${i.productName} (x${i.quantity.toInt()})').join(', ');
+      AppLogger.info('order', 'Gui bep thanh cong tai ${widget.zone.name} - ${widget.table.label}: $itemsSummary');
     } catch (e) {
       debugPrint('[Kitchen] ❌ Lỗi insert items: $e');
       // Rollback: xóa ticket để tránh phiếu rỗng

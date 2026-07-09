@@ -135,6 +135,14 @@ const Map<String, ModuleTileData> kModuleConfigs = {
     baseColor: Color(0xFF4338CA), // indigo-700
     route: '/bill_printer',
   ),
+  'log_viewer': ModuleTileData(
+    id: 'log_viewer',
+    title: 'Nhật Ký Log',
+    subtitle: 'Theo dõi nhật ký sử dụng ứng dụng quán nhỏ',
+    icon: Icons.history_edu_rounded,
+    baseColor: Color(0xFF0EA5E9), // cyan-500
+    route: '/log_viewer',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

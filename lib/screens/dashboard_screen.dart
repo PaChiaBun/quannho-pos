@@ -1822,6 +1822,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       '/kho_pro':  11, // Module Kho Hàng Chuyên Nghiệp — KhoProScreen tại index 11
       '/tinhluong': 12, // Module Tính Lương — TinhLuongScreen tại index 12
       '/kay_ops':   13, // Module Vận Hành — OpsScreen tại index 13
+      '/log_viewer': 14, // Module Nhật ký hệ thống — LogViewerScreen tại index 14
     };
     final idx = tabMap[route];
     if (idx != null) {

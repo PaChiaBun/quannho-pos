@@ -713,28 +713,39 @@ class StationPrinterDispatcher {
     PrinterConfig config,
     String jobName,
   ) async {
+    writePrintLog('[_dispatchPrint] Start: $jobName. Printer: ${config.name}, Type: ${config.type}, Enabled: ${config.enabled}');
     if (kIsWeb) {
+      writePrintLog('[_dispatchPrint] Web fallback');
       await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
       return;
     }
     if (config.type == 'system') {
       if (config.name.isEmpty) {
+        writePrintLog('[_dispatchPrint] Printer name is empty. Fallback.');
         await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
       } else {
-        await Printing.directPrintPdf(
-          printer: Printer(url: config.name),
-          onLayout: (_) async => bytes,
-          name: jobName,
-        );
+        try {
+          writePrintLog('[_dispatchPrint] Calling directPrintPdf for ${config.name}');
+          final success = await Printing.directPrintPdf(
+            printer: Printer(url: config.name),
+            onLayout: (_) async => bytes,
+            name: jobName,
+          );
+          writePrintLog('[_dispatchPrint] Result: $success');
+        } catch (e) {
+          writePrintLog('[_dispatchPrint ERROR] directPrintPdf failed: $e');
+          await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
+        }
       }
     } else {
-      // Mạng IP (LAN/Wifi) - Hộp thoại in hệ thống làm dự phòng nếu không kết nối được trực tiếp
+      writePrintLog('[_dispatchPrint] Checking IP printer ${config.name}:9100');
       try {
         final socket = await Socket.connect(config.name, 9100, timeout: const Duration(seconds: 3));
-        // Đóng cổng vì direct pdf qua socket cần parser đặc biệt. Fallback sang layoutPdf.
+        writePrintLog('[_dispatchPrint] Connected to IP ${config.name}.');
         await socket.close();
         await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
-      } catch (_) {
+      } catch (e) {
+        writePrintLog('[_dispatchPrint ERROR] Connection failed: $e. Fallback.');
         await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
       }
     }

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart' show Color;
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'staff_sync_service.dart';
+import '../utils/app_logger.dart';
 
 // ── Module IDs (khớp với module system) ───────────────────────────────────────
 const kAllModules = ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'loyalty', 'staff', 'chamcong', 'tinhluong', 'kay_ops'];
@@ -327,6 +328,7 @@ class StaffService {
     if (address     != null) data['address']       = address;
     if (driveFileId != null) data['drive_file_id'] = driveFileId;
     final res = await db.from('staff_shifts').insert(data).select('id').single();
+    AppLogger.info('auth', 'Nhan vien bat dau vao ca (Clock-In) thanh cong.');
     return res['id'] as String;
   }
 
@@ -349,6 +351,7 @@ class StaffService {
     if (address     != null) data['address_out']       = address;
     if (driveFileId != null) data['drive_file_id_out'] = driveFileId;
     await db.from('staff_shifts').update(data).eq('id', shiftId);
+    AppLogger.info('auth', 'Nhan vien ket thuc ca lam (Clock-Out) thanh cong.');
   }
 
   // ── Manager: Sửa giờ vào/ra ca ──────────────────────────────────────────
@@ -364,6 +367,7 @@ class StaffService {
     if (clockOut != null) data['clock_out'] = clockOut.toUtc().toIso8601String();
     if (data.isEmpty) return;
     await db.from('staff_shifts').update(data).eq('id', shiftId);
+    AppLogger.info('auth', 'Cap nhat ca lam viec $shiftId thanh cong.');
   }
 
   static Future<String?> getOpenShiftId(String userId, String storeId) async {
