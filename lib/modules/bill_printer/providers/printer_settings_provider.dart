@@ -428,18 +428,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         return;
       }
 
-      String tableName = 'Mang về';
-      final sessionId = ticketData['session_id'] as String?;
-      if (sessionId != null) {
-        final sessionData = await Supabase.instance.client
-            .from('ban_sessions')
-            .select('label')
-            .eq('id', sessionId)
-            .maybeSingle();
-        if (sessionData != null) {
-          tableName = sessionData['label'] as String? ?? 'Mang về';
-        }
-      }
+      final tableName = ticketData['table_label'] as String? ?? 'Mang về';
 
       final note = ticketData['note'] as String? ?? '';
       final round = ticketData['round'] as int? ?? 1;
