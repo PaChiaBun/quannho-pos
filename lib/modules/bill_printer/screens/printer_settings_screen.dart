@@ -254,7 +254,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
                       style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 14, color: _kIndigo)),
                   const SizedBox(height: 12),
                   SwitchListTile(
-                    activeColor: _kIndigo,
+                    activeColor: Colors.blue,
                     contentPadding: EdgeInsets.zero,
                     title: const Text('In khi thanh toán', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     subtitle: const Text('In hoá đơn khi bán thành công', style: TextStyle(fontSize: 11)),
@@ -262,7 +262,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
                     onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(checkout: v),
                   ),
                   SwitchListTile(
-                    activeColor: _kIndigo,
+                    activeColor: Colors.blue,
                     contentPadding: EdgeInsets.zero,
                     title: const Text('In khi báo chế biến', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     subtitle: const Text('Gửi món đến trạm bếp & nhãn ly', style: TextStyle(fontSize: 11)),
@@ -270,7 +270,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
                     onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(kitchen: v),
                   ),
                   SwitchListTile(
-                    activeColor: _kIndigo,
+                    activeColor: Colors.blue,
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Tự động mở két tiền', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     subtitle: const Text('Mở két khi in hoá đơn thanh toán', style: TextStyle(fontSize: 11)),
@@ -278,7 +278,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
                     onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(openDrawer: v),
                   ),
                   SwitchListTile(
-                    activeColor: _kIndigo,
+                    activeColor: Colors.blue,
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Máy chủ in ấn (Print Server)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     subtitle: const Text('Tự động in hộ các thiết bị di động/web khác', style: TextStyle(fontSize: 11)),
@@ -318,7 +318,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
                             ),
                           ),
                           Switch(
-                            activeColor: _kIndigo,
+                            activeColor: Colors.blue,
                             value: stationConfig.enabled,
                             onChanged: (v) {
                               ref.read(printerSettingsProvider.notifier).saveConfig(
@@ -372,28 +372,28 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
               child: Column(
                 children: [
                   SwitchListTile(
-                    activeColor: _kIndigo,
+                    activeColor: Colors.blue,
                     title: const Text('Tự động in khi thanh toán (Khách)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     value: settings.autoPrintCheckout,
                     onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(checkout: v),
                   ),
                   const Divider(height: 1),
                   SwitchListTile(
-                    activeColor: _kIndigo,
+                    activeColor: Colors.blue,
                     title: const Text('Tự động in phiếu bếp khi báo chế biến', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     value: settings.autoPrintKitchen,
                     onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(kitchen: v),
                   ),
                   const Divider(height: 1),
                   SwitchListTile(
-                    activeColor: _kIndigo,
+                    activeColor: Colors.blue,
                     title: const Text('Tự động mở két tiền khi thanh toán', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     value: settings.autoOpenDrawer,
                     onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(openDrawer: v),
                   ),
                   const Divider(height: 1),
                   SwitchListTile(
-                    activeColor: _kIndigo,
+                    activeColor: Colors.blue,
                     title: const Text('Máy chủ in ấn (In hộ thiết bị khác)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     value: settings.autoPrintServer,
                     onChanged: (v) => ref.read(printerSettingsProvider.notifier).toggleAutoPrint(printServer: v),
@@ -551,7 +551,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
           ),
         ),
         trailing: Switch(
-          activeColor: _kIndigo,
+          activeColor: Colors.blue,
           value: config.enabled,
           onChanged: (v) {
             ref.read(printerSettingsProvider.notifier).saveConfig(
