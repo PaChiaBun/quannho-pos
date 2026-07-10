@@ -607,11 +607,11 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       if ((sourceType == 'table' || sourceType == 'ban') && sourceId != null) {
         final tableRow = await Supabase.instance.client
             .from('ban_dining_tables')
-            .select('label')
+            .select('name, label')
             .eq('id', sourceId)
             .maybeSingle();
         if (tableRow != null) {
-          tableName = tableRow['label'] as String? ?? 'Mang về';
+          tableName = (tableRow['name'] as String?) ?? (tableRow['label'] as String?) ?? 'Mang về';
         }
       }
 
