@@ -141,7 +141,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       }
     }
     AppLogger.setDeviceId(deviceId);
-    return 'qn_station_printers_$deviceId';
+    return 'qn_station_printers_global';
   }
 
   Future<void> _loadLocalSettings() async {

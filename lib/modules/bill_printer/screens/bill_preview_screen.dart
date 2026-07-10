@@ -668,7 +668,7 @@ class StationPrinterDispatcher {
     }
 
     // 2. In phiếu bếp nóng
-    if (!onlyReceipt && settings.bepNong.enabled) {
+    if (!onlyReceipt && settings.bepNong.enabled && settings.bepNong.name.isNotEmpty) {
       final hotItems = bill.items
           .where((i) => i.stationCode == 'bep_nong' || i.stationCode == 'nong')
           .toList();
@@ -712,7 +712,7 @@ class StationPrinterDispatcher {
     }
 
     // 3. In phiếu bếp bar
-    if (!onlyReceipt && settings.bepBar.enabled) {
+    if (!onlyReceipt && settings.bepBar.enabled && settings.bepBar.name.isNotEmpty) {
       final barItems = bill.items
           .where((i) => i.stationCode == 'bep_bar' || i.stationCode == 'bar')
           .toList();

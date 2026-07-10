@@ -230,14 +230,17 @@ class ThermalPrinterService {
   }) async {
     Socket? socket;
     try {
+      print('[openCashDrawer] Connecting to IP: $printerIp');
       socket = await Socket.connect(printerIp, port, timeout: const Duration(seconds: 2));
       // Mã lệnh ESC/POS mở két tiền (Pin 2 và Pin 5)
       socket.add(Uint8List.fromList([0x1B, 0x70, 0x00, 0x19, 0xFA]));
       socket.add(Uint8List.fromList([0x1B, 0x70, 0x01, 0x19, 0xFA]));
       await socket.flush();
+      await Future.delayed(const Duration(milliseconds: 100)); // Delay để máy in kịp nhận lệnh trước khi ngắt kết nối
       await socket.close();
-    } catch (_) {
-      // Bỏ qua lỗi kết nối máy in khi mở két
+      print('[openCashDrawer] Sent drawer kick command successfully.');
+    } catch (e) {
+      print('[openCashDrawer Error] Failed to kick drawer on $printerIp: $e');
     } finally {
       try { socket?.destroy(); } catch (_) {}
     }
