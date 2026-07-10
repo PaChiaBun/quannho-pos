@@ -111,7 +111,10 @@ class BillPdfGenerator {
     final pageFormat = PdfPageFormat(
       paperMm * PdfPageFormat.mm,
       double.infinity,
-      marginAll: 6 * PdfPageFormat.mm,
+      marginLeft: 3 * PdfPageFormat.mm,
+      marginRight: 3 * PdfPageFormat.mm,
+      marginTop: 5 * PdfPageFormat.mm,
+      marginBottom: 5 * PdfPageFormat.mm,
     );
 
     final sections = <pw.Widget>[];
@@ -450,7 +453,10 @@ class BillPdfGenerator {
     final pageFormat = PdfPageFormat(
       paperMm * PdfPageFormat.mm,
       double.infinity,
-      marginAll: 6 * PdfPageFormat.mm,
+      marginLeft: 3 * PdfPageFormat.mm,
+      marginRight: 3 * PdfPageFormat.mm,
+      marginTop: 5 * PdfPageFormat.mm,
+      marginBottom: 5 * PdfPageFormat.mm,
     );
 
     final hfs  = tpl.headerFontSize.toDouble();
@@ -643,11 +649,22 @@ class StationPrinterDispatcher {
     // 1. In hoá đơn thu ngân (chỉ in khi là hóa đơn thanh toán, không in khi là phiếu bếp)
     if (!onlyKitchen && settings.cashier.enabled && bill.type == BillType.receipt) {
       final bytes = await BillPdfGenerator.generateReceipt(bill, stationKey: 'cashier');
+      final tpl = await BillBlockTemplate.load(stationKey: 'cashier');
+      final paperMm = tpl.paperSize == '58mm' ? 58.0 : tpl.paperSize == 'a4' ? 210.0 : 80.0;
+      final format = PdfPageFormat(
+        paperMm * PdfPageFormat.mm,
+        double.infinity,
+        marginLeft: 3 * PdfPageFormat.mm,
+        marginRight: 3 * PdfPageFormat.mm,
+        marginTop: 5 * PdfPageFormat.mm,
+        marginBottom: 5 * PdfPageFormat.mm,
+      );
+
       if (settings.autoOpenDrawer && settings.cashier.type == 'network' && settings.cashier.name.isNotEmpty) {
         // Tự động gửi lệnh mở két tiền kết nối với máy in thu ngân
         ThermalPrinterService.openCashDrawer(printerIp: settings.cashier.name).catchError((_) => null);
       }
-      await _dispatchPrint(bytes, settings.cashier, 'hoa_don_${bill.orderNumber}');
+      await _dispatchPrint(bytes, settings.cashier, 'hoa_don_${bill.orderNumber}', format: format);
     }
 
     // 2. In phiếu bếp nóng
@@ -679,7 +696,17 @@ class StationPrinterDispatcher {
             note: bill.note,
           );
           final bytes = await BillPdfGenerator.generateKitchenTicket(hotBill, stationKey: 'bepNong');
-          await _dispatchPrint(bytes, settings.bepNong, 'phieu_bep_nong_${bill.orderNumber}');
+          final tpl = await KitchenTicketTemplate.load(stationKey: 'bepNong');
+          final paperMm = tpl.paperSize == '58mm' ? 58.0 : 80.0;
+          final format = PdfPageFormat(
+            paperMm * PdfPageFormat.mm,
+            double.infinity,
+            marginLeft: 3 * PdfPageFormat.mm,
+            marginRight: 3 * PdfPageFormat.mm,
+            marginTop: 5 * PdfPageFormat.mm,
+            marginBottom: 5 * PdfPageFormat.mm,
+          );
+          await _dispatchPrint(bytes, settings.bepNong, 'phieu_bep_nong_${bill.orderNumber}', format: format);
         }
       }
     }
@@ -713,7 +740,17 @@ class StationPrinterDispatcher {
             note: bill.note,
           );
           final bytes = await BillPdfGenerator.generateKitchenTicket(barBill, stationKey: 'bepBar');
-          await _dispatchPrint(bytes, settings.bepBar, 'phieu_bep_bar_${bill.orderNumber}');
+          final tpl = await KitchenTicketTemplate.load(stationKey: 'bepBar');
+          final paperMm = tpl.paperSize == '58mm' ? 58.0 : 80.0;
+          final format = PdfPageFormat(
+            paperMm * PdfPageFormat.mm,
+            double.infinity,
+            marginLeft: 3 * PdfPageFormat.mm,
+            marginRight: 3 * PdfPageFormat.mm,
+            marginTop: 5 * PdfPageFormat.mm,
+            marginBottom: 5 * PdfPageFormat.mm,
+          );
+          await _dispatchPrint(bytes, settings.bepBar, 'phieu_bep_bar_${bill.orderNumber}', format: format);
         }
       }
     }
@@ -726,6 +763,14 @@ class StationPrinterDispatcher {
           labelBytesList[i],
           settings.barLabel,
           'tem_bar_${bill.orderNumber}_$i',
+          format: const PdfPageFormat(
+            50 * PdfPageFormat.mm,
+            30 * PdfPageFormat.mm,
+            marginLeft: 2 * PdfPageFormat.mm,
+            marginRight: 2 * PdfPageFormat.mm,
+            marginTop: 2 * PdfPageFormat.mm,
+            marginBottom: 2 * PdfPageFormat.mm,
+          ),
         );
       }
     }
@@ -777,18 +822,20 @@ class StationPrinterDispatcher {
   static Future<void> _dispatchPrint(
     Uint8List bytes,
     PrinterConfig config,
-    String jobName,
-  ) async {
+    String jobName, {
+    PdfPageFormat? format,
+  }) async {
     writePrintLog('[_dispatchPrint] Start: $jobName. Printer: ${config.name}, Type: ${config.type}, Enabled: ${config.enabled}');
+    final finalFormat = format ?? PdfPageFormat.roll80;
     if (kIsWeb) {
       writePrintLog('[_dispatchPrint] Web fallback');
-      await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
+      await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName, format: finalFormat);
       return;
     }
     if (config.type == 'system') {
       if (config.name.isEmpty) {
         writePrintLog('[_dispatchPrint] Printer name is empty. Fallback.');
-        await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
+        await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName, format: finalFormat);
       } else {
         try {
           writePrintLog('[_dispatchPrint] Calling directPrintPdf for ${config.name}');
@@ -796,11 +843,12 @@ class StationPrinterDispatcher {
             printer: Printer(url: config.name),
             onLayout: (_) async => bytes,
             name: jobName,
+            format: finalFormat,
           );
           writePrintLog('[_dispatchPrint] Result: $success');
         } catch (e) {
           writePrintLog('[_dispatchPrint ERROR] directPrintPdf failed: $e');
-          await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
+          await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName, format: finalFormat);
         }
       }
     } else {
@@ -809,10 +857,10 @@ class StationPrinterDispatcher {
         final socket = await Socket.connect(config.name, 9100, timeout: const Duration(seconds: 3));
         writePrintLog('[_dispatchPrint] Connected to IP ${config.name}.');
         await socket.close();
-        await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
+        await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName, format: finalFormat);
       } catch (e) {
         writePrintLog('[_dispatchPrint ERROR] Connection failed: $e. Fallback.');
-        await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName);
+        await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName, format: finalFormat);
       }
     }
   }
@@ -927,7 +975,8 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                             onLayout: (_) async => bytes,
                             name: isKitchen
                                 ? 'phieu_bep_${bill.orderNumber}'
-                                : 'hoa_don_${bill.orderNumber}');
+                                : 'hoa_don_${bill.orderNumber}',
+                            format: fmt);
                       },
                     ),
                   ],
