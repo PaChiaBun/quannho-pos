@@ -32,6 +32,7 @@ IconData _blockIcon(BillBlockType type) {
     case BillBlockType.spacer:        return Icons.space_bar_rounded;
     case BillBlockType.footer:        return Icons.favorite_border_rounded;
     case BillBlockType.appBranding:   return Icons.rocket_launch_rounded;
+    case BillBlockType.taxInfo:       return Icons.description_rounded;
   }
 }
 
@@ -54,6 +55,7 @@ String _blockLabel(BillBlockType type) {
     case BillBlockType.spacer:        return 'Khoảng trắng';
     case BillBlockType.footer:        return 'Lời cảm ơn';
     case BillBlockType.appBranding:   return 'Quán Nhỏ POS';
+    case BillBlockType.taxInfo:       return 'Ký hiệu & Mẫu số HĐ';
   }
 }
 

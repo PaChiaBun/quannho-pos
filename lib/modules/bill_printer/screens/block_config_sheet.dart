@@ -94,11 +94,21 @@ class _BlockConfigSheetState extends ConsumerState<BlockConfigSheet> {
       case BillBlockType.footer:        return _footerFields();
       case BillBlockType.totals:        return _totalsFields();
       case BillBlockType.paymentMethod: return _paymentFields();
+      case BillBlockType.taxInfo:       return _taxInfoFields();
       case BillBlockType.itemsList:
       case BillBlockType.appBranding:
         return [const Text('🔒 Block bắt buộc — không thể chỉnh sửa.', style: TextStyle(color: Colors.grey))];
     }
   }
+
+  // ── taxInfo ──
+  List<Widget> _taxInfoFields() => [
+    _textField('Mẫu số hóa đơn', 'invoicePattern', hint: 'VD: 1/001'),
+    _textField('Ký hiệu hóa đơn', 'invoiceSerial', hint: 'VD: 1C26TAA'),
+    _toggle('Hiện Mẫu số', 'showPattern'),
+    _toggle('Hiện Ký hiệu', 'showSerial'),
+    _sliderRow('Cỡ chữ', 'fontSize', 8, 14),
+  ];
 
   // ── shopHeader ──
   List<Widget> _shopHeaderFields() => [

@@ -95,6 +95,8 @@ class BillPreviewWidget extends StatelessWidget {
         return _Footer(b: b);
       case BillBlockType.appBranding:
         return const _AppBrandingWidget();
+      case BillBlockType.taxInfo:
+        return _TaxInfo(b: b);
     }
   }
 }
@@ -242,6 +244,40 @@ class _TableInfo extends StatelessWidget {
       Text(label, style: TextStyle(fontSize: fs)),
       Text('Bàn 5', style: TextStyle(fontSize: fs, fontWeight: FontWeight.w700)),
     ]);
+  }
+}
+
+class _TaxInfo extends StatelessWidget {
+  final BillBlock b;
+  const _TaxInfo({required this.b});
+  @override
+  Widget build(BuildContext context) {
+    final fs = b.cfg<int>('fontSize', 10).toDouble();
+    final pattern = b.cfg<String>('invoicePattern', '1/001');
+    final serial = b.cfg<String>('invoiceSerial', '1C26TAA');
+    final showPattern = b.cfg<bool>('showPattern', true);
+    final showSerial = b.cfg<bool>('showSerial', true);
+
+    return Column(
+      children: [
+        if (showPattern)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Mẫu số HĐ:', style: TextStyle(fontSize: fs)),
+              Text(pattern, style: TextStyle(fontSize: fs, fontWeight: FontWeight.w700)),
+            ],
+          ),
+        if (showSerial)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Ký hiệu HĐ:', style: TextStyle(fontSize: fs)),
+              Text(serial, style: TextStyle(fontSize: fs, fontWeight: FontWeight.w700)),
+            ],
+          ),
+      ],
+    );
   }
 }
 

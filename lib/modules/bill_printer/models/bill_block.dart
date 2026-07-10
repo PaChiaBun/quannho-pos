@@ -21,6 +21,7 @@ enum BillBlockType {
   spacer,        // ↕️ Khoảng trắng
   footer,        // 🙏 Lời cảm ơn / footer
   appBranding,   // 🚀 Quán Nhỏ POS — bắt buộc, không xoá
+  taxInfo,       // 📄 Ký hiệu & Mẫu số HĐ
 }
 
 extension BillBlockTypeX on BillBlockType {
@@ -42,6 +43,7 @@ extension BillBlockTypeX on BillBlockType {
       case BillBlockType.spacer:        return '↕️ Khoảng trắng';
       case BillBlockType.footer:        return '🙏 Lời cảm ơn';
       case BillBlockType.appBranding:   return '🚀 Quán Nhỏ POS';
+      case BillBlockType.taxInfo:       return '📄 Ký hiệu & Mẫu số HĐ';
     }
   }
 
@@ -101,6 +103,8 @@ extension BillBlockTypeX on BillBlockType {
                 'fontSize': 12, 'align': 'center', 'bold': true};
       case BillBlockType.appBranding:
         return {'fontSize': 8, 'align': 'center'};
+      case BillBlockType.taxInfo:
+        return {'invoicePattern': '1/001', 'invoiceSerial': '1C26TAA', 'fontSize': 10, 'showSerial': true, 'showPattern': true};
     }
   }
 }

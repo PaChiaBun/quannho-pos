@@ -241,6 +241,25 @@ class BillPdfGenerator {
           pw.Text(tableName, style: pw.TextStyle(font: fontBold, fontSize: fs)),
         ]);
       }
+      case BillBlockType.taxInfo: {
+        final fs = b.cfg<int>('fontSize', 10).toDouble();
+        final pattern = b.cfg<String>('invoicePattern', '1/001');
+        final serial  = b.cfg<String>('invoiceSerial', '1C26TAA');
+        final showPattern = b.cfg<bool>('showPattern', true);
+        final showSerial  = b.cfg<bool>('showSerial', true);
+        return pw.Column(children: [
+          if (showPattern)
+            pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+              pw.Text('Mau so HD:', style: pw.TextStyle(font: font, fontSize: fs)),
+              pw.Text(pattern, style: pw.TextStyle(font: fontBold, fontSize: fs)),
+            ]),
+          if (showSerial)
+            pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+              pw.Text('Ky hieu HD:', style: pw.TextStyle(font: font, fontSize: fs)),
+              pw.Text(serial, style: pw.TextStyle(font: fontBold, fontSize: fs)),
+            ]),
+        ]);
+      }
       case BillBlockType.itemsList: {
         final fs = b.cfg<int>('fontSize', 10).toDouble();
         return pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.stretch, children: [

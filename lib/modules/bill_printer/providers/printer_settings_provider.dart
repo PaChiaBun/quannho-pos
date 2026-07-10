@@ -340,12 +340,15 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     _printedTicketIds.clear();
     _printedOrderIds.clear();
 
-    // Nạp lịch sử phiếu bếp đã có trên cloud để tránh in lại khi khởi động
+    final startupTime = DateTime.now().toUtc();
+
+    // Nạp lịch sử phiếu bếp đã có trên cloud để tránh in lại khi khởi động (chỉ lấy phiếu tạo trước khi khởi chạy app)
     try {
       final oldTickets = await Supabase.instance.client
           .from('kitchen_tickets')
           .select('id')
           .eq('store_id', storeId)
+          .lt('sent_at', startupTime.toIso8601String())
           .order('sent_at', ascending: false)
           .limit(50);
       for (final row in oldTickets) {
@@ -357,13 +360,14 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       writePrintLog('[PrintServer Error] Loi nap phieu bep lich su: $e');
     }
 
-    // Nạp lịch sử hoá đơn đã có trên cloud để tránh in lại khi khởi động
+    // Nạp lịch sử hoá đơn đã có trên cloud để tránh in lại khi khởi động (chỉ lấy đơn tạo trước khi khởi chạy app)
     try {
       final oldOrders = await Supabase.instance.client
           .from('orders')
           .select('id')
           .eq('store_id', storeId)
           .inFilter('status', ['paid', 'completed'])
+          .lt('created_at', startupTime.toIso8601String())
           .order('created_at', ascending: false)
           .limit(50);
       for (final row in oldOrders) {

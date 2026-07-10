@@ -289,6 +289,8 @@ class CartNotifier extends Notifier<CartState> {
         loyaltyPtsUsed: state.loyaltyPtsUsed,
         loyaltyRate: loyaltyRate,
         note: state.orderNote,
+        sourceType: state.tableId != null ? 'ban' : 'pos',
+        sourceId: state.tableId,
         staffId: session?.userId,
       );
       state = const CartState(); // clear sau khi thành công
