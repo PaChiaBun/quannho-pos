@@ -106,13 +106,13 @@ class BillPdfGenerator {
     final font     = await PdfGoogleFonts.notoSansRegular();
     final fontBold = await PdfGoogleFonts.notoSansBold();
 
-    final paperMm = tpl.paperSize == '58mm' ? 58.0
-                  : tpl.paperSize == 'a4'   ? 210.0 : 80.0;
+    final paperMm = tpl.paperSize == '58mm' ? 48.0
+                  : tpl.paperSize == 'a4'   ? 210.0 : 70.0;
     final pageFormat = PdfPageFormat(
       paperMm * PdfPageFormat.mm,
       double.infinity,
-      marginLeft: 3 * PdfPageFormat.mm,
-      marginRight: 3 * PdfPageFormat.mm,
+      marginLeft: 2 * PdfPageFormat.mm,
+      marginRight: 2 * PdfPageFormat.mm,
       marginTop: 5 * PdfPageFormat.mm,
       marginBottom: 5 * PdfPageFormat.mm,
     );
@@ -449,12 +449,12 @@ class BillPdfGenerator {
     // Load template chủ quán đã thiết kế
     final tpl = await KitchenTicketTemplate.load(stationKey: stationKey);
 
-    final paperMm = tpl.paperSize == '58mm' ? 58.0 : 80.0;
+    final paperMm = tpl.paperSize == '58mm' ? 48.0 : 70.0;
     final pageFormat = PdfPageFormat(
       paperMm * PdfPageFormat.mm,
       double.infinity,
-      marginLeft: 3 * PdfPageFormat.mm,
-      marginRight: 3 * PdfPageFormat.mm,
+      marginLeft: 2 * PdfPageFormat.mm,
+      marginRight: 2 * PdfPageFormat.mm,
       marginTop: 5 * PdfPageFormat.mm,
       marginBottom: 5 * PdfPageFormat.mm,
     );
@@ -650,12 +650,12 @@ class StationPrinterDispatcher {
     if (!onlyKitchen && settings.cashier.enabled && bill.type == BillType.receipt) {
       final bytes = await BillPdfGenerator.generateReceipt(bill, stationKey: 'cashier');
       final tpl = await BillBlockTemplate.load(stationKey: 'cashier');
-      final paperMm = tpl.paperSize == '58mm' ? 58.0 : tpl.paperSize == 'a4' ? 210.0 : 80.0;
+      final paperMm = tpl.paperSize == '58mm' ? 48.0 : tpl.paperSize == 'a4' ? 210.0 : 70.0;
       final format = PdfPageFormat(
         paperMm * PdfPageFormat.mm,
         double.infinity,
-        marginLeft: 3 * PdfPageFormat.mm,
-        marginRight: 3 * PdfPageFormat.mm,
+        marginLeft: 2 * PdfPageFormat.mm,
+        marginRight: 2 * PdfPageFormat.mm,
         marginTop: 5 * PdfPageFormat.mm,
         marginBottom: 5 * PdfPageFormat.mm,
       );
@@ -697,12 +697,12 @@ class StationPrinterDispatcher {
           );
           final bytes = await BillPdfGenerator.generateKitchenTicket(hotBill, stationKey: 'bepNong');
           final tpl = await KitchenTicketTemplate.load(stationKey: 'bepNong');
-          final paperMm = tpl.paperSize == '58mm' ? 58.0 : 80.0;
+          final paperMm = tpl.paperSize == '58mm' ? 48.0 : 70.0;
           final format = PdfPageFormat(
             paperMm * PdfPageFormat.mm,
             double.infinity,
-            marginLeft: 3 * PdfPageFormat.mm,
-            marginRight: 3 * PdfPageFormat.mm,
+            marginLeft: 2 * PdfPageFormat.mm,
+            marginRight: 2 * PdfPageFormat.mm,
             marginTop: 5 * PdfPageFormat.mm,
             marginBottom: 5 * PdfPageFormat.mm,
           );
@@ -741,12 +741,12 @@ class StationPrinterDispatcher {
           );
           final bytes = await BillPdfGenerator.generateKitchenTicket(barBill, stationKey: 'bepBar');
           final tpl = await KitchenTicketTemplate.load(stationKey: 'bepBar');
-          final paperMm = tpl.paperSize == '58mm' ? 58.0 : 80.0;
+          final paperMm = tpl.paperSize == '58mm' ? 48.0 : 70.0;
           final format = PdfPageFormat(
             paperMm * PdfPageFormat.mm,
             double.infinity,
-            marginLeft: 3 * PdfPageFormat.mm,
-            marginRight: 3 * PdfPageFormat.mm,
+            marginLeft: 2 * PdfPageFormat.mm,
+            marginRight: 2 * PdfPageFormat.mm,
             marginTop: 5 * PdfPageFormat.mm,
             marginBottom: 5 * PdfPageFormat.mm,
           );
