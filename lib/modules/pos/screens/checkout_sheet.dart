@@ -649,6 +649,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             footer:        billFooter.isNotEmpty ? billFooter : null,
             orderNumber:   orderId.substring(0, 8),
             createdAt:     DateTime.now(),
+            tableName:     cartSnapshot.tableName,
             items:         cartSnapshot.lines.map((l) => BillItem(
               name:  l.productName,
               qty:   l.quantity.toInt(),
@@ -728,6 +729,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               footer:        billFooter.isNotEmpty ? billFooter : null,
               orderNumber:   order?.orderNumber ?? orderId.substring(0, 8),
               createdAt:     DateTime.now(),
+              tableName:     cartSnapshot.tableName,
               items:         cartSnapshot.lines.map((l) => BillItem(
                 name:  l.productName,
                 qty:   l.quantity.toInt(),
