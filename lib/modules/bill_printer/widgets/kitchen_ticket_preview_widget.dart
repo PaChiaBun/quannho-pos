@@ -1,0 +1,161 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../providers/kitchen_ticket_template_provider.dart';
+
+class KitchenTicketPreviewWidget extends StatelessWidget {
+  final KitchenTicketTemplate tpl;
+  const KitchenTicketPreviewWidget({super.key, required this.tpl});
+
+  static const _sampleItems = [
+    ('Phở Bò Đặc Biệt', 2, 'Không hành, ít ớt'),
+    ('Cơm Gà Xối Mỡ', 1, null),
+    ('Bánh Mì Thịt', 3, 'Không rau mùi'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final widthFactor = tpl.paperSize == '58mm' ? 0.7 : 0.88;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: FractionallySizedBox(
+          widthFactor: widthFactor,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Tiêu đề ──
+                Text(
+                  tpl.headerText,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.outfit(
+                    fontSize: tpl.headerFontSize.toDouble(),
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+
+                // ── Bàn + số đơn ──
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (tpl.showTableName)
+                      Text(
+                        'BÀN 5',
+                        style: GoogleFonts.outfit(
+                          fontSize: tpl.tableFontSize.toDouble(),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    if (tpl.showOrderNumber)
+                      Text(
+                        '#QN-018',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                  ],
+                ),
+                if (tpl.showDateTime)
+                  Text(
+                    '14/05/2026  13:45',
+                    style: GoogleFonts.outfit(
+                      fontSize: 10,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+
+                if (tpl.showDivider) ...[
+                  const SizedBox(height: 6),
+                  const Divider(thickness: 1, height: 8),
+                ],
+                const SizedBox(height: 4),
+
+                // ── Danh sách món ──
+                ..._sampleItems.map((item) {
+                  final hasNote = tpl.showNote && item.$3 != null;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.$1,
+                                style: GoogleFonts.outfit(
+                                  fontSize: tpl.itemFontSize.toDouble(),
+                                  fontWeight: tpl.boldItemName ? FontWeight.w900 : FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'x${item.$2}',
+                              style: GoogleFonts.outfit(
+                                fontSize: tpl.qtyFontSize.toDouble(),
+                                fontWeight: FontWeight.w900,
+                                color: Colors.red.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (hasNote)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8, top: 2),
+                            child: Text(
+                              '↳ Ghi chú: ${item.$3}',
+                              style: GoogleFonts.outfit(
+                                fontSize: 10,
+                                color: Colors.blueGrey,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }),
+
+                if (tpl.showDivider) ...[
+                  const SizedBox(height: 8),
+                  const Divider(thickness: 1, height: 8),
+                ],
+                const SizedBox(height: 4),
+
+                // Footer branding hoặc note chung
+                Center(
+                  child: Text(
+                    'Quán Nhỏ POS',
+                    style: GoogleFonts.outfit(
+                      fontSize: 9,
+                      color: Colors.grey.shade400,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

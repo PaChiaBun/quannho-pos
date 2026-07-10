@@ -38,53 +38,58 @@ class BillPrinterHub extends ConsumerWidget {
           padding: const EdgeInsets.all(20),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
-            // ── Cấu hình máy in trạm ──────────────────────────────────────────
-            _HubCard(
-              icon: Icons.print_rounded,
-              color: const Color(0xFFD97706),
-              title: 'Cấu Hình Máy In & Tem Dán Ly',
-              subtitle: 'Phân trạm: Thu Ngân, Bếp Nóng, Bếp Bar, và Tem Nhãn Dán Ly',
-              onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const PrinterSettingsScreen())),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: MediaQuery.of(context).size.width > 700 ? 3 : 2,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: MediaQuery.of(context).size.width > 700 ? 2.2 : 1.6,
+              children: [
+                _HubSquareCard(
+                  icon: Icons.print_rounded,
+                  color: const Color(0xFFD97706),
+                  title: 'Cấu Hình Trạm In',
+                  subtitle: 'Kết nối máy in Thu ngân, Bếp nóng, Bếp bar...',
+                  onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const PrinterSettingsScreen())),
+                ),
+                _HubSquareCard(
+                  icon: Icons.tune_rounded,
+                  color: _kIndigo,
+                  title: 'Thiết Kế Hoá Đơn',
+                  subtitle: 'Sắp xếp, tuỳ biến khối hoá đơn thanh toán',
+                  onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const BillDesignerV2())),
+                ),
+                _HubSquareCard(
+                  icon: Icons.local_fire_department_rounded,
+                  color: const Color(0xFF7C3AED),
+                  title: 'Thiết Kế Bếp Nóng',
+                  subtitle: 'Cấu hình font, cỡ chữ phiếu món nóng',
+                  onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const KitchenTicketDesigner(stationKey: 'bepNong'))),
+                ),
+                _HubSquareCard(
+                  icon: Icons.local_bar_rounded,
+                  color: const Color(0xFF9333EA),
+                  title: 'Thiết Kế Bếp Bar',
+                  subtitle: 'Cấu hình font, cỡ chữ phiếu đồ uống',
+                  onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const KitchenTicketDesigner(stationKey: 'bepBar'))),
+                ),
+                _HubSquareCard(
+                  icon: Icons.collections_bookmark_rounded,
+                  color: const Color(0xFF0F766E),
+                  title: 'Chọn Mẫu Dựng Sẵn',
+                  subtitle: 'Mẫu hoá đơn & phiếu bếp thiết kế sẵn',
+                  onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const TemplateGalleryScreen())),
+                ),
+              ],
             ),
 
-            const SizedBox(height: 12),
-
-            // ── Thiết kế hoá đơn khách ────────────────────────────────────────
-            _HubCard(
-              icon: Icons.tune_rounded,
-              color: _kIndigo,
-              title: 'Thiết Kế Hoá Đơn',
-              subtitle: '${tpl.blocks.where((b) => b.enabled).length} blocks đang hiện  •  ${tpl.paperSize.toUpperCase()}',
-              onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const BillDesignerV2())),
-            ),
-
-            const SizedBox(height: 12),
-
-            // ── Thiết kế phiếu bếp ───────────────────────────────────────────
-            _HubCard(
-              icon: Icons.local_fire_department_rounded,
-              color: const Color(0xFF7C3AED),
-              title: 'Thiết Kế Phiếu Bếp',
-              subtitle: 'Font to, số lượng nổi bật, ghi chú đặc biệt',
-              onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const KitchenTicketDesigner())),
-            ),
-
-            const SizedBox(height: 12),
-
-            // ── Chọn mẫu dựng sẵn ──────────────────────────────────────────
-            _HubCard(
-              icon: Icons.collections_bookmark_rounded,
-              color: const Color(0xFF0F766E),
-              title: 'Chọn Mẫu Hoá Đơn & Phiếu Bếp',
-              subtitle: '10 mẫu hoá đơn + 8 mẫu phiếu bếp dựng sẵn — chọn & áp dụng ngay',
-              onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const TemplateGalleryScreen())),
-            ),
-
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             // ── Xem trước nhanh theo mẫu hiện tại ──────────────────────────
             Text('Xem Trước Nhanh',
@@ -526,14 +531,14 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
   }
 }
 
-// ─── Hub Card ───────────────────────────────────────────────────────────────
-class _HubCard extends StatelessWidget {
+// ─── Hub Square Card ─────────────────────────────────────────────────────────
+class _HubSquareCard extends StatelessWidget {
   final IconData icon;
   final String title, subtitle;
   final Color color;
   final VoidCallback onTap;
 
-  const _HubCard({
+  const _HubSquareCard({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -545,35 +550,66 @@ class _HubCard extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
-      child: Row(children: [
-        Container(
-          width: 46, height: 46,
-          decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, color: Colors.white, size: 22),
-        ),
-        const SizedBox(width: 16),
-        Expanded(child: Column(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: Colors.white, size: 20),
+              ),
+              const Icon(Icons.arrow_forward_rounded, color: Colors.white70, size: 16),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: GoogleFonts.outfit(
-                  color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
-              const SizedBox(height: 2),
-              Text(subtitle, style: GoogleFonts.outfit(
-                  color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
-            ])),
-        const Icon(Icons.arrow_forward_ios_rounded,
-            color: Colors.white54, size: 16),
-      ]),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.outfit(
+                  color: Colors.white.withValues(alpha: 0.75),
+                  fontSize: 13,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     ),
   );
 }

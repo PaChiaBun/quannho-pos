@@ -12,11 +12,11 @@ const _kRed     = Color(0xFFDC2626);
 const _kAmber   = Color(0xFFF59E0B);
 
 class KitchenTicketDesigner extends ConsumerStatefulWidget {
-  const KitchenTicketDesigner({super.key});
+  final String stationKey;
+  const KitchenTicketDesigner({super.key, required this.stationKey});
   @override
   ConsumerState<KitchenTicketDesigner> createState() => _KitchenTicketDesignerState();
 }
-
 class _KitchenTicketDesignerState extends ConsumerState<KitchenTicketDesigner>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
@@ -37,7 +37,10 @@ class _KitchenTicketDesignerState extends ConsumerState<KitchenTicketDesigner>
 
   Future<void> _save() async {
     setState(() => _saving = true);
-    await ref.read(kitchenTicketTemplateProvider.notifier).save();
+    final currentProvider = widget.stationKey == 'bepBar'
+        ? kitchenTicketTemplateBepBarProvider
+        : kitchenTicketTemplateBepNongProvider;
+    await ref.read(currentProvider.notifier).save();
     setState(() => _saving = false);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -53,7 +56,10 @@ class _KitchenTicketDesignerState extends ConsumerState<KitchenTicketDesigner>
 
   @override
   Widget build(BuildContext context) {
-    final tpl = ref.watch(kitchenTicketTemplateProvider);
+    final currentProvider = widget.stationKey == 'bepBar'
+        ? kitchenTicketTemplateBepBarProvider
+        : kitchenTicketTemplateBepNongProvider;
+    final tpl = ref.watch(currentProvider);
     final isWide = MediaQuery.of(context).size.width > 700;
 
     return Scaffold(
@@ -61,7 +67,7 @@ class _KitchenTicketDesignerState extends ConsumerState<KitchenTicketDesigner>
       appBar: AppBar(
         backgroundColor: const Color(0xFF7C3AED), // tím — phân biệt với navy của hoá đơn khách
         foregroundColor: Colors.white,
-        title: Text('Thiết Kế Phiếu Bếp',
+        title: Text(widget.stationKey == 'bepBar' ? 'Thiết Kế Phiếu Bếp Bar' : 'Thiết Kế Phiếu Bếp Nóng',
             style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 18)),
         actions: [
           if (_saving)
@@ -93,30 +99,30 @@ class _KitchenTicketDesignerState extends ConsumerState<KitchenTicketDesigner>
       body: isWide
           ? Row(children: [
               SizedBox(width: 420, child: _ConfigPanel(tpl: tpl, tipsExpanded: _tipsExpanded,
-                  onToggleTips: () => setState(() => _tipsExpanded = !_tipsExpanded))),
+                  onToggleTips: () => setState(() => _tipsExpanded = !_tipsExpanded), provider: currentProvider)),
               const VerticalDivider(width: 1),
               Expanded(child: _PreviewPanel(tpl: tpl)),
             ])
           : TabBarView(controller: _tab, children: [
               _ConfigPanel(tpl: tpl, tipsExpanded: _tipsExpanded,
-                  onToggleTips: () => setState(() => _tipsExpanded = !_tipsExpanded)),
+                  onToggleTips: () => setState(() => _tipsExpanded = !_tipsExpanded), provider: currentProvider),
               _PreviewPanel(tpl: tpl),
             ]),
     );
   }
 }
 
-// ─── Config Panel ─────────────────────────────────────────────────────────────
 class _ConfigPanel extends ConsumerWidget {
   final KitchenTicketTemplate tpl;
   final bool tipsExpanded;
   final VoidCallback onToggleTips;
-  const _ConfigPanel({required this.tpl, required this.tipsExpanded, required this.onToggleTips});
+  final NotifierProvider<KitchenTicketTemplateNotifier, KitchenTicketTemplate> provider;
+  const _ConfigPanel({required this.tpl, required this.tipsExpanded, required this.onToggleTips, required this.provider});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     void update(KitchenTicketTemplate t) =>
-        ref.read(kitchenTicketTemplateProvider.notifier).update(t);
+        ref.read(provider.notifier).update(t);
 
     return ListView(padding: const EdgeInsets.all(16), children: [
 
@@ -263,7 +269,7 @@ class _ConfigPanel extends ConsumerWidget {
           side: BorderSide(color: Colors.red.shade300),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        onPressed: () => ref.read(kitchenTicketTemplateProvider.notifier).reset(),
+        onPressed: () => ref.read(provider.notifier).reset(),
       ),
       const SizedBox(height: 20),
     ]);

@@ -1,8 +1,10 @@
 // lib/modules/bill_printer/screens/block_config_sheet.dart
 // Config bottom sheet cho từng block type
 // ignore_for_file: use_build_context_synchronously
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/bill_block.dart';
 import '../providers/bill_template_provider.dart';
 import '../../../core/services/vietqr_service.dart';
@@ -139,6 +141,36 @@ class _BlockConfigSheetState extends ConsumerState<BlockConfigSheet> {
         )),
       ]),
     ),
+    ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.image_rounded, color: _kIndigo),
+      title: const Text('Chọn logo từ thiết bị', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+      subtitle: Text(
+        _cfg['imagePath'] != null && (_cfg['imagePath'] as String).startsWith('data:image')
+            ? 'Đã chọn logo tải lên'
+            : 'Chưa có logo',
+        style: const TextStyle(fontSize: 11),
+      ),
+      trailing: ElevatedButton(
+        onPressed: () async {
+          final picker = ImagePicker();
+          final img = await picker.pickImage(source: ImageSource.gallery, maxWidth: 400);
+          if (img != null) {
+            final bytes = await img.readAsBytes();
+            final base64Str = 'data:image/png;base64,${base64Encode(bytes)}';
+            _set('imagePath', base64Str);
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _kIndigo,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+        ),
+        child: const Text('Chọn ảnh', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+      ),
+    ),
+    const SizedBox(height: 12),
     _sliderRow('Chiều rộng ảnh (px)', 'width', 40, 160, isDouble: true),
     _alignPicker('Vị trí', 'align'),
   ];
@@ -193,40 +225,99 @@ class _BlockConfigSheetState extends ConsumerState<BlockConfigSheet> {
   List<Widget> _qrCodeFields() {
     final mode = _cfg['mode'] as String? ?? 'static';
     final currentBin = _cfg['bankBin'] as String? ?? '970422';
+    final qrSource = _cfg['qrSource'] as String? ?? 'vietqr';
     return [
-      _label('Chế độ QR'),
-      _chipGroup('mode', ['static', 'sepay'], ['VietQR Tĩnh (Miễn phí)', 'SePay API (Tự động confirm)']),
+      _label('Nguồn mã QR'),
+      _chipGroup('qrSource', ['vietqr', 'custom_image'], ['VietQR Tự động', 'Tải ảnh QR lên']),
       const SizedBox(height: 16),
-      if (mode == 'static') ...[
-        _label('Thông tin tài khoản'),
-        _label('Ngân hàng', sub: true),
-        DropdownButtonFormField<String>(
-          // ignore: deprecated_member_use
-          value: currentBin,
-          decoration: _inputDeco(''),
-          items: VietQrService.banks.map((b) => DropdownMenuItem(
-            value: b.bin,
-            child: Text('${b.shortName} — ${b.fullName}', overflow: TextOverflow.ellipsis),
-          )).toList(),
-          onChanged: (v) { if (v != null) _set('bankBin', v); },
+      if (qrSource == 'vietqr') ...[
+        _label('Chế độ QR'),
+        _chipGroup('mode', ['static', 'sepay'], ['VietQR Tĩnh (Miễn phí)', 'SePay API (Tự động confirm)']),
+        const SizedBox(height: 16),
+        if (mode == 'static') ...[
+          _label('Thông tin tài khoản'),
+          _label('Ngân hàng', sub: true),
+          DropdownButtonFormField<String>(
+            value: currentBin,
+            decoration: _inputDeco(''),
+            items: VietQrService.banks.map((b) => DropdownMenuItem(
+              value: b.bin,
+              child: Text('${b.shortName} — ${b.fullName}', overflow: TextOverflow.ellipsis),
+            )).toList(),
+            onChanged: (v) { if (v != null) _set('bankBin', v); },
+          ),
+          const SizedBox(height: 12),
+          _textField('Số tài khoản', 'accountNo', hint: '12345678901'),
+          _textField('Tên chủ TK (IN HOA)', 'accountName', hint: 'NGUYEN VAN A'),
+          _label('Loại VietQR'),
+          _chipGroup('qrType', ['dynamic', 'static_amount'], ['QR Động (Có sẵn số tiền)', 'QR Tĩnh (Không số tiền)']),
+          const SizedBox(height: 12),
+          Container(
+            margin: const EdgeInsets.only(top: 8, bottom: 16),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
+            child: Builder(
+              builder: (context) {
+                final qrType = _cfg['qrType'] as String? ?? 'dynamic';
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      qrType == 'dynamic'
+                          ? '⚡ QR Động: Tự động điền số tiền hoá đơn & nội dung. Khách chỉ cần quét & xác nhận.'
+                          : 'ℹ️ QR Tĩnh: Chỉ chứa thông tin tài khoản. Khách hàng phải tự nhập số tiền khi chuyển khoản.',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      '🔗 Đăng ký hoặc tạo mã QR nhanh tại: vietqr.net',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue),
+                    ),
+                  ],
+                );
+              }
+            ),
+          ),
+        ] else ...[
+          _textField('SePay API Key', 'sepayApiKey', hint: 'Lấy tại sepay.vn'),
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8)),
+            child: const Text('✅ Tự động xác nhận thanh toán khi khách quét. Cần đăng ký tại sepay.vn', style: TextStyle(fontSize: 11)),
+          ),
+        ],
+      ] else ...[
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.qr_code_rounded, color: _kIndigo),
+          title: const Text('Chọn ảnh QR từ thiết bị', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+          subtitle: Text(
+            _cfg['qrImagePath'] != null && (_cfg['qrImagePath'] as String).startsWith('data:image')
+                ? 'Đã chọn ảnh QR tải lên'
+                : 'Chưa có ảnh QR',
+            style: const TextStyle(fontSize: 11),
+          ),
+          trailing: ElevatedButton(
+            onPressed: () async {
+              final picker = ImagePicker();
+              final img = await picker.pickImage(source: ImageSource.gallery, maxWidth: 500);
+              if (img != null) {
+                final bytes = await img.readAsBytes();
+                final base64Str = 'data:image/png;base64,${base64Encode(bytes)}';
+                _set('qrImagePath', base64Str);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kIndigo,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            child: const Text('Chọn ảnh', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
         ),
         const SizedBox(height: 12),
-        _textField('Số tài khoản', 'accountNo', hint: '12345678901'),
-        _textField('Tên chủ TK (IN HOA)', 'accountName', hint: 'NGUYEN VAN A'),
-        Container(
-          margin: const EdgeInsets.only(top: 8, bottom: 16),
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
-          child: const Text('⚡ QR sẽ tự điền số tiền đơn hàng. Khách chỉ cần quét và xác nhận.', style: TextStyle(fontSize: 11)),
-        ),
-      ] else ...[
-        _textField('SePay API Key', 'sepayApiKey', hint: 'Lấy tại sepay.vn'),
-        Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8)),
-          child: const Text('✅ Tự động xác nhận thanh toán khi khách quét. Cần đăng ký tại sepay.vn', style: TextStyle(fontSize: 11)),
-        ),
       ],
       _label('Hiển thị'),
       _chipGroup('size', ['small', 'medium', 'large'], ['Nhỏ', 'Vừa', 'Lớn']),

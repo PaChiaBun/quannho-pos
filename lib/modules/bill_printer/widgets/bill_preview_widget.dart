@@ -1,5 +1,4 @@
-// lib/modules/bill_printer/widgets/bill_preview_widget.dart
-// Real-time Flutter widget preview của hoá đơn
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/bill_block.dart';
@@ -133,11 +132,17 @@ class _ShopLogo extends StatelessWidget {
     final path = b.cfg<String>('imagePath', '');
     final width = b.cfg<double>('width', 80.0);
     final align = b.cfg<String>('align', 'center');
-    Widget logo = path.isEmpty
-        ? Container(width: width, height: width * 0.6,
-            decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(4)),
-            child: const Icon(Icons.image_outlined, color: Colors.grey))
-        : Image.asset(path, width: width, fit: BoxFit.contain);
+    Widget logo;
+    if (path.isEmpty) {
+      logo = Container(width: width, height: width * 0.6,
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(4)),
+          child: const Icon(Icons.image_outlined, color: Colors.grey));
+    } else if (path.startsWith('data:image')) {
+      final base64Data = path.split(',').last;
+      logo = Image.memory(base64Decode(base64Data), width: width, fit: BoxFit.contain);
+    } else {
+      logo = Image.asset(path, width: width, fit: BoxFit.contain);
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Align(
@@ -356,10 +361,31 @@ class _QrCode extends StatelessWidget {
         : b.cfg<String>('size', 'medium') == 'large' ? 140.0 : 110.0;
 
     Widget qrWidget;
-    if (mode == 'static' && accNo.isNotEmpty) {
+    final qrType = b.cfg<String>('qrType', 'dynamic');
+    final qrSource = b.cfg<String>('qrSource', 'vietqr');
+    final qrImagePath = b.cfg<String>('qrImagePath', '');
+
+    if (qrSource == 'custom_image') {
+      if (qrImagePath.startsWith('data:image')) {
+        final base64Data = qrImagePath.split(',').last;
+        qrWidget = Image.memory(
+          base64Decode(base64Data),
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          errorBuilder: (ctx, err, stack) => _QrPlaceholder(size: size),
+        );
+      } else {
+        qrWidget = _QrPlaceholder(size: size);
+      }
+    } else if (mode == 'static' && accNo.isNotEmpty) {
       final url = VietQrService.generateUrl(
-        bankBin: bin, accountNo: accNo,
-        accountName: accName, amount: amount, addInfo: 'QN-20260513-018');
+        bankBin: bin,
+        accountNo: accNo,
+        accountName: accName,
+        amount: qrType == 'static_amount' ? null : amount,
+        addInfo: qrType == 'static_amount' ? null : 'QN-20260513-018',
+      );
       qrWidget = Image.network(url, width: size, height: size, fit: BoxFit.contain,
         errorBuilder: (ctx, err, stack) => _QrPlaceholder(size: size));
     } else {

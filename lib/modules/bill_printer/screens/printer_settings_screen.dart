@@ -10,8 +10,12 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../providers/printer_settings_provider.dart';
 import '../providers/bill_template_provider.dart';
+import '../providers/kitchen_ticket_template_provider.dart';
+import '../models/bill_block.dart';
+import '../models/bill_block_template.dart';
 import '../../../core/services/thermal_printer_service.dart';
 import '../widgets/bill_preview_widget.dart';
+import '../widgets/kitchen_ticket_preview_widget.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/services/network_printer_search_service.dart';
 
@@ -904,20 +908,21 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
   }
 
   Widget _buildStationPreview(String stationKey) {
-    final asyncTpl = ref.watch(billTemplateProvider);
-    return asyncTpl.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Lỗi tải mẫu: $e')),
-      data: (tpl) {
-        if (stationKey == 'barLabel') {
-          // Tem dán ly Preview
-          return _buildStickerMockPreview();
-        } else {
-          // Hoá đơn thông thường
-          return BillPreviewWidget(tpl: tpl);
-        }
-      },
-    );
+    if (stationKey == 'barLabel') {
+      return _buildStickerMockPreview();
+    }
+    
+    if (stationKey == 'cashier') {
+      final asyncTpl = ref.watch(billTemplateProvider);
+      return asyncTpl.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Lỗi tải mẫu: $e')),
+        data: (tpl) => BillPreviewWidget(tpl: tpl),
+      );
+    } else {
+      final tpl = ref.watch(stationKey == 'bepBar' ? kitchenTicketTemplateBepBarProvider : kitchenTicketTemplateBepNongProvider);
+      return KitchenTicketPreviewWidget(tpl: tpl);
+    }
   }
 
   Widget _buildStickerMockPreview() {

@@ -425,8 +425,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       print('[PrintServer] Kênh Realtime đơn hàng: $status ${error != null ? "- Lỗi: $error" : ""}');
     });
 
-    // 3. Polling Fallback - Tự động quét in bù mỗi 12 giây đề phòng mất mạng / socket lỗi
-    _pollTimer = Timer.periodic(const Duration(seconds: 12), (timer) async {
+    // 3. Polling Fallback - Tự động quét in bù mỗi 2 giây đề phòng mất mạng / socket lỗi
+    _pollTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       _pollActiveTicketsAndOrders(storeId);
     });
   }

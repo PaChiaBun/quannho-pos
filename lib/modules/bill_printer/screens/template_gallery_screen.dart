@@ -26,14 +26,28 @@ class _TemplateGalleryScreenState extends ConsumerState<TemplateGalleryScreen>
   // Hoá đơn
   String? _selectedBillId;
   BillBlockTemplate? _previewBillTpl;
-  // Phiếu bếp
-  String? _selectedKitchenId;
-  KitchenTicketTemplate? _previewKitchenTpl;
+  // Bếp Nóng
+  String? _selectedKitchenNongId;
+  KitchenTicketTemplate? _previewKitchenNongTpl;
+  // Bếp Bar
+  String? _selectedKitchenBarId;
+  KitchenTicketTemplate? _previewKitchenBarTpl;
 
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 2, vsync: this);
+    _tab = TabController(length: 3, vsync: this);
+    // Tự động chọn mẫu đầu tiên
+    if (billPresets.isNotEmpty) {
+      _selectedBillId = billPresets.first.id;
+      _previewBillTpl = billPresets.first.template;
+    }
+    if (kitchenPresets.isNotEmpty) {
+      _selectedKitchenNongId = kitchenPresets.first.id;
+      _previewKitchenNongTpl = kitchenPresets.first.template;
+      _selectedKitchenBarId = kitchenPresets.first.id;
+      _previewKitchenBarTpl = kitchenPresets.first.template;
+    }
   }
 
   @override
@@ -55,13 +69,18 @@ class _TemplateGalleryScreenState extends ConsumerState<TemplateGalleryScreen>
     }
   }
 
-  // Áp dụng mẫu phiếu bếp
-  Future<void> _applyKitchen(KitchenPreset p) async {
-    ref.read(kitchenTicketTemplateProvider.notifier).update(p.template);
-    await ref.read(kitchenTicketTemplateProvider.notifier).save();
+  // Áp dụng mẫu phiếu bếp cho trạm chỉ định
+  Future<void> _applyKitchen(KitchenPreset p, String stationKey) async {
+    final provider = stationKey == 'bepBar'
+        ? kitchenTicketTemplateBepBarProvider
+        : kitchenTicketTemplateBepNongProvider;
+    ref.read(provider.notifier).update(p.template);
+    await ref.read(provider.notifier).save();
+    
     if (mounted) {
+      String stationName = stationKey == 'bepBar' ? 'Bếp Bar (Nước)' : 'Bếp Nóng';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('✅ Đã áp dụng mẫu bếp "${p.name}"',
+        content: Text('✅ Đã áp dụng mẫu "${p.name}" cho $stationName',
             style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
         backgroundColor: _kPurple,
         behavior: SnackBarBehavior.floating,
@@ -88,7 +107,8 @@ class _TemplateGalleryScreenState extends ConsumerState<TemplateGalleryScreen>
           labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 13),
           tabs: const [
             Tab(icon: Icon(Icons.receipt_long_rounded, size: 18), text: 'Hoá Đơn'),
-            Tab(icon: Icon(Icons.local_fire_department_rounded, size: 18), text: 'Phiếu Bếp'),
+            Tab(icon: Icon(Icons.local_fire_department_rounded, size: 18), text: 'Bếp Nóng'),
+            Tab(icon: Icon(Icons.local_bar_rounded, size: 18), text: 'Bếp Nước (Bar)'),
           ],
         ),
       ),
@@ -105,13 +125,22 @@ class _TemplateGalleryScreenState extends ConsumerState<TemplateGalleryScreen>
             onApply: _applyBill,
           ),
           _KitchenGalleryTab(
-            selectedId: _selectedKitchenId,
-            previewTpl: _previewKitchenTpl,
+            selectedId: _selectedKitchenNongId,
+            previewTpl: _previewKitchenNongTpl,
             onSelect: (p) => setState(() {
-              _selectedKitchenId = p.id;
-              _previewKitchenTpl = p.template;
+              _selectedKitchenNongId = p.id;
+              _previewKitchenNongTpl = p.template;
             }),
-            onApply: _applyKitchen,
+            onApply: (p) => _applyKitchen(p, 'bepNong'),
+          ),
+          _KitchenGalleryTab(
+            selectedId: _selectedKitchenBarId,
+            previewTpl: _previewKitchenBarTpl,
+            onSelect: (p) => setState(() {
+              _selectedKitchenBarId = p.id;
+              _previewKitchenBarTpl = p.template;
+            }),
+            onApply: (p) => _applyKitchen(p, 'bepBar'),
           ),
         ],
       ),
@@ -145,9 +174,11 @@ class _BillGalleryTab extends StatelessWidget {
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10,
-            childAspectRatio: 2.0,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: MediaQuery.of(context).size.width > 700 ? 4 : 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: MediaQuery.of(context).size.width > 700 ? 2.5 : 2.0,
           ),
           itemCount: presets.length,
           itemBuilder: (_, i) => _PresetCard(
@@ -204,9 +235,11 @@ class _KitchenGalleryTab extends StatelessWidget {
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10,
-            childAspectRatio: 2.0,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: MediaQuery.of(context).size.width > 700 ? 4 : 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: MediaQuery.of(context).size.width > 700 ? 2.5 : 2.0,
           ),
           itemCount: presets.length,
           itemBuilder: (_, i) => _PresetCard(
@@ -347,8 +380,8 @@ class _PreviewSection extends StatelessWidget {
         ),
         child: Row(children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w800, color: accentColor)),
-            Text(description, style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade600)),
+            Text(title, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: accentColor)),
+            Text(description, style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade600)),
           ])),
           ElevatedButton.icon(
             icon: const Icon(Icons.check_rounded, size: 16, color: Colors.white),

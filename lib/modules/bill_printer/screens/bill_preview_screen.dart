@@ -1,7 +1,9 @@
 // lib/modules/bill_printer/screens/bill_preview_screen.dart
 // ignore_for_file: use_build_context_synchronously
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import '../../../core/services/vietqr_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -98,9 +100,9 @@ class BillPdfGenerator {
   }
 
   // ‼️ FIX BUG #1 — V2: đọc BillBlockTemplate, render từng block đúng theo designer
-  static Future<Uint8List> generateReceipt(BillData bill) async {
+  static Future<Uint8List> generateReceipt(BillData bill, {String stationKey = 'cashier'}) async {
     final pdf      = pw.Document();
-    final tpl      = await BillBlockTemplate.load(); // key: bill_blocks_v2
+    final tpl      = await BillBlockTemplate.load(stationKey: stationKey); // key: bill_blocks_v2
     final font     = await PdfGoogleFonts.notoSansRegular();
     final fontBold = await PdfGoogleFonts.notoSansBold();
 
@@ -151,12 +153,37 @@ class BillPdfGenerator {
             pw.SizedBox(height: 2),
             pw.Text(tagline, textAlign: align,
                 style: pw.TextStyle(font: font, fontSize: (fs - 4).clamp(6, 20),
-                    color: PdfColors.grey600)),
+                    color: PdfColors.black)),
           ],
         ]);
       }
-      case BillBlockType.shopLogo:
-        return null; // logo không in rõ trên thermal — bỏ qua
+      case BillBlockType.shopLogo: {
+        final path = b.cfg<String>('imagePath', '');
+        final alignStr = b.cfg<String>('align', 'center');
+        final pw.AlignmentGeometry align = alignStr == 'left' ? pw.Alignment.centerLeft
+            : alignStr == 'right' ? pw.Alignment.centerRight : pw.Alignment.center;
+        final width = b.cfg<double>('width', 80.0);
+        if (path.isEmpty) return null;
+
+        pw.MemoryImage? img;
+        try {
+          if (path.startsWith('data:image')) {
+            final base64Data = path.split(',').last;
+            img = pw.MemoryImage(base64Decode(base64Data));
+          }
+        } catch (e) {
+          debugPrint('Error parsing logo: $e');
+        }
+
+        if (img == null) return null;
+        return pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(vertical: 4),
+          child: pw.Align(
+            alignment: align,
+            child: pw.Image(img, width: width),
+          ),
+        );
+      }
       case BillBlockType.shopAddress: {
         final addr = b.cfg<String>('address', '').isNotEmpty
             ? b.cfg<String>('address', '') : (bill.shopAddress ?? '');
@@ -164,7 +191,7 @@ class BillPdfGenerator {
         final fs = b.cfg<int>('fontSize', 10).toDouble();
         return pw.Text(addr,
             textAlign: _pdfAlign(b.cfg<String>('align', 'center')),
-            style: pw.TextStyle(font: font, fontSize: fs, color: PdfColors.grey700));
+            style: pw.TextStyle(font: font, fontSize: fs, color: PdfColors.black));
       }
       case BillBlockType.shopPhone: {
         final phone = b.cfg<String>('phone', '').isNotEmpty
@@ -174,7 +201,7 @@ class BillPdfGenerator {
         final fs    = b.cfg<int>('fontSize', 10).toDouble();
         return pw.Text('$label $phone',
             textAlign: _pdfAlign(b.cfg<String>('align', 'center')),
-            style: pw.TextStyle(font: font, fontSize: fs, color: PdfColors.grey700));
+            style: pw.TextStyle(font: font, fontSize: fs, color: PdfColors.black));
       }
       case BillBlockType.divider: {
         final style = b.cfg<String>('style', 'solid');
@@ -291,22 +318,61 @@ class BillPdfGenerator {
         return pw.Padding(padding: const pw.EdgeInsets.symmetric(vertical: 4), child: col);
       }
       case BillBlockType.qrCode: {
-        final accNo   = b.cfg<String>('accountNo', '');
-        final accName = b.cfg<String>('accountName', '');
-        if (accNo.isEmpty) return null;
+        final qrSource = b.cfg<String>('qrSource', 'vietqr');
+        final qrImagePath = b.cfg<String>('qrImagePath', '');
+        final sizeStr = b.cfg<String>('size', 'medium');
+        final double qrSize = sizeStr == 'small' ? 60.0 : sizeStr == 'large' ? 120.0 : 90.0;
+
+        pw.Widget? qrWidget;
+        if (qrSource == 'custom_image') {
+          if (qrImagePath.startsWith('data:image')) {
+            try {
+              final base64Data = qrImagePath.split(',').last;
+              final img = pw.MemoryImage(base64Decode(base64Data));
+              qrWidget = pw.Image(img, width: qrSize, height: qrSize);
+            } catch (e) {
+              debugPrint('Error parsing custom QR in PDF: $e');
+            }
+          }
+        } else {
+          final bin = b.cfg<String>('bankBin', '970422');
+          final accNo   = b.cfg<String>('accountNo', '');
+          final accName = b.cfg<String>('accountName', '');
+          if (accNo.isNotEmpty) {
+            final qrType = b.cfg<String>('qrType', 'dynamic');
+            final qrUrl = VietQrService.generateUrl(
+              bankBin: bin,
+              accountNo: accNo,
+              accountName: accName,
+              amount: qrType == 'static_amount' ? null : bill.total,
+              addInfo: qrType == 'static_amount' ? null : bill.orderNumber,
+            );
+            qrWidget = pw.BarcodeWidget(
+              barcode: pw.Barcode.qrCode(),
+              data: qrUrl,
+              width: qrSize,
+              height: qrSize,
+            );
+          }
+        }
+
+        if (qrWidget == null) return null;
+
         return pw.Padding(
           padding: const pw.EdgeInsets.symmetric(vertical: 6),
-          child: pw.Column(children: [
-            pw.Text('CHUYEN KHOAN', textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(font: fontBold, fontSize: 10)),
-            pw.Text(accNo, textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(font: fontBold, fontSize: 13)),
-            if (accName.isNotEmpty)
-              pw.Text(accName, textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(font: font, fontSize: 9, color: PdfColors.grey700)),
-            pw.Text('So tien: ${_money(bill.total)}', textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(font: fontBold, fontSize: 11)),
-          ]),
+          child: pw.Column(
+            children: [
+              qrWidget,
+              pw.SizedBox(height: 4),
+              if (b.cfg<bool>('showLabel', true))
+                pw.Text(b.cfg<String>('label', 'Quet de thanh toan'), textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(font: fontBold, fontSize: 9)),
+              if (qrSource == 'vietqr') ...[
+                pw.Text('${b.cfg<String>('accountNo', '')} - ${b.cfg<String>('accountName', '')}', textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.black)),
+              ]
+            ],
+          ),
         );
       }
       case BillBlockType.customText: {
@@ -348,7 +414,7 @@ class BillPdfGenerator {
             if (sub.isNotEmpty)
               pw.Text(sub, textAlign: align,
                   style: pw.TextStyle(font: font, fontSize: (fs - 2).clamp(6, 20),
-                      color: PdfColors.grey600)),
+                      color: PdfColors.black)),
           ]),
         );
       }
@@ -362,23 +428,23 @@ class BillPdfGenerator {
     return pw.Padding(
       padding: const pw.EdgeInsets.only(top: 6, bottom: 2),
       child: pw.Column(children: [
-        pw.Divider(thickness: 0.3, height: 6, color: PdfColors.grey400),
+        pw.Divider(thickness: 0.3, height: 6, color: PdfColors.black),
         pw.Text('Powered by Quan Nho POS',
             textAlign: pw.TextAlign.center,
-            style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.grey500)),
+            style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.black)),
       ]),
     );
   }
 
 
   // ── generateKitchenTicket: đọc từ KitchenTicketTemplate do chủ quán thiết kế ─────────
-  static Future<Uint8List> generateKitchenTicket(BillData bill) async {
+  static Future<Uint8List> generateKitchenTicket(BillData bill, {String stationKey = 'bepNong'}) async {
     final pdf     = pw.Document();
     final font    = await PdfGoogleFonts.notoSansRegular();
     final fontBold = await PdfGoogleFonts.notoSansBold();
 
     // Load template chủ quán đã thiết kế
-    final tpl = await KitchenTicketTemplate.load();
+    final tpl = await KitchenTicketTemplate.load(stationKey: stationKey);
 
     final paperMm = tpl.paperSize == '58mm' ? 58.0 : 80.0;
     final pageFormat = PdfPageFormat(
@@ -416,14 +482,14 @@ class BillPdfGenerator {
               if (tpl.showOrderNumber)
                 pw.Text('#${bill.orderNumber}',
                     style: pw.TextStyle(font: font, fontSize: 10,
-                        color: PdfColors.grey600)),
+                        color: PdfColors.black)),
             ],
           ),
 
           if (tpl.showDateTime)
             pw.Text(_fmtDate(bill.createdAt),
                 style: pw.TextStyle(font: font, fontSize: 9,
-                    color: PdfColors.grey600)),
+                    color: PdfColors.black)),
 
           if (tpl.showDivider) pw.Divider(thickness: 1, height: 10),
 
@@ -457,7 +523,7 @@ class BillPdfGenerator {
                             style: pw.TextStyle(
                                 font: font, fontSize: ifs - 2,
                                 fontStyle: pw.FontStyle.italic,
-                                color: PdfColors.grey700)),
+                                color: PdfColors.black)),
                     ],
                   ),
                 ),
@@ -541,7 +607,7 @@ class BillPdfGenerator {
                     font: font,
                     fontSize: 7,
                     fontStyle: pw.FontStyle.italic,
-                    color: PdfColors.grey700,
+                    color: PdfColors.black,
                   ),
                   maxLines: 1,
                   overflow: pw.TextOverflow.clip,
@@ -552,7 +618,7 @@ class BillPdfGenerator {
                 alignment: pw.Alignment.bottomRight,
                 child: pw.Text(
                   _fmtDate(bill.createdAt).split(' ').last, // chỉ giờ:phút
-                  style: pw.TextStyle(font: font, fontSize: 6, color: PdfColors.grey500),
+                  style: pw.TextStyle(font: font, fontSize: 6, color: PdfColors.black),
                 ),
               ),
             ],
@@ -576,7 +642,7 @@ class StationPrinterDispatcher {
   }) async {
     // 1. In hoá đơn thu ngân (chỉ in khi là hóa đơn thanh toán, không in khi là phiếu bếp)
     if (!onlyKitchen && settings.cashier.enabled && bill.type == BillType.receipt) {
-      final bytes = await BillPdfGenerator.generateReceipt(bill);
+      final bytes = await BillPdfGenerator.generateReceipt(bill, stationKey: 'cashier');
       if (settings.autoOpenDrawer && settings.cashier.type == 'network' && settings.cashier.name.isNotEmpty) {
         // Tự động gửi lệnh mở két tiền kết nối với máy in thu ngân
         ThermalPrinterService.openCashDrawer(printerIp: settings.cashier.name).catchError((_) => null);
@@ -612,7 +678,7 @@ class StationPrinterDispatcher {
             type: BillType.kitchen,
             note: bill.note,
           );
-          final bytes = await BillPdfGenerator.generateKitchenTicket(hotBill);
+          final bytes = await BillPdfGenerator.generateKitchenTicket(hotBill, stationKey: 'bepNong');
           await _dispatchPrint(bytes, settings.bepNong, 'phieu_bep_nong_${bill.orderNumber}');
         }
       }
@@ -646,7 +712,7 @@ class StationPrinterDispatcher {
             type: BillType.kitchen,
             note: bill.note,
           );
-          final bytes = await BillPdfGenerator.generateKitchenTicket(barBill);
+          final bytes = await BillPdfGenerator.generateKitchenTicket(barBill, stationKey: 'bepBar');
           await _dispatchPrint(bytes, settings.bepBar, 'phieu_bep_bar_${bill.orderNumber}');
         }
       }
@@ -757,11 +823,13 @@ class StationPrinterDispatcher {
 class BillPreviewScreen extends StatefulWidget {
   final BillData bill;
   final bool isKitchen;
+  final String? stationKey;
 
   const BillPreviewScreen({
     super.key,
     required this.bill,
     this.isKitchen = false,
+    this.stationKey,
   });
 
   @override
@@ -781,8 +849,8 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   Future<void> _generate() async {
     try {
       final bytes = widget.isKitchen
-          ? await BillPdfGenerator.generateKitchenTicket(widget.bill)
-          : await BillPdfGenerator.generateReceipt(widget.bill);
+          ? await BillPdfGenerator.generateKitchenTicket(widget.bill, stationKey: widget.stationKey ?? 'bepNong')
+          : await BillPdfGenerator.generateReceipt(widget.bill, stationKey: widget.stationKey ?? 'cashier');
       if (mounted) setState(() => _cachedBytes = bytes);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());

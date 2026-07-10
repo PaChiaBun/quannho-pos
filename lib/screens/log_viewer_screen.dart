@@ -26,6 +26,8 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
   String _selectedLevel = 'Tất cả';
   String _selectedTag = 'Tất cả';
   DateTimeRange? _selectedDateRange;
+  TimeOfDay _startTime = const TimeOfDay(hour: 0, minute: 0);
+  TimeOfDay _endTime = const TimeOfDay(hour: 23, minute: 59);
 
   // Lọc theo tiếng Việt
   final List<String> _levels = [
@@ -111,11 +113,25 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
           .select()
           .eq('store_id', storeId);
 
-      // Lọc khoảng ngày
+      // Lọc khoảng ngày & giờ
       if (_selectedDateRange != null) {
+        final startDateTime = DateTime(
+          _selectedDateRange!.start.year,
+          _selectedDateRange!.start.month,
+          _selectedDateRange!.start.day,
+          _startTime.hour,
+          _startTime.minute,
+        );
+        final endDateTime = DateTime(
+          _selectedDateRange!.end.year,
+          _selectedDateRange!.end.month,
+          _selectedDateRange!.end.day,
+          _endTime.hour,
+          _endTime.minute,
+        );
         query = query
-            .gte('created_at', _selectedDateRange!.start.toUtc().toIso8601String())
-            .lte('created_at', _selectedDateRange!.end.toUtc().toIso8601String());
+            .gte('created_at', startDateTime.toUtc().toIso8601String())
+            .lte('created_at', endDateTime.toUtc().toIso8601String());
       }
 
       // Lọc Level
@@ -296,6 +312,76 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                       setState(() => _selectedStaff = val);
                     }
                   },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () async {
+                    final picked = await showTimePicker(
+                      context: context,
+                      initialTime: _startTime,
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _startTime = picked;
+                      });
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Giờ bắt đầu',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _startTime.format(context),
+                          style: GoogleFonts.outfit(fontSize: 14),
+                        ),
+                        const Icon(Icons.access_time_rounded, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: InkWell(
+                  onTap: () async {
+                    final picked = await showTimePicker(
+                      context: context,
+                      initialTime: _endTime,
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _endTime = picked;
+                      });
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Giờ kết thúc',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _endTime.format(context),
+                          style: GoogleFonts.outfit(fontSize: 14),
+                        ),
+                        const Icon(Icons.access_time_rounded, size: 16),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],

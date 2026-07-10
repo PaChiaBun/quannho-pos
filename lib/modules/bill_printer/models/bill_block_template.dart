@@ -28,14 +28,15 @@ class BillBlockTemplate {
       );
 
   // ── Lưu vào SharedPreferences & Supabase ──────────────────────────────────────
-  Future<void> save({String? storeId}) async {
+  Future<void> save({String? storeId, String stationKey = 'cashier'}) async {
     final prefs = await SharedPreferences.getInstance();
     final json = jsonEncode({
       'paper':  paperSize,
       'blocks': blocks.map((b) => b.toJson()).toList(),
     });
-    await prefs.setString(_kPrefsKey, json);
-    debugPrint('[BillTemplate] saved ${blocks.length} blocks');
+    final prefKey = '${_kPrefsKey}_$stationKey';
+    await prefs.setString(prefKey, json);
+    debugPrint('[BillTemplate] saved ${blocks.length} blocks for station $stationKey');
 
     try {
       final resolvedStoreId = storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
@@ -46,7 +47,7 @@ class BillBlockTemplate {
         await Supabase.instance.client.from('app_settings').upsert({
           'id': const Uuid().v4(),
           'store_id': resolvedStoreId,
-          'key': _kPrefsKey,
+          'key': 'qn_bill_template_$stationKey',
           'value': json,
         }, onConflict: 'store_id,key');
       } else {
@@ -58,11 +59,12 @@ class BillBlockTemplate {
   }
 
   // ── Tải từ SharedPreferences & Supabase ───────────────────────────────────────
-  static Future<BillBlockTemplate> load() async {
+  static Future<BillBlockTemplate> load({String stationKey = 'cashier'}) async {
     String? raw;
+    final prefKey = '${_kPrefsKey}_$stationKey';
     try {
       final prefs = await SharedPreferences.getInstance();
-      raw = prefs.getString(_kPrefsKey);
+      raw = prefs.getString(prefKey);
     } catch (_) {}
 
     try {
@@ -76,14 +78,14 @@ class BillBlockTemplate {
             .from('app_settings')
             .select('value')
             .eq('store_id', storeId)
-            .eq('key', _kPrefsKey)
+            .eq('key', 'qn_bill_template_$stationKey')
             .maybeSingle();
         if (res != null && res['value'] != null) {
           final cloudJson = res['value'] as String;
           if (cloudJson != raw) {
             raw = cloudJson;
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setString(_kPrefsKey, cloudJson);
+            await prefs.setString(prefKey, cloudJson);
           }
         }
       }
@@ -106,7 +108,40 @@ class BillBlockTemplate {
         debugPrint('[BillTemplate] parse error: $e');
       }
     }
-    // Trả về template mặc định
+    // Trả về template mặc định cho từng trạm
+    return BillBlockTemplate.defaultTemplateForStation(stationKey);
+  }
+
+  // ── Template mặc định cho từng trạm ────────────────────────────────────────
+  factory BillBlockTemplate.defaultTemplateForStation(String stationKey) {
+    const uuid = Uuid();
+    if (stationKey == 'bepNong' || stationKey == 'bepBar') {
+      return BillBlockTemplate(
+        paperSize: '80mm',
+        blocks: [
+          BillBlock(
+            id: uuid.v4(), type: BillBlockType.tableInfo, enabled: true,
+            config: {'showTable': true, 'label': 'PHIẾU BẾP:', 'fontSize': 14},
+          ),
+          BillBlock(
+            id: uuid.v4(), type: BillBlockType.orderInfo, enabled: true,
+            config: {'showOrderNo': true, 'showDate': true, 'showCashier': false, 'fontSize': 10},
+          ),
+          BillBlock(
+            id: uuid.v4(), type: BillBlockType.divider, enabled: true,
+            config: {'style': 'solid', 'thickness': 1.0},
+          ),
+          BillBlock(
+            id: uuid.v4(), type: BillBlockType.itemsList, enabled: true,
+            config: {'showPrice': false, 'showQty': true, 'showTotal': false, 'fontSize': 12},
+          ),
+          BillBlock(
+            id: uuid.v4(), type: BillBlockType.divider, enabled: true,
+            config: {'style': 'solid', 'thickness': 1.0},
+          ),
+        ],
+      );
+    }
     return BillBlockTemplate.defaultTemplate();
   }
 

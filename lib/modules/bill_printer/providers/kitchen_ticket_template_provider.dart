@@ -68,10 +68,11 @@ class KitchenTicketTemplate {
     boldItemName:   m['bold']      ?? true,
   );
 
-  Future<void> save() async {
+  Future<void> save({String stationKey = 'bepNong'}) async {
     final p = await SharedPreferences.getInstance();
     final json = jsonEncode(toMap());
-    await p.setString(_kPrefsKey, json);
+    final prefKey = '${_kPrefsKey}_$stationKey';
+    await p.setString(prefKey, json);
 
     try {
       final info = await StoreAuthService.getStoreInfo();
@@ -83,18 +84,19 @@ class KitchenTicketTemplate {
         await Supabase.instance.client.from('app_settings').upsert({
           'id': const Uuid().v4(),
           'store_id': storeId,
-          'key': _kPrefsKey,
+          'key': 'qn_kitchen_ticket_template_$stationKey',
           'value': json,
         }, onConflict: 'store_id,key');
       }
     } catch (_) {}
   }
 
-  static Future<KitchenTicketTemplate> load() async {
+  static Future<KitchenTicketTemplate> load({String stationKey = 'bepNong'}) async {
     String? raw;
+    final prefKey = '${_kPrefsKey}_$stationKey';
     try {
       final p = await SharedPreferences.getInstance();
-      raw = p.getString(_kPrefsKey);
+      raw = p.getString(prefKey);
     } catch (_) {}
 
     try {
@@ -108,14 +110,14 @@ class KitchenTicketTemplate {
             .from('app_settings')
             .select('value')
             .eq('store_id', storeId)
-            .eq('key', _kPrefsKey)
+            .eq('key', 'qn_kitchen_ticket_template_$stationKey')
             .maybeSingle();
         if (res != null && res['value'] != null) {
           final cloudJson = res['value'] as String;
           if (cloudJson != raw) {
             raw = cloudJson;
             final p = await SharedPreferences.getInstance();
-            await p.setString(_kPrefsKey, cloudJson);
+            await p.setString(prefKey, cloudJson);
           }
         }
       }
@@ -127,7 +129,9 @@ class KitchenTicketTemplate {
         return KitchenTicketTemplate.fromMap(map);
       } catch (_) {}
     }
-    return const KitchenTicketTemplate();
+    return KitchenTicketTemplate(
+      headerText: stationKey == 'bepBar' ? 'PHIẾU NƯỚC' : 'PHIẾU BẾP',
+    );
   }
 
   KitchenTicketTemplate copyWith({
@@ -161,27 +165,41 @@ class KitchenTicketTemplate {
 
 // ─── Notifier ─────────────────────────────────────────────────────────────────
 class KitchenTicketTemplateNotifier extends Notifier<KitchenTicketTemplate> {
+  final String stationKey;
+  KitchenTicketTemplateNotifier(this.stationKey);
+
   @override
   KitchenTicketTemplate build() {
     _load();
-    return const KitchenTicketTemplate(); // default trước khi load xong
+    return KitchenTicketTemplate(
+      headerText: stationKey == 'bepBar' ? 'PHIẾU NƯỚC' : 'PHIẾU BẾP',
+    ); // default trước khi load xong
   }
 
   Future<void> _load() async {
-    state = await KitchenTicketTemplate.load();
+    state = await KitchenTicketTemplate.load(stationKey: stationKey);
   }
 
   void update(KitchenTicketTemplate t) => state = t;
 
-  Future<void> save() async => await state.save();
+  Future<void> save() async => await state.save(stationKey: stationKey);
 
   Future<void> reset() async {
-    state = const KitchenTicketTemplate();
-    await state.save();
+    state = KitchenTicketTemplate(
+      headerText: stationKey == 'bepBar' ? 'PHIẾU NƯỚC' : 'PHIẾU BẾP',
+    );
+    await state.save(stationKey: stationKey);
   }
 }
 
-final kitchenTicketTemplateProvider =
+final kitchenTicketTemplateBepNongProvider =
     NotifierProvider<KitchenTicketTemplateNotifier, KitchenTicketTemplate>(
-  KitchenTicketTemplateNotifier.new,
+  () => KitchenTicketTemplateNotifier('bepNong'),
 );
+
+final kitchenTicketTemplateBepBarProvider =
+    NotifierProvider<KitchenTicketTemplateNotifier, KitchenTicketTemplate>(
+  () => KitchenTicketTemplateNotifier('bepBar'),
+);
+
+final kitchenTicketTemplateProvider = kitchenTicketTemplateBepNongProvider;

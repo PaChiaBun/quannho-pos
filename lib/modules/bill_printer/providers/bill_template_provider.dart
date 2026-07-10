@@ -14,7 +14,7 @@ final billTemplateProvider =
 
 class BillTemplateNotifier extends AsyncNotifier<BillBlockTemplate> {
   @override
-  Future<BillBlockTemplate> build() => BillBlockTemplate.load();
+  Future<BillBlockTemplate> build() => BillBlockTemplate.load(stationKey: 'cashier');
 
   BillBlockTemplate? get _tpl => state.value;
 
@@ -85,16 +85,16 @@ class BillTemplateNotifier extends AsyncNotifier<BillBlockTemplate> {
     if (tpl == null) return;
     final session = ref.read(sessionProvider);
     final storeId = session?.storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
-    await tpl.save(storeId: storeId);
+    await tpl.save(storeId: storeId, stationKey: 'cashier');
   }
 
   // ── Reset về default ──────────────────────────────────────────────────────
   Future<void> reset() async {
-    final tpl = BillBlockTemplate.defaultTemplate();
+    final tpl = BillBlockTemplate.defaultTemplateForStation('cashier');
     state = AsyncData(tpl);
     final session = ref.read(sessionProvider);
     final storeId = session?.storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
-    await tpl.save(storeId: storeId);
+    await tpl.save(storeId: storeId, stationKey: 'cashier');
   }
 
   // ── Áp dụng mẫu dựng sẵn từ Gallery ─────────────────────────────────────
@@ -102,6 +102,6 @@ class BillTemplateNotifier extends AsyncNotifier<BillBlockTemplate> {
     state = AsyncData(preset);
     final session = ref.read(sessionProvider);
     final storeId = session?.storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
-    await preset.save(storeId: storeId);
+    await preset.save(storeId: storeId, stationKey: 'cashier');
   }
 }
