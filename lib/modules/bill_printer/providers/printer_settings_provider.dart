@@ -151,6 +151,10 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       final jsonStr = prefs.getString(key);
       if (jsonStr != null) {
         _applyJson(jsonStr);
+        final initialSession = ref.read(sessionProvider);
+        if (initialSession != null && initialSession.storeId != null && state.autoPrintServer) {
+          _setupPrintServerListener(initialSession.storeId!);
+        }
       }
     } catch (_) {}
   }

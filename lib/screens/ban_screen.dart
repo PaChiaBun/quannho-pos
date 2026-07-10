@@ -2417,7 +2417,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         'payment_method': payMethod,
         'status': 'completed',
         'source_type': 'ban',
-        'source_id': widget.session.id,
+        'source_id': widget.session.tableId,
         'loyalty_pts_earned': ptsEarned,
         'loyalty_pts_used':   ptsUsed.toDouble(),
         'created_at': now,
