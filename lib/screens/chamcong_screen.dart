@@ -40,7 +40,10 @@ final _myShiftsProvider = FutureProvider.autoDispose<List<ShiftRecord>>((ref) as
     debugPrint('[ChamCong] ⚠️ storeId=null | userId=${s?.userId} | role=${s?.role} | isOwner=${s?.isOwner}');
     return [];
   }
-  final isManager = s!.isOwner || s.role == 'owner' || s.role == 'manager';
+  final isManager = s!.isOwner || 
+      s.role == 'owner' || 
+      s.role == 'manager' ||
+      s.role.toLowerCase() == 'quản lý';
   debugPrint('[ChamCong] getShifts → storeId=${s.storeId} | isManager=$isManager | role=${s.role}');
   final result = await StaffService.getShifts(
     storeId: s.storeId!,
@@ -117,7 +120,10 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
 
   bool get _isManager {
     final s = ref.read(sessionProvider);
-    return s?.isOwner == true || s?.role == 'owner' || s?.role == 'manager';
+    return s?.isOwner == true || 
+        s?.role == 'owner' || 
+        s?.role == 'manager' ||
+        s?.role.toLowerCase() == 'quản lý';
   }
 
   @override

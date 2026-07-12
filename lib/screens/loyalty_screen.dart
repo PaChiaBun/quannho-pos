@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../core/providers/app_providers.dart';
 import '../modules/loyalty/repository/loyalty_repository.dart';
+import '../modules/pos/screens/discount_management_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOYALTY PROVIDERS — local trong file này
@@ -66,7 +67,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 4, vsync: this);
+    _tab = TabController(length: 5, vsync: this);
     _tab.addListener(() {
       if (_tab.indexIsChanging || _tab.index != _tabIndex) {
         setState(() => _tabIndex = _tab.index);
@@ -110,6 +111,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
                 Tab(text: 'Ví'),
                 Tab(text: 'Thưởng'),
                 Tab(text: 'Gói nạp'),
+                Tab(text: 'Khuyến mãi / Voucher'),
               ],
             ),
           ),
@@ -129,6 +131,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
                 _buildWalletSummary(),
                 _buildRewardsList(),
                 _buildPackagesTab(),
+                const DiscountManagementScreen(isTab: true),
               ],
             ),
           ),

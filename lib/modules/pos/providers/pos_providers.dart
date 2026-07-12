@@ -4,6 +4,7 @@ import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/core_product_repository.dart';
 import '../../../core/providers/session_provider.dart';
 import '../repository/pos_repository.dart';
+import '../models/coupon_model.dart';
 
 // posRepositoryProvider đã khai báo trong app_providers.dart
 export '../../../core/providers/app_providers.dart' show posRepositoryProvider;
@@ -24,6 +25,8 @@ class CartState {
   final double discount;
   final String paymentMethod;       // 'cash' | 'transfer' | 'card' | 'wallet'
   final bool isProcessing;
+  final CouponModel? appliedCoupon;
+  final double manualDiscount;
 
   // ── Wallet fields ─────────────────────────────────────────────────────────
   final double walletRealAvailable;   // ví thật (tiền thật)
@@ -44,6 +47,8 @@ class CartState {
     this.discount = 0,
     this.paymentMethod = 'cash',
     this.isProcessing = false,
+    this.appliedCoupon,
+    this.manualDiscount = 0,
     this.walletRealAvailable = 0,
     this.walletBonusAvailable = 0,
     this.walletBonusCapPct = 15,
@@ -74,6 +79,8 @@ class CartState {
     double? discount,
     String? paymentMethod,
     bool? isProcessing,
+    CouponModel? Function()? appliedCoupon,
+    double? manualDiscount,
     double? walletRealAvailable,
     double? walletBonusAvailable,
     int? walletBonusCapPct,
@@ -94,6 +101,8 @@ class CartState {
         discount: discount ?? this.discount,
         paymentMethod: paymentMethod ?? this.paymentMethod,
         isProcessing: isProcessing ?? this.isProcessing,
+        appliedCoupon: appliedCoupon != null ? appliedCoupon() : this.appliedCoupon,
+        manualDiscount: manualDiscount ?? this.manualDiscount,
         walletRealAvailable: walletRealAvailable ?? this.walletRealAvailable,
         walletBonusAvailable: walletBonusAvailable ?? this.walletBonusAvailable,
         walletBonusCapPct: walletBonusCapPct ?? this.walletBonusCapPct,
@@ -108,6 +117,39 @@ class CartState {
 class CartNotifier extends Notifier<CartState> {
   @override
   CartState build() => const CartState();
+
+  // Helper to recalculate discount and update state
+  void _recalculate() {
+    double computedDiscount = state.manualDiscount;
+    if (state.appliedCoupon != null) {
+      final coupon = state.appliedCoupon!;
+      if (coupon.discountType == 'percent') {
+        double d = (state.subtotal * coupon.value / 100);
+        if (coupon.maxDiscountAmount != null) {
+          d = d.clamp(0.0, coupon.maxDiscountAmount!);
+        }
+        computedDiscount = d;
+      } else {
+        computedDiscount = coupon.value;
+      }
+    }
+    computedDiscount = computedDiscount.clamp(0.0, state.subtotal);
+
+    // Also recalculate loyaltyPtsUsed to make sure it doesn't exceed subtotal - discount
+    final maxPts = state.loyaltyPtsAvailable;
+    final maxByOrder = (state.subtotal - computedDiscount).clamp(0.0, double.infinity);
+    final cappedPts = state.loyaltyPtsUsed.clamp(0.0, maxPts < maxByOrder ? maxPts : maxByOrder);
+
+    state = state.copyWith(
+      discount: computedDiscount,
+      loyaltyPtsUsed: cappedPts,
+    );
+  }
+
+  void _updateState(CartState newState) {
+    state = newState;
+    _recalculate();
+  }
 
   // ── Product actions ─────────────────────────────────────────────────────
 
@@ -130,7 +172,7 @@ class CartNotifier extends Notifier<CartState> {
         stationCode: product.stationCode,
       ));
     }
-    state = state.copyWith(lines: lines);
+    _updateState(state.copyWith(lines: lines));
   }
 
   /// Thêm sản phẩm với ghi chú riêng — luôn tạo CartLine mới
@@ -145,7 +187,7 @@ class CartNotifier extends Notifier<CartState> {
       note: note?.isEmpty == true ? null : note,
       stationCode: product.stationCode,
     ));
-    state = state.copyWith(lines: lines);
+    _updateState(state.copyWith(lines: lines));
   }
 
   void increaseQty(String lineId) {
@@ -153,7 +195,7 @@ class CartNotifier extends Notifier<CartState> {
     final idx = lines.indexWhere((l) => l.lineId == lineId);
     if (idx >= 0) {
       lines[idx] = lines[idx].copyWith(quantity: lines[idx].quantity + 1);
-      state = state.copyWith(lines: lines);
+      _updateState(state.copyWith(lines: lines));
     }
   }
 
@@ -167,7 +209,7 @@ class CartNotifier extends Notifier<CartState> {
     } else {
       lines.removeAt(idx);
     }
-    state = state.copyWith(lines: lines);
+    _updateState(state.copyWith(lines: lines));
   }
 
   /// Giảm qty theo productId (dùng cho product card trong grid)
@@ -177,16 +219,16 @@ class CartNotifier extends Notifier<CartState> {
   }
 
   void removeLine(String lineId) {
-    state = state.copyWith(
+    _updateState(state.copyWith(
       lines: state.lines.where((l) => l.lineId != lineId).toList(),
-    );
+    ));
   }
 
   /// Đánh dấu các line đã gửi bếp — Ẩn nút -/+ cho các line này
   void markLinesSent(List<String> lineIds) {
-    state = state.copyWith(
+    _updateState(state.copyWith(
       sentLineIds: {...state.sentLineIds, ...lineIds},
-    );
+    ));
   }
 
   void setItemNote(String lineId, String? note) {
@@ -194,11 +236,11 @@ class CartNotifier extends Notifier<CartState> {
     final idx = lines.indexWhere((l) => l.lineId == lineId);
     if (idx < 0) return;
     lines[idx] = lines[idx].copyWith(note: () => note?.isEmpty == true ? null : note);
-    state = state.copyWith(lines: lines);
+    _updateState(state.copyWith(lines: lines));
   }
 
   void setOrderNote(String? note) {
-    state = state.copyWith(orderNote: () => note?.isEmpty == true ? null : note);
+    _updateState(state.copyWith(orderNote: () => note?.isEmpty == true ? null : note));
   }
 
   void clearCart() => state = const CartState();
@@ -211,7 +253,7 @@ class CartNotifier extends Notifier<CartState> {
     int bonusCapPct = 15,
     DateTime? bonusExpiresAt,
   }) {
-    state = state.copyWith(
+    _updateState(state.copyWith(
       customerId: () => id,
       customerName: () => name,
       loyaltyPtsAvailable: loyaltyPts,
@@ -220,11 +262,11 @@ class CartNotifier extends Notifier<CartState> {
       walletBonusAvailable: walletBonus,
       walletBonusCapPct: bonusCapPct,
       walletBonusExpiresAt: () => bonusExpiresAt,
-    );
+    ));
   }
 
   void clearCustomer() {
-    state = state.copyWith(
+    _updateState(state.copyWith(
       customerId: () => null,
       customerName: () => null,
       loyaltyPtsAvailable: 0,
@@ -233,21 +275,21 @@ class CartNotifier extends Notifier<CartState> {
       walletBonusAvailable: 0,
       walletBonusCapPct: 15,
       walletBonusExpiresAt: () => null,
-    );
+    ));
   }
 
   void setTable(String id, String name) {
-    state = state.copyWith(
+    _updateState(state.copyWith(
       tableId: () => id,
       tableName: () => name,
-    );
+    ));
   }
 
   void clearTable() {
-    state = state.copyWith(
+    _updateState(state.copyWith(
       tableId: () => null,
       tableName: () => null,
-    );
+    ));
   }
 
   void setLoyaltyPtsUsed(double pts) {
@@ -255,16 +297,37 @@ class CartNotifier extends Notifier<CartState> {
     final maxByBalance = state.loyaltyPtsAvailable;
     final maxByOrder   = (state.subtotal - state.discount).clamp(0.0, double.infinity);
     final capped = pts.clamp(0.0, maxByBalance < maxByOrder ? maxByBalance : maxByOrder);
-    state = state.copyWith(loyaltyPtsUsed: capped);
+    _updateState(state.copyWith(loyaltyPtsUsed: capped));
   }
 
   // ── Payment ───────────────────────────────────────────────────────────────
 
   void setPaymentMethod(String method) =>
-      state = state.copyWith(paymentMethod: method);
+      _updateState(state.copyWith(paymentMethod: method));
 
-  void setDiscount(double amount) =>
-      state = state.copyWith(discount: amount.clamp(0, state.subtotal));
+  void setDiscount(double amount) {
+    _updateState(state.copyWith(
+      manualDiscount: amount.clamp(0, state.subtotal),
+      appliedCoupon: () => null, // clear coupon when manually setting discount
+    ));
+  }
+
+  void applyCoupon(CouponModel? coupon) {
+    if (coupon == null) {
+      removeCoupon();
+      return;
+    }
+    _updateState(state.copyWith(
+      appliedCoupon: () => coupon,
+      manualDiscount: 0, // override manual discount when coupon is applied
+    ));
+  }
+
+  void removeCoupon() {
+    _updateState(state.copyWith(
+      appliedCoupon: () => null,
+    ));
+  }
 
   // ── Checkout ──────────────────────────────────────────────────────────────
 

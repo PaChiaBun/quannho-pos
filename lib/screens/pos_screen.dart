@@ -4015,7 +4015,9 @@ class _RecentOrdersSheetState extends ConsumerState<_RecentOrdersSheet> {
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
     final isOwner = session?.isOwner == true ||
-        session?.role == 'owner' || session?.role == 'manager';
+        session?.role == 'owner' || 
+        session?.role == 'manager' ||
+        session?.role.toLowerCase() == 'quản lý';
     final posRepo = ref.watch(posRepositoryProvider);
     final ordersStream = posRepo.watchTodayOrders();
 

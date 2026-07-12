@@ -62,8 +62,8 @@ const Map<String, ModuleTileData> kModuleConfigs = {
   ),
   'loyalty': ModuleTileData(
     id: 'loyalty',
-    title: 'Khách hàng',
-    subtitle: 'Điểm thưởng',
+    title: 'Khách Hàng - Giảm Giá - Khuyến mãi',
+    subtitle: 'Tích điểm, ví thành viên & mã voucher',
     icon: Icons.card_giftcard_rounded,
     baseColor: Color(0xFFDB2777), // hot pink
     route: '/loyalty',

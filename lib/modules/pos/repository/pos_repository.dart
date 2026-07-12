@@ -6,6 +6,7 @@ import '../../../core/services/store_auth_service.dart';
 import '../../../core/repositories/core_product_repository.dart';
 import '../../../core/repositories/core_customer_repository.dart';
 import '../../kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart';
+import '../models/coupon_model.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POS REPOSITORY — 100% Supabase
@@ -578,6 +579,41 @@ class PosRepository {
         .count(CountOption.exact);
 
     return '$prefix-${((count.count) + 1).toString().padLeft(3, '0')}';
+  }
+
+  // ── Coupons (Vouchers & Giảm giá) ──────────────────────────────────────────
+  Future<List<CouponModel>> getCoupons() async {
+    final storeId = await _storeId();
+    if (storeId == null) return [];
+    try {
+      final rows = await _sb
+          .from('coupons')
+          .select()
+          .eq('store_id', storeId)
+          .order('created_at', ascending: false);
+      return rows.map((r) => CouponModel.fromMap(r)).toList();
+    } catch (e) {
+      debugPrint('[PosRepository] getCoupons error: $e');
+      return [];
+    }
+  }
+
+  Future<void> upsertCoupon(CouponModel coupon) async {
+    try {
+      await _sb.from('coupons').upsert(coupon.toMap());
+    } catch (e) {
+      debugPrint('[PosRepository] upsertCoupon error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteCoupon(String couponId) async {
+    try {
+      await _sb.from('coupons').delete().eq('id', couponId);
+    } catch (e) {
+      debugPrint('[PosRepository] deleteCoupon error: $e');
+      rethrow;
+    }
   }
 }
 

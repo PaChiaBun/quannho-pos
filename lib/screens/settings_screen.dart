@@ -15,6 +15,7 @@ import 'log_viewer_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../modules/bill_printer/screens/printer_settings_screen.dart';
 import '../core/services/auto_update_service.dart';
+import '../modules/pos/screens/discount_management_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS SCREEN — Cài đặt Quán Nhỏ POS
@@ -32,6 +33,11 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final shopNameAsync  = ref.watch(shopNameProvider);
+    final session = ref.watch(sessionProvider);
+    final isManager = session?.isOwner == true ||
+        session?.role == 'owner' ||
+        session?.role == 'manager' ||
+        session?.role.toLowerCase() == 'quản lý';
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -90,6 +96,7 @@ class SettingsScreen extends ConsumerWidget {
               ]),
             ),
           ),
+
 
 
           // ── Dữ liệu ────────────────────────────────────────────────
@@ -771,7 +778,7 @@ class _ModuleTile extends StatelessWidget {
     'pos':     (Icons.shopping_cart_rounded,  'Bán hàng',  Color(0xFF1E1C5E)),
     'kho':     (Icons.inventory_2_rounded,    'Kho hàng',  Color(0xFF2E7D32)),
     'finance': (Icons.account_balance_wallet_rounded, 'Thu Chi', Color(0xFFE85D20)),
-    'loyalty': (Icons.loyalty_rounded,        'Điểm thưởng', Color(0xFF7B1FA2)),
+    'loyalty': (Icons.loyalty_rounded,        'Khách Hàng - Giảm Giá - Khuyến mãi', Color(0xFF7B1FA2)),
     'report':  (Icons.bar_chart_rounded,      'Báo cáo',   Color(0xFF1565C0)),
   };
 
@@ -1866,7 +1873,9 @@ class _QuickPinTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
     final isManager = session?.isOwner == true ||
-        session?.role == 'owner' || session?.role == 'manager';
+        session?.role == 'owner' || 
+        session?.role == 'manager' || 
+        session?.role.toLowerCase() == 'quản lý';
 
     if (!isManager) return const SizedBox.shrink();
 

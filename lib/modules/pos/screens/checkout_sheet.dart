@@ -12,6 +12,7 @@ import '../../../modules/bill_printer/screens/bill_preview_screen.dart';
 import '../../../modules/bill_printer/providers/printer_settings_provider.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../screens/pos_screen.dart' show billPrinterModuleActiveProvider;
+import '../models/coupon_model.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CHECKOUT BOTTOM SHEET
@@ -34,6 +35,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   static const _kInk    = Color(0xFF1A1207);
   static const _kMuted  = Color(0xFF9E9085);
   static const _kBg     = Color(0xFFFAF7F2);
+  static const _kOrange = Color(0xFFFF6B35);
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +109,9 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                       cart.loyaltyPtsAvailable > 0 &&
                       _selectedPayment != 'wallet')
                     _buildLoyaltySection(cart),
+
+                  // ── Voucher section ────────────────────────────────────
+                  _buildVoucherSection(cart),
 
                   // ── Total breakdown ────────────────────────────────────
                   _buildTotalBreakdown(cart),
@@ -767,6 +772,160 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
     }
   }
 
+  Widget _buildVoucherSection(CartState cart) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Khuyến mãi / Voucher',
+          style: TextStyle(
+            fontSize: 14, fontWeight: FontWeight.w700,
+            color: _kMuted, letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF3E0),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFFFB74D).withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.local_offer_rounded, color: Color(0xFFE65100), size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      cart.appliedCoupon != null
+                          ? 'Mã: ${cart.appliedCoupon!.code}'
+                          : 'Chưa áp dụng voucher',
+                      style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700,
+                        color: Color(0xFFE65100),
+                      ),
+                    ),
+                    Text(
+                      cart.appliedCoupon != null
+                          ? (cart.appliedCoupon!.discountType == 'percent'
+                              ? 'Giảm ${cart.appliedCoupon!.value.toInt()}% (Tối đa ${fmtVnd(cart.appliedCoupon!.maxDiscountAmount?.toInt() ?? 0)})'
+                              : 'Giảm ${fmtVnd(cart.appliedCoupon!.value.toInt())}')
+                          : 'Chọn mã giảm giá từ cửa hàng',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFFE65100)),
+                    ),
+                  ],
+                ),
+              ),
+              if (cart.appliedCoupon != null)
+                TextButton(
+                  onPressed: () {
+                    ref.read(cartProvider.notifier).removeCoupon();
+                  },
+                  child: const Text('Gỡ mã', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w700)),
+                )
+              else
+                TextButton(
+                  onPressed: () => _selectVoucher(cart),
+                  child: const Text('Chọn mã', style: TextStyle(color: Color(0xFFE65100), fontWeight: FontWeight.w700)),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  void _selectVoucher(CartState cart) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return FutureBuilder<List<CouponModel>>(
+          future: ref.read(posRepositoryProvider).getCoupons(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: Padding(
+                padding: EdgeInsets.all(40.0),
+                child: CircularProgressIndicator(color: _kOrange),
+              ));
+            }
+            final list = snapshot.data ?? [];
+            final activeList = list.where((c) {
+              final isExpired = c.endDate != null && c.endDate!.isBefore(DateTime.now());
+              return c.isActive && !isExpired;
+            }).toList();
+
+            if (activeList.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(40.0),
+                  child: Text('Không có voucher khả dụng lúc này'),
+                ),
+              );
+            }
+
+            return Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Chọn Voucher giảm giá',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _kNavy),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: activeList.length,
+                      itemBuilder: (ctx, idx) {
+                        final c = activeList[idx];
+                        final sub = cart.subtotal;
+                        final isApplicable = sub >= c.minOrderAmount;
+
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                          leading: const Icon(Icons.local_offer_rounded, color: _kOrange),
+                          title: Text(
+                            c.code,
+                            style: const TextStyle(fontWeight: FontWeight.w700, color: _kNavy),
+                          ),
+                          subtitle: Text(
+                            c.discountType == 'percent'
+                                ? 'Giảm ${c.value.toInt()}% (Đơn tối thiểu ${fmtVnd(c.minOrderAmount.toInt())})'
+                                : 'Giảm ${fmtVnd(c.value.toInt())} (Đơn tối thiểu ${fmtVnd(c.minOrderAmount.toInt())})',
+                            style: TextStyle(color: isApplicable ? Colors.black54 : Colors.redAccent, fontSize: 12),
+                          ),
+                          trailing: ElevatedButton(
+                            onPressed: isApplicable
+                                ? () {
+                                    ref.read(cartProvider.notifier).applyCoupon(c);
+                                    Navigator.pop(ctx);
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _kOrange,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                            ),
+                            child: const Text('Áp dụng'),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
 class _TotalRow extends StatelessWidget {

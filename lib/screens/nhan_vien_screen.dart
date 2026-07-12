@@ -97,7 +97,7 @@ final _staffListProvider = FutureProvider.autoDispose<List<StaffMember>>((ref) a
 final _shiftsProvider = FutureProvider.autoDispose<List<ShiftRecord>>((ref) async {
   final session = ref.watch(sessionProvider);
   if (session?.storeId == null) return [];
-  final isOwner = session!.isOwner || session.role == 'manager';
+  final isOwner = session!.isOwner || session.role == 'manager' || session.role.toLowerCase() == 'quản lý';
   return StaffService.getShifts(
     storeId: session.storeId!,
     userId: isOwner ? null : session.userId,
@@ -134,7 +134,7 @@ final _monthlyShiftsProvider = FutureProvider.autoDispose
     .family<List<ShiftRecord>, DateTime>((ref, month) async {
   final session = ref.watch(sessionProvider);
   if (session?.storeId == null) return [];
-  final isManager = session!.isOwner || session.role == 'manager';
+  final isManager = session!.isOwner || session.role == 'manager' || session.role.toLowerCase() == 'quản lý';
   return StaffService.getShiftsForMonth(
     storeId: session.storeId!,
     userId:  isManager ? null : session.userId,
@@ -171,7 +171,7 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
   Future<void> _startSync() async {
     final session = ref.read(sessionProvider);
     if (session?.storeId == null) return;
-    final isManager = session!.isOwner || session.role == 'owner' || session.role == 'manager';
+    final isManager = session!.isOwner || session.role == 'owner' || session.role == 'manager' || session.role.toLowerCase() == 'quản lý';
     if (isManager) return; // manager broadcast, không cần lắng nghe
     _syncService = StaffSyncService(
       storeId:       session.storeId!,
@@ -249,7 +249,10 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
 
   bool _isManager() {
     final s = ref.read(sessionProvider);
-    return s?.isOwner == true || s?.role == 'owner' || s?.role == 'manager';
+    return s?.isOwner == true || 
+        s?.role == 'owner' || 
+        s?.role == 'manager' ||
+        s?.role.toLowerCase() == 'quản lý';
   }
 
   @override
@@ -262,7 +265,10 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
   @override
   Widget build(BuildContext context) {
     final session   = ref.watch(sessionProvider);
-    final isManager = session?.isOwner == true || session?.role == 'owner' || session?.role == 'manager';
+    final isManager = session?.isOwner == true || 
+        session?.role == 'owner' || 
+        session?.role == 'manager' ||
+        session?.role.toLowerCase() == 'quản lý';
 
     final mainContent = NestedScrollView(
       headerSliverBuilder: (_, __) => [_buildAppBar(isManager)],

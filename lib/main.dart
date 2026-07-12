@@ -47,7 +47,7 @@ const _kTabMeta = [
   (icon: Icons.shopping_cart_rounded,           label: 'Bán hàng'),   // 1
   (icon: Icons.inventory_2_rounded,             label: 'Kho'),        // 2
   (icon: Icons.account_balance_wallet_rounded,  label: 'Thu Chi'),    // 3
-  (icon: Icons.loyalty_rounded,                 label: 'Điểm'),       // 4
+  (icon: Icons.loyalty_rounded,                 label: 'Khách Hàng - Giảm Giá - Khuyến mãi'),       // 4
   (icon: Icons.bar_chart_rounded,               label: 'Báo cáo'),    // 5
   (icon: Icons.settings_rounded,                label: 'Cài đặt'),    // 6
   (icon: Icons.table_restaurant_rounded,        label: 'Bàn'),        // 7 — Module Quản lý Bàn
