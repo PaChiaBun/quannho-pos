@@ -31,35 +31,24 @@ class CoreProductRepository {
       yield []; return;
     }
 
-    final initial = await _fetchAll(storeId);
-    assert(() { debugPrint('[CoreProductRepo] watchAll → ${initial.length} items'); return true; }());
-    yield initial;
-
-    // Bắt lỗi stream bất đồng bộ (như RealtimeSubscribeException) bằng vòng lặp await for + try-catch
-    final realtimeStream = _sb
-        .from('products')
-        .stream(primaryKey: ['id'])
-        .eq('store_id', storeId)
-        .map((rows) => rows
-            .where((r) => r['is_deleted'] != true)
-            .map(ProductModel.fromMap)
-            .toList()
-          ..sort((a, b) => a.name.compareTo(b.name)));
-
     try {
-      await for (final products in realtimeStream) {
-        yield products;
-      }
+      final initial = await _fetchAll(storeId);
+      assert(() { debugPrint('[CoreProductRepo] watchAll → ${initial.length} items'); return true; }());
+      yield initial;
     } catch (e) {
-      assert(() { debugPrint('[CoreProductRepo] watchAll → Realtime lỗi ($e), fallback polling 10s'); return true; }());
-      // Fallback: Tự động chuyển sang chế độ Polling âm thầm mà không gây lỗi giao diện
-      while (true) {
-        await Future.delayed(const Duration(seconds: 10));
-        try {
-          yield await _fetchAll(storeId);
-        } catch (_) {
-          // Tiếp tục vòng lặp nếu lỗi mạng tạm thời
-        }
+      debugPrint('[CoreProductRepo] watchAll initial fetch error: $e');
+      yield [];
+    }
+
+    // Thay thế WebSockets stream bằng Polling qua REST API để gửi kèm HTTP headers (x-store-id)
+    // Giúp hoạt động chuẩn xác với cơ chế phân quyền Row Level Security (RLS) của Supabase
+    while (true) {
+      await Future.delayed(const Duration(seconds: 15));
+      try {
+        final products = await _fetchAll(storeId);
+        yield products;
+      } catch (e) {
+        // Bỏ qua lỗi mạng tạm thời
       }
     }
   }

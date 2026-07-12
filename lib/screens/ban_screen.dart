@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../core/utils/app_logger.dart';
+import '../core/utils/string_utils.dart';
 import '../core/utils/cart_animation_helper.dart';
 import '../core/utils/money_formatter.dart';
 import 'package:flutter/services.dart';
@@ -94,20 +95,24 @@ const _kZoneIconCodes = <int>[
 // PROVIDERS
 // ─────────────────────────────────────────────────────────────────────────────
 final banZonesProvider = StreamProvider.autoDispose<List<BanZoneModel>>((ref) {
+  ref.watch(sessionProvider); // Force rebuild on store switch
   return ref.watch(banRepositoryProvider).watchZones();
 });
 
 final banTablesForZoneProvider =
     StreamProvider.autoDispose.family<List<BanTableModel>, String>((ref, zoneId) {
+  ref.watch(sessionProvider); // Force rebuild on store switch
   return ref.watch(banRepositoryProvider).watchTablesForZone(zoneId);
 });
 
 final allBanTablesProvider = StreamProvider.autoDispose<List<BanTableModel>>((ref) {
+  ref.watch(sessionProvider); // Force rebuild on store switch
   return ref.watch(banRepositoryProvider).watchAllTables();
 });
 
 final activeSessionsProvider =
     StreamProvider.autoDispose<Map<String, BanSessionModel>>((ref) {
+  ref.watch(sessionProvider); // Force rebuild on store switch
   return ref.watch(banRepositoryProvider).watchActiveSessions();
 });
 
@@ -299,8 +304,11 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       final storeInfo = await StoreAuthService.getStoreInfo();
       final storeId = storeInfo['store_id'] as String? ?? '';
       if (storeId.isEmpty) throw Exception('Chưa đăng ký quán. Vui lòng đăng xuất và thử lại.');
-      final existing  = zones.where((z) => z.id == zoneId).toList();
-      final baseOrder = existing.length;
+      final allTables = await _banRepo.getAllTables();
+      final existingTables = allTables.where((t) => t.zoneId == zoneId).toList();
+      final baseOrder = existingTables.isEmpty
+          ? 0
+          : existingTables.map((t) => t.sortOrder).reduce(max) + 1;
       for (int i = 0; i < batchCount; i++) {
         final finalName = batchCount == 1 ? baseName : '$baseName ${i + 1}';
         final tableId = const Uuid().v4();
@@ -5088,15 +5096,16 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                     const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('$e')),
                 data: (products) {
+                  final prodList = (products as List).cast<ProductModel>();
                   final filtered = _search.isEmpty && _selectedCategory == 'Tất cả'
-                      ? products
-                      : products.where((p) {
+                      ? prodList
+                      : prodList.where((p) {
                           final matchCat = _selectedCategory == 'Tất cả'
                               ? true
                               : (p.category ?? 'Khác') == _selectedCategory;
                           final matchSearch = _search.isEmpty
                               ? true
-                              : p.name.toLowerCase().contains(_search.toLowerCase());
+                              : p.name.containsSearch(_search);
                           return matchCat && matchSearch;
                         }).toList();
 
@@ -7017,7 +7026,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                       _CounterButton(
                         icon: Icons.add_rounded,
                         onTap: () {
-                          if (_batchCount < 10) setState(() => _batchCount++);
+                          setState(() => _batchCount++);
                         },
                       ),
                     ],
@@ -7025,7 +7034,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                   // Quick select chips
                   const SizedBox(height: 10),
                   Row(
-                    children: [1, 2, 3, 4, 5, 6, 8, 10].map((n) {
+                    children: [1, 2, 3, 5, 10, 15, 20, 30].map((n) {
                       final isSel = _batchCount == n;
                       return Expanded(
                         child: GestureDetector(
@@ -7547,24 +7556,28 @@ class _TransferTableSheetState
     extends ConsumerState<_TransferTableSheet> {
   String? _selectedTableId;
   String? _selectedTableLabel;
+  String _selectedZoneId = 'Tất cả';
   bool _loading = false;
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: !_loading,
-      child: FutureBuilder<List<BanTableModel>>(
-        future: ref.read(banRepositoryProvider).getAllTables(),
+      child: FutureBuilder<List<dynamic>>(
+        future: Future.wait([
+          ref.read(banRepositoryProvider).getAllTables(),
+          ref.read(banRepositoryProvider).getZones(),
+        ]),
         builder: (ctx, snap) {
-          // Lọc ra các bàn có thể chuyển:
-          // - Không phải bàn hiện tại
-          // - Chưa có session đang mở
-          final tables = (snap.data ?? [])
-              .where((t) =>
-                  t.id != widget.currentTableId &&
-                  !widget.activeSessions.containsKey(t.id))
+          final allTables = (snap.data?[0] as List<BanTableModel>?) ?? [];
+          final allZones = (snap.data?[1] as List<BanZoneModel>?) ?? [];
+
+          // Lọc ra các bàn có thể chuyển theo phân khu đã chọn
+          final tables = allTables
+              .where((t) => t.id != widget.currentTableId)
+              .where((t) => _selectedZoneId == 'Tất cả' || t.zoneId == _selectedZoneId)
               .toList()
-            ..sort((a, b) => a.label.compareTo(b.label));
+            ..sort((a, b) => compareNatural(a.label, b.label));
 
           return Padding(
             padding: EdgeInsets.only(
@@ -7572,13 +7585,13 @@ class _TransferTableSheetState
             child: Stack(
               children: [
                 Container(
+                  height: MediaQuery.of(context).size.height * 0.75,
                   decoration: const BoxDecoration(
                     color: _kCream,
                     borderRadius:
                         BorderRadius.vertical(top: Radius.circular(24)),
                   ),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const SizedBox(height: 10),
                       Container(
@@ -7623,89 +7636,182 @@ class _TransferTableSheetState
                           ],
                         ),
                       ),
-                      const Divider(height: 20, color: Color(0xFFE8E0D4)),
+                      const Divider(height: 12, color: Color(0xFFE8E0D4)),
 
-                      if (snap.connectionState == ConnectionState.waiting)
-                        const Padding(
-                          padding: EdgeInsets.all(24),
-                          child: CircularProgressIndicator(),
-                        )
-                      else if (tables.isEmpty)
+                      // Chọn Phân khu (Horizontal Zone Selector)
+                      if (snap.connectionState != ConnectionState.waiting && allZones.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            children: [
-                              const Icon(Icons.table_restaurant_rounded,
-                                  size: 48, color: _kNavy),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Không có bàn trống nào',
-                                style: GoogleFonts.outfit(
-                                    fontSize: 15,
-                                    color: _kNavy.withValues(alpha: 0.5)),
-                              ),
-                              Text(
-                                'Tất cả bàn khác đều đang có khách',
-                                style: GoogleFonts.outfit(
-                                    fontSize: 12,
-                                    color: _kNavy.withValues(alpha: 0.35)),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        // Grid chọn bàn
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                          child: Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: tables.map((t) {
-                              final isSelected = _selectedTableId == t.id;
-                              return GestureDetector(
-                                onTap: () => setState(() {
-                                  _selectedTableId = t.id;
-                                  _selectedTableLabel = t.label;
-                                }),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 150),
-                                  width: 80, height: 56,
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? _kAmber
-                                        : Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? _kAmber
-                                          : const Color(0xFFDDD5C8),
-                                      width: isSelected ? 2 : 1,
-                                    ),
-                                    boxShadow: isSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: _kAmber.withValues(alpha: 0.3),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 3),
-                                            )
-                                          ]
-                                        : [],
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      t.label,
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: SizedBox(
+                            height: 38,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: allZones.length + 1,
+                              itemBuilder: (ctx, idx) {
+                                final isAll = idx == 0;
+                                final zoneId = isAll ? 'Tất cả' : allZones[idx - 1].id;
+                                final zoneName = isAll ? 'Tất cả' : allZones[idx - 1].name;
+                                final isSelected = _selectedZoneId == zoneId;
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: ChoiceChip(
+                                    label: Text(
+                                      zoneName,
                                       style: GoogleFonts.outfit(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w800,
-                                        color: isSelected
-                                            ? Colors.white
-                                            : _kNavy,
+                                        fontSize: 13,
+                                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                        color: isSelected ? Colors.white : _kNavy,
+                                      ),
+                                    ),
+                                    selected: isSelected,
+                                    selectedColor: _kNavy,
+                                    backgroundColor: Colors.white,
+                                    checkmarkColor: Colors.white,
+                                    onSelected: (val) {
+                                      if (val) {
+                                        setState(() => _selectedZoneId = zoneId);
+                                      }
+                                    },
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      side: BorderSide(
+                                        color: isSelected ? _kNavy : const Color(0xFFDDD5C8),
+                                        width: 1,
                                       ),
                                     ),
                                   ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+
+                      if (snap.connectionState == ConnectionState.waiting)
+                        const Expanded(
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      else if (tables.isEmpty)
+                        Expanded(
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.table_restaurant_rounded,
+                                    size: 48, color: _kNavy),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Không có bàn nào khác ở phân khu này',
+                                  style: GoogleFonts.outfit(
+                                      fontSize: 14,
+                                      color: _kNavy.withValues(alpha: 0.5)),
                                 ),
-                              );
-                            }).toList(),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        // Grid chọn bàn cuộn được (Scrollable Grid)
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                            child: Align(
+                              alignment: Alignment.topLeft,
+                              child: Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: tables.map((t) {
+                                  final isOccupied = widget.activeSessions.containsKey(t.id);
+                                  final isSelected = _selectedTableId == t.id;
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      if (isOccupied) {
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                          content: Text('⚠️ Bàn ${t.label} đang có khách, không thể chuyển sang.',
+                                              style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                                          backgroundColor: _kAmber,
+                                          behavior: SnackBarBehavior.floating,
+                                          margin: const EdgeInsets.all(12),
+                                          duration: const Duration(seconds: 2),
+                                        ));
+                                        return;
+                                      }
+                                      setState(() {
+                                        _selectedTableId = t.id;
+                                        _selectedTableLabel = t.label;
+                                      });
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 150),
+                                      width: 80, height: 56,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? _kAmber
+                                            : (isOccupied ? const Color(0xFFF0EAE1) : Colors.white),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? _kAmber
+                                              : (isOccupied ? const Color(0xFFDDD5C8) : const Color(0xFFDDD5C8)),
+                                          width: isSelected ? 2 : 1,
+                                        ),
+                                        boxShadow: isSelected
+                                            ? [
+                                                BoxShadow(
+                                                  color: _kAmber.withValues(alpha: 0.3),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 3),
+                                                )
+                                              ]
+                                            : [],
+                                      ),
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                t.label,
+                                                style: GoogleFonts.outfit(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : (isOccupied ? _kNavy.withValues(alpha: 0.4) : _kNavy),
+                                                ),
+                                              ),
+                                              if (isOccupied)
+                                                Text(
+                                                  'Có khách',
+                                                  style: GoogleFonts.outfit(
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: isSelected ? Colors.white : _kRed.withValues(alpha: 0.7),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          if (isOccupied)
+                                            Positioned(
+                                              top: 4, right: 4,
+                                              child: Icon(
+                                                Icons.people_alt_rounded,
+                                                size: 10,
+                                                color: isSelected ? Colors.white : _kNavy.withValues(alpha: 0.35),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
                           ),
                         ),
 

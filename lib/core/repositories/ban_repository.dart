@@ -164,13 +164,9 @@ class BanSessionItemModel {
 class BanRepository {
   static SupabaseClient get _sb => Supabase.instance.client;
 
-  String? _cachedStoreId;
-
   Future<String?> _storeId() async {
-    if (_cachedStoreId != null) return _cachedStoreId;
     final info = await StoreAuthService.getStoreInfo();
-    _cachedStoreId = info['store_id'] as String?;
-    return _cachedStoreId;
+    return info['store_id'] as String?;
   }
 
   bool _areModifiersEqual(String? json1, String? json2) {
@@ -344,7 +340,7 @@ class BanRepository {
         .where((r) => r['zone_id'] == zoneId && (r['is_active'] as bool? ?? true))
         .map(BanTableModel.fromMap)
         .toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder))
+      ..sort((a, b) => compareNatural(a.label, b.label))
     );
   }
 
@@ -357,7 +353,7 @@ class BanRepository {
         .where((r) => r['is_active'] as bool? ?? true)
         .map(BanTableModel.fromMap)
         .toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder))
+      ..sort((a, b) => compareNatural(a.label, b.label))
     );
   }
 
@@ -382,16 +378,30 @@ class BanRepository {
   Stream<Map<String, BanSessionModel>> watchActiveSessions() async* {
     final storeId = await _storeId();
     if (storeId == null) { yield {}; return; }
-    yield* _robustStream(
-      'ban_sessions', 'store_id', storeId,
-      (rows) {
-        final sessions = rows
-            .where((r) => r['status'] == 'open')
-            .map(BanSessionModel.fromMap)
-            .toList();
+
+    Future<Map<String, BanSessionModel>> fetch() async {
+      try {
+        final rows = await _sb
+            .from('ban_sessions')
+            .select()
+            .eq('store_id', storeId)
+            .eq('status', 'open');
+        final sessions = rows.map(BanSessionModel.fromMap).toList();
         return {for (final s in sessions) s.tableId: s};
+      } catch (e) {
+        debugPrint('[BanRepository] watchActiveSessions fetch error: $e');
+        return {};
       }
-    );
+    }
+
+    // Yield initial data
+    yield await fetch();
+
+    // Poll every 8 seconds
+    while (true) {
+      await Future.delayed(const Duration(seconds: 8));
+      yield await fetch();
+    }
   }
 
   Future<BanSessionModel> openSession(String tableId, {int guestCount = 1}) async {
@@ -701,4 +711,29 @@ int _toMs(dynamic val) {
   if (val is int) return val;
   if (val is String) return DateTime.tryParse(val)?.millisecondsSinceEpoch ?? 0;
   return 0;
+}
+
+int compareNatural(String a, String b) {
+  final regExp = RegExp(r'(\d+|\D+)');
+  final aParts = regExp.allMatches(a).map((m) => m.group(0)!).toList();
+  final bParts = regExp.allMatches(b).map((m) => m.group(0)!).toList();
+
+  final minLen = aParts.length < bParts.length ? aParts.length : bParts.length;
+  for (int i = 0; i < minLen; i++) {
+    final aPart = aParts[i];
+    final bPart = bParts[i];
+
+    if (aPart != bPart) {
+      final aIsDigit = RegExp(r'^\d+$').hasMatch(aPart);
+      final bIsDigit = RegExp(r'^\d+$').hasMatch(bPart);
+
+      if (aIsDigit && bIsDigit) {
+        final aNum = int.parse(aPart);
+        final bNum = int.parse(bPart);
+        return aNum.compareTo(bNum);
+      }
+      return aPart.compareTo(bPart);
+    }
+  }
+  return aParts.length.compareTo(bParts.length);
 }

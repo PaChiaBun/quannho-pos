@@ -1,17 +1,18 @@
 // lib/screens/store_picker_screen.dart
 // ─────────────────────────────────────────────────────────────────────────────
-// Store Picker — Chọn quán khi tài khoản thuộc nhiều quán
+// Store Picker — Chọn quán hoặc tạo/kết nối quán
 // ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/user_auth_service.dart';
 import '../core/providers/session_provider.dart';
+import '../core/widgets/create_store_sheet.dart';
+import '../core/widgets/join_store_sheet.dart';
 
 class StorePickerScreen extends ConsumerWidget {
   const StorePickerScreen({super.key});
 
   static const _bg     = Color(0xFF131128);
-  static const _navy   = Color(0xFF1E1C5E);
   static const _orange = Color(0xFFFF6B35);
 
   @override
@@ -33,44 +34,157 @@ class StorePickerScreen extends ConsumerWidget {
                 style: const TextStyle(
                   color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
-              Text('Bạn đang ở quán nào hôm nay?',
+              Text('Bạn muốn thực hiện thao tác nào hôm nay?',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.5), fontSize: 14)),
               const SizedBox(height: 32),
 
-              // Danh sách quán
+              // Danh sách quán hoặc thông báo chưa có quán
               Expanded(
-                child: ListView.separated(
-                  itemCount: stores.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, i) {
-                    final store = stores[i];
-                    return _StoreCard(
-                      store: store,
-                      onTap: () async {
-                        await UserAuthService.selectStore(store);
-                        ref.read(sessionProvider.notifier).updateStore(store);
-                        if (context.mounted) {
-                          Navigator.of(context).pushReplacementNamed('/home');
-                        }
-                      },
-                    );
-                  },
-                ),
+                child: stores.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.05),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.storefront_rounded,
+                                color: Colors.white30,
+                                size: 48,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Bạn chưa tham gia quán nào',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Nhập mã kết nối hoặc tạo quán mới ở bên dưới.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.35),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'VÀO QUÁN ĐÃ CÓ',
+                            style: TextStyle(
+                              color: Colors.white38,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Expanded(
+                            child: ListView.separated(
+                              itemCount: stores.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 12),
+                              itemBuilder: (_, i) {
+                                final store = stores[i];
+                                return _StoreCard(
+                                  store: store,
+                                  onTap: () async {
+                                    await UserAuthService.selectStore(store);
+                                    ref.read(sessionProvider.notifier).updateStore(store);
+                                    if (context.mounted) {
+                                      Navigator.of(context).pushReplacementNamed('/home');
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
               ),
 
+              const SizedBox(height: 20),
+
+              // ── 2 LỰA CHỌN: KẾT NỐI QUÁN HOẶC TẠO QUÁN MỚI ──
+              Row(
+                children: [
+                  // Lựa chọn 1: Kết nối quán
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => showJoinStoreSheet(
+                        context,
+                        ref,
+                        onSuccess: () =>
+                            Navigator.of(context).pushReplacementNamed('/home'),
+                      ),
+                      icon: const Icon(Icons.link_rounded, size: 18),
+                      label: const Text('Kết nối quán'),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: _orange),
+                        foregroundColor: _orange,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        textStyle: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w800),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Lựa chọn 2: Tạo quán mới
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => showCreateStoreSheet(
+                        context,
+                        ref,
+                        onSuccess: () =>
+                            Navigator.of(context).pushReplacementNamed('/home'),
+                      ),
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Tạo quán mới'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _orange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        textStyle: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w800),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
               // Đăng xuất
-              TextButton.icon(
-                onPressed: () async {
-                  await UserAuthService.logout();
-                  ref.read(sessionProvider.notifier).clear();
-                  if (context.mounted) {
-                    Navigator.of(context).pushReplacementNamed('/auth');
-                  }
-                },
-                icon: const Icon(Icons.logout_rounded, color: Colors.white38, size: 16),
-                label: const Text('Đăng xuất',
-                  style: TextStyle(color: Colors.white38, fontSize: 13)),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () async {
+                    await UserAuthService.logout();
+                    ref.read(sessionProvider.notifier).clear();
+                    if (context.mounted) {
+                      Navigator.of(context).pushReplacementNamed('/auth');
+                    }
+                  },
+                  icon: const Icon(Icons.logout_rounded, color: Colors.white38, size: 16),
+                  label: const Text('Đăng xuất tài khoản',
+                    style: TextStyle(color: Colors.white38, fontSize: 13)),
+                ),
               ),
             ],
           ),
@@ -148,7 +262,7 @@ class _StoreCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Colors.white24),
+            const Icon(Icons.login_rounded, color: Colors.white24, size: 20),
           ],
         ),
       ),

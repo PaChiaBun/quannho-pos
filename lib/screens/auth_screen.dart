@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/user_auth_service.dart';
 import '../core/providers/session_provider.dart';
 import '../core/widgets/create_store_sheet.dart';
+import '../core/widgets/join_store_sheet.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -73,21 +74,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         isOwner:     result.selectedStore?.isOwner ?? false,
       ));
 
-      if (result.stores.isEmpty) {
-        // Chưa thuộc quán nào
-        _showNoStoreDialog();
-      } else if (result.stores.length == 1) {
-        // 1 quán → vào thẳng
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else {
-        // Nhiều quán → chọn
-        Navigator.of(context).pushReplacementNamed('/store_picker',
+      Navigator.of(context).pushReplacementNamed('/store_picker',
           arguments: {
             'stores':  result.stores,
             'userId':  result.userId,
             'name':    result.displayName,
           });
-      }
     } else {
       setState(() {
         _loading = false;
@@ -123,8 +115,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         isOwner:     false,
       ));
 
-      // Vào thẳng /home — tạo quán sau từ Dashboard hoặc Settings
-      Navigator.of(context).pushReplacementNamed('/home');
+      // Vào màn hình Store Picker để chọn tạo quán hoặc kết nối quán
+      Navigator.of(context).pushReplacementNamed('/store_picker',
+          arguments: {
+            'stores': <StoreMembership>[],
+            'userId': result.userId,
+            'name':   result.displayName,
+          });
     } else {
       setState(() {
         _loading = false;
@@ -193,44 +190,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     );
   }
 
-  void _showNoStoreDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1B48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Chưa thuộc quán nào',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-        content: const Text(
-          'Hãy gửi số điện thoại của bạn cho chủ quán để được thêm vào.\nHoặc tạo quán mới nếu bạn là chủ quán.',
-          style: TextStyle(color: Colors.white60, fontSize: 13, height: 1.6)),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() { _loading = false; });
-            },
-            child: const Text('Đóng', style: TextStyle(color: Colors.white38))),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() { _loading = false; });
-              showCreateStoreSheet(
-                context,
-                ref,
-                onSuccess: () =>
-                    Navigator.of(context).pushReplacementNamed('/home'),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _orange, foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            child: const Text('Tạo quán mới'),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // BUILD

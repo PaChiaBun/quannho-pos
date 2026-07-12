@@ -296,6 +296,14 @@ class _RoleCardState extends ConsumerState<_RoleCard> {
   }
 
   @override
+  void didUpdateWidget(covariant _RoleCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.role.modules != oldWidget.role.modules) {
+      _perms = List.from(widget.role.modules);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final role  = widget.role;
     final color = role.colorValue;

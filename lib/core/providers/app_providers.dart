@@ -69,6 +69,7 @@ final banRepositoryProvider = Provider<BanRepository>((ref) {
 
 /// Tất cả sản phẩm (reactive)
 final allProductsProvider = StreamProvider<List<ProductModel>>((ref) {
+  ref.watch(sessionProvider); // bắt buộc refresh khi chuyển quán
   return ref.watch(productRepositoryProvider).watchAll();
 });
 
@@ -85,6 +86,7 @@ final posProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) {
 
 /// Tất cả khách hàng (reactive)
 final allCustomersProvider = StreamProvider<List<CustomerModel>>((ref) {
+  ref.watch(sessionProvider); // bắt buộc refresh khi chuyển quán
   return ref.watch(customerRepositoryProvider).watchAll();
 });
 

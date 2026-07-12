@@ -7,6 +7,7 @@ import '../core/repositories/module_repository.dart';
 import '../core/providers/session_provider.dart';
 import '../core/services/user_auth_service.dart';
 import '../core/widgets/create_store_sheet.dart';
+import '../core/widgets/join_store_sheet.dart';
 import '../features/backup/backup_screen.dart';
 import 'bug_report_screen.dart';
 import 'pin_lock_screen.dart';
@@ -441,22 +442,42 @@ class _ShopInfoCard extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12.5, color: Color(0xFF9E9085), height: 1.4)),
                 const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => showCreateStoreSheet(context, ref),
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Tạo quán ngay'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE85D20),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      textStyle: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w800),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => showJoinStoreSheet(context, ref),
+                        icon: const Icon(Icons.link_rounded, size: 18),
+                        label: const Text('Kết nối quán'),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFE85D20)),
+                          foregroundColor: const Color(0xFFE85D20),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          textStyle: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w800),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => showCreateStoreSheet(context, ref),
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Tạo quán ngay'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE85D20),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          textStyle: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w800),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

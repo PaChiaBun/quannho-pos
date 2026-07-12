@@ -298,6 +298,76 @@ class UserAuthService {
     }
   }
 
+  static Future<CreateStoreResult> joinStoreByCode({
+    required String userId,
+    required String storeCode,
+  }) async {
+    final db = _db;
+    if (db == null) return CreateStoreResult.error('Không kết nối được server.');
+    final code = storeCode.trim().toUpperCase();
+    if (code.isEmpty) {
+      return CreateStoreResult.error('Vui lòng nhập mã quán.');
+    }
+
+    try {
+      // 1. Tìm store theo storeCode
+      final storeRes = await db
+          .from('stores')
+          .select('id, name, status, store_code')
+          .eq('store_code', code)
+          .maybeSingle();
+
+      if (storeRes == null) {
+        return CreateStoreResult.error('Mã quán "$code" không tồn tại.\nVui lòng kiểm tra lại hoặc hỏi chủ quán.');
+      }
+
+      final status = storeRes['status'] as String?;
+      if (status == 'suspended' || status == 'deleted') {
+        return CreateStoreResult.error('Quán này đã bị khóa hoặc ngừng hoạt động.');
+      }
+
+      final storeId = storeRes['id'] as String;
+      final storeName = storeRes['name'] as String;
+
+      // 2. Kiểm tra xem user đã là thành viên chưa
+      final existing = await db
+          .from('store_members')
+          .select('id')
+          .eq('store_id', storeId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (existing != null) {
+        return CreateStoreResult.error('Bạn đã là thành viên của quán này rồi.');
+      }
+
+      // 3. Thêm vào store_members với role mặc định là 'waiter' (Phục vụ)
+      await db.from('store_members').insert({
+        'user_id': userId,
+        'store_id': storeId,
+        'role': 'waiter',
+        'is_owner': false,
+      });
+
+      // 4. Lưu session cho quán này
+      final membership = StoreMembership(
+        storeId: storeId,
+        storeName: storeName,
+        storeCode: code,
+        role: 'waiter',
+        isOwner: false,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      await _applyMembershipToPrefs(prefs, membership);
+
+      return CreateStoreResult.success(storeId: storeId, storeCode: code);
+    } on PostgrestException catch (e) {
+      return CreateStoreResult.error('Lỗi database: ${e.message}');
+    } catch (e) {
+      return CreateStoreResult.error('Lỗi: $e');
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // CHỌN QUÁN (khi có nhiều quán)
   // ═══════════════════════════════════════════════════════════════════════════

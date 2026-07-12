@@ -1,7 +1,4 @@
-// lib/core/providers/session_provider.dart
-// ─────────────────────────────────────────────────────────────────────────────
-// Session Provider — Quản lý trạng thái đăng nhập toàn app
-// ─────────────────────────────────────────────────────────────────────────────
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/user_auth_service.dart';
@@ -28,7 +25,7 @@ class _SessionNotifier extends Notifier<SessionData?> {
     } catch (_) {}
   }
 
-  void updateStore(StoreMembership membership) {
+  void updateStore(StoreMembership membership) async {
     if (state == null) return;
     state = SessionData(
       userId:      state!.userId,
@@ -40,6 +37,18 @@ class _SessionNotifier extends Notifier<SessionData?> {
       role:        membership.role,
       isOwner:     membership.isOwner,
     );
+
+    // Save to SharedPreferences so that repositories get the updated store ID
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_store_id', membership.storeId);
+      await prefs.setString('auth_store_code', membership.storeCode);
+      await prefs.setString('auth_store_name', membership.storeName);
+      await prefs.setString('auth_role', membership.role);
+    } catch (e) {
+      print('Error saving store info to SharedPreferences: $e');
+    }
+
     AppLogger.updateSession(
       storeId: membership.storeId,
       staffName: state?.displayName,

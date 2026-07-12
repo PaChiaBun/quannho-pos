@@ -18,6 +18,7 @@ import '../core/providers/session_provider.dart';
 import '../core/repositories/core_product_repository.dart';
 import '../core/repositories/ban_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/utils/string_utils.dart';
 
 // Màu local
 const _kNavy      = Color(0xFF1E1C5E);
@@ -147,18 +148,18 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   child: CircularProgressIndicator(color: _kNavy)),
               error: (e, _) => Center(child: Text('Lỗi: $e')),
               data: (products) {
-                final filtered = products.where((p) {
+                final prodList = (products as List).cast<ProductModel>();
+                final filtered = prodList.where((p) {
                   final matchSearch = _searchQuery.isEmpty ||
-                      p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                      (p.sku?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
-                          false);
+                      p.name.containsSearch(_searchQuery) ||
+                      (p.sku?.containsSearch(_searchQuery) ?? false);
                   final matchCat = _selectedCategory == 'Tất cả' ||
                       (p.category ?? '') == _selectedCategory;
                   return matchSearch && matchCat;
                 }).toList();
 
                 final categories = ['Tất cả',
-                  ...products
+                  ...prodList
                       .map((p) => p.category ?? '')
                       .where((c) => c.isNotEmpty)
                       .toSet()
@@ -200,18 +201,19 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           child: CircularProgressIndicator(color: _kNavy)),
       error: (e, _) => Center(child: Text('Lỗi: $e')),
       data: (products) {
-        final filtered = (products as List).where((p) {
+        final prodList = (products as List).cast<ProductModel>();
+        final filtered = prodList.where((p) {
           final matchSearch = _searchQuery.isEmpty ||
-              p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-              (p.sku?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+              p.name.containsSearch(_searchQuery) ||
+              (p.sku?.containsSearch(_searchQuery) ?? false);
           final matchCat = _selectedCategory == 'Tất cả' ||
               (p.category ?? '') == _selectedCategory;
           return matchSearch && matchCat;
         }).toList();
 
         final categories = ['Tất cả',
-          ...products
-              .map((p) => (p.category ?? '') as String)
+          ...prodList
+              .map((p) => p.category ?? '')
               .where((c) => c.isNotEmpty)
               .toSet()
         ];
@@ -222,7 +224,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             Expanded(
               child: filtered.isEmpty
                   ? _buildEmptyProducts()
-                  : _buildProductGrid(filtered as List<ProductModel>),
+                  : _buildProductGrid(filtered),
             ),
           ],
         );
@@ -3556,10 +3558,11 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('$e')),
                 data: (products) {
+                  final prodList = (products as List).cast<ProductModel>();
                   final filtered = _search.isEmpty
-                      ? products
-                      : products.where((p) =>
-                          p.name.toLowerCase().contains(_search.toLowerCase())).toList();
+                      ? prodList
+                      : prodList.where((p) =>
+                          p.name.containsSearch(_search)).toList();
 
                   if (filtered.isEmpty) {
                     return Center(

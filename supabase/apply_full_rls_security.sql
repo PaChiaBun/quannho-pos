@@ -42,16 +42,20 @@ BEGIN
               AND table_name = t_name 
               AND column_name = 'store_id'
         ) THEN
-            -- Xóa policy cũ nếu có trùng tên
-            EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I;', t_name || '_isolation', t_name);
-            
-            -- Tạo chính sách phân quyền: Chỉ cho truy cập dữ liệu của chính cửa hàng (store_id) đó (Ép kiểu về ::text để tránh lỗi lệch kiểu dữ liệu)
-            EXECUTE format('
-                CREATE POLICY %I ON public.%I 
-                FOR ALL 
-                USING (store_id::text = public.current_store_id()::text) 
-                WITH CHECK (store_id::text = public.current_store_id()::text);
-            ', t_name || '_isolation', t_name);
+            IF t_name = 'store_members' THEN
+                EXECUTE 'ALTER TABLE public.store_members DISABLE ROW LEVEL SECURITY;';
+            ELSE
+                -- Xóa policy cũ nếu có trùng tên
+                EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I;', t_name || '_isolation', t_name);
+                
+                -- Tạo chính sách phân quyền: Chỉ cho truy cập dữ liệu của chính cửa hàng (store_id) đó (Ép kiểu về ::text để tránh lỗi lệch kiểu dữ liệu)
+                EXECUTE format('
+                    CREATE POLICY %I ON public.%I 
+                    FOR ALL 
+                    USING (store_id::text = public.current_store_id()::text) 
+                    WITH CHECK (store_id::text = public.current_store_id()::text);
+                ', t_name || '_isolation', t_name);
+            END IF;
             
         -- TRƯỜNG HỢP B: Bảng 'stores' (Thông tin cửa hàng)
         ELSIF t_name = 'stores' THEN
@@ -65,14 +69,18 @@ BEGIN
             
         -- TRƯỜNG HỢP C: Các bảng cấu hình chung không chứa store_id (ví dụ: app_versions, bug_reports)
         ELSE
-            EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I;', t_name || '_read_all', t_name);
-            
-            -- Cho phép tất cả mọi người đọc thông tin (SELECT) nhưng không được tự ý sửa đổi
-            EXECUTE format('
-                CREATE POLICY %I ON public.%I 
-                FOR SELECT 
-                USING (true);
-            ', t_name || '_read_all', t_name);
+            IF t_name = 'user_accounts' THEN
+                EXECUTE 'ALTER TABLE public.user_accounts DISABLE ROW LEVEL SECURITY;';
+            ELSE
+                EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I;', t_name || '_read_all', t_name);
+                
+                -- Cho phép tất cả mọi người đọc thông tin (SELECT) nhưng không được tự ý sửa đổi
+                EXECUTE format('
+                    CREATE POLICY %I ON public.%I 
+                    FOR SELECT 
+                    USING (true);
+                ', t_name || '_read_all', t_name);
+            END IF;
         END IF;
     END LOOP;
 END $$;
