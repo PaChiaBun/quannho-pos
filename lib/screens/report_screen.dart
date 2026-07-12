@@ -18,6 +18,8 @@ import '../core/repositories/dashboard_repository.dart';
 import '../core/services/store_auth_service.dart';
 import '../modules/finance/providers/finance_providers.dart';
 import '../modules/finance/repository/finance_repository.dart';
+import '../modules/bill_printer/providers/printer_settings_provider.dart';
+import '../modules/bill_printer/screens/bill_preview_screen.dart';
 
 // ─── Design Tokens (nhất quán với toàn app) ───────────────────────────────────
 const _kNavy   = Color(0xFF1C2151);  // Đồng bộ với toàn app
@@ -550,11 +552,16 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
           },
         ),
       );
-
-      await Printing.layoutPdf(
-        onLayout: (PdfPageFormat format) async => doc.save(),
-        name: 'Bao_cao_doanh_thu_${_period.label}',
-      );
+ 
+      final settings = ref.read(printerSettingsProvider);
+      if (settings.cashier.enabled && settings.cashier.name.isNotEmpty) {
+        await StationPrinterDispatcher.printReport(await doc.save(), settings);
+      } else {
+        await Printing.layoutPdf(
+          onLayout: (PdfPageFormat format) async => doc.save(),
+          name: 'Bao_cao_doanh_thu_${_period.label}',
+        );
+      }
     } catch (e) {
       debugPrint('[PrintReport] Error generating PDF: $e');
       if (context.mounted) {

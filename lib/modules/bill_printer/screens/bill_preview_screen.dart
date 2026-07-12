@@ -659,6 +659,21 @@ class BillPdfGenerator {
 // ─── Station Printer Dispatcher ──────────────────────────────────────────────
 
 class StationPrinterDispatcher {
+  static Future<void> printReport(
+    Uint8List bytes,
+    StationPrintersState settings,
+  ) async {
+    final format = const PdfPageFormat(
+      80 * PdfPageFormat.mm,
+      double.infinity,
+      marginLeft: 2 * PdfPageFormat.mm,
+      marginRight: 2 * PdfPageFormat.mm,
+      marginTop: 5 * PdfPageFormat.mm,
+      marginBottom: 5 * PdfPageFormat.mm,
+    );
+    await _dispatchPrint(bytes, settings.cashier, 'bao_cao_doanh_thu', format: format);
+  }
+
   static Future<void> printBill(
     BillData bill,
     StationPrintersState settings, {

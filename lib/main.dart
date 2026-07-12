@@ -12,6 +12,8 @@ import 'core/services/supabase_service.dart';
 import 'core/services/update_checker_service.dart';
 import 'core/providers/app_providers.dart';
 import 'core/services/user_auth_service.dart' show SessionData;
+import 'dart:async';
+import 'package:printing/printing.dart';
 
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -66,6 +68,12 @@ const _kCream  = Color(0xFFFFF8F0);
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  // Pre-cache fonts to avoid browser user-gesture print blocks
+  unawaited(PdfGoogleFonts.notoSansRegular().catchError((_) => null as dynamic));
+  unawaited(PdfGoogleFonts.notoSansBold().catchError((_) => null as dynamic));
+  unawaited(PdfGoogleFonts.robotoRegular().catchError((_) => null as dynamic));
+  unawaited(PdfGoogleFonts.robotoBold().catchError((_) => null as dynamic));
 
   await initializeDateFormatting('vi', null);
   await SupabaseService.initialize(); // ⚠️ PHẢI await — Supabase cần sẵn sàng trước khi dùng

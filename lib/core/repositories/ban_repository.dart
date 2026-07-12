@@ -286,18 +286,30 @@ class BanRepository {
 
   // ── Zones ─────────────────────────────────────────────────────────────────
   Stream<List<BanZoneModel>> watchZones() async* {
-    final storeId = await _storeId();
-    if (storeId == null) { yield []; return; }
-    // Lọc bỏ zone hệ thống của POS mang đi (UUID cố định)
-    const kSysPosZoneId = '00000000-0000-0000-0001-000000000001';
-    yield* _robustStream(
-      'ban_zones', 'store_id', storeId,
-      (rows) => rows
-        .where((r) => (r['is_active'] as bool? ?? true) && r['id'] != kSysPosZoneId)
-        .map(BanZoneModel.fromMap)
-        .toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder))
-    );
+    while (true) {
+      final storeId = await _storeId();
+      if (storeId == null) {
+        yield [];
+      } else {
+        try {
+          const kSysPosZoneId = '00000000-0000-0000-0001-000000000001';
+          final rows = await _sb
+              .from('ban_zones')
+              .select()
+              .eq('store_id', storeId)
+              .eq('is_active', true)
+              .neq('id', kSysPosZoneId)
+              .order('sort_order');
+          final zones = rows.map(BanZoneModel.fromMap).toList();
+          yield zones;
+        } catch (e) {
+          debugPrint('[BanRepository] watchZones error: $e');
+          yield [];
+        }
+      }
+      // Poll every 15 seconds
+      await Future.delayed(const Duration(seconds: 15));
+    }
   }
 
   Future<List<BanZoneModel>> getZones() async {
@@ -332,29 +344,54 @@ class BanRepository {
 
   // ── Tables ─────────────────────────────────────────────────────────────────
   Stream<List<BanTableModel>> watchTablesForZone(String zoneId) async* {
-    final storeId = await _storeId();
-    if (storeId == null) { yield []; return; }
-    yield* _robustStream(
-      'ban_dining_tables', 'store_id', storeId,
-      (rows) => rows
-        .where((r) => r['zone_id'] == zoneId && (r['is_active'] as bool? ?? true))
-        .map(BanTableModel.fromMap)
-        .toList()
-      ..sort((a, b) => compareNatural(a.label, b.label))
-    );
+    while (true) {
+      final storeId = await _storeId();
+      if (storeId == null) {
+        yield [];
+      } else {
+        try {
+          final rows = await _sb
+              .from('ban_dining_tables')
+              .select()
+              .eq('store_id', storeId)
+              .eq('zone_id', zoneId)
+              .eq('is_active', true);
+          final tables = rows.map(BanTableModel.fromMap).toList()
+            ..sort((a, b) => compareNatural(a.label, b.label));
+          yield tables;
+        } catch (e) {
+          debugPrint('[BanRepository] watchTablesForZone error: $e');
+          yield [];
+        }
+      }
+      // Poll every 12 seconds
+      await Future.delayed(const Duration(seconds: 12));
+    }
   }
 
   Stream<List<BanTableModel>> watchAllTables() async* {
-    final storeId = await _storeId();
-    if (storeId == null) { yield []; return; }
-    yield* _robustStream(
-      'ban_dining_tables', 'store_id', storeId,
-      (rows) => rows
-        .where((r) => r['is_active'] as bool? ?? true)
-        .map(BanTableModel.fromMap)
-        .toList()
-      ..sort((a, b) => compareNatural(a.label, b.label))
-    );
+    while (true) {
+      final storeId = await _storeId();
+      if (storeId == null) {
+        yield [];
+      } else {
+        try {
+          final rows = await _sb
+              .from('ban_dining_tables')
+              .select()
+              .eq('store_id', storeId)
+              .eq('is_active', true);
+          final tables = rows.map(BanTableModel.fromMap).toList()
+            ..sort((a, b) => compareNatural(a.label, b.label));
+          yield tables;
+        } catch (e) {
+          debugPrint('[BanRepository] watchAllTables error: $e');
+          yield [];
+        }
+      }
+      // Poll every 12 seconds
+      await Future.delayed(const Duration(seconds: 12));
+    }
   }
 
   Future<void> upsertTable(BanTableModel table) async =>
@@ -376,31 +413,26 @@ class BanRepository {
 
   // ── Sessions ───────────────────────────────────────────────────────────────
   Stream<Map<String, BanSessionModel>> watchActiveSessions() async* {
-    final storeId = await _storeId();
-    if (storeId == null) { yield {}; return; }
-
-    Future<Map<String, BanSessionModel>> fetch() async {
-      try {
-        final rows = await _sb
-            .from('ban_sessions')
-            .select()
-            .eq('store_id', storeId)
-            .eq('status', 'open');
-        final sessions = rows.map(BanSessionModel.fromMap).toList();
-        return {for (final s in sessions) s.tableId: s};
-      } catch (e) {
-        debugPrint('[BanRepository] watchActiveSessions fetch error: $e');
-        return {};
-      }
-    }
-
-    // Yield initial data
-    yield await fetch();
-
-    // Poll every 8 seconds
     while (true) {
+      final storeId = await _storeId();
+      if (storeId == null) {
+        yield {};
+      } else {
+        try {
+          final rows = await _sb
+              .from('ban_sessions')
+              .select()
+              .eq('store_id', storeId)
+              .eq('status', 'open');
+          final sessions = rows.map(BanSessionModel.fromMap).toList();
+          yield {for (final s in sessions) s.tableId: s};
+        } catch (e) {
+          debugPrint('[BanRepository] watchActiveSessions fetch error: $e');
+          yield {};
+        }
+      }
+      // Poll every 8 seconds
       await Future.delayed(const Duration(seconds: 8));
-      yield await fetch();
     }
   }
 
@@ -481,13 +513,21 @@ class BanRepository {
 
   // ── Session Items ──────────────────────────────────────────────────────────
   Stream<List<BanSessionItemModel>> watchSessionItems(String sessionId) async* {
-    yield* _robustStream(
-      'ban_session_items', 'session_id', sessionId,
-      (rows) => rows
-          .map(BanSessionItemModel.fromMap)
-          .toList()
-        ..sort((a, b) => a.addedAt.compareTo(b.addedAt))
-    );
+    while (true) {
+      try {
+        final rows = await _sb
+            .from('ban_session_items')
+            .select()
+            .eq('session_id', sessionId);
+        final items = rows.map(BanSessionItemModel.fromMap).toList()
+          ..sort((a, b) => a.addedAt.compareTo(b.addedAt));
+        yield items;
+      } catch (e) {
+        debugPrint('[BanRepository] watchSessionItems error: $e');
+        yield [];
+      }
+      await Future.delayed(const Duration(seconds: 5));
+    }
   }
 
   Future<void> addSessionItem({

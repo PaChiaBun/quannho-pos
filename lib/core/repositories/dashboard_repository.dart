@@ -182,13 +182,17 @@ class DashboardRepository {
 
     for (final o in orders) {
       final amount = (o['total_amount'] as num?)?.toDouble() ?? 0;
-      final method = o['payment_method'] as String? ?? 'cash';
-      if (method == 'cash') {
+      final rawMethod = o['payment_method'] as String? ?? 'cash';
+      final String method;
+      if (rawMethod == 'cash') {
+        method = 'cash';
         cashRevenue += amount;
-      } else if (method == 'transfer') {
-        transferRevenue += amount;
-      } else if (method == 'card') {
+      } else if (rawMethod == 'card') {
+        method = 'card';
         cardRevenue += amount;
+      } else {
+        method = 'transfer';
+        transferRevenue += amount;
       }
 
       final staffId = (o['staff_id'] as String?)?.isNotEmpty == true ? o['staff_id'] as String : 'unassigned';
@@ -329,7 +333,7 @@ class DashboardRepository {
       agg.discount += disc;
       if (method == 'cash') {
         agg.cashRevenue += amount;
-      } else if (method == 'transfer') {
+      } else {
         agg.transferRevenue += amount;
       }
     }
