@@ -47,7 +47,7 @@ class KitchenTicketModel {
     tableLabel: m['table_label'] as String?,
     zoneId: m['zone_id'] as String?,
     zoneLabel: m['zone_label'] as String?, // Thêm zoneLabel
-    orderNote: m['order_note'] as String?,
+    orderNote: (m['note'] as String?) ?? (m['order_note'] as String?),
     status: m['status'] as String? ?? 'cho',
     sentAt: _toMs(m['sent_at']),
     startedAt: m['started_at'] != null ? _toMs(m['started_at']) : null,

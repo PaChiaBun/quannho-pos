@@ -19,6 +19,7 @@ class KitchenTicketTemplate {
   final int itemFontSize;      // Cỡ chữ tên món (12–18)
   final int qtyFontSize;       // Cỡ số lượng (16–28) — nên rất to, bếp nhìn xa
   final bool boldItemName;     // In đậm tên món
+  final bool showWaiterName;   // Tên nhân viên order
 
   const KitchenTicketTemplate({
     this.paperSize      = '80mm',
@@ -33,6 +34,7 @@ class KitchenTicketTemplate {
     this.itemFontSize   = 14,
     this.qtyFontSize    = 22,
     this.boldItemName   = true,
+    this.showWaiterName = true,
   });
 
   // ── Serialization ───────────────────────────────────────────────────────────
@@ -51,6 +53,7 @@ class KitchenTicketTemplate {
     'ifont':       itemFontSize,
     'qfont':       qtyFontSize,
     'bold':        boldItemName,
+    'waiter':      showWaiterName,
   };
 
   factory KitchenTicketTemplate.fromMap(Map<String, dynamic> m) => KitchenTicketTemplate(
@@ -66,6 +69,7 @@ class KitchenTicketTemplate {
     itemFontSize:   m['ifont']     ?? 14,
     qtyFontSize:    m['qfont']     ?? 22,
     boldItemName:   m['bold']      ?? true,
+    showWaiterName: m['waiter']    ?? true,
   );
 
   Future<void> save({String stationKey = 'bepNong'}) async {
@@ -134,7 +138,7 @@ class KitchenTicketTemplate {
     );
   }
 
-  KitchenTicketTemplate copyWith({
+   KitchenTicketTemplate copyWith({
     String? paperSize,
     String? headerText,
     bool? showOrderNumber,
@@ -147,6 +151,7 @@ class KitchenTicketTemplate {
     int? itemFontSize,
     int? qtyFontSize,
     bool? boldItemName,
+    bool? showWaiterName,
   }) => KitchenTicketTemplate(
     paperSize:       paperSize      ?? this.paperSize,
     headerText:      headerText     ?? this.headerText,
@@ -160,6 +165,7 @@ class KitchenTicketTemplate {
     itemFontSize:    itemFontSize   ?? this.itemFontSize,
     qtyFontSize:     qtyFontSize    ?? this.qtyFontSize,
     boldItemName:    boldItemName   ?? this.boldItemName,
+    showWaiterName:  showWaiterName  ?? this.showWaiterName,
   );
 }
 

@@ -523,7 +523,7 @@ class BillPdfGenerator {
                 style: pw.TextStyle(font: font, fontSize: 9,
                     color: PdfColors.black)),
 
-          if (bill.waiterName != null && bill.waiterName!.isNotEmpty) ...[
+          if (tpl.showWaiterName && bill.waiterName != null && bill.waiterName!.isNotEmpty) ...[
             pw.SizedBox(height: 2),
             pw.Text('NV Order: ${bill.waiterName!}',
                 style: pw.TextStyle(font: fontBold, fontSize: 9,

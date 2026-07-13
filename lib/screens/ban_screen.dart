@@ -2749,6 +2749,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             ));
           }
 
+          final session = ref.read(sessionProvider);
           final billData = BillData(
             shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
             shopAddress: storeInfo['address'] ?? '',
@@ -2761,6 +2762,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             total: total,
             type: BillType.receipt,
             note: '',
+            waiterName: session?.displayName,
           );
 
           await StationPrinterDispatcher.printBill(billData, printerSettingsCached, onlyReceipt: true);
@@ -2954,6 +2956,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     final storeId   = storeInfo['store_id'];
     if (storeId == null) throw Exception('storeId null — chưa đăng nhập ?');
 
+    final session = ref.read(sessionProvider);
     // 1. Tạo KitchenTicket
     await Supabase.instance.client.from('kitchen_tickets').insert({
       'id':          ticketId,
@@ -2964,6 +2967,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       'round':       round,
       'status':      'cho',
       'sent_at':     now,
+      'note':        session?.displayName,
     });
 
     // ‼️ FIX #2: Batch lookup station code — 1 query thay vì N queries

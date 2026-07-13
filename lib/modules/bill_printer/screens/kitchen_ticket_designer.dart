@@ -213,6 +213,9 @@ class _ConfigPanel extends ConsumerWidget {
           _ToggleRow('In đậm tên món', tpl.boldItemName, Icons.format_bold_rounded,
               isRecommended: true,
               (v) => update(tpl.copyWith(boldItemName: v))),
+          _ToggleRow('Tên nhân viên order', tpl.showWaiterName, Icons.person_outline_rounded,
+              isRecommended: true,
+              (v) => update(tpl.copyWith(showWaiterName: v))),
         ],
       ),
 

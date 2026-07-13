@@ -2212,6 +2212,7 @@ class _TicketCard extends ConsumerWidget {
       total:    0,
       type:     BillType.kitchen,
       note: ticket.orderNote,
+      waiterName: ticket.orderNote,
     );
     showBillPreview(context, bill, isKitchen: true);
   }

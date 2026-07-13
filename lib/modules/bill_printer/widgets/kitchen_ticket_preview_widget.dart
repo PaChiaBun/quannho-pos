@@ -79,6 +79,18 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                       color: Colors.grey.shade500,
                     ),
                   ),
+                if (tpl.showWaiterName)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      'NV Order: Thành Nghiệp',
+                      style: GoogleFonts.outfit(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
 
                 if (tpl.showDivider) ...[
                   const SizedBox(height: 6),

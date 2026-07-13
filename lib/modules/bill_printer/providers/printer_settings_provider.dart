@@ -559,6 +559,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         total: 0,
         type: BillType.kitchen,
         note: '',
+        waiterName: note,
       );
 
       writePrintLog('[Process Ticket] Đẩy in: $orderNumber. Bàn: $tableName, số món: ${billItems.length}');
