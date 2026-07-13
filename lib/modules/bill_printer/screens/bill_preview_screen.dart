@@ -820,14 +820,25 @@ class StationPrinterDispatcher {
     try {
       final ticketItems = items.map((i) {
         final List<String> modifiers = [];
+        String? freeNote;
         if (i.note != null && i.note!.isNotEmpty) {
-          modifiers.addAll(i.note!.split(', ').map((s) => s.trim()));
+          final lines = i.note!.split('\n');
+          for (final line in lines) {
+            if (line.startsWith('+ Thêm món: ')) {
+              final mStr = line.substring('+ Thêm món: '.length);
+              modifiers.addAll(mStr.split(', ').map((s) => s.trim()));
+            } else if (line.startsWith('Ghi chú: ')) {
+              freeNote = line.substring('Ghi chú: '.length).trim();
+            } else {
+              modifiers.add(line.trim());
+            }
+          }
         }
         return TicketItemData(
           name: i.name,
           quantity: i.qty.toDouble(),
           modifiers: modifiers,
-          note: null,
+          note: freeNote,
         );
       }).toList();
 

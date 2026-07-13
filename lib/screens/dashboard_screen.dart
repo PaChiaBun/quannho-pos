@@ -200,11 +200,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           // null = owner/no-store → hiện tất cả module isActive=true
           List<String>? allowedPerms;
           if (session != null && !session.isOwner && session.hasStore) {
+            final canonical = StaffService.canonicalRole(session.role);
             final rawPerms = staffPermsAsync?.when(
               data: (p) => p,
-              loading: () => kDefaultPerms[session.role] ?? kDefaultPerms['cashier']!,
-              error: (_, __) => kDefaultPerms[session.role] ?? kDefaultPerms['cashier']!,
-            ) ?? kDefaultPerms[session.role] ?? kDefaultPerms['cashier']!;
+              loading: () => kDefaultPerms[canonical] ?? kDefaultPerms['cashier']!,
+              error: (_, __) => kDefaultPerms[canonical] ?? kDefaultPerms['cashier']!,
+            ) ?? kDefaultPerms[canonical] ?? kDefaultPerms['cashier']!;
             // ⭐ kay_ops luôn available cho mọi nhân viên
             allowedPerms = rawPerms.contains('kay_ops')
                 ? rawPerms

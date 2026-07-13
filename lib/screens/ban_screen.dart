@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -1863,6 +1864,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   bool _isCancelling = false;
   // Map lưu TextEditingController theo item.id — tránh tạo mới mỗi build
   final Map<String, TextEditingController> _noteControllers = {};
+  final Map<String, FocusNode> _noteFocusNodes = {};
 
   BanRepository get _banRepo => ref.read(banRepositoryProvider);
 
@@ -1881,6 +1883,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   void dispose() {
     for (final c in _noteControllers.values) {
       c.dispose();
+    }
+    for (final fn in _noteFocusNodes.values) {
+      fn.dispose();
     }
     super.dispose();
   }
@@ -1912,7 +1917,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         type: BillType.receipt,
       );
 
-      await StationPrinterDispatcher.printBill(billData, settings);
+      await StationPrinterDispatcher.printBill(billData, settings, onlyReceipt: true);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2892,7 +2897,27 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   // ── Gửi bếp ──────────────────────────────────────────────────────────────
   Future<void> _sendToKitchen(List<BanSessionItemModel> items) async {
     try {
-      await _sendToKitchenImpl(items);
+      final List<BanSessionItemModel> updatedItems = [];
+      // Lưu toàn bộ ghi chú từ controller vào database trước để tránh race condition
+      for (final item in items) {
+        if (item.kitchenStatus == 'chua_gui') {
+          final ctrl = _noteControllers[item.id];
+          if (ctrl != null) {
+            final newNote = ctrl.text.trim();
+            final oldNote = item.note?.trim() ?? '';
+            if (newNote != oldNote) {
+              await Supabase.instance.client
+                  .from('ban_session_items')
+                  .update({'note': newNote.isEmpty ? null : newNote})
+                  .eq('id', item.id);
+              updatedItems.add(item.copyWith(note: newNote.isEmpty ? null : newNote, clearNote: newNote.isEmpty));
+              continue;
+            }
+          }
+        }
+        updatedItems.add(item);
+      }
+      await _sendToKitchenImpl(updatedItems);
     } catch (e, st) {
       debugPrint('[Kitchen] ❌ _sendToKitchen crash: $e\n$st');
       if (mounted) {
@@ -2941,6 +2966,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
     // ‼️ FIX #2: Batch lookup station code — 1 query thay vì N queries
     final productIds = unsent.map((i) => i.productId).toList();
+    try {
+      Supabase.instance.client.rest.headers['x-store-id'] = storeId;
+    } catch (_) {}
     final productRows = await Supabase.instance.client
         .from('products').select('id, category, station_code').inFilter('id', productIds);
     final productInfoMap = <String, Map<String, dynamic>>{
@@ -3888,29 +3916,116 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         if (item.quantity > 0)
                                           Padding(
                                             padding: const EdgeInsets.only(top: 12),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: _kNavy.withValues(alpha: 0.03),
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                              child: TextField(
-                                                onChanged: (v) => _updateItemNote(item, v),
-                                                controller: _noteControllers.putIfAbsent(
-                                                  item.id, () => TextEditingController(text: item.note ?? '')),
-                                                style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: _kNavy),
-                                                decoration: InputDecoration(
-                                                  isDense: true,
-                                                  hintText: 'Ghi chú cho nhà bếp (vd: ít rau, không hành...)',
-                                                  hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
-                                                  prefixIcon: Icon(Icons.edit_note_rounded, size: 18, color: _kNavy.withValues(alpha: 0.4)),
-                                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                                  border: InputBorder.none,
-                                                  focusedBorder: OutlineInputBorder(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Container(
+                                                  decoration: BoxDecoration(
+                                                    color: _kNavy.withValues(alpha: 0.03),
                                                     borderRadius: BorderRadius.circular(10),
-                                                    borderSide: const BorderSide(color: _kNavy, width: 1.2),
+                                                  ),
+                                                  child: Builder(
+                                                    builder: (context) {
+                                                      final focusNode = _noteFocusNodes.putIfAbsent(
+                                                        item.id,
+                                                        () {
+                                                          final fn = FocusNode();
+                                                          fn.addListener(() {
+                                                            if (!fn.hasFocus) {
+                                                              final currentText = _noteControllers[item.id]?.text ?? '';
+                                                              _updateItemNote(item, currentText);
+                                                            }
+                                                          });
+                                                          return fn;
+                                                        },
+                                                      );
+                                                      return TextField(
+                                                        focusNode: focusNode,
+                                                        controller: _noteControllers.putIfAbsent(
+                                                          item.id, () => TextEditingController(text: item.note ?? '')),
+                                                        style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: _kNavy),
+                                                        decoration: InputDecoration(
+                                                          isDense: true,
+                                                          hintText: 'Ghi chú cho nhà bếp (vd: ít rau, không hành...)',
+                                                          hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
+                                                          prefixIcon: Icon(Icons.edit_note_rounded, size: 18, color: _kNavy.withValues(alpha: 0.4)),
+                                                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                                          border: InputBorder.none,
+                                                          focusedBorder: OutlineInputBorder(
+                                                            borderRadius: BorderRadius.circular(10),
+                                                            borderSide: const BorderSide(color: _kNavy, width: 1.2),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
                                                   ),
                                                 ),
-                                              ),
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: 8),
+                                                  child: SizedBox(
+                                                    height: 28,
+                                                    child: ListView(
+                                                      scrollDirection: Axis.horizontal,
+                                                      children: _AddItemsSheetState._kPresets.map((preset) {
+                                                        final ctrl = _noteControllers.putIfAbsent(
+                                                          item.id, () => TextEditingController(text: item.note ?? ''));
+                                                        final currentText = ctrl.text;
+                                                        final isOn = currentText.contains(preset);
+                                                        return Padding(
+                                                          padding: const EdgeInsets.only(right: 6),
+                                                          child: InkWell(
+                                                            onTap: () {
+                                                              HapticFeedback.selectionClick();
+                                                              String newText;
+                                                              if (isOn) {
+                                                                newText = currentText
+                                                                    .replaceAll(', $preset', '')
+                                                                    .replaceAll(preset, '')
+                                                                    .trim()
+                                                                    .replaceAll(RegExp(r'^,\s*|,\s*$'), '');
+                                                              } else {
+                                                                newText = currentText.isEmpty
+                                                                    ? preset
+                                                                    : '$currentText, $preset';
+                                                              }
+                                                              ctrl.text = newText;
+                                                              ctrl.selection = TextSelection.fromPosition(
+                                                                TextPosition(offset: newText.length),
+                                                              );
+                                                              
+                                                              Supabase.instance.client
+                                                                  .from('ban_session_items')
+                                                                  .update({'note': newText.trim().isEmpty ? null : newText.trim()})
+                                                                  .eq('id', item.id);
+                                                              setState(() {});
+                                                            },
+                                                            child: Container(
+                                                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                                                              alignment: Alignment.center,
+                                                              decoration: BoxDecoration(
+                                                                color: isOn ? _kNavy : _kNavy.withValues(alpha: 0.05),
+                                                                borderRadius: BorderRadius.circular(15),
+                                                                border: Border.all(
+                                                                  color: isOn ? _kNavy : _kNavy.withValues(alpha: 0.1),
+                                                                  width: 1,
+                                                                ),
+                                                              ),
+                                                              child: Text(
+                                                                preset,
+                                                                style: GoogleFonts.outfit(
+                                                                  fontSize: 11,
+                                                                  fontWeight: FontWeight.bold,
+                                                                  color: isOn ? Colors.white : _kNavy.withValues(alpha: 0.6),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }).toList(),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                       ],
@@ -4240,7 +4355,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         type: BillType.receipt,
       );
 
-      await StationPrinterDispatcher.printBill(billData, settings);
+      await StationPrinterDispatcher.printBill(billData, settings, onlyReceipt: true);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -4994,7 +5109,8 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
 
   static const _kPresets = [
     'Ít cay', 'Không cay', 'Ít đường', 'Không đá',
-    'Nhiều hành', 'Không hành', 'Ít mắm', 'Thêm rau',
+    'Nhiều hành', 'Không hành', 'Ít hành', 'Không tiêu', 'Không mực',
+    'Ít mắm', 'Thêm rau',
   ];
 
   Future<void> _confirm(List<ProductModel> products) async {

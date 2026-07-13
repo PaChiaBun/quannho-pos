@@ -507,11 +507,28 @@ class StaffService {
 
   // ══════════════════════════════════════════════════════════════════════════
   // PHÂN QUYỀN MODULE
+  static String canonicalRole(String roleName) {
+    final n = roleName.toLowerCase().trim();
+    if (n.contains('owner') || n.contains('chủ quán') || n.contains('chủ')) return 'owner';
+    if (n.contains('manager') || n.contains('quản lý')) return 'manager';
+    if (n.contains('cashier') || n.contains('thu ngân') || n.contains('quầy')) return 'cashier';
+    if (n.contains('waiter') || n.contains('phục vụ') || n.contains('chạy bàn')) return 'waiter';
+    if (n.contains('kitchen') || n.contains('bếp')) return 'kitchen';
+    if (n.contains('stock') || n.contains('kho')) return 'stock';
+    return roleName;
+  }
+
   // ══════════════════════════════════════════════════════════════════════════
   static Future<List<String>> getModulePermissions(String storeId, String role) async {
     final db = _db;
-    if (db == null) return List<String>.from(kDefaultPerms[role] ?? []);
+    final canonical = canonicalRole(role);
+    if (db == null) return List<String>.from(kDefaultPerms[canonical] ?? []);
     try {
+      // Thiết lập header x-store-id để vượt qua RLS
+      try {
+        db.rest.headers['x-store-id'] = storeId;
+      } catch (_) {}
+
       // 1. ƯU TIÊN: đọc từ store_roles.modules (hệ thống role động mới)
       final roleRow = await db.from('store_roles')
           .select('modules')
@@ -536,10 +553,10 @@ class StaffService {
       }
 
       // 3. Fallback cuối: kDefaultPerms (hardcoded)
-      return List<String>.from(kDefaultPerms[role] ?? []);
+      return List<String>.from(kDefaultPerms[canonical] ?? []);
     } catch (e) {
       debugPrint('[StaffService] getModulePermissions error: $e');
-      return List<String>.from(kDefaultPerms[role] ?? []);
+      return List<String>.from(kDefaultPerms[canonical] ?? []);
     }
   }
 
@@ -744,6 +761,9 @@ class StoreRoleService {
     final db = _db;
     if (db == null) return [];
     try {
+      try {
+        db.rest.headers['x-store-id'] = storeId;
+      } catch (_) {}
       final rows = await db
           .from('store_roles')
           .select()

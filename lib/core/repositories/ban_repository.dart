@@ -138,6 +138,31 @@ class BanSessionItemModel {
     this.kitchenStatus = 'pending',
   });
 
+  BanSessionItemModel copyWith({
+    String? id,
+    String? sessionId,
+    String? productId,
+    String? productName,
+    double? price,
+    double? quantity,
+    String? note,
+    String? modifiersJson,
+    int? addedAt,
+    String? kitchenStatus,
+    bool clearNote = false,
+  }) => BanSessionItemModel(
+    id: id ?? this.id,
+    sessionId: sessionId ?? this.sessionId,
+    productId: productId ?? this.productId,
+    productName: productName ?? this.productName,
+    price: price ?? this.price,
+    quantity: quantity ?? this.quantity,
+    note: clearNote ? null : (note ?? this.note),
+    modifiersJson: modifiersJson ?? this.modifiersJson,
+    addedAt: addedAt ?? this.addedAt,
+    kitchenStatus: kitchenStatus ?? this.kitchenStatus,
+  );
+
   double get subtotal => price * quantity;
 
   factory BanSessionItemModel.fromMap(Map<String, dynamic> m) => BanSessionItemModel(

@@ -371,9 +371,9 @@ class _PreviewPanel extends StatelessWidget {
 
   // Dữ liệu mẫu để xem trước
   static const _sampleItems = [
-    ('Phở Bò Đặc Biệt', 2, 'Không hành, ít ớt'),
+    ('Phở Bò Đặc Biệt', 2, '+ Thêm món: Khúc Bạch, Dừa sợi\nGhi chú: Không hành, ít ớt'),
     ('Cơm Gà Xối Mỡ', 1, null),
-    ('Bánh Mì Thịt', 3, 'Không rau mùi'),
+    ('Bánh Mì Thịt', 3, 'Ghi chú: Không rau mùi'),
   ];
 
   @override
@@ -443,7 +443,7 @@ class _PreviewPanel extends StatelessWidget {
                         decoration: const BoxDecoration(
                             color: Colors.black, shape: BoxShape.circle),
                         child: Center(
-                          child: Text('${item.$2}',
+                           child: Text('${item.$2}',
                               style: GoogleFonts.outfit(
                                   fontSize: tpl.qtyFontSize.toDouble(),
                                   fontWeight: FontWeight.w900,
@@ -461,11 +461,13 @@ class _PreviewPanel extends StatelessWidget {
                                     fontWeight: tpl.boldItemName
                                         ? FontWeight.w800 : FontWeight.w500)),
                             if (hasNote)
-                              Text('↳ ${item.$3!}',
-                                  style: GoogleFonts.outfit(
-                                      fontSize: (tpl.itemFontSize - 2).toDouble(),
-                                      fontStyle: FontStyle.italic,
-                                      color: Colors.grey.shade600)),
+                              ...item.$3!.split('\n').map((line) => Text(
+                                    '↳ $line',
+                                    style: GoogleFonts.outfit(
+                                        fontSize: (tpl.itemFontSize - 2).toDouble(),
+                                        fontStyle: FontStyle.italic,
+                                        color: Colors.grey.shade600),
+                                  )),
                           ],
                         ),
                       ),

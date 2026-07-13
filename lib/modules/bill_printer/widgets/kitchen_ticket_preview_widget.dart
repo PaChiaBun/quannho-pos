@@ -7,9 +7,9 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
   const KitchenTicketPreviewWidget({super.key, required this.tpl});
 
   static const _sampleItems = [
-    ('Phở Bò Đặc Biệt', 2, 'Không hành, ít ớt'),
+    ('Phở Bò Đặc Biệt', 2, '+ Thêm món: Khúc Bạch, Dừa sợi\nGhi chú: Không hành, ít ớt'),
     ('Cơm Gà Xối Mỡ', 1, null),
-    ('Bánh Mì Thịt', 3, 'Không rau mùi'),
+    ('Bánh Mì Thịt', 3, 'Ghi chú: Không rau mùi'),
   ];
 
   @override
@@ -120,13 +120,16 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                         if (hasNote)
                           Padding(
                             padding: const EdgeInsets.only(left: 8, top: 2),
-                            child: Text(
-                              '↳ Ghi chú: ${item.$3}',
-                              style: GoogleFonts.outfit(
-                                fontSize: 10,
-                                color: Colors.blueGrey,
-                                fontStyle: FontStyle.italic,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: item.$3!.split('\n').map((line) => Text(
+                                '↳ $line',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 10,
+                                  color: Colors.blueGrey,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              )).toList(),
                             ),
                           ),
                       ],

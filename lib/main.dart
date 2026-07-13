@@ -11,6 +11,7 @@ import 'core/services/event_bridge_service.dart';
 import 'core/services/supabase_service.dart';
 import 'core/services/update_checker_service.dart';
 import 'core/providers/app_providers.dart';
+import 'core/services/staff_service.dart';
 import 'core/services/user_auth_service.dart' show SessionData;
 import 'dart:async';
 import 'package:printing/printing.dart';
@@ -743,7 +744,7 @@ class _MainShellState extends ConsumerState<MainShell>
     }
 
     // Fallback: role cũ hardcoded
-    switch (role) {
+    switch (role != null ? StaffService.canonicalRole(role) : null) {
       case 'kitchen': return {0, 8, 6, 1, 13};
       case 'cashier': return {0, 1, 7, 6, 13};
       case 'waiter':  return {0, 7, 8, 6, 13};

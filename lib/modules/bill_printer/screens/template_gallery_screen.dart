@@ -423,9 +423,9 @@ class _KitchenPreviewWidget extends StatelessWidget {
   const _KitchenPreviewWidget({required this.tpl});
 
   static const _sampleItems = [
-    ('Phở Bò Đặc Biệt', 2, 'Không hành, ít ớt'),
+    ('Phở Bò Đặc Biệt', 2, '+ Thêm món: Khúc Bạch, Dừa sợi\nGhi chú: Không hành, ít ớt'),
     ('Cơm Gà Xối Mỡ', 1, null),
-    ('Bún Bò Huế', 3, 'Cay vừa'),
+    ('Bún Bò Huế', 3, 'Ghi chú: Cay vừa'),
   ];
 
   @override
@@ -476,9 +476,13 @@ class _KitchenPreviewWidget extends StatelessWidget {
                         fontSize: tpl.itemFontSize.toDouble(),
                         fontWeight: tpl.boldItemName ? FontWeight.w800 : FontWeight.w500)),
                     if (tpl.showNote && item.$3 != null)
-                      Text('↳ ${item.$3!}', style: GoogleFonts.outfit(
-                          fontSize: (tpl.itemFontSize - 2).toDouble(),
-                          fontStyle: FontStyle.italic, color: Colors.grey.shade600)),
+                      ...item.$3!.split('\n').map((line) => Text(
+                            '↳ $line',
+                            style: GoogleFonts.outfit(
+                                fontSize: (tpl.itemFontSize - 2).toDouble(),
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey.shade600),
+                          )),
                   ])),
                 ]),
               )),

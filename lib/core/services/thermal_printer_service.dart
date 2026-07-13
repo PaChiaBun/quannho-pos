@@ -94,7 +94,7 @@ class ThermalPrinterService {
         }
         // Ghi chú
         if (item.note != null && item.note!.isNotEmpty) {
-          buffer.add(_utf8('   ** ${item.note}\n'));
+          buffer.add(_utf8('   Ghi chu: ${item.note}\n'));
         }
       }
 

@@ -487,12 +487,15 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         final stationCode = (item['station_code'] as String?) ?? 'bep_nong';
 
         String? noteText;
-        final rawNote = (item['modifiers_json'] as String?) ?? (item['kitchen_note'] as String?) ?? (item['free_note'] as String?);
-        if (rawNote != null && rawNote.isNotEmpty) {
+        final rawMods = (item['modifiers_json'] as String?) ?? (item['kitchen_note'] as String?);
+        final freeNote = item['free_note'] as String?;
+        final List<String> noteParts = [];
+
+        if (rawMods != null && rawMods.isNotEmpty && rawMods != '[]') {
           try {
-            final decoded = jsonDecode(rawNote);
+            final decoded = jsonDecode(rawMods);
             if (decoded is List) {
-              noteText = decoded.map<String>((m) {
+              final modsText = decoded.map<String>((m) {
                 if (m is Map) {
                   final nameVal = m['name'] as String? ?? '';
                   final qtyVal  = (m['qty'] as num?)?.toInt() ?? 1;
@@ -504,12 +507,23 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
                 }
                 return '$m';
               }).where((s) => s.isNotEmpty).join(', ');
+              if (modsText.isNotEmpty) {
+                noteParts.add('+ Thêm món: $modsText');
+              }
             } else {
-              noteText = rawNote;
+              noteParts.add(rawMods);
             }
           } catch (_) {
-            noteText = rawNote;
+            noteParts.add(rawMods);
           }
+        }
+
+        if (freeNote != null && freeNote.trim().isNotEmpty) {
+          noteParts.add('Ghi chú: ${freeNote.trim()}');
+        }
+
+        if (noteParts.isNotEmpty) {
+          noteText = noteParts.join('\n');
         }
 
         billItems.add(BillItem(
