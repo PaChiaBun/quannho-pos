@@ -3932,40 +3932,23 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                     color: _kNavy.withValues(alpha: 0.03),
                                                     borderRadius: BorderRadius.circular(10),
                                                   ),
-                                                  child: Builder(
-                                                    builder: (context) {
-                                                      final focusNode = _noteFocusNodes.putIfAbsent(
-                                                        item.id,
-                                                        () {
-                                                          final fn = FocusNode();
-                                                          fn.addListener(() {
-                                                            if (!fn.hasFocus) {
-                                                              final currentText = _noteControllers[item.id]?.text ?? '';
-                                                              _updateItemNote(item, currentText);
-                                                            }
-                                                          });
-                                                          return fn;
-                                                        },
-                                                      );
-                                                      return TextField(
-                                                        focusNode: focusNode,
-                                                        controller: _noteControllers.putIfAbsent(
-                                                          item.id, () => TextEditingController(text: item.note ?? '')),
-                                                        style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: _kNavy),
-                                                        decoration: InputDecoration(
-                                                          isDense: true,
-                                                          hintText: 'Ghi chú cho nhà bếp (vd: ít rau, không hành...)',
-                                                          hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
-                                                          prefixIcon: Icon(Icons.edit_note_rounded, size: 18, color: _kNavy.withValues(alpha: 0.4)),
-                                                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                                          border: InputBorder.none,
-                                                          focusedBorder: OutlineInputBorder(
-                                                            borderRadius: BorderRadius.circular(10),
-                                                            borderSide: const BorderSide(color: _kNavy, width: 1.2),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }
+                                                  child: _ItemNoteInput(
+                                                    item: item,
+                                                    focusNode: _noteFocusNodes.putIfAbsent(
+                                                      item.id,
+                                                      () {
+                                                        final fn = FocusNode();
+                                                        fn.addListener(() {
+                                                          if (!fn.hasFocus) {
+                                                            final currentText = _noteControllers[item.id]?.text ?? '';
+                                                            _updateItemNote(item, currentText);
+                                                          }
+                                                        });
+                                                        return fn;
+                                                      },
+                                                    ),
+                                                    controller: _noteControllers.putIfAbsent(
+                                                      item.id, () => TextEditingController(text: item.note ?? '')),
                                                   ),
                                                 ),
                                                 Padding(
@@ -8622,6 +8605,44 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ItemNoteInput extends StatefulWidget {
+  final BanSessionItemModel item;
+  final TextEditingController controller;
+  final FocusNode focusNode;
+
+  const _ItemNoteInput({
+    required this.item,
+    required this.controller,
+    required this.focusNode,
+  });
+
+  @override
+  State<_ItemNoteInput> createState() => _ItemNoteInputState();
+}
+
+class _ItemNoteInputState extends State<_ItemNoteInput> {
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      focusNode: widget.focusNode,
+      controller: widget.controller,
+      style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: _kNavy),
+      decoration: InputDecoration(
+        isDense: true,
+        hintText: 'Ghi chú cho nhà bếp (vd: ít rau, không hành...)',
+        hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
+        prefixIcon: Icon(Icons.edit_note_rounded, size: 18, color: _kNavy.withValues(alpha: 0.4)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        border: InputBorder.none,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _kNavy, width: 1.2),
         ),
       ),
     );
