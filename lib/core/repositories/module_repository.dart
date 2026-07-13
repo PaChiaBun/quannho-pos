@@ -247,6 +247,30 @@ class AppSettingsRepository {
   Future<bool>    get receiptEnabled => getBool('receipt_enabled');
   Future<double>  get taxRate        => getDouble('tax_rate');
   Future<double>  get loyaltyRate    => getDouble('loyalty_rate', defaultValue: 10000);
+
+  // Cấu hình định vị chấm công
+  Future<double?> get attendanceLat async {
+    final val = await get('attendance_latitude');
+    return val != null ? double.tryParse(val) : null;
+  }
+  Future<double?> get attendanceLng async {
+    final val = await get('attendance_longitude');
+    return val != null ? double.tryParse(val) : null;
+  }
+  Future<String?> get attendanceAddress => get('attendance_address');
+  Future<double>  get attendanceRadius  => getDouble('attendance_radius', defaultValue: 200.0);
+
+  Future<void> saveAttendanceConfig({
+    required double lat,
+    required double lng,
+    required String address,
+    required double radius,
+  }) async {
+    await set('attendance_latitude', lat.toString());
+    await set('attendance_longitude', lng.toString());
+    await set('attendance_address', address);
+    await set('attendance_radius', radius.toString());
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

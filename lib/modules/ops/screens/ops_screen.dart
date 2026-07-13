@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/services/staff_service.dart';
 import '../../../core/providers/session_provider.dart';
 import '../../../core/utils/responsive.dart';
 import 'ops_staff_screen.dart';
@@ -21,7 +22,8 @@ class _OpsScreenInner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session   = ref.watch(sessionProvider);
-    final isManager = session?.isOwner == true || session?.role == 'owner' || session?.role == 'manager';
+    final canonical = StaffService.canonicalRole(session?.role ?? '');
+    final isManager = session?.isOwner == true || canonical == 'owner' || canonical == 'manager';
 
     if (!isManager) {
       // Staff: single tab Nhiệm Vụ

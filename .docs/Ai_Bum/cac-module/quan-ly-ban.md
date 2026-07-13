@@ -13,7 +13,7 @@ Quản lý sơ đồ bàn trực quan — biết bàn nào trống, bàn nào c�
 - Trạng thái bàn: Trống / Có khách
 - Mở đơn → gọi món → gửi bếp → tính tiền — tất cả trong 1 luồng
 - Chuyển bàn (kéo toàn bộ đơn sang bàn khác)
-- Thêm/sửa/xóa bàn và khu vực (chủ quán)
+- Thêm/sửa/xóa bàn và khu vực (Chủ quán/Quản lý hoặc nhân viên được phân quyền qua `'ban.manage_structure'`)
 
 ## Luồng Gọi Món & Gửi Bếp
 ```
@@ -55,7 +55,9 @@ Chủ quán có thể xem lại để kiểm soát gian lận.
 - **→ Kho CN:** Bán món → tự trừ nguyên liệu theo công thức
 
 ## Câu Hỏi Thường Gặp
-- *"Thêm bàn mới?"* → Bàn → nhấn "+" góc phải dưới → đặt tên, chọn khu vực, số ghế
+- *"Thêm bàn mới / Thêm khu vực mới?"* → Cần có vai trò **Chủ quán / Quản lý** hoặc nhân viên có quyền `'ban.manage_structure'` (được phân quyền động). Vào tab Bàn → nhấn "+" ở góc dưới bên phải.
+- *"Thanh toán hoá đơn bàn?"* → Cần có vai trò **Chủ quán / Quản lý** hoặc nhân viên được phân quyền `'pos.checkout'` (ví dụ: Thu ngân). Phục vụ thông thường không được phép thanh toán trừ khi được cấp quyền này.
+- *"Truy vết ai gọi món?"* → Tên nhân viên gọi món được tự động lưu vào hệ thống (`added_by`) và hiển thị trên Sơ đồ bàn, Sidebar chi tiết, hóa đơn tạm tính và góc trên cùng của phiếu bếp để dễ dàng kiểm tra.
 - *"Chuyển khách sang bàn khác?"* → Giữ lâu vào thẻ bàn → Chuyển bàn → chọn bàn đích
 - *"Gọi thêm món cho bàn đang có khách?"* → Mở bàn → thêm món → gửi bếp lần 2 (đợt 2)
 - *"Huỷ món đã gửi bếp?"* → Nhấn 🗑️ vào món → chọn lý do → xác nhận → nhớ báo bếp qua bộ đàm

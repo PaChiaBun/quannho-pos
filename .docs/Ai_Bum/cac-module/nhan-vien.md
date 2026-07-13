@@ -59,18 +59,29 @@ Nhấn **"+ Thêm ca"** → form mở ra với:
 ## Ví Dụ Vai Trò
 | Vai trò | Module được cấp |
 |---------|----------------|
-| Nhân viên bàn | Bán hàng, Bàn, Bếp |
-| Thu ngân | Bán hàng, Thu Chi |
-| Quản kho | Kho, Bán hàng |
-| Quản lý | Hầu hết module |
+| Phục vụ / Nhân viên bàn | Bàn, Bếp, Chấm công, Vận hành |
+| Thu ngân | Bán hàng, Bàn, Báo cáo, Bếp, Thu chi |
+| Quản kho | Kho hàng |
+| Quản lý | Hầu hết module (Tự động kế thừa toàn bộ quyền hành động giống Chủ Quán) |
+
+---
+
+## Phân Quyền Hành Động Nhạy Cảm (Action-Level)
+Bên cạnh quyền truy cập Module, Chủ quán có thể bật/tắt các hành động nhạy cảm trong mục **Hành động nhạy cảm**:
+- **POS**: Hủy đơn hàng, Áp dụng giảm giá, Sửa giá bán, Xem lịch sử đơn, **Thanh toán hoá đơn** (`pos.checkout`).
+- **Quản lý bàn**: **Thêm/Sửa bàn & khu vực** (`ban.manage_structure`).
+- **Kho**: Sửa số lượng tồn, Xóa sản phẩm kho.
+- **Thu Chi**: Xem toàn bộ thu chi.
+- **Báo Cáo**: Xem báo cáo doanh thu.
 
 ---
 
 ## Câu Hỏi Thường Gặp
-- *"Thêm nhân viên mới?"* → Nhân Viên → "+" → nhập SĐT, chọn vai trò, đặt PIN
-- *"Thay đổi quyền có hiệu lực ngay không?"* → Có, realtime — nhân viên không cần đăng xuất
-- *"Nhân viên quên PIN?"* → Chủ quán vào hồ sơ → Đặt lại PIN
-- *"Thêm vai trò mới?"* → Nhân Viên → tab Phân quyền → Vai trò → "+"
-- *"Tạo ca làm việc?"* → Nhân Viên → tab Phân quyền → Ca làm việc → "+ Thêm ca"
-- *"Gán nhân viên vào ca?"* → Ca làm việc → card Ca → nhấn "Nhân viên ∨" → "+ Thêm"
-- *"1 nhân viên có thể làm nhiều ca không?"* → Không — mỗi nhân viên chỉ có 1 ca chính trong `store_members.shift_config_id`
+- *"Thêm nhân viên mới?"* → Nhân Viên → "+" → nhập SĐT, chọn vai trò, đặt PIN.
+- *"Thay đổi quyền có hiệu lực ngay không?"* → Có, realtime — nhân viên không cần đăng xuất.
+- *"Nhân viên quên PIN / Cần đổi mã PIN duyệt nhanh?"* → Đối với nhân viên, Chủ quán vào hồ sơ đặt lại PIN. Đối với Chủ Quán/Quản Lý, có thể vào **Cài đặt -> Mã PIN duyệt nhanh** để tự thiết lập hoặc cập nhật mã PIN 4 chữ số của riêng mình.
+- *"Vai trò Quản Lý có quyền hạn thế nào?"* → Quản Lý tự động kế thừa toàn quyền như Chủ Quán, được quyền thiết lập mã PIN riêng và phê duyệt các yêu cầu từ nhân viên cấp dưới (Phục vụ/Thu ngân). Quản lý chỉ bị giới hạn không được sửa tài khoản Chủ Quán và không được nâng/gán vai trò Chủ Quán.
+- *"Thêm vai trò mới?"* → Nhân Viên → tab Phân quyền → Vai trò → "+".
+- *"Tạo ca làm việc?"* → Nhân Viên → tab Phân quyền → Ca làm việc → "+ Thêm ca".
+- *"Gán nhân viên vào ca?"* → Ca làm việc → card Ca → nhấn "Nhân viên ∨" → "+ Thêm".
+- *"1 nhân viên có thể làm nhiều ca không?"* → Không — mỗi nhân viên chỉ có 1 ca chính trong `store_members.shift_config_id`.

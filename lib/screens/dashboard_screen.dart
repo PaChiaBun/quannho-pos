@@ -169,6 +169,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final lowStockAsync = ref.watch(lowStockKhoProvider);
     final todayStats    = ref.watch(todayStatsProvider);
     final session       = ref.watch(sessionProvider); // Watch để rebuild khi session update
+    ref.watch(openShiftCCProvider); // Watch để luôn có data ca làm việc của nhân viên
 
     // Lấy quyền thực tế từ Supabase (không dùng kDefaultPerms hardcode)
     final staffPermsAsync = (session != null && !session.isOwner && session.hasStore)
@@ -1800,6 +1801,69 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   void _navigateTo(String? route) {
     if (route == null) return;
+
+    // ── CLOCK-IN GUARD CHO NHÂN VIÊN ──
+    final session = ref.read(sessionProvider);
+    final isStaff = session != null &&
+        !(session.isOwner) &&
+        session.role != 'owner' &&
+        session.role != 'manager' &&
+        session.role.toLowerCase() != 'quản lý';
+
+    if (isStaff && route != '/chamcong') {
+      final openShiftAsync = ref.read(openShiftCCProvider);
+      if (openShiftAsync.isLoading) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đang kiểm tra ca làm việc, vui lòng thử lại sau giây lát...'),
+              duration: Duration(milliseconds: 1500),
+            ),
+          );
+        }
+        return;
+      }
+      final hasActiveShift = openShiftAsync.asData?.value != null;
+      if (!hasActiveShift) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(children: [
+              Icon(Icons.lock_clock_rounded, color: _kOrange, size: 24),
+              SizedBox(width: 8),
+              Text('Yêu cầu chấm công', style: TextStyle(fontWeight: FontWeight.w800, color: _kNavy)),
+            ]),
+            content: const Text(
+              'Tính năng này tạm khóa vì bạn chưa vào ca làm việc.\n\n'
+              'Vui lòng thực hiện chấm công để mở khóa các module của quán.'
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Đóng', style: TextStyle(color: _kMuted)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kNavy,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _navigateTo('/chamcong');
+                },
+                child: const Text('Đi chấm công'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+    }
     // bill_printer → push screen riêng (không dùng tab index)
     if (route == '/bill_printer') {
       Navigator.push(context, _smoothRoute(const _BillPrinterHubWrapper()));

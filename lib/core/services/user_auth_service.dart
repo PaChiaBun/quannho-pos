@@ -526,7 +526,9 @@ class UserAuthService {
         final user = m['user_accounts'] as Map<String, dynamic>?;
         if (user == null) continue;
 
-        if (role == 'owner' || role == 'manager' || isOwner) {
+        final rLower = role.toLowerCase().trim();
+        final isCanonicalManager = rLower.contains('owner') || rLower.contains('chủ') || rLower.contains('manager') || rLower.contains('quản lý');
+        if (isCanonicalManager || isOwner) {
           final phone = user['phone'] as String? ?? '';
           final storedHash = user['quick_pin'] as String?;
           if (storedHash == null || storedHash.isEmpty) continue;

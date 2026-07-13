@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../core/providers/app_providers.dart';
 import '../core/providers/dashboard_providers.dart';
@@ -20,6 +21,7 @@ import '../modules/finance/providers/finance_providers.dart';
 import '../modules/finance/repository/finance_repository.dart';
 import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import '../modules/bill_printer/screens/bill_preview_screen.dart';
+import '../core/repositories/module_repository.dart';
 
 // ─── Design Tokens (nhất quán với toàn app) ───────────────────────────────────
 const _kNavy   = Color(0xFF1C2151);  // Đồng bộ với toàn app
@@ -92,7 +94,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
   late TabController _tab;
 
   @override
-  void initState() { super.initState(); _tab = TabController(length: 5, vsync: this); }
+  void initState() { super.initState(); _tab = TabController(length: 7, vsync: this); }
   @override
   void dispose() { _tab.dispose(); super.dispose(); }
 
@@ -105,7 +107,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
     final mainContent = Column(children: [
       _buildHeader(todayStats, todayFin, monthRev),
       Expanded(child: TabBarView(controller: _tab, children: const [
-        _RevenueTab(), _ProductTab(), _FinanceTab(), _KhoTab(), _VoidAuditTab(),
+        _RevenueTab(), _ProductTab(), _FinanceTab(), _KhoTab(), _VoidAuditTab(), _StaffAttendanceTab(), _VoucherTab(),
       ])),
     ]);
 
@@ -222,6 +224,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
             Tab(text: 'Tài chính'),
             Tab(text: 'Kho'),
             Tab(text: 'Huỷ/Duyệt'),
+            Tab(text: 'Nhân viên'),
+            Tab(text: 'Voucher'),
           ]),
       ])),
     );
@@ -3062,4 +3066,935 @@ class _VoidAuditTabState extends ConsumerState<_VoidAuditTab> {
       ],
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB BÁO CÁO NHÂN VIÊN (CLOCK-IN REPORT)
+// ─────────────────────────────────────────────────────────────────────────────
+class _StaffAttendanceTab extends ConsumerStatefulWidget {
+  const _StaffAttendanceTab();
+  @override
+  ConsumerState<_StaffAttendanceTab> createState() => _StaffAttendanceTabState();
+}
+
+class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
+  ReportPeriod _period = ReportPeriod.month;
+  DateTime _weekStart = _mondayOf(DateTime.now());
+  int _navYear = DateTime.now().year;
+  int _navMonth = DateTime.now().month;
+
+  bool _loading = true;
+  String? _error;
+
+  int _totalShifts = 0;
+  double _totalHours = 0;
+  int _totalLate = 0;
+  int _totalMismatch = 0;
+
+  List<_StaffReportRow> _staffRows = [];
+
+  static DateTime _mondayOf(DateTime d) {
+    final m = d.subtract(Duration(days: d.weekday - 1));
+    return DateTime(m.year, m.month, m.day);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final info = await StoreAuthService.getStoreInfo();
+      final storeId = info['store_id'];
+      if (storeId == null) {
+        if (mounted) setState(() => _loading = false);
+        return;
+      }
+
+      final db = Supabase.instance.client;
+      
+      // 1. Lấy toạ độ quán chuẩn
+      final repo = AppSettingsRepository();
+      final double? storeLat = await repo.attendanceLat;
+      final double? storeLng = await repo.attendanceLng;
+      final double storeRadius = await repo.attendanceRadius;
+
+      // 2. Lấy danh sách nhân viên
+      final membersRes = await db
+          .from('store_members')
+          .select('user_id, role, user_accounts(display_name)')
+          .eq('store_id', storeId);
+
+      final Map<String, _StaffInfo> memberMap = {};
+      for (final m in (membersRes as List)) {
+        final userId = m['user_id'] as String;
+        final role = m['role'] as String? ?? 'cashier';
+        final userAcc = m['user_accounts'] as Map<String, dynamic>?;
+        final name = userAcc?['display_name'] as String? ?? 'Nhân viên';
+        memberMap[userId] = _StaffInfo(name: name, role: role);
+      }
+
+      // 3. Lấy danh sách ca làm việc trong khoảng thời gian lọc
+      final (from, to) = _period.rangeFor(
+        weekStart: _weekStart,
+        navYear: _navYear,
+        navMonth: _navMonth,
+      );
+      final start = DateTime.fromMillisecondsSinceEpoch(from).toIso8601String();
+      final end = DateTime.fromMillisecondsSinceEpoch(to).toIso8601String();
+
+      final shiftsRes = await db
+          .from('staff_shifts')
+          .select()
+          .eq('store_id', storeId)
+          .gte('clock_in', start)
+          .lt('clock_in', end);
+
+      // Reset statistics
+      _totalShifts = 0;
+      _totalHours = 0;
+      _totalLate = 0;
+      _totalMismatch = 0;
+
+      final Map<String, _StaffStatsAccumulator> accumulators = {};
+
+      for (final s in (shiftsRes as List)) {
+        final userId = s['user_id'] as String;
+        final clockInStr = s['clock_in'] as String;
+        final clockOutStr = s['clock_out'] as String?;
+        final isLate = s['is_late'] as bool? ?? false;
+        final double? lat = s['latitude'] != null ? (s['latitude'] as num).toDouble() : null;
+        final double? lng = s['longitude'] != null ? (s['longitude'] as num).toDouble() : null;
+
+        final clockIn = DateTime.parse(clockInStr).toLocal();
+        final clockOut = clockOutStr != null ? DateTime.parse(clockOutStr).toLocal() : DateTime.now();
+        final double hours = clockOut.difference(clockIn).inMinutes / 60.0;
+
+        _totalShifts++;
+        _totalHours += hours;
+        if (isLate) _totalLate++;
+
+        bool isLocationMismatch = false;
+        bool isNoGps = false;
+
+        if (lat == null || lng == null) {
+          isNoGps = true;
+        } else if (storeLat != null && storeLng != null) {
+          final distance = Geolocator.distanceBetween(lat, lng, storeLat, storeLng);
+          if (distance > storeRadius) {
+            isLocationMismatch = true;
+            _totalMismatch++;
+          }
+        }
+
+        final acc = accumulators.putIfAbsent(userId, () => _StaffStatsAccumulator());
+        acc.shiftsCount++;
+        acc.hoursCount += hours;
+        if (isLate) acc.lateCount++;
+        if (isLocationMismatch) acc.mismatchCount++;
+        if (isNoGps) acc.noGpsCount++;
+      }
+
+      // Convert accumulators to rows
+      final List<_StaffReportRow> rows = [];
+      accumulators.forEach((userId, acc) {
+        final info = memberMap[userId] ?? _StaffInfo(name: 'Ẩn danh ($userId)', role: 'staff');
+        rows.add(_StaffReportRow(
+          name: info.name,
+          role: info.role,
+          shifts: acc.shiftsCount,
+          hours: acc.hoursCount,
+          lateCount: acc.lateCount,
+          mismatchCount: acc.mismatchCount,
+          noGpsCount: acc.noGpsCount,
+        ));
+      });
+
+      // Sắp xếp theo tổng số giờ làm giảm dần
+      rows.sort((a, b) => b.hours.compareTo(a.hours));
+
+      if (mounted) {
+        setState(() {
+          _staffRows = rows;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _pickWeek(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: _weekStart,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn tuần muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _weekStart = _mondayOf(picked));
+      _load();
+    }
+  }
+
+  Future<void> _pickMonth(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: DateTime(_navYear, _navMonth),
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn tháng muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _navYear = picked.year;
+        _navMonth = picked.month;
+      });
+      _load();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator(color: _kNavy));
+    }
+    if (_error != null) {
+      return Center(child: Text('Lỗi: $_error', style: const TextStyle(color: _kRed)));
+    }
+
+    return Column(
+      children: [
+        _buildPeriodSelector(),
+        _buildSummaryCards(),
+        Expanded(child: _buildStaffList()),
+      ],
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    final now = DateTime.now();
+    final isThisMonth = _navYear == now.year && _navMonth == now.month;
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          ...ReportPeriod.values.map((p) {
+            final isSel = _period == p;
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: ChoiceChip(
+                label: Text(
+                  p.label,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                    color: isSel ? Colors.white : _kNavy.withValues(alpha: 0.8),
+                  ),
+                ),
+                selected: isSel,
+                onSelected: (val) {
+                  if (val) {
+                    setState(() => _period = p);
+                    _load();
+                  }
+                },
+                selectedColor: _kNavy,
+                backgroundColor: const Color(0xFFF5F7FF),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                side: BorderSide.none,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              ),
+            );
+          }),
+          const Spacer(),
+          if (_period == ReportPeriod.week)
+            TextButton.icon(
+              onPressed: () => _pickWeek(context),
+              icon: const Icon(Icons.date_range_rounded, size: 16, color: _kOrange),
+              label: Text('T${DateFormat('dd/MM').format(_weekStart)}', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
+            ),
+          if (_period == ReportPeriod.month)
+            TextButton.icon(
+              onPressed: () => _pickMonth(context),
+              icon: const Icon(Icons.calendar_month_rounded, size: 16, color: _kOrange),
+              label: Text(isThisMonth ? 'Tháng này' : 'T$_navMonth/$_navYear', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCards() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 4,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 1.1,
+        children: [
+          _buildStatCard('Ca làm', '$_totalShifts ca', Icons.work_history_rounded, _kNavy),
+          _buildStatCard('Giờ công', '${_totalHours.toStringAsFixed(1)}h', Icons.timer_rounded, _kNavyL),
+          _buildStatCard('Đi trễ', '$_totalLate lần', Icons.schedule_rounded, _kOrange),
+          _buildStatCard('Lệch vị trí', '$_totalMismatch ca', Icons.wrong_location_rounded, _kRed),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE8E2DA)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const Spacer(),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w900, color: color)),
+          const SizedBox(height: 2),
+          Text(label, style: GoogleFonts.outfit(fontSize: 9, color: _kMuted, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaffList() {
+    if (_staffRows.isEmpty) {
+      return Center(
+        child: Text('Không có dữ liệu chấm công trong kỳ.', style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _staffRows.length,
+      itemBuilder: (context, idx) {
+        final row = _staffRows[idx];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE8E2DA)),
+          ),
+          child: Row(
+            children: [
+              // Avatar Circle
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: _kNavy.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    row.name.isNotEmpty ? row.name.characters.first.toUpperCase() : 'N',
+                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Name & Role
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(row.name, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800, color: _kInk)),
+                    const SizedBox(height: 3),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAF7F2),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFE8E2DA)),
+                      ),
+                      child: Text(
+                        _translateRole(row.role),
+                        style: GoogleFonts.outfit(fontSize: 9, color: _kMuted, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Shifts & Hours Summary
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('${row.shifts} ca làm', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: _kInk)),
+                  const SizedBox(height: 2),
+                  Text('${row.hours.toStringAsFixed(1)} giờ', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w900, color: _kNavyL)),
+                ],
+              ),
+              const SizedBox(width: 12),
+              // Badges for exceptions
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (row.lateCount > 0)
+                    _buildExceptionBadge('🕒 ${row.lateCount} trễ', const Color(0xFFEA580C)),
+                  if (row.mismatchCount > 0)
+                    _buildExceptionBadge('⚠️ ${row.mismatchCount} ca lệch', _kRed),
+                  if (row.noGpsCount > 0)
+                    _buildExceptionBadge('📍 ${row.noGpsCount} ko GPS', _kMuted),
+                  if (row.lateCount == 0 && row.mismatchCount == 0 && row.noGpsCount == 0)
+                    _buildExceptionBadge('✓ Đầy đủ', _kGreen),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildExceptionBadge(String text, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.outfit(fontSize: 9, color: color, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  String _translateRole(String role) {
+    switch (role.toLowerCase()) {
+      case 'owner': return 'Chủ quán';
+      case 'manager': return 'Quản lý';
+      case 'cashier': return 'Thu ngân';
+      case 'waiter': return 'Phục vụ';
+      case 'kitchen': return 'Bếp';
+      default: return role;
+    }
+  }
+}
+
+class _StaffInfo {
+  final String name;
+  final String role;
+  _StaffInfo({required this.name, required this.role});
+}
+
+class _StaffStatsAccumulator {
+  int shiftsCount = 0;
+  double hoursCount = 0.0;
+  int lateCount = 0;
+  int mismatchCount = 0;
+  int noGpsCount = 0;
+}
+
+class _StaffReportRow {
+  final String name;
+  final String role;
+  final int shifts;
+  final double hours;
+  final int lateCount;
+  final int mismatchCount;
+  final int noGpsCount;
+
+  _StaffReportRow({
+    required this.name,
+    required this.role,
+    required this.shifts,
+    required this.hours,
+    required this.lateCount,
+    required this.mismatchCount,
+    required this.noGpsCount,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB BÁO CÁO VOUCHER (VOUCHER REPORT)
+// ─────────────────────────────────────────────────────────────────────────────
+class _VoucherTab extends ConsumerStatefulWidget {
+  const _VoucherTab();
+  @override
+  ConsumerState<_VoucherTab> createState() => _VoucherTabState();
+}
+
+class _VoucherTabState extends ConsumerState<_VoucherTab> {
+  ReportPeriod _period = ReportPeriod.month;
+  DateTime _weekStart = _mondayOf(DateTime.now());
+  int _navYear = DateTime.now().year;
+  int _navMonth = DateTime.now().month;
+
+  bool _loading = true;
+  String? _error;
+
+  int _totalOrders = 0;
+  double _totalDiscount = 0;
+
+  List<_VoucherGroup> _groups = [];
+
+  static DateTime _mondayOf(DateTime d) {
+    final m = d.subtract(Duration(days: d.weekday - 1));
+    return DateTime(m.year, m.month, m.day);
+  }
+
+  String _fmtVnd(double v) => '${NumberFormat('#,###', 'vi_VN').format(v)} đ';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final info = await StoreAuthService.getStoreInfo();
+      final storeId = info['store_id'];
+      if (storeId == null) {
+        if (mounted) setState(() => _loading = false);
+        return;
+      }
+
+      final db = Supabase.instance.client;
+
+      // Lấy danh sách hóa đơn có giảm giá trong khoảng thời gian lọc
+      final (from, to) = _period.rangeFor(
+        weekStart: _weekStart,
+        navYear: _navYear,
+        navMonth: _navMonth,
+      );
+      final start = DateTime.fromMillisecondsSinceEpoch(from).toIso8601String();
+      final end = DateTime.fromMillisecondsSinceEpoch(to).toIso8601String();
+
+      // Query các hóa đơn có discount > 0 và có note
+      final ordersRes = await db
+          .from('orders')
+          .select('id, order_number, discount, note, created_at, staff_members(name)')
+          .eq('store_id', storeId)
+          .gte('created_at', start)
+          .lt('created_at', end)
+          .gt('discount', 0)
+          .not('note', 'is', null);
+
+      _totalOrders = 0;
+      _totalDiscount = 0;
+      final Map<String, List<_VoucherUseRow>> tempGroups = {};
+
+      for (final o in (ordersRes as List)) {
+        final note = o['note'] as String? ?? '';
+        // Kiểm tra xem note có chứa tag [Voucher: CODE] không
+        if (!note.contains('[Voucher: ')) continue;
+
+        // Parse code
+        final startIndex = note.indexOf('[Voucher: ') + '[Voucher: '.length;
+        final endIndex = note.indexOf(']', startIndex);
+        if (endIndex == -1) continue;
+        final code = note.substring(startIndex, endIndex).trim().toUpperCase();
+
+        final orderNumber = o['order_number'] as String? ?? o['id'].toString().substring(0, 8);
+        final double discount = (o['discount'] as num?)?.toDouble() ?? 0;
+        final createdAt = DateTime.parse(o['created_at'] as String).toLocal();
+        final staff = o['staff_members'] as Map<String, dynamic>?;
+        final cashierName = staff?['name'] as String? ?? 'Thu ngân';
+
+        _totalOrders++;
+        _totalDiscount += discount;
+
+        final group = tempGroups.putIfAbsent(code, () => []);
+        group.add(_VoucherUseRow(
+          orderNumber: orderNumber,
+          createdAt: createdAt,
+          discount: discount,
+          cashierName: cashierName,
+        ));
+      }
+
+      final List<_VoucherGroup> groups = [];
+      tempGroups.forEach((code, rows) {
+        // Sắp xếp các đơn dùng voucher mới nhất lên trước
+        rows.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        final double sum = rows.fold(0, (s, r) => s + r.discount);
+        groups.add(_VoucherGroup(
+          code: code,
+          usageCount: rows.length,
+          totalDiscount: sum,
+          rows: rows,
+        ));
+      });
+
+      // Sắp xếp theo tổng tiền giảm dần
+      groups.sort((a, b) => b.totalDiscount.compareTo(a.totalDiscount));
+
+      if (mounted) {
+        setState(() {
+          _groups = groups;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _pickWeek(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: _weekStart,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn tuần muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _weekStart = _mondayOf(picked));
+      _load();
+    }
+  }
+
+  Future<void> _pickMonth(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: DateTime(_navYear, _navMonth),
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn tháng muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _navYear = picked.year;
+        _navMonth = picked.month;
+      });
+      _load();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator(color: _kNavy));
+    }
+    if (_error != null) {
+      return Center(child: Text('Lỗi: $_error', style: const TextStyle(color: _kRed)));
+    }
+
+    return Column(
+      children: [
+        _buildPeriodSelector(),
+        _buildSummaryCards(),
+        Expanded(child: _buildVoucherGroupsList()),
+      ],
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    final now = DateTime.now();
+    final isThisMonth = _navYear == now.year && _navMonth == now.month;
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          ...ReportPeriod.values.map((p) {
+            final isSel = _period == p;
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: ChoiceChip(
+                label: Text(
+                  p.label,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                    color: isSel ? Colors.white : _kNavy.withValues(alpha: 0.8),
+                  ),
+                ),
+                selected: isSel,
+                onSelected: (val) {
+                  if (val) {
+                    setState(() => _period = p);
+                    _load();
+                  }
+                },
+                selectedColor: _kNavy,
+                backgroundColor: const Color(0xFFF5F7FF),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                side: BorderSide.none,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              ),
+            );
+          }),
+          const Spacer(),
+          if (_period == ReportPeriod.week)
+            TextButton.icon(
+              onPressed: () => _pickWeek(context),
+              icon: const Icon(Icons.date_range_rounded, size: 16, color: _kOrange),
+              label: Text('T${DateFormat('dd/MM').format(_weekStart)}', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
+            ),
+          if (_period == ReportPeriod.month)
+            TextButton.icon(
+              onPressed: () => _pickMonth(context),
+              icon: const Icon(Icons.calendar_month_rounded, size: 16, color: _kOrange),
+              label: Text(isThisMonth ? 'Tháng này' : 'T$_navMonth/$_navYear', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCards() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE8E2DA)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.local_offer_rounded, color: _kOrange, size: 24),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Tổng đơn áp mã', style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 2),
+                      Text('$_totalOrders đơn', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kNavy)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE8E2DA)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.monetization_on_rounded, color: _kGreen, size: 24),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Tổng tiền giảm', style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 2),
+                      Text(_fmtVnd(_totalDiscount), style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kGreen)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVoucherGroupsList() {
+    if (_groups.isEmpty) {
+      return Center(
+        child: Text('Không có dữ liệu sử dụng voucher trong kỳ.', style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _groups.length,
+      itemBuilder: (context, idx) {
+        final g = _groups[idx];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          color: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(color: Color(0xFFE8E2DA)),
+          ),
+          child: ExpansionTile(
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _kOrange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    g.code,
+                    style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: _kOrange),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${g.usageCount} lượt dùng',
+                  style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            trailing: Text(
+              _fmtVnd(g.totalDiscount),
+              style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: _kRed),
+            ),
+            childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+            shape: const Border(),
+            children: [
+              const Divider(color: Color(0xFFE8E2DA)),
+              // Header row
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(flex: 3, child: Text('Số đơn', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold))),
+                    Expanded(flex: 3, child: Text('Thời gian', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold))),
+                    Expanded(flex: 3, child: Text('Giảm giá', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), textAlign: TextAlign.right)),
+                    Expanded(flex: 3, child: Text('Nhân viên', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), textAlign: TextAlign.right)),
+                  ],
+                ),
+              ),
+              const Divider(color: Color(0xFFE8E2DA)),
+              ...g.rows.map((row) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            row.orderNumber,
+                            style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kInk),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            DateFormat('dd/MM HH:mm').format(row.createdAt),
+                            style: GoogleFonts.outfit(fontSize: 11, color: _kMuted),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            _fmtVnd(row.discount),
+                            style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kRed),
+                            textAlign: TextAlign.right,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            row.cashierName,
+                            style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: _kNavyL),
+                            textAlign: TextAlign.right,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _VoucherGroup {
+  final String code;
+  final int usageCount;
+  final double totalDiscount;
+  final List<_VoucherUseRow> rows;
+
+  _VoucherGroup({
+    required this.code,
+    required this.usageCount,
+    required this.totalDiscount,
+    required this.rows,
+  });
+}
+
+class _VoucherUseRow {
+  final String orderNumber;
+  final DateTime createdAt;
+  final double discount;
+  final String cashierName;
+
+  _VoucherUseRow({
+    required this.orderNumber,
+    required this.createdAt,
+    required this.discount,
+    required this.cashierName,
+  });
 }

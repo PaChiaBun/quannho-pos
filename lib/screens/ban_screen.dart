@@ -19,6 +19,7 @@ import '../core/providers/app_providers.dart';
 import '../core/providers/dashboard_providers.dart'; // invalidate sau checkout
 import '../modules/finance/providers/finance_providers.dart'; // invalidate financeStats sau checkout
 import '../core/providers/session_provider.dart';
+import '../core/providers/permission_provider.dart';
 import '../core/repositories/ban_repository.dart';
 import '../core/repositories/core_product_repository.dart';
 import '../modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart';
@@ -26,6 +27,7 @@ import '../modules/kho_chuyen_nghiep/providers/kho_chuyen_nghiep_providers.dart'
     show khoProRepositoryProvider;
 import '../core/repositories/kitchen_repository.dart';
 import '../core/services/store_auth_service.dart';
+import '../core/services/staff_service.dart';
 import '../core/services/user_auth_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/services/thermal_printer_service.dart';
@@ -236,6 +238,21 @@ class _BanScreenState extends ConsumerState<BanScreen> {
 
   // ── Zone ──
   Future<void> _addZone() async {
+    final perms = ref.read(userActionPermsProvider).value;
+    final hasPerm = perms?.contains('ban.manage_structure') ?? false;
+    if (!hasPerm) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Bạn không có quyền "Thêm khu vực".',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: _kRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -269,6 +286,21 @@ class _BanScreenState extends ConsumerState<BanScreen> {
   }
 
   Future<void> _editZone(BanZoneModel zone) async {
+    final perms = ref.read(userActionPermsProvider).value;
+    final hasPerm = perms?.contains('ban.manage_structure') ?? false;
+    if (!hasPerm) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Bạn không có quyền "Sửa khu vực".',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: _kRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -285,6 +317,21 @@ class _BanScreenState extends ConsumerState<BanScreen> {
   }
 
   Future<void> _addTable(String? defaultZoneId) async {
+    final perms = ref.read(userActionPermsProvider).value;
+    final hasPerm = perms?.contains('ban.manage_structure') ?? false;
+    if (!hasPerm) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Bạn không có quyền "Thêm bàn".',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: _kRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     var zones = await _banRepo.getZones();
     if (zones.isEmpty) {
       await _addZone();
@@ -397,6 +444,21 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         session: session,
         onEdit: () async {
           Navigator.pop(context);
+          final perms = ref.read(userActionPermsProvider).value;
+          final hasPerm = perms?.contains('ban.manage_structure') ?? false;
+          if (!hasPerm) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Bạn không có quyền "Sửa/Xóa bàn".',
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                ),
+                backgroundColor: _kRed,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            return;
+          }
           final zones = await _banRepo.getZones();
           if (!mounted) return;
           final result = await showModalBottomSheet<Map<String, dynamic>>(
@@ -1043,6 +1105,8 @@ class _ActiveTableRow extends ConsumerWidget {
     final itemsAsync = ref.watch(sessionItemsProvider(session.id));
     final activeItems = itemsAsync.value?.where((i) => i.kitchenStatus != 'huy') ?? [];
     final total = activeItems.fold<double>(0, (s, item) => s + item.subtotal);
+    final totalQty = activeItems.fold<double>(0, (sum, item) => sum + item.quantity).toInt();
+    final waiters = activeItems.map((i) => i.addedBy).where((name) => name != null && name.isNotEmpty).toSet().join(', ');
 
     final elapsed = DateTime.now()
         .difference(DateTime.fromMillisecondsSinceEpoch(session.openedAt));
@@ -1103,43 +1167,61 @@ class _ActiveTableRow extends ConsumerWidget {
               ),
             ),
           ]),
-          // Hàng 2: Zone + số khách + số tiền
+          // Hàng 2: Zone + số khách + số món + số tiền
           Padding(
             padding: const EdgeInsets.only(left: 16, top: 2),
-            child: Row(children: [
-              Flexible(
-                child: Text(
-                  zone.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    color: const Color(0xFF9E9085),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Flexible(
+                    child: Text(
+                      zone.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        color: const Color(0xFF9E9085),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              // Số khách
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE3F2FD),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '${session.guestCount} khách',
-                  style: GoogleFonts.outfit(
-                    fontSize: 10, fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1565C0)),
-                ),
-              ),
-              const SizedBox(width: 4),
-              const Spacer(),
-              if (total > 0)
-                Text(fmtVnd(total),
-                  style: GoogleFonts.outfit(
-                    fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy)),
-            ]),
+                  const SizedBox(width: 6),
+                  // Số khách
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '${session.guestCount} khách • $totalQty món',
+                      style: GoogleFonts.outfit(
+                        fontSize: 10, fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1565C0)),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Spacer(),
+                  if (total > 0)
+                    Text(fmtVnd(total),
+                      style: GoogleFonts.outfit(
+                        fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy)),
+                ]),
+                if (waiters.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'NV: $waiters',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.outfit(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF9E9085),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
           const Padding(
             padding: EdgeInsets.only(top: 8),
@@ -1412,6 +1494,8 @@ class _TableCard extends ConsumerWidget {
 
     final activeItems = itemsAsync?.value?.where((i) => i.kitchenStatus != 'huy') ?? [];
     final totalAmount = activeItems.fold<double>(0, (sum, item) => sum + item.subtotal);
+    final totalQty = activeItems.fold<double>(0, (sum, item) => sum + item.quantity).toInt();
+    final waiters = activeItems.map((i) => i.addedBy).where((name) => name != null && name.isNotEmpty).toSet().join(', ');
 
     // Kích thước động theo cardSize
     final double paddingVal = cardSize == 'nho' ? 8.0 : cardSize == 'vua' ? 11.0 : 14.0;
@@ -1496,15 +1580,28 @@ class _TableCard extends ConsumerWidget {
                     ),
                   ),
                   SizedBox(height: cardSize == 'nho' ? 0 : 2),
-                  if (isOccupied) ...[
+                   if (isOccupied) ...[
                     Text(
-                      '${session!.guestCount} khách',
+                      '${session!.guestCount} khách • $totalQty món',
                       style: GoogleFonts.outfit(
                         fontSize: infoFontSize,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.85),
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.9),
                       ),
                     ),
+                    if (waiters.isNotEmpty && cardSize != 'nho') ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        'NV: $waiters',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(
+                          fontSize: infoFontSize - 1.5,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white.withValues(alpha: 0.75),
+                        ),
+                      ),
+                    ],
                   ] else
                     Text(
                       '${table.seats} chỗ',
@@ -2389,6 +2486,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     String? customerId,
     int ptsUsed = 0,
     double discount = 0,
+    String? couponCode,
   }) async {
     final banRepoCached = ref.read(banRepositoryProvider);
     final khoProRepoCached = ref.read(khoProRepositoryProvider);
@@ -2494,6 +2592,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         'loyalty_pts_earned': ptsEarned,
         'loyalty_pts_used':   ptsUsed.toDouble(),
         'created_at': now,
+        'note': couponCode != null ? '[Voucher: $couponCode]' : null,
         if (cashierRecordId != null) 'staff_id': cashierRecordId,
         if (widget.session.waiterId != null) 'waiter_id': widget.session.waiterId,
       });
@@ -2856,6 +2955,21 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
   Future<void> _openCheckout(double total, List<BanSessionItemModel> items) async {
     if (_isCheckingOut) return; // guard double-tap
+    final perms = ref.read(userActionPermsProvider).value;
+    final hasPerm = perms?.contains('pos.checkout') ?? false;
+    if (!hasPerm) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Bạn không có quyền "Thanh toán".',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: _kRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     final result = await showModalBottomSheet<Map<String, dynamic?>>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -2876,6 +2990,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       final ptsUsed    = (result['ptsUsed']   as int?)   ?? 0;
       final discount   = ((result['discount'] as num?)   ?? 0).toDouble();
       final finalTotal = (total - discount).clamp(0.0, double.infinity) as double;
+      final couponCode = result['couponCode'] as String?;
       await _checkout(
         finalTotal,
         payMethod,
@@ -2883,6 +2998,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         customerId: customerId,
         ptsUsed: ptsUsed,
         discount: discount,
+        couponCode: couponCode,
       );
     } finally {
       _isCheckingOut = false;
@@ -3163,8 +3279,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
   Future<Map<String, String>?> _verifyManagerApproval() async {
     final session = ref.read(sessionProvider);
+    final canonical = StaffService.canonicalRole(session?.role ?? '');
     final isManager = session?.isOwner == true ||
-        session?.role == 'owner' || session?.role == 'manager';
+        canonical == 'owner' || canonical == 'manager';
 
     if (isManager) {
       return {
@@ -4851,6 +4968,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                         'customerId': _customerId,
                         'ptsUsed':    _usePts,
                         'discount':   (_usePts * _redeemRate) + _couponDiscount,
+                        'couponCode': _appliedCoupon?.code,
                       }),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: zoneColor,
@@ -6665,44 +6783,29 @@ class ModifierManagerSheet extends StatefulWidget {
   State<ModifierManagerSheet> createState() => _ModifierManagerSheetState();
 }
 
-class _ModifierManagerSheetState extends State<ModifierManagerSheet>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabCtrl;
-  // Tab 0: Tùy chọn
+class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
+  // Tùy chọn
   final _nameCtrl  = TextEditingController();
   final _priceCtrl = TextEditingController();
   String _group   = 'Mặc định';
   bool _saving    = false;
   List<Map<String, dynamic>> _modifiers = [];
-  // Tab 1: Topping
-  final _tNameCtrl  = TextEditingController();
-  final _tPriceCtrl = TextEditingController();
-  final _tUnitCtrl  = TextEditingController();
-  String _tGroup    = 'Topping';
-  bool _tSaving     = false;
-  List<Map<String, dynamic>> _catalog    = [];   // tất cả topping của quán
-  List<String>               _linkedIds  = [];   // đang gắn cho món này
   String? _storeId;
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 2, vsync: this);
-    _tUnitCtrl.text = 'phần';
     _loadAll();
   }
 
   @override
   void dispose() {
-    _tabCtrl.dispose();
     _nameCtrl.dispose(); _priceCtrl.dispose();
-    _tNameCtrl.dispose(); _tPriceCtrl.dispose(); _tUnitCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _loadAll() async {
     await _loadModifiers();
-    await _loadToppingData();
   }
 
   Future<void> _loadModifiers() async {
@@ -6711,26 +6814,6 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet>
         .eq('product_id', widget.product.id)
         .order('group_name').order('sort_order');
     if (mounted) setState(() => _modifiers = List<Map<String,dynamic>>.from(resp as List));
-  }
-
-  Future<void> _loadToppingData() async {
-    // Lấy store_id
-    final info = await StoreAuthService.getStoreInfo();
-    _storeId = info['store_id'];
-    if (_storeId == null) return;
-    // Catalog toàn quán
-    final cat = await Supabase.instance.client
-        .from('topping_catalog').select()
-        .eq('store_id', _storeId!).eq('is_active', true)
-        .order('group_name').order('sort_order');
-    // Links của món này
-    final links = await Supabase.instance.client
-        .from('product_topping_links').select('topping_catalog_id')
-        .eq('product_id', widget.product.id);
-    if (mounted) setState(() {
-      _catalog   = List<Map<String,dynamic>>.from(cat as List);
-      _linkedIds = (links as List).map((r) => r['topping_catalog_id'] as String).toList();
-    });
   }
 
   Future<void> _addModifier() async {
@@ -6760,44 +6843,6 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet>
     await _loadModifiers();
   }
 
-  Future<void> _addToppingToCatalog() async {
-    final name = _tNameCtrl.text.trim();
-    if (name.isEmpty || _storeId == null) return;
-    final price = double.tryParse(_tPriceCtrl.text.replaceAll(',','').replaceAll('.','')) ?? 0;
-    final unit  = _tUnitCtrl.text.trim().isEmpty ? 'phần' : _tUnitCtrl.text.trim();
-    setState(() => _tSaving = true);
-    final id = const Uuid().v4();
-    await Supabase.instance.client.from('topping_catalog').insert({
-      'id': id, 'store_id': _storeId!, 'group_name': _tGroup.trim().isEmpty ? 'Topping' : _tGroup.trim(),
-      'name': name, 'price': price, 'unit': unit, 'sort_order': 0, 'is_active': true,
-    });
-    // Tự động gắn cho món hiện tại
-    await Supabase.instance.client.from('product_topping_links').insert(
-        {'product_id': widget.product.id, 'topping_catalog_id': id});
-    _tNameCtrl.clear(); _tPriceCtrl.clear();
-    setState(() => _tSaving = false);
-    await _loadToppingData();
-    HapticFeedback.lightImpact();
-  }
-
-  Future<void> _toggleToppingLink(String toppingId) async {
-    if (_linkedIds.contains(toppingId)) {
-      await Supabase.instance.client.from('product_topping_links')
-          .delete().eq('product_id', widget.product.id).eq('topping_catalog_id', toppingId);
-    } else {
-      await Supabase.instance.client.from('product_topping_links')
-          .insert({'product_id': widget.product.id, 'topping_catalog_id': toppingId});
-    }
-    await _loadToppingData();
-    HapticFeedback.selectionClick();
-  }
-
-  Future<void> _deleteToppingFromCatalog(String toppingId) async {
-    await Supabase.instance.client.from('topping_catalog').delete().eq('id', toppingId);
-    await _loadToppingData();
-    HapticFeedback.mediumImpact();
-  }
-
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -6815,155 +6860,135 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Cài đặt món', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy)),
+              Text('Cài đặt tùy chọn món', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy)),
               Text(widget.product.name, style: GoogleFonts.outfit(fontSize: 13, color: _kOrange, fontWeight: FontWeight.w600)),
             ]),
           ),
-          const SizedBox(height: 10),
-          // Tab bar
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: _kNavy.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TabBar(
-              controller: _tabCtrl,
-              labelStyle: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700),
-              unselectedLabelStyle: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w500),
-              labelColor: Colors.white,
-              unselectedLabelColor: _kNavy.withValues(alpha: 0.55),
-              indicator: BoxDecoration(color: _kNavy, borderRadius: BorderRadius.circular(10)),
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              tabs: const [Tab(text: '⚙️  Tùy chọn'), Tab(text: '  Topping')],
-            ),
-          ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
           Expanded(
-            child: TabBarView(controller: _tabCtrl, children: [
-              // ─── Tab 0: Tùy chọn (existing) ───────────────────────────────
-              Column(children: [
-                Expanded(child: _modifiers.isEmpty
-                  ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.tune_rounded, size: 40, color: _kNavy.withValues(alpha: 0.15)),
-                      const SizedBox(height: 8),
-                      Text('Chưa có tùy chọn', style: GoogleFonts.outfit(fontSize: 14, color: _kNavy.withValues(alpha: 0.35))),
-                    ]))
-                  : ListView(controller: scrollCtrl, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      children: (() {
-                        final groups = <String, List<Map<String,dynamic>>>{};
-                        for (final m in _modifiers) groups.putIfAbsent(m['group_name'] as String? ?? 'Mặc định', () => []).add(m);
-                        return groups.entries.map((e) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Padding(padding: const EdgeInsets.only(top: 8, bottom: 6),
-                            child: Text(e.key, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: _kNavy.withValues(alpha: 0.45)))),
-                          ...e.value.map((mod) {
-                            final isActive = mod['is_active'] as bool? ?? true;
-                            final priceAdj = (mod['price_adjust'] as num?)?.toDouble() ?? 0;
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.5),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: _kNavy.withValues(alpha: isActive ? 0.1 : 0.05)),
-                              ),
-                              child: Row(children: [
-                                GestureDetector(onTap: () => _toggleModifier(mod),
-                                  child: Container(width: 22, height: 22,
-                                    decoration: BoxDecoration(color: isActive ? _kNavy : _kNavy.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                                    child: isActive ? const Icon(Icons.check_rounded, color: Colors.white, size: 14) : null)),
-                                const SizedBox(width: 10),
-                                Expanded(child: Text(
-                                  priceAdj > 0 ? '${mod['name']}  +${fmtVnd(priceAdj)}' : mod['name'] as String,
-                                  style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600,
-                                    color: isActive ? _kNavy : _kNavy.withValues(alpha: 0.35),
-                                    decoration: isActive ? null : TextDecoration.lineThrough))),
-                                GestureDetector(onTap: () => _deleteModifier(mod),
-                                  child: Icon(Icons.delete_outline_rounded, size: 18, color: _kRed.withValues(alpha: 0.5))),
-                              ]),
-                            );
-                          }),
-                        ])).toList();
-                      })(),
-                ),
-                ),
-                // Form thêm modifier
-                Container(
-                  padding: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-                  decoration: BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: _kNavy.withValues(alpha: 0.08)))),
-                  child: Row(children: [
-                    SizedBox(width: 80, child: TextField(onChanged: (v) => setState(() => _group = v),
-                      style: GoogleFonts.outfit(fontSize: 12),
-                      decoration: InputDecoration(isDense: true, hintText: 'Nhóm',
-                        hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.2))),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kNavy))))),
-                    const SizedBox(width: 6),
-                    Expanded(child: TextField(controller: _nameCtrl, style: GoogleFonts.outfit(fontSize: 13),
-                      decoration: InputDecoration(isDense: true, hintText: 'Tên tùy chọn',
-                        hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.2))),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kNavy))))),
-                    const SizedBox(width: 6),
-                    SizedBox(width: 70, child: TextField(controller: _priceCtrl, keyboardType: TextInputType.number,
-                      style: GoogleFonts.outfit(fontSize: 12),
-                      decoration: InputDecoration(isDense: true, hintText: '+Giá',
-                        hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.2))),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kNavy))))),
-                    const SizedBox(width: 6),
-                    GestureDetector(onTap: _saving ? null : _addModifier,
-                      child: Container(width: 36, height: 36,
-                        decoration: BoxDecoration(color: _kNavy, borderRadius: BorderRadius.circular(10)),
-                        child: _saving
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Icon(Icons.add_rounded, color: Colors.white, size: 18))),
-                  ]),
-                ),
-              ]),
-
-              // ─── Tab 1: Topping → Hướng dẫn dùng hệ thống mới ─────────────
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: _kOrange.withValues(alpha: 0.08),
-                        shape: BoxShape.circle),
-                      child: const Icon(Icons.restaurant_menu_rounded, size: 40, color: _kOrange),
+            child: Column(children: [
+              Expanded(child: _modifiers.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.tune_rounded, size: 44, color: _kNavy.withValues(alpha: 0.15)),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Chưa có tùy chọn nhanh',
+                            style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: _kNavy),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Thêm các ghi chú nhanh bên dưới để nhân viên click chọn nhanh khi order (Không cần gõ tay).',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.55), height: 1.4),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: _kOrange.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: _kOrange.withValues(alpha: 0.15)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '💡 Ví dụ cách thiết lập:',
+                                  style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: _kOrange),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '• Nhóm: "Mức cay"  -> Tên: "Cấp độ 2"  -> Giá: 0\n'
+                                  '• Nhóm: "Ghi chú" -> Tên: "Không hành" -> Giá: 0\n'
+                                  '• Nhóm: "Thêm món" -> Tên: "Thêm Mực" -> Giá: 15000',
+                                  style: GoogleFonts.outfit(fontSize: 11, color: _kNavy.withValues(alpha: 0.7), height: 1.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    Text('Cấu hình Topping đã được nâng cấp',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                        fontSize: 16, fontWeight: FontWeight.w800,
-                        color: _kNavy)),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Vào Kho → tìm sản phẩm chính → nhấn nút "Topping" trên card để gắn topping.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(fontSize: 13, color: _kNavy.withValues(alpha: 0.55))),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _kOrange.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _kOrange.withValues(alpha: 0.3))),
-                      child: Text('Hệ thống topping mới dùng bảng product_topping_links — mỗi sản phẩm có thể gắn nhiều topping trực tiếp.',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.outfit(fontSize: 11, color: _kOrange, fontWeight: FontWeight.w600)),
-                    ),
-                  ]),
+                  )
+                : ListView(controller: scrollCtrl, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    children: (() {
+                      final groups = <String, List<Map<String,dynamic>>>{};
+                      for (final m in _modifiers) groups.putIfAbsent(m['group_name'] as String? ?? 'Mặc định', () => []).add(m);
+                      return groups.entries.map((e) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Padding(padding: const EdgeInsets.only(top: 8, bottom: 6),
+                          child: Text(e.key, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: _kNavy.withValues(alpha: 0.45)))),
+                        ...e.value.map((mod) {
+                          final isActive = mod['is_active'] as bool? ?? true;
+                          final priceAdj = (mod['price_adjust'] as num?)?.toDouble() ?? 0;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: _kNavy.withValues(alpha: isActive ? 0.1 : 0.05)),
+                            ),
+                            child: Row(children: [
+                              GestureDetector(onTap: () => _toggleModifier(mod),
+                                child: Container(width: 22, height: 22,
+                                  decoration: BoxDecoration(color: isActive ? _kNavy : _kNavy.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                                  child: isActive ? const Icon(Icons.check_rounded, color: Colors.white, size: 14) : null)),
+                              const SizedBox(width: 10),
+                              Expanded(child: Text(
+                                priceAdj > 0 ? '${mod['name']}  +${fmtVnd(priceAdj)}' : mod['name'] as String,
+                                style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600,
+                                  color: isActive ? _kNavy : _kNavy.withValues(alpha: 0.35),
+                                  decoration: isActive ? null : TextDecoration.lineThrough))),
+                              GestureDetector(onTap: () => _deleteModifier(mod),
+                                child: Icon(Icons.delete_outline_rounded, size: 18, color: _kRed.withValues(alpha: 0.5))),
+                            ]),
+                          );
+                        }),
+                      ])).toList();
+                    })(),
                 ),
               ),
-
+              // Form thêm modifier
+              Container(
+                padding: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+                decoration: BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: _kNavy.withValues(alpha: 0.08)))),
+                child: Row(children: [
+                  SizedBox(width: 80, child: TextField(onChanged: (v) => setState(() => _group = v),
+                    style: GoogleFonts.outfit(fontSize: 12),
+                    decoration: InputDecoration(isDense: true, hintText: 'Nhóm',
+                      hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.2))),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kNavy))))),
+                  const SizedBox(width: 6),
+                  Expanded(child: TextField(controller: _nameCtrl, style: GoogleFonts.outfit(fontSize: 13),
+                    decoration: InputDecoration(isDense: true, hintText: 'Tên tùy chọn',
+                      hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.2))),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kNavy))))),
+                  const SizedBox(width: 6),
+                  SizedBox(width: 70, child: TextField(controller: _priceCtrl, keyboardType: TextInputType.number,
+                    style: GoogleFonts.outfit(fontSize: 12),
+                    decoration: InputDecoration(isDense: true, hintText: '+Giá',
+                      hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.2))),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kNavy))))),
+                  const SizedBox(width: 6),
+                  GestureDetector(onTap: _saving ? null : _addModifier,
+                    child: Container(width: 36, height: 36,
+                      decoration: BoxDecoration(color: _kNavy, borderRadius: BorderRadius.circular(10)),
+                      child: _saving
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.add_rounded, color: Colors.white, size: 18))),
+                ]),
+              ),
             ]),
           ),
         ]),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +15,8 @@ import '../core/providers/session_provider.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/drive_service.dart';
 import '../modules/tinhluong/repository/shift_template_repository.dart';
+import '../core/repositories/module_repository.dart';
+import '../core/providers/app_providers.dart';
 
 const _kNavy   = Color(0xFF1C2151);
 const _kBg     = Color(0xFFF5F7FF);
@@ -23,16 +26,6 @@ const _kRed    = Color(0xFFDC2626);
 const _kOrange = Color(0xFFEA580C);
 
 // ── Providers ─────────────────────────────────────────────────────────────────
-final _openShiftCCProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
-  final s = ref.watch(sessionProvider);
-  if (s == null) return null;
-  try {
-    return await Supabase.instance.client
-        .from('staff_shifts').select('id,clock_in')
-        .eq('user_id', s.userId).eq('store_id', s.storeId ?? '')
-        .isFilter('clock_out', null).maybeSingle();
-  } catch (_) { return null; }
-});
 
 final _myShiftsProvider = FutureProvider.autoDispose<List<ShiftRecord>>((ref) async {
   final s = ref.watch(sessionProvider);
@@ -52,6 +45,18 @@ final _myShiftsProvider = FutureProvider.autoDispose<List<ShiftRecord>>((ref) as
   );
   debugPrint('[ChamCong] getShifts ← ${result.length} ca');
   return result;
+});
+
+final _storeLocationProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+  final repo = AppSettingsRepository();
+  final lat = await repo.attendanceLat;
+  final lng = await repo.attendanceLng;
+  final radius = await repo.attendanceRadius;
+  return {
+    'lat': lat,
+    'lng': lng,
+    'radius': radius,
+  };
 });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -126,6 +131,177 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
         s?.role.toLowerCase() == 'quản lý';
   }
 
+  Future<void> _showLocationSettingsDialog(BuildContext context) async {
+    final repo = AppSettingsRepository();
+    final initialLat = await repo.attendanceLat;
+    final initialLng = await repo.attendanceLng;
+    final initialAddr = await repo.attendanceAddress;
+    final initialRadius = await repo.attendanceRadius;
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        double? currentLat = initialLat;
+        double? currentLng = initialLng;
+        String? currentAddr = initialAddr;
+        final radiusCtrl = TextEditingController(text: initialRadius.toInt().toString());
+        bool isLocating = false;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Row(children: [
+                Icon(Icons.location_on_rounded, color: _kNavy),
+                SizedBox(width: 8),
+                Text('Định vị của quán', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: _kNavy)),
+              ]),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Thiết lập toạ độ chuẩn của quán để xác thực khoảng cách chấm công của nhân viên.',
+                      style: TextStyle(fontSize: 12, color: _kMuted),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _kNavy.withOpacity(0.04),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _kNavy.withOpacity(0.1)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('VỊ TRÍ ĐÃ LƯU:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _kNavy)),
+                          const SizedBox(height: 6),
+                          if (currentLat != null && currentLng != null) ...[
+                            Text('Tọa độ: ${currentLat!.toStringAsFixed(6)}, ${currentLng!.toStringAsFixed(6)}',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text('Địa chỉ: ${currentAddr ?? "Chưa lấy địa chỉ"}',
+                                style: const TextStyle(fontSize: 12, color: Color(0xFF374151))),
+                          ] else ...[
+                            const Text('Chưa thiết lập vị trí.', style: TextStyle(fontSize: 12, color: _kRed)),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Nút cập nhật vị trí quán tại đây
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _kNavy,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: isLocating ? null : () async {
+                          setDialogState(() => isLocating = true);
+                          try {
+                            final perm = await Geolocator.checkPermission();
+                            if (perm == LocationPermission.denied) {
+                              await Geolocator.requestPermission();
+                            }
+                            final pos = await Geolocator.getCurrentPosition(
+                              locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+                            );
+                            final marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+                            String? addr;
+                            if (marks.isNotEmpty) {
+                              final m = marks.first;
+                              addr = [m.street, m.subAdministrativeArea, m.administrativeArea]
+                                  .where((s) => s?.isNotEmpty == true).join(', ');
+                            }
+                            setDialogState(() {
+                              currentLat = pos.latitude;
+                              currentLng = pos.longitude;
+                              currentAddr = addr;
+                              isLocating = false;
+                            });
+                          } catch (e) {
+                            setDialogState(() => isLocating = false);
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text('Lỗi lấy vị trí: $e')),
+                              );
+                            }
+                          }
+                        },
+                        icon: isLocating
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.my_location_rounded, size: 16),
+                        label: Text(isLocating ? 'Đang lấy vị trí...' : 'Lấy vị trí hiện tại của quán'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Bán kính cho phép (mét):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: radiusCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: 'Mặc định: 200',
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Hủy', style: TextStyle(color: _kMuted)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kGreen,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () async {
+                    if (currentLat == null || currentLng == null) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(content: Text('Vui lòng lấy vị trí quán trước khi lưu.')),
+                      );
+                      return;
+                    }
+                    final radius = double.tryParse(radiusCtrl.text) ?? 200.0;
+                    await repo.saveAttendanceConfig(
+                      lat: currentLat!,
+                      lng: currentLng!,
+                      address: currentAddr ?? 'Tọa độ chuẩn của quán',
+                      radius: radius,
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Đã lưu cấu hình định vị của quán.')),
+                      );
+                      ref.invalidate(_myShiftsProvider);
+                    }
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Lưu cài đặt'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
@@ -170,6 +346,13 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
     expandedHeight: 110,
     pinned: true,
     backgroundColor: _kNavy,
+    actions: _isManager ? [
+      IconButton(
+        icon: const Icon(Icons.settings_outlined, color: Colors.white),
+        tooltip: 'Cài đặt định vị quán',
+        onPressed: () => _showLocationSettingsDialog(context),
+      ),
+    ] : null,
     flexibleSpace: FlexibleSpaceBar(
       titlePadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       title: Row(children: [
@@ -208,7 +391,7 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
 
   // ── Staff View ───────────────────────────────────────────────────────────────
   Widget _buildStaffView() {
-    final openAsync = ref.watch(_openShiftCCProvider);
+    final openAsync = ref.watch(openShiftCCProvider);
     final shiftsAsync = ref.watch(_myShiftsProvider);
 
     return openAsync.when(
@@ -325,7 +508,7 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
             margin: const EdgeInsets.all(16),
           ));
         }
-        ref.invalidate(_openShiftCCProvider);
+        ref.invalidate(openShiftCCProvider);
         ref.invalidate(_myShiftsProvider);
         // 📡 Broadcast — subscribe trước, send, rồi unsubscribe để tránh channel leak
         try {
@@ -353,8 +536,8 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
         final xfile = await picker.pickImage(
           source: ImageSource.camera,
           preferredCameraDevice: CameraDevice.front,
-          imageQuality: 70,
-          maxWidth: 800,
+          imageQuality: 50,
+          maxWidth: 600,
         ).timeout(const Duration(seconds: 60));
         if (xfile == null) { setState(() => _loading = false); return; }
         bytes = await xfile.readAsBytes();
@@ -388,6 +571,70 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
         }
       } catch (_) {} // GPS là optional
 
+      // ── XÁC THỰC KHOẢNG CÁCH ──
+      final repo = AppSettingsRepository();
+      final storeLat = await repo.attendanceLat;
+      final storeLng = await repo.attendanceLng;
+      final storeRadius = await repo.attendanceRadius;
+      
+      if (storeLat != null && storeLng != null && lat != null && lng != null) {
+        final distance = Geolocator.distanceBetween(lat, lng, storeLat, storeLng);
+        if (distance > storeRadius) {
+          if (mounted) {
+            final confirmCC = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: const Row(children: [
+                  Icon(Icons.warning_amber_rounded, color: _kOrange, size: 24),
+                  SizedBox(width: 8),
+                  Text('Định vị lệch phạm vi'),
+                ]),
+                content: Text(
+                  'Hệ thống phát hiện bạn đang cách quán khoảng ${distance.toInt()}m '
+                  '(vượt quá giới hạn ${storeRadius.toInt()}m).\n\n'
+                  'Ca chấm công này của bạn sẽ bị gắn cờ "Lệch vị trí" gửi đến chủ quán. Bạn có muốn tiếp tục?'
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Hủy', style: TextStyle(color: _kNavy)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _kOrange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Tiếp tục'),
+                  ),
+                ],
+              ),
+            );
+            if (confirmCC != true) {
+              setState(() => _loading = false);
+              return;
+            }
+          }
+        }
+      }
+
+      // ── ĐÓNG DẤU HÌNH ẢNH ──
+      try {
+        final timeStr = DateFormat('HH:mm dd/MM/yyyy').format(DateTime.now());
+        final locationStr = address ?? (lat != null && lng != null ? '${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}' : 'Không xác định vị trí');
+        bytes = await _addWatermarkToImage(bytes!, timeStr, locationStr);
+        if (!kIsWeb) {
+          final tempDir = Directory.systemTemp;
+          final tempFile = File('${tempDir.path}/temp_clockin.jpg');
+          await tempFile.writeAsBytes(bytes);
+          file = tempFile;
+        }
+      } catch (e) {
+        debugPrint('Lỗi đóng dấu hình ảnh: $e');
+      }
+
       final session = ref.read(sessionProvider)!;
       final ts = DateFormat('yyyy-MM-dd_HH-mm').format(DateTime.now());
       final name = session.displayName.replaceAll(' ', '_');
@@ -400,7 +647,7 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       if (kIsWeb) {
         photoUrl = await SupabaseStorageFallback.uploadPhoto(
           storeId: session.storeId ?? '',
-          photoBytes: bytes,
+          photoBytes: bytes!,
           fileName: fileName,
         );
       } else {
@@ -416,7 +663,7 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
         } else {
           photoUrl = await SupabaseStorageFallback.uploadPhoto(
             storeId: session.storeId ?? '',
-            photoBytes: bytes,
+            photoBytes: bytes!,
             fileName: fileName,
           );
         }
@@ -463,7 +710,7 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
         ));
       }
 
-      ref.invalidate(_openShiftCCProvider);
+      ref.invalidate(openShiftCCProvider);
       ref.invalidate(_myShiftsProvider);
 
       // 📡 Broadcast — subscribe trước, send, rồi unsubscribe để tránh channel leak
@@ -1105,12 +1352,12 @@ class _EmployeeGroupState extends State<_EmployeeGroup> {
 }
 
 // ── Compact shift row (inside group) ─────────────────────────────────────────
-class _ShiftRowCompact extends StatelessWidget {
+class _ShiftRowCompact extends ConsumerWidget {
   final ShiftRecord shift;
   const _ShiftRowCompact({required this.shift});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ci = DateFormat('HH:mm').format(shift.clockIn.toLocal());
     final co = shift.clockOut != null
         ? DateFormat('HH:mm').format(shift.clockOut!.toLocal()) : 'Đang làm';
@@ -1152,6 +1399,7 @@ class _ShiftRowCompact extends StatelessWidget {
                 decoration: BoxDecoration(color: _kGreen, borderRadius: BorderRadius.circular(4)),
                 child: const Text('LIVE', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900)),
               ),
+              _buildLocationBadge(ref),
             ]),
             if (shift.address != null)
               Text(shift.address!, style: const TextStyle(fontSize: 10, color: _kMuted),
@@ -1162,6 +1410,57 @@ class _ShiftRowCompact extends StatelessWidget {
         Text(shift.durationStr,
           style: TextStyle(fontWeight: FontWeight.w800, color: shift.isOpen ? _kGreen : _kNavy, fontSize: 13)),
       ]),
+    );
+  }
+
+  Widget _buildLocationBadge(WidgetRef ref) {
+    final locAsync = ref.watch(_storeLocationProvider);
+    return locAsync.maybeWhen(
+      data: (config) {
+        final storeLat = config['lat'] as double?;
+        final storeLng = config['lng'] as double?;
+        final storeRadius = config['radius'] as double? ?? 200.0;
+
+        if (storeLat == null || storeLng == null) return const SizedBox.shrink();
+
+        if (shift.latitude == null || shift.longitude == null) {
+          return Container(
+            margin: const EdgeInsets.only(left: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade400,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              '⚠️ Không GPS',
+              style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800),
+            ),
+          );
+        }
+
+        final distance = Geolocator.distanceBetween(
+          shift.latitude!, shift.longitude!, storeLat, storeLng);
+        
+        final isOut = distance > storeRadius;
+        return Container(
+          margin: const EdgeInsets.only(left: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+          decoration: BoxDecoration(
+            color: isOut ? _kRed.withOpacity(0.1) : _kGreen.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: isOut ? _kRed : _kGreen, width: 0.5),
+          ),
+          child: Text(
+            isOut ? '⚠️ Lệch ${distance.toInt()}m' : '✓ Ở quán',
+            style: TextStyle(
+              color: isOut ? _kRed : _kGreen,
+              fontSize: 8,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 
@@ -1360,13 +1659,13 @@ Widget _MgrStat(String value, String label, IconData icon, Color color) => Expan
 );
 
 // ── Shift history row ─────────────────────────────────────────────────────────
-class _ShiftRow extends StatelessWidget {
+class _ShiftRow extends ConsumerWidget {
   final ShiftRecord shift;
   final bool showName;
   const _ShiftRow({required this.shift, this.showName = false});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final clockIn  = DateFormat('HH:mm').format(shift.clockIn.toLocal());
     final clockOut = shift.clockOut != null
         ? DateFormat('HH:mm').format(shift.clockOut!.toLocal()) : null;
@@ -1428,6 +1727,7 @@ class _ShiftRow extends StatelessWidget {
                       child: const Text('LIVE',
                         style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
                     ),
+                    _buildLocationBadge(ref),
                   ]),
                   if (shift.address != null) ...[
                     const SizedBox(height: 3),
@@ -1450,6 +1750,57 @@ class _ShiftRow extends StatelessWidget {
           ]),
         ),
       ),
+    );
+  }
+
+  Widget _buildLocationBadge(WidgetRef ref) {
+    final locAsync = ref.watch(_storeLocationProvider);
+    return locAsync.maybeWhen(
+      data: (config) {
+        final storeLat = config['lat'] as double?;
+        final storeLng = config['lng'] as double?;
+        final storeRadius = config['radius'] as double? ?? 200.0;
+
+        if (storeLat == null || storeLng == null) return const SizedBox.shrink();
+
+        if (shift.latitude == null || shift.longitude == null) {
+          return Container(
+            margin: const EdgeInsets.only(left: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade400,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              '⚠️ Không GPS',
+              style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800),
+            ),
+          );
+        }
+
+        final distance = Geolocator.distanceBetween(
+          shift.latitude!, shift.longitude!, storeLat, storeLng);
+        
+        final isOut = distance > storeRadius;
+        return Container(
+          margin: const EdgeInsets.only(left: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+          decoration: BoxDecoration(
+            color: isOut ? _kRed.withOpacity(0.1) : _kGreen.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: isOut ? _kRed : _kGreen, width: 0.5),
+          ),
+          child: Text(
+            isOut ? '⚠️ Lệch ${distance.toInt()}m' : '✓ Ở quán',
+            style: TextStyle(
+              color: isOut ? _kRed : _kGreen,
+              fontSize: 8,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 }
@@ -1594,4 +1945,81 @@ class _CCRow extends StatelessWidget {
       Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
     ]),
   );
+}
+
+Future<Uint8List> _addWatermarkToImage(
+  Uint8List originalImageBytes,
+  String dateTimeText,
+  String locationText,
+) async {
+  final ui.Codec codec = await ui.instantiateImageCodec(originalImageBytes);
+  final ui.FrameInfo frameInfo = await codec.getNextFrame();
+  final ui.Image image = frameInfo.image;
+
+  final double originalWidth = image.width.toDouble();
+  final double originalHeight = image.height.toDouble();
+
+  // Tối ưu RAM cho thiết bị yếu: giới hạn chiều rộng ảnh tối đa là 480px
+  double targetWidth = originalWidth;
+  double targetHeight = originalHeight;
+  if (originalWidth > 480) {
+    targetWidth = 480;
+    targetHeight = (originalHeight * 480) / originalWidth;
+  }
+
+  final ui.PictureRecorder recorder = ui.PictureRecorder();
+  final Canvas canvas = Canvas(recorder);
+
+  // Vẽ hình ảnh đã được thu nhỏ (downscaled) để tiết kiệm bộ nhớ khi render & encode PNG
+  canvas.drawImageRect(
+    image,
+    Rect.fromLTWH(0, 0, originalWidth, originalHeight),
+    Rect.fromLTWH(0, 0, targetWidth, targetHeight),
+    Paint()..filterQuality = ui.FilterQuality.medium,
+  );
+
+  final double overlayHeight = targetHeight * 0.12;
+  final Paint backgroundPaint = Paint()
+    ..color = Colors.black.withOpacity(0.5)
+    ..style = PaintingStyle.fill;
+
+  canvas.drawRect(
+    Rect.fromLTWH(0, targetHeight - overlayHeight, targetWidth, overlayHeight),
+    backgroundPaint,
+  );
+
+  final ui.ParagraphBuilder builder = ui.ParagraphBuilder(
+    ui.ParagraphStyle(
+      textAlign: TextAlign.left,
+      fontSize: (targetWidth * 0.035).clamp(10.0, 20.0),
+      maxLines: 2,
+    ),
+  );
+
+  builder.pushStyle(ui.TextStyle(
+    color: Colors.white,
+    fontWeight: FontWeight.bold,
+  ));
+  builder.addText('⏰ $dateTimeText\n');
+  builder.addText('📍 $locationText');
+
+  final ui.Paragraph paragraph = builder.build();
+  paragraph.layout(ui.ParagraphConstraints(width: targetWidth - 20));
+
+  canvas.drawParagraph(
+    paragraph,
+    Offset(10, targetHeight - overlayHeight + (overlayHeight - paragraph.height) / 2),
+  );
+
+  final ui.Picture picture = recorder.endRecording();
+  final ui.Image watermarkedImage = await picture.toImage(targetWidth.toInt(), targetHeight.toInt());
+  
+  // PNG encoding lúc này sẽ tốn rất ít RAM do size ảnh đã nhỏ đi nhiều lần (~480px width)
+  final ByteData? byteData = await watermarkedImage.toByteData(format: ui.ImageByteFormat.png);
+
+  // Giải phóng đối tượng Image gốc để giải phóng RAM ngay lập tức
+  image.dispose();
+  watermarkedImage.dispose();
+
+  return byteData!.buffer.asUint8List();
 }

@@ -351,7 +351,11 @@ class CartNotifier extends Notifier<CartState> {
         discount: state.discount,
         loyaltyPtsUsed: state.loyaltyPtsUsed,
         loyaltyRate: loyaltyRate,
-        note: state.orderNote,
+        note: state.appliedCoupon != null
+            ? ((state.orderNote ?? '').isEmpty
+                ? '[Voucher: ${state.appliedCoupon!.code}]'
+                : '${state.orderNote} | [Voucher: ${state.appliedCoupon!.code}]')
+            : state.orderNote,
         sourceType: state.tableId != null ? 'ban' : 'pos',
         sourceId: state.tableId,
         staffId: session?.userId,

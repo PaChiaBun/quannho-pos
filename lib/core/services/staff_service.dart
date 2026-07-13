@@ -30,6 +30,8 @@ const kAllActions = [
   'pos.apply_discount',   // Áp dụng giảm giá thủ công
   'pos.edit_price',       // Sửa giá bán tại quầy
   'pos.view_history',     // Xem lịch sử đơn toàn quán
+  'pos.checkout',         // Thanh toán hoá đơn
+  'ban.manage_structure', // Thêm/Sửa/Xoá bàn & khu vực
   'kho.edit_quantity',    // Sửa số lượng tồn kho
   'kho.delete_item',      // Xoá sản phẩm khỏi kho
   'finance.view_all',     // Xem toàn bộ thu chi
@@ -42,6 +44,8 @@ const kActionMeta = <String, (String, String, String)>{
   'pos.apply_discount': ('Áp dụng giảm giá',      'Giảm giá thủ công trên bill', 'POS'),
   'pos.edit_price':     ('Sửa giá bán',            'Đổi giá sản phẩm lúc tính tiền', 'POS'),
   'pos.view_history':   ('Xem lịch sử đơn',        'Xem toàn bộ đơn hàng cũ', 'POS'),
+  'pos.checkout':       ('Thanh toán hoá đơn',     'Bấm nút thanh toán & in hoá đơn', 'POS'),
+  'ban.manage_structure': ('Thêm/Sửa bàn & khu vực', 'Quản lý danh sách bàn và khu vực', 'Quản lý bàn'),
   'kho.edit_quantity':  ('Sửa số lượng tồn',       'Chỉnh tồn kho thủ công', 'Kho'),
   'kho.delete_item':    ('Xoá sản phẩm kho',       'Xoá vĩnh viễn khỏi kho', 'Kho'),
   'finance.view_all':   ('Xem toàn bộ thu chi',    'Xem doanh thu & chi phí', 'Thu Chi'),
@@ -50,9 +54,9 @@ const kActionMeta = <String, (String, String, String)>{
 
 // Quyền action mặc định mỗi role (restrictive by default — owner luôn có tất cả)
 const kDefaultActionPerms = <String, List<String>>{
-  'owner':   ['pos.cancel_bill', 'pos.apply_discount', 'pos.edit_price', 'pos.view_history', 'kho.edit_quantity', 'kho.delete_item', 'finance.view_all', 'report.view'],
-  'manager': ['pos.cancel_bill', 'pos.apply_discount', 'pos.view_history', 'kho.edit_quantity', 'finance.view_all', 'report.view'],
-  'cashier': ['pos.apply_discount', 'pos.view_history'],
+  'owner':   ['pos.cancel_bill', 'pos.apply_discount', 'pos.edit_price', 'pos.view_history', 'pos.checkout', 'ban.manage_structure', 'kho.edit_quantity', 'kho.delete_item', 'finance.view_all', 'report.view'],
+  'manager': ['pos.cancel_bill', 'pos.apply_discount', 'pos.edit_price', 'pos.view_history', 'pos.checkout', 'ban.manage_structure', 'kho.edit_quantity', 'kho.delete_item', 'finance.view_all', 'report.view'],
+  'cashier': ['pos.apply_discount', 'pos.view_history', 'pos.checkout'],
   'waiter':  <String>[],
   'kitchen': <String>[],
   'stock':   ['kho.edit_quantity'],
@@ -311,12 +315,39 @@ class StaffService {
     if (db == null) return null;
     // Kiểm tra đã có ca mở chưa
     final open = await db.from('staff_shifts')
-        .select('id')
+        .select('id, clock_in, note')
         .eq('user_id', userId)
         .eq('store_id', storeId)
         .isFilter('clock_out', null)
         .maybeSingle();
-    if (open != null) return open['id'] as String;
+    if (open != null) {
+      final openId = open['id'] as String;
+      final openClockInStr = open['clock_in'] as String;
+      final openClockIn = DateTime.parse(openClockInStr).toLocal();
+      final nowLocal = DateTime.now();
+      
+      final isOpenFromPastDay = openClockIn.year != nowLocal.year ||
+          openClockIn.month != nowLocal.month ||
+          openClockIn.day != nowLocal.day;
+
+      if (isOpenFromPastDay) {
+        // Tự động đóng ca cũ cách đây hơn 1 ngày
+        final autoClockOutTime = openClockIn.add(const Duration(hours: 8));
+        final finalClockOut = autoClockOutTime.isAfter(nowLocal) ? nowLocal : autoClockOutTime;
+        
+        final existingNote = open['note'] as String? ?? '';
+        final newNote = existingNote.isEmpty 
+            ? '[Hệ thống tự động kết ca do quên đóng]' 
+            : '$existingNote\n[Hệ thống tự động kết ca do quên đóng]';
+            
+        await db.from('staff_shifts').update({
+          'clock_out': finalClockOut.toUtc().toIso8601String(),
+          'note': newNote,
+        }).eq('id', openId);
+      } else {
+        return openId;
+      }
+    }
     final data = <String, dynamic>{
       'user_id':  userId,
       'store_id': storeId,
@@ -606,8 +637,8 @@ class StaffService {
   /// Lấy danh sách action được phép của một role.
   /// Fallback: kDefaultActionPerms nếu chưa cấu hình.
   static Future<Set<String>> getActionPermissions(String storeId, String role) async {
-    // Owner luôn có toàn quyền — không cần query DB
-    if (role == 'owner') {
+    final canonical = canonicalRole(role);
+    if (canonical == 'owner' || canonical == 'manager') {
       return Set<String>.from(kAllActions);
     }
     final db = _db;

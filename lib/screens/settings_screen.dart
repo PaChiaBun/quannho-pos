@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers/app_providers.dart';
 import '../core/repositories/module_repository.dart';
 import '../core/providers/session_provider.dart';
+import '../core/services/staff_service.dart';
 import '../core/services/user_auth_service.dart';
 import '../core/widgets/create_store_sheet.dart';
 import '../core/widgets/join_store_sheet.dart';
@@ -34,10 +35,10 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final shopNameAsync  = ref.watch(shopNameProvider);
     final session = ref.watch(sessionProvider);
+    final canonical = StaffService.canonicalRole(session?.role ?? '');
     final isManager = session?.isOwner == true ||
-        session?.role == 'owner' ||
-        session?.role == 'manager' ||
-        session?.role.toLowerCase() == 'quản lý';
+        canonical == 'owner' ||
+        canonical == 'manager';
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -1872,10 +1873,10 @@ class _QuickPinTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
+    final canonical = StaffService.canonicalRole(session?.role ?? '');
     final isManager = session?.isOwner == true ||
-        session?.role == 'owner' || 
-        session?.role == 'manager' || 
-        session?.role.toLowerCase() == 'quản lý';
+        canonical == 'owner' || 
+        canonical == 'manager';
 
     if (!isManager) return const SizedBox.shrink();
 

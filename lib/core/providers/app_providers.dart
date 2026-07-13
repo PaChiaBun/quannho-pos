@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'session_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../repositories/core_product_repository.dart';
 import '../repositories/core_customer_repository.dart';
 import '../repositories/module_repository.dart';
@@ -185,3 +186,14 @@ class NavSlotsNotifier extends AsyncNotifier<List<int>> {
 
 final navSlotsProvider =
     AsyncNotifierProvider<NavSlotsNotifier, List<int>>(NavSlotsNotifier.new);
+
+final openShiftCCProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
+  final s = ref.watch(sessionProvider);
+  if (s == null) return null;
+  try {
+    return await Supabase.instance.client
+        .from('staff_shifts').select('id,clock_in')
+        .eq('user_id', s.userId).eq('store_id', s.storeId ?? '')
+        .isFilter('clock_out', null).maybeSingle();
+  } catch (_) { return null; }
+});

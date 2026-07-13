@@ -396,6 +396,22 @@ class _MainShellState extends ConsumerState<MainShell>
 
 
   Widget _buildBody(int idx) {
+    // ── CLOCK-IN GUARD CHO NHÂN VIÊN ──
+    final session = ref.watch(sessionProvider);
+    final isStaff = session != null &&
+        !(session.isOwner) &&
+        session.role != 'owner' &&
+        session.role != 'manager' &&
+        session.role.toLowerCase() != 'quản lý';
+
+    if (isStaff && idx != 0 && idx != 10) {
+      final openShiftAsync = ref.watch(openShiftCCProvider);
+      final hasActiveShift = openShiftAsync.asData?.value != null;
+      if (!hasActiveShift) {
+        return _buildClockInRequiredScreen();
+      }
+    }
+
     // ✅ PERF: chỉ FadeTransition, bỏ SlideTransition
     // → giảm 50% repaint cost vì không cần transform matrix
     return FadeTransition(
@@ -403,6 +419,79 @@ class _MainShellState extends ConsumerState<MainShell>
       child: IndexedStack(
         index: idx,
         children: _bodyChildren,
+      ),
+    );
+  }
+
+  Widget _buildClockInRequiredScreen() {
+    return Container(
+      color: const Color(0xFFFAF7F2), // _kBg
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEA580C).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.lock_clock_rounded,
+                color: Color(0xFFEA580C),
+                size: 64,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'YÊU CẦU CHẤM CÔNG',
+              style: GoogleFonts.outfit(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF1E1C5E), // _kNavy
+                letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Tính năng này tạm khóa vì bạn chưa vào ca làm việc.\nVui lòng hoàn thành chấm công để mở khóa các module của quán.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: const Color(0xFF9E9085), // _kMuted
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: 220,
+              height: 50,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E1C5E), // _kNavy
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: () {
+                  ref.read(navTabProvider.notifier).goTo(10); // Chuyển sang tab Chấm công (ChamCongScreen)
+                },
+                icon: const Icon(Icons.fingerprint_rounded, size: 20),
+                label: Text(
+                  'Đi chấm công ngay',
+                  style: GoogleFonts.outfit(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -702,8 +791,8 @@ class _MainShellState extends ConsumerState<MainShell>
 
   /// Các tab hiển thị trên Bottom Nav Bar — tính từ store_roles.modules
   Set<int> _navBarTabsForRole(String? role, List<dynamic> storeRoles, bool isOwner) {
-    // Owner/manager luôn có tất cả
-    if (isOwner || role == 'owner' || role == 'manager') {
+    final canonical = StaffService.canonicalRole(role ?? '');
+    if (isOwner || canonical == 'owner' || canonical == 'manager') {
       return {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
     }
 
@@ -1383,12 +1472,12 @@ class _TinhLuongRouteScreen extends ConsumerWidget {
     }
 
     // Owner hoặc các role quản lý → bảng quản lý lương
+    final canonical = StaffService.canonicalRole(session.role);
     final isManager = session.isOwner
-        || session.role == 'owner'
-        || session.role == 'manager'
-        || session.role == 'accountant'
-        || session.role == 'ketoan'
-        || session.role == 'kế toán';
+        || canonical == 'owner'
+        || canonical == 'manager'
+        || canonical == 'accountant'
+        || canonical == 'ketoan';
 
     return isManager
         ? const TinhLuongScreen()
