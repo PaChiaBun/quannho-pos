@@ -243,10 +243,22 @@ class BillPdfGenerator {
         if (!b.cfg<bool>('showTable', true) || tableName == null) return null;
         final label = b.cfg<String>('label', 'Ban:');
         final fs    = b.cfg<int>('fontSize', 10).toDouble();
-        return pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-          pw.Text(label, style: pw.TextStyle(font: font, fontSize: fs)),
-          pw.Text(tableName, style: pw.TextStyle(font: fontBold, fontSize: fs)),
-        ]);
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+              pw.Text(label, style: pw.TextStyle(font: font, fontSize: fs)),
+              pw.Text(tableName, style: pw.TextStyle(font: fontBold, fontSize: fs)),
+            ]),
+            if (bill.waiterName != null && bill.waiterName!.isNotEmpty) ...[
+              pw.SizedBox(height: 2),
+              pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+                pw.Text('Nhan vien:', style: pw.TextStyle(font: font, fontSize: fs)),
+                pw.Text(bill.waiterName!, style: pw.TextStyle(font: font, fontSize: fs)),
+              ]),
+            ],
+          ],
+        );
       }
       case BillBlockType.taxInfo: {
         final fs = b.cfg<int>('fontSize', 10).toDouble();

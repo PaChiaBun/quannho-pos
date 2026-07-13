@@ -240,10 +240,20 @@ class _TableInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = b.cfg<String>('label', 'Bàn:');
     final fs = b.cfg<int>('fontSize', 10).toDouble();
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: TextStyle(fontSize: fs)),
-      Text('Bàn 5', style: TextStyle(fontSize: fs, fontWeight: FontWeight.w700)),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text(label, style: TextStyle(fontSize: fs)),
+          Text('Bàn A 06', style: TextStyle(fontSize: fs, fontWeight: FontWeight.w700)),
+        ]),
+        const SizedBox(height: 2),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text('Nhân viên:', style: TextStyle(fontSize: fs)),
+          Text('Thành Nghiệp', style: TextStyle(fontSize: fs)),
+        ]),
+      ],
+    );
   }
 }
 
