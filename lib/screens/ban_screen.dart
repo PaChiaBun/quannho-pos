@@ -1897,6 +1897,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
       final settings = ref.read(printerSettingsProvider);
 
+      final session = ref.read(sessionProvider);
       final billData = BillData(
         shopName: info['name'] ?? 'Quán Nhỏ',
         shopAddress: info['address'],
@@ -1915,6 +1916,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         total: total,
         paymentMethod: 'cash',
         type: BillType.receipt,
+        waiterName: session?.displayName,
       );
 
       await StationPrinterDispatcher.printBill(billData, settings, onlyReceipt: true);
@@ -3042,6 +3044,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ));
         }
 
+        final session = ref.read(sessionProvider);
         final billData = BillData(
           shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
           shopAddress: storeInfo['address'] ?? '',
@@ -3054,6 +3057,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           total: 0,
           type: BillType.kitchen,
           note: '',
+          waiterName: session?.displayName,
         );
         
         await StationPrinterDispatcher.printBill(billData, settings);
@@ -3758,7 +3762,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                               child: Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  Text(item.productName,
+                                                  Text(item.addedBy != null && item.addedBy!.isNotEmpty ? '${item.productName} (${item.addedBy})' : item.productName,
                                                     style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: _kNavy, fontSize: 14.5)),
                                                   const SizedBox(height: 2),
                                                   Text(fmtVnd(item.price),
@@ -4102,32 +4106,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                 ],
                               ),
                               const SizedBox(height: 10),
-                              // Nút In hoá đơn tạm tính
-                              if (total > 0) ...[
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: OutlinedButton.icon(
-                                    onPressed: () => _printInterimBill(total, activeItems.toList()),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: _kOrange,
-                                      side: const BorderSide(color: _kOrange, width: 1.5),
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                    icon: const Icon(Icons.print_rounded, size: 18),
-                                    label: Text(
-                                      'In hoá đơn tạm tính',
-                                      style: GoogleFonts.outfit(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 14.5,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                              ],
+
                               // Nút Thanh toán
                               SizedBox(
                                 width: double.infinity,
@@ -4335,6 +4314,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       final settings = ref.read(printerSettingsProvider);
       final finalTotal = (widget.total - _couponDiscount - (_usePts * _redeemRate)).clamp(0.0, double.infinity);
 
+      final session = ref.read(sessionProvider);
       final billData = BillData(
         shopName: info['name'] ?? 'Quán Nhỏ',
         shopAddress: info['address'],
@@ -4353,6 +4333,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         total: finalTotal,
         paymentMethod: 'cash',
         type: BillType.receipt,
+        waiterName: session?.displayName,
       );
 
       await StationPrinterDispatcher.printBill(billData, settings, onlyReceipt: true);
@@ -5171,6 +5152,19 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
         sessionId: widget.sessionId,
         items: itemsList,
       );
+
+      try {
+        final session = ref.read(sessionProvider);
+        if (session != null && session.displayName.isNotEmpty) {
+          await Supabase.instance.client
+              .from('ban_session_items')
+              .update({'added_by': session.displayName})
+              .eq('session_id', widget.sessionId)
+              .isFilter('added_by', null);
+        }
+      } catch (e) {
+        debugPrint('[BanScreen] Error updating added_by: $e');
+      }
 
       ref.invalidate(sessionItemsProvider(widget.sessionId));
       HapticFeedback.lightImpact();

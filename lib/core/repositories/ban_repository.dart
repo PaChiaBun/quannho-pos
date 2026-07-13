@@ -130,12 +130,14 @@ class BanSessionItemModel {
   final String? modifiersJson;
   final int addedAt;
   final String kitchenStatus; // 'pending' | 'dang_lam' | 'xong'
+  final String? addedBy;
 
   const BanSessionItemModel({
     required this.id, required this.sessionId, required this.productId,
     required this.productName, required this.price, required this.quantity,
     this.note, this.modifiersJson, required this.addedAt,
     this.kitchenStatus = 'pending',
+    this.addedBy,
   });
 
   BanSessionItemModel copyWith({
@@ -150,6 +152,7 @@ class BanSessionItemModel {
     int? addedAt,
     String? kitchenStatus,
     bool clearNote = false,
+    String? addedBy,
   }) => BanSessionItemModel(
     id: id ?? this.id,
     sessionId: sessionId ?? this.sessionId,
@@ -161,6 +164,7 @@ class BanSessionItemModel {
     modifiersJson: modifiersJson ?? this.modifiersJson,
     addedAt: addedAt ?? this.addedAt,
     kitchenStatus: kitchenStatus ?? this.kitchenStatus,
+    addedBy: addedBy ?? this.addedBy,
   );
 
   double get subtotal => price * quantity;
@@ -180,6 +184,7 @@ class BanSessionItemModel {
     kitchenStatus: (m['kitchen_status'] == 'pending' || m['kitchen_status'] == null)
         ? 'chua_gui'
         : m['kitchen_status'] as String,
+    addedBy: m['added_by'] as String?,
   );
 }
 

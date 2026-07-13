@@ -36,6 +36,7 @@ class BillData {
   final String? note;
   final String? footer; // Lời cuối hoá đơn — từ Settings "bill_footer"
   final BillType type;
+  final String? waiterName;
 
   const BillData({
     required this.shopName,
@@ -55,6 +56,7 @@ class BillData {
     this.note,
     this.footer,
     this.type = BillType.receipt,
+    this.waiterName,
   });
 }
 
@@ -228,6 +230,11 @@ class BillPdfGenerator {
             pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
               pw.Text('Ngay:', style: pw.TextStyle(font: font, fontSize: fs)),
               pw.Text(_fmtDate(bill.createdAt), style: pw.TextStyle(font: font, fontSize: fs)),
+            ]),
+          if (bill.waiterName != null && bill.waiterName!.isNotEmpty)
+            pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+              pw.Text('Nhan vien:', style: pw.TextStyle(font: font, fontSize: fs)),
+              pw.Text(bill.waiterName!, style: pw.TextStyle(font: font, fontSize: fs)),
             ]),
         ]);
       }
@@ -516,6 +523,13 @@ class BillPdfGenerator {
                 style: pw.TextStyle(font: font, fontSize: 9,
                     color: PdfColors.black)),
 
+          if (bill.waiterName != null && bill.waiterName!.isNotEmpty) ...[
+            pw.SizedBox(height: 2),
+            pw.Text('NV Order: ${bill.waiterName!}',
+                style: pw.TextStyle(font: fontBold, fontSize: 9,
+                    color: PdfColors.black)),
+          ],
+
           if (tpl.showDivider) pw.Divider(thickness: 1, height: 10),
 
           // Danh sách món với số lượng vòng tròn
@@ -714,6 +728,7 @@ class StationPrinterDispatcher {
             tableName: bill.tableName,
             orderNumber: bill.orderNumber,
             items: hotItems,
+            waiterName: bill.waiterName,
           );
         } else {
           final hotBill = BillData(
@@ -728,6 +743,7 @@ class StationPrinterDispatcher {
             total: 0,
             type: BillType.kitchen,
             note: bill.note,
+            waiterName: bill.waiterName,
           );
           final bytes = await BillPdfGenerator.generateKitchenTicket(hotBill, stationKey: 'bepNong');
           final tpl = await KitchenTicketTemplate.load(stationKey: 'bepNong');
@@ -758,6 +774,7 @@ class StationPrinterDispatcher {
             tableName: bill.tableName,
             orderNumber: bill.orderNumber,
             items: barItems,
+            waiterName: bill.waiterName,
           );
         } else {
           final barBill = BillData(
@@ -772,6 +789,7 @@ class StationPrinterDispatcher {
             total: 0,
             type: BillType.kitchen,
             note: bill.note,
+            waiterName: bill.waiterName,
           );
           final bytes = await BillPdfGenerator.generateKitchenTicket(barBill, stationKey: 'bepBar');
           final tpl = await KitchenTicketTemplate.load(stationKey: 'bepBar');
@@ -816,6 +834,7 @@ class StationPrinterDispatcher {
     String? tableName,
     String? orderNumber,
     required List<BillItem> items,
+    String? waiterName,
   }) async {
     try {
       final ticketItems = items.map((i) {
@@ -857,6 +876,7 @@ class StationPrinterDispatcher {
         round: round,
         items: ticketItems,
         sentAt: DateTime.now().millisecondsSinceEpoch,
+        waiterName: waiterName,
       );
       debugPrint('[DirectPrint] In thành công qua socket tới: $printerIp');
     } catch (e) {

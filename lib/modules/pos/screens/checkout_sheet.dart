@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/pos_providers.dart'; // posTodayStatsProvider
 import '../../../core/providers/app_providers.dart';
+import '../../../core/providers/session_provider.dart';
 import '../../../core/providers/dashboard_providers.dart'; // invalidate sau checkout
 import '../../../modules/finance/providers/finance_providers.dart'; // invalidate financeStats
 import '../../../modules/loyalty/repository/loyalty_repository.dart';
@@ -668,6 +669,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             customerName:  cartSnapshot.customerName,
             loyaltyPoints: cartSnapshot.loyaltyPtsUsed > 0
                 ? cartSnapshot.loyaltyPtsUsed.round() : null,
+            waiterName:    ref.read(sessionProvider)?.displayName,
           );
         });
         HapticFeedback.heavyImpact();
@@ -748,6 +750,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               customerName:  cartSnapshot.customerName,
               loyaltyPoints: cartSnapshot.loyaltyPtsUsed > 0
                   ? cartSnapshot.loyaltyPtsUsed.round() : null,
+              waiterName:    ref.read(sessionProvider)?.displayName,
             );
           });
         }

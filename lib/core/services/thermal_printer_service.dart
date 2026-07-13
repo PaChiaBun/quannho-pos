@@ -42,6 +42,7 @@ class ThermalPrinterService {
     required int round,
     required List<TicketItemData> items,
     int sentAt = 0,
+    String? waiterName,
   }) async {
     Socket? socket;
     try {
@@ -73,6 +74,9 @@ class ThermalPrinterService {
       buffer.add(_normalSize);
       buffer.add(_boldOff);
       buffer.add(_utf8('Khu: $zoneLabel\n'));
+      if (waiterName != null && waiterName.isNotEmpty) {
+        buffer.add(_utf8('NV Order: $waiterName\n'));
+      }
       buffer.add(_utf8('$divider\n'));
 
       // ── Danh sách món ──

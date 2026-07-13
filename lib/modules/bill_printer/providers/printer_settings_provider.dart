@@ -100,6 +100,16 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     ref.listen<SessionData?>(sessionProvider, (previous, next) {
       if (next != null && next.storeId != null) {
         _loadSettings(next.storeId!);
+      } else {
+        _kitchenTicketsSubscription?.unsubscribe();
+        _kitchenTicketsSubscription = null;
+        _ordersSubscription?.unsubscribe();
+        _ordersSubscription = null;
+        _pollTimer?.cancel();
+        _pollTimer = null;
+        _printedTicketIds.clear();
+        _printedOrderIds.clear();
+        writePrintLog('[PrintServer] Da don dep cac listener in an do dang xuat.');
       }
     });
 
@@ -325,6 +335,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   final Set<String> _printedTicketIds = {};
   final Set<String> _printedOrderIds = {};
   Timer? _pollTimer;
+  DateTime? _startupTime;
 
   Future<void> _setupPrintServerListener(String storeId) async {
     _kitchenTicketsSubscription?.unsubscribe();
@@ -345,6 +356,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     _printedOrderIds.clear();
 
     final startupTime = DateTime.now().toUtc();
+    _startupTime = startupTime;
 
     // Nạp lịch sử phiếu bếp đã có trên cloud để tránh in lại khi khởi động (chỉ lấy phiếu tạo trước khi khởi chạy app)
     try {
@@ -676,11 +688,14 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
   Future<void> _pollActiveTicketsAndOrders(String storeId) async {
     try {
-      // 1. Quét 10 phiếu bếp mới nhất
+      // 1. Quét 10 phiếu bếp mới nhất đang ở trạng thái 'chờ' và được gửi gần đây
+      final limitTime = (_startupTime ?? DateTime.now().toUtc()).subtract(const Duration(minutes: 5)).toIso8601String();
       final tickets = await Supabase.instance.client
           .from('kitchen_tickets')
           .select('id')
           .eq('store_id', storeId)
+          .eq('status', 'cho')
+          .gt('sent_at', limitTime)
           .order('sent_at', ascending: false)
           .limit(10);
       
@@ -696,12 +711,13 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         }
       }
 
-      // 2. Quét 10 đơn hàng thanh toán mới nhất
+      // 2. Quét 10 đơn hàng thanh toán mới nhất được thanh toán gần đây
       final orders = await Supabase.instance.client
           .from('orders')
           .select('id')
           .eq('store_id', storeId)
           .inFilter('status', ['paid', 'completed'])
+          .gt('created_at', limitTime)
           .order('created_at', ascending: false)
           .limit(10);
 
