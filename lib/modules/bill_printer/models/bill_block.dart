@@ -76,7 +76,7 @@ extension BillBlockTypeX on BillBlockType {
       case BillBlockType.itemsList:
         return {'showPrice': true, 'showQty': true, 'showTotal': true, 'fontSize': 10};
       case BillBlockType.totals:
-        return {'showSubtotal': true, 'showDiscount': true, 'showTax': false,
+        return {'showSubtotal': true, 'showDiscount': true, 'showTax': false, 'showSurcharge': true,
                 'boldTotal': true, 'totalFontSize': 14, 'fontSize': 10};
       case BillBlockType.paymentMethod:
         return {'label': 'Thanh toán:', 'fontSize': 10};

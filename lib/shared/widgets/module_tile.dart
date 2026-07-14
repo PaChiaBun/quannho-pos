@@ -370,55 +370,71 @@ class _ModuleTileState extends State<ModuleTile>
                     ),
 
                     // ── Content ──────────────────────────────────────────
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Icon pill
-                          Container(
-                            width: 62,
-                            height: 62,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              color: Colors.white.withValues(alpha: 0.20),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.35),
-                                width: 1.5,
+                    Builder(
+                      builder: (context) {
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final isSmallMobile = screenWidth < 450;
+                        
+                        final padding = isSmallMobile 
+                            ? const EdgeInsets.fromLTRB(14, 14, 14, 12) 
+                            : const EdgeInsets.fromLTRB(20, 20, 20, 16);
+                            
+                        final iconBoxSize = isSmallMobile ? 48.0 : 62.0;
+                        final iconSize = isSmallMobile ? 26.0 : 36.0;
+                        final titleFontSize = isSmallMobile ? 18.0 : 22.0;
+                        final subtitleFontSize = isSmallMobile ? 12.0 : 13.5;
+                        
+                        return Padding(
+                          padding: padding,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Icon pill
+                              Container(
+                                width: iconBoxSize,
+                                height: iconBoxSize,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(isSmallMobile ? 14 : 18),
+                                  color: Colors.white.withValues(alpha: 0.20),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.35),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Icon(d.icon, color: Colors.white, size: iconSize),
                               ),
-                            ),
-                            child: Icon(d.icon, color: Colors.white, size: 36),
-                          ),
 
-                          const Spacer(),
+                              const Spacer(),
 
-                          // Module name
-                          Text(
-                            d.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900, // Dày và đậm hơn
-                              letterSpacing: -0.3,
-                              height: 1.1,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                              // Module name
+                              Text(
+                                d.title,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: titleFontSize,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.3,
+                                  height: 1.1,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              // Subtitle
+                              Text(
+                                d.subtitle,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.85),
+                                  fontSize: subtitleFontSize,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          // Subtitle
-                          Text(
-                            d.subtitle,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.85),
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700, // Đậm hơn
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
+                        );
+                      }
                     ),
 
                     // ── Ripple từ điểm chạm ──────────────────────────────

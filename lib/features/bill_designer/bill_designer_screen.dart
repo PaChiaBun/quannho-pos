@@ -345,7 +345,8 @@ class _PreviewTab extends StatelessWidget {
 
     double subtotal = _sampleItems.fold(0, (s, e) => s + e.$2 * e.$3);
     double discount = 15000;
-    double total    = subtotal - discount;
+    double surcharge = 10000;
+    double total    = subtotal - discount + surcharge;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -428,6 +429,10 @@ class _PreviewTab extends StatelessWidget {
                 Text('Giảm giá:', style: TextStyle(fontSize: b - 1)),
                 Text('-${_money(discount)}',
                     style: TextStyle(fontSize: b - 1, color: Colors.red.shade600)),
+              ]),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text('Phí dịch vụ/Ship:', style: TextStyle(fontSize: b - 1)),
+                Text(_money(surcharge), style: TextStyle(fontSize: b - 1)),
               ]),
               const SizedBox(height: 4),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [

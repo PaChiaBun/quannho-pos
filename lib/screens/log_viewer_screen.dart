@@ -234,6 +234,221 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
   }
 
   Widget _buildFilterBar() {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    final dateRangeWidget = InkWell(
+      onTap: () async {
+        final picked = await showDateRangePicker(
+          context: context,
+          initialDateRange: _selectedDateRange,
+          firstDate: DateTime(2025),
+          lastDate: DateTime.now().add(const Duration(days: 1)),
+        );
+        if (picked != null) {
+          setState(() {
+            _selectedDateRange = DateTimeRange(
+              start: DateTime(picked.start.year, picked.start.month, picked.start.day, 0, 0, 0),
+              end: DateTime(picked.end.year, picked.end.month, picked.end.day, 23, 59, 59),
+            );
+          });
+        }
+      },
+      child: InputDecorator(
+        decoration: const InputDecoration(
+          labelText: 'Khoảng thời gian',
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                _selectedDateRange == null
+                    ? 'Chọn ngày...'
+                    : '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}',
+                style: GoogleFonts.outfit(fontSize: 14),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(Icons.calendar_today_rounded, size: 16),
+          ],
+        ),
+      ),
+    );
+
+    final staffWidget = DropdownButtonFormField<String>(
+      value: _selectedStaff,
+      decoration: const InputDecoration(
+        labelText: 'Nhân viên',
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+      isExpanded: true,
+      items: _staffNames.map((name) {
+        return DropdownMenuItem<String>(
+          value: name,
+          child: Text(name, style: GoogleFonts.outfit(fontSize: 14), overflow: TextOverflow.ellipsis),
+        );
+      }).toList(),
+      onChanged: (val) {
+        if (val != null) {
+          setState(() => _selectedStaff = val);
+        }
+      },
+    );
+
+    final startTimeWidget = InkWell(
+      onTap: () async {
+        final picked = await showTimePicker(
+          context: context,
+          initialTime: _startTime,
+        );
+        if (picked != null) {
+          setState(() {
+            _startTime = picked;
+          });
+        }
+      },
+      child: InputDecorator(
+        decoration: const InputDecoration(
+          labelText: 'Giờ bắt đầu',
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _startTime.format(context),
+              style: GoogleFonts.outfit(fontSize: 14),
+            ),
+            const Icon(Icons.access_time_rounded, size: 16),
+          ],
+        ),
+      ),
+    );
+
+    final endTimeWidget = InkWell(
+      onTap: () async {
+        final picked = await showTimePicker(
+          context: context,
+          initialTime: _endTime,
+        );
+        if (picked != null) {
+          setState(() {
+            _endTime = picked;
+          });
+        }
+      },
+      child: InputDecorator(
+        decoration: const InputDecoration(
+          labelText: 'Giờ kết thúc',
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _endTime.format(context),
+              style: GoogleFonts.outfit(fontSize: 14),
+            ),
+            const Icon(Icons.access_time_rounded, size: 16),
+          ],
+        ),
+      ),
+    );
+
+    final tagWidget = DropdownButtonFormField<String>(
+      value: _selectedTag,
+      decoration: const InputDecoration(
+        labelText: 'Loại thao tác',
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+      isExpanded: true,
+      items: _tags.entries.map((e) {
+        return DropdownMenuItem<String>(
+          value: e.key,
+          child: Text(e.value, style: GoogleFonts.outfit(fontSize: 14), overflow: TextOverflow.ellipsis),
+        );
+      }).toList(),
+      onChanged: (val) {
+        if (val != null) {
+          setState(() => _selectedTag = val);
+        }
+      },
+    );
+
+    final levelWidget = DropdownButtonFormField<String>(
+      value: _selectedLevel,
+      decoration: const InputDecoration(
+        labelText: 'Phân loại Log',
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+      isExpanded: true,
+      items: _levels.map((level) {
+        return DropdownMenuItem<String>(
+          value: level,
+          child: Text(level, style: GoogleFonts.outfit(fontSize: 14), overflow: TextOverflow.ellipsis),
+        );
+      }).toList(),
+      onChanged: (val) {
+        if (val != null) {
+          setState(() => _selectedLevel = val);
+        }
+      },
+    );
+
+    Widget filterLayout;
+    if (isMobile) {
+      filterLayout = Column(
+        children: [
+          dateRangeWidget,
+          const SizedBox(height: 12),
+          staffWidget,
+          const SizedBox(height: 12),
+          startTimeWidget,
+          const SizedBox(height: 12),
+          endTimeWidget,
+          const SizedBox(height: 12),
+          tagWidget,
+          const SizedBox(height: 12),
+          levelWidget,
+        ],
+      );
+    } else {
+      filterLayout = Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: dateRangeWidget),
+              const SizedBox(width: 12),
+              Expanded(child: staffWidget),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: startTimeWidget),
+              const SizedBox(width: 12),
+              Expanded(child: endTimeWidget),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: tagWidget),
+              const SizedBox(width: 12),
+              Expanded(child: levelWidget),
+            ],
+          ),
+        ],
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -250,192 +465,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final picked = await showDateRangePicker(
-                      context: context,
-                      initialDateRange: _selectedDateRange,
-                      firstDate: DateTime(2025),
-                      lastDate: DateTime.now().add(const Duration(days: 1)),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _selectedDateRange = DateTimeRange(
-                          start: DateTime(picked.start.year, picked.start.month, picked.start.day, 0, 0, 0),
-                          end: DateTime(picked.end.year, picked.end.month, picked.end.day, 23, 59, 59),
-                        );
-                      });
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Khoảng thời gian',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _selectedDateRange == null
-                              ? 'Chọn ngày...'
-                              : '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}',
-                          style: GoogleFonts.outfit(fontSize: 14),
-                        ),
-                        const Icon(Icons.calendar_today_rounded, size: 16),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Chọn Nhân viên
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _selectedStaff,
-                  decoration: const InputDecoration(
-                    labelText: 'Nhân viên',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                  items: _staffNames.map((name) {
-                    return DropdownMenuItem<String>(
-                      value: name,
-                      child: Text(name, style: GoogleFonts.outfit(fontSize: 14)),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() => _selectedStaff = val);
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final picked = await showTimePicker(
-                      context: context,
-                      initialTime: _startTime,
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _startTime = picked;
-                      });
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Giờ bắt đầu',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _startTime.format(context),
-                          style: GoogleFonts.outfit(fontSize: 14),
-                        ),
-                        const Icon(Icons.access_time_rounded, size: 16),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final picked = await showTimePicker(
-                      context: context,
-                      initialTime: _endTime,
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _endTime = picked;
-                      });
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Giờ kết thúc',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _endTime.format(context),
-                          style: GoogleFonts.outfit(fontSize: 14),
-                        ),
-                        const Icon(Icons.access_time_rounded, size: 16),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              // Loại thao tác (Tag)
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _selectedTag,
-                  decoration: const InputDecoration(
-                    labelText: 'Loại thao tác',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                  items: _tags.entries.map((e) {
-                    return DropdownMenuItem<String>(
-                      value: e.key,
-                      child: Text(e.value, style: GoogleFonts.outfit(fontSize: 14)),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() => _selectedTag = val);
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Mức độ nghiêm trọng (Log Level tiếng Việt)
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _selectedLevel,
-                  decoration: const InputDecoration(
-                    labelText: 'Phân loại Log',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                  items: _levels.map((level) {
-                    return DropdownMenuItem<String>(
-                      value: level,
-                      child: Text(level, style: GoogleFonts.outfit(fontSize: 14)),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() => _selectedLevel = val);
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
+          filterLayout,
           const SizedBox(height: 16),
           // NÚT TRUY XUẤT LOG
           SizedBox(

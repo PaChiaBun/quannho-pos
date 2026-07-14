@@ -2,6 +2,7 @@
 // ignore_for_file: use_build_context_synchronously
 import 'dart:convert';
 import 'dart:io';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import '../../../core/services/vietqr_service.dart';
 import 'package:flutter/material.dart';
@@ -121,7 +122,7 @@ class BillPdfGenerator {
 
     final sections = <pw.Widget>[];
     for (final block in tpl.blocks.where((b) => b.enabled)) {
-      final w = _blockToPdf(block, bill, font, fontBold);
+      final w = _blockToPdf(block, tpl, bill, font, fontBold);
       if (w != null) sections.add(w);
     }
 
@@ -142,7 +143,7 @@ class BillPdfGenerator {
 
   // ── Render từng BillBlock → pw.Widget ─────────────────────────────────────
   static pw.Widget? _blockToPdf(
-      BillBlock b, BillData bill, pw.Font font, pw.Font fontBold) {
+      BillBlock b, BillBlockTemplate tpl, BillData bill, pw.Font font, pw.Font fontBold) {
     switch (b.type) {
       case BillBlockType.shopHeader: {
         final name    = b.cfg<String>('shopName', '').isNotEmpty
@@ -281,6 +282,13 @@ class BillPdfGenerator {
       }
       case BillBlockType.itemsList: {
         final fs = b.cfg<int>('fontSize', 10).toDouble();
+        final totalsBlock = tpl.blocks.firstWhereOrNull((block) => block.type == BillBlockType.totals);
+        final showSurchargeInTotals = totalsBlock?.cfg<bool>('showSurcharge', true) ?? true;
+
+        final items = showSurchargeInTotals
+            ? bill.items.where((item) => item.name != 'Phí dịch vụ / Ship')
+            : bill.items;
+
         return pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.stretch, children: [
           pw.Row(children: [
             pw.Expanded(flex: 4, child: pw.Text('Mon',
@@ -290,7 +298,7 @@ class BillPdfGenerator {
             pw.Text('T.Tien', style: pw.TextStyle(font: fontBold, fontSize: fs - 1)),
           ]),
           pw.Divider(thickness: 0.3, height: 4),
-          ...bill.items.map((item) => pw.Padding(
+          ...items.map((item) => pw.Padding(
             padding: const pw.EdgeInsets.symmetric(vertical: 2),
             child: pw.Row(children: [
               pw.Expanded(flex: 4, child: pw.Text(item.name,
@@ -306,17 +314,28 @@ class BillPdfGenerator {
         final fs   = b.cfg<int>('fontSize', 10).toDouble();
         final tfs  = b.cfg<int>('totalFontSize', 14).toDouble();
         final isBold = b.cfg<bool>('boldTotal', true);
+        final showSurcharge = b.cfg<bool>('showSurcharge', true);
+
+        final surchargeItem = bill.items.firstWhereOrNull((item) => item.name == 'Phí dịch vụ / Ship');
+        final surcharge = surchargeItem?.total ?? 0.0;
+        final displaySubtotal = showSurcharge ? (bill.subtotal) : (bill.subtotal - surcharge);
+
         return pw.Column(children: [
           if (b.cfg<bool>('showSubtotal', true))
             pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
               pw.Text('Tam tinh:', style: pw.TextStyle(font: font, fontSize: fs)),
-              pw.Text(_money(bill.subtotal), style: pw.TextStyle(font: font, fontSize: fs)),
+              pw.Text(_money(displaySubtotal), style: pw.TextStyle(font: font, fontSize: fs)),
             ]),
           if (b.cfg<bool>('showDiscount', true) && bill.discount > 0)
             pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
               pw.Text('Giam gia:', style: pw.TextStyle(font: font, fontSize: fs)),
               pw.Text('-${_money(bill.discount)}',
                   style: pw.TextStyle(font: font, fontSize: fs, color: PdfColors.red)),
+            ]),
+          if (showSurcharge && surcharge > 0)
+            pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+              pw.Text('Phi dich vu/Ship:', style: pw.TextStyle(font: font, fontSize: fs)),
+              pw.Text(_money(surcharge), style: pw.TextStyle(font: font, fontSize: fs)),
             ]),
           pw.SizedBox(height: 4),
           pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [

@@ -211,6 +211,7 @@ class _BlockConfigSheetState extends ConsumerState<BlockConfigSheet> {
   List<Widget> _totalsFields() => [
     _toggle('Hiện tạm tính', 'showSubtotal'),
     _toggle('Hiện giảm giá', 'showDiscount'),
+    _toggle('Hiện phí dịch vụ / Ship', 'showSurcharge'),
     _toggle('Hiện thuế VAT', 'showTax'),
     _toggle('In đậm tổng', 'boldTotal'),
     _sliderRow('Cỡ chữ tổng', 'totalFontSize', 10, 20),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/bill_block.dart';
@@ -20,9 +21,15 @@ class BillPreviewWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final widthFactor = tpl.paperSize == '58mm' ? 0.60
         : tpl.paperSize == 'a4' ? 1.0 : 0.80;
-    final subtotal = _kSampleItems.fold(0.0, (s, e) => s + e.$2 * e.$3);
+    final baseSubtotal = _kSampleItems.fold(0.0, (s, e) => s + e.$2 * e.$3);
     const discount = 15000.0;
-    final total = subtotal - discount;
+    const surcharge = 10000.0;
+
+    final totalsBlock = tpl.blocks.firstWhereOrNull((block) => block.type == BillBlockType.totals);
+    final showSurchargeInTotals = totalsBlock?.cfg<bool>('showSurcharge', true) ?? true;
+
+    final subtotal = showSurchargeInTotals ? baseSubtotal : (baseSubtotal + surcharge);
+    final total = baseSubtotal - discount + surcharge;
 
     return Container(
       color: const Color(0xFFE8EAF2),
@@ -78,7 +85,7 @@ class BillPreviewWidget extends StatelessWidget {
       case BillBlockType.tableInfo:
         return _TableInfo(b: b);
       case BillBlockType.itemsList:
-        return _ItemsList(b: b);
+        return _ItemsList(b: b, tpl: tpl);
       case BillBlockType.totals:
         return _Totals(b: b, subtotal: subtotal, discount: discount, total: total);
       case BillBlockType.paymentMethod:
@@ -293,12 +300,22 @@ class _TaxInfo extends StatelessWidget {
 
 class _ItemsList extends StatelessWidget {
   final BillBlock b;
-  const _ItemsList({required this.b});
+  final BillBlockTemplate tpl;
+  const _ItemsList({required this.b, required this.tpl});
   static final _fmt = NumberFormat('#,###', 'vi_VN');
   static String _m(double v) => '${_fmt.format(v.round())}đ';
   @override
   Widget build(BuildContext context) {
     final fs = b.cfg<int>('fontSize', 10).toDouble();
+    final totalsBlock = tpl.blocks.firstWhereOrNull((block) => block.type == BillBlockType.totals);
+    final showSurchargeInTotals = totalsBlock?.cfg<bool>('showSurcharge', true) ?? true;
+
+    final items = [
+      ..._kSampleItems,
+      if (!showSurchargeInTotals)
+        ('Phí dịch vụ / Ship', 1, 10000.0),
+    ];
+
     return Column(children: [
       Row(children: [
         Expanded(flex: 4, child: Text('Món', style: TextStyle(fontWeight: FontWeight.w700, fontSize: fs - 1))),
@@ -306,7 +323,7 @@ class _ItemsList extends StatelessWidget {
         const SizedBox(width: 12),
         Text('T.Tiền', style: TextStyle(fontWeight: FontWeight.w700, fontSize: fs - 1)),
       ]),
-      ..._kSampleItems.map((item) => Padding(
+      ...items.map((item) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 2),
         child: Row(children: [
           Expanded(flex: 4, child: Text(item.$1, style: TextStyle(fontSize: fs - 1))),
@@ -330,16 +347,26 @@ class _Totals extends StatelessWidget {
     final fs = b.cfg<int>('fontSize', 10).toDouble();
     final tfs = b.cfg<int>('totalFontSize', 14).toDouble();
     final bold = b.cfg<bool>('boldTotal', true);
+    final showSurcharge = b.cfg<bool>('showSurcharge', true);
+    const surcharge = 10000.0;
+
+    final displaySubtotal = showSurcharge ? (subtotal) : (subtotal - surcharge);
+
     return Column(children: [
       if (b.cfg<bool>('showSubtotal', true))
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('Tạm tính:', style: TextStyle(fontSize: fs)),
-          Text(_m(subtotal), style: TextStyle(fontSize: fs)),
+          Text(_m(displaySubtotal), style: TextStyle(fontSize: fs)),
         ]),
       if (b.cfg<bool>('showDiscount', true) && discount > 0)
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('Giảm giá:', style: TextStyle(fontSize: fs)),
           Text('-${_m(discount)}', style: TextStyle(fontSize: fs, color: Colors.red.shade600)),
+        ]),
+      if (showSurcharge)
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text('Phí dịch vụ/Ship:', style: TextStyle(fontSize: fs)),
+          Text(_m(surcharge), style: TextStyle(fontSize: fs)),
         ]),
       const SizedBox(height: 4),
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [

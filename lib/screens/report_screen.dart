@@ -2938,6 +2938,7 @@ class _VoidAuditTabState extends ConsumerState<_VoidAuditTab> {
                       final qty = (item['quantity'] ?? item['qty'] ?? 1.0) as num;
                       final price = (item['price'] ?? item['unit_price'] ?? 0.0) as num;
                       final itemTotal = qty * price;
+                      final deductedAsLoss = item['deducted_as_loss'] as bool? ?? false;
 
                       return Row(
                         children: [
@@ -2969,9 +2970,39 @@ class _VoidAuditTabState extends ConsumerState<_VoidAuditTab> {
                                     color: _kInk,
                                   ),
                                 ),
-                                Text(
-                                  'Đơn giá: ${_fmtShort(price.toDouble())}',
-                                  style: const TextStyle(fontSize: 10, color: _kMuted),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Đơn giá: ${_fmtShort(price.toDouble())}',
+                                      style: const TextStyle(fontSize: 10, color: _kMuted),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                      decoration: BoxDecoration(
+                                        color: deductedAsLoss
+                                            ? const Color(0xFFFFEBEE)
+                                            : const Color(0xFFE8F5E9),
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: deductedAsLoss
+                                              ? const Color(0xFFFFCDD2)
+                                              : const Color(0xFFC8E6C9),
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        deductedAsLoss ? 'Đã trừ hao hụt' : 'Không trừ kho',
+                                        style: TextStyle(
+                                          fontSize: 8,
+                                          fontWeight: FontWeight.w700,
+                                          color: deductedAsLoss
+                                              ? const Color(0xFFC62828)
+                                              : const Color(0xFF2E7D32),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -3616,7 +3647,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
       // Query các hóa đơn có discount > 0 và có note
       final ordersRes = await db
           .from('orders')
-          .select('id, order_number, discount, note, created_at, staff_members(name)')
+          .select('id, order_number, discount, note, created_at, staff_members!orders_staff_id_fkey(name)')
           .eq('store_id', storeId)
           .gte('created_at', start)
           .lt('created_at', end)
@@ -3641,7 +3672,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
         final orderNumber = o['order_number'] as String? ?? o['id'].toString().substring(0, 8);
         final double discount = (o['discount'] as num?)?.toDouble() ?? 0;
         final createdAt = DateTime.parse(o['created_at'] as String).toLocal();
-        final staff = o['staff_members'] as Map<String, dynamic>?;
+        final staff = o['staff_members!orders_staff_id_fkey'] as Map<String, dynamic>?;
         final cashierName = staff?['name'] as String? ?? 'Thu ngân';
 
         _totalOrders++;
