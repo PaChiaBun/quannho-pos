@@ -404,7 +404,7 @@ class _MainShellState extends ConsumerState<MainShell>
         session.role != 'manager' &&
         session.role.toLowerCase() != 'quản lý';
 
-    if (isStaff && idx != 0 && idx != 10) {
+    if (isStaff && idx != 0 && idx != 10 && idx != 6) {
       final openShiftAsync = ref.watch(openShiftCCProvider);
       final hasActiveShift = openShiftAsync.asData?.value != null;
       if (!hasActiveShift) {

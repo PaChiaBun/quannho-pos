@@ -427,6 +427,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             Consumer(builder: (_, ref, __) {
                               final session = ref.watch(sessionProvider);
                               final isOwner = session?.isOwner ?? true;
+                              final shopName = session?.storeName ?? 'Quán Nhỏ';
+
                               if (!isOwner && session != null && session.hasStore) {
                                 // Staff — pill rõ với border trắng
                                 return Container(
@@ -447,7 +449,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                           size: 11, color: Colors.white),
                                       const SizedBox(width: 5),
                                       Text(
-                                        session.storeName ?? 'Quán Nhỏ',
+                                        shopName,
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 11,
@@ -474,15 +476,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     ),
                                   ],
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.storefront_rounded,
+                                    const Icon(Icons.storefront_rounded,
                                         size: 11, color: Colors.white),
-                                    SizedBox(width: 5),
+                                    const SizedBox(width: 5),
                                     Text(
-                                      'Quán Nhỏ · POS',
-                                      style: TextStyle(
+                                      shopName,
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w800,
@@ -685,7 +687,78 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     onTap: () => showCreateStoreSheet(ctx, r),
                   );
                 }
-                // ── Doanh thu bình thường ──────────────────────────────────
+                // ── Kiểm tra quyền xem doanh thu (Ẩn đối với nhân viên thường) ──────
+                final session = r.watch(sessionProvider);
+                final isStaff = session != null &&
+                    !(session.isOwner) &&
+                    session.role != 'owner' &&
+                    session.role != 'manager' &&
+                    session.role.toLowerCase() != 'quản lý';
+
+                if (isStaff) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'XIN CHÀO, ${session.displayName.toUpperCase()}',
+                                  style: const TextStyle(
+                                    color: _kWhite60,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                const Text(
+                                  'Chúc bạn một ngày làm việc vui vẻ!',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0x334CAF50),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: const Color(0x664CAF50)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.store_rounded,
+                                    size: 12, color: Color(0xFF81C784)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Sẵn sàng',
+                                  style: TextStyle(
+                                    color: Color(0xFF81C784),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                }
+
+                // ── Doanh thu bình thường (chỉ hiện cho chủ quán/quản lý) ──────────────────
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -744,38 +817,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   color: Color(0xFF81C784),
                                   fontWeight: FontWeight.w700,
                                   fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Pills row — live data
-                    Builder(builder: (_) {
-                      final s         = r.watch(todayStatsProvider);
-                      final orders    = s.value?.todayOrders ?? 0;
-                      final customers = s.value?.todayCustomers ?? 0;
-                      return Row(
-                        children: [
-                          _HeaderPill(
-                            icon: Icons.receipt_long_rounded,
-                            label: 'Số đơn',
-                            value: '$orders',
-                          ),
-                          const SizedBox(width: 8),
-                          _HeaderPill(
-                            icon: Icons.people_rounded,
-                            label: 'Khách',
-                            value: '$customers',
+                              ],
+                            ),
                           ),
                         ],
-                      );
-                    }),
-                  ],
-                );
-              }),
+                      ),
+                      const SizedBox(height: 16),
+                      // Pills row — live data
+                      Builder(builder: (_) {
+                        final s         = r.watch(todayStatsProvider);
+                        final orders    = s.value?.todayOrders ?? 0;
+                        final customers = s.value?.todayCustomers ?? 0;
+                        return Row(
+                          children: [
+                            _HeaderPill(
+                              icon: Icons.receipt_long_rounded,
+                              label: 'Số đơn',
+                              value: '$orders',
+                            ),
+                            const SizedBox(width: 8),
+                            _HeaderPill(
+                              icon: Icons.people_rounded,
+                              label: 'Khách',
+                              value: '$customers',
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
+                  );
+                }),
               ],
             ),
           ),

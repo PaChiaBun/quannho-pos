@@ -1686,24 +1686,26 @@ Phát hiện lỗi nghiêm trọng khi gọi món nháp (Chưa gửi bếp):
 
 ---
 
-## 2026-07-14 — Thiết Kế Lại Giao Diện Checkout & Deploy Lên VPS
+## 2026-07-14 — Ẩn Doanh Thu Nhân Viên, Hiện Tên Quán Thực Tế & Mở Khóa Cài Đặt Không Cần Chấm Công
 
 ### Đã làm
-- ✅ **Thiết kế lại Hộp thoại Thu tiền (`_CheckoutSheet`)**:
-  - Giao diện hai cột trực quan hơn cho PC: Cột trái quản lý đơn hàng & chiết khấu; Cột phải quản lý phương thức thanh toán.
-  - Thiết kế lại thẻ "Tổng tiền cần thu" nổi bật với tông màu Navy và logo tiền cam.
-  - Tích hợp các nút gợi ý tiền mặt lớn (Quick Cash Grid) giúp nhấp chuột hoặc chạm dễ dàng.
-  - Hộp thông tin tiền thừa/thiếu thiết kế đẹp mắt với thẻ trạng thái có màu sắc rõ ràng (xanh lá/cam).
-  - Tái cấu trúc phần hiển thị mã QR VietQR chuyển khoản gọn gàng và tinh tế.
-- ✅ **Deploy và cập nhật lên VPS**:
-  - Biên dịch phiên bản Flutter Web với base-href `/pos/`.
-  - Đồng bộ hóa và cập nhật thành công lên VPS `45.32.104.228` tại `/var/www/quannho/pos/`.
+- ✅ **Ẩn Doanh Thu Hôm Nay Cho Nhân Viên**:
+  - Ẩn hoàn toàn bảng doanh thu hôm nay, số đơn và khách hàng đối với các vai trò nhân sự thông thường (không phải chủ quán hay quản lý). Thay thế bằng lời chúc ngày làm việc vui vẻ thân thiện.
+- ✅ **Hiển Thị Tên Quán Thực Tế**:
+  - Cập nhật ô hiển thị loại quán ("Quán ăn" hoặc text tĩnh "Quán Nhỏ · POS") để lấy chính xác tên quán thực tế đã thiết lập thông qua `shopNameProvider` cho cả chủ quán và nhân viên.
+- ✅ **Mở Khóa Tab Cài Đặt (Settings)**:
+  - Cho phép nhân viên truy cập thẳng vào tab Cài đặt (index `6`) để xem/cài đặt thiết bị mà không bị chặn bởi màn hình yêu cầu chấm công (`_buildClockInRequiredScreen`).
+- ✅ **Đồng Bộ & Deploy**:
+  - Build bản production Flutter Web và upload thành công lên VPS `45.32.104.228`.
+  - Thực hiện Hot Reload / Hot Restart đồng bộ trên cả 2 máy giả lập Pixel 6 và Pixel 7.
 
 ### Files đã sửa/tạo mới
 | File | Thay đổi |
 |------|----------|
-| `lib/screens/ban_screen.dart` | Thiết kế lại hoàn toàn các widget con trong `_CheckoutSheetState` và tối ưu responsive. |
-| `nhat_ky.md` | Cập nhật nhật ký thay đổi thiết kế và deploy. |
+| `lib/screens/dashboard_screen.dart` | Cập nhật bộ lọc ẩn doanh thu nhân viên, nạp `shopNameProvider` để hiển thị tên quán thực tế của thẻ shop. |
+| `lib/main.dart` | Thêm ngoại lệ tab Cài đặt (index `6`) khỏi bộ lọc Clock-in bắt buộc. |
+| `nhat_ky.md` | Ghi chép tiến độ ngày hôm nay. |
+
 
 
 
