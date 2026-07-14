@@ -238,8 +238,8 @@ class _BanScreenState extends ConsumerState<BanScreen> {
 
   // ── Zone ──
   Future<void> _addZone() async {
-    final perms = ref.read(userActionPermsProvider).value;
-    final hasPerm = perms?.contains('ban.manage_structure') ?? false;
+    final perms = await ref.read(userActionPermsProvider.future);
+    final hasPerm = perms.contains('ban.manage_structure');
     if (!hasPerm) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -286,8 +286,8 @@ class _BanScreenState extends ConsumerState<BanScreen> {
   }
 
   Future<void> _editZone(BanZoneModel zone) async {
-    final perms = ref.read(userActionPermsProvider).value;
-    final hasPerm = perms?.contains('ban.manage_structure') ?? false;
+    final perms = await ref.read(userActionPermsProvider.future);
+    final hasPerm = perms.contains('ban.manage_structure');
     if (!hasPerm) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -317,8 +317,8 @@ class _BanScreenState extends ConsumerState<BanScreen> {
   }
 
   Future<void> _addTable(String? defaultZoneId) async {
-    final perms = ref.read(userActionPermsProvider).value;
-    final hasPerm = perms?.contains('ban.manage_structure') ?? false;
+    final perms = await ref.read(userActionPermsProvider.future);
+    final hasPerm = perms.contains('ban.manage_structure');
     if (!hasPerm) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -444,8 +444,8 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         session: session,
         onEdit: () async {
           Navigator.pop(context);
-          final perms = ref.read(userActionPermsProvider).value;
-          final hasPerm = perms?.contains('ban.manage_structure') ?? false;
+          final perms = await ref.read(userActionPermsProvider.future);
+          final hasPerm = perms.contains('ban.manage_structure');
           if (!hasPerm) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -521,6 +521,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     final zonesAsync = ref.watch(banZonesProvider);
     final allTablesAsync = ref.watch(allBanTablesProvider);
     final activeSessionsAsync = ref.watch(activeSessionsProvider);
+    ref.watch(userActionPermsProvider);
 
     // Khi session load xong (từ null → có storeId) → bắt đầu sync
     ref.listen<SessionData?>(sessionProvider, (previous, next) {
@@ -2955,8 +2956,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
   Future<void> _openCheckout(double total, List<BanSessionItemModel> items) async {
     if (_isCheckingOut) return; // guard double-tap
-    final perms = ref.read(userActionPermsProvider).value;
-    final hasPerm = perms?.contains('pos.checkout') ?? false;
+    final perms = await ref.read(userActionPermsProvider.future);
+    final hasPerm = perms.contains('pos.checkout');
     if (!hasPerm) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
