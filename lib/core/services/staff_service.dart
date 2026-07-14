@@ -653,7 +653,16 @@ class StaffService {
           .maybeSingle();
       if (res != null) {
         final decoded = jsonDecode(res['value'] as String) as List;
-        return decoded.cast<String>().toSet();
+        final perms = decoded.cast<String>().toSet();
+        if (canonical == 'cashier' && !perms.contains('pos.checkout')) {
+          perms.add('pos.checkout');
+          unawaited(setActionPermissions(
+            storeId: storeId,
+            role: role,
+            actions: perms,
+          ));
+        }
+        return perms;
       }
     } catch (e) {
       debugPrint('[StaffService] getActionPermissions error: $e');
