@@ -3892,6 +3892,194 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
     );
   }
 
+  Future<void> _showOrderDetailsByNumber(String orderNumber) async {
+    try {
+      final sb = Supabase.instance.client;
+      final orderRows = await sb
+          .from('orders')
+          .select('id, order_number, customer_name, subtotal, discount, total, payment_method, note, created_at')
+          .eq('order_number', orderNumber)
+          .limit(1);
+
+      if (orderRows.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Không tìm thấy đơn hàng "$orderNumber"', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+              backgroundColor: _kRed,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        }
+        return;
+      }
+      final order = orderRows.first;
+      final orderId = order['id'] as String;
+
+      final items = await sb
+          .from('order_items')
+          .select('name, qty, quantity, unit_price, subtotal')
+          .eq('order_id', orderId);
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: _kBg,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Chi tiết đơn hàng', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 16, color: _kNavy)),
+              IconButton(
+                icon: const Icon(Icons.close_rounded, size: 20),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE8E2DA)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Số đơn:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                          Text(order['order_number'] as String, style: GoogleFonts.outfit(fontSize: 13, color: _kNavy, fontWeight: FontWeight.w900)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Thời gian:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                          Text(
+                            DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(order['created_at'] as String)),
+                            style: GoogleFonts.outfit(fontSize: 12, color: _kInk, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                      if (order['customer_name'] != null && (order['customer_name'] as String).isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Khách hàng:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                            Text(order['customer_name'] as String, style: GoogleFonts.outfit(fontSize: 12, color: _kInk, fontWeight: FontWeight.w500)),
+                          ],
+                        ),
+                      ],
+                      if (order['payment_method'] != null && (order['payment_method'] as String).isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Hình thức:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                            Text(order['payment_method'] as String, style: GoogleFonts.outfit(fontSize: 12, color: _kInk, fontWeight: FontWeight.w500)),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text('Danh sách món:', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: _kNavy)),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.3),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: items.map((item) {
+                        final name = item['name'] as String? ?? '';
+                        final qty = (item['quantity'] as num?)?.toDouble() ?? (item['qty'] as num?)?.toDouble() ?? 1;
+                        final sub = (item['subtotal'] as num?)?.toDouble() ?? 0;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: const BoxDecoration(
+                            border: Border(bottom: BorderSide(color: Color(0xFFF2ECE4), width: 0.5)),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(child: Text(name, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: _kInk))),
+                              const SizedBox(width: 8),
+                              Text('x${qty.toStringAsFixed(0)}', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w800, color: _kNavy)),
+                              const SizedBox(width: 16),
+                              Text(_fmtVnd(sub), style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w800, color: _kNavy)),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Tạm tính:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+                    Text(_fmtVnd((order['subtotal'] as num?)?.toDouble() ?? 0), style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kInk)),
+                  ],
+                ),
+                if (order['discount'] != null && (order['discount'] as num).toDouble() > 0) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Giảm giá:', style: GoogleFonts.outfit(fontSize: 12, color: _kRed)),
+                      Text('-${_fmtVnd((order['discount'] as num).toDouble())}', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kRed)),
+                    ],
+                  ),
+                ],
+                const Divider(height: 20, color: Color(0xFFE8E2DA)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Tổng thanh toán:', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: _kNavy)),
+                    Text(_fmtVnd((order['total'] as num?)?.toDouble() ?? 0), style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kGreen)),
+                  ],
+                ),
+                if (order['note'] != null && (order['note'] as String).trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE8E2DA)),
+                    ),
+                    width: double.infinity,
+                    child: Text('Ghi chú: ${order['note']}', style: GoogleFonts.outfit(fontSize: 11, fontStyle: FontStyle.italic, color: _kMuted)),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi tải chi tiết: $e', style: GoogleFonts.outfit(color: Colors.white))),
+        );
+      }
+    }
+  }
+
   Widget _buildVoucherGroupsList() {
     if (_groups.isEmpty) {
       return Center(
@@ -3962,9 +4150,21 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                       children: [
                         Expanded(
                           flex: 3,
-                          child: Text(
-                            row.orderNumber,
-                            style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kInk),
+                          child: InkWell(
+                            onTap: () => _showOrderDetailsByNumber(row.orderNumber),
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Text(
+                                row.orderNumber,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF1565C0),
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                         Expanded(

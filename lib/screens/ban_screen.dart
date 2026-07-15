@@ -2060,26 +2060,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       return;
     }
 
-    // Món bếp đã xong → không cho xoá
-    if (status == 'xong') {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '⚠️ Món "${item.productName}" bếp đã xong, không thể xoá.',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
-            ),
-            backgroundColor: _kAmber,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
-      return;
-    }
-
-    // Món đã gửi / đang làm → confirm dialog có lý do bắt buộc
-    final label = status == 'dang_lam' ? '⚠️ Bếp đang làm món này!' : '📋 Món đã gửi bếp';
+    // Món đã gửi / đang làm / đã xong → confirm dialog có lý do bắt buộc
+    final label = status == 'xong'
+        ? '⚠️ Món này bếp đã làm xong!'
+        : (status == 'dang_lam' ? '⚠️ Bếp đang làm món này!' : '📋 Món đã gửi bếp');
     final showWastageOption = status == 'dang_lam' || status == 'xong';
     String? selectedReason;
     bool deductAsLoss = true;
@@ -4195,21 +4179,19 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                   color: _kNavy,
                                                   fontSize: 14.5),
                                             ),
-                                            if (!_isItemSent) ...[
-                                              const SizedBox(width: 6),
-                                              GestureDetector(
-                                                behavior: HitTestBehavior.opaque,
-                                                onTap: () => _removeItem(item),
-                                                child: Container(
-                                                  width: 30, height: 30,
-                                                  decoration: BoxDecoration(
-                                                    color: _kRed.withValues(alpha: 0.08),
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  ),
-                                                  child: const Icon(Icons.delete_outline_rounded, size: 16, color: _kRed),
+                                            const SizedBox(width: 6),
+                                            GestureDetector(
+                                              behavior: HitTestBehavior.opaque,
+                                              onTap: () => _removeItem(item),
+                                              child: Container(
+                                                width: 30, height: 30,
+                                                decoration: BoxDecoration(
+                                                  color: _kRed.withValues(alpha: 0.08),
+                                                  borderRadius: BorderRadius.circular(8),
                                                 ),
+                                                child: const Icon(Icons.delete_outline_rounded, size: 16, color: _kRed),
                                               ),
-                                            ],
+                                            ),
                                           ],
                                         ),
                                         // ── Topping & modifiers chips từ modifiersJson ──────

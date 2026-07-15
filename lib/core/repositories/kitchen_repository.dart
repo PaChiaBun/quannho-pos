@@ -186,8 +186,8 @@ class KitchenRepository {
         channel!.subscribe();
       } catch (_) {}
 
-      // Fallback polling (10s)
-      fallbackTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      // Fallback polling (45s)
+      fallbackTimer = Timer.periodic(const Duration(seconds: 45), (_) {
         refresh(storeId);
       });
     }
@@ -615,8 +615,8 @@ Stream<List<VoidNoticeModel>> watchVoidNotices(String storeId) async* {
     debugPrint('[KitchenRepo] void_notices channel status: $status err=$err');
   });
 
-  // ‼️ FALLBACK: Poll mỗi 10s để đảm bảo banner luôn hiện dù Realtime lag/fail
-  final pollTimer = Timer.periodic(const Duration(seconds: 10), (_) => fetch());
+  // ‼️ FALLBACK: Poll mỗi 45s để đảm bảo banner luôn hiện dù Realtime lag/fail
+  final pollTimer = Timer.periodic(const Duration(seconds: 45), (_) => fetch());
 
   yield* ctrl.stream;
 
