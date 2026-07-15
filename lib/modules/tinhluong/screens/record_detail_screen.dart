@@ -381,9 +381,11 @@ class _ShiftSummaryGrid extends StatelessWidget {
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 4,
-              childAspectRatio: 1.1,
+              crossAxisCount: MediaQuery.of(context).size.width > 700 ? 4 : 2,
+              childAspectRatio: MediaQuery.of(context).size.width > 700 ? 1.1 : 1.5,
               padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
               children: stats.map((s) => _StatCell(
                 icon: s.$1, color: s.$2, label: s.$3, value: s.$4,
               )).toList(),

@@ -564,42 +564,68 @@ class BillPdfGenerator {
           if (tpl.showDivider) pw.Divider(thickness: 1, height: 10),
 
           // Danh sách món với số lượng vòng tròn
-          ...bill.items.map((item) => pw.Padding(
-            padding: const pw.EdgeInsets.symmetric(vertical: 4),
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+          ...bill.items.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final item = entry.value;
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
               children: [
-                // Vòng tròn số lượng
                 pw.Container(
-                  width: qfs + 8, height: qfs + 8,
                   decoration: const pw.BoxDecoration(
-                      color: PdfColors.black, shape: pw.BoxShape.circle),
-                  child: pw.Center(
-                    child: pw.Text('${item.qty}',
-                        style: pw.TextStyle(
-                            font: fontBold, fontSize: qfs,
-                            color: PdfColors.white)),
+                    border: pw.Border(
+                      left: pw.BorderSide(color: PdfColors.black, width: 3),
+                    ),
                   ),
-                ),
-                pw.SizedBox(width: 8),
-                pw.Expanded(
-                  child: pw.Column(
+                  padding: const pw.EdgeInsets.only(left: 8, top: 2, bottom: 2),
+                  margin: const pw.EdgeInsets.symmetric(vertical: 4),
+                  child: pw.Row(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text(item.name,
-                          style: pw.TextStyle(font: bold, fontSize: ifs)),
-                      if (tpl.showNote && item.note != null && item.note!.isNotEmpty)
-                        pw.Text('   > ${item.note!}',
-                            style: pw.TextStyle(
-                                font: font, fontSize: ifs - 2,
-                                fontStyle: pw.FontStyle.italic,
-                                color: PdfColors.black)),
+                      // Vòng tròn số lượng
+                      pw.Container(
+                        width: qfs + 8, height: qfs + 8,
+                        decoration: const pw.BoxDecoration(
+                            color: PdfColors.black, shape: pw.BoxShape.circle),
+                        child: pw.Center(
+                          child: pw.Text('${item.qty}',
+                              style: pw.TextStyle(
+                                  font: fontBold, fontSize: qfs,
+                                  color: PdfColors.white)),
+                        ),
+                      ),
+                      pw.SizedBox(width: 8),
+                      pw.Expanded(
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(item.name,
+                                style: pw.TextStyle(font: bold, fontSize: ifs)),
+                            if (tpl.showNote && item.note != null && item.note!.isNotEmpty)
+                              pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: item.note!.split('\n').map((line) {
+                                  var displayLine = line;
+                                  if (displayLine.startsWith('+ Thêm món: ')) {
+                                    displayLine = '+ ${displayLine.substring('+ Thêm món: '.length)}';
+                                  }
+                                  return pw.Text('   > $displayLine',
+                                      style: pw.TextStyle(
+                                          font: font, fontSize: ifs - 2,
+                                          fontStyle: pw.FontStyle.italic,
+                                          color: PdfColors.black));
+                                }).toList(),
+                              ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
+                if (idx < bill.items.length - 1)
+                  pw.Divider(thickness: 0.5, height: 8, color: PdfColors.black),
               ],
-            ),
-          )),
+            );
+          }),
 
           if (tpl.showDivider) pw.Divider(thickness: 0.5, height: 8),
 
@@ -876,6 +902,9 @@ class StationPrinterDispatcher {
           for (final line in lines) {
             if (line.startsWith('+ Thêm món: ')) {
               final mStr = line.substring('+ Thêm món: '.length);
+              modifiers.addAll(mStr.split(', ').map((s) => s.trim()));
+            } else if (line.startsWith('+ ')) {
+              final mStr = line.substring('+ '.length);
               modifiers.addAll(mStr.split(', ').map((s) => s.trim()));
             } else if (line.startsWith('Ghi chú: ')) {
               freeNote = line.substring('Ghi chú: '.length).trim();

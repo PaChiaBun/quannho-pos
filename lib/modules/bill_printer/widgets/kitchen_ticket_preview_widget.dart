@@ -7,7 +7,7 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
   const KitchenTicketPreviewWidget({super.key, required this.tpl});
 
   static const _sampleItems = [
-    ('Phở Bò Đặc Biệt', 2, '+ Thêm món: Khúc Bạch, Dừa sợi\nGhi chú: Không hành, ít ớt'),
+    ('Phở Bò Đặc Biệt', 2, '+ Khúc Bạch, Dừa sợi\nGhi chú: Không hành, ít ớt'),
     ('Cơm Gà Xối Mỡ', 1, null),
     ('Bánh Mì Thịt', 3, 'Ghi chú: Không rau mùi'),
   ];
@@ -99,53 +99,74 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
                 const SizedBox(height: 4),
 
                 // ── Danh sách món ──
-                ..._sampleItems.map((item) {
+                ..._sampleItems.asMap().entries.map((entry) {
+                  final idx = entry.key;
+                  final item = entry.value;
                   final hasNote = tpl.showNote && item.$3 != null;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            left: BorderSide(color: Colors.black, width: 3.5),
+                          ),
+                        ),
+                        padding: const EdgeInsets.only(left: 10, top: 4, bottom: 4),
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                item.$1,
-                                style: GoogleFonts.outfit(
-                                  fontSize: tpl.itemFontSize.toDouble(),
-                                  fontWeight: tpl.boldItemName ? FontWeight.w900 : FontWeight.w500,
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    item.$1,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: tpl.itemFontSize.toDouble(),
+                                      fontWeight: tpl.boldItemName ? FontWeight.w900 : FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'x${item.$2}',
+                                  style: GoogleFonts.outfit(
+                                      fontSize: tpl.qtyFontSize.toDouble(),
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (hasNote)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4, top: 4),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: item.$3!.split('\n').map((line) {
+                                    var displayLine = line;
+                                    if (displayLine.startsWith('+ Thêm món: ')) {
+                                      displayLine = '+ ${displayLine.substring('+ Thêm món: '.length)}';
+                                    }
+                                    return Text(
+                                      '↳ $displayLine',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 10,
+                                        color: Colors.blueGrey,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    );
+                                  }).toList(),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'x${item.$2}',
-                              style: GoogleFonts.outfit(
-                                fontSize: tpl.qtyFontSize.toDouble(),
-                                fontWeight: FontWeight.w900,
-                                color: Colors.red.shade700,
-                              ),
-                            ),
                           ],
                         ),
-                        if (hasNote)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8, top: 2),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: item.$3!.split('\n').map((line) => Text(
-                                '↳ $line',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 10,
-                                  color: Colors.blueGrey,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              )).toList(),
-                            ),
-                          ),
-                      ],
-                    ),
+                      ),
+                      if (idx < _sampleItems.length - 1)
+                        const Divider(thickness: 0.8, height: 12, color: Colors.black26),
+                    ],
                   );
                 }),
 

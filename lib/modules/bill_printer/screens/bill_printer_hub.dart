@@ -44,7 +44,7 @@ class BillPrinterHub extends ConsumerWidget {
               crossAxisCount: MediaQuery.of(context).size.width > 700 ? 3 : 2,
               crossAxisSpacing: 14,
               mainAxisSpacing: 14,
-              childAspectRatio: MediaQuery.of(context).size.width > 700 ? 2.2 : 1.6,
+              childAspectRatio: MediaQuery.of(context).size.width > 700 ? 2.2 : 1.28,
               children: [
                 _HubSquareCard(
                   icon: Icons.print_rounded,
@@ -547,69 +547,72 @@ class _HubSquareCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.25),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
+  Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width <= 700;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(isMobile ? 12 : 16),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: isMobile ? 34 : 42,
+                  height: isMobile ? 34 : 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: isMobile ? 18 : 20),
+                ),
+                Icon(Icons.arrow_forward_rounded, color: Colors.white70, size: isMobile ? 14 : 16),
+              ],
+            ),
+            SizedBox(height: isMobile ? 6 : 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: isMobile ? 14 : 17,
+                  ),
+                ),
+                SizedBox(height: isMobile ? 2 : 4),
+                Text(
+                  subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white.withValues(alpha: 0.75),
+                    fontSize: isMobile ? 11 : 13,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: Colors.white, size: 20),
-              ),
-              const Icon(Icons.arrow_forward_rounded, color: Colors.white70, size: 16),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 17,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.outfit(
-                  color: Colors.white.withValues(alpha: 0.75),
-                  fontSize: 13,
-                  height: 1.3,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
+    );
+  }
 }

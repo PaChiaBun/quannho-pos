@@ -374,7 +374,7 @@ class _PreviewPanel extends StatelessWidget {
 
   // Dữ liệu mẫu để xem trước
   static const _sampleItems = [
-    ('Phở Bò Đặc Biệt', 2, '+ Thêm món: Khúc Bạch, Dừa sợi\nGhi chú: Không hành, ít ớt'),
+    ('Phở Bò Đặc Biệt', 2, '+ Khúc Bạch, Dừa sợi\nGhi chú: Không hành, ít ớt'),
     ('Cơm Gà Xối Mỡ', 1, null),
     ('Bánh Mì Thịt', 3, 'Ghi chú: Không rau mùi'),
   ];
@@ -432,50 +432,77 @@ class _PreviewPanel extends StatelessWidget {
               const SizedBox(height: 4),
 
               // ── Danh sách món ──
-              ..._sampleItems.map((item) {
+              ..._sampleItems.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final item = entry.value;
                 final hasNote = tpl.showNote && item.$3 != null;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Vòng tròn số lượng
-                      Container(
-                        width: tpl.qtyFontSize + 8,
-                        height: tpl.qtyFontSize + 8,
-                        decoration: const BoxDecoration(
-                            color: Colors.black, shape: BoxShape.circle),
-                        child: Center(
-                           child: Text('${item.$2}',
-                              style: GoogleFonts.outfit(
-                                  fontSize: tpl.qtyFontSize.toDouble(),
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white)),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          left: BorderSide(color: Colors.black, width: 3.5),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(item.$1,
-                                style: GoogleFonts.outfit(
-                                    fontSize: tpl.itemFontSize.toDouble(),
-                                    fontWeight: tpl.boldItemName
-                                        ? FontWeight.w800 : FontWeight.w500)),
-                            if (hasNote)
-                              ...item.$3!.split('\n').map((line) => Text(
-                                    '↳ $line',
+                      padding: const EdgeInsets.only(left: 10, top: 4, bottom: 4),
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Vòng tròn số lượng
+                          Container(
+                            width: tpl.qtyFontSize + 8,
+                            height: tpl.qtyFontSize + 8,
+                            decoration: const BoxDecoration(
+                                color: Colors.black, shape: BoxShape.circle),
+                            child: Center(
+                               child: Text('${item.$2}',
+                                  style: GoogleFonts.outfit(
+                                      fontSize: tpl.qtyFontSize.toDouble(),
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white)),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item.$1,
                                     style: GoogleFonts.outfit(
-                                        fontSize: (tpl.itemFontSize - 2).toDouble(),
-                                        fontStyle: FontStyle.italic,
-                                        color: Colors.grey.shade600),
-                                  )),
-                          ],
-                        ),
+                                        fontSize: tpl.itemFontSize.toDouble(),
+                                        fontWeight: tpl.boldItemName
+                                            ? FontWeight.w800 : FontWeight.w500)),
+                                if (hasNote)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4, top: 4),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: item.$3!.split('\n').map((line) {
+                                        var displayLine = line;
+                                        if (displayLine.startsWith('+ Thêm món: ')) {
+                                          displayLine = '+ ${displayLine.substring('+ Thêm món: '.length)}';
+                                        }
+                                        return Text(
+                                          '↳ $displayLine',
+                                          style: GoogleFonts.outfit(
+                                              fontSize: (tpl.itemFontSize - 2).toDouble(),
+                                              fontStyle: FontStyle.italic,
+                                              color: Colors.blueGrey),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    if (idx < _sampleItems.length - 1)
+                      const Divider(thickness: 0.8, height: 12, color: Colors.black26),
+                  ],
                 );
               }),
 

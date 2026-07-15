@@ -68,6 +68,21 @@ final _staffPermsProvider = FutureProvider.family<List<String>, StoreRoleKey>(
   },
 );
 
+final dashboardShopNameProvider = FutureProvider<String>((ref) async {
+  final session = ref.watch(sessionProvider);
+  if (session == null || session.storeId == null) return 'Quán Nhỏ';
+  try {
+    final res = await Supabase.instance.client
+        .from('stores')
+        .select('name')
+        .eq('id', session.storeId!)
+        .maybeSingle();
+    return res?['name'] as String? ?? 'Quán Nhỏ';
+  } catch (_) {
+    return session.storeName ?? 'Quán Nhỏ';
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD SCREEN — Lego Dashboard với Riverpod
 // ─────────────────────────────────────────────────────────────────────────────
@@ -427,7 +442,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             Consumer(builder: (_, ref, __) {
                               final session = ref.watch(sessionProvider);
                               final isOwner = session?.isOwner ?? true;
-                              final shopName = session?.storeName ?? 'Quán Nhỏ';
+                              final shopNameAsync = ref.watch(dashboardShopNameProvider);
+                              final shopName = shopNameAsync.when(
+                                data: (name) => name,
+                                loading: () => session?.storeName ?? 'Quán Nhỏ',
+                                error: (_, __) => session?.storeName ?? 'Quán Nhỏ',
+                              );
 
                               if (!isOwner && session != null && session.hasStore) {
                                 // Staff — pill rõ với border trắng

@@ -423,7 +423,7 @@ class _KitchenPreviewWidget extends StatelessWidget {
   const _KitchenPreviewWidget({required this.tpl});
 
   static const _sampleItems = [
-    ('Phở Bò Đặc Biệt', 2, '+ Thêm món: Khúc Bạch, Dừa sợi\nGhi chú: Không hành, ít ớt'),
+    ('Phở Bò Đặc Biệt', 2, '+ Khúc Bạch, Dừa sợi\nGhi chú: Không hành, ít ớt'),
     ('Cơm Gà Xối Mỡ', 1, null),
     ('Bún Bò Huế', 3, 'Ghi chú: Cay vừa'),
   ];
@@ -459,33 +459,54 @@ class _KitchenPreviewWidget extends StatelessWidget {
               if (tpl.showDateTime)
                 Text('14/05/2026  13:45', style: GoogleFonts.outfit(fontSize: 9, color: Colors.grey.shade500)),
               if (tpl.showDivider) const Divider(thickness: 1, height: 10),
-              ..._sampleItems.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Container(
-                    width: tpl.qtyFontSize + 6.0, height: tpl.qtyFontSize + 6.0,
-                    decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
-                    child: Center(child: Text('${item.$2}',
-                        style: GoogleFonts.outfit(
-                            fontSize: tpl.qtyFontSize.toDouble(),
-                            fontWeight: FontWeight.w900, color: Colors.white))),
+              ..._sampleItems.map((item) {
+                final hasNote = tpl.showNote && item.$3 != null;
+                return Container(
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: Colors.black, width: 3.5),
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(item.$1, style: GoogleFonts.outfit(
-                        fontSize: tpl.itemFontSize.toDouble(),
-                        fontWeight: tpl.boldItemName ? FontWeight.w800 : FontWeight.w500)),
-                    if (tpl.showNote && item.$3 != null)
-                      ...item.$3!.split('\n').map((line) => Text(
-                            '↳ $line',
-                            style: GoogleFonts.outfit(
-                                fontSize: (tpl.itemFontSize - 2).toDouble(),
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey.shade600),
-                          )),
-                  ])),
-                ]),
-              )),
+                  padding: const EdgeInsets.only(left: 10, top: 4, bottom: 4),
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Container(
+                      width: tpl.qtyFontSize + 6.0, height: tpl.qtyFontSize + 6.0,
+                      decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
+                      child: Center(child: Text('${item.$2}',
+                          style: GoogleFonts.outfit(
+                              fontSize: tpl.qtyFontSize.toDouble(),
+                              fontWeight: FontWeight.w900, color: Colors.white))),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(item.$1, style: GoogleFonts.outfit(
+                          fontSize: tpl.itemFontSize.toDouble(),
+                          fontWeight: tpl.boldItemName ? FontWeight.w800 : FontWeight.w500)),
+                      if (hasNote)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, top: 4),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: item.$3!.split('\n').map((line) {
+                              var displayLine = line;
+                              if (displayLine.startsWith('+ Thêm món: ')) {
+                                displayLine = '+ ${displayLine.substring('+ Thêm món: '.length)}';
+                              }
+                              return Text(
+                                '↳ $displayLine',
+                                style: GoogleFonts.outfit(
+                                    fontSize: (tpl.itemFontSize - 2).toDouble(),
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.blueGrey),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                    ])),
+                  ]),
+                );
+              }),
               if (tpl.showDivider) const Divider(thickness: 0.5),
               Row(children: List.generate(28, (i) => Expanded(
                 child: Container(height: 1, color: i % 2 == 0 ? Colors.black26 : Colors.transparent)))),

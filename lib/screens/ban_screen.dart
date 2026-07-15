@@ -755,11 +755,11 @@ class _BanScreenState extends ConsumerState<BanScreen> {
   double _getAspectRatio(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
     if (_tableCardSize == 'nho') {
-      return isMobile ? 0.90 : 1.15;
+      return isMobile ? 0.78 : 1.15;
     } else if (_tableCardSize == 'vua') {
-      return isMobile ? 0.96 : 1.3;
+      return isMobile ? 0.84 : 1.3;
     } else { // 'to'
-      return isMobile ? 1.0 : 1.45;
+      return isMobile ? 0.88 : 1.45;
     }
   }
 

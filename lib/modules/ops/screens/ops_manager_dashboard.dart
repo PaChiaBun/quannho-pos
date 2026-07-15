@@ -210,13 +210,16 @@ class _HeroCard extends StatelessWidget {
             child: LinearProgressIndicator(value: pct.clamp(0.0, 1.0), minHeight: 8, backgroundColor: Colors.white24, valueColor: AlwaysStoppedAnimation(barColor)),
           ),
           const SizedBox(height: 16),
-          Row(children: [
-            _Pill(total, 'Tổng', Colors.white60),
-            const SizedBox(width: 8),
-            _Pill(done, 'Xong', _kGreen),
-            if (pending > 0) ...[const SizedBox(width: 8), _Pill(pending, 'Đang làm', _kYellow)],
-            if (missed > 0) ...[const SizedBox(width: 8), _Pill(missed, 'Bỏ sót', _kRed)],
-          ]),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _Pill(total, 'Tổng', Colors.white60),
+              _Pill(done, 'Xong', _kGreen),
+              if (pending > 0) _Pill(pending, 'Đang làm', _kYellow),
+              if (missed > 0) _Pill(missed, 'Bỏ sót', _kRed),
+            ],
+          ),
         ]),
       ),
     );
@@ -467,27 +470,34 @@ class _ChecklistSheet extends StatelessWidget {
         ]),
         const SizedBox(height: 16),
         const Divider(),
-        ...group.logs.map((log) {
-          final IconData icon;
-          final Color ic;
-          final String label;
-          if (log.isCompleted) { icon = Icons.check_circle_rounded; ic = _kGreen; label = 'Hoàn thành'; }
-          else if (log.isMissed) { icon = Icons.cancel_rounded; ic = _kRed; label = 'Bỏ sót'; }
-          else { icon = Icons.radio_button_unchecked_rounded; ic = _kYellow; label = 'Chưa làm'; }
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(children: [
-              Icon(icon, size: 22, color: ic),
-              const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(log.templateId.substring(0, 8), style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
-                Text(label, style: GoogleFonts.outfit(fontSize: 11, color: ic, fontWeight: FontWeight.w600)),
-                if (log.notes != null && log.notes!.isNotEmpty)
-                  Text(log.notes!, style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
-              ])),
-            ]),
-          );
-        }),
+        Flexible(
+          child: ListView(
+            shrinkWrap: true,
+            physics: const ClampingScrollPhysics(),
+            padding: EdgeInsets.zero,
+            children: group.logs.map((log) {
+              final IconData icon;
+              final Color ic;
+              final String label;
+              if (log.isCompleted) { icon = Icons.check_circle_rounded; ic = _kGreen; label = 'Hoàn thành'; }
+              else if (log.isMissed) { icon = Icons.cancel_rounded; ic = _kRed; label = 'Bỏ sót'; }
+              else { icon = Icons.radio_button_unchecked_rounded; ic = _kYellow; label = 'Chưa làm'; }
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(children: [
+                  Icon(icon, size: 22, color: ic),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(log.templateId.substring(0, 8), style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
+                    Text(label, style: GoogleFonts.outfit(fontSize: 11, color: ic, fontWeight: FontWeight.w600)),
+                    if (log.notes != null && log.notes!.isNotEmpty)
+                      Text(log.notes!, style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                  ])),
+                ]),
+              );
+            }).toList(),
+          ),
+        ),
       ]),
     );
   }

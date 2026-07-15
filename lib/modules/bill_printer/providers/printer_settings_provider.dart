@@ -520,7 +520,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
                 return '$m';
               }).where((s) => s.isNotEmpty).join(', ');
               if (modsText.isNotEmpty) {
-                noteParts.add('+ Thêm món: $modsText');
+                noteParts.add('+ $modsText');
               }
             } else {
               noteParts.add(rawMods);
