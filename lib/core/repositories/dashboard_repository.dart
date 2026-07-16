@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/store_auth_service.dart';
@@ -15,10 +16,29 @@ class DashboardRepository {
 
   // ── Today stats (Supabase query) ──────────────────────────────────────────
 
-  Stream<DashboardStats> watchTodayStats() async* {
-    // Supabase stream không hỗ trợ realtime query phức tạp —
-    // poll mỗi 30 giây hoặc invalidate từ ngoài khi có đơn mới
-    yield await getTodayStats();
+  Stream<DashboardStats> watchTodayStats() {
+    final controller = StreamController<DashboardStats>();
+    
+    // Fetch ban đầu
+    getTodayStats().then((stats) {
+      if (!controller.isClosed) controller.add(stats);
+    });
+
+    // Lắng nghe sự kiện Broadcast gọn nhẹ tự phát giữa các thiết bị (không dùng Supabase DB Realtime)
+    final channel = _sb.channel('store_broadcast');
+    channel.onBroadcast(
+      event: 'checkout_completed',
+      callback: (payload) async {
+        final stats = await getTodayStats();
+        if (!controller.isClosed) controller.add(stats);
+      },
+    ).subscribe();
+
+    controller.onCancel = () {
+      channel.unsubscribe();
+    };
+
+    return controller.stream;
   }
 
   Future<DashboardStats> getTodayStats() async {

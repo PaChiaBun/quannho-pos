@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -722,6 +723,12 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
           ref.invalidate(financeRecordsProvider);
           ref.invalidate(financeStatsProvider);
           ref.invalidate(todayFinanceStatsProvider);
+          final ch = Supabase.instance.client.channel('store_broadcast');
+          ch.subscribe();
+          ch.sendBroadcastMessage(
+            event: 'checkout_completed',
+            payload: {},
+          ).then((_) => ch.unsubscribe());
         } catch (e) {
           debugPrint('[POS Invalidation] error: $e');
         }

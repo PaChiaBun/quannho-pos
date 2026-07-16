@@ -11,9 +11,9 @@ final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
 });
 
 /// Stats hôm nay — refresh khi session thay đổi hoặc bị invalidate từ ngoài
-final todayStatsProvider = StreamProvider<DashboardStats>((ref) async* {
+final todayStatsProvider = StreamProvider<DashboardStats>((ref) {
   ref.watch(sessionProvider); // bắt buộc refresh khi storeId có
-  yield await ref.read(dashboardRepositoryProvider).getTodayStats();
+  return ref.read(dashboardRepositoryProvider).watchTodayStats();
 });
 
 /// Top sản phẩm hôm nay

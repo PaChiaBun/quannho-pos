@@ -3082,6 +3082,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         ref.invalidate(financeRecordsProvider);      // list giao dịch
         ref.invalidate(financeStatsProvider);        // stats header kỳ đang chọn
         ref.invalidate(todayFinanceStatsProvider);
+        try {
+          final ch = Supabase.instance.client.channel('store_broadcast');
+          ch.subscribe();
+          ch.sendBroadcastMessage(
+            event: 'checkout_completed',
+            payload: {},
+          ).then((_) => ch.unsubscribe());
+        } catch (_) {}
       }
 
       if (mounted) {
