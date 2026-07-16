@@ -2017,7 +2017,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         total: total,
         paymentMethod: 'cash',
         type: BillType.receipt,
-        waiterName: session?.displayName,
+        waiterName: _resolveWaiterName(activeItems, session?.displayName),
       );
 
       await StationPrinterDispatcher.printBill(billData, settings, onlyReceipt: true);
@@ -3063,7 +3063,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             total: total + surcharge,
             type: BillType.receipt,
             note: '',
-            waiterName: session?.displayName,
+            waiterName: _resolveWaiterName(items, session?.displayName),
           );
 
           await StationPrinterDispatcher.printBill(billData, printerSettingsCached, onlyReceipt: true);
@@ -3381,7 +3381,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           total: 0,
           type: BillType.kitchen,
           note: '',
-          waiterName: session?.displayName,
+          waiterName: _resolveWaiterName(unsent, session?.displayName),
         );
         
         await StationPrinterDispatcher.printBill(billData, settings);
@@ -4650,7 +4650,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         total: finalTotal,
         paymentMethod: 'cash',
         type: BillType.receipt,
-        waiterName: session?.displayName,
+        waiterName: _resolveWaiterName(widget.items, session?.displayName),
       );
 
       await StationPrinterDispatcher.printBill(billData, settings, onlyReceipt: true);
@@ -9185,5 +9185,16 @@ class _ItemNoteInputState extends State<_ItemNoteInput> {
       ),
     );
   }
+}
+
+String _resolveWaiterName(List<BanSessionItemModel> items, String? fallback) {
+  final waiters = items
+      .map((i) => i.addedBy)
+      .where((name) => name != null && name.isNotEmpty)
+      .toSet();
+  if (waiters.isEmpty) {
+    return fallback ?? 'Không rõ';
+  }
+  return waiters.join(', ');
 }
 
