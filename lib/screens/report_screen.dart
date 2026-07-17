@@ -46,13 +46,14 @@ extension ReportPeriodX on ReportPeriod {
   };
 
   // Dynamic range — dùng weekStart / navYear+navMonth khi được truyền vào
-  (int, int) rangeFor({DateTime? weekStart, int? navYear, int? navMonth}) {
+  (int, int) rangeFor({DateTime? weekStart, int? navYear, int? navMonth, DateTime? selectedDay}) {
     final now = DateTime.now();
     switch (this) {
       case ReportPeriod.today:
         // ‼️ FIX: dùng midnight ngày kế (exclusive) thay vì 23:59:59 (bỏ sót 59.001–999ms)
-        final start   = DateTime(now.year, now.month, now.day);
-        final endExcl = DateTime(now.year, now.month, now.day + 1);
+        final d = selectedDay ?? now;
+        final start   = DateTime(d.year, d.month, d.day);
+        final endExcl = DateTime(d.year, d.month, d.day + 1);
         return (start.millisecondsSinceEpoch, endExcl.millisecondsSinceEpoch);
       case ReportPeriod.week:
         final mon    = weekStart ?? now.subtract(Duration(days: now.weekday - 1));
@@ -359,6 +360,7 @@ class _RevenueTab extends ConsumerStatefulWidget {
 }
 class _RevenueTabState extends ConsumerState<_RevenueTab> {
   ReportPeriod       _period = ReportPeriod.today;
+  DateTime _selectedDay = DateTime.now();
   DateTime _weekStart = _mondayOf(DateTime.now());
   int _navYear  = DateTime.now().year;
   int _navMonth = DateTime.now().month;
@@ -386,12 +388,12 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
     await _hourSub?.cancel();
     _hourSub = null;
     final repo = ref.read(dashboardRepositoryProvider);
-    final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth);
+    final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth, selectedDay: _selectedDay);
     final stats = await repo.getStatsForRange(from, to);
     if (!mounted) return;
     if (_period == ReportPeriod.today) {
       setState(() { _stats = stats; _days = []; });
-      _hourSub = repo.watchHourlyRevenue(DateTime.now()).listen((h) {
+      _hourSub = repo.watchHourlyRevenue(_selectedDay).listen((h) {
         if (mounted) setState(() { _hours = h; _loading = false; });
       });
     } else {
@@ -411,7 +413,18 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
     } else if (_period == ReportPeriod.month) {
       titleStr = 'BÁO CÁO DOANH THU THÁNG';
     } else {
-      titleStr = 'BÁO CÁO DOANH THU CA';
+      final d = _selectedDay;
+      final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+      final sel = DateTime(d.year, d.month, d.day);
+      if (sel == today) {
+        titleStr = 'BÁO CÁO DOANH THU HÔM NAY';
+      } else if (sel == today.subtract(const Duration(days: 1))) {
+        titleStr = 'BÁO CÁO DOANH THU HÔM QUA';
+      } else if (sel == today.subtract(const Duration(days: 2))) {
+        titleStr = 'BÁO CÁO DOANH THU HÔM KIA';
+      } else {
+        titleStr = 'BÁO CÁO DOANH THU NGÀY ' + DateFormat('dd/MM/yyyy').format(d);
+      }
     }
 
     try {
@@ -601,7 +614,18 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
           ),
         ],
       ),
-      // ── Nav tuần / tháng
+      // ── Nav ngày / tuần / tháng
+      if (_period == ReportPeriod.today) ...[
+        const SizedBox(height: 8),
+        _ReportNavBar.day(
+          date: _selectedDay,
+          canGoNext: DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day)
+              .isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)),
+          onPrev: () { setState(() => _selectedDay = _selectedDay.subtract(const Duration(days: 1))); _load(); },
+          onNext: () { setState(() => _selectedDay = _selectedDay.add(const Duration(days: 1))); _load(); },
+          onPick: () => _pickDay(context),
+        ),
+      ],
       if (_period == ReportPeriod.week) ...[
         const SizedBox(height: 8),
         _ReportNavBar.week(
@@ -709,6 +733,18 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
     );
   }
 
+  Future<void> _pickDay(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx, initialDate: _selectedDay,
+      firstDate: DateTime(now.year - 2), lastDate: now,
+      helpText: 'Chọn ngày muốn xem',
+      builder: (c, child) => Theme(data: Theme.of(c).copyWith(
+        colorScheme: const ColorScheme.light(primary: _kNavy)), child: child!),
+    );
+    if (picked != null && mounted) { setState(() => _selectedDay = picked); _load(); }
+  }
+
   Future<void> _pickWeek(BuildContext ctx) async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -784,9 +820,11 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
     // Chuẩn bị data bars kèm số đơn
     final List<({String label, double value, int orders})> bars;
     if (_period == ReportPeriod.today) {
-      final nowH = DateTime.now().hour;
+      final isToday = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day)
+          == DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+      final maxH = isToday ? DateTime.now().hour : 23;
       bars = _hours
-          .where((h) => h.hour <= nowH)
+          .where((h) => h.hour <= maxH)
           .map((h) => (label: '${h.hour}h', value: h.revenue, orders: h.orders))
           .toList();
     } else if (_period == ReportPeriod.week) {
@@ -807,6 +845,11 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
     final chartMax   = milestones.last;
     final chartH     = MediaQuery.of(context).size.width >= 750 ? 230.0 : 180.0;
     const yAxisW     = 44.0;
+
+    final screenW = MediaQuery.of(context).size.width;
+    final chartAreaW = screenW > 700 ? (screenW - 280) : screenW;
+    final cellW = (chartAreaW - yAxisW - 32) / bars.length;
+    final barWidth = (cellW * 0.75).clamp(12.0, 60.0);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 16, 12, 10),
@@ -841,14 +884,7 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
                   final isLast   = i == bars.length - 1;
                   final barH     = (chartH * (bar.value / chartMax)).clamp(2.0, chartH);
                   final isEmpty  = bar.value == 0;
-                  final double barWidth;
-                  if (bars.length <= 7) {
-                    barWidth = 36.0;
-                  } else if (bars.length <= 15) {
-                    barWidth = 24.0;
-                  } else {
-                    barWidth = 14.0;
-                  }
+                  // Use parent scope responsive barWidth
 
                   return Expanded(
                     child: GestureDetector(
@@ -1791,7 +1827,7 @@ class _BarTooltip extends StatelessWidget {
     child: Column(mainAxisSize: MainAxisSize.min, children: [
       Text(label,
         style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600)),
-      Text('${_fmtShort(revenue)}đ',
+      Text(_fmtShort(revenue),
         style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
       Text('$orders đơn',
         style: const TextStyle(color: Colors.white60, fontSize: 9)),
@@ -1806,6 +1842,25 @@ class _ReportNavBar extends StatefulWidget {
   final VoidCallback onPrev, onNext, onPick;
   const _ReportNavBar({required this.label, required this.canGoNext,
     required this.onPrev, required this.onNext, required this.onPick});
+
+  factory _ReportNavBar.day({required DateTime date, required bool canGoNext,
+    required VoidCallback onPrev, required VoidCallback onNext, required VoidCallback onPick}) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = DateTime(date.year, date.month, date.day);
+    final String label;
+    if (selected == today) {
+      label = 'Hôm nay';
+    } else if (selected == today.subtract(const Duration(days: 1))) {
+      label = 'Hôm qua';
+    } else if (selected == today.subtract(const Duration(days: 2))) {
+      label = 'Hôm kia';
+    } else {
+      label = DateFormat('dd/MM/yyyy').format(date);
+    }
+    return _ReportNavBar(label: label,
+      canGoNext: canGoNext, onPrev: onPrev, onNext: onNext, onPick: onPick);
+  }
 
   factory _ReportNavBar.week({required DateTime weekStart, required bool canGoNext,
     required VoidCallback onPrev, required VoidCallback onNext, required VoidCallback onPick}) {
@@ -1907,9 +1962,8 @@ class _RNavBtnState extends State<_RNavBtn> with SingleTickerProviderStateMixin 
 // ─── Formatters
 // Định dạng tiền: 2.5 trĐ / 500 KĐ / 100 Đ
 String _fmt(double v) {
-  if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} Tr Đ';
-  if (v >= 1000)    return '${(v / 1000).toStringAsFixed(0)} K Đ';
-  return '${v.toStringAsFixed(0)} Đ';
+  final formatted = NumberFormat('#,###', 'vi_VN').format(v.round());
+  return '$formatted Đ';
 }
 String _fmtShort(double v) => _fmt(v);
 

@@ -76,13 +76,13 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
 
       Supabase.instance.client.rest.headers['x-store-id'] = storeId;
       final staffData = await Supabase.instance.client
-          .from('app_logs')
-          .select('staff_name')
+          .from('staff_members')
+          .select('name')
           .eq('store_id', storeId);
 
       final Set<String> uniqueStaff = {'Tất cả'};
       for (final row in staffData) {
-        final name = row['staff_name'] as String?;
+        final name = row['name'] as String?;
         if (name != null && name.isNotEmpty) {
           uniqueStaff.add(name);
         }
