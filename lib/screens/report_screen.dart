@@ -22,6 +22,7 @@ import '../modules/finance/repository/finance_repository.dart';
 import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import '../modules/bill_printer/screens/bill_preview_screen.dart';
 import '../core/repositories/module_repository.dart';
+import '../core/widgets/order_detail_dialog.dart';
 
 // ─── Design Tokens (nhất quán với toàn app) ───────────────────────────────────
 const _kNavy   = Color(0xFF1C2151);  // Đồng bộ với toàn app
@@ -105,18 +106,62 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
     final todayFin   = ref.watch(todayFinanceStatsProvider);
     final monthRev   = ref.watch(_monthRevProvider);
 
-    final mainContent = Column(children: [
-      _buildHeader(todayStats, todayFin, monthRev),
-      Expanded(child: TabBarView(controller: _tab, children: const [
-        _RevenueTab(), _ProductTab(), _FinanceTab(), _KhoTab(), _VoidAuditTab(), _StaffAttendanceTab(), _VoucherTab(),
-      ])),
-    ]);
+    Widget buildMainContent(bool isMobile) {
+      return NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          SliverToBoxAdapter(
+            child: _buildHeaderTop(todayStats, todayFin, monthRev, isMobile),
+          ),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _SliverTabBarDelegate(
+              child: TabBar(
+                controller: _tab,
+                isScrollable: isMobile,
+                tabAlignment: isMobile ? TabAlignment.start : TabAlignment.fill,
+                indicatorColor: _kOrange,
+                indicatorWeight: 3,
+                dividerColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white38,
+                labelStyle: TextStyle(fontWeight: FontWeight.w900, fontSize: isMobile ? 12.5 : 13),
+                unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: isMobile ? 11.5 : 12),
+                padding: isMobile ? const EdgeInsets.symmetric(horizontal: 8) : EdgeInsets.zero,
+                tabs: const [
+                  Tab(text: 'Doanh thu'),
+                  Tab(text: 'Sản phẩm'),
+                  Tab(text: 'Tài chính'),
+                  Tab(text: 'Kho'),
+                  Tab(text: 'Huỷ/Duyệt'),
+                  Tab(text: 'Nhân viên'),
+                  Tab(text: 'Voucher'),
+                ],
+              ),
+            ),
+          ),
+        ],
+        body: TabBarView(
+          controller: _tab,
+          children: const [
+            _RevenueTab(),
+            _ProductTab(),
+            _FinanceTab(),
+            _KhoTab(),
+            _VoidAuditTab(),
+            _StaffAttendanceTab(),
+            _VoucherTab(),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: _kBg,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth > 700) {
+          final isMobile = constraints.maxWidth <= 700;
+          final mainContent = buildMainContent(isMobile);
+          if (!isMobile) {
             return Row(children: [
               Expanded(flex: 3, child: mainContent),
               SizedBox(
@@ -135,10 +180,11 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
     );
   }
 
-  Widget _buildHeader(
+  Widget _buildHeaderTop(
     AsyncValue<DashboardStats> sA,
     AsyncValue<FinanceStats> fA,
     AsyncValue<double> mA,
+    bool isMobile,
   ) {
     final s    = sA.value ?? DashboardStats.empty;
     final f    = fA.value ?? FinanceStats.empty;
@@ -157,7 +203,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
       child: SafeArea(bottom: false, child: Column(children: [
 
         // ── AppBar ──────────────────────────────────────────────────────────
-        Padding(padding: const EdgeInsets.fromLTRB(20, 12, 4, 0), child: Row(
+        Padding(padding: EdgeInsets.fromLTRB(16, isMobile ? 6 : 12, 4, 0), child: Row(
           children: [
             const Text('Báo cáo',
               style: TextStyle(color: Colors.white, fontSize: 20,
@@ -181,7 +227,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
         )),
 
         // ── 2 Hero cards ────────────────────────────────────────────────────
-        Padding(padding: const EdgeInsets.fromLTRB(16, 10, 16, 0), child: Row(
+        Padding(padding: EdgeInsets.fromLTRB(16, isMobile ? 6 : 10, 16, 0), child: Row(
           children: [
             _HeroCard(
               label: 'Hôm nay',
@@ -189,48 +235,46 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
               sub: '${s.todayOrders} đơn',
               accent: _kOrange,
               isHighlight: true,
+              isMobile: isMobile,
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: isMobile ? 8 : 10),
             _HeroCard(
               label: 'Tháng ${now.month}',
               value: _fmtShort(mRev),
               sub: 'lũy kế',
               accent: const Color(0xFF69F0AE),
               isHighlight: false,
+              isMobile: isMobile,
             ),
           ],
         )),
 
         // ── 3 stat pills ────────────────────────────────────────────────────
-        Padding(padding: const EdgeInsets.fromLTRB(16, 10, 16, 12), child: Row(
+        Padding(padding: EdgeInsets.fromLTRB(16, isMobile ? 8 : 10, 16, isMobile ? 8 : 12), child: Row(
           children: [
-            _SmallStat(label: 'Chi phí',   value: _fmtShort(f.expense),      color: const Color(0xFFFF6B6B)),
-            _vDivider(),
-            _SmallStat(label: 'Lợi nhuận', value: _fmtShort(f.profit),       color: const Color(0xFF69F0AE)),
-            _vDivider(),
-            _SmallStat(label: 'TB/đơn',    value: _fmtShort(s.avgOrderValue), color: const Color(0xFFFFD54F)),
+            _SmallStat(label: 'Chi phí',   value: _fmtShort(f.expense),      color: const Color(0xFFFF6B6B), isMobile: isMobile),
+            _vDivider(isMobile: isMobile),
+            _SmallStat(label: 'Lợi nhuận', value: _fmtShort(f.profit),       color: const Color(0xFF69F0AE), isMobile: isMobile),
+            _vDivider(isMobile: isMobile),
+            _SmallStat(label: 'TB/đơn',    value: _fmtShort(s.avgOrderValue), color: const Color(0xFFFFD54F), isMobile: isMobile),
           ],
         )),
-
-        // ── TabBar ──────────────────────────────────────────────────────────
-        TabBar(
-          controller: _tab,
-          indicatorColor: _kOrange, indicatorWeight: 3,
-          labelColor: Colors.white, unselectedLabelColor: Colors.white38,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
-          tabs: const [
-            Tab(text: 'Doanh thu'),
-            Tab(text: 'Sản phẩm'),
-            Tab(text: 'Tài chính'),
-            Tab(text: 'Kho'),
-            Tab(text: 'Huỷ/Duyệt'),
-            Tab(text: 'Nhân viên'),
-            Tab(text: 'Voucher'),
-          ]),
       ])),
     );
   }
+}
+
+class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  _SliverTabBarDelegate({required this.child});
+  @override
+  double get minExtent => 48.0;
+  @override
+  double get maxExtent => 48.0;
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => Container(color: _kNavy, child: child);
+  @override
+  bool shouldRebuild(_SliverTabBarDelegate oldDelegate) => false;
 }
 
 // ── Month revenue provider ─────────────────────────────────────────────────────
@@ -248,23 +292,24 @@ class _HeroCard extends StatelessWidget {
   final String label, value, sub;
   final Color accent;
   final bool isHighlight;
+  final bool isMobile;
   const _HeroCard({required this.label, required this.value, required this.sub,
-      required this.accent, required this.isHighlight});
+      required this.accent, required this.isHighlight, this.isMobile = false});
 
   @override
   Widget build(BuildContext context) => Expanded(
     child: Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      padding: EdgeInsets.fromLTRB(isMobile ? 10 : 14, isMobile ? 8 : 12, isMobile ? 10 : 14, isMobile ? 8 : 12),
       decoration: BoxDecoration(
         // Cùng 1 màu kem nhạt cho cả 2 card
         color: const Color(0xFFFFF8F2),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE8DDD4), width: 1),
         boxShadow: [
           BoxShadow(
             color: _kNavy.withValues(alpha: 0.13),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: isMobile ? 8 : 12,
+            offset: Offset(0, isMobile ? 2 : 4),
           ),
         ],
       ),
@@ -277,22 +322,22 @@ class _HeroCard extends StatelessWidget {
           const SizedBox(width: 6),
           Text(label, style: TextStyle(
             color: _kNavy.withValues(alpha: 0.50),
-            fontSize: 11, fontWeight: FontWeight.w600,
+            fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w600,
           )),
         ]),
-        const SizedBox(height: 6),
+        SizedBox(height: isMobile ? 3 : 6),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
           child: Text(value, style: TextStyle(
             color: _kNavy.withValues(alpha: 0.88),
-            fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5,
+            fontSize: isMobile ? 18 : 22, fontWeight: FontWeight.w900, letterSpacing: -0.5,
           )),
         ),
-        const SizedBox(height: 5),
+        SizedBox(height: isMobile ? 2 : 5),
         Text(sub, style: TextStyle(
           color: _kNavy.withValues(alpha: 0.40),
-          fontSize: 10, fontWeight: FontWeight.w600,
+          fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w600,
         )),
       ]),
     ),
@@ -303,21 +348,22 @@ class _HeroCard extends StatelessWidget {
 class _SmallStat extends StatelessWidget {
   final String label, value;
   final Color color;
-  const _SmallStat({required this.label, required this.value, required this.color});
+  final bool isMobile;
+  const _SmallStat({required this.label, required this.value, required this.color, this.isMobile = false});
   @override
   Widget build(BuildContext context) => Expanded(
     child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
       Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.50),
-          fontSize: 10, fontWeight: FontWeight.w500)),
-      const SizedBox(height: 3),
-      Text(value, style: TextStyle(color: color, fontSize: 15,
+          fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w500)),
+      SizedBox(height: isMobile ? 1 : 3),
+      Text(value, style: TextStyle(color: color, fontSize: isMobile ? 13 : 15,
           fontWeight: FontWeight.w900, letterSpacing: -0.3)),
     ]),
   );
 }
 
-Widget _vDivider() => Container(
-  width: 1, height: 28,
+Widget _vDivider({bool isMobile = false}) => Container(
+  width: 1, height: isMobile ? 18 : 28,
   margin: const EdgeInsets.symmetric(horizontal: 4),
   color: Colors.white.withValues(alpha: 0.12),
 );
@@ -825,6 +871,7 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
       final maxH = isToday ? DateTime.now().hour : 23;
       bars = _hours
           .where((h) => h.hour <= maxH)
+          .where((h) => !(h.hour < 7 && h.revenue == 0)) // Ẩn 0h-6h sáng khi không có doanh thu
           .map((h) => (label: '${h.hour}h', value: h.revenue, orders: h.orders))
           .toList();
     } else if (_period == ReportPeriod.week) {
@@ -844,7 +891,7 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
     final milestones = _computeMilestones(maxV);
     final chartMax   = milestones.last;
     final chartH     = MediaQuery.of(context).size.width >= 750 ? 230.0 : 180.0;
-    const yAxisW     = 44.0;
+    const yAxisW     = 68.0;
 
     final screenW = MediaQuery.of(context).size.width;
     final chartAreaW = screenW > 700 ? (screenW - 280) : screenW;
@@ -865,9 +912,15 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
               children: milestones.asMap().entries.map((e) {
                 final bottom = (e.value / chartMax * chartH).clamp(0.0, chartH - 10);
                 return Positioned(
-                  bottom: bottom - 6, right: 4,
-                  child: Text(_fmtShort(e.value),
-                    style: const TextStyle(fontSize: 9, color: _kMuted, fontWeight: FontWeight.w600)));
+                  bottom: bottom - 6,
+                  left: 0,
+                  right: 6,
+                  child: Text(
+                    _fmtShort(e.value),
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(fontSize: 8.5, color: _kMuted, fontWeight: FontWeight.w600),
+                  ),
+                );
               }).toList(),
             ),
           ),
@@ -1279,6 +1332,7 @@ class _ProductTab extends ConsumerStatefulWidget {
 }
 class _ProductTabState extends ConsumerState<_ProductTab> {
   ReportPeriod   _period   = ReportPeriod.today;
+  DateTime _selectedDay = DateTime.now();
   DateTime _weekStart = _mondayOf(DateTime.now());
   int _navYear  = DateTime.now().year;
   int _navMonth = DateTime.now().month;
@@ -1295,14 +1349,45 @@ class _ProductTabState extends ConsumerState<_ProductTab> {
   @override
   void initState() { super.initState(); _load(); }
 
-  Future<void> _load() async {
+  Future<void> _load({bool refreshCategories = true}) async {
     if (!mounted) return;
     setState(() => _loading = true);
     final repo = ref.read(dashboardRepositoryProvider);
-    final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth);
-    final products = await repo.getTopProductsForRangeCompat(from, to, category: _category, limit: 20);
-    final cats     = await repo.getProductCategoriesSold(from, to);
-    if (mounted) setState(() { _products = products; _categories = cats; _loading = false; });
+    final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth, selectedDay: _selectedDay);
+
+    if (refreshCategories || _categories.isEmpty) {
+      final results = await Future.wait([
+        repo.getTopProductsForRangeCompat(from, to, category: _category, limit: 20),
+        repo.getProductCategoriesSold(from, to),
+      ]);
+      if (mounted) {
+        setState(() {
+          _products = results[0] as List<TopProduct>;
+          _categories = results[1] as List<String>;
+          _loading = false;
+        });
+      }
+    } else {
+      final products = await repo.getTopProductsForRangeCompat(from, to, category: _category, limit: 20);
+      if (mounted) {
+        setState(() {
+          _products = products;
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _pickDay(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx, initialDate: _selectedDay,
+      firstDate: DateTime(now.year - 2), lastDate: now,
+      helpText: 'Chọn ngày muốn xem',
+      builder: (c, child) => Theme(data: Theme.of(c).copyWith(
+        colorScheme: const ColorScheme.light(primary: _kNavy)), child: child!),
+    );
+    if (picked != null && mounted) { setState(() => _selectedDay = picked); _load(); }
   }
 
   Future<void> _pickWeek(BuildContext ctx) async {
@@ -1334,7 +1419,18 @@ class _ProductTabState extends ConsumerState<_ProductTab> {
     final maxQ = _products.fold<double>(1, (m, p) => p.totalQty > m ? p.totalQty : m);
     return ListView(padding: const EdgeInsets.fromLTRB(16, 20, 16, 80), children: [
       _PeriodPills(current: _period, onChanged: (p) { setState(() { _period = p; _category = null; }); _load(); }),
-      // ── Nav tuần / tháng
+      // ── Nav ngày / tuần / tháng
+      if (_period == ReportPeriod.today) ...[
+        const SizedBox(height: 8),
+        _ReportNavBar.day(
+          date: _selectedDay,
+          canGoNext: DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day)
+              .isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)),
+          onPrev: () { setState(() => _selectedDay = _selectedDay.subtract(const Duration(days: 1))); _load(); },
+          onNext: () { setState(() => _selectedDay = _selectedDay.add(const Duration(days: 1))); _load(); },
+          onPick: () => _pickDay(context),
+        ),
+      ],
       if (_period == ReportPeriod.week) ...[
         const SizedBox(height: 8),
         _ReportNavBar.week(
@@ -1360,9 +1456,9 @@ class _ProductTabState extends ConsumerState<_ProductTab> {
         const SizedBox(height: 12),
         SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
           _CatPill(label: 'Tất cả', active: _category == null,
-            onTap: () { setState(() => _category = null); _load(); }),
+            onTap: () { setState(() => _category = null); _load(refreshCategories: false); }),
           ..._categories.map((c) => _CatPill(label: c, active: _category == c,
-            onTap: () { setState(() => _category = c); _load(); })),
+            onTap: () { setState(() => _category = c); _load(refreshCategories: false); })),
         ])),
       ],
       const SizedBox(height: 20),
@@ -3384,53 +3480,80 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
   Widget _buildPeriodSelector() {
     final now = DateTime.now();
     final isThisMonth = _navYear == now.year && _navMonth == now.month;
+    final isMobile = MediaQuery.of(context).size.width <= 700;
+
+    final chipsList = ReportPeriod.values.map((p) {
+      final isSel = _period == p;
+      return Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: ChoiceChip(
+          label: Text(
+            p.label,
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+              color: isSel ? Colors.white : _kNavy.withValues(alpha: 0.8),
+            ),
+          ),
+          selected: isSel,
+          onSelected: (val) {
+            if (val) {
+              setState(() => _period = p);
+              _load();
+            }
+          },
+          selectedColor: _kNavy,
+          backgroundColor: const Color(0xFFF5F7FF),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          side: BorderSide.none,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        ),
+      );
+    }).toList();
+
+    Widget buildActionBtn() {
+      if (_period == ReportPeriod.week) {
+        return TextButton.icon(
+          onPressed: () => _pickWeek(context),
+          icon: const Icon(Icons.date_range_rounded, size: 16, color: _kOrange),
+          label: Text('T${DateFormat('dd/MM').format(_weekStart)}', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
+        );
+      }
+      if (_period == ReportPeriod.month) {
+        return TextButton.icon(
+          onPressed: () => _pickMonth(context),
+          icon: const Icon(Icons.calendar_month_rounded, size: 16, color: _kOrange),
+          label: Text(isThisMonth ? 'Tháng này' : 'T$_navMonth/$_navYear', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
+        );
+      }
+      return const SizedBox.shrink();
+    }
+
+    if (isMobile) {
+      return Container(
+        color: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              ...chipsList,
+              const SizedBox(width: 12),
+              buildActionBtn(),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          ...ReportPeriod.values.map((p) {
-            final isSel = _period == p;
-            return Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: ChoiceChip(
-                label: Text(
-                  p.label,
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                    color: isSel ? Colors.white : _kNavy.withValues(alpha: 0.8),
-                  ),
-                ),
-                selected: isSel,
-                onSelected: (val) {
-                  if (val) {
-                    setState(() => _period = p);
-                    _load();
-                  }
-                },
-                selectedColor: _kNavy,
-                backgroundColor: const Color(0xFFF5F7FF),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                side: BorderSide.none,
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              ),
-            );
-          }),
+          ...chipsList,
           const Spacer(),
-          if (_period == ReportPeriod.week)
-            TextButton.icon(
-              onPressed: () => _pickWeek(context),
-              icon: const Icon(Icons.date_range_rounded, size: 16, color: _kOrange),
-              label: Text('T${DateFormat('dd/MM').format(_weekStart)}', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
-            ),
-          if (_period == ReportPeriod.month)
-            TextButton.icon(
-              onPressed: () => _pickMonth(context),
-              icon: const Icon(Icons.calendar_month_rounded, size: 16, color: _kOrange),
-              label: Text(isThisMonth ? 'Tháng này' : 'T$_navMonth/$_navYear', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
-            ),
+          buildActionBtn(),
         ],
       ),
     );
@@ -3646,7 +3769,8 @@ class _VoucherTab extends ConsumerStatefulWidget {
 }
 
 class _VoucherTabState extends ConsumerState<_VoucherTab> {
-  ReportPeriod _period = ReportPeriod.month;
+  ReportPeriod _period = ReportPeriod.today;
+  DateTime _selectedDay = DateTime.now();
   DateTime _weekStart = _mondayOf(DateTime.now());
   int _navYear = DateTime.now().year;
   int _navMonth = DateTime.now().month;
@@ -3694,6 +3818,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
         weekStart: _weekStart,
         navYear: _navYear,
         navMonth: _navMonth,
+        selectedDay: _selectedDay,
       );
       final start = DateTime.fromMillisecondsSinceEpoch(from).toIso8601String();
       final end = DateTime.fromMillisecondsSinceEpoch(to).toIso8601String();
@@ -3773,6 +3898,18 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
     }
   }
 
+  Future<void> _pickDay(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx, initialDate: _selectedDay,
+      firstDate: DateTime(now.year - 2), lastDate: now,
+      helpText: 'Chọn ngày muốn xem',
+      builder: (c, child) => Theme(data: Theme.of(c).copyWith(
+        colorScheme: const ColorScheme.light(primary: _kNavy)), child: child!),
+    );
+    if (picked != null && mounted) { setState(() => _selectedDay = picked); _load(); }
+  }
+
   Future<void> _pickWeek(BuildContext ctx) async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -3816,332 +3953,164 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: _kNavy));
-    }
-    if (_error != null) {
-      return Center(child: Text('Lỗi: $_error', style: const TextStyle(color: _kRed)));
-    }
-
-    return Column(
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 80),
       children: [
-        _buildPeriodSelector(),
+        _PeriodPills(
+          current: _period,
+          onChanged: (p) {
+            setState(() => _period = p);
+            _load();
+          },
+        ),
+        if (_period == ReportPeriod.today) ...[
+          const SizedBox(height: 8),
+          _ReportNavBar.day(
+            date: _selectedDay,
+            canGoNext: DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day)
+                .isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)),
+            onPrev: () { setState(() => _selectedDay = _selectedDay.subtract(const Duration(days: 1))); _load(); },
+            onNext: () { setState(() => _selectedDay = _selectedDay.add(const Duration(days: 1))); _load(); },
+            onPick: () => _pickDay(context),
+          ),
+        ],
+        if (_period == ReportPeriod.week) ...[
+          const SizedBox(height: 8),
+          _ReportNavBar.week(
+            weekStart: _weekStart,
+            canGoNext: _weekStart.add(const Duration(days: 7)).isBefore(
+              DateTime.now().add(const Duration(days: 1)),
+            ),
+            onPrev: () {
+              setState(() => _weekStart = _weekStart.subtract(const Duration(days: 7)));
+              _load();
+            },
+            onNext: () {
+              setState(() => _weekStart = _weekStart.add(const Duration(days: 7)));
+              _load();
+            },
+            onPick: () => _pickWeek(context),
+          ),
+        ],
+        if (_period == ReportPeriod.month) ...[
+          const SizedBox(height: 8),
+          _ReportNavBar.month(
+            year: _navYear,
+            month: _navMonth,
+            canGoNext: !(_navYear == DateTime.now().year && _navMonth == DateTime.now().month),
+            onPrev: () {
+              setState(() {
+                if (_navMonth == 1) {
+                  _navYear--;
+                  _navMonth = 12;
+                } else {
+                  _navMonth--;
+                }
+              });
+              _load();
+            },
+            onNext: () {
+              setState(() {
+                if (_navMonth == 12) {
+                  _navYear++;
+                  _navMonth = 1;
+                } else {
+                  _navMonth++;
+                }
+              });
+              _load();
+            },
+            onPick: () => _pickMonth(context),
+          ),
+        ],
+        const SizedBox(height: 16),
         _buildSummaryCards(),
-        Expanded(child: _buildVoucherGroupsList()),
+        const SizedBox(height: 16),
+        if (_loading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: Center(child: CircularProgressIndicator(color: _kNavy)),
+          )
+        else if (_error != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Center(child: Text('Lỗi: $_error', style: const TextStyle(color: _kRed))),
+          )
+        else
+          _buildVoucherGroupsList(),
       ],
     );
   }
 
-  Widget _buildPeriodSelector() {
-    final now = DateTime.now();
-    final isThisMonth = _navYear == now.year && _navMonth == now.month;
-
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          ...ReportPeriod.values.map((p) {
-            final isSel = _period == p;
-            return Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: ChoiceChip(
-                label: Text(
-                  p.label,
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                    color: isSel ? Colors.white : _kNavy.withValues(alpha: 0.8),
-                  ),
-                ),
-                selected: isSel,
-                onSelected: (val) {
-                  if (val) {
-                    setState(() => _period = p);
-                    _load();
-                  }
-                },
-                selectedColor: _kNavy,
-                backgroundColor: const Color(0xFFF5F7FF),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                side: BorderSide.none,
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              ),
-            );
-          }),
-          const Spacer(),
-          if (_period == ReportPeriod.week)
-            TextButton.icon(
-              onPressed: () => _pickWeek(context),
-              icon: const Icon(Icons.date_range_rounded, size: 16, color: _kOrange),
-              label: Text('T${DateFormat('dd/MM').format(_weekStart)}', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
-            ),
-          if (_period == ReportPeriod.month)
-            TextButton.icon(
-              onPressed: () => _pickMonth(context),
-              icon: const Icon(Icons.calendar_month_rounded, size: 16, color: _kOrange),
-              label: Text(isThisMonth ? 'Tháng này' : 'T$_navMonth/$_navYear', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
-            ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSummaryCards() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE8E2DA)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.local_offer_rounded, color: _kOrange, size: 24),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Tổng đơn áp mã', style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 2),
-                      Text('$_totalOrders đơn', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kNavy)),
-                    ],
-                  ),
-                ],
-              ),
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE8E2DA)),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE8E2DA)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.monetization_on_rounded, color: _kGreen, size: 24),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Tổng tiền giảm', style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 2),
-                      Text(_fmtVnd(_totalDiscount), style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kGreen)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showOrderDetailsByNumber(String orderNumber) async {
-    try {
-      final sb = Supabase.instance.client;
-      final orderRows = await sb
-          .from('orders')
-          .select('id, order_number, customer_name, subtotal, discount, total, payment_method, note, created_at')
-          .eq('order_number', orderNumber)
-          .limit(1);
-
-      if (orderRows.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Không tìm thấy đơn hàng "$orderNumber"', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-              backgroundColor: _kRed,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          );
-        }
-        return;
-      }
-      final order = orderRows.first;
-      final orderId = order['id'] as String;
-
-      final items = await sb
-          .from('order_items')
-          .select('name, qty, quantity, unit_price, subtotal')
-          .eq('order_id', orderId);
-
-      if (!mounted) return;
-
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: _kBg,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Chi tiết đơn hàng', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 16, color: _kNavy)),
-              IconButton(
-                icon: const Icon(Icons.close_rounded, size: 20),
-                onPressed: () => Navigator.pop(ctx),
-              ),
-            ],
-          ),
-          content: SizedBox(
-            width: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE8E2DA)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Số đơn:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
-                          Text(order['order_number'] as String, style: GoogleFonts.outfit(fontSize: 13, color: _kNavy, fontWeight: FontWeight.w900)),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Thời gian:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
-                          Text(
-                            DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(order['created_at'] as String)),
-                            style: GoogleFonts.outfit(fontSize: 12, color: _kInk, fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
-                      if (order['customer_name'] != null && (order['customer_name'] as String).isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Khách hàng:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
-                            Text(order['customer_name'] as String, style: GoogleFonts.outfit(fontSize: 12, color: _kInk, fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                      ],
-                      if (order['payment_method'] != null && (order['payment_method'] as String).isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Hình thức:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
-                            Text(order['payment_method'] as String, style: GoogleFonts.outfit(fontSize: 12, color: _kInk, fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text('Danh sách món:', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: _kNavy)),
-                const SizedBox(height: 8),
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.3),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: items.map((item) {
-                        final name = item['name'] as String? ?? '';
-                        final qty = (item['quantity'] as num?)?.toDouble() ?? (item['qty'] as num?)?.toDouble() ?? 1;
-                        final sub = (item['subtotal'] as num?)?.toDouble() ?? 0;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          decoration: const BoxDecoration(
-                            border: Border(bottom: BorderSide(color: Color(0xFFF2ECE4), width: 0.5)),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(child: Text(name, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: _kInk))),
-                              const SizedBox(width: 8),
-                              Text('x${qty.toStringAsFixed(0)}', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w800, color: _kNavy)),
-                              const SizedBox(width: 16),
-                              Text(_fmtVnd(sub), style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w800, color: _kNavy)),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                const Icon(Icons.local_offer_rounded, color: _kOrange, size: 24),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Tạm tính:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
-                    Text(_fmtVnd((order['subtotal'] as num?)?.toDouble() ?? 0), style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kInk)),
+                    Text('Tổng đơn áp mã', style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text('$_totalOrders đơn', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kNavy)),
                   ],
                 ),
-                if (order['discount'] != null && (order['discount'] as num).toDouble() > 0) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Giảm giá:', style: GoogleFonts.outfit(fontSize: 12, color: _kRed)),
-                      Text('-${_fmtVnd((order['discount'] as num).toDouble())}', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kRed)),
-                    ],
-                  ),
-                ],
-                const Divider(height: 20, color: Color(0xFFE8E2DA)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Tổng thanh toán:', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: _kNavy)),
-                    Text(_fmtVnd((order['total'] as num?)?.toDouble() ?? 0), style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kGreen)),
-                  ],
-                ),
-                if (order['note'] != null && (order['note'] as String).trim().isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE8E2DA)),
-                    ),
-                    width: double.infinity,
-                    child: Text('Ghi chú: ${order['note']}', style: GoogleFonts.outfit(fontSize: 11, fontStyle: FontStyle.italic, color: _kMuted)),
-                  ),
-                ],
               ],
             ),
           ),
         ),
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi tải chi tiết: $e', style: GoogleFonts.outfit(color: Colors.white))),
-        );
-      }
-    }
+        const SizedBox(width: 12),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE8E2DA)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.monetization_on_rounded, color: _kGreen, size: 24),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Tổng tiền giảm', style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text(_fmtVnd(_totalDiscount), style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kGreen)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildVoucherGroupsList() {
     if (_groups.isEmpty) {
-      return Center(
-        child: Text('Không có dữ liệu sử dụng voucher trong kỳ.', style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Text('Không có dữ liệu sử dụng voucher trong kỳ.', style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
+        ),
       );
     }
 
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: _groups.length,
       itemBuilder: (context, idx) {
@@ -4205,7 +4174,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                         Expanded(
                           flex: 3,
                           child: InkWell(
-                            onTap: () => _showOrderDetailsByNumber(row.orderNumber),
+                            onTap: () => showOrderDetailDialog(context, row.orderNumber),
                             borderRadius: BorderRadius.circular(4),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 2),

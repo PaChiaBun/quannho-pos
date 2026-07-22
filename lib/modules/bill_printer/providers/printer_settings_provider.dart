@@ -14,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../../core/utils/app_logger.dart';
 
 Future<void> writePrintLog(String message) async {
+  if (message.contains('[Polling Orders]') || message.contains('[Polling Tickets]')) return;
   AppLogger.info('printer', message);
 }
 
@@ -700,9 +701,6 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .order('sent_at', ascending: false)
           .limit(10);
       
-      if (tickets.isNotEmpty) {
-        writePrintLog('[Polling Tickets] Tìm thấy ${tickets.length} tickets.');
-      }
       for (final row in tickets) {
         final ticketId = row['id'] as String?;
         if (ticketId != null && !_printedTicketIds.contains(ticketId)) {
@@ -722,9 +720,6 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .order('created_at', ascending: false)
           .limit(10);
 
-      if (orders.isNotEmpty) {
-        writePrintLog('[Polling Orders] Tìm thấy ${orders.length} orders.');
-      }
       for (final row in orders) {
         final orderId = row['id'] as String?;
         if (orderId != null && !_printedOrderIds.contains(orderId)) {

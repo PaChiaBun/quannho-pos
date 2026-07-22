@@ -14,6 +14,7 @@ import '../core/services/store_auth_service.dart';
 import '../modules/finance/providers/finance_providers.dart';
 import '../modules/finance/repository/finance_repository.dart';
 import '../modules/finance/screens/add_transaction_sheet.dart';
+import '../core/widgets/order_detail_dialog.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE
@@ -41,6 +42,36 @@ class FinanceScreen extends ConsumerStatefulWidget {
 
 class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
+  Future<void> _selectCustomDateRange(BuildContext context, WidgetRef ref, DateRange current) async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(now.year, now.month, now.day + 1),
+      initialDateRange: DateTimeRange(
+        start: current.from.toLocal(),
+        end: current.to.subtract(const Duration(seconds: 1)).toLocal(),
+      ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: _kNavy,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: _kInk,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      ref.read(periodProvider.notifier).setCustom(picked.start, picked.end);
+    }
+  }
+
   Future<void> _openAddSheet({String type = 'income'}) async {
     HapticFeedback.selectionClick();
     final result = await showModalBottomSheet<bool>(
@@ -57,6 +88,86 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     }
   }
 
+  void _showPeriodSelectionSheet(BuildContext context, WidgetRef ref, DateRange current) {
+    final periods = [
+      ('today', 'Hôm nay'),
+      ('yesterday', 'Hôm qua'),
+      ('7days', '7 ngày qua'),
+      ('week', 'Tuần này'),
+      ('month', 'Tháng này'),
+      ('last_month', 'Tháng trước'),
+      ('custom', '📅 Chọn ngày tùy chỉnh...'),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Chọn thời gian báo cáo', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: _kNavy)),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ...periods.map((p) {
+              final active = current.label == p.$2 ||
+                  (p.$1 == 'today' && current.label == 'Hôm nay') ||
+                  (p.$1 == 'yesterday' && current.label == 'Hôm qua') ||
+                  (p.$1 == '7days' && current.label == '7 ngày qua') ||
+                  (p.$1 == 'week' && current.label == 'Tuần này') ||
+                  (p.$1 == 'month' && current.label == 'Tháng này') ||
+                  (p.$1 == 'last_month' && current.label == 'Tháng trước');
+
+              return ListTile(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                tileColor: active ? const Color(0xFFE3F2FD) : null,
+                leading: Icon(
+                  p.$1 == 'custom' ? Icons.calendar_month_rounded : Icons.access_time_rounded,
+                  color: active ? _kNavy : _kMuted,
+                  size: 20,
+                ),
+                title: Text(
+                  p.$2,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: active ? FontWeight.bold : FontWeight.w500,
+                    color: active ? _kNavy : _kInk,
+                  ),
+                ),
+                trailing: active ? const Icon(Icons.check_circle_rounded, color: _kNavy, size: 20) : null,
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  switch (p.$1) {
+                    case 'today':      ref.read(periodProvider.notifier).setToday(); break;
+                    case 'yesterday':  ref.read(periodProvider.notifier).setYesterday(); break;
+                    case '7days':      ref.read(periodProvider.notifier).setLast7Days(); break;
+                    case 'week':       ref.read(periodProvider.notifier).setThisWeek(); break;
+                    case 'month':      ref.read(periodProvider.notifier).setThisMonth(); break;
+                    case 'last_month': ref.read(periodProvider.notifier).setLastMonth(); break;
+                    case 'custom':     await _selectCustomDateRange(context, ref, current); break;
+                  }
+                },
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final periodState = ref.watch(periodProvider);
@@ -65,14 +176,17 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     final recordsAsync = ref.watch(filteredRecordsProvider);
     final selectedFund = ref.watch(selectedFundProvider);
 
-    final mainContent = Column(
-      children: [
-        _buildHeader(statsAsync, periodState),
-        _buildFundTabs(selectedFund),
-        _buildPeriodChips(periodState),
-        _buildFilterTabs(filterType, recordsAsync),
-        Expanded(child: _buildList(recordsAsync)),
-      ],
+    final mainContent = SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        children: [
+          _buildHeader(statsAsync, periodState),
+          _buildFundTabs(selectedFund),
+          _buildPeriodChips(periodState),
+          _buildFilterTabs(filterType, recordsAsync),
+          _buildList(recordsAsync),
+        ],
+      ),
     );
 
     return Scaffold(
@@ -104,12 +218,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   // HEADER
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildHeader(AsyncValue<FinanceStats> statsAsync, DateRange period) {
-    final periods = [
-      ('today', 'Hôm nay'),
-      ('week',  'Tuần'),
-      ('month', 'Tháng'),
-    ];
-
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -125,7 +233,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Title + Period tabs ──
+              // ── Title ──
               Row(children: [
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   const Text('Thu Chi',
@@ -136,39 +244,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                   const Text('Doanh thu POS · Chi phí vận hành',
                     style: TextStyle(color: Colors.white38, fontSize: 11)),
                 ]),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: const Color(0x1AFFFFFF),
-                    borderRadius: BorderRadius.circular(10)),
-                  child: Row(children: periods.map((p) {
-                    final active = period.label == p.$2 ||
-                      (p.$1 == 'today' && period.label == 'Hôm nay') ||
-                      (p.$1 == 'week'  && period.label == 'Tuần này') ||
-                      (p.$1 == 'month' && period.label == 'Tháng này');
-                    return GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        switch (p.$1) {
-                          case 'today': ref.read(periodProvider.notifier).setToday(); break;
-                          case 'week':  ref.read(periodProvider.notifier).setThisWeek(); break;
-                          case 'month': ref.read(periodProvider.notifier).setThisMonth(); break;
-                        }
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: active ? _kWhite : Colors.transparent,
-                          borderRadius: BorderRadius.circular(7)),
-                        child: Text(p.$2,
-                          style: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w700,
-                            color: active ? _kNavy : Colors.white60))),
-                    );
-                  }).toList()),
-                ),
               ]),
               const SizedBox(height: 18),
 
@@ -179,23 +254,25 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                 data: (stats) => Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Lợi nhuận hero
-                    Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                    // Lợi nhuận ròng (Gross Profit)
+                    Row(children: [
                       Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('LỢI NHUẬN',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.45),
-                              fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.2)),
-                          const SizedBox(height: 4),
+                          Text('LỢI NHUẬN', style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.45), fontSize: 10,
+                            fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                          const SizedBox(height: 2),
                           Text(
-                            '${stats.profit >= 0 ? '+ ' : '- '}${_fmtMoney(stats.profit.abs().toInt())}',
+                            '${stats.profit >= 0 ? "+" : ""}${fmtVnd(stats.profit)}',
                             style: TextStyle(
                               color: stats.profit >= 0
-                                ? const Color(0xFF81C784)
-                                : const Color(0xFFEF9A9A),
-                              fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: -1.5)),
+                                ? const Color(0xFF69F0AE)
+                                : const Color(0xFFFF5252),
+                              fontSize: 26, fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5),
+                          ),
+                          const SizedBox(height: 2),
                           Text('Biên lợi nhuận: ${stats.profitMargin.toStringAsFixed(1)}%',
                             style: TextStyle(color: Colors.white.withValues(alpha: 0.38), fontSize: 11)),
                         ],
@@ -246,9 +323,62 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
 
   // ─────────────────────────────────────────────────────────────────────────
-  // PERIOD CHIPS — đã merge vào header, giữ lại để không break provider
+  // PERIOD CHIPS — Banner hiển thị ngày đang xem & nút chọn ngày linh hoạt
   // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildPeriodChips(DateRange current) => const SizedBox.shrink();
+  Widget _buildPeriodChips(DateRange current) {
+    final fromStr = DateFormat('dd/MM/yyyy').format(current.from.toLocal());
+    final toDate = current.to.subtract(const Duration(seconds: 1)).toLocal();
+    final toStr = DateFormat('dd/MM/yyyy').format(toDate);
+    final isSameDay = fromStr == toStr;
+    final rangeText = isSameDay ? fromStr : '$fromStr - $toStr';
+
+    return Container(
+      color: _kBg,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: InkWell(
+        onTap: () => _showPeriodSelectionSheet(context, ref, current),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE8E2DA)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.date_range_rounded, size: 16, color: _kNavy),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Đang xem: ${current.label} ($rangeText)',
+                  style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: _kNavy),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: _kNavy,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.calendar_month_rounded, size: 12, color: Colors.white),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Đổi ngày',
+                      style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // FILTER TABS
@@ -468,7 +598,10 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildList(AsyncValue<List<FinanceRecordModel>> recordsAsync) {
     return recordsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator(color: _kNavy)),
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(child: CircularProgressIndicator(color: _kNavy)),
+      ),
       error: (e, _) => Center(child: Text('Lỗi: $e')),
       data: (records) {
         if (records.isEmpty) return _buildEmpty();
@@ -482,6 +615,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           items.add(r);
         }
         return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(12, 4, 12, 100),
           itemCount: items.length,
           itemBuilder: (_, i) {
@@ -688,6 +823,31 @@ class _TransactionCard extends StatelessWidget {
               fontSize: 15, fontWeight: FontWeight.w800,
               color: color),
           ),
+          onTap: () {
+            final orderNum = extractOrderNumber(record.description);
+            if (orderNum != null) {
+              showOrderDetailDialog(context, orderNum);
+            } else if (record.isAuto) {
+              final desc = record.description ?? 'giao dịch';
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(SnackBar(
+                  content: Row(children: [
+                    const Icon(Icons.info_outline_rounded,
+                      color: Colors.white, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(
+                      'Tự động từ: $desc. Không thể xóa thủ công.',
+                      style: const TextStyle(fontSize: 12))),
+                  ]),
+                  duration: const Duration(seconds: 3),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: _kNavy,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                ));
+            }
+          },
           onLongPress: onDelete,
         ),
       ),

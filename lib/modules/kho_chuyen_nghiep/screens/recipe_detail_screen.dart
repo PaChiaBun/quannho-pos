@@ -48,6 +48,28 @@ class RecipeDetailScreen extends ConsumerWidget {
                 ),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
+                    if (recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty) ...[
+                      Container(
+                        width: 48, height: 48,
+                        margin: const EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white24, width: 1.5),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            recipe.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.menu_book_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                     Expanded(child: Text(recipe.name, style: GoogleFonts.outfit(
                         color: Colors.white, fontSize: 22,
                         fontWeight: FontWeight.w900))),

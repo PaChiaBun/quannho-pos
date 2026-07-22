@@ -27,9 +27,21 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
   Widget build(BuildContext context) {
     final ordersAsync  = ref.watch(productionOrdersByDateProvider);
     final recipesAsync = ref.watch(recipesProvider);
+    final canPop = Navigator.canPop(context);
 
     return Scaffold(
       backgroundColor: KhoTheme.bg,
+      appBar: canPop
+          ? AppBar(
+              title: Text('Lệnh sản xuất', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: KhoTheme.navy)),
+              backgroundColor: Colors.white,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: KhoTheme.navy),
+                onPressed: () => Navigator.pop(context),
+              ),
+            )
+          : null,
       body: CustomScrollView(
         slivers: [
 

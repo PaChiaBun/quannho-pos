@@ -118,12 +118,26 @@ class DashboardRepository {
         .gte('created_at', from)
         .lt('created_at', to); // ‼️ FIX: lt (exclusive) — caller truyền midnight ngày kế
 
+    if (orders.isEmpty) return [];
     final orderIds = orders.map((o) => o['id'] as String).toList();
-    final items    = await _sb.from('order_items').select().inFilter('order_id', orderIds);
+
+    // Batch orderIds in parallel chunks of 100 to prevent Postgrest URI limits and speed up fetch
+    final List<Map<String, dynamic>> items = [];
+    const chunkSize = 100;
+    final futures = <Future<List<Map<String, dynamic>>>>[];
+    for (int i = 0; i < orderIds.length; i += chunkSize) {
+      final chunk = orderIds.sublist(i, (i + chunkSize).clamp(0, orderIds.length));
+      futures.add(_sb.from('order_items').select('product_id, product_name, name, quantity, qty, subtotal').inFilter('order_id', chunk));
+    }
+    final results = await Future.wait(futures);
+    for (final res in results) {
+      items.addAll(res);
+    }
 
     final map = <String, _ProductAgg>{};
     for (final item in items) {
       final productId = item['product_id'] as String? ?? '';
+      if (productId.isEmpty) continue;
       final agg = map[productId] ??= _ProductAgg(item['product_name'] as String? ?? item['name'] as String? ?? '');
       // Fallback: quantity (extended col) → qty (legacy col)
       agg.qty     += (item['quantity'] as num?)?.toDouble()
@@ -395,8 +409,20 @@ class DashboardRepository {
         .lt('created_at', t); // ‼️ FIX: lt (exclusive)
     if (orders.isEmpty) return [];
     final orderIds = orders.map((o) => o['id'] as String).toList();
-    final items = await _sb.from('order_items').select('product_id').inFilter('order_id', orderIds);
-    final productIds = items.map((i) => i['product_id'] as String).toSet().toList();
+
+    final List<Map<String, dynamic>> items = [];
+    const chunkSize = 100;
+    final futures = <Future<List<Map<String, dynamic>>>>[];
+    for (int i = 0; i < orderIds.length; i += chunkSize) {
+      final chunk = orderIds.sublist(i, (i + chunkSize).clamp(0, orderIds.length));
+      futures.add(_sb.from('order_items').select('product_id').inFilter('order_id', chunk));
+    }
+    final results = await Future.wait(futures);
+    for (final res in results) {
+      items.addAll(res);
+    }
+
+    final productIds = items.map((i) => i['product_id'] as String? ?? '').where((id) => id.isNotEmpty).toSet().toList();
     if (productIds.isEmpty) return [];
     final products = await _sb.from('products').select('category').inFilter('id', productIds);
     return products.map((p) => p['category'] as String? ?? '').where((c) => c.isNotEmpty).toSet().toList()..sort();

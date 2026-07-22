@@ -16,8 +16,14 @@ class PeriodNotifier extends Notifier<DateRange> {
   DateRange build() => DateRange.today();
 
   void setToday()     => state = DateRange.today();
+  void setYesterday() => state = DateRange.yesterday();
+  void setLast7Days() => state = DateRange.last7Days();
   void setThisWeek()  => state = DateRange.thisWeek();
   void setThisMonth() => state = DateRange.thisMonth();
+  void setLast30Days() => state = DateRange.last30Days();
+  void setLastMonth() => state = DateRange.lastMonth();
+  void setCustom(DateTime from, DateTime to) => state = DateRange.custom(from, to);
+  void setDateRange(DateRange range) => state = range;
 }
 
 final periodProvider = NotifierProvider<PeriodNotifier, DateRange>(

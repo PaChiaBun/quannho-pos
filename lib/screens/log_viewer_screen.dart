@@ -66,6 +66,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       end: DateTime(now.year, now.month, now.day, 23, 59, 59),
     );
     _fetchStaffNames();
+    _fetchLogs();
   }
 
   Future<void> _fetchStaffNames() async {
@@ -153,7 +154,11 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       }
 
       final data = await query.order('created_at', ascending: false).limit(1000);
-      final List<Map<String, dynamic>> fetchedLogs = List<Map<String, dynamic>>.from(data);
+      final List<Map<String, dynamic>> fetchedLogs = List<Map<String, dynamic>>.from(data)
+          .where((log) {
+            final msg = log['message'] as String? ?? '';
+            return !msg.contains('[Polling Orders]') && !msg.contains('[Polling Tickets]');
+          }).toList();
 
       setState(() {
         _logs = fetchedLogs;
@@ -193,19 +198,40 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
         final storeId = info['store_id'];
         if (storeId != null) {
           Supabase.instance.client.rest.headers['x-store-id'] = storeId;
-          await Supabase.instance.client.from('app_logs').delete().eq('store_id', storeId);
+          
+          // Xoá theo lô (chunking 500 bản ghi/lần) để tránh lỗi PostgreSQL statement_timeout (57014)
+          while (true) {
+            final rows = await Supabase.instance.client
+                .from('app_logs')
+                .select('id')
+                .eq('store_id', storeId)
+                .limit(500);
+            if (rows.isEmpty) break;
+
+            final ids = rows.map((r) => r['id'] as String).toList();
+            await Supabase.instance.client
+                .from('app_logs')
+                .delete()
+                .inFilter('id', ids);
+
+            if (ids.length < 500) break;
+          }
         }
         await AppLogger.clearLocalLogs();
-        _fetchLogs();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã xóa sạch nhật ký!'), backgroundColor: Colors.green),
-        );
+        await _fetchLogs();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đã xóa sạch nhật ký!'), backgroundColor: Colors.green),
+          );
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi xóa nhật ký: $e'), backgroundColor: Colors.red),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi xóa nhật ký: $e'), backgroundColor: Colors.red),
+          );
+        }
       } finally {
-        setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
@@ -565,121 +591,131 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
           ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             _buildFilterBar(),
             const SizedBox(height: 16),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : !_hasFetched
-                      ? Center(
+            _isLoading
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : !_hasFetched
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Center(
                           child: Text(
                             'Vui lòng chọn bộ lọc và nhấn nút "Truy xuất Log" để tải nhật ký.',
                             style: GoogleFonts.outfit(fontSize: 15, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                           ),
-                        )
-                      : _logs.isEmpty
-                          ? Center(
+                        ),
+                      )
+                    : _logs.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40),
+                            child: Center(
                               child: Text(
                                 'Không tìm thấy bản ghi nhật ký nào.',
                                 style: GoogleFonts.outfit(fontSize: 15, color: Colors.grey),
                               ),
-                            )
-                          : ListView.builder(
-                              itemCount: _logs.length,
-                              itemBuilder: (context, index) {
-                                final log = _logs[index];
-                                final time = DateTime.parse(log['created_at'] as String).toLocal();
-                                final timeStr = DateFormat('HH:mm:ss - dd/MM/yyyy').format(time);
-                                final level = log['level'] as String? ?? 'INFO';
-                                final tag = log['tag'] as String? ?? 'system';
-                                final staff = log['staff_name'] as String? ?? 'Hệ thống';
-                                final msg = log['message'] as String? ?? '';
-                                final details = log['details'] as String?;
+                            ),
+                          )
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _logs.length,
+                            itemBuilder: (context, index) {
+                              final log = _logs[index];
+                              final time = DateTime.parse(log['created_at'] as String).toLocal();
+                              final timeStr = DateFormat('HH:mm:ss - dd/MM/yyyy').format(time);
+                              final level = log['level'] as String? ?? 'INFO';
+                              final tag = log['tag'] as String? ?? 'system';
+                              final staff = log['staff_name'] as String? ?? 'Hệ thống';
+                              final msg = log['message'] as String? ?? '';
+                              final details = log['details'] as String?;
 
-                                final levelColor = _getColorForLevel(level);
+                              final levelColor = _getColorForLevel(level);
 
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 10),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  child: ExpansionTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: levelColor.withOpacity(0.1),
-                                      child: Icon(_getIconForTag(tag), color: levelColor, size: 20),
-                                    ),
-                                    title: Row(
-                                      children: [
-                                        Text(
-                                          staff,
-                                          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: levelColor.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            _getTranslatedLevel(level),
-                                            style: GoogleFonts.outfit(
-                                              color: levelColor,
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 10,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    subtitle: Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(msg, style: GoogleFonts.outfit(fontSize: 13, color: Colors.black87)),
-                                          const SizedBox(height: 2),
-                                          Text(timeStr, style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey)),
-                                        ],
-                                      ),
-                                    ),
-                                    childrenPadding: const EdgeInsets.all(16),
-                                    expandedAlignment: Alignment.topLeft,
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                child: ExpansionTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: levelColor.withOpacity(0.1),
+                                    child: Icon(_getIconForTag(tag), color: levelColor, size: 20),
+                                  ),
+                                  title: Row(
                                     children: [
-                                      if (details != null && details.isNotEmpty)
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Chi tiết kỹ thuật (Technical Details):',
-                                              style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.red.shade800),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Container(
-                                              width: double.infinity,
-                                              padding: const EdgeInsets.all(10),
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey.shade100,
-                                                borderRadius: BorderRadius.circular(6),
-                                                border: Border.all(color: Colors.grey.shade200),
-                                              ),
-                                              child: SelectableText(
-                                                details,
-                                                style: GoogleFonts.sourceCodePro(fontSize: 12, color: Colors.black87),
-                                              ),
-                                            ),
-                                          ],
-                                        )
-                                      else
-                                        Text('Không có thông tin kỹ thuật bổ sung.', style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey)),
+                                      Text(
+                                        staff,
+                                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: levelColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          _getTranslatedLevel(level),
+                                          style: GoogleFonts.outfit(
+                                            color: levelColor,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                );
-                              },
-                            ),
-            ),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(msg, style: GoogleFonts.outfit(fontSize: 13, color: Colors.black87)),
+                                        const SizedBox(height: 2),
+                                        Text(timeStr, style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ),
+                                  childrenPadding: const EdgeInsets.all(16),
+                                  expandedAlignment: Alignment.topLeft,
+                                  children: [
+                                    if (details != null && details.isNotEmpty)
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Chi tiết kỹ thuật (Technical Details):',
+                                            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.red.shade800),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade100,
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(color: Colors.grey.shade200),
+                                            ),
+                                            child: SelectableText(
+                                              details,
+                                              style: GoogleFonts.sourceCodePro(fontSize: 12, color: Colors.black87),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    else
+                                      Text('Không có thông tin kỹ thuật bổ sung.', style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey)),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
           ],
         ),
       ),

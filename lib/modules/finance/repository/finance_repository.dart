@@ -244,7 +244,6 @@ class DateRange {
   static DateRange today() {
     final now        = DateTime.now();
     final startLocal = DateTime(now.year, now.month, now.day);
-    // to = midnight NGÀY KẾ (exclusive) — cả watchRecords lẫn getStats đều dùng exclusive upper bound
     final endLocal   = DateTime(now.year, now.month, now.day + 1);
     return DateRange(
       from:  startLocal.toUtc(),
@@ -253,11 +252,34 @@ class DateRange {
     );
   }
 
+  static DateRange yesterday() {
+    final now        = DateTime.now();
+    final yest       = now.subtract(const Duration(days: 1));
+    final startLocal = DateTime(yest.year, yest.month, yest.day);
+    final endLocal   = DateTime(now.year, now.month, now.day);
+    return DateRange(
+      from:  startLocal.toUtc(),
+      to:    endLocal.toUtc(),
+      label: 'Hôm qua',
+    );
+  }
+
+  static DateRange last7Days() {
+    final now        = DateTime.now();
+    final start      = now.subtract(const Duration(days: 6));
+    final startLocal = DateTime(start.year, start.month, start.day);
+    final endLocal   = DateTime(now.year, now.month, now.day + 1);
+    return DateRange(
+      from:  startLocal.toUtc(),
+      to:    endLocal.toUtc(),
+      label: '7 ngày qua',
+    );
+  }
+
   static DateRange thisWeek() {
     final now    = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final startLocal = DateTime(monday.year, monday.month, monday.day);
-    // to = midnight NGÀY MAI (exclusive)
     final endLocal   = DateTime(now.year, now.month, now.day + 1);
     return DateRange(
       from:  startLocal.toUtc(),
@@ -268,12 +290,47 @@ class DateRange {
 
   static DateRange thisMonth() {
     final now = DateTime.now();
-    // to = midnight NGÀY MAI (exclusive)
     final endLocal = DateTime(now.year, now.month, now.day + 1);
     return DateRange(
       from:  DateTime(now.year, now.month, 1).toUtc(),
       to:    endLocal.toUtc(),
       label: 'Tháng này',
+    );
+  }
+
+  static DateRange last30Days() {
+    final now        = DateTime.now();
+    final start      = now.subtract(const Duration(days: 29));
+    final startLocal = DateTime(start.year, start.month, start.day);
+    final endLocal   = DateTime(now.year, now.month, now.day + 1);
+    return DateRange(
+      from:  startLocal.toUtc(),
+      to:    endLocal.toUtc(),
+      label: '30 ngày qua',
+    );
+  }
+
+  static DateRange lastMonth() {
+    final now = DateTime.now();
+    final firstDayThisMonth = DateTime(now.year, now.month, 1);
+    final lastDayLastMonth  = firstDayThisMonth.subtract(const Duration(days: 1));
+    final firstDayLastMonth = DateTime(lastDayLastMonth.year, lastDayLastMonth.month, 1);
+    return DateRange(
+      from:  firstDayLastMonth.toUtc(),
+      to:    firstDayThisMonth.toUtc(),
+      label: 'Tháng trước',
+    );
+  }
+
+  static DateRange custom(DateTime fromDate, DateTime toDate, {String? customLabel}) {
+    final startLocal = DateTime(fromDate.year, fromDate.month, fromDate.day);
+    final endLocal   = DateTime(toDate.year, toDate.month, toDate.day + 1);
+    final labelStr   = customLabel ??
+        '${fromDate.day.toString().padLeft(2, '0')}/${fromDate.month.toString().padLeft(2, '0')} - ${toDate.day.toString().padLeft(2, '0')}/${toDate.month.toString().padLeft(2, '0')}';
+    return DateRange(
+      from:  startLocal.toUtc(),
+      to:    endLocal.toUtc(),
+      label: labelStr,
     );
   }
 }

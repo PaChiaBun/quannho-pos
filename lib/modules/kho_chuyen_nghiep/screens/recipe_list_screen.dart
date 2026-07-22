@@ -293,8 +293,24 @@ class _RecipeCard extends StatelessWidget {
                     color: KhoTheme.violet.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.menu_book_rounded,
-                      color: KhoTheme.violet, size: 20),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
+                      ? Image.network(
+                          recipe.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.menu_book_rounded,
+                            color: KhoTheme.violet,
+                            size: 20,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.menu_book_rounded,
+                          color: KhoTheme.violet,
+                          size: 20,
+                        ),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(child: Column(
