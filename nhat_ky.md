@@ -1706,6 +1706,38 @@ Phát hiện lỗi nghiêm trọng khi gọi món nháp (Chưa gửi bếp):
 | `lib/main.dart` | Thêm ngoại lệ tab Cài đặt (index `6`) khỏi bộ lọc Clock-in bắt buộc. |
 | `nhat_ky.md` | Ghi chép tiến độ ngày hôm nay. |
 
+---
+
+## 2026-07-22 — Tối Ưu Hóa Hiệu Năng Truy Vấn, Sửa Lỗi Giao Diện Co Giãn & Dọn Rác Nhật Ký Log
+
+### Đã làm
+- ✅ **Cải Tiến Module Thu Chi (`finance_screen.dart`)**:
+  - Chuyển layout trang Thu Chi sang dạng cuộn trượt đồng bộ `SingleChildScrollView` kết hợp `shrinkWrap: true` và `NeverScrollableScrollPhysics` cho `ListView.builder`, khắc phục lỗi màn hình trắng và bỏ thanh ghim cố định gây khuất tầm nhìn trên điện thoại.
+  - Tích hợp Bottom Sheet chọn thời gian linh hoạt: Hôm nay, Hôm qua, 7 ngày qua, 30 ngày qua, Tháng này, Tuỳ chọn ngày (Custom Date Range Picker) khi bấm nút "Đổi ngày" hoặc banner thời gian.
+- ✅ **Tối Ưu Hóa & Sửa Lỗi Module Báo Cáo (`report_screen.dart`)**:
+  - **Biểu đồ Doanh Thu Theo Giờ**: Mở rộng trục Y lên 68px và căn phải `TextAlign.end`, khắc phục triệt để lỗi bị mất chữ/cắt số tiền lớn (như `500.000 Đ`). Tự động ẩn các khung giờ từ 0h đến 6h sáng khi không có doanh thu (`revenue == 0`).
+  - **Tối ưu tốc độ tải Tab Sản Phẩm**: Chuyển các truy vấn Supabase sang chạy song song bằng `Future.wait`, chia nhỏ danh sách `order_id` thành các lô 100 ID (`Batching chunks of 100`) tránh lỗi Postgrest URI quá dài và giảm 90% thời gian chờ tải. Tích hợp cache danh mục giúp chuyển tab danh mục sản phẩm tức thì.
+  - **Tab Voucher**: Bổ sung thanh điều hướng thời gian ngày/tuần/tháng (`_ReportNavBar.day`, `.week`, `.month`) và bộ chọn ngày quá khứ bất kỳ đồng bộ với các tab Báo cáo khác.
+- ✅ **Nâng Cấp & Xóa Rác Module Nhật Ký Hoạt Động (`log_viewer_screen.dart` & `printer_settings_provider.dart`)**:
+  - **Cuộn trượt đồng bộ**: Đổi layout sang `SingleChildScrollView` giúp cuộn trôi khung bộ lọc 6 ô lên trên khi lướt xem danh sách log trên điện thoại. Tự động tải nhật ký ngay khi mở màn hình (`auto-fetch`).
+  - **Tắt log quét ngầm định kỳ**: Loại bỏ hoàn toàn các câu lệnh `writePrintLog('[Polling Orders]')` và `writePrintLog('[Polling Tickets]')` chạy ngầm 2s/lần làm rác database Supabase. Tích hợp bộ lọc 2 lớp tại logger và màn hình hiển thị.
+  - **Xóa log khối lượng lớn an toàn**: Đổi cơ chế xóa sạch log `_clearLogs` sang xóa theo từng lô 500 bản ghi (`batch delete chunks of 500`), khắc phục triệt đẻ lỗi `PostgrestException statement_timeout (57014)`.
+- ✅ **Triển Khai Web Lên VPS (`quannho.lpm.vn/pos`)**:
+  - Build bản Flutter Web release với cấu hình base href `/pos/`.
+  - Đồng bộ và upload code tĩnh lên VPS `45.32.104.228` tại thư mục `/var/www/quannho/pos`.
+
+### Files đã sửa/tạo mới
+| File | Thay đổi |
+|------|----------|
+| `lib/screens/finance_screen.dart` | Chuyển layout sang cuộn trượt đồng bộ, tích hợp Bottom Sheet chọn khoảng thời gian đa dạng. |
+| `lib/modules/finance/repository/finance_repository.dart` & `finance_providers.dart` | Thêm static constructors cho `DateRange` và method tương ứng trong `PeriodNotifier`. |
+| `lib/screens/report_screen.dart` | Mở rộng trục Y & ẩn giờ 0h-6h rỗng trên biểu đồ doanh thu; bổ sung thanh điều hướng thời gian cho Tab Voucher; tối ưu hóa truy vấn song song batching 100 ID cho Tab Sản phẩm. |
+| `lib/core/repositories/dashboard_repository.dart` | Batching `order_ids` theo lô 100 ID song song trong `getTopProductsForRange` và `getProductCategoriesSold`. |
+| `lib/screens/log_viewer_screen.dart` | Layout cuộn trượt đồng bộ, auto-fetch log, xóa log khối lượng lớn theo lô 500 bản ghi và bổ sung bộ lọc ẩn log polling rác. |
+| `lib/modules/bill_printer/providers/printer_settings_provider.dart` | Bỏ ghi log định kỳ `[Polling Orders]` / `[Polling Tickets]` mỗi 2s và chặn log polling rác tại `writePrintLog`. |
+| `nhat_ky.md` | Cập nhật nhật ký phát triển ngày 2026-07-22. |
+
+
 
 
 
