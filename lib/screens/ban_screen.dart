@@ -3831,6 +3831,45 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     );
   }
 
+  Future<void> _mergeTable() async {
+    final activeSessions = ref.read(activeSessionsProvider).value ?? {};
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _TransferTableSheet(
+        currentTableId: widget.table.id,
+        currentTableLabel: widget.table.label,
+        activeSessions: activeSessions,
+        isMergeMode: true,
+        onConfirm: (targetTableId) async {
+          final targetSession = activeSessions[targetTableId];
+          await _banRepo.mergeSession(
+            sourceSessionId: widget.session.id,
+            targetTableId: targetTableId,
+            targetSessionId: targetSession?.id,
+          );
+          ref.invalidate(activeSessionsProvider);
+          if (mounted) {
+            Navigator.pop(context); // đóng session sheet
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Row(children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Text('Gộp bàn thành công!',
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+              ]),
+              backgroundColor: _kGreen,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ));
+          }
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final itemsAsync = ref.watch(sessionItemsProvider(widget.session.id));
@@ -3909,6 +3948,34 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                   'Chuyển',
                                   style: GoogleFonts.outfit(
                                     color: _kAmber,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Nút Gộp bàn
+                        GestureDetector(
+                          onTap: _mergeTable,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.2)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.merge_type_rounded, size: 14, color: Color(0xFF2563EB)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Gộp bàn',
+                                  style: GoogleFonts.outfit(
+                                    color: const Color(0xFF2563EB),
                                     fontWeight: FontWeight.w700,
                                     fontSize: 12,
                                   ),
@@ -8531,12 +8598,14 @@ class _TransferTableSheet extends ConsumerStatefulWidget {
   final String currentTableId;
   final String currentTableLabel;
   final Map<String, BanSessionModel> activeSessions;
+  final bool isMergeMode;
   final Future<void> Function(String newTableId) onConfirm;
 
   const _TransferTableSheet({
     required this.currentTableId,
     required this.currentTableLabel,
     required this.activeSessions,
+    this.isMergeMode = false,
     required this.onConfirm,
   });
 
@@ -8601,14 +8670,14 @@ class _TransferTableSheetState
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Row(
                           children: [
-                            const Icon(Icons.swap_horiz_rounded,
-                                color: _kAmber, size: 22),
+                            Icon(widget.isMergeMode ? Icons.merge_type_rounded : Icons.swap_horiz_rounded,
+                                color: widget.isMergeMode ? const Color(0xFF2563EB) : _kAmber, size: 22),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Chuyển bàn',
+                                  Text(widget.isMergeMode ? 'Gộp bàn' : 'Chuyển bàn',
                                       style: GoogleFonts.outfit(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w900,
@@ -8720,9 +8789,11 @@ class _TransferTableSheetState
                                   final isOccupied = widget.activeSessions.containsKey(t.id);
                                   final isSelected = _selectedTableId == t.id;
 
+                                  final themeColor = widget.isMergeMode ? const Color(0xFF2563EB) : _kAmber;
+
                                   return GestureDetector(
                                     onTap: () {
-                                      if (isOccupied) {
+                                      if (!widget.isMergeMode && isOccupied) {
                                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                           content: Text('⚠️ Bàn ${t.label} đang có khách, không thể chuyển sang.',
                                               style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
@@ -8743,19 +8814,19 @@ class _TransferTableSheetState
                                       width: 80, height: 56,
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? _kAmber
-                                            : (isOccupied ? const Color(0xFFF0EAE1) : Colors.white),
+                                            ? themeColor
+                                            : (isOccupied ? (widget.isMergeMode ? const Color(0xFFEFF6FF) : const Color(0xFFF0EAE1)) : Colors.white),
                                         borderRadius: BorderRadius.circular(14),
                                         border: Border.all(
                                           color: isSelected
-                                              ? _kAmber
-                                              : (isOccupied ? const Color(0xFFDDD5C8) : const Color(0xFFDDD5C8)),
+                                              ? themeColor
+                                              : (isOccupied ? (widget.isMergeMode ? const Color(0xFF93C5FD) : const Color(0xFFDDD5C8)) : const Color(0xFFDDD5C8)),
                                           width: isSelected ? 2 : 1,
                                         ),
                                         boxShadow: isSelected
                                             ? [
                                                 BoxShadow(
-                                                  color: _kAmber.withValues(alpha: 0.3),
+                                                  color: themeColor.withValues(alpha: 0.3),
                                                   blurRadius: 8,
                                                   offset: const Offset(0, 3),
                                                 )
@@ -8775,16 +8846,16 @@ class _TransferTableSheetState
                                                   fontWeight: FontWeight.w800,
                                                   color: isSelected
                                                       ? Colors.white
-                                                      : (isOccupied ? _kNavy.withValues(alpha: 0.4) : _kNavy),
+                                                      : (isOccupied ? (widget.isMergeMode ? const Color(0xFF1E40AF) : _kNavy.withValues(alpha: 0.4)) : _kNavy),
                                                 ),
                                               ),
                                               if (isOccupied)
                                                 Text(
-                                                  'Có khách',
+                                                  widget.isMergeMode ? '🔗 Gộp món' : 'Có khách',
                                                   style: GoogleFonts.outfit(
                                                     fontSize: 9,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: isSelected ? Colors.white : _kRed.withValues(alpha: 0.7),
+                                                    fontWeight: FontWeight.w700,
+                                                    color: isSelected ? Colors.white : (widget.isMergeMode ? const Color(0xFF2563EB) : _kRed.withValues(alpha: 0.7)),
                                                   ),
                                                 ),
                                             ],
@@ -8793,9 +8864,9 @@ class _TransferTableSheetState
                                             Positioned(
                                               top: 4, right: 4,
                                               child: Icon(
-                                                Icons.people_alt_rounded,
+                                                widget.isMergeMode ? Icons.merge_type_rounded : Icons.people_alt_rounded,
                                                 size: 10,
-                                                color: isSelected ? Colors.white : _kNavy.withValues(alpha: 0.35),
+                                                color: isSelected ? Colors.white : (widget.isMergeMode ? const Color(0xFF2563EB) : _kNavy.withValues(alpha: 0.35)),
                                               ),
                                             ),
                                         ],
@@ -8828,14 +8899,14 @@ class _TransferTableSheetState
                                 : const Icon(Icons.check_rounded),
                             label: Text(
                               _selectedTableId != null
-                                  ? 'Chuyển sang $_selectedTableLabel'
+                                  ? (widget.isMergeMode ? 'Gộp ${widget.currentTableLabel} vào $_selectedTableLabel' : 'Chuyển sang $_selectedTableLabel')
                                   : 'Chọn bàn đích',
                               style: GoogleFonts.outfit(
                                   fontSize: 15, fontWeight: FontWeight.w800),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _selectedTableId != null
-                                  ? _kAmber
+                                  ? (widget.isMergeMode ? const Color(0xFF2563EB) : _kAmber)
                                   : const Color(0xFFCCC4B8),
                               foregroundColor: Colors.white,
                               elevation: 0,
@@ -8985,13 +9056,13 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
   }
 
   void _onDigit(String d) {
-    if (_pin.length >= 4 || _loading) return;
+    if (_pin.length >= 6 || _loading) return;
     HapticFeedback.selectionClick();
     setState(() {
       _pin += d;
       _error = null;
     });
-    if (_pin.length == 4) {
+    if (_pin.length == 6) {
       Future.delayed(const Duration(milliseconds: 150), _verify);
     }
   }
@@ -9052,7 +9123,7 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
             ]),
             const SizedBox(height: 8),
             Text(
-              'Vui lòng gọi Quản lý nhập mã PIN 4 số duyệt thao tác nhạy cảm này.',
+              'Vui lòng gọi Quản lý nhập mã PIN 6 số duyệt thao tác nhạy cảm này.',
               textAlign: TextAlign.center,
               style: GoogleFonts.outfit(
                 fontSize: 12.5, color: _kNavy.withValues(alpha: 0.55), height: 1.4),
@@ -9070,13 +9141,13 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(4, (i) {
+                children: List.generate(6, (i) {
                   final filled = i < _pin.length;
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    width: filled ? 18 : 14,
-                    height: filled ? 18 : 14,
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    width: filled ? 16 : 12,
+                    height: filled ? 16 : 12,
                     decoration: BoxDecoration(
                       color: filled ? _kOrange : _kDot,
                       shape: BoxShape.circle,

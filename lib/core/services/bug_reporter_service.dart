@@ -68,11 +68,12 @@ class BugReporterService {
     String? userId,
     String? storeId,
     String? screenName,
+    Map<String, dynamic>? customLogs,
   }) async {
     try {
       final client = Supabase.instance.client;
       final packageInfo = await PackageInfo.fromPlatform();
-      final deviceInfo = await _getDeviceInfo(packageInfo);
+      final deviceInfo = await _getDeviceInfo(packageInfo, storeId: storeId, userId: userId, customLogs: customLogs);
 
       await client.from('bug_reports').insert({
         'user_id': userId ?? '',
@@ -80,7 +81,7 @@ class BugReporterService {
         'description': description,
         'screenshot_url': screenshotUrl,
         'device_info': deviceInfo,
-        'screen_name': screenName ?? '',
+        'screen_name': screenName ?? 'Settings > Gửi phản hồi',
         'status': 'open',
       });
 
@@ -91,19 +92,36 @@ class BugReporterService {
     }
   }
 
-  /// Thu thập thông tin thiết bị tự động
-  static Future<Map<String, dynamic>> _getDeviceInfo(PackageInfo packageInfo) async {
+  /// Thu thập thông tin thiết bị & Nhật ký dấu vết kỹ thuật (System Diagnostic Trace)
+  static Future<Map<String, dynamic>> _getDeviceInfo(
+    PackageInfo packageInfo, {
+    String? storeId,
+    String? userId,
+    Map<String, dynamic>? customLogs,
+  }) async {
+    final now = DateTime.now();
     final info = <String, dynamic>{
       'app_version': packageInfo.version,
       'build_number': packageInfo.buildNumber,
       'app_name': packageInfo.appName,
+      'reported_at': now.toIso8601String(),
+      'store_id': storeId ?? 'unknown',
+      'user_id': userId ?? 'unknown',
+      'system_logs': {
+        'timestamp': now.millisecondsSinceEpoch,
+        'formatted_time': now.toLocal().toString(),
+        'session_active': userId != null && userId.isNotEmpty,
+        'store_linked': storeId != null && storeId.isNotEmpty,
+        'trace_id': 'TRACE-${now.millisecondsSinceEpoch}',
+        if (customLogs != null) ...customLogs,
+      },
     };
 
     try {
       if (kIsWeb) {
         info['os'] = 'web';
-        info['os_version'] = 'browser';
-        info['locale'] = 'unknown';
+        info['os_version'] = 'Browser PWA / Web Client';
+        info['locale'] = 'vi-VN';
       } else {
         info['os'] = Platform.operatingSystem;
         info['os_version'] = Platform.operatingSystemVersion;

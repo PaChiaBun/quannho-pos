@@ -17,6 +17,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../modules/bill_printer/screens/printer_settings_screen.dart';
 import '../core/services/auto_update_service.dart';
 import '../modules/pos/screens/discount_management_screen.dart';
+import 'role_manager_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS SCREEN — Cài đặt Quán Nhỏ POS
@@ -51,7 +52,7 @@ class SettingsScreen extends ConsumerWidget {
             backgroundColor: _kNavy,
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-              title: const Text('Cài đặt',
+              title: const Text('Cài đặt hệ thống',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18, fontWeight: FontWeight.w900,
@@ -69,7 +70,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
-          // ── Shop Info Card ─────────────────────────────────────────
+          // ── 1. Cửa Hàng & Hoá Đơn ──────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -79,11 +80,11 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
-          // ── Bảo mật ─────────────────────────────────────────────
+          // ── 2. Bảo Mật Tài Khoản ───────────────────────────────────
           SliverToBoxAdapter(
             child: _SectionHeader(
-              icon: Icons.lock_rounded,
-              title: 'Bảo mật',
+              icon: Icons.shield_rounded,
+              title: 'Bảo mật tài khoản',
               color: const Color(0xFF1565C0),
             ),
           ),
@@ -91,58 +92,18 @@ class SettingsScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _PinToggleTile(),
-                _RecoveryEmailTile(),
                 _QuickPinTile(),
+                const _ChangePasswordTile(),
+                const _PasswordRecoveryTile(),
               ]),
             ),
           ),
 
-
-
-          // ── Dữ liệu ────────────────────────────────────────────────
+          // ── 3. Hỗ Trợ Kỹ Thuật & Tài Khoản ──────────────────────────
           SliverToBoxAdapter(
             child: _SectionHeader(
-              icon: Icons.storage_rounded,
-              title: 'Dữ liệu',
-              color: _kGreen,
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _SettingsTile(
-                  icon: Icons.backup_rounded,
-                  label: 'Sao lưu',
-                  subtitle: 'Xuất CSV — Đơn hàng, Lương, Tồn kho...',
-                  color: _kGreen,
-                  onTap: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const BackupScreen())),
-                ),
-                _SettingsTile(
-                  icon: Icons.restore_rounded,
-                  label: 'Khôi phục',
-                  subtitle: 'Từ bản sao dự phòng',
-                  color: _kOrange,
-                  onTap: () => _comingSoon(context),
-                ),
-                _SettingsTile(
-                  icon: Icons.delete_sweep_rounded,
-                  label: 'Xoá dữ liệu',
-                  subtitle: 'Reset toàn bộ — không thể hoàn tác',
-                  color: const Color(0xFFC62828),
-                  onTap: () => _confirmReset(context, ref),
-                ),
-              ]),
-            ),
-          ),
-
-          // ── Về ứng dụng ────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              icon: Icons.info_rounded,
-              title: 'Về ứng dụng',
+              icon: Icons.support_agent_rounded,
+              title: 'Hỗ trợ kỹ thuật & Tài khoản',
               color: _kMuted,
             ),
           ),
@@ -151,43 +112,13 @@ class SettingsScreen extends ConsumerWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 _SettingsTile(
-                  icon: Icons.smart_toy_rounded,
-                  label: 'Trợ lý AI',
-                  subtitle: 'Gemini • Tích hợp sẵn',
-                  color: const Color(0xFF1565C0),
-                  onTap: () => _comingSoon(context),
-                ),
-                _SettingsTile(
                   icon: Icons.bug_report_rounded,
                   label: 'Gửi phản hồi',
-                  subtitle: 'Báo lỗi & đề xuất tính năng',
-                  color: _kMuted,
+                  subtitle: 'Báo lỗi & tự động đính kèm Log kỹ thuật',
+                  color: const Color(0xFF1565C0),
                   onTap: () => Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const BugReportScreen())),
                 ),
-                _SettingsTile(
-                  icon: Icons.system_update_rounded,
-                  label: 'Kiểm tra cập nhật',
-                  subtitle: 'Cập nhật phiên bản Windows tự động',
-                  color: const Color(0xFFE85D20),
-                  onTap: () => AutoUpdateService.checkForUpdates(context, showNoUpdateDialog: true),
-                ),
-              ]),
-            ),
-          ),
-
-          // ── Tài khoản ───────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              icon: Icons.account_circle_rounded,
-              title: 'Tài khoản',
-              color: const Color(0xFF1565C0),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
                 _AccountTile(ref: ref),
               ]),
             ),
@@ -1901,12 +1832,12 @@ class _QuickPinTile extends ConsumerWidget {
               ),
               child: const Icon(Icons.offline_pin_rounded, color: _kOrange, size: 20),
             ),
-            title: const Text('Mã PIN duyệt nhanh',
+            title: const Text('Mã PIN duyệt nhanh (6 số)',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
             subtitle: Text(
               hasPin
                   ? 'Đã thiết lập — Nhấp để thay đổi'
-                  : 'PIN 4 số duyệt hủy bàn, hủy món tại chỗ',
+                  : 'PIN 6 số duyệt hủy bàn, hủy món tại chỗ',
               style: TextStyle(
                 fontSize: 12,
                 color: hasPin ? const Color(0xFF4CAF50) : _kMuted,
@@ -1929,6 +1860,426 @@ class _QuickPinTile extends ConsumerWidget {
           ),
         );
       }
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHANGE PASSWORD TILE & SHEET
+// ─────────────────────────────────────────────────────────────────────────────
+class _ChangePasswordTile extends StatelessWidget {
+  const _ChangePasswordTile();
+
+  @override
+  Widget build(BuildContext context) {
+    const _kNavy   = Color(0xFF1E1C5E);
+    const _kOrange = Color(0xFFE85D20);
+    const _kMuted  = Color(0xFF9E9085);
+    const _kBorder = Color(0xFFE0D8CC);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _kBorder),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 40, height: 40,
+          decoration: BoxDecoration(
+            color: _kOrange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(Icons.password_rounded, color: _kOrange, size: 20),
+        ),
+        title: const Text('Đổi mật khẩu tài khoản',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
+        subtitle: const Text('Thay đổi mật khẩu đăng nhập cá nhân',
+            style: TextStyle(fontSize: 12, color: _kMuted)),
+        trailing: const Icon(Icons.chevron_right_rounded, color: _kMuted),
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => const _ChangePasswordSheet(),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ChangePasswordSheet extends StatefulWidget {
+  const _ChangePasswordSheet();
+
+  @override
+  State<_ChangePasswordSheet> createState() => _ChangePasswordSheetState();
+}
+
+class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
+  final _oldPassCtrl = TextEditingController();
+  final _newPassCtrl = TextEditingController();
+  final _confirmPassCtrl = TextEditingController();
+  String? _error;
+  bool _saving = false;
+
+  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kOrange = Color(0xFFE85D20);
+  static const _kBorder = Color(0xFFE0D8CC);
+  static const _kMuted  = Color(0xFF9E9085);
+  static const _kBg     = Color(0xFFFAF7F2);
+
+  @override
+  void dispose() {
+    _oldPassCtrl.dispose();
+    _newPassCtrl.dispose();
+    _confirmPassCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: _kBorder, borderRadius: BorderRadius.circular(2)),
+              )),
+              const SizedBox(height: 16),
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _kOrange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.password_rounded, color: _kOrange, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Text('Đổi mật khẩu tài khoản',
+                    style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w800, color: _kNavy)),
+              ]),
+              const SizedBox(height: 16),
+
+              // Old Password
+              TextField(
+                controller: _oldPassCtrl,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Mật khẩu hiện tại *',
+                  labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
+                  prefixIcon: const Icon(Icons.lock_clock_rounded, color: _kOrange, size: 18),
+                  filled: true, fillColor: _kBg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kOrange, width: 2)),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // New Password
+              TextField(
+                controller: _newPassCtrl,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Mật khẩu mới (từ 6 ký tự) *',
+                  labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
+                  prefixIcon: const Icon(Icons.key_rounded, color: _kOrange, size: 18),
+                  filled: true, fillColor: _kBg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kOrange, width: 2)),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Confirm New Password
+              TextField(
+                controller: _confirmPassCtrl,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Xác nhận mật khẩu mới *',
+                  labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
+                  prefixIcon: const Icon(Icons.check_circle_outline_rounded, color: _kOrange, size: 18),
+                  filled: true, fillColor: _kBg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kOrange, width: 2)),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                ),
+              ),
+
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w600)),
+              ],
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: double.infinity, height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: _saving ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kNavy,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: _saving
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.save_rounded),
+                  label: Text(_saving ? 'Đang cập nhật...' : 'Lưu mật khẩu mới',
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 15)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    final oldP = _oldPassCtrl.text.trim();
+    final newP = _newPassCtrl.text.trim();
+    final confirmP = _confirmPassCtrl.text.trim();
+
+    if (oldP.isEmpty) {
+      setState(() => _error = '❌ Vui lòng nhập mật khẩu hiện tại');
+      return;
+    }
+    if (newP.length < 6) {
+      setState(() => _error = '❌ Mật khẩu mới phải từ 6 ký tự trở lên');
+      return;
+    }
+    if (newP != confirmP) {
+      setState(() => _error = '❌ Mật khẩu xác nhận không trùng khớp');
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      final res = await UserAuthService.changePassword(oldPassword: oldP, newPassword: newP);
+      if (res['success'] == true) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('✅ Đã đổi mật khẩu thành công!'),
+            backgroundColor: Color(0xFF2E7D32),
+            behavior: SnackBarBehavior.floating,
+          ));
+        }
+      } else {
+        setState(() => _error = '❌ ${res['message']}');
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PASSWORD RECOVERY TILE & SHEET
+// ─────────────────────────────────────────────────────────────────────────────
+class _PasswordRecoveryTile extends StatelessWidget {
+  const _PasswordRecoveryTile();
+
+  @override
+  Widget build(BuildContext context) {
+    const _kNavy   = Color(0xFF1E1C5E);
+    const _kGreen  = Color(0xFF2E7D32);
+    const _kMuted  = Color(0xFF9E9085);
+    const _kBorder = Color(0xFFE0D8CC);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _kBorder),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 40, height: 40,
+          decoration: BoxDecoration(
+            color: _kGreen.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(Icons.help_center_rounded, color: _kGreen, size: 20),
+        ),
+        title: const Text('Khôi phục / Quên mật khẩu',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
+        subtitle: const Text('Các phương thức hỗ trợ cấp lại mật khẩu',
+            style: TextStyle(fontSize: 12, color: _kMuted)),
+        trailing: const Icon(Icons.chevron_right_rounded, color: _kMuted),
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => const _PasswordRecoverySheet(),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PasswordRecoverySheet extends StatelessWidget {
+  const _PasswordRecoverySheet();
+
+  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kGreen  = Color(0xFF2E7D32);
+  static const _kOrange = Color(0xFFE85D20);
+  static const _kBorder = Color(0xFFE0D8CC);
+  static const _kBg     = Color(0xFFFAF7F2);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: _kBorder, borderRadius: BorderRadius.circular(2)),
+            )),
+            const SizedBox(height: 16),
+            Row(children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _kGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.lock_reset_rounded, color: _kGreen, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Text('Khôi phục & Quên mật khẩu',
+                  style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w800, color: _kNavy)),
+            ]),
+            const SizedBox(height: 16),
+
+            // Card 1: Nhờ Chủ quán / Quản lý
+            _buildOptionCard(
+              icon: Icons.supervisor_account_rounded,
+              color: const Color(0xFF1565C0),
+              stepNumber: 'CÁCH 1 (NHANH NHẤT)',
+              title: 'Nhờ Chủ quán / Quản lý đặt lại tại chỗ',
+              description: 'Chủ quán hoặc Quản lý truy cập vào mục Nhân Viên → Tìm tên tài khoản của bạn → Bấm "Đặt lại mật khẩu" để tạo mật khẩu mới ngay tức thì.',
+            ),
+
+            const SizedBox(height: 12),
+
+            // Card 2: Liên hệ Bộ phận Kỹ thuật
+            _buildOptionCard(
+              icon: Icons.headset_mic_rounded,
+              color: _kOrange,
+              stepNumber: 'CÁCH 2',
+              title: 'Liên hệ Hotline Hỗ Trợ Kỹ Thuật 24/7',
+              description: 'Gọi trực tiếp Hotline: 0838.518.618 (LPM Digital) đọc Số điện thoại đăng ký tài khoản để kỹ thuật viên xác minh và khôi phục cho bạn.',
+            ),
+
+            const SizedBox(height: 12),
+
+            // Card 3: Gửi yêu cầu báo lỗi khẩn cấp
+            _buildOptionCard(
+              icon: Icons.mark_email_unread_rounded,
+              color: _kGreen,
+              stepNumber: 'CÁCH 3',
+              title: 'Gửi yêu cầu khôi phục trực tiếp cho IT',
+              description: 'Sử dụng tính năng "Gửi phản hồi" ngay bên dưới để gửi yêu cầu cấp lại mật khẩu. Hệ thống sẽ tự động gói kèm ID tài khoản để kỹ thuật xử lý.',
+            ),
+
+            const SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity, height: 48,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: _kBorder),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                icon: const Icon(Icons.check_rounded, color: _kNavy),
+                label: Text('Đã hiểu', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: _kNavy)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionCard({
+    required IconData icon,
+    required Color color,
+    required String stepNumber,
+    required String title,
+    required String description,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(stepNumber,
+                    style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
+                const SizedBox(height: 2),
+                Text(title,
+                    style: GoogleFonts.outfit(fontSize: 13.5, fontWeight: FontWeight.w800, color: _kNavy)),
+                const SizedBox(height: 4),
+                Text(description,
+                    style: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.75), height: 1.4)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1995,7 +2346,7 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                       color: _kOrange, size: 20),
                 ),
                 const SizedBox(width: 10),
-                Text(widget.hasPin ? 'Đổi mã PIN duyệt nhanh 4 số' : 'Mã PIN duyệt nhanh 4 số',
+                Text(widget.hasPin ? 'Đổi mã PIN duyệt nhanh 6 số' : 'Mã PIN duyệt nhanh 6 số',
                     style: const TextStyle(
                         fontSize: 17, fontWeight: FontWeight.w800,
                         color: _kNavy)),
@@ -2022,7 +2373,7 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                     ]),
                     const SizedBox(height: 8),
                     Text(
-                      'Đây là mã PIN 4 chữ số được sử dụng để Quản lý hoặc Chủ quán phê duyệt nhanh tại chỗ khi nhân viên phục vụ thực hiện các thao tác nhạy cảm như Hủy bàn hoặc Hủy món đã gửi bếp.\n\nSử dụng mã PIN này giúp bảo vệ doanh thu quán của bạn khỏi thất thoát, gian lận mà không cần phải tiết lộ mật khẩu tài khoản đăng nhập chính.',
+                      'Đây là mã PIN 6 chữ số được sử dụng để Quản lý hoặc Chủ quán phê duyệt nhanh tại chỗ khi nhân viên thực hiện các thao tác nhạy cảm như Hủy bàn hoặc Hủy món đã gửi bếp.\n\nSử dụng mã PIN này giúp bảo vệ doanh thu quán của bạn khỏi thất thoát mà không cần tiết lộ mật khẩu đăng nhập chính.',
                       style: GoogleFonts.outfit(
                         fontSize: 12, color: _kNavy.withValues(alpha: 0.75), height: 1.45),
                     ),
@@ -2036,9 +2387,9 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                 controller: _pinCtrl,
                 keyboardType: TextInputType.number,
                 obscureText: true,
-                maxLength: 4,
+                maxLength: 6,
                 decoration: InputDecoration(
-                  labelText: widget.hasPin ? 'Mã PIN mới (4 chữ số)' : 'Mã PIN mới (4 chữ số)',
+                  labelText: widget.hasPin ? 'Mã PIN mới (6 chữ số)' : 'Mã PIN mới (6 chữ số)',
                   labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
                   prefixIcon: const Icon(Icons.lock_outline_rounded, color: _kOrange, size: 18),
                   filled: true, fillColor: _kBg,
@@ -2063,9 +2414,9 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                 controller: _confirmPinCtrl,
                 keyboardType: TextInputType.number,
                 obscureText: true,
-                maxLength: 4,
+                maxLength: 6,
                 decoration: InputDecoration(
-                  labelText: widget.hasPin ? 'Xác nhận mã PIN mới' : 'Xác nhận mã PIN mới',
+                  labelText: widget.hasPin ? 'Xác nhận mã PIN mới (6 số)' : 'Xác nhận mã PIN mới (6 số)',
                   labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
                   prefixIcon: const Icon(Icons.lock_outline_rounded, color: _kOrange, size: 18),
                   filled: true, fillColor: _kBg,
@@ -2104,7 +2455,7 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2))
                       : const Icon(Icons.save_rounded),
-                  label: Text(_saving ? 'Đang lưu...' : (widget.hasPin ? 'Cập nhật mã PIN' : 'Lưu mã PIN'),
+                  label: Text(_saving ? 'Đang lưu...' : (widget.hasPin ? 'Cập nhật mã PIN 6 số' : 'Lưu mã PIN 6 số'),
                       style: const TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 15)),
                 ),
@@ -2120,8 +2471,8 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
     final pin = _pinCtrl.text.trim();
     final confirm = _confirmPinCtrl.text.trim();
 
-    if (pin.length != 4 || int.tryParse(pin) == null) {
-      setState(() => _error = '❌ Mã PIN phải là 4 chữ số');
+    if (pin.length != 6 || int.tryParse(pin) == null) {
+      setState(() => _error = '❌ Mã PIN phải bao gồm đúng 6 chữ số');
       return;
     }
 

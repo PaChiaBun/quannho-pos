@@ -277,7 +277,7 @@ class SupabaseStorageFallback {
   }) async {
     try {
       final db = Supabase.instance.client;
-      final path = 'staff-photos/$storeId/$fileName';
+      final path = '$storeId/$fileName';
       await db.storage.from('staff-photos').uploadBinary(
         path,
         photoBytes,

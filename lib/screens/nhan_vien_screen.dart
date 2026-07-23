@@ -383,6 +383,22 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
   }
 }
 
+bool _isUnassignedStaff(StaffMember m, List<StoreRole> storeRoles) {
+  if (m.isOwner) return false;
+  final r = m.role.toLowerCase().trim();
+  if (r.isEmpty ||
+      r == 'none' ||
+      r == 'unassigned' ||
+      r == 'waiter' || // Role mặc định hệ thống khi nhân viên mới xin vào quán qua mã
+      r.contains('chưa phân') ||
+      r.contains('chưa gán') ||
+      r.contains('chưa có') ||
+      r.contains('chưa cấp')) {
+    return true;
+  }
+  return false;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TAB 1: DANH SÁCH NHÂN VIÊN
 // ─────────────────────────────────────────────────────────────────────────────
@@ -418,11 +434,31 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
     final storeId = session?.storeId;
     if (storeId == null) return;
     try {
-      // Lắng nghe Broadcast (không cần cấu hình DB Realtime)
+      // 1. Lắng nghe Broadcast (ca làm thay đổi)
       _shiftsChannel = Supabase.instance.client
           .channel('shifts:$storeId')
           .onBroadcast(
             event: 'shift_changed',
+            callback: (_) {
+              if (mounted) ref.invalidate(_staffListProvider);
+            },
+          )
+          // 2. Lắng nghe Realtime DB khi nhân viên mới xin vào quán (store_members)
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'store_members',
+            filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'store_id', value: storeId),
+            callback: (_) {
+              if (mounted) ref.invalidate(_staffListProvider);
+            },
+          )
+          // 3. Lắng nghe Realtime DB khi hồ sơ/role nhân viên thay đổi (staff_members)
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'staff_members',
+            filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'store_id', value: storeId),
             callback: (_) {
               if (mounted) ref.invalidate(_staffListProvider);
             },
@@ -442,13 +478,19 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(_staffListProvider);
+    final storeRoles = ref.watch(storeRolesProvider).value ?? [];
+
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error:   (e, _) => Center(child: Text('Lỗi: $e')),
       data: (all) {
+        final unassignedCount = all.where((m) => _isUnassignedStaff(m, storeRoles)).length;
+
         // ── Filter ──
         final list = all.where((m) {
+          final isUnassigned = _isUnassignedStaff(m, storeRoles);
           final matchRole   = _roleFilter == 'all'
+              || (_roleFilter == 'unassigned' && isUnassigned)
               || m.role == _roleFilter
               || StaffService.canonicalRole(m.role) == StaffService.canonicalRole(_roleFilter);
           final matchSearch = _query.isEmpty
@@ -456,6 +498,22 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
               || m.phone.contains(_query);
           return matchRole && matchSearch;
         }).toList();
+
+        // 🚀 SẮP XẾP ƯU TIÊN HÀNG ĐẦU (PRIORITY SORT):
+        // 1. Nhân viên CHƯA PHÂN VÀI TRÒ (isUnassigned = true) lên TRÊN CÙNG
+        // 2. Nhân viên ĐANG LÀM CA tiếp theo
+        // 3. Xếp theo tên A-Z
+        list.sort((a, b) {
+          final aUnassigned = _isUnassignedStaff(a, storeRoles);
+          final bUnassigned = _isUnassignedStaff(b, storeRoles);
+          if (aUnassigned && !bUnassigned) return -1;
+          if (!aUnassigned && bUnassigned) return 1;
+
+          if (a.isClockedIn && !b.isClockedIn) return -1;
+          if (!a.isClockedIn && b.isClockedIn) return 1;
+
+          return a.name.compareTo(b.name);
+        });
 
         return Column(children: [
           // ── Search bar ──
@@ -512,6 +570,7 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
               ),
             );
           }),
+
           // ── Danh sách ──
           Expanded(
             child: list.isEmpty
@@ -605,10 +664,13 @@ class _StaffCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final storeRoles = ref.watch(storeRolesProvider).value ?? [];
-    final resolved  = member.isOwner
+    final storeRoles  = ref.watch(storeRolesProvider).value ?? [];
+    final isUnassigned = _isUnassignedStaff(member, storeRoles);
+    final resolved     = member.isOwner
         ? (name: 'Chủ quán', color: const Color(0xFFFF6B35), icon: Icons.star_rounded)
-        : _resolveRole(member.role, storeRoles);
+        : (isUnassigned
+            ? (name: 'Chưa phân vai trò', color: const Color(0xFFFF6B35), icon: Icons.warning_amber_rounded)
+            : _resolveRole(member.role, storeRoles));
     final initial   = member.name.isNotEmpty ? member.name[0].toUpperCase() : '?';
     final roleColor = resolved.color;
 
@@ -617,10 +679,20 @@ class _StaffCard extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isUnassigned ? const Color(0xFFFFFBF7) : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8, offset: const Offset(0, 2))],
+          border: isUnassigned
+              ? Border.all(color: const Color(0xFFFF8C00).withValues(alpha: 0.6), width: 1.5)
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: isUnassigned
+                  ? const Color(0xFFFF8C00).withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            )
+          ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
@@ -644,6 +716,18 @@ class _StaffCard extends ConsumerWidget {
                         child: Center(child: Text(initial,
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: roleColor))),
                       ),
+                      if (isUnassigned)
+                        Positioned(
+                          right: 0, bottom: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFFF6B35),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.priority_high_rounded, size: 10, color: Colors.white),
+                          ),
+                        ),
                     ]),
                     const SizedBox(width: 12),
                     // Info
@@ -651,8 +735,25 @@ class _StaffCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(member.name,
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _kNavy)),
+                        Row(children: [
+                          Flexible(
+                            child: Text(member.name,
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _kNavy),
+                              overflow: TextOverflow.ellipsis),
+                          ),
+                          if (isUnassigned) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF6B35).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text('⚡ MỚI',
+                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFFFF6B35))),
+                            ),
+                          ],
+                        ]),
                         const SizedBox(height: 2),
                         Text(member.phone,
                           style: const TextStyle(fontSize: 12, color: _kMuted)),
@@ -682,17 +783,33 @@ class _StaffCard extends ConsumerWidget {
                         ]),
                       ],
                     )),
-                    // Role badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: roleColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: roleColor.withValues(alpha: 0.3)),
+                    // Role badge or Quick Cấp quyền button
+                    if (isUnassigned && isManager)
+                      ElevatedButton.icon(
+                        onPressed: () => _openDetail(context, ref),
+                        icon: const Icon(Icons.edit_rounded, size: 13, color: Colors.white),
+                        label: const Text('Cấp quyền',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF6B35),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          elevation: 2,
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: roleColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: roleColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Text(resolved.name,
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: roleColor)),
                       ),
-                      child: Text(resolved.name,
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: roleColor)),
-                    ),
                   ]),
                 ),
               ),
@@ -2570,9 +2687,24 @@ class _ActionPermsSectionState extends ConsumerState<_ActionPermsSection> {
       });
     }
 
-    // Group actions by module group label
+    // ── Lấy thông tin StoreRole đang chọn để lọc Lego modules ──
+    final selectedRoleObj = roles.firstWhere(
+      (r) => r.name == _selectedRoleName,
+      orElse: () => StoreRole(id: '', storeId: '', name: '', icon: '', color: '#1C2151', modules: []),
+    );
+    final allowedModules = selectedRoleObj.modules.map((m) => m.toLowerCase().trim()).toSet();
+
+    // Group actions by module group label (chỉ lấy hành động thuộc Module được cấp)
     final grouped = <String, List<String>>{};
     for (final key in kAllActions) {
+      final modulePrefix = key.split('.').first.toLowerCase();
+      // Nếu vai trò không sở hữu module Lego này thì không hiển thị công tắc nhạy cảm
+      final isModuleAllowed = allowedModules.contains(modulePrefix) ||
+          (modulePrefix == 'kho' && allowedModules.contains('kho_pro')) ||
+          allowedModules.contains(key) ||
+          StaffService.canonicalRole(selectedRoleObj.name) == 'owner';
+      if (!isModuleAllowed) continue;
+
       final group = kActionMeta[key]?.$3 ?? 'Khác';
       grouped.putIfAbsent(group, () => []).add(key);
     }

@@ -295,7 +295,71 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
               ],
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
+
+            // ── Card liên kết Log kỹ thuật ──────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1565C0).withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF1565C0).withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.manage_search_rounded, color: Color(0xFF1565C0), size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'ĐÍNH KÈM LOG NHẬT KÝ & DẤU VẾT KỸ THUẬT',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1565C0),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 12),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Đã tự động liên kết',
+                              style: GoogleFonts.outfit(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF2E7D32),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Hệ thống tự động gói kèm thông tin tài khoản, ID cửa hàng, phiên bản ứng dụng và Log lịch sử thao tác gần nhất giúp đội ngũ Kỹ thuật truy vết chính xác dấu vết sự cố.',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: _kNavy.withValues(alpha: 0.75),
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
 
             // ── Nút gửi ────────────────────────────────────────────
             SizedBox(
@@ -308,7 +372,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.send_rounded, size: 18),
-                label: Text(_sending ? 'Đang gửi...' : 'Gửi phản hồi'),
+                label: Text(_sending ? 'Đang gửi...' : 'Gửi phản hồi kèm Log kỹ thuật'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kNavy,
                   foregroundColor: Colors.white,
@@ -328,7 +392,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
             // ── Disclaimer ──────────────────────────────────────────
             Center(
               child: Text(
-                'Thông tin thiết bị và phiên bản app sẽ được gửi kèm\nđể giúp chúng tôi khắc phục nhanh hơn',
+                'Dấu vết nhật ký kỹ thuật (Log Trace) được gửi kèm tự động\ngiúp bộ phận IT khắc phục sự cố nhanh chóng.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, height: 1.5),
               ),

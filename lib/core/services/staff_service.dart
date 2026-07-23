@@ -76,20 +76,22 @@ class StaffService {
     final db = _db;
     if (db == null) return [];
     try {
-      // 1. Lấy danh sách từ staff_members (bảng chuẩn mới)
+      // 1. Lấy danh sách từ staff_members (bỏ qua nhân viên đã xoá/nghỉ active=false)
       final staffRows = await db
           .from('staff_members')
           .select('id, name, phone, role, hourly_rate, is_active')
-          .eq('store_id', storeId);
+          .eq('store_id', storeId)
+          .neq('is_active', false);
 
-      // 2. Lấy danh sách từ store_members + user_accounts (bảng hệ thống auth)
       List<Map<String, dynamic>> memberRows = [];
       try {
         memberRows = await db
             .from('store_members')
-            .select('role, is_owner, user_id, shift_config_id, user_accounts(id, phone, display_name)')
+            .select('role, is_owner, user_id, user_accounts(id, phone, display_name)')
             .eq('store_id', storeId);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[StaffService.getStaffList] store_members fetch error: $e');
+      }
 
       // 3. Lấy danh sách ca làm việc đang mở (chấm công)
       Set<String> activeIds = {};
@@ -171,7 +173,7 @@ class StaffService {
             jobDesc: '',
             startDate: null,
             isClockedIn: activeIds.contains(userId),
-            shiftConfigId: m['shift_config_id'] as String?,
+            shiftConfigId: null,
           );
 
           // Auto-sync sang staff_members
@@ -312,10 +314,29 @@ class StaffService {
   }) async {
     final db = _db;
     if (db == null) return;
-    await db.from('store_members')
-        .delete()
-        .eq('store_id', storeId)
-        .eq('user_id', userId);
+    // 1. Xoá quyền liên kết đăng nhập vào quán trong store_members
+    try {
+      await db.from('store_members')
+          .delete()
+          .eq('store_id', storeId)
+          .eq('user_id', userId);
+    } catch (e) {
+      debugPrint('[StaffService.removeStaff] store_members delete err: $e');
+    }
+
+    // 2. Set is_active = false trong staff_members để biến mất khỏi danh sách màn hình
+    try {
+      await db.from('staff_members')
+          .update({
+            'is_active': false,
+            'updated_at': DateTime.now().millisecondsSinceEpoch,
+          })
+          .eq('store_id', storeId)
+          .eq('id', userId);
+    } catch (e) {
+      debugPrint('[StaffService.removeStaff] staff_members update err: $e');
+    }
+
     await _logPermChange(
       storeId: storeId, byUser: removedByUserId, targetUser: userId,
       action: 'remove_staff', detail: {'name': staffName},
@@ -447,6 +468,25 @@ class StaffService {
         return openId;
       }
     }
+
+    // ‼️ PREVENT ORPHAN SHIFTS: Đảm bảo userId có thông tin hồ sơ nhân viên chuẩn
+    try {
+      final staffExists = await db.from('staff_members').select('id, name').eq('id', userId).maybeSingle();
+      if (staffExists == null) {
+        final userAcc = await db.from('user_accounts').select('id, display_name, phone').eq('id', userId).maybeSingle();
+        if (userAcc != null) {
+          await db.from('staff_members').upsert({
+            'id': userId,
+            'store_id': storeId,
+            'name': userAcc['display_name'] ?? 'Nhân viên',
+            'phone': userAcc['phone'],
+            'role': 'cashier',
+            'is_active': true,
+          });
+        }
+      }
+    } catch (_) {}
+
     final data = <String, dynamic>{
       'user_id':  userId,
       'store_id': storeId,
@@ -624,8 +664,7 @@ class StaffService {
       final List<dynamic> rows;
       if (userId != null) {
         rows = await db.from('staff_shifts')
-            // ‼️ FIX Bug #23: bỏ join user_accounts(display_name) thừa — đã query riêng bên dưới
-            .select('id, user_id, clock_in, clock_out, source')
+            .select('id, user_id, clock_in, clock_out, source, photo_url, address, latitude, longitude, drive_file_id')
             .eq('store_id', storeId)
             .eq('user_id', userId)
             .gte('clock_in', from)
@@ -633,7 +672,7 @@ class StaffService {
             .order('clock_in', ascending: false);
       } else {
         rows = await db.from('staff_shifts')
-            .select('id, user_id, clock_in, clock_out, source')
+            .select('id, user_id, clock_in, clock_out, source, photo_url, address, latitude, longitude, drive_file_id')
             .eq('store_id', storeId)
             .gte('clock_in', from)
             .lt('clock_in', to)
@@ -644,19 +683,42 @@ class StaffService {
       final Map<String, String> nm = {};
       try {
         final users = await db.from('staff_members').select('id, name').inFilter('id', userIds2);
-        for (final u in users) { nm[u['id'] as String] = u['name'] as String? ?? ''; }
-      } catch (_) {}
+        for (final u in users) {
+          final id = u['id'] as String;
+          final name = u['name'] as String?;
+          if (name != null && name.trim().isNotEmpty) nm[id] = name;
+        }
+        // Fallback: tìm trong user_accounts nếu ID chưa có trong staff_members
+        final missingIds = userIds2.where((id) => !nm.containsKey(id)).toList();
+        if (missingIds.isNotEmpty) {
+          final userAccs = await db.from('user_accounts').select('id, display_name').inFilter('id', missingIds);
+          for (final u in userAccs) {
+            final id = u['id'] as String;
+            final name = u['display_name'] as String?;
+            if (name != null && name.trim().isNotEmpty) nm[id] = name;
+          }
+        }
+      } catch (e) {
+        debugPrint('[StaffService.getShiftsForMonth] name resolution error: $e');
+      }
       return rows.map<ShiftRecord>((r) {
+        final uid = r['user_id'] as String;
+        var name = nm[uid];
+        if (name == null || name.trim().isEmpty) name = 'Nhân viên';
         return ShiftRecord(
-          id:       r['id']      as String,
-          userId:   r['user_id'] as String,
-          userName: nm[r['user_id'] as String] ?? '',
-          // ‼️ FIX: parse UTC → toLocal, đồng bộ với getShifts()
-          clockIn:  DateTime.parse(r['clock_in']  as String).toLocal(),
-          clockOut: r['clock_out'] != null
+          id:          r['id']      as String,
+          userId:      uid,
+          userName:    name,
+          clockIn:     DateTime.parse(r['clock_in']  as String).toLocal(),
+          clockOut:    r['clock_out'] != null
               ? DateTime.parse(r['clock_out'] as String).toLocal() : null,
-          source:   'manual',
-          note:     '',
+          source:      'manual',
+          note:        '',
+          photoUrl:    r['photo_url']    as String?,
+          address:     r['address']      as String?,
+          latitude:    (r['latitude']    as num?)?.toDouble(),
+          longitude:   (r['longitude']   as num?)?.toDouble(),
+          driveFileId: r['drive_file_id'] as String?,
         );
       }).toList();
     } catch (e) { return []; }
@@ -1212,20 +1274,13 @@ class StoreRole {
   });
 
   factory StoreRole.fromMap(Map<String, dynamic> m) {
-    List<String> mods = [];
-    try {
-      final raw = m['modules'];
-      if (raw is String && raw.isNotEmpty) {
-        mods = (jsonDecode(raw) as List).cast<String>();
-      }
-    } catch (_) {}
     return StoreRole(
       id:      m['id']       as String,
       storeId: m['store_id'] as String,
       name:    m['name']     as String,
       icon:    m['icon']     as String? ?? 'badge',
       color:   m['color']    as String? ?? '#1C2151',
-      modules: mods,
+      modules: StaffService._parseModules(m['modules']),
     );
   }
 

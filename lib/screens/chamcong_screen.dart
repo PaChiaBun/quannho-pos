@@ -1680,7 +1680,10 @@ class _ManagerStatsRow extends StatelessWidget {
     // ‼️ FIX: chỉ tính tổng giờ ca đã đóng (isOpen=false)
     // Ca đang mở có duration không ổn định (tăng theo thời gian), gây số nhảy mỗi 60s do _liveTimer
     final doneFiltered = filtered.where((s) => !s.isOpen).toList();
-    final totalMin = doneFiltered.fold<int>(0, (sum, s) => sum + s.duration.inMinutes);
+    int totalMin = 0;
+    for (final s in doneFiltered) {
+      totalMin += s.duration.inMinutes;
+    }
     final periodLabels = ['Ca hôm nay', 'Ca tuần', 'Ca tháng'];
     final label = periodLabels[filterIdx];
 

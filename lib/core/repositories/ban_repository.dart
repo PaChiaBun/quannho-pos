@@ -737,6 +737,51 @@ class BanRepository {
         .eq('id', sessionId);
   }
 
+  /// Gộp bàn: Chuyển toàn bộ món từ sourceSessionId sang targetSessionId và đóng sourceSessionId.
+  Future<void> mergeSession({
+    required String sourceSessionId,
+    required String targetTableId,
+    String? targetSessionId,
+  }) async {
+    final storeId = await _storeId();
+    if (storeId == null) return;
+
+    if (targetSessionId == null || targetSessionId.isEmpty) {
+      // Bàn đích chưa có session -> Chuyển bàn
+      await transferSession(sourceSessionId, targetTableId);
+      return;
+    }
+
+    // 1. Chuyển toàn bộ món từ session nguồn sang session đích
+    await _sb
+        .from('ban_session_items')
+        .update({'session_id': targetSessionId})
+        .eq('session_id', sourceSessionId);
+
+    // 2. Đóng session nguồn
+    final now = DateTime.now().toUtc().toIso8601String();
+    await _sb.from('ban_sessions').update({
+      'status': 'closed',
+      'closed_at': now,
+      'total_amount': 0,
+    }).eq('id', sourceSessionId);
+
+    // 3. Tính lại tổng tiền của session đích
+    try {
+      final items = await _sb
+          .from('ban_session_items')
+          .select('subtotal')
+          .eq('session_id', targetSessionId);
+      double total = 0;
+      for (final r in items) {
+        total += (r['subtotal'] as num? ?? 0).toDouble();
+      }
+      await updateSessionTotal(targetSessionId, total);
+    } catch (e) {
+      debugPrint('[BanRepository] mergeSession update total err: $e');
+    }
+  }
+
   /// Lấy tất cả bàn của quán — dùng để pick bàn đích khi chuyển
   Future<List<BanTableModel>> getAllTables() async {
     final storeId = await _storeId();

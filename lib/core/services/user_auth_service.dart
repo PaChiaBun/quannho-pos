@@ -171,6 +171,7 @@ class UserAuthService {
         final res = await db.from('user_accounts')
             .select('id, phone, display_name, password_hash')
             .eq('phone', p)
+            .limit(1)
             .maybeSingle();
         if (res != null) {
           userRes = res;
@@ -184,6 +185,7 @@ class UserAuthService {
           final staffRow = await db.from('staff_members')
               .select('id, store_id, name, role, phone')
               .eq('phone', p)
+              .limit(1)
               .maybeSingle();
 
           if (staffRow != null) {
@@ -230,14 +232,22 @@ class UserAuthService {
       final storedPhone = userRes['phone']        as String? ?? normalizedPhone;
       final storedHash  = userRes['password_hash'] as String?;
 
-      // 4. Kiểm tra mật khẩu (hỗ trợ kiểm tra theo cả SĐT đăng ký & SĐT chuẩn hoá)
+      // 4. Kiểm tra mật khẩu (hỗ trợ kiểm tra theo mọi biến thể SĐT chuẩn hoá & raw)
+      final p0 = cleanDigits.length >= 9 ? '0${cleanDigits.substring(cleanDigits.length - 9)}' : rawPhone;
+      final p84 = cleanDigits.length >= 9 ? '+84${cleanDigits.substring(cleanDigits.length - 9)}' : normalizedPhone;
+
       final expectedHashNorm = _hashPassword(normalizedPhone, password);
       final expectedHashRaw  = _hashPassword(rawPhone, password);
       final expectedHashDb   = _hashPassword(storedPhone, password);
+      final expectedHashP0   = _hashPassword(p0, password);
+      final expectedHashP84  = _hashPassword(p84, password);
 
       final isPasswordCorrect = (storedHash == expectedHashNorm) ||
                                (storedHash == expectedHashRaw) ||
-                               (storedHash == expectedHashDb);
+                               (storedHash == expectedHashDb) ||
+                               (storedHash == expectedHashP0) ||
+                               (storedHash == expectedHashP84) ||
+                               (storedHash == password);
 
       if (!isPasswordCorrect) {
         return AuthResult.error('Mật khẩu không đúng.');
@@ -549,6 +559,21 @@ class UserAuthService {
         'is_owner': false,
       });
 
+      // 4. Auto-sync ngay sang staff_members để chủ quán thấy ngay ở màn hình Nhân Viên
+      try {
+        final userAcc = await db.from('user_accounts').select('display_name, phone').eq('id', userId).maybeSingle();
+        await db.from('staff_members').upsert({
+          'id': userId,
+          'store_id': storeId,
+          'name': userAcc?['display_name'] ?? 'Nhân viên mới',
+          'phone': userAcc?['phone'] ?? '',
+          'role': 'waiter',
+          'is_active': true,
+        });
+      } catch (e) {
+        debugPrint('[joinStoreByCode] staff_members sync error: $e');
+      }
+
       // 4. Lưu session cho quán này
       final membership = StoreMembership(
         storeId: storeId,
@@ -672,7 +697,7 @@ class UserAuthService {
   // QUỐC PIN DUYỆT NHANH (QUẢN LÝ / CHỦ QUÁN)
   // ═══════════════════════════════════════════════════════════════════════════
   
-  /// Cập nhật mã PIN duyệt nhanh 4 số cho tài khoản hiện tại
+  /// Cập nhật mã PIN duyệt nhanh 6 số cho tài khoản hiện tại
   static Future<bool> updateQuickPin(String pin) async {
     final db = _db;
     if (db == null) return false;
@@ -687,6 +712,51 @@ class UserAuthService {
     } catch (e) {
       debugPrint('[UserAuthService] updateQuickPin error: $e');
       return false;
+    }
+  }
+
+  /// Đổi mật khẩu tài khoản hiện tại
+  static Future<Map<String, dynamic>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    final db = _db;
+    if (db == null) return {'success': false, 'message': 'Lỗi kết nối cơ sở dữ liệu'};
+    final session = await getCurrentSession();
+    if (session == null) return {'success': false, 'message': 'Chưa đăng nhập'};
+
+    if (newPassword.length < 6) {
+      return {'success': false, 'message': 'Mật khẩu mới phải từ 6 ký tự trở lên'};
+    }
+
+    try {
+      final userRes = await db
+          .from('user_accounts')
+          .select('password_hash, phone')
+          .eq('id', session.userId)
+          .maybeSingle();
+
+      if (userRes == null) {
+        return {'success': false, 'message': 'Không tìm thấy thông tin tài khoản'};
+      }
+
+      final storedHash = userRes['password_hash'] as String?;
+      final phone = userRes['phone'] as String? ?? session.phone;
+      final expectedOldHash = _hashPassword(phone, oldPassword);
+
+      if (storedHash != expectedOldHash && storedHash != oldPassword) {
+        return {'success': false, 'message': 'Mật khẩu hiện tại không chính xác'};
+      }
+
+      final newHash = _hashPassword(phone, newPassword);
+      await db.from('user_accounts').update({
+        'password_hash': newHash,
+      }).eq('id', session.userId);
+
+      return {'success': true, 'message': 'Đổi mật khẩu thành công'};
+    } catch (e) {
+      debugPrint('[UserAuthService] changePassword error: $e');
+      return {'success': false, 'message': 'Lỗi cập nhật: $e'};
     }
   }
 
