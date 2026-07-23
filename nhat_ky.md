@@ -1637,12 +1637,13 @@ Phát hiện lỗi nghiêm trọng khi gọi món nháp (Chưa gửi bếp):
 | `supabase/add_fund_type_to_finance.sql` | [NEW] SQL di cư thêm cột fund_type và backfill hóa đơn chuyển khoản cũ. |
 | `lib/modules/finance/repository/finance_repository.dart` | Cập nhật CRUD và hàm query watchRecords, getStats hỗ trợ fund_type. |
 | `lib/modules/finance/providers/finance_providers.dart` | Cập nhật selectedFundProvider mặc định là 'all' và tối ưu hóa reactive streams. |
-| `lib/screens/finance_screen.dart` | Thiết kế lại 3 Tab lọc quỹ, tích hợp nút tải báo cáo CSV và tính số dư lũy kế dòng tiền. |
-| `lib/modules/finance/screens/add_transaction_sheet.dart` | Loại bỏ emoji, tích hợp bộ chọn quỹ thủ công và định dạng số tiền nhập liêu ThousandsSeparatorInputFormatter. |
-| `lib/modules/pos/repository/pos_repository.dart` & `lib/screens/ban_screen.dart` | Tự động phân loại dòng tiền POS/Bàn và thêm in hóa đơn thu ngân tự động khi thanh toán bàn. |
-| `lib/modules/kho/repository/kho_repository.dart` & `lib/modules/tinhluong/repository/tinhluong_repository.dart` | Tự động phân loại dòng tiền Nhập kho (Hỗ trợ hoàn tiền đúng quỹ khi hủy đơn) & Trả lương. |
-| `lib/modules/bill_printer/screens/bill_preview_screen.dart` | Thêm tham số `onlyReceipt`/`onlyKitchen` và xử lý in an toàn trên môi trường Web browser. |
-| `lib/modules/bill_printer/providers/printer_settings_provider.dart` & `lib/modules/bill_printer/models/bill_block_template.dart` & `lib/modules/bill_printer/providers/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync cấu hình và mẫu thiết kế lên Supabase app_settings. |
+| `lib/screens/finance_screen.dart` | Thiết kế lại 3 Tab lọc quỹ, tích h�- ✅ **Khắc phục lỗi Module Nhân Viên & Tự Động Tạo Tài Khoản Nhân Viên**:
+  - Sửa hàm `StaffService.getStaffList` ưu tiên tra cứu trực tiếp từ bảng chuẩn `staff_members`.
+  - Khởi tạo 5 vai trò mặc định (`owner`, `Quản Lý`, `Thu ngân`, `Phục Vụ`, `Barista`) vào bảng `store_roles`.
+  - Cập nhật `StaffService.addStaffByPhone` và form `_AddStaffSheet` cho phép Quản lý nhập **Họ tên + SĐT + Vai trò** để tự động khởi tạo nhân viên mới trực tiếp vào `staff_members`, `user_accounts`, và `store_members` mà không bắt nhân viên phải tự mở app tạo tài khoản trước.
+- ✅ **Khởi tạo Bảng Khuyến Mãi & Hủy Bill (`coupons`, `void_audit_logs`)**:
+  - Tạo bảng `public.coupons` và `public.void_audit_logs` trên Supabase PostgreSQL. Chèn voucher mẫu `KHAI_TRUONG` (Giảm 10%). Kiểm tra API REST qua HTTPS đạt HTTP/2 200 OK.
+iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync cấu hình và mẫu thiết kế lên Supabase app_settings. |
 | `web/index.html` | Cập nhật placeholder `$FLUTTER_BASE_HREF` hỗ trợ build subfolder. |
 | `.docs/qn.md` | Cập nhật hướng dẫn tính năng phân tách quỹ và deploy VPS. |
 
@@ -1736,6 +1737,39 @@ Phát hiện lỗi nghiêm trọng khi gọi món nháp (Chưa gửi bếp):
 | `lib/screens/log_viewer_screen.dart` | Layout cuộn trượt đồng bộ, auto-fetch log, xóa log khối lượng lớn theo lô 500 bản ghi và bổ sung bộ lọc ẩn log polling rác. |
 | `lib/modules/bill_printer/providers/printer_settings_provider.dart` | Bỏ ghi log định kỳ `[Polling Orders]` / `[Polling Tickets]` mỗi 2s và chặn log polling rác tại `writePrintLog`. |
 | `nhat_ky.md` | Cập nhật nhật ký phát triển ngày 2026-07-22. |
+
+---
+
+## 2026-07-23 — Triển Khai Self-Hosted Supabase, Nginx SSL Dedicated Subdomain, Khắc Phục Lỗi Báo Cáo Nhân Viên & Audit Dữ Liệu
+
+### Đã làm
+- ✅ **Chuyển Đổi Hạ Tầng Self-Hosted Supabase & Tên Miền Riêng**:
+  - Cấu hình Nginx SSL Dedicated Subdomain **`https://quannho-db.lpm.vn`** proxy thẳng tới Supabase Studio container (`http://127.0.0.1:3003`), giải quyết triệt để vấn đề dùng IP thô thiếu chuyên nghiệp.
+  - Cấu hình Nginx Proxy ưu tiên **`location ^~ /supabase/`** chuyển hướng trực tiếp API REST sang Kong API Gateway (`http://127.0.0.1:8000/`), đảm bảo toàn bộ request HTTPS API từ POS Web trả về `HTTP/2 200 OK`.
+- ✅ **Khắc Phục Lỗi Báo Cáo "Nhân Viên Ẩn"**:
+  - Chuyển đổi toàn bộ logic tra cứu nhân viên trong `DashboardRepository`, `ReportScreen`, `PosRepository` và `BanRepository` từ tên bảng cũ `store_members` sang bảng chuẩn **`public.staff_members`** (`id`, `name`, `role`).
+  - Hiển thị đầy đủ 100% tên nhân viên thực tế (*Phan Thị Thuỳ Dung, Tô Vũ Yên Khuê, GIANG, Nguyễn Hữu Phúc...*) trong báo cáo thu ngân và số bàn phục vụ.
+- ✅ **Bổ Sung Bảng Nhật Ký Hoạt Động (`app_logs`)**:
+  - Khởi tạo bảng **`public.app_logs`** trên PostgreSQL kèm phân quyền RLS `app_logs_all` và thực hiện `NOTIFY pgrst, 'reload schema'`. Sửa dứt điểm lỗi thông báo banner màu đỏ `Could not find the table 'public.app_logs'` ở màn hình POS.
+- ✅ **Dọn Dẹp Dữ Liệu Thử Nghiệm & Audit Chất Lượng Sâu (10/10 An Toàn)**:
+  - Xóa 100% dữ liệu test rác trong giai đoạn thử nghiệm (từ `06/07/2026` đến `12/07/2026`): 88 đơn hàng, 88 lượt bàn, 65 phiếu bếp, 116 thu chi, 255 thẻ kho theo đúng quy trình Foreign Key CASCADE (`kitchen_tickets` $\rightarrow$ `ban_sessions` $\rightarrow$ `orders` $\rightarrow$ `finance_records` $\rightarrow$ `stock_movements`).
+  - Chạy kịch bản QC Audit toàn diện 10 tiêu chí: 0 món ăn mồ côi, 0 hóa đơn mồ côi, 0 đơn thiếu `store_id`. Bảo vệ nguyên vẹn 100% hơn 730 đơn hàng thực tế từ `13/07/2026` trở đi.
+- ✅ **Biên Dịch & Deploy Bản Web POS Mới Lên VPS**:
+  - Build bản Flutter Web release với `--base-href "/pos/"` và deploy trực tiếp lên `/var/www/quannho/pos` trên VPS `45.32.104.228`.
+- ✅ **Cập Nhật Tài Liệu Dự Án**:
+  - Ghi chép chi tiết cấu trúc dữ liệu, đường tuyến gateway và quy chuẩn tra cứu nhân viên vào `qn.md`, `.docs/qn.md` và `nhat_ky.md`.
+
+### Files đã sửa/tạo mới
+| File | Thay đổi |
+|------|----------|
+| `lib/core/repositories/dashboard_repository.dart` | Refactor truy vấn tra cứu nhân viên từ `store_members` sang `staff_members` (`id, name`). |
+| `lib/screens/report_screen.dart` | Refactor truy vấn danh sách nhân viên từ `store_members` sang `staff_members`. |
+| `lib/modules/pos/repository/pos_repository.dart` | Cập nhật tra cứu ưu tiên `staff_members` trực tiếp khi tạo đơn hàng. |
+| `lib/core/repositories/ban_repository.dart` | Cập nhật tra cứu ưu tiên `staff_members` trực tiếp khi mở phiên bàn. |
+| `/etc/nginx/sites-available/lpm.vn` (VPS) | Thêm quy tắc proxy ưu tiên `location ^~ /supabase/` tới Kong Gateway (port 8000). |
+| `/etc/nginx/sites-available/quannho-db` (VPS) | Tạo server block Nginx Dedicated Domain cho `quannho-db.lpm.vn` (port 3003 Studio). |
+| `qn.md` & `.docs/qn.md` | Thêm mục 4 & 12 về hạ tầng Self-Hosted Supabase, cấu trúc `staff_members`, `app_logs` và quy trình Audit Dữ liệu. |
+| `nhat_ky.md` | Cập nhật nhật ký phát triển ngày 2026-07-23. |
 
 
 

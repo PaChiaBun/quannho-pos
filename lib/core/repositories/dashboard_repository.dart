@@ -253,14 +253,13 @@ class DashboardRepository {
         
         if (staffIds.isNotEmpty) {
           final memberRows = await _sb
-              .from('store_members')
-              .select('id, user_accounts(display_name)')
+              .from('staff_members')
+              .select('id, name')
               .inFilter('id', staffIds);
           
           for (final r in memberRows) {
             final id = r['id'] as String;
-            final userAcc = r['user_accounts'] as Map<String, dynamic>?;
-            nameMap[id] = userAcc?['display_name'] as String? ?? 'Chưa rõ';
+            nameMap[id] = (r['name'] as String?) ?? 'Chưa rõ';
           }
         }
 
@@ -302,15 +301,14 @@ class DashboardRepository {
       try {
         final waiterIds = waiterCountsRaw.keys.toList();
         final memberRows = await _sb
-            .from('store_members')
-            .select('id, user_accounts(display_name)')
+            .from('staff_members')
+            .select('id, name')
             .inFilter('id', waiterIds);
         
         final nameMap = <String, String>{};
         for (final r in memberRows) {
           final id = r['id'] as String;
-          final userAcc = r['user_accounts'] as Map<String, dynamic>?;
-          nameMap[id] = userAcc?['display_name'] as String? ?? 'Chưa rõ';
+          nameMap[id] = (r['name'] as String?) ?? 'Chưa rõ';
         }
 
         waiterCountsRaw.forEach((waiterId, val) {

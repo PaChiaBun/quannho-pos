@@ -485,32 +485,42 @@ class BanRepository {
     String? waiterRecordId;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final currentUserId = prefs.getString('auth_user_id');
-      if (currentUserId != null) {
-        final memberRow = await _sb
-            .from('store_members')
-            .select('id, role, user_accounts(display_name, phone)')
-            .eq('store_id', storeId)
-            .eq('user_id', currentUserId)
+      final currentStaffId = prefs.getString('auth_staff_id') ?? prefs.getString('auth_user_id');
+      if (currentStaffId != null) {
+        final staffRow = await _sb
+            .from('staff_members')
+            .select('id')
+            .eq('id', currentStaffId)
             .maybeSingle();
 
-        if (memberRow != null) {
-          waiterRecordId = memberRow['id'] as String?;
-          final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
-          final displayName = userAcc?['display_name'] as String? ?? 'Waiter';
-          final phone = userAcc?['phone'] as String?;
-          final role = memberRow['role'] as String? ?? 'waiter';
+        if (staffRow != null) {
+          waiterRecordId = staffRow['id'] as String?;
+        } else {
+          final memberRow = await _sb
+              .from('store_members')
+              .select('id, role, user_accounts(display_name, phone)')
+              .eq('store_id', storeId)
+              .eq('user_id', currentStaffId)
+              .maybeSingle();
 
-          if (waiterRecordId != null) {
-            await _sb.from('staff_members').upsert({
-              'id': waiterRecordId,
-              'store_id': storeId,
-              'name': displayName,
-              'role': role,
-              'phone': phone,
-              'is_active': true,
-              'updated_at': DateTime.now().millisecondsSinceEpoch,
-            });
+          if (memberRow != null) {
+            waiterRecordId = memberRow['id'] as String?;
+            final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
+            final displayName = userAcc?['display_name'] as String? ?? 'Waiter';
+            final phone = userAcc?['phone'] as String?;
+            final role = memberRow['role'] as String? ?? 'waiter';
+
+            if (waiterRecordId != null) {
+              await _sb.from('staff_members').upsert({
+                'id': waiterRecordId,
+                'store_id': storeId,
+                'name': displayName,
+                'role': role,
+                'phone': phone,
+                'is_active': true,
+                'updated_at': DateTime.now().millisecondsSinceEpoch,
+              });
+            }
           }
         }
       }

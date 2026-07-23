@@ -525,10 +525,10 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       return;
     }
 
-    // ── VÀO CA: chụp ảnh + GPS ───────────────────────────────────────────────
+    // ── VÀO CA: chụp ảnh trực tiếp + GPS (BẮT BUỘC CÓ ẢNH LIVE) ──────────────
     setState(() => _loading = true);
     try {
-      // 1. Chụp ảnh selfie — timeout 60s để tránh ANR nếu camera chậm mở
+      // 1. CHỤP ẢNH SỐNG TRỰC TIẾP QUA CAMERA (BẮT BUỘC - CHỐNG GIAN LẬN)
       File? file;
       Uint8List? bytes;
       try {
@@ -538,18 +538,70 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
           preferredCameraDevice: CameraDevice.front,
           imageQuality: 50,
           maxWidth: 600,
-        ).timeout(const Duration(seconds: 60));
-        if (xfile == null) { setState(() => _loading = false); return; }
-        bytes = await xfile.readAsBytes();
-        if (!kIsWeb) {
-          file = File(xfile.path);
+        ).timeout(const Duration(seconds: 45));
+        if (xfile != null) {
+          bytes = await xfile.readAsBytes();
+          if (!kIsWeb) file = File(xfile.path);
         }
       } on TimeoutException {
-        if (mounted) setState(() => _loading = false);
-        return;
+        debugPrint('[ChamCong] Front camera timeout');
       } catch (e) {
-        if (mounted) setState(() => _loading = false);
-        return;
+        debugPrint('[ChamCong] Front camera error: $e');
+      }
+
+      // Fallback: Thử chụp bằng camera mặc định (nếu camera trước lỗi)
+      if (bytes == null) {
+        try {
+          final picker = ImagePicker();
+          final xfile = await picker.pickImage(
+            source: ImageSource.camera,
+            imageQuality: 50,
+            maxWidth: 600,
+          );
+          if (xfile != null) {
+            bytes = await xfile.readAsBytes();
+            if (!kIsWeb) file = File(xfile.path);
+          }
+        } catch (e2) {
+          debugPrint('[ChamCong] Default camera error: $e2');
+        }
+      }
+
+      // ❌ CHỐNG GIAN LẬN: BẮT BUỘC PHẢI CHỤP ẢNH TRỰC TIẾP BẰNG CAMERA
+      // Cấm tuyệt đối chọn ảnh có sẵn từ thư viện hoặc điểm danh không có ảnh
+      if (bytes == null) {
+        setState(() => _loading = false);
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Row(children: [
+                Icon(Icons.gavel_rounded, color: Colors.red, size: 24),
+                SizedBox(width: 8),
+                Text('Yêu cầu chụp ảnh trực tiếp'),
+              ]),
+              content: const Text(
+                'Để chống gian lận điểm danh, hệ thống yêu cầu nhân viên bắt buộc phải chụp ảnh selfie trực tiếp từ camera tại quán.\n\n'
+                '• Không hỗ trợ chọn ảnh sẵn từ thư viện.\n'
+                '• Không hỗ trợ điểm danh không có ảnh.\n\n'
+                'Vui lòng cấp quyền truy cập máy ảnh và thực hiện chụp ảnh thực tế để vào ca!'
+              ),
+              actions: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kNavy,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Đã hiểu'),
+                ),
+              ],
+            ),
+          );
+        }
+        return; // Dừng ngay lập tức — KHÔNG CHO PHÉP VÀO CA NẾU KHÔNG CÓ ẢNH LIVE
       }
 
       // 2. Lấy GPS — medium accuracy để nhanh hơn, timeout 5s
@@ -621,18 +673,20 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       }
 
       // ── ĐÓNG DẤU HÌNH ẢNH ──
-      try {
-        final timeStr = DateFormat('HH:mm dd/MM/yyyy').format(DateTime.now());
-        final locationStr = address ?? (lat != null && lng != null ? '${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}' : 'Không xác định vị trí');
-        bytes = await _addWatermarkToImage(bytes!, timeStr, locationStr);
-        if (!kIsWeb) {
-          final tempDir = Directory.systemTemp;
-          final tempFile = File('${tempDir.path}/temp_clockin.jpg');
-          await tempFile.writeAsBytes(bytes);
-          file = tempFile;
+      if (bytes != null) {
+        try {
+          final timeStr = DateFormat('HH:mm dd/MM/yyyy').format(DateTime.now());
+          final locationStr = address ?? (lat != null && lng != null ? '${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}' : 'Không xác định vị trí');
+          bytes = await _addWatermarkToImage(bytes, timeStr, locationStr);
+          if (!kIsWeb) {
+            final tempDir = Directory.systemTemp;
+            final tempFile = File('${tempDir.path}/temp_clockin.jpg');
+            await tempFile.writeAsBytes(bytes);
+            file = tempFile;
+          }
+        } catch (e) {
+          debugPrint('Lỗi đóng dấu hình ảnh: $e');
         }
-      } catch (e) {
-        debugPrint('Lỗi đóng dấu hình ảnh: $e');
       }
 
       final session = ref.read(sessionProvider)!;
@@ -641,31 +695,35 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       final fileName = '${ts}_$name.jpg';
       final subFolder = DateFormat('yyyy-MM').format(DateTime.now());
 
-      // 3. Upload ảnh
+      // 3. Upload ảnh (chỉ upload nếu có bytes)
       String? photoUrl;
       String? driveFileId;
-      if (kIsWeb) {
-        photoUrl = await SupabaseStorageFallback.uploadPhoto(
-          storeId: session.storeId ?? '',
-          photoBytes: bytes!,
-          fileName: fileName,
-        );
-      } else {
-        final driveResult = await DriveService.uploadPhoto(
-          storeId: session.storeId ?? '',
-          photoFile: file!,
-          fileName: fileName,
-          subFolder: subFolder,
-        );
-        if (driveResult != null) {
-          driveFileId = driveResult.fileId;
-          photoUrl    = driveResult.viewLink;
-        } else {
+      if (bytes != null) {
+        if (kIsWeb) {
           photoUrl = await SupabaseStorageFallback.uploadPhoto(
             storeId: session.storeId ?? '',
-            photoBytes: bytes!,
+            photoBytes: bytes,
             fileName: fileName,
           );
+        } else {
+          if (file != null) {
+            final driveResult = await DriveService.uploadPhoto(
+              storeId: session.storeId ?? '',
+              photoFile: file,
+              fileName: fileName,
+              subFolder: subFolder,
+            );
+            if (driveResult != null) {
+              driveFileId = driveResult.fileId;
+              photoUrl    = driveResult.viewLink;
+            } else {
+              photoUrl = await SupabaseStorageFallback.uploadPhoto(
+                storeId: session.storeId ?? '',
+                photoBytes: bytes,
+                fileName: fileName,
+              );
+            }
+          }
         }
       }
 
@@ -1363,9 +1421,11 @@ class _ShiftRowCompact extends ConsumerWidget {
         ? DateFormat('HH:mm').format(shift.clockOut!.toLocal()) : 'Đang làm';
     final date = DateFormat('dd/MM').format(shift.clockIn.toLocal());
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-      child: Row(children: [
+    return InkWell(
+      onTap: () => _showPhotoAuditDialog(context, shift),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        child: Row(children: [
         // Photo thumbnail
         if (shift.photoUrl != null)
           ClipRRect(
@@ -1410,7 +1470,8 @@ class _ShiftRowCompact extends ConsumerWidget {
         Text(shift.durationStr,
           style: TextStyle(fontWeight: FontWeight.w800, color: shift.isOpen ? _kGreen : _kNavy, fontSize: 13)),
       ]),
-    );
+    ),
+  );
   }
 
   Widget _buildLocationBadge(WidgetRef ref) {
@@ -1673,81 +1734,85 @@ class _ShiftRow extends ConsumerWidget {
     final isOpen = shift.isOpen;
     final borderColor = isOpen ? _kGreen : const Color(0xFFE5E7EB);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
-          child: Row(children: [
-            // Left accent
-            Container(width: 4, color: isOpen ? _kGreen : const Color(0xFFE5E7EB)),
-            // Photo
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: shift.photoUrl != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.network(shift.photoUrl!, width: 44, height: 44, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const _AvatarPh()))
-                  : const _AvatarPh(),
-            ),
-            // Info
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  if (showName) Text(shift.userName,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kNavy)),
-                  Row(children: [
-                    Text(date, style: const TextStyle(fontSize: 11, color: _kMuted)),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: (isOpen ? _kGreen : _kNavy).withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        isOpen ? '$clockIn → Đang làm' : '$clockIn → ${clockOut ?? ''}',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                          color: isOpen ? _kGreen : _kNavy),
-                      ),
-                    ),
-                    if (isOpen) Container(
-                      margin: const EdgeInsets.only(left: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: _kGreen, borderRadius: BorderRadius.circular(5)),
-                      child: const Text('LIVE',
-                        style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
-                    ),
-                    _buildLocationBadge(ref),
-                  ]),
-                  if (shift.address != null) ...[
-                    const SizedBox(height: 3),
-                    Text(shift.address!,
-                      style: const TextStyle(fontSize: 10, color: _kMuted),
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                  ],
-                ]),
+    return InkWell(
+      onTap: () => _showPhotoAuditDialog(context, shift),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: IntrinsicHeight(
+            child: Row(children: [
+              // Left accent
+              Container(width: 4, color: isOpen ? _kGreen : const Color(0xFFE5E7EB)),
+              // Photo
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: shift.photoUrl != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(shift.photoUrl!, width: 44, height: 44, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const _AvatarPh()))
+                    : const _AvatarPh(),
               ),
-            ),
-            // Duration
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Text(shift.durationStr,
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: isOpen ? _kGreen : _kNavy,
-                  fontSize: 15)),
-            ),
-          ]),
+              // Info
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    if (showName) Text(shift.userName.trim().isNotEmpty ? shift.userName : 'Nhân viên',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kNavy)),
+                    Row(children: [
+                      Text(date, style: const TextStyle(fontSize: 11, color: _kMuted)),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: (isOpen ? _kGreen : _kNavy).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          isOpen ? '$clockIn → Đang làm' : '$clockIn → ${clockOut ?? ''}',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                            color: isOpen ? _kGreen : _kNavy),
+                        ),
+                      ),
+                      if (isOpen) Container(
+                        margin: const EdgeInsets.only(left: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _kGreen, borderRadius: BorderRadius.circular(5)),
+                        child: const Text('LIVE',
+                          style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                      ),
+                      _buildLocationBadge(ref),
+                    ]),
+                    if (shift.address != null) ...[
+                      const SizedBox(height: 3),
+                      Text(shift.address!,
+                        style: const TextStyle(fontSize: 10, color: _kMuted),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ],
+                  ]),
+                ),
+              ),
+              // Duration
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Text(shift.durationStr,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: isOpen ? _kGreen : _kNavy,
+                    fontSize: 15)),
+              ),
+            ]),
+          ),
         ),
       ),
     );
@@ -2022,4 +2087,169 @@ Future<Uint8List> _addWatermarkToImage(
   watermarkedImage.dispose();
 
   return byteData!.buffer.asUint8List();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DIALOG KIỂM TRA NGẪU NHIÊN ẢNH CHỤP ĐIỂM DANH LIVE CỦA NHÂN VIÊN
+// ─────────────────────────────────────────────────────────────────────────────
+void _showPhotoAuditDialog(BuildContext context, ShiftRecord shift) {
+  final clockInStr = DateFormat('HH:mm dd/MM/yyyy').format(shift.clockIn.toLocal());
+  final clockOutStr = shift.clockOut != null
+      ? DateFormat('HH:mm dd/MM/yyyy').format(shift.clockOut!.toLocal())
+      : 'Đang trong ca (LIVE)';
+
+  showDialog(
+    context: context,
+    builder: (ctx) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 420),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _kNavy.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.verified_user_rounded, color: _kNavy, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        shift.userName.isNotEmpty ? shift.userName : 'Nhân viên',
+                        style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy),
+                      ),
+                      Text(
+                        shift.isOpen ? '🟢 Đang làm việc' : '⚪ Đã kết thúc ca',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: shift.isOpen ? _kGreen : _kMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Ảnh kiểm tra ngẫu nhiên
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: shift.photoUrl != null
+                  ? AspectRatio(
+                      aspectRatio: 1.1,
+                      child: Image.network(
+                        shift.photoUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey.shade100,
+                          child: const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey),
+                                SizedBox(height: 8),
+                                Text('Không tải được ảnh', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      padding: const EdgeInsets.all(32),
+                      color: Colors.grey.shade100,
+                      child: const Column(
+                        children: [
+                          Icon(Icons.no_photography_rounded, size: 48, color: Colors.grey),
+                          SizedBox(height: 10),
+                          Text(
+                            'Chưa có ảnh chụp selfie ca này',
+                            style: TextStyle(fontWeight: FontWeight.w700, color: _kNavy, fontSize: 13),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Ca làm việc tạo trước khi áp dụng bắt buộc chụp ảnh live',
+                            style: TextStyle(color: _kMuted, fontSize: 11),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 16),
+
+            // Chi tiết ca
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Column(
+                children: [
+                  _auditDetailRow(Icons.login_rounded, 'Vào ca:', clockInStr),
+                  const SizedBox(height: 6),
+                  _auditDetailRow(Icons.logout_rounded, 'Ra ca:', clockOutStr),
+                  if (shift.address != null) ...[
+                    const SizedBox(height: 6),
+                    _auditDetailRow(Icons.location_on_rounded, 'Vị trí:', shift.address!),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kNavy,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Đóng'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _auditDetailRow(IconData icon, String label, String value) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(icon, size: 15, color: _kNavy),
+      const SizedBox(width: 6),
+      Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kNavy)),
+      const SizedBox(width: 6),
+      Expanded(
+        child: Text(
+          value,
+          style: const TextStyle(fontSize: 11, color: _kMuted),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    ],
+  );
 }

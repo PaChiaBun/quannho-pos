@@ -166,5 +166,28 @@ Hệ thống ghi nhận toàn bộ hoạt động nghiệp vụ của nhân viê
 1. Tiến hành **Push** các thay đổi mã nguồn này lên repository GitHub của bạn.
 2. Bản nâng cấp này sẽ tự động cập nhật đồng bộ lên cả phiên bản Web và App di động khi đóng gói bản dựng tiếp theo!
 
+---
 
+## 🗄️ 12. Hạ Tầng Cơ Sở Dữ Liệu Self-Hosted & Quy Chuẩn Tra Cứu (Self-Hosted Supabase Architecture)
 
+### 1. Domain & Đường Tuyến Gateway (Nginx Proxy Routing):
+* **Supabase Studio:** `https://quannho-db.lpm.vn` (Phục vụ giao diện quản trị Studio port 3003, hỗ trợ SSL Let's Encrypt).
+* **API REST Gateway:** `https://quannho.lpm.vn/supabase/` (Proxy đường dẫn ưu tiên `location ^~ /supabase/` trực tiếp tới Kong Gateway port 8000).
+* **Ứng dụng POS Web:** `https://quannho.lpm.vn/pos/` (Chạy ứng dụng Flutter Web từ thư mục `/var/www/quannho/pos`).
+
+### 2. Quy Chuẩn Tra Cứu Bảng Nhân Viên (`staff_members`):
+* Danh sách toàn bộ nhân viên thuộc quán được quản lý tập trung tại bảng **`public.staff_members`** (`id`, `store_id`, `name`, `role`, `phone`, `is_active`, `hourly_rate`).
+* Tất cả các repository & screen (`DashboardRepository`, `ReportScreen`, `PosRepository`, `BanRepository`) đều bắt buộc tra cứu tên nhân viên theo `staff_members.id` $\rightarrow$ `staff_members.name` để tránh bị rơi vào lỗi hiển thị mặc định *"Nhân viên ẩn"*.
+
+### 3. Bảng Ghi Vết Nhật Ký Hệ Thống (`app_logs`):
+* Bảng nhật ký hoạt động được khởi tạo chuẩn hóa tại **`public.app_logs`** (`id`, `store_id`, `device_id`, `staff_name`, `level`, `tag`, `message`, `details`, `created_at`).
+* Đã cấu hình phân quyền bảo mật RLS `app_logs_all` và reload Schema Cache Kong API Gateway (`NOTIFY pgrst, 'reload schema'`).
+
+### 4. Quy Trình Audit & Dọn Dẹp Dữ Liệu Thử Nghiệm:
+* Thứ tự xóa dữ liệu thử nghiệm chuẩn Foreign Key CASCADE để tránh lỗi liên kết mồ côi:
+  1. `kitchen_tickets` (Phiếu bếp)
+  2. `ban_sessions` (Phiên bàn)
+  3. `orders` (Hóa đơn)
+  4. `finance_records` (Thu chi)
+  5. `stock_movements` (Xuất nhập kho)
+* Kết quả dọn dẹp ngày 06/07 - 12/07: Đã dọn dẹp toàn bộ dữ liệu test, bảo vệ 100% dữ liệu thực tế từ 13/07/2026 trở đi với 0 bản ghi lỗi mồ côi.

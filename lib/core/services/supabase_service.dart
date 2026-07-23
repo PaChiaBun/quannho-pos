@@ -7,8 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
   // ── Config — Điền sau khi tạo project Supabase ────────────────────────────
-  static const _supabaseUrl    = 'https://cibaxqrvfotglpobxxlw.supabase.co';
-  static const _supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpYmF4cXJ2Zm90Z2xwb2J4eGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MzA0MDIsImV4cCI6MjA5MjUwNjQwMn0.gPcBvRJ8JUJ2aWftkS1RzlR2uag7LwHdTFL4Arn4ELw';
+  static const _supabaseUrl    = 'https://quannho.lpm.vn/supabase';
+  static const _supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzg0NzM5NDkwLCJleHAiOjE5NDI0MTk0OTB9.xh6_u5i7_ddq3LxAcx2ytGOnijPzRnfQ_Vkv8d0XBpw';
 
   static bool _initialized = false;
 

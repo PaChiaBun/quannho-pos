@@ -135,35 +135,44 @@ class PosRepository {
     final totalAmount = (subtotal - discount - loyaltyPtsUsed).clamp(0.0, double.infinity);
     final ptsEarned   = (totalAmount / loyaltyRate).floorToDouble();
 
-    // Tìm store_members.id và đồng bộ sang staff_members để làm khoá ngoại cho orders.staff_id
+    // Tìm staff_members.id trực tiếp hoặc đồng bộ từ store_members
     String? memberRecordId;
     if (staffId != null && staffId.isNotEmpty) {
       try {
-        final memberRow = await _sb
-            .from('store_members')
-            .select('id, role, user_accounts(display_name, phone)')
-            .eq('store_id', storeId)
-            .eq('user_id', staffId)
+        final staffRow = await _sb
+            .from('staff_members')
+            .select('id')
+            .eq('id', staffId)
             .maybeSingle();
 
-        if (memberRow != null) {
-          memberRecordId = memberRow['id'] as String?;
-          final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
-          final displayName = userAcc?['display_name'] as String? ?? 'Thu ngân';
-          final phone = userAcc?['phone'] as String?;
-          final role = memberRow['role'] as String? ?? 'cashier';
+        if (staffRow != null) {
+          memberRecordId = staffRow['id'] as String?;
+        } else {
+          final memberRow = await _sb
+              .from('store_members')
+              .select('id, role, user_accounts(display_name, phone)')
+              .eq('store_id', storeId)
+              .eq('user_id', staffId)
+              .maybeSingle();
 
-          if (memberRecordId != null) {
-            // Đồng bộ bản ghi sang staff_members để thoả mãn khoá ngoại
-            await _sb.from('staff_members').upsert({
-              'id': memberRecordId,
-              'store_id': storeId,
-              'name': displayName,
-              'role': role,
-              'phone': phone,
-              'is_active': true,
-              'updated_at': DateTime.now().millisecondsSinceEpoch,
-            });
+          if (memberRow != null) {
+            memberRecordId = memberRow['id'] as String?;
+            final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
+            final displayName = userAcc?['display_name'] as String? ?? 'Thu ngân';
+            final phone = userAcc?['phone'] as String?;
+            final role = memberRow['role'] as String? ?? 'cashier';
+
+            if (memberRecordId != null) {
+              await _sb.from('staff_members').upsert({
+                'id': memberRecordId,
+                'store_id': storeId,
+                'name': displayName,
+                'role': role,
+                'phone': phone,
+                'is_active': true,
+                'updated_at': DateTime.now().millisecondsSinceEpoch,
+              });
+            }
           }
         }
       } catch (e) {

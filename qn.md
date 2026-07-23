@@ -28,6 +28,18 @@ Tài liệu này ghi nhận các nguyên tắc thiết kế, cấu trúc thư m�
 
 ---
 
-## 3. Quản Lý Trạng Thái & Database
-* Sử dụng **Riverpod** làm giải pháp quản lý trạng thái chính trong ứng dụng.
-* Tất cả cấu hình tuỳ chỉnh của người dùng phải được lưu và đồng bộ tức thời với cơ sở dữ liệu để tránh mất dữ liệu khi restart app.
+## 4. Cấu Trúc Cơ Sở Dữ Liệu Self-Hosted & Quy Chuẩn Tra Cứu Dữ Liệu (Database Architecture)
+* **Domain & Router Gateway:**
+  * Supabase Studio: `https://quannho-db.lpm.vn` (Proxy tới Studio port 3003).
+  * API Gateway: `https://quannho.lpm.vn/supabase/` (Proxy ưu tiên `^~ /supabase/` tới Kong Gateway port 8000).
+  * POS Web: `https://quannho.lpm.vn/pos/` (Phục vụ từ `/var/www/quannho/pos`).
+* **Bảng Dữ liệu Nhân viên chuẩn (`staff_members`):**
+  * Toàn bộ nhân viên thu ngân và phục vụ của quán được lưu trữ duy nhất tại bảng **`public.staff_members`** (`id`, `store_id`, `name`, `role`, `phone`, `is_active`).
+  * Mọi truy vấn báo cáo (`DashboardRepository`, `ReportScreen`, `PosRepository`, `BanRepository`) phải tra cứu trực tiếp từ bảng `staff_members` thay vì bảng cũ `store_members` để tránh lỗi hiển thị *"Nhân viên ẩn"*.
+* **Bảng Nhật Ký Hoạt Động & Khuyến Mãi (`app_logs`, `coupons`, `void_audit_logs`):**
+  * **`public.app_logs`**: Nhật ký hoạt động và theo dõi lỗi ứng dụng (`id`, `store_id`, `device_id`, `staff_name`, `level`, `tag`, `message`, `details`, `created_at`).
+  * **`public.coupons`**: Bảng quản lý khuyến mãi & voucher (`id`, `store_id`, `code`, `description`, `discount_type`, `value`, `min_order_amount`, `max_discount_amount`, `is_active`, `start_date`, `end_date`).
+  * **`public.void_audit_logs`**: Bảng nhật ký hủy món & hủy bill (`id`, `store_id`, `void_type`, `reference_id`, `label`, `reason`, `amount`, `details_json`).
+* **Quy trình Audit & Dọn dẹp dữ liệu:**
+  * Thứ tự xóa dữ liệu thử nghiệm đúng chuẩn khóa ngoại Foreign Key: `kitchen_tickets` $\rightarrow$ `ban_sessions` $\rightarrow$ `orders` $\rightarrow$ `finance_records` $\rightarrow$ `stock_movements`.
+

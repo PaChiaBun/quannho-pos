@@ -49,9 +49,10 @@ const _moduleNames = {
 // Ưu tiên store_roles (custom), fallback về _roles cũ để tương thích ngược
 ({String name, Color color, IconData icon}) _resolveRole(
     String roleKey, List<StoreRole> storeRoles) {
-  // 1. Tìm trong store_roles
+  final canon = StaffService.canonicalRole(roleKey);
+  // 1. Tìm trong store_roles (khớp tên trực tiếp hoặc qua canonicalRole)
   for (final r in storeRoles) {
-    if (r.name == roleKey) {
+    if (r.name == roleKey || StaffService.canonicalRole(r.name) == canon) {
       final icon = <String, IconData>{
         'badge': Icons.badge_rounded, 'manage_accounts': Icons.manage_accounts_rounded,
         'support_agent': Icons.support_agent_rounded, 'security': Icons.security_rounded,
@@ -81,7 +82,7 @@ const _moduleNames = {
     }
   }
   // 2. Fallback _roles cũ (cashier, kitchen, waiter...)
-  final old = _roles[roleKey];
+  final old = _roles[canon] ?? _roles[roleKey];
   if (old != null) return (name: old.$1, color: old.$3, icon: old.$2);
   // 3. Default
   return (name: roleKey, color: _kNavy, icon: Icons.badge_rounded);
@@ -447,7 +448,9 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
       data: (all) {
         // ── Filter ──
         final list = all.where((m) {
-          final matchRole   = _roleFilter == 'all' || m.role == _roleFilter;
+          final matchRole   = _roleFilter == 'all'
+              || m.role == _roleFilter
+              || StaffService.canonicalRole(m.role) == StaffService.canonicalRole(_roleFilter);
           final matchSearch = _query.isEmpty
               || m.name.toLowerCase().contains(_query.toLowerCase())
               || m.phone.contains(_query);
@@ -725,13 +728,18 @@ class _AddStaffSheet extends ConsumerStatefulWidget {
 }
 
 class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
+  final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   String _role = 'cashier';
   bool _loading = false;
   String? _error;
 
   @override
-  void dispose() { _phoneCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -751,9 +759,19 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
         const Text('Thêm nhân viên',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _kNavy)),
         const SizedBox(height: 4),
-        const Text('Nhân viên cần đăng ký tài khoản trước',
+        const Text('Nhập tên và số điện thoại để gán nhân viên vào quán',
           style: TextStyle(fontSize: 12, color: _kMuted)),
         const SizedBox(height: 20),
+        // Name field
+        TextField(
+          controller: _nameCtrl,
+          decoration: InputDecoration(
+            labelText: 'Họ và tên nhân viên',
+            prefixIcon: const Icon(Icons.person_rounded),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        const SizedBox(height: 14),
         // Phone field
         TextField(
           controller: _phoneCtrl,
@@ -799,8 +817,6 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
                 prefixIcon: const Icon(Icons.badge_rounded),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              // ‼️ FIX Bug #31: loại bỏ role 'owner' khỏi dropdown
-              // Manager không được phép gán role chủ quán cho người mới
               items: roles
                   .where((r) => r.name.toLowerCase() != 'owner')
                   .map((r) => DropdownMenuItem(
@@ -841,7 +857,6 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
     final phone = _phoneCtrl.text.trim();
     if (phone.isEmpty) { setState(() => _error = 'Nhập số điện thoại'); return; }
 
-    // Dismiss keyboard để thấy kết quả rõ hơn
     FocusScope.of(context).unfocus();
     setState(() { _loading = true; _error = null; });
 
@@ -854,6 +869,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
       final result = await StaffService.addStaffByPhone(
         storeId: session!.storeId!,
         phone:   phone,
+        name:    _nameCtrl.text.trim(),
         role:    _role,
         addedByUserId: session.userId,
       );
@@ -3261,20 +3277,22 @@ class _ShiftFormSheetState extends State<_ShiftFormSheet> {
 // ─────────────────────────────────────────────────────────────────────────────
 // TABLET RIGHT PANEL — Staff Summary Sidebar
 // ─────────────────────────────────────────────────────────────────────────────
-class _StaffRightPanel extends StatelessWidget {
+class _StaffRightPanel extends ConsumerWidget {
   final AsyncValue<List<StaffMember>> staffAsync;
   const _StaffRightPanel({required this.staffAsync});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final staff = staffAsync.value ?? [];
     final active = staff.where((s) => s.isClockedIn).length;
     final inactive = staff.length - active;
+    final storeRoles = ref.watch(storeRolesProvider).value ?? [];
 
-    // Group by role
+    // Group by resolved role name
     final roleGroups = <String, int>{};
     for (final s in staff) {
-      roleGroups[s.role] = (roleGroups[s.role] ?? 0) + 1;
+      final name = s.isOwner ? 'Chủ quán' : _resolveRole(s.role, storeRoles).name;
+      roleGroups[name] = (roleGroups[name] ?? 0) + 1;
     }
 
     return Container(

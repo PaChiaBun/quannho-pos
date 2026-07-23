@@ -7,6 +7,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
+import 'package:crypto/crypto.dart';
 import 'staff_sync_service.dart';
 import '../utils/app_logger.dart';
 
@@ -74,57 +76,119 @@ class StaffService {
     final db = _db;
     if (db == null) return [];
     try {
-      // 1. Lấy store_members + user_accounts
-      final members = await db
-          .from('store_members')
-          .select('role, is_owner, user_id, shift_config_id, user_accounts(id, phone, display_name)')
+      // 1. Lấy danh sách từ staff_members (bảng chuẩn mới)
+      final staffRows = await db
+          .from('staff_members')
+          .select('id, name, phone, role, hourly_rate, is_active')
           .eq('store_id', storeId);
 
-      if (members.isEmpty) return [];
+      // 2. Lấy danh sách từ store_members + user_accounts (bảng hệ thống auth)
+      List<Map<String, dynamic>> memberRows = [];
+      try {
+        memberRows = await db
+            .from('store_members')
+            .select('role, is_owner, user_id, shift_config_id, user_accounts(id, phone, display_name)')
+            .eq('store_id', storeId);
+      } catch (_) {}
 
-      final userIds = members.map((m) => m['user_id'] as String).toList();
+      // 3. Lấy danh sách ca làm việc đang mở (chấm công)
+      Set<String> activeIds = {};
+      try {
+        final activeShifts = await db
+            .from('staff_shifts')
+            .select('user_id')
+            .eq('store_id', storeId)
+            .isFilter('clock_out', null);
+        activeIds = { for (var s in activeShifts) s['user_id'] as String };
+      } catch (_) {}
 
-      // 2. Lấy staff_profiles
-      final profiles = await db
-          .from('staff_profiles')
-          .select('user_id, hourly_rate, base_salary, job_desc, start_date')
-          .eq('store_id', storeId)
-          .inFilter('user_id', userIds);
+      final resultMap = <String, StaffMember>{};
 
-      final profileMap = { for (var p in profiles) p['user_id'] as String: p };
-
-      // 3. Lấy ca đang mở (chưa clock_out)
-      final activeShifts = await db
-          .from('staff_shifts')
-          .select('user_id')
-          .eq('store_id', storeId)
-          .isFilter('clock_out', null);
-
-      final activeIds = { for (var s in activeShifts) s['user_id'] as String };
-
-      // 4. Ghép kết quả
-      // ‼️ FIX: null-safe cast — user_accounts có thể null nếu account bị xoá (orphan FK)
-      final result = <StaffMember>[];
-      for (final m in members) {
-        final user = m['user_accounts'] as Map<String, dynamic>?;
-        if (user == null) continue; // skip orphan member
-        final userId  = user['id'] as String? ?? (m['user_id'] as String);
-        final profile = profileMap[userId];
-        result.add(StaffMember(
-          userId:     userId,
-          name:       user['display_name'] as String? ?? '',
-          phone:      user['phone']        as String? ?? '',
-          role:       m['role']            as String? ?? 'cashier',
-          isOwner:    m['is_owner']        as bool?   ?? false,
-          hourlyRate: (profile?['hourly_rate'] as num?)?.toDouble() ?? 0,
-          baseSalary: (profile?['base_salary'] as num?)?.toDouble() ?? 0,
-          jobDesc:    profile?['job_desc']  as String? ?? '',
-          startDate:  profile?['start_date'] as String?,
-          isClockedIn:   activeIds.contains(userId),
-          shiftConfigId: m['shift_config_id'] as String?,
-        ));
+      // Thêm nhân viên từ staff_members
+      for (final s in staffRows) {
+        final id = s['id'] as String;
+        final role = (s['role'] as String?) ?? 'cashier';
+        final isOwnerRole = role.toLowerCase() == 'owner' ||
+            role.toLowerCase() == 'chủ quán' ||
+            StaffService.canonicalRole(role) == 'owner';
+        resultMap[id] = StaffMember(
+          userId: id,
+          name: (s['name'] as String?) ?? 'Nhân viên',
+          phone: (s['phone'] as String?) ?? '',
+          role: role,
+          isOwner: isOwnerRole,
+          hourlyRate: (s['hourly_rate'] as num?)?.toDouble() ?? 0,
+          baseSalary: 0,
+          jobDesc: '',
+          startDate: null,
+          isClockedIn: activeIds.contains(id),
+          shiftConfigId: null,
+        );
       }
-      return result;
+
+      // Thêm/Đồng bộ nhân viên từ store_members nếu chưa có trong resultMap
+      for (final m in memberRows) {
+        final user = m['user_accounts'] as Map<String, dynamic>?;
+        final userId = user?['id'] as String? ?? (m['user_id'] as String?);
+        if (userId == null) continue;
+
+        final isOwnerFlag = (m['is_owner'] as bool?) ?? false;
+
+        if (resultMap.containsKey(userId)) {
+          if (isOwnerFlag && !resultMap[userId]!.isOwner) {
+            final existing = resultMap[userId]!;
+            resultMap[userId] = StaffMember(
+              userId: existing.userId,
+              name: existing.name,
+              phone: existing.phone,
+              role: existing.role,
+              isOwner: true,
+              hourlyRate: existing.hourlyRate,
+              baseSalary: existing.baseSalary,
+              jobDesc: existing.jobDesc,
+              startDate: existing.startDate,
+              isClockedIn: existing.isClockedIn,
+              shiftConfigId: existing.shiftConfigId,
+            );
+          }
+        } else {
+          final name = user?['display_name'] as String? ?? 'Nhân viên';
+          final phone = user?['phone'] as String? ?? '';
+          final role = (m['role'] as String?) ?? 'cashier';
+          final isOwnerRole = isOwnerFlag ||
+              role.toLowerCase() == 'owner' ||
+              role.toLowerCase() == 'chủ quán' ||
+              StaffService.canonicalRole(role) == 'owner';
+
+          resultMap[userId] = StaffMember(
+            userId: userId,
+            name: name,
+            phone: phone,
+            role: role,
+            isOwner: isOwnerRole,
+            hourlyRate: 0,
+            baseSalary: 0,
+            jobDesc: '',
+            startDate: null,
+            isClockedIn: activeIds.contains(userId),
+            shiftConfigId: m['shift_config_id'] as String?,
+          );
+
+          // Auto-sync sang staff_members
+          try {
+            await db.from('staff_members').upsert({
+              'id': userId,
+              'store_id': storeId,
+              'name': name,
+              'role': role,
+              'phone': phone,
+              'is_active': true,
+            });
+          } catch (_) {}
+        }
+      }
+
+      return resultMap.values.toList();
     } catch (e) {
       debugPrint('[StaffService] getStaffList error: $e');
       return [];
@@ -137,69 +201,86 @@ class StaffService {
   static Future<AddStaffResult> addStaffByPhone({
     required String storeId,
     required String phone,
+    String? name,
     required String role,
     required String addedByUserId,
   }) async {
     final db = _db;
     if (db == null) return AddStaffResult.error('Không kết nối được server.');
 
-    // ‼️ FIX Bug #31: ngăn gán role 'owner' qua API — bảo vệ defense-in-depth
     if (role.toLowerCase() == 'owner') {
       return AddStaffResult.error('Không thể gán vai trò Chủ quán cho nhân viên mới.');
     }
 
-
-    // Chuẩn hoá SĐT — xử lý 3 dạng: 0xxx, 84xxx, +84xxx
     var p = phone.trim().replaceAll(RegExp(r'\s|-|\(|\)'), '');
     if (p.startsWith('0')) {
       p = '+84${p.substring(1)}';
     } else if (p.startsWith('84') && !p.startsWith('+84')) {
-      // ‼️ FIX: nhập '84XXXXXXXXX' → '+84XXXXXXXXX'
       p = '+$p';
     }
 
     try {
-      // Tìm user theo SĐT
+      // 1. Tìm user theo SĐT trong user_accounts
       final userRes = await db
           .from('user_accounts')
           .select('id, display_name, phone')
           .eq('phone', p)
           .maybeSingle();
 
-      if (userRes == null) {
-        return AddStaffResult.error('Không tìm thấy tài khoản với số $phone.\nNhân viên cần tự đăng ký tài khoản trước.');
+      String userId;
+      String userName;
+
+      if (userRes != null) {
+        userId   = userRes['id']           as String;
+        userName = (name != null && name.trim().isNotEmpty) ? name.trim() : (userRes['display_name'] as String);
+      } else {
+        // Tự động tạo tài khoản nếu nhân viên chưa từng đăng ký tài khoản
+        userId = const Uuid().v4();
+        userName = (name != null && name.trim().isNotEmpty) ? name.trim() : 'NV ${phone.replaceAll(RegExp(r'\D'), '')}';
+
+        final pwdInput = '$p:123456:qn_pos_2024_salt';
+        final defaultHash = sha256.convert(utf8.encode(pwdInput)).toString();
+
+        try {
+          await db.from('user_accounts').insert({
+            'id':            userId,
+            'phone':         p,
+            'display_name':  userName,
+            'password_hash': defaultHash,
+            'created_at':    DateTime.now().toIso8601String(),
+          });
+        } catch (_) {}
       }
 
-      final userId   = userRes['id']           as String;
-      final userName = userRes['display_name'] as String;
-
-      // Kiểm tra đã là thành viên chưa
-      final existing = await db
-          .from('store_members')
-          .select('id')
-          .eq('store_id', storeId)
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      if (existing != null) {
-        return AddStaffResult.error('$userName đã là thành viên của quán này.');
-      }
-
-      // Thêm vào store_members
-      await db.from('store_members').insert({
-        'user_id':  userId,
+      // 2. Thêm/Cập nhật vào staff_members (bảng chuẩn mới)
+      await db.from('staff_members').upsert({
+        'id': userId,
         'store_id': storeId,
-        'role':     role,
+        'name': userName,
+        'role': role,
+        'phone': p,
+        'is_active': true,
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      });
+
+      // 3. Thêm/Cập nhật vào store_members (để duy trì tương thích)
+      await db.from('store_members').upsert({
+        'id': userId,
+        'user_id': userId,
+        'store_id': storeId,
+        'role': role,
         'is_owner': false,
       });
 
-      // Tạo profile mặc định
-      await db.from('staff_profiles').upsert({
-        'user_id':  userId,
-        'store_id': storeId,
-        'job_desc': _defaultJobDesc(role),
-        'start_date': DateTime.now().toIso8601String().split('T').first,
-      }, onConflict: 'user_id,store_id');
+      // 4. Tạo profile mặc định
+      try {
+        await db.from('staff_profiles').upsert({
+          'user_id':  userId,
+          'store_id': storeId,
+          'job_desc': _defaultJobDesc(role),
+          'start_date': DateTime.now().toIso8601String().split('T').first,
+        }, onConflict: 'user_id,store_id');
+      } catch (_) {}
 
       // Ghi log
       await _logPermChange(
@@ -212,7 +293,7 @@ class StaffService {
 
       return AddStaffResult.success(userId: userId, userName: userName);
     } on PostgrestException catch (e) {
-      debugPrint('[StaffService] addStaff PostgrestException: ${e.message} | code: ${e.code} | details: ${e.details}');
+      debugPrint('[StaffService] addStaff PostgrestException: ${e.message}');
       return AddStaffResult.error('Lỗi: ${e.message}');
     } catch (e) {
       debugPrint('[StaffService] addStaff error: $e');
@@ -261,10 +342,28 @@ class StaffService {
       debugPrint('[StaffService] updateRole blocked: cannot assign owner role');
       return;
     }
-    await db.from('store_members')
-        .update({'role': newRole})
-        .eq('store_id', storeId)
-        .eq('user_id', userId);
+    // 1. Cập nhật ở bảng nhân viên chuẩn staff_members
+    try {
+      await db.from('staff_members')
+          .update({
+            'role': newRole,
+            'updated_at': DateTime.now().millisecondsSinceEpoch,
+          })
+          .eq('store_id', storeId)
+          .eq('id', userId);
+    } catch (e) {
+      debugPrint('[StaffService] updateRole staff_members error: $e');
+    }
+
+    // 2. Cập nhật ở bảng store_members (để duy trì tương thích auth)
+    try {
+      await db.from('store_members')
+          .update({'role': newRole})
+          .eq('store_id', storeId)
+          .eq('user_id', userId);
+    } catch (e) {
+      debugPrint('[StaffService] updateRole store_members error: $e');
+    }
     await _logPermChange(
       storeId: storeId, byUser: changedByUserId, targetUser: userId,
       action: 'role_change', detail: {'old': oldRole, 'new': newRole},
@@ -442,23 +541,50 @@ class StaffService {
       }
       if (rows.isEmpty) return [];
 
-      // Lấy tên nhân viên riêng (không dùng PostgREST join vì không có FK)
-      final userIds = rows.map((r) => r['user_id'] as String).toSet().toList();
+      // Lấy tên nhân viên trực tiếp theo store_id với fallback user_accounts
       final Map<String, String> nameMap = {};
       try {
-        final users = await db.from('user_accounts')
-            .select('id, display_name')
-            .inFilter('id', userIds);
+        final users = await db.from('staff_members')
+            .select('id, name')
+            .eq('store_id', storeId);
         for (final u in users) {
-          nameMap[u['id'] as String] = u['display_name'] as String? ?? '';
+          final id = u['id'] as String?;
+          final n  = u['name'] as String?;
+          if (id != null && n != null && n.trim().isNotEmpty) {
+            nameMap[id] = n.trim();
+          }
         }
-      } catch (_) {} // tên không bắt buộc
+      } catch (e) {
+        debugPrint('[StaffService.getShifts] staff_members error: $e');
+      }
+
+      try {
+        final uAccs = await db.from('user_accounts')
+            .select('id, display_name, phone');
+        for (final u in uAccs) {
+          final id = u['id'] as String?;
+          final dn = u['display_name'] as String?;
+          final ph = u['phone'] as String?;
+          if (id != null && (!nameMap.containsKey(id) || nameMap[id]!.isEmpty)) {
+            if (dn != null && dn.trim().isNotEmpty) {
+              nameMap[id] = dn.trim();
+            } else if (ph != null && ph.trim().isNotEmpty) {
+              nameMap[id] = 'NV ($ph)';
+            }
+          }
+        }
+      } catch (_) {}
 
       return rows.map<ShiftRecord>((r) {
+        final uid = r['user_id'] as String;
+        var name = nameMap[uid];
+        if (name == null || name.trim().isEmpty) {
+          name = 'Nhân viên';
+        }
         return ShiftRecord(
           id:          r['id']       as String,
-          userId:      r['user_id']  as String,
-          userName:    nameMap[r['user_id'] as String] ?? '',
+          userId:      uid,
+          userName:    name,
           // ‼️ FIX: parse UTC rồi convert sang local — tránh lệch ngày khi so sánh hôm nay
           clockIn:     DateTime.parse(r['clock_in'] as String).toLocal(),
           clockOut:    r['clock_out'] != null
@@ -517,8 +643,8 @@ class StaffService {
       final userIds2 = rows.map((r) => r['user_id'] as String).toSet().toList();
       final Map<String, String> nm = {};
       try {
-        final users = await db.from('user_accounts').select('id, display_name').inFilter('id', userIds2);
-        for (final u in users) { nm[u['id'] as String] = u['display_name'] as String? ?? ''; }
+        final users = await db.from('staff_members').select('id, name').inFilter('id', userIds2);
+        for (final u in users) { nm[u['id'] as String] = u['name'] as String? ?? ''; }
       } catch (_) {}
       return rows.map<ShiftRecord>((r) {
         return ShiftRecord(
@@ -550,12 +676,25 @@ class StaffService {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
+  static List<String> _parseModules(dynamic raw) {
+    if (raw == null) return [];
+    if (raw is List) return raw.map((e) => e.toString()).toList();
+    final str = raw.toString().trim();
+    if (str.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(str);
+      if (decoded is List) return decoded.map((e) => e.toString()).toList();
+    } catch (_) {}
+    // Fallback parse chuỗi dạng [ban,kitchen,kay_ops] hoặc ban,kitchen
+    final cleaned = str.replaceAll('[', '').replaceAll(']', '').replaceAll('"', '').replaceAll("'", '');
+    return cleaned.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+  }
+
   static Future<List<String>> getModulePermissions(String storeId, String role) async {
     final db = _db;
     final canonical = canonicalRole(role);
     if (db == null) return List<String>.from(kDefaultPerms[canonical] ?? []);
     try {
-      // Thiết lập header x-store-id để vượt qua RLS
       try {
         db.rest.headers['x-store-id'] = storeId;
       } catch (_) {}
@@ -564,23 +703,22 @@ class StaffService {
       final roleRow = await db.from('store_roles')
           .select('modules')
           .eq('store_id', storeId)
-          .eq('name', role)
+          .or('name.eq.$role,name.eq.$canonical')
           .maybeSingle();
       if (roleRow != null && roleRow['modules'] != null) {
-        final raw = roleRow['modules'];
-        final mods = raw is List ? raw : (jsonDecode(raw as String) as List);
-        return mods.cast<String>();
+        final mods = _parseModules(roleRow['modules']);
+        if (mods.isNotEmpty) return mods;
       }
 
       // 2. Fallback: app_settings perm_role (hệ thống cũ)
       final res = await db.from('app_settings')
           .select('value')
           .eq('store_id', storeId)
-          .eq('key', 'perm_$role')
+          .or('key.eq.perm_$role,key.eq.perm_$canonical')
           .maybeSingle();
-      if (res != null) {
-        final decoded = jsonDecode(res['value'] as String) as List;
-        return decoded.cast<String>();
+      if (res != null && res['value'] != null) {
+        final mods = _parseModules(res['value']);
+        if (mods.isNotEmpty) return mods;
       }
 
       // 3. Fallback cuối: kDefaultPerms (hardcoded)
@@ -869,7 +1007,40 @@ class StoreRoleService {
     if (color   != null) data['color']   = color;
     if (modules != null) data['modules'] = jsonEncode(modules);
     if (data.isEmpty) return;
+
+    String? oldName;
+    String? storeId;
+    if (name != null) {
+      try {
+        final oldRoleRow = await db.from('store_roles')
+            .select('name, store_id')
+            .eq('id', roleId)
+            .maybeSingle();
+        if (oldRoleRow != null) {
+          oldName = oldRoleRow['name'] as String?;
+          storeId = oldRoleRow['store_id'] as String?;
+        }
+      } catch (_) {}
+    }
+
     await db.from('store_roles').update(data).eq('id', roleId);
+
+    // Đồng bộ đổi tên vai trò sang cả 2 bảng staff_members và store_members
+    if (name != null && oldName != null && oldName != name.trim() && storeId != null) {
+      final newName = name.trim();
+      try {
+        await db.from('staff_members')
+            .update({'role': newName, 'updated_at': DateTime.now().millisecondsSinceEpoch})
+            .eq('store_id', storeId)
+            .eq('role', oldName);
+      } catch (_) {}
+      try {
+        await db.from('store_members')
+            .update({'role': newName})
+            .eq('store_id', storeId)
+            .eq('role', oldName);
+      } catch (_) {}
+    }
   }
 
   // ── Xoá role — tự động reassign NV sang role đầu tiên còn lại ───────────
@@ -894,12 +1065,22 @@ class StoreRoleService {
         ? others.first['name'] as String
         : 'member'; // mặc định nếu không còn role nào
 
-    // Reassign tất cả NV đang dùng role này
-    await db
-        .from('store_members')
-        .update({'role': fallbackRole})
-        .eq('store_id', storeId)
-        .eq('role', roleName);
+    // Reassign tất cả NV đang dùng role này sang cả 2 bảng staff_members & store_members
+    try {
+      await db
+          .from('staff_members')
+          .update({'role': fallbackRole, 'updated_at': DateTime.now().millisecondsSinceEpoch})
+          .eq('store_id', storeId)
+          .eq('role', roleName);
+    } catch (_) {}
+
+    try {
+      await db
+          .from('store_members')
+          .update({'role': fallbackRole})
+          .eq('store_id', storeId)
+          .eq('role', roleName);
+    } catch (_) {}
 
     // Xoá role
     await db.from('store_roles').delete().eq('id', roleId);

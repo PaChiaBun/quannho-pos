@@ -3310,16 +3310,15 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
 
       // 2. Lấy danh sách nhân viên
       final membersRes = await db
-          .from('store_members')
-          .select('user_id, role, user_accounts(display_name)')
+          .from('staff_members')
+          .select('id, role, name')
           .eq('store_id', storeId);
 
       final Map<String, _StaffInfo> memberMap = {};
       for (final m in (membersRes as List)) {
-        final userId = m['user_id'] as String;
+        final userId = m['id'] as String;
         final role = m['role'] as String? ?? 'cashier';
-        final userAcc = m['user_accounts'] as Map<String, dynamic>?;
-        final name = userAcc?['display_name'] as String? ?? 'Nhân viên';
+        final name = m['name'] as String? ?? 'Nhân viên';
         memberMap[userId] = _StaffInfo(name: name, role: role);
       }
 

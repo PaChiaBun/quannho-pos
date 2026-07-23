@@ -152,40 +152,182 @@ class UserAuthService {
 
 
     try {
-      // Tìm tài khoản
-      final userRes = await db.from('user_accounts')
-          .select('id, phone, display_name, password_hash')
-          .eq('phone', normalizedPhone)
-          .maybeSingle();
+      // 1. Chuẩn bị các biến thể SĐT (09xxx, +849xxx, 849xxx, raw)
+      final rawPhone = phone.trim().replaceAll(RegExp(r'\s|-|\(|\)'), '');
+      final cleanDigits = rawPhone.replaceAll(RegExp(r'\D'), '');
+      final phoneVariants = <String>{
+        normalizedPhone,
+        rawPhone,
+        if (cleanDigits.length >= 9) ...[
+          '0${cleanDigits.substring(cleanDigits.length - 9)}',
+          '+84${cleanDigits.substring(cleanDigits.length - 9)}',
+          '84${cleanDigits.substring(cleanDigits.length - 9)}',
+        ]
+      }.toList();
+
+      // 2. Tìm tài khoản trong user_accounts theo danh sách biến thể SĐT
+      Map<String, dynamic>? userRes;
+      for (final p in phoneVariants) {
+        final res = await db.from('user_accounts')
+            .select('id, phone, display_name, password_hash')
+            .eq('phone', p)
+            .maybeSingle();
+        if (res != null) {
+          userRes = res;
+          break;
+        }
+      }
+
+      // 3. Fallback: Nếu không thấy trong user_accounts → tìm trong staff_members (bảng nhân viên chuẩn mới)
+      if (userRes == null) {
+        for (final p in phoneVariants) {
+          final staffRow = await db.from('staff_members')
+              .select('id, store_id, name, role, phone')
+              .eq('phone', p)
+              .maybeSingle();
+
+          if (staffRow != null) {
+            final staffId   = staffRow['id'] as String;
+            final staffName = (staffRow['name'] as String?) ?? 'Nhân viên';
+            final staffRole = (staffRow['role'] as String?) ?? 'cashier';
+            final storeId   = staffRow['store_id'] as String;
+            final dbPhone   = (staffRow['phone'] as String?) ?? normalizedPhone;
+
+            // Auto-provision tài khoản user_accounts & store_members tương ứng
+            final pwdHash = _hashPassword(dbPhone, password);
+            await db.from('user_accounts').upsert({
+              'id':            staffId,
+              'phone':         dbPhone,
+              'display_name':  staffName,
+              'password_hash': pwdHash,
+            });
+
+            await db.from('store_members').upsert({
+              'id':       staffId,
+              'user_id':  staffId,
+              'store_id': storeId,
+              'role':     staffRole,
+              'is_owner': staffRole.toLowerCase() == 'owner',
+            });
+
+            userRes = {
+              'id':            staffId,
+              'phone':         dbPhone,
+              'display_name':  staffName,
+              'password_hash': pwdHash,
+            };
+            break;
+          }
+        }
+      }
 
       if (userRes == null) {
         return AuthResult.error('Số điện thoại chưa được đăng ký.');
       }
 
-      // Kiểm tra mật khẩu
-      final expectedHash = _hashPassword(normalizedPhone, password);
-      if (userRes['password_hash'] != expectedHash) {
+      final userId      = userRes['id']           as String;
+      final displayName = userRes['display_name'] as String;
+      final storedPhone = userRes['phone']        as String? ?? normalizedPhone;
+      final storedHash  = userRes['password_hash'] as String?;
+
+      // 4. Kiểm tra mật khẩu (hỗ trợ kiểm tra theo cả SĐT đăng ký & SĐT chuẩn hoá)
+      final expectedHashNorm = _hashPassword(normalizedPhone, password);
+      final expectedHashRaw  = _hashPassword(rawPhone, password);
+      final expectedHashDb   = _hashPassword(storedPhone, password);
+
+      final isPasswordCorrect = (storedHash == expectedHashNorm) ||
+                               (storedHash == expectedHashRaw) ||
+                               (storedHash == expectedHashDb);
+
+      if (!isPasswordCorrect) {
         return AuthResult.error('Mật khẩu không đúng.');
       }
 
-      final userId      = userRes['id']           as String;
-      final displayName = userRes['display_name'] as String;
+      // Cập nhật chuẩn hoá password_hash nếu vừa khớp qua biến thể cũ
+      if (storedHash != expectedHashNorm) {
+        try {
+          await db.from('user_accounts').update({
+            'password_hash': expectedHashNorm,
+            'phone': normalizedPhone,
+          }).eq('id', userId);
+        } catch (_) {}
+      }
 
-      // Lấy danh sách quán
+      // 5. Lấy danh sách quán từ store_members
       final memberships = await db.from('store_members')
           .select('role, is_owner, store_id, stores(id, name, store_code)')
           .eq('user_id', userId);
 
-      final stores = memberships.map<StoreMembership>((m) {
-        final store = m['stores'] as Map<String, dynamic>;
-        return StoreMembership(
-          storeId:   store['id']         as String,
-          storeName: store['name']       as String,
-          storeCode: store['store_code'] as String,
-          role:      m['role']           as String,
-          isOwner:   m['is_owner']       as bool,
-        );
-      }).toList();
+      List<StoreMembership> stores = [];
+      for (final m in memberships) {
+        Map<String, dynamic>? store = m['stores'] as Map<String, dynamic>?;
+        final storeId = m['store_id'] as String?;
+
+        if (store == null && storeId != null) {
+          try {
+            store = await db.from('stores')
+                .select('id, name, store_code')
+                .eq('id', storeId)
+                .maybeSingle();
+          } catch (_) {}
+        }
+
+        if (store != null) {
+          stores.add(StoreMembership(
+            storeId:   store['id']         as String,
+            storeName: (store['name'] as String?) ?? 'Quán Nhỏ',
+            storeCode: (store['store_code'] as String?) ?? '',
+            role:      (m['role'] as String?) ?? 'cashier',
+            isOwner:   (m['is_owner'] as bool?) ?? false,
+          ));
+        }
+      }
+
+      // 6. Fallback: Nếu store_members rỗng → kiểm tra từ staff_members
+      if (stores.isEmpty) {
+        final staffRows = await db.from('staff_members')
+            .select('role, store_id, stores(id, name, store_code)')
+            .eq('id', userId);
+
+        for (final s in staffRows) {
+          Map<String, dynamic>? store = s['stores'] as Map<String, dynamic>?;
+          final storeId = s['store_id'] as String?;
+
+          // Nếu FK embedding bị null → tra cứu trực tiếp từ bảng stores theo store_id
+          if (store == null && storeId != null) {
+            try {
+              store = await db.from('stores')
+                  .select('id, name, store_code')
+                  .eq('id', storeId)
+                  .maybeSingle();
+            } catch (_) {}
+          }
+
+          if (store != null) {
+            final role = (s['role'] as String?) ?? 'cashier';
+            final isOwner = role.toLowerCase() == 'owner';
+            final m = StoreMembership(
+              storeId:   store['id']         as String,
+              storeName: (store['name'] as String?) ?? 'Quán Nhỏ',
+              storeCode: (store['store_code'] as String?) ?? '',
+              role:      role,
+              isOwner:   isOwner,
+            );
+            stores.add(m);
+
+            // Đồng bộ sang store_members để đảm bảo nhất quán
+            try {
+              await db.from('store_members').upsert({
+                'id':       userId,
+                'user_id':  userId,
+                'store_id': m.storeId,
+                'role':     role,
+                'is_owner': isOwner,
+              });
+            } catch (_) {}
+          }
+        }
+      }
 
       // Nếu chỉ có 1 quán → tự động chọn
       if (stores.length == 1) {
@@ -226,17 +368,75 @@ class UserAuthService {
           .select('role, is_owner, store_id, stores(id, name, store_code)')
           .eq('user_id', userId);
 
-      if (memberships.isEmpty) return null;
+      if (memberships.isNotEmpty) {
+        final m = memberships.first;
+        Map<String, dynamic>? store = m['stores'] as Map<String, dynamic>?;
+        final storeId = m['store_id'] as String?;
 
-      final m     = memberships.first;
-      final store = m['stores'] as Map<String, dynamic>;
-      return StoreMembership(
-        storeId:   store['id']         as String,
-        storeName: store['name']       as String,
-        storeCode: store['store_code'] as String,
-        role:      m['role']           as String,
-        isOwner:   m['is_owner']       as bool,
-      );
+        if (store == null && storeId != null) {
+          try {
+            store = await db.from('stores')
+                .select('id, name, store_code')
+                .eq('id', storeId)
+                .maybeSingle();
+          } catch (_) {}
+        }
+
+        if (store != null) {
+          return StoreMembership(
+            storeId:   store['id']         as String,
+            storeName: (store['name'] as String?) ?? 'Quán Nhỏ',
+            storeCode: (store['store_code'] as String?) ?? '',
+            role:      (m['role'] as String?) ?? 'cashier',
+            isOwner:   (m['is_owner'] as bool?) ?? false,
+          );
+        }
+      }
+
+      // Fallback: Tìm từ staff_members nếu store_members bị thiếu
+      final staffRows = await db
+          .from('staff_members')
+          .select('role, store_id, stores(id, name, store_code)')
+          .eq('id', userId);
+
+      if (staffRows.isNotEmpty) {
+        final s = staffRows.first;
+        Map<String, dynamic>? store = s['stores'] as Map<String, dynamic>?;
+        final storeId = s['store_id'] as String?;
+
+        if (store == null && storeId != null) {
+          try {
+            store = await db.from('stores')
+                .select('id, name, store_code')
+                .eq('id', storeId)
+                .maybeSingle();
+          } catch (_) {}
+        }
+
+        if (store != null) {
+          final role = (s['role'] as String?) ?? 'cashier';
+          final isOwner = role.toLowerCase() == 'owner';
+          final m = StoreMembership(
+            storeId:   store['id']         as String,
+            storeName: (store['name'] as String?) ?? 'Quán Nhỏ',
+            storeCode: (store['store_code'] as String?) ?? '',
+            role:      role,
+            isOwner:   isOwner,
+          );
+          try {
+            await db.from('store_members').upsert({
+              'id':       userId,
+              'user_id':  userId,
+              'store_id': m.storeId,
+              'role':     role,
+              'is_owner': isOwner,
+            });
+          } catch (_) {}
+          return m;
+        }
+      }
+
+      return null;
     } catch (e) {
       debugPrint('[UserAuthService] fetchStoreMembership error: $e');
       return null;
@@ -453,6 +653,12 @@ class UserAuthService {
     await prefs.setString(_kStoreCode, m.storeCode);
     await prefs.setString(_kRole,      m.role);
     await prefs.setBool(_kIsOwner,     m.isOwner);
+
+    // Đồng bộ sang các key legacy (dùng bởi StoreAuthService & các repository cũ)
+    await prefs.setString('store_id',    m.storeId);
+    await prefs.setString('store_name',  m.storeName);
+    await prefs.setString('store_code',  m.storeCode);
+    await prefs.setString('device_role', m.role);
   }
 
   static String _generateCode() {
@@ -533,8 +739,11 @@ class UserAuthService {
           final storedHash = user['quick_pin'] as String?;
           if (storedHash == null || storedHash.isEmpty) continue;
 
-          final inputHash = _hashPassword(phone, pin);
-          if (storedHash == inputHash) {
+          final normPhone = _normalizePhone(phone);
+          final inputHash1 = _hashPassword(phone, pin);
+          final inputHash2 = _hashPassword(normPhone, pin);
+
+          if (storedHash == inputHash1 || storedHash == inputHash2) {
             return {
               'id': user['id'] as String,
               'name': user['display_name'] as String? ?? 'Quản lý',
@@ -542,6 +751,46 @@ class UserAuthService {
           }
         }
       }
+
+      // Fallback: Tra cứu quản lý trực tiếp từ staff_members
+      try {
+        final staffRows = await db
+            .from('staff_members')
+            .select('id, name, phone, role, pin_hash')
+            .eq('store_id', storeId);
+
+        for (final s in staffRows) {
+          final role = s['role'] as String? ?? '';
+          final rLower = role.toLowerCase().trim();
+          final isManager = rLower.contains('owner') || rLower.contains('chủ') || rLower.contains('manager') || rLower.contains('quản lý');
+          if (!isManager) continue;
+
+          final phone = s['phone'] as String? ?? '';
+          final storedPinHash = s['pin_hash'] as String?;
+          final id = s['id'] as String;
+
+          // Tra cứu quick_pin trong user_accounts nếu pin_hash ở staff_members rỗng
+          String? storedHash = storedPinHash;
+          if (storedHash == null || storedHash.isEmpty) {
+            final u = await db.from('user_accounts').select('quick_pin').eq('id', id).maybeSingle();
+            storedHash = u?['quick_pin'] as String?;
+          }
+
+          if (storedHash == null || storedHash.isEmpty) continue;
+
+          final normPhone = _normalizePhone(phone);
+          final inputHash1 = _hashPassword(phone, pin);
+          final inputHash2 = _hashPassword(normPhone, pin);
+
+          if (storedHash == inputHash1 || storedHash == inputHash2) {
+            return {
+              'id': id,
+              'name': (s['name'] as String?) ?? 'Quản lý',
+            };
+          }
+        }
+      } catch (_) {}
+
       return null;
     } catch (e) {
       debugPrint('[UserAuthService] verifyManagerQuickPin error: $e');
