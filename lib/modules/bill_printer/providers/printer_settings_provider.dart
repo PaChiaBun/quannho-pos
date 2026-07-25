@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -631,7 +632,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
       writePrintLog('[Process Ticket] Đẩy in: $orderNumber. Bàn: $tableName, số món: ${billItems.length}');
       print('[PrintServer] Bắt đầu đẩy in phiếu bếp $orderNumber...');
-      await StationPrinterDispatcher.printBill(billData, this.state, onlyKitchen: true);
+      await StationPrinterDispatcher.printBill(billData, state, onlyKitchen: true);
       writePrintLog('[Process Ticket] In thành công!');
       print('[PrintServer] Đã đẩy in thành công!');
     } catch (e) {
@@ -744,7 +745,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
       writePrintLog('[Process Order] Đẩy in hoá đơn: $orderNumber. Bàn: $tableName, số món: ${billItems.length}');
       print('[PrintServer] Bắt đầu đẩy in hoá đơn thanh toán $orderNumber...');
-      await StationPrinterDispatcher.printBill(billData, this.state, onlyReceipt: true);
+      await StationPrinterDispatcher.printBill(billData, state, onlyReceipt: true);
       writePrintLog('[Process Order] In hoá đơn thành công!');
       print('[PrintServer] Đã đẩy in hoá đơn thành công!');
     } catch (e) {
