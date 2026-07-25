@@ -376,7 +376,51 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
       body: ticketsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator(color: _kOrange)),
         error: (e, _) => Center(
-          child: Text('Lỗi: $e', style: const TextStyle(color: Colors.white54)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _kOrange.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.wifi_off_rounded, size: 42, color: _kOrange),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Gián đoạn kết nối máy chủ Bếp',
+                  style: GoogleFonts.outfit(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Hệ thống đang tự động kết nối lại (502 Bad Gateway). Vui lòng đợi trong giây lát...',
+                  style: TextStyle(fontSize: 12, color: Colors.white60),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kOrange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Thử kết nối lại ngay', style: TextStyle(fontWeight: FontWeight.w700)),
+                  onPressed: () {
+                    ref.invalidate(kitchenTicketsProvider);
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
         data: (tickets) {
           if (tickets.isEmpty) return const _EmptyKitchenState();

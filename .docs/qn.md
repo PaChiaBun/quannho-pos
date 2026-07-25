@@ -21,6 +21,17 @@ Mã nguồn giao diện Sidebar Navigation (cho Tablet/PC) đã được khôi p
 
 ---
 
+## 🗄️ 1.5 Kiến Trúc Dữ Liệu Hybrid Seamless & Khả Năng Mở Rộng Linh Hoạt
+
+* **Tối ưu hóa Data Engine (Online & Offline Song Hành):**
+  * Hệ thống sở hữu kiến trúc dữ liệu Hybrid thế hệ mới cho phép ứng dụng hoạt động hoàn hảo 100% dù **Online** (đồng bộ Cloud Realtime) hay **Offline** (lưu local database).
+  * Tự động nhận diện mạng và chuyển đổi trạng thái đồng bộ bất đối xứng 2 chiều khi khôi phục kết nối, đảm bảo 0% rủi ro đứt đoạn kinh doanh, mất hóa đơn hay lệch tồn kho.
+* **Tương thích từ Quán Nhỏ đến Nhà Hàng Lớn & Chuỗi Chi Nhánh:**
+  * Cấu trúc phần mềm linh hoạt thích ứng cho mọi quy mô kinh doanh: từ **Quán nhỏ / Hộ kinh doanh cá thể**, **Nhà hàng quy mô lớn**, tới **Chuỗi chi nhánh nhượng quyền mở rộng (Multi-branch Franchise Chains)**.
+  * Hỗ trợ quản lý đa cửa hàng (`store_id`), chuyển đổi chi nhánh siêu tốc và tổng hợp báo cáo toàn chuỗi thời gian thực.
+
+---
+
 ## 🖨️ 2. Hệ Thống Phân Trạm In & Tem Nhãn Dán Ly
 
 Chúng ta đã nâng cấp module in bill để hỗ trợ chia và điều hướng in bill tự động cho 4 trạm:

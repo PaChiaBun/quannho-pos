@@ -31,6 +31,12 @@ BEGIN
     LOOP
         t_name := r.table_name;
         
+        -- Bỏ qua không bật RLS cho các bảng Auth
+        IF t_name IN ('user_accounts', 'store_members') THEN
+            EXECUTE format('ALTER TABLE public.%I DISABLE ROW LEVEL SECURITY;', t_name);
+            CONTINUE;
+        END IF;
+
         -- Kích hoạt tính năng bảo mật Row-Level Security (RLS)
         EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', t_name);
         

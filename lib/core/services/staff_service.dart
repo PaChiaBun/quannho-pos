@@ -214,20 +214,39 @@ class StaffService {
       return AddStaffResult.error('Không thể gán vai trò Chủ quán cho nhân viên mới.');
     }
 
-    var p = phone.trim().replaceAll(RegExp(r'\s|-|\(|\)'), '');
+    final rawPhone = phone.trim().replaceAll(RegExp(r'\s|-|\(|\)'), '');
+    final cleanDigits = rawPhone.replaceAll(RegExp(r'\D'), '');
+    var p = rawPhone;
     if (p.startsWith('0')) {
       p = '+84${p.substring(1)}';
     } else if (p.startsWith('84') && !p.startsWith('+84')) {
       p = '+$p';
     }
 
+    final phoneVariants = <String>{
+      p,
+      rawPhone,
+      if (cleanDigits.length >= 9) ...[
+        '0${cleanDigits.substring(cleanDigits.length - 9)}',
+        '+84${cleanDigits.substring(cleanDigits.length - 9)}',
+        '84${cleanDigits.substring(cleanDigits.length - 9)}',
+      ]
+    }.toList();
+
     try {
-      // 1. Tìm user theo SĐT trong user_accounts
-      final userRes = await db
-          .from('user_accounts')
-          .select('id, display_name, phone')
-          .eq('phone', p)
-          .maybeSingle();
+      // 1. Tìm user theo SĐT trong user_accounts (kiểm tra tất cả các biến thể SĐT)
+      Map<String, dynamic>? userRes;
+      for (final variant in phoneVariants) {
+        final res = await db
+            .from('user_accounts')
+            .select('id, display_name, phone')
+            .eq('phone', variant)
+            .maybeSingle();
+        if (res != null) {
+          userRes = res;
+          break;
+        }
+      }
 
       String userId;
       String userName;
@@ -238,20 +257,22 @@ class StaffService {
       } else {
         // Tự động tạo tài khoản nếu nhân viên chưa từng đăng ký tài khoản
         userId = const Uuid().v4();
-        userName = (name != null && name.trim().isNotEmpty) ? name.trim() : 'NV ${phone.replaceAll(RegExp(r'\D'), '')}';
+        userName = (name != null && name.trim().isNotEmpty) ? name.trim() : 'NV ${cleanDigits.isNotEmpty ? cleanDigits : phone}';
 
         final pwdInput = '$p:123456:qn_pos_2024_salt';
         final defaultHash = sha256.convert(utf8.encode(pwdInput)).toString();
 
         try {
-          await db.from('user_accounts').insert({
+          await db.from('user_accounts').upsert({
             'id':            userId,
             'phone':         p,
             'display_name':  userName,
             'password_hash': defaultHash,
             'created_at':    DateTime.now().toIso8601String(),
           });
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[StaffService.addStaffByPhone] user_accounts upsert error: $e');
+        }
       }
 
       // 2. Thêm/Cập nhật vào staff_members (bảng chuẩn mới)
@@ -376,12 +397,15 @@ class StaffService {
       debugPrint('[StaffService] updateRole staff_members error: $e');
     }
 
-    // 2. Cập nhật ở bảng store_members (để duy trì tương thích auth)
+    // 2. Cập nhật/Thêm mới ở bảng store_members (để duy trì tương thích auth)
     try {
-      await db.from('store_members')
-          .update({'role': newRole})
-          .eq('store_id', storeId)
-          .eq('user_id', userId);
+      await db.from('store_members').upsert({
+        'id': userId,
+        'user_id': userId,
+        'store_id': storeId,
+        'role': newRole,
+        'is_owner': false,
+      });
     } catch (e) {
       debugPrint('[StaffService] updateRole store_members error: $e');
     }
@@ -425,6 +449,7 @@ class StaffService {
   static Future<String?> clockIn(
     String userId,
     String storeId, {
+    String? userName,
     String? photoUrl,
     double? latitude,
     double? longitude,
@@ -472,14 +497,16 @@ class StaffService {
     // ‼️ PREVENT ORPHAN SHIFTS: Đảm bảo userId có thông tin hồ sơ nhân viên chuẩn
     try {
       final staffExists = await db.from('staff_members').select('id, name').eq('id', userId).maybeSingle();
-      if (staffExists == null) {
+      final currentName = staffExists?['name'] as String?;
+      if (staffExists == null || currentName == null || currentName.trim().isEmpty || currentName == 'Nhân viên') {
         final userAcc = await db.from('user_accounts').select('id, display_name, phone').eq('id', userId).maybeSingle();
-        if (userAcc != null) {
+        final realName = (userAcc?['display_name'] as String?) ?? (userName?.isNotEmpty == true ? userName : null);
+        if (realName != null && realName.trim().isNotEmpty) {
           await db.from('staff_members').upsert({
             'id': userId,
             'store_id': storeId,
-            'name': userAcc['display_name'] ?? 'Nhân viên',
-            'phone': userAcc['phone'],
+            'name': realName.trim(),
+            'phone': userAcc?['phone'],
             'role': 'cashier',
             'is_active': true,
           });
@@ -540,6 +567,32 @@ class StaffService {
     AppLogger.info('auth', 'Cap nhat ca lam viec $shiftId thanh cong.');
   }
 
+  /// Gán lại ca làm việc cho nhân viên khác
+  static Future<bool> reassignShift(String shiftId, String newUserId) async {
+    final db = _db;
+    if (db == null) return false;
+    try {
+      await db.from('staff_shifts').update({'user_id': newUserId}).eq('id', shiftId);
+      return true;
+    } catch (e) {
+      debugPrint('[StaffService] reassignShift error: $e');
+      return false;
+    }
+  }
+
+  /// Xoá ca làm việc (ca rác / ca thử nghiệm)
+  static Future<bool> deleteShift(String shiftId) async {
+    final db = _db;
+    if (db == null) return false;
+    try {
+      await db.from('staff_shifts').delete().eq('id', shiftId);
+      return true;
+    } catch (e) {
+      debugPrint('[StaffService] deleteShift error: $e');
+      return false;
+    }
+  }
+
   static Future<String?> getOpenShiftId(String userId, String storeId) async {
     final db = _db;
     if (db == null) return null;
@@ -581,46 +634,12 @@ class StaffService {
       }
       if (rows.isEmpty) return [];
 
-      // Lấy tên nhân viên trực tiếp theo store_id với fallback user_accounts
-      final Map<String, String> nameMap = {};
-      try {
-        final users = await db.from('staff_members')
-            .select('id, name')
-            .eq('store_id', storeId);
-        for (final u in users) {
-          final id = u['id'] as String?;
-          final n  = u['name'] as String?;
-          if (id != null && n != null && n.trim().isNotEmpty) {
-            nameMap[id] = n.trim();
-          }
-        }
-      } catch (e) {
-        debugPrint('[StaffService.getShifts] staff_members error: $e');
-      }
-
-      try {
-        final uAccs = await db.from('user_accounts')
-            .select('id, display_name, phone');
-        for (final u in uAccs) {
-          final id = u['id'] as String?;
-          final dn = u['display_name'] as String?;
-          final ph = u['phone'] as String?;
-          if (id != null && (!nameMap.containsKey(id) || nameMap[id]!.isEmpty)) {
-            if (dn != null && dn.trim().isNotEmpty) {
-              nameMap[id] = dn.trim();
-            } else if (ph != null && ph.trim().isNotEmpty) {
-              nameMap[id] = 'NV ($ph)';
-            }
-          }
-        }
-      } catch (_) {}
+      final userIds = rows.map((r) => r['user_id'] as String).toSet().toList();
+      final nameMap = await _resolveStaffNames(db, storeId, userIds);
 
       return rows.map<ShiftRecord>((r) {
         final uid = r['user_id'] as String;
-        var name = nameMap[uid];
-        if (name == null || name.trim().isEmpty) {
-          name = 'Nhân viên';
-        }
+        final name = nameMap[uid] ?? 'Nhân viên';
         return ShiftRecord(
           id:          r['id']       as String,
           userId:      uid,
@@ -658,7 +677,6 @@ class StaffService {
     if (db == null) return [];
     try {
       final from = DateTime(year, month, 1).toUtc().toIso8601String();
-      // ‼️ FIX Bug #30: explicit rollover — máy chủ Dart đúng nhưng explicit rõ ràng hơn
       final nextMonth = month == 12 ? DateTime(year + 1, 1, 1) : DateTime(year, month + 1, 1);
       final to = nextMonth.toUtc().toIso8601String();
       final List<dynamic> rows;
@@ -679,32 +697,13 @@ class StaffService {
             .order('clock_in', ascending: false);
       }
       if (rows.isEmpty) return [];
-      final userIds2 = rows.map((r) => r['user_id'] as String).toSet().toList();
-      final Map<String, String> nm = {};
-      try {
-        final users = await db.from('staff_members').select('id, name').inFilter('id', userIds2);
-        for (final u in users) {
-          final id = u['id'] as String;
-          final name = u['name'] as String?;
-          if (name != null && name.trim().isNotEmpty) nm[id] = name;
-        }
-        // Fallback: tìm trong user_accounts nếu ID chưa có trong staff_members
-        final missingIds = userIds2.where((id) => !nm.containsKey(id)).toList();
-        if (missingIds.isNotEmpty) {
-          final userAccs = await db.from('user_accounts').select('id, display_name').inFilter('id', missingIds);
-          for (final u in userAccs) {
-            final id = u['id'] as String;
-            final name = u['display_name'] as String?;
-            if (name != null && name.trim().isNotEmpty) nm[id] = name;
-          }
-        }
-      } catch (e) {
-        debugPrint('[StaffService.getShiftsForMonth] name resolution error: $e');
-      }
+
+      final userIds = rows.map((r) => r['user_id'] as String).toSet().toList();
+      final nameMap = await _resolveStaffNames(db, storeId, userIds);
+
       return rows.map<ShiftRecord>((r) {
         final uid = r['user_id'] as String;
-        var name = nm[uid];
-        if (name == null || name.trim().isEmpty) name = 'Nhân viên';
+        final name = nameMap[uid] ?? 'Nhân viên';
         return ShiftRecord(
           id:          r['id']      as String,
           userId:      uid,
@@ -722,6 +721,96 @@ class StaffService {
         );
       }).toList();
     } catch (e) { return []; }
+  }
+
+  /// Tra cứu tên nhân viên kết hợp 3 bảng: staff_members, store_members (với user_accounts) & user_accounts
+  static Future<Map<String, String>> _resolveStaffNames(
+    SupabaseClient db,
+    String storeId,
+    List<String> userIds,
+  ) async {
+    final Map<String, String> nameMap = {};
+    if (userIds.isEmpty) return nameMap;
+
+    // 1. Tìm trong staff_members theo storeId
+    try {
+      final staffRows = await db
+          .from('staff_members')
+          .select('id, name')
+          .eq('store_id', storeId)
+          .inFilter('id', userIds);
+      for (final u in staffRows) {
+        final id = u['id'] as String?;
+        final name = u['name'] as String?;
+        if (id != null && name != null && name.trim().isNotEmpty) {
+          nameMap[id] = name.trim();
+        }
+      }
+    } catch (e) {
+      debugPrint('[StaffService._resolveStaffNames] staff_members err: $e');
+    }
+
+    // 2. Tìm trong store_members (kèm user_accounts join) theo storeId
+    final missingIds1 = userIds.where((id) => !nameMap.containsKey(id)).toList();
+    if (missingIds1.isNotEmpty) {
+      try {
+        final storeMemberRows = await db
+            .from('store_members')
+            .select('user_id, user_accounts(id, display_name, phone)')
+            .eq('store_id', storeId)
+            .inFilter('user_id', missingIds1);
+        for (final m in storeMemberRows) {
+          final uid = m['user_id'] as String?;
+          final userAcc = m['user_accounts'] as Map<String, dynamic>?;
+          if (uid != null && userAcc != null) {
+            final dn = userAcc['display_name'] as String?;
+            final ph = userAcc['phone'] as String?;
+            if (dn != null && dn.trim().isNotEmpty) {
+              nameMap[uid] = dn.trim();
+            } else if (ph != null && ph.trim().isNotEmpty) {
+              nameMap[uid] = 'NV ($ph)';
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[StaffService._resolveStaffNames] store_members err: $e');
+      }
+    }
+
+    // 3. Tra cứu trực tiếp user_accounts theo ID cho các tài khoản còn thiếu
+    final missingIds2 = userIds.where((id) => !nameMap.containsKey(id)).toList();
+    if (missingIds2.isNotEmpty) {
+      try {
+        final userAccRows = await db
+            .from('user_accounts')
+            .select('id, display_name, phone')
+            .inFilter('id', missingIds2);
+        for (final u in userAccRows) {
+          final id = u['id'] as String?;
+          final dn = u['display_name'] as String?;
+          final ph = u['phone'] as String?;
+          if (id != null) {
+            if (dn != null && dn.trim().isNotEmpty) {
+              nameMap[id] = dn.trim();
+            } else if (ph != null && ph.trim().isNotEmpty) {
+              nameMap[id] = 'NV ($ph)';
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[StaffService._resolveStaffNames] user_accounts err: $e');
+      }
+    }
+
+    // 4. Đối với các user_id cũ không còn tài khoản: dùng format NV-(4 ký tự cuối UUID) thay vì "Nhân viên"
+    for (final uid in userIds) {
+      if (!nameMap.containsKey(uid) || nameMap[uid]!.isEmpty) {
+        final shortId = uid.length >= 4 ? uid.substring(uid.length - 4).toUpperCase() : uid;
+        nameMap[uid] = 'Nhân viên ($shortId)';
+      }
+    }
+
+    return nameMap;
   }
 
   // ══════════════════════════════════════════════════════════════════════════

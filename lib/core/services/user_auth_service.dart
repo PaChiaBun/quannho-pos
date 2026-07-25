@@ -181,36 +181,36 @@ class UserAuthService {
 
       // 3. Fallback: Nếu không thấy trong user_accounts → tìm trong staff_members (bảng nhân viên chuẩn mới)
       if (userRes == null) {
-        for (final p in phoneVariants) {
-          final staffRow = await db.from('staff_members')
-              .select('id, store_id, name, role, phone')
-              .eq('phone', p)
-              .limit(1)
-              .maybeSingle();
+        // Ưu tiên 3A: Gọi RPC lookup_staff_by_phone để bypass RLS ở màn hình Login
+        try {
+          final rpcRes = await db.rpc('lookup_staff_by_phone', params: {'phone_input': normalizedPhone});
+          if (rpcRes != null && rpcRes is List && rpcRes.isNotEmpty) {
+            final first = Map<String, dynamic>.from(rpcRes.first as Map);
+            final staffId   = first['id'] as String;
+            final staffName = (first['name'] as String?) ?? 'Nhân viên';
+            final staffRole = (first['role'] as String?) ?? 'cashier';
+            final storeId   = first['store_id'] as String;
+            final dbPhone   = (first['phone'] as String?) ?? normalizedPhone;
 
-          if (staffRow != null) {
-            final staffId   = staffRow['id'] as String;
-            final staffName = (staffRow['name'] as String?) ?? 'Nhân viên';
-            final staffRole = (staffRow['role'] as String?) ?? 'cashier';
-            final storeId   = staffRow['store_id'] as String;
-            final dbPhone   = (staffRow['phone'] as String?) ?? normalizedPhone;
-
-            // Auto-provision tài khoản user_accounts & store_members tương ứng
             final pwdHash = _hashPassword(dbPhone, password);
-            await db.from('user_accounts').upsert({
-              'id':            staffId,
-              'phone':         dbPhone,
-              'display_name':  staffName,
-              'password_hash': pwdHash,
-            });
+            try {
+              await db.from('user_accounts').upsert({
+                'id':            staffId,
+                'phone':         dbPhone,
+                'display_name':  staffName,
+                'password_hash': pwdHash,
+              });
 
-            await db.from('store_members').upsert({
-              'id':       staffId,
-              'user_id':  staffId,
-              'store_id': storeId,
-              'role':     staffRole,
-              'is_owner': staffRole.toLowerCase() == 'owner',
-            });
+              await db.from('store_members').upsert({
+                'id':       staffId,
+                'user_id':  staffId,
+                'store_id': storeId,
+                'role':     staffRole,
+                'is_owner': staffRole.toLowerCase() == 'owner',
+              });
+            } catch (e) {
+              debugPrint('[UserAuthService.login] RPC auto-provision error: $e');
+            }
 
             userRes = {
               'id':            staffId,
@@ -218,7 +218,56 @@ class UserAuthService {
               'display_name':  staffName,
               'password_hash': pwdHash,
             };
-            break;
+          }
+        } catch (e) {
+          debugPrint('[UserAuthService.login] RPC lookup_staff_by_phone error: $e');
+        }
+
+        // Ưu tiên 3B: Tra cứu trực tiếp từ staff_members theo phoneVariants
+        if (userRes == null) {
+          for (final p in phoneVariants) {
+            final staffRow = await db.from('staff_members')
+                .select('id, store_id, name, role, phone')
+                .eq('phone', p)
+                .limit(1)
+                .maybeSingle();
+
+            if (staffRow != null) {
+              final staffId   = staffRow['id'] as String;
+              final staffName = (staffRow['name'] as String?) ?? 'Nhân viên';
+              final staffRole = (staffRow['role'] as String?) ?? 'cashier';
+              final storeId   = staffRow['store_id'] as String;
+              final dbPhone   = (staffRow['phone'] as String?) ?? normalizedPhone;
+
+              // Auto-provision tài khoản user_accounts & store_members tương ứng
+              final pwdHash = _hashPassword(dbPhone, password);
+              try {
+                await db.from('user_accounts').upsert({
+                  'id':            staffId,
+                  'phone':         dbPhone,
+                  'display_name':  staffName,
+                  'password_hash': pwdHash,
+                });
+
+                await db.from('store_members').upsert({
+                  'id':       staffId,
+                  'user_id':  staffId,
+                  'store_id': storeId,
+                  'role':     staffRole,
+                  'is_owner': staffRole.toLowerCase() == 'owner',
+                });
+              } catch (e) {
+                debugPrint('[UserAuthService.login] Direct auto-provision error: $e');
+              }
+
+              userRes = {
+                'id':            staffId,
+                'phone':         dbPhone,
+                'display_name':  staffName,
+                'password_hash': pwdHash,
+              };
+              break;
+            }
           }
         }
       }

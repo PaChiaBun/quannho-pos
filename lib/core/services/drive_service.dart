@@ -270,6 +270,25 @@ class DriveService {
 
 // ── Fallback: Supabase Storage ────────────────────────────────────────────────
 class SupabaseStorageFallback {
+  static String sanitizeKey(String name) {
+    return name
+        .replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a')
+        .replaceAll(RegExp(r'[ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ]'), 'A')
+        .replaceAll(RegExp(r'[èéẹẻẽêềếệểễ]'), 'e')
+        .replaceAll(RegExp(r'[ÈÉẸẺẼÊỀẾỆỂỄ]'), 'E')
+        .replaceAll(RegExp(r'[òóọỏõôồốộổỗơờớợởỡ]'), 'o')
+        .replaceAll(RegExp(r'[ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ]'), 'O')
+        .replaceAll(RegExp(r'[ùúụủũưừứựửữ]'), 'u')
+        .replaceAll(RegExp(r'[ÙÚỤỦŨƯỪỨỰỬỮ]'), 'U')
+        .replaceAll(RegExp(r'[ìíịỉĩ]'), 'i')
+        .replaceAll(RegExp(r'[ÌÍỊỈĨ]'), 'I')
+        .replaceAll(RegExp(r'[đ]'), 'd')
+        .replaceAll(RegExp(r'[Đ]'), 'D')
+        .replaceAll(RegExp(r'[ỳýỵỷỹ]'), 'y')
+        .replaceAll(RegExp(r'[ỲÝỴỶỸ]'), 'Y')
+        .replaceAll(RegExp(r'[^a-zA-Z0-9_\.-]'), '_');
+  }
+
   static Future<String?> uploadPhoto({
     required String storeId,
     required Uint8List photoBytes,
@@ -277,7 +296,9 @@ class SupabaseStorageFallback {
   }) async {
     try {
       final db = Supabase.instance.client;
-      final path = '$storeId/$fileName';
+      final safeFileName = sanitizeKey(fileName);
+      final safeStoreId = sanitizeKey(storeId);
+      final path = '$safeStoreId/$safeFileName';
       await db.storage.from('staff-photos').uploadBinary(
         path,
         photoBytes,

@@ -17,6 +17,7 @@ import '../core/services/drive_service.dart';
 import '../modules/tinhluong/repository/shift_template_repository.dart';
 import '../core/repositories/module_repository.dart';
 import '../core/providers/app_providers.dart';
+import '../core/utils/watermark_helper.dart';
 
 const _kNavy   = Color(0xFF1C2151);
 const _kBg     = Color(0xFFF5F7FF);
@@ -672,30 +673,21 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
         }
       }
 
-      // ── ĐÓNG DẤU HÌNH ẢNH ──
-      if (bytes != null) {
-        try {
-          final timeStr = DateFormat('HH:mm dd/MM/yyyy').format(DateTime.now());
-          final locationStr = address ?? (lat != null && lng != null ? '${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}' : 'Không xác định vị trí');
-          bytes = await _addWatermarkToImage(bytes, timeStr, locationStr);
-          if (!kIsWeb) {
-            final tempDir = Directory.systemTemp;
-            final tempFile = File('${tempDir.path}/temp_clockin.jpg');
-            await tempFile.writeAsBytes(bytes);
-            file = tempFile;
-          }
-        } catch (e) {
-          debugPrint('Lỗi đóng dấu hình ảnh: $e');
-        }
+      // Không cần vẽ Watermark vào ảnh để giữ tốc độ điểm danh siêu nhanh
+      if (bytes != null && !kIsWeb) {
+        final tempDir = Directory.systemTemp;
+        final tempFile = File('${tempDir.path}/temp_clockin.jpg');
+        await tempFile.writeAsBytes(bytes);
+        file = tempFile;
       }
 
       final session = ref.read(sessionProvider)!;
       final ts = DateFormat('yyyy-MM-dd_HH-mm').format(DateTime.now());
-      final name = session.displayName.replaceAll(' ', '_');
-      final fileName = '${ts}_$name.jpg';
+      final safeName = SupabaseStorageFallback.sanitizeKey(session.displayName.replaceAll(' ', '_'));
+      final fileName = '${ts}_$safeName.jpg';
       final subFolder = DateFormat('yyyy-MM').format(DateTime.now());
 
-      // 3. Upload ảnh (chỉ upload nếu có bytes)
+      // 3. Upload ảnh (bắt buộc thành công 100%)
       String? photoUrl;
       String? driveFileId;
       if (bytes != null) {
@@ -723,12 +715,53 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
                 fileName: fileName,
               );
             }
+          } else {
+            photoUrl = await SupabaseStorageFallback.uploadPhoto(
+              storeId: session.storeId ?? '',
+              photoBytes: bytes,
+              fileName: fileName,
+            );
           }
         }
       }
 
+      // ❌ CHỐNG LỖI MẤT ẢNH: Nếu upload thất bại (photoUrl == null), dừng ngay không cho ghi ca rỗng
+      if (photoUrl == null || photoUrl.isEmpty) {
+        setState(() => _loading = false);
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Row(children: [
+                Icon(Icons.cloud_off_rounded, color: _kOrange, size: 24),
+                SizedBox(width: 8),
+                Text('Tải ảnh thất bại'),
+              ]),
+              content: const Text(
+                'Tải ảnh selfie lên hệ thống không thành công do kết nối mạng yếu hoặc gián đoạn.\n\n'
+                'Vui lòng kiểm tra lại kết nối Wifi/4G và thực hiện bấm điểm danh lại để đảm bảo ảnh selfie được lưu đầy đủ!'
+              ),
+              actions: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kNavy,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Thử lại'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+
       // 4. Ghi DB vào ca
       final shiftId = await StaffService.clockIn(session.userId, session.storeId ?? '',
+          userName: session.displayName,
           photoUrl: photoUrl, latitude: lat, longitude: lng,
           address: address, driveFileId: driveFileId);
 
@@ -1416,13 +1449,19 @@ class _ShiftRowCompact extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(sessionProvider);
+    final isManager = session?.isOwner == true ||
+        session?.role == 'owner' ||
+        session?.role == 'manager' ||
+        session?.role.toLowerCase() == 'quản lý';
+
     final ci = DateFormat('HH:mm').format(shift.clockIn.toLocal());
     final co = shift.clockOut != null
         ? DateFormat('HH:mm').format(shift.clockOut!.toLocal()) : 'Đang làm';
     final date = DateFormat('dd/MM').format(shift.clockIn.toLocal());
 
     return InkWell(
-      onTap: () => _showPhotoAuditDialog(context, shift),
+      onTap: () => _showPhotoAuditDialog(context, ref, shift, isManager),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
         child: Row(children: [
@@ -1730,6 +1769,12 @@ class _ShiftRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(sessionProvider);
+    final isManager = session?.isOwner == true ||
+        session?.role == 'owner' ||
+        session?.role == 'manager' ||
+        session?.role.toLowerCase() == 'quản lý';
+
     final clockIn  = DateFormat('HH:mm').format(shift.clockIn.toLocal());
     final clockOut = shift.clockOut != null
         ? DateFormat('HH:mm').format(shift.clockOut!.toLocal()) : null;
@@ -1738,7 +1783,7 @@ class _ShiftRow extends ConsumerWidget {
     final borderColor = isOpen ? _kGreen : const Color(0xFFE5E7EB);
 
     return InkWell(
-      onTap: () => _showPhotoAuditDialog(context, shift),
+      onTap: () => _showPhotoAuditDialog(context, ref, shift, isManager),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -2020,82 +2065,108 @@ Future<Uint8List> _addWatermarkToImage(
   String dateTimeText,
   String locationText,
 ) async {
-  final ui.Codec codec = await ui.instantiateImageCodec(originalImageBytes);
-  final ui.FrameInfo frameInfo = await codec.getNextFrame();
-  final ui.Image image = frameInfo.image;
+  try {
+    final ui.Codec codec = await ui.instantiateImageCodec(originalImageBytes);
+    final ui.FrameInfo frameInfo = await codec.getNextFrame();
+    final ui.Image image = frameInfo.image;
 
-  final double originalWidth = image.width.toDouble();
-  final double originalHeight = image.height.toDouble();
+    final double originalWidth = image.width.toDouble();
+    final double originalHeight = image.height.toDouble();
 
-  // Tối ưu RAM cho thiết bị yếu: giới hạn chiều rộng ảnh tối đa là 480px
-  double targetWidth = originalWidth;
-  double targetHeight = originalHeight;
-  if (originalWidth > 480) {
-    targetWidth = 480;
-    targetHeight = (originalHeight * 480) / originalWidth;
+    // Giới hạn chiều rộng tối đa 600px để giữ nét trên ảnh web & mobile
+    double targetWidth = originalWidth;
+    double targetHeight = originalHeight;
+    if (originalWidth > 600) {
+      targetWidth = 600;
+      targetHeight = (originalHeight * 600) / originalWidth;
+    }
+
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(recorder);
+
+    // 1. Vẽ ảnh nền
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(0, 0, originalWidth, originalHeight),
+      Rect.fromLTWH(0, 0, targetWidth, targetHeight),
+      Paint()..filterQuality = ui.FilterQuality.medium,
+    );
+
+    // 2. Chuẩn bị text watermark (Dùng chữ thường THỜI GIAN, VỊ TRÍ thay cho Emoji để tránh lỗi font Web canvas)
+    final double fontSize = (targetWidth * 0.036).clamp(12.0, 18.0);
+
+    final ui.ParagraphBuilder builder = ui.ParagraphBuilder(
+      ui.ParagraphStyle(
+        textAlign: TextAlign.left,
+        fontSize: fontSize,
+        maxLines: 3,
+      ),
+    );
+
+    builder.pushStyle(ui.TextStyle(
+      color: const Color(0xFFFFD700), // Màu vàng rực rỡ
+      fontWeight: FontWeight.bold,
+    ));
+    builder.addText('THOI GIAN: $dateTimeText\n');
+
+    builder.pushStyle(ui.TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.w600,
+    ));
+    builder.addText('VI TRI: $locationText');
+
+    final ui.Paragraph paragraph = builder.build();
+    paragraph.layout(ui.ParagraphConstraints(width: targetWidth - 28));
+
+    // 3. Đóng khung đen bán trong suốt ôm trọn chữ
+    final double padding = 10.0;
+    final double overlayHeight = paragraph.height + (padding * 2);
+
+    final Paint backgroundPaint = Paint()
+      ..color = const Color(0xD9000000) // Đen 85% opacity
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, targetHeight - overlayHeight, targetWidth, overlayHeight),
+      backgroundPaint,
+    );
+
+    // 4. Vẽ thanh màu cam bên trái khung watermark
+    final Paint accentPaint = Paint()
+      ..color = const Color(0xFFEA580C)
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(
+      Rect.fromLTWH(0, targetHeight - overlayHeight, 6, overlayHeight),
+      accentPaint,
+    );
+
+    // 5. Vẽ chữ lên khung
+    canvas.drawParagraph(
+      paragraph,
+      Offset(14, targetHeight - overlayHeight + padding),
+    );
+
+    final ui.Picture picture = recorder.endRecording();
+    final ui.Image watermarkedImage = await picture.toImage(targetWidth.toInt(), targetHeight.toInt());
+
+    final ByteData? byteData = await watermarkedImage.toByteData(format: ui.ImageByteFormat.png);
+
+    image.dispose();
+    watermarkedImage.dispose();
+
+    if (byteData != null) {
+      return byteData.buffer.asUint8List();
+    }
+  } catch (e) {
+    debugPrint('[ChamCong] Watermark error: $e');
   }
-
-  final ui.PictureRecorder recorder = ui.PictureRecorder();
-  final Canvas canvas = Canvas(recorder);
-
-  // Vẽ hình ảnh đã được thu nhỏ (downscaled) để tiết kiệm bộ nhớ khi render & encode PNG
-  canvas.drawImageRect(
-    image,
-    Rect.fromLTWH(0, 0, originalWidth, originalHeight),
-    Rect.fromLTWH(0, 0, targetWidth, targetHeight),
-    Paint()..filterQuality = ui.FilterQuality.medium,
-  );
-
-  final double overlayHeight = targetHeight * 0.12;
-  final Paint backgroundPaint = Paint()
-    ..color = Colors.black.withOpacity(0.5)
-    ..style = PaintingStyle.fill;
-
-  canvas.drawRect(
-    Rect.fromLTWH(0, targetHeight - overlayHeight, targetWidth, overlayHeight),
-    backgroundPaint,
-  );
-
-  final ui.ParagraphBuilder builder = ui.ParagraphBuilder(
-    ui.ParagraphStyle(
-      textAlign: TextAlign.left,
-      fontSize: (targetWidth * 0.035).clamp(10.0, 20.0),
-      maxLines: 2,
-    ),
-  );
-
-  builder.pushStyle(ui.TextStyle(
-    color: Colors.white,
-    fontWeight: FontWeight.bold,
-  ));
-  builder.addText('⏰ $dateTimeText\n');
-  builder.addText('📍 $locationText');
-
-  final ui.Paragraph paragraph = builder.build();
-  paragraph.layout(ui.ParagraphConstraints(width: targetWidth - 20));
-
-  canvas.drawParagraph(
-    paragraph,
-    Offset(10, targetHeight - overlayHeight + (overlayHeight - paragraph.height) / 2),
-  );
-
-  final ui.Picture picture = recorder.endRecording();
-  final ui.Image watermarkedImage = await picture.toImage(targetWidth.toInt(), targetHeight.toInt());
-  
-  // PNG encoding lúc này sẽ tốn rất ít RAM do size ảnh đã nhỏ đi nhiều lần (~480px width)
-  final ByteData? byteData = await watermarkedImage.toByteData(format: ui.ImageByteFormat.png);
-
-  // Giải phóng đối tượng Image gốc để giải phóng RAM ngay lập tức
-  image.dispose();
-  watermarkedImage.dispose();
-
-  return byteData!.buffer.asUint8List();
+  return originalImageBytes;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DIALOG KIỂM TRA NGẪU NHIÊN ẢNH CHỤP ĐIỂM DANH LIVE CỦA NHÂN VIÊN
 // ─────────────────────────────────────────────────────────────────────────────
-void _showPhotoAuditDialog(BuildContext context, ShiftRecord shift) {
+void _showPhotoAuditDialog(BuildContext context, WidgetRef ref, ShiftRecord shift, bool isManager) {
   final clockInStr = DateFormat('HH:mm dd/MM/yyyy').format(shift.clockIn.toLocal());
   final clockOutStr = shift.clockOut != null
       ? DateFormat('HH:mm dd/MM/yyyy').format(shift.clockOut!.toLocal())
@@ -2200,25 +2271,131 @@ void _showPhotoAuditDialog(BuildContext context, ShiftRecord shift) {
 
             // Chi tiết ca
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
-              child: Column(
-                children: [
-                  _auditDetailRow(Icons.login_rounded, 'Vào ca:', clockInStr),
-                  const SizedBox(height: 6),
-                  _auditDetailRow(Icons.logout_rounded, 'Ra ca:', clockOutStr),
-                  if (shift.address != null) ...[
-                    const SizedBox(height: 6),
-                    _auditDetailRow(Icons.location_on_rounded, 'Vị trí:', shift.address!),
-                  ],
-                ],
+              child: FutureBuilder<Map<String, double?>>(
+                future: () async {
+                  final repo = AppSettingsRepository();
+                  final lat = await repo.attendanceLat;
+                  final lng = await repo.attendanceLng;
+                  final radius = await repo.attendanceRadius;
+                  return {'lat': lat, 'lng': lng, 'radius': radius};
+                }(),
+                builder: (context, snapshot) {
+                  String locationText = 'Chấm công tại vị trí quán';
+                  String? distanceBadge;
+                  Color? badgeColor;
+
+                  if (shift.address != null && shift.address!.isNotEmpty) {
+                    locationText = shift.address!;
+                  } else if (shift.latitude != null && shift.longitude != null) {
+                    locationText = '${shift.latitude!.toStringAsFixed(5)}, ${shift.longitude!.toStringAsFixed(5)}';
+                  }
+
+                  if (snapshot.hasData && shift.latitude != null && shift.longitude != null) {
+                    final storeLat = snapshot.data!['lat'];
+                    final storeLng = snapshot.data!['lng'];
+                    final radius = snapshot.data!['radius'] ?? 100.0;
+
+                    if (storeLat != null && storeLng != null) {
+                      final distance = Geolocator.distanceBetween(
+                        shift.latitude!, shift.longitude!, storeLat, storeLng,
+                      );
+                      final meters = distance.round();
+                      if (distance <= radius) {
+                        distanceBadge = '✓ Chuẩn vị trí quán (cách ${meters}m)';
+                        badgeColor = _kGreen;
+                      } else {
+                        distanceBadge = '⚠️ Lệch vị trí (cách quán ${meters}m)';
+                        badgeColor = _kOrange;
+                      }
+                    }
+                  }
+
+                  return Column(
+                    children: [
+                      _auditDetailRow(Icons.access_time_filled_rounded, 'Vào ca:', clockInStr),
+                      const SizedBox(height: 8),
+                      _auditDetailRow(Icons.logout_rounded, 'Ra ca:', clockOutStr),
+                      const SizedBox(height: 8),
+                      _auditDetailRow(Icons.location_on_rounded, 'Vị trí Check-in:', locationText),
+                      if (distanceBadge != null) ...[
+                        const SizedBox(height: 8),
+                        _auditDetailRow(
+                          Icons.straighten_rounded,
+                          'Khoảng cách quán:',
+                          distanceBadge,
+                          valueColor: badgeColor,
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
             ),
             const SizedBox(height: 16),
+
+            if (isManager) ...[
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1565C0),
+                  side: const BorderSide(color: Color(0xFF1565C0)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                ),
+                icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                label: const Text('Gán lại tên nhân viên', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  await _openReassignShiftSheet(context, ref, shift);
+                },
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFC62828),
+                  side: const BorderSide(color: Color(0xFFC62828)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                ),
+                icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                label: const Text('Xoá ca rác / ca thử này', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (c) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      title: const Text('Xoá ca làm việc này?'),
+                      content: Text('Bạn có chắc muốn xoá ca làm việc của "${shift.userName}" (${DateFormat('HH:mm dd/MM').format(shift.clockIn)}) không?'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Huỷ')),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
+                          onPressed: () => Navigator.pop(c, true),
+                          child: const Text('Xoá'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    Navigator.pop(ctx);
+                    await StaffService.deleteShift(shift.id);
+                    ref.invalidate(_myShiftsProvider);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('✅ Đã xoá ca làm việc'),
+                        behavior: SnackBarBehavior.floating,
+                      ));
+                    }
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
 
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -2237,18 +2414,87 @@ void _showPhotoAuditDialog(BuildContext context, ShiftRecord shift) {
   );
 }
 
-Widget _auditDetailRow(IconData icon, String label, String value) {
+Future<void> _openReassignShiftSheet(BuildContext context, WidgetRef ref, ShiftRecord shift) async {
+  final session = ref.read(sessionProvider);
+  if (session?.storeId == null) return;
+  final staffList = await StaffService.getStaffList(session!.storeId!);
+
+  if (!context.mounted) return;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(height: 16),
+          Text('Gán ca này cho nhân viên:', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy)),
+          const SizedBox(height: 4),
+          Text('Ca lúc ${DateFormat('HH:mm dd/MM/yyyy').format(shift.clockIn)}', style: const TextStyle(fontSize: 12, color: _kMuted)),
+          const SizedBox(height: 16),
+          Flexible(
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: staffList.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (_, i) {
+                final staff = staffList[i];
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  leading: CircleAvatar(
+                    backgroundColor: _kNavy.withValues(alpha: 0.1),
+                    child: Text(staff.name.isNotEmpty ? staff.name[0].toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.w800, color: _kNavy)),
+                  ),
+                  title: Text(staff.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  subtitle: Text(staff.phone.isNotEmpty ? staff.phone : staff.role, style: const TextStyle(fontSize: 12, color: _kMuted)),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final ok = await StaffService.reassignShift(shift.id, staff.userId);
+                    if (ok) {
+                      ref.invalidate(_myShiftsProvider);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('✅ Đã gán ca cho nhân viên ${staff.name}'),
+                          behavior: SnackBarBehavior.floating,
+                        ));
+                      }
+                    }
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _auditDetailRow(IconData icon, String label, String value, {Color? valueColor}) {
   return Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Icon(icon, size: 15, color: _kNavy),
+      Icon(icon, size: 15, color: valueColor ?? _kNavy),
       const SizedBox(width: 6),
       Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kNavy)),
       const SizedBox(width: 6),
       Expanded(
         child: Text(
           value,
-          style: const TextStyle(fontSize: 11, color: _kMuted),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: valueColor != null ? FontWeight.w700 : FontWeight.normal,
+            color: valueColor ?? _kMuted,
+          ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),

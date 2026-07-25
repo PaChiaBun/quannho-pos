@@ -28,6 +28,16 @@ Tài liệu này ghi nhận các nguyên tắc thiết kế, cấu trúc thư m�
 
 ---
 
+## 3. Kiến Trúc Dữ Liệu Hybrid Online/Offline & Khả Năng Mở Rộng (Data Architecture & Scalability)
+* **Vận hành Hybrid Seamless (Online & Offline Song Hành):**
+  * Đã tối ưu hóa cấu trúc dữ liệu cho phép ứng dụng hoạt động hoàn hảo 100% trong mọi điều kiện kết nối: hoạt động mượt mà khi **Online** (kết nối Cloud Realtime) và tiếp tục bán hàng, tính tiền, in hóa đơn không ngắt quãng khi **Offline** (lưu trữ local database).
+  - Tự động chuyển đổi chế độ và đồng bộ bất đối xứng 2 chiều khi có mạng trở lại, đảm bảo 0% rủi ro mất đơn hàng, trùng lặp hay sai lệch kho.
+* **Linh hoạt thích ứng mọi quy mô (Từ Quán Nhỏ đến Nhà Hàng Lớn & Chuỗi Chi Nhánh):**
+  * Kiến trúc thiết kế đáp ứng hoàn hảo cho mọi cấp độ kinh doanh: từ **Quán nhỏ lẻ / Hộ kinh doanh cá thể**, **Nhà hàng quy mô lớn**, cho đến **Chuỗi chi nhánh nhượng quyền mở rộng (Multi-branch Franchise Chains)**.
+  * Hỗ trợ quản lý đa cửa hàng (`store_id`), chuyển đổi chi nhánh siêu tốc và tổng hợp báo cáo kinh doanh toàn chuỗi theo thời gian thực.
+
+---
+
 ## 4. Cấu Trúc Cơ Sở Dữ Liệu Self-Hosted & Quy Chuẩn Tra Cứu Dữ Liệu (Database Architecture)
 * **Domain & Router Gateway:**
   * Supabase Studio: `https://quannho-db.lpm.vn` (Proxy tới Studio port 3003).

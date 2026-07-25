@@ -4,10 +4,48 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/user_auth_service.dart';
 import '../utils/app_logger.dart';
 
+import '../services/staff_sync_service.dart';
+import 'permission_provider.dart';
+
 // ── Session state ─────────────────────────────────────────────────────────────
 class _SessionNotifier extends Notifier<SessionData?> {
+  StaffSyncService? _syncService;
+
   @override
   SessionData? build() => null;
+
+  void _setupSyncService(SessionData? session) {
+    _syncService?.stop();
+    _syncService = null;
+
+    if (session != null && !session.isOwner && session.storeId != null && session.storeId!.isNotEmpty) {
+      _syncService = StaffSyncService(
+        storeId: session.storeId!,
+        currentUserId: session.userId,
+        currentRole: session.role,
+        onRoleChanged: (newRole) {
+          if (state != null && state!.userId == session.userId) {
+            final updatedMembership = StoreMembership(
+              storeId:   state!.storeId ?? '',
+              storeName: state!.storeName ?? '',
+              storeCode: state!.storeCode ?? '',
+              role:      newRole,
+              isOwner:   false,
+            );
+            updateStore(updatedMembership);
+            ref.invalidate(userActionPermsProvider);
+          }
+        },
+        onPermsChanged: () {
+          ref.invalidate(userActionPermsProvider);
+        },
+        onRemoved: () {
+          clear();
+        },
+      );
+      _syncService?.start();
+    }
+  }
 
   void setSession(SessionData? session) {
     state = session;
@@ -23,6 +61,8 @@ class _SessionNotifier extends Notifier<SessionData?> {
         client.rest.headers.remove('x-store-id');
       }
     } catch (_) {}
+
+    _setupSyncService(session);
   }
 
   void updateStore(StoreMembership membership) async {
@@ -56,9 +96,13 @@ class _SessionNotifier extends Notifier<SessionData?> {
     try {
       Supabase.instance.client.rest.headers['x-store-id'] = membership.storeId;
     } catch (_) {}
+
+    _setupSyncService(state);
   }
 
   void clear() {
+    _syncService?.stop();
+    _syncService = null;
     state = null;
     AppLogger.updateSession(storeId: null, staffName: null);
     try {
