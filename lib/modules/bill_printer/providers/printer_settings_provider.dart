@@ -97,6 +97,9 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
   @override
   StationPrintersState build() {
+    // Tải đệm lịch sử đã in từ SharedPreferences đĩa cứng ngay khi khởi tạo
+    _loadPrintedIdsFromPrefs();
+
     // Lắng nghe thay đổi của sessionProvider để tự động tải cài đặt khi đăng nhập thành công
     ref.listen<SessionData?>(sessionProvider, (previous, next) {
       if (next != null && next.storeId != null) {
@@ -108,9 +111,9 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         _ordersSubscription = null;
         _pollTimer?.cancel();
         _pollTimer = null;
-        _printedTicketIds.clear();
-        _printedOrderIds.clear();
-        writePrintLog('[PrintServer] Da don dep cac listener in an do dang xuat.');
+        _activeStoreId = null;
+        // KHÔNG clear _printedTicketIds và _printedOrderIds để bảo vệ vết đã in trên đĩa
+        writePrintLog('[PrintServer] Tam dung cac listener in an do dang xuat (Bao ve vet da in).');
       }
     });
 
@@ -337,8 +340,70 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   final Set<String> _printedOrderIds = {};
   Timer? _pollTimer;
   DateTime? _startupTime;
+  String? _activeStoreId;
+  bool _isWarmedUp = false;
+
+  // ── Khởi động ấm hệ thống máy in & Font tiếng Việt (Warmup) ────────────────
+  Future<void> _warmupPrinting() async {
+    if (_isWarmedUp) return;
+    _isWarmedUp = true;
+    try {
+      writePrintLog('[Warmup] Dang nap san Google Fonts & Quet danh sach may in OS...');
+      await Future.wait([
+        PdfGoogleFonts.notoSansRegular(),
+        PdfGoogleFonts.notoSansBold(),
+      ]);
+      if (!kIsWeb) {
+        await Printing.listPrinters();
+      }
+      writePrintLog('[Warmup] He thong in an da duoc khoi dong am thanh cong!');
+    } catch (e) {
+      writePrintLog('[Warmup Error] Loi khoi dong am may in: $e');
+    }
+  }
+
+  // ── Lưu vết đệm ID đã in xuống SharedPreferences ──────────────────────────
+  Future<void> _loadPrintedIdsFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tickets = prefs.getStringList('qn_printed_ticket_ids') ?? [];
+      final orders = prefs.getStringList('qn_printed_order_ids') ?? [];
+      _printedTicketIds.addAll(tickets);
+      _printedOrderIds.addAll(orders);
+      writePrintLog('[PrintCache] Da nap ${_printedTicketIds.length} ticket_ids va ${_printedOrderIds.length} order_ids tu SharedPrefs.');
+    } catch (e) {
+      writePrintLog('[PrintCache Error] Loi nap print cache: $e');
+    }
+  }
+
+  Future<void> _markTicketPrinted(String id) async {
+    _printedTicketIds.add(id);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = _printedTicketIds.toList();
+      final trimmed = list.length > 500 ? list.sublist(list.length - 500) : list;
+      await prefs.setStringList('qn_printed_ticket_ids', trimmed);
+    } catch (_) {}
+  }
+
+  Future<void> _markOrderPrinted(String id) async {
+    _printedOrderIds.add(id);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = _printedOrderIds.toList();
+      final trimmed = list.length > 500 ? list.sublist(list.length - 500) : list;
+      await prefs.setStringList('qn_printed_order_ids', trimmed);
+    } catch (_) {}
+  }
 
   Future<void> _setupPrintServerListener(String storeId) async {
+    // Guard chống race condition khi _setupPrintServerListener bị gọi liên tiếp trong vài ms
+    if (_activeStoreId == storeId && _kitchenTicketsSubscription != null) {
+      writePrintLog('[Setup] Stream cho storeId $storeId da ton tai. Bo qua re-init.');
+      return;
+    }
+    _activeStoreId = storeId;
+
     _kitchenTicketsSubscription?.unsubscribe();
     _kitchenTicketsSubscription = null;
     _ordersSubscription?.unsubscribe();
@@ -353,45 +418,46 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       return;
     }
 
-    _printedTicketIds.clear();
-    _printedOrderIds.clear();
+    // Tự động khởi động ấm Font & máy in ngay lập tức
+    _warmupPrinting();
 
     final startupTime = DateTime.now().toUtc();
     _startupTime = startupTime;
+    final past12hIso = startupTime.subtract(const Duration(hours: 12)).toIso8601String();
 
-    // Nạp lịch sử phiếu bếp đã có trên cloud để tránh in lại khi khởi động (chỉ lấy phiếu tạo trước khi khởi chạy app)
+    // Nạp lịch sử phiếu bếp trong 12h qua để tuyệt đối không in lại phiếu cũ
     try {
       final oldTickets = await Supabase.instance.client
           .from('kitchen_tickets')
           .select('id')
           .eq('store_id', storeId)
-          .lt('sent_at', startupTime.toIso8601String())
+          .gte('sent_at', past12hIso)
           .order('sent_at', ascending: false)
-          .limit(50);
+          .limit(200);
       for (final row in oldTickets) {
         final id = row['id'] as String?;
-        if (id != null) _printedTicketIds.add(id);
+        if (id != null) _markTicketPrinted(id);
       }
-      writePrintLog('[PrintServer] Da nap ${_printedTicketIds.length} phieu bep lich su.');
+      writePrintLog('[PrintServer] Da nap ${_printedTicketIds.length} phieu bep lich su (12h).');
     } catch (e) {
       writePrintLog('[PrintServer Error] Loi nap phieu bep lich su: $e');
     }
 
-    // Nạp lịch sử hoá đơn đã có trên cloud để tránh in lại khi khởi động (chỉ lấy đơn tạo trước khi khởi chạy app)
+    // Nạp lịch sử hoá đơn trong 12h qua để tuyệt đối không in lại bill cũ
     try {
       final oldOrders = await Supabase.instance.client
           .from('orders')
           .select('id')
           .eq('store_id', storeId)
           .inFilter('status', ['paid', 'completed'])
-          .lt('created_at', startupTime.toIso8601String())
+          .gte('created_at', past12hIso)
           .order('created_at', ascending: false)
-          .limit(50);
+          .limit(200);
       for (final row in oldOrders) {
         final id = row['id'] as String?;
-        if (id != null) _printedOrderIds.add(id);
+        if (id != null) _markOrderPrinted(id);
       }
-      writePrintLog('[PrintServer] Da nap ${_printedOrderIds.length} hoa don lich su.');
+      writePrintLog('[PrintServer] Da nap ${_printedOrderIds.length} hoa don lich su (12h).');
     } catch (e) {
       writePrintLog('[PrintServer Error] Loi nap hoa don lich su: $e');
     }
@@ -457,7 +523,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       writePrintLog('[Process Ticket] Ticket $ticketId đã được in. Bỏ qua.');
       return;
     }
-    _printedTicketIds.add(ticketId); // Đánh dấu đang xử lý ngay lập tức để tránh trùng lặp song song
+    _markTicketPrinted(ticketId); // Đánh dấu đang xử lý và lưu đệm đĩa cứng ngay lập tức
 
     writePrintLog('[Process Ticket] Đang tải chi tiết cho ticket: $ticketId');
     print('[PrintServer] Xử lý phiếu bếp mới: $ticketId. Đang tải chi tiết món...');
@@ -580,7 +646,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       writePrintLog('[Process Order] Order $orderId đã in. Bỏ qua.');
       return;
     }
-    _printedOrderIds.add(orderId); // Đánh dấu đang xử lý ngay lập tức để tránh trùng lặp song song
+    _markOrderPrinted(orderId); // Đánh dấu đang xử lý và lưu đệm đĩa cứng ngay lập tức
 
     writePrintLog('[Process Order] Đang tải chi tiết cho order: $orderId');
     print('[PrintServer] Xử lý đơn hàng mới: $orderId. Đang tải chi tiết để in bill thanh toán...');

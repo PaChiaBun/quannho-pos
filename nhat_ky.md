@@ -1845,4 +1845,18 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
 | `lib/core/services/user_auth_service.dart` | Thêm RPC fallback lookup_staff_by_phone và chuẩn hóa SĐT thông minh. |
 | `lib/core/services/staff_service.dart` | Tra cứu biến thể SĐT trong addStaffByPhone; dùng upsert cho store_members trong updateRole. |
 | `lib/core/providers/session_provider.dart` | Tích hợp StaffSyncService tự động lắng nghe Realtime vai trò/quyền và invalidate userActionPermsProvider. |
+| `lib/modules/bill_printer/providers/printer_settings_provider.dart` | Khắc phục triệt để lỗi in trùng bill/phiếu bếp khi đăng xuất/đăng nhập (bàn giao ca), bảo vệ vết đệm ID trên SharedPreferences, chống race condition init và tự động pre-warm Google Fonts + máy in OS khi đăng nhập. |
 | `nhat_ky.md` | Cập nhật nhật ký phát triển ngày 2026-07-25. |
+
+---
+
+### Khắc Phục Triệt Để 2 Lỗi In Ấn (In Trùng Bill Bàn Giao Ca & Khởi Động Ấm Máy In)
+
+- ✅ **Khắc Phục Lỗi In Trùng Bill & Phiếu Bếp Khi Đăng Xuất / Đăng Nhập (Bàn Giao Ca)**:
+  - **Lưu vết đệm đĩa cứng (`SharedPreferences`)**: Chuyển bộ đệm `_printedTicketIds` và `_printedOrderIds` sang lưu bền vững trên đĩa cứng (`SharedPreferences`). Khi Đăng xuất ca làm việc, hệ thống giữ nguyên đệm này, tuyệt đối không xóa sạch như trước.
+  - **Chặn Race Condition**: Thêm cờ guard `_activeStoreId` trong `PrinterSettingsNotifier` ngăn việc re-init `_setupPrintServerListener` 4 lần/2s khi đăng nhập.
+  - **Nạp Lịch Sử 12 Giờ Qua**: Mở rộng quét lịch sử khi khởi chạy PrintServer từ 50 đơn lên các đơn trong 12 giờ qua (`gte('created_at', past12h)`), chặn 100% việc in trùng các bill và phiếu bếp đã làm trước đó trong ngày.
+- ✅ **Tự Động Khởi Động Ấm Máy In & Font Chữ Tiếng Việt (Warmup)**:
+  - Tự động nạp sẵn Font `PdfGoogleFonts.notoSansRegular()` và `notoSansBold()` vào RAM và quét danh sách máy in OS `Printing.listPrinters()` ngay khi đăng nhập.
+  - Loại bỏ hoàn toàn tình trạng thu ngân mới đăng nhập phải bấm "In bill tạm tính" thủ công thì máy in bếp mới nhận đơn.
+
