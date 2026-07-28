@@ -53,28 +53,33 @@ user_accounts (
   created_at    timestamptz
 )
 
--- Nhân viên thuộc quán + role
+-- Nhân viên thuộc quán + vai trò + danh sách module & action được phép trực tiếp
+staff_members (
+  id         uuid PK,
+  store_id   uuid → stores.id,
+  name       text,
+  role       text,                  -- tên vai trò gợi nhớ (vd: "Thu ngân", "Bếp")
+  phone      text,
+  is_active  boolean,
+  modules    jsonb,                 -- ["pos","table","kitchen","log_viewer"] — Gán trực tiếp cho NV
+  actions    jsonb,                 -- ["pos.cancel_bill","pos.apply_discount"] — Quyền hành động nhạy cảm
+  updated_at timestamptz
+)
+
 store_members (
   id         uuid PK,
   user_id    uuid → user_accounts.id,
   store_id   uuid → stores.id,
-  role       text,                  -- owner/manager/cashier/waiter/kitchen/stock
+  role       text,                  -- owner/manager/cashier/...
   is_owner   boolean,
+  modules    jsonb,                 -- Mirror từ staff_members.modules
+  actions    jsonb,                 -- Mirror từ staff_members.actions
   created_at timestamptz,
   UNIQUE(user_id, store_id)
 )
 
--- Vai trò tùy chỉnh + danh sách module được phép
-store_roles (
-  id          uuid PK,
-  store_id    uuid → stores.id,
-  name        text,                 -- "Thu ngân", "Bếp trưởng", "Phục vụ"
-  icon        text,                 -- icon emoji hoặc codepoint
-  color       text,                 -- hex color
-  modules     jsonb,                -- ["pos","table","kitchen"] — danh sách module được phép
-  created_at  timestamptz
-)
--- ⚠️ Bật Realtime: ALTER PUBLICATION supabase_realtime ADD TABLE store_roles;
+-- ⚠️ Cập nhật kiến trúc 2026-07-28: Không còn phụ thuộc vào bảng store_roles để cấp quyền nữa.
+-- Danh sách modules & actions được lưu trực tiếp vào từng Nhân viên (staff_members.modules).
 ```
 
 ### TẦNG 3: Sản Phẩm & Khách Hàng (Core Data)
@@ -529,10 +534,12 @@ Manual records: nhân viên nhập tay
 
 ### 👥 Nhân Viên (Staff)
 ```
-Chủ quán tạo store_roles → gán modules []
-    → Thêm nhân viên: tạo user_accounts (SĐT) → tạo store_members (role)
-    → Nhân viên đăng nhập → load store_roles → hiển thị modules đúng quyền
-    → Realtime: store_roles thay đổi → permsVersionProvider.bump() → UI cập nhật ngay
+Chủ quán/Quản lý thêm hoặc sửa nhân viên:
+    → Tích chọn các Module được phép (["pos","table","kitchen","log_viewer"])
+    → Tích chọn các Hành động được phép (["pos.cancel_bill"])
+    → Lưu trực tiếp vào staff_members.modules + staff_members.actions
+    → Nhân viên đăng nhập → App đọc trực tiếp mảng modules → Hiển thị đúng 100% giao diện
+    → Realtime: StaffSyncService phát tín hiệu → permsVersionProvider bump → UI làm tươi ngay
 ```
 
 ### 🖐️ Chấm Công

@@ -1860,3 +1860,19 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
   - Tự động nạp sẵn Font `PdfGoogleFonts.notoSansRegular()` và `notoSansBold()` vào RAM và quét danh sách máy in OS `Printing.listPrinters()` ngay khi đăng nhập.
   - Loại bỏ hoàn toàn tình trạng thu ngân mới đăng nhập phải bấm "In bill tạm tính" thủ công thì máy in bếp mới nhận đơn.
 
+---
+
+## 2026-07-28 — Nâng Cấp Hệ Thống Audit Logging & Chuyển Đổi Sang Mô Hình Phân Quyền Module Trực Tiếp Cho Nhân Viên
+
+### Đã làm
+- ✅ **Hệ Thống Tự Động Ghi Nhật Ký Hoạt Động (Audit Logging Engine)**:
+  - Bổ sung `AppLogger.logUserAction(tag, action, details, level)` ghi vết thông tin người thao tác (`staff_name`), vai trò, thời gian, tên thiết bị, tên hành động và chi tiết JSON đính kèm.
+  - Tự động ghi vết trên tất cả các thao tác chính: Đăng nhập/Đăng xuất, Thanh toán đơn POS, Mở/Chuyển/Ghép bàn, Gửi/Xác nhận phiếu bếp, Thêm/Sửa nhân viên, Thay đổi phân quyền, Chấm công, Điều hướng màn hình.
+  - Cập nhật quy chuẩn phát triển bắt buộc vào `.docs/lam-viec.md` để tất cả các module mới phát triển sau này và AI Bum luôn tự động chèn hook ghi log.
+- ✅ **Chuyển Đổi Sang Mô Hình Phân Quyền Module Trực Tiếp (Direct Per-User Permissions)**:
+  - Loại bỏ hoàn toàn sự phụ thuộc vào bảng trung gian `store_roles` và thuật toán dịch tên role `canonicalRole` rắc rối vốn dễ gây lỗi lệch tên Tiếng Việt (`Thu ngân` vs `cashier`).
+  - Lưu trực tiếp danh sách `modules` và `actions` được phép vào hồ sơ nhân viên (`staff_members.modules` & `store_members.modules`).
+  - Giao diện `NhanVienScreen` cho phép Quản lý/Chủ quán tích chọn trực tiếp các Module được mở và các Hành động nhạy cảm cho từng nhân viên.
+  - Đảm bảo 100% tài khoản nhân viên sau khi được cấp quyền hiển thị chính xác toàn bộ các tab/module trên thanh điều hướng & Dashboard mà không bị văng về danh sách tab mặc định cũ.
+
+

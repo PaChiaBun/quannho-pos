@@ -13,12 +13,12 @@ import 'staff_sync_service.dart';
 import '../utils/app_logger.dart';
 
 // ── Module IDs (khớp với module system) ───────────────────────────────────────
-const kAllModules = ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'loyalty', 'staff', 'chamcong', 'tinhluong', 'kay_ops'];
+const kAllModules = ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'loyalty', 'staff', 'chamcong', 'tinhluong', 'kay_ops', 'log_viewer'];
 
 // Quyền mặc định mỗi role (module-level)
 const kDefaultPerms = {
-  'owner':   ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'loyalty', 'staff', 'chamcong', 'tinhluong', 'kay_ops'],
-  'manager': ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'tinhluong', 'kay_ops'],
+  'owner':   ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'loyalty', 'staff', 'chamcong', 'tinhluong', 'kay_ops', 'log_viewer'],
+  'manager': ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'tinhluong', 'kay_ops', 'log_viewer'],
   'cashier': ['pos', 'ban', 'kay_ops'],
   'waiter':  ['ban', 'kitchen', 'kay_ops'],
   'kitchen': ['kitchen', 'kay_ops'],
@@ -376,6 +376,7 @@ class StaffService {
     required String newRole,
     required String changedByUserId,
     String oldRole = '',
+    List<String>? directModules,
   }) async {
     final db = _db;
     if (db == null) return;
@@ -384,11 +385,20 @@ class StaffService {
       debugPrint('[StaffService] updateRole blocked: cannot assign owner role');
       return;
     }
+
+    // Tự động nạp danh sách module được gán để lưu trực tiếp vào hồ sơ NV
+    List<String> modulesToSave = directModules ?? [];
+    if (modulesToSave.isEmpty) {
+      modulesToSave = await getModulePermissions(storeId, newRole, userId: userId);
+    }
+    final modulesJson = jsonEncode(modulesToSave);
+
     // 1. Cập nhật ở bảng nhân viên chuẩn staff_members
     try {
       await db.from('staff_members')
           .update({
             'role': newRole,
+            'modules': modulesJson,
             'updated_at': DateTime.now().millisecondsSinceEpoch,
           })
           .eq('store_id', storeId)
@@ -404,14 +414,16 @@ class StaffService {
         'user_id': userId,
         'store_id': storeId,
         'role': newRole,
+        'modules': modulesJson,
         'is_owner': false,
       });
     } catch (e) {
       debugPrint('[StaffService] updateRole store_members error: $e');
     }
+
     await _logPermChange(
       storeId: storeId, byUser: changedByUserId, targetUser: userId,
-      action: 'role_change', detail: {'old': oldRole, 'new': newRole},
+      action: 'role_change', detail: {'old': oldRole, 'new': newRole, 'modules': modulesToSave},
     );
     // Real-time: notify nhân viên bị đổi role
     unawaited(StaffSyncService.broadcastRoleChanged(
@@ -841,7 +853,7 @@ class StaffService {
     return cleaned.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
   }
 
-  static Future<List<String>> getModulePermissions(String storeId, String role) async {
+  static Future<List<String>> getModulePermissions(String storeId, String role, {String? userId}) async {
     final db = _db;
     final canonical = canonicalRole(role);
     if (db == null) return List<String>.from(kDefaultPerms[canonical] ?? []);
@@ -850,27 +862,64 @@ class StaffService {
         db.rest.headers['x-store-id'] = storeId;
       } catch (_) {}
 
-      // 1. ƯU TIÊN: đọc từ store_roles.modules (hệ thống role động mới)
-      final roleRow = await db.from('store_roles')
-          .select('modules')
-          .eq('store_id', storeId)
-          .or('name.eq.$role,name.eq.$canonical')
-          .maybeSingle();
-      if (roleRow != null && roleRow['modules'] != null) {
-        final mods = _parseModules(roleRow['modules']);
-        if (mods.isNotEmpty) return mods;
+      // 0. ƯU TIÊN HÀNG ĐẦU (2026-07-28): Đọc mảng modules gán TRỰC TIẾP cho Nhân viên từ staff_members / store_members
+      if (userId != null && userId.isNotEmpty) {
+        try {
+          final staffRow = await db.from('staff_members')
+              .select('modules, role')
+              .eq('store_id', storeId)
+              .eq('id', userId)
+              .maybeSingle();
+          if (staffRow != null && staffRow['modules'] != null) {
+            final mods = _parseModules(staffRow['modules']);
+            if (mods.isNotEmpty) return mods;
+          }
+        } catch (_) {}
+
+        try {
+          final memberRow = await db.from('store_members')
+              .select('modules, role')
+              .eq('store_id', storeId)
+              .eq('user_id', userId)
+              .maybeSingle();
+          if (memberRow != null && memberRow['modules'] != null) {
+            final mods = _parseModules(memberRow['modules']);
+            if (mods.isNotEmpty) return mods;
+          }
+        } catch (_) {}
       }
 
+      // 1. ƯU TIÊN 2: đọc từ store_roles.modules (dùng inFilter an toàn 100% với tiếng Việt)
+      try {
+        final roleRows = await db.from('store_roles')
+            .select('modules')
+            .eq('store_id', storeId)
+            .inFilter('name', [role, canonical]);
+        if (roleRows is List && roleRows.isNotEmpty) {
+          for (final row in roleRows) {
+            if (row['modules'] != null) {
+              final mods = _parseModules(row['modules']);
+              if (mods.isNotEmpty) return mods;
+            }
+          }
+        }
+      } catch (_) {}
+
       // 2. Fallback: app_settings perm_role (hệ thống cũ)
-      final res = await db.from('app_settings')
-          .select('value')
-          .eq('store_id', storeId)
-          .or('key.eq.perm_$role,key.eq.perm_$canonical')
-          .maybeSingle();
-      if (res != null && res['value'] != null) {
-        final mods = _parseModules(res['value']);
-        if (mods.isNotEmpty) return mods;
-      }
+      try {
+        final resRows = await db.from('app_settings')
+            .select('value')
+            .eq('store_id', storeId)
+            .inFilter('key', ['perm_$role', 'perm_$canonical']);
+        if (resRows is List && resRows.isNotEmpty) {
+          for (final res in resRows) {
+            if (res['value'] != null) {
+              final mods = _parseModules(res['value']);
+              if (mods.isNotEmpty) return mods;
+            }
+          }
+        }
+      } catch (_) {}
 
       // 3. Fallback cuối: kDefaultPerms (hardcoded)
       return List<String>.from(kDefaultPerms[canonical] ?? []);
@@ -878,6 +927,75 @@ class StaffService {
       debugPrint('[StaffService] getModulePermissions error: $e');
       return List<String>.from(kDefaultPerms[canonical] ?? []);
     }
+  }
+
+  /// Gán phân quyền Module & Hành động TRỰC TIẾP cho từng Nhân viên (Direct Per-User Permissions)
+  static Future<void> saveDirectPermissions({
+    required String storeId,
+    required String userId,
+    required List<String> modules,
+    List<String>? actions,
+    required String changedByUserId,
+  }) async {
+    final db = _db;
+    if (db == null) return;
+
+    final modulesJson = jsonEncode(modules);
+    final actionsJson = actions != null ? jsonEncode(actions) : null;
+
+    // 1. Cập nhật trực tiếp vào staff_members
+    try {
+      final updateData = <String, dynamic>{
+        'modules': modulesJson,
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      };
+      if (actionsJson != null) updateData['actions'] = actionsJson;
+
+      await db.from('staff_members')
+          .update(updateData)
+          .eq('store_id', storeId)
+          .eq('id', userId);
+    } catch (e) {
+      debugPrint('[StaffService] saveDirectPermissions staff_members error: $e');
+    }
+
+    // 2. Cập nhật trực tiếp vào store_members
+    try {
+      final updateData = <String, dynamic>{
+        'modules': modulesJson,
+      };
+      if (actionsJson != null) updateData['actions'] = actionsJson;
+
+      await db.from('store_members')
+          .update(updateData)
+          .eq('store_id', storeId)
+          .eq('user_id', userId);
+    } catch (e) {
+      debugPrint('[StaffService] saveDirectPermissions store_members error: $e');
+    }
+
+    // 3. Ghi vết Audit Log
+    AppLogger.logUserAction(
+      tag: 'staff',
+      action: 'Gán trực tiếp phân quyền module cho nhân viên (${modules.length} modules)',
+      details: {
+        'target_user_id': userId,
+        'by_user_id': changedByUserId,
+        'modules': modules,
+        'actions': actions,
+      },
+    );
+
+    // 4. Phát lệnh Realtime Sync về thiết bị nhân viên
+    unawaited(StaffSyncService.broadcastRoleChanged(
+      storeId: storeId,
+      targetUserId: userId,
+      newRole: 'custom',
+    ));
+    unawaited(StaffSyncService.broadcastPermsChanged(
+      storeId: storeId,
+      role: 'all',
+    ));
   }
 
   static Future<void> setModulePermissions({
@@ -1058,6 +1176,11 @@ class StaffService {
         'action':      action,
         'detail':      jsonEncode(detail),
       });
+      AppLogger.logUserAction(
+        tag: 'staff',
+        action: 'Thay đổi phân quyền nhân viên [$action]',
+        details: {'by_user': byUser, 'target_user': targetUser, ...detail},
+      );
     } catch (_) {}
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart'; // for debugPrint
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../services/store_auth_service.dart';
+import '../utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODELS — tương đương Drift KitchenTicket & KitchenTicketItem
@@ -355,6 +356,13 @@ class KitchenRepository {
     if (itemRows.isNotEmpty) {
       await _sb.from('kitchen_ticket_items').insert(itemRows);
     }
+
+    AppLogger.logUserAction(
+      tag: 'kitchen',
+      action: 'Gửi phiếu bếp [$tableLabel] (${items.length} món)',
+      details: {'ticket_id': ticketId, 'table_label': tableLabel, 'item_count': items.length},
+    );
+
     return ticketId;
   }
 
@@ -365,6 +373,12 @@ class KitchenRepository {
     if (status == 'dang_lam') update['started_at'] = now;
     if (status == 'xong')     update['done_at'] = now;
     await _sb.from('kitchen_tickets').update(update).eq('id', ticketId);
+
+    AppLogger.logUserAction(
+      tag: 'kitchen',
+      action: 'Bếp cập nhật trạng thái phiếu [$status]',
+      details: {'ticket_id': ticketId, 'status': status},
+    );
 
     // Đồng bộ trạng thái done cho toàn bộ kitchen_ticket_items chi tiết của ticket
     if (status == 'xong') {

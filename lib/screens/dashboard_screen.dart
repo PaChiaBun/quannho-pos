@@ -22,6 +22,7 @@ import 'module_picker_screen.dart';
 import '../modules/bill_printer/screens/bill_printer_hub.dart';
 import '../modules/ops/screens/ops_screen.dart';
 import '../core/services/auto_update_service.dart';
+import '../core/utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MÀU LOCAL
@@ -64,7 +65,8 @@ final permsVersionProvider = NotifierProvider<_PermsVersionNotifier, int>(
 final _staffPermsProvider = FutureProvider.family<List<String>, StoreRoleKey>(
   (ref, key) {
     ref.watch(permsVersionProvider); // ← watch version → auto-refetch khi bump()
-    return StaffService.getModulePermissions(key.storeId, key.role);
+    final session = ref.watch(sessionProvider);
+    return StaffService.getModulePermissions(key.storeId, key.role, userId: session?.userId);
   },
 );
 
@@ -210,6 +212,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             'kho_pro': 'kho_pro', // ⭐ Kho Hàng Chuyên Nghiệp
             'tinhluong': 'tinhluong', // ⭐ Tính Lương
             'kay_ops': 'kay_ops', // ⭐ Vận Hành
+            'log_viewer': 'log_viewer', // ⭐ Nhật Ký Log
           };
 
           // Quyền thực tế từ Supabase, fallback kDefaultPerms
@@ -1985,6 +1988,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final idx = tabMap[route];
     if (idx != null) {
       ref.read(navTabProvider.notifier).goTo(idx);
+      AppLogger.logUserAction(
+        tag: 'system',
+        action: 'Mở module [$route]',
+        details: {'route': route, 'tab_index': idx},
+      );
     }
   }
 

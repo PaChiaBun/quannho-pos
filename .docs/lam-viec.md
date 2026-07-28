@@ -134,3 +134,18 @@ width: Responsive.isDesktop(context) ? 400 : double.infinity
 - 📱 Mobile `< 600px` — Điện thoại nhân viên
 - 📟 Tablet `600–1024px` — Tablet bếp treo tường
 - 🖥️ Desktop `≥ 1024px` — Máy tính tiền POS cảm ứng
+
+---
+
+### 📝 Quy Tắc Audit Logging (Bắt Bắt Bắt Buộc từ 2026-07-28)
+
+> **Mọi module mới khi phát triển PHẢI chèn `AppLogger.logUserAction(...)` tại tất cả các sự kiện thay đổi dữ liệu hoặc hành vi người dùng.**
+
+```dart
+// ✅ Mọi thao tác tạo, sửa, xóa, đổi trạng thái, thanh toán, phân quyền PHẢI ghi log:
+AppLogger.logUserAction(
+  tag: 'module_name', // 'pos' | 'table' | 'kitchen' | 'kho' | 'finance' | 'staff' | 'settings'
+  action: 'Tên hành động mô tả rõ ràng (ví dụ: Tạo đơn hàng #QN-001)',
+  details: {'key': 'value'}, // JSON chi tiết bổ sung
+);
+```

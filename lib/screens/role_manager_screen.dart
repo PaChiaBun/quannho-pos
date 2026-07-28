@@ -92,18 +92,19 @@ class _RoleTemplate {
 }
 
 const _kModuleNames = <String, (String, IconData)>{
-  'pos':      ('Bán hàng',         Icons.point_of_sale_rounded),
-  'kho':      ('Kho hàng',         Icons.inventory_2_rounded),
-  'kho_pro':  ('Kho CN',           Icons.restaurant_menu_rounded),
-  'ban':      ('Quản lý bàn',      Icons.table_bar_rounded),
-  'kitchen':  ('Bếp',              Icons.local_fire_department_rounded),
-  'finance':  ('Thu chi',          Icons.account_balance_wallet_rounded),
-  'report':   ('Báo cáo',          Icons.bar_chart_rounded),
-  'loyalty':  ('Điểm thưởng',      Icons.star_rounded),
-  'staff':    ('Nhân viên',        Icons.people_rounded),
-  'chamcong':  ('Chấm công',   Icons.fingerprint_rounded),
-  'tinhluong': ('Tính lương',  Icons.payments_rounded),
-  'kay_ops':   ('Vận Hành',    Icons.checklist_rounded),
+  'pos':        ('Bán hàng',         Icons.point_of_sale_rounded),
+  'kho':        ('Kho hàng',         Icons.inventory_2_rounded),
+  'kho_pro':    ('Kho CN',           Icons.restaurant_menu_rounded),
+  'ban':        ('Quản lý bàn',      Icons.table_bar_rounded),
+  'kitchen':    ('Bếp',              Icons.local_fire_department_rounded),
+  'finance':    ('Thu chi',          Icons.account_balance_wallet_rounded),
+  'report':     ('Báo cáo',          Icons.bar_chart_rounded),
+  'loyalty':    ('Điểm thưởng',      Icons.star_rounded),
+  'staff':      ('Nhân viên',        Icons.people_rounded),
+  'chamcong':   ('Chấm công',        Icons.fingerprint_rounded),
+  'tinhluong':  ('Tính lương',       Icons.payments_rounded),
+  'kay_ops':    ('Vận Hành',         Icons.checklist_rounded),
+  'log_viewer': ('Nhật Ký Log',      Icons.history_edu_rounded),
 };
 
 // ✅ FIX #3: keepAlive — không bao giờ dispose dù không còn listener

@@ -74,5 +74,7 @@
 		<string>Ứng dụng cần truy cập thư viện ảnh để bạn có thể tải lên ảnh sản phẩm và ảnh thực đơn của quán.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
 	</dict>
 </plist>

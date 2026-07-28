@@ -109,16 +109,16 @@
 
 ---
 
-## 🏗️ Kiến Trúc Phân Quyền Module (Bắt buộc đọc khi thêm module mới)
+## 🏗️ Kiến Trúc Phân Quyền Module Trực Tiếp (Bắt buộc đọc khi thêm module mới)
 
-### Luồng hoạt động
+### Luồng hoạt động (Cập nhật 2026-07-28 — Gán Module Trực Tiếp cho NV)
 ```
-Chủ quán bật module X cho role Y (trong RoleManagerScreen)
-    → store_roles.modules cập nhật trên Supabase
-    → Dashboard nhân viên nhận Postgres Realtime event
+Chủ quán/Quản lý gán trực tiếp module X cho nhân viên (trong NhanVienScreen)
+    → staff_members.modules + store_members.modules cập nhật trên Supabase
+    → Thiết bị nhân viên nhận Postgres Realtime event
     → permsVersionProvider.bump()
-    → _staffPermsProvider refetch
-    → activeModules filter lại → tile hiện/ẩn
+    → _staffPermsProvider đọc trực tiếp mảng modules của NV
+    → activeModules filter lại → tile & tab hiển thị đúng 100%
 ```
 
 ### Checklist khi thêm module mới

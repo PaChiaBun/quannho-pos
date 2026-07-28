@@ -22,6 +22,25 @@ class AppLogger {
     _deviceId = deviceId;
   }
 
+  /// Ghi vết thao tác người dùng (Chủ quán, Quản lý, Nhân viên) trên tất cả các module
+  static void logUserAction({
+    required String tag,
+    required String action,
+    Map<String, dynamic>? details,
+    String level = 'INFO',
+  }) {
+    final detailsStr = details != null && details.isNotEmpty ? jsonEncode(details) : null;
+    if (level == 'WARNING') {
+      warning(tag, action);
+      if (detailsStr != null) _writeCloud('WARNING', tag, action, detailsStr);
+    } else if (level == 'ERROR') {
+      error(tag, action, detailsStr);
+    } else {
+      info(tag, action);
+      if (detailsStr != null) _writeCloud('INFO', tag, action, detailsStr);
+    }
+  }
+
   /// Ghi log gỡ lỗi (chỉ lưu cục bộ, không gửi lên Cloud để tránh spam)
   static void debug(String tag, String message) {
     final logMsg = '[$tag] $message';

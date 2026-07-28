@@ -802,7 +802,7 @@ class _MainShellState extends ConsumerState<MainShell>
     );
   }
 
-  /// Các tab hiển thị trên Bottom Nav Bar — tính từ store_roles.modules
+  /// Các tab hiển thị trên Bottom Nav Bar — tính từ store_roles.modules hoặc phân quyền nhân viên
   Set<int> _navBarTabsForRole(String? role, List<dynamic> storeRoles, bool isOwner) {
     final canonical = StaffService.canonicalRole(role ?? '');
     if (isOwner || canonical == 'owner' || canonical == 'manager') {
@@ -811,34 +811,37 @@ class _MainShellState extends ConsumerState<MainShell>
 
     // Map module ID → tab index
     const moduleToTab = {
-      'pos':     1,
-      'kho':     2,
-      'finance': 3,
-      'loyalty': 4,
-      'report':  5,
-      'ban':      7,
-      'kitchen':  8,
-      'staff':    9,
+      'pos':        1,
+      'kho':        2,
+      'finance':    3,
+      'loyalty':    4,
+      'report':     5,
+      'ban':        7,
+      'table':      7,
+      'kitchen':    8,
+      'staff':      9,
       'chamcong':   10,
       'kho_pro':    11,
       'tinhluong':  12,
       'kay_ops':    13,
+      'log_viewer': 14,
     };
 
     // Luôn có tab Home + Cài đặt
     final tabs = <int>{0, 6};
 
-    // Tìm role trong store_roles
+    // Tìm role trong store_roles (khớp trực tiếp tên hoặc qua canonicalRole)
     debugPrint('[NavTabs] role=$role storeRoles=${storeRoles.map((r) => r.name).toList()} isOwner=$isOwner');
     if (role != null && storeRoles.isNotEmpty) {
       for (final r in storeRoles) {
-        if (r.name == role) {
+        final rName = r.name.toString();
+        if (rName == role || StaffService.canonicalRole(rName) == canonical) {
           for (final mod in r.modules) {
-            final tab = moduleToTab[mod];
+            final tab = moduleToTab[mod.toString()];
             if (tab != null) tabs.add(tab);
           }
           tabs.add(13); // ⭐ Vận Hành — mọi nhân viên đều có quyền truy cập
-          debugPrint('[NavTabs] matched role=$role → tabs=$tabs');
+          debugPrint('[NavTabs] matched role=$role ($rName) → tabs=$tabs');
           return tabs;
         }
       }
@@ -846,9 +849,9 @@ class _MainShellState extends ConsumerState<MainShell>
     }
 
     // Fallback: role cũ hardcoded
-    switch (role != null ? StaffService.canonicalRole(role) : null) {
+    switch (canonical) {
       case 'kitchen': return {0, 8, 6, 1, 13};
-      case 'cashier': return {0, 1, 7, 6, 13};
+      case 'cashier': return {0, 1, 7, 6, 13, 14};
       case 'waiter':  return {0, 7, 8, 6, 13};
       case 'stock':   return {0, 2, 1, 6, 13};
       default:        return tabs.isEmpty ? {0, 1, 2, 6, 13} : (tabs..add(13));

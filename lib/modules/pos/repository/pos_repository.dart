@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../../../core/repositories/core_product_repository.dart';
 import '../../../core/repositories/core_customer_repository.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart';
 import '../models/coupon_model.dart';
 
@@ -203,6 +204,18 @@ class PosRepository {
       'receipt_printed':    false,
       'created_at':         now,
     });
+
+    AppLogger.logUserAction(
+      tag: 'checkout',
+      action: 'Thanh toán & tạo đơn hàng #$orderNumber (${totalAmount.toInt()}đ)',
+      details: {
+        'order_id': orderId,
+        'order_number': orderNumber,
+        'total': totalAmount,
+        'payment_method': paymentMethod,
+        'item_count': lines.length,
+      },
+    );
 
     // 2. Ghi order_items — map đúng tên cột schema
     final itemRows = lines.map((l) => {

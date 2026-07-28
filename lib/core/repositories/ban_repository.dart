@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../services/store_auth_service.dart';
+import '../utils/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -735,6 +736,12 @@ class BanRepository {
         .from('ban_sessions')
         .update({'table_id': newTableId})
         .eq('id', sessionId);
+
+    AppLogger.logUserAction(
+      tag: 'order',
+      action: 'Chuyển bàn [Session $sessionId sang Bàn mới]',
+      details: {'session_id': sessionId, 'new_table_id': newTableId},
+    );
   }
 
   /// Gộp bàn: Chuyển toàn bộ món từ sourceSessionId sang targetSessionId và đóng sourceSessionId.
@@ -751,6 +758,12 @@ class BanRepository {
       await transferSession(sourceSessionId, targetTableId);
       return;
     }
+
+    AppLogger.logUserAction(
+      tag: 'order',
+      action: 'Gộp bàn [Gộp Session $sourceSessionId vào Session $targetSessionId]',
+      details: {'source_session_id': sourceSessionId, 'target_session_id': targetSessionId, 'target_table_id': targetTableId},
+    );
 
     // 1. Chuyển toàn bộ món từ session nguồn sang session đích
     await _sb
