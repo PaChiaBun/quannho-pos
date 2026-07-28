@@ -1869,10 +1869,14 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
   - Bổ sung `AppLogger.logUserAction(tag, action, details, level)` ghi vết thông tin người thao tác (`staff_name`), vai trò, thời gian, tên thiết bị, tên hành động và chi tiết JSON đính kèm.
   - Tự động ghi vết trên tất cả các thao tác chính: Đăng nhập/Đăng xuất, Thanh toán đơn POS, Mở/Chuyển/Ghép bàn, Gửi/Xác nhận phiếu bếp, Thêm/Sửa nhân viên, Thay đổi phân quyền, Chấm công, Điều hướng màn hình.
   - Cập nhật quy chuẩn phát triển bắt buộc vào `.docs/lam-viec.md` để tất cả các module mới phát triển sau này và AI Bum luôn tự động chèn hook ghi log.
-- ✅ **Chuyển Đổi Sang Mô Hình Phân Quyền Module Trực Tiếp (Direct Per-User Permissions)**:
-  - Loại bỏ hoàn toàn sự phụ thuộc vào bảng trung gian `store_roles` và thuật toán dịch tên role `canonicalRole` rắc rối vốn dễ gây lỗi lệch tên Tiếng Việt (`Thu ngân` vs `cashier`).
-  - Lưu trực tiếp danh sách `modules` và `actions` được phép vào hồ sơ nhân viên (`staff_members.modules` & `store_members.modules`).
-  - Giao diện `NhanVienScreen` cho phép Quản lý/Chủ quán tích chọn trực tiếp các Module được mở và các Hành động nhạy cảm cho từng nhân viên.
-  - Đảm bảo 100% tài khoản nhân viên sau khi được cấp quyền hiển thị chính xác toàn bộ các tab/module trên thanh điều hướng & Dashboard mà không bị văng về danh sách tab mặc định cũ.
+- ✅ **Sửa Triệt Để Lỗi Đổi Vai Trò Nhân Viên (`StaffService.updateRole` & `getStaffList`) & Deploy VPS**:
+  - Loại bỏ tham số thừa `modules` gây lỗi `PGRST204` trên Supabase REST API khi cập nhật `store_members` trong `StaffService.updateRole`.
+  - Khắc phục lỗi đè vai trò trong `StaffService.getStaffList`: Đã ép danh sách nhân viên trên Web luôn luôn hiển thị vai trò mới nhất từ `store_members`, không bị đọc đè vai trò cũ từ `staff_members`.
+  - Biên dịch và deploy thành công bản build Web mới nhất (`main.dart.js` Jul 28 11:16) lên VPS `/var/www/quannho/pos/`.
+  - Hot Restart ứng dụng thành công trên máy giả lập Android Pixel 6 (`emulator-5554`).
+
+
+
+
 
 

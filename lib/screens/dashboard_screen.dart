@@ -254,16 +254,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             _orderInitialized = false;
           }
 
-          // Khởi tạo local order lần đầu
-          if (!_orderInitialized || _moduleOrder.isEmpty) {
-            _moduleOrder = activeModules.map((m) => m.id).toList();
+          // Đồng bộ _moduleOrder với activeModules mới nhất
+          final activeIdsList = activeModules.map((m) => m.id).toList();
+          if (!_isEditMode) {
+            _moduleOrder = List.from(activeIdsList);
             _orderInitialized = true;
           } else {
-            // Sync: thêm module mới vào cuối, xóa module bị tắt
-            final activeIds = activeModules.map((m) => m.id).toSet();
-            _moduleOrder.removeWhere((id) => !activeIds.contains(id));
+            // Trong edit mode: thêm module mới, xóa module bị tắt
+            final activeSet = activeIdsList.toSet();
+            _moduleOrder.removeWhere((id) => !activeSet.contains(id));
             for (final m in activeModules) {
-              // Không re-add module đã bị xóa trong session edit này
               if (!_moduleOrder.contains(m.id) && !_editRemovedIds.contains(m.id)) {
                 _moduleOrder.add(m.id);
               }

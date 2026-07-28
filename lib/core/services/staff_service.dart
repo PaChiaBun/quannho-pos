@@ -19,10 +19,10 @@ const kAllModules = ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'repo
 const kDefaultPerms = {
   'owner':   ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'loyalty', 'staff', 'chamcong', 'tinhluong', 'kay_ops', 'log_viewer'],
   'manager': ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'tinhluong', 'kay_ops', 'log_viewer'],
-  'cashier': ['pos', 'ban', 'kay_ops'],
-  'waiter':  ['ban', 'kitchen', 'kay_ops'],
-  'kitchen': ['kitchen', 'kay_ops'],
-  'stock':   ['kho', 'kho_pro', 'kay_ops'],
+  'cashier': ['pos', 'ban', 'kay_ops', 'chamcong'],
+  'waiter':  ['pos', 'ban', 'kitchen', 'kay_ops', 'chamcong', 'tinhluong'],
+  'kitchen': ['kitchen', 'kay_ops', 'chamcong'],
+  'stock':   ['kho', 'kho_pro', 'kay_ops', 'chamcong'],
 };
 
 // ── Action-level permissions ──────────────────────────────────────────────────
@@ -76,24 +76,31 @@ class StaffService {
     final db = _db;
     if (db == null) return [];
     try {
-      // 1. Lấy danh sách từ staff_members (bỏ qua nhân viên đã xoá/nghỉ active=false)
-      final staffRows = await db
-          .from('staff_members')
-          .select('id, name, phone, role, hourly_rate, is_active')
-          .eq('store_id', storeId)
-          .neq('is_active', false);
-
-      List<Map<String, dynamic>> memberRows = [];
       try {
-        memberRows = await db
-            .from('store_members')
-            .select('role, is_owner, user_id, user_accounts(id, phone, display_name)')
-            .eq('store_id', storeId);
-      } catch (e) {
-        debugPrint('[StaffService.getStaffList] store_members fetch error: $e');
-      }
+        db.rest.headers['x-store-id'] = storeId;
+      } catch (_) {}
 
-      // 3. Lấy danh sách ca làm việc đang mở (chấm công)
+      // 1. NGUỒN SỰ THẬT DUY NHẤT (Single Source of Truth) cho danh sách thành viên & vai trò: store_members
+      final memberRows = await db
+          .from('store_members')
+          .select('id, role, is_owner, user_id, user_accounts(id, phone, display_name)')
+          .eq('store_id', storeId);
+
+      // 2. Lấy hồ sơ chi tiết (lương, mô tả...) từ staff_members (nếu có)
+      final staffProfileMap = <String, Map<String, dynamic>>{};
+      try {
+        final staffRows = await db
+            .from('staff_members')
+            .select('id, name, phone, role, hourly_rate, is_active')
+            .eq('store_id', storeId)
+            .neq('is_active', false);
+        for (final s in staffRows) {
+          final id = s['id'] as String;
+          staffProfileMap[id] = s;
+        }
+      } catch (_) {}
+
+      // 3. Lấy ca làm việc đang mở (chấm công)
       Set<String> activeIds = {};
       try {
         final activeShifts = await db
@@ -104,95 +111,45 @@ class StaffService {
         activeIds = { for (var s in activeShifts) s['user_id'] as String };
       } catch (_) {}
 
-      final resultMap = <String, StaffMember>{};
+      final resultList = <StaffMember>[];
 
-      // Thêm nhân viên từ staff_members
-      for (final s in staffRows) {
-        final id = s['id'] as String;
-        final role = (s['role'] as String?) ?? 'cashier';
-        final isOwnerRole = role.toLowerCase() == 'owner' ||
-            role.toLowerCase() == 'chủ quán' ||
-            StaffService.canonicalRole(role) == 'owner';
-        resultMap[id] = StaffMember(
-          userId: id,
-          name: (s['name'] as String?) ?? 'Nhân viên',
-          phone: (s['phone'] as String?) ?? '',
-          role: role,
-          isOwner: isOwnerRole,
-          hourlyRate: (s['hourly_rate'] as num?)?.toDouble() ?? 0,
-          baseSalary: 0,
-          jobDesc: '',
-          startDate: null,
-          isClockedIn: activeIds.contains(id),
-          shiftConfigId: null,
-        );
-      }
-
-      // Thêm/Đồng bộ nhân viên từ store_members nếu chưa có trong resultMap
       for (final m in memberRows) {
         final user = m['user_accounts'] as Map<String, dynamic>?;
         final userId = user?['id'] as String? ?? (m['user_id'] as String?);
         if (userId == null) continue;
 
         final isOwnerFlag = (m['is_owner'] as bool?) ?? false;
+        final role = (m['role'] as String?) ?? 'cashier';
+        final isOwnerRole = isOwnerFlag ||
+            role.toLowerCase() == 'owner' ||
+            role.toLowerCase() == 'chủ quán' ||
+            canonicalRole(role) == 'owner';
 
-        if (resultMap.containsKey(userId)) {
-          if (isOwnerFlag && !resultMap[userId]!.isOwner) {
-            final existing = resultMap[userId]!;
-            resultMap[userId] = StaffMember(
-              userId: existing.userId,
-              name: existing.name,
-              phone: existing.phone,
-              role: existing.role,
-              isOwner: true,
-              hourlyRate: existing.hourlyRate,
-              baseSalary: existing.baseSalary,
-              jobDesc: existing.jobDesc,
-              startDate: existing.startDate,
-              isClockedIn: existing.isClockedIn,
-              shiftConfigId: existing.shiftConfigId,
-            );
-          }
-        } else {
-          final name = user?['display_name'] as String? ?? 'Nhân viên';
-          final phone = user?['phone'] as String? ?? '';
-          final role = (m['role'] as String?) ?? 'cashier';
-          final isOwnerRole = isOwnerFlag ||
-              role.toLowerCase() == 'owner' ||
-              role.toLowerCase() == 'chủ quán' ||
-              StaffService.canonicalRole(role) == 'owner';
+        // Lấy tên/sđt/lương từ staff_members profile (nếu có) hoặc user_accounts
+        final memberId = m['id'] as String?;
+        final profile = staffProfileMap[userId] ?? (memberId != null ? staffProfileMap[memberId] : null);
+        final name = (profile?['name'] as String?) ?? (user?['display_name'] as String?) ?? 'Nhân viên';
+        final phone = (profile?['phone'] as String?) ?? (user?['phone'] as String?) ?? '';
+        final hourlyRate = (profile?['hourly_rate'] as num?)?.toDouble() ?? 0;
 
-          resultMap[userId] = StaffMember(
-            userId: userId,
-            name: name,
-            phone: phone,
-            role: role,
-            isOwner: isOwnerRole,
-            hourlyRate: 0,
-            baseSalary: 0,
-            jobDesc: '',
-            startDate: null,
-            isClockedIn: activeIds.contains(userId),
-            shiftConfigId: null,
-          );
-
-          // Auto-sync sang staff_members
-          try {
-            await db.from('staff_members').upsert({
-              'id': userId,
-              'store_id': storeId,
-              'name': name,
-              'role': role,
-              'phone': phone,
-              'is_active': true,
-            });
-          } catch (_) {}
-        }
+        resultList.add(StaffMember(
+          userId: userId,
+          name: name,
+          phone: phone,
+          role: role, // ⭐ NGUỒN SỰ THẬT DUY NHẤT: role từ store_members
+          isOwner: isOwnerRole,
+          hourlyRate: hourlyRate,
+          baseSalary: 0,
+          jobDesc: '',
+          startDate: null,
+          isClockedIn: activeIds.contains(userId),
+          shiftConfigId: null,
+        ));
       }
 
-      return resultMap.values.toList();
+      return resultList;
     } catch (e) {
-      debugPrint('[StaffService] getStaffList error: $e');
+      debugPrint('[StaffService.getStaffList] error: $e');
       return [];
     }
   }
@@ -275,6 +232,10 @@ class StaffService {
         }
       }
 
+      // Nạp mảng modules mặc định của Role để gán trực tiếp cho nhân viên mới
+      final initialModules = await getModulePermissions(storeId, role, userId: userId);
+      final initialModulesJson = jsonEncode(initialModules);
+
       // 2. Thêm/Cập nhật vào staff_members (bảng chuẩn mới)
       await db.from('staff_members').upsert({
         'id': userId,
@@ -282,6 +243,7 @@ class StaffService {
         'name': userName,
         'role': role,
         'phone': p,
+        'modules': initialModulesJson,
         'is_active': true,
         'updated_at': DateTime.now().millisecondsSinceEpoch,
       });
@@ -292,6 +254,7 @@ class StaffService {
         'user_id': userId,
         'store_id': storeId,
         'role': role,
+        'modules': initialModulesJson,
         'is_owner': false,
       });
 
@@ -380,50 +343,39 @@ class StaffService {
   }) async {
     final db = _db;
     if (db == null) return;
-    // ‼️ FIX Bug #32: guard service layer — không bao giờ đấy NV thường lên role 'owner'
     if (newRole.toLowerCase() == 'owner') {
       debugPrint('[StaffService] updateRole blocked: cannot assign owner role');
       return;
     }
 
-    // Tự động nạp danh sách module được gán để lưu trực tiếp vào hồ sơ NV
-    List<String> modulesToSave = directModules ?? [];
-    if (modulesToSave.isEmpty) {
-      modulesToSave = await getModulePermissions(storeId, newRole, userId: userId);
-    }
-    final modulesJson = jsonEncode(modulesToSave);
-
-    // 1. Cập nhật ở bảng nhân viên chuẩn staff_members
+    // 1. Cập nhật ở bảng store_members (chỉ update các cột có sẵn: role)
     try {
-      await db.from('staff_members')
+      await db.from('store_members')
           .update({
             'role': newRole,
-            'modules': modulesJson,
-            'updated_at': DateTime.now().millisecondsSinceEpoch,
           })
           .eq('store_id', storeId)
-          .eq('id', userId);
-    } catch (e) {
-      debugPrint('[StaffService] updateRole staff_members error: $e');
-    }
-
-    // 2. Cập nhật/Thêm mới ở bảng store_members (để duy trì tương thích auth)
-    try {
-      await db.from('store_members').upsert({
-        'id': userId,
-        'user_id': userId,
-        'store_id': storeId,
-        'role': newRole,
-        'modules': modulesJson,
-        'is_owner': false,
-      });
+          .eq('user_id', userId);
     } catch (e) {
       debugPrint('[StaffService] updateRole store_members error: $e');
     }
 
+    // 2. Cập nhật ở bảng staff_members (nếu có)
+    try {
+      await db.from('staff_members')
+          .update({
+            'role': newRole,
+            'updated_at': DateTime.now().millisecondsSinceEpoch,
+          })
+          .eq('store_id', storeId)
+          .or('id.eq.$userId,user_id.eq.$userId');
+    } catch (e) {
+      debugPrint('[StaffService] updateRole staff_members error: $e');
+    }
+
     await _logPermChange(
       storeId: storeId, byUser: changedByUserId, targetUser: userId,
-      action: 'role_change', detail: {'old': oldRole, 'new': newRole, 'modules': modulesToSave},
+      action: 'role_change', detail: {'old': oldRole, 'new': newRole},
     );
     // Real-time: notify nhân viên bị đổi role
     unawaited(StaffSyncService.broadcastRoleChanged(
@@ -862,11 +814,32 @@ class StaffService {
         db.rest.headers['x-store-id'] = storeId;
       } catch (_) {}
 
-      // 0. ƯU TIÊN HÀNG ĐẦU (2026-07-28): Đọc mảng modules gán TRỰC TIẾP cho Nhân viên từ staff_members / store_members
+      // 1. ƯU TIÊN SỐ 1: Đọc mảng modules trực tiếp từ store_roles mà Quản lý / Chủ quán đã thiết lập
+      try {
+        final roleRows = await db.from('store_roles')
+            .select('name, modules')
+            .eq('store_id', storeId);
+        if (roleRows is List && roleRows.isNotEmpty) {
+          for (final row in roleRows) {
+            final rName = (row['name'] as String?)?.trim() ?? '';
+            final rCanon = canonicalRole(rName);
+            if (rName == role || rCanon == canonical || rName.toLowerCase() == role.toLowerCase()) {
+              if (row['modules'] != null) {
+                final mods = _parseModules(row['modules']);
+                if (mods.isNotEmpty) return mods;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[StaffService] store_roles perms query error: $e');
+      }
+
+      // 2. ƯU TIÊN SỐ 2: Đọc mảng modules cá nhân nếu có gán riêng
       if (userId != null && userId.isNotEmpty) {
         try {
           final staffRow = await db.from('staff_members')
-              .select('modules, role')
+              .select('modules')
               .eq('store_id', storeId)
               .eq('id', userId)
               .maybeSingle();
@@ -875,37 +848,9 @@ class StaffService {
             if (mods.isNotEmpty) return mods;
           }
         } catch (_) {}
-
-        try {
-          final memberRow = await db.from('store_members')
-              .select('modules, role')
-              .eq('store_id', storeId)
-              .eq('user_id', userId)
-              .maybeSingle();
-          if (memberRow != null && memberRow['modules'] != null) {
-            final mods = _parseModules(memberRow['modules']);
-            if (mods.isNotEmpty) return mods;
-          }
-        } catch (_) {}
       }
 
-      // 1. ƯU TIÊN 2: đọc từ store_roles.modules (dùng inFilter an toàn 100% với tiếng Việt)
-      try {
-        final roleRows = await db.from('store_roles')
-            .select('modules')
-            .eq('store_id', storeId)
-            .inFilter('name', [role, canonical]);
-        if (roleRows is List && roleRows.isNotEmpty) {
-          for (final row in roleRows) {
-            if (row['modules'] != null) {
-              final mods = _parseModules(row['modules']);
-              if (mods.isNotEmpty) return mods;
-            }
-          }
-        }
-      } catch (_) {}
-
-      // 2. Fallback: app_settings perm_role (hệ thống cũ)
+      // 3. Fallback: app_settings perm_role (hệ thống cũ)
       try {
         final resRows = await db.from('app_settings')
             .select('value')
@@ -921,7 +866,7 @@ class StaffService {
         }
       } catch (_) {}
 
-      // 3. Fallback cuối: kDefaultPerms (hardcoded)
+      // 4. Fallback cuối cùng: kDefaultPerms (hardcoded)
       return List<String>.from(kDefaultPerms[canonical] ?? []);
     } catch (e) {
       debugPrint('[StaffService] getModulePermissions error: $e');
@@ -1282,38 +1227,58 @@ class StoreRoleService {
     if (modules != null) data['modules'] = jsonEncode(modules);
     if (data.isEmpty) return;
 
-    String? oldName;
+    String? roleName;
     String? storeId;
-    if (name != null) {
-      try {
-        final oldRoleRow = await db.from('store_roles')
-            .select('name, store_id')
-            .eq('id', roleId)
-            .maybeSingle();
-        if (oldRoleRow != null) {
-          oldName = oldRoleRow['name'] as String?;
-          storeId = oldRoleRow['store_id'] as String?;
-        }
-      } catch (_) {}
-    }
+    try {
+      final roleRow = await db.from('store_roles')
+          .select('name, store_id')
+          .eq('id', roleId)
+          .maybeSingle();
+      if (roleRow != null) {
+        roleName = roleRow['name'] as String?;
+        storeId = roleRow['store_id'] as String?;
+      }
+    } catch (_) {}
 
     await db.from('store_roles').update(data).eq('id', roleId);
 
-    // Đồng bộ đổi tên vai trò sang cả 2 bảng staff_members và store_members
-    if (name != null && oldName != null && oldName != name.trim() && storeId != null) {
-      final newName = name.trim();
-      try {
-        await db.from('staff_members')
-            .update({'role': newName, 'updated_at': DateTime.now().millisecondsSinceEpoch})
-            .eq('store_id', storeId)
-            .eq('role', oldName);
-      } catch (_) {}
-      try {
-        await db.from('store_members')
-            .update({'role': newName})
-            .eq('store_id', storeId)
-            .eq('role', oldName);
-      } catch (_) {}
+    final targetRole = name?.trim() ?? roleName;
+    if (targetRole != null && storeId != null) {
+      // 🔑 Cascading: Cập nhật danh sách modules mới sang TẤT CẢ nhân viên thuộc vai trò này
+      if (modules != null) {
+        final modulesJson = jsonEncode(modules);
+        try {
+          await db.from('staff_members')
+              .update({'modules': modulesJson, 'updated_at': DateTime.now().millisecondsSinceEpoch})
+              .eq('store_id', storeId)
+              .eq('role', targetRole);
+        } catch (e) {
+          debugPrint('[StoreRoleService] updateRole staff_members modules sync error: $e');
+        }
+        try {
+          await db.from('store_members')
+              .update({'modules': modulesJson})
+              .eq('store_id', storeId)
+              .eq('role', targetRole);
+        } catch (_) {}
+      }
+
+      // Đồng bộ đổi tên vai trò sang cả 2 bảng staff_members và store_members
+      if (name != null && roleName != null && roleName != name.trim()) {
+        final newName = name.trim();
+        try {
+          await db.from('staff_members')
+              .update({'role': newName, 'updated_at': DateTime.now().millisecondsSinceEpoch})
+              .eq('store_id', storeId)
+              .eq('role', roleName);
+        } catch (_) {}
+        try {
+          await db.from('store_members')
+              .update({'role': newName})
+              .eq('store_id', storeId)
+              .eq('role', roleName);
+        } catch (_) {}
+      }
     }
   }
 
