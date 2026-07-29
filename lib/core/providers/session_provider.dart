@@ -18,7 +18,10 @@ class _SessionNotifier extends Notifier<SessionData?> {
     _syncService?.stop();
     _syncService = null;
 
-    if (session != null && !session.isOwner && session.storeId != null && session.storeId!.isNotEmpty) {
+    if (session != null &&
+        !session.isOwner &&
+        session.storeId != null &&
+        session.storeId!.isNotEmpty) {
       _syncService = StaffSyncService(
         storeId: session.storeId!,
         currentUserId: session.userId,
@@ -26,11 +29,11 @@ class _SessionNotifier extends Notifier<SessionData?> {
         onRoleChanged: (newRole) {
           if (state != null && state!.userId == session.userId) {
             final updatedMembership = StoreMembership(
-              storeId:   state!.storeId ?? '',
+              storeId: state!.storeId ?? '',
               storeName: state!.storeName ?? '',
               storeCode: state!.storeCode ?? '',
-              role:      newRole,
-              isOwner:   false,
+              role: newRole,
+              isOwner: false,
             );
             updateStore(updatedMembership);
             ref.invalidate(userActionPermsProvider);
@@ -55,6 +58,11 @@ class _SessionNotifier extends Notifier<SessionData?> {
     );
     try {
       final client = Supabase.instance.client;
+      if (session != null) {
+        client.rest.headers['x-user-id'] = session.userId;
+      } else {
+        client.rest.headers.remove('x-user-id');
+      }
       if (session != null && session.storeId != null) {
         client.rest.headers['x-store-id'] = session.storeId!;
       } else {
@@ -68,14 +76,14 @@ class _SessionNotifier extends Notifier<SessionData?> {
   void updateStore(StoreMembership membership) async {
     if (state == null) return;
     state = SessionData(
-      userId:      state!.userId,
-      phone:       state!.phone,
+      userId: state!.userId,
+      phone: state!.phone,
       displayName: state!.displayName,
-      storeId:     membership.storeId,
-      storeName:   membership.storeName,
-      storeCode:   membership.storeCode,
-      role:        membership.role,
-      isOwner:     membership.isOwner,
+      storeId: membership.storeId,
+      storeName: membership.storeName,
+      storeCode: membership.storeCode,
+      role: membership.role,
+      isOwner: membership.isOwner,
     );
 
     // Save to SharedPreferences so that repositories get the updated store ID
@@ -95,6 +103,9 @@ class _SessionNotifier extends Notifier<SessionData?> {
     );
     try {
       Supabase.instance.client.rest.headers['x-store-id'] = membership.storeId;
+      if (state != null) {
+        Supabase.instance.client.rest.headers['x-user-id'] = state!.userId;
+      }
     } catch (_) {}
 
     _setupSyncService(state);
@@ -107,12 +118,14 @@ class _SessionNotifier extends Notifier<SessionData?> {
     AppLogger.updateSession(storeId: null, staffName: null);
     try {
       Supabase.instance.client.rest.headers.remove('x-store-id');
+      Supabase.instance.client.rest.headers.remove('x-user-id');
     } catch (_) {}
   }
 }
 
-final sessionProvider =
-    NotifierProvider<_SessionNotifier, SessionData?>(_SessionNotifier.new);
+final sessionProvider = NotifierProvider<_SessionNotifier, SessionData?>(
+  _SessionNotifier.new,
+);
 
 // ── Convenience selectors ─────────────────────────────────────────────────────
 

@@ -38,6 +38,11 @@ const kAllActions = [
   'kho.delete_item',      // Xoá sản phẩm khỏi kho
   'finance.view_all',     // Xem toàn bộ thu chi
   'report.view',          // Xem báo cáo doanh thu
+  'tinhluong.view_all',
+  'tinhluong.manage_config',
+  'tinhluong.approve_payroll',
+  'tinhluong.srm_settings',
+  'tinhluong.srm_review',
 ];
 
 // Label hiển thị trên UI — key → (tiêu đề, mô tả, module group)
@@ -52,12 +57,17 @@ const kActionMeta = <String, (String, String, String)>{
   'kho.delete_item':    ('Xoá sản phẩm kho',       'Xoá vĩnh viễn khỏi kho', 'Kho'),
   'finance.view_all':   ('Xem toàn bộ thu chi',    'Xem doanh thu & chi phí', 'Thu Chi'),
   'report.view':        ('Xem báo cáo doanh thu',  'Xem KPI, thống kê', 'Báo Cáo'),
+  'tinhluong.view_all':        ('Xem toàn bộ lương',       'Xem bảng lương của tất cả', 'Lương'),
+  'tinhluong.manage_config':   ('Quản lý thiết lập lương', 'Cấu hình lương cơ bản/chấm công', 'Lương'),
+  'tinhluong.approve_payroll': ('Chốt bảng lương',         'Tính toán và chốt lương cuối kỳ', 'Lương'),
+  'tinhluong.srm_settings':    ('Thiết lập ghi nhận',      'Cấu hình danh mục ghi nhận đóng góp', 'Lương'),
+  'tinhluong.srm_review':      ('Duyệt ghi nhận',          'Duyệt/từ chối đề xuất ghi nhận', 'Lương'),
 };
 
 // Quyền action mặc định mỗi role (restrictive by default — owner luôn có tất cả)
 const kDefaultActionPerms = <String, List<String>>{
-  'owner':   ['pos.cancel_bill', 'pos.apply_discount', 'pos.edit_price', 'pos.view_history', 'pos.checkout', 'ban.manage_structure', 'kho.edit_quantity', 'kho.delete_item', 'finance.view_all', 'report.view'],
-  'manager': ['pos.cancel_bill', 'pos.apply_discount', 'pos.edit_price', 'pos.view_history', 'pos.checkout', 'ban.manage_structure', 'kho.edit_quantity', 'kho.delete_item', 'finance.view_all', 'report.view'],
+  'owner':   ['pos.cancel_bill', 'pos.apply_discount', 'pos.edit_price', 'pos.view_history', 'pos.checkout', 'ban.manage_structure', 'kho.edit_quantity', 'kho.delete_item', 'finance.view_all', 'report.view', 'tinhluong.view_all', 'tinhluong.manage_config', 'tinhluong.approve_payroll', 'tinhluong.srm_settings', 'tinhluong.srm_review'],
+  'manager': ['pos.cancel_bill', 'pos.apply_discount', 'pos.edit_price', 'pos.view_history', 'pos.checkout', 'ban.manage_structure', 'kho.edit_quantity', 'kho.delete_item', 'finance.view_all', 'report.view', 'tinhluong.view_all', 'tinhluong.manage_config', 'tinhluong.approve_payroll', 'tinhluong.srm_settings', 'tinhluong.srm_review'],
   'cashier': ['pos.apply_discount', 'pos.view_history', 'pos.checkout'],
   'waiter':  <String>[],
   'kitchen': <String>[],
@@ -67,6 +77,114 @@ const kDefaultActionPerms = <String, List<String>>{
 class StaffService {
   static SupabaseClient? get _db {
     try { return Supabase.instance.client; } catch (_) { return null; }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // QUYỀN ACTIONS MỚI (P3)
+  // ══════════════════════════════════════════════════════════════════════════
+  static Future<List<String>> getEffectiveActionPermissions({
+    required String storeId,
+    required String userId,
+    required String role,
+    required bool isOwner,
+  }) async {
+    if (isOwner) return List.from(kAllActions);
+
+    final db = _db;
+    if (db == null) return []; // Fail-closed
+
+    final canonical = canonicalRole(role);
+    final defaultPerms = kDefaultActionPerms[canonical] ?? [];
+
+    try {
+      try {
+        db.rest.headers['x-store-id'] = storeId;
+      } catch (_) {}
+
+      // 1. Kiểm tra store_members trước
+      final storeMemberResp = await db
+          .from('store_members')
+          .select('actions')
+          .eq('store_id', storeId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (storeMemberResp != null && storeMemberResp['actions'] != null) {
+        return parseActionPermissions(storeMemberResp['actions']);
+      }
+
+      // 2. Nếu null trong store_members, kiểm tra staff_members (fallback)
+      final staffMemberResp = await db
+          .from('staff_members')
+          .select('actions')
+          .eq('store_id', storeId)
+          .or('user_id.eq.$userId,id.eq.$userId') // Tương thích schema cũ
+          .maybeSingle();
+
+      if (staffMemberResp != null && staffMemberResp['actions'] != null) {
+        return parseActionPermissions(staffMemberResp['actions']);
+      }
+
+      // 3. Fallback to role app_settings
+      final exactRoleSettings = await db
+          .from('app_settings')
+          .select('value')
+          .eq('store_id', storeId)
+          .eq('key', 'action_perms_$role')
+          .maybeSingle();
+
+      if (exactRoleSettings != null && exactRoleSettings['value'] != null) {
+        return parseActionPermissions(exactRoleSettings['value']);
+      }
+
+      if (role != canonical) {
+        final canonicalRoleSettings = await db
+            .from('app_settings')
+            .select('value')
+            .eq('store_id', storeId)
+            .eq('key', 'action_perms_$canonical')
+            .maybeSingle();
+
+        if (canonicalRoleSettings != null &&
+            canonicalRoleSettings['value'] != null) {
+          return parseActionPermissions(canonicalRoleSettings['value']);
+        }
+      }
+    } catch (e) {
+      // Lỗi truy vấn -> fail-closed: trả về mảng rỗng (deny all). Tuyệt đối không đoán quyền khi lỗi.
+      return [];
+    }
+
+    // 4. Fallback to hardcoded role default
+    return parseActionPermissions(defaultPerms);
+  }
+
+  static List<String> parseActionPermissions(dynamic rawActions) {
+    if (rawActions == null) return [];
+
+    List<dynamic> list;
+    if (rawActions is String) {
+      try {
+        final decoded = jsonDecode(rawActions);
+        if (decoded is List) {
+          list = decoded;
+        } else {
+          return []; // Fail-closed nếu JSON không phải là mảng
+        }
+      } catch (_) {
+        return []; // Fail-closed nếu JSON lỗi
+      }
+    } else if (rawActions is List) {
+      list = rawActions;
+    } else {
+      return []; // Fail-closed
+    }
+
+    return list
+        .whereType<String>()
+        .where((a) => kAllActions.contains(a))
+        .toSet()
+        .toList();
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -580,7 +698,7 @@ class StaffService {
     final db = _db;
     if (db == null) return [];
     try {
-      const sel = 'id, user_id, clock_in, clock_out, photo_url, address, latitude, longitude, drive_file_id';
+      const sel = '*';
       final List<dynamic> rows;
       if (userId != null) {
         rows = await db.from('staff_shifts')
@@ -605,24 +723,29 @@ class StaffService {
         final uid = r['user_id'] as String;
         final name = nameMap[uid] ?? 'Nhân viên';
         return ShiftRecord(
-          id:          r['id']       as String,
-          userId:      uid,
-          userName:    name,
-          // ‼️ FIX: parse UTC rồi convert sang local — tránh lệch ngày khi so sánh hôm nay
-          clockIn:     DateTime.parse(r['clock_in'] as String).toLocal(),
-          clockOut:    r['clock_out'] != null
+          id:                  r['id']       as String,
+          userId:              uid,
+          userName:            name,
+          clockIn:             DateTime.parse(r['clock_in'] as String).toLocal(),
+          clockOut:            r['clock_out'] != null
               ? DateTime.parse(r['clock_out'] as String).toLocal() : null,
-          source:      'manual',
-          note:        '',
-          photoUrl:    r['photo_url']    as String?,
-          address:     r['address']      as String?,
-          latitude:    (r['latitude']    as num?)?.toDouble(),
-          longitude:   (r['longitude']   as num?)?.toDouble(),
-          driveFileId: r['drive_file_id'] as String?,
+          source:              'manual',
+          note:                '',
+          photoUrl:            r['photo_url']    as String?,
+          address:             r['address']      as String?,
+          latitude:            (r['latitude']    as num?)?.toDouble(),
+          longitude:           (r['longitude']   as num?)?.toDouble(),
+          driveFileId:         r['drive_file_id'] as String?,
+          isOtApproved:        (r['is_ot_approved'] as bool?) ?? false,
+          otReason:            r['ot_reason'] as String?,
+          otApprovedBy:        r['ot_approved_by'] as String?,
+          isForgotClockout:    (r['is_forgot_clockout'] as bool?) ?? false,
+          isManagerOverridden: (r['is_manager_overridden'] as bool?) ?? false,
+          overrideReason:      r['override_reason'] as String?,
+          overrideBy:          r['override_by'] as String?,
         );
       }).toList();
     } catch (e, st) {
-      // ignore: avoid_print
       debugPrint('[StaffService.getShifts] ERROR: $e\n$st');
       return [];
     }
@@ -643,10 +766,11 @@ class StaffService {
       final from = DateTime(year, month, 1).toUtc().toIso8601String();
       final nextMonth = month == 12 ? DateTime(year + 1, 1, 1) : DateTime(year, month + 1, 1);
       final to = nextMonth.toUtc().toIso8601String();
+      const sel = '*';
       final List<dynamic> rows;
       if (userId != null) {
         rows = await db.from('staff_shifts')
-            .select('id, user_id, clock_in, clock_out, source, photo_url, address, latitude, longitude, drive_file_id')
+            .select(sel)
             .eq('store_id', storeId)
             .eq('user_id', userId)
             .gte('clock_in', from)
@@ -654,7 +778,7 @@ class StaffService {
             .order('clock_in', ascending: false);
       } else {
         rows = await db.from('staff_shifts')
-            .select('id, user_id, clock_in, clock_out, source, photo_url, address, latitude, longitude, drive_file_id')
+            .select(sel)
             .eq('store_id', storeId)
             .gte('clock_in', from)
             .lt('clock_in', to)
@@ -669,22 +793,102 @@ class StaffService {
         final uid = r['user_id'] as String;
         final name = nameMap[uid] ?? 'Nhân viên';
         return ShiftRecord(
-          id:          r['id']      as String,
-          userId:      uid,
-          userName:    name,
-          clockIn:     DateTime.parse(r['clock_in']  as String).toLocal(),
-          clockOut:    r['clock_out'] != null
+          id:                  r['id']      as String,
+          userId:              uid,
+          userName:            name,
+          clockIn:             DateTime.parse(r['clock_in']  as String).toLocal(),
+          clockOut:            r['clock_out'] != null
               ? DateTime.parse(r['clock_out'] as String).toLocal() : null,
-          source:      'manual',
-          note:        '',
-          photoUrl:    r['photo_url']    as String?,
-          address:     r['address']      as String?,
-          latitude:    (r['latitude']    as num?)?.toDouble(),
-          longitude:   (r['longitude']   as num?)?.toDouble(),
-          driveFileId: r['drive_file_id'] as String?,
+          source:              'manual',
+          note:                '',
+          photoUrl:            r['photo_url']    as String?,
+          address:             r['address']      as String?,
+          latitude:            (r['latitude']    as num?)?.toDouble(),
+          longitude:           (r['longitude']   as num?)?.toDouble(),
+          driveFileId:         r['drive_file_id'] as String?,
+          isOtApproved:        (r['is_ot_approved'] as bool?) ?? false,
+          otReason:            r['ot_reason'] as String?,
+          otApprovedBy:        r['ot_approved_by'] as String?,
+          isForgotClockout:    (r['is_forgot_clockout'] as bool?) ?? false,
+          isManagerOverridden: (r['is_manager_overridden'] as bool?) ?? false,
+          overrideReason:      r['override_reason'] as String?,
+          overrideBy:          r['override_by'] as String?,
         );
       }).toList();
     } catch (e) { return []; }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // XÁC NHẬN ĐIỀU CHỈNH CA — AUDIT LOG
+  // ══════════════════════════════════════════════════════════════════════════
+
+  static Future<void> approveOt({
+    required String shiftId,
+    required String otReason,
+    required String approvedBy,
+    required String storeId,
+    String? staffName,
+  }) async {
+    final db = _db;
+    if (db == null) return;
+    try {
+      await db.from('staff_shifts').update({
+        'is_ot_approved': true,
+        'ot_reason': otReason,
+        'ot_approved_by': approvedBy,
+      }).eq('id', shiftId);
+
+      await db.from('app_logs').insert({
+        'store_id': storeId,
+        'device_id': 'POS_APP',
+        'staff_name': approvedBy,
+        'level': 'INFO',
+        'tag': 'STAFF_SHIFT_AUDIT',
+        'message': 'Duyệt Tăng Ca (OT) cho ${staffName ?? "Nhân viên"}',
+        'details': 'Lý do OT: $otReason | Người duyệt: $approvedBy | Shift ID: $shiftId',
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('[StaffService.approveOt] Error: $e');
+    }
+  }
+
+  static Future<void> overrideShift({
+    required String shiftId,
+    required String storeId,
+    DateTime? newClockOut,
+    required String overrideReason,
+    required String approvedBy,
+    String? staffName,
+  }) async {
+    final db = _db;
+    if (db == null) return;
+    try {
+      final Map<String, dynamic> updateData = {
+        'is_manager_overridden': true,
+        'is_forgot_clockout': false,
+        'override_reason': overrideReason,
+        'override_by': approvedBy,
+      };
+      if (newClockOut != null) {
+        updateData['clock_out'] = newClockOut.toUtc().toIso8601String();
+      }
+
+      await db.from('staff_shifts').update(updateData).eq('id', shiftId);
+
+      await db.from('app_logs').insert({
+        'store_id': storeId,
+        'device_id': 'POS_APP',
+        'staff_name': approvedBy,
+        'level': 'INFO',
+        'tag': 'STAFF_SHIFT_AUDIT',
+        'message': 'Điều chỉnh ca làm cho ${staffName ?? "Nhân viên"}',
+        'details': 'Lý do điều chỉnh: $overrideReason | Người duyệt: $approvedBy | Shift ID: $shiftId ${newClockOut != null ? "| ClockOut mới: ${newClockOut.toIso8601String()}" : ""}',
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('[StaffService.overrideShift] Error: $e');
+    }
   }
 
   /// Tra cứu tên nhân viên kết hợp 3 bảng: staff_members, store_members (với user_accounts) & user_accounts
@@ -1370,6 +1574,13 @@ class ShiftRecord {
   final double?   longitude;
   final String?   address;    // địa chỉ văn bản
   final String?   driveFileId;
+  final bool      isOtApproved;
+  final String?   otReason;
+  final String?   otApprovedBy;
+  final bool      isForgotClockout;
+  final bool      isManagerOverridden;
+  final String?   overrideReason;
+  final String?   overrideBy;
 
   Duration get duration {
     final raw = (clockOut ?? DateTime.now()).difference(clockIn);
@@ -1385,6 +1596,13 @@ class ShiftRecord {
 
   bool get isOpen => clockOut == null;
 
+  /// Phát hiện ca quên chốt (> 14 tiếng và chưa được quản lý xác nhận điều chỉnh)
+  bool get checkIsForgotClockout {
+    if (isManagerOverridden) return false;
+    if (isForgotClockout) return true;
+    return clockOut != null && duration.inHours >= 14;
+  }
+
   const ShiftRecord({
     required this.id,
     required this.userId,
@@ -1398,7 +1616,46 @@ class ShiftRecord {
     this.longitude,
     this.address,
     this.driveFileId,
+    this.isOtApproved = false,
+    this.otReason,
+    this.otApprovedBy,
+    this.isForgotClockout = false,
+    this.isManagerOverridden = false,
+    this.overrideReason,
+    this.overrideBy,
   });
+
+  ShiftRecord copyWith({
+    bool? isOtApproved,
+    String? otReason,
+    String? otApprovedBy,
+    bool? isForgotClockout,
+    bool? isManagerOverridden,
+    String? overrideReason,
+    String? overrideBy,
+  }) {
+    return ShiftRecord(
+      id: id,
+      userId: userId,
+      userName: userName,
+      clockIn: clockIn,
+      clockOut: clockOut,
+      source: source,
+      note: note,
+      photoUrl: photoUrl,
+      latitude: latitude,
+      longitude: longitude,
+      address: address,
+      driveFileId: driveFileId,
+      isOtApproved: isOtApproved ?? this.isOtApproved,
+      otReason: otReason ?? this.otReason,
+      otApprovedBy: otApprovedBy ?? this.otApprovedBy,
+      isForgotClockout: isForgotClockout ?? this.isForgotClockout,
+      isManagerOverridden: isManagerOverridden ?? this.isManagerOverridden,
+      overrideReason: overrideReason ?? this.overrideReason,
+      overrideBy: overrideBy ?? this.overrideBy,
+    );
+  }
 }
 
 class AddStaffResult {
@@ -1674,4 +1931,3 @@ class ShiftConfigService {
         .eq('user_id', userId);
   }
 }
-

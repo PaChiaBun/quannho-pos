@@ -3,6 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/services/store_auth_service.dart';
+import '../../../core/services/staff_service.dart';
+import 'staff_salary_config_repository.dart';
+import '../../../core/utils/app_logger.dart';
+import 'shift_template_repository.dart';
 
 // ─── MODELS ──────────────────────────────────────────────────────────────────
 
@@ -322,18 +326,214 @@ PayrollCalcResult calculatePayroll(PayrollInput input) {
 
 // ─── REPOSITORY ──────────────────────────────────────────────────────────────
 
+class CreatePeriodResult {
+  final PayrollPeriodModel? period;
+  final String? error;
+  bool get isSuccess => period != null;
+
+  CreatePeriodResult.success(this.period) : error = null;
+  CreatePeriodResult.failure(this.error) : period = null;
+}
+
 class TinhLuongRepository {
   static SupabaseClient get _sb => Supabase.instance.client;
   static const _uuid = Uuid();
 
   static Future<String?> _storeId() async {
     final info = await StoreAuthService.getStoreInfo();
-    return info['store_id'] as String?;
+    return info['store_id'];
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PAYROLL PERIODS
   // ═══════════════════════════════════════════════════════════════════════════
+
+  static Future<double> autoGenerateRecordsForPeriod({
+    required String periodId,
+    required String storeId,
+    required String fromDateStr,
+    required String toDateStr,
+  }) async {
+    try {
+      // 1. Kiểm tra trạng thái kỳ, nếu đã duyệt hoặc đã trả lương thì từ chối generate
+      final periodRow = await _sb
+          .from('payroll_periods')
+          .select('status, total_amount')
+          .eq('store_id', storeId)
+          .eq('id', periodId)
+          .maybeSingle();
+
+      if (periodRow != null) {
+        final st = periodRow['status'] as String?;
+        if (st == 'approved' || st == 'paid') {
+          debugPrint('[TinhLuong] autoGenerateRecordsForPeriod bị từ chối do kỳ đã lock: $st');
+          return (periodRow['total_amount'] as num?)?.toDouble() ?? 0.0;
+        }
+      }
+
+      final members = await StaffService.getStaffList(storeId);
+      if (members.isEmpty) return 0;
+
+      // 2. Lấy danh sách record hiện có để giữ lại các trường manual và không đè record đã chốt
+      final existingRecordsRows = await _sb
+          .from('payroll_records')
+          .select('id, user_id, payment_status, created_at, bonus_revenue, bonus_manual, deduction_absent, deduction_manual, allowance_total, absent_days, net_pay')
+          .eq('store_id', storeId)
+          .eq('period_id', periodId);
+      final Map<String, Map<String, dynamic>> existingRecords = {
+        for (var r in existingRecordsRows as List)
+          r['user_id'] as String: r as Map<String, dynamic>,
+      };
+
+      final fromParts = fromDateStr.split('-').map(int.parse).toList();
+      final toParts   = toDateStr.split('-').map(int.parse).toList();
+
+      final fromLocal = DateTime(fromParts[0], fromParts[1], fromParts[2], 0, 0, 0);
+      final toLocal   = DateTime(toParts[0], toParts[1], toParts[2], 23, 59, 59);
+
+      final fromIso = fromLocal.toUtc().toIso8601String();
+      final toIso   = toLocal.toUtc().toIso8601String();
+
+      final shiftsRows = await _sb
+          .from('staff_shifts')
+          .select('*')
+          .eq('store_id', storeId)
+          .gte('clock_in', fromIso)
+          .lte('clock_in', toIso)
+          .not('clock_out', 'is', null);
+
+      final configs = await StaffSalaryConfigRepo.fetchAll();
+      final configMap = {for (var c in configs) c.userId: c};
+      final memberMap = {for (var m in members) m.userId: m};
+
+      final List<ShiftRecord> allShifts = (shiftsRows as List).map((r) {
+        final m = r as Map<String, dynamic>;
+        final uid = m['user_id'] as String? ?? '';
+        final userName = memberMap[uid]?.name ?? 'Nhân viên';
+
+        return ShiftRecord(
+          id: m['id'] as String,
+          userId: uid,
+          userName: userName,
+          clockIn: DateTime.parse(m['clock_in'] as String),
+          clockOut: m['clock_out'] != null ? DateTime.parse(m['clock_out'] as String) : null,
+          source: m['source'] as String? ?? 'app',
+          note: m['note'] as String? ?? '',
+          isOtApproved: m['is_ot_approved'] as bool? ?? false,
+          otReason: m['ot_reason'] as String?,
+          otApprovedBy: m['ot_approved_by'] as String?,
+          isForgotClockout: m['is_forgot_clockout'] as bool? ?? false,
+          isManagerOverridden: m['is_manager_overridden'] as bool? ?? false,
+          overrideReason: m['override_reason'] as String?,
+          overrideBy: m['override_by'] as String?,
+        );
+      }).toList();
+
+      final Map<String, List<ShiftRecord>> userShiftMap = {};
+      for (final s in allShifts) {
+        userShiftMap.putIfAbsent(s.userId, () => []).add(s);
+      }
+
+      double grandTotalNet = 0;
+      final nowStr = DateTime.now().toUtc().toIso8601String();
+
+      for (final m in members) {
+        final uid = m.userId;
+        final shifts = userShiftMap[uid] ?? [];
+        final cfg = configMap[uid];
+
+        double staffHours = 0;
+        double staffRegularPay = 0;
+        double staffOtPay = 0;
+        double staffDeductionLate = 0;
+        double staffOtHours = 0;
+        int staffLateCount = 0;
+
+        for (final s in shifts) {
+          final calc = calculateSingleShiftEarnings(shift: s, config: cfg);
+          staffHours += calc.totalHours;
+          staffRegularPay += calc.regularPay;
+          staffOtPay += calc.overtimePay;
+          staffDeductionLate += calc.deductionLate;
+          staffOtHours += calc.overtimeHours;
+          if (calc.penaltyReasons.any((reason) => reason.contains('Đi muộn'))) {
+            staffLateCount++;
+          }
+        }
+
+        final existing = existingRecords[uid];
+
+        // Tuyệt đối không chạm vào record đã chốt hoặc chờ duyệt
+        if (existing != null) {
+          final st = existing['payment_status'] as String?;
+          if (st == 'paid' || st == 'pending_staff_confirm') {
+            grandTotalNet += (existing['net_pay'] as num?)?.toDouble() ?? 0.0;
+            continue;
+          }
+        }
+
+        final recId = existing?['id'] as String? ?? _uuid.v4();
+
+        final bonusRev = (existing?['bonus_revenue'] as num?)?.toDouble() ?? 0.0;
+        final bonusMan = (existing?['bonus_manual'] as num?)?.toDouble() ?? 0.0;
+        final allowTotal = (existing?['allowance_total'] as num?)?.toDouble() ?? 0.0;
+        final dedAbs = (existing?['deduction_absent'] as num?)?.toDouble() ?? 0.0;
+        final dedMan = (existing?['deduction_manual'] as num?)?.toDouble() ?? 0.0;
+        final absentDays = (existing?['absent_days'] as num?)?.toInt() ?? 0;
+        final createdAt = existing?['created_at'] as String? ?? nowStr;
+        final status = existing?['payment_status'] as String? ?? 'pending';
+
+        final grossPay = staffRegularPay + staffOtPay;
+        final netPay = grossPay - staffDeductionLate + bonusRev + bonusMan + allowTotal - dedAbs - dedMan;
+
+        grandTotalNet += netPay;
+
+        await _sb.from('payroll_records').upsert({
+          'id': recId,
+          'store_id': storeId,
+          'period_id': periodId,
+          'user_id': uid,
+          'staff_name': m.name,
+          'role': m.role,
+          'salary_mode': cfg?.salaryMode ?? 'M1',
+          'base_salary': cfg?.baseSalary ?? 0,
+          'hourly_rate': cfg?.hourlyRate ?? 25000,
+          'total_hours': staffHours,
+          'overtime_hours': staffOtHours,
+          'regular_pay': staffRegularPay,
+          'overtime_pay': staffOtPay,
+          'bonus_revenue': bonusRev,
+          'bonus_manual': bonusMan,
+          'deduction_late': staffDeductionLate,
+          'deduction_absent': dedAbs,
+          'deduction_manual': dedMan,
+          'allowance_total': allowTotal,
+          'gross_pay': grossPay,
+          'net_pay': netPay,
+          'absent_days': absentDays,
+          'late_count': staffLateCount,
+          'payment_status': status,
+          'created_at': createdAt,
+        });
+      }
+
+      await _sb
+          .from('payroll_periods')
+          .update({'total_amount': grandTotalNet})
+          .eq('store_id', storeId)
+          .eq('id', periodId);
+
+      AppLogger.logUserAction(
+        tag: 'payroll',
+        action: 'Tổng hợp dữ liệu kỳ lương',
+        details: {'period_id': periodId, 'record_count': members.length},
+      );
+      return grandTotalNet;
+    } catch (e) {
+      debugPrint('[TinhLuong] autoGenerateRecordsForPeriod error: $e');
+      return 0;
+    }
+  }
 
   static Future<List<PayrollPeriodModel>> fetchPeriods() async {
     final storeId = await _storeId();
@@ -351,33 +551,24 @@ class TinhLuongRepository {
 
       if (periods.isEmpty) return [];
 
-      // 2. ‼️ FIX: Batch-fetch TẤT CẢ records trong 1 query duy nhất
-      // Tính live total từ net_pay thực tế — tránh dùng total_amount stale trong DB
+      // 2. Batch-fetch TẤT CẢ records trong 1 query duy nhất
       final periodIds = periods.map((p) => p.id).toList();
       final recordRows = await _sb
           .from('payroll_records')
           .select('period_id, net_pay')
           .inFilter('period_id', periodIds);
 
-      // 3. Group records → sum net_pay theo period_id (trong Dart — không cần RPC)
       final Map<String, double> liveTotal = {};
-      for (final r in recordRows as List) {
+      final recordList = recordRows as List;
+      for (final r in recordList) {
         final pid = r['period_id'] as String;
         final pay = (r['net_pay'] as num?)?.toDouble() ?? 0;
         liveTotal[pid] = (liveTotal[pid] ?? 0) + pay;
       }
 
-      // 4. Override totalAmount với giá trị live, sync DB nền cho các period bị stale
+      // Trả về periods với liveTotal mà không gọi update DB hay autoGenerate
       final corrected = periods.map((p) {
         final live = liveTotal[p.id] ?? p.totalAmount;
-        if ((live - p.totalAmount).abs() > 1.0) {
-          // ‼️ Fire-and-forget: sync DB mà không block UI
-          _sb.from('payroll_periods')
-              .update({'total_amount': live})
-              .eq('id', p.id)
-              .then((_) => debugPrint('[TinhLuong] auto-healed period ${p.name}: ${p.totalAmount} → $live'))
-              .catchError((e) => debugPrint('[TinhLuong] heal error: $e'));
-        }
         return p.copyWith(totalAmount: live);
       }).toList();
 
@@ -388,7 +579,7 @@ class TinhLuongRepository {
     }
   }
 
-  static Future<PayrollPeriodModel?> createPeriod({
+  static Future<CreatePeriodResult> createPeriodWithResult({
     required String name,
     required String fromDate,
     required String toDate,
@@ -397,9 +588,10 @@ class TinhLuongRepository {
     String? createdBy,
   }) async {
     final storeId = await _storeId();
-    if (storeId == null) return null;
+    if (storeId == null) {
+      return CreatePeriodResult.failure('Chưa xác định Store ID cửa hàng');
+    }
     try {
-      // ‼️ FIX Bug #22: .single() crash khi DB trả 0 rows (race condition) → maybeSingle()
       final res = await _sb.from('payroll_periods').insert({
         'id':          _uuid.v4(),
         'store_id':    storeId,
@@ -412,12 +604,46 @@ class TinhLuongRepository {
         'created_by':  createdBy,
         'created_at':  DateTime.now().toUtc().toIso8601String(),
       }).select().maybeSingle();
-      if (res == null) return null;
-      return PayrollPeriodModel.fromMap(res);
+
+      if (res == null) {
+        return CreatePeriodResult.failure('Dữ liệu trả về rỗng từ máy chủ');
+      }
+      final createdPeriod = PayrollPeriodModel.fromMap(res);
+
+      // Tự động tính toán & tạo chi tiết lương từng nhân viên cho kỳ vừa tạo
+      final totalNet = await autoGenerateRecordsForPeriod(
+        periodId: createdPeriod.id,
+        storeId: storeId,
+        fromDateStr: fromDate,
+        toDateStr: toDate,
+      );
+
+      AppLogger.logUserAction(
+        tag: 'payroll',
+        action: 'Tạo kỳ lương mới [$name]',
+        details: {'period_id': createdPeriod.id},
+      );
+
+      return CreatePeriodResult.success(createdPeriod.copyWith(totalAmount: totalNet));
     } catch (e) {
       debugPrint('[TinhLuong] createPeriod error: $e');
-      return null;
+      return CreatePeriodResult.failure(e.toString());
     }
+  }
+
+  static Future<PayrollPeriodModel?> createPeriod({
+    required String name,
+    required String fromDate,
+    required String toDate,
+    String periodType = 'monthly',
+    String? note,
+    String? createdBy,
+  }) async {
+    final result = await createPeriodWithResult(
+      name: name, fromDate: fromDate, toDate: toDate,
+      periodType: periodType, note: note, createdBy: createdBy,
+    );
+    return result.period;
   }
 
   static Future<void> updatePeriodStatus(String id, String status) async {
@@ -429,6 +655,12 @@ class TinhLuongRepository {
       updates['paid_at'] = DateTime.now().toUtc().toIso8601String();
     }
     await _sb.from('payroll_periods').update(updates).eq('id', id);
+
+    AppLogger.logUserAction(
+      tag: 'payroll',
+      action: 'Cập nhật trạng thái kỳ lương [$status]',
+      details: {'period_id': id, 'new_status': status},
+    );
   }
 
   static Future<void> updatePeriodTotal(String id, double total) async {
@@ -481,7 +713,6 @@ class TinhLuongRepository {
     if (storeId == null) return null;
 
     final calc = calculatePayroll(input);
-    final id   = _uuid.v4();
     final now  = DateTime.now().toUtc().toIso8601String();
 
     final allowanceTotal = input.extraItems
@@ -489,19 +720,27 @@ class TinhLuongRepository {
         .fold(0.0, (s, i) => s + i.amount);
 
     try {
-      // ‼️ FIX BUG #16: guard — không đè lên record đã 'paid'
+      // ‼️ FIX BUG #16: guard — không đè lên record đã chốt hoặc chờ duyệt
       final existing = await _sb.from('payroll_records')
-          .select('id, payment_status')
+          .select('id, payment_status, created_at')
           .eq('period_id', periodId)
           .eq('user_id', input.userId)
           .maybeSingle();
-      if (existing != null && existing['payment_status'] == 'paid') {
-        debugPrint('[TinhLuong] upsertRecord: bỏ qua ${input.staffName} — đã paid');
-        return existing['id'] as String;
+
+      if (existing != null) {
+        final st = existing['payment_status'] as String?;
+        if (st == 'paid' || st == 'pending_staff_confirm') {
+          debugPrint('[TinhLuong] upsertRecord: bỏ qua ${input.staffName} — record đang bị lock: $st');
+          return existing['id'] as String;
+        }
       }
 
+      final recId = existing != null ? (existing['id'] as String) : _uuid.v4();
+      final status = existing != null ? (existing['payment_status'] as String? ?? 'pending') : 'pending';
+      final createdAt = existing != null ? (existing['created_at'] as String? ?? now) : now;
+
       final newRow = {
-        'id':               id,
+        'id':               recId,
         'store_id':         storeId,
         'period_id':        periodId,
         'user_id':          input.userId,
@@ -524,23 +763,24 @@ class TinhLuongRepository {
         'net_pay':          calc.netPay,
         'absent_days':      input.absentDays,
         'late_count':       input.lateCount,
-        'payment_status':   'pending',
-        'created_at':       now,
+        'payment_status':   status,
+        'created_at':       createdAt,
       };
 
-      // ‼️ FIX: Insert TRƯỚC, delete sau — tránh mất dữ liệu nếu insert thất bại
-      // Nếu đã có record cũ → insert sẽ thất bại (trùng PK nếu same id), cần delete trước
-      // Nhưng PK là uuid mới → insert luôn thành công → delete old sau
-      await _sb.from('payroll_records').insert(newRow);
+      // Dùng upsert với ID hiện tại (nếu có) để đảm bảo tính idempotent tuyệt đối (period_id + user_id)
+      await _sb.from('payroll_records').upsert(newRow);
 
-      // Insert thành công → xóa record cũ (nếu có) an toàn
-      await _sb.from('payroll_records')
-          .delete()
-          .eq('period_id', periodId)
-          .eq('user_id', input.userId)
-          .neq('id', id); // chỉ xóa record CŨ, không xóa vừa insert
+      AppLogger.logUserAction(
+        tag: 'payroll',
+        action: 'Cập nhật bản ghi lương [NV: ${input.staffName}]',
+        details: {
+          'record_id': recId,
+          'user_id': input.userId,
+          'period_id': periodId,
+        },
+      );
 
-      return id;
+      return recId;
     } catch (e) {
       debugPrint('[TinhLuong] upsertRecord error: $e');
       return null;
@@ -552,10 +792,44 @@ class TinhLuongRepository {
     required String paymentMethod,
   }) async {
     await _sb.from('payroll_records').update({
-      'payment_status': 'paid',
+      'payment_status': 'pending_staff_confirm',
       'payment_method': paymentMethod,
       'paid_at':        DateTime.now().toUtc().toIso8601String(),
     }).eq('id', id);
+
+    AppLogger.logUserAction(
+      tag: 'payroll',
+      action: 'Thanh toán lương cá nhân',
+      details: {'record_id': id},
+    );
+  }
+
+  static Future<void> confirmStaffPaid({
+    required String id,
+    required String staffName,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    try {
+      await _sb.from('payroll_records').update({
+        'payment_status': 'paid',
+      }).eq('id', id);
+
+      final record = await fetchRecordById(id);
+      final storeId = record?.storeId ?? '';
+
+      await _sb.from('app_logs').insert({
+        'store_id': storeId,
+        'device_id': 'POS_APP',
+        'staff_name': staffName,
+        'level': 'INFO',
+        'tag': 'PAYROLL_STAFF_CONFIRM',
+        'message': 'Nhân viên $staffName xác nhận đã nhận đủ lương',
+        'details': 'Record ID: $id | Mức lương: ${record?.netPay}đ',
+        'created_at': now,
+      });
+    } catch (e) {
+      debugPrint('[TinhLuong] confirmStaffPaid error: $e');
+    }
   }
 
   static Future<void> updateRecordNote(String id, String note) async {
@@ -933,6 +1207,239 @@ class TinhLuongRepository {
       debugPrint('[TinhLuong] recordPayrollExpense silent fail: $e');
     }
   }
+
+  // ─── REALTIME SHIFT & MONTHLY EARNINGS CALCULATOR ──────────────────────────────
+
+  static SingleShiftEarnings calculateSingleShiftEarnings({
+    required ShiftRecord shift,
+    StaffSalaryConfig? config,
+    ShiftTemplate? template,
+  }) {
+    if (shift.clockOut == null) {
+      return const SingleShiftEarnings(
+        regularPay: 0,
+        overtimePay: 0,
+        deductionLate: 0,
+        netPay: 0,
+        totalHours: 0,
+        overtimeHours: 0,
+        penaltyReasons: [],
+        bonusReasons: [],
+      );
+    }
+
+    final mode = config?.salaryMode ?? 'M1';
+    final baseSalary = config?.baseSalary ?? 0;
+    final hourlyRate = (config?.hourlyRate ?? 0) > 0 ? config!.hourlyRate : 25000.0;
+    final dailyRate = config?.dailyRate ?? 0;
+    final otThreshold = config?.otThresholdHours ?? 8.0;
+    final otMultiplier = config?.otMultiplier ?? 1.5;
+    final perLatePenalty = config?.deductionPerLate ?? 20000.0;
+
+    final duration = shift.clockOut!.difference(shift.clockIn);
+    final totalHours = duration.inMinutes / 60.0;
+    if (totalHours <= 0) {
+      return const SingleShiftEarnings(
+        regularPay: 0,
+        overtimePay: 0,
+        deductionLate: 0,
+        netPay: 0,
+        totalHours: 0,
+        overtimeHours: 0,
+        penaltyReasons: [],
+        bonusReasons: [],
+      );
+    }
+
+    final overtimeHours = totalHours > otThreshold ? (totalHours - otThreshold) : 0.0;
+    final regularHours = totalHours - overtimeHours;
+
+    double regularPay = 0;
+    double overtimePay = 0;
+
+    switch (mode) {
+      case 'M1': // Theo giờ
+        regularPay = regularHours * hourlyRate;
+        overtimePay = overtimeHours * hourlyRate * otMultiplier;
+        break;
+      case 'M2': // Cố định tháng
+        final rate = baseSalary > 0 ? (baseSalary / 26 / 8) : hourlyRate;
+        regularPay = regularHours * rate;
+        overtimePay = overtimeHours * rate * otMultiplier;
+        break;
+      case 'M3': // Cố định + OT giờ
+        final rate = hourlyRate > 0 ? hourlyRate : (baseSalary > 0 ? (baseSalary / 26 / 8) : 25000.0);
+        regularPay = regularHours * rate;
+        overtimePay = overtimeHours * rate * otMultiplier;
+        break;
+      case 'M4': // Theo ngày
+        final rate = dailyRate > 0 ? (dailyRate / 8) : (baseSalary > 0 ? (baseSalary / 8) : hourlyRate);
+        regularPay = regularHours * rate;
+        overtimePay = overtimeHours * rate * otMultiplier;
+        break;
+      default:
+        regularPay = regularHours * hourlyRate;
+        overtimePay = overtimeHours * hourlyRate * otMultiplier;
+    }
+
+    final List<String> penaltyReasons = [];
+    final List<String> bonusReasons = [];
+    double deductionLate = 0;
+
+    // Check Late via template
+    if (template != null) {
+      final startH = template.startHour;
+      final startM = template.startMinute;
+      final graceM = template.lateGraceMinutes;
+      final shiftDate = shift.clockIn.toLocal();
+      final expectedStart = DateTime(shiftDate.year, shiftDate.month, shiftDate.day, startH, startM);
+      final graceCutoff = expectedStart.add(Duration(minutes: graceM));
+
+      if (shiftDate.isAfter(graceCutoff)) {
+        final lateMinutes = shiftDate.difference(expectedStart).inMinutes;
+        deductionLate += perLatePenalty;
+        penaltyReasons.add('Đi muộn ${lateMinutes}p (Quy định: ${graceM}p) - Khấu trừ ${perLatePenalty.toStringAsFixed(0)}đ');
+      }
+
+      // Check Early Leave
+      final endH = template.endHour;
+      final endM = template.endMinute;
+      final expectedEnd = DateTime(shiftDate.year, shiftDate.month, shiftDate.day, endH, endM);
+      final clockOutLocal = shift.clockOut!.toLocal();
+      if (clockOutLocal.isBefore(expectedEnd)) {
+        final earlyMinutes = expectedEnd.difference(clockOutLocal).inMinutes;
+        if (earlyMinutes > 5) {
+          final earlyPenalty = perLatePenalty > 0 ? perLatePenalty : 10000.0;
+          deductionLate += earlyPenalty;
+          penaltyReasons.add('Về sớm ${earlyMinutes}p - Khấu trừ ${earlyPenalty.toStringAsFixed(0)}đ');
+        }
+      }
+    }
+
+    if (overtimeHours > 0) {
+      if (shift.isOtApproved) {
+        bonusReasons.add('🟢 OT ${overtimeHours.toStringAsFixed(1)}h (+${overtimePay.toStringAsFixed(0)}đ) [Duyệt bởi: ${shift.otApprovedBy ?? "Quản lý"} - Lý do: ${shift.otReason ?? "Tăng ca"}]');
+      } else {
+        penaltyReasons.add('🟡 OT ${overtimeHours.toStringAsFixed(1)}h (+${overtimePay.toStringAsFixed(0)}đ) - Chờ Quản lý duyệt OT & nhập lý do');
+      }
+    }
+
+    if (shift.isManagerOverridden) {
+      bonusReasons.add('🛡️ Điều chỉnh bởi ${shift.overrideBy ?? "Quản lý"}: ${shift.overrideReason ?? "Khôi phục 100% lương"}');
+    }
+
+    final isForgotClockout = shift.checkIsForgotClockout;
+    if (isForgotClockout) {
+      final activeOtForForgot = shift.isOtApproved ? overtimePay : 0.0;
+      final grossBeforePenalty = regularPay + activeOtForForgot;
+      final forgotPenalty = grossBeforePenalty * 0.5;
+      deductionLate += forgotPenalty;
+      penaltyReasons.add('🔴 Quên chốt ca (Ca > 14h) - Khấu trừ 50% tiền ca (-${forgotPenalty.toStringAsFixed(0)}đ)');
+    }
+
+    final activeOtPay = shift.isOtApproved ? overtimePay : 0.0;
+    final gross = regularPay + activeOtPay;
+    final net = (gross - deductionLate) < 0 ? 0.0 : (gross - deductionLate);
+
+    return SingleShiftEarnings(
+      regularPay: regularPay,
+      overtimePay: activeOtPay,
+      deductionLate: deductionLate,
+      netPay: net,
+      totalHours: totalHours,
+      overtimeHours: overtimeHours,
+      penaltyReasons: penaltyReasons,
+      bonusReasons: bonusReasons,
+    );
+  }
+
+  static Future<RealtimeMonthlyEarnings> fetchRealtimeMonthlyEarnings({
+    required String storeId,
+    required String userId,
+    DateTime? monthYear,
+  }) async {
+    final targetDate = monthYear ?? DateTime.now();
+    final startOfMonth = DateTime(targetDate.year, targetDate.month, 1);
+    final endOfMonth = DateTime(targetDate.year, targetDate.month + 1, 0, 23, 59, 59);
+
+    final config = await StaffSalaryConfigRepo.fetchByUserId(userId);
+    final shifts = await StaffService.getShifts(
+      storeId: storeId,
+      userId: userId,
+      limit: 300,
+    );
+
+    final monthlyShifts = shifts.where((s) {
+      final dt = s.clockIn.toLocal();
+      return dt.isAfter(startOfMonth.subtract(const Duration(seconds: 1))) &&
+             dt.isBefore(endOfMonth.add(const Duration(seconds: 1))) &&
+             s.clockOut != null;
+    }).toList();
+
+    double totalEarnings = 0;
+    double totalHours = 0;
+    double totalDeductions = 0;
+    double totalBonus = 0;
+
+    for (final s in monthlyShifts) {
+      final res = calculateSingleShiftEarnings(shift: s, config: config);
+      totalEarnings += res.netPay;
+      totalHours += res.totalHours;
+      totalDeductions += res.deductionLate;
+      totalBonus += res.overtimePay;
+    }
+
+    return RealtimeMonthlyEarnings(
+      totalEarnings: totalEarnings,
+      totalHours: totalHours,
+      shiftCount: monthlyShifts.length,
+      totalDeductions: totalDeductions,
+      totalBonus: totalBonus,
+      shifts: monthlyShifts,
+    );
+  }
+}
+
+// ─── REALTIME EARNINGS MODELS ──────────────────────────────────────────────────
+
+class SingleShiftEarnings {
+  final double regularPay;
+  final double overtimePay;
+  final double deductionLate;
+  final double netPay;
+  final double totalHours;
+  final double overtimeHours;
+  final List<String> penaltyReasons;
+  final List<String> bonusReasons;
+
+  const SingleShiftEarnings({
+    required this.regularPay,
+    required this.overtimePay,
+    required this.deductionLate,
+    required this.netPay,
+    required this.totalHours,
+    required this.overtimeHours,
+    required this.penaltyReasons,
+    required this.bonusReasons,
+  });
+}
+
+class RealtimeMonthlyEarnings {
+  final double totalEarnings;
+  final double totalHours;
+  final int shiftCount;
+  final double totalDeductions;
+  final double totalBonus;
+  final List<ShiftRecord> shifts;
+
+  const RealtimeMonthlyEarnings({
+    required this.totalEarnings,
+    required this.totalHours,
+    required this.shiftCount,
+    required this.totalDeductions,
+    required this.totalBonus,
+    required this.shifts,
+  });
 }
 
 // ─── SHIFT SUMMARY (public) ───────────────────────────────────────────────────
@@ -975,4 +1482,3 @@ class StaffPayConfig {
     this.otMultiplier       = 1.5,
   });
 }
-

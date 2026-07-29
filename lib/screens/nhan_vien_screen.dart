@@ -15,6 +15,7 @@ import '../core/services/user_auth_service.dart' show SessionData;
 import 'role_manager_screen.dart';
 import 'dashboard_screen.dart' show permsVersionProvider;
 import '../core/providers/permission_provider.dart' show userActionPermsProvider;
+import '../modules/tinhluong/screens/staff_salary_config_screen.dart';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const _kNavy   = Color(0xFF1C2151);
@@ -1172,27 +1173,54 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
               decoration: _inputDec('Nhập mô tả...', Icons.work_outline_rounded),
             ),
             const SizedBox(height: 14),
-            Row(children: [
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _fieldLabel('Lương cơ bản (đ/tháng)'),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: _baseSalaryCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: _inputDec('0', Icons.payments_outlined),
-                ),
-              ])),
-              const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _fieldLabel('Lương/giờ (đ)'),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: _hourlyRateCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: _inputDec('0', Icons.access_time_rounded),
-                ),
-              ])),
-            ]),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _kNavy.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: _kNavy.withValues(alpha: 0.12)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.request_quote_rounded, color: _kNavy, size: 18),
+                      SizedBox(width: 8),
+                      Text(
+                        'Cấu hình lương (Module Lương)',
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kNavy),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Tất cả cấu hình Lương (Giờ/Tháng/Ngày, OT 1.5x, Khấu trừ đi muộn) được tập trung tại Module Lương để liên kết 3 data: Lương - Chấm Công - Nhân Viên.',
+                    style: TextStyle(fontSize: 11, color: _kMuted, height: 1.4),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const StaffSalaryConfigScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.settings_rounded, size: 16),
+                      label: const Text('⚙️ Mở Cấu Hình Lương Nâng Cao', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _kNavy,
+                        side: const BorderSide(color: _kNavy),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 14),
             _fieldLabel('Ngày bắt đầu'),
             const SizedBox(height: 6),
@@ -1256,11 +1284,40 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
               ),
               const SizedBox(height: 14),
             ],
-            Row(children: [
-              _InfoChip('Lương cơ bản', m.baseSalary > 0 ? '${_fmtMoney(m.baseSalary)}đ' : '—'),
-              const SizedBox(width: 8),
-              _InfoChip('Lương/giờ', m.hourlyRate > 0 ? '${_fmtMoney(m.hourlyRate)}đ' : '—'),
-            ]),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _kNavy.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _kNavy.withValues(alpha: 0.1)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.verified_user_rounded, color: _kNavy, size: 18),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Cấu hình lương', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kMuted)),
+                        Text('Đã liên kết Module Lương', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: _kNavy)),
+                      ],
+                    ),
+                  ),
+                  if (widget.isManager)
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const StaffSalaryConfigScreen()),
+                        );
+                      },
+                      child: const Text('Thiết lập', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                    ),
+                ],
+              ),
+            ),
             if (m.startDate != null) ...[ 
               const SizedBox(height: 8),
               Row(children: [

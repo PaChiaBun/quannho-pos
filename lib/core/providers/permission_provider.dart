@@ -10,40 +10,52 @@ import 'session_provider.dart';
 final userActionPermsProvider = FutureProvider<Set<String>>((ref) async {
   final session = ref.watch(sessionProvider);
 
+  if (session == null) {
+    return <String>{};
+  }
+
   // Owner luôn có toàn quyền — không cần query
-  if (session == null || session.isOwner) {
+  if (session.isOwner) {
     return Set<String>.from(kAllActions);
   }
 
   final storeId = session.storeId;
   final role    = session.role;
+  final userId  = session.userId;
 
-  if (storeId == null || storeId.isEmpty || role.isEmpty) {
+  if (storeId == null || storeId.isEmpty || role.isEmpty || userId.isEmpty) {
     return <String>{};
   }
 
-  return StaffService.getActionPermissions(storeId, role);
+  final perms = await StaffService.getEffectiveActionPermissions(
+    storeId: storeId,
+    userId: userId,
+    role: role,
+    isOwner: session.isOwner,
+  );
+  return Set<String>.from(perms);
 });
 
 // ── Helper: dùng trong ConsumerWidget để check nhanh ─────────────────────────
 extension PermissionRef on WidgetRef {
   /// Trả về true nếu user hiện tại có quyền thực hiện [action].
-  /// Fallback về true (permissive) khi chưa load xong — tránh block UI.
   bool canDo(String action) {
     final async = watch(userActionPermsProvider);
     return async.when(
       data:    (perms) => perms.contains(action),
-      loading: ()      => true,  // optimistic — tránh flash UI
-      error:   (_, __) => true,  // fallback permissive khi lỗi
+      loading: ()      => false, // fail-closed
+      error:   (err, stack) => false, // fail-closed
     );
   }
 
-  /// Trả về true nếu đã load xong VÀ không có quyền.
+  /// Trả về true nếu không có quyền (hoặc đang loading/lỗi -> fail-closed chặn).
   bool isBlocked(String action) {
     final async = watch(userActionPermsProvider);
     return async.maybeWhen(
       data: (perms) => !perms.contains(action),
-      orElse: () => false,
+      loading: () => true, // fail-closed
+      error: (err, stack) => true, // fail-closed
+      orElse: () => true, // fail-closed
     );
   }
 }

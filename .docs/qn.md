@@ -202,3 +202,21 @@ Hệ thống ghi nhận toàn bộ hoạt động nghiệp vụ của nhân viê
   4. `finance_records` (Thu chi)
   5. `stock_movements` (Xuất nhập kho)
 * Kết quả dọn dẹp ngày 06/07 - 12/07: Đã dọn dẹp toàn bộ dữ liệu test, bảo vệ 100% dữ liệu thực tế từ 13/07/2026 trở đi với 0 bản ghi lỗi mồ côi.
+
+---
+
+## 📱 13. Trạng Thái Phát Hành & Đăng Ký Nhà Phát Triển (App Distribution Status)
+
+### 1. Google Play Store (CH Play / Android):
+* **Tên gói (Package Name):** `vn.lpm.quannho_pos`
+* **Trạng thái:** **Phát hành công khai (LIVE 100%)** từ ngày 22/06/2026.
+* **Xác minh Nhà phát triển:** Đã đăng ký tên gói chính chủ cho doanh nghiệp `LPM Digital` trên Google Play Console, đạt chuẩn bảo mật 100% cho quy định Android 2026.
+
+### 2. Apple App Store (iOS):
+* **Tài khoản Doanh nghiệp:** `LPM DIGITAL COMPANY LIMITED` (Team ID: `V4HN95W2C7`).
+* **Bundle Identifier:** `vn.lpm.quannhoPos` (App ID: `6795376140`).
+* **Xử lý phản hồi kiểm duyệt Apple (29/07/2026):**
+  * Khắc phục dứt điểm bug lệch số 9 trong hàm kiểm tra SĐT Reviewer test (`user_auth_service.dart`).
+  * Nâng phiên bản build từ `1.0.2 (4)` lên **`1.0.2 (5)`**.
+  * Đã Upload thành công bản **Build 5** qua Xcode Organizer và gửi tin nhắn giải trình trực tiếp cho đội ngũ kiểm duyệt Apple.
+  * **Trạng thái hiện tại:** 🟡 **Ready for Review / Resubmitted (Đã nộp lại thành công chờ Apple duyệt)**.

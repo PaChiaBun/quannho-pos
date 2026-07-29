@@ -15,6 +15,8 @@ import '../core/providers/session_provider.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/drive_service.dart';
 import '../modules/tinhluong/repository/shift_template_repository.dart';
+import '../modules/tinhluong/repository/staff_salary_config_repository.dart';
+import '../modules/tinhluong/repository/tinhluong_repository.dart';
 import '../core/repositories/module_repository.dart';
 import '../core/providers/app_providers.dart';
 import '../core/utils/watermark_helper.dart';
@@ -27,6 +29,15 @@ const _kRed    = Color(0xFFDC2626);
 const _kOrange = Color(0xFFEA580C);
 
 // ── Providers ─────────────────────────────────────────────────────────────────
+
+final _realtimeEarningsProvider = FutureProvider.autoDispose<RealtimeMonthlyEarnings?>((ref) async {
+  final s = ref.watch(sessionProvider);
+  if (s == null || s.storeId == null) return null;
+  return TinhLuongRepository.fetchRealtimeMonthlyEarnings(
+    storeId: s.storeId!,
+    userId: s.userId,
+  );
+});
 
 final _myShiftsProvider = FutureProvider.autoDispose<List<ShiftRecord>>((ref) async {
   final s = ref.watch(sessionProvider);
@@ -408,6 +419,8 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
         final isClockedIn = open != null;
 
         return Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          const _StaffRealtimeEarningsCard(),
+
           // ── Circular clock button ──
           _ClockButton(
             isClockedIn: isClockedIn,
@@ -466,7 +479,7 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
             Text('Xác nhận ra ca', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
           ]),
           content: Text(
-            'Ra ca lúc ${DateFormat('HH:mm').format(DateTime.now())}?\nThời gian làm việc sẽ được ghi nhận tự động.',
+            'Ra ca lúc ${DateFormat('HH:mm').format(DateTime.now())}?\nThời gian làm việc và tiền ca sẽ được ghi nhận tự động.',
             style: const TextStyle(fontSize: 14, height: 1.5),
           ),
           actions: [
@@ -489,28 +502,48 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
 
       setState(() => _loading = true);
       try {
-        // ‼️ FIX Bug #21: đọc session TRƯỚC clockOut() — trước đây session đọc sau await,
-        // nếu session null giữa chừng sẽ NPE khi dùng session.storeId trong broadcast
         final session = ref.read(sessionProvider);
         if (session == null) { setState(() => _loading = false); return; }
-        await StaffService.clockOut(openShift['id'] as String);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Row(children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-              const SizedBox(width: 10),
-              Text('Đã ra ca lúc ${DateFormat('HH:mm').format(DateTime.now())}',
-                style: const TextStyle(fontWeight: FontWeight.w700)),
-            ]),
-            backgroundColor: _kNavy,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            duration: const Duration(milliseconds: 2500),
-            margin: const EdgeInsets.all(16),
-          ));
-        }
+
+        final String shiftId = openShift['id'] as String;
+        final DateTime clockInTime = DateTime.parse(openShift['clock_in'] as String).toLocal();
+        final DateTime clockOutTime = DateTime.now();
+
+        await StaffService.clockOut(shiftId);
+
+        // Fetch salary config & calculate single shift earnings
+        final config = await StaffSalaryConfigRepo.fetchByUserId(session.userId);
+        final shiftRecord = ShiftRecord(
+          id: shiftId,
+          userId: session.userId,
+          userName: session.displayName ?? '',
+          clockIn: clockInTime,
+          clockOut: clockOutTime,
+          source: openShift['source'] as String? ?? 'mobile',
+          note: openShift['note'] as String? ?? '',
+        );
+
+        final calcResult = TinhLuongRepository.calculateSingleShiftEarnings(
+          shift: shiftRecord,
+          config: config,
+        );
+
         ref.invalidate(openShiftCCProvider);
         ref.invalidate(_myShiftsProvider);
+        ref.invalidate(_realtimeEarningsProvider);
+
+        RealtimeMonthlyEarnings? updatedMonthly;
+        if (session.storeId != null) {
+          updatedMonthly = await TinhLuongRepository.fetchRealtimeMonthlyEarnings(
+            storeId: session.storeId!,
+            userId: session.userId,
+          );
+        }
+
+        if (mounted) {
+          _showClockOutEarningsDialog(context, calcResult, updatedMonthly);
+        }
+
         // 📡 Broadcast — subscribe trước, send, rồi unsubscribe để tránh channel leak
         try {
           final ch = Supabase.instance.client.channel('shifts_sender_${session.storeId}');
@@ -1847,6 +1880,66 @@ class _ShiftRow extends ConsumerWidget {
                         style: const TextStyle(fontSize: 10, color: _kMuted),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
                     ],
+                    if (shift.checkIsForgotClockout) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _kRed.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: _kRed.withValues(alpha: 0.3)),
+                        ),
+                        child: const Text(
+                          '🔴 Quên chốt ca (>14h) - Trừ 50% lương',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kRed),
+                        ),
+                      ),
+                    ],
+                    if (shift.isManagerOverridden) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '🛡️ Điều chỉnh bởi ${shift.overrideBy ?? "Quản lý"}: ${shift.overrideReason ?? "Khôi phục lương"}',
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF0284C7)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                    if (shift.duration.inHours >= 8) ...[
+                      const SizedBox(height: 4),
+                      if (shift.isOtApproved)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _kGreen.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '🟢 OT đã duyệt (${shift.otApprovedBy ?? "Quản lý"}): ${shift.otReason ?? "Tăng ca"}',
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGreen),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _kOrange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            '🟡 Chờ Quản lý duyệt OT',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kOrange),
+                          ),
+                        ),
+                    ],
                   ]),
                 ),
               ),
@@ -2177,96 +2270,103 @@ void _showPhotoAuditDialog(BuildContext context, WidgetRef ref, ShiftRecord shif
     builder: (ctx) => Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 420),
+        constraints: BoxConstraints(
+          maxWidth: 420,
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
+        ),
         padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _kNavy.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _kNavy.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.verified_user_rounded, color: _kNavy, size: 22),
                   ),
-                  child: const Icon(Icons.verified_user_rounded, color: _kNavy, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        shift.userName.isNotEmpty ? shift.userName : 'Nhân viên',
-                        style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy),
-                      ),
-                      Text(
-                        shift.isOpen ? '🟢 Đang làm việc' : '⚪ Đã kết thúc ca',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: shift.isOpen ? _kGreen : _kMuted),
-                      ),
-                    ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          shift.userName.isNotEmpty ? shift.userName : 'Nhân viên',
+                          style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy),
+                        ),
+                        Text(
+                          shift.isOpen ? '🟢 Đang làm việc' : '⚪ Đã kết thúc ca',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: shift.isOpen ? _kGreen : _kMuted),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
 
-            // Ảnh kiểm tra ngẫu nhiên
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: shift.photoUrl != null
-                  ? AspectRatio(
-                      aspectRatio: 1.1,
-                      child: Image.network(
-                        shift.photoUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey.shade100,
-                          child: const Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey),
-                                SizedBox(height: 8),
-                                Text('Không tải được ảnh', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                              ],
+              // Ảnh kiểm tra ngẫu nhiên
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: shift.photoUrl != null
+                    ? ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 220),
+                        child: AspectRatio(
+                          aspectRatio: 1.35,
+                          child: Image.network(
+                            shift.photoUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: Colors.grey.shade100,
+                              child: const Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey),
+                                    SizedBox(height: 8),
+                                    Text('Không tải được ảnh', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
+                      )
+                    : Container(
+                        padding: const EdgeInsets.all(32),
+                        color: Colors.grey.shade100,
+                        child: const Column(
+                          children: [
+                            Icon(Icons.no_photography_rounded, size: 48, color: Colors.grey),
+                            SizedBox(height: 10),
+                            Text(
+                              'Chưa có ảnh chụp selfie ca này',
+                              style: TextStyle(fontWeight: FontWeight.w700, color: _kNavy, fontSize: 13),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Ca làm việc tạo trước khi áp dụng bắt buộc chụp ảnh live',
+                              style: TextStyle(color: _kMuted, fontSize: 11),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
-                    )
-                  : Container(
-                      padding: const EdgeInsets.all(32),
-                      color: Colors.grey.shade100,
-                      child: const Column(
-                        children: [
-                          Icon(Icons.no_photography_rounded, size: 48, color: Colors.grey),
-                          SizedBox(height: 10),
-                          Text(
-                            'Chưa có ảnh chụp selfie ca này',
-                            style: TextStyle(fontWeight: FontWeight.w700, color: _kNavy, fontSize: 13),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Ca làm việc tạo trước khi áp dụng bắt buộc chụp ảnh live',
-                            style: TextStyle(color: _kMuted, fontSize: 11),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-            ),
+              ),
             const SizedBox(height: 16),
 
             // Chi tiết ca
@@ -2340,6 +2440,40 @@ void _showPhotoAuditDialog(BuildContext context, WidgetRef ref, ShiftRecord shif
             const SizedBox(height: 16),
 
             if (isManager) ...[
+              if (shift.duration.inHours >= 8 && !shift.isOtApproved) ...[
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kGreen,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                  ),
+                  icon: const Icon(Icons.stars_rounded, size: 18),
+                  label: const Text('Duyệt Tăng Ca (OT)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await _showApproveOtDialog(context, ref, shift);
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (shift.checkIsForgotClockout || shift.duration.inHours >= 14) ...[
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0284C7),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                  ),
+                  icon: const Icon(Icons.shield_rounded, size: 18),
+                  label: const Text('Xác nhận ca quên chốt', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await _showOverrideShiftDialog(context, ref, shift);
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF1565C0),
@@ -2411,7 +2545,8 @@ void _showPhotoAuditDialog(BuildContext context, WidgetRef ref, ShiftRecord shif
         ),
       ),
     ),
-  );
+  ),
+);
 }
 
 Future<void> _openReassignShiftSheet(BuildContext context, WidgetRef ref, ShiftRecord shift) async {
@@ -2501,4 +2636,491 @@ Widget _auditDetailRow(IconData icon, String label, String value, {Color? valueC
       ),
     ],
   );
+}
+
+// ─── CLOCK OUT EARNINGS DIALOG ────────────────────────────────────────────────
+
+void _showClockOutEarningsDialog(
+  BuildContext context,
+  SingleShiftEarnings calc,
+  RealtimeMonthlyEarnings? monthly,
+) {
+  final currencyFmt = NumberFormat('#,###', 'vi_VN');
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: Colors.white,
+      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      title: Column(
+        children: [
+          Container(
+            width: 52, height: 52,
+            decoration: const BoxDecoration(
+              color: Color(0xFFDCFCE7),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check_circle_rounded, color: _kGreen, size: 32),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'ĐÃ RA CA THÀNH CÔNG',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: _kNavy),
+          ),
+          Text(
+            'Ra ca lúc ${DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.now())}',
+            style: const TextStyle(fontSize: 12, color: _kMuted),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Box 1: Money earned in this shift ──
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _kGreen.withValues(alpha: 0.3)),
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  'CỘNG VÀO LƯƠNG CA NÀY',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kMuted),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '+ ${currencyFmt.format(calc.netPay)}đ',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: _kGreen,
+                  ),
+                ),
+                const Divider(height: 16, thickness: 0.5),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Lương làm ${calc.totalHours.toStringAsFixed(1)}h:',
+                      style: const TextStyle(fontSize: 12, color: _kNavy),
+                    ),
+                    Text(
+                      '+${currencyFmt.format(calc.regularPay)}đ',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy),
+                    ),
+                  ],
+                ),
+                if (calc.overtimePay > 0) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Tăng ca (${calc.overtimeHours.toStringAsFixed(1)}h):',
+                        style: const TextStyle(fontSize: 12, color: _kGreen),
+                      ),
+                      Text(
+                        '+${currencyFmt.format(calc.overtimePay)}đ',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGreen),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // ── Box 2: Penalty / Deductions if any ──
+          if (calc.deductionLate > 0 || calc.penaltyReasons.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _kRed.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, size: 16, color: _kRed),
+                      SizedBox(width: 6),
+                      Text(
+                        'KHẤU TRỪ & LÝ DO LỖI',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _kRed),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  if (calc.penaltyReasons.isNotEmpty)
+                    ...calc.penaltyReasons.map(
+                      (reason) => Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Text(
+                          '• $reason',
+                          style: const TextStyle(fontSize: 12, color: _kRed, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    )
+                  else
+                    Text(
+                      '• Khấu trừ vi phạm ca làm: -${currencyFmt.format(calc.deductionLate)}đ',
+                      style: const TextStyle(fontSize: 12, color: _kRed, fontWeight: FontWeight.w600),
+                    ),
+                ],
+              ),
+            ),
+          ],
+
+          // ── Box 3: Total Monthly Accumulator ──
+          if (monthly != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: _kNavy.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.account_balance_wallet_rounded, size: 16, color: _kNavy),
+                      SizedBox(width: 6),
+                      Text(
+                        'Lương tích lũy tháng:',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '${currencyFmt.format(monthly.totalEarnings)}đ',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _kNavy),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kNavy,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Đã hiểu', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// ─── REALTIME EARNINGS CARD ───────────────────────────────────────────────────
+
+class _StaffRealtimeEarningsCard extends ConsumerWidget {
+  const _StaffRealtimeEarningsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(_realtimeEarningsProvider);
+    final currencyFmt = NumberFormat('#,###', 'vi_VN');
+    final now = DateTime.now();
+
+    return async.when(
+      loading: () => Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Center(child: CircularProgressIndicator(color: _kNavy, strokeWidth: 2)),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (earnings) {
+        if (earnings == null) return const SizedBox.shrink();
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 20),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [_kNavy, Color(0xFF2E376E)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: _kNavy.withValues(alpha: 0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.stars_rounded, color: Color(0xFFFBBF24), size: 18),
+                      const SizedBox(width: 6),
+                      Text(
+                        'LƯƠNG TÍCH LŨY THÁNG ${now.month}/${now.year}',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${earnings.shiftCount} ca làm',
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    '${currencyFmt.format(earnings.totalEarnings)}đ',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _SubStatItem(
+                      icon: Icons.timer_rounded,
+                      color: const Color(0xFF38BDF8),
+                      label: 'Tổng giờ',
+                      value: '${earnings.totalHours.toStringAsFixed(1)}h',
+                    ),
+                    Container(width: 1, height: 18, color: Colors.white24),
+                    _SubStatItem(
+                      icon: Icons.trending_up_rounded,
+                      color: const Color(0xFF4ADE80),
+                      label: 'Ghi nhận/OT',
+                      value: '+${currencyFmt.format(earnings.totalBonus)}đ',
+                    ),
+                    Container(width: 1, height: 18, color: Colors.white24),
+                    _SubStatItem(
+                      icon: Icons.warning_rounded,
+                      color: const Color(0xFFF87171),
+                      label: 'Khấu trừ',
+                      value: '-${currencyFmt.format(earnings.totalDeductions)}đ',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SubStatItem extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String value;
+  const _SubStatItem({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(color: Colors.white60, fontSize: 9, fontWeight: FontWeight.w600)),
+              Text(value, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+            ],
+          ),
+        ],
+      );
+}
+
+// ─── MANAGER APPROVE OT & OVERRIDE DIALOGS ────────────────────────────────────
+
+Future<void> _showApproveOtDialog(BuildContext context, WidgetRef ref, ShiftRecord shift) async {
+  final session = ref.read(sessionProvider);
+  if (session?.storeId == null) return;
+  final controller = TextEditingController(text: 'Đông khách cuối ngày');
+
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Row(
+        children: [
+          Icon(Icons.stars_rounded, color: _kGreen, size: 22),
+          SizedBox(width: 8),
+          Text('Duyệt Tăng Ca (OT)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Xác nhận duyệt OT cho ${shift.userName}?'),
+          const SizedBox(height: 12),
+          const Text('Lý do tăng ca (bắt buộc):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: 'Nhập lý do tăng ca...',
+              filled: true,
+              fillColor: const Color(0xFFF3F4F6),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ', style: TextStyle(color: _kMuted))),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          style: ElevatedButton.styleFrom(backgroundColor: _kGreen, foregroundColor: Colors.white),
+          child: const Text('Xác nhận Duyệt OT', style: TextStyle(fontWeight: FontWeight.w700)),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed == true && controller.text.trim().isNotEmpty) {
+    await StaffService.approveOt(
+      shiftId: shift.id,
+      otReason: controller.text.trim(),
+      approvedBy: session?.displayName ?? 'Quản lý',
+      storeId: session!.storeId!,
+      staffName: shift.userName,
+    );
+    ref.invalidate(_myShiftsProvider);
+    ref.invalidate(_realtimeEarningsProvider);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ Đã duyệt OT & ghi nhật ký hệ thống'), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
+}
+
+Future<void> _showOverrideShiftDialog(BuildContext context, WidgetRef ref, ShiftRecord shift) async {
+  final session = ref.read(sessionProvider);
+  if (session?.storeId == null) return;
+  final controller = TextEditingController(text: 'Xác nhận điều chỉnh ca quên chốt cho nhân viên');
+
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Row(
+        children: [
+          Icon(Icons.shield_rounded, color: Color(0xFF0284C7), size: 22),
+          SizedBox(width: 8),
+          Text('Xác nhận ca quên chốt', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Hủy khấu trừ 50% do quên chốt ca và khôi phục 100% lương cho ${shift.userName}?'),
+          const SizedBox(height: 12),
+          const Text('Lý do điều chỉnh (bắt buộc):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy)),
+          const SizedBox(height: 6),
+          TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: 'Nhập lý do điều chỉnh...',
+              filled: true,
+              fillColor: const Color(0xFFF3F4F6),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ', style: TextStyle(color: _kMuted))),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0284C7), foregroundColor: Colors.white),
+          child: const Text('Xác nhận điều chỉnh', style: TextStyle(fontWeight: FontWeight.w700)),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed == true && controller.text.trim().isNotEmpty) {
+    await StaffService.overrideShift(
+      shiftId: shift.id,
+      storeId: session!.storeId!,
+      overrideReason: controller.text.trim(),
+      approvedBy: session.displayName ?? 'Quản lý',
+      staffName: shift.userName,
+    );
+    ref.invalidate(_myShiftsProvider);
+    ref.invalidate(_realtimeEarningsProvider);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('🛡️ Đã xác nhận điều chỉnh và ghi nhật ký hệ thống'), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
 }

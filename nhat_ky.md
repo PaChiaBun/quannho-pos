@@ -1862,21 +1862,79 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
 
 ---
 
-## 2026-07-28 — Nâng Cấp Hệ Thống Audit Logging & Chuyển Đổi Sang Mô Hình Phân Quyền Module Trực Tiếp Cho Nhân Viên
+## 2026-07-28 — Nâng Cấp Hệ Thống Audit Logging, Chuẩn Hóa Nguồn Sự Thật Duy Nhất & Chuyển Đổi Mô Hình Phân Quyền Module Trực Tiếp
 
 ### Đã làm
 - ✅ **Hệ Thống Tự Động Ghi Nhật Ký Hoạt Động (Audit Logging Engine)**:
   - Bổ sung `AppLogger.logUserAction(tag, action, details, level)` ghi vết thông tin người thao tác (`staff_name`), vai trò, thời gian, tên thiết bị, tên hành động và chi tiết JSON đính kèm.
   - Tự động ghi vết trên tất cả các thao tác chính: Đăng nhập/Đăng xuất, Thanh toán đơn POS, Mở/Chuyển/Ghép bàn, Gửi/Xác nhận phiếu bếp, Thêm/Sửa nhân viên, Thay đổi phân quyền, Chấm công, Điều hướng màn hình.
   - Cập nhật quy chuẩn phát triển bắt buộc vào `.docs/lam-viec.md` để tất cả các module mới phát triển sau này và AI Bum luôn tự động chèn hook ghi log.
-- ✅ **Sửa Triệt Để Lỗi Đổi Vai Trò Nhân Viên (`StaffService.updateRole` & `getStaffList`) & Deploy VPS**:
-  - Loại bỏ tham số thừa `modules` gây lỗi `PGRST204` trên Supabase REST API khi cập nhật `store_members` trong `StaffService.updateRole`.
-  - Khắc phục lỗi đè vai trò trong `StaffService.getStaffList`: Đã ép danh sách nhân viên trên Web luôn luôn hiển thị vai trò mới nhất từ `store_members`, không bị đọc đè vai trò cũ từ `staff_members`.
-  - Biên dịch và deploy thành công bản build Web mới nhất (`main.dart.js` Jul 28 11:16) lên VPS `/var/www/quannho/pos/`.
-  - Hot Restart ứng dụng thành công trên máy giả lập Android Pixel 6 (`emulator-5554`).
+
+- ✅ **Chuyển Đổi Mô Hình Phân Quyền Module Trực Tiếp Cho Nhân Viên (Direct Per-User Permission Architecture)**:
+  - Loại bỏ hoàn toàn sự phụ thuộc vào tên role hardcode dễ vỡ; gán trực tiếp mảng `modules` & `actions` cho từng vai trò và từng nhân viên.
+  - Bổ sung module `pos` (Bán hàng), `chamcong` và `tinhluong` vào bộ quyền mặc định `kDefaultPerms['waiter']` ➔ Đảm bảo nhân viên Phục Vụ luôn có nút Bán hàng kể cả khi không đọc được `store_roles` do RLS.
+  - Cập nhật `StaffService.getModulePermissions` đọc và so khớp tên Role tiếng Việt/canonical linh hoạt.
+  - Tự động cascading update mảng `modules` sang tất cả nhân viên thuộc vai trò đó khi Quản lý lưu thay đổi phân quyền trong `StoreRoleService.updateRole`.
+
+- ✅ **Chuẩn Hóa Nguồn Sự Thật Duy Nhất (`Single Source of Truth`) Cho Phân Quyền & Vai Trò**:
+  - Tối ưu hóa hàm `StaffService.getStaffList`: Lấy vai trò thành viên trực tiếp 100% từ bảng `store_members` (Nguồn sự thật duy nhất), khắc phục triệt để lỗi bị vai trò cũ của bảng `staff_members` đè lên gây sai lệch hiển thị trên Web Quản lý.
+  - Sửa lỗi `StaffService.updateRole`: Loại bỏ tham số thừa `modules` gây lỗi `PGRST204` trên Supabase REST API khi cập nhật `store_members`.
+
+- ✅ **Sửa Lỗi Đồng Bộ Giao Diện Trang Chủ (`_moduleOrder` Sync Fix)**:
+  - Khắc phục triệt để lỗi `_moduleOrder` trong `_DashboardScreenState` (`dashboard_screen.dart`): Ép `_moduleOrder` luôn đồng bộ 100% với mảng `activeModules` khi ở chế độ xem bình thường (`!_isEditMode`), loại bỏ hoàn toàn hiện tượng kẹt 3 ô tile cũ sau khi loading state kết thúc.
+
+- ✅ **Đồng Bộ Hóa Toàn Bộ Tài Liệu Kiến Trúc & Workflow (.md)**:
+  - `quan_nho/.agents/workflows/qn.md`: Đồng bộ quy trình AI Bum theo mô hình phân quyền module trực tiếp & audit logging.
+  - `quan_nho/.docs/kien-truc-data.md`: Cập nhật Layer 2 Auth & Staff Data Schema với mảng `modules` & `actions`.
+  - `quan_nho/.docs/tinh-nang.md`: Cập nhật Kiến trúc phân quyền Module động.
+  - `quan_nho/.docs/lam-viec.md`: Thêm tiêu chuẩn bắt buộc ghi log `AppLogger.logUserAction`.
+
+- ✅ **Biên Dịch & Deploy Bản Web POS Mới Lên VPS (`45.32.104.228`) & Test Giả Lập Pixel 6**:
+  - Build thành công bản Flutter Web release sạch sẽ với `--base-href "/pos/" --no-tree-shake-icons`.
+  - Upload và giải nén bản build mới (`main.dart.js` Jul 28 11:16) lên VPS `/var/www/quannho/pos/`, reload Nginx (`https://quannho.lpm.vn/pos/`).
+  - Chạy test live và Hot Restart thành công trên máy giả lập Android Pixel 6 (`emulator-5554`).
+
+---
+
+### Danh sách file đã chỉnh sửa
+| File | Thay đổi |
+|------|----------|
+| `lib/core/utils/app_logger.dart` | Nâng cấp `AppLogger.logUserAction` ghi vết người thao tác, thiết bị, thời gian & chi tiết JSON. |
+| `lib/core/services/staff_service.dart` | Bổ sung `pos` vào `kDefaultPerms['waiter']`, nâng cấp `getModulePermissions`, sửa `updateRole` chuẩn hóa `store_members`, tối ưu `getStaffList` chuẩn Single Source of Truth. |
+| `lib/screens/dashboard_screen.dart` | Tích hợp `AppLogger`, khắc phục lỗi đồng bộ `_moduleOrder` với `activeModules`. |
+| `lib/main.dart` | Thêm tab `log_viewer`, cập nhật so khớp role cho Bottom Navigation Bar. |
+| `web/index.html` | Bổ sung script unregister Service Worker tự động dọn dẹp cache. |
+| `quan_nho/.agents/workflows/qn.md` | Đồng bộ quy trình AI Bum theo chuẩn phân quyền trực tiếp & audit logging. |
+| `quan_nho/.docs/kien-truc-data.md` | Cập nhật Layer 2 Auth & Staff Schema. |
+| `quan_nho/.docs/tinh-nang.md` | Cập nhật luồng phân quyền module động. |
+| `quan_nho/.docs/lam-viec.md` | Thêm tiêu chuẩn bắt buộc ghi audit log. |
+| `quan_nho/nhat_ky.md` | Cập nhật nhật ký phát triển chi tiết ngày 2026-07-28. |
 
 
 
 
+
+---
+
+## 2026-07-29 — Nâng cấp module Lương và QC độc lập
+
+### Quyết định sản phẩm
+- Tên thương mại và tên hiển thị của module giữ đơn giản là **Lương**.
+- Thân – Tâm – Tuệ chỉ là định hướng quản trị con người, không dùng làm thương hiệu module và không dùng trực tiếp làm căn cứ khấu trừ lương.
+- Tách lớp **ghi nhận đóng góp** khỏi lương cơ bản; giao diện dùng ngôn ngữ trung tính, chuyên nghiệp: “ghi nhận”, “điều chỉnh”, “khấu trừ”.
+- Các khóa tương thích nội bộ `tinhluong.srm_*`, tên model/RPC/migration cũ được giữ nguyên để không phá dữ liệu và phân quyền đang vận hành.
+
+### Đã triển khai
+- Hoàn thiện luồng bảng lương theo kỳ, phiếu lương cá nhân, chi tiết bản ghi, khiếu nại, báo cáo và cấu hình lương nhân viên.
+- Bổ sung repository/migration cho lớp ghi nhận đóng góp, kiểm tra quyền fail-closed, cô lập dữ liệu theo `store_id`, khóa bảng lương và chống gửi lặp.
+- Hoàn thiện màn cấu hình lương M1–M4 với kiểm tra dữ liệu, trạng thái loading/error/empty, chống double-submit và responsive.
+- Chuẩn hóa câu chữ cũ “SRM / Tâm / Tuệ / du di / bỏ phạt / phạt trừ” trên các màn liên quan thành ngôn ngữ Lương dễ hiểu.
+- Sửa lỗi biên dịch luồng ra ca: `chamcong_screen.dart` thiếu import trực tiếp `staff_salary_config_repository.dart`.
+- Loại bỏ đợt format ngoài phạm vi làm phát sinh hơn 10.000 dòng diff; patch thuật ngữ cuối cùng chỉ thay đổi đúng các dòng cần thiết.
+
+### QC
+- `flutter test` cho quyền, repository ghi nhận và helper tính lương: **20/20 test passed**.
+- `flutter analyze` toàn dự án: **0 error**; còn warning/info kỹ thuật cũ cần dọn dần, không chặn biên dịch.
+- `git diff --check`: không có lỗi whitespace.
 
 
