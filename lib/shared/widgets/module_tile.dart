@@ -143,6 +143,14 @@ const Map<String, ModuleTileData> kModuleConfigs = {
     baseColor: Color(0xFF0EA5E9), // cyan-500
     route: '/log_viewer',
   ),
+  'qr_order': ModuleTileData(
+    id: 'qr_order',
+    title: 'QR Gọi Món',
+    subtitle: 'Gọi tại bàn & tại quầy',
+    icon: Icons.qr_code_scanner_rounded,
+    baseColor: Color(0xFF8B5CF6), // vivid purple
+    route: '/qr_order',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

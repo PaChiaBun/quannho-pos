@@ -21,6 +21,7 @@ import '../shared/widgets/module_tile.dart';
 import 'module_picker_screen.dart';
 import '../modules/bill_printer/screens/bill_printer_hub.dart';
 import '../modules/ops/screens/ops_screen.dart';
+import '../modules/qr_order/screens/qr_order_screen.dart';
 import '../core/services/auto_update_service.dart';
 import '../core/utils/app_logger.dart';
 
@@ -1968,6 +1969,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     // kay_ops → push trực tiếp, bypass tab guard
     if (route == '/kay_ops') {
       Navigator.push(context, _smoothRoute(const OpsScreen()));
+      return;
+    }
+    // qr_order → push trực tiếp QrOrderScreen
+    if (route == '/qr_order') {
+      Navigator.push(context, _smoothRoute(const QrOrderScreen()));
       return;
     }
     final tabMap = {

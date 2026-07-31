@@ -244,6 +244,8 @@ class RecordDetailScreen extends ConsumerWidget {
         return 'Cố định + OT';
       case 'M4':
         return 'Theo ngày';
+      case 'M5':
+        return 'Tự thiết lập';
       default:
         return m;
     }
@@ -366,6 +368,8 @@ class _PayslipCard extends StatelessWidget {
         return 'CĐ+OT';
       case 'M4':
         return 'Theo ngày';
+      case 'M5':
+        return 'Tự thiết lập';
       default:
         return m;
     }

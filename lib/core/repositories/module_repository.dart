@@ -26,6 +26,7 @@ const _kAllModules = [
   ModuleConfig(id: 'tinhluong',     label: 'Lương',              icon: '💵', position: 11, isActive: true),
   ModuleConfig(id: 'kay_ops',       label: 'Vận Hành',           icon: '📋', position: 12, isActive: false),
   ModuleConfig(id: 'log_viewer',    label: 'Nhật Ký Log',        icon: '📝', position: 14, isActive: true),
+  ModuleConfig(id: 'qr_order',      label: 'QR Gọi Món',         icon: '📱', position: 15, isActive: true),
 ];
 
 // Key mới — tránh xung đột với legacy SharedPrefs key cũ

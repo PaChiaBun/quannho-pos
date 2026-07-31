@@ -64,13 +64,15 @@
 - Tích hợp POS: bán 1 món → tự trừ nguyên liệu theo công thức
 - Mặc định TẮT — dành cho nhà hàng/quán cần quản lý COGS
 
-### 💰 Tính Lương (index 12)
-- `modules/tinhluong/` (3 screens + 1 repo + 1 provider)
-- 4 chế độ lương: M1 (giờ) / M2 (cố định) / M3 (cố định+OT) / M4 (ngày)
-- Auto-generate từ dữ liệu chấm công
-- Luồng duyệt: Nháp → Chờ duyệt → Duyệt → Trả lương
-- Khi trả lương → tự ghi expense vào Finance
-- **SQL Migration cần chạy:** `sql_migration_payroll.sql`
+### 💰 Lương (index 12)
+- `modules/tinhluong/` — trung tâm chính sách, kỳ lương, phiếu lương và báo cáo vận hành
+- 5 chế độ: M1 theo giờ / M2 cố định / M3 cố định + OT / M4 theo ngày / M5 tùy chỉnh
+- Thiết lập chính sách theo **vị trí** trước, cho phép ghi đè riêng theo **nhân viên**
+- Chính sách tách rõ: cách tính lương, thưởng & phụ cấp, OT và khấu trừ
+- Tạo kỳ từ dữ liệu chấm công; bắt buộc rà soát cấu hình và ca bất thường trước khi gửi duyệt
+- Luồng duyệt: Nháp → Chờ duyệt → Duyệt → Trả lương; trả lương tự ghi expense vào Finance
+- Báo cáo dạng bảng theo nhân viên, có tìm kiếm, lọc, sắp xếp và khu vực “Cần rà soát”
+- **Migration:** `supabase/payroll_salary_config_migration.sql`
 
 ---
 

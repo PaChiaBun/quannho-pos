@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/tinhluong_providers.dart';
 import '../repository/tinhluong_repository.dart';
+import 'payroll_report_screen.dart';
 import '../../../core/providers/permission_provider.dart';
+import '../../../core/providers/session_provider.dart';
 
 final _fmt = NumberFormat('#,###', 'vi_VN');
 String _fmtM(double v) => '${_fmt.format(v.round())}đ';
@@ -24,12 +26,12 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
   String _searchQuery = '';
   String _selectedRole = 'Tất cả';
   String _payFilter = 'Tất cả'; // Tất cả | Chưa trả | Đã trả
-
   @override
   Widget build(BuildContext context) {
     final permsAsync = ref.watch(userActionPermsProvider);
     final perms = permsAsync.value ?? {};
     final canApprove = perms.contains('tinhluong.approve_payroll');
+    final canReport = perms.contains('tinhluong.view_all');
 
     final recordsAsync = ref.watch(payrollRecordsProvider(widget.period.id));
 
@@ -41,6 +43,32 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
           List<Widget> actions = [];
 
           if (!isNarrow) {
+            if (canReport) {
+              actions.add(
+                TextButton.icon(
+                  icon: const Icon(
+                    Icons.bar_chart_rounded,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                  label: const Text(
+                    'Báo cáo KPI',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PayrollReportScreen(targetPeriod: widget.period),
+                      ),
+                    );
+                  },
+                ),
+              );
+            }
             if (widget.period.isDraft && canApprove) {
               actions.add(
                 TextButton.icon(
@@ -56,7 +84,31 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  onPressed: () => _submitForReview(context),
+                  onPressed: () {
+                    final readiness = ref
+                        .read(payrollReadinessProvider(widget.period))
+                        .value;
+                    _submitForReview(context, readiness);
+                  },
+                ),
+              );
+            }
+            if (widget.period.isDraft && canApprove) {
+              actions.add(
+                TextButton.icon(
+                  icon: const Icon(
+                    Icons.refresh_rounded,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                  label: const Text(
+                    'Tính lại',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  onPressed: () => _recalculate(context),
                 ),
               );
             }
@@ -82,6 +134,20 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
             if (actions.isNotEmpty) actions.add(const SizedBox(width: 8));
           } else {
             List<PopupMenuEntry<String>> menuItems = [];
+            if (canReport) {
+              menuItems.add(
+                const PopupMenuItem(
+                  value: 'report',
+                  child: Row(
+                    children: [
+                      Icon(Icons.bar_chart_rounded, size: 18),
+                      SizedBox(width: 12),
+                      Text('Báo cáo KPI'),
+                    ],
+                  ),
+                ),
+              );
+            }
             if (widget.period.isDraft && canApprove) {
               menuItems.add(
                 const PopupMenuItem(
@@ -123,17 +189,47 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
                   ),
                   tooltip: 'Tùy chọn',
                   onSelected: (val) {
+                    if (val == 'report') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PayrollReportScreen(targetPeriod: widget.period),
+                        ),
+                      );
+                    }
                     if (val == 'submit') {
-                      _submitForReview(context);
+                      final readiness = ref
+                          .read(payrollReadinessProvider(widget.period))
+                          .value;
+                      _submitForReview(context, readiness);
+                    }
+                    if (val == 'recalc') {
+                      _recalculate(context);
                     }
                     if (val == 'approve') {
                       _approve(context);
                     }
+
                   },
                   itemBuilder: (_) => menuItems,
                 ),
               );
             }
+            if (widget.period.isDraft && canApprove) {
+              menuItems.add(
+                const PopupMenuItem(
+                  value: 'recalc',
+                  child: Row(
+                    children: [
+                      Icon(Icons.refresh_rounded, size: 18),
+                      SizedBox(width: 12),
+                      Text('Tính lại'),
+                    ],
+                  ),
+                ),
+              );
+            }
+
           }
 
           return RefreshIndicator(
@@ -319,6 +415,19 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
     return SliverMainAxisGroup(
       slivers: [
         SliverToBoxAdapter(
+          child: _ReadinessDashboard(
+            period: widget.period,
+            onRecalculate: () => _recalculate(context),
+          ),
+        ),
+        if (widget.period.hasDelta)
+          SliverToBoxAdapter(
+            child: _DeltaWarningBanner(
+              period: widget.period,
+              onUpdate: () => _recalculate(context),
+            ),
+          ),
+        SliverToBoxAdapter(
           child: _HeaderDashboard(
             period: widget.period,
             liveTotal: liveTotal,
@@ -457,7 +566,55 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
     );
   }
 
-  Future<void> _submitForReview(BuildContext context) async {
+  Future<void> _submitForReview(
+    BuildContext context,
+    PayrollReadiness? readiness,
+  ) async {
+    if (readiness == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Dữ liệu trạng thái đang tải hoặc có lỗi. Vui lòng thử lại sau.',
+          ),
+        ),
+      );
+      return;
+    }
+    if (!readiness.canSubmit) {
+      showDialog(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text(
+            'Không thể gửi duyệt',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Kỳ lương chưa sẵn sàng do còn các vấn đề sau:'),
+              const SizedBox(height: 8),
+              ...readiness.blockingReasons.map(
+                (r) => Text('• $r', style: const TextStyle(color: Colors.red)),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Vui lòng xử lý trước khi gửi duyệt.',
+                style: TextStyle(fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(c),
+              child: const Text('Đóng'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     await TinhLuongRepository.updatePeriodStatus(
       widget.period.id,
       'pending_review',
@@ -469,13 +626,102 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
     ).showSnackBar(const SnackBar(content: Text('✅ Đã gửi duyệt kỳ lương')));
   }
 
+  Future<void> _recalculate(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Tính lại kỳ lương?'),
+        content: const Text(
+          'Hành động này sẽ tính toán lại toàn bộ dữ liệu lương (dựa trên ca làm và cấu hình lương MỚI NHẤT) '
+          'cho những nhân viên đang hoạt động.\n\n'
+          'Dữ liệu những bản ghi chưa bị khóa sẽ bị ghi đè. Bạn có chắc chắn muốn tiếp tục?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(c, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kNavy,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Tính lại'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final storeId = ref.read(sessionProvider)?.storeId;
+    if (storeId == null || storeId.isEmpty || !context.mounted) return;
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      await TinhLuongRepository.autoGenerateRecordsForPeriod(
+        storeId: storeId,
+        periodId: widget.period.id,
+        fromDateStr: widget.period.fromDate,
+        toDateStr: widget.period.toDate,
+      );
+      if (context.mounted) {
+        Navigator.pop(context); // hide loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Đã tính lại thành công!')),
+        );
+        ref.invalidate(payrollRecordsProvider(widget.period.id));
+        ref.invalidate(payrollPeriodsProvider);
+        ref.invalidate(payrollReadinessProvider(widget.period));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('❌ Lỗi tính lại: $e')));
+      }
+    }
+  }
+
   Future<void> _approve(BuildContext context) async {
-    await TinhLuongRepository.updatePeriodStatus(widget.period.id, 'approved');
-    ref.invalidate(payrollPeriodsProvider);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('✅ Đã duyệt kỳ lương')));
+    final storeId = ref.read(sessionProvider)?.storeId;
+    if (storeId == null || storeId.isEmpty || !context.mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      await TinhLuongRepository.autoGenerateRecordsForPeriod(
+        storeId: storeId,
+        periodId: widget.period.id,
+        fromDateStr: widget.period.fromDate,
+        toDateStr: widget.period.toDate,
+      );
+      await TinhLuongRepository.updatePeriodStatus(widget.period.id, 'approved');
+      if (context.mounted) {
+        Navigator.pop(context); // hide loading
+        ref.invalidate(payrollPeriodsProvider);
+        ref.invalidate(payrollRecordsProvider(widget.period.id));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Đã duyệt kỳ lương')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Lỗi khi duyệt kỳ lương: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _markPaid(
@@ -608,10 +854,218 @@ class _HeaderDashboard extends StatelessWidget {
                 '$activeStaffCount NV có ca · Đã trả: $paidCount/$totalStaffCount (${totalStaffCount == 0 ? 0 : (paidCount / totalStaffCount * 100).toStringAsFixed(0)}%)',
                 style: const TextStyle(color: Colors.white60, fontSize: 10),
               ),
+              const SizedBox(height: 6),
+              const Text(
+                'Bản nháp: Dữ liệu chốt tại thời điểm tạo/tính lại',
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 9,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
             ],
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── DELTA WARNING BANNER ────────────────────────────────────────────────────
+
+class _DeltaWarningBanner extends StatelessWidget {
+  final PayrollPeriodModel period;
+  final VoidCallback onUpdate;
+
+  const _DeltaWarningBanner({required this.period, required this.onUpdate});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4E5),
+        border: Border.all(color: const Color(0xFFFFCC80)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Color(0xFFE65100)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Dữ liệu đã thay đổi',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE65100),
+                  ),
+                ),
+                Text(
+                  'Có sự thay đổi về ca làm/cấu hình: ${_fmtM(period.deltaAmount)}. Cập nhật để áp dụng thay đổi.',
+                  style: const TextStyle(fontSize: 12, color: Color(0xFFE65100)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: onUpdate,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE65100),
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            child: const Text('Cập nhật'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── READINESS DASHBOARD ─────────────────────────────────────────────────────
+
+class _ReadinessDashboard extends ConsumerWidget {
+  final PayrollPeriodModel period;
+  final VoidCallback onRecalculate;
+
+  const _ReadinessDashboard({
+    required this.period,
+    required this.onRecalculate,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!period.isDraft) return const SizedBox.shrink();
+
+    final readinessAsync = ref.watch(payrollReadinessProvider(period));
+
+    return readinessAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, st) => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline_rounded, color: Colors.red.shade800),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Lỗi tải trạng thái kiểm tra. Vui lòng thử lại sau.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      data: (readiness) {
+        if (readiness.canSubmit) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green.shade200),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.green),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Kỳ lương đã sẵn sàng gửi duyệt',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.red.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.red.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.red.shade800),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Kỳ lương chưa sẵn sàng (còn ${readiness.blockingReasons.length} vấn đề)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.red.shade900,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: onRecalculate,
+                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                    label: const Text('Tính lại'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.red.shade900,
+                      backgroundColor: Colors.red.shade100,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ...readiness.blockingReasons.map(
+                (r) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4, left: 36),
+                  child: Text(
+                    '• $r',
+                    style: TextStyle(color: Colors.red.shade900, fontSize: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Padding(
+                padding: EdgeInsets.only(left: 36),
+                child: Text(
+                  'Vui lòng chốt ca, duyệt OT và cấu hình lương, sau đó bấm "Tính lại".',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

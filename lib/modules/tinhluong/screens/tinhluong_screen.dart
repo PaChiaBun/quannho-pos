@@ -46,6 +46,9 @@ class TinhLuongScreen extends ConsumerWidget {
     final disputeCount = disputeAsync.value ?? 0;
     final perms = permsAsync.value ?? {};
 
+    final periodsAsync = ref.watch(payrollPeriodsProvider);
+    final latestPeriod = periodsAsync.value?.firstOrNull;
+
     final canCreate = perms.contains('tinhluong.approve_payroll');
     final canReport = perms.contains('tinhluong.view_all');
     final canConfig = perms.contains('tinhluong.manage_config');
@@ -77,7 +80,8 @@ class TinhLuongScreen extends ConsumerWidget {
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const PayrollReportScreen(),
+                      builder: (_) =>
+                          PayrollReportScreen(targetPeriod: latestPeriod),
                     ),
                   ),
                 ),
@@ -110,7 +114,8 @@ class TinhLuongScreen extends ConsumerWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const PayrollReportScreen(),
+                          builder: (_) =>
+                              PayrollReportScreen(targetPeriod: latestPeriod),
                         ),
                       );
                     }
@@ -208,7 +213,33 @@ class TinhLuongScreen extends ConsumerWidget {
                       actions: actions,
                     ),
 
-                    SliverToBoxAdapter(child: _CompactHeader(ref: ref)),
+                    SliverToBoxAdapter(
+                      child: _CompactHeader(
+                        ref: ref,
+                        onCreate: canCreate
+                            ? () => _showCreatePeriodSheet(context, ref)
+                            : null,
+                        onReport: canReport
+                            ? () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => PayrollReportScreen(
+                                    targetPeriod: latestPeriod,
+                                  ),
+                                ),
+                              )
+                            : null,
+                        onConfig: canConfig
+                            ? () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const StaffSalaryConfigScreen(),
+                                ),
+                              )
+                            : null,
+                      ),
+                    ),
 
                     if (disputeCount > 0)
                       SliverToBoxAdapter(
@@ -225,6 +256,14 @@ class TinhLuongScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
+
+                    const SliverToBoxAdapter(
+                      child: _SectionTitle(
+                        title: 'Các kỳ lương',
+                        subtitle:
+                            'Theo dõi trạng thái, tổng chi và tiến độ thanh toán',
+                      ),
+                    ),
 
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(
@@ -261,99 +300,282 @@ class TinhLuongScreen extends ConsumerWidget {
 
 class _CompactHeader extends StatelessWidget {
   final WidgetRef ref;
-  const _CompactHeader({required this.ref});
+  final VoidCallback? onCreate;
+  final VoidCallback? onReport;
+  final VoidCallback? onConfig;
+
+  const _CompactHeader({
+    required this.ref,
+    this.onCreate,
+    this.onReport,
+    this.onConfig,
+  });
 
   @override
   Widget build(BuildContext context) {
     final periodsAsync = ref.watch(payrollPeriodsProvider);
     final periods = periodsAsync.value ?? [];
+    final isLoading = periodsAsync.isLoading;
+    final hasError = periodsAsync.hasError;
 
-    if (periods.isEmpty) return const SizedBox.shrink();
-
-    final latestNet = periods.first.totalAmount;
-    final latestName = periods.first.name;
+    final latestNet = periods.isEmpty ? 0.0 : periods.first.totalAmount;
+    final latestName = switch ((isLoading, hasError, periods.isEmpty)) {
+      (true, _, _) => 'Đang tải dữ liệu...',
+      (_, true, _) => 'Chưa tải được tổng quan',
+      (_, _, true) => 'Chưa có kỳ lương',
+      _ => periods.first.name,
+    };
     final total = periods.length;
     final paidCount = periods.where((p) => p.status == 'paid').length;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1C2151), Color(0xFF303A86)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF1C2151).withValues(alpha: 0.18),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  latestName,
-                  style: const TextStyle(
-                    color: Colors.black54,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    _fmtMoney(latestNet),
-                    style: const TextStyle(
-                      color: Color(0xFFFF6B35),
-                      fontSize: 24,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 700;
+              final summary = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'TỔNG QUAN LƯƠNG',
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
+                      letterSpacing: 1.1,
                     ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(height: 10),
+                  Text(
+                    latestName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    switch ((isLoading, hasError, periods.isEmpty)) {
+                      (true, _, _) => 'Vui lòng chờ trong giây lát',
+                      (_, true, _) => 'Làm mới để thử tải lại dữ liệu',
+                      (_, _, true) =>
+                        'Tạo kỳ đầu tiên để bắt đầu quản lý lương',
+                      _ => _fmtMoney(latestNet),
+                    },
+                    style: TextStyle(
+                      color: periods.isEmpty || hasError || isLoading
+                          ? Colors.white70
+                          : const Color(0xFFFFA47E),
+                      fontSize: periods.isEmpty || hasError || isLoading
+                          ? 14
+                          : 30,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.7,
+                    ),
+                  ),
+                ],
+              );
+              final metrics = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _HeroMetric(
+                    icon: Icons.receipt_long_rounded,
+                    value: isLoading || hasError ? '—' : '$total',
+                    label: 'Kỳ lương',
+                  ),
+                  const SizedBox(width: 10),
+                  _HeroMetric(
+                    icon: Icons.verified_rounded,
+                    value: isLoading || hasError ? '—' : '$paidCount/$total',
+                    label: 'Đã trả',
+                  ),
+                ],
+              );
+              if (isWide) {
+                return Row(
+                  children: [
+                    Expanded(child: summary),
+                    metrics,
+                  ],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [summary, const SizedBox(height: 18), metrics],
+              );
+            },
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
+          if (onCreate != null || onReport != null || onConfig != null) ...[
+            const SizedBox(height: 18),
+            Divider(color: Colors.white.withValues(alpha: 0.14), height: 1),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
               children: [
-                const Text(
-                  'Đã trả',
-                  style: TextStyle(
-                    color: Colors.green,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                if (onCreate != null)
+                  _HeroAction(
+                    icon: Icons.add_rounded,
+                    label: 'Tạo kỳ lương',
+                    emphasized: true,
+                    onTap: onCreate!,
                   ),
-                ),
-                Text(
-                  '$paidCount/$total',
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                if (onReport != null)
+                  _HeroAction(
+                    icon: Icons.insights_rounded,
+                    label: 'Xem báo cáo',
+                    onTap: onReport!,
                   ),
-                ),
+                if (onConfig != null)
+                  _HeroAction(
+                    icon: Icons.tune_rounded,
+                    label: 'Cấu hình lương',
+                    onTap: onConfig!,
+                  ),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );
   }
+}
+
+class _HeroMetric extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+
+  const _HeroMetric({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 112,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+    ),
+    child: Row(
+      children: [
+        Icon(icon, color: Colors.white70, size: 20),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white60, fontSize: 10),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _HeroAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool emphasized;
+
+  const _HeroAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.emphasized = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 48,
+    child: ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 19),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        elevation: 0,
+        backgroundColor: emphasized
+            ? const Color(0xFFFF6B35)
+            : Colors.white.withValues(alpha: 0.11),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: emphasized
+              ? BorderSide.none
+              : BorderSide(color: Colors.white.withValues(alpha: 0.14)),
+        ),
+      ),
+    ),
+  );
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _SectionTitle({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(18, 4, 18, 2),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF1C2151),
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          subtitle,
+          style: const TextStyle(color: Colors.black45, fontSize: 12),
+        ),
+      ],
+    ),
+  );
 }
 
 class _DisputeBanner extends StatelessWidget {
@@ -495,10 +717,18 @@ class _PeriodList extends ConsumerWidget {
             ),
           );
         }
+        if (periods.length == 1) {
+          return SliverToBoxAdapter(
+            child: SizedBox(
+              height: 176,
+              child: _PeriodItem(period: periods.first, ref: innerRef),
+            ),
+          );
+        }
         return SliverGrid(
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: 600,
-            mainAxisExtent: 160,
+            mainAxisExtent: 176,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
           ),
@@ -553,7 +783,6 @@ class _PeriodItem extends StatelessWidget {
 
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),

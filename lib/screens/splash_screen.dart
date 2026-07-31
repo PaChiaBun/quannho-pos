@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,7 +54,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   void initState() {
     super.initState();
-    FlutterNativeSplash.remove();
+    if (!kIsWeb) {
+      FlutterNativeSplash.remove();
+    }
 
     // Background slow pulse
     _bgCtrl = AnimationController(
@@ -532,4 +535,3 @@ class _LpmBadge extends StatelessWidget {
     );
   }
 }
-

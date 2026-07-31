@@ -33,7 +33,12 @@ import '../core/theme/app_colors.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
 import '../modules/bill_printer/screens/bill_preview_screen.dart'
-    show BillData, BillItem, showBillPreview, BillType, StationPrinterDispatcher;
+    show
+        BillData,
+        BillItem,
+        showBillPreview,
+        BillType,
+        StationPrinterDispatcher;
 import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import 'kitchen_screen.dart' show kitchenReadyStreamProvider;
 import '../core/utils/responsive.dart';
@@ -41,35 +46,39 @@ import 'package:collection/collection.dart' hide compareNatural;
 import '../modules/pos/models/coupon_model.dart';
 import '../modules/bill_printer/providers/bill_template_provider.dart';
 import '../core/services/vietqr_service.dart';
-
+import '../modules/qr_order/providers/qr_order_providers.dart';
+import '../modules/qr_order/widgets/qr_order_review_sheet.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BRAND COLORS
 // ─────────────────────────────────────────────────────────────────────────────
-const _kNavy   = Color(0xFF1C2151);
+const _kNavy = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
-const _kCream  = Color(0xFFFFF8F0);
-const _kGreen  = Color(0xFF22C55E);
-const _kRed    = Color(0xFFEF4444);
-const _kAmber  = Color(0xFFF59E0B);
+const _kCream = Color(0xFFFFF8F0);
+const _kGreen = Color(0xFF22C55E);
+const _kRed = Color(0xFFEF4444);
+const _kAmber = Color(0xFFF59E0B);
 
 /// Provider kiểm tra module Bếp có đang bật không
 /// Dùng activeModulesProvider — tự refresh khi session có và khi module config thay đổi
 final kitchenModuleActiveProvider = Provider<bool>((ref) {
-  return ref.watch(activeModulesProvider).maybeWhen(
-    data: (modules) => modules.any((m) => m.id == 'kitchen'),
-    orElse: () => false,
-  );
+  return ref
+      .watch(activeModulesProvider)
+      .maybeWhen(
+        data: (modules) => modules.any((m) => m.id == 'kitchen'),
+        orElse: () => false,
+      );
 });
 
 /// Provider kiểm tra module In Hoá Đơn có đang bật không
 final banBillPrinterModuleActiveProvider = Provider<bool>((ref) {
-  return ref.watch(activeModulesProvider).maybeWhen(
-    data: (modules) => modules.any((m) => m.id == 'bill_printer'),
-    orElse: () => false,
-  );
+  return ref
+      .watch(activeModulesProvider)
+      .maybeWhen(
+        data: (modules) => modules.any((m) => m.id == 'bill_printer'),
+        orElse: () => false,
+      );
 });
-
 
 // Màu preset cho zones
 const _kZoneColors = [
@@ -107,102 +116,109 @@ final banZonesProvider = StreamProvider.autoDispose<List<BanZoneModel>>((ref) {
   return ref.watch(banRepositoryProvider).watchZones();
 });
 
-final banTablesForZoneProvider =
-    StreamProvider.autoDispose.family<List<BanTableModel>, String>((ref, zoneId) {
-  ref.watch(sessionProvider); // Force rebuild on store switch
-  return ref.watch(banRepositoryProvider).watchTablesForZone(zoneId);
-});
+final banTablesForZoneProvider = StreamProvider.autoDispose
+    .family<List<BanTableModel>, String>((ref, zoneId) {
+      ref.watch(sessionProvider); // Force rebuild on store switch
+      return ref.watch(banRepositoryProvider).watchTablesForZone(zoneId);
+    });
 
-final allBanTablesProvider = StreamProvider.autoDispose<List<BanTableModel>>((ref) {
+final allBanTablesProvider = StreamProvider.autoDispose<List<BanTableModel>>((
+  ref,
+) {
   ref.watch(sessionProvider); // Force rebuild on store switch
   return ref.watch(banRepositoryProvider).watchAllTables();
 });
 
 final activeSessionsProvider =
     StreamProvider.autoDispose<Map<String, BanSessionModel>>((ref) {
-  ref.watch(sessionProvider); // Force rebuild on store switch
-  return ref.watch(banRepositoryProvider).watchActiveSessions();
-});
+      ref.watch(sessionProvider); // Force rebuild on store switch
+      return ref.watch(banRepositoryProvider).watchActiveSessions();
+    });
 
-final sessionItemsProvider =
-    StreamProvider.autoDispose.family<List<BanSessionItemModel>, String>((ref, sessionId) {
-  return ref.watch(banRepositoryProvider).watchSessionItems(sessionId);
-});
-
-
-
+final sessionItemsProvider = StreamProvider.autoDispose
+    .family<List<BanSessionItemModel>, String>((ref, sessionId) {
+      return ref.watch(banRepositoryProvider).watchSessionItems(sessionId);
+    });
 
 /// Stream modifiers của 1 sản phẩm (query Supabase thật)
 final productModifiersProvider =
-    StreamProvider.family<List<Map<String, dynamic>>, String>((ref, productId) async* {
-  // Poll mỗi 30s (Supabase realtime không hỗ trợ arbitrary tables dễ)
-  while (true) {
-    try {
-      final rows = await Supabase.instance.client
-          .from('product_modifiers')
-          .select()
-          .eq('product_id', productId)
-          .eq('is_active', true)
-          .order('group_name')
-          .order('sort_order');
-      yield List<Map<String, dynamic>>.from(rows as List);
-    } catch (_) {
-      yield [];
-    }
-    await Future.delayed(const Duration(seconds: 30));
-  }
-});
+    StreamProvider.family<List<Map<String, dynamic>>, String>((
+      ref,
+      productId,
+    ) async* {
+      // Poll mỗi 30s (Supabase realtime không hỗ trợ arbitrary tables dễ)
+      while (true) {
+        try {
+          final rows = await Supabase.instance.client
+              .from('product_modifiers')
+              .select()
+              .eq('product_id', productId)
+              .eq('is_active', true)
+              .order('group_name')
+              .order('sort_order');
+          yield List<Map<String, dynamic>>.from(rows as List);
+        } catch (_) {
+          yield [];
+        }
+        await Future.delayed(const Duration(seconds: 30));
+      }
+    });
 
 // ── Topping catalog — lấy từ bảng products có is_topping=true ─────────────
 final toppingCatalogProvider =
-    StreamProvider.family<List<Map<String, dynamic>>, String>((ref, storeId) async* {
-  while (true) {
-    try {
-      final rows = await Supabase.instance.client
-          .from('products')
-          .select('id, name, sell_price, unit, topping_unit')
-          .eq('store_id', storeId)
-          .eq('is_topping', true)
-          .eq('is_deleted', false)
-          .order('name');
-      yield List<Map<String, dynamic>>.from(rows as List);
-    } catch (_) {
-      yield [];
-    }
-    await Future.delayed(const Duration(seconds: 30));
-  }
-});
-
+    StreamProvider.family<List<Map<String, dynamic>>, String>((
+      ref,
+      storeId,
+    ) async* {
+      while (true) {
+        try {
+          final rows = await Supabase.instance.client
+              .from('products')
+              .select('id, name, sell_price, unit, topping_unit')
+              .eq('store_id', storeId)
+              .eq('is_topping', true)
+              .eq('is_deleted', false)
+              .order('name');
+          yield List<Map<String, dynamic>>.from(rows as List);
+        } catch (_) {
+          yield [];
+        }
+        await Future.delayed(const Duration(seconds: 30));
+      }
+    });
 
 // ── Topping products gắn với 1 sản phẩm (flat list, bảng mới) ────────────────
 final productToppingLinksProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, productId) async {
-  final sb = Supabase.instance.client;
-  try {
-    final links = await sb
-        .from('product_topping_links')
-        .select('topping_id')
-        .eq('product_id', productId);
-    if ((links as List).isEmpty) return [];
-    // Giữ thứ tự theo danh sách links trả về (inserted_at tự nhiên)
-    final orderedIds = links.map((l) => l['topping_id'] as String).toList();
-    final products = await sb
-        .from('products')
-        .select('id, name, sell_price, unit, stock_qty')
-        .inFilter('id', orderedIds)
-        .eq('is_deleted', false);
-    final productList = List<Map<String, dynamic>>.from(products as List);
-    // Sort lại theo thứ tự orderedIds (inFilter không đảm bảo thứ tự)
-    productList.sort((a, b) {
-      final ai = orderedIds.indexOf(a['id'] as String);
-      final bi = orderedIds.indexOf(b['id'] as String);
-      return ai.compareTo(bi);
+    FutureProvider.family<List<Map<String, dynamic>>, String>((
+      ref,
+      productId,
+    ) async {
+      final sb = Supabase.instance.client;
+      try {
+        final links = await sb
+            .from('product_topping_links')
+            .select('topping_id')
+            .eq('product_id', productId);
+        if ((links as List).isEmpty) return [];
+        // Giữ thứ tự theo danh sách links trả về (inserted_at tự nhiên)
+        final orderedIds = links.map((l) => l['topping_id'] as String).toList();
+        final products = await sb
+            .from('products')
+            .select('id, name, sell_price, unit, stock_qty')
+            .inFilter('id', orderedIds)
+            .eq('is_deleted', false);
+        final productList = List<Map<String, dynamic>>.from(products as List);
+        // Sort lại theo thứ tự orderedIds (inFilter không đảm bảo thứ tự)
+        productList.sort((a, b) {
+          final ai = orderedIds.indexOf(a['id'] as String);
+          final bi = orderedIds.indexOf(b['id'] as String);
+          return ai.compareTo(bi);
+        });
+        return productList;
+      } catch (e) {
+        return [];
+      }
     });
-    return productList;
-  } catch (e) {
-    return [];
-  }
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ENUMS
@@ -261,27 +277,41 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     );
     if (result == null) return;
     try {
-      final zones   = await _banRepo.getZones();
-      final zoneId  = const Uuid().v4();
-      final storeId = await StoreAuthService.getStoreInfo().then((m) => m['store_id'] as String? ?? '');
-      if (storeId.isEmpty) throw Exception('Chưa đăng ký quán. Vui lòng đăng xuất và thử lại.');
-      await _banRepo.upsertZone(BanZoneModel(
-        id: zoneId, storeId: storeId,
-        name: result['name'] as String,
-        colorValue: int.tryParse(
-          ((result['color'] as String? ?? '#1C2151')).replaceAll('#', '0xFF')) ?? 0xFF1C2151,
-        iconCode: result['iconCode'] as int,
-        sortOrder: zones.length,
-        isActive: true,
-      ));
+      final zones = await _banRepo.getZones();
+      final zoneId = const Uuid().v4();
+      final storeId = await StoreAuthService.getStoreInfo().then(
+        (m) => m['store_id'] as String? ?? '',
+      );
+      if (storeId.isEmpty)
+        throw Exception('Chưa đăng ký quán. Vui lòng đăng xuất và thử lại.');
+      await _banRepo.upsertZone(
+        BanZoneModel(
+          id: zoneId,
+          storeId: storeId,
+          name: result['name'] as String,
+          colorValue:
+              int.tryParse(
+                ((result['color'] as String? ?? '#1C2151')).replaceAll(
+                  '#',
+                  '0xFF',
+                ),
+              ) ??
+              0xFF1C2151,
+          iconCode: result['iconCode'] as int,
+          sortOrder: zones.length,
+          isActive: true,
+        ),
+      );
       if (mounted) setState(() => _selectedZoneIndex = 0);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Lỗi thêm khu: $e', style: GoogleFonts.outfit()),
-        backgroundColor: _kRed,
-        duration: const Duration(seconds: 6),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi thêm khu: $e', style: GoogleFonts.outfit()),
+          backgroundColor: _kRed,
+          duration: const Duration(seconds: 6),
+        ),
+      );
     }
   }
 
@@ -351,34 +381,45 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     if (result == null) return;
     try {
       final batchCount = (result['batchCount'] as int?) ?? 1;
-      final zoneId   = result['zoneId'] as String;
+      final zoneId = result['zoneId'] as String;
       final baseName = result['name'] as String;
       final capacity = result['capacity'] as int;
       final storeInfo = await StoreAuthService.getStoreInfo();
       final storeId = storeInfo['store_id'] as String? ?? '';
-      if (storeId.isEmpty) throw Exception('Chưa đăng ký quán. Vui lòng đăng xuất và thử lại.');
+      if (storeId.isEmpty)
+        throw Exception('Chưa đăng ký quán. Vui lòng đăng xuất và thử lại.');
       final allTables = await _banRepo.getAllTables();
-      final existingTables = allTables.where((t) => t.zoneId == zoneId).toList();
+      final existingTables = allTables
+          .where((t) => t.zoneId == zoneId)
+          .toList();
       final baseOrder = existingTables.isEmpty
           ? 0
           : existingTables.map((t) => t.sortOrder).reduce(max) + 1;
       for (int i = 0; i < batchCount; i++) {
         final finalName = batchCount == 1 ? baseName : '$baseName ${i + 1}';
         final tableId = const Uuid().v4();
-        await _banRepo.upsertTable(BanTableModel(
-          id: tableId, zoneId: zoneId, storeId: storeId,
-          label: finalName, seats: capacity,
-          sortOrder: baseOrder + i, isActive: true,
-        ));
+        await _banRepo.upsertTable(
+          BanTableModel(
+            id: tableId,
+            zoneId: zoneId,
+            storeId: storeId,
+            label: finalName,
+            seats: capacity,
+            sortOrder: baseOrder + i,
+            isActive: true,
+          ),
+        );
       }
       HapticFeedback.lightImpact();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Lỗi thêm bàn: $e', style: GoogleFonts.outfit()),
-        backgroundColor: _kRed,
-        duration: const Duration(seconds: 6),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi thêm bàn: $e', style: GoogleFonts.outfit()),
+          backgroundColor: _kRed,
+          duration: const Duration(seconds: 6),
+        ),
+      );
     }
   }
 
@@ -419,22 +460,25 @@ class _BanScreenState extends ConsumerState<BanScreen> {
   }
 
   Future<void> _manageSession(
-      BanTableModel table, BanSessionModel session, BanZoneModel zone) async {
+    BanTableModel table,
+    BanSessionModel session,
+    BanZoneModel zone,
+  ) async {
     await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       enableDrag: false,
-      builder: (_) => _TableSessionSheet(
-        table: table,
-        session: session,
-        zone: zone,
-      ),
+      builder: (_) =>
+          _TableSessionSheet(table: table, session: session, zone: zone),
     );
   }
 
   void _showTableOptions(
-      BanTableModel table, BanSessionModel? session, BanZoneModel zone) {
+    BanTableModel table,
+    BanSessionModel? session,
+    BanZoneModel zone,
+  ) {
     HapticFeedback.mediumImpact();
     showModalBottomSheet(
       context: context,
@@ -475,43 +519,58 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           if (result['delete'] == true) {
             await _banRepo.deactivateTable(table.id);
           } else {
-            await _banRepo.upsertTable(BanTableModel(
-              id: table.id, zoneId: result['zoneId'] as String,
-              storeId: table.storeId, label: result['name'] as String,
-              seats: result['capacity'] as int,
-              sortOrder: table.sortOrder, isActive: true,
-            ));
+            await _banRepo.upsertTable(
+              BanTableModel(
+                id: table.id,
+                zoneId: result['zoneId'] as String,
+                storeId: table.storeId,
+                label: result['name'] as String,
+                seats: result['capacity'] as int,
+                sortOrder: table.sortOrder,
+                isActive: true,
+              ),
+            );
           }
         },
-        onTransfer: session == null ? null : () {
-          Navigator.pop(context); // đóng options sheet
-          // Mở transfer sheet trực tiếp từ context menu
-          final activeSessions = ref.read(activeSessionsProvider).value ?? {};
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (_) => _TransferTableSheet(
-              currentTableId: table.id,
-              currentTableLabel: table.label,
-              activeSessions: activeSessions,
-              onConfirm: (newTableId) async {
-                await _banRepo.transferSession(session!.id, newTableId);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('Chuyển bàn thành công!',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-                    backgroundColor: _kGreen,
-                    behavior: SnackBarBehavior.floating,
-                    margin: const EdgeInsets.all(12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ));
-                }
+        onTransfer: session == null
+            ? null
+            : () {
+                Navigator.pop(context); // đóng options sheet
+                // Mở transfer sheet trực tiếp từ context menu
+                final activeSessions =
+                    ref.read(activeSessionsProvider).value ?? {};
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => _TransferTableSheet(
+                    currentTableId: table.id,
+                    currentTableLabel: table.label,
+                    activeSessions: activeSessions,
+                    onConfirm: (newTableId) async {
+                      await _banRepo.transferSession(session!.id, newTableId);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Chuyển bàn thành công!',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            backgroundColor: _kGreen,
+                            behavior: SnackBarBehavior.floating,
+                            margin: const EdgeInsets.all(12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                );
               },
-            ),
-          );
-        },
       ),
     );
   }
@@ -542,7 +601,11 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -560,7 +623,9 @@ class _BanScreenState extends ConsumerState<BanScreen> {
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 5),
             margin: const EdgeInsets.all(12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       });
@@ -593,9 +658,8 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         ),
       ),
       body: zonesAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: _kNavy),
-        ),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(color: _kNavy)),
         error: (e, _) => Center(child: Text('Lỗi: $e')),
         data: (zones) {
           if (_cachedZones.length != zones.length) {
@@ -610,49 +674,53 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           Widget tableGrid = _buildTableGrid(zones);
 
           // ── Tablet: Two Column ──────────────────────────────────────────
-          return LayoutBuilder(builder: (context, constraints) {
-            if (constraints.maxWidth > 700) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Cột trái: ZoneTabBar + Grid bàn
-                  Expanded(flex: 3, child: tableGrid),
-                  // Cột phải: Panel tổng quan (fixed 280px)
-                  SizedBox(
-                    width: 280,
-                    child: _BanRightPanel(zones: zones),
-                  ),
-                ],
-              );
-            }
-            // Phone: layout cũ, không thay đổi gì
-            return tableGrid;
-          });
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth > 700) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Cột trái: ZoneTabBar + Grid bàn
+                    Expanded(flex: 3, child: tableGrid),
+                    // Cột phải: Panel tổng quan (fixed 280px)
+                    SizedBox(width: 280, child: _BanRightPanel(zones: zones)),
+                  ],
+                );
+              }
+              // Phone: layout cũ, không thay đổi gì
+              return tableGrid;
+            },
+          );
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'ban_screen_fab',
         onPressed: () {
-          final zoneId = _selectedZoneIndex > 0 &&
+          final zoneId =
+              _selectedZoneIndex > 0 &&
                   _selectedZoneIndex - 1 < _cachedZones.length
               ? _cachedZones[_selectedZoneIndex - 1].id
               : null;
           _addTable(zoneId);
         },
-          backgroundColor: _kNavy,
-          icon: const Icon(Icons.add_rounded, color: Colors.white),
-          label: Text(
-            'Thêm bàn',
-            style: GoogleFonts.outfit(
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
+        backgroundColor: _kNavy,
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: Text(
+          'Thêm bàn',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
           ),
         ),
+      ),
     );
   }
 
-  Widget _buildFilterChip({required String label, required String value, required Color color}) {
+  Widget _buildFilterChip({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
     final isSelected = _statusFilter == value;
     return GestureDetector(
       onTap: () => setState(() => _statusFilter = value),
@@ -744,11 +812,24 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     final isMobile = Responsive.isMobile(context);
     final isTablet = Responsive.isTablet(context);
     if (_tableCardSize == 'nho') {
-      return isMobile ? 4 : isTablet ? 5 : 6;
+      return isMobile
+          ? 4
+          : isTablet
+          ? 5
+          : 6;
     } else if (_tableCardSize == 'vua') {
-      return isMobile ? 3 : isTablet ? 4 : 5;
-    } else { // 'to'
-      return isMobile ? 2 : isTablet ? 3 : 4;
+      return isMobile
+          ? 3
+          : isTablet
+          ? 4
+          : 5;
+    } else {
+      // 'to'
+      return isMobile
+          ? 2
+          : isTablet
+          ? 3
+          : 4;
     }
   }
 
@@ -758,7 +839,8 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       return isMobile ? 0.78 : 1.15;
     } else if (_tableCardSize == 'vua') {
       return isMobile ? 0.84 : 1.3;
-    } else { // 'to'
+    } else {
+      // 'to'
       return isMobile ? 0.88 : 1.45;
     }
   }
@@ -768,226 +850,320 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     final activeSessionsAsync = ref.watch(activeSessionsProvider);
     final allTablesAsync = ref.watch(allBanTablesProvider);
 
-    return Column(children: [
-      _ZoneTabBar(
-        zones: zones,
-        selectedIndex: _selectedZoneIndex,
-        onSelect: (i) => setState(() => _selectedZoneIndex = i),
-        onLongPress: (zone) => _editZone(zone),
-        onAddZone: _addZone,
-      ),
-      Container(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-        color: Colors.white,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _buildFilterChip(label: 'Tất cả bàn', value: 'all', color: _kNavy),
-              const SizedBox(width: 8),
-              _buildFilterChip(label: 'Đang có khách', value: 'occupied', color: _kRed),
-              const SizedBox(width: 8),
-              _buildFilterChip(label: 'Bàn trống', value: 'empty', color: _kGreen),
-              const SizedBox(width: 16),
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade300.withValues(alpha: 0.8)),
+    return Column(
+      children: [
+        _ZoneTabBar(
+          zones: zones,
+          selectedIndex: _selectedZoneIndex,
+          onSelect: (i) => setState(() => _selectedZoneIndex = i),
+          onLongPress: (zone) => _editZone(zone),
+          onAddZone: _addZone,
+        ),
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          color: Colors.white,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildFilterChip(
+                  label: 'Tất cả bàn',
+                  value: 'all',
+                  color: _kNavy,
                 ),
-                child: Row(
-                  children: [
-                    _buildSizeToggleItem('to', 'To'),
-                    _buildSizeToggleItem('vua', 'Vừa'),
-                    _buildSizeToggleItem('nho', 'Nhỏ'),
-                  ],
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  label: 'Đang có khách',
+                  value: 'occupied',
+                  color: _kRed,
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  label: 'Bàn trống',
+                  value: 'empty',
+                  color: _kGreen,
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.grey.shade300.withValues(alpha: 0.8),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      _buildSizeToggleItem('to', 'To'),
+                      _buildSizeToggleItem('vua', 'Vừa'),
+                      _buildSizeToggleItem('nho', 'Nhỏ'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      const Divider(height: 1, color: Color(0xFFEEEBE6)),
-      Expanded(
-        child: activeSessionsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('$e')),
-          data: (activeSessions) {
-            return allTablesAsync.when(
-              loading: () => const SizedBox(),
-              error: (e, _) => const SizedBox(),
-              data: (allTables) {
-                if (allTables.isEmpty) {
-                  return _EmptyState(
-                    onAddZone: _addZone,
-                    onAddTable: () => _addTable(null),
-                  );
-                }
-                final zoneFiltered = _selectedZoneIndex == 0
-                    ? allTables
-                    : zones.isNotEmpty &&
+        const Divider(height: 1, color: Color(0xFFEEEBE6)),
+        Expanded(
+          child: activeSessionsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('$e')),
+            data: (activeSessions) {
+              return allTablesAsync.when(
+                loading: () => const SizedBox(),
+                error: (e, _) => const SizedBox(),
+                data: (allTables) {
+                  if (allTables.isEmpty) {
+                    return _EmptyState(
+                      onAddZone: _addZone,
+                      onAddTable: () => _addTable(null),
+                    );
+                  }
+                  final zoneFiltered = _selectedZoneIndex == 0
+                      ? allTables
+                      : zones.isNotEmpty &&
                             _selectedZoneIndex - 1 < zones.length
-                        ? allTables
-                            .where((t) =>
-                                t.zoneId ==
-                                zones[_selectedZoneIndex - 1].id)
+                      ? allTables
+                            .where(
+                              (t) =>
+                                  t.zoneId == zones[_selectedZoneIndex - 1].id,
+                            )
                             .toList()
-                        : allTables;
+                      : allTables;
 
-                var filtered = zoneFiltered;
-                if (_statusFilter == 'occupied') {
-                  filtered = zoneFiltered.where((t) => activeSessions.containsKey(t.id)).toList();
-                } else if (_statusFilter == 'empty') {
-                  filtered = zoneFiltered.where((t) => !activeSessions.containsKey(t.id)).toList();
-                }
+                  var filtered = zoneFiltered;
+                  if (_statusFilter == 'occupied') {
+                    filtered = zoneFiltered
+                        .where((t) => activeSessions.containsKey(t.id))
+                        .toList();
+                  } else if (_statusFilter == 'empty') {
+                    filtered = zoneFiltered
+                        .where((t) => !activeSessions.containsKey(t.id))
+                        .toList();
+                  }
 
-                if (filtered.isEmpty) {
-                  if (_statusFilter != 'all') {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 40),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              _statusFilter == 'occupied' ? Icons.people_outline_rounded : Icons.check_circle_outline_rounded,
-                              size: 48,
-                              color: const Color(0xFF9E9085),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              _statusFilter == 'occupied' ? 'Hiện tại không có bàn nào có khách' : 'Không có bàn nào trống',
-                              style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF9E9085), fontWeight: FontWeight.w600),
-                            ),
-                          ],
+                  if (filtered.isEmpty) {
+                    if (_statusFilter != 'all') {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _statusFilter == 'occupied'
+                                    ? Icons.people_outline_rounded
+                                    : Icons.check_circle_outline_rounded,
+                                size: 48,
+                                color: const Color(0xFF9E9085),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                _statusFilter == 'occupied'
+                                    ? 'Hiện tại không có bàn nào có khách'
+                                    : 'Không có bàn nào trống',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 14,
+                                  color: const Color(0xFF9E9085),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                      );
+                    }
+
+                    return _EmptyState(
+                      onAddZone: _addZone,
+                      onAddTable: () => _addTable(
+                        _selectedZoneIndex > 0 &&
+                                _selectedZoneIndex - 1 < zones.length
+                            ? zones[_selectedZoneIndex - 1].id
+                            : null,
                       ),
                     );
                   }
 
-                  return _EmptyState(
-                    onAddZone: _addZone,
-                    onAddTable: () => _addTable(
-                      _selectedZoneIndex > 0 &&
-                              _selectedZoneIndex - 1 < zones.length
-                          ? zones[_selectedZoneIndex - 1].id
-                          : null,
-                    ),
-                  );
-                }
-
-                // "Tất cả" — hiển thị phân nhóm theo khu vực
-                if (_selectedZoneIndex == 0) {
-                  return CustomScrollView(
-                    slivers: zones.map((zone) {
-                      final zoneTables = filtered
-                          .where((t) => t.zoneId == zone.id)
-                          .toList();
-                      if (zoneTables.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
-                      final zoneColor = Color(zone.colorValue);
-                      return SliverMainAxisGroup(slivers: [
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                            child: Row(children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: zoneColor,
-                                  borderRadius: BorderRadius.circular(10),
+                  // "Tất cả" — hiển thị phân nhóm theo khu vực
+                  if (_selectedZoneIndex == 0) {
+                    return CustomScrollView(
+                      slivers:
+                          zones.map((zone) {
+                            final zoneTables = filtered
+                                .where((t) => t.zoneId == zone.id)
+                                .toList();
+                            if (zoneTables.isEmpty)
+                              return const SliverToBoxAdapter(
+                                child: SizedBox.shrink(),
+                              );
+                            final zoneColor = Color(zone.colorValue);
+                            return SliverMainAxisGroup(
+                              slivers: [
+                                SliverToBoxAdapter(
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      16,
+                                      16,
+                                      8,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: zoneColor,
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                IconData(
+                                                  zone.iconCode,
+                                                  fontFamily: 'MaterialIcons',
+                                                ),
+                                                color: Colors.white,
+                                                size: 14,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                zone.name,
+                                                style: GoogleFonts.outfit(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          '${zoneTables.length} bàn  •  '
+                                          '${zoneTables.where((t) => activeSessions.containsKey(t.id)).length} có khách',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: _kNavy.withValues(
+                                              alpha: 0.65,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                  Icon(IconData(zone.iconCode, fontFamily: 'MaterialIcons'),
-                                      color: Colors.white, size: 14),
-                                  const SizedBox(width: 6),
-                                  Text(zone.name,
-                                      style: GoogleFonts.outfit(
-                                          fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-                                ]),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${zoneTables.length} bàn  •  '
-                                '${zoneTables.where((t) => activeSessions.containsKey(t.id)).length} có khách',
-                                style: GoogleFonts.outfit(
-                                    fontSize: 12, fontWeight: FontWeight.w600,
-                                    color: _kNavy.withValues(alpha: 0.65)),
-                              ),
-                            ]),
-                          ),
-                        ),
-                        SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          sliver: SliverGrid(
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: _getCrossAxisCount(context),
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: _getAspectRatio(context),
+                                SliverPadding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  sliver: SliverGrid(
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: _getCrossAxisCount(
+                                            context,
+                                          ),
+                                          crossAxisSpacing: 12,
+                                          mainAxisSpacing: 12,
+                                          childAspectRatio: _getAspectRatio(
+                                            context,
+                                          ),
+                                        ),
+                                    delegate: SliverChildBuilderDelegate((
+                                      ctx,
+                                      i,
+                                    ) {
+                                      final table = zoneTables[i];
+                                      final session = activeSessions[table.id];
+                                      return _TableCard(
+                                        table: table,
+                                        session: session,
+                                        zone: zone,
+                                        cardSize: _tableCardSize,
+                                        onTap: () => session != null
+                                            ? _manageSession(
+                                                table,
+                                                session,
+                                                zone,
+                                              )
+                                            : _openTable(table, zone),
+                                        onLongPress: () => _showTableOptions(
+                                          table,
+                                          session,
+                                          zone,
+                                        ),
+                                      );
+                                    }, childCount: zoneTables.length),
+                                  ),
+                                ),
+                                SliverToBoxAdapter(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 4,
+                                    ),
+                                    child: Divider(
+                                      height: 1,
+                                      color: _kNavy.withValues(alpha: 0.07),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList()..add(
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: 80),
                             ),
-                            delegate: SliverChildBuilderDelegate(
-                              (ctx, i) {
-                                final table = zoneTables[i];
-                                final session = activeSessions[table.id];
-                                return _TableCard(
-                                  table: table, session: session, zone: zone,
-                                  cardSize: _tableCardSize,
-                                  onTap: () => session != null
-                                      ? _manageSession(table, session, zone)
-                                      : _openTable(table, zone),
-                                  onLongPress: () => _showTableOptions(table, session, zone),
-                                );
-                              },
-                              childCount: zoneTables.length,
-                            ),
                           ),
-                        ),
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                            child: Divider(height: 1, color: _kNavy.withValues(alpha: 0.07)),
-                          ),
-                        ),
-                      ]);
-                    }).toList()
-                      ..add(const SliverToBoxAdapter(child: SizedBox(height: 80))),
-                  );
-                }
+                    );
+                  }
 
-                // Zone cụ thể
-                return GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _getCrossAxisCount(context),
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: _getAspectRatio(context),
-                  ),
-                  itemCount: filtered.length,
-                  itemBuilder: (ctx, i) {
-                    final table = filtered[i];
-                    final session = activeSessions[table.id];
-                    final zone = zones.firstWhere(
-                      (z) => z.id == table.zoneId,
-                      orElse: () => zones.first,
-                    );
-                    return _TableCard(
-                      table: table, session: session, zone: zone,
-                      cardSize: _tableCardSize,
-                      onTap: () => session != null
-                          ? _manageSession(table, session, zone)
-                          : _openTable(table, zone),
-                      onLongPress: () => _showTableOptions(table, session, zone),
-                    );
-                  },
-                );
-              },
-            );
-          },
+                  // Zone cụ thể
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _getCrossAxisCount(context),
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: _getAspectRatio(context),
+                    ),
+                    itemCount: filtered.length,
+                    itemBuilder: (ctx, i) {
+                      final table = filtered[i];
+                      final session = activeSessions[table.id];
+                      final zone = zones.firstWhere(
+                        (z) => z.id == table.zoneId,
+                        orElse: () => zones.first,
+                      );
+                      return _TableCard(
+                        table: table,
+                        session: session,
+                        zone: zone,
+                        cardSize: _tableCardSize,
+                        onTap: () => session != null
+                            ? _manageSession(table, session, zone)
+                            : _openTable(table, zone),
+                        onLongPress: () =>
+                            _showTableOptions(table, session, zone),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 }
 
@@ -1000,25 +1176,27 @@ class _BanRightPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final allTablesAsync      = ref.watch(allBanTablesProvider);
+    final allTablesAsync = ref.watch(allBanTablesProvider);
     final activeSessionsAsync = ref.watch(activeSessionsProvider);
 
     return Container(
       color: const Color(0xFFF5F0EA),
       child: allTablesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error:   (e, _) => const SizedBox(),
+        error: (e, _) => const SizedBox(),
         data: (allTables) => activeSessionsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error:   (e, _) => const SizedBox(),
+          error: (e, _) => const SizedBox(),
           data: (activeSessions) {
             final occupied = allTables
                 .where((t) => activeSessions.containsKey(t.id))
                 .toList();
             final emptyCount = allTables.length - occupied.length;
 
-            final totalGuests = activeSessions.values
-                .fold<int>(0, (s, sess) => s + sess.guestCount);
+            final totalGuests = activeSessions.values.fold<int>(
+              0,
+              (s, sess) => s + sess.guestCount,
+            );
 
             return ListView(
               padding: const EdgeInsets.fromLTRB(12, 16, 12, 80),
@@ -1027,31 +1205,33 @@ class _BanRightPanel extends ConsumerWidget {
                 _RightCard(
                   title: 'Tổng quan',
                   icon: Icons.dashboard_rounded,
-                  child: Column(children: [
-                    _StatusRow(
-                      label: 'Trống',
-                      value: '$emptyCount bàn',
-                      color: const Color(0xFF2E7D32),
-                    ),
-                    const Divider(height: 1),
-                    _StatusRow(
-                      label: 'Đang phục vụ',
-                      value: '${occupied.length} bàn',
-                      color: const Color(0xFFE65100),
-                    ),
-                    const Divider(height: 1),
-                    _StatusRow(
-                      label: 'Tổng',
-                      value: '${allTables.length} bàn',
-                      color: _kNavy,
-                    ),
-                    const Divider(height: 1),
-                    _StatusRow(
-                      label: 'Số khách',
-                      value: '$totalGuests người',
-                      color: const Color(0xFF1565C0),
-                    ),
-                  ]),
+                  child: Column(
+                    children: [
+                      _StatusRow(
+                        label: 'Trống',
+                        value: '$emptyCount bàn',
+                        color: const Color(0xFF2E7D32),
+                      ),
+                      const Divider(height: 1),
+                      _StatusRow(
+                        label: 'Đang phục vụ',
+                        value: '${occupied.length} bàn',
+                        color: const Color(0xFFE65100),
+                      ),
+                      const Divider(height: 1),
+                      _StatusRow(
+                        label: 'Tổng',
+                        value: '${allTables.length} bàn',
+                        color: _kNavy,
+                      ),
+                      const Divider(height: 1),
+                      _StatusRow(
+                        label: 'Số khách',
+                        value: '$totalGuests người',
+                        color: const Color(0xFF1565C0),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
 
@@ -1066,7 +1246,9 @@ class _BanRightPanel extends ConsumerWidget {
                             'Chưa có bàn nào có khách',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.outfit(
-                                fontSize: 12, color: const Color(0xFF9E9085)),
+                              fontSize: 12,
+                              color: const Color(0xFF9E9085),
+                            ),
                           ),
                         )
                       : Column(
@@ -1095,9 +1277,9 @@ class _BanRightPanel extends ConsumerWidget {
 
 /// Row bàn đang phục vụ — watch sessionItems riêng để lấy số tiền
 class _ActiveTableRow extends ConsumerWidget {
-  final BanTableModel   table;
+  final BanTableModel table;
   final BanSessionModel session;
-  final BanZoneModel    zone;
+  final BanZoneModel zone;
   const _ActiveTableRow({
     required this.table,
     required this.session,
@@ -1107,19 +1289,27 @@ class _ActiveTableRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final itemsAsync = ref.watch(sessionItemsProvider(session.id));
-    final activeItems = itemsAsync.value?.where((i) => i.kitchenStatus != 'huy') ?? [];
+    final activeItems =
+        itemsAsync.value?.where((i) => i.kitchenStatus != 'huy') ?? [];
     final total = activeItems.fold<double>(0, (s, item) => s + item.subtotal);
-    final totalQty = activeItems.fold<double>(0, (sum, item) => sum + item.quantity).toInt();
-    final waiters = activeItems.map((i) => i.addedBy).where((name) => name != null && name.isNotEmpty).toSet().join(', ');
+    final totalQty = activeItems
+        .fold<double>(0, (sum, item) => sum + item.quantity)
+        .toInt();
+    final waiters = activeItems
+        .map((i) => i.addedBy)
+        .where((name) => name != null && name.isNotEmpty)
+        .toSet()
+        .join(', ');
 
-    final elapsed = DateTime.now()
-        .difference(DateTime.fromMillisecondsSinceEpoch(session.openedAt));
+    final elapsed = DateTime.now().difference(
+      DateTime.fromMillisecondsSinceEpoch(session.openedAt),
+    );
     final minutes = elapsed.inMinutes;
     final timeStr = minutes >= 60
         ? '${elapsed.inHours}h${(minutes % 60).toString().padLeft(2, '0')}p'
         : '${minutes}p';
 
-    final isLong  = minutes > 180; // > 3 tiếng → cảnh báo
+    final isLong = minutes > 180; // > 3 tiếng → cảnh báo
     final zoneColor = Color(zone.colorValue);
 
     return Padding(
@@ -1128,89 +1318,120 @@ class _ActiveTableRow extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Hàng 1: Dot + Tên bàn + Thời gian + Nút đóng
-          Row(children: [
-            Container(
-              width: 8, height: 8,
-              decoration: BoxDecoration(color: zoneColor, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                table.label,
-                style: GoogleFonts.outfit(
-                    fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy),
-              ),
-            ),
-            if (isLong)
-              const Icon(Icons.warning_amber_rounded,
-                  size: 13, color: Color(0xFFC62828)),
-            const SizedBox(width: 2),
-            Text(
-              timeStr,
-              style: GoogleFonts.outfit(
-                fontSize: 11, fontWeight: FontWeight.w600,
-                color: isLong ? const Color(0xFFC62828) : const Color(0xFF9E9085),
-              ),
-            ),
-            // Nút đóng session — hit area 26x26
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => _confirmClose(context, ref, total),
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  width: 26, height: 26,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFEBEE),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(Icons.close_rounded,
-                      size: 14, color: Color(0xFFC62828)),
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: zoneColor,
+                  shape: BoxShape.circle,
                 ),
               ),
-            ),
-          ]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  table.label,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _kNavy,
+                  ),
+                ),
+              ),
+              if (isLong)
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  size: 13,
+                  color: Color(0xFFC62828),
+                ),
+              const SizedBox(width: 2),
+              Text(
+                timeStr,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isLong
+                      ? const Color(0xFFC62828)
+                      : const Color(0xFF9E9085),
+                ),
+              ),
+              // Nút đóng session — hit area 26x26
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _confirmClose(context, ref, total),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    width: 26,
+                    height: 26,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFEBEE),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 14,
+                      color: Color(0xFFC62828),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
           // Hàng 2: Zone + số khách + số món + số tiền
           Padding(
             padding: const EdgeInsets.only(left: 16, top: 2),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  Flexible(
-                    child: Text(
-                      zone.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.outfit(
-                        fontSize: 11,
-                        color: const Color(0xFF9E9085),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        zone.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          color: const Color(0xFF9E9085),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  // Số khách
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE3F2FD),
-                      borderRadius: BorderRadius.circular(4),
+                    const SizedBox(width: 6),
+                    // Số khách
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE3F2FD),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${session.guestCount} khách • $totalQty món',
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1565C0),
+                        ),
+                      ),
                     ),
-                    child: Text(
-                      '${session.guestCount} khách • $totalQty món',
-                      style: GoogleFonts.outfit(
-                        fontSize: 10, fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1565C0)),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Spacer(),
-                  if (total > 0)
-                    Text(fmtVnd(total),
-                      style: GoogleFonts.outfit(
-                        fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy)),
-                ]),
+                    const SizedBox(width: 4),
+                    const Spacer(),
+                    if (total > 0)
+                      Text(
+                        fmtVnd(total),
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: _kNavy,
+                        ),
+                      ),
+                  ],
+                ),
                 if (waiters.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
@@ -1237,14 +1458,19 @@ class _ActiveTableRow extends ConsumerWidget {
   }
 
   Future<void> _confirmClose(
-      BuildContext context, WidgetRef ref, double total) async {
+    BuildContext context,
+    WidgetRef ref,
+    double total,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       useRootNavigator: true,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Đóng session "${table.label}"?',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16)),
+        title: Text(
+          'Đóng session "${table.label}"?',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16),
+        ),
         content: Text(
           'Session này đang mở ${_elapsedStr()}. Bạn có chắc muốn đóng không?',
           style: GoogleFonts.outfit(fontSize: 14),
@@ -1257,12 +1483,18 @@ class _ActiveTableRow extends ConsumerWidget {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC62828),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Đóng session',
-                style: GoogleFonts.outfit(
-                    color: Colors.white, fontWeight: FontWeight.w700)),
+            child: Text(
+              'Đóng session',
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -1273,8 +1505,9 @@ class _ActiveTableRow extends ConsumerWidget {
   }
 
   String _elapsedStr() {
-    final elapsed = DateTime.now()
-        .difference(DateTime.fromMillisecondsSinceEpoch(session.openedAt));
+    final elapsed = DateTime.now().difference(
+      DateTime.fromMillisecondsSinceEpoch(session.openedAt),
+    );
     final m = elapsed.inMinutes;
     return m >= 60 ? '${elapsed.inHours}h${m % 60}p' : '${m}p';
   }
@@ -1287,46 +1520,88 @@ class _RightCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Widget child;
-  const _RightCard({required this.title, required this.icon, required this.child});
+  const _RightCard({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
-      boxShadow: [BoxShadow(
-        color: _kNavy.withValues(alpha: 0.07), blurRadius: 8, offset: const Offset(0, 2))],
+      boxShadow: [
+        BoxShadow(
+          color: _kNavy.withValues(alpha: 0.07),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
     ),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-        child: Row(children: [
-          Icon(icon, size: 16, color: _kNavy),
-          const SizedBox(width: 6),
-          Text(title, style: GoogleFonts.outfit(
-            fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
-        ]),
-      ),
-      const Divider(height: 1),
-      Padding(padding: const EdgeInsets.all(14), child: child),
-    ]),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: _kNavy),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: _kNavy,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Padding(padding: const EdgeInsets.all(14), child: child),
+      ],
+    ),
   );
 }
 
 class _StatusRow extends StatelessWidget {
   final String label, value;
   final Color color;
-  const _StatusRow({required this.label, required this.value, required this.color});
+  const _StatusRow({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Row(children: [
-      Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 8),
-      Expanded(child: Text(label, style: GoogleFonts.outfit(fontSize: 13, color: _kNavy))),
-      Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
-    ]),
+    child: Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.outfit(fontSize: 13, color: _kNavy),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    ),
   );
 }
 
@@ -1438,8 +1713,8 @@ class _ZoneChip extends StatelessWidget {
             color: isDashed
                 ? color.withValues(alpha: 0.4)
                 : isSelected
-                    ? color
-                    : color.withValues(alpha: 0.3),
+                ? color
+                : color.withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -1496,139 +1771,238 @@ class _TableCard extends ConsumerWidget {
         ? ref.watch(sessionItemsProvider(session!.id))
         : null;
 
-    final activeItems = itemsAsync?.value?.where((i) => i.kitchenStatus != 'huy') ?? [];
-    final totalAmount = activeItems.fold<double>(0, (sum, item) => sum + item.subtotal);
-    final totalQty = activeItems.fold<double>(0, (sum, item) => sum + item.quantity).toInt();
-    final waiters = activeItems.map((i) => i.addedBy).where((name) => name != null && name.isNotEmpty).toSet().join(', ');
+    final activeItems =
+        itemsAsync?.value?.where((i) => i.kitchenStatus != 'huy') ?? [];
+    final totalAmount = activeItems.fold<double>(
+      0,
+      (sum, item) => sum + item.subtotal,
+    );
+    final totalQty = activeItems
+        .fold<double>(0, (sum, item) => sum + item.quantity)
+        .toInt();
+    final waiters = activeItems
+        .map((i) => i.addedBy)
+        .where((name) => name != null && name.isNotEmpty)
+        .toSet()
+        .join(', ');
+
+    // QR Calling check for this table
+    final pendingQrReqs = ref.watch(pendingTableQrRequestsProvider);
+    final pendingForTable = pendingQrReqs
+        .where((r) => r.tableId == table.id)
+        .toList();
+    final hasPendingQr = pendingForTable.isNotEmpty;
 
     // Kích thước động theo cardSize
-    final double paddingVal = cardSize == 'nho' ? 8.0 : cardSize == 'vua' ? 11.0 : 14.0;
-    final double iconSizeVal = cardSize == 'nho' ? 16.0 : cardSize == 'vua' ? 20.0 : 24.0;
-    final double statusFontSize = cardSize == 'nho' ? 9.0 : cardSize == 'vua' ? 10.0 : 11.0;
-    final double labelFontSize = cardSize == 'nho' ? 15.0 : cardSize == 'vua' ? 18.5 : 22.0;
-    final double infoFontSize = cardSize == 'nho' ? 10.5 : cardSize == 'vua' ? 11.5 : 13.0;
-    final double amountFontSize = cardSize == 'nho' ? 13.0 : cardSize == 'vua' ? 15.5 : 18.0;
+    final double paddingVal = cardSize == 'nho'
+        ? 8.0
+        : cardSize == 'vua'
+        ? 11.0
+        : 14.0;
+    final double iconSizeVal = cardSize == 'nho'
+        ? 16.0
+        : cardSize == 'vua'
+        ? 20.0
+        : 24.0;
+    final double statusFontSize = cardSize == 'nho'
+        ? 9.0
+        : cardSize == 'vua'
+        ? 10.0
+        : 11.0;
+    final double labelFontSize = cardSize == 'nho'
+        ? 15.0
+        : cardSize == 'vua'
+        ? 18.5
+        : 22.0;
+    final double infoFontSize = cardSize == 'nho'
+        ? 10.5
+        : cardSize == 'vua'
+        ? 11.5
+        : 13.0;
+    final double amountFontSize = cardSize == 'nho'
+        ? 13.0
+        : cardSize == 'vua'
+        ? 15.5
+        : 18.0;
 
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        decoration: BoxDecoration(
-          color: isOccupied ? zoneColor : Colors.white,
-          borderRadius: BorderRadius.circular(cardSize == 'nho' ? 12 : 16),
-          border: Border.all(
-            color: isOccupied
-                ? zoneColor
-                : zoneColor.withValues(alpha: 0.3),
-            width: isOccupied ? 0 : 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isOccupied
-                  ? zoneColor.withValues(alpha: 0.3)
-                  : Colors.black.withValues(alpha: 0.05),
-              blurRadius: isOccupied ? 12 : 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(paddingVal),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(
-                    IconData(zone.iconCode, fontFamily: 'MaterialIcons'),
-                    size: iconSizeVal,
-                    color: isOccupied
-                        ? Colors.white.withValues(alpha: 0.8)
-                        : Color(zone.colorValue),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: cardSize == 'nho' ? 6 : cardSize == 'vua' ? 8 : 10,
-                      vertical: cardSize == 'nho' ? 2 : cardSize == 'vua' ? 3 : 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isOccupied
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : _kGreen.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(cardSize == 'nho' ? 6 : 8),
-                    ),
-                    child: Text(
-                      isOccupied ? '● Có khách' : '○ Trống',
-                      style: GoogleFonts.outfit(
-                        fontSize: statusFontSize,
-                        fontWeight: FontWeight.w600,
-                        color: isOccupied ? Colors.white : _kGreen,
-                      ),
-                    ),
-                  ),
-                ],
+    final borderRadiusVal = BorderRadius.circular(cardSize == 'nho' ? 12 : 16);
+
+    return _PulsingTableBorder(
+      isPulsing: hasPendingQr,
+      borderRadius: borderRadiusVal,
+      child: GestureDetector(
+        onTap: () {
+          if (hasPendingQr) {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => QrOrderReviewSheet(
+                request: pendingForTable.first,
+                onApproved: () {},
+                onRejected: () {},
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    table.label,
-                    style: GoogleFonts.outfit(
-                      fontSize: labelFontSize,
-                      fontWeight: FontWeight.w900,
-                      color: isOccupied ? Colors.white : _kNavy,
+            );
+          } else {
+            onTap();
+          }
+        },
+        onLongPress: onLongPress,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color: isOccupied ? zoneColor : Colors.white,
+            borderRadius: borderRadiusVal,
+            border: Border.all(
+              color: isOccupied ? zoneColor : zoneColor.withValues(alpha: 0.3),
+              width: isOccupied ? 0 : 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isOccupied
+                    ? zoneColor.withValues(alpha: 0.3)
+                    : Colors.black.withValues(alpha: 0.05),
+                blurRadius: isOccupied ? 12 : 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(paddingVal),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Icon(
+                      IconData(zone.iconCode, fontFamily: 'MaterialIcons'),
+                      size: iconSizeVal,
+                      color: isOccupied
+                          ? Colors.white.withValues(alpha: 0.8)
+                          : Color(zone.colorValue),
                     ),
-                  ),
-                  SizedBox(height: cardSize == 'nho' ? 0 : 2),
-                   if (isOccupied) ...[
+                    if (hasPendingQr)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.bolt_rounded,
+                              size: 12,
+                              color: Colors.black,
+                            ),
+                            Text(
+                              'QR (${pendingForTable.first.items.length})',
+                              style: GoogleFonts.outfit(
+                                fontSize: statusFontSize,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: cardSize == 'nho'
+                              ? 6
+                              : cardSize == 'vua'
+                              ? 8
+                              : 10,
+                          vertical: cardSize == 'nho'
+                              ? 2
+                              : cardSize == 'vua'
+                              ? 3
+                              : 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isOccupied
+                              ? Colors.white.withValues(alpha: 0.2)
+                              : _kGreen.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(
+                            cardSize == 'nho' ? 6 : 8,
+                          ),
+                        ),
+                        child: Text(
+                          isOccupied ? '● Có khách' : '○ Trống',
+                          style: GoogleFonts.outfit(
+                            fontSize: statusFontSize,
+                            fontWeight: FontWeight.w600,
+                            color: isOccupied ? Colors.white : _kGreen,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      '${session!.guestCount} khách • $totalQty món',
+                      table.label,
                       style: GoogleFonts.outfit(
-                        fontSize: infoFontSize,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: labelFontSize,
+                        fontWeight: FontWeight.w900,
+                        color: isOccupied ? Colors.white : _kNavy,
                       ),
                     ),
-                    if (waiters.isNotEmpty && cardSize != 'nho') ...[
-                      const SizedBox(height: 1),
+                    SizedBox(height: cardSize == 'nho' ? 0 : 2),
+                    if (isOccupied) ...[
                       Text(
-                        'NV: $waiters',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        '${session!.guestCount} khách • $totalQty món',
                         style: GoogleFonts.outfit(
-                          fontSize: infoFontSize - 1.5,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white.withValues(alpha: 0.75),
+                          fontSize: infoFontSize,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                      if (waiters.isNotEmpty && cardSize != 'nho') ...[
+                        const SizedBox(height: 1),
+                        Text(
+                          'NV: $waiters',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.outfit(
+                            fontSize: infoFontSize - 1.5,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white.withValues(alpha: 0.75),
+                          ),
+                        ),
+                      ],
+                    ] else
+                      Text(
+                        '${table.seats} chỗ',
+                        style: GoogleFonts.outfit(
+                          fontSize: infoFontSize,
+                          fontWeight: FontWeight.w500,
+                          color: _kNavy.withValues(alpha: 0.55),
+                        ),
+                      ),
+                    if (isOccupied && totalAmount > 0) ...[
+                      SizedBox(height: cardSize == 'nho' ? 2 : 6),
+                      Text(
+                        fmtVnd(totalAmount),
+                        style: GoogleFonts.outfit(
+                          fontSize: amountFontSize,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
                         ),
                       ),
                     ],
-                  ] else
-                    Text(
-                      '${table.seats} chỗ',
-                      style: GoogleFonts.outfit(
-                        fontSize: infoFontSize,
-                        fontWeight: FontWeight.w500,
-                        color: _kNavy.withValues(alpha: 0.55),
-                      ),
-                    ),
-                  if (isOccupied && totalAmount > 0) ...[
-                    SizedBox(height: cardSize == 'nho' ? 2 : 6),
-                    Text(
-                      fmtVnd(totalAmount),
-                      style: GoogleFonts.outfit(
-                        fontSize: amountFontSize,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
                   ],
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1684,13 +2058,16 @@ class _EmptyState extends StatelessWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
                 icon: const Icon(Icons.add_rounded),
                 label: Text(
                   'Bắt đầu thiết lập ngay',
                   style: GoogleFonts.outfit(
-                      fontWeight: FontWeight.w700, fontSize: 15),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
               ),
             ),
@@ -1708,7 +2085,11 @@ class _OpenTableSheet extends StatefulWidget {
   final BanTableModel table;
   final BanZoneModel zone;
   final Future<BanSessionModel> Function(int count) onOpen;
-  const _OpenTableSheet({required this.table, required this.zone, required this.onOpen});
+  const _OpenTableSheet({
+    required this.table,
+    required this.zone,
+    required this.onOpen,
+  });
 
   @override
   State<_OpenTableSheet> createState() => _OpenTableSheetState();
@@ -1745,7 +2126,10 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                 ),
                 const SizedBox(height: 20),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: zoneColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -1754,7 +2138,10 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        IconData(widget.zone.iconCode, fontFamily: 'MaterialIcons'),
+                        IconData(
+                          widget.zone.iconCode,
+                          fontFamily: 'MaterialIcons',
+                        ),
                         size: 20,
                         color: zoneColor,
                       ),
@@ -1841,11 +2228,17 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                                   setState(() => _isLoading = false);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Lỗi mở bàn: $e',
-                                          style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                                      content: Text(
+                                        'Lỗi mở bàn: $e',
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                       backgroundColor: _kRed,
                                       behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                     ),
                                   );
                                 }
@@ -1854,9 +2247,12 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: zoneColor,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor: zoneColor.withValues(alpha: 0.6),
+                        disabledBackgroundColor: zoneColor.withValues(
+                          alpha: 0.6,
+                        ),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         elevation: 0,
                       ),
                       child: _isLoading
@@ -1865,7 +2261,9 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                               height: 24,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : Text(
@@ -1957,8 +2355,7 @@ class _TableSessionSheet extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_TableSessionSheet> createState() =>
-      _TableSessionSheetState();
+  ConsumerState<_TableSessionSheet> createState() => _TableSessionSheetState();
 }
 
 class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
@@ -1990,7 +2387,11 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
     super.dispose();
   }
-  void _printInterimBill(double total, List<BanSessionItemModel> activeItems) async {
+
+  void _printInterimBill(
+    double total,
+    List<BanSessionItemModel> activeItems,
+  ) async {
     try {
       final info = await StoreAuthService.getStoreInfo();
       final storeId = info['store_id'];
@@ -2006,12 +2407,16 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         orderNumber: 'TẠM TÍNH',
         createdAt: DateTime.now(),
         tableName: widget.table.label,
-        items: activeItems.map((i) => BillItem(
-          name: i.productName,
-          qty: i.quantity.toInt(),
-          price: i.price,
-          note: i.note,
-        )).toList(),
+        items: activeItems
+            .map(
+              (i) => BillItem(
+                name: i.productName,
+                qty: i.quantity.toInt(),
+                price: i.price,
+                note: i.note,
+              ),
+            )
+            .toList(),
         subtotal: total,
         discount: 0,
         total: total,
@@ -2020,23 +2425,31 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         waiterName: _resolveWaiterName(activeItems, session?.displayName),
       );
 
-      await StationPrinterDispatcher.printBill(billData, settings, onlyReceipt: true);
-      
+      await StationPrinterDispatcher.printBill(
+        billData,
+        settings,
+        onlyReceipt: true,
+      );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã gửi lệnh in tạm tính'), behavior: SnackBarBehavior.floating)
+          const SnackBar(
+            content: Text('Đã gửi lệnh in tạm tính'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi in tạm tính: $e'), behavior: SnackBarBehavior.floating)
+          SnackBar(
+            content: Text('Lỗi in tạm tính: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
   }
-
-
 
   // Dùng fmtVnd() từ money_formatter.dart
 
@@ -2063,7 +2476,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     // Món đã gửi / đang làm / đã xong → confirm dialog có lý do bắt buộc
     final label = status == 'xong'
         ? '⚠️ Món này bếp đã làm xong!'
-        : (status == 'dang_lam' ? '⚠️ Bếp đang làm món này!' : '📋 Món đã gửi bếp');
+        : (status == 'dang_lam'
+              ? '⚠️ Bếp đang làm món này!'
+              : '📋 Món đã gửi bếp');
     final showWastageOption = status == 'dang_lam' || status == 'xong';
     String? selectedReason;
     bool deductAsLoss = true;
@@ -2073,20 +2488,39 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       barrierDismissible: false,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
-          title: Text('Huỷ món?', style: GoogleFonts.outfit(fontWeight: FontWeight.w800)),
+          title: Text(
+            'Huỷ món?',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w800),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('$label\nBếp sẽ thấy thông báo huỷ.', style: GoogleFonts.outfit(height: 1.5, fontSize: 14)),
+              Text(
+                '$label\nBếp sẽ thấy thông báo huỷ.',
+                style: GoogleFonts.outfit(height: 1.5, fontSize: 14),
+              ),
               const SizedBox(height: 14),
-              Text('Lý do huỷ *', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 13)),
+              Text(
+                'Lý do huỷ *',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
               const SizedBox(height: 6),
-              for (final r in ['Khách đổi ý', 'Nhân viên nhập nhầm', 'Hết món', 'Khác'])
+              for (final r in [
+                'Khách đổi ý',
+                'Nhân viên nhập nhầm',
+                'Hết món',
+                'Khác',
+              ])
                 RadioListTile<String>(
-                  dense: true, contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
                   title: Text(r, style: GoogleFonts.outfit(fontSize: 13)),
-                  value: r, groupValue: selectedReason,
+                  value: r,
+                  groupValue: selectedReason,
                   onChanged: (v) => setS(() => selectedReason = v),
                   activeColor: _kOrange,
                 ),
@@ -2100,14 +2534,19 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                       child: Checkbox(
                         value: deductAsLoss,
                         activeColor: _kOrange,
-                        onChanged: (val) => setS(() => deductAsLoss = val ?? true),
+                        onChanged: (val) =>
+                            setS(() => deductAsLoss = val ?? true),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Trừ kho nguyên liệu (hao hụt)',
-                        style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: _kNavy),
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _kNavy,
+                        ),
                       ),
                     ),
                   ],
@@ -2116,14 +2555,24 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Không', style: GoogleFonts.outfit(color: _kNavy))),
             TextButton(
-              onPressed: selectedReason == null ? null : () => Navigator.pop(ctx, {
-                'reason': selectedReason,
-                'deductAsLoss': deductAsLoss,
-              }),
-              child: Text('Huỷ món', style: GoogleFonts.outfit(
-                color: selectedReason == null ? Colors.grey : _kRed, fontWeight: FontWeight.w700)),
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Không', style: GoogleFonts.outfit(color: _kNavy)),
+            ),
+            TextButton(
+              onPressed: selectedReason == null
+                  ? null
+                  : () => Navigator.pop(ctx, {
+                      'reason': selectedReason,
+                      'deductAsLoss': deductAsLoss,
+                    }),
+              child: Text(
+                'Huỷ món',
+                style: GoogleFonts.outfit(
+                  color: selectedReason == null ? Colors.grey : _kRed,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),
@@ -2137,7 +2586,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     final approval = await _verifyManagerApproval();
     if (approval == null) return;
 
-    await _executeCancelItem(item, reason, approvedBy: approval, deductAsLoss: finalDeduct);
+    await _executeCancelItem(
+      item,
+      reason,
+      approvedBy: approval,
+      deductAsLoss: finalDeduct,
+    );
   }
 
   /// Trừ kho nguyên liệu/sản phẩm thô dưới dạng hao hụt (loss)
@@ -2177,7 +2631,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             recipe: recipe,
             quantity: quantity,
             reason: 'loss',
-            note: 'Hao hụt hủy món: "$productName" x ${quantity.toStringAsFixed(0)} tại Bàn "$tableLabel" (Lý do: $reason)',
+            note:
+                'Hao hụt hủy món: "$productName" x ${quantity.toStringAsFixed(0)} tại Bàn "$tableLabel" (Lý do: $reason)',
             referenceId: sessionId,
           );
           debugPrint('[Wastage] ✅ deductIngredients loss success');
@@ -2193,7 +2648,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             'product_id': productId,
             'delta': double.parse((-quantity).toStringAsFixed(3)),
             'reason': 'loss',
-            'note': 'Hao hụt hủy món: "$productName" tại Bàn "$tableLabel" (Lý do: $reason)',
+            'note':
+                'Hao hụt hủy món: "$productName" tại Bàn "$tableLabel" (Lý do: $reason)',
             'created_at': now,
             'reference_id': sessionId,
           });
@@ -2210,37 +2666,55 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   /// Thực thi huỷ món (soft delete) — dùng chung cho _removeItem và _updateItemQty
   /// Không hiện dialog — reason đã được lấy từ dialog gọi trước
   Future<void> _executeCancelItem(
-      BanSessionItemModel item, String reason,
-      {required Map<String, String> approvedBy, bool deductAsLoss = false}) async {
+    BanSessionItemModel item,
+    String reason, {
+    required Map<String, String> approvedBy,
+    bool deductAsLoss = false,
+  }) async {
     final sb = Supabase.instance.client;
     // 1. Soft delete: đánh dấu 'huy' (KHÔNG hard delete để tránh FK violation)
-    await sb.from('ban_session_items')
+    await sb
+        .from('ban_session_items')
         .update({'kitchen_status': 'huy'})
         .eq('id', item.id);
     // 2. Đánh dấu kitchen_ticket_items done=true
-    await sb.from('kitchen_ticket_items')
+    await sb
+        .from('kitchen_ticket_items')
         .update({'done': true})
         .eq('session_item_id', item.id);
     // 3. Cancel ticket nếu toàn bộ items đều done
     try {
-      final ticketRows = await sb.from('kitchen_ticket_items')
-          .select('ticket_id').eq('session_item_id', item.id);
+      final ticketRows = await sb
+          .from('kitchen_ticket_items')
+          .select('ticket_id')
+          .eq('session_item_id', item.id);
       for (final row in ticketRows) {
         final ticketId = row['ticket_id'] as String?;
         if (ticketId == null) continue;
-        final remaining = await sb.from('kitchen_ticket_items')
-            .select('id').eq('ticket_id', ticketId).eq('done', false);
+        final remaining = await sb
+            .from('kitchen_ticket_items')
+            .select('id')
+            .eq('ticket_id', ticketId)
+            .eq('done', false);
         if (remaining.isEmpty) {
-          await sb.from('kitchen_tickets').update({
-            'status': 'huy',
-            'done_at': DateTime.now().toUtc().toIso8601String(),
-          }).eq('id', ticketId).inFilter('status', ['cho', 'dang_lam']);
+          await sb
+              .from('kitchen_tickets')
+              .update({
+                'status': 'huy',
+                'done_at': DateTime.now().toUtc().toIso8601String(),
+              })
+              .eq('id', ticketId)
+              .inFilter('status', ['cho', 'dang_lam']);
         } else {
-          final ticketRow = await sb.from('kitchen_tickets')
-              .select('order_note').eq('id', ticketId).maybeSingle();
-          await sb.from('kitchen_tickets').update({
-            'order_note': ticketRow?['order_note'],
-          }).eq('id', ticketId);
+          final ticketRow = await sb
+              .from('kitchen_tickets')
+              .select('order_note')
+              .eq('id', ticketId)
+              .maybeSingle();
+          await sb
+              .from('kitchen_tickets')
+              .update({'order_note': ticketRow?['order_note']})
+              .eq('id', ticketId);
         }
       }
     } catch (e) {
@@ -2262,21 +2736,22 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     // 4. Ghi void log → bếp thấy banner thông báo
     try {
       final storeInfo = await StoreAuthService.getStoreInfo();
-      final storeId   = storeInfo['store_id'] as String?;
-      final staffName = storeInfo['display_name'] as String?
-                     ?? storeInfo['email']        as String?
-                     ?? 'Nhân viên';
+      final storeId = storeInfo['store_id'] as String?;
+      final staffName =
+          storeInfo['display_name'] as String? ??
+          storeInfo['email'] as String? ??
+          'Nhân viên';
       if (storeId != null) {
         await sb.from('ban_session_void_logs').insert({
-          'store_id':     storeId,
-          'session_id':   widget.session.id,
-          'table_label':  widget.table.label,
+          'store_id': storeId,
+          'session_id': widget.session.id,
+          'table_label': widget.table.label,
           'product_name': item.productName,
-          'action':       'cancel',
-          'old_qty':      item.quantity,
-          'new_qty':      0,
-          'reason':       reason,
-          'staff_name':   staffName,
+          'action': 'cancel',
+          'old_qty': item.quantity,
+          'new_qty': 0,
+          'reason': reason,
+          'staff_name': staffName,
         });
         debugPrint('[Ban] ✅ void log CANCEL inserted');
       }
@@ -2297,12 +2772,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         approvedByName: approvedBy['name'] ?? 'Quản lý',
         reason: reason,
         amount: item.subtotal,
-        details: [{
-          'product_name': item.productName,
-          'quantity': item.quantity,
-          'subtotal': item.subtotal,
-          'deducted_as_loss': deductAsLoss,
-        }],
+        details: [
+          {
+            'product_name': item.productName,
+            'quantity': item.quantity,
+            'subtotal': item.subtotal,
+            'deducted_as_loss': deductAsLoss,
+          },
+        ],
       );
       debugPrint('[Ban] ✅ void audit log CANCEL_ITEM inserted');
     } catch (e) {
@@ -2312,19 +2789,27 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     HapticFeedback.mediumImpact();
     ref.invalidate(sessionItemsProvider(widget.session.id));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('❌ Đã huỷ "${item.productName}" — bếp đã được thông báo',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-        backgroundColor: _kRed,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '❌ Đã huỷ "${item.productName}" — bếp đã được thông báo',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: _kRed,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
     }
   }
 
   Future<void> _updateItemQty(BanSessionItemModel item, int newQty) async {
-    debugPrint('[BAN-TEST] _updateItemQty: ${item.productName} newQty=$newQty status=${item.kitchenStatus}');
+    debugPrint(
+      '[BAN-TEST] _updateItemQty: ${item.productName} newQty=$newQty status=${item.kitchenStatus}',
+    );
     final sentStatuses = ['da_gui', 'dang_lam', 'xong'];
     final isSent = sentStatuses.contains(item.kitchenStatus);
 
@@ -2349,139 +2834,206 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     // ─── Đã gửi bếp: bắt buộc chọn lý do ───────────────────────────────────
     // Xác định hành động: giảm qty hay huỷ cả món
     final isCancel = newQty <= 0;
-    final showWastageOption = item.kitchenStatus == 'dang_lam' || item.kitchenStatus == 'xong';
+    final showWastageOption =
+        item.kitchenStatus == 'dang_lam' || item.kitchenStatus == 'xong';
     String? selectedReason;
     bool deductAsLoss = true;
 
     final confirm = await showDialog<Map<String, dynamic>>(
       context: context,
       barrierDismissible: false,
-        builder: (_) => StatefulBuilder(
-          builder: (ctx, setS) => Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              decoration: BoxDecoration(
-                color: _kCream,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setS) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              color: _kCream,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: (isCancel ? _kRed : _kOrange).withValues(alpha: 0.12),
+                        color: (isCancel ? _kRed : _kOrange).withValues(
+                          alpha: 0.12,
+                        ),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         isCancel ? Icons.cancel_rounded : Icons.edit_rounded,
-                        color: isCancel ? _kRed : _kOrange, size: 20),
+                        color: isCancel ? _kRed : _kOrange,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
-                    Text(isCancel ? 'Huỷ món?' : 'Giảm số lượng?',
-                        style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.w800, fontSize: 18, color: _kNavy)),
-                  ]),
-                  const SizedBox(height: 14),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _kNavy.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      isCancel
-                          ? '"${item.productName}"\nHuỷ ${item.quantity.toStringAsFixed(0)} phần'
-                          : '"${item.productName}"\n${item.quantity.toStringAsFixed(0)} → $newQty phần',
+                    Text(
+                      isCancel ? 'Huỷ món?' : 'Giảm số lượng?',
                       style: GoogleFonts.outfit(
-                        fontSize: 14, height: 1.5, color: _kNavy, fontWeight: FontWeight.w600),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                        color: _kNavy,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _kNavy.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    isCancel
+                        ? '"${item.productName}"\nHuỷ ${item.quantity.toStringAsFixed(0)} phần'
+                        : '"${item.productName}"\n${item.quantity.toStringAsFixed(0)} → $newQty phần',
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: _kNavy,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  Text('Lý do *',
-                      style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.w700, fontSize: 13, color: _kNavy)),
-                  const SizedBox(height: 8),
-                  for (final r in ['Khách đổi ý', 'Nhân viên nhập nhầm', 'Hết món', 'Khác'])
-                    GestureDetector(
-                      onTap: () => setS(() => selectedReason = r),
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                        decoration: BoxDecoration(
-                          color: selectedReason == r ? _kOrange.withValues(alpha: 0.1) : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: selectedReason == r ? _kOrange : _kNavy.withValues(alpha: 0.12),
-                            width: selectedReason == r ? 1.5 : 1,
-                          ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Lý do *',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: _kNavy,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                for (final r in [
+                  'Khách đổi ý',
+                  'Nhân viên nhập nhầm',
+                  'Hết món',
+                  'Khác',
+                ])
+                  GestureDetector(
+                    onTap: () => setS(() => selectedReason = r),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 11,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selectedReason == r
+                            ? _kOrange.withValues(alpha: 0.1)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: selectedReason == r
+                              ? _kOrange
+                              : _kNavy.withValues(alpha: 0.12),
+                          width: selectedReason == r ? 1.5 : 1,
                         ),
-                        child: Row(children: [
+                      ),
+                      child: Row(
+                        children: [
                           Container(
-                            width: 18, height: 18,
+                            width: 18,
+                            height: 18,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: selectedReason == r ? _kOrange : _kNavy.withValues(alpha: 0.3),
+                                color: selectedReason == r
+                                    ? _kOrange
+                                    : _kNavy.withValues(alpha: 0.3),
                                 width: 2,
                               ),
                             ),
                             child: selectedReason == r
-                                ? Center(child: Container(
-                                    width: 8, height: 8,
-                                    decoration: BoxDecoration(shape: BoxShape.circle, color: _kOrange),
-                                  ))
+                                ? Center(
+                                    child: Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: _kOrange,
+                                      ),
+                                    ),
+                                  )
                                 : null,
                           ),
                           const SizedBox(width: 10),
-                          Text(r, style: GoogleFonts.outfit(
-                            fontSize: 14,
-                            fontWeight: selectedReason == r ? FontWeight.w700 : FontWeight.w500,
-                            color: selectedReason == r ? _kOrange : _kNavy,
-                          )),
-                        ]),
+                          Text(
+                            r,
+                            style: GoogleFonts.outfit(
+                              fontSize: 14,
+                              fontWeight: selectedReason == r
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: selectedReason == r ? _kOrange : _kNavy,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  if (showWastageOption) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Checkbox(
-                            value: deductAsLoss,
-                            activeColor: _kOrange,
-                            onChanged: (val) => setS(() => deductAsLoss = val ?? true),
+                  ),
+                if (showWastageOption) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: deductAsLoss,
+                          activeColor: _kOrange,
+                          onChanged: (val) =>
+                              setS(() => deductAsLoss = val ?? true),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Trừ kho nguyên liệu (hao hụt)',
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: _kNavy,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Trừ kho nguyên liệu (hao hụt)',
-                            style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: _kNavy),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  Row(children: [
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(ctx),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _kNavy,
-                          side: BorderSide(color: _kNavy.withValues(alpha: 0.2)),
+                          side: BorderSide(
+                            color: _kNavy.withValues(alpha: 0.2),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
-                        child: Text('Không', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                        child: Text(
+                          'Không',
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -2496,21 +3048,31 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isCancel ? _kRed : _kOrange,
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor: _kNavy.withValues(alpha: 0.1),
+                          disabledBackgroundColor: _kNavy.withValues(
+                            alpha: 0.1,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
-                        child: Text('Xác nhận', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                        child: Text(
+                          'Xác nhận',
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
-                  ]),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
-      );
+      ),
+    );
     if (confirm == null) return; // user cancel → không sửa
     final reason = confirm['reason'] as String;
     final finalDeduct = confirm['deductAsLoss'] as bool? ?? false;
@@ -2520,15 +3082,24 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     if (isCancel) {
       final approval = await _verifyManagerApproval();
       if (approval == null) return;
-      await _executeCancelItem(item, reason, approvedBy: approval, deductAsLoss: finalDeduct);
+      await _executeCancelItem(
+        item,
+        reason,
+        approvedBy: approval,
+        deductAsLoss: finalDeduct,
+      );
       HapticFeedback.selectionClick();
       return;
     }
 
     // ─── Giảm qty từng phần ─────────────────────────────────────────────────
     try {
-      await sb2.from('ban_session_items')
-          .update({'quantity': newQty.toDouble(), 'subtotal': item.price * newQty})
+      await sb2
+          .from('ban_session_items')
+          .update({
+            'quantity': newQty.toDouble(),
+            'subtotal': item.price * newQty,
+          })
           .eq('id', item.id);
 
       // ‼️ FIX: Force UI refresh — stream cần invalidate để hiện qty mới
@@ -2536,19 +3107,26 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
       // Đồng bộ qty sang kitchen_ticket_items để bếp thấy số đúng
       try {
-        await sb2.from('kitchen_ticket_items')
+        await sb2
+            .from('kitchen_ticket_items')
             .update({'quantity': newQty.toDouble()})
             .eq('session_item_id', item.id);
         // Touch kitchen_tickets → trigger Realtime cho màn bếp refresh
-        final ticketRows = await sb2.from('kitchen_ticket_items')
-            .select('ticket_id').eq('session_item_id', item.id);
+        final ticketRows = await sb2
+            .from('kitchen_ticket_items')
+            .select('ticket_id')
+            .eq('session_item_id', item.id);
         for (final row in ticketRows) {
           final ticketId = row['ticket_id'] as String?;
           if (ticketId == null) continue;
-          final t = await sb2.from('kitchen_tickets')
-              .select('status').eq('id', ticketId).maybeSingle();
+          final t = await sb2
+              .from('kitchen_tickets')
+              .select('status')
+              .eq('id', ticketId)
+              .maybeSingle();
           if (t != null) {
-            await sb2.from('kitchen_tickets')
+            await sb2
+                .from('kitchen_tickets')
                 .update({'status': t['status']})
                 .eq('id', ticketId);
           }
@@ -2575,21 +3153,22 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       // Ghi void log
       try {
         final storeInfo = await StoreAuthService.getStoreInfo();
-        final storeId   = storeInfo['store_id'] as String?;
-        final staffName = storeInfo['display_name'] as String?
-                       ?? storeInfo['email']        as String?
-                       ?? 'Nhân viên';
+        final storeId = storeInfo['store_id'] as String?;
+        final staffName =
+            storeInfo['display_name'] as String? ??
+            storeInfo['email'] as String? ??
+            'Nhân viên';
         if (storeId != null) {
           await sb2.from('ban_session_void_logs').insert({
-            'store_id':     storeId,
-            'session_id':   widget.session.id,
-            'table_label':  widget.table.label,
+            'store_id': storeId,
+            'session_id': widget.session.id,
+            'table_label': widget.table.label,
             'product_name': item.productName,
-            'action':       'reduce_qty',
-            'old_qty':      item.quantity,
-            'new_qty':      newQty.toDouble(),
-            'reason':       reason,
-            'staff_name':   staffName,
+            'action': 'reduce_qty',
+            'old_qty': item.quantity,
+            'new_qty': newQty.toDouble(),
+            'reason': reason,
+            'staff_name': staffName,
           });
         }
       } catch (e) {
@@ -2610,12 +3189,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           approvedByName: session?.displayName ?? 'Nhân viên',
           reason: reason,
           amount: item.price * qtyDelta,
-          details: [{
-            'product_name': item.productName,
-            'quantity': qtyDelta,
-            'subtotal': item.price * qtyDelta,
-            'deducted_as_loss': finalDeduct,
-          }],
+          details: [
+            {
+              'product_name': item.productName,
+              'quantity': qtyDelta,
+              'subtotal': item.price * qtyDelta,
+              'deducted_as_loss': finalDeduct,
+            },
+          ],
         );
         debugPrint('[Ban] ✅ void audit log REDUCE_QTY inserted');
       } catch (e) {
@@ -2625,29 +3206,40 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       HapticFeedback.selectionClick();
       ref.invalidate(sessionItemsProvider(widget.session.id));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('✏️ "${item.productName}": ${item.quantity.toInt()} → $newQty phần',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-          backgroundColor: _kOrange,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '✏️ "${item.productName}": ${item.quantity.toInt()} → $newQty phần',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            ),
+            backgroundColor: _kOrange,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
       }
     } catch (e) {
       debugPrint('[Ban] ❌ reduce_qty FAIL: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('❌ Lỗi: $e',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-          backgroundColor: _kRed,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '❌ Lỗi: $e',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            ),
+            backgroundColor: _kRed,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
       }
     }
-
   } // end _updateItemQty
 
   Future<void> _checkout(
@@ -2667,41 +3259,62 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
     try {
       final orderId = const Uuid().v4();
-      final now     = DateTime.now().toUtc().toIso8601String();
-      final sb      = Supabase.instance.client;
+      final now = DateTime.now().toUtc().toIso8601String();
+      final sb = Supabase.instance.client;
 
       // 0. Lấy store_id
       final storeInfo = await StoreAuthService.getStoreInfo();
       final storeId = storeInfo['store_id'] as String?;
-      if (storeId == null) throw Exception('Không lấy được store_id — vui lòng đăng nhập lại');
+      if (storeId == null)
+        throw Exception('Không lấy được store_id — vui lòng đăng nhập lại');
 
       // 0b. Tạo orderNumber sequential (giống POS screen — dùng count từ DB)
       final today = DateTime.now();
-      final datePrefix = 'QN-${today.year}${today.month.toString().padLeft(2,'0')}${today.day.toString().padLeft(2,'0')}';
-      final startOfDay = DateTime(today.year, today.month, today.day).toUtc().toIso8601String();
+      final datePrefix =
+          'QN-${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}';
+      final startOfDay = DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ).toUtc().toIso8601String();
       // ‼️ FIX Bug #19: thêm upper bound lt(endOfDay) — trước đây đếm cả đơn ngày hôm qua
-      final endOfDay   = DateTime(today.year, today.month, today.day + 1).toUtc().toIso8601String();
+      final endOfDay = DateTime(
+        today.year,
+        today.month,
+        today.day + 1,
+      ).toUtc().toIso8601String();
       final productIds = items.map((i) => i.productId).toSet().toList();
 
       // [TỐI ƯU HOÁ TỐC ĐỘ]: Gom 3 truy vấn độc lập chạy song song (Tiết kiệm ~1-2 giây)
       final fetchFutures = await Future.wait(<Future<dynamic>>[
-        sb.from('orders').select('id')
+        sb
+            .from('orders')
+            .select('id')
             .eq('store_id', storeId)
             .gte('created_at', startOfDay)
             .lt('created_at', endOfDay)
             .count(CountOption.exact),
         if (customerId != null)
-          sb.from('app_settings').select('value').eq('store_id', storeId).eq('key', 'loyalty_rate').maybeSingle()
+          sb
+              .from('app_settings')
+              .select('value')
+              .eq('store_id', storeId)
+              .eq('key', 'loyalty_rate')
+              .maybeSingle()
         else
           Future.value(null),
-        sb.from('products').select('id, cost_price_latest').inFilter('id', productIds),
+        sb
+            .from('products')
+            .select('id, cost_price_latest')
+            .inFilter('id', productIds),
       ]);
 
       final countRes = fetchFutures[0] as PostgrestResponse;
-      final rateRes  = fetchFutures[1] as Map<String, dynamic>?;
+      final rateRes = fetchFutures[1] as Map<String, dynamic>?;
       final prodRows = fetchFutures[2] as List<dynamic>;
 
-      final orderNumber = '$datePrefix-${((countRes.count) + 1).toString().padLeft(3, '0')}';
+      final orderNumber =
+          '$datePrefix-${((countRes.count) + 1).toString().padLeft(3, '0')}';
 
       // 1. Core: Tạo order
       // Lấy loyalty_rate trước để tính ptsEarned
@@ -2709,7 +3322,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       final finalPaidTotal = total + surcharge;
       if (customerId != null) {
         try {
-          final rate = double.tryParse((rateRes?['value'] as String?) ?? '10000') ?? 10000;
+          final rate =
+              double.tryParse((rateRes?['value'] as String?) ?? '10000') ??
+              10000;
           ptsEarned = (finalPaidTotal / rate).floorToDouble();
         } catch (_) {}
       }
@@ -2727,10 +3342,11 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           if (memberRow != null) {
             cashierRecordId = memberRow['id'] as String?;
             final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
-            final displayName = userAcc?['display_name'] as String? ?? 'Cashier';
+            final displayName =
+                userAcc?['display_name'] as String? ?? 'Cashier';
             final phone = userAcc?['phone'] as String?;
             final role = memberRow['role'] as String? ?? 'cashier';
-            
+
             if (cashierRecordId != null) {
               await sb.from('staff_members').upsert({
                 'id': cashierRecordId,
@@ -2750,7 +3366,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
       final noteParts = <String>[
         if (couponCode != null) '[Voucher: $couponCode]',
-        if (surcharge > 0) '[Phí dịch vụ/ship: ${fmtVnd(surcharge)}]'
+        if (surcharge > 0) '[Phí dịch vụ/ship: ${fmtVnd(surcharge)}]',
       ];
       final noteStr = noteParts.isEmpty ? null : noteParts.join(' ');
 
@@ -2759,7 +3375,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         'store_id': storeId,
         'order_number': orderNumber,
         'customer_id': customerId,
-        'subtotal': total + discount + surcharge,  // subtotal trước giảm + phí dịch vụ
+        'subtotal':
+            total + discount + surcharge, // subtotal trước giảm + phí dịch vụ
         'discount': discount,
         'tax': 0,
         'total': finalPaidTotal,
@@ -2769,11 +3386,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         'source_type': 'ban',
         'source_id': widget.session.tableId,
         'loyalty_pts_earned': ptsEarned,
-        'loyalty_pts_used':   ptsUsed.toDouble(),
+        'loyalty_pts_used': ptsUsed.toDouble(),
         'created_at': now,
         'note': noteStr,
         if (cashierRecordId != null) 'staff_id': cashierRecordId,
-        if (widget.session.waiterId != null) 'waiter_id': widget.session.waiterId,
+        if (widget.session.waiterId != null)
+          'waiter_id': widget.session.waiterId,
       });
 
       // 2. Core: Tạo order_items
@@ -2784,14 +3402,17 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           costPriceMap[p['id'] as String] =
               (p['cost_price_latest'] as num?)?.toDouble() ?? 0;
         }
-      } catch (e) { debugPrint('[Checkout] cost_price fetch err: $e'); }
+      } catch (e) {
+        debugPrint('[Checkout] cost_price fetch err: $e');
+      }
 
       final List<Map<String, dynamic>> orderItemRows = [];
       final Map<String, BanSessionItemModel> groupedItems = {};
       for (final item in items) {
         final cleanNote = item.note?.trim() ?? '';
         final cleanMods = item.modifiersJson?.trim() ?? '';
-        final key = '${item.productId}_${item.price.toStringAsFixed(2)}_${cleanNote}_$cleanMods';
+        final key =
+            '${item.productId}_${item.price.toStringAsFixed(2)}_${cleanNote}_$cleanMods';
         if (groupedItems.containsKey(key)) {
           final prev = groupedItems[key]!;
           groupedItems[key] = BanSessionItemModel(
@@ -2816,15 +3437,17 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           'id': const Uuid().v4(),
           'order_id': orderId,
           'product_id': item.productId,
-          'store_id':    storeId,
-          'name':        item.productName,
+          'store_id': storeId,
+          'name': item.productName,
           'product_name': item.productName,
-          'qty':         item.quantity.toInt(),
-          'unit_price':  item.price,
-          'cost_price':  costPriceMap[item.productId] ?? 0, // ✅ FIX: lấy cost thực
-          'modifiers_json': item.modifiersJson,             // ✅ R3-02: lưu topping vào order history
-          'quantity':    item.quantity,
-          'subtotal':    item.subtotal,
+          'qty': item.quantity.toInt(),
+          'unit_price': item.price,
+          'cost_price':
+              costPriceMap[item.productId] ?? 0, // ✅ FIX: lấy cost thực
+          'modifiers_json':
+              item.modifiersJson, // ✅ R3-02: lưu topping vào order history
+          'quantity': item.quantity,
+          'subtotal': item.subtotal,
         });
       }
       if (surcharge > 0) {
@@ -2832,15 +3455,15 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           'id': const Uuid().v4(),
           'order_id': orderId,
           'product_id': null,
-          'store_id':    storeId,
-          'name':        'Phí dịch vụ / Ship',
+          'store_id': storeId,
+          'name': 'Phí dịch vụ / Ship',
           'product_name': 'Phí dịch vụ / Ship',
-          'qty':         1,
-          'unit_price':  surcharge,
-          'cost_price':  0,
+          'qty': 1,
+          'unit_price': surcharge,
+          'cost_price': 0,
           'modifiers_json': null,
-          'quantity':    1.0,
-          'subtotal':    surcharge,
+          'quantity': 1.0,
+          'subtotal': surcharge,
         });
       }
       if (orderItemRows.isNotEmpty) {
@@ -2850,7 +3473,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       // 3 + 3b + 4 + 5. Cross-module (Trừ kho, Tài chính, Tích điểm) chạy chế độ nền không block UI
       Future<void> runBackgroundSideEffects() async {
         // 3 + 3b. Cross-module: Trừ kho — phân biệt sản phẩm CÓ/KHÔNG có công thức
-        final khoProRepo  = khoProRepoCached;
+        final khoProRepo = khoProRepoCached;
         final productRepo = productRepoCached;
         Map<String, RecipeModel> recipeByPosId = {};
         try {
@@ -2859,7 +3482,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             for (final r in allRecipes)
               if (r.posProductId != null) r.posProductId!: r,
           };
-        } catch (e) { debugPrint('[Checkout] fetchRecipes err: $e'); }
+        } catch (e) {
+          debugPrint('[Checkout] fetchRecipes err: $e');
+        }
 
         for (final item in items) {
           final recipe = recipeByPosId[item.productId];
@@ -2867,27 +3492,32 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             // Sản phẩm CÓ công thức → deductIngredients trừ NL + ghi COGS
             try {
               await khoProRepo.deductIngredients(
-                recipe:      recipe,
-                quantity:    item.quantity,
-                reason:      'sale',
-                note:        'Bàn "${widget.table.label}" bán "${item.productName}" × ${item.quantity.toStringAsFixed(0)} (Đơn $orderNumber)',
+                recipe: recipe,
+                quantity: item.quantity,
+                reason: 'sale',
+                note:
+                    'Bàn "${widget.table.label}" bán "${item.productName}" × ${item.quantity.toStringAsFixed(0)} (Đơn $orderNumber)',
                 referenceId: orderId,
               );
-            } catch (e) { debugPrint('[Checkout] ❌ deductIngredients err: $e'); }
+            } catch (e) {
+              debugPrint('[Checkout] ❌ deductIngredients err: $e');
+            }
           } else {
             // Sản phẩm KHÔNG có công thức → trừ stock thô
             try {
               await productRepo.updateStockQty(item.productId, -item.quantity);
               await sb.from('stock_movements').insert({
-                'id':         const Uuid().v4(),
-                'store_id':   storeId,
+                'id': const Uuid().v4(),
+                'store_id': storeId,
                 'product_id': item.productId,
-                'delta':      double.parse((-item.quantity).toStringAsFixed(3)),
-                'reason':     'sale',
-                'note':       'Bán bàn $orderNumber',
+                'delta': double.parse((-item.quantity).toStringAsFixed(3)),
+                'reason': 'sale',
+                'note': 'Bán bàn $orderNumber',
                 'created_at': now,
               });
-            } catch (e) { debugPrint('[Checkout] ❌ stock err: $e'); }
+            } catch (e) {
+              debugPrint('[Checkout] ❌ stock err: $e');
+            }
           }
 
           // ── Topping deduction (Option A: qua Kho CN recipe) ──────────────
@@ -2897,47 +3527,61 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               for (final extra in extras) {
                 final m = extra as Map<String, dynamic>;
                 if (m['type'] != 'topping') continue;
-                final toppingId  = m['id'] as String?;
-                final toppingQty = ((m['qty'] as num?) ?? 1).toDouble() * item.quantity;
+                final toppingId = m['id'] as String?;
+                final toppingQty =
+                    ((m['qty'] as num?) ?? 1).toDouble() * item.quantity;
                 final toppingName = m['name'] as String? ?? 'Topping';
                 if (toppingId == null || toppingQty <= 0) continue;
 
                 final toppingRecipe = recipeByPosId[toppingId];
-                if (toppingRecipe != null && toppingRecipe.ingredients.isNotEmpty) {
-                  debugPrint('[Checkout] 🧋 Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} → deduct recipe');
+                if (toppingRecipe != null &&
+                    toppingRecipe.ingredients.isNotEmpty) {
+                  debugPrint(
+                    '[Checkout] 🧋 Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} → deduct recipe',
+                  );
                   try {
                     await khoProRepo.deductIngredients(
-                      recipe:      toppingRecipe,
-                      quantity:    toppingQty,
-                      reason:      'sale',
-                      note:        'Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} (Đơn $orderNumber)',
+                      recipe: toppingRecipe,
+                      quantity: toppingQty,
+                      reason: 'sale',
+                      note:
+                          'Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} (Đơn $orderNumber)',
                       referenceId: orderId,
                     );
-                  } catch (e) { debugPrint('[Checkout] ❌ topping recipe deduct err: $e'); }
+                  } catch (e) {
+                    debugPrint('[Checkout] ❌ topping recipe deduct err: $e');
+                  }
                 } else {
-                  debugPrint('[Checkout] 🧋 Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} → deduct stock thô');
+                  debugPrint(
+                    '[Checkout] 🧋 Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} → deduct stock thô',
+                  );
                   try {
                     await productRepo.updateStockQty(toppingId, -toppingQty);
                     await sb.from('stock_movements').insert({
-                      'id':         const Uuid().v4(),
-                      'store_id':   storeId,
+                      'id': const Uuid().v4(),
+                      'store_id': storeId,
                       'product_id': toppingId,
-                      'delta':      double.parse((-toppingQty).toStringAsFixed(3)),
-                      'reason':     'sale',
-                      'note':       'Topping "$toppingName" (Đơn $orderNumber)',
+                      'delta': double.parse((-toppingQty).toStringAsFixed(3)),
+                      'reason': 'sale',
+                      'note': 'Topping "$toppingName" (Đơn $orderNumber)',
                       'created_at': now,
                     });
-                  } catch (e) { debugPrint('[Checkout] ❌ topping stock err: $e'); }
+                  } catch (e) {
+                    debugPrint('[Checkout] ❌ topping stock err: $e');
+                  }
                 }
               }
-            } catch (e) { debugPrint('[Checkout] ❌ parse modifiers_json err: $e'); }
+            } catch (e) {
+              debugPrint('[Checkout] ❌ parse modifiers_json err: $e');
+            }
           }
         }
 
         // 4. Cross-module: Finance
         if (storeId != null) {
           try {
-            final existIncome = await sb.from('finance_records')
+            final existIncome = await sb
+                .from('finance_records')
                 .select('id')
                 .eq('store_id', storeId)
                 .eq('reference_id', orderId)
@@ -2945,77 +3589,97 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 .eq('is_auto', true)
                 .maybeSingle();
             if (existIncome == null) {
-              final fundType = (payMethod == 'transfer' || payMethod == 'card') ? 'bank' : 'cash';
+              final fundType = (payMethod == 'transfer' || payMethod == 'card')
+                  ? 'bank'
+                  : 'cash';
               await sb.from('finance_records').insert({
-                'id':           const Uuid().v4(),
-                'store_id':     storeId,
-                'type':         'income',
-                'amount':       total,
-                'description':  'Doanh thu bàn $orderNumber',
+                'id': const Uuid().v4(),
+                'store_id': storeId,
+                'type': 'income',
+                'amount': total,
+                'description': 'Doanh thu bàn $orderNumber',
                 'reference_id': orderId,
-                'is_auto':      true,
-                'recorded_at':  now,
-                'fund_type':    fundType,
+                'is_auto': true,
+                'recorded_at': now,
+                'fund_type': fundType,
               });
             }
-          } catch (e) { debugPrint('[Checkout] finance silent err: $e'); }
+          } catch (e) {
+            debugPrint('[Checkout] finance silent err: $e');
+          }
         }
 
         // 5. Cross-module: Loyalty
         if (storeId != null && customerId != null) {
           try {
-            final customer = await sb.from('customers')
+            final customer = await sb
+                .from('customers')
                 .select('loyalty_pts, total_spent, visit_count, stamp_count')
                 .eq('id', customerId)
                 .maybeSingle();
             if (customer != null) {
-              final currentPts    = (customer['loyalty_pts'] as num?)?.toDouble() ?? 0;
-              final currentSpent  = (customer['total_spent'] as num?)?.toDouble() ?? 0;
-              final currentVisit  = (customer['visit_count'] as num?)?.toInt()    ?? 0;
-              final currentStamps = (customer['stamp_count'] as num?)?.toInt()    ?? 0;
+              final currentPts =
+                  (customer['loyalty_pts'] as num?)?.toDouble() ?? 0;
+              final currentSpent =
+                  (customer['total_spent'] as num?)?.toDouble() ?? 0;
+              final currentVisit =
+                  (customer['visit_count'] as num?)?.toInt() ?? 0;
+              final currentStamps =
+                  (customer['stamp_count'] as num?)?.toInt() ?? 0;
 
-              final newPts = (currentPts + ptsEarned - ptsUsed).clamp(0, double.infinity);
+              final newPts = (currentPts + ptsEarned - ptsUsed).clamp(
+                0,
+                double.infinity,
+              );
 
               int threshold = 10;
               try {
-                final tRes = await sb.from('app_settings')
+                final tRes = await sb
+                    .from('app_settings')
                     .select('value')
                     .eq('store_id', storeId)
                     .eq('key', 'stamp_threshold')
                     .maybeSingle();
-                threshold = int.tryParse(tRes?['value'] as String? ?? '10') ?? 10;
+                threshold =
+                    int.tryParse(tRes?['value'] as String? ?? '10') ?? 10;
               } catch (_) {}
 
               final nextStamps = currentStamps + 1;
               final rewardTriggered = nextStamps >= threshold;
               final newStampCount = rewardTriggered ? 0 : nextStamps;
-              final newStampTotal  = (customer['stamp_total'] as num?)?.toInt() ?? 0;
+              final newStampTotal =
+                  (customer['stamp_total'] as num?)?.toInt() ?? 0;
 
-              await sb.from('customers').update({
-                'loyalty_pts':  newPts,
-                'total_spent':  currentSpent + (total + discount),
-                'visit_count':  currentVisit + 1,
-                'stamp_count':  newStampCount,
-                'stamp_total':  newStampTotal + 1,
-                'updated_at':   now,
-              }).eq('id', customerId);
+              await sb
+                  .from('customers')
+                  .update({
+                    'loyalty_pts': newPts,
+                    'total_spent': currentSpent + (total + discount),
+                    'visit_count': currentVisit + 1,
+                    'stamp_count': newStampCount,
+                    'stamp_total': newStampTotal + 1,
+                    'updated_at': now,
+                  })
+                  .eq('id', customerId);
 
               if (ptsEarned > 0 || ptsUsed > 0) {
                 await sb.from('loyalty_transactions').insert({
-                  'id':          const Uuid().v4(),
-                  'store_id':    storeId,
+                  'id': const Uuid().v4(),
+                  'store_id': storeId,
                   'customer_id': customerId,
-                  'order_id':    orderId,
-                  'pts_earned':  ptsEarned,
-                  'pts_used':    ptsUsed.toDouble(),
-                  'note':        ptsUsed > 0
+                  'order_id': orderId,
+                  'pts_earned': ptsEarned,
+                  'pts_used': ptsUsed.toDouble(),
+                  'note': ptsUsed > 0
                       ? 'Ban $orderNumber (dùng $ptsUsed điểm giảm giá)'
                       : 'Ban $orderNumber',
-                  'created_at':  now,
+                  'created_at': now,
                 });
               }
             }
-          } catch (e) { debugPrint('[Checkout] loyalty silent err: $e'); }
+          } catch (e) {
+            debugPrint('[Checkout] loyalty silent err: $e');
+          }
         }
       }
 
@@ -3028,26 +3692,30 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       await banRepoCached.closeSession(widget.session.id, total);
 
       // LOG HOẠT ĐỘNG
-      AppLogger.info('checkout', 'Thanh toan hoa don thanh cong tai ${widget.zone.name} - ${widget.table.label}. Tong: ${total.toInt()}d, Hinh thuc: ${payMethod.toUpperCase()}');
-      
+      AppLogger.info(
+        'checkout',
+        'Thanh toan hoa don thanh cong tai ${widget.zone.name} - ${widget.table.label}. Tong: ${total.toInt()}d, Hinh thuc: ${payMethod.toUpperCase()}',
+      );
+
       // Tự động in hóa đơn thu ngân khi thanh toán tại bàn (nếu bật cấu hình)
       try {
-        if (printerSettingsCached.autoPrintCheckout && !printerSettingsCached.autoPrintServer) {
+        if (printerSettingsCached.autoPrintCheckout &&
+            !printerSettingsCached.autoPrintServer) {
           final List<BillItem> billItems = [];
           for (final item in items) {
-            billItems.add(BillItem(
-              name: item.productName,
-              qty: item.quantity.toInt(),
-              price: item.price,
-              note: item.note,
-            ));
+            billItems.add(
+              BillItem(
+                name: item.productName,
+                qty: item.quantity.toInt(),
+                price: item.price,
+                note: item.note,
+              ),
+            );
           }
           if (surcharge > 0) {
-            billItems.add(BillItem(
-              name: 'Phí dịch vụ / Ship',
-              qty: 1,
-              price: surcharge,
-            ));
+            billItems.add(
+              BillItem(name: 'Phí dịch vụ / Ship', qty: 1, price: surcharge),
+            );
           }
 
           final session = ref.read(sessionProvider);
@@ -3066,7 +3734,11 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             waiterName: _resolveWaiterName(items, session?.displayName),
           );
 
-          await StationPrinterDispatcher.printBill(billData, printerSettingsCached, onlyReceipt: true);
+          await StationPrinterDispatcher.printBill(
+            billData,
+            printerSettingsCached,
+            onlyReceipt: true,
+          );
         }
       } catch (e) {
         debugPrint('[Checkout Print] ❌ Lỗi in hóa đơn thanh toán bàn: $e');
@@ -3079,16 +3751,15 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         ref.invalidate(activeSessionsProvider);
         ref.invalidate(todayStatsProvider);
         // Invalidate finance — StreamProvider + FutureProviders cùng refresh
-        ref.invalidate(financeRecordsProvider);      // list giao dịch
-        ref.invalidate(financeStatsProvider);        // stats header kỳ đang chọn
+        ref.invalidate(financeRecordsProvider); // list giao dịch
+        ref.invalidate(financeStatsProvider); // stats header kỳ đang chọn
         ref.invalidate(todayFinanceStatsProvider);
         try {
           final ch = Supabase.instance.client.channel('store_broadcast');
           ch.subscribe();
-          ch.sendBroadcastMessage(
-            event: 'checkout_completed',
-            payload: {},
-          ).then((_) => ch.unsubscribe());
+          ch
+              .sendBroadcastMessage(event: 'checkout_completed', payload: {})
+              .then((_) => ch.unsubscribe());
         } catch (_) {}
       }
 
@@ -3096,7 +3767,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         // Phát âm thanh tiền
         try {
           final player = AudioPlayer();
-          player.play(AssetSource('sounds/payment_success.mp3')); // KHÔNG await để UI phản hồi ngay lập tức
+          player.play(
+            AssetSource('sounds/payment_success.mp3'),
+          ); // KHÔNG await để UI phản hồi ngay lập tức
         } catch (_) {}
         if (!mounted) return;
         // Hiện dialog thành công trước khi đóng tab
@@ -3104,7 +3777,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           context: context,
           barrierDismissible: false,
           builder: (_) => Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
             backgroundColor: Colors.white,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 28),
@@ -3112,23 +3787,36 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 72, height: 72,
+                    width: 72,
+                    height: 72,
                     decoration: BoxDecoration(
                       color: _kGreen.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.check_circle_rounded,
-                        color: _kGreen, size: 44),
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      color: _kGreen,
+                      size: 44,
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  Text('Thanh toán thành công!',
+                  Text(
+                    'Thanh toán thành công!',
                     style: GoogleFonts.outfit(
-                      fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy)),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: _kNavy,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text(fmtVnd(total),
+                  Text(
+                    fmtVnd(total),
                     style: GoogleFonts.outfit(
-                      fontSize: 26, fontWeight: FontWeight.w900,
-                      color: _kGreen)),
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: _kGreen,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -3163,7 +3851,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   // ‼️ FIX Bug #38: _isCheckingOut guard — ngăn double-tap tạo 2 order, 2 finance record
   bool _isCheckingOut = false;
 
-  Future<void> _openCheckout(double total, List<BanSessionItemModel> items) async {
+  Future<void> _openCheckout(
+    double total,
+    List<BanSessionItemModel> items,
+  ) async {
     if (_isCheckingOut) return; // guard double-tap
     final perms = await ref.read(userActionPermsProvider.future);
     final hasPerm = perms.contains('pos.checkout');
@@ -3195,13 +3886,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     if (_isCheckingOut) return; // second guard sau khi sheet đóng
     _isCheckingOut = true;
     try {
-      final payMethod  = result['pay']        as String? ?? 'cash';
+      final payMethod = result['pay'] as String? ?? 'cash';
       final customerId = result['customerId'] as String?;
-      final ptsUsed    = (result['ptsUsed']   as int?)   ?? 0;
-      final discount   = ((result['discount'] as num?)   ?? 0).toDouble();
-      final finalTotal = (total - discount).clamp(0.0, double.infinity) as double;
+      final ptsUsed = (result['ptsUsed'] as int?) ?? 0;
+      final discount = ((result['discount'] as num?) ?? 0).toDouble();
+      final finalTotal =
+          (total - discount).clamp(0.0, double.infinity) as double;
       final couponCode = result['couponCode'] as String?;
-      final surcharge  = ((result['surcharge'] as num?) ?? 0).toDouble();
+      final surcharge = ((result['surcharge'] as num?) ?? 0).toDouble();
       await _checkout(
         finalTotal,
         payMethod,
@@ -3217,8 +3909,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
   }
 
-  Future<void> _updateItemNote(
-      BanSessionItemModel item, String newNote) async {
+  Future<void> _updateItemNote(BanSessionItemModel item, String newNote) async {
     await Supabase.instance.client
         .from('ban_session_items')
         .update({'note': newNote.trim().isEmpty ? null : newNote.trim()})
@@ -3242,7 +3933,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   .from('ban_session_items')
                   .update({'note': newNote.isEmpty ? null : newNote})
                   .eq('id', item.id);
-              updatedItems.add(item.copyWith(note: newNote.isEmpty ? null : newNote, clearNote: newNote.isEmpty));
+              updatedItems.add(
+                item.copyWith(
+                  note: newNote.isEmpty ? null : newNote,
+                  clearNote: newNote.isEmpty,
+                ),
+              );
               continue;
             }
           }
@@ -3253,14 +3949,20 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     } catch (e, st) {
       debugPrint('[Kitchen] ❌ _sendToKitchen crash: $e\n$st');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('⚠️ Gửi bếp thất bại: $e',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-          backgroundColor: _kRed,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 6),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '⚠️ Gửi bếp thất bại: $e',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            ),
+            backgroundColor: _kRed,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 6),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
       }
     }
   }
@@ -3281,21 +3983,21 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
     // Lấy store_id — cần cho NOT NULL constraint
     final storeInfo = await StoreAuthService.getStoreInfo();
-    final storeId   = storeInfo['store_id'];
+    final storeId = storeInfo['store_id'];
     if (storeId == null) throw Exception('storeId null — chưa đăng nhập ?');
 
     final session = ref.read(sessionProvider);
     // 1. Tạo KitchenTicket
     await Supabase.instance.client.from('kitchen_tickets').insert({
-      'id':          ticketId,
-      'store_id':    storeId,
-      'session_id':  widget.session.id,
+      'id': ticketId,
+      'store_id': storeId,
+      'session_id': widget.session.id,
       'table_label': widget.table.label,
-      'zone_label':  widget.zone.name,
-      'round':       round,
-      'status':      'cho',
-      'sent_at':     now,
-      'note':        session?.displayName,
+      'zone_label': widget.zone.name,
+      'round': round,
+      'status': 'cho',
+      'sent_at': now,
+      'note': session?.displayName,
     });
 
     // ‼️ FIX #2: Batch lookup station code — 1 query thay vì N queries
@@ -3304,7 +4006,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       Supabase.instance.client.rest.headers['x-store-id'] = storeId;
     } catch (_) {}
     final productRows = await Supabase.instance.client
-        .from('products').select('id, category, station_code').inFilter('id', productIds);
+        .from('products')
+        .select('id, category, station_code')
+        .inFilter('id', productIds);
     final productInfoMap = <String, Map<String, dynamic>>{
       for (final r in productRows) r['id'] as String: r,
     };
@@ -3316,25 +4020,29 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         final pInfo = productInfoMap[item.productId];
         final stationCode = pInfo?['station_code'] as String? ?? 'bep_nong';
         itemRows.add({
-          'id':              const Uuid().v4(),
-          'store_id':        storeId,
-          'ticket_id':       ticketId,
+          'id': const Uuid().v4(),
+          'store_id': storeId,
+          'ticket_id': ticketId,
           'session_item_id': item.id,
-          'product_id':      item.productId,
-          'name':            item.productName,            // Hỗ trợ cột 'name' của schema cũ (NOT NULL)
-          'product_name':    item.productName,            // Hỗ trợ cột 'product_name' của schema mới
-          'qty':             item.quantity.toInt(),       // Hỗ trợ cột 'qty' của schema cũ
-          'quantity':        item.quantity,               // Hỗ trợ cột 'quantity' của schema mới
-          'free_note':       item.note,
-          'kitchen_note':    item.modifiersJson,          // Hỗ trợ cột 'kitchen_note'
-          'modifiers_json':  item.modifiersJson,          // Hỗ trợ cột 'modifiers_json'
-          'station_code':    stationCode,
-          'done':            false,
+          'product_id': item.productId,
+          'name':
+              item.productName, // Hỗ trợ cột 'name' của schema cũ (NOT NULL)
+          'product_name':
+              item.productName, // Hỗ trợ cột 'product_name' của schema mới
+          'qty': item.quantity.toInt(), // Hỗ trợ cột 'qty' của schema cũ
+          'quantity': item.quantity, // Hỗ trợ cột 'quantity' của schema mới
+          'free_note': item.note,
+          'kitchen_note': item.modifiersJson, // Hỗ trợ cột 'kitchen_note'
+          'modifiers_json': item.modifiersJson, // Hỗ trợ cột 'modifiers_json'
+          'station_code': stationCode,
+          'done': false,
         });
       }
 
       if (itemRows.isNotEmpty) {
-        await Supabase.instance.client.from('kitchen_ticket_items').insert(itemRows);
+        await Supabase.instance.client
+            .from('kitchen_ticket_items')
+            .insert(itemRows);
       }
 
       final unsentIds = unsent.map((i) => i.id).toList();
@@ -3346,16 +4054,25 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       // Invalidate stream provider immediately so UI updates to 'da_gui' without waiting for realtime/poll
       ref.invalidate(sessionItemsProvider(widget.session.id));
 
-      final itemsSummary = unsent.map((i) => '${i.productName} (x${i.quantity.toInt()})').join(', ');
-      AppLogger.info('order', 'Gui bep thanh cong tai ${widget.zone.name} - ${widget.table.label}: $itemsSummary');
+      final itemsSummary = unsent
+          .map((i) => '${i.productName} (x${i.quantity.toInt()})')
+          .join(', ');
+      AppLogger.info(
+        'order',
+        'Gui bep thanh cong tai ${widget.zone.name} - ${widget.table.label}: $itemsSummary',
+      );
     } catch (e) {
       debugPrint('[Kitchen] ❌ Lỗi insert items: $e');
       // Rollback: xóa ticket để tránh phiếu rỗng
       await Supabase.instance.client
-          .from('kitchen_tickets').delete().eq('id', ticketId);
+          .from('kitchen_tickets')
+          .delete()
+          .eq('id', ticketId);
       final unsentIds = unsent.map((i) => i.id).toList();
-      await Supabase.instance.client.from('ban_session_items')
-          .update({'kitchen_status': 'chua_gui'}).inFilter('id', unsentIds);
+      await Supabase.instance.client
+          .from('ban_session_items')
+          .update({'kitchen_status': 'chua_gui'})
+          .inFilter('id', unsentIds);
       rethrow; // đẩy lỗi lên wrapper để hiện SnackBar
     }
 
@@ -3367,13 +4084,15 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         for (final item in unsent) {
           final pInfo = productInfoMap[item.productId];
           final stationCode = pInfo?['station_code'] as String? ?? 'bep_nong';
-          billItems.add(BillItem(
-            name: item.productName,
-            qty: item.quantity.toInt(),
-            price: 0, // In bếp không hiển thị giá
-            note: item.note,
-            stationCode: stationCode,
-          ));
+          billItems.add(
+            BillItem(
+              name: item.productName,
+              qty: item.quantity.toInt(),
+              price: 0, // In bếp không hiển thị giá
+              note: item.note,
+              stationCode: stationCode,
+            ),
+          );
         }
 
         final session = ref.read(sessionProvider);
@@ -3391,7 +4110,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           note: '',
           waiterName: _resolveWaiterName(unsent, session?.displayName),
         );
-        
+
         await StationPrinterDispatcher.printBill(billData, settings);
       }
     } catch (e) {
@@ -3414,7 +4133,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
           backgroundColor: _kOrange,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -3442,19 +4163,23 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             for (final e in extras) {
               if (e is Map) {
                 final name = e['name'] as String? ?? '';
-                final qty  = e['qty'];
+                final qty = e['qty'];
                 final type = e['type'] as String? ?? '';
                 if (name.isEmpty) continue;
                 modifierLines.add(
-                  (type == 'topping' && qty != null && qty != 1) ? '$name x$qty' : name,
+                  (type == 'topping' && qty != null && qty != 1)
+                      ? '$name x$qty'
+                      : name,
                 );
               }
             }
           } catch (_) {}
         }
         return TicketItemData(
-          name: i.productName, quantity: i.quantity,
-          modifiers: modifierLines, note: i.note,
+          name: i.productName,
+          quantity: i.quantity,
+          modifiers: modifierLines,
+          note: i.note,
         );
       }).toList();
 
@@ -3479,7 +4204,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             backgroundColor: Colors.orange.shade700,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
+              borderRadius: BorderRadius.circular(10),
+            ),
             duration: const Duration(seconds: 4),
           ),
         );
@@ -3492,14 +4218,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   Future<Map<String, String>?> _verifyManagerApproval() async {
     final session = ref.read(sessionProvider);
     final canonical = StaffService.canonicalRole(session?.role ?? '');
-    final isManager = session?.isOwner == true ||
-        canonical == 'owner' || canonical == 'manager';
+    final isManager =
+        session?.isOwner == true ||
+        canonical == 'owner' ||
+        canonical == 'manager';
 
     if (isManager) {
-      return {
-        'id': session!.userId,
-        'name': session.displayName,
-      };
+      return {'id': session!.userId, 'name': session.displayName};
     }
 
     final storeId = session?.storeId;
@@ -3519,16 +4244,26 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       barrierDismissible: false,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
-          title: Text('Lý do huỷ bàn *', style: GoogleFonts.outfit(fontWeight: FontWeight.w800)),
+          title: Text(
+            'Lý do huỷ bàn *',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w800),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final r in ['Khách đổi ý', 'Mở nhầm bàn', 'Gộp/Chuyển bàn', 'Khác'])
+              for (final r in [
+                'Khách đổi ý',
+                'Mở nhầm bàn',
+                'Gộp/Chuyển bàn',
+                'Khác',
+              ])
                 RadioListTile<String>(
-                  dense: true, contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
                   title: Text(r, style: GoogleFonts.outfit(fontSize: 13)),
-                  value: r, groupValue: selectedReason,
+                  value: r,
+                  groupValue: selectedReason,
                   onChanged: (v) => setS(() => selectedReason = v),
                   activeColor: _kOrange,
                 ),
@@ -3536,9 +4271,16 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
           actions: [
             TextButton(
-              onPressed: selectedReason == null ? null : () => Navigator.pop(ctx, selectedReason),
-              child: Text('Đồng ý', style: GoogleFonts.outfit(
-                color: selectedReason == null ? Colors.grey : _kRed, fontWeight: FontWeight.w700)),
+              onPressed: selectedReason == null
+                  ? null
+                  : () => Navigator.pop(ctx, selectedReason),
+              child: Text(
+                'Đồng ý',
+                style: GoogleFonts.outfit(
+                  color: selectedReason == null ? Colors.grey : _kRed,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),
@@ -3546,7 +4288,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     );
   }
 
-  Future<String?> _askWastageReasonAndResponsibilityCommitment(String managerName) async {
+  Future<String?> _askWastageReasonAndResponsibilityCommitment(
+    String managerName,
+  ) async {
     String? selectedReason;
     bool committed = false;
     return showDialog<String>(
@@ -3554,12 +4298,20 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       barrierDismissible: false,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Row(
             children: [
               const Icon(Icons.gavel_rounded, color: _kRed, size: 22),
               const SizedBox(width: 8),
-              Text('Cam kết trách nhiệm', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: _kRed)),
+              Text(
+                'Cam kết trách nhiệm',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w800,
+                  color: _kRed,
+                ),
+              ),
             ],
           ),
           content: Column(
@@ -3568,12 +4320,19 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             children: [
               Text(
                 'Quản lý: $managerName',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 13, color: _kNavy),
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: _kNavy,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Bàn đã có món đang làm hoặc đã làm xong. Vui lòng chọn lý do hao phí và tích xác nhận chịu trách nhiệm:',
-                style: GoogleFonts.outfit(fontSize: 12.5, color: Colors.black87),
+                style: GoogleFonts.outfit(
+                  fontSize: 12.5,
+                  color: Colors.black87,
+                ),
               ),
               const SizedBox(height: 12),
               for (final r in [
@@ -3581,22 +4340,29 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 'Bếp làm sai món / hỏng đồ',
                 'Nhân viên order nhầm đã nấu',
                 'Khách đổi ý khi đang nấu',
-                'Lý do hao phí khác'
+                'Lý do hao phí khác',
               ])
                 RadioListTile<String>(
-                  dense: true, contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
                   title: Text(r, style: GoogleFonts.outfit(fontSize: 13)),
-                  value: r, groupValue: selectedReason,
+                  value: r,
+                  groupValue: selectedReason,
                   onChanged: (v) => setS(() => selectedReason = v),
                   activeColor: _kRed,
                 ),
               const Divider(height: 24),
               CheckboxListTile(
-                dense: true, contentPadding: EdgeInsets.zero,
+                dense: true,
+                contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
                 title: Text(
                   'Tôi xác nhận chịu trách nhiệm cho các món đã chế biến bị huỷ bỏ.',
-                  style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: _kRed),
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: _kRed,
+                  ),
                 ),
                 value: committed,
                 onChanged: (v) => setS(() => committed = v ?? false),
@@ -3612,14 +4378,22 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             ElevatedButton(
               onPressed: (selectedReason == null || !committed)
                   ? null
-                  : () => Navigator.pop(ctx, '[HAO PHÍ - $selectedReason] Đã ký cam kết chịu trách nhiệm'),
+                  : () => Navigator.pop(
+                      ctx,
+                      '[HAO PHÍ - $selectedReason] Đã ký cam kết chịu trách nhiệm',
+                    ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _kRed,
                 disabledBackgroundColor: Colors.grey.shade300,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              child: Text('Đồng ý huỷ bàn', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+              child: Text(
+                'Đồng ý huỷ bàn',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ),
@@ -3630,7 +4404,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   Future<void> _cancelSession() async {
     final items = ref.read(sessionItemsProvider(widget.session.id)).value ?? [];
     final activeItems = items.where((i) => i.kitchenStatus != 'huy').toList();
-    final hasCookingOrDone = activeItems.any((i) => i.kitchenStatus == 'dang_lam' || i.kitchenStatus == 'xong');
+    final hasCookingOrDone = activeItems.any(
+      (i) => i.kitchenStatus == 'dang_lam' || i.kitchenStatus == 'xong',
+    );
 
     String? reason;
     Map<String, String>? approval;
@@ -3645,7 +4421,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             children: [
               Icon(Icons.warning_amber_rounded, color: _kRed, size: 22),
               const SizedBox(width: 8),
-              Text('Huỷ bàn khẩn cấp?', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: _kRed)),
+              Text(
+                'Huỷ bàn khẩn cấp?',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  color: _kRed,
+                ),
+              ),
             ],
           ),
           content: Text(
@@ -3659,7 +4441,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text('Tiếp tục', style: GoogleFonts.outfit(color: _kRed, fontWeight: FontWeight.w700)),
+              child: Text(
+                'Tiếp tục',
+                style: GoogleFonts.outfit(
+                  color: _kRed,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),
@@ -3671,17 +4459,23 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       if (approval == null) return;
 
       // Lớp 2: Cam kết trách nhiệm & Lý do hao phí bắt buộc
-      reason = await _askWastageReasonAndResponsibilityCommitment(approval['name'] ?? 'Quản lý');
+      reason = await _askWastageReasonAndResponsibilityCommitment(
+        approval['name'] ?? 'Quản lý',
+      );
       if (reason == null) return;
     } else {
       // ── CHẾ ĐỘ THÔNG THƯỜNG (Chưa nấu) ────────────────────────────────────
       final confirm = await showDialog<bool>(
         context: context,
         builder: (_) => AlertDialog(
-          title: Text('Huỷ bàn?',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
-          content: Text('Tất cả món đã gọi sẽ bị xoá.',
-              style: GoogleFonts.outfit()),
+          title: Text(
+            'Huỷ bàn?',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            'Tất cả món đã gọi sẽ bị xoá.',
+            style: GoogleFonts.outfit(),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -3689,9 +4483,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text('Huỷ bàn',
-                  style: GoogleFonts.outfit(
-                      color: _kRed, fontWeight: FontWeight.w700)),
+              child: Text(
+                'Huỷ bàn',
+                style: GoogleFonts.outfit(
+                  color: _kRed,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),
@@ -3710,18 +4508,27 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     setState(() => _isCancelling = true);
     try {
       final session = ref.read(sessionProvider);
-      final activeItemsForLog = items.where((i) => i.kitchenStatus != 'huy').toList();
+      final activeItemsForLog = items
+          .where((i) => i.kitchenStatus != 'huy')
+          .toList();
       final total = activeItemsForLog.fold<double>(0, (s, i) => s + i.subtotal);
-      final details = activeItemsForLog.map((i) => {
-        'product_name': i.productName,
-        'quantity': i.quantity,
-        'subtotal': i.subtotal,
-      }).toList();
+      final details = activeItemsForLog
+          .map(
+            (i) => {
+              'product_name': i.productName,
+              'quantity': i.quantity,
+              'subtotal': i.subtotal,
+            },
+          )
+          .toList();
 
       // Đóng session
       await Supabase.instance.client
           .from('ban_sessions')
-          .update({'status': 'cancelled', 'closed_at': DateTime.now().toUtc().toIso8601String()})
+          .update({
+            'status': 'cancelled',
+            'closed_at': DateTime.now().toUtc().toIso8601String(),
+          })
           .eq('id', widget.session.id);
 
       // Cập nhật trạng thái tất cả các món ăn của bàn thành 'huy'
@@ -3743,28 +4550,32 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       // Ghi void log từng món đang nấu/gửi bếp để bếp thấy banner thông báo huỷ bàn đỏ nổi bật
       try {
         final storeInfo = await StoreAuthService.getStoreInfo();
-        final storeId   = storeInfo['store_id'] as String?;
+        final storeId = storeInfo['store_id'] as String?;
         if (storeId != null) {
           final List<Map<String, dynamic>> voidLogs = [];
           for (final item in activeItemsForLog) {
             final sentStatuses = ['da_gui', 'dang_lam', 'xong'];
             if (sentStatuses.contains(item.kitchenStatus)) {
               voidLogs.add({
-                'store_id':     storeId,
-                'session_id':   widget.session.id,
-                'table_label':  widget.table.label,
+                'store_id': storeId,
+                'session_id': widget.session.id,
+                'table_label': widget.table.label,
                 'product_name': item.productName,
-                'action':       'cancel',
-                'old_qty':      item.quantity,
-                'new_qty':      0,
-                'reason':       'Huỷ bàn: $reason',
-                'staff_name':   approval['name'] ?? 'Quản lý',
+                'action': 'cancel',
+                'old_qty': item.quantity,
+                'new_qty': 0,
+                'reason': 'Huỷ bàn: $reason',
+                'staff_name': approval['name'] ?? 'Quản lý',
               });
             }
           }
           if (voidLogs.isNotEmpty) {
-            await Supabase.instance.client.from('ban_session_void_logs').insert(voidLogs);
-            debugPrint('[Ban] ✅ ban_session_void_logs for cancelled table items inserted');
+            await Supabase.instance.client
+                .from('ban_session_void_logs')
+                .insert(voidLogs);
+            debugPrint(
+              '[Ban] ✅ ban_session_void_logs for cancelled table items inserted',
+            );
           }
         }
       } catch (e) {
@@ -3785,8 +4596,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         details: details,
       );
 
-      debugPrint('[Ban] ✅ void audit log CANCEL_TABLE inserted with 2-step verification if cooking/done');
-
+      debugPrint(
+        '[Ban] ✅ void audit log CANCEL_TABLE inserted with 2-step verification if cooking/done',
+      );
     } catch (e) {
       debugPrint('[Ban] cancel kitchen tickets err: $e');
     } finally {
@@ -3811,20 +4623,30 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ref.invalidate(activeSessionsProvider);
           if (mounted) {
             Navigator.pop(context); // đóng session sheet
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Row(children: [
-                const Icon(Icons.check_circle_rounded,
-                    color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text('Chuyển bàn thành công!',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-              ]),
-              backgroundColor: _kGreen,
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Chuyển bàn thành công!',
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+                backgroundColor: _kGreen,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.all(12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            );
           }
         },
       ),
@@ -3852,18 +4674,30 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ref.invalidate(activeSessionsProvider);
           if (mounted) {
             Navigator.pop(context); // đóng session sheet
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Row(children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text('Gộp bàn thành công!',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-              ]),
-              backgroundColor: _kGreen,
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Gộp bàn thành công!',
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+                backgroundColor: _kGreen,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.all(12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            );
           }
         },
       ),
@@ -3906,7 +4740,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: zoneColor,
                             borderRadius: BorderRadius.circular(10),
@@ -3933,16 +4769,25 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         GestureDetector(
                           onTap: _transferTable,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: _kAmber.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: _kAmber.withValues(alpha: 0.2)),
+                              border: Border.all(
+                                color: _kAmber.withValues(alpha: 0.2),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.swap_horiz_rounded, size: 14, color: _kAmber),
+                                const Icon(
+                                  Icons.swap_horiz_rounded,
+                                  size: 14,
+                                  color: _kAmber,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Chuyển',
@@ -3961,16 +4806,29 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         GestureDetector(
                           onTap: _mergeTable,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                              color: const Color(
+                                0xFF2563EB,
+                              ).withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.2)),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFF2563EB,
+                                ).withValues(alpha: 0.2),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.merge_type_rounded, size: 14, color: Color(0xFF2563EB)),
+                                const Icon(
+                                  Icons.merge_type_rounded,
+                                  size: 14,
+                                  color: Color(0xFF2563EB),
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Gộp bàn',
@@ -3988,16 +4846,25 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         GestureDetector(
                           onTap: _cancelSession,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: _kRed.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: _kRed.withValues(alpha: 0.2)),
+                              border: Border.all(
+                                color: _kRed.withValues(alpha: 0.2),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.cancel_rounded, size: 14, color: _kRed),
+                                const Icon(
+                                  Icons.cancel_rounded,
+                                  size: 14,
+                                  color: _kRed,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Huỷ bàn',
@@ -4025,7 +4892,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         if (items.isEmpty) {
                           return Center(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
                               child: Container(
                                 padding: const EdgeInsets.all(32),
                                 decoration: BoxDecoration(
@@ -4038,12 +4907,17 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                       offset: const Offset(0, 6),
                                     ),
                                   ],
-                                  border: Border.all(color: _kNavy.withValues(alpha: 0.06)),
+                                  border: Border.all(
+                                    color: _kNavy.withValues(alpha: 0.06),
+                                  ),
                                 ),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Text('🍽️', style: TextStyle(fontSize: 54)),
+                                    const Text(
+                                      '🍽️',
+                                      style: TextStyle(fontSize: 54),
+                                    ),
                                     const SizedBox(height: 16),
                                     Text(
                                       'Chưa có món nào được chọn',
@@ -4070,15 +4944,30 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         backgroundColor: _kNavy,
                                         foregroundColor: Colors.white,
                                         elevation: 4,
-                                        shadowColor: _kNavy.withValues(alpha: 0.25),
-                                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                                        shadowColor: _kNavy.withValues(
+                                          alpha: 0.25,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 28,
+                                          vertical: 14,
+                                        ),
                                         shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16)),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
                                       ),
-                                      icon: const Icon(Icons.add_rounded, size: 20),
-                                      label: Text('Gọi món ngay',
-                                          style: GoogleFonts.outfit(
-                                              fontWeight: FontWeight.w800, fontSize: 14)),
+                                      icon: const Icon(
+                                        Icons.add_rounded,
+                                        size: 20,
+                                      ),
+                                      label: Text(
+                                        'Gọi món ngay',
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 14,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -4086,15 +4975,21 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                             ),
                           );
                         }
-                        print('[UI DEBUG] TableSessionSheet received items length: ${items.length}');
+                        print(
+                          '[UI DEBUG] TableSessionSheet received items length: ${items.length}',
+                        );
                         // ‼️ FIX #R3: Exclude món đã hủy khỏi tổng — tránh tính tiền món đã cancel
-                        final rawActiveItems = items.where((i) => i.kitchenStatus != 'huy').toList();
-                        final Map<String, BanSessionItemModel> groupedActiveMap = {};
+                        final rawActiveItems = items
+                            .where((i) => i.kitchenStatus != 'huy')
+                            .toList();
+                        final Map<String, BanSessionItemModel>
+                        groupedActiveMap = {};
                         for (final item in rawActiveItems) {
                           final cleanNote = item.note?.trim() ?? '';
                           final cleanMods = item.modifiersJson?.trim() ?? '';
                           // Gộp theo key = product_id + price + note + modifiers + kitchenStatus
-                          final key = '${item.productId}_${item.price.toStringAsFixed(2)}_${cleanNote}_${cleanMods}_${item.kitchenStatus}';
+                          final key =
+                              '${item.productId}_${item.price.toStringAsFixed(2)}_${cleanNote}_${cleanMods}_${item.kitchenStatus}';
                           if (groupedActiveMap.containsKey(key)) {
                             final prev = groupedActiveMap[key]!;
                             groupedActiveMap[key] = BanSessionItemModel(
@@ -4115,8 +5010,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         }
                         final activeItems = groupedActiveMap.values.toList()
                           ..sort((a, b) => a.addedAt.compareTo(b.addedAt));
-                        print('[UI DEBUG] TableSessionSheet activeItems length: ${activeItems.length}');
-                        final total = activeItems.fold<double>(0, (s, i) => s + i.subtotal);
+                        print(
+                          '[UI DEBUG] TableSessionSheet activeItems length: ${activeItems.length}',
+                        );
+                        final total = activeItems.fold<double>(
+                          0,
+                          (s, i) => s + i.subtotal,
+                        );
 
                         return CustomScrollView(
                           slivers: [
@@ -4124,15 +5024,24 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                               delegate: SliverChildBuilderDelegate(
                                 (ctx, i) {
                                   final item = activeItems[i];
-                                  
+
                                   // Sent items → không Dismissible (tránh gesture conflict với nút bên trong)
                                   // Unsent items → Dismissible swipe-to-delete bình thường
                                   // NUCLEAR FIX: Bỏ Dismissible hoàn toàn, dùng GestureDetector
-                                  final _sentSts = ['da_gui', 'dang_lam', 'xong'];
-                                  final _isItemSent = _sentSts.contains(item.kitchenStatus);
+                                  final _sentSts = [
+                                    'da_gui',
+                                    'dang_lam',
+                                    'xong',
+                                  ];
+                                  final _isItemSent = _sentSts.contains(
+                                    item.kitchenStatus,
+                                  );
                                   return Container(
                                     key: ValueKey(item.id),
-                                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 6,
+                                    ),
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
@@ -4152,21 +5061,46 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                       ),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
-                                            _KitchenStatusDot(status: item.kitchenStatus),
+                                            _KitchenStatusDot(
+                                              status: item.kitchenStatus,
+                                            ),
                                             const SizedBox(width: 8),
                                             Expanded(
                                               child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
-                                                  Text(item.addedBy != null && item.addedBy!.isNotEmpty ? '${item.productName} (${item.addedBy})' : item.productName,
-                                                    style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: _kNavy, fontSize: 14.5)),
+                                                  Text(
+                                                    item.addedBy != null &&
+                                                            item
+                                                                .addedBy!
+                                                                .isNotEmpty
+                                                        ? '${item.productName} (${item.addedBy})'
+                                                        : item.productName,
+                                                    style: GoogleFonts.outfit(
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: _kNavy,
+                                                      fontSize: 14.5,
+                                                    ),
+                                                  ),
                                                   const SizedBox(height: 2),
-                                                  Text(fmtVnd(item.price),
-                                                    style: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.45), fontWeight: FontWeight.w600)),
+                                                  Text(
+                                                    fmtVnd(item.price),
+                                                    style: GoogleFonts.outfit(
+                                                      fontSize: 12,
+                                                      color: _kNavy.withValues(
+                                                        alpha: 0.45,
+                                                      ),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
                                                 ],
                                               ),
                                             ),
@@ -4174,19 +5108,33 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                             if (!_isItemSent) ...[
                                               Container(
                                                 decoration: BoxDecoration(
-                                                  color: _kNavy.withValues(alpha: 0.05),
-                                                  borderRadius: BorderRadius.circular(12),
+                                                  color: _kNavy.withValues(
+                                                    alpha: 0.05,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                 ),
-                                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 4,
+                                                      vertical: 4,
+                                                    ),
                                                 child: Row(
                                                   children: [
                                                     GestureDetector(
                                                       onTap: () async {
                                                         HapticFeedback.selectionClick();
                                                         if (item.quantity > 1) {
-                                                          await _updateItemQty(item, item.quantity.toInt() - 1);
+                                                          await _updateItemQty(
+                                                            item,
+                                                            item.quantity
+                                                                    .toInt() -
+                                                                1,
+                                                          );
                                                         } else {
-                                                          await _removeItem(item);
+                                                          await _removeItem(
+                                                            item,
+                                                          );
                                                         }
                                                       },
                                                       child: Container(
@@ -4194,36 +5142,60 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                         height: 28,
                                                         decoration: BoxDecoration(
                                                           color: Colors.white,
-                                                          borderRadius: BorderRadius.circular(8),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
                                                         ),
-                                                        child: const Icon(Icons.remove_rounded, size: 14, color: _kNavy),
+                                                        child: const Icon(
+                                                          Icons.remove_rounded,
+                                                          size: 14,
+                                                          color: _kNavy,
+                                                        ),
                                                       ),
                                                     ),
                                                     SizedBox(
                                                       width: 30,
                                                       child: Text(
-                                                        item.quantity.toStringAsFixed(0),
-                                                        textAlign: TextAlign.center,
-                                                        style: GoogleFonts.outfit(
-                                                          fontWeight: FontWeight.w800,
-                                                          color: _kNavy,
-                                                          fontSize: 13,
-                                                        ),
+                                                        item.quantity
+                                                            .toStringAsFixed(0),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style:
+                                                            GoogleFonts.outfit(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w800,
+                                                              color: _kNavy,
+                                                              fontSize: 13,
+                                                            ),
                                                       ),
                                                     ),
                                                     GestureDetector(
                                                       onTap: () async {
                                                         HapticFeedback.selectionClick();
-                                                        await _updateItemQty(item, item.quantity.toInt() + 1);
+                                                        await _updateItemQty(
+                                                          item,
+                                                          item.quantity
+                                                                  .toInt() +
+                                                              1,
+                                                        );
                                                       },
                                                       child: Container(
                                                         width: 28,
                                                         height: 28,
                                                         decoration: BoxDecoration(
                                                           color: Colors.white,
-                                                          borderRadius: BorderRadius.circular(8),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
                                                         ),
-                                                        child: const Icon(Icons.add_rounded, size: 14, color: _kNavy),
+                                                        child: const Icon(
+                                                          Icons.add_rounded,
+                                                          size: 14,
+                                                          color: _kNavy,
+                                                        ),
                                                       ),
                                                     ),
                                                   ],
@@ -4232,17 +5204,25 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                             ] else ...[
                                               // Món đã gửi bếp → chỉ hiện Text số lượng
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 5,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color: _kNavy.withValues(alpha: 0.05),
-                                                  borderRadius: BorderRadius.circular(8),
+                                                  color: _kNavy.withValues(
+                                                    alpha: 0.05,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
                                                 ),
                                                 child: Text(
                                                   'x${item.quantity.toStringAsFixed(0)}',
                                                   style: GoogleFonts.outfit(
-                                                      fontWeight: FontWeight.w800,
-                                                      color: _kNavy,
-                                                      fontSize: 13),
+                                                    fontWeight: FontWeight.w800,
+                                                    color: _kNavy,
+                                                    fontSize: 13,
+                                                  ),
                                                 ),
                                               ),
                                             ],
@@ -4250,148 +5230,301 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                             Text(
                                               fmtVnd(item.subtotal),
                                               style: GoogleFonts.outfit(
-                                                  fontWeight: FontWeight.w800,
-                                                  color: _kNavy,
-                                                  fontSize: 14.5),
+                                                fontWeight: FontWeight.w800,
+                                                color: _kNavy,
+                                                fontSize: 14.5,
+                                              ),
                                             ),
                                             const SizedBox(width: 6),
                                             GestureDetector(
                                               behavior: HitTestBehavior.opaque,
                                               onTap: () => _removeItem(item),
                                               child: Container(
-                                                width: 30, height: 30,
+                                                width: 30,
+                                                height: 30,
                                                 decoration: BoxDecoration(
-                                                  color: _kRed.withValues(alpha: 0.08),
-                                                  borderRadius: BorderRadius.circular(8),
+                                                  color: _kRed.withValues(
+                                                    alpha: 0.08,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
                                                 ),
-                                                child: const Icon(Icons.delete_outline_rounded, size: 16, color: _kRed),
+                                                child: const Icon(
+                                                  Icons.delete_outline_rounded,
+                                                  size: 16,
+                                                  color: _kRed,
+                                                ),
                                               ),
                                             ),
                                           ],
                                         ),
                                         // ── Topping & modifiers chips từ modifiersJson ──────
                                         if (item.modifiersJson != null)
-                                          Builder(builder: (_) {
-                                            try {
-                                              final extras = jsonDecode(item.modifiersJson!) as List<dynamic>;
-                                              if (extras.isEmpty) return const SizedBox.shrink();
-                                              return Padding(
-                                                padding: const EdgeInsets.only(top: 10),
-                                                child: Wrap(
-                                                  spacing: 6,
-                                                  runSpacing: 6,
-                                                  children: extras.map((e) {
-                                                    final name = e['name'] as String? ?? '';
-                                                    final isTopping = e['type'] == 'topping';
-                                                    final qty = (e['qty'] as num?)?.toInt() ?? 1;
-                                                    
-                                                    return Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                      decoration: BoxDecoration(
-                                                        color: isTopping 
-                                                            ? _kOrange.withValues(alpha: 0.06) 
-                                                            : _kNavy.withValues(alpha: 0.05),
-                                                        borderRadius: BorderRadius.circular(8),
-                                                        border: Border.all(
-                                                          color: isTopping 
-                                                              ? _kOrange.withValues(alpha: 0.2) 
-                                                              : _kNavy.withValues(alpha: 0.1),
-                                                          width: 1,
-                                                        ),
+                                          Builder(
+                                            builder: (_) {
+                                              try {
+                                                final extras =
+                                                    jsonDecode(
+                                                          item.modifiersJson!,
+                                                        )
+                                                        as List<dynamic>;
+                                                if (extras.isEmpty)
+                                                  return const SizedBox.shrink();
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        top: 10,
                                                       ),
-                                                      child: Text(
-                                                        isTopping
-                                                            ? (qty > 1 ? '🥗 $name ×$qty' : '🥗 $name')
-                                                            : '✨ $name',
-                                                        style: GoogleFonts.outfit(
-                                                          fontSize: 11, 
-                                                          fontWeight: FontWeight.w700, 
-                                                          color: isTopping ? _kOrange : _kNavy.withValues(alpha: 0.75),
+                                                  child: Wrap(
+                                                    spacing: 6,
+                                                    runSpacing: 6,
+                                                    children: extras.map((e) {
+                                                      final name =
+                                                          e['name']
+                                                              as String? ??
+                                                          '';
+                                                      final isTopping =
+                                                          e['type'] ==
+                                                          'topping';
+                                                      final qty =
+                                                          (e['qty'] as num?)
+                                                              ?.toInt() ??
+                                                          1;
+
+                                                      return Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 10,
+                                                              vertical: 4,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: isTopping
+                                                              ? _kOrange
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.06,
+                                                                    )
+                                                              : _kNavy
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.05,
+                                                                    ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: isTopping
+                                                                ? _kOrange
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.2,
+                                                                      )
+                                                                : _kNavy
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.1,
+                                                                      ),
+                                                            width: 1,
+                                                          ),
                                                         ),
-                                                      ),
-                                                    );
-                                                  }).toList(),
-                                                ),
-                                              );
-                                            } catch (_) { return const SizedBox.shrink(); }
-                                          }),
+                                                        child: Text(
+                                                          isTopping
+                                                              ? (qty > 1
+                                                                    ? '🥗 $name ×$qty'
+                                                                    : '🥗 $name')
+                                                              : '✨ $name',
+                                                          style: GoogleFonts.outfit(
+                                                            fontSize: 11,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            color: isTopping
+                                                                ? _kOrange
+                                                                : _kNavy
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.75,
+                                                                      ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                );
+                                              } catch (_) {
+                                                return const SizedBox.shrink();
+                                              }
+                                            },
+                                          ),
                                         if (item.quantity > 0)
                                           Padding(
-                                            padding: const EdgeInsets.only(top: 12),
+                                            padding: const EdgeInsets.only(
+                                              top: 12,
+                                            ),
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Container(
                                                   decoration: BoxDecoration(
-                                                    color: _kNavy.withValues(alpha: 0.03),
-                                                    borderRadius: BorderRadius.circular(10),
+                                                    color: _kNavy.withValues(
+                                                      alpha: 0.03,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
                                                   ),
                                                   child: _ItemNoteInput(
                                                     item: item,
-                                                    focusNode: _noteFocusNodes.putIfAbsent(
-                                                      item.id,
-                                                      () {
-                                                        final fn = FocusNode();
-                                                        fn.addListener(() {
-                                                          if (!fn.hasFocus) {
-                                                            final currentText = _noteControllers[item.id]?.text ?? '';
-                                                            _updateItemNote(item, currentText);
-                                                          }
-                                                        });
-                                                        return fn;
-                                                      },
-                                                    ),
-                                                    controller: _noteControllers.putIfAbsent(
-                                                      item.id, () => TextEditingController(text: item.note ?? '')),
+                                                    focusNode: _noteFocusNodes
+                                                        .putIfAbsent(item.id, () {
+                                                          final fn =
+                                                              FocusNode();
+                                                          fn.addListener(() {
+                                                            if (!fn.hasFocus) {
+                                                              final currentText =
+                                                                  _noteControllers[item
+                                                                          .id]
+                                                                      ?.text ??
+                                                                  '';
+                                                              _updateItemNote(
+                                                                item,
+                                                                currentText,
+                                                              );
+                                                            }
+                                                          });
+                                                          return fn;
+                                                        }),
+                                                    controller: _noteControllers
+                                                        .putIfAbsent(
+                                                          item.id,
+                                                          () =>
+                                                              TextEditingController(
+                                                                text:
+                                                                    item.note ??
+                                                                    '',
+                                                              ),
+                                                        ),
                                                   ),
                                                 ),
                                                 Padding(
-                                                  padding: const EdgeInsets.only(top: 8),
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        top: 8,
+                                                      ),
                                                   child: SizedBox(
                                                     height: 28,
                                                     child: ListView(
-                                                      scrollDirection: Axis.horizontal,
-                                                      children: _AddItemsSheetState._kPresets.map((preset) {
-                                                        final ctrl = _noteControllers.putIfAbsent(
-                                                          item.id, () => TextEditingController(text: item.note ?? ''));
-                                                        final currentText = ctrl.text;
-                                                        final isOn = currentText.contains(preset);
+                                                      scrollDirection:
+                                                          Axis.horizontal,
+                                                      children: _AddItemsSheetState._kPresets.map((
+                                                        preset,
+                                                      ) {
+                                                        final ctrl = _noteControllers
+                                                            .putIfAbsent(
+                                                              item.id,
+                                                              () => TextEditingController(
+                                                                text:
+                                                                    item.note ??
+                                                                    '',
+                                                              ),
+                                                            );
+                                                        final currentText =
+                                                            ctrl.text;
+                                                        final isOn = currentText
+                                                            .contains(preset);
                                                         return Padding(
-                                                          padding: const EdgeInsets.only(right: 6),
+                                                          padding:
+                                                              const EdgeInsets.only(
+                                                                right: 6,
+                                                              ),
                                                           child: InkWell(
                                                             onTap: () {
                                                               HapticFeedback.selectionClick();
                                                               String newText;
                                                               if (isOn) {
                                                                 newText = currentText
-                                                                    .replaceAll(', $preset', '')
-                                                                    .replaceAll(preset, '')
+                                                                    .replaceAll(
+                                                                      ', $preset',
+                                                                      '',
+                                                                    )
+                                                                    .replaceAll(
+                                                                      preset,
+                                                                      '',
+                                                                    )
                                                                     .trim()
-                                                                    .replaceAll(RegExp(r'^,\s*|,\s*$'), '');
+                                                                    .replaceAll(
+                                                                      RegExp(
+                                                                        r'^,\s*|,\s*$',
+                                                                      ),
+                                                                      '',
+                                                                    );
                                                               } else {
-                                                                newText = currentText.isEmpty
+                                                                newText =
+                                                                    currentText
+                                                                        .isEmpty
                                                                     ? preset
                                                                     : '$currentText, $preset';
                                                               }
-                                                              ctrl.text = newText;
-                                                              ctrl.selection = TextSelection.fromPosition(
-                                                                TextPosition(offset: newText.length),
-                                                              );
-                                                              
-                                                              Supabase.instance.client
-                                                                  .from('ban_session_items')
-                                                                  .update({'note': newText.trim().isEmpty ? null : newText.trim()})
-                                                                  .eq('id', item.id);
+                                                              ctrl.text =
+                                                                  newText;
+                                                              ctrl.selection =
+                                                                  TextSelection.fromPosition(
+                                                                    TextPosition(
+                                                                      offset: newText
+                                                                          .length,
+                                                                    ),
+                                                                  );
+
+                                                              Supabase
+                                                                  .instance
+                                                                  .client
+                                                                  .from(
+                                                                    'ban_session_items',
+                                                                  )
+                                                                  .update({
+                                                                    'note':
+                                                                        newText
+                                                                            .trim()
+                                                                            .isEmpty
+                                                                        ? null
+                                                                        : newText
+                                                                              .trim(),
+                                                                  })
+                                                                  .eq(
+                                                                    'id',
+                                                                    item.id,
+                                                                  );
                                                               setState(() {});
                                                             },
                                                             child: Container(
-                                                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                                                              alignment: Alignment.center,
+                                                              padding:
+                                                                  const EdgeInsets.symmetric(
+                                                                    horizontal:
+                                                                        10,
+                                                                  ),
+                                                              alignment:
+                                                                  Alignment
+                                                                      .center,
                                                               decoration: BoxDecoration(
-                                                                color: isOn ? _kNavy : _kNavy.withValues(alpha: 0.05),
-                                                                borderRadius: BorderRadius.circular(15),
+                                                                color: isOn
+                                                                    ? _kNavy
+                                                                    : _kNavy.withValues(
+                                                                        alpha:
+                                                                            0.05,
+                                                                      ),
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      15,
+                                                                    ),
                                                                 border: Border.all(
-                                                                  color: isOn ? _kNavy : _kNavy.withValues(alpha: 0.1),
+                                                                  color: isOn
+                                                                      ? _kNavy
+                                                                      : _kNavy.withValues(
+                                                                          alpha:
+                                                                              0.1,
+                                                                        ),
                                                                   width: 1,
                                                                 ),
                                                               ),
@@ -4399,8 +5532,16 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                                 preset,
                                                                 style: GoogleFonts.outfit(
                                                                   fontSize: 11,
-                                                                  fontWeight: FontWeight.bold,
-                                                                  color: isOn ? Colors.white : _kNavy.withValues(alpha: 0.6),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  color: isOn
+                                                                      ? Colors
+                                                                            .white
+                                                                      : _kNavy.withValues(
+                                                                          alpha:
+                                                                              0.6,
+                                                                        ),
                                                                 ),
                                                               ),
                                                             ),
@@ -4417,130 +5558,174 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                     ),
                                   );
                                 },
-                          childCount: activeItems.length, // ‼️ FIX: chỉ đếm món chưa huỷ
-                        ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            children: [
-                              Divider(color: _kNavy.withValues(alpha: 0.1)),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'TỔNG CỘNG',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: _kNavy.withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                                  Text(
-                                    fmtVnd(total),
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w800,
-                                      color: _kNavy,
-                                    ),
-                                  ),
-                                ],
+                                childCount: activeItems
+                                    .length, // ‼️ FIX: chỉ đếm món chưa huỷ
                               ),
-                              const SizedBox(height: 16),
-                              // Action buttons — Thêm món + Gửi bếp
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: _addItems,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.white,
-                                        foregroundColor: _kNavy,
-                                        elevation: 0,
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
-                                          side: BorderSide(color: _kNavy.withValues(alpha: 0.15), width: 1.5),
-                                        ),
-                                      ),
-                                      icon: const Icon(Icons.add_rounded, size: 18),
-                                      label: Text(
-                                        'Thêm món',
-                                        style: GoogleFonts.outfit(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 13.5,
-                                        ),
-                                      ),
+                            ),
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: Column(
+                                  children: [
+                                    Divider(
+                                      color: _kNavy.withValues(alpha: 0.1),
                                     ),
-                                  ),
-                                   const SizedBox(width: 10),
-                                   _SendKitchenButton(
-                                     unsentCount: items
-                                         .where((i) =>
-                                             i.kitchenStatus == 'chua_gui')
-                                         .fold<int>(0, (sum, i) => sum + i.quantity.toInt()),
-                                     onPressed: () async => await _sendToKitchen(items),
-                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'TỔNG CỘNG',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: _kNavy.withValues(
+                                              alpha: 0.6,
+                                            ),
+                                          ),
+                                        ),
+                                        Text(
+                                          fmtVnd(total),
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.w800,
+                                            color: _kNavy,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    // Action buttons — Thêm món + Gửi bếp
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: ElevatedButton.icon(
+                                            onPressed: _addItems,
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.white,
+                                              foregroundColor: _kNavy,
+                                              elevation: 0,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 16,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                side: BorderSide(
+                                                  color: _kNavy.withValues(
+                                                    alpha: 0.15,
+                                                  ),
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                            ),
+                                            icon: const Icon(
+                                              Icons.add_rounded,
+                                              size: 18,
+                                            ),
+                                            label: Text(
+                                              'Thêm món',
+                                              style: GoogleFonts.outfit(
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 13.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        _SendKitchenButton(
+                                          unsentCount: items
+                                              .where(
+                                                (i) =>
+                                                    i.kitchenStatus ==
+                                                    'chua_gui',
+                                              )
+                                              .fold<int>(
+                                                0,
+                                                (sum, i) =>
+                                                    sum + i.quantity.toInt(),
+                                              ),
+                                          onPressed: () async =>
+                                              await _sendToKitchen(items),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
 
-                              // Nút Thanh toán
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: total > 0
-                                      ? () => _openCheckout(total, activeItems)
-                                      : null,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: zoneColor,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16)),
-                                    elevation: total > 0 ? 6 : 0,
-                                    shadowColor: total > 0 ? zoneColor.withValues(alpha: 0.45) : null,
-                                    disabledBackgroundColor: _kNavy.withValues(alpha: 0.2),
-                                  ),
-                                  icon: const Icon(Icons.payments_rounded),
-                                  label: Text(
-                                    'Thanh toán',
-                                    style: GoogleFonts.outfit(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 15,
+                                    // Nút Thanh toán
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton.icon(
+                                        onPressed: total > 0
+                                            ? () => _openCheckout(
+                                                total,
+                                                activeItems,
+                                              )
+                                            : null,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: zoneColor,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 16,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                          ),
+                                          elevation: total > 0 ? 6 : 0,
+                                          shadowColor: total > 0
+                                              ? zoneColor.withValues(
+                                                  alpha: 0.45,
+                                                )
+                                              : null,
+                                          disabledBackgroundColor: _kNavy
+                                              .withValues(alpha: 0.2),
+                                        ),
+                                        icon: const Icon(
+                                          Icons.payments_rounded,
+                                        ),
+                                        label: Text(
+                                          'Thanh toán',
+                                          style: GoogleFonts.outfit(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(height: 8),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-      if (_isCancelling)
+            if (_isCancelling)
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.35),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
                   ),
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -4589,11 +5774,11 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
   // Customer loyalty
   String? _customerId;
   String? _customerName;
-  int     _customerPts  = 0;
-  int     _stampCount   = 0;   // tem hiện tại trong vòng này
-  int     _stampThreshold = 10;// số tem cần để nhận thưởng
-  int     _redeemRate   = 1000;// VNĐ mỗi điểm khi đổi (mặc định 1000đ/điểm)
-  int     _usePts       = 0;   // điểm muốn dùng giảm giá
+  int _customerPts = 0;
+  int _stampCount = 0; // tem hiện tại trong vòng này
+  int _stampThreshold = 10; // số tem cần để nhận thưởng
+  int _redeemRate = 1000; // VNĐ mỗi điểm khi đổi (mặc định 1000đ/điểm)
+  int _usePts = 0; // điểm muốn dùng giảm giá
   final _phoneCtrl = TextEditingController();
   final _cashReceivedCtrl = TextEditingController();
   final _surchargeCtrl = TextEditingController();
@@ -4633,17 +5818,20 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
     final phone = _phoneCtrl.text.trim();
     if (phone.length < 9) return;
     setState(() {
-      _searchingCustomer = true; _customerId = null;
-      _customerName = null; _usePts = 0;
+      _searchingCustomer = true;
+      _customerId = null;
+      _customerName = null;
+      _usePts = 0;
     });
     try {
-      final sb      = Supabase.instance.client;
-      final info    = await StoreAuthService.getStoreInfo();
+      final sb = Supabase.instance.client;
+      final info = await StoreAuthService.getStoreInfo();
       final storeId = info['store_id'];
       if (storeId == null) return;
 
       // ── Fetch customer ───────────────────────────────────────────────
-      final res = await sb.from('customers')
+      final res = await sb
+          .from('customers')
           .select('id, name, loyalty_pts, stamp_count')
           .eq('store_id', storeId)
           .eq('phone', phone)
@@ -4653,15 +5841,18 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       // ── Fetch settings (redeem rate + stamp threshold) ───────────────
       if (storeId != null) {
         try {
-          final settings = await sb.from('app_settings')
+          final settings = await sb
+              .from('app_settings')
               .select('key, value')
               .eq('store_id', storeId)
               .inFilter('key', ['loyalty_redeem_rate', 'stamp_threshold']);
           for (final s in settings) {
             if (s['key'] == 'loyalty_redeem_rate') {
-              _redeemRate = int.tryParse(s['value'] as String? ?? '1000') ?? 1000;
+              _redeemRate =
+                  int.tryParse(s['value'] as String? ?? '1000') ?? 1000;
             } else if (s['key'] == 'stamp_threshold') {
-              _stampThreshold = int.tryParse(s['value'] as String? ?? '10') ?? 10;
+              _stampThreshold =
+                  int.tryParse(s['value'] as String? ?? '10') ?? 10;
             }
           }
         } catch (_) {}
@@ -4669,20 +5860,26 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
 
       if (res != null && mounted) {
         setState(() {
-          _customerId  = res['id'] as String;
+          _customerId = res['id'] as String;
           _customerName = res['name'] as String? ?? phone;
-          _customerPts  = ((res['loyalty_pts'] as num?)?.toInt()) ?? 0;
-          _stampCount   = ((res['stamp_count'] as num?)?.toInt()) ?? 0;
+          _customerPts = ((res['loyalty_pts'] as num?)?.toInt()) ?? 0;
+          _stampCount = ((res['stamp_count'] as num?)?.toInt()) ?? 0;
           _usePts = 0; // reset khi tìm khách mới
         });
       } else if (mounted) {
         setState(() {
-          _customerId = null; _customerName = null;
-          _customerPts = 0; _stampCount = 0; _usePts = 0;
+          _customerId = null;
+          _customerName = null;
+          _customerPts = 0;
+          _stampCount = 0;
+          _usePts = 0;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Không tìm thấy khách hàng'),
-            behavior: SnackBarBehavior.floating));
+          const SnackBar(
+            content: Text('Không tìm thấy khách hàng'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } catch (_) {}
     if (mounted) setState(() => _searchingCustomer = false);
@@ -4696,7 +5893,12 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       if (storeId == null) return;
 
       final settings = ref.read(printerSettingsProvider);
-      final finalTotal = (widget.total - _couponDiscount - (_usePts * _redeemRate) + _shippingFee).clamp(0.0, double.infinity);
+      final finalTotal =
+          (widget.total -
+                  _couponDiscount -
+                  (_usePts * _redeemRate) +
+                  _shippingFee)
+              .clamp(0.0, double.infinity);
 
       final session = ref.read(sessionProvider);
       final billData = BillData(
@@ -4707,18 +5909,16 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         createdAt: DateTime.now(),
         tableName: widget.tableName,
         items: [
-          ...widget.items.map((i) => BillItem(
-            name: i.productName,
-            qty: i.quantity.toInt(),
-            price: i.price,
-            note: i.note,
-          )),
-          if (_shippingFee > 0)
-            BillItem(
-              name: 'Phí dịch vụ / Ship',
-              qty: 1,
-              price: _shippingFee,
+          ...widget.items.map(
+            (i) => BillItem(
+              name: i.productName,
+              qty: i.quantity.toInt(),
+              price: i.price,
+              note: i.note,
             ),
+          ),
+          if (_shippingFee > 0)
+            BillItem(name: 'Phí dịch vụ / Ship', qty: 1, price: _shippingFee),
         ],
         subtotal: widget.total + _shippingFee,
         discount: _couponDiscount + (_usePts * _redeemRate),
@@ -4728,17 +5928,27 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         waiterName: _resolveWaiterName(widget.items, session?.displayName),
       );
 
-      await StationPrinterDispatcher.printBill(billData, settings, onlyReceipt: true);
-      
+      await StationPrinterDispatcher.printBill(
+        billData,
+        settings,
+        onlyReceipt: true,
+      );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã gửi lệnh in tạm tính'), behavior: SnackBarBehavior.floating)
+          const SnackBar(
+            content: Text('Đã gửi lệnh in tạm tính'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi in tạm tính: $e'), behavior: SnackBarBehavior.floating)
+          SnackBar(
+            content: Text('Lỗi in tạm tính: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
@@ -4823,14 +6033,29 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
             controller: _surchargeCtrl,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy),
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: _kNavy,
+            ),
             decoration: InputDecoration(
               hintText: 'Nhập phí dịch vụ hoặc phí ship...',
-              hintStyle: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade400),
+              hintStyle: GoogleFonts.outfit(
+                fontSize: 13,
+                color: Colors.grey.shade400,
+              ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-              prefixIcon: Icon(Icons.delivery_dining_rounded, color: _kNavy.withOpacity(0.4), size: 20),
+              prefixIcon: Icon(
+                Icons.delivery_dining_rounded,
+                color: _kNavy.withOpacity(0.4),
+                size: 20,
+              ),
               suffixText: 'đ',
-              suffixStyle: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: _kNavy.withOpacity(0.5)),
+              suffixStyle: GoogleFonts.outfit(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: _kNavy.withOpacity(0.5),
+              ),
               filled: true,
               fillColor: Colors.white,
               enabledBorder: OutlineInputBorder(
@@ -4875,12 +6100,23 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 child: TextField(
                   controller: _phoneCtrl,
                   keyboardType: TextInputType.phone,
-                  style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy),
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _kNavy,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Nhập số điện thoại...',
-                    hintStyle: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade400),
+                    hintStyle: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: Colors.grey.shade400,
+                    ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                    prefixIcon: Icon(Icons.phone_iphone_rounded, color: _kNavy.withOpacity(0.4), size: 20),
+                    prefixIcon: Icon(
+                      Icons.phone_iphone_rounded,
+                      color: _kNavy.withOpacity(0.4),
+                      size: 20,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     enabledBorder: OutlineInputBorder(
@@ -4906,7 +6142,9 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   foregroundColor: Colors.white,
                   elevation: 2,
                   shadowColor: _kNavy.withOpacity(0.3),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   padding: EdgeInsets.zero,
                 ),
                 child: _searchingCustomer
@@ -4940,23 +6178,38 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.account_circle_rounded, color: Color(0xFF2E7D32), size: 18),
+                        const Icon(
+                          Icons.account_circle_rounded,
+                          color: Color(0xFF2E7D32),
+                          size: 18,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           _customerName ?? '',
-                          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: const Color(0xFF2E7D32)),
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: const Color(0xFF2E7D32),
+                          ),
                         ),
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF2E7D32).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         '$_customerPts điểm',
-                        style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF2E7D32)),
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF2E7D32),
+                        ),
                       ),
                     ),
                   ],
@@ -4967,19 +6220,30 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   children: [
                     Expanded(
                       child: Text(
-                        _usePts > 0 ? 'Đã áp dụng giảm: ${fmtVnd(_usePts * _redeemRate.toDouble())}' : 'Chưa sử dụng điểm tích lũy',
-                        style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54),
+                        _usePts > 0
+                            ? 'Đã áp dụng giảm: ${fmtVnd(_usePts * _redeemRate.toDouble())}'
+                            : 'Chưa sử dụng điểm tích lũy',
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
                       ),
                     ),
                     TextButton.icon(
                       onPressed: () {
                         final maxUsable = (widget.total / _redeemRate).floor();
                         setState(() {
-                          _usePts = _usePts > 0 ? 0 : _customerPts.clamp(0, maxUsable);
+                          _usePts = _usePts > 0
+                              ? 0
+                              : _customerPts.clamp(0, maxUsable);
                         });
                       },
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         backgroundColor: Colors.white,
@@ -4989,13 +6253,19 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                         ),
                       ),
                       icon: Icon(
-                        _usePts > 0 ? Icons.cancel_rounded : Icons.check_circle_rounded,
+                        _usePts > 0
+                            ? Icons.cancel_rounded
+                            : Icons.check_circle_rounded,
                         size: 13,
                         color: const Color(0xFF2E7D32),
                       ),
                       label: Text(
                         _usePts > 0 ? 'Hủy' : 'Dùng điểm',
-                        style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF2E7D32)),
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF2E7D32),
+                        ),
                       ),
                     ),
                   ],
@@ -5028,7 +6298,9 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
             color: hasCoupon ? const Color(0xFFFFF3E0) : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: hasCoupon ? const Color(0xFFFFB74D) : _kNavy.withOpacity(0.12),
+              color: hasCoupon
+                  ? const Color(0xFFFFB74D)
+                  : _kNavy.withOpacity(0.12),
               width: 1,
             ),
           ),
@@ -5036,7 +6308,9 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
             children: [
               Icon(
                 Icons.local_offer_rounded,
-                color: hasCoupon ? const Color(0xFFE65100) : _kNavy.withOpacity(0.4),
+                color: hasCoupon
+                    ? const Color(0xFFE65100)
+                    : _kNavy.withOpacity(0.4),
                 size: 18,
               ),
               const SizedBox(width: 10),
@@ -5048,7 +6322,9 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   style: GoogleFonts.outfit(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: hasCoupon ? const Color(0xFFE65100) : _kNavy.withOpacity(0.6),
+                    color: hasCoupon
+                        ? const Color(0xFFE65100)
+                        : _kNavy.withOpacity(0.6),
                   ),
                 ),
               ),
@@ -5061,13 +6337,20 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                     });
                   },
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
                     'Gỡ mã',
-                    style: GoogleFonts.outfit(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 12),
+                    style: GoogleFonts.outfit(
+                      color: Colors.redAccent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 )
               else
@@ -5077,12 +6360,20 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                     backgroundColor: const Color(0xFFFFF3E0),
                     foregroundColor: const Color(0xFFE65100),
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: Text(
                     'Chọn mã',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 11),
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
             ],
@@ -5160,12 +6451,23 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
               controller: _cashReceivedCtrl,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: _kNavy),
+              style: GoogleFonts.outfit(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: _kNavy,
+              ),
               decoration: InputDecoration(
                 hintText: 'Nhập tiền khách đưa...',
-                hintStyle: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade400),
+                hintStyle: GoogleFonts.outfit(
+                  fontSize: 13,
+                  color: Colors.grey.shade400,
+                ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                prefixIcon: Icon(Icons.attach_money_rounded, color: _kNavy.withOpacity(0.4), size: 20),
+                prefixIcon: Icon(
+                  Icons.attach_money_rounded,
+                  color: _kNavy.withOpacity(0.4),
+                  size: 20,
+                ),
                 filled: true,
                 fillColor: Colors.white,
                 enabledBorder: OutlineInputBorder(
@@ -5187,9 +6489,18 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
             final List<int> suggestions = [];
             if (finalTotal > 0) {
               suggestions.add(finalTotal.toInt());
-              final roundedValues = [10000, 20000, 50000, 100000, 200000, 500000];
+              final roundedValues = [
+                10000,
+                20000,
+                50000,
+                100000,
+                200000,
+                500000,
+              ];
               for (final val in roundedValues) {
-                if (val > finalTotal && suggestions.length < 5 && !suggestions.contains(val)) {
+                if (val > finalTotal &&
+                    suggestions.length < 5 &&
+                    !suggestions.contains(val)) {
                   suggestions.add(val);
                 }
               }
@@ -5207,7 +6518,10 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   },
                   borderRadius: BorderRadius.circular(10),
                   child: Ink(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: isExact ? _kOrange : Colors.white,
                       borderRadius: BorderRadius.circular(10),
@@ -5221,7 +6535,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                                 color: _kOrange.withOpacity(0.2),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
-                              )
+                              ),
                             ]
                           : null,
                     ),
@@ -5245,7 +6559,10 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
             if (entered <= 0) return const SizedBox.shrink();
             if (change >= 0) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(12),
@@ -5256,24 +6573,39 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.change_circle_rounded, color: Color(0xFF2E7D32), size: 20),
+                        const Icon(
+                          Icons.change_circle_rounded,
+                          color: Color(0xFF2E7D32),
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'TIỀN THỐI LẠI:',
-                          style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFF2E7D32), fontSize: 13),
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF2E7D32),
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
                     Text(
                       fmtVnd(change),
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: const Color(0xFF2E7D32), fontSize: 18),
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF2E7D32),
+                        fontSize: 18,
+                      ),
                     ),
                   ],
                 ),
               );
             } else {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF3E0),
                   borderRadius: BorderRadius.circular(12),
@@ -5284,17 +6616,29 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded, color: Color(0xFFE65100), size: 20),
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          color: Color(0xFFE65100),
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Còn thiếu:',
-                          style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFFE65100), fontSize: 13),
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFE65100),
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
                     Text(
                       fmtVnd(-change),
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: const Color(0xFFE65100), fontSize: 16),
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFFE65100),
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
@@ -5315,12 +6659,18 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 ),
                 child: Text(
                   'Đang tải thiết lập mẫu in hóa đơn...',
-                  style: GoogleFonts.outfit(fontSize: 12, color: Colors.blue.shade800),
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: Colors.blue.shade800,
+                  ),
                 ),
               );
             }
-            final qrBlock = template.blocks
-                .firstWhereOrNull((b) => b.type.name == 'qrCode' || b.type.toString().contains('qrCode'));
+            final qrBlock = template.blocks.firstWhereOrNull(
+              (b) =>
+                  b.type.name == 'qrCode' ||
+                  b.type.toString().contains('qrCode'),
+            );
             if (qrBlock == null) {
               return Container(
                 padding: const EdgeInsets.all(12),
@@ -5330,14 +6680,17 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 ),
                 child: Text(
                   'Chưa thiết lập thông tin ngân hàng ở mục In hóa đơn. Vui lòng thiết lập để hiện mã QR chuyển khoản.',
-                  style: GoogleFonts.outfit(fontSize: 12, color: Colors.blue.shade800),
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: Colors.blue.shade800,
+                  ),
                 ),
               );
             }
             final bin = qrBlock.cfg<String>('bankBin', '970422');
             final accNo = qrBlock.cfg<String>('accountNo', '');
             final accName = qrBlock.cfg<String>('accountName', '');
-            
+
             if (accNo.isEmpty) {
               return Container(
                 padding: const EdgeInsets.all(12),
@@ -5347,11 +6700,14 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 ),
                 child: Text(
                   'Chưa nhập số tài khoản ngân hàng ở mục In hóa đơn. Vui lòng thiết lập để hiện mã QR chuyển khoản.',
-                  style: GoogleFonts.outfit(fontSize: 12, color: Colors.blue.shade800),
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: Colors.blue.shade800,
+                  ),
                 ),
               );
             }
-            
+
             final qrUrl = VietQrService.generateUrl(
               bankBin: bin,
               accountNo: accNo,
@@ -5359,7 +6715,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
               amount: finalTotal,
               addInfo: '${widget.tableName} thanh toan',
             );
-            
+
             final bank = VietQrService.findByBin(bin);
             final bankName = bank?.shortName ?? 'Ngân hàng';
 
@@ -5375,7 +6731,12 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 children: [
                   Text(
                     'QUÉT MÃ QR ĐỂ CHUYỂN KHOẢN',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: _kNavy, fontSize: 12, letterSpacing: 0.8),
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w900,
+                      color: _kNavy,
+                      fontSize: 12,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Center(
@@ -5397,19 +6758,31 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                         width: 160,
                         height: 160,
                         fit: BoxFit.contain,
-                        errorBuilder: (ctx, err, st) => const Icon(Icons.qr_code_2_rounded, size: 80, color: Colors.grey),
+                        errorBuilder: (ctx, err, st) => const Icon(
+                          Icons.qr_code_2_rounded,
+                          size: 80,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     '$bankName • STK: $accNo',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: _kNavy, fontSize: 14),
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w900,
+                      color: _kNavy,
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     accName.toUpperCase(),
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: Colors.black54, fontSize: 11),
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black54,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
@@ -5428,12 +6801,18 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               side: BorderSide(color: _kNavy.withOpacity(0.2), width: 1.5),
             ),
             child: Text(
               'Hủy bỏ',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: _kNavy.withOpacity(0.8), fontSize: 14),
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold,
+                color: _kNavy.withOpacity(0.8),
+                fontSize: 14,
+              ),
             ),
           ),
         ),
@@ -5441,12 +6820,12 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () => Navigator.pop(context, {
-              'pay':        _payMethod,
+              'pay': _payMethod,
               'customerId': _customerId,
-              'ptsUsed':    _usePts,
-              'discount':   (_usePts * _redeemRate) + _couponDiscount,
+              'ptsUsed': _usePts,
+              'discount': (_usePts * _redeemRate) + _couponDiscount,
               'couponCode': _appliedCoupon?.code,
-              'surcharge':  _shippingFee,
+              'surcharge': _shippingFee,
             }),
             style: ElevatedButton.styleFrom(
               backgroundColor: _kNavy,
@@ -5454,12 +6833,21 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               elevation: 4,
               shadowColor: _kNavy.withOpacity(0.3),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
-            icon: const Icon(Icons.check_circle_rounded, size: 18, color: _kOrange),
+            icon: const Icon(
+              Icons.check_circle_rounded,
+              size: 18,
+              color: _kOrange,
+            ),
             label: Text(
               'Xác nhận',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 14),
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+              ),
             ),
           ),
         ),
@@ -5470,7 +6858,12 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
   @override
   Widget build(BuildContext context) {
     final zoneColor = Color(widget.zone.colorValue);
-    final finalTotal = (widget.total - _couponDiscount - (_usePts * _redeemRate) + _shippingFee).clamp(0.0, double.infinity);
+    final finalTotal =
+        (widget.total -
+                _couponDiscount -
+                (_usePts * _redeemRate) +
+                _shippingFee)
+            .clamp(0.0, double.infinity);
     final isWide = MediaQuery.of(context).size.width > 750;
 
     return Dialog(
@@ -5504,7 +6897,10 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _kOrange,
                       side: const BorderSide(color: _kOrange, width: 1.5),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -5521,7 +6917,11 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded, color: Colors.grey, size: 20),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -5585,20 +6985,25 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) {
         return FutureBuilder<List<CouponModel>>(
           future: ref.read(posRepositoryProvider).getCoupons(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: Padding(
-                padding: EdgeInsets.all(40.0),
-                child: CircularProgressIndicator(color: _kOrange),
-              ));
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(40.0),
+                  child: CircularProgressIndicator(color: _kOrange),
+                ),
+              );
             }
             final list = snapshot.data ?? [];
             final activeList = list.where((c) {
-              final isExpired = c.endDate != null && c.endDate!.isBefore(DateTime.now());
+              final isExpired =
+                  c.endDate != null && c.endDate!.isBefore(DateTime.now());
               return c.isActive && !isExpired;
             }).toList();
 
@@ -5619,7 +7024,11 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 children: [
                   Text(
                     'Chọn Voucher giảm giá',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kNavy),
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: _kNavy,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Expanded(
@@ -5630,17 +7039,30 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                         final isApplicable = widget.total >= c.minOrderAmount;
 
                         return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                          leading: const Icon(Icons.local_offer_rounded, color: _kOrange),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 4,
+                          ),
+                          leading: const Icon(
+                            Icons.local_offer_rounded,
+                            color: _kOrange,
+                          ),
                           title: Text(
                             c.code,
-                            style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: _kNavy),
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              color: _kNavy,
+                            ),
                           ),
                           subtitle: Text(
                             c.discountType == 'percent'
                                 ? 'Giảm ${c.value.toInt()}% (Đơn tối thiểu ${fmtVnd(c.minOrderAmount)})'
                                 : 'Giảm ${fmtVnd(c.value)} (Đơn tối thiểu ${fmtVnd(c.minOrderAmount)})',
-                            style: GoogleFonts.outfit(color: isApplicable ? Colors.black54 : Colors.redAccent, fontSize: 12),
+                            style: GoogleFonts.outfit(
+                              color: isApplicable
+                                  ? Colors.black54
+                                  : Colors.redAccent,
+                              fontSize: 12,
+                            ),
                           ),
                           trailing: ElevatedButton(
                             onPressed: isApplicable
@@ -5772,23 +7194,41 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
 
   Offset _getBottomBarOffset() {
     try {
-      final RenderBox? box = _bottomBarKey.currentContext?.findRenderObject() as RenderBox?;
+      final RenderBox? box =
+          _bottomBarKey.currentContext?.findRenderObject() as RenderBox?;
       if (box != null) {
         final position = box.localToGlobal(Offset.zero);
-        return Offset(position.dx + box.size.width / 2, position.dy + box.size.height / 2);
+        return Offset(
+          position.dx + box.size.width / 2,
+          position.dy + box.size.height / 2,
+        );
       }
     } catch (_) {}
-    return Offset(MediaQuery.of(context).size.width / 2, MediaQuery.of(context).size.height - 40);
+    return Offset(
+      MediaQuery.of(context).size.width / 2,
+      MediaQuery.of(context).size.height - 40,
+    );
   }
 
   static const _kPresets = [
-    'Ít cay', 'Không cay', 'Ít đường', 'Không đá',
-    'Nhiều hành', 'Không hành', 'Ít hành', 'Không tiêu', 'Không mực',
-    'Ít mắm', 'Thêm rau',
+    'Ít cay',
+    'Không cay',
+    'Ít đường',
+    'Không đá',
+    'Nhiều hành',
+    'Không hành',
+    'Ít hành',
+    'Không tiêu',
+    'Không mực',
+    'Ít mắm',
+    'Thêm rau',
   ];
 
   Future<void> _confirm(List<ProductModel> products) async {
-    if (_selected.isEmpty) { Navigator.pop(context); return; }
+    if (_selected.isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
     if (_isConfirming) return;
     setState(() {
       _isConfirming = true;
@@ -5802,11 +7242,18 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
         // Modifiers (on/off)
         final selectedModIds = _selectedModifiers[product.id] ?? {};
         final modifiers = _modifierCache[product.id] ?? [];
-        final selectedMods = modifiers.where((m) => selectedModIds.contains(m['id'])).toList();
-        final modPrice = selectedMods.fold<double>(0, (s, m) => s + ((m['price_adjust'] as num?)?.toDouble() ?? 0));
+        final selectedMods = modifiers
+            .where((m) => selectedModIds.contains(m['id']))
+            .toList();
+        final modPrice = selectedMods.fold<double>(
+          0,
+          (s, m) => s + ((m['price_adjust'] as num?)?.toDouble() ?? 0),
+        );
         // Toppings — đọc từ _toppingInfoCache (populated by picker)
         final toppingQtys = _selectedToppings[product.id] ?? {};
-        final toppingEntries = toppingQtys.entries.where((e) => e.value > 0).toList();
+        final toppingEntries = toppingQtys.entries
+            .where((e) => e.value > 0)
+            .toList();
         // Option C: counter = tổng phần topping, không phải per-bowl
         double toppingTotalPrice = 0;
         final List<Map<String, dynamic>> toppingItems = [];
@@ -5814,19 +7261,22 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
           final tc = _toppingInfoCache[tEntry.key];
           if (tc != null) {
             final price = (tc['sell_price'] as num?)?.toDouble() ?? 0;
-            toppingTotalPrice += price * tEntry.value;  // total across all bowls
+            toppingTotalPrice += price * tEntry.value; // total across all bowls
             toppingItems.add({
               'type': 'topping',
               'id': tEntry.key,
               'name': tc['name'] as String? ?? '',
               'price': price,
-              'qty': tEntry.value,  // total qty
+              'qty': tEntry.value, // total qty
               'unit': tc['unit'] as String? ?? 'phần',
             });
           }
         }
         // Spread topping cost evenly per bowl: finalPrice = bowlPrice + toppingTotal/bowlQty
-        final finalPrice = product.sellPrice + modPrice + (qty > 0 ? toppingTotalPrice / qty : 0);
+        final finalPrice =
+            product.sellPrice +
+            modPrice +
+            (qty > 0 ? toppingTotalPrice / qty : 0);
         // Merge modifiers + toppings vào 1 JSON
         final allExtras = [...selectedMods, ...toppingItems];
         final modifiersJson = allExtras.isEmpty ? null : jsonEncode(allExtras);
@@ -5865,18 +7315,25 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
     } catch (e) {
       if (mounted) {
         setState(() => _isConfirming = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Lỗi thêm món: $e',
-            style: const TextStyle(color: Colors.white, fontSize: 12)),
-          backgroundColor: Colors.red.shade700,
-          duration: const Duration(seconds: 6),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Lỗi thêm món: $e',
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+            backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 6),
+          ),
+        );
       }
     }
   }
 
   // Mở sheet chọn topping phẳng (flat list, không dùng nhóm)
-  void _openToppingPicker(dynamic product, List<Map<String, dynamic>> toppings) {
+  void _openToppingPicker(
+    dynamic product,
+    List<Map<String, dynamic>> toppings,
+  ) {
     // Populate cache để _confirm() có thể build modifiersJson
     for (final t in toppings) {
       _toppingInfoCache[t['id'] as String] = t;
@@ -5888,8 +7345,11 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
       builder: (_) => _ToppingPickerSheet(
         product: product,
         toppings: toppings,
-        selectedQtys: Map<String, int>.from(_selectedToppings[product.id] ?? {}),
-        onChanged: (updated) => setState(() => _selectedToppings[product.id] = updated),
+        selectedQtys: Map<String, int>.from(
+          _selectedToppings[product.id] ?? {},
+        ),
+        onChanged: (updated) =>
+            setState(() => _selectedToppings[product.id] = updated),
       ),
     );
   }
@@ -5927,7 +7387,11 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        const Icon(Icons.shopping_cart_rounded, color: _kNavy, size: 20),
+                        const Icon(
+                          Icons.shopping_cart_rounded,
+                          color: _kNavy,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Chi tiết món đã chọn',
@@ -5954,12 +7418,17 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                   Expanded(
                     child: Builder(
                       builder: (context) {
-                        final selectedEntries = _selected.entries.where((e) => e.value > 0).toList();
+                        final selectedEntries = _selected.entries
+                            .where((e) => e.value > 0)
+                            .toList();
                         if (selectedEntries.isEmpty) {
                           return Center(
                             child: Text(
                               'Chưa có món nào được chọn',
-                              style: GoogleFonts.outfit(color: Colors.grey, fontWeight: FontWeight.w600),
+                              style: GoogleFonts.outfit(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           );
                         }
@@ -5967,27 +7436,39 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                           controller: scrollCtrl,
                           padding: const EdgeInsets.all(16),
                           itemCount: selectedEntries.length,
-                          separatorBuilder: (_, __) => const Divider(height: 24, thickness: 0.5),
+                          separatorBuilder: (_, __) =>
+                              const Divider(height: 24, thickness: 0.5),
                           itemBuilder: (ctx, index) {
                             final entry = selectedEntries[index];
-                            final prod = products.firstWhere((p) => p.id == entry.key);
+                            final prod = products.firstWhere(
+                              (p) => p.id == entry.key,
+                            );
                             final qty = entry.value;
                             final note = _notes[prod.id] ?? '';
 
                             // Modifiers list
-                            final selectedModIds = _selectedModifiers[prod.id] ?? {};
+                            final selectedModIds =
+                                _selectedModifiers[prod.id] ?? {};
                             final modifiers = _modifierCache[prod.id] ?? [];
-                            final selectedMods = modifiers.where((m) => selectedModIds.contains(m['id'])).toList();
+                            final selectedMods = modifiers
+                                .where((m) => selectedModIds.contains(m['id']))
+                                .toList();
 
                             // Toppings list
-                            final toppingQtys = _selectedToppings[prod.id] ?? {};
-                            final toppingEntries = toppingQtys.entries.where((e) => e.value > 0).toList();
+                            final toppingQtys =
+                                _selectedToppings[prod.id] ?? {};
+                            final toppingEntries = toppingQtys.entries
+                                .where((e) => e.value > 0)
+                                .toList();
 
                             return Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: _kNavy.withValues(alpha: 0.08),
                                     borderRadius: BorderRadius.circular(10),
@@ -6004,7 +7485,8 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         prod.name,
@@ -6014,48 +7496,88 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                           color: _kNavy,
                                         ),
                                       ),
-                                      if (selectedMods.isNotEmpty || toppingEntries.isNotEmpty || note.isNotEmpty) ...[
+                                      if (selectedMods.isNotEmpty ||
+                                          toppingEntries.isNotEmpty ||
+                                          note.isNotEmpty) ...[
                                         const SizedBox(height: 4),
                                         Wrap(
                                           spacing: 4,
                                           runSpacing: 4,
                                           children: [
-                                            ...selectedMods.map((m) => Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: _kOrange.withValues(alpha: 0.08),
-                                                borderRadius: BorderRadius.circular(6),
-                                              ),
-                                              child: Text(
-                                                m['name'] as String,
-                                                style: GoogleFonts.outfit(fontSize: 10.5, color: _kOrange, fontWeight: FontWeight.w600),
-                                              ),
-                                            )),
-                                            ...toppingEntries.map((te) {
-                                              final tc = _toppingInfoCache[te.key];
-                                              final tName = tc?['name'] as String? ?? 'Topping';
-                                              return Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            ...selectedMods.map(
+                                              (m) => Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.green.withValues(alpha: 0.08),
-                                                  borderRadius: BorderRadius.circular(6),
+                                                  color: _kOrange.withValues(
+                                                    alpha: 0.08,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  m['name'] as String,
+                                                  style: GoogleFonts.outfit(
+                                                    fontSize: 10.5,
+                                                    color: _kOrange,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            ...toppingEntries.map((te) {
+                                              final tc =
+                                                  _toppingInfoCache[te.key];
+                                              final tName =
+                                                  tc?['name'] as String? ??
+                                                  'Topping';
+                                              return Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green
+                                                      .withValues(alpha: 0.08),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
                                                 ),
                                                 child: Text(
                                                   '+${te.value} $tName',
-                                                  style: GoogleFonts.outfit(fontSize: 10.5, color: Colors.green.shade800, fontWeight: FontWeight.w600),
+                                                  style: GoogleFonts.outfit(
+                                                    fontSize: 10.5,
+                                                    color:
+                                                        Colors.green.shade800,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                                 ),
                                               );
                                             }),
                                             if (note.isNotEmpty)
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.grey.withValues(alpha: 0.1),
-                                                  borderRadius: BorderRadius.circular(6),
+                                                  color: Colors.grey.withValues(
+                                                    alpha: 0.1,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
                                                 ),
                                                 child: Text(
                                                   '📝 $note',
-                                                  style: GoogleFonts.outfit(fontSize: 10.5, color: Colors.grey.shade700, fontWeight: FontWeight.w600),
+                                                  style: GoogleFonts.outfit(
+                                                    fontSize: 10.5,
+                                                    color: Colors.grey.shade700,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                                 ),
                                               ),
                                           ],
@@ -6066,7 +7588,11 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                 ),
                                 const SizedBox(width: 8),
                                 IconButton(
-                                  icon: Icon(Icons.delete_outline_rounded, color: _kRed.withValues(alpha: 0.7), size: 20),
+                                  icon: Icon(
+                                    Icons.delete_outline_rounded,
+                                    color: _kRed.withValues(alpha: 0.7),
+                                    size: 20,
+                                  ),
                                   onPressed: () {
                                     HapticFeedback.selectionClick();
                                     Navigator.pop(context);
@@ -6084,7 +7610,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                             );
                           },
                         );
-                      }
+                      },
                     ),
                   ),
                 ],
@@ -6107,1038 +7633,1613 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
         maxChildSize: 0.95,
         minChildSize: 0.5,
         builder: (_, scrollCtrl) => Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFF8FAFC), // Ultra-clean premium slate background
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Center(
-              child: Container(
-                width: 44,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: _kNavy.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(2.5),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8FAFC), // Ultra-clean premium slate background
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: _kNavy.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 18),
-            // ── HỘP TÌM KIẾM CAO CẤP ──────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: _kNavy.withValues(alpha: 0.04),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
-                ),
-                child: TextField(
-                  controller: _searchCtrl,
-                  onChanged: (v) => setState(() => _search = v),
-                  style: GoogleFonts.outfit(color: _kNavy, fontWeight: FontWeight.w600),
-                  decoration: InputDecoration(
-                    hintText: 'Tìm sản phẩm, thức uống...',
-                    hintStyle:
-                        GoogleFonts.outfit(color: _kNavy.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
-                    prefixIcon: Icon(Icons.search_rounded, color: _kNavy.withValues(alpha: 0.5), size: 22),
-                    suffixIcon: _search.isNotEmpty
-                        ? GestureDetector(
-                            onTap: () {
-                              _searchCtrl.clear();
-                              setState(() => _search = '');
-                            },
-                            child: Icon(
-                              Icons.cancel_rounded,
-                              color: _kNavy.withValues(alpha: 0.45),
-                              size: 20,
-                            ),
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.05)),
+              const SizedBox(height: 18),
+              // ── HỘP TÌM KIẾM CAO CẤP ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: _kNavy.withValues(alpha: 0.04),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    onChanged: (v) => setState(() => _search = v),
+                    style: GoogleFonts.outfit(
+                      color: _kNavy,
+                      fontWeight: FontWeight.w600,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.05)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: _kNavy, width: 1.5),
+                    decoration: InputDecoration(
+                      hintText: 'Tìm sản phẩm, thức uống...',
+                      hintStyle: GoogleFonts.outfit(
+                        color: _kNavy.withValues(alpha: 0.35),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: _kNavy.withValues(alpha: 0.5),
+                        size: 22,
+                      ),
+                      suffixIcon: _search.isNotEmpty
+                          ? GestureDetector(
+                              onTap: () {
+                                _searchCtrl.clear();
+                                setState(() => _search = '');
+                              },
+                              child: Icon(
+                                Icons.cancel_rounded,
+                                color: _kNavy.withValues(alpha: 0.45),
+                                size: 20,
+                              ),
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: _kNavy.withValues(alpha: 0.05),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: _kNavy.withValues(alpha: 0.05),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: _kNavy, width: 1.5),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            // ── THANH DANH MỤC DI ĐỘNG CAO CẤP ────────────────────────────────
-            productsAsync.when(
-              data: (products) {
-                final cats = <String>{
-                  ...products.map((p) => p.category ?? 'Khác')
-                }.toList()..sort();
-                if (cats.length <= 1) return const SizedBox.shrink();
-                final allCats = ['Tất cả', ...cats];
-                return SizedBox(
-                  height: 42,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: allCats.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (_, i) {
-                      final cat = allCats[i];
-                      final isActive = cat == _selectedCategory;
-                      return GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setState(() => _selectedCategory = cat);
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeInOut,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isActive ? _kNavy : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isActive ? _kNavy : _kNavy.withValues(alpha: 0.08),
-                              width: 1,
+              const SizedBox(height: 12),
+              // ── THANH DANH MỤC DI ĐỘNG CAO CẤP ────────────────────────────────
+              productsAsync.when(
+                data: (products) {
+                  final cats = <String>{
+                    ...products.map((p) => p.category ?? 'Khác'),
+                  }.toList()..sort();
+                  if (cats.length <= 1) return const SizedBox.shrink();
+                  final allCats = ['Tất cả', ...cats];
+                  return SizedBox(
+                    height: 42,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: allCats.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (_, i) {
+                        final cat = allCats[i];
+                        final isActive = cat == _selectedCategory;
+                        return GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selectedCategory = cat);
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeInOut,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
                             ),
-                            boxShadow: isActive
-                                ? [
-                                    BoxShadow(
-                                      color: _kNavy.withValues(alpha: 0.18),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    )
-                                  ]
-                                : [],
-                          ),
-                          child: Center(
-                            child: Text(cat,
+                            decoration: BoxDecoration(
+                              color: isActive ? _kNavy : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isActive
+                                    ? _kNavy
+                                    : _kNavy.withValues(alpha: 0.08),
+                                width: 1,
+                              ),
+                              boxShadow: isActive
+                                  ? [
+                                      BoxShadow(
+                                        color: _kNavy.withValues(alpha: 0.18),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
+                                  : [],
+                            ),
+                            child: Center(
+                              child: Text(
+                                cat,
                                 style: GoogleFonts.outfit(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: isActive ? Colors.white : _kNavy.withValues(alpha: 0.6),
-                                )),
+                                  color: isActive
+                                      ? Colors.white
+                                      : _kNavy.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ),
                           ),
+                        );
+                      },
+                    ),
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
+              const SizedBox(height: 12),
+              // ── DANH SÁCH MÓN ĂN DẠNG THẺ (CARD LAYOUT) ───────────────────────
+              Expanded(
+                child: productsAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('$e')),
+                  data: (products) {
+                    final prodList = (products as List).cast<ProductModel>();
+                    final filtered =
+                        _search.isEmpty && _selectedCategory == 'Tất cả'
+                        ? prodList
+                        : prodList.where((p) {
+                            final matchCat = _selectedCategory == 'Tất cả'
+                                ? true
+                                : (p.category ?? 'Khác') == _selectedCategory;
+                            final matchSearch = _search.isEmpty
+                                ? true
+                                : p.name.containsSearch(_search);
+                            return matchCat && matchSearch;
+                          }).toList();
+
+                    if (filtered.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('🔍', style: TextStyle(fontSize: 40)),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Không tìm thấy sản phẩm phù hợp',
+                              style: GoogleFonts.outfit(
+                                color: _kNavy.withValues(alpha: 0.4),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       );
-                    },
-                  ),
-                );
-              },
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 12),
-            // ── DANH SÁCH MÓN ĂN DẠNG THẺ (CARD LAYOUT) ───────────────────────
-            Expanded(
-              child: productsAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('$e')),
-                data: (products) {
-                  final prodList = (products as List).cast<ProductModel>();
-                  final filtered = _search.isEmpty && _selectedCategory == 'Tất cả'
-                      ? prodList
-                      : prodList.where((p) {
-                          final matchCat = _selectedCategory == 'Tất cả'
-                              ? true
-                              : (p.category ?? 'Khác') == _selectedCategory;
-                          final matchSearch = _search.isEmpty
-                              ? true
-                              : p.name.containsSearch(_search);
-                          return matchCat && matchSearch;
-                        }).toList();
+                    }
 
-                  if (filtered.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('🔍', style: TextStyle(fontSize: 40)),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Không tìm thấy sản phẩm phù hợp',
-                            style: GoogleFonts.outfit(
-                              color: _kNavy.withValues(alpha: 0.4),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
+                    return ListView.builder(
+                      controller: scrollCtrl,
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                      itemCount: filtered.length,
+                      itemBuilder: (ctx, i) {
+                        final p = filtered[i];
+                        final qty = _selected[p.id] ?? 0;
+                        final isOutOfStock = p.stockQty <= 0 && p.minStock > 0;
 
-                  return ListView.builder(
-                    controller: scrollCtrl,
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                    itemCount: filtered.length,
-                    itemBuilder: (ctx, i) {
-                      final p = filtered[i];
-                      final qty = _selected[p.id] ?? 0;
-                      final isOutOfStock = p.stockQty <= 0 && p.minStock > 0;
+                        final modifiersAsync = ref.watch(
+                          productModifiersProvider(p.id),
+                        );
+                        final modifiers = modifiersAsync.value ?? [];
+                        if (modifiers.isNotEmpty)
+                          _modifierCache[p.id] = modifiers;
 
-                      final modifiersAsync =
-                          ref.watch(productModifiersProvider(p.id));
-                      final modifiers = modifiersAsync.value ?? [];
-                      if (modifiers.isNotEmpty) _modifierCache[p.id] = modifiers;
+                        final selectedModIds = _selectedModifiers[p.id] ?? {};
+                        final modPrice = modifiers
+                            .where(
+                              (m) => selectedModIds.contains(m['id'] as String),
+                            )
+                            .fold<double>(
+                              0,
+                              (s, m) =>
+                                  s +
+                                  ((m['price_adjust'] as num?)?.toDouble() ??
+                                      0),
+                            );
+                        final finalPrice = (p.sellPrice ?? 0) + modPrice;
 
-                      final selectedModIds = _selectedModifiers[p.id] ?? {};
-                      final modPrice = modifiers
-                          .where((m) => selectedModIds.contains(m['id'] as String))
-                          .fold<double>(0, (s, m) => s + ((m['price_adjust'] as num?)?.toDouble() ?? 0));
-                      final finalPrice = (p.sellPrice ?? 0) + modPrice;
-
-                      final modGroups = <String, List<Map<String, dynamic>>>{};
-                      for (final m in modifiers) {
-                        modGroups.putIfAbsent(m['group_name'] as String? ?? 'Mặc định', () => []).add(m);
-                      }
-
-                      return Opacity(
-                        opacity: isOutOfStock ? 0.55 : 1.0,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(
-                            color: qty > 0
-                                ? _kNavy.withValues(alpha: 0.03)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: qty > 0
-                                  ? _kNavy.withValues(alpha: 0.3)
-                                  : Colors.black.withValues(alpha: 0.04),
-                              width: qty > 0 ? 1.8 : 1.0,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: qty > 0
-                                    ? _kNavy.withValues(alpha: 0.06)
-                                    : Colors.black.withValues(alpha: 0.02),
-                                blurRadius: 14,
-                                offset: const Offset(0, 4),
+                        final modGroups =
+                            <String, List<Map<String, dynamic>>>{};
+                        for (final m in modifiers) {
+                          modGroups
+                              .putIfAbsent(
+                                m['group_name'] as String? ?? 'Mặc định',
+                                () => [],
                               )
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(14),
-                                child: Row(
-                                  children: [
-                                    // ── Ảnh sản phẩm cao cấp ──
-                                    Container(
-                                      width: 58,
-                                      height: 58,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(14),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.04),
-                                            blurRadius: 6,
-                                            offset: const Offset(0, 2),
-                                          )
-                                        ],
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(14),
-                                        child: p.imageUrl != null && p.imageUrl!.isNotEmpty
-                                            ? Image.network(
-                                                p.imageUrl!,
-                                                width: 58,
-                                                height: 58,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (_, __, ___) => Container(
-                                                  color: _kNavy.withValues(alpha: 0.05),
-                                                  child: Icon(
-                                                    Icons.restaurant_rounded,
-                                                    color: _kNavy.withValues(alpha: 0.35),
-                                                    size: 26,
-                                                  ),
-                                                ),
-                                              )
-                                            : Container(
-                                                color: _kNavy.withValues(alpha: 0.05),
-                                                child: Icon(
-                                                  Icons.restaurant_rounded,
-                                                  color: _kNavy.withValues(alpha: 0.35),
-                                                  size: 26,
-                                                ),
+                              .add(m);
+                        }
+
+                        return Opacity(
+                          opacity: isOutOfStock ? 0.55 : 1.0,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: qty > 0
+                                  ? _kNavy.withValues(alpha: 0.03)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: qty > 0
+                                    ? _kNavy.withValues(alpha: 0.3)
+                                    : Colors.black.withValues(alpha: 0.04),
+                                width: qty > 0 ? 1.8 : 1.0,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: qty > 0
+                                      ? _kNavy.withValues(alpha: 0.06)
+                                      : Colors.black.withValues(alpha: 0.02),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Row(
+                                    children: [
+                                      // ── Ảnh sản phẩm cao cấp ──
+                                      Container(
+                                        width: 58,
+                                        height: 58,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.04,
                                               ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    // ── Chi tiết sản phẩm ──
-                                    Expanded(
-                                      child: GestureDetector(
-                                        behavior: HitTestBehavior.opaque,
-                                        onTap: () {
-                                          if (qty > 0) {
-                                            HapticFeedback.selectionClick();
-                                            setState(() {
-                                              if (_expandedProductIds.contains(p.id)) {
-                                                _expandedProductIds.remove(p.id);
-                                              } else {
-                                                _expandedProductIds.add(p.id);
-                                              }
-                                            });
-                                          }
-                                        },
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Expanded(
-                                                  child: Text(p.name,
-                                                      style: GoogleFonts.outfit(
-                                                        fontWeight: FontWeight.w700,
-                                                        color: _kNavy,
-                                                        fontSize: 14.5,
-                                                      )),
-                                                ),
-                                                if (isOutOfStock)
-                                                  Container(
-                                                    margin: const EdgeInsets.only(left: 6),
-                                                    padding: const EdgeInsets.symmetric(
-                                                        horizontal: 8, vertical: 3),
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(0xFFFFEBEE),
-                                                      borderRadius: BorderRadius.circular(8),
-                                                    ),
-                                                    child: Text('TẠM HẾT',
-                                                        style: GoogleFonts.outfit(
-                                                            fontSize: 9,
-                                                            fontWeight: FontWeight.w800,
-                                                            color: _kRed,
-                                                            letterSpacing: 0.5)),
-                                                  ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 3),
-                                            Text(
-                                              modPrice > 0
-                                                  ? '${fmtVnd(p.sellPrice ?? 0)} +${fmtVnd(modPrice)} = ${fmtVnd(finalPrice)}'
-                                                  : fmtVnd(p.sellPrice ?? 0),
-                                              style: GoogleFonts.outfit(
-                                                fontSize: 13,
-                                                color: modPrice > 0
-                                                    ? _kOrange
-                                                    : _kNavy.withValues(alpha: 0.55),
-                                                fontWeight: modPrice > 0
-                                                    ? FontWeight.w700
-                                                    : FontWeight.w600,
-                                              ),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
                                             ),
                                           ],
                                         ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                          child:
+                                              p.imageUrl != null &&
+                                                  p.imageUrl!.isNotEmpty
+                                              ? Image.network(
+                                                  p.imageUrl!,
+                                                  width: 58,
+                                                  height: 58,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (_, __, ___) =>
+                                                      Container(
+                                                        color: _kNavy
+                                                            .withValues(
+                                                              alpha: 0.05,
+                                                            ),
+                                                        child: Icon(
+                                                          Icons
+                                                              .restaurant_rounded,
+                                                          color: _kNavy
+                                                              .withValues(
+                                                                alpha: 0.35,
+                                                              ),
+                                                          size: 26,
+                                                        ),
+                                                      ),
+                                                )
+                                              : Container(
+                                                  color: _kNavy.withValues(
+                                                    alpha: 0.05,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.restaurant_rounded,
+                                                    color: _kNavy.withValues(
+                                                      alpha: 0.35,
+                                                    ),
+                                                    size: 26,
+                                                  ),
+                                                ),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    // ── Điều khiển số lượng cao cấp ──
-                                    Row(
-                                      children: [
-                                        if (qty > 0) ...[
-                                          GestureDetector(
-                                            onTap: () {
+                                      const SizedBox(width: 12),
+                                      // ── Chi tiết sản phẩm ──
+                                      Expanded(
+                                        child: GestureDetector(
+                                          behavior: HitTestBehavior.opaque,
+                                          onTap: () {
+                                            if (qty > 0) {
                                               HapticFeedback.selectionClick();
                                               setState(() {
-                                                if (_expandedProductIds.contains(p.id)) {
-                                                  _expandedProductIds.remove(p.id);
+                                                if (_expandedProductIds
+                                                    .contains(p.id)) {
+                                                  _expandedProductIds.remove(
+                                                    p.id,
+                                                  );
                                                 } else {
                                                   _expandedProductIds.add(p.id);
                                                 }
                                               });
-                                            },
-                                            child: Container(
-                                              margin: const EdgeInsets.only(right: 8),
-                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                              decoration: BoxDecoration(
-                                                color: _expandedProductIds.contains(p.id)
-                                                    ? _kNavy.withValues(alpha: 0.12)
-                                                    : _kNavy.withValues(alpha: 0.06),
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    _expandedProductIds.contains(p.id)
-                                                        ? Icons.expand_less_rounded
-                                                        : Icons.tune_rounded,
-                                                    size: 14,
-                                                    color: _kNavy,
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    _expandedProductIds.contains(p.id) ? 'Thu gọn' : 'Tùy chọn',
-                                                    style: GoogleFonts.outfit(
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.w700,
-                                                      color: _kNavy,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              color: _kNavy.withValues(alpha: 0.05),
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                                            child: Row(
-                                              children: [
-                                                GestureDetector(
-                                                  onTap: () {
-                                                    HapticFeedback.selectionClick();
-                                                    setState(() {
-                                                      if (qty <= 1) {
-                                                        _selected.remove(p.id);
-                                                        _selectedModifiers.remove(p.id);
-                                                        _expandedProductIds.remove(p.id);
-                                                      } else {
-                                                        _selected[p.id] = qty - 1;
-                                                      }
-                                                    });
-                                                  },
-                                                  child: Container(
-                                                    width: 28,
-                                                    height: 28,
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white,
-                                                      borderRadius: BorderRadius.circular(8),
-                                                    ),
-                                                    child: const Icon(Icons.remove_rounded, size: 14, color: _kNavy),
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: 32,
-                                                  child: Text(
-                                                    '$qty',
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.outfit(
-                                                      fontWeight: FontWeight.w800,
-                                                      color: _kNavy,
-                                                      fontSize: 13.5,
-                                                    ),
-                                                  ),
-                                                ),
-                                                GestureDetector(
-                                                  onTapDown: isOutOfStock ? null : (details) {
-                                                    setState(() => _selected[p.id] = qty + 1);
-                                                    
-                                                    // Kích hoạt hiệu ứng bay mượt mà WOW v3
-                                                    CartAnimationHelper.runFlyAnimation(
-                                                      context: context,
-                                                      startOffset: details.globalPosition,
-                                                      endOffset: _getBottomBarOffset(),
-                                                      color: _kNavy,
-                                                      onComplete: () {
-                                                        setState(() {
-                                                          _bottomBarPopTrigger++;
-                                                        });
-                                                        HapticFeedback.lightImpact();
-                                                      },
-                                                    );
-                                                  },
-                                                  child: Container(
-                                                    width: 28,
-                                                    height: 28,
-                                                    decoration: BoxDecoration(
-                                                      color: _kNavy,
-                                                      borderRadius: BorderRadius.circular(8),
-                                                    ),
-                                                    child: const Icon(Icons.add_rounded, size: 14, color: Colors.white),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ] else ...[
-                                          GestureDetector(
-                                            onTapDown: isOutOfStock ? null : (details) {
-                                              setState(() => _selected[p.id] = 1);
-                                              
-                                              // Kích hoạt hiệu ứng bay mượt mà WOW v3
-                                              CartAnimationHelper.runFlyAnimation(
-                                                context: context,
-                                                startOffset: details.globalPosition,
-                                                endOffset: _getBottomBarOffset(),
-                                                color: _kNavy,
-                                                onComplete: () {
-                                                  setState(() {
-                                                    _bottomBarPopTrigger++;
-                                                  });
-                                                  HapticFeedback.lightImpact();
-                                                },
-                                              );
-                                            },
-                                            child: Container(
-                                              width: 36,
-                                              height: 36,
-                                              decoration: BoxDecoration(
-                                                color: isOutOfStock
-                                                    ? _kNavy.withValues(alpha: 0.25)
-                                                    : _kNavy,
-                                                borderRadius: BorderRadius.circular(12),
-                                                boxShadow: isOutOfStock
-                                                    ? []
-                                                    : [
-                                                        BoxShadow(
-                                                          color: _kNavy.withValues(alpha: 0.15),
-                                                          blurRadius: 8,
-                                                          offset: const Offset(0, 3),
-                                                        )
-                                                      ],
-                                              ),
-                                              child: const Icon(Icons.add_rounded,
-                                                  size: 20, color: Colors.white),
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // ── PHÂN HỆ TOPPING CAO CẤP CHẠY INLINE ──────────
-                              if (qty > 0 && _expandedProductIds.contains(p.id))
-                                Builder(builder: (_) {
-                                  final toppingsAsync = ref.watch(productToppingLinksProvider(p.id));
-                                  final toppings = toppingsAsync.value ?? [];
-                                  if (toppings.isEmpty) return const SizedBox.shrink();
-                                  return Padding(
-                                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF8FAFC),
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(color: _kNavy.withValues(alpha: 0.05)),
-                                      ),
-                                      padding: const EdgeInsets.all(12),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
+                                            }
+                                          },
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              Text('🥗 Topping tùy chọn',
-                                                style: GoogleFonts.outfit(
-                                                  fontSize: 11.5,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: _kNavy.withValues(alpha: 0.45),
-                                                )),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 8),
-                                          ...toppings.map((t) {
-                                            final toppingId = t['id'] as String;
-                                            final toppingName = t['name'] as String? ?? '';
-                                            final toppingPrice = (t['sell_price'] as num? ?? 0).toDouble();
-                                            final toppingUnit = t['unit'] as String? ?? 'phần';
-                                            final tQty = _selectedToppings[p.id]?[toppingId] ?? 0;
-                                            final isActive = tQty > 0;
-                                            return Padding(
-                                              padding: const EdgeInsets.only(bottom: 8),
-                                              child: Row(
+                                              Row(
                                                 children: [
                                                   Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Text(toppingName,
-                                                          style: GoogleFonts.outfit(
-                                                            fontSize: 13,
-                                                            fontWeight: FontWeight.w700,
-                                                            color: isActive ? _kOrange : _kNavy,
-                                                          )),
-                                                        Text('+${fmtVnd(toppingPrice)}/$toppingUnit',
-                                                          style: GoogleFonts.outfit(
-                                                            fontSize: 11,
-                                                            color: _kOrange.withValues(alpha: 0.85),
-                                                            fontWeight: FontWeight.w600,
-                                                          )),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  if (isActive) ...[
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        HapticFeedback.selectionClick();
-                                                        setState(() {
-                                                          final qtys = Map<String, int>.from(_selectedToppings[p.id] ?? {});
-                                                          if (tQty <= 1) qtys.remove(toppingId);
-                                                          else qtys[toppingId] = tQty - 1;
-                                                          _selectedToppings[p.id] = qtys;
-                                                          _toppingInfoCache[toppingId] = t;
-                                                        });
-                                                      },
-                                                      child: Container(
-                                                        width: 28,
-                                                        height: 28,
-                                                        decoration: BoxDecoration(
-                                                          color: _kNavy.withValues(alpha: 0.08),
-                                                          borderRadius: BorderRadius.circular(8),
-                                                        ),
-                                                        child: const Icon(Icons.remove_rounded, size: 14, color: _kNavy),
+                                                    child: Text(
+                                                      p.name,
+                                                      style: GoogleFonts.outfit(
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: _kNavy,
+                                                        fontSize: 14.5,
                                                       ),
                                                     ),
-                                                    const SizedBox(width: 8),
-                                                    Text('$tQty',
+                                                  ),
+                                                  if (isOutOfStock)
+                                                    Container(
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                            left: 6,
+                                                          ),
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 3,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(
+                                                          0xFFFFEBEE,
+                                                        ),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8,
+                                                            ),
+                                                      ),
+                                                      child: Text(
+                                                        'TẠM HẾT',
+                                                        style:
+                                                            GoogleFonts.outfit(
+                                                              fontSize: 9,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w800,
+                                                              color: _kRed,
+                                                              letterSpacing:
+                                                                  0.5,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 3),
+                                              Text(
+                                                modPrice > 0
+                                                    ? '${fmtVnd(p.sellPrice ?? 0)} +${fmtVnd(modPrice)} = ${fmtVnd(finalPrice)}'
+                                                    : fmtVnd(p.sellPrice ?? 0),
+                                                style: GoogleFonts.outfit(
+                                                  fontSize: 13,
+                                                  color: modPrice > 0
+                                                      ? _kOrange
+                                                      : _kNavy.withValues(
+                                                          alpha: 0.55,
+                                                        ),
+                                                  fontWeight: modPrice > 0
+                                                      ? FontWeight.w700
+                                                      : FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      // ── Điều khiển số lượng cao cấp ──
+                                      Row(
+                                        children: [
+                                          if (qty > 0) ...[
+                                            GestureDetector(
+                                              onTap: () {
+                                                HapticFeedback.selectionClick();
+                                                setState(() {
+                                                  if (_expandedProductIds
+                                                      .contains(p.id)) {
+                                                    _expandedProductIds.remove(
+                                                      p.id,
+                                                    );
+                                                  } else {
+                                                    _expandedProductIds.add(
+                                                      p.id,
+                                                    );
+                                                  }
+                                                });
+                                              },
+                                              child: Container(
+                                                margin: const EdgeInsets.only(
+                                                  right: 8,
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 6,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      _expandedProductIds
+                                                          .contains(p.id)
+                                                      ? _kNavy.withValues(
+                                                          alpha: 0.12,
+                                                        )
+                                                      : _kNavy.withValues(
+                                                          alpha: 0.06,
+                                                        ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      _expandedProductIds
+                                                              .contains(p.id)
+                                                          ? Icons
+                                                                .expand_less_rounded
+                                                          : Icons.tune_rounded,
+                                                      size: 14,
+                                                      color: _kNavy,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      _expandedProductIds
+                                                              .contains(p.id)
+                                                          ? 'Thu gọn'
+                                                          : 'Tùy chọn',
                                                       style: GoogleFonts.outfit(
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.w800,
-                                                        color: _kOrange,
-                                                      )),
-                                                    const SizedBox(width: 8),
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: _kNavy,
+                                                      ),
+                                                    ),
                                                   ],
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: _kNavy.withValues(
+                                                  alpha: 0.05,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 4,
+                                                    vertical: 4,
+                                                  ),
+                                              child: Row(
+                                                children: [
                                                   GestureDetector(
                                                     onTap: () {
                                                       HapticFeedback.selectionClick();
                                                       setState(() {
-                                                        final qtys = Map<String, int>.from(_selectedToppings[p.id] ?? {});
-                                                        qtys[toppingId] = tQty + 1;
-                                                        _selectedToppings[p.id] = qtys;
-                                                        _toppingInfoCache[toppingId] = t;
+                                                        if (qty <= 1) {
+                                                          _selected.remove(
+                                                            p.id,
+                                                          );
+                                                          _selectedModifiers
+                                                              .remove(p.id);
+                                                          _expandedProductIds
+                                                              .remove(p.id);
+                                                        } else {
+                                                          _selected[p.id] =
+                                                              qty - 1;
+                                                        }
                                                       });
                                                     },
                                                     child: Container(
                                                       width: 28,
                                                       height: 28,
                                                       decoration: BoxDecoration(
-                                                        color: isActive ? _kOrange : _kNavy.withValues(alpha: 0.1),
-                                                        borderRadius: BorderRadius.circular(8),
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8,
+                                                            ),
                                                       ),
-                                                      child: Icon(Icons.add_rounded, size: 14,
-                                                        color: isActive ? Colors.white : _kNavy),
+                                                      child: const Icon(
+                                                        Icons.remove_rounded,
+                                                        size: 14,
+                                                        color: _kNavy,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    width: 32,
+                                                    child: Text(
+                                                      '$qty',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: GoogleFonts.outfit(
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        color: _kNavy,
+                                                        fontSize: 13.5,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  GestureDetector(
+                                                    onTapDown: isOutOfStock
+                                                        ? null
+                                                        : (details) {
+                                                            setState(
+                                                              () =>
+                                                                  _selected[p
+                                                                          .id] =
+                                                                      qty + 1,
+                                                            );
+
+                                                            // Kích hoạt hiệu ứng bay mượt mà WOW v3
+                                                            CartAnimationHelper.runFlyAnimation(
+                                                              context: context,
+                                                              startOffset: details
+                                                                  .globalPosition,
+                                                              endOffset:
+                                                                  _getBottomBarOffset(),
+                                                              color: _kNavy,
+                                                              onComplete: () {
+                                                                setState(() {
+                                                                  _bottomBarPopTrigger++;
+                                                                });
+                                                                HapticFeedback.lightImpact();
+                                                              },
+                                                            );
+                                                          },
+                                                    child: Container(
+                                                      width: 28,
+                                                      height: 28,
+                                                      decoration: BoxDecoration(
+                                                        color: _kNavy,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8,
+                                                            ),
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.add_rounded,
+                                                        size: 14,
+                                                        color: Colors.white,
+                                                      ),
                                                     ),
                                                   ),
                                                 ],
                                               ),
+                                            ),
+                                          ] else ...[
+                                            GestureDetector(
+                                              onTapDown: isOutOfStock
+                                                  ? null
+                                                  : (details) {
+                                                      setState(
+                                                        () =>
+                                                            _selected[p.id] = 1,
+                                                      );
+
+                                                      // Kích hoạt hiệu ứng bay mượt mà WOW v3
+                                                      CartAnimationHelper.runFlyAnimation(
+                                                        context: context,
+                                                        startOffset: details
+                                                            .globalPosition,
+                                                        endOffset:
+                                                            _getBottomBarOffset(),
+                                                        color: _kNavy,
+                                                        onComplete: () {
+                                                          setState(() {
+                                                            _bottomBarPopTrigger++;
+                                                          });
+                                                          HapticFeedback.lightImpact();
+                                                        },
+                                                      );
+                                                    },
+                                              child: Container(
+                                                width: 36,
+                                                height: 36,
+                                                decoration: BoxDecoration(
+                                                  color: isOutOfStock
+                                                      ? _kNavy.withValues(
+                                                          alpha: 0.25,
+                                                        )
+                                                      : _kNavy,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  boxShadow: isOutOfStock
+                                                      ? []
+                                                      : [
+                                                          BoxShadow(
+                                                            color: _kNavy
+                                                                .withValues(
+                                                                  alpha: 0.15,
+                                                                ),
+                                                            blurRadius: 8,
+                                                            offset:
+                                                                const Offset(
+                                                                  0,
+                                                                  3,
+                                                                ),
+                                                          ),
+                                                        ],
+                                                ),
+                                                child: const Icon(
+                                                  Icons.add_rounded,
+                                                  size: 20,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // ── PHÂN HỆ TOPPING CAO CẤP CHẠY INLINE ──────────
+                                if (qty > 0 &&
+                                    _expandedProductIds.contains(p.id))
+                                  Builder(
+                                    builder: (_) {
+                                      final toppingsAsync = ref.watch(
+                                        productToppingLinksProvider(p.id),
+                                      );
+                                      final toppings =
+                                          toppingsAsync.value ?? [];
+                                      if (toppings.isEmpty)
+                                        return const SizedBox.shrink();
+                                      return Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          14,
+                                          0,
+                                          14,
+                                          12,
+                                        ),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF8FAFC),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            border: Border.all(
+                                              color: _kNavy.withValues(
+                                                alpha: 0.05,
+                                              ),
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.all(12),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    '🥗 Topping tùy chọn',
+                                                    style: GoogleFonts.outfit(
+                                                      fontSize: 11.5,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: _kNavy.withValues(
+                                                        alpha: 0.45,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 8),
+                                              ...toppings.map((t) {
+                                                final toppingId =
+                                                    t['id'] as String;
+                                                final toppingName =
+                                                    t['name'] as String? ?? '';
+                                                final toppingPrice =
+                                                    (t['sell_price'] as num? ??
+                                                            0)
+                                                        .toDouble();
+                                                final toppingUnit =
+                                                    t['unit'] as String? ??
+                                                    'phần';
+                                                final tQty =
+                                                    _selectedToppings[p
+                                                        .id]?[toppingId] ??
+                                                    0;
+                                                final isActive = tQty > 0;
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        bottom: 8,
+                                                      ),
+                                                  child: Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              toppingName,
+                                                              style: GoogleFonts.outfit(
+                                                                fontSize: 13,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                color: isActive
+                                                                    ? _kOrange
+                                                                    : _kNavy,
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              '+${fmtVnd(toppingPrice)}/$toppingUnit',
+                                                              style: GoogleFonts.outfit(
+                                                                fontSize: 11,
+                                                                color: _kOrange
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.85,
+                                                                    ),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      if (isActive) ...[
+                                                        GestureDetector(
+                                                          onTap: () {
+                                                            HapticFeedback.selectionClick();
+                                                            setState(() {
+                                                              final qtys =
+                                                                  Map<
+                                                                    String,
+                                                                    int
+                                                                  >.from(
+                                                                    _selectedToppings[p
+                                                                            .id] ??
+                                                                        {},
+                                                                  );
+                                                              if (tQty <= 1)
+                                                                qtys.remove(
+                                                                  toppingId,
+                                                                );
+                                                              else
+                                                                qtys[toppingId] =
+                                                                    tQty - 1;
+                                                              _selectedToppings[p
+                                                                      .id] =
+                                                                  qtys;
+                                                              _toppingInfoCache[toppingId] =
+                                                                  t;
+                                                            });
+                                                          },
+                                                          child: Container(
+                                                            width: 28,
+                                                            height: 28,
+                                                            decoration: BoxDecoration(
+                                                              color: _kNavy
+                                                                  .withValues(
+                                                                    alpha: 0.08,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    8,
+                                                                  ),
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons
+                                                                  .remove_rounded,
+                                                              size: 14,
+                                                              color: _kNavy,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
+                                                        Text(
+                                                          '$tQty',
+                                                          style:
+                                                              GoogleFonts.outfit(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w800,
+                                                                color: _kOrange,
+                                                              ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
+                                                      ],
+                                                      GestureDetector(
+                                                        onTap: () {
+                                                          HapticFeedback.selectionClick();
+                                                          setState(() {
+                                                            final qtys =
+                                                                Map<
+                                                                  String,
+                                                                  int
+                                                                >.from(
+                                                                  _selectedToppings[p
+                                                                          .id] ??
+                                                                      {},
+                                                                );
+                                                            qtys[toppingId] =
+                                                                tQty + 1;
+                                                            _selectedToppings[p
+                                                                    .id] =
+                                                                qtys;
+                                                            _toppingInfoCache[toppingId] =
+                                                                t;
+                                                          });
+                                                        },
+                                                        child: Container(
+                                                          width: 28,
+                                                          height: 28,
+                                                          decoration: BoxDecoration(
+                                                            color: isActive
+                                                                ? _kOrange
+                                                                : _kNavy
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.1,
+                                                                      ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  8,
+                                                                ),
+                                                          ),
+                                                          child: Icon(
+                                                            Icons.add_rounded,
+                                                            size: 14,
+                                                            color: isActive
+                                                                ? Colors.white
+                                                                : _kNavy,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+
+                                // ── HƯƠNG VỊ / MODIFIER CHIPS CAO CẤP ───────────
+                                if (qty > 0 &&
+                                    _expandedProductIds.contains(p.id) &&
+                                    modifiers.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      14,
+                                      0,
+                                      14,
+                                      12,
+                                    ),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFFFAF9F6,
+                                        ), // Warm light background for flavors
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: _kNavy.withValues(alpha: 0.05),
+                                        ),
+                                      ),
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '✨ Tùy chọn hương vị',
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: _kNavy.withValues(
+                                                alpha: 0.45,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          ...modGroups.entries.map((entry) {
+                                            final groupName = entry.key;
+                                            final groupMods = entry.value;
+                                            return Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                if (modGroups.length > 1)
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          bottom: 4,
+                                                          top: 4,
+                                                        ),
+                                                    child: Text(
+                                                      groupName,
+                                                      style: GoogleFonts.outfit(
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: _kNavy
+                                                            .withValues(
+                                                              alpha: 0.4,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                Wrap(
+                                                  spacing: 6,
+                                                  runSpacing: 6,
+                                                  children: groupMods.map((
+                                                    mod,
+                                                  ) {
+                                                    final modId =
+                                                        mod['id'] as String;
+                                                    final isSelected =
+                                                        selectedModIds.contains(
+                                                          modId,
+                                                        );
+                                                    return GestureDetector(
+                                                      onTap: () {
+                                                        HapticFeedback.selectionClick();
+                                                        setState(() {
+                                                          final mods =
+                                                              _selectedModifiers
+                                                                  .putIfAbsent(
+                                                                    p.id,
+                                                                    () => {},
+                                                                  );
+                                                          if (isSelected) {
+                                                            mods.remove(modId);
+                                                          } else {
+                                                            mods.add(modId);
+                                                          }
+                                                        });
+                                                      },
+                                                      child: AnimatedContainer(
+                                                        duration:
+                                                            const Duration(
+                                                              milliseconds: 180,
+                                                            ),
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 11,
+                                                              vertical: 6,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: isSelected
+                                                              ? _kOrange
+                                                              : Colors.white,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                16,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: isSelected
+                                                                ? _kOrange
+                                                                : _kNavy
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.15,
+                                                                      ),
+                                                            width: 1,
+                                                          ),
+                                                          boxShadow: isSelected
+                                                              ? [
+                                                                  BoxShadow(
+                                                                    color: _kOrange
+                                                                        .withValues(
+                                                                          alpha:
+                                                                              0.2,
+                                                                        ),
+                                                                    blurRadius:
+                                                                        6,
+                                                                    offset:
+                                                                        const Offset(
+                                                                          0,
+                                                                          2,
+                                                                        ),
+                                                                  ),
+                                                                ]
+                                                              : [],
+                                                        ),
+                                                        child: Text(
+                                                          (mod['price_adjust']
+                                                                          as num? ??
+                                                                      0) >
+                                                                  0
+                                                              ? '${mod['name']} +${fmtVnd((mod['price_adjust'] as num).toDouble())}'
+                                                              : mod['name']
+                                                                    as String,
+                                                          style: GoogleFonts.outfit(
+                                                            fontSize: 11.5,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            color: isSelected
+                                                                ? Colors.white
+                                                                : _kNavy
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.75,
+                                                                      ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ],
                                             );
                                           }).toList(),
                                         ],
                                       ),
                                     ),
-                                  );
-                                }),
+                                  ),
 
-                              // ── HƯƠNG VỊ / MODIFIER CHIPS CAO CẤP ───────────
-                              if (qty > 0 && _expandedProductIds.contains(p.id) && modifiers.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFAF9F6), // Warm light background for flavors
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: _kNavy.withValues(alpha: 0.05)),
+                                // ── GHI CHÚ NHANH (QUICK NOTE PRESETS) ───────────
+                                if (qty > 0 &&
+                                    _expandedProductIds.contains(p.id))
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      14,
+                                      0,
+                                      14,
+                                      12,
                                     ),
-                                    padding: const EdgeInsets.all(12),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          '✨ Tùy chọn hương vị',
-                                          style: GoogleFonts.outfit(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.w800,
-                                            color: _kNavy.withValues(alpha: 0.45),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        ...modGroups.entries.map((entry) {
-                                          final groupName = entry.key;
-                                          final groupMods = entry.value;
-                                          return Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                        SizedBox(
+                                          height: 32,
+                                          child: ListView(
+                                            scrollDirection: Axis.horizontal,
                                             children: [
-                                              if (modGroups.length > 1)
-                                                Padding(
-                                                  padding: const EdgeInsets.only(
-                                                      bottom: 4, top: 4),
-                                                  child: Text(
-                                                    groupName,
-                                                    style: GoogleFonts.outfit(
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.w700,
-                                                      color: _kNavy.withValues(alpha: 0.4),
-                                                    ),
-                                                  ),
-                                                ),
-                                              Wrap(
-                                                spacing: 6,
-                                                runSpacing: 6,
-                                                children: groupMods.map((mod) {
-                                                  final modId = mod['id'] as String;
-                                                  final isSelected =
-                                                      selectedModIds.contains(modId);
-                                                  return GestureDetector(
+                                              ..._kPresets.map((preset) {
+                                                final note = _notes[p.id] ?? '';
+                                                final isOn = note.contains(
+                                                  preset,
+                                                );
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        right: 6,
+                                                      ),
+                                                  child: GestureDetector(
                                                     onTap: () {
                                                       HapticFeedback.selectionClick();
                                                       setState(() {
-                                                        final mods =
-                                                            _selectedModifiers
-                                                                .putIfAbsent(
-                                                                    p.id, () => {});
-                                                        if (isSelected) {
-                                                          mods.remove(modId);
+                                                        var current =
+                                                            _notes[p.id] ?? '';
+                                                        if (isOn) {
+                                                          current = current
+                                                              .replaceAll(
+                                                                ', $preset',
+                                                                '',
+                                                              )
+                                                              .replaceAll(
+                                                                preset,
+                                                                '',
+                                                              )
+                                                              .trim()
+                                                              .replaceAll(
+                                                                RegExp(
+                                                                  r'^,\s*|,\s*$',
+                                                                ),
+                                                                '',
+                                                              );
                                                         } else {
-                                                          mods.add(modId);
+                                                          current =
+                                                              current.isEmpty
+                                                              ? preset
+                                                              : '$current, $preset';
                                                         }
+                                                        _notes[p.id] = current;
                                                       });
                                                     },
                                                     child: AnimatedContainer(
                                                       duration: const Duration(
-                                                          milliseconds: 180),
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                          horizontal: 11,
-                                                          vertical: 6),
+                                                        milliseconds: 140,
+                                                      ),
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 12,
+                                                            vertical: 5,
+                                                          ),
                                                       decoration: BoxDecoration(
-                                                        color: isSelected
+                                                        color: isOn
                                                             ? _kOrange
                                                             : Colors.white,
                                                         borderRadius:
                                                             BorderRadius.circular(
-                                                                16),
+                                                              16,
+                                                            ),
                                                         border: Border.all(
-                                                          color: isSelected
+                                                          color: isOn
                                                               ? _kOrange
-                                                              : _kNavy.withValues(
-                                                                  alpha: 0.15),
-                                                          width: 1,
-                                                        ),
-                                                        boxShadow: isSelected
-                                                            ? [
-                                                                BoxShadow(
-                                                                  color: _kOrange.withValues(alpha: 0.2),
-                                                                  blurRadius: 6,
-                                                                  offset: const Offset(0, 2),
-                                                                )
-                                                              ]
-                                                            : [],
-                                                      ),
-                                                      child: Text(
-                                                        (mod['price_adjust'] as num? ?? 0) > 0
-                                                            ? '${mod['name']} +${fmtVnd((mod['price_adjust'] as num).toDouble())}'
-                                                            : mod['name'] as String,
-                                                        style: GoogleFonts.outfit(
-                                                          fontSize: 11.5,
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                          color: isSelected
-                                                              ? Colors.white
-                                                              : _kNavy.withValues(alpha: 0.75),
+                                                              : _kNavy
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.15,
+                                                                    ),
                                                         ),
                                                       ),
-                                                    ),
-                                                  );
-                                                }).toList(),
-                                              ),
-                                            ],
-                                          );
-                                        }).toList(),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-
-                              // ── GHI CHÚ NHANH (QUICK NOTE PRESETS) ───────────
-                              if (qty > 0 && _expandedProductIds.contains(p.id))
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      SizedBox(
-                                        height: 32,
-                                        child: ListView(
-                                          scrollDirection: Axis.horizontal,
-                                          children: [
-                                            ..._kPresets.map((preset) {
-                                              final note = _notes[p.id] ?? '';
-                                              final isOn = note.contains(preset);
-                                              return Padding(
-                                                padding: const EdgeInsets.only(right: 6),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    HapticFeedback.selectionClick();
-                                                    setState(() {
-                                                      var current = _notes[p.id] ?? '';
-                                                      if (isOn) {
-                                                        current = current
-                                                            .replaceAll(', $preset', '')
-                                                            .replaceAll(preset, '')
-                                                            .trim()
-                                                            .replaceAll(RegExp(r'^,\s*|,\s*$'), '');
-                                                      } else {
-                                                        current = current.isEmpty
-                                                            ? preset
-                                                            : '$current, $preset';
-                                                      }
-                                                      _notes[p.id] = current;
-                                                    });
-                                                  },
-                                                  child: AnimatedContainer(
-                                                    duration: const Duration(milliseconds: 140),
-                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                                    decoration: BoxDecoration(
-                                                      color: isOn ? _kOrange : Colors.white,
-                                                      borderRadius: BorderRadius.circular(16),
-                                                      border: Border.all(
-                                                        color: isOn ? _kOrange : _kNavy.withValues(alpha: 0.15),
-                                                      ),
-                                                    ),
-                                                    child: Center(
-                                                      child: Text(preset,
+                                                      child: Center(
+                                                        child: Text(
+                                                          preset,
                                                           style: GoogleFonts.outfit(
                                                             fontSize: 11,
-                                                            fontWeight: FontWeight.w700,
-                                                            color: isOn ? Colors.white : _kNavy.withValues(alpha: 0.65),
-                                                          )),
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            }),
-                                            // ✏️ Ghi chú tự do
-                                            GestureDetector(
-                                              onTap: () async {
-                                                final ctrl = TextEditingController(text: _notes[p.id]);
-                                                await showDialog(
-                                                  context: context,
-                                                  builder: (_) => AlertDialog(
-                                                    title: Text('Ghi chú cho ${p.name}',
-                                                        style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16)),
-                                                    content: TextField(
-                                                      controller: ctrl,
-                                                      autofocus: true,
-                                                      style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600),
-                                                      decoration: InputDecoration(
-                                                        hintText: 'vd: ít rau, không cay...',
-                                                        hintStyle: GoogleFonts.outfit(color: _kNavy.withValues(alpha: 0.35)),
-                                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                                        focusedBorder: OutlineInputBorder(
-                                                          borderRadius: BorderRadius.circular(12),
-                                                          borderSide: const BorderSide(color: _kNavy, width: 1.5),
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            color: isOn
+                                                                ? Colors.white
+                                                                : _kNavy
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.65,
+                                                                      ),
+                                                          ),
                                                         ),
                                                       ),
                                                     ),
-                                                    actions: [
-                                                      TextButton(onPressed: () => Navigator.pop(context), child: Text('Huỷ', style: GoogleFonts.outfit(color: _kNavy.withValues(alpha: 0.5), fontWeight: FontWeight.w700))),
-                                                      TextButton(
-                                                        onPressed: () { setState(() => _notes[p.id] = ctrl.text.trim()); Navigator.pop(context); },
-                                                        child: Text('Lưu', style: GoogleFonts.outfit(color: _kNavy, fontWeight: FontWeight.w800)),
+                                                  ),
+                                                );
+                                              }),
+                                              // ✏️ Ghi chú tự do
+                                              GestureDetector(
+                                                onTap: () async {
+                                                  final ctrl =
+                                                      TextEditingController(
+                                                        text: _notes[p.id],
+                                                      );
+                                                  await showDialog(
+                                                    context: context,
+                                                    builder: (_) => AlertDialog(
+                                                      title: Text(
+                                                        'Ghi chú cho ${p.name}',
+                                                        style:
+                                                            GoogleFonts.outfit(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w800,
+                                                              fontSize: 16,
+                                                            ),
+                                                      ),
+                                                      content: TextField(
+                                                        controller: ctrl,
+                                                        autofocus: true,
+                                                        style:
+                                                            GoogleFonts.outfit(
+                                                              fontSize: 13,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                            ),
+                                                        decoration: InputDecoration(
+                                                          hintText:
+                                                              'vd: ít rau, không cay...',
+                                                          hintStyle:
+                                                              GoogleFonts.outfit(
+                                                                color: _kNavy
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.35,
+                                                                    ),
+                                                              ),
+                                                          border: OutlineInputBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  12,
+                                                                ),
+                                                          ),
+                                                          focusedBorder:
+                                                              OutlineInputBorder(
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      12,
+                                                                    ),
+                                                                borderSide:
+                                                                    const BorderSide(
+                                                                      color:
+                                                                          _kNavy,
+                                                                      width:
+                                                                          1.5,
+                                                                    ),
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                context,
+                                                              ),
+                                                          child: Text(
+                                                            'Huỷ',
+                                                            style:
+                                                                GoogleFonts.outfit(
+                                                                  color: _kNavy
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.5,
+                                                                      ),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            setState(
+                                                              () =>
+                                                                  _notes[p
+                                                                      .id] = ctrl
+                                                                      .text
+                                                                      .trim(),
+                                                            );
+                                                            Navigator.pop(
+                                                              context,
+                                                            );
+                                                          },
+                                                          child: Text(
+                                                            'Lưu',
+                                                            style:
+                                                                GoogleFonts.outfit(
+                                                                  color: _kNavy,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w800,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                                child: Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 5,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          16,
+                                                        ),
+                                                    border: Border.all(
+                                                      color: _kNavy.withValues(
+                                                        alpha: 0.15,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.edit_rounded,
+                                                        size: 12,
+                                                        color: _kNavy
+                                                            .withValues(
+                                                              alpha: 0.5,
+                                                            ),
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        'Ghi chú',
+                                                        style:
+                                                            GoogleFonts.outfit(
+                                                              fontSize: 11,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w700,
+                                                              color: _kNavy
+                                                                  .withValues(
+                                                                    alpha: 0.6,
+                                                                  ),
+                                                            ),
                                                       ),
                                                     ],
                                                   ),
-                                                );
-                                              },
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius: BorderRadius.circular(16),
-                                                  border: Border.all(color: _kNavy.withValues(alpha: 0.15)),
                                                 ),
-                                                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                                  Icon(Icons.edit_rounded, size: 12, color: _kNavy.withValues(alpha: 0.5)),
-                                                  const SizedBox(width: 4),
-                                                  Text('Ghi chú',
-                                                      style: GoogleFonts.outfit(
-                                                          fontSize: 11, fontWeight: FontWeight.w700, color: _kNavy.withValues(alpha: 0.6))),
-                                                ]),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if ((_notes[p.id] ?? '').isNotEmpty)
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 6),
-                                          child: Text(
-                                            '📝 ${_notes[p.id]}',
-                                            style: GoogleFonts.outfit(
-                                                fontSize: 11.5, color: _kOrange, fontWeight: FontWeight.w700),
+                                            ],
                                           ),
                                         ),
-                                    ],
+                                        if ((_notes[p.id] ?? '').isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 6,
+                                            ),
+                                            child: Text(
+                                              '📝 ${_notes[p.id]}',
+                                              style: GoogleFonts.outfit(
+                                                fontSize: 11.5,
+                                                color: _kOrange,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              // ── THANH TỔNG HỢP & NÚT THÊM MÓN CAO CẤP Ở DƯỚI CÙNG ────────────────
+              productsAsync.when(
+                data: (products) {
+                  final count = _selected.values.fold(0, (s, v) => s + v);
+                  double total = 0;
+                  for (final entry in _selected.entries) {
+                    final prod = products.firstWhere(
+                      (p) => p.id == entry.key,
+                      orElse: () => products.first,
+                    );
+                    final selectedMods = _selectedModifiers[entry.key] ?? {};
+                    final mods = _modifierCache[entry.key] ?? [];
+                    final modPrice = mods
+                        .where((m) => selectedMods.contains(m['id']))
+                        .fold<double>(
+                          0,
+                          (s, m) =>
+                              s +
+                              ((m['price_adjust'] as num?)?.toDouble() ?? 0),
+                        );
+
+                    double toppingTotalPrice = 0;
+                    final toppingQtys = _selectedToppings[entry.key] ?? {};
+                    for (final tEntry in toppingQtys.entries) {
+                      final tc = _toppingInfoCache[tEntry.key];
+                      if (tc != null) {
+                        toppingTotalPrice +=
+                            ((tc['sell_price'] as num?)?.toDouble() ?? 0) *
+                            tEntry.value;
+                      }
+                    }
+                    total +=
+                        (prod.sellPrice + modPrice) * entry.value +
+                        toppingTotalPrice;
+                  }
+
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: _kNavy.withValues(alpha: 0.08),
+                          blurRadius: 16,
+                          offset: const Offset(0, -4),
                         ),
-                      );
-                    },
+                      ],
+                    ),
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (count > 0) ...[
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.receipt_long_rounded,
+                                    size: 18,
+                                    color: _kNavy.withValues(alpha: 0.6),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _kNavy,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '$count món',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () =>
+                                        _showDraftCartPreview(products),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: _kOrange.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: _kOrange.withValues(
+                                            alpha: 0.25,
+                                          ),
+                                          width: 0.8,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.shopping_cart_rounded,
+                                            size: 12,
+                                            color: _kOrange,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Xem chi tiết',
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w800,
+                                              color: _kOrange,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    'Tổng cộng: ',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: _kNavy.withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  Text(
+                                    fmtVnd(total),
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: _kNavy,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            SizedBox(
+                                  key: _bottomBarKey,
+                                  width: double.infinity,
+                                  height: 52,
+                                  child: ElevatedButton(
+                                    onPressed: _isConfirming
+                                        ? null
+                                        : () => _confirm(products),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: count > 0
+                                          ? _kNavy
+                                          : const Color(0xFFE2E8F0),
+                                      foregroundColor: count > 0
+                                          ? Colors.white
+                                          : _kNavy.withValues(alpha: 0.4),
+                                      disabledBackgroundColor:
+                                          (count > 0
+                                                  ? _kNavy
+                                                  : const Color(0xFFE2E8F0))
+                                              .withValues(alpha: 0.6),
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(18),
+                                      ),
+                                      shadowColor: _kNavy.withValues(
+                                        alpha: 0.25,
+                                      ),
+                                    ),
+                                    child: _isConfirming
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.5,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    Colors.white,
+                                                  ),
+                                            ),
+                                          )
+                                        : Text(
+                                            count > 0
+                                                ? 'Xác nhận • Thêm $count món'
+                                                : 'Quay lại Bàn',
+                                            style: GoogleFonts.outfit(
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                  ),
+                                )
+                                .animate(
+                                  target: _bottomBarPopTrigger.toDouble(),
+                                )
+                                .scaleXY(
+                                  begin: 1.0,
+                                  end: 1.05,
+                                  duration: 150.ms,
+                                  curve: Curves.easeOut,
+                                )
+                                .then()
+                                .scaleXY(
+                                  begin: 1.05,
+                                  end: 1.0,
+                                  duration: 100.ms,
+                                ),
+                          ],
+                        ),
+                      ),
+                    ),
                   );
                 },
+                loading: () => const SizedBox(),
+                error: (_, __) => const SizedBox(),
               ),
-            ),
-            // ── THANH TỔNG HỢP & NÚT THÊM MÓN CAO CẤP Ở DƯỚI CÙNG ────────────────
-            productsAsync.when(
-              data: (products) {
-                final count = _selected.values.fold(0, (s, v) => s + v);
-                double total = 0;
-                for (final entry in _selected.entries) {
-                  final prod = products.firstWhere(
-                    (p) => p.id == entry.key,
-                    orElse: () => products.first,
-                  );
-                  final selectedMods = _selectedModifiers[entry.key] ?? {};
-                  final mods = _modifierCache[entry.key] ?? [];
-                  final modPrice = mods
-                      .where((m) => selectedMods.contains(m['id']))
-                      .fold<double>(0, (s, m) => s + ((m['price_adjust'] as num?)?.toDouble() ?? 0));
-                  
-                  double toppingTotalPrice = 0;
-                  final toppingQtys = _selectedToppings[entry.key] ?? {};
-                  for (final tEntry in toppingQtys.entries) {
-                    final tc = _toppingInfoCache[tEntry.key];
-                    if (tc != null) {
-                      toppingTotalPrice += ((tc['sell_price'] as num?)?.toDouble() ?? 0) * tEntry.value;
-                    }
-                  }
-                  total += (prod.sellPrice + modPrice) * entry.value + toppingTotalPrice;
-                }
-
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: _kNavy.withValues(alpha: 0.08),
-                        blurRadius: 16,
-                        offset: const Offset(0, -4),
-                      ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                        if (count > 0) ...[
-                          Row(children: [
-                            Icon(Icons.receipt_long_rounded, size: 18,
-                                color: _kNavy.withValues(alpha: 0.6)),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _kNavy,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text('$count món',
-                                  style: GoogleFonts.outfit(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white)),
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () => _showDraftCartPreview(products),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: _kOrange.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: _kOrange.withValues(alpha: 0.25), width: 0.8),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.shopping_cart_rounded, size: 12, color: _kOrange),
-                                    const SizedBox(width: 4),
-                                    Text('Xem chi tiết',
-                                        style: GoogleFonts.outfit(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w800,
-                                            color: _kOrange)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            Text('Tổng cộng: ',
-                                style: GoogleFonts.outfit(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: _kNavy.withValues(alpha: 0.5))),
-                            Text(fmtVnd(total),
-                                style: GoogleFonts.outfit(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: _kNavy)),
-                          ]),
-                          const SizedBox(height: 12),
-                        ],
-                        SizedBox(
-                          key: _bottomBarKey,
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: _isConfirming
-                                ? null
-                                : () => _confirm(products),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: count > 0 ? _kNavy : const Color(0xFFE2E8F0),
-                              foregroundColor: count > 0 ? Colors.white : _kNavy.withValues(alpha: 0.4),
-                              disabledBackgroundColor: (count > 0 ? _kNavy : const Color(0xFFE2E8F0)).withValues(alpha: 0.6),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18)),
-                              shadowColor: _kNavy.withValues(alpha: 0.25),
-                            ),
-                            child: _isConfirming
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                    ),
-                                  )
-                                : Text(
-                                    count > 0 ? 'Xác nhận • Thêm $count món' : 'Quay lại Bàn',
-                                    style: GoogleFonts.outfit(
-                                        fontWeight: FontWeight.w800, fontSize: 15),
-                                  ),
-                          ),
-                        ).animate(
-                          target: _bottomBarPopTrigger.toDouble(),
-                        ).scaleXY(begin: 1.0, end: 1.05, duration: 150.ms, curve: Curves.easeOut)
-                         .then()
-                         .scaleXY(begin: 1.05, end: 1.0, duration: 100.ms),
-                      ]),
-                    ),
-                  ),
-                );
-              },
-              loading: () => const SizedBox(),
-              error: (_, __) => const SizedBox(),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),);
+    );
   }
 }
-
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOPPING PICKER SHEET — Flat list (bảng đơn giản, không nhóm)
@@ -7163,11 +9264,11 @@ class _ToppingPickerSheet extends StatefulWidget {
 class _ToppingPickerSheetState extends State<_ToppingPickerSheet> {
   late Map<String, int> _qtys;
 
-  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kNavy = Color(0xFF1E1C5E);
   static const _kOrange = Color(0xFFE85D20);
-  static const _kCream  = Color(0xFFFAF7F2);
+  static const _kCream = Color(0xFFFAF7F2);
   static const _kBorder = Color(0xFFE0D8CC);
-  static const _kMuted  = Color(0xFF9E9085);
+  static const _kMuted = Color(0xFF9E9085);
 
   @override
   void initState() {
@@ -7197,169 +9298,245 @@ class _ToppingPickerSheetState extends State<_ToppingPickerSheet> {
           color: _kCream,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Column(children: [
-          const SizedBox(height: 10),
-          Center(child: Container(
-            width: 40, height: 4,
-            decoration: BoxDecoration(
-              color: _kNavy.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(2)),
-          )),
-          const SizedBox(height: 14),
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(children: [
-              const Icon(Icons.add_circle_outline_rounded, size: 20, color: _kOrange),
-              const SizedBox(width: 8),
-              Expanded(child: Text(
-                'Topping cho ${widget.product.name ?? ''}',
-                style: GoogleFonts.outfit(
-                  fontSize: 16, fontWeight: FontWeight.w800,
-                  color: _kNavy),
-              )),
-              if (_totalQty > 0) Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: _kOrange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '+${fmtVnd(_totalPrice)}',
-                  style: GoogleFonts.outfit(
-                    fontSize: 13, fontWeight: FontWeight.w800,
-                    color: _kOrange),
-                ),
-              ),
-            ]),
-          ),
-          const SizedBox(height: 8),
-          const Divider(height: 1),
-          // Topping list
-          Expanded(
-            child: widget.toppings.isEmpty
-              ? Center(child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_shopping_cart_outlined, size: 40, color: _kNavy.withValues(alpha: 0.15)),
-                    const SizedBox(height: 8),
-                    Text('Chưa có topping nào\nVào Kho → sửa món để gắn topping',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
-                  ],
-                ))
-              : ListView.builder(
-                  controller: ctrl,
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  itemCount: widget.toppings.length,
-                  itemBuilder: (_, i) {
-                    final t = widget.toppings[i];
-                    final tid = t['id'] as String;
-                    final qty = _qtys[tid] ?? 0;
-                    final price = (t['sell_price'] as num? ?? 0).toDouble();
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: qty > 0
-                          ? _kOrange.withValues(alpha: 0.06)
-                          : Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: qty > 0 ? _kOrange : _kBorder,
-                          width: qty > 0 ? 1.5 : 1),
-                      ),
-                      child: Row(children: [
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(t['name'] as String? ?? '',
-                              style: GoogleFonts.outfit(
-                                fontSize: 14, fontWeight: FontWeight.w700,
-                                color: _kNavy)),
-                            if (price > 0)
-                              Text('+${fmtVnd(price)}/${t['unit'] ?? 'phần'}',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 12, color: _kOrange,
-                                  fontWeight: FontWeight.w600)),
-                          ],
-                        )),
-                        // Increment/Decrement
-                        Row(children: [
-                          if (qty > 0) ...[
-                            GestureDetector(
-                              onTap: () => setState(() {
-                                _qtys[tid] = qty - 1;
-                                if (_qtys[tid] == 0) _qtys.remove(tid);
-                                widget.onChanged(Map<String, int>.from(_qtys));
-                              }),
-                              child: Container(
-                                width: 32, height: 32,
-                                decoration: BoxDecoration(
-                                  color: _kNavy.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(8)),
-                                child: Icon(Icons.remove_rounded, size: 16,
-                                  color: _kNavy.withValues(alpha: 0.6)),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text('$qty', style: GoogleFonts.outfit(
-                              fontSize: 16, fontWeight: FontWeight.w800,
-                              color: _kNavy)),
-                            const SizedBox(width: 8),
-                          ],
-                          GestureDetector(
-                            onTap: () => setState(() {
-                              _qtys[tid] = qty + 1;
-                              widget.onChanged(Map<String, int>.from(_qtys));
-                            }),
-                            child: Container(
-                              width: 32, height: 32,
-                              decoration: BoxDecoration(
-                                color: qty > 0 ? _kOrange : _kNavy,
-                                borderRadius: BorderRadius.circular(8)),
-                              child: const Icon(Icons.add_rounded,
-                                size: 16, color: Colors.white),
-                            ),
-                          ),
-                        ]),
-                      ]),
-                    );
-                  },
-                ),
-          ),
-          // Footer confirm
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _kNavy,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14))),
-                  child: Text(
-                    _totalQty > 0
-                      ? 'Xong · +${fmtVnd(_totalPrice)}'
-                      : 'Không thêm topping',
-                    style: GoogleFonts.outfit(
-                      fontSize: 15, fontWeight: FontWeight.w800,
-                      color: Colors.white)),
+                  color: _kNavy.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-          ),
-        ]),
+            const SizedBox(height: 14),
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.add_circle_outline_rounded,
+                    size: 20,
+                    color: _kOrange,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Topping cho ${widget.product.name ?? ''}',
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: _kNavy,
+                      ),
+                    ),
+                  ),
+                  if (_totalQty > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _kOrange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '+${fmtVnd(_totalPrice)}',
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: _kOrange,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            // Topping list
+            Expanded(
+              child: widget.toppings.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add_shopping_cart_outlined,
+                            size: 40,
+                            color: _kNavy.withValues(alpha: 0.15),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Chưa có topping nào\nVào Kho → sửa món để gắn topping',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              color: _kMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: ctrl,
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      itemCount: widget.toppings.length,
+                      itemBuilder: (_, i) {
+                        final t = widget.toppings[i];
+                        final tid = t['id'] as String;
+                        final qty = _qtys[tid] ?? 0;
+                        final price = (t['sell_price'] as num? ?? 0).toDouble();
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: qty > 0
+                                ? _kOrange.withValues(alpha: 0.06)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: qty > 0 ? _kOrange : _kBorder,
+                              width: qty > 0 ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      t['name'] as String? ?? '',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: _kNavy,
+                                      ),
+                                    ),
+                                    if (price > 0)
+                                      Text(
+                                        '+${fmtVnd(price)}/${t['unit'] ?? 'phần'}',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 12,
+                                          color: _kOrange,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              // Increment/Decrement
+                              Row(
+                                children: [
+                                  if (qty > 0) ...[
+                                    GestureDetector(
+                                      onTap: () => setState(() {
+                                        _qtys[tid] = qty - 1;
+                                        if (_qtys[tid] == 0) _qtys.remove(tid);
+                                        widget.onChanged(
+                                          Map<String, int>.from(_qtys),
+                                        );
+                                      }),
+                                      child: Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: _kNavy.withValues(alpha: 0.08),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          Icons.remove_rounded,
+                                          size: 16,
+                                          color: _kNavy.withValues(alpha: 0.6),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '$qty',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: _kNavy,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  GestureDetector(
+                                    onTap: () => setState(() {
+                                      _qtys[tid] = qty + 1;
+                                      widget.onChanged(
+                                        Map<String, int>.from(_qtys),
+                                      );
+                                    }),
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: qty > 0 ? _kOrange : _kNavy,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.add_rounded,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            // Footer confirm
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _kNavy,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      _totalQty > 0
+                          ? 'Xong · +${fmtVnd(_totalPrice)}'
+                          : 'Không thêm topping',
+                      style: GoogleFonts.outfit(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 // _ToppingGroupPickerSheet — DEPRECATED. Thay bằng _ToppingPickerSheet (flat list).
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODIFIER MANAGER SHEET — Quản lý tùy chọn cho từng sản phẩm
@@ -7373,10 +9550,10 @@ class ModifierManagerSheet extends StatefulWidget {
 
 class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
   // Tùy chọn
-  final _nameCtrl  = TextEditingController();
+  final _nameCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
-  String _group   = 'Mặc định';
-  bool _saving    = false;
+  String _group = 'Mặc định';
+  bool _saving = false;
   List<Map<String, dynamic>> _modifiers = [];
   String? _storeId;
 
@@ -7388,7 +9565,8 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose(); _priceCtrl.dispose();
+    _nameCtrl.dispose();
+    _priceCtrl.dispose();
     super.dispose();
   }
 
@@ -7398,193 +9576,471 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
 
   Future<void> _loadModifiers() async {
     final resp = await Supabase.instance.client
-        .from('product_modifiers').select()
+        .from('product_modifiers')
+        .select()
         .eq('product_id', widget.product.id)
-        .order('group_name').order('sort_order');
-    if (mounted) setState(() => _modifiers = List<Map<String,dynamic>>.from(resp as List));
+        .order('group_name')
+        .order('sort_order');
+    if (mounted)
+      setState(
+        () => _modifiers = List<Map<String, dynamic>>.from(resp as List),
+      );
   }
 
   Future<void> _addModifier() async {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
-    final price = double.tryParse(_priceCtrl.text.replaceAll(',','').replaceAll('.','')) ?? 0;
+    final price =
+        double.tryParse(
+          _priceCtrl.text.replaceAll(',', '').replaceAll('.', ''),
+        ) ??
+        0;
     setState(() => _saving = true);
     await Supabase.instance.client.from('product_modifiers').insert({
-      'id': const Uuid().v4(), 'product_id': widget.product.id,
+      'id': const Uuid().v4(),
+      'product_id': widget.product.id,
       'group_name': _group.trim().isEmpty ? 'Mặc định' : _group.trim(),
-      'name': name, 'price_adjust': price, 'sort_order': 0, 'is_active': true,
+      'name': name,
+      'price_adjust': price,
+      'sort_order': 0,
+      'is_active': true,
     });
-    _nameCtrl.clear(); _priceCtrl.clear();
+    _nameCtrl.clear();
+    _priceCtrl.clear();
     setState(() => _saving = false);
     await _loadModifiers();
     HapticFeedback.lightImpact();
   }
 
-  Future<void> _deleteModifier(Map<String,dynamic> mod) async {
-    await Supabase.instance.client.from('product_modifiers').delete().eq('id', mod['id'] as String);
-    await _loadModifiers(); HapticFeedback.mediumImpact();
+  Future<void> _deleteModifier(Map<String, dynamic> mod) async {
+    await Supabase.instance.client
+        .from('product_modifiers')
+        .delete()
+        .eq('id', mod['id'] as String);
+    await _loadModifiers();
+    HapticFeedback.mediumImpact();
   }
 
-  Future<void> _toggleModifier(Map<String,dynamic> mod) async {
-    await Supabase.instance.client.from('product_modifiers')
-        .update({'is_active': !(mod['is_active'] as bool? ?? true)}).eq('id', mod['id'] as String);
+  Future<void> _toggleModifier(Map<String, dynamic> mod) async {
+    await Supabase.instance.client
+        .from('product_modifiers')
+        .update({'is_active': !(mod['is_active'] as bool? ?? true)})
+        .eq('id', mod['id'] as String);
     await _loadModifiers();
   }
 
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.75, maxChildSize: 0.95, minChildSize: 0.4,
+      initialChildSize: 0.75,
+      maxChildSize: 0.95,
+      minChildSize: 0.4,
       builder: (_, scrollCtrl) => Container(
         decoration: const BoxDecoration(
           color: _kCream,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Column(children: [
-          const SizedBox(height: 10),
-          Center(child: Container(width: 40, height: 4,
-            decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(2)))),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Cài đặt tùy chọn món', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy)),
-              Text(widget.product.name, style: GoogleFonts.outfit(fontSize: 13, color: _kOrange, fontWeight: FontWeight.w600)),
-            ]),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Column(children: [
-              Expanded(child: _modifiers.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.tune_rounded, size: 44, color: _kNavy.withValues(alpha: 0.15)),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Chưa có tùy chọn nhanh',
-                            style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: _kNavy),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Thêm các ghi chú nhanh bên dưới để nhân viên click chọn nhanh khi order (Không cần gõ tay).',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.55), height: 1.4),
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: _kOrange.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: _kOrange.withValues(alpha: 0.15)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '💡 Ví dụ cách thiết lập:',
-                                  style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: _kOrange),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '• Nhóm: "Mức cay"  -> Tên: "Cấp độ 2"  -> Giá: 0\n'
-                                  '• Nhóm: "Ghi chú" -> Tên: "Không hành" -> Giá: 0\n'
-                                  '• Nhóm: "Thêm món" -> Tên: "Thêm Mực" -> Giá: 15000',
-                                  style: GoogleFonts.outfit(fontSize: 11, color: _kNavy.withValues(alpha: 0.7), height: 1.5),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : ListView(controller: scrollCtrl, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    children: (() {
-                      final groups = <String, List<Map<String,dynamic>>>{};
-                      for (final m in _modifiers) groups.putIfAbsent(m['group_name'] as String? ?? 'Mặc định', () => []).add(m);
-                      return groups.entries.map((e) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Padding(padding: const EdgeInsets.only(top: 8, bottom: 6),
-                          child: Text(e.key, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: _kNavy.withValues(alpha: 0.45)))),
-                        ...e.value.map((mod) {
-                          final isActive = mod['is_active'] as bool? ?? true;
-                          final priceAdj = (mod['price_adjust'] as num?)?.toDouble() ?? 0;
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 6),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: _kNavy.withValues(alpha: isActive ? 0.1 : 0.05)),
-                            ),
-                            child: Row(children: [
-                              GestureDetector(onTap: () => _toggleModifier(mod),
-                                child: Container(width: 22, height: 22,
-                                  decoration: BoxDecoration(color: isActive ? _kNavy : _kNavy.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                                  child: isActive ? const Icon(Icons.check_rounded, color: Colors.white, size: 14) : null)),
-                              const SizedBox(width: 10),
-                              Expanded(child: Text(
-                                priceAdj > 0 ? '${mod['name']}  +${fmtVnd(priceAdj)}' : mod['name'] as String,
-                                style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600,
-                                  color: isActive ? _kNavy : _kNavy.withValues(alpha: 0.35),
-                                  decoration: isActive ? null : TextDecoration.lineThrough))),
-                              GestureDetector(onTap: () => _deleteModifier(mod),
-                                child: Icon(Icons.delete_outline_rounded, size: 18, color: _kRed.withValues(alpha: 0.5))),
-                            ]),
-                          );
-                        }),
-                      ])).toList();
-                    })(),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: _kNavy.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Form thêm modifier
-              Container(
-                padding: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-                decoration: BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: _kNavy.withValues(alpha: 0.08)))),
-                child: Row(children: [
-                  SizedBox(width: 80, child: TextField(onChanged: (v) => setState(() => _group = v),
-                    style: GoogleFonts.outfit(fontSize: 12),
-                    decoration: InputDecoration(isDense: true, hintText: 'Nhóm',
-                      hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.2))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kNavy))))),
-                  const SizedBox(width: 6),
-                  Expanded(child: TextField(controller: _nameCtrl, style: GoogleFonts.outfit(fontSize: 13),
-                    decoration: InputDecoration(isDense: true, hintText: 'Tên tùy chọn',
-                      hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.2))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kNavy))))),
-                  const SizedBox(width: 6),
-                  SizedBox(width: 70, child: TextField(controller: _priceCtrl, keyboardType: TextInputType.number,
-                    style: GoogleFonts.outfit(fontSize: 12),
-                    decoration: InputDecoration(isDense: true, hintText: '+Giá',
-                      hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.2))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kNavy))))),
-                  const SizedBox(width: 6),
-                  GestureDetector(onTap: _saving ? null : _addModifier,
-                    child: Container(width: 36, height: 36,
-                      decoration: BoxDecoration(color: _kNavy, borderRadius: BorderRadius.circular(10)),
-                      child: _saving
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.add_rounded, color: Colors.white, size: 18))),
-                ]),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cài đặt tùy chọn món',
+                    style: GoogleFonts.outfit(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: _kNavy,
+                    ),
+                  ),
+                  Text(
+                    widget.product.name,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: _kOrange,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-            ]),
-          ),
-        ]),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: _modifiers.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.tune_rounded,
+                                    size: 44,
+                                    color: _kNavy.withValues(alpha: 0.15),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Chưa có tùy chọn nhanh',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: _kNavy,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Thêm các ghi chú nhanh bên dưới để nhân viên click chọn nhanh khi order (Không cần gõ tay).',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 12,
+                                      color: _kNavy.withValues(alpha: 0.55),
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: _kOrange.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: _kOrange.withValues(alpha: 0.15),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '💡 Ví dụ cách thiết lập:',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: _kOrange,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          '• Nhóm: "Mức cay"  -> Tên: "Cấp độ 2"  -> Giá: 0\n'
+                                          '• Nhóm: "Ghi chú" -> Tên: "Không hành" -> Giá: 0\n'
+                                          '• Nhóm: "Thêm món" -> Tên: "Thêm Mực" -> Giá: 15000',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 11,
+                                            color: _kNavy.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : ListView(
+                            controller: scrollCtrl,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            children: (() {
+                              final groups =
+                                  <String, List<Map<String, dynamic>>>{};
+                              for (final m in _modifiers)
+                                groups
+                                    .putIfAbsent(
+                                      m['group_name'] as String? ?? 'Mặc định',
+                                      () => [],
+                                    )
+                                    .add(m);
+                              return groups.entries
+                                  .map(
+                                    (e) => Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8,
+                                            bottom: 6,
+                                          ),
+                                          child: Text(
+                                            e.key,
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: _kNavy.withValues(
+                                                alpha: 0.45,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        ...e.value.map((mod) {
+                                          final isActive =
+                                              mod['is_active'] as bool? ?? true;
+                                          final priceAdj =
+                                              (mod['price_adjust'] as num?)
+                                                  ?.toDouble() ??
+                                              0;
+                                          return Container(
+                                            margin: const EdgeInsets.only(
+                                              bottom: 6,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: isActive
+                                                  ? Colors.white
+                                                  : Colors.white.withValues(
+                                                      alpha: 0.5,
+                                                    ),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: _kNavy.withValues(
+                                                  alpha: isActive ? 0.1 : 0.05,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                GestureDetector(
+                                                  onTap: () =>
+                                                      _toggleModifier(mod),
+                                                  child: Container(
+                                                    width: 22,
+                                                    height: 22,
+                                                    decoration: BoxDecoration(
+                                                      color: isActive
+                                                          ? _kNavy
+                                                          : _kNavy.withValues(
+                                                              alpha: 0.1,
+                                                            ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            6,
+                                                          ),
+                                                    ),
+                                                    child: isActive
+                                                        ? const Icon(
+                                                            Icons.check_rounded,
+                                                            color: Colors.white,
+                                                            size: 14,
+                                                          )
+                                                        : null,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Expanded(
+                                                  child: Text(
+                                                    priceAdj > 0
+                                                        ? '${mod['name']}  +${fmtVnd(priceAdj)}'
+                                                        : mod['name'] as String,
+                                                    style: GoogleFonts.outfit(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: isActive
+                                                          ? _kNavy
+                                                          : _kNavy.withValues(
+                                                              alpha: 0.35,
+                                                            ),
+                                                      decoration: isActive
+                                                          ? null
+                                                          : TextDecoration
+                                                                .lineThrough,
+                                                    ),
+                                                  ),
+                                                ),
+                                                GestureDetector(
+                                                  onTap: () =>
+                                                      _deleteModifier(mod),
+                                                  child: Icon(
+                                                    Icons
+                                                        .delete_outline_rounded,
+                                                    size: 18,
+                                                    color: _kRed.withValues(
+                                                      alpha: 0.5,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }),
+                                      ],
+                                    ),
+                                  )
+                                  .toList();
+                            })(),
+                          ),
+                  ),
+                  // Form thêm modifier
+                  Container(
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 12,
+                      bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border(
+                        top: BorderSide(color: _kNavy.withValues(alpha: 0.08)),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 80,
+                          child: TextField(
+                            onChanged: (v) => setState(() => _group = v),
+                            style: GoogleFonts.outfit(fontSize: 12),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              hintText: 'Nhóm',
+                              hintStyle: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: _kNavy.withValues(alpha: 0.35),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: _kNavy.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: _kNavy),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: TextField(
+                            controller: _nameCtrl,
+                            style: GoogleFonts.outfit(fontSize: 13),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              hintText: 'Tên tùy chọn',
+                              hintStyle: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: _kNavy.withValues(alpha: 0.35),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: _kNavy.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: _kNavy),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        SizedBox(
+                          width: 70,
+                          child: TextField(
+                            controller: _priceCtrl,
+                            keyboardType: TextInputType.number,
+                            style: GoogleFonts.outfit(fontSize: 12),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              hintText: '+Giá',
+                              hintStyle: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: _kNavy.withValues(alpha: 0.35),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: _kNavy.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: _kNavy),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: _saving ? null : _addModifier,
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: _kNavy,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: _saving
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.add_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
 
 class _ZoneFormSheet extends StatefulWidget {
   final BanZoneModel? existing;
@@ -7616,8 +10072,9 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
   Widget build(BuildContext context) {
     final isEdit = widget.existing != null;
     return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
         decoration: BoxDecoration(
@@ -7656,18 +10113,21 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                 decoration: InputDecoration(
                   labelText: 'Tên khu vực',
                   labelStyle: GoogleFonts.outfit(
-                      color: _kNavy.withValues(alpha: 0.6)),
+                    color: _kNavy.withValues(alpha: 0.6),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        BorderSide(color: _kNavy.withValues(alpha: 0.2)),
+                    borderSide: BorderSide(
+                      color: _kNavy.withValues(alpha: 0.2),
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        BorderSide(color: _kNavy.withValues(alpha: 0.2)),
+                    borderSide: BorderSide(
+                      color: _kNavy.withValues(alpha: 0.2),
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -7683,11 +10143,13 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Biểu tượng',
-                      style: GoogleFonts.outfit(
-                        fontSize: 13,
-                        color: _kNavy.withValues(alpha: 0.6),
-                      )),
+                  Text(
+                    'Biểu tượng',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: _kNavy.withValues(alpha: 0.6),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -7695,8 +10157,7 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                     children: _kZoneIconCodes.map((iconCp) {
                       final isSel = _selectedIconCode == iconCp;
                       return GestureDetector(
-                        onTap: () =>
-                            setState(() => _selectedIconCode = iconCp),
+                        onTap: () => setState(() => _selectedIconCode = iconCp),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -7733,46 +10194,45 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Màu sắc',
-                      style: GoogleFonts.outfit(
-                        fontSize: 13,
-                        color: _kNavy.withValues(alpha: 0.6),
-                      )),
+                  Text(
+                    'Màu sắc',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: _kNavy.withValues(alpha: 0.6),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: _kZoneColors.map((color) {
                       final isSel = _selectedColor.value == color.value;
                       return Expanded(
                         child: GestureDetector(
-                          onTap: () =>
-                              setState(() => _selectedColor = color),
+                          onTap: () => setState(() => _selectedColor = color),
                           child: Container(
-                            margin:
-                                const EdgeInsets.symmetric(horizontal: 3),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
                             height: 36,
                             decoration: BoxDecoration(
                               color: color,
                               borderRadius: BorderRadius.circular(8),
                               border: isSel
-                                  ? Border.all(
-                                      color: Colors.white,
-                                      width: 3,
-                                    )
+                                  ? Border.all(color: Colors.white, width: 3)
                                   : null,
                               boxShadow: isSel
                                   ? [
                                       BoxShadow(
-                                        color:
-                                            color.withValues(alpha: 0.5),
+                                        color: color.withValues(alpha: 0.5),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),
-                                      )
+                                      ),
                                     ]
                                   : null,
                             ),
                             child: isSel
-                                ? const Icon(Icons.check_rounded,
-                                    color: Colors.white, size: 18)
+                                ? const Icon(
+                                    Icons.check_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  )
                                 : null,
                           ),
                         ),
@@ -7794,16 +10254,18 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                             Navigator.pop(context, {'delete': true}),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: _kRed),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('Xoá khu',
-                            style: GoogleFonts.outfit(
-                              color: _kRed,
-                              fontWeight: FontWeight.w700,
-                            )),
+                        child: Text(
+                          'Xoá khu',
+                          style: GoogleFonts.outfit(
+                            color: _kRed,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   if (isEdit) const SizedBox(width: 12),
@@ -7821,15 +10283,16 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _selectedColor,
                         foregroundColor: Colors.white,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         elevation: 0,
                       ),
-                      child: Text(isEdit ? 'Lưu' : 'Thêm khu vực',
-                          style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.w700)),
+                      child: Text(
+                        isEdit ? 'Lưu' : 'Thêm khu vực',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                 ],
@@ -7871,7 +10334,8 @@ class _TableFormSheetState extends State<_TableFormSheet> {
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.existing?.label ?? '');
-    _selectedZoneId = widget.existing?.zoneId ??
+    _selectedZoneId =
+        widget.existing?.zoneId ??
         widget.defaultZoneId ??
         (widget.zones.isNotEmpty ? widget.zones.first.id : '');
     _capacity = widget.existing?.seats ?? 4;
@@ -7881,8 +10345,9 @@ class _TableFormSheetState extends State<_TableFormSheet> {
   Widget build(BuildContext context) {
     final isEdit = widget.existing != null;
     return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
         decoration: BoxDecoration(
@@ -7922,18 +10387,21 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                 decoration: InputDecoration(
                   labelText: 'Tên bàn (vd: Bàn 1, Bàn VIP)',
                   labelStyle: GoogleFonts.outfit(
-                      color: _kNavy.withValues(alpha: 0.6)),
+                    color: _kNavy.withValues(alpha: 0.6),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        BorderSide(color: _kNavy.withValues(alpha: 0.2)),
+                    borderSide: BorderSide(
+                      color: _kNavy.withValues(alpha: 0.2),
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        BorderSide(color: _kNavy.withValues(alpha: 0.2)),
+                    borderSide: BorderSide(
+                      color: _kNavy.withValues(alpha: 0.2),
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -7949,11 +10417,13 @@ class _TableFormSheetState extends State<_TableFormSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Khu vực',
-                      style: GoogleFonts.outfit(
-                        fontSize: 13,
-                        color: _kNavy.withValues(alpha: 0.6),
-                      )),
+                  Text(
+                    'Khu vực',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: _kNavy.withValues(alpha: 0.6),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -7967,11 +10437,12 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                         zoneColor = _kNavy;
                       }
                       return GestureDetector(
-                        onTap: () =>
-                            setState(() => _selectedZoneId = zone.id),
+                        onTap: () => setState(() => _selectedZoneId = zone.id),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: isSel
                                 ? zoneColor
@@ -7982,19 +10453,22 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                IconData(zone.iconCode,
-                                    fontFamily: 'MaterialIcons'),
+                                IconData(
+                                  zone.iconCode,
+                                  fontFamily: 'MaterialIcons',
+                                ),
                                 size: 14,
                                 color: isSel ? Colors.white : zoneColor,
                               ),
                               const SizedBox(width: 6),
-                              Text(zone.name,
-                                  style: GoogleFonts.outfit(
-                                    fontWeight: FontWeight.w600,
-                                    color:
-                                        isSel ? Colors.white : zoneColor,
-                                    fontSize: 13,
-                                  )),
+                              Text(
+                                zone.name,
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w600,
+                                  color: isSel ? Colors.white : zoneColor,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -8006,127 +10480,135 @@ class _TableFormSheetState extends State<_TableFormSheet> {
             ),
             const SizedBox(height: 16),
             // Số lượng bàn (chỉ hiện khi thêm mới)
-            if (!isEdit) Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Số lượng bàn',
-                        style: GoogleFonts.outfit(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: _kNavy.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _kOrange.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'Tiết kiệm thời gian!',
+            if (!isEdit)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Số lượng bàn',
                           style: GoogleFonts.outfit(
-                            fontSize: 10,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: _kOrange,
+                            color: _kNavy.withValues(alpha: 0.6),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _batchCount == 1
-                        ? 'Têm bàn sẽ được dùng nguyên vd: "Bàn 5"'
-                        : 'Sẽ tạo: ${List.generate(_batchCount, (i) => '"${_nameCtrl.text.trim().isEmpty ? "Bàn" : _nameCtrl.text.trim()} ${i + 1}"').join(", ")}',
-                    style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      color: _kNavy.withValues(alpha: 0.4),
-                      fontStyle: _batchCount > 1 ? FontStyle.italic : FontStyle.normal,
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _kOrange.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Tiết kiệm thời gian!',
+                            style: GoogleFonts.outfit(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: _kOrange,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      _CounterButton(
-                        icon: Icons.remove_rounded,
-                        onTap: () {
-                          if (_batchCount > 1) setState(() => _batchCount--);
-                        },
+                    const SizedBox(height: 4),
+                    Text(
+                      _batchCount == 1
+                          ? 'Têm bàn sẽ được dùng nguyên vd: "Bàn 5"'
+                          : 'Sẽ tạo: ${List.generate(_batchCount, (i) => '"${_nameCtrl.text.trim().isEmpty ? "Bàn" : _nameCtrl.text.trim()} ${i + 1}"').join(", ")}',
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        color: _kNavy.withValues(alpha: 0.4),
+                        fontStyle: _batchCount > 1
+                            ? FontStyle.italic
+                            : FontStyle.normal,
                       ),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Text(
-                              '$_batchCount',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.outfit(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w800,
-                                color: _kNavy,
-                              ),
-                            ),
-                            Text(
-                              'bàn',
-                              style: GoogleFonts.outfit(
-                                fontSize: 11,
-                                color: _kNavy.withValues(alpha: 0.4),
-                              ),
-                            ),
-                          ],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        _CounterButton(
+                          icon: Icons.remove_rounded,
+                          onTap: () {
+                            if (_batchCount > 1) setState(() => _batchCount--);
+                          },
                         ),
-                      ),
-                      _CounterButton(
-                        icon: Icons.add_rounded,
-                        onTap: () {
-                          setState(() => _batchCount++);
-                        },
-                      ),
-                    ],
-                  ),
-                  // Quick select chips
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [1, 2, 3, 5, 10, 15, 20, 30].map((n) {
-                      final isSel = _batchCount == n;
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _batchCount = n),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            decoration: BoxDecoration(
-                              color: isSel ? _kNavy : Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isSel ? _kNavy : _kNavy.withValues(alpha: 0.15),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Text(
+                                '$_batchCount',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                  color: _kNavy,
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              '$n',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.outfit(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: isSel ? Colors.white : _kNavy,
+                              Text(
+                                'bàn',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11,
+                                  color: _kNavy.withValues(alpha: 0.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        _CounterButton(
+                          icon: Icons.add_rounded,
+                          onTap: () {
+                            setState(() => _batchCount++);
+                          },
+                        ),
+                      ],
+                    ),
+                    // Quick select chips
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [1, 2, 3, 5, 10, 15, 20, 30].map((n) {
+                        final isSel = _batchCount == n;
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _batchCount = n),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              margin: const EdgeInsets.symmetric(horizontal: 2),
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isSel ? _kNavy : Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isSel
+                                      ? _kNavy
+                                      : _kNavy.withValues(alpha: 0.15),
+                                ),
+                              ),
+                              child: Text(
+                                '$n',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSel ? Colors.white : _kNavy,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 16),
             // Số chỗ ngồi
             Padding(
@@ -8134,11 +10616,13 @@ class _TableFormSheetState extends State<_TableFormSheet> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Số chỗ ngồi',
-                      style: GoogleFonts.outfit(
-                        fontSize: 13,
-                        color: _kNavy.withValues(alpha: 0.6),
-                      )),
+                  Text(
+                    'Số chỗ ngồi',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: _kNavy.withValues(alpha: 0.6),
+                    ),
+                  ),
                   Row(
                     children: [
                       _CounterButton(
@@ -8180,16 +10664,18 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                             Navigator.pop(context, {'delete': true}),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: _kRed),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('Xoá bàn',
-                            style: GoogleFonts.outfit(
-                              color: _kRed,
-                              fontWeight: FontWeight.w700,
-                            )),
+                        child: Text(
+                          'Xoá bàn',
+                          style: GoogleFonts.outfit(
+                            color: _kRed,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   if (isEdit) const SizedBox(width: 12),
@@ -8213,15 +10699,16 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _kNavy,
                         foregroundColor: Colors.white,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         elevation: 0,
                       ),
-                      child: Text(isEdit ? 'Lưu' : 'Thêm bàn',
-                          style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.w700)),
+                      child: Text(
+                        isEdit ? 'Lưu' : 'Thêm bàn',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                 ],
@@ -8310,7 +10797,10 @@ class _KitchenStatusDot extends StatelessWidget {
 class _SendKitchenButton extends ConsumerStatefulWidget {
   final int unsentCount;
   final Future<void> Function() onPressed; // ‼️ async callback
-  const _SendKitchenButton({required this.unsentCount, required this.onPressed});
+  const _SendKitchenButton({
+    required this.unsentCount,
+    required this.onPressed,
+  });
 
   @override
   ConsumerState<_SendKitchenButton> createState() => _SendKitchenButtonState();
@@ -8344,10 +10834,10 @@ class _SendKitchenButtonState extends ConsumerState<_SendKitchenButton> {
         color: !isKitchenActive
             ? _kNavy.withValues(alpha: 0.06)
             : _isSending
-                ? _kOrange.withValues(alpha: 0.6)
-                : hasUnsent
-                    ? _kOrange
-                    : _kNavy.withValues(alpha: 0.12),
+            ? _kOrange.withValues(alpha: 0.6)
+            : hasUnsent
+            ? _kOrange
+            : _kNavy.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
         border: !isKitchenActive
             ? Border.all(color: _kNavy.withValues(alpha: 0.15), width: 1)
@@ -8360,7 +10850,8 @@ class _SendKitchenButtonState extends ConsumerState<_SendKitchenButton> {
           children: [
             if (_isSending)
               const SizedBox(
-                width: 18, height: 18,
+                width: 18,
+                height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -8379,8 +10870,8 @@ class _SendKitchenButtonState extends ConsumerState<_SendKitchenButton> {
               _isSending
                   ? 'Đang gửi...'
                   : hasUnsent
-                      ? 'Gửi bếp (${widget.unsentCount})'
-                      : 'Đã gửi hết',
+                  ? 'Gửi bếp (${widget.unsentCount})'
+                  : 'Đã gửi hết',
               style: GoogleFonts.outfit(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -8495,22 +10986,30 @@ class _TableShapePainter extends CustomPainter {
       canvas.drawCircle(Offset(cx, cy), r, paint);
     } else if (shape == 'square') {
       final s = size.height - 2;
-      final rect =
-          Rect.fromCenter(center: Offset(cx, cy), width: s, height: s);
+      final rect = Rect.fromCenter(center: Offset(cx, cy), width: s, height: s);
       canvas.drawRRect(
-          RRect.fromRectAndRadius(rect, const Radius.circular(4)), fill);
+        RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+        fill,
+      );
       canvas.drawRRect(
-          RRect.fromRectAndRadius(rect, const Radius.circular(4)), paint);
+        RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+        paint,
+      );
     } else {
       // rect (dài)
       final rect = Rect.fromCenter(
-          center: Offset(cx, cy),
-          width: size.width - 2,
-          height: size.height - 4);
+        center: Offset(cx, cy),
+        width: size.width - 2,
+        height: size.height - 4,
+      );
       canvas.drawRRect(
-          RRect.fromRectAndRadius(rect, const Radius.circular(4)), fill);
+        RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+        fill,
+      );
       canvas.drawRRect(
-          RRect.fromRectAndRadius(rect, const Radius.circular(4)), paint);
+        RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+        paint,
+      );
     }
   }
 
@@ -8570,15 +11069,19 @@ class _TableOptionsSheet extends StatelessWidget {
           if (session == null)
             ListTile(
               leading: const Icon(Icons.edit_rounded, color: _kNavy),
-              title: Text('Sửa thông tin bàn',
-                  style: GoogleFonts.outfit(color: _kNavy)),
+              title: Text(
+                'Sửa thông tin bàn',
+                style: GoogleFonts.outfit(color: _kNavy),
+              ),
               onTap: onEdit,
             ),
           if (session != null)
             ListTile(
               leading: const Icon(Icons.swap_horiz_rounded, color: _kNavy),
-              title: Text('Chuyển bàn',
-                  style: GoogleFonts.outfit(color: _kNavy)),
+              title: Text(
+                'Chuyển bàn',
+                style: GoogleFonts.outfit(color: _kNavy),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 onTransfer?.call();
@@ -8614,8 +11117,7 @@ class _TransferTableSheet extends ConsumerStatefulWidget {
       _TransferTableSheetState();
 }
 
-class _TransferTableSheetState
-    extends ConsumerState<_TransferTableSheet> {
+class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
   String? _selectedTableId;
   String? _selectedTableLabel;
   String _selectedZoneId = 'Tất cả';
@@ -8635,29 +11137,37 @@ class _TransferTableSheetState
           final allZones = (snap.data?[1] as List<BanZoneModel>?) ?? [];
 
           // Lọc ra các bàn có thể chuyển theo phân khu đã chọn
-          final tables = allTables
-              .where((t) => t.id != widget.currentTableId)
-              .where((t) => _selectedZoneId == 'Tất cả' || t.zoneId == _selectedZoneId)
-              .toList()
-            ..sort((a, b) => compareNatural(a.label, b.label));
+          final tables =
+              allTables
+                  .where((t) => t.id != widget.currentTableId)
+                  .where(
+                    (t) =>
+                        _selectedZoneId == 'Tất cả' ||
+                        t.zoneId == _selectedZoneId,
+                  )
+                  .toList()
+                ..sort((a, b) => compareNatural(a.label, b.label));
 
           return Padding(
             padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom),
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: Stack(
               children: [
                 Container(
                   height: MediaQuery.of(context).size.height * 0.75,
                   decoration: const BoxDecoration(
                     color: _kCream,
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(24)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
                   ),
                   child: Column(
                     children: [
                       const SizedBox(height: 10),
                       Container(
-                        width: 40, height: 4,
+                        width: 40,
+                        height: 4,
                         decoration: BoxDecoration(
                           color: _kNavy.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(2),
@@ -8670,29 +11180,45 @@ class _TransferTableSheetState
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Row(
                           children: [
-                            Icon(widget.isMergeMode ? Icons.merge_type_rounded : Icons.swap_horiz_rounded,
-                                color: widget.isMergeMode ? const Color(0xFF2563EB) : _kAmber, size: 22),
+                            Icon(
+                              widget.isMergeMode
+                                  ? Icons.merge_type_rounded
+                                  : Icons.swap_horiz_rounded,
+                              color: widget.isMergeMode
+                                  ? const Color(0xFF2563EB)
+                                  : _kAmber,
+                              size: 22,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(widget.isMergeMode ? 'Gộp bàn' : 'Chuyển bàn',
-                                      style: GoogleFonts.outfit(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w900,
-                                          color: _kNavy)),
                                   Text(
-                                      'Từ: ${widget.currentTableLabel}',
-                                      style: GoogleFonts.outfit(
-                                          fontSize: 13,
-                                          color: _kNavy.withValues(alpha: 0.5))),
+                                    widget.isMergeMode
+                                        ? 'Gộp bàn'
+                                        : 'Chuyển bàn',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: _kNavy,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Từ: ${widget.currentTableLabel}',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 13,
+                                      color: _kNavy.withValues(alpha: 0.5),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close_rounded,
-                                  color: _kNavy),
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: _kNavy,
+                              ),
                               onPressed: () => Navigator.pop(context),
                             ),
                           ],
@@ -8701,19 +11227,26 @@ class _TransferTableSheetState
                       const Divider(height: 12, color: Color(0xFFE8E0D4)),
 
                       // Chọn Phân khu (Horizontal Zone Selector)
-                      if (snap.connectionState != ConnectionState.waiting && allZones.isNotEmpty)
+                      if (snap.connectionState != ConnectionState.waiting &&
+                          allZones.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: SizedBox(
                             height: 38,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               itemCount: allZones.length + 1,
                               itemBuilder: (ctx, idx) {
                                 final isAll = idx == 0;
-                                final zoneId = isAll ? 'Tất cả' : allZones[idx - 1].id;
-                                final zoneName = isAll ? 'Tất cả' : allZones[idx - 1].name;
+                                final zoneId = isAll
+                                    ? 'Tất cả'
+                                    : allZones[idx - 1].id;
+                                final zoneName = isAll
+                                    ? 'Tất cả'
+                                    : allZones[idx - 1].name;
                                 final isSelected = _selectedZoneId == zoneId;
 
                                 return Padding(
@@ -8723,8 +11256,12 @@ class _TransferTableSheetState
                                       zoneName,
                                       style: GoogleFonts.outfit(
                                         fontSize: 13,
-                                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                        color: isSelected ? Colors.white : _kNavy,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : _kNavy,
                                       ),
                                     ),
                                     selected: isSelected,
@@ -8733,13 +11270,17 @@ class _TransferTableSheetState
                                     checkmarkColor: Colors.white,
                                     onSelected: (val) {
                                       if (val) {
-                                        setState(() => _selectedZoneId = zoneId);
+                                        setState(
+                                          () => _selectedZoneId = zoneId,
+                                        );
                                       }
                                     },
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
                                       side: BorderSide(
-                                        color: isSelected ? _kNavy : const Color(0xFFDDD5C8),
+                                        color: isSelected
+                                            ? _kNavy
+                                            : const Color(0xFFDDD5C8),
                                         width: 1,
                                       ),
                                     ),
@@ -8752,9 +11293,7 @@ class _TransferTableSheetState
 
                       if (snap.connectionState == ConnectionState.waiting)
                         const Expanded(
-                          child: Center(
-                            child: CircularProgressIndicator(),
-                          ),
+                          child: Center(child: CircularProgressIndicator()),
                         )
                       else if (tables.isEmpty)
                         Expanded(
@@ -8762,14 +11301,18 @@ class _TransferTableSheetState
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.table_restaurant_rounded,
-                                    size: 48, color: _kNavy),
+                                const Icon(
+                                  Icons.table_restaurant_rounded,
+                                  size: 48,
+                                  color: _kNavy,
+                                ),
                                 const SizedBox(height: 12),
                                 Text(
                                   'Không có bàn nào khác ở phân khu này',
                                   style: GoogleFonts.outfit(
-                                      fontSize: 14,
-                                      color: _kNavy.withValues(alpha: 0.5)),
+                                    fontSize: 14,
+                                    color: _kNavy.withValues(alpha: 0.5),
+                                  ),
                                 ),
                               ],
                             ),
@@ -8786,22 +11329,35 @@ class _TransferTableSheetState
                                 spacing: 10,
                                 runSpacing: 10,
                                 children: tables.map((t) {
-                                  final isOccupied = widget.activeSessions.containsKey(t.id);
+                                  final isOccupied = widget.activeSessions
+                                      .containsKey(t.id);
                                   final isSelected = _selectedTableId == t.id;
 
-                                  final themeColor = widget.isMergeMode ? const Color(0xFF2563EB) : _kAmber;
+                                  final themeColor = widget.isMergeMode
+                                      ? const Color(0xFF2563EB)
+                                      : _kAmber;
 
                                   return GestureDetector(
                                     onTap: () {
                                       if (!widget.isMergeMode && isOccupied) {
-                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                          content: Text('⚠️ Bàn ${t.label} đang có khách, không thể chuyển sang.',
-                                              style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-                                          backgroundColor: _kAmber,
-                                          behavior: SnackBarBehavior.floating,
-                                          margin: const EdgeInsets.all(12),
-                                          duration: const Duration(seconds: 2),
-                                        ));
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              '⚠️ Bàn ${t.label} đang có khách, không thể chuyển sang.',
+                                              style: GoogleFonts.outfit(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            backgroundColor: _kAmber,
+                                            behavior: SnackBarBehavior.floating,
+                                            margin: const EdgeInsets.all(12),
+                                            duration: const Duration(
+                                              seconds: 2,
+                                            ),
+                                          ),
+                                        );
                                         return;
                                       }
                                       setState(() {
@@ -8810,26 +11366,47 @@ class _TransferTableSheetState
                                       });
                                     },
                                     child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 150),
-                                      width: 80, height: 56,
+                                      duration: const Duration(
+                                        milliseconds: 150,
+                                      ),
+                                      width: 80,
+                                      height: 56,
                                       decoration: BoxDecoration(
                                         color: isSelected
                                             ? themeColor
-                                            : (isOccupied ? (widget.isMergeMode ? const Color(0xFFEFF6FF) : const Color(0xFFF0EAE1)) : Colors.white),
+                                            : (isOccupied
+                                                  ? (widget.isMergeMode
+                                                        ? const Color(
+                                                            0xFFEFF6FF,
+                                                          )
+                                                        : const Color(
+                                                            0xFFF0EAE1,
+                                                          ))
+                                                  : Colors.white),
                                         borderRadius: BorderRadius.circular(14),
                                         border: Border.all(
                                           color: isSelected
                                               ? themeColor
-                                              : (isOccupied ? (widget.isMergeMode ? const Color(0xFF93C5FD) : const Color(0xFFDDD5C8)) : const Color(0xFFDDD5C8)),
+                                              : (isOccupied
+                                                    ? (widget.isMergeMode
+                                                          ? const Color(
+                                                              0xFF93C5FD,
+                                                            )
+                                                          : const Color(
+                                                              0xFFDDD5C8,
+                                                            ))
+                                                    : const Color(0xFFDDD5C8)),
                                           width: isSelected ? 2 : 1,
                                         ),
                                         boxShadow: isSelected
                                             ? [
                                                 BoxShadow(
-                                                  color: themeColor.withValues(alpha: 0.3),
+                                                  color: themeColor.withValues(
+                                                    alpha: 0.3,
+                                                  ),
                                                   blurRadius: 8,
                                                   offset: const Offset(0, 3),
-                                                )
+                                                ),
                                               ]
                                             : [],
                                       ),
@@ -8837,7 +11414,8 @@ class _TransferTableSheetState
                                         alignment: Alignment.center,
                                         children: [
                                           Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
                                             children: [
                                               Text(
                                                 t.label,
@@ -8846,27 +11424,59 @@ class _TransferTableSheetState
                                                   fontWeight: FontWeight.w800,
                                                   color: isSelected
                                                       ? Colors.white
-                                                      : (isOccupied ? (widget.isMergeMode ? const Color(0xFF1E40AF) : _kNavy.withValues(alpha: 0.4)) : _kNavy),
+                                                      : (isOccupied
+                                                            ? (widget.isMergeMode
+                                                                  ? const Color(
+                                                                      0xFF1E40AF,
+                                                                    )
+                                                                  : _kNavy.withValues(
+                                                                      alpha:
+                                                                          0.4,
+                                                                    ))
+                                                            : _kNavy),
                                                 ),
                                               ),
                                               if (isOccupied)
                                                 Text(
-                                                  widget.isMergeMode ? '🔗 Gộp món' : 'Có khách',
+                                                  widget.isMergeMode
+                                                      ? '🔗 Gộp món'
+                                                      : 'Có khách',
                                                   style: GoogleFonts.outfit(
                                                     fontSize: 9,
                                                     fontWeight: FontWeight.w700,
-                                                    color: isSelected ? Colors.white : (widget.isMergeMode ? const Color(0xFF2563EB) : _kRed.withValues(alpha: 0.7)),
+                                                    color: isSelected
+                                                        ? Colors.white
+                                                        : (widget.isMergeMode
+                                                              ? const Color(
+                                                                  0xFF2563EB,
+                                                                )
+                                                              : _kRed
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.7,
+                                                                    )),
                                                   ),
                                                 ),
                                             ],
                                           ),
                                           if (isOccupied)
                                             Positioned(
-                                              top: 4, right: 4,
+                                              top: 4,
+                                              right: 4,
                                               child: Icon(
-                                                widget.isMergeMode ? Icons.merge_type_rounded : Icons.people_alt_rounded,
+                                                widget.isMergeMode
+                                                    ? Icons.merge_type_rounded
+                                                    : Icons.people_alt_rounded,
                                                 size: 10,
-                                                color: isSelected ? Colors.white : (widget.isMergeMode ? const Color(0xFF2563EB) : _kNavy.withValues(alpha: 0.35)),
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : (widget.isMergeMode
+                                                          ? const Color(
+                                                              0xFF2563EB,
+                                                            )
+                                                          : _kNavy.withValues(
+                                                              alpha: 0.35,
+                                                            )),
                                               ),
                                             ),
                                         ],
@@ -8882,8 +11492,11 @@ class _TransferTableSheetState
                       // Xác nhận
                       Padding(
                         padding: EdgeInsets.fromLTRB(
-                            20, 12, 20,
-                            MediaQuery.of(context).padding.bottom + 20),
+                          20,
+                          12,
+                          20,
+                          MediaQuery.of(context).padding.bottom + 20,
+                        ),
                         child: SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -8893,25 +11506,36 @@ class _TransferTableSheetState
                                 : null,
                             icon: _loading
                                 ? const SizedBox(
-                                    width: 18, height: 18,
+                                    width: 18,
+                                    height: 18,
                                     child: CircularProgressIndicator(
-                                        color: Colors.white, strokeWidth: 2.5))
+                                      color: Colors.white,
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
                                 : const Icon(Icons.check_rounded),
                             label: Text(
                               _selectedTableId != null
-                                  ? (widget.isMergeMode ? 'Gộp ${widget.currentTableLabel} vào $_selectedTableLabel' : 'Chuyển sang $_selectedTableLabel')
+                                  ? (widget.isMergeMode
+                                        ? 'Gộp ${widget.currentTableLabel} vào $_selectedTableLabel'
+                                        : 'Chuyển sang $_selectedTableLabel')
                                   : 'Chọn bàn đích',
                               style: GoogleFonts.outfit(
-                                  fontSize: 15, fontWeight: FontWeight.w800),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _selectedTableId != null
-                                  ? (widget.isMergeMode ? const Color(0xFF2563EB) : _kAmber)
+                                  ? (widget.isMergeMode
+                                        ? const Color(0xFF2563EB)
+                                        : _kAmber)
                                   : const Color(0xFFCCC4B8),
                               foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16)),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                             ),
                           ),
                         ),
@@ -8924,14 +11548,18 @@ class _TransferTableSheetState
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.35),
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(24),
+                        ),
                       ),
                       child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -8965,10 +11593,9 @@ class _TransferTableSheetState
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Lỗi: $e'),
-          backgroundColor: _kRed,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e'), backgroundColor: _kRed),
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -8993,13 +11620,14 @@ class _StampRow extends StatelessWidget {
         final filled = i < current;
         final nextFill = i == current; // tem sẽ được cộng đơn này
         return Container(
-          width: 26, height: 26,
+          width: 26,
+          height: 26,
           decoration: BoxDecoration(
             color: filled
                 ? const Color(0xFF2E7D32)
                 : nextFill
-                    ? const Color(0xFF81C784)
-                    : const Color(0xFF4CAF50).withAlpha(30),
+                ? const Color(0xFF81C784)
+                : const Color(0xFF4CAF50).withAlpha(30),
             shape: BoxShape.circle,
             border: Border.all(
               color: filled || nextFill
@@ -9011,9 +11639,8 @@ class _StampRow extends StatelessWidget {
           child: filled
               ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
               : nextFill
-                  ? const Icon(Icons.add_rounded,
-                      color: Colors.white, size: 12)
-                  : null,
+              ? const Icon(Icons.add_rounded, color: Colors.white, size: 12)
+              : null,
         );
       }),
     );
@@ -9036,7 +11663,7 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
   String _pin = '';
   String? _error;
   bool _loading = false;
-  
+
   late AnimationController _shakeCtrl;
   late Animation<double> _shakeAnim;
 
@@ -9044,9 +11671,13 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
   void initState() {
     super.initState();
     _shakeCtrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 400));
-    _shakeAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn));
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _shakeAnim = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.elasticIn));
   }
 
   @override
@@ -9076,7 +11707,10 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
   Future<void> _verify() async {
     setState(() => _loading = true);
     try {
-      final manager = await UserAuthService.verifyManagerQuickPin(widget.storeId, _pin);
+      final manager = await UserAuthService.verifyManagerQuickPin(
+        widget.storeId,
+        _pin,
+      );
       if (manager != null) {
         HapticFeedback.heavyImpact();
         if (mounted) Navigator.pop(context, manager);
@@ -9112,21 +11746,30 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const Icon(Icons.shield_rounded, color: _kOrange, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                'Quản lý phê duyệt',
-                style: GoogleFonts.outfit(
-                  fontSize: 18, fontWeight: FontWeight.w900, color: _kNavy),
-              ),
-            ]),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.shield_rounded, color: _kOrange, size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  'Quản lý phê duyệt',
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: _kNavy,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             Text(
               'Vui lòng gọi Quản lý nhập mã PIN 6 số duyệt thao tác nhạy cảm này.',
               textAlign: TextAlign.center,
               style: GoogleFonts.outfit(
-                fontSize: 12.5, color: _kNavy.withValues(alpha: 0.55), height: 1.4),
+                fontSize: 12.5,
+                color: _kNavy.withValues(alpha: 0.55),
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 20),
 
@@ -9135,8 +11778,11 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
               animation: _shakeAnim,
               builder: (_, child) => Transform.translate(
                 offset: Offset(
-                  _shakeAnim.value * 12 * (1 - 2 * (_shakeAnim.value.floor() % 2)),
-                  0),
+                  _shakeAnim.value *
+                      12 *
+                      (1 - 2 * (_shakeAnim.value.floor() % 2)),
+                  0,
+                ),
                 child: child,
               ),
               child: Row(
@@ -9151,11 +11797,14 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
                     decoration: BoxDecoration(
                       color: filled ? _kOrange : _kDot,
                       shape: BoxShape.circle,
-                      boxShadow: filled ? [
-                        BoxShadow(
-                          color: _kOrange.withValues(alpha: 0.4),
-                          blurRadius: 8),
-                      ] : [],
+                      boxShadow: filled
+                          ? [
+                              BoxShadow(
+                                color: _kOrange.withValues(alpha: 0.4),
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : [],
                     ),
                   );
                 }),
@@ -9167,7 +11816,10 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
               Text(
                 _error!,
                 style: GoogleFonts.outfit(
-                  fontSize: 12, color: Colors.red, fontWeight: FontWeight.w700),
+                  fontSize: 12,
+                  color: Colors.red,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             const SizedBox(height: 20),
 
@@ -9189,18 +11841,28 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
                         return GestureDetector(
                           onTap: key == '⌫' ? _onDelete : () => _onDigit(key),
                           child: Container(
-                            width: 58, height: 58,
+                            width: 58,
+                            height: 58,
                             decoration: BoxDecoration(
-                              color: key == '⌫' ? Colors.transparent : const Color(0xFFF3F4F6),
+                              color: key == '⌫'
+                                  ? Colors.transparent
+                                  : const Color(0xFFF3F4F6),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
                               child: key == '⌫'
-                                  ? const Icon(Icons.backspace_rounded, color: _kNavy, size: 18)
+                                  ? const Icon(
+                                      Icons.backspace_rounded,
+                                      color: _kNavy,
+                                      size: 18,
+                                    )
                                   : Text(
                                       key,
                                       style: GoogleFonts.outfit(
-                                        fontSize: 22, fontWeight: FontWeight.w700, color: _kNavy),
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w700,
+                                        color: _kNavy,
+                                      ),
                                     ),
                             ),
                           ),
@@ -9218,7 +11880,10 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
               child: Text(
                 'Huỷ bỏ',
                 style: GoogleFonts.outfit(
-                  color: _kNavy.withValues(alpha: 0.5), fontWeight: FontWeight.w700, fontSize: 14),
+                  color: _kNavy.withValues(alpha: 0.5),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
               ),
             ),
           ],
@@ -9249,13 +11914,27 @@ class _ItemNoteInputState extends State<_ItemNoteInput> {
     return TextField(
       focusNode: widget.focusNode,
       controller: widget.controller,
-      style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: _kNavy),
+      style: GoogleFonts.outfit(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: _kNavy,
+      ),
       decoration: InputDecoration(
         isDense: true,
         hintText: 'Ghi chú cho nhà bếp (vd: ít rau, không hành...)',
-        hintStyle: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.35)),
-        prefixIcon: Icon(Icons.edit_note_rounded, size: 18, color: _kNavy.withValues(alpha: 0.4)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        hintStyle: GoogleFonts.outfit(
+          fontSize: 12,
+          color: _kNavy.withValues(alpha: 0.35),
+        ),
+        prefixIcon: Icon(
+          Icons.edit_note_rounded,
+          size: 18,
+          color: _kNavy.withValues(alpha: 0.4),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 10,
+        ),
         border: InputBorder.none,
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -9277,3 +11956,83 @@ String _resolveWaiterName(List<BanSessionItemModel> items, String? fallback) {
   return waiters.join(', ');
 }
 
+class _PulsingTableBorder extends StatefulWidget {
+  final Widget child;
+  final bool isPulsing;
+  final BorderRadius borderRadius;
+
+  const _PulsingTableBorder({
+    required this.child,
+    required this.isPulsing,
+    required this.borderRadius,
+  });
+
+  @override
+  State<_PulsingTableBorder> createState() => _PulsingTableBorderState();
+}
+
+class _PulsingTableBorderState extends State<_PulsingTableBorder>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 850),
+    );
+    _anim = Tween<double>(
+      begin: 0.3,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    if (widget.isPulsing) _ctrl.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_PulsingTableBorder old) {
+    super.didUpdateWidget(old);
+    if (widget.isPulsing && !_ctrl.isAnimating) {
+      _ctrl.repeat(reverse: true);
+    } else if (!widget.isPulsing && _ctrl.isAnimating) {
+      _ctrl.stop();
+      _ctrl.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.isPulsing) return widget.child;
+
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: widget.borderRadius,
+            border: Border.all(
+              color: Colors.amber.withValues(alpha: _anim.value),
+              width: 3.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.amber.withValues(alpha: _anim.value * 0.7),
+                blurRadius: 14 * _anim.value,
+                spreadRadius: 2 * _anim.value,
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: widget.child,
+    );
+  }
+}

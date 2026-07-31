@@ -220,3 +220,32 @@ Hệ thống ghi nhận toàn bộ hoạt động nghiệp vụ của nhân viê
   * Nâng phiên bản build từ `1.0.2 (4)` lên **`1.0.2 (5)`**.
   * Đã Upload thành công bản **Build 5** qua Xcode Organizer và gửi tin nhắn giải trình trực tiếp cho đội ngũ kiểm duyệt Apple.
   * **Trạng thái hiện tại:** 🟡 **Ready for Review / Resubmitted (Đã nộp lại thành công chờ Apple duyệt)**.
+
+---
+
+## ⚡ 14. Module QR Gọi Món (MVP - Chế Độ TABLE & COUNTER)
+
+Ứng dụng đã hoàn thành tích hợp Module **QR Gọi Món** cho phép khách hàng tự gọi món qua điện thoại bằng cách quét mã QR tại bàn hoặc tại quầy thu ngân:
+
+### 1. Luồng Nghiệp Vụ Chính:
+* **2 Chế độ:**
+  * **TABLE (Gọi tại bàn):** Khách quét QR bàn $\rightarrow$ Đơn tạo ở trạng thái `pending_staff` $\rightarrow$ Thẻ bàn trên `BanScreen` phát hiệu ứng **viền nhấp nháy màu vàng pulse** (`_PulsingTableBorder`) và hiển thị badge `⚡ QR (N món)` $\rightarrow$ Nhân viên mở Review Sheet kiểm tra/chỉnh sửa $\rightarrow$ Bấm **XÁC NHẬN & GỬI BẾP** để ghi món vào phiên bàn và tạo vé bếp.
+  * **COUNTER (Gọi tại quầy):** Khách quét QR quầy $\rightarrow$ Đơn tạo sinh mã **Pickup Code** dạng `#Q01`, `#Q02`... $\rightarrow$ POS Thu ngân hiển thị badge **`⚡ QR Quầy (N) #Q01`** trên Header Bar $\rightarrow$ Nhân viên duyệt món vào Bàn Mang đi hệ thống (`kSysPosTakeawayTableId = 00000000-0000-0000-0001-000000000002`).
+* **Không tích hợp ngoài phạm vi:** Không có QR Payment, không có nút gọi phục vụ hay yêu cầu thanh toán.
+
+### 2. Kiến Trúc Bảo Mật & Commit Boundary 2 Giai Đoạn:
+* **Khóa Atomic Claim (`claim_qr_request`):** Đảm bảo tính nguyên tử, ngăn chặn 2 nhân viên cùng mở và duyệt trùng 1 đơn QR.
+* **Tự động tính giá Authoritative:** Hàm SQL RPC `submit_qr_order` tự động đọc giá sản phẩm và topping (`is_topping = true` + `product_topping_links`) trực tiếp từ DB server, không tin tưởng giá client.
+* **Quy tắc Rollback 2 Giai Đoạn:**
+  * **Phase 1 (Pre-Commit Rollback):** Xóa dữ liệu chèn dở dang nếu lỗi tạo ticket/session item và khôi phục đơn về `pending_staff`.
+  * **Phase 2 (Post-Commit Status Sync):** Việc tạo vé bếp và đánh dấu `da_gui` được coi là Kitchen Commit Boundary thành công. Nếu lỗi mạng khi cập nhật status `sent_kitchen`, hệ thống retry 3 lần và KHÔNG rollback để tránh in trùng vé bếp.
+
+### 3. File Mã Nguồn Module:
+* Thư mục module: `lib/modules/qr_order/`
+* Tài liệu kỹ thuật chi tiết: `maqr.md`
+* File SQL Migration: `supabase/migration_qr_ordering.sql`
+
+### 4. Trạng Thái Hiện Tại:
+* 🟢 Mã nguồn Dart đã hoàn thiện 100%, tích hợp sạch **0 errors** trên `flutter analyze`.
+* ⚠️ **Trạng thái Deployment:** **CHƯA apply migration SQL lên Supabase production, CHƯA deploy web/mobile, CHƯA commit/push git.**
+

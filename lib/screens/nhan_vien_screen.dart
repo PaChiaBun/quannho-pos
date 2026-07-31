@@ -156,7 +156,7 @@ class NhanVienScreen extends ConsumerStatefulWidget {
 }
 
 class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tab;
   StaffSyncService? _syncService;
   int _tabIndex = 0;
@@ -257,6 +257,24 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
         s?.role.toLowerCase() == 'quản lý';
   }
 
+  void _syncTabController(bool isManager) {
+    final desiredLength = isManager ? 2 : 1;
+    if (_tab.length == desiredLength) return;
+
+    final previous = _tab;
+    final nextIndex = previous.index.clamp(0, desiredLength - 1);
+    _tab = TabController(
+      length: desiredLength,
+      initialIndex: nextIndex,
+      vsync: this,
+    );
+    _tab.addListener(() {
+      if (mounted) setState(() => _tabIndex = _tab.index);
+    });
+    _tabIndex = nextIndex;
+    previous.dispose();
+  }
+
   @override
   void dispose() {
     _syncService?.stop();
@@ -271,6 +289,7 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
         session?.role == 'owner' || 
         session?.role == 'manager' ||
         session?.role.toLowerCase() == 'quản lý';
+    _syncTabController(isManager);
 
     final mainContent = NestedScrollView(
       headerSliverBuilder: (_, __) => [_buildAppBar(isManager)],

@@ -350,7 +350,8 @@ class PayslipPdfService {
 
   static String _modeLabel(String m) => switch (m) {
     'M1' => 'Theo giờ', 'M2' => 'Cố định tháng',
-    'M3' => 'Cố định + OT', 'M4' => 'Theo ngày', _ => m,
+    'M3' => 'Cố định + OT', 'M4' => 'Theo ngày',
+    'M5' => 'Tự thiết lập', _ => m,
   };
 
   static String _payStatusLabel(String s) => switch (s) {

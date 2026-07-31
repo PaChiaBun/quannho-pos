@@ -14,6 +14,7 @@ import 'package:quannho_pos/modules/tinhluong/repository/staff_salary_config_rep
 import '../../../core/services/store_auth_service.dart';
 import '../../../core/providers/permission_provider.dart';
 import '../repository/tinhluong_repository.dart';
+import '../services/payroll_evaluation_service.dart';
 
 final _fmt = NumberFormat('#,###', 'vi_VN');
 String _fmtM(double v) => '${_fmt.format(v.round())}đ';
@@ -84,6 +85,13 @@ class _StaffSalarySummary {
   final int forgotClockoutCount;
   final List<ShiftRecord> shifts;
 
+  final double overtimeHours;
+  final double regularPay;
+  final double overtimePay;
+  final double deductionLate;
+  final double configuredExtras;
+  final StaffSalaryConfig? config;
+
   const _StaffSalarySummary({
     required this.userId,
     required this.name,
@@ -94,6 +102,12 @@ class _StaffSalarySummary {
     required this.pendingOtCount,
     required this.forgotClockoutCount,
     required this.shifts,
+    required this.overtimeHours,
+    required this.regularPay,
+    required this.overtimePay,
+    required this.deductionLate,
+    required this.configuredExtras,
+    this.config,
   });
 }
 
@@ -129,6 +143,7 @@ class _ReportParam {
   final DateTime weekStart;
   final int navYear;
   final int navMonth;
+  final PayrollPeriodModel? targetPeriod;
 
   const _ReportParam({
     required this.period,
@@ -136,6 +151,7 @@ class _ReportParam {
     required this.weekStart,
     required this.navYear,
     required this.navMonth,
+    this.targetPeriod,
   });
 
   @override
@@ -149,7 +165,8 @@ class _ReportParam {
       other.weekStart.month == weekStart.month &&
       other.weekStart.day == weekStart.day &&
       other.navYear == navYear &&
-      other.navMonth == navMonth;
+      other.navMonth == navMonth &&
+      other.targetPeriod?.id == targetPeriod?.id;
 
   @override
   int get hashCode => Object.hash(
@@ -162,42 +179,93 @@ class _ReportParam {
     weekStart.day,
     navYear,
     navMonth,
+    targetPeriod?.id,
   );
 }
 
 final _realtimeReportProv =
     FutureProvider.family<_RealtimeReportData, _ReportParam>((ref, p) async {
-      final info = await StoreAuthService.getStoreInfo();
+      final info = await StoreAuthService.getStoreInfo().timeout(
+        const Duration(seconds: 8),
+      );
       final sid = info['store_id']?.toString();
       if (sid == null) {
         throw Exception('Lỗi không xác định: Không tìm thấy store_id.');
       }
 
-      final (from, to) = p.period.rangeFor(
-        selectedDay: p.selectedDay,
-        weekStart: p.weekStart,
-        navYear: p.navYear,
-        navMonth: p.navMonth,
-      );
-
       final db = Supabase.instance.client;
-      final fromIso = from.toUtc().toIso8601String();
-      final toIso = to.toUtc().toIso8601String();
+      String fromIso;
+      String toIso;
+      if (p.targetPeriod != null) {
+        final fromParts = p.targetPeriod!.fromDate
+            .split('-')
+            .map(int.parse)
+            .toList();
+        final toParts = p.targetPeriod!.toDate
+            .split('-')
+            .map(int.parse)
+            .toList();
+        fromIso = DateTime(
+          fromParts[0],
+          fromParts[1],
+          fromParts[2],
+          0,
+          0,
+          0,
+        ).toUtc().toIso8601String();
+        toIso = DateTime(
+          toParts[0],
+          toParts[1],
+          toParts[2],
+          23,
+          59,
+          59,
+        ).toUtc().toIso8601String();
+      } else {
+        final (from, to) = p.period.rangeFor(
+          selectedDay: p.selectedDay,
+          weekStart: p.weekStart,
+          navYear: p.navYear,
+          navMonth: p.navMonth,
+        );
+        fromIso = from.toUtc().toIso8601String();
+        toIso = to.toUtc().toIso8601String();
+      }
 
       try {
-        final members = await StaffService.getStaffList(sid);
+        // These three reads are independent; running them together removes
+        // one full network round-trip from the report's critical path.
+        final loaded = await Future.wait<dynamic>([
+          StaffService.getStaffList(sid)
+              .timeout(
+                const Duration(seconds: 8),
+                onTimeout: () => <StaffMember>[],
+              )
+              .catchError((_) => <StaffMember>[]),
+          db
+              .from('staff_shifts')
+              .select('*')
+              .eq('store_id', sid)
+              .gte('clock_in', fromIso)
+              .lte('clock_in', toIso)
+              .not('clock_out', 'is', null)
+              .order('clock_in', ascending: false)
+              .then<List<dynamic>>((rows) => rows as List<dynamic>)
+              .timeout(const Duration(seconds: 8), onTimeout: () => <dynamic>[])
+              .catchError((_) => <dynamic>[]),
+          StaffSalaryConfigRepo.fetchAll()
+              .timeout(
+                const Duration(seconds: 8),
+                onTimeout: () => <StaffSalaryConfig>[],
+              )
+              .catchError((_) => <StaffSalaryConfig>[]),
+        ]);
+
+        final members = loaded[0] as List<StaffMember>;
         final memberMap = {for (var m in members) m.userId: m};
+        final shiftsRows = loaded[1] as List;
 
-        final shiftsRows = await db
-            .from('staff_shifts')
-            .select('*')
-            .eq('store_id', sid)
-            .gte('clock_in', fromIso)
-            .lte('clock_in', toIso)
-            .not('clock_out', 'is', null)
-            .order('clock_in', ascending: false);
-
-        final List<ShiftRecord> allShifts = (shiftsRows as List).map((r) {
+        final List<ShiftRecord> allShifts = shiftsRows.map((r) {
           final m = r as Map<String, dynamic>;
           final uid = m['user_id'] as String? ?? '';
           final userName = memberMap[uid]?.name ?? 'Nhân viên';
@@ -227,7 +295,7 @@ final _realtimeReportProv =
           userShiftMap.putIfAbsent(s.userId, () => []).add(s);
         }
 
-        final configs = await StaffSalaryConfigRepo.fetchAll();
+        final configs = loaded[2] as List<StaffSalaryConfig>;
         final configMap = {for (var c in configs) c.userId: c};
 
         double grandTotalSalary = 0;
@@ -237,54 +305,156 @@ final _realtimeReportProv =
 
         final List<_StaffSalarySummary> summaries = [];
 
-        for (final entry in userShiftMap.entries) {
-          final uid = entry.key;
-          final shifts = entry.value;
-
-          final m = memberMap[uid];
-          final name =
-              m?.name ??
-              (shifts.isNotEmpty ? shifts.first.userName : 'Nhân viên');
-          final role = m?.role ?? 'Nhân viên';
-
-          final cfg = configMap[uid];
-
-          double staffHours = 0;
-          double staffNetPay = 0;
-          int pendingOt = 0;
-          int forgotCount = 0;
-
-          for (final s in shifts) {
-            final calc = TinhLuongRepository.calculateSingleShiftEarnings(
-              shift: s,
-              config: cfg,
+        if (p.targetPeriod != null) {
+          // Live evaluation can be expensive and may be blocked by one
+          // unconfigured employee. The report must still be able to show the
+          // saved payroll snapshot for the selected period.
+          PayrollEvaluationResult evalResult;
+          try {
+            evalResult = await PayrollEvaluationService.evaluatePeriod(
+              storeId: sid,
+              periodId: p.targetPeriod!.id,
+              fromDateStr: p.targetPeriod!.fromDate,
+              toDateStr: p.targetPeriod!.toDate,
+              status: p.targetPeriod!.status,
+            ).timeout(const Duration(seconds: 12));
+          } catch (e) {
+            debugPrint('[PayrollReport] live evaluation fallback: $e');
+            final savedRows = await db
+                .from('payroll_records')
+                .select()
+                .eq('store_id', sid)
+                .eq('period_id', p.targetPeriod!.id)
+                .timeout(
+                  const Duration(seconds: 8),
+                  onTimeout: () => <Map<String, dynamic>>[],
+                );
+            final savedRecords = (savedRows as List)
+                .map(
+                  (r) => PayrollRecordModel.fromMap(r as Map<String, dynamic>),
+                )
+                .toList();
+            final savedTotal = savedRecords.fold<double>(
+              0,
+              (sum, record) => sum + record.netPay,
             );
-            staffHours += calc.totalHours;
-            staffNetPay += calc.netPay;
-            if (!s.isOtApproved && calc.overtimeHours > 0) pendingOt++;
-            if (s.checkIsForgotClockout && !s.isManagerOverridden) {
-              forgotCount++;
-            }
+            evalResult = PayrollEvaluationResult(
+              status: p.targetPeriod!.status,
+              resolvedTotal: savedTotal,
+              storedTotal: savedTotal,
+              liveTotal: savedTotal,
+              hasDelta: false,
+              deltaAmount: 0,
+              records: savedRecords,
+            );
           }
+          for (final r in evalResult.records) {
+            final uid = r.userId;
+            final shifts = userShiftMap[uid] ?? [];
+            final cfg = configMap[uid];
+            int pendingOt = 0;
+            int forgotCount = 0;
+            for (final s in shifts) {
+              final calc = TinhLuongRepository.calculateSingleShiftEarnings(
+                shift: s,
+                config: cfg,
+              );
+              if (!s.isOtApproved && calc.overtimeHours > 0) pendingOt++;
+              if (s.checkIsForgotClockout && !s.isManagerOverridden) {
+                forgotCount++;
+              }
+            }
+            grandPendingOt += pendingOt;
+            grandForgotClockout += forgotCount;
+            grandTotalHours += r.totalHours;
+            summaries.add(
+              _StaffSalarySummary(
+                userId: uid,
+                name: r.staffName,
+                role: r.role ?? 'Nhân viên',
+                totalHours: r.totalHours,
+                overtimeHours: r.overtimeHours,
+                regularPay: r.regularPay,
+                overtimePay: r.overtimePay,
+                deductionLate: r.deductionLate,
+                totalNetPay: r.netPay,
+                shiftCount: shifts.length,
+                pendingOtCount: pendingOt,
+                forgotClockoutCount: forgotCount,
+                configuredExtras: r.bonusManual + r.allowanceTotal,
+                shifts: shifts,
+                config: cfg,
+              ),
+            );
+          }
+          grandTotalSalary = evalResult.resolvedTotal;
+        } else {
+          for (final entry in userShiftMap.entries) {
+            final uid = entry.key;
+            final shifts = entry.value;
 
-          grandTotalSalary += staffNetPay;
-          grandTotalHours += staffHours;
-          grandPendingOt += pendingOt;
-          grandForgotClockout += forgotCount;
+            final m = memberMap[uid];
+            final name =
+                m?.name ??
+                (shifts.isNotEmpty ? shifts.first.userName : 'Nhân viên');
+            final role = m?.role ?? 'Nhân viên';
 
-          summaries.add(
-            _StaffSalarySummary(
-              userId: uid,
-              name: name,
-              role: role,
-              totalHours: staffHours,
-              totalNetPay: staffNetPay,
-              shiftCount: shifts.length,
-              pendingOtCount: pendingOt,
-              forgotClockoutCount: forgotCount,
-              shifts: shifts,
-            ),
-          );
+            final cfg = configMap[uid];
+
+            double staffHours = 0;
+            double staffNetPay = 0;
+            int pendingOt = 0;
+            int forgotCount = 0;
+
+            double overtimeHours = 0;
+            double regularPay = 0;
+            double overtimePay = 0;
+            double deductionLate = 0;
+
+            for (final s in shifts) {
+              final calc = TinhLuongRepository.calculateSingleShiftEarnings(
+                shift: s,
+                config: cfg,
+              );
+              staffHours += calc.totalHours;
+              staffNetPay += calc.netPay;
+
+              overtimeHours += calc.overtimeHours;
+              regularPay += calc.regularPay;
+              overtimePay += calc.overtimePay;
+              deductionLate += calc.deductionLate;
+              if (!s.isOtApproved && calc.overtimeHours > 0) pendingOt++;
+              if (s.checkIsForgotClockout && !s.isManagerOverridden) {
+                forgotCount++;
+              }
+            }
+
+            grandTotalSalary += staffNetPay;
+            grandTotalHours += staffHours;
+            grandPendingOt += pendingOt;
+            grandForgotClockout += forgotCount;
+
+            summaries.add(
+              _StaffSalarySummary(
+                userId: uid,
+                name: name,
+                role: role,
+                totalHours: staffHours,
+                totalNetPay: staffNetPay,
+                shiftCount: shifts.length,
+                pendingOtCount: pendingOt,
+                forgotClockoutCount: forgotCount,
+                shifts: shifts,
+                overtimeHours: overtimeHours,
+                regularPay: regularPay,
+                overtimePay: overtimePay,
+                deductionLate: deductionLate,
+                configuredExtras:
+                    0.0, // Trong realtime loop cũ, configuredExtras chỉ tính khi chốt kỳ, tạm để 0
+                config: cfg,
+              ),
+            );
+          }
         }
 
         summaries.sort((a, b) => b.totalNetPay.compareTo(a.totalNetPay));
@@ -297,8 +467,8 @@ final _realtimeReportProv =
           pendingOtCount: grandPendingOt,
           forgotClockoutCount: grandForgotClockout,
           staffSummaries: summaries,
-          fromDate: from,
-          toDate: to,
+          fromDate: DateTime.parse(fromIso),
+          toDate: DateTime.parse(toIso),
         );
       } catch (e) {
         debugPrint('[PayrollReport] fetch error: $e');
@@ -309,7 +479,8 @@ final _realtimeReportProv =
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
 class PayrollReportScreen extends ConsumerStatefulWidget {
-  const PayrollReportScreen({super.key});
+  final PayrollPeriodModel? targetPeriod;
+  const PayrollReportScreen({super.key, this.targetPeriod});
 
   @override
   ConsumerState<PayrollReportScreen> createState() =>
@@ -343,6 +514,7 @@ class _PayrollReportScreenState extends ConsumerState<PayrollReportScreen>
     weekStart: _weekStart,
     navYear: _navYear,
     navMonth: _navMonth,
+    targetPeriod: widget.targetPeriod,
   );
 
   @override

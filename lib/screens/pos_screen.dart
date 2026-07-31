@@ -19,6 +19,9 @@ import '../core/repositories/core_product_repository.dart';
 import '../core/repositories/ban_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/utils/string_utils.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../modules/qr_order/providers/qr_order_providers.dart';
+import '../modules/qr_order/widgets/qr_order_review_sheet.dart';
 
 // Màu local
 const _kNavy      = Color(0xFF1E1C5E);
@@ -292,6 +295,63 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     ),
                   ],
                 ),
+              ),
+
+              // ── Pending Counter QR Orders Badge ──
+              Consumer(
+                builder: (context, ref, _) {
+                  final pendingCounterReqs = ref.watch(pendingCounterQrRequestsProvider);
+                  if (pendingCounterReqs.isEmpty) return const SizedBox.shrink();
+                  final firstReq = pendingCounterReqs.first;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => QrOrderReviewSheet(
+                            request: firstReq,
+                            onApproved: () {},
+                            onRejected: () {},
+                          ),
+                        );
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.orange.withValues(alpha: 0.5),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.bolt_rounded, size: 16, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              'QR Quầy (${pendingCounterReqs.length}) ${firstReq.pickupCode ?? ""}',
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
 
               // ── Quick add product (always shown, no Kho module needed) ──

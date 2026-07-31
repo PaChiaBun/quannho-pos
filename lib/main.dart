@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -33,6 +34,8 @@ import 'screens/auth_screen.dart';
 import 'screens/store_picker_screen.dart';
 import 'screens/chamcong_screen.dart';
 import 'modules/kho_chuyen_nghiep/screens/kho_chuyen_nghiep_screen.dart';
+import 'modules/qr_order/screens/qr_order_screen.dart';
+import 'modules/qr_order/screens/customer_qr_order_screen.dart';
 import 'modules/tinhluong/screens/tinhluong_screen.dart';
 import 'modules/tinhluong/screens/my_payslip_screen.dart';
 import 'modules/ops/screens/ops_screen.dart';
@@ -81,7 +84,9 @@ class MyHttpOverrides extends HttpOverrides {
 void main() async {
   HttpOverrides.global = MyHttpOverrides();
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  if (!kIsWeb) {
+    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  }
 
   // Pre-cache fonts to avoid browser user-gesture print blocks
   unawaited(PdfGoogleFonts.notoSansRegular().catchError((_) => null as dynamic));
@@ -134,6 +139,20 @@ class QuanNhoPOSApp extends StatelessWidget {
         '/auth':          (context) => const AuthScreen(),
         '/store_picker':  (context) => const StorePickerScreen(),
         '/home':          (context) => const MainShell(),
+        '/qr_order':      (context) => const QrOrderScreen(),
+      },
+      onGenerateRoute: (settings) {
+        final uri = Uri.parse(settings.name ?? '');
+        if (uri.path == '/qr_order' || uri.path.endsWith('/qr_order')) {
+          final code = uri.queryParameters['code'];
+          if (code != null && code.isNotEmpty) {
+            return MaterialPageRoute(
+              builder: (_) => CustomerQrOrderScreen(channelCode: code),
+            );
+          }
+          return MaterialPageRoute(builder: (_) => const QrOrderScreen());
+        }
+        return null;
       },
     );
   }
@@ -1500,4 +1519,3 @@ class _TinhLuongRouteScreen extends ConsumerWidget {
         : const MyPayslipScreen();
   }
 }
-

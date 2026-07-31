@@ -1937,4 +1937,30 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
 - `flutter analyze` toàn dự án: **0 error**; còn warning/info kỹ thuật cũ cần dọn dần, không chặn biên dịch.
 - `git diff --check`: không có lỗi whitespace.
 
+---
+
+## 2026-07-30 — Hoàn thiện trung tâm chính sách Lương, báo cáo và triển khai production
+
+### Trải nghiệm sản phẩm
+- ✅ Chuyển **Cấu hình lương** thành trung tâm chính sách hai lớp: thiết lập chung **Theo vị trí** và ghi đè **Theo nhân viên**.
+- ✅ Hoàn thiện M1–M4 và bổ sung **M5 Tùy chỉnh** để kết hợp lương nền, đơn giá giờ/ngày và OT.
+- ✅ Tách biểu mẫu thành các nhóm dễ hiểu: cách tính lương, thưởng & phụ cấp, OT và khấu trừ; bổ sung hướng dẫn ngay trong luồng cấu hình.
+- ✅ Thiết kế lại **Báo cáo lương** theo dạng bảng vận hành: tìm kiếm, lọc, sắp xếp, xem chi tiết nhân viên và khu vực “Cần rà soát”.
+- ✅ Nâng cấp chi tiết kỳ lương với thẻ nhân viên, thu nhập, khấu trừ, thực lĩnh và bộ lọc theo trạng thái/vị trí.
+- ✅ Loại bỏ điểm vào cấu hình trùng lặp; thẻ vị trí hoặc nhân viên là điểm thao tác chính.
+
+### An toàn nghiệp vụ và dữ liệu
+- ✅ Quy trình gửi duyệt hoạt động theo nguyên tắc fail-closed: không cho gửi nếu chưa tải được trạng thái sẵn sàng hoặc còn lỗi bắt buộc.
+- ✅ Giữ nguyên `store_id`, khóa phân quyền và các tên nội bộ cũ để không phá dữ liệu đang vận hành.
+- ✅ Xác nhận migration `staff_salary_configs` đã có trên production, RLS và policy theo cửa hàng hoạt động.
+- ✅ Thu hồi quyền `DELETE`, `TRUNCATE`, `REFERENCES`, `TRIGGER` khỏi `anon` và `authenticated`; chỉ giữ `SELECT`, `INSERT`, `UPDATE`.
+- ✅ Không có file POS, bill printer hoặc máy in nào nằm trong phạm vi thay đổi của đợt Lương.
+
+### QC và triển khai
+- ✅ Test module Lương: **25/25 passed**.
+- ✅ Analyze riêng phạm vi Lương: **0 issue**; analyze toàn dự án không có compile error, còn các warning/info kỹ thuật cũ.
+- ✅ `git diff --check`: sạch.
+- ✅ Build Flutter Web release với base path `/pos/`, sao lưu bản production cũ tại `/var/backups/quannho-pos/pos-20260730_salary_phase3.tar.gz`.
+- ✅ Đồng bộ lên `/var/www/quannho/pos/`, kiểm tra Nginx hợp lệ và tải thành công tại `https://quannho.lpm.vn/pos/`.
+- ✅ Đối chiếu SHA-256 `main.dart.js` giữa máy build và VPS trùng khớp.
 
