@@ -211,6 +211,30 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
     return null;
   }
 
+  String _formatQrUrl(String baseUrl, String channelCode) {
+    var trimmed = baseUrl.trim();
+    if (trimmed.contains('{code}')) {
+      return trimmed.replaceAll('{code}', channelCode);
+    }
+    while (trimmed.endsWith('/')) {
+      trimmed = trimmed.substring(0, trimmed.length - 1);
+    }
+    if (trimmed.contains('/#')) {
+      trimmed = trimmed.substring(0, trimmed.indexOf('/#'));
+    }
+    final subpathsToStrip = ['/menu', '/goi-mon', '/pos', '/qr_order'];
+    for (final sub in subpathsToStrip) {
+      if (trimmed.endsWith(sub)) {
+        trimmed = trimmed.substring(0, trimmed.length - sub.length);
+        break;
+      }
+    }
+    while (trimmed.endsWith('/')) {
+      trimmed = trimmed.substring(0, trimmed.length - 1);
+    }
+    return '$trimmed/goi-mon/?code=$channelCode';
+  }
+
   String? _buildTableQrUrl(BanTableModel table) {
     final ch = _channelsByTableId[table.id];
     if (ch == null || ch.channelCode.isEmpty) return null;
@@ -218,17 +242,18 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
     final baseUrl = _getActiveBaseUrl();
     if (baseUrl == null) return null;
 
-    return '$baseUrl/#/qr_order?code=${ch.channelCode}';
+    return _formatQrUrl(baseUrl, ch.channelCode);
   }
 
   String? _buildCounterQrUrl() {
-    if (_counterChannel == null || _counterChannel!.channelCode.isEmpty)
+    if (_counterChannel == null || _counterChannel!.channelCode.isEmpty) {
       return null;
+    }
 
     final baseUrl = _getActiveBaseUrl();
     if (baseUrl == null) return null;
 
-    return '$baseUrl/#/qr_order?code=${_counterChannel!.channelCode}';
+    return _formatQrUrl(baseUrl, _counterChannel!.channelCode);
   }
 
   Future<void> _testOpenDomain(String url) async {

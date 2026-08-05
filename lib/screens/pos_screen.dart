@@ -20,50 +20,60 @@ import '../core/repositories/ban_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/utils/string_utils.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../modules/qr_order/models/qr_order_model.dart';
 import '../modules/qr_order/providers/qr_order_providers.dart';
 import '../modules/qr_order/widgets/qr_order_review_sheet.dart';
+import '../modules/qr_order/widgets/qr_counter_queue_sheet.dart';
 
 // Màu local
-const _kNavy      = Color(0xFF1E1C5E);
+const _kNavy = Color(0xFF1E1C5E);
 const _kNavyLight = Color(0xFF2D2B8A);
-const _kOrange    = Color(0xFFE85D20);
-const _kInk       = Color(0xFF1A1207);
-const _kMuted     = Color(0xFF9E9085);
-const _kBg        = Color(0xFFFAF7F2);
-const _kRed       = Color(0xFFC62828);
-const _kBorder    = Color(0xFFE0D8CC);
+const _kOrange = Color(0xFFE85D20);
+const _kInk = Color(0xFF1A1207);
+
+const _kMuted = Color(0xFF9E9085);
+const _kBg = Color(0xFFFAF7F2);
+const _kRed = Color(0xFFC62828);
+const _kBorder = Color(0xFFE0D8CC);
 
 /// Provider kiểm tra module Bàn có đang bật không
 /// Dùng allModulesProvider — tự refresh khi module config thay đổi
 final tableModuleActiveProvider = Provider<bool>((ref) {
-  return ref.watch(allModulesProvider).maybeWhen(
-    data: (modules) => modules.any((m) => m.id == 'table' && m.isActive),
-    orElse: () => false,
-  );
+  return ref
+      .watch(allModulesProvider)
+      .maybeWhen(
+        data: (modules) => modules.any((m) => m.id == 'table' && m.isActive),
+        orElse: () => false,
+      );
 });
 
 /// Provider kiểm tra module Bếp có đang bật không (dùng trong POS)
 /// Dùng allModulesProvider — tự refresh khi module config thay đổi
 final posKitchenModuleActiveProvider = Provider<bool>((ref) {
-  return ref.watch(allModulesProvider).maybeWhen(
-    data: (modules) => modules.any((m) => m.id == 'kitchen' && m.isActive),
-    orElse: () => false,
-  );
+  return ref
+      .watch(allModulesProvider)
+      .maybeWhen(
+        data: (modules) => modules.any((m) => m.id == 'kitchen' && m.isActive),
+        orElse: () => false,
+      );
 });
 
 /// Provider kiểm tra module In Hoá Đơn có đang bật không
 final billPrinterModuleActiveProvider = Provider<bool>((ref) {
-  return ref.watch(allModulesProvider).maybeWhen(
-    data: (modules) => modules.any((m) => m.id == 'bill_printer' && m.isActive),
-    orElse: () => false,
-  );
+  return ref
+      .watch(allModulesProvider)
+      .maybeWhen(
+        data: (modules) =>
+            modules.any((m) => m.id == 'bill_printer' && m.isActive),
+        orElse: () => false,
+      );
 });
 
 /// FIX: Provider cố định cho customer picker — tránh tạo StreamProvider inline trong build()
 final _loyaltyCustomersForPickerProvider =
     StreamProvider.autoDispose<List<LoyaltyCustomerModel>>((ref) {
-  return ref.watch(loyaltyRepositoryProvider).watchCustomers();
-});
+      return ref.watch(loyaltyRepositoryProvider).watchCustomers();
+    });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POS SCREEN — Màn hình bán hàng chính
@@ -87,10 +97,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   Offset _getCartOffset() {
     try {
-      final RenderBox? box = _cartKey.currentContext?.findRenderObject() as RenderBox?;
+      final RenderBox? box =
+          _cartKey.currentContext?.findRenderObject() as RenderBox?;
       if (box != null) {
         final position = box.localToGlobal(Offset.zero);
-        return Offset(position.dx + box.size.width / 2, position.dy + box.size.height / 2);
+        return Offset(
+          position.dx + box.size.width / 2,
+          position.dy + box.size.height / 2,
+        );
       }
     } catch (_) {}
     return Offset(MediaQuery.of(context).size.width - 50, 40);
@@ -120,14 +134,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 children: [
                   _buildTopBar(),
                   _buildSearchBar(),
-                  Expanded(
-                    child: _buildProductArea(productsAsync),
-                  ),
+                  Expanded(child: _buildProductArea(productsAsync)),
                 ],
               ),
             ),
             // Divider
-            const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE0D8CC)),
+            const VerticalDivider(
+              width: 1,
+              thickness: 1,
+              color: Color(0xFFE0D8CC),
+            ),
             // Bên phải: Giỏ hàng cố định (~38%)
             SizedBox(
               width: Responsive.isDesktop(context) ? 380 : 320,
@@ -147,25 +163,28 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           _buildSearchBar(),
           Expanded(
             child: productsAsync.when(
-              loading: () => const Center(
-                  child: CircularProgressIndicator(color: _kNavy)),
+              loading: () =>
+                  const Center(child: CircularProgressIndicator(color: _kNavy)),
               error: (e, _) => Center(child: Text('Lỗi: $e')),
               data: (products) {
                 final prodList = (products as List).cast<ProductModel>();
                 final filtered = prodList.where((p) {
-                  final matchSearch = _searchQuery.isEmpty ||
+                  final matchSearch =
+                      _searchQuery.isEmpty ||
                       p.name.containsSearch(_searchQuery) ||
                       (p.sku?.containsSearch(_searchQuery) ?? false);
-                  final matchCat = _selectedCategory == 'Tất cả' ||
+                  final matchCat =
+                      _selectedCategory == 'Tất cả' ||
                       (p.category ?? '') == _selectedCategory;
                   return matchSearch && matchCat;
                 }).toList();
 
-                final categories = ['Tất cả',
+                final categories = [
+                  'Tất cả',
                   ...prodList
                       .map((p) => p.category ?? '')
                       .where((c) => c.isNotEmpty)
-                      .toSet()
+                      .toSet(),
                 ];
 
                 return Stack(
@@ -178,13 +197,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               ? _buildEmptyProducts()
                               : _buildProductGrid(filtered),
                         ),
-                        if (!cart.isEmpty)
-                          const SizedBox(height: 90),
+                        if (!cart.isEmpty) const SizedBox(height: 90),
                       ],
                     ),
                     if (!cart.isEmpty)
                       Positioned(
-                        left: 0, right: 0, bottom: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
                         child: _buildCartBar(cart),
                       ),
                   ],
@@ -200,25 +220,28 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   // Helper dùng cho desktop layout
   Widget _buildProductArea(AsyncValue productsAsync) {
     return productsAsync.when(
-      loading: () => const Center(
-          child: CircularProgressIndicator(color: _kNavy)),
+      loading: () =>
+          const Center(child: CircularProgressIndicator(color: _kNavy)),
       error: (e, _) => Center(child: Text('Lỗi: $e')),
       data: (products) {
         final prodList = (products as List).cast<ProductModel>();
         final filtered = prodList.where((p) {
-          final matchSearch = _searchQuery.isEmpty ||
+          final matchSearch =
+              _searchQuery.isEmpty ||
               p.name.containsSearch(_searchQuery) ||
               (p.sku?.containsSearch(_searchQuery) ?? false);
-          final matchCat = _selectedCategory == 'Tất cả' ||
+          final matchCat =
+              _selectedCategory == 'Tất cả' ||
               (p.category ?? '') == _selectedCategory;
           return matchSearch && matchCat;
         }).toList();
 
-        final categories = ['Tất cả',
+        final categories = [
+          'Tất cả',
           ...prodList
               .map((p) => p.category ?? '')
               .where((c) => c.isNotEmpty)
-              .toSet()
+              .toSet(),
         ];
 
         return Column(
@@ -235,16 +258,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
-
-
   // ─────────────────────────────────────────────────────────────────────────
   // TOP BAR
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildTopBar() {
-    final cart  = ref.watch(cartProvider);
-    final now   = DateTime.now();
-    final timeStr  = '${now.hour.toString().padLeft(2,'0')}:${now.minute.toString().padLeft(2,'0')}';
-    final dateStr  = '${now.day}/${now.month}/${now.year}';
+    final cart = ref.watch(cartProvider);
+    final now = DateTime.now();
+    final timeStr =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    final dateStr = '${now.day}/${now.month}/${now.year}';
 
     return Container(
       decoration: const BoxDecoration(
@@ -297,37 +319,113 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 ),
               ),
 
-              // ── Pending Counter QR Orders Badge ──
+              // ── Active Counter QR Orders Badge & Comprehensive Pipeline Error Warning ──
               Consumer(
                 builder: (context, ref, _) {
-                  final pendingCounterReqs = ref.watch(pendingCounterQrRequestsProvider);
-                  if (pendingCounterReqs.isEmpty) return const SizedBox.shrink();
-                  final firstReq = pendingCounterReqs.first;
+                  final activeCounterReqs = ref.watch(
+                    activeCounterQrRequestsProvider,
+                  );
+                  final pipelineError = ref.watch(qrPipelineErrorProvider);
+
+                  if (pipelineError != null) {
+                    final errCode = pipelineError.errorCode;
+                    final errMsg =
+                        pipelineError.errorMessage ?? 'Lỗi không xác định';
+                    String label = 'Lỗi QR';
+                    Color bg = Colors.red.shade800;
+                    IconData icon = Icons.warning_amber_rounded;
+
+                    if (errCode == 'NO_POS_TOKEN') {
+                      label = 'Chưa đăng nhập POS Token';
+                      bg = Colors.red.shade900;
+                      icon = Icons.key_off_rounded;
+                    } else if (errCode == 'NETWORK_ERROR') {
+                      label = 'Lỗi Kết Nối Mạng QR';
+                      bg = Colors.orange.shade900;
+                      icon = Icons.wifi_off_rounded;
+                    } else if (errCode == 'RPC_ERROR') {
+                      label = 'Lỗi Backend RPC QR';
+                      bg = Colors.purple.shade900;
+                      icon = Icons.dns_rounded;
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Tooltip(
+                        message: '$label: $errMsg',
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: bg,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(icon, size: 14, color: Colors.white),
+                              const SizedBox(width: 4),
+                              Text(
+                                label,
+                                style: GoogleFonts.outfit(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (activeCounterReqs.isEmpty) return const SizedBox.shrink();
+
+                  final hasPending = activeCounterReqs.any(
+                    (r) => r.status == 'pending_staff',
+                  );
+                  final badgeColor = hasPending ? Colors.orange : Colors.blue;
 
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: GestureDetector(
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => QrOrderReviewSheet(
-                            request: firstReq,
-                            onApproved: () {},
-                            onRejected: () {},
-                          ),
-                        );
+                      onTap: () async {
+                        final selectedReq =
+                            await showModalBottomSheet<QrRequestModel>(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => const QrCounterQueueSheet(),
+                            );
+
+                        if (selectedReq != null && context.mounted) {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => QrOrderReviewSheet(
+                              request: selectedReq,
+                              onApproved: () {},
+                              onRejected: () {},
+                            ),
+                          );
+                        }
                       },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
-                          color: Colors.orange,
+                          color: badgeColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.orange.withValues(alpha: 0.5),
+                              color: badgeColor.withValues(alpha: 0.5),
                               blurRadius: 10,
                               offset: const Offset(0, 2),
                             ),
@@ -336,10 +434,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.bolt_rounded, size: 16, color: Colors.white),
+                            const Icon(
+                              Icons.bolt_rounded,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                             const SizedBox(width: 4),
                             Text(
-                              'QR Quầy (${pendingCounterReqs.length}) ${firstReq.pickupCode ?? ""}',
+                              'QR Quầy (${activeCounterReqs.length})',
                               style: GoogleFonts.outfit(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -363,51 +465,67 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.20), width: 1),
+                      color: Colors.white.withValues(alpha: 0.20),
+                      width: 1,
+                    ),
                   ),
-                  child: const Icon(Icons.add_rounded,
-                      color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
 
               // Cart badge
               GestureDetector(
-                key: _cartKey,
-                onTap: cart.isEmpty ? null : _openCart,
-                child: AnimatedContainer(
-                  duration: 200.ms,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: cart.isEmpty
-                        ? Colors.white.withValues(alpha: 0.10)
-                        : _kOrange,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.shopping_cart_rounded,
-                          color: Colors.white, size: 18),
-                      if (cart.itemCount > 0) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          '${cart.itemCount} mon',
-                          style: const TextStyle(
+                    key: _cartKey,
+                    onTap: cart.isEmpty ? null : _openCart,
+                    child: AnimatedContainer(
+                      duration: 200.ms,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cart.isEmpty
+                            ? Colors.white.withValues(alpha: 0.10)
+                            : _kOrange,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.shopping_cart_rounded,
                             color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
+                            size: 18,
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ).animate(
-                target: _cartPopTrigger.toDouble(),
-              ).scaleXY(begin: 1.0, end: 1.08, duration: 150.ms, curve: Curves.easeOut)
-               .then()
-               .scaleXY(begin: 1.08, end: 1.0, duration: 100.ms),
+                          if (cart.itemCount > 0) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              '${cart.itemCount} mon',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  )
+                  .animate(target: _cartPopTrigger.toDouble())
+                  .scaleXY(
+                    begin: 1.0,
+                    end: 1.08,
+                    duration: 150.ms,
+                    curve: Curves.easeOut,
+                  )
+                  .then()
+                  .scaleXY(begin: 1.08, end: 1.0, duration: 100.ms),
 
               const SizedBox(width: 8),
 
@@ -421,8 +539,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       color: Colors.white.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.delete_sweep_rounded,
-                        color: Color(0x99FFFFFF), size: 20),
+                    child: const Icon(
+                      Icons.delete_sweep_rounded,
+                      color: Color(0x99FFFFFF),
+                      size: 20,
+                    ),
                   ),
                 ),
             ],
@@ -469,10 +590,18 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               decoration: InputDecoration(
                 hintText: 'Tim mon, ma SKU...',
                 hintStyle: TextStyle(color: _kMuted, fontSize: 14),
-                prefixIcon: Icon(Icons.search_rounded, color: _kMuted, size: 20),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: _kMuted,
+                  size: 20,
+                ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: Icon(Icons.close_rounded, color: _kMuted, size: 18),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: _kMuted,
+                          size: 18,
+                        ),
                         onPressed: () {
                           _searchCtrl.clear();
                           setState(() => _searchQuery = '');
@@ -487,31 +616,49 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           const SizedBox(height: 10),
 
           // ── Action row: Đơn gần đây + Bếp ────────────────────────────
-          Row(children: [
-            // Nút Đơn gần đây
-            GestureDetector(
-              onTap: _openRecentOrders,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+          Row(
+            children: [
+              // Nút Đơn gần đây
+              GestureDetector(
+                onTap: _openRecentOrders,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.22),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.history_rounded,
+                        color: Colors.white70,
+                        size: 16,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Đơn gần đây',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.history_rounded, color: Colors.white70, size: 16),
-                  SizedBox(width: 6),
-                  Text('Đơn gần đây',
-                    style: TextStyle(
-                      color: Colors.white70, fontSize: 13,
-                      fontWeight: FontWeight.w700)),
-                ]),
               ),
-            ),
-            const Spacer(),
-            // Kitchen send status hint (if module active)
-            _PosKitchenSendHint(),
-          ]),
+              const Spacer(),
+              // Kitchen send status hint (if module active)
+              _PosKitchenSendHint(),
+            ],
+          ),
         ],
       ),
     );
@@ -527,26 +674,35 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
-
-
   void _openCustomerPicker() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _CustomerPickerSheet(
-        onSelect: (id, name, pts, {double walletReal = 0,
-            double walletBonus = 0, int bonusCapPct = 15,
-            DateTime? bonusExpiresAt}) {
-          ref.read(cartProvider.notifier).setCustomer(
-            id, name, pts,
-            walletReal: walletReal,
-            walletBonus: walletBonus,
-            bonusCapPct: bonusCapPct,
-            bonusExpiresAt: bonusExpiresAt,
-          );
-          Navigator.pop(ctx);
-        },
+        onSelect:
+            (
+              id,
+              name,
+              pts, {
+              double walletReal = 0,
+              double walletBonus = 0,
+              int bonusCapPct = 15,
+              DateTime? bonusExpiresAt,
+            }) {
+              ref
+                  .read(cartProvider.notifier)
+                  .setCustomer(
+                    id,
+                    name,
+                    pts,
+                    walletReal: walletReal,
+                    walletBonus: walletBonus,
+                    bonusCapPct: bonusCapPct,
+                    bonusExpiresAt: bonusExpiresAt,
+                  );
+              Navigator.pop(ctx);
+            },
       ),
     );
   }
@@ -564,6 +720,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       ),
     );
   }
+
   // ─────────────────────────────────────────────────────────────────────────
   // CATEGORY CHIPS
   // ─────────────────────────────────────────────────────────────────────────
@@ -603,8 +760,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     : null,
                 color: selected ? null : const Color(0xFFF0EEF8),
                 borderRadius: BorderRadius.circular(20),
-                border: selected ? null : Border.all(
-                    color: _kNavy.withValues(alpha: 0.12), width: 1),
+                border: selected
+                    ? null
+                    : Border.all(
+                        color: _kNavy.withValues(alpha: 0.12),
+                        width: 1,
+                      ),
               ),
               child: Center(
                 child: Text(
@@ -627,111 +788,116 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   // PRODUCT GRID
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildProductGrid(List<ProductModel> products) {
-    return LayoutBuilder(builder: (context, constraints) {
-      // Dùng width thực của khu vực (không phải width màn hình tổng)
-      final w = constraints.maxWidth;
-      final cols = w >= 900 ? 4
-                 : w >= 600 ? 3
-                 : 2;
-      final aspectRatio = cols >= 4 ? 1.1
-                        : cols >= 3 ? 1.3
-                        : 0.88;
-      final delegate = SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: cols,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: aspectRatio,
-      );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Dùng width thực của khu vực (không phải width màn hình tổng)
+        final w = constraints.maxWidth;
+        final cols = w >= 900
+            ? 4
+            : w >= 600
+            ? 3
+            : 2;
+        final aspectRatio = cols >= 4
+            ? 1.1
+            : cols >= 3
+            ? 1.3
+            : 0.88;
+        final delegate = SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: cols,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: aspectRatio,
+        );
 
-    // Khi dang filter 1 category cu the → grid don gian
-    if (_selectedCategory != 'Tat ca' && _selectedCategory != 'Tất cả') {
-      return GridView.builder(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-        gridDelegate: delegate,
-        itemCount: products.length,
-        itemBuilder: (_, i) => _ProductCard(
-          product: products[i],
-          onTapWithDetails: (details) => _addToCart(products[i], details),
-        ).animate(delay: (i * 40).ms).fadeIn(duration: 250.ms),
-      );
-    }
+        // Khi dang filter 1 category cu the → grid don gian
+        if (_selectedCategory != 'Tat ca' && _selectedCategory != 'Tất cả') {
+          return GridView.builder(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            gridDelegate: delegate,
+            itemCount: products.length,
+            itemBuilder: (_, i) => _ProductCard(
+              product: products[i],
+              onTapWithDetails: (details) => _addToCart(products[i], details),
+            ).animate(delay: (i * 40).ms).fadeIn(duration: 250.ms),
+          );
+        }
 
-    // Khi "Tat ca": group theo category voi section headers
-    final Map<String, List<ProductModel>> grouped = {};
-    final List<String> order = [];
-    for (final p in products) {
-      final cat = p.category?.isNotEmpty == true ? p.category! : 'Khac';
-      if (!grouped.containsKey(cat)) {
-        grouped[cat] = [];
-        order.add(cat);
-      }
-      grouped[cat]!.add(p);
-    }
+        // Khi "Tat ca": group theo category voi section headers
+        final Map<String, List<ProductModel>> grouped = {};
+        final List<String> order = [];
+        for (final p in products) {
+          final cat = p.category?.isNotEmpty == true ? p.category! : 'Khac';
+          if (!grouped.containsKey(cat)) {
+            grouped[cat] = [];
+            order.add(cat);
+          }
+          grouped[cat]!.add(p);
+        }
 
-    int globalIdx = 0;
-    return CustomScrollView(
-      slivers: [
-        for (final cat in order) ...[
-          // Section header
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 20, 12, 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 5, height: 22,
-                    decoration: BoxDecoration(
-                      color: _kOrange,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
+        int globalIdx = 0;
+        return CustomScrollView(
+          slivers: [
+            for (final cat in order) ...[
+              // Section header
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 20, 12, 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 5,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: _kOrange,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        cat,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: _kInk,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${grouped[cat]!.length} mon',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _kMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    cat,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: _kInk,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${grouped[cat]!.length} mon',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _kMuted,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-          // Grid for this category
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            sliver: SliverGrid(
-              delegate: SliverChildBuilderDelegate(
-                (_, i) {
-                  final idx = globalIdx;
-                  globalIdx++;
-                  return _ProductCard(
-                    product: grouped[cat]![i],
-                    onTapWithDetails: (details) => _addToCart(grouped[cat]![i], details),
-                  ).animate(delay: (idx * 30).ms).fadeIn(duration: 220.ms);
-                },
-                childCount: grouped[cat]!.length,
+              // Grid for this category
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                sliver: SliverGrid(
+                  delegate: SliverChildBuilderDelegate((_, i) {
+                    final idx = globalIdx;
+                    globalIdx++;
+                    return _ProductCard(
+                      product: grouped[cat]![i],
+                      onTapWithDetails: (details) =>
+                          _addToCart(grouped[cat]![i], details),
+                    ).animate(delay: (idx * 30).ms).fadeIn(duration: 220.ms);
+                  }, childCount: grouped[cat]!.length),
+                  gridDelegate: delegate,
+                ),
               ),
-              gridDelegate: delegate,
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 4)),
-        ],
-        const SliverToBoxAdapter(child: SizedBox(height: 8)),
-      ],
-    );
-    }); // end LayoutBuilder
+              const SliverToBoxAdapter(child: SizedBox(height: 4)),
+            ],
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          ],
+        );
+      },
+    ); // end LayoutBuilder
   }
 
   Widget _buildEmptyProducts() {
@@ -743,7 +909,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 80, height: 80,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 color: _kNavy.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(24),
@@ -752,7 +919,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 hasSearch
                     ? Icons.search_off_rounded
                     : Icons.inventory_2_rounded,
-                size: 40, color: _kMuted,
+                size: 40,
+                color: _kMuted,
               ),
             ),
             const SizedBox(height: 16),
@@ -762,8 +930,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   : 'Chưa có sản phẩm nào',
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 16, color: _kMuted,
-                fontWeight: FontWeight.w600),
+                fontSize: 16,
+                color: _kMuted,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -780,17 +950,21 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 backgroundColor: _kNavy,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24, vertical: 12),
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
               icon: const Icon(Icons.add_rounded, size: 20),
               label: Text(
-                hasSearch
-                    ? 'Thêm "$_searchQuery"'
-                    : 'Thêm sản phẩm mới',
+                hasSearch ? 'Thêm "$_searchQuery"' : 'Thêm sản phẩm mới',
                 style: const TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 14)),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
             ),
           ],
         ),
@@ -807,27 +981,33 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         prefillName: prefillName,
         onSaved: (name, price, costPrice, category, unit) async {
           try {
-            await ref.read(productRepositoryProvider).create(
-              name: name,
-              sellPrice: price,
-              costPrice: costPrice,
-              category: category.isEmpty ? null : category,
-              unit: unit.isEmpty ? 'phần' : unit,
-              isAvailable: true,
-            );
+            await ref
+                .read(productRepositoryProvider)
+                .create(
+                  name: name,
+                  sellPrice: price,
+                  costPrice: costPrice,
+                  category: category.isEmpty ? null : category,
+                  unit: unit.isEmpty ? 'phần' : unit,
+                  isAvailable: true,
+                );
             if (ctx.mounted) {
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                content: Text('✅ Đã thêm "$name" vào thực đơn'),
-                behavior: SnackBarBehavior.floating,
-              ));
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(
+                  content: Text('✅ Đã thêm "$name" vào thực đơn'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
             }
           } catch (e) {
             if (ctx.mounted) {
-              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                content: Text('Lỗi: $e'),
-                behavior: SnackBarBehavior.floating,
-              ));
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(
+                  content: Text('Lỗi: $e'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
             }
           }
         },
@@ -841,85 +1021,102 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   Widget _buildCartBar(CartState cart) {
     return GestureDetector(
       onTap: _openCart,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 18),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [_kNavy, _kNavyLight],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(26),
-          boxShadow: [
-            BoxShadow(
-              color: _kNavy.withValues(alpha: 0.5),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Count badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _kOrange,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '${cart.itemCount} món',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+      child:
+          Container(
+                margin: const EdgeInsets.fromLTRB(12, 0, 12, 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
                 ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                cart.lines.length == 1
-                    ? cart.lines.first.productName
-                    : '${cart.lines.length} loại món',
-                style: const TextStyle(
-                  color: Color(0xD9FFFFFF),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            // Gui bep (dim khi module tat)
-            _PosKitchenSendBtn(onPressed: () => _openKitchenConfirm(cart)),
-            const SizedBox(width: 6),
-            // Total + checkout
-            GestureDetector(
-              onTap: _openCheckout,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: _kOrange,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  fmtVnd(cart.total.toInt()),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
+                  gradient: const LinearGradient(
+                    colors: [_kNavy, _kNavyLight],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(26),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _kNavy.withValues(alpha: 0.5),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-          ],
-        ),
-      )
-          .animate()
-          .slideY(begin: 1, end: 0, duration: 300.ms, curve: Curves.easeOutCubic)
-          .fadeIn(duration: 250.ms),
+                child: Row(
+                  children: [
+                    // Count badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _kOrange,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${cart.itemCount} món',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        cart.lines.length == 1
+                            ? cart.lines.first.productName
+                            : '${cart.lines.length} loại món',
+                        style: const TextStyle(
+                          color: Color(0xD9FFFFFF),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    // Gui bep (dim khi module tat)
+                    _PosKitchenSendBtn(
+                      onPressed: () => _openKitchenConfirm(cart),
+                    ),
+                    const SizedBox(width: 6),
+                    // Total + checkout
+                    GestureDetector(
+                      onTap: _openCheckout,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _kOrange,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          fmtVnd(cart.total.toInt()),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+              .animate()
+              .slideY(
+                begin: 1,
+                end: 0,
+                duration: 300.ms,
+                curve: Curves.easeOutCubic,
+              )
+              .fadeIn(duration: 250.ms),
     );
   }
 
@@ -950,7 +1147,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         try {
           await Supabase.instance.client
               .from('ban_sessions')
-              .update({'status': 'closed', 'closed_at': DateTime.now().toUtc().toIso8601String()})
+              .update({
+                'status': 'closed',
+                'closed_at': DateTime.now().toUtc().toIso8601String(),
+              })
               .eq('id', sid)
               .eq('status', 'open');
         } catch (e) {
@@ -986,7 +1186,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
-    // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
   // GỬI BẾP TỪ POS (Hướng 1) — chỉ gửi unsent lines, giữ cart
   // ─────────────────────────────────────────────────────────────────────────
   Future<void> _sendCartToKitchen(
@@ -1004,16 +1204,22 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     // Lấy store_id từ session
     final storeId = ref.read(sessionProvider)?.storeId;
     if (storeId == null) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Chưa chọn quán'), behavior: SnackBarBehavior.floating));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Chưa chọn quán'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       return;
     }
 
     try {
       // 1. Đảm bảo zone hệ thống tồn tại (upsert)
       // Dùng UUID cố định (v5-like) — không phải random để luôn upsert đúng record
-      const zoneId  = '00000000-0000-0000-0001-000000000001'; // sys-zone-pos
-      const tableId = '00000000-0000-0000-0001-000000000002'; // sys-table-takeaway
+      const zoneId = '00000000-0000-0000-0001-000000000001'; // sys-zone-pos
+      const tableId =
+          '00000000-0000-0000-0001-000000000002'; // sys-table-takeaway
       debugPrint('[POS→Bếp] 1. upsert ban_zones...');
       await sb.from('ban_zones').upsert({
         'id': zoneId,
@@ -1053,7 +1259,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       debugPrint('[POS→Bếp] 3. done ✓');
 
       // 4. Tạo session items cho unsent lines
-      debugPrint('[POS→Bếp] 4. insert ${unsentLines.length} ban_session_items...');
+      debugPrint(
+        '[POS→Bếp] 4. insert ${unsentLines.length} ban_session_items...',
+      );
       final sessionItemIds = <String>[];
       for (final line in unsentLines) {
         final itemId = uuid.v4();
@@ -1064,10 +1272,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           'session_id': sessionId,
           'product_id': line.productId,
           'product_name': line.productName,
-          'unit_price': line.unitPrice,   // cột gốc NOT NULL
-          'price':      line.unitPrice,   // cột thêm
-          'quantity':   line.quantity,
-          'subtotal':   line.subtotal,
+          'unit_price': line.unitPrice, // cột gốc NOT NULL
+          'price': line.unitPrice, // cột thêm
+          'quantity': line.quantity,
+          'subtotal': line.subtotal,
           'kitchen_status': 'da_gui',
           'added_at': now,
         });
@@ -1085,79 +1293,97 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         'zone_label': 'Mang đi',
         'round': 1,
         'sent_at': now,
-        'status': 'cho',          // ← khớp với kitchen_screen filter
+        'status': 'cho', // ← khớp với kitchen_screen filter
       });
       debugPrint('[POS→Bếp] 5. done ✓');
 
       // 6. Batch query station code + insert ticket items
       debugPrint('[POS→Bếp] 6. batch lookup station codes...');
       final productIds = unsentLines.map((l) => l.productId).toList();
-      final productRows = await sb.from('products')
+      final productRows = await sb
+          .from('products')
           .select('id, category')
           .inFilter('id', productIds);
       final categoryMap = <String, String>{
-        for (final r in productRows) r['id'] as String: r['category'] as String? ?? '',
+        for (final r in productRows)
+          r['id'] as String: r['category'] as String? ?? '',
       };
 
-      debugPrint('[POS→Bếp] 6. insert ${unsentLines.length} kitchen_ticket_items...');
+      debugPrint(
+        '[POS→Bếp] 6. insert ${unsentLines.length} kitchen_ticket_items...',
+      );
       for (int i = 0; i < unsentLines.length; i++) {
         final line = unsentLines[i];
         // FIX #2: dùng map thay vì query riêng từng item
-        final stationCode = (categoryMap[line.productId] == 'Đồ uống') ? 'nuoc' : 'nong';
+        final stationCode = (categoryMap[line.productId] == 'Đồ uống')
+            ? 'nuoc'
+            : 'nong';
 
         final parts = <String>[
-          if (itemNotes != null && (itemNotes[line.lineId] ?? '').isNotEmpty) itemNotes[line.lineId]!,
+          if (itemNotes != null && (itemNotes[line.lineId] ?? '').isNotEmpty)
+            itemNotes[line.lineId]!,
           if (kitchenNote != null && kitchenNote.isNotEmpty) '📋 $kitchenNote',
         ];
 
         await sb.from('kitchen_ticket_items').insert({
-          'id':              uuid.v4(),
-          'store_id':        storeId,           // NOT NULL
-          'ticket_id':       ticketId,
+          'id': uuid.v4(),
+          'store_id': storeId, // NOT NULL
+          'ticket_id': ticketId,
           'session_item_id': sessionItemIds[i],
           // ‼️ FIX #1: Dùng đúng field names khớp với KitchenTicketItemModel
-          'product_name':    line.productName,  // ✅ model đọc 'product_name'
-          'quantity':        line.quantity,      // ✅ model đọc 'quantity'
-          'station_code':    stationCode,
-          'free_note':       parts.isEmpty ? null : parts.join(' | '),
+          'product_name': line.productName, // ✅ model đọc 'product_name'
+          'quantity': line.quantity, // ✅ model đọc 'quantity'
+          'station_code': stationCode,
+          'free_note': parts.isEmpty ? null : parts.join(' | '),
           // ‼️ FIX #5: Explicit done=false thay vì NULL
-          'done':            false,
+          'done': false,
         });
       }
       debugPrint('[POS→Bếp] 6. done ✓ — ALL STEPS COMPLETE');
 
       // Hướng 1: GIỮ cart, đánh dấu lines đã gửi
-      ref.read(cartProvider.notifier).markLinesSent(
-        unsentLines.map((l) => l.lineId).toList(),
-      );
+      ref
+          .read(cartProvider.notifier)
+          .markLinesSent(unsentLines.map((l) => l.lineId).toList());
       _kitchenSessionIds.add(sessionId);
 
       if (mounted) {
         final sentCount = unsentLines.fold(0, (s, l) => s + l.quantity.toInt());
-        final batchNum  = _kitchenSessionIds.length;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Row(children: [
-            const Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Text('Đã gửi bếp đợt $batchNum: $tableLabel — $sentCount món'),
-          ]),
-          backgroundColor: _kOrange,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-          margin: const EdgeInsets.all(12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ));
+        final batchNum = _kitchenSessionIds.length;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.local_fire_department_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text('Đã gửi bếp đợt $batchNum: $tableLabel — $sentCount món'),
+              ],
+            ),
+            backgroundColor: _kOrange,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
       }
-
     } catch (e, st) {
       debugPrint('[POS→Bếp] ❌ LỖI: $e\n$st');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Lỗi gửi bếp: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 8),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi gửi bếp: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 8),
+          ),
+        );
       }
     }
   }
@@ -1168,17 +1394,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       HapticFeedback.heavyImpact();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(children: [
-            const Icon(Icons.block_rounded, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Text('${product.name} đã hết hàng'),
-          ]),
+          content: Row(
+            children: [
+              const Icon(Icons.block_rounded, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Text('${product.name} đã hết hàng'),
+            ],
+          ),
           backgroundColor: _kRed,
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(12, 0, 12, 100),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
@@ -1207,8 +1436,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Xóa giỏ hàng?',
-          style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Xóa giỏ hàng?',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         content: const Text('Tất cả món trong giỏ sẽ bị xóa.'),
         actions: [
           TextButton(
@@ -1227,7 +1458,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
-    String _fmt(int v) => fmtMoney(v.toDouble());
+  String _fmt(int v) => fmtMoney(v.toDouble());
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1241,29 +1472,39 @@ class _ProductCard extends ConsumerWidget {
 
   // Category-based icon + accent color
   static const Map<String, ({IconData icon, Color color})> _catStyle = {
-    'Đồ uống':    (icon: Icons.local_cafe_rounded,   color: Color(0xFF1565C0)),
-    'Đồ ăn':      (icon: Icons.restaurant_rounded,   color: Color(0xFFE65100)),
-    'Tráng miệng':(icon: Icons.cake_rounded,          color: Color(0xFF880E4F)),
+    'Đồ uống': (icon: Icons.local_cafe_rounded, color: Color(0xFF1565C0)),
+    'Đồ ăn': (icon: Icons.restaurant_rounded, color: Color(0xFFE65100)),
+    'Tráng miệng': (icon: Icons.cake_rounded, color: Color(0xFF880E4F)),
   };
 
   Widget _iconFallback(Color accent, IconData icon, double box, double sz) =>
-    Container(
-      color: accent.withValues(alpha: 0.12),
-      child: Center(child: Icon(icon, color: accent, size: sz)));
+      Container(
+        color: accent.withValues(alpha: 0.12),
+        child: Center(
+          child: Icon(icon, color: accent, size: sz),
+        ),
+      );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cart      = ref.watch(cartProvider);
-    final inCartLines = cart.lines.where((l) => l.productId == product.id).toList();
-    final inCartQty   = inCartLines.fold<int>(0, (s, l) => s + l.quantity.toInt());
+    final cart = ref.watch(cartProvider);
+    final inCartLines = cart.lines
+        .where((l) => l.productId == product.id)
+        .toList();
+    final inCartQty = inCartLines.fold<int>(
+      0,
+      (s, l) => s + l.quantity.toInt(),
+    );
     final isOutOfStock = product.stockQty <= 0 && product.minStock > 0;
-    final isLowStock   = !isOutOfStock && product.minStock > 0 &&
+    final isLowStock =
+        !isOutOfStock &&
+        product.minStock > 0 &&
         product.stockQty <= product.minStock;
 
     // Determine visual style based on category
-    final cat     = product.category ?? '';
-    final style   = _catStyle[cat];
-    final accent  = style?.color ?? _kNavy;
+    final cat = product.category ?? '';
+    final style = _catStyle[cat];
+    final accent = style?.color ?? _kNavy;
     final catIcon = style?.icon ?? Icons.fastfood_rounded;
 
     final isInCart = inCartQty > 0;
@@ -1272,297 +1513,363 @@ class _ProductCard extends ConsumerWidget {
       // Mờ 50% khi hết hàng — vẫn hiện để biết món tồn tại nhưng disable
       opacity: isOutOfStock ? 0.45 : 1.0,
       child: GestureDetector(
-        onTapDown: isOutOfStock ? null : onTapWithDetails, // disable click khi hết hàng
-      onLongPress: () {
-        HapticFeedback.mediumImpact();
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => _PosAddItemsSheet(),
-        );
-      },
-      child: LayoutBuilder(builder: (ctx2, cs) {
-        final w = cs.maxWidth;
-        final isCompact = w < 260;
-        final isTiny    = w < 160;
-        final pad       = isTiny ? 8.0  : isCompact ? 10.0 : 14.0;
-        final iconBox   = isTiny ? 32.0 : isCompact ? 40.0 : 52.0;
-        final iconSz    = isTiny ? 16.0 : isCompact ? 20.0 : 26.0;
-        final nameSize  = isTiny ? 13.0 : isCompact ? 16.0 : 22.0;
-        final priceSize = isTiny ? 11.0 : isCompact ? 13.0 : 17.0;
-        final radius    = isCompact ? 16.0 : 22.0;
-        // Format giá ngắn gọn cho card: 20K, 150K, 1.5Tr
-        String fmtCard(int v) {
-          if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(v % 1000000 == 0 ? 0 : 1)}Tr';
-          if (v >= 1000)    return '${(v / 1000).toStringAsFixed(v % 1000 == 0 ? 0 : 1)}K';
-          return '${v}Đ';
-        }
+        onTapDown: isOutOfStock
+            ? null
+            : onTapWithDetails, // disable click khi hết hàng
+        onLongPress: () {
+          HapticFeedback.mediumImpact();
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => _PosAddItemsSheet(),
+          );
+        },
+        child: LayoutBuilder(
+          builder: (ctx2, cs) {
+            final w = cs.maxWidth;
+            final isCompact = w < 260;
+            final isTiny = w < 160;
+            final pad = isTiny
+                ? 8.0
+                : isCompact
+                ? 10.0
+                : 14.0;
+            final iconBox = isTiny
+                ? 32.0
+                : isCompact
+                ? 40.0
+                : 52.0;
+            final iconSz = isTiny
+                ? 16.0
+                : isCompact
+                ? 20.0
+                : 26.0;
+            final nameSize = isTiny
+                ? 13.0
+                : isCompact
+                ? 16.0
+                : 22.0;
+            final priceSize = isTiny
+                ? 11.0
+                : isCompact
+                ? 13.0
+                : 17.0;
+            final radius = isCompact ? 16.0 : 22.0;
+            // Format giá ngắn gọn cho card: 20K, 150K, 1.5Tr
+            String fmtCard(int v) {
+              if (v >= 1000000)
+                return '${(v / 1000000).toStringAsFixed(v % 1000000 == 0 ? 0 : 1)}Tr';
+              if (v >= 1000)
+                return '${(v / 1000).toStringAsFixed(v % 1000 == 0 ? 0 : 1)}K';
+              return '${v}Đ';
+            }
 
-        return AnimatedContainer(
-          duration: 150.ms,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(
-              color: isInCart ? accent : _kBorder,
-              width: isInCart ? 1.5 : 0.8,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isInCart
-                    ? accent.withValues(alpha: 0.14)
-                    : Colors.black.withValues(alpha: 0.06),
-                blurRadius: isInCart ? 12 : 6,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-        child: Stack(
-          children: [
-            // ── Nền: full ảnh (nếu có) hoặc layout icon cũ ──
-            if (product.imageUrl != null && product.imageUrl!.isNotEmpty) ...[
-              // Full-card image
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(radius),
-                  child: Image.network(
-                    product.imageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const SizedBox(),
-                  ),
+            return AnimatedContainer(
+              duration: 150.ms,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(radius),
+                border: Border.all(
+                  color: isInCart ? accent : _kBorder,
+                  width: isInCart ? 1.5 : 0.8,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isInCart
+                        ? accent.withValues(alpha: 0.14)
+                        : Colors.black.withValues(alpha: 0.06),
+                    blurRadius: isInCart ? 12 : 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-              // Gradient overlay — tối phía dưới để đọc chữ
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(radius),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.55),
-                        ],
-                        stops: const [0.35, 1.0],
+              child: Stack(
+                children: [
+                  // ── Nền: full ảnh (nếu có) hoặc layout icon cũ ──
+                  if (product.imageUrl != null &&
+                      product.imageUrl!.isNotEmpty) ...[
+                    // Full-card image
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(radius),
+                        child: Image.network(
+                          product.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const SizedBox(),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-              // Thanh nền mờ + Tên + giá ở dưới
-              Positioned(
-                bottom: 0, left: 0, right: 0,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(radius),
-                    bottomRight: Radius.circular(radius),
-                  ),
-                  child: Container(
-                    padding: EdgeInsets.fromLTRB(pad, 8, 44, pad),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.42),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          product.name,
-                          style: TextStyle(
-                            fontSize: nameSize + 4,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: isCompact ? 1 : 2),
-                        Row(children: [
-                          Expanded(child: Text(
-                            fmtVnd(product.sellPrice.toInt()),
-                            style: TextStyle(
-                              fontSize: priceSize + 3,
-                              fontWeight: FontWeight.w900,
-                              color: const Color(0xFFFFD54F),
-                              letterSpacing: -0.3,
+                    // Gradient overlay — tối phía dưới để đọc chữ
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(radius),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.55),
+                              ],
+                              stops: const [0.35, 1.0],
                             ),
-                          )),
-                          if (isOutOfStock)
-                            _StockBadge('Hết', _kRed, const Color(0xFFFFEBEE))
-                          else if (isLowStock)
-                            _StockBadge(
-                              '${product.stockQty.toInt()}',
-                              const Color(0xFFE65100),
-                              const Color(0xFFFFF3E0)),
-                        ]),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ] else ...[
-              // Layout gradient theo danh mục — không có ảnh
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(radius),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          accent.withValues(alpha: 0.85),
-                          accent,
-                        ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-              // Icon căn giữa phần trên card — trang trí có chủ đích
-              Positioned.fill(
-                child: Align(
-                  alignment: const Alignment(0, -0.25),
-                  child: Icon(
-                    catIcon,
-                    size: isTiny ? 28 : isCompact ? 36 : 44,
-                    color: Colors.white.withValues(alpha: 0.28),
-                  ),
-                ),
-              ),
-              // Tên + giá ở dưới
-              Positioned(
-                bottom: 0, left: 0, right: 0,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(radius),
-                    bottomRight: Radius.circular(radius),
-                  ),
-                  child: Container(
-                    padding: EdgeInsets.fromLTRB(pad, 8, 44, pad),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.18),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          product.name,
-                          style: TextStyle(
-                            fontSize: nameSize + 2,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                    // Thanh nền mờ + Tên + giá ở dưới
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(radius),
+                          bottomRight: Radius.circular(radius),
                         ),
-                        SizedBox(height: isCompact ? 1 : 2),
-                        Row(children: [
-                          Expanded(child: Text(
-                            fmtVnd(product.sellPrice.toInt()),
-                            style: TextStyle(
-                              fontSize: priceSize + 1,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white.withValues(alpha: 0.92),
-                              letterSpacing: -0.3,
-                            ),
-                          )),
-                          if (isOutOfStock)
-                            _StockBadge('Hết', _kRed, const Color(0xFFFFEBEE))
-                          else if (isLowStock)
-                            _StockBadge(
-                              '${product.stockQty.toInt()}',
-                              const Color(0xFFE65100),
-                              const Color(0xFFFFF3E0)),
-                        ]),
-                      ],
+                        child: Container(
+                          padding: EdgeInsets.fromLTRB(pad, 8, 44, pad),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.42),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                product.name,
+                                style: TextStyle(
+                                  fontSize: nameSize + 4,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  height: 1.2,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: isCompact ? 1 : 2),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      fmtVnd(product.sellPrice.toInt()),
+                                      style: TextStyle(
+                                        fontSize: priceSize + 3,
+                                        fontWeight: FontWeight.w900,
+                                        color: const Color(0xFFFFD54F),
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
+                                  ),
+                                  if (isOutOfStock)
+                                    _StockBadge(
+                                      'Hết',
+                                      _kRed,
+                                      const Color(0xFFFFEBEE),
+                                    )
+                                  else if (isLowStock)
+                                    _StockBadge(
+                                      '${product.stockQty.toInt()}',
+                                      const Color(0xFFE65100),
+                                      const Color(0xFFFFF3E0),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            ],
+                  ] else ...[
+                    // Layout gradient theo danh mục — không có ảnh
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(radius),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [accent.withValues(alpha: 0.85), accent],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Icon căn giữa phần trên card — trang trí có chủ đích
+                    Positioned.fill(
+                      child: Align(
+                        alignment: const Alignment(0, -0.25),
+                        child: Icon(
+                          catIcon,
+                          size: isTiny
+                              ? 28
+                              : isCompact
+                              ? 36
+                              : 44,
+                          color: Colors.white.withValues(alpha: 0.28),
+                        ),
+                      ),
+                    ),
+                    // Tên + giá ở dưới
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(radius),
+                          bottomRight: Radius.circular(radius),
+                        ),
+                        child: Container(
+                          padding: EdgeInsets.fromLTRB(pad, 8, 44, pad),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.18),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                product.name,
+                                style: TextStyle(
+                                  fontSize: nameSize + 2,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  height: 1.2,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: isCompact ? 1 : 2),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      fmtVnd(product.sellPrice.toInt()),
+                                      style: TextStyle(
+                                        fontSize: priceSize + 1,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white.withValues(
+                                          alpha: 0.92,
+                                        ),
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
+                                  ),
+                                  if (isOutOfStock)
+                                    _StockBadge(
+                                      'Hết',
+                                      _kRed,
+                                      const Color(0xFFFFEBEE),
+                                    )
+                                  else if (isLowStock)
+                                    _StockBadge(
+                                      '${product.stockQty.toInt()}',
+                                      const Color(0xFFE65100),
+                                      const Color(0xFFFFF3E0),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
 
-            // ── Top-right controls: [−] xN  OR  [+] ──
-            Positioned(
-              right: 6, top: 6,
-              child: isInCart
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Nut tru
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () => ref
-                              .read(cartProvider.notifier)
-                              .decreaseQtyByProductId(product.id),
-                          child: Container(
-                            width: 38, height: 38,
+                  // ── Top-right controls: [−] xN  OR  [+] ──
+                  Positioned(
+                    right: 6,
+                    top: 6,
+                    child: isInCart
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Nut tru
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => ref
+                                    .read(cartProvider.notifier)
+                                    .decreaseQtyByProductId(product.id),
+                                child: Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: accent,
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: accent.withValues(alpha: 0.18),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    Icons.remove_rounded,
+                                    color: accent,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              // Qty badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: accent,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  'x$inCartQty',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ).animate().scale(
+                                begin: const Offset(0.6, 0.6),
+                                duration: 200.ms,
+                                curve: Curves.elasticOut,
+                              ),
+                            ],
+                          )
+                        : Container(
+                            width: 26,
+                            height: 26,
                             decoration: BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
-                              border: Border.all(color: accent, width: 1.5),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: accent.withValues(alpha: 0.18),
-                                  blurRadius: 4, offset: const Offset(0, 2)),
-                              ],
+                              border: Border.all(color: _kBorder, width: 1),
                             ),
-                            child: Icon(Icons.remove_rounded,
-                                color: accent, size: 20),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        // Qty badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: accent,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'x$inCartQty',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
+                            child: const Icon(
+                              Icons.add_rounded,
+                              color: _kMuted,
+                              size: 14,
                             ),
                           ),
-                        )
-                            .animate()
-                            .scale(
-                              begin: const Offset(0.6, 0.6),
-                              duration: 200.ms,
-                              curve: Curves.elasticOut,
-                            ),
-                      ],
-                    )
-                  : Container(
-                      width: 26, height: 26,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: _kBorder, width: 1),
-                      ),
-                      child: const Icon(Icons.add_rounded,
-                          color: _kMuted, size: 14),
-                    ),
-            ),
-          ],
-        ),
-        ); // AnimatedContainer
-      }), // LayoutBuilder
-    ), // GestureDetector
-  ); // Opacity
+                  ),
+                ],
+              ),
+            ); // AnimatedContainer
+          },
+        ), // LayoutBuilder
+      ), // GestureDetector
+    ); // Opacity
   }
 
-    String _fmt(int v) => fmtMoney(v.toDouble());
+  String _fmt(int v) => fmtMoney(v.toDouble());
 }
 
 class _StockBadge extends StatelessWidget {
@@ -1573,14 +1880,20 @@ class _StockBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Text(text,
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: textColor)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: BoxDecoration(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(4),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        color: textColor,
+      ),
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1619,32 +1932,44 @@ class _CartPanel extends ConsumerWidget {
                 // Drag handle (chỉ hiện khi là sheet, không hiện trong panel)
                 if (!isPanel) ...[
                   Container(
-                    width: 40, height: 4,
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: _kBorder, borderRadius: BorderRadius.circular(2)),
+                      color: _kBorder,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                   const SizedBox(height: 14),
                 ],
                 Row(
                   children: [
-                    const Text('Giỏ hàng',
+                    const Text(
+                      'Giỏ hàng',
                       style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w900,
-                        color: _kInk, letterSpacing: -0.3,
-                      )),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: _kInk,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: _kOrange.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text('${cart.itemCount} món',
+                      child: Text(
+                        '${cart.itemCount} món',
                         style: const TextStyle(
-                          color: _kOrange, fontSize: 12,
+                          color: _kOrange,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
-                        )),
+                        ),
+                      ),
                     ),
                     const Spacer(),
                     // Permission guard: chỉ owner/manager mới được xoá giỏ hàng
@@ -1657,8 +1982,10 @@ class _CartPanel extends ConsumerWidget {
                           ref.read(cartProvider.notifier).clearCart();
                           if (!isPanel) Navigator.pop(context);
                         },
-                        child: const Text('Xóa hết',
-                          style: TextStyle(color: _kRed, fontSize: 13)),
+                        child: const Text(
+                          'Xóa hết',
+                          style: TextStyle(color: _kRed, fontSize: 13),
+                        ),
                       ),
                     ),
                   ],
@@ -1692,19 +2019,38 @@ class _CartPanel extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             decoration: BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(
-                color: _kInk.withValues(alpha: 0.06),
-                blurRadius: 8, offset: const Offset(0, -2))]),
-            child: Column(children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                const Text('Tổng cộng',
-                  style: TextStyle(fontSize: 15, color: _kMuted,
-                    fontWeight: FontWeight.w600)),
-                Text(fmtVnd(cart.subtotal.toInt()),
-                  style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w900,
-                    color: _kNavy, letterSpacing: -0.5)),
-              ]),
+              boxShadow: [
+                BoxShadow(
+                  color: _kInk.withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Tổng cộng',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: _kMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      fmtVnd(cart.subtotal.toInt()),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: _kNavy,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
@@ -1724,13 +2070,19 @@ class _CartPanel extends ConsumerWidget {
                       );
                     },
                     icon: const Icon(Icons.payment_rounded),
-                    label: const Text('Thanh toán',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    label: const Text(
+                      'Thanh toán',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _kNavy,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       elevation: 0,
                     ),
                   ),
@@ -1777,27 +2129,46 @@ class _OrderNoteRow extends ConsumerWidget {
           color: note != null ? _kOrange.withValues(alpha: 0.07) : _kBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: note != null
-              ? _kOrange.withValues(alpha: 0.30)
-              : _kBorder,
-            width: note != null ? 1.2 : 1)),
-        child: Row(children: [
-          Icon(note != null ? Icons.notes_rounded : Icons.add_comment_outlined,
-            size: 16,
-            color: note != null ? _kOrange : _kMuted),
-          const SizedBox(width: 10),
-          Expanded(child: note != null
-            ? Text(note,
-                style: const TextStyle(fontSize: 13, color: _kOrange,
-                  fontWeight: FontWeight.w600),
-                maxLines: 1, overflow: TextOverflow.ellipsis)
-            : const Text('Thêm ghi chú đơn hàng',
-                style: TextStyle(fontSize: 13, color: _kMuted))),
-          if (note != null)
-            GestureDetector(
-              onTap: () => notifier.setOrderNote(null),
-              child: const Icon(Icons.close_rounded, size: 14, color: _kMuted)),
-        ]),
+            color: note != null ? _kOrange.withValues(alpha: 0.30) : _kBorder,
+            width: note != null ? 1.2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              note != null ? Icons.notes_rounded : Icons.add_comment_outlined,
+              size: 16,
+              color: note != null ? _kOrange : _kMuted,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: note != null
+                  ? Text(
+                      note,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: _kOrange,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : const Text(
+                      'Thêm ghi chú đơn hàng',
+                      style: TextStyle(fontSize: 13, color: _kMuted),
+                    ),
+            ),
+            if (note != null)
+              GestureDetector(
+                onTap: () => notifier.setOrderNote(null),
+                child: const Icon(
+                  Icons.close_rounded,
+                  size: 14,
+                  color: _kMuted,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -1810,105 +2181,179 @@ class _OrderNoteSheet extends StatefulWidget {
   final String initialNote;
   final ValueChanged<String> onSave;
   final VoidCallback onClear;
-  const _OrderNoteSheet({required this.initialNote,
-    required this.onSave, required this.onClear});
-  @override State<_OrderNoteSheet> createState() => _OrderNoteSheetState();
+  const _OrderNoteSheet({
+    required this.initialNote,
+    required this.onSave,
+    required this.onClear,
+  });
+  @override
+  State<_OrderNoteSheet> createState() => _OrderNoteSheetState();
 }
 
 class _OrderNoteSheetState extends State<_OrderNoteSheet> {
   late final TextEditingController _ctrl;
 
-  @override void initState() {
+  @override
+  void initState() {
     super.initState();
     _ctrl = TextEditingController(text: widget.initialNote);
   }
-  @override void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const SizedBox(height: 10),
-          Container(width: 40, height: 4,
-            decoration: BoxDecoration(
-              color: _kBorder, borderRadius: BorderRadius.circular(2))),
-          const SizedBox(height: 14),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(children: [
-              Container(padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _kNavy.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.receipt_long_rounded,
-                  color: _kNavy, size: 18)),
-              const SizedBox(width: 12),
-              const Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Ghi chú đơn hàng',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900,
-                    color: _kInk, letterSpacing: -0.3)),
-                Text('Áp dụng cho toàn bộ đơn',
-                  style: TextStyle(fontSize: 12, color: _kMuted)),
-              ])),
-              if (widget.initialNote.isNotEmpty)
-                GestureDetector(
-                  onTap: () { widget.onClear(); Navigator.pop(context); },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _kRed.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10)),
-                    child: const Text('Xóa',
-                      style: TextStyle(fontSize: 12, color: _kRed,
-                        fontWeight: FontWeight.w700)))),
-            ]),
-          ),
-          const SizedBox(height: 14),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              controller: _ctrl, autofocus: true, maxLines: 3,
-              style: const TextStyle(fontSize: 14, color: _kInk),
-              decoration: InputDecoration(
-                hintText: 'Vd: khách dị ứng hành, giao trước 12h...',
-                hintStyle: TextStyle(color: _kMuted.withValues(alpha: 0.7)),
-                filled: true, fillColor: _kBg,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: _kBorder)),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: _kNavy, width: 1.5)),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: _kBorder))),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            child: SizedBox(width: double.infinity, height: 48,
-              child: ElevatedButton(
-                onPressed: () {
-                  widget.onSave(_ctrl.text.trim());
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kNavy, foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                  elevation: 0),
-                child: const Text('Lưu ghi chú',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: _kBorder,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-          ),
-        ]),
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _kNavy.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.receipt_long_rounded,
+                      color: _kNavy,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ghi chú đơn hàng',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: _kInk,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        Text(
+                          'Áp dụng cho toàn bộ đơn',
+                          style: TextStyle(fontSize: 12, color: _kMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (widget.initialNote.isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        widget.onClear();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _kRed.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          'Xóa',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _kRed,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _ctrl,
+                autofocus: true,
+                maxLines: 3,
+                style: const TextStyle(fontSize: 14, color: _kInk),
+                decoration: InputDecoration(
+                  hintText: 'Vd: khách dị ứng hành, giao trước 12h...',
+                  hintStyle: TextStyle(color: _kMuted.withValues(alpha: 0.7)),
+                  filled: true,
+                  fillColor: _kBg,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: _kNavy, width: 1.5),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    widget.onSave(_ctrl.text.trim());
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kNavy,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Lưu ghi chú',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1921,8 +2366,8 @@ class _CartLineRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier  = ref.read(cartProvider.notifier);
-    final isSent    = ref.watch(cartProvider).isLineSent(line.lineId);
+    final notifier = ref.read(cartProvider.notifier);
+    final isSent = ref.watch(cartProvider).isLineSent(line.lineId);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1934,24 +2379,42 @@ class _CartLineRow extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Tên món
-                Row(children: [
-                  if (isSent) Container(
-                    margin: const EdgeInsets.only(right: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE85D20).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
+                Row(
+                  children: [
+                    if (isSent)
+                      Container(
+                        margin: const EdgeInsets.only(right: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFFE85D20,
+                          ).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'đã gửi bếp',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFFE85D20),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    Expanded(
+                      child: Text(
+                        line.productName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: _kInk,
+                        ),
+                      ),
                     ),
-                    child: const Text('đã gửi bếp',
-                      style: TextStyle(fontSize: 10, color: Color(0xFFE85D20),
-                          fontWeight: FontWeight.w700)),
-                  ),
-                  Expanded(
-                    child: Text(line.productName,
-                      style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w700, color: _kInk)),
-                  ),
-                ]),
+                  ],
+                ),
                 const SizedBox(height: 2),
                 // Giá đơn vị + nút ghi chú (tự động xuống dòng khi màn hình hẹp)
                 Wrap(
@@ -1959,47 +2422,83 @@ class _CartLineRow extends ConsumerWidget {
                   spacing: 8,
                   runSpacing: 4,
                   children: [
-                    Text(fmtVnd(line.unitPrice.toInt()),
-                      style: const TextStyle(fontSize: 12, color: _kMuted)),
+                    Text(
+                      fmtVnd(line.unitPrice.toInt()),
+                      style: const TextStyle(fontSize: 12, color: _kMuted),
+                    ),
                     // Nút ghi chú — luôn hiển thị, đủ target size
                     GestureDetector(
                       onTap: () => _openItemNoteSheet(context, notifier, line),
                       child: line.note != null && line.note!.isNotEmpty
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: _kOrange.withValues(alpha: 0.10),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: _kOrange.withValues(alpha: 0.40))),
-                            child: Row(mainAxisSize: MainAxisSize.min, children: [
-                              const Icon(Icons.edit_note_rounded,
-                                size: 13, color: _kOrange),
-                              const SizedBox(width: 4),
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 80),
-                                child: Text(line.note!,
-                                  style: const TextStyle(
-                                    fontSize: 11, color: _kOrange,
-                                    fontWeight: FontWeight.w700),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis)),
-                            ]))
-                        : Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: _kBg,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: _kBorder)),
-                            child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                              Icon(Icons.add_rounded, size: 12, color: _kMuted),
-                              SizedBox(width: 4),
-                              Text('Ghi chú',
-                                style: TextStyle(fontSize: 11, color: _kMuted,
-                                  fontWeight: FontWeight.w600)),
-                            ])),
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _kOrange.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: _kOrange.withValues(alpha: 0.40),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.edit_note_rounded,
+                                    size: 13,
+                                    color: _kOrange,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 80,
+                                    ),
+                                    child: Text(
+                                      line.note!,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: _kOrange,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _kBg,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: _kBorder),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.add_rounded,
+                                    size: 12,
+                                    color: _kMuted,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Ghi chú',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: _kMuted,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                     ),
                   ],
                 ),
@@ -2014,32 +2513,44 @@ class _CartLineRow extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                if (!isSent) _QBtn(
-                  icon: line.quantity <= 1
-                      ? Icons.delete_outline_rounded
-                      : Icons.remove_rounded,
-                  color: line.quantity <= 1 ? _kRed : _kMuted,
-                  onTap: () => notifier.decreaseQty(line.lineId),
-                ),
+                if (!isSent)
+                  _QBtn(
+                    icon: line.quantity <= 1
+                        ? Icons.delete_outline_rounded
+                        : Icons.remove_rounded,
+                    color: line.quantity <= 1 ? _kRed : _kMuted,
+                    onTap: () => notifier.decreaseQty(line.lineId),
+                  ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
-                  child: Text('${line.quantity.toInt()}',
+                  child: Text(
+                    '${line.quantity.toInt()}',
                     style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w800, color: _kInk)),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: _kInk,
+                    ),
+                  ),
                 ),
-                if (!isSent) _QBtn(
-                  icon: Icons.add_rounded,
-                  color: _kNavy,
-                  onTap: () => notifier.increaseQty(line.lineId),
-                ),
+                if (!isSent)
+                  _QBtn(
+                    icon: Icons.add_rounded,
+                    color: _kNavy,
+                    onTap: () => notifier.increaseQty(line.lineId),
+                  ),
               ],
             ),
           ),
           const SizedBox(width: 12),
           // Subtotal (tổng tiền dòng = đơn giá × số lượng)
-          Text(fmtVnd(line.subtotal.toInt()),
+          Text(
+            fmtVnd(line.subtotal.toInt()),
             style: const TextStyle(
-              fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy)),
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: _kNavy,
+            ),
+          ),
         ],
       ),
     );
@@ -2050,7 +2561,10 @@ class _CartLineRow extends ConsumerWidget {
 // ITEM NOTE SHEET — Ghi chú per-item (bottom sheet thay AlertDialog)
 // ─────────────────────────────────────────────────────────────────────────────
 void _openItemNoteSheet(
-    BuildContext context, CartNotifier notifier, CartLine line) {
+  BuildContext context,
+  CartNotifier notifier,
+  CartLine line,
+) {
   HapticFeedback.selectionClick();
   showModalBottomSheet(
     context: context,
@@ -2071,153 +2585,240 @@ class _ItemNoteSheet extends StatefulWidget {
   final String productName, initialNote;
   final ValueChanged<String> onSave;
   final VoidCallback onClear;
-  const _ItemNoteSheet({required this.productName, required this.initialNote,
-    required this.onSave, required this.onClear});
-  @override State<_ItemNoteSheet> createState() => _ItemNoteSheetState();
+  const _ItemNoteSheet({
+    required this.productName,
+    required this.initialNote,
+    required this.onSave,
+    required this.onClear,
+  });
+  @override
+  State<_ItemNoteSheet> createState() => _ItemNoteSheetState();
 }
 
 class _ItemNoteSheetState extends State<_ItemNoteSheet> {
   late final TextEditingController _ctrl;
   static const _suggestions = [
-    'Không hành', 'Ít đường', 'Ít đá', 'Không đá',
-    'Thêm sauce', 'Chín kỹ', 'Không cay', 'Thêm phần',
+    'Không hành',
+    'Ít đường',
+    'Ít đá',
+    'Không đá',
+    'Thêm sauce',
+    'Chín kỹ',
+    'Không cay',
+    'Thêm phần',
   ];
 
-  @override void initState() {
+  @override
+  void initState() {
     super.initState();
     _ctrl = TextEditingController(text: widget.initialNote);
   }
-  @override void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom),
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          // Handle
-          const SizedBox(height: 10),
-          Container(width: 40, height: 4,
-            decoration: BoxDecoration(
-              color: _kBorder, borderRadius: BorderRadius.circular(2))),
-          const SizedBox(height: 14),
-
-          // Header
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _kOrange.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.notes_rounded,
-                  color: _kOrange, size: 18)),
-              const SizedBox(width: 12),
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Ghi chú món',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900,
-                    color: _kInk, letterSpacing: -0.3)),
-                Text(widget.productName,
-                  style: const TextStyle(fontSize: 12, color: _kMuted)),
-              ])),
-              if (widget.initialNote.isNotEmpty)
-                GestureDetector(
-                  onTap: () { widget.onClear(); Navigator.pop(context); },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _kRed.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10)),
-                    child: const Text('Xóa',
-                      style: TextStyle(fontSize: 12, color: _kRed,
-                        fontWeight: FontWeight.w700)))),
-            ]),
-          ),
-          const SizedBox(height: 14),
-
-          // Quick suggest chips
-          SizedBox(height: 34,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _suggestions.length,
-              itemBuilder: (_, i) {
-                final s = _suggestions[i];
-                return GestureDetector(
-                  onTap: () {
-                    final cur = _ctrl.text;
-                    _ctrl.text = cur.isEmpty ? s : '$cur, $s';
-                    _ctrl.selection = TextSelection.fromPosition(
-                      TextPosition(offset: _ctrl.text.length));
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _kBg,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: _kBorder)),
-                    child: Text(s,
-                      style: const TextStyle(fontSize: 12, color: _kInk,
-                        fontWeight: FontWeight.w600))),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Input field
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              controller: _ctrl,
-              autofocus: true,
-              maxLines: 2,
-              style: const TextStyle(fontSize: 14, color: _kInk),
-              decoration: InputDecoration(
-                hintText: 'Vd: không hành, thêm sauce...',
-                hintStyle: TextStyle(color: _kMuted.withValues(alpha: 0.7)),
-                filled: true,
-                fillColor: _kBg,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: _kBorder)),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: _kNavy, width: 1.5)),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: _kBorder))),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Save button
-          Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            child: SizedBox(width: double.infinity, height: 48,
-              child: ElevatedButton(
-                onPressed: () {
-                  widget.onSave(_ctrl.text.trim());
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _kNavy,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                  elevation: 0),
-                child: const Text('Lưu ghi chú',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            const SizedBox(height: 10),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: _kBorder,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-          ),
-        ]),
+            const SizedBox(height: 14),
+
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _kOrange.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.notes_rounded,
+                      color: _kOrange,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Ghi chú món',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: _kInk,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        Text(
+                          widget.productName,
+                          style: const TextStyle(fontSize: 12, color: _kMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (widget.initialNote.isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        widget.onClear();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _kRed.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          'Xóa',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _kRed,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Quick suggest chips
+            SizedBox(
+              height: 34,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _suggestions.length,
+                itemBuilder: (_, i) {
+                  final s = _suggestions[i];
+                  return GestureDetector(
+                    onTap: () {
+                      final cur = _ctrl.text;
+                      _ctrl.text = cur.isEmpty ? s : '$cur, $s';
+                      _ctrl.selection = TextSelection.fromPosition(
+                        TextPosition(offset: _ctrl.text.length),
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _kBg,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: _kBorder),
+                      ),
+                      child: Text(
+                        s,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: _kInk,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Input field
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _ctrl,
+                autofocus: true,
+                maxLines: 2,
+                style: const TextStyle(fontSize: 14, color: _kInk),
+                decoration: InputDecoration(
+                  hintText: 'Vd: không hành, thêm sauce...',
+                  hintStyle: TextStyle(color: _kMuted.withValues(alpha: 0.7)),
+                  filled: true,
+                  fillColor: _kBg,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: _kNavy, width: 1.5),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Save button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    widget.onSave(_ctrl.text.trim());
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kNavy,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Lưu ghi chú',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2232,20 +2833,20 @@ class _QBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        child: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 18, color: color),
-        ),
-      );
+    onTap: () {
+      HapticFeedback.selectionClick();
+      onTap();
+    },
+    child: Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(icon, size: 18, color: color),
+    ),
+  );
 }
 
 String _fmtStatic(int v) => fmtMoney(v.toDouble());
@@ -2283,7 +2884,9 @@ class _CustomerPickerRowState extends ConsumerState<_CustomerPickerRow> {
 
       final res = await sb
           .from('customers')
-          .select('id, name, loyalty_pts, real_balance, bonus_balance, bonus_cap_pct, bonus_expires_at')
+          .select(
+            'id, name, loyalty_pts, real_balance, bonus_balance, bonus_cap_pct, bonus_expires_at',
+          )
           .eq('store_id', storeId)
           .eq('phone', phone)
           .eq('is_deleted', false)
@@ -2293,15 +2896,17 @@ class _CustomerPickerRowState extends ConsumerState<_CustomerPickerRow> {
         final expiresAt = res['bonus_expires_at'] != null
             ? DateTime.tryParse(res['bonus_expires_at'] as String)
             : null;
-        ref.read(cartProvider.notifier).setCustomer(
-          res['id'] as String,
-          res['name'] as String? ?? phone,
-          (res['loyalty_pts'] as num?)?.toDouble() ?? 0,
-          walletReal:     (res['real_balance'] as num?)?.toDouble() ?? 0,
-          walletBonus:    (res['bonus_balance'] as num?)?.toDouble() ?? 0,
-          bonusCapPct:    (res['bonus_cap_pct'] as num?)?.toInt() ?? 15,
-          bonusExpiresAt: expiresAt,
-        );
+        ref
+            .read(cartProvider.notifier)
+            .setCustomer(
+              res['id'] as String,
+              res['name'] as String? ?? phone,
+              (res['loyalty_pts'] as num?)?.toDouble() ?? 0,
+              walletReal: (res['real_balance'] as num?)?.toDouble() ?? 0,
+              walletBonus: (res['bonus_balance'] as num?)?.toDouble() ?? 0,
+              bonusCapPct: (res['bonus_cap_pct'] as num?)?.toInt() ?? 15,
+              bonusExpiresAt: expiresAt,
+            );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -2313,7 +2918,10 @@ class _CustomerPickerRowState extends ConsumerState<_CustomerPickerRow> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e'), behavior: SnackBarBehavior.floating),
+          SnackBar(
+            content: Text('Lỗi: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -2328,114 +2936,169 @@ class _CustomerPickerRowState extends ConsumerState<_CustomerPickerRow> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: hasCustomer
-          ? _buildCustomerCard(cart)
-          : _buildSearchRow(),
+      child: hasCustomer ? _buildCustomerCard(cart) : _buildSearchRow(),
     );
   }
 
-  Widget _buildSearchRow() => Row(children: [
-    Expanded(child: SizedBox(
-      height: 42,
-      child: TextField(
-        controller: _phoneCtrl,
-        keyboardType: TextInputType.phone,
-        style: const TextStyle(fontSize: 13, color: _kInk),
-        onSubmitted: (_) => _lookup(),
-        decoration: InputDecoration(
-          hintText: 'SĐT khách hàng (tích điểm)...',
-          hintStyle: const TextStyle(fontSize: 12, color: _kMuted),
-          prefixIcon: const Icon(Icons.person_search_rounded, size: 16, color: _kMuted),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          filled: true,
-          fillColor: _kBg,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _kBorder)),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _kBorder)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _kNavy, width: 1.5)),
+  Widget _buildSearchRow() => Row(
+    children: [
+      Expanded(
+        child: SizedBox(
+          height: 42,
+          child: TextField(
+            controller: _phoneCtrl,
+            keyboardType: TextInputType.phone,
+            style: const TextStyle(fontSize: 13, color: _kInk),
+            onSubmitted: (_) => _lookup(),
+            decoration: InputDecoration(
+              hintText: 'SĐT khách hàng (tích điểm)...',
+              hintStyle: const TextStyle(fontSize: 12, color: _kMuted),
+              prefixIcon: const Icon(
+                Icons.person_search_rounded,
+                size: 16,
+                color: _kMuted,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              filled: true,
+              fillColor: _kBg,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: _kBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: _kBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: _kNavy, width: 1.5),
+              ),
+            ),
+          ),
         ),
       ),
-    )),
-    const SizedBox(width: 8),
-    GestureDetector(
-      onTap: _searching ? null : _lookup,
-      child: Container(
-        width: 42, height: 42,
-        decoration: BoxDecoration(
-          color: _kNavy,
-          borderRadius: BorderRadius.circular(12),
+      const SizedBox(width: 8),
+      GestureDetector(
+        onTap: _searching ? null : _lookup,
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: _kNavy,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: _searching
+              ? const Padding(
+                  padding: EdgeInsets.all(10),
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Icon(Icons.search_rounded, color: Colors.white, size: 20),
         ),
-        child: _searching
-            ? const Padding(
-                padding: EdgeInsets.all(10),
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-            : const Icon(Icons.search_rounded, color: Colors.white, size: 20),
       ),
-    ),
-  ]);
+    ],
+  );
 
   Widget _buildCustomerCard(CartState cart) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
     decoration: BoxDecoration(
       color: const Color(0xFFE8F5E9),
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0xFF4CAF50).withValues(alpha: 0.40)),
-    ),
-    child: Row(children: [
-      Container(
-        width: 34, height: 34,
-        decoration: BoxDecoration(
-          color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: const Icon(Icons.stars_rounded, color: Color(0xFF2E7D32), size: 18),
+      border: Border.all(
+        color: const Color(0xFF4CAF50).withValues(alpha: 0.40),
       ),
-      const SizedBox(width: 10),
-      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(cart.customerName ?? '',
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800,
-            color: Color(0xFF1B5E20))),
-        Row(children: [
-          Text('${cart.loyaltyPtsAvailable.toInt()} điểm',
-            style: const TextStyle(fontSize: 11, color: Color(0xFF388E3C),
-              fontWeight: FontWeight.w600)),
-          if (cart.hasWallet) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2E7D32).withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(6)),
-              child: Text('Ví: ${fmtVnd(cart.walletTotal.toInt())}',
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
-                  color: Color(0xFF2E7D32))),
-            ),
-          ],
-        ]),
-      ])),
-      GestureDetector(
-        onTap: () {
-          ref.read(cartProvider.notifier).clearCustomer();
-          _phoneCtrl.clear();
-        },
-        child: Container(
-          padding: const EdgeInsets.all(6),
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
           decoration: BoxDecoration(
             color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF2E7D32)),
+          child: const Icon(
+            Icons.stars_rounded,
+            color: Color(0xFF2E7D32),
+            size: 18,
+          ),
         ),
-      ),
-    ]),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                cart.customerName ?? '',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1B5E20),
+                ),
+              ),
+              Row(
+                children: [
+                  Text(
+                    '${cart.loyaltyPtsAvailable.toInt()} điểm',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF388E3C),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (cart.hasWallet) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2E7D32).withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Ví: ${fmtVnd(cart.walletTotal.toInt())}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF2E7D32),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+        GestureDetector(
+          onTap: () {
+            ref.read(cartProvider.notifier).clearCustomer();
+            _phoneCtrl.clear();
+          },
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.close_rounded,
+              size: 14,
+              color: Color(0xFF2E7D32),
+            ),
+          ),
+        ),
+      ],
+    ),
   );
 }
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QUICK ADD PRODUCT SHEET
@@ -2443,8 +3106,13 @@ class _CustomerPickerRowState extends ConsumerState<_CustomerPickerRow> {
 class _QuickAddProductSheet extends StatefulWidget {
   final String prefillName;
   final Future<void> Function(
-      String name, double price, double costPrice,
-      String category, String unit) onSaved;
+    String name,
+    double price,
+    double costPrice,
+    String category,
+    String unit,
+  )
+  onSaved;
 
   const _QuickAddProductSheet({
     required this.prefillName,
@@ -2456,21 +3124,21 @@ class _QuickAddProductSheet extends StatefulWidget {
 }
 
 class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
-  final _formKey    = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameCtrl;
-  final _priceCtrl  = TextEditingController();
-  final _costCtrl   = TextEditingController();
-  final _catCtrl    = TextEditingController();
-  final _unitCtrl   = TextEditingController(text: 'phần');
-  bool _saving      = false;
+  final _priceCtrl = TextEditingController();
+  final _costCtrl = TextEditingController();
+  final _catCtrl = TextEditingController();
+  final _unitCtrl = TextEditingController(text: 'phần');
+  bool _saving = false;
   double _previewPrice = 0;
 
-  static const _kNavy   = Color(0xFF1E1C5E);
-  static const _kNavyL  = Color(0xFF2D2B8A);
+  static const _kNavy = Color(0xFF1E1C5E);
+  static const _kNavyL = Color(0xFF2D2B8A);
   static const _kOrange = Color(0xFFE85D20);
   static const _kBorder = Color(0xFFE0D8CC);
-  static const _kMuted  = Color(0xFF9E9085);
-  static const _kBg     = Color(0xFFFAF7F2);
+  static const _kMuted = Color(0xFF9E9085);
+  static const _kBg = Color(0xFFFAF7F2);
 
   // Common categories để gợi ý
   static const _cats = ['Đồ ăn', 'Đồ uống', 'Tráng miệng', 'Combo', 'Khác'];
@@ -2481,16 +3149,18 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.prefillName);
     _priceCtrl.addListener(() {
-      final val = double.tryParse(
-          _priceCtrl.text.replaceAll(',', '')) ?? 0;
+      final val = double.tryParse(_priceCtrl.text.replaceAll(',', '')) ?? 0;
       setState(() => _previewPrice = val);
     });
   }
 
   @override
   void dispose() {
-    _nameCtrl.dispose(); _priceCtrl.dispose();
-    _costCtrl.dispose(); _catCtrl.dispose(); _unitCtrl.dispose();
+    _nameCtrl.dispose();
+    _priceCtrl.dispose();
+    _costCtrl.dispose();
+    _catCtrl.dispose();
+    _unitCtrl.dispose();
     super.dispose();
   }
 
@@ -2498,7 +3168,8 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom),
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -2521,12 +3192,16 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
               child: Column(
                 children: [
                   // Handle
-                  Center(child: Container(
-                    width: 40, height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2)),
-                  )),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 14),
                   Row(
                     children: [
@@ -2534,30 +3209,44 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10)),
-                        child: const Icon(Icons.add_box_rounded,
-                          color: Colors.white, size: 20),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.add_box_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       const Expanded(
-                        child: Text('Thêm sản phẩm mới',
+                        child: Text(
+                          'Thêm sản phẩm mới',
                           style: TextStyle(
-                            color: Colors.white, fontSize: 17,
-                            fontWeight: FontWeight.w800)),
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
                       // Live price preview
                       if (_previewPrice > 0)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: _kOrange,
-                            borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                           child: Text(
                             '${_fmtPrice(_previewPrice)}',
                             style: const TextStyle(
-                              color: Colors.white, fontSize: 13,
-                              fontWeight: FontWeight.w800)),
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ),
                     ],
                   ),
@@ -2581,72 +3270,87 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
                         icon: Icons.restaurant_menu_rounded,
                         color: _kNavy,
                         validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Vui lòng nhập tên' : null,
+                            ? 'Vui lòng nhập tên'
+                            : null,
                       ),
                       const SizedBox(height: 12),
 
                       // Giá bán + giá vốn side by side
                       Row(
                         children: [
-                          Expanded(child: _FormField(
-                            ctrl: _priceCtrl,
-                            label: 'Giá bán (đ)',
-                            icon: Icons.sell_rounded,
-                            color: _kOrange,
-                            keyboard: TextInputType.number,
-                            validator: (v) {
-                              final val = double.tryParse(
-                                  (v ?? '').replaceAll(',', ''));
-                              if (val == null || val <= 0) {
-                                return 'Nhập giá > 0';
-                              }
-                              return null;
-                            },
-                          )),
+                          Expanded(
+                            child: _FormField(
+                              ctrl: _priceCtrl,
+                              label: 'Giá bán (đ)',
+                              icon: Icons.sell_rounded,
+                              color: _kOrange,
+                              keyboard: TextInputType.number,
+                              validator: (v) {
+                                final val = double.tryParse(
+                                  (v ?? '').replaceAll(',', ''),
+                                );
+                                if (val == null || val <= 0) {
+                                  return 'Nhập giá > 0';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
                           const SizedBox(width: 10),
-                          Expanded(child: _FormField(
-                            ctrl: _costCtrl,
-                            label: 'Giá vốn (đ)',
-                            icon: Icons.shopping_basket_rounded,
-                            color: _kMuted,
-                            keyboard: TextInputType.number,
-                          )),
+                          Expanded(
+                            child: _FormField(
+                              ctrl: _costCtrl,
+                              label: 'Giá vốn (đ)',
+                              icon: Icons.shopping_basket_rounded,
+                              color: _kMuted,
+                              keyboard: TextInputType.number,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
 
                       // Danh mục — quick chips
-                      const Text('Danh mục',
+                      const Text(
+                        'Danh mục',
                         style: TextStyle(
-                          fontSize: 12, color: _kMuted,
-                          fontWeight: FontWeight.w600)),
+                          fontSize: 12,
+                          color: _kMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       Wrap(
-                        spacing: 8, runSpacing: 8,
+                        spacing: 8,
+                        runSpacing: 8,
                         children: _cats.map((c) {
                           final sel = _catCtrl.text == c;
                           return GestureDetector(
-                            onTap: () => setState(() =>
-                                _catCtrl.text = sel ? '' : c),
+                            onTap: () =>
+                                setState(() => _catCtrl.text = sel ? '' : c),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 150),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: sel
                                     ? _kNavy
                                     : _kNavy.withValues(alpha: 0.06),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: sel
-                                      ? _kNavy
-                                      : _kBorder),
+                                  color: sel ? _kNavy : _kBorder,
+                                ),
                               ),
-                              child: Text(c,
+                              child: Text(
+                                c,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: sel ? Colors.white : _kMuted)),
+                                  color: sel ? Colors.white : _kMuted,
+                                ),
+                              ),
                             ),
                           );
                         }).toList(),
@@ -2654,13 +3358,18 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
                       const SizedBox(height: 12),
 
                       // Đơn vị — quick chips
-                      const Text('Đơn vị',
+                      const Text(
+                        'Đơn vị',
                         style: TextStyle(
-                          fontSize: 12, color: _kMuted,
-                          fontWeight: FontWeight.w600)),
+                          fontSize: 12,
+                          color: _kMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       Wrap(
-                        spacing: 8, runSpacing: 8,
+                        spacing: 8,
+                        runSpacing: 8,
                         children: _units.map((u) {
                           final sel = _unitCtrl.text == u;
                           return GestureDetector(
@@ -2668,22 +3377,26 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 150),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
                               decoration: BoxDecoration(
                                 color: sel
                                     ? _kOrange
                                     : _kOrange.withValues(alpha: 0.06),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: sel
-                                      ? _kOrange
-                                      : _kBorder),
+                                  color: sel ? _kOrange : _kBorder,
+                                ),
                               ),
-                              child: Text(u,
+                              child: Text(
+                                u,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: sel ? Colors.white : _kMuted)),
+                                  color: sel ? Colors.white : _kMuted,
+                                ),
+                              ),
                             ),
                           );
                         }).toList(),
@@ -2692,24 +3405,34 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
 
                       // Save button
                       SizedBox(
-                        width: double.infinity, height: 52,
+                        width: double.infinity,
+                        height: 52,
                         child: ElevatedButton.icon(
                           onPressed: _saving ? null : _save,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _kNavy,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                           icon: _saving
-                              ? const SizedBox(width: 18, height: 18,
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
                                   child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2))
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
                               : const Icon(Icons.add_circle_rounded),
                           label: Text(
                             _saving ? 'Đang thêm...' : 'Thêm vào thực đơn',
                             style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 15)),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -2727,7 +3450,7 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    final price     = double.tryParse(_priceCtrl.text.replaceAll(',', '')) ?? 0;
+    final price = double.tryParse(_priceCtrl.text.replaceAll(',', '')) ?? 0;
     final costPrice = double.tryParse(_costCtrl.text.replaceAll(',', '')) ?? 0;
     await widget.onSaved(
       _nameCtrl.text.trim(),
@@ -2739,7 +3462,7 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
     if (mounted) setState(() => _saving = false);
   }
 
-    String _fmtPrice(double v) => fmtMoney(v);
+  String _fmtPrice(double v) => fmtMoney(v);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2754,13 +3477,16 @@ class _FormField extends StatelessWidget {
   final TextInputType? keyboard;
 
   static const _kBorder = Color(0xFFE0D8CC);
-  static const _kMuted  = Color(0xFF9E9085);
-  static const _kBg     = Color(0xFFFAF7F2);
+  static const _kMuted = Color(0xFF9E9085);
+  static const _kBg = Color(0xFFFAF7F2);
 
   const _FormField({
-    required this.ctrl, required this.label,
-    required this.icon, required this.color,
-    this.validator, this.keyboard,
+    required this.ctrl,
+    required this.label,
+    required this.icon,
+    required this.color,
+    this.validator,
+    this.keyboard,
   });
 
   @override
@@ -2772,18 +3498,21 @@ class _FormField extends StatelessWidget {
       labelText: label,
       labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
       prefixIcon: Icon(icon, color: color, size: 18),
-      filled: true, fillColor: _kBg,
+      filled: true,
+      fillColor: _kBg,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _kBorder)),
+        borderSide: const BorderSide(color: _kBorder),
+      ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _kBorder)),
+        borderSide: const BorderSide(color: _kBorder),
+      ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: color, width: 2)),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14, vertical: 12),
+        borderSide: BorderSide(color: color, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     ),
   );
 }
@@ -2800,7 +3529,8 @@ class _CustomerPickerSheet extends ConsumerStatefulWidget {
     double walletBonus,
     int bonusCapPct,
     DateTime? bonusExpiresAt,
-  }) onSelect;
+  })
+  onSelect;
 
   const _CustomerPickerSheet({required this.onSelect});
 
@@ -2809,16 +3539,15 @@ class _CustomerPickerSheet extends ConsumerStatefulWidget {
       _CustomerPickerSheetState();
 }
 
-class _CustomerPickerSheetState
-    extends ConsumerState<_CustomerPickerSheet> {
+class _CustomerPickerSheetState extends ConsumerState<_CustomerPickerSheet> {
   final _searchCtrl = TextEditingController();
   String _query = '';
 
-  static const _kNavy   = Color(0xFF1E1C5E);
-  static const _kGold   = Color(0xFFF9A825);
-  static const _kMuted  = Color(0xFF9E9085);
+  static const _kNavy = Color(0xFF1E1C5E);
+  static const _kGold = Color(0xFFF9A825);
+  static const _kMuted = Color(0xFF9E9085);
   static const _kBorder = Color(0xFFE0D8CC);
-  static const _kBg     = Color(0xFFFAF7F2);
+  static const _kBg = Color(0xFFFAF7F2);
 
   @override
   void dispose() {
@@ -2846,61 +3575,86 @@ class _CustomerPickerSheetState
               color: _kNavy,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            child: Column(children: [
-              Center(child: Container(
-                width: 36, height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2)),
-              )),
-              const SizedBox(height: 12),
-              Row(children: [
-                const Icon(Icons.person_search_rounded,
-                  color: Colors.white, size: 22),
-                const SizedBox(width: 10),
-                const Text('Chọn khách hàng',
-                  style: TextStyle(color: Colors.white,
-                    fontSize: 16, fontWeight: FontWeight.w800)),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded,
-                    color: Colors.white70, size: 20),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ]),
-              const SizedBox(height: 12),
-              // Search
-              Container(
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12)),
-                child: TextField(
-                  controller: _searchCtrl,
-                  onChanged: (v) => setState(() => _query = v),
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: 'Tìm tên, số điện thoại...',
-                    hintStyle: const TextStyle(
-                      color: Colors.white54, fontSize: 13),
-                    prefixIcon: const Icon(Icons.search_rounded,
-                      color: Colors.white54, size: 18),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 11),
+            child: Column(
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-            ]),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.person_search_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Chọn khách hàng',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white70,
+                        size: 20,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Search
+                Container(
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    onChanged: (v) => setState(() => _query = v),
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Tìm tên, số điện thoại...',
+                      hintStyle: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 13,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: Colors.white54,
+                        size: 18,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           // Customer list
           Expanded(
             child: customersAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Center(
-                child: Text('Không thể tải danh sách')),
+              error: (_, __) =>
+                  const Center(child: Text('Không thể tải danh sách')),
               data: (customers) {
                 final filtered = _query.isEmpty
                     ? customers
@@ -2915,77 +3669,112 @@ class _CustomerPickerSheetState
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.person_off_rounded,
-                          size: 48, color: _kMuted.withValues(alpha: 0.5)),
+                        Icon(
+                          Icons.person_off_rounded,
+                          size: 48,
+                          color: _kMuted.withValues(alpha: 0.5),
+                        ),
                         const SizedBox(height: 12),
-                        const Text('Không tìm thấy khách hàng',
-                          style: TextStyle(color: _kMuted, fontSize: 14)),
+                        const Text(
+                          'Không tìm thấy khách hàng',
+                          style: TextStyle(color: _kMuted, fontSize: 14),
+                        ),
                       ],
                     ),
                   );
                 }
 
-                 return ListView.separated(
+                return ListView.separated(
                   padding: const EdgeInsets.symmetric(
-                    vertical: 8, horizontal: 16),
+                    vertical: 8,
+                    horizontal: 16,
+                  ),
                   itemCount: filtered.length,
                   separatorBuilder: (_, __) =>
-                    const Divider(height: 1, color: _kBorder),
+                      const Divider(height: 1, color: _kBorder),
                   itemBuilder: (_, i) {
                     final c = filtered[i];
                     final pts = c.loyaltyPts;
                     final hasWallet = c.realBalance > 0 || c.bonusBalance > 0;
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 4, vertical: 4),
+                        horizontal: 4,
+                        vertical: 4,
+                      ),
                       leading: CircleAvatar(
                         backgroundColor: _kNavy.withValues(alpha: 0.1),
                         child: Text(
-                          c.name.isNotEmpty
-                              ? c.name[0].toUpperCase()
-                              : '?',
+                          c.name.isNotEmpty ? c.name[0].toUpperCase() : '?',
                           style: const TextStyle(
                             color: _kNavy,
-                            fontWeight: FontWeight.w800)),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
-                      title: Text(c.name,
+                      title: Text(
+                        c.name,
                         style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w700,
-                          color: _kNavy)),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: _kNavy,
+                        ),
+                      ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(c.phone ?? 'Chưa có SĐT',
-                            style: const TextStyle(fontSize: 12, color: _kMuted)),
+                          Text(
+                            c.phone ?? 'Chưa có SĐT',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: _kMuted,
+                            ),
+                          ),
                           if (hasWallet)
-                            Text('💳 Ví: ${c.realBalance.toInt()} + ${c.bonusBalance.toInt()} bonus',
-                              style: const TextStyle(fontSize: 11,
-                                color: Color(0xFF1E1C5E), fontWeight: FontWeight.w600)),
+                            Text(
+                              '💳 Ví: ${c.realBalance.toInt()} + ${c.bonusBalance.toInt()} bonus',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF1E1C5E),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                         ],
                       ),
                       trailing: pts > 0
                           ? Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: _kGold.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(8)),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.stars_rounded,
-                                    color: _kGold, size: 14),
+                                  const Icon(
+                                    Icons.stars_rounded,
+                                    color: _kGold,
+                                    size: 14,
+                                  ),
                                   const SizedBox(width: 4),
-                                  Text('${pts.toInt()}đ',
+                                  Text(
+                                    '${pts.toInt()}đ',
                                     style: const TextStyle(
-                                      color: _kGold, fontSize: 12,
-                                      fontWeight: FontWeight.w700)),
+                                      color: _kGold,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                 ],
                               ),
                             )
                           : null,
                       onTap: () => widget.onSelect(
-                        c.id, c.name, pts,
+                        c.id,
+                        c.name,
+                        pts,
                         walletReal: c.realBalance,
                         walletBonus: c.bonusBalance,
                         bonusCapPct: c.bonusCapPct,
@@ -3010,7 +3799,11 @@ class _TableChip extends ConsumerWidget {
   final String? tableName;
   final VoidCallback onTap;
   final VoidCallback onClear;
-  const _TableChip({required this.tableName, required this.onTap, required this.onClear});
+  const _TableChip({
+    required this.tableName,
+    required this.onTap,
+    required this.onClear,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -3024,13 +3817,15 @@ class _TableChip extends ConsumerWidget {
         color: !isTableActive
             ? Colors.white.withValues(alpha: 0.05)
             : hasTable
-                ? const Color(0xFF3B82F6).withValues(alpha: 0.20)
-                : Colors.white.withValues(alpha: 0.10),
+            ? const Color(0xFF3B82F6).withValues(alpha: 0.20)
+            : Colors.white.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: !isTableActive
               ? Colors.white.withValues(alpha: 0.12)
-              : hasTable ? const Color(0xFF60A5FA) : Colors.white.withValues(alpha: 0.25),
+              : hasTable
+              ? const Color(0xFF60A5FA)
+              : Colors.white.withValues(alpha: 0.25),
         ),
       ),
       child: Opacity(
@@ -3039,16 +3834,23 @@ class _TableChip extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              hasTable ? Icons.table_restaurant_rounded : Icons.table_restaurant_outlined,
-              color: hasTable && isTableActive ? const Color(0xFF60A5FA) : Colors.white60,
+              hasTable
+                  ? Icons.table_restaurant_rounded
+                  : Icons.table_restaurant_outlined,
+              color: hasTable && isTableActive
+                  ? const Color(0xFF60A5FA)
+                  : Colors.white60,
               size: 15,
             ),
             const SizedBox(width: 5),
             Text(
               hasTable ? tableName! : 'Chọn bàn',
               style: TextStyle(
-                color: hasTable && isTableActive ? const Color(0xFF60A5FA) : Colors.white60,
-                fontSize: 12, fontWeight: FontWeight.w600,
+                color: hasTable && isTableActive
+                    ? const Color(0xFF60A5FA)
+                    : Colors.white60,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -3077,8 +3879,14 @@ class _TableChip extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.10), shape: BoxShape.circle),
-              child: const Icon(Icons.close_rounded, color: Colors.white54, size: 13),
+                color: Colors.white.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close_rounded,
+                color: Colors.white54,
+                size: 13,
+              ),
             ),
           ),
         ],
@@ -3096,8 +3904,11 @@ class _TablePickerSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tablesAsync = ref.watch(StreamProvider((ref) =>
-      ref.watch(banRepositoryProvider).watchAllTables()));
+    final tablesAsync = ref.watch(
+      StreamProvider(
+        (ref) => ref.watch(banRepositoryProvider).watchAllTables(),
+      ),
+    );
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -3108,15 +3919,25 @@ class _TablePickerSheet extends ConsumerWidget {
         children: [
           Container(
             margin: const EdgeInsets.only(top: 12, bottom: 16),
-            width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(2)),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.black12,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text('Chọn bàn',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy)),
+              child: Text(
+                'Chọn bàn',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: _kNavy,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -3129,11 +3950,21 @@ class _TablePickerSheet extends ConsumerWidget {
                 final activeTables = tables.where((t) => t.isActive).toList();
                 if (activeTables.isEmpty) {
                   return Center(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.table_restaurant_rounded, size: 48, color: Colors.black26),
-                      const SizedBox(height: 12),
-                      Text('Chưa có bàn nào', style: TextStyle(color: Colors.grey.shade500)),
-                    ]),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.table_restaurant_rounded,
+                          size: 48,
+                          color: Colors.black26,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Chưa có bàn nào',
+                          style: TextStyle(color: Colors.grey.shade500),
+                        ),
+                      ],
+                    ),
                   );
                 }
                 return ListView.builder(
@@ -3142,18 +3973,34 @@ class _TablePickerSheet extends ConsumerWidget {
                   itemBuilder: (_, i) {
                     final t = activeTables[i];
                     return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       leading: Container(
-                        width: 40, height: 40,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
                           color: _kNavy.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.table_restaurant_rounded, color: _kNavy, size: 20),
+                        child: const Icon(
+                          Icons.table_restaurant_rounded,
+                          color: _kNavy,
+                          size: 20,
+                        ),
                       ),
-                      title: Text(t.label,
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: _kNavy)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      title: Text(
+                        t.label,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: _kNavy,
+                        ),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       onTap: () => onSelect(t.id, t.label),
                     );
                   },
@@ -3204,11 +4051,16 @@ class _PosKitchenSendBtn extends ConsumerWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.local_fire_department_rounded,
-                color: Colors.white, size: 16),
+            const Icon(
+              Icons.local_fire_department_rounded,
+              color: Colors.white,
+              size: 16,
+            ),
             const SizedBox(width: 4),
             Text(
-              allSent ? 'Đã gửi hết' : 'Bếp${unsentCount > 0 ? ' ($unsentCount)' : ''}',
+              allSent
+                  ? 'Đã gửi hết'
+                  : 'Bếp${unsentCount > 0 ? ' ($unsentCount)' : ''}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
@@ -3284,8 +4136,11 @@ class _LocationSelector extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.table_restaurant_rounded,
-                    color: Color(0xFF93C5FD), size: 13),
+                const Icon(
+                  Icons.table_restaurant_rounded,
+                  color: Color(0xFF93C5FD),
+                  size: 13,
+                ),
                 const SizedBox(width: 5),
                 Text(
                   tableName!,
@@ -3307,8 +4162,11 @@ class _LocationSelector extends ConsumerWidget {
                 color: Colors.white.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.close_rounded,
-                  color: Colors.white54, size: 13),
+              child: const Icon(
+                Icons.close_rounded,
+                color: Colors.white54,
+                size: 13,
+              ),
             ),
           ),
         ] else ...[
@@ -3323,8 +4181,11 @@ class _LocationSelector extends ConsumerWidget {
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.shopping_bag_outlined,
-                    color: Colors.white70, size: 13),
+                Icon(
+                  Icons.shopping_bag_outlined,
+                  color: Colors.white70,
+                  size: 13,
+                ),
                 SizedBox(width: 5),
                 Text(
                   'Mang di',
@@ -3350,8 +4211,9 @@ class _LocationSelector extends ConsumerWidget {
                 color: Colors.white.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.20),
-                    style: BorderStyle.solid),
+                  color: Colors.white.withValues(alpha: 0.20),
+                  style: BorderStyle.solid,
+                ),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
@@ -3426,18 +4288,14 @@ class _InlineLocationChip extends ConsumerWidget {
                   hasTable
                       ? Icons.table_restaurant_rounded
                       : Icons.add_location_alt_rounded,
-                  color: hasTable
-                      ? const Color(0xFF93C5FD)
-                      : Colors.white54,
+                  color: hasTable ? const Color(0xFF93C5FD) : Colors.white54,
                   size: 12,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   hasTable ? tableName! : 'Chon ban',
                   style: TextStyle(
-                    color: hasTable
-                        ? const Color(0xFF93C5FD)
-                        : Colors.white54,
+                    color: hasTable ? const Color(0xFF93C5FD) : Colors.white54,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
@@ -3450,8 +4308,11 @@ class _InlineLocationChip extends ConsumerWidget {
           const SizedBox(width: 2),
           GestureDetector(
             onTap: onClearTable,
-            child: const Icon(Icons.close_rounded,
-                color: Colors.white38, size: 13),
+            child: const Icon(
+              Icons.close_rounded,
+              color: Colors.white38,
+              size: 13,
+            ),
           ),
         ],
       ],
@@ -3475,13 +4336,18 @@ class _PosKitchenSendHint extends ConsumerWidget {
         color: const Color(0xFFE85D20).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-            color: const Color(0xFFE85D20).withValues(alpha: 0.35), width: 1),
+          color: const Color(0xFFE85D20).withValues(alpha: 0.35),
+          width: 1,
+        ),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.local_fire_department_rounded,
-              color: Color(0xFFE85D20), size: 12),
+          Icon(
+            Icons.local_fire_department_rounded,
+            color: Color(0xFFE85D20),
+            size: 12,
+          ),
           SizedBox(width: 4),
           Text(
             'Bep san sang',
@@ -3516,10 +4382,10 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
   final Map<String, TextEditingController> _noteCtrls = {};
   String _search = '';
 
-  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kNavy = Color(0xFF1E1C5E);
   static const _kOrange = Color(0xFFE85D20);
-  static const _kMuted  = Color(0xFF9E9085);
-  static const _kBg     = Color(0xFFFAF7F2);
+  static const _kMuted = Color(0xFF9E9085);
+  static const _kBg = Color(0xFFFAF7F2);
 
   @override
   void dispose() {
@@ -3530,7 +4396,10 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
   String _fmt(double amount) => _fmtStatic(amount.toInt());
 
   void _confirm(List<ProductModel> products) {
-    if (_selected.isEmpty) { Navigator.pop(context); return; }
+    if (_selected.isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
     final notifier = ref.read(cartProvider.notifier);
     for (final entry in _selected.entries) {
       final product = products.firstWhere((p) => p.id == entry.key);
@@ -3545,18 +4414,26 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
     HapticFeedback.lightImpact();
     final total = _selected.values.fold(0, (s, v) => s + v);
     Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        const Icon(Icons.add_shopping_cart_rounded, color: Colors.white, size: 16),
-        const SizedBox(width: 8),
-        Text('Đã thêm $total món vào giỏ'),
-      ]),
-      backgroundColor: _kNavy,
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 2),
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 100),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(
+              Icons.add_shopping_cart_rounded,
+              color: Colors.white,
+              size: 16,
+            ),
+            const SizedBox(width: 8),
+            Text('Đã thêm $total món vào giỏ'),
+          ],
+        ),
+        backgroundColor: _kNavy,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 100),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
   @override
@@ -3575,12 +4452,16 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            Center(child: Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: _kNavy.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(2)),
-            )),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: _kNavy.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
             // Search
             Padding(
@@ -3590,18 +4471,25 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
                 style: TextStyle(color: _kNavy, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'Tìm sản phẩm...',
-                  hintStyle: TextStyle(color: _kNavy.withValues(alpha: 0.4), fontSize: 14),
+                  hintStyle: TextStyle(
+                    color: _kNavy.withValues(alpha: 0.4),
+                    fontSize: 14,
+                  ),
                   prefixIcon: const Icon(Icons.search_rounded, color: _kNavy),
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.15)),
+                    borderSide: BorderSide(
+                      color: _kNavy.withValues(alpha: 0.15),
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: _kNavy.withValues(alpha: 0.15)),
+                    borderSide: BorderSide(
+                      color: _kNavy.withValues(alpha: 0.15),
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -3621,13 +4509,16 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
                   final prodList = (products as List).cast<ProductModel>();
                   final filtered = _search.isEmpty
                       ? prodList
-                      : prodList.where((p) =>
-                          p.name.containsSearch(_search)).toList();
+                      : prodList
+                            .where((p) => p.name.containsSearch(_search))
+                            .toList();
 
                   if (filtered.isEmpty) {
                     return Center(
-                      child: Text('Không tìm thấy sản phẩm',
-                        style: TextStyle(color: _kNavy.withValues(alpha: 0.5))),
+                      child: Text(
+                        'Không tìm thấy sản phẩm',
+                        style: TextStyle(color: _kNavy.withValues(alpha: 0.5)),
+                      ),
                     );
                   }
 
@@ -3638,7 +4529,10 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
                     itemBuilder: (ctx, i) {
                       final p = filtered[i];
                       final qty = _selected[p.id] ?? 0;
-                      _noteCtrls.putIfAbsent(p.id, () => TextEditingController());
+                      _noteCtrls.putIfAbsent(
+                        p.id,
+                        () => TextEditingController(),
+                      );
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 8),
@@ -3657,21 +4551,36 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                              padding: const EdgeInsets.fromLTRB(
+                                14,
+                                10,
+                                14,
+                                10,
+                              ),
                               child: Row(
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(p.name,
+                                        Text(
+                                          p.name,
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w600,
-                                            color: _kNavy, fontSize: 14)),
-                                        Text(_fmt(p.sellPrice),
+                                            color: _kNavy,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        Text(
+                                          _fmt(p.sellPrice),
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: _kNavy.withValues(alpha: 0.6))),
+                                            color: _kNavy.withValues(
+                                              alpha: 0.6,
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -3682,37 +4591,59 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
                                       if (qty > 0)
                                         GestureDetector(
                                           onTap: () => setState(() {
-                                            if (qty <= 1) _selected.remove(p.id);
-                                            else _selected[p.id] = qty - 1;
+                                            if (qty <= 1)
+                                              _selected.remove(p.id);
+                                            else
+                                              _selected[p.id] = qty - 1;
                                           }),
                                           child: Container(
-                                            width: 32, height: 32,
+                                            width: 32,
+                                            height: 32,
                                             decoration: BoxDecoration(
-                                              color: _kNavy.withValues(alpha: 0.1),
-                                              borderRadius: BorderRadius.circular(8)),
-                                            child: const Icon(Icons.remove_rounded,
-                                                size: 16, color: _kNavy),
+                                              color: _kNavy.withValues(
+                                                alpha: 0.1,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: const Icon(
+                                              Icons.remove_rounded,
+                                              size: 16,
+                                              color: _kNavy,
+                                            ),
                                           ),
                                         ),
                                       if (qty > 0)
                                         SizedBox(
                                           width: 36,
-                                          child: Text('$qty',
+                                          child: Text(
+                                            '$qty',
                                             textAlign: TextAlign.center,
                                             style: const TextStyle(
                                               fontWeight: FontWeight.w700,
-                                              fontSize: 16, color: _kNavy)),
+                                              fontSize: 16,
+                                              color: _kNavy,
+                                            ),
+                                          ),
                                         ),
                                       GestureDetector(
                                         onTap: () => setState(
-                                            () => _selected[p.id] = qty + 1),
+                                          () => _selected[p.id] = qty + 1,
+                                        ),
                                         child: Container(
-                                          width: 36, height: 36,
+                                          width: 36,
+                                          height: 36,
                                           decoration: BoxDecoration(
                                             color: _kNavy,
-                                            borderRadius: BorderRadius.circular(10)),
-                                          child: const Icon(Icons.add_rounded,
-                                              size: 18, color: Colors.white),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.add_rounded,
+                                            size: 18,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -3723,26 +4654,41 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
                             // Note field — chỉ hiện khi qty > 0
                             if (qty > 0)
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+                                padding: const EdgeInsets.fromLTRB(
+                                  14,
+                                  0,
+                                  14,
+                                  10,
+                                ),
                                 child: TextField(
                                   controller: _noteCtrls[p.id],
-                                  style: const TextStyle(fontSize: 12, color: _kNavy),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: _kNavy,
+                                  ),
                                   decoration: InputDecoration(
                                     isDense: true,
-                                    hintText: 'Ghi chú bếp (vd: ít rau, không cay)',
+                                    hintText:
+                                        'Ghi chú bếp (vd: ít rau, không cay)',
                                     hintStyle: TextStyle(
                                       fontSize: 12,
-                                      color: _kNavy.withValues(alpha: 0.4)),
+                                      color: _kNavy.withValues(alpha: 0.4),
+                                    ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 6),
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
                                       borderSide: BorderSide(
-                                          color: _kNavy.withValues(alpha: 0.2)),
+                                        color: _kNavy.withValues(alpha: 0.2),
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
-                                      borderSide: const BorderSide(color: _kNavy),
+                                      borderSide: const BorderSide(
+                                        color: _kNavy,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -3765,20 +4711,25 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
                   color: Colors.white,
                   child: SafeArea(
                     child: SizedBox(
-                      width: double.infinity, height: 54,
+                      width: double.infinity,
+                      height: 54,
                       child: ElevatedButton(
                         onPressed: () => _confirm(products),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: count > 0 ? _kNavy : _kMuted,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16)),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           elevation: 0,
                         ),
                         child: Text(
                           count > 0 ? 'Thêm $count món vào giỏ' : 'Chọn món',
                           style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 15)),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -3796,7 +4747,11 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
 
 class _KitchenConfirmSheet extends StatefulWidget {
   final CartState cart;
-  final Future<void> Function(String? kitchenNote, Map<String, String> itemNotes) onConfirm;
+  final Future<void> Function(
+    String? kitchenNote,
+    Map<String, String> itemNotes,
+  )
+  onConfirm;
   const _KitchenConfirmSheet({required this.cart, required this.onConfirm});
 
   @override
@@ -3810,12 +4765,12 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
   final Map<String, TextEditingController> _itemNoteCtrls = {};
   bool _sending = false;
 
-  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kNavy = Color(0xFF1E1C5E);
   static const _kOrange = Color(0xFFE85D20);
   static const _kBorder = Color(0xFFE0D8CC);
-  static const _kMuted  = Color(0xFF9E9085);
-  static const _kBg     = Color(0xFFFAF7F2);
-  static const _kInk    = Color(0xFF1A1714);
+  static const _kMuted = Color(0xFF9E9085);
+  static const _kBg = Color(0xFFFAF7F2);
+  static const _kInk = Color(0xFF1A1714);
 
   @override
   void initState() {
@@ -3833,7 +4788,7 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
     super.dispose();
   }
 
-    String _fmt(int v) => fmtMoney(v.toDouble());
+  String _fmt(int v) => fmtMoney(v.toDouble());
 
   @override
   Widget build(BuildContext context) {
@@ -3853,19 +4808,24 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                    colors: [_kNavy, Color(0xFF2D2B8A)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight),
+                  colors: [_kNavy, Color(0xFF2D2B8A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
                 children: [
-                  Center(child: Container(
-                    width: 40, height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2)),
-                  )),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 14),
                   Row(
                     children: [
@@ -3873,20 +4833,34 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: _kOrange.withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(10)),
-                        child: const Icon(Icons.local_fire_department_rounded,
-                            color: Colors.white, size: 20),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.local_fire_department_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Xác nhận gửi bếp',
-                              style: TextStyle(color: Colors.white,
-                                  fontSize: 16, fontWeight: FontWeight.w800)),
-                            Text('Thêm ghi chú nếu cần rồi bấm gửi',
-                              style: TextStyle(color: Color(0x99FFFFFF), fontSize: 11)),
+                            Text(
+                              'Xác nhận gửi bếp',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text(
+                              'Thêm ghi chú nếu cần rồi bấm gửi',
+                              style: TextStyle(
+                                color: Color(0x99FFFFFF),
+                                fontSize: 11,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -3910,8 +4884,7 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: _kNavy.withValues(alpha: 0.08)),
+                      border: Border.all(color: _kNavy.withValues(alpha: 0.08)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3922,20 +4895,32 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
                           child: Row(
                             children: [
                               Expanded(
-                                child: Text(line.productName,
+                                child: Text(
+                                  line.productName,
                                   style: const TextStyle(
-                                      fontSize: 14, fontWeight: FontWeight.w700,
-                                      color: _kInk)),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: _kInk,
+                                  ),
+                                ),
                               ),
-                              Text('×${line.quantity.toInt()}',
+                              Text(
+                                '×${line.quantity.toInt()}',
                                 style: TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w600,
-                                    color: _kNavy.withValues(alpha: 0.5))),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: _kNavy.withValues(alpha: 0.5),
+                                ),
+                              ),
                               const SizedBox(width: 8),
-                              Text('${_fmt(line.subtotal.toInt())}',
+                              Text(
+                                '${_fmt(line.subtotal.toInt())}',
                                 style: const TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w800,
-                                    color: _kNavy)),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: _kNavy,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -3949,19 +4934,24 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
                               isDense: true,
                               hintText: 'Ghi chú bếp (vd: ít rau, không cay)',
                               hintStyle: TextStyle(
-                                  fontSize: 12,
-                                  color: _kNavy.withValues(alpha: 0.4)),
+                                fontSize: 12,
+                                color: _kNavy.withValues(alpha: 0.4),
+                              ),
                               contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 6),
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide(
-                                    color: _kNavy.withValues(alpha: 0.2)),
+                                  color: _kNavy.withValues(alpha: 0.2),
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide(
-                                    color: _kNavy.withValues(alpha: 0.2)),
+                                  color: _kNavy.withValues(alpha: 0.2),
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -3986,67 +4976,107 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Ghi chú chung cho bếp (tuỳ chọn)',
-                      style: TextStyle(fontSize: 12, color: _kMuted,
-                          fontWeight: FontWeight.w600)),
+                    const Text(
+                      'Ghi chú chung cho bếp (tuỳ chọn)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _kMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _kitchenNoteCtrl,
                       maxLines: 1,
                       decoration: InputDecoration(
                         hintText: 'Vd: bàn vội, khách dị ứng hành...',
-                        hintStyle: const TextStyle(color: _kMuted, fontSize: 12),
+                        hintStyle: const TextStyle(
+                          color: _kMuted,
+                          fontSize: 12,
+                        ),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: _kBorder)),
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: _kBorder),
+                        ),
                         enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: _kBorder)),
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: _kBorder),
+                        ),
                         focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: _kNavy, width: 1.5)),
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: _kNavy,
+                            width: 1.5,
+                          ),
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         filled: true,
                         fillColor: _kBg,
-                        prefixIcon: const Icon(Icons.speaker_notes_outlined,
-                            color: _kMuted, size: 16),
+                        prefixIcon: const Icon(
+                          Icons.speaker_notes_outlined,
+                          color: _kMuted,
+                          size: 16,
+                        ),
                         isDense: true,
                       ),
                     ),
                     const SizedBox(height: 10),
                     SizedBox(
-                      width: double.infinity, height: 50,
+                      width: double.infinity,
+                      height: 50,
                       child: ElevatedButton.icon(
-                        onPressed: _sending ? null : () async {
-                          setState(() => _sending = true);
-                          // Thu thập ghi chú từng món
-                          final itemNotes = <String, String>{};
-                          for (final line in widget.cart.lines) {
-                            final note = _itemNoteCtrls[line.lineId]?.text.trim() ?? '';
-                            if (note.isNotEmpty) itemNotes[line.lineId] = note;
-                          }
-                          final kitchenNote = _kitchenNoteCtrl.text.trim().isEmpty
-                              ? null : _kitchenNoteCtrl.text.trim();
-                          Navigator.pop(context);
-                          await widget.onConfirm(kitchenNote, itemNotes);
-                        },
+                        onPressed: _sending
+                            ? null
+                            : () async {
+                                setState(() => _sending = true);
+                                // Thu thập ghi chú từng món
+                                final itemNotes = <String, String>{};
+                                for (final line in widget.cart.lines) {
+                                  final note =
+                                      _itemNoteCtrls[line.lineId]?.text
+                                          .trim() ??
+                                      '';
+                                  if (note.isNotEmpty)
+                                    itemNotes[line.lineId] = note;
+                                }
+                                final kitchenNote =
+                                    _kitchenNoteCtrl.text.trim().isEmpty
+                                    ? null
+                                    : _kitchenNoteCtrl.text.trim();
+                                Navigator.pop(context);
+                                await widget.onConfirm(kitchenNote, itemNotes);
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _kOrange,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           elevation: 0,
                         ),
                         icon: _sending
-                            ? const SizedBox(width: 16, height: 16,
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
                                 child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2))
-                            : const Icon(Icons.local_fire_department_rounded, size: 18),
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.local_fire_department_rounded,
+                                size: 18,
+                              ),
                         label: Text(
                           _sending ? 'Đang gửi...' : 'Gửi bếp ngay',
                           style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 15)),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -4065,7 +5095,8 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _RecentOrdersSheet extends ConsumerStatefulWidget {
   const _RecentOrdersSheet();
-  @override ConsumerState<_RecentOrdersSheet> createState() => _RecentOrdersSheetState();
+  @override
+  ConsumerState<_RecentOrdersSheet> createState() => _RecentOrdersSheetState();
 }
 
 class _RecentOrdersSheetState extends ConsumerState<_RecentOrdersSheet> {
@@ -4074,8 +5105,9 @@ class _RecentOrdersSheetState extends ConsumerState<_RecentOrdersSheet> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
-    final isOwner = session?.isOwner == true ||
-        session?.role == 'owner' || 
+    final isOwner =
+        session?.isOwner == true ||
+        session?.role == 'owner' ||
         session?.role == 'manager' ||
         session?.role.toLowerCase() == 'quản lý';
     final posRepo = ref.watch(posRepositoryProvider);
@@ -4084,78 +5116,144 @@ class _RecentOrdersSheetState extends ConsumerState<_RecentOrdersSheet> {
     return Container(
       decoration: const BoxDecoration(
         color: _kBg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.82),
+        maxHeight: MediaQuery.of(context).size.height * 0.82,
+      ),
       child: StreamBuilder<List<OrderModel>>(
         stream: ordersStream,
         builder: (_, snap) {
           final orders = snap.data ?? [];
-          return Column(children: [
-            // Handle + Header
-            Padding(padding: const EdgeInsets.fromLTRB(20, 12, 16, 10),
-              child: Column(children: [
-                Container(width: 40, height: 4,
-                  decoration: BoxDecoration(
-                    color: _kBorder, borderRadius: BorderRadius.circular(2))),
-                const SizedBox(height: 14),
-                Row(children: [
-                  const Icon(Icons.history_rounded, color: _kNavy, size: 20),
-                  const SizedBox(width: 8),
-                  const Text('Đơn gần đây',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900,
-                      color: _kInk, letterSpacing: -0.3)),
-                  const SizedBox(width: 8),
-                  if (orders.isNotEmpty)
+          return Column(
+            children: [
+              // Handle + Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 16, 10),
+                child: Column(
+                  children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      width: 40,
+                      height: 4,
                       decoration: BoxDecoration(
-                        color: _kOrange.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20)),
-                      child: Text('${orders.length} đơn',
-                        style: const TextStyle(color: _kOrange, fontSize: 12,
-                          fontWeight: FontWeight.w700))),
-                  const Spacer(),
-                  if (isOwner && orders.isNotEmpty)
-                    Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text(
-                        _fmtV(orders.fold(0.0, (s, o) => s + o.totalAmount).toInt()),
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900,
-                          color: _kNavy, letterSpacing: -0.5)),
-                      const Text('tổng hôm nay',
-                        style: TextStyle(fontSize: 9, color: _kMuted)),
-                    ]),
-                ]),
-              ]),
-            ),
-            const Divider(height: 1, color: _kBorder),
+                        color: _kBorder,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.history_rounded,
+                          color: _kNavy,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Đơn gần đây',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: _kInk,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (orders.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _kOrange.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${orders.length} đơn',
+                              style: const TextStyle(
+                                color: _kOrange,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        const Spacer(),
+                        if (isOwner && orders.isNotEmpty)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                _fmtV(
+                                  orders
+                                      .fold(0.0, (s, o) => s + o.totalAmount)
+                                      .toInt(),
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  color: _kNavy,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const Text(
+                                'tổng hôm nay',
+                                style: TextStyle(fontSize: 9, color: _kMuted),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: _kBorder),
 
-            Expanded(
-              child: orders.isEmpty
-                ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.receipt_long_rounded,
-                      size: 64, color: _kMuted.withValues(alpha: 0.3)),
-                    const SizedBox(height: 12),
-                    const Text('Chưa có đơn nào hôm nay',
-                      style: TextStyle(fontSize: 15, color: _kMuted,
-                        fontWeight: FontWeight.w600)),
-                  ]))
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    itemCount: orders.length,
-                    itemBuilder: (ctx, i) {
-                      final o = orders[i];
-                      final expanded = _expandedId == o.id;
-                      return _PosOrderCard(
-                        order: o, isOwner: isOwner,
-                        isExpanded: expanded,
-                        onTap: () => setState(() =>
-                          _expandedId = expanded ? null : o.id),
-                      );
-                    },
-                  ),
-            ),
-          ]);
+              Expanded(
+                child: orders.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.receipt_long_rounded,
+                              size: 64,
+                              color: _kMuted.withValues(alpha: 0.3),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Chưa có đơn nào hôm nay',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: _kMuted,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        itemCount: orders.length,
+                        itemBuilder: (ctx, i) {
+                          final o = orders[i];
+                          final expanded = _expandedId == o.id;
+                          return _PosOrderCard(
+                            order: o,
+                            isOwner: isOwner,
+                            isExpanded: expanded,
+                            onTap: () => setState(
+                              () => _expandedId = expanded ? null : o.id,
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
         },
       ),
     );
@@ -4167,18 +5265,25 @@ class _PosOrderCard extends ConsumerWidget {
   final OrderModel order;
   final bool isOwner, isExpanded;
   final VoidCallback onTap;
-  const _PosOrderCard({required this.order, required this.isOwner,
-    required this.isExpanded, required this.onTap});
+  const _PosOrderCard({
+    required this.order,
+    required this.isOwner,
+    required this.isExpanded,
+    required this.onTap,
+  });
 
-  String _payLabel(String m) => switch(m) {
-    'cash' => '💵 Tiền mặt', 'transfer' => '🏦 Chuyển khoản',
-    'card'  => '💳 Thẻ', _ => m,
+  String _payLabel(String m) => switch (m) {
+    'cash' => '💵 Tiền mặt',
+    'transfer' => '🏦 Chuyển khoản',
+    'card' => '💳 Thẻ',
+    _ => m,
   };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dt = DateTime.tryParse(order.createdAt) ?? DateTime.now();
-    final t = '${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}';
+    final t =
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
 
     return GestureDetector(
       onTap: onTap,
@@ -4190,106 +5295,214 @@ class _PosOrderCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isExpanded ? _kNavy.withValues(alpha: 0.35) : _kBorder,
-            width: isExpanded ? 1.5 : 1),
-          boxShadow: [BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6, offset: const Offset(0, 2))]),
-        child: Column(children: [
-          Padding(padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-            child: Row(children: [
-              Container(width: 8, height: 8,
-                decoration: BoxDecoration(
-                  color: order.status == 'completed'
-                    ? const Color(0xFF4CAF50) : const Color(0xFFC62828),
-                  shape: BoxShape.circle)),
-              const SizedBox(width: 10),
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(order.orderNumber,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800,
-                    color: _kInk, letterSpacing: 0.2)),
-                const SizedBox(height: 2),
-                Wrap(spacing: 8, children: [
-                  Text(t, style: const TextStyle(fontSize: 11, color: _kMuted)),
-                  Text(_payLabel(order.paymentMethod),
-                    style: const TextStyle(fontSize: 11, color: _kMuted)),
-                  if (order.customerName != null)
-                    Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.person_outline_rounded, size: 11, color: _kMuted),
-                      const SizedBox(width: 2),
-                      Text(order.customerName!,
-                        style: const TextStyle(fontSize: 11, color: _kMuted)),
-                    ]),
-                ]),
-              ])),
-              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text(_fmtV(order.totalAmount.toInt()),
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900,
-                    color: _kNavy, letterSpacing: -0.5)),
-                const SizedBox(height: 2),
-                Icon(isExpanded
-                  ? Icons.keyboard_arrow_up_rounded
-                  : Icons.keyboard_arrow_down_rounded,
-                  size: 16, color: _kMuted),
-              ]),
-            ]),
+            width: isExpanded ? 1.5 : 1,
           ),
-
-          // Expanded detail
-          if (isExpanded)
-            FutureBuilder<List<OrderItemModel>>(
-              future: ref.read(posRepositoryProvider).getOrderItems(order.id),
-              builder: (_, snap) {
-                final items = snap.data ?? [];
-                return Column(children: [
-                  const Divider(height: 1, color: _kBorder),
-                  Padding(padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-                    child: Column(children: [
-                      ...items.map((item) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 3),
-                        child: Row(children: [
-                          Container(
-                            width: 24, height: 24,
-                            decoration: BoxDecoration(
-                              color: _kNavy.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(6)),
-                            child: Center(child: Text(
-                              '${item.quantity.toInt()}',
-                              style: const TextStyle(fontSize: 11,
-                                fontWeight: FontWeight.w800, color: _kNavy)))),
-                          const SizedBox(width: 10),
-                          Expanded(child: Text(item.productName,
-                            style: const TextStyle(fontSize: 13,
-                              fontWeight: FontWeight.w600, color: _kInk))),
-                          Text(_fmtV(item.subtotal.toInt()),
-                            style: const TextStyle(fontSize: 13,
-                              fontWeight: FontWeight.w700, color: _kInk)),
-                        ]),
-                      )),
-                      if (order.note != null && order.note!.isNotEmpty) ...[
-                        const Divider(height: 16, color: _kBorder),
-                        Row(children: [
-                          const Icon(Icons.notes_rounded, size: 13, color: _kOrange),
-                          const SizedBox(width: 6),
-                          Expanded(child: Text(order.note!,
-                            style: const TextStyle(fontSize: 12, color: _kOrange,
-                              fontStyle: FontStyle.italic))),
-                        ]),
-                      ],
-                    ]),
-                  ),
-                ]);
-              },
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-        ]),
+          ],
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: order.status == 'completed'
+                          ? const Color(0xFF4CAF50)
+                          : const Color(0xFFC62828),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          order.orderNumber,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: _kInk,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            Text(
+                              t,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: _kMuted,
+                              ),
+                            ),
+                            Text(
+                              _payLabel(order.paymentMethod),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: _kMuted,
+                              ),
+                            ),
+                            if (order.customerName != null)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.person_outline_rounded,
+                                    size: 11,
+                                    color: _kMuted,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    order.customerName!,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: _kMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        _fmtV(order.totalAmount.toInt()),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: _kNavy,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Icon(
+                        isExpanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: _kMuted,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Expanded detail
+            if (isExpanded)
+              FutureBuilder<List<OrderItemModel>>(
+                future: ref.read(posRepositoryProvider).getOrderItems(order.id),
+                builder: (_, snap) {
+                  final items = snap.data ?? [];
+                  return Column(
+                    children: [
+                      const Divider(height: 1, color: _kBorder),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+                        child: Column(
+                          children: [
+                            ...items.map(
+                              (item) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 3,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 24,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        color: _kNavy.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '${item.quantity.toInt()}',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            color: _kNavy,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        item.productName,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: _kInk,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      _fmtV(item.subtotal.toInt()),
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: _kInk,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (order.note != null &&
+                                order.note!.isNotEmpty) ...[
+                              const Divider(height: 16, color: _kBorder),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.notes_rounded,
+                                    size: 13,
+                                    color: _kOrange,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      order.note!,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: _kOrange,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
-
 String _fmtV(int v) {
   if (v < 0) return '-${_fmtV(-v)}';
   return '${v.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} đ';
 }
-

@@ -1793,6 +1793,11 @@ class _TableCard extends ConsumerWidget {
         .toList();
     final hasPendingQr = pendingForTable.isNotEmpty;
 
+    final activeForTable = ref.watch(
+      activeQrRequestsForTableProvider(table.id),
+    );
+    final hasActiveQr = activeForTable.isNotEmpty;
+
     // Kích thước động theo cardSize
     final double paddingVal = cardSize == 'nho'
         ? 8.0
@@ -1832,13 +1837,13 @@ class _TableCard extends ConsumerWidget {
       borderRadius: borderRadiusVal,
       child: GestureDetector(
         onTap: () {
-          if (hasPendingQr) {
+          if (hasActiveQr) {
             showModalBottomSheet(
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
               builder: (_) => QrOrderReviewSheet(
-                request: pendingForTable.first,
+                request: activeForTable.first,
                 onApproved: () {},
                 onRejected: () {},
               ),
@@ -1847,6 +1852,7 @@ class _TableCard extends ConsumerWidget {
             onTap();
           }
         },
+
         onLongPress: onLongPress,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),

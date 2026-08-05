@@ -284,6 +284,12 @@ class QrRequestModel {
   final DateTime createdAt;
   final List<QrRequestItemModel> items;
 
+  String get displayPickupCode {
+    if (pickupCode == null || pickupCode!.trim().isEmpty) return '#Q01';
+    final clean = pickupCode!.replaceAll('#', '').trim();
+    return '#$clean';
+  }
+
   const QrRequestModel({
     required this.id,
     required this.storeId,

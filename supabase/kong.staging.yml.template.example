@@ -1,0 +1,110 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# KONG DECLARATIVE ROUTING TEMPLATE FOR STAGING
+# File: supabase/kong.staging.yml.template.example
+# Target runtime location: /var/www/quannho_staging/kong.staging.yml (chmod 600)
+# Note: Rendered via envsubst to substitute ${ANON_KEY} and ${SERVICE_ROLE_KEY}
+# ═══════════════════════════════════════════════════════════════════════════
+
+_format_version: "2.1"
+_transform: true
+
+# 1. Supabase API Key Consumers
+consumers:
+  - username: anon
+    keyauth_credentials:
+      - key: "${ANON_KEY}"
+  - username: service_role
+    keyauth_credentials:
+      - key: "${SERVICE_ROLE_KEY}"
+
+# 2. Services and Declarative Routes
+services:
+  # PostgREST REST API
+  - name: rest-v1
+    url: http://staging-rest:3000/
+    routes:
+      - name: rest-v1-routes
+        strip_path: true
+        paths:
+          - /rest/v1/
+    plugins:
+      - name: key-auth
+        config:
+          key_names:
+            - apikey
+
+  # GoTrue Auth API - Unauthenticated Public Callback Routes (OAuth & Email Verification)
+  - name: auth-v1-open
+    url: http://staging-auth:9999/
+    routes:
+      - name: auth-v1-open-routes
+        strip_path: true
+        paths:
+          - /auth/v1/callback
+          - /auth/v1/verify
+          - /auth/v1/authorize
+
+  # GoTrue Auth API - Protected Routes (Requires apikey)
+  - name: auth-v1
+    url: http://staging-auth:9999/
+    routes:
+      - name: auth-v1-routes
+        strip_path: true
+        paths:
+          - /auth/v1/
+    plugins:
+      - name: key-auth
+        config:
+          key_names:
+            - apikey
+
+  # Realtime WebSocket API
+  - name: realtime-v1
+    url: http://staging-realtime:4000/
+    routes:
+      - name: realtime-v1-routes
+        strip_path: true
+        paths:
+          - /realtime/v1/
+    plugins:
+      - name: key-auth
+        config:
+          key_names:
+            - apikey
+
+  # Storage API
+  - name: storage-v1
+    url: http://staging-storage:5000/
+    routes:
+      - name: storage-v1-routes
+        strip_path: true
+        paths:
+          - /storage/v1/
+    plugins:
+      - name: key-auth
+        config:
+          key_names:
+            - apikey
+
+# 3. Global Plugins Configuration (CORS configured for apikey/Bearer header authorization, credentials: false)
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "https://quannho-staging.lpm.vn"
+        - "https://kay.lpm.vn"
+        - "http://localhost:3000"
+        - "http://localhost:8080"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - "*"
+      exposed_headers:
+        - "*"
+      credentials: false
+      max_age: 3600

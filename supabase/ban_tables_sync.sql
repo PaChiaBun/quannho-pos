@@ -72,8 +72,20 @@ CREATE POLICY "ban_dining_tables: owner/manager write"
   ));
 
 -- ─── REALTIME ─────────────────────────────────────────────────────────────────
--- Chạy lệnh này để bật Realtime (hoặc enable qua Dashboard > Database > Replication)
-ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_zones;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_dining_tables;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_sessions;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_session_items;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'ban_zones') THEN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_zones;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'ban_dining_tables') THEN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_dining_tables;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'ban_sessions') THEN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_sessions;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'ban_session_items') THEN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.ban_session_items;
+    END IF;
+  END IF;
+END $$;

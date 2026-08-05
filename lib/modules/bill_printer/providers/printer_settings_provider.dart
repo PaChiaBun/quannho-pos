@@ -340,9 +340,13 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   final Set<String> _printedTicketIds = {};
   final Set<String> _printedOrderIds = {};
   Timer? _pollTimer;
+  Timer? _reconnectTimer;
   DateTime? _startupTime;
   String? _activeStoreId;
   bool _isWarmedUp = false;
+  bool _isWsConnected = false;
+  int _wsReconnectAttempts = 0;
+  int _currentPollingIntervalSeconds = 30;
 
   // ── Khởi động ấm hệ thống máy in & Font tiếng Việt (Warmup) ────────────────
   Future<void> _warmupPrinting() async {
@@ -397,9 +401,51 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     } catch (_) {}
   }
 
-  Future<void> _setupPrintServerListener(String storeId) async {
-    // Guard chống race condition khi _setupPrintServerListener bị gọi liên tiếp trong vài ms
-    if (_activeStoreId == storeId && _kitchenTicketsSubscription != null) {
+  void _startAdaptivePolling(String storeId, {required int intervalSeconds}) {
+    if (_pollTimer != null && _currentPollingIntervalSeconds == intervalSeconds) return;
+    _pollTimer?.cancel();
+    _currentPollingIntervalSeconds = intervalSeconds;
+    writePrintLog('[PrintServer Polling] Chuyển chu kỳ Polling: $intervalSeconds giay/lan (WS Connected: $_isWsConnected)');
+    
+    // Quét ngay 1 lần lập tức khi vừa đổi mode
+    _pollActiveTicketsAndOrders(storeId);
+    _pollTimer = Timer.periodic(Duration(seconds: intervalSeconds), (timer) async {
+      _pollActiveTicketsAndOrders(storeId);
+    });
+  }
+
+  void _handleWsStatus(String channelName, RealtimeSubscribeStatus status, Object? error, String storeId) {
+    writePrintLog('[WS $channelName Status] Kênh: $status. Error: $error');
+    print('[PrintServer] Kênh Realtime $channelName: $status ${error != null ? "- Lỗi: $error" : ""}');
+
+    if (status == RealtimeSubscribeStatus.subscribed) {
+      _isWsConnected = true;
+      _wsReconnectAttempts = 0;
+      _startAdaptivePolling(storeId, intervalSeconds: 15);
+    } else if (status == RealtimeSubscribeStatus.channelError ||
+               status == RealtimeSubscribeStatus.closed ||
+               status == RealtimeSubscribeStatus.timedOut) {
+      _isWsConnected = false;
+      _startAdaptivePolling(storeId, intervalSeconds: 5);
+      _scheduleWsReconnect(storeId);
+    }
+  }
+
+  void _scheduleWsReconnect(String storeId) {
+    if (_reconnectTimer?.isActive == true) return;
+    _wsReconnectAttempts++;
+    final delaySeconds = (_wsReconnectAttempts * 3).clamp(3, 15);
+    writePrintLog('[WS Reconnect] Tu dong thu ket noi lai Realtime sau $delaySeconds giay (Lan: $_wsReconnectAttempts)...');
+    _reconnectTimer = Timer(Duration(seconds: delaySeconds), () {
+      if (_activeStoreId == storeId && state.autoPrintServer) {
+        _setupPrintServerListener(storeId, isReconnect: true);
+      }
+    });
+  }
+
+  Future<void> _setupPrintServerListener(String storeId, {bool isReconnect = false}) async {
+    // Guard chống race condition khi _setupPrintServerListener bị gọi liên tiếp trong vài ms ngoại trừ khi reconnect
+    if (!isReconnect && _activeStoreId == storeId && _kitchenTicketsSubscription != null) {
       writePrintLog('[Setup] Stream cho storeId $storeId da ton tai. Bo qua re-init.');
       return;
     }
@@ -411,6 +457,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     _ordersSubscription = null;
     _pollTimer?.cancel();
     _pollTimer = null;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
 
     writePrintLog('[Setup] storeId: $storeId, autoPrintServer: ${state.autoPrintServer}');
 
@@ -467,7 +515,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     
     // 1. WebSocket Realtime - Lắng nghe kitchen_tickets
     _kitchenTicketsSubscription = Supabase.instance.client
-        .channel('print_server_tickets')
+        .channel('print_server_tickets_${DateTime.now().millisecondsSinceEpoch}')
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
           schema: 'public',
@@ -485,13 +533,12 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           },
         );
     _kitchenTicketsSubscription!.subscribe((status, [error]) {
-      writePrintLog('[WS Ticket Status] Kênh: $status. Error: $error');
-      print('[PrintServer] Kênh Realtime phiếu bếp: $status ${error != null ? "- Lỗi: $error" : ""}');
+      _handleWsStatus('Ticket', status, error, storeId);
     });
 
     // 2. WebSocket Realtime - Lắng nghe orders (đã thanh toán)
     _ordersSubscription = Supabase.instance.client
-        .channel('print_server_orders')
+        .channel('print_server_orders_${DateTime.now().millisecondsSinceEpoch}')
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
           schema: 'public',
@@ -509,14 +556,11 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           },
         );
     _ordersSubscription!.subscribe((status, [error]) {
-      writePrintLog('[WS Order Status] Kênh: $status. Error: $error');
-      print('[PrintServer] Kênh Realtime đơn hàng: $status ${error != null ? "- Lỗi: $error" : ""}');
+      _handleWsStatus('Order', status, error, storeId);
     });
 
-    // 3. Polling Fallback - Tự động quét in bù mỗi 30 giây đề phòng mất mạng / socket lỗi
-    _pollTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
-      _pollActiveTicketsAndOrders(storeId);
-    });
+    // 3. Khởi động Adaptive Polling Timer
+    _startAdaptivePolling(storeId, intervalSeconds: _isWsConnected ? 15 : 5);
   }
 
   Future<void> _processTicket(String ticketId, String storeId) async {
@@ -757,8 +801,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
   Future<void> _pollActiveTicketsAndOrders(String storeId) async {
     try {
-      // 1. Quét 10 phiếu bếp mới nhất đang ở trạng thái 'chờ' và được gửi gần đây
-      final limitTime = (_startupTime ?? DateTime.now().toUtc()).subtract(const Duration(minutes: 5)).toIso8601String();
+      // 1. Quét 20 phiếu bếp mới nhất đang ở trạng thái 'chờ' và được gửi trong 15 phút qua
+      final limitTime = (_startupTime ?? DateTime.now().toUtc()).subtract(const Duration(minutes: 15)).toIso8601String();
       final tickets = await Supabase.instance.client
           .from('kitchen_tickets')
           .select('id')
@@ -766,7 +810,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .eq('status', 'cho')
           .gt('sent_at', limitTime)
           .order('sent_at', ascending: false)
-          .limit(10);
+          .limit(20);
       
       for (final row in tickets) {
         final ticketId = row['id'] as String?;
@@ -777,7 +821,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         }
       }
 
-      // 2. Quét 10 đơn hàng thanh toán mới nhất được thanh toán gần đây
+      // 2. Quét 20 đơn hàng thanh toán mới nhất được thanh toán trong 15 phút qua
       final orders = await Supabase.instance.client
           .from('orders')
           .select('id')
@@ -785,7 +829,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           .inFilter('status', ['paid', 'completed'])
           .gt('created_at', limitTime)
           .order('created_at', ascending: false)
-          .limit(10);
+          .limit(20);
 
       for (final row in orders) {
         final orderId = row['id'] as String?;

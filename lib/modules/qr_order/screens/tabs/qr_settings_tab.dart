@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/qr_order_model.dart';
 import '../../providers/qr_order_providers.dart';
 
+import 'pos_device_session_card.dart';
+
 class QrSettingsTab extends ConsumerWidget {
   final QrOrderSettingsModel settings;
   final TextEditingController baseUrlCtrl;
@@ -30,6 +32,9 @@ class QrSettingsTab extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const PosDeviceSessionCard(),
+          const SizedBox(height: 20),
+
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(

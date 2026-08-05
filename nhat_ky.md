@@ -1964,3 +1964,99 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
 - ✅ Đồng bộ lên `/var/www/quannho/pos/`, kiểm tra Nginx hợp lệ và tải thành công tại `https://quannho.lpm.vn/pos/`.
 - ✅ Đối chiếu SHA-256 `main.dart.js` giữa máy build và VPS trùng khớp.
 
+---
+
+## 2026-08-02 — Kiểm Tra Log Module In Ấn, Tái Cấu Trúc Realtime WebSocket & Adaptive Polling Máy Chủ In (PC Windows)
+
+### Bối cảnh & Nguyên nhân tìm thấy từ Log
+- Kiểm tra dữ liệu Supabase `app_logs`, `kitchen_tickets` và `kitchen_ticket_items` lúc 18h30 trở đi:
+  - Ghi nhận có 7 phiếu bếp được tạo trên DB (`44ea5d01...`, `2b4e359c...`, `488d3c66...`, `ca43781f...`, `9ad6a5d5...`, `c6f26ad9...`, `629eaa7d...`).
+  - Phát hiện nguyên nhân phiếu bếp bị trễ/không in:
+    1. **Realtime WebSocket bị rớt kết nối** toàn bộ thiết bị (`WebSocketChannelException: WebSocket connection failed`).
+    2. **Polling quét bù bị trễ (30s)**: Khi mất WebSocket, Polling cũ chỉ quét 30s/lần với thời gian giới hạn 5 phút.
+    3. **Tên máy in bị trống (`Printer name is empty. Fallback`)**: Một số thiết bị có tên máy in cấu hình bị rỗng, dẫn đến việc chuyển sang `Web fallback` thay vì bắn lệnh in trực tiếp ra máy in LAN.
+    4. **Phiếu bếp bị bấm HỦY**: 2 phiếu bếp đợt 2 & 3 của bàn A 04 (`9ad6a5d5...` & `c6f26ad9...`) có trạng thái `status = 'huy'` nên không hiển thị/in.
+
+### Đã làm
+- ✅ **Tự động kết nối lại WebSocket (Auto Reconnect & Health Check)**:
+  - Thêm `_handleWsStatus()` & `_scheduleWsReconnect()` trong `printer_settings_provider.dart`: Tự động đăng ký lại kênh Realtime sau 3–5s khi phát hiện channel bị đứt (`channelError`, `closed`, `timedOut`).
+- ✅ **Quét ngầm siêu tốc khi rớt kết nối (Adaptive Polling 5s)**:
+  - Khi WebSocket bị ngắt: Tự động chuyển chu kỳ Polling từ 30s xuống **5s/lần**. Đảm bảo phiếu bếp mới tạo được máy PC Windows bắt và đẩy in ra máy in trong tối đa **5 giây** ngay cả khi không có mạng Realtime WebSocket.
+  - Khi WebSocket khôi phục bình thường: Tự động chuyển về chu kỳ quét an toàn **15s/lần**.
+  - Mở rộng khoảng thời gian tìm phiếu ngầm từ **5 phút lên 15 phút** (`Duration(minutes: 15)`), quét tối đa **20 phiếu/lần** đề phòng mất mạng gián đoạn lâu.
+- ✅ **Dự phòng Máy In Mặc Định Windows System Printer (Default Printer Fallback)**:
+  - `bill_preview_screen.dart` `_dispatchPrint`: Khi `config.name.isEmpty` trên Windows/Native, tự động truy vấn `Printing.listPrinters()` chọn **Máy in mặc định của Windows (Default Printer)** để in trực tiếp qua `directPrintPdf` mà không bị bật pop-up dialog.
+- ✅ **Đảm bảo An Toàn Chống In Trùng Hàng Loại (Bảo vệ đệm đĩa 25/07)**:
+  - Giữ nguyên đệm lưu đĩa cứng `_printedTicketIds` & `_printedOrderIds` (`SharedPreferences`), nạp trước 12h lịch sử khi khởi động. Tuyệt đối không xóa đệm khi reconnect, đảm bảo 0% rủi ro in trùng bill/phiếu cũ.
+- ✅ **Chạy `flutter analyze`**: **0 lỗi biên dịch** toàn dự án.
+
+### Files đã sửa
+| File | Thay đổi |
+|------|----------|
+| `lib/modules/bill_printer/providers/printer_settings_provider.dart` | Tự động reconnect WebSocket, Adaptive Polling 5s khi rớt mạng, mở rộng cửa sổ quét ngầm 15 phút |
+| `lib/modules/bill_printer/screens/bill_preview_screen.dart` | Tự động lấy Windows Default Printer khi tên máy in cấu hình bị trống |
+| `nhat_ky.md` | Cập nhật nhật ký công việc ngày 2026-08-02 |
+
+---
+
+## 2026-08-02 (tối) — Tích Hợp QR Gọi Món V3 Trực Tiếp Vào Luồng Vận Hành POS & POS Device Session Security
+
+### Bối cảnh & Mục tiêu Kiến trúc
+- Chuyển đổi module QR từ module vận hành độc lập trên trang chủ sang tích hợp trực tiếp vào luồng vận hành của Quán Nhỏ POS:
+  - **QR tại quầy** $\rightarrow$ Tích hợp vào module Bán hàng (`pos_screen.dart`), hiển thị badge hàng chờ và mở sheet duyệt đơn quầy.
+  - **QR theo bàn** $\rightarrow$ Tích hợp vào module Bàn (`ban_screen.dart`), thẻ bàn đổi màu viền nhấp nháy cam/vàng + badge `⚡ QR (N)`, mở đơn bàn tương ứng.
+  - **Cấu hình QR & Quản lý thiết bị** $\rightarrow$ Đưa vào màn hình Cài đặt (`settings_screen.dart` / `qr_settings_tab.dart`).
+- Chuẩn hóa 100% sang **QR Architecture V3 RPCs** (`get_qr_menu_v3`, `submit_qr_order_v3`, `get_qr_request_status_v3`, `get_pending_qr_requests_v3`, `claim_qr_request_v3`, `confirm_qr_request_v3`, `send_to_kitchen_qr_v3`, `reject_qr_request_v3`).
+
+### Đã làm
+- ✅ **Bảo mật POS Device Token Session (`pos_device_token_service.dart` & `pos_device_session_card.dart`)**:
+  - Quản lý phiên làm việc thiết bị POS bằng `flutter_secure_storage` (^10.0.0).
+  - Tích hợp card quản lý phiên POS trong Cài đặt với 4 trạng thái rõ ràng (`⚪ Chưa kích hoạt`, `🟢 Đang hoạt động`, `🟠 Hết hạn - Nhập lại PIN`, `🔴 Lỗi xác thực`).
+  - Cho phép Kích hoạt máy chính (`bootstrap_first_pos_device_v3`), Ghép thiết bị mới (`pair_pos_device_v3`), Cấp lại session token (`issue_pos_device_session_v3`) và Thu hồi phiên (`revoke_pos_device_session_v3`).
+  - Kiểm tra tính hợp lệ dữ liệu RPC (`INVALID_RPC_RESPONSE`) và bắt lỗi SecureStorage, không báo thành công giả. Không bao giờ hiển thị/log token thô hay PIN.
+- ✅ **Phục hồi Hàng đợi Active Pipeline (Chống mất đơn sau khi Claim/Confirm)**:
+  - Nâng cấp `fetchActiveRequestsPipeline` trong `QrOrderRepository` gom 3 trạng thái active: `pending_staff` $\rightarrow$ `processing` $\rightarrow$ `confirmed`.
+  - Giúp nhân viên mở lại được các đơn đang kiểm tra hoặc đã xác nhận từ Bàn hoặc Quầy ngay cả sau khi đóng sheet hay reload ứng dụng.
+  - Đơn chỉ rời khỏi hàng đợi active khi chuyển sang trạng thái kết thúc (`sent_kitchen` hoặc `rejected`).
+- ✅ **Hàng chờ Đơn QR Quầy (`qr_counter_queue_sheet.dart`)**:
+  - Xây dựng sheet hàng chờ đơn quầy hiển thị danh sách toàn bộ các đơn quầy đang có trong pipeline active.
+  - Cho phép nhân viên xem mã pickup `#Qxxx`, tổng tiền, số lượng món và bấm "Duyệt đơn" chọn xử lý từng đơn cụ thể thay vì mở đơn đầu tiên.
+  - Xử lý điều hướng an toàn qua `Navigator.pop(context, selectedReq)` và `await` trên context chính của POS screen để mở `QrOrderReviewSheet`.
+- ✅ **Phân tách State Machine 4 bước độc lập (`qr_order_review_sheet.dart`)**:
+  - Bước 1: **"1. NHẬN ĐƠN"** (`claim_qr_request_v3` $\rightarrow$ `processing`). Chặn atomic claim trùng từ 2 POS.
+  - Bước 2: **"2. XÁC NHẬN VỚI KHÁCH"** (`confirm_qr_request_v3` $\rightarrow$ `confirmed`). Chưa tạo vé bếp.
+  - Bước 3: **"3. GỬI BẾP"** (`send_to_kitchen_qr_v3` $\rightarrow$ `sent_kitchen`). Đã xác nhận mới cho gửi bếp và tạo vé bếp nguyên tử.
+  - Nút **"Từ chối"** (`reject_qr_request_v3` $\rightarrow$ `rejected` kèm lý do).
+  - Loại bỏ các nút chỉnh món giả lập (Option A), nhân viên xác nhận chính xác các món khách đặt.
+- ✅ **Chuẩn hóa hiển thị `pickupCode` & Render lỗi chi tiết**:
+  - Thêm getter `displayPickupCode` trên `QrRequestModel` đảm bảo luôn hiển thị đúng 1 dấu `#` (vd: `#Q01`), chống lặp `##Q01`.
+  - Render trực quan tất cả nhóm lỗi (`NO_POS_TOKEN`, `NETWORK_ERROR`, `RPC_ERROR`) kèm tooltip giải thích chi tiết trên Header Bar.
+- ✅ **Async Safety (`ctx.mounted`) & Anti Double-tap (`_isSubmitting`)**:
+  - Kiểm tra `ctx.mounted` trước khi gọi `setDlgState` hoặc `Navigator.pop` trong các dialog bất đồng bộ.
+  - Khóa nút bấm khi đang gửi RPC chống tạo chuyển trạng thái trùng.
+
+### Kiểm thử & QC
+- ✅ **`dart format`**: Định dạng sạch sẽ toàn bộ các file đã sửa.
+- ✅ **`flutter analyze`**: **0 ERRORS**, 0 undefined names trên toàn bộ các file module QR V3 và POS Token Service.
+- ✅ **`git diff --check`**: Sạch 100%, không dính lỗi khoảng trắng.
+- ✅ **An toàn Production**: 0 sửa dữ liệu Production DB, 0 deploy Production, 0 commit/push Git.
+
+### Files đã sửa & tạo mới
+| File | Thay đổi |
+|------|----------|
+| `lib/core/services/pos_device_token_service.dart` | Quản lý token session secure storage & RPC V3 auth |
+| `lib/modules/qr_order/screens/tabs/pos_device_session_card.dart` | `[NEW]` Card quản lý POS device session trong Cài đặt |
+| `lib/modules/qr_order/widgets/qr_counter_queue_sheet.dart` | `[NEW]` Sheet danh sách hàng chờ đơn QR quầy |
+| `lib/modules/qr_order/repository/qr_order_repository.dart` | Repository QR Architecture V3 RPCs & Active Pipeline |
+| `lib/modules/qr_order/providers/qr_order_providers.dart` | Active pipeline stream, single-shot sound, active providers |
+| `lib/modules/qr_order/widgets/qr_order_review_sheet.dart` | Sheet duyệt đơn 4 bước, Option A, async safety |
+| `lib/modules/qr_order/models/qr_order_model.dart` | Bổ sung getter `displayPickupCode` |
+| `lib/modules/qr_order/screens/tabs/qr_settings_tab.dart` | Đưa `PosDeviceSessionCard` vào tab Cài đặt QR |
+| `lib/screens/pos_screen.dart` | Badge QR quầy, render lỗi chi tiết, tích hợp queue sheet |
+| `lib/screens/ban_screen.dart` | Bàn nhấp nháy viền + badge QR, mở lại đơn active |
+| `lib/screens/settings_screen.dart` | Đưa Cấu hình QR Gọi Món vào Cài đặt |
+| `pubspec.yaml` | Thêm dependency `flutter_secure_storage: ^10.0.0` |
+| `nhat_ky.md` | Cập nhật nhật ký công việc ngày 2026-08-02 |
+
+
+

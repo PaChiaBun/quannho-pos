@@ -959,7 +959,25 @@ class StationPrinterDispatcher {
     }
     if (config.type == 'system') {
       if (config.name.isEmpty) {
-        writePrintLog('[_dispatchPrint] Printer name is empty. Fallback.');
+        writePrintLog('[_dispatchPrint] Printer name is empty. Seeking system default printer...');
+        try {
+          final printers = await Printing.listPrinters();
+          final targetPrinter = printers.firstWhereOrNull((p) => p.isDefault) ?? printers.firstOrNull;
+          if (targetPrinter != null) {
+            writePrintLog('[_dispatchPrint] Found default system printer: ${targetPrinter.name}');
+            final success = await Printing.directPrintPdf(
+              printer: targetPrinter,
+              onLayout: (_) async => bytes,
+              name: jobName,
+              format: finalFormat,
+            );
+            writePrintLog('[_dispatchPrint] Result using default printer: $success');
+            return;
+          }
+        } catch (e) {
+          writePrintLog('[_dispatchPrint ERROR] Default printer print failed: $e');
+        }
+        writePrintLog('[_dispatchPrint] Fallback to layoutPdf dialog.');
         await Printing.layoutPdf(onLayout: (_) async => bytes, name: jobName, format: finalFormat);
       } else {
         try {

@@ -18,6 +18,7 @@ import '../modules/bill_printer/screens/printer_settings_screen.dart';
 import '../core/services/auto_update_service.dart';
 import '../modules/pos/screens/discount_management_screen.dart';
 import 'role_manager_screen.dart';
+import '../modules/qr_order/screens/qr_order_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS SCREEN — Cài đặt Quán Nhỏ POS
@@ -25,19 +26,20 @@ import 'role_manager_screen.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  static const _kNavy   = Color(0xFF1E1C5E);
-  static const _kNavyL  = Color(0xFF2D2B8A);
+  static const _kNavy = Color(0xFF1E1C5E);
+  static const _kNavyL = Color(0xFF2D2B8A);
   static const _kOrange = Color(0xFFE85D20);
-  static const _kGreen  = Color(0xFF2E7D32);
-  static const _kMuted  = Color(0xFF9E9085);
-  static const _kBg     = Color(0xFFFAF7F2);
+  static const _kGreen = Color(0xFF2E7D32);
+  static const _kMuted = Color(0xFF9E9085);
+  static const _kBg = Color(0xFFFAF7F2);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final shopNameAsync  = ref.watch(shopNameProvider);
+    final shopNameAsync = ref.watch(shopNameProvider);
     final session = ref.watch(sessionProvider);
     final canonical = StaffService.canonicalRole(session?.role ?? '');
-    final isManager = session?.isOwner == true ||
+    final isManager =
+        session?.isOwner == true ||
         canonical == 'owner' ||
         canonical == 'manager';
 
@@ -52,12 +54,15 @@ class SettingsScreen extends ConsumerWidget {
             backgroundColor: _kNavy,
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-              title: const Text('Cài đặt hệ thống',
+              title: const Text(
+                'Cài đặt hệ thống',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 18, fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
                   letterSpacing: -0.3,
-                )),
+                ),
+              ),
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -74,9 +79,7 @@ class SettingsScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: _ShopInfoCard(
-                shopName: shopNameAsync.value ?? 'Quán Nhỏ',
-              ),
+              child: _ShopInfoCard(shopName: shopNameAsync.value ?? 'Quán Nhỏ'),
             ),
           ),
 
@@ -99,6 +102,32 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
+          // ── 2b. QR Gọi Món (Bàn & Quầy) ─────────────────────────────
+          SliverToBoxAdapter(
+            child: _SectionHeader(
+              icon: Icons.qr_code_scanner_rounded,
+              title: 'Cấu hình QR Gọi Món',
+              color: const Color(0xFF8B5CF6),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _SettingsTile(
+                  icon: Icons.qr_code_2_rounded,
+                  label: 'Thiết lập & In ấn Mã QR',
+                  subtitle: 'Tên miền, mẫu tem decal bàn, poster quầy thu ngân',
+                  color: const Color(0xFF8B5CF6),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const QrOrderScreen()),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+
           // ── 3. Hỗ Trợ Kỹ Thuật & Tài Khoản ──────────────────────────
           SliverToBoxAdapter(
             child: _SectionHeader(
@@ -116,8 +145,10 @@ class SettingsScreen extends ConsumerWidget {
                   label: 'Gửi phản hồi',
                   subtitle: 'Báo lỗi & tự động đính kèm Log kỹ thuật',
                   color: const Color(0xFF1565C0),
-                  onTap: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const BugReportScreen())),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const BugReportScreen()),
+                  ),
                 ),
                 _AccountTile(ref: ref),
               ]),
@@ -125,9 +156,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
 
           // ── App Footer ─────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _buildFooter(),
-          ),
+          SliverToBoxAdapter(child: _buildFooter()),
         ],
       ),
     );
@@ -151,37 +180,48 @@ class SettingsScreen extends ConsumerWidget {
         child: Column(
           children: [
             Container(
-              width: 56, height: 56,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.store_rounded,
-                color: Colors.white, size: 30),
+              child: const Icon(
+                Icons.store_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
             ),
             const SizedBox(height: 12),
-            const Text('Quán Nhỏ POS',
+            const Text(
+              'Quán Nhỏ POS',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 18, fontWeight: FontWeight.w900,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
                 letterSpacing: -0.3,
-              )),
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(versionText,
-              style: const TextStyle(
-                color: Colors.white54, fontSize: 12)),
+            Text(
+              versionText,
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text('Made with ❤️ by LPM Digital',
+              child: const Text(
+                'Made with ❤️ by LPM Digital',
                 style: TextStyle(
-                  color: Colors.white70, fontSize: 12,
-                  fontWeight: FontWeight.w500)),
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ],
         ),
@@ -212,13 +252,15 @@ class SettingsScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
-        title: const Text('⚠️ Xoá toàn bộ dữ liệu?',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          '⚠️ Xoá toàn bộ dữ liệu?',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+        ),
         content: const Text(
           'Thao tác này sẽ xoá tất cả đơn hàng, kho hàng, và thu chi. Không thể hoàn tác.',
-          style: TextStyle(color: Color(0xFF9E9085))),
+          style: TextStyle(color: Color(0xFF9E9085)),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -233,7 +275,8 @@ class SettingsScreen extends ConsumerWidget {
               backgroundColor: const Color(0xFFC62828),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: const Text('Xoá tất cả'),
           ),
@@ -244,7 +287,6 @@ class SettingsScreen extends ConsumerWidget {
 
   void _showLoyaltySettings(BuildContext context, WidgetRef ref) {}
 }
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHOP INFO CARD
@@ -277,7 +319,8 @@ class _ShopInfoCard extends ConsumerWidget {
             children: [
               // Avatar gradient với chữ cái đầu
               Container(
-                width: 62, height: 62,
+                width: 62,
+                height: 62,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF1E1C5E), Color(0xFFE85D20)],
@@ -298,7 +341,8 @@ class _ShopInfoCard extends ConsumerWidget {
                     shopName.isEmpty ? '?' : shopName[0].toUpperCase(),
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 26, fontWeight: FontWeight.w900,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
@@ -308,22 +352,33 @@ class _ShopInfoCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(session?.storeName ?? shopName,
+                    Text(
+                      session?.storeName ?? shopName,
                       style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w900,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
                         color: Color(0xFF1A1207),
                         letterSpacing: -0.4,
-                      )),
+                      ),
+                    ),
                     const SizedBox(height: 3),
                     if ((session?.displayName ?? '').isNotEmpty)
-                      Text(session!.displayName!,
+                      Text(
+                        session!.displayName!,
                         style: const TextStyle(
-                          fontSize: 12.5, color: Color(0xFF7A6E66),
-                          fontWeight: FontWeight.w500)),
+                          fontSize: 12.5,
+                          color: Color(0xFF7A6E66),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     if ((session?.phone ?? '').isNotEmpty)
-                      Text(session!.phone!,
+                      Text(
+                        session!.phone!,
                         style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF9E9085))),
+                          fontSize: 12,
+                          color: Color(0xFF9E9085),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -336,8 +391,11 @@ class _ShopInfoCard extends ConsumerWidget {
                     color: const Color(0xFFFFF3E0),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.edit_rounded,
-                    color: Color(0xFFE85D20), size: 18),
+                  child: const Icon(
+                    Icons.edit_rounded,
+                    color: Color(0xFFE85D20),
+                    size: 18,
+                  ),
                 ),
               ),
             ],
@@ -367,19 +425,31 @@ class _ShopInfoCard extends ConsumerWidget {
                     color: const Color(0xFFFFF3E0),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.storefront_rounded,
-                    size: 28, color: Color(0xFFE85D20)),
+                  child: const Icon(
+                    Icons.storefront_rounded,
+                    size: 28,
+                    color: Color(0xFFE85D20),
+                  ),
                 ),
                 const SizedBox(height: 12),
-                const Text('Bạn chưa tạo quán',
+                const Text(
+                  'Bạn chưa tạo quán',
                   style: TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w800,
-                    color: Color(0xFF1A1207))),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1A1207),
+                  ),
+                ),
                 const SizedBox(height: 4),
-                const Text('Tạo quán để bắt đầu quản lý nhân viên,\ndoanh thu và kết nối đội nhóm',
+                const Text(
+                  'Tạo quán để bắt đầu quản lý nhân viên,\ndoanh thu và kết nối đội nhóm',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 12.5, color: Color(0xFF9E9085), height: 1.4)),
+                    fontSize: 12.5,
+                    color: Color(0xFF9E9085),
+                    height: 1.4,
+                  ),
+                ),
                 const SizedBox(height: 14),
                 Row(
                   children: [
@@ -393,9 +463,12 @@ class _ShopInfoCard extends ConsumerWidget {
                           foregroundColor: const Color(0xFFE85D20),
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           textStyle: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w800),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                       ),
                     ),
@@ -410,9 +483,12 @@ class _ShopInfoCard extends ConsumerWidget {
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           textStyle: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w800),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                       ),
                     ),
@@ -461,7 +537,9 @@ class _StoreCodeCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(22),
+              ),
             ),
             child: Row(
               children: [
@@ -471,21 +549,28 @@ class _StoreCodeCard extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.group_add_rounded,
-                    color: Colors.white, size: 18),
+                  child: const Icon(
+                    Icons.group_add_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Mã kết nối nhân viên',
+                    Text(
+                      'Mã kết nối nhân viên',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 14, fontWeight: FontWeight.w800)),
-                    Text('Chia sẻ mã này để thêm thành viên vào quán',
-                      style: TextStyle(
-                        color: Colors.white60,
-                        fontSize: 11)),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      'Chia sẻ mã này để thêm thành viên vào quán',
+                      style: TextStyle(color: Colors.white60, fontSize: 11),
+                    ),
                   ],
                 ),
               ],
@@ -510,16 +595,22 @@ class _StoreCodeCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.qr_code_rounded,
-                        size: 18, color: Color(0xFFE85D20)),
+                      const Icon(
+                        Icons.qr_code_rounded,
+                        size: 18,
+                        color: Color(0xFFE85D20),
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(storeCode,
+                        child: Text(
+                          storeCode,
                           style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
                             color: Color(0xFFE85D20),
                             letterSpacing: 3,
-                          )),
+                          ),
+                        ),
                       ),
                       // Copy button
                       GestureDetector(
@@ -530,8 +621,11 @@ class _StoreCodeCard extends StatelessWidget {
                             const SnackBar(
                               content: Row(
                                 children: [
-                                  Icon(Icons.check_circle_rounded,
-                                    color: Colors.white, size: 16),
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
                                   SizedBox(width: 8),
                                   Text('Đã copy mã quán'),
                                 ],
@@ -539,24 +633,34 @@ class _StoreCodeCard extends StatelessWidget {
                               behavior: SnackBarBehavior.floating,
                               backgroundColor: Color(0xFF2E7D32),
                               duration: Duration(seconds: 2),
-                            ));
+                            ),
+                          );
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 8),
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1E1C5E),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Row(
                             children: [
-                              Icon(Icons.copy_rounded,
-                                size: 14, color: Colors.white),
+                              Icon(
+                                Icons.copy_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
                               SizedBox(width: 5),
-                              Text('Copy',
+                              Text(
+                                'Copy',
                                 style: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.w700,
-                                  color: Colors.white)),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -568,10 +672,14 @@ class _StoreCodeCard extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // ── Hướng dẫn 3 bước ────────────────────────────────
-                const Text('Cách nhân viên kết nối vào quán:',
+                const Text(
+                  'Cách nhân viên kết nối vào quán:',
                   style: TextStyle(
-                    fontSize: 12.5, fontWeight: FontWeight.w800,
-                    color: Color(0xFF5A5260))),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF5A5260),
+                  ),
+                ),
                 const SizedBox(height: 10),
 
                 _buildStep(
@@ -605,25 +713,38 @@ class _StoreCodeCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      Clipboard.setData(ClipboardData(
-                        text: 'Tải app Quán Nhỏ POS và nhập mã quán: $storeCode để vào làm nhé! 🏪'));
+                      Clipboard.setData(
+                        ClipboardData(
+                          text:
+                              'Tải app Quán Nhỏ POS và nhập mã quán: $storeCode để vào làm nhé! 🏪',
+                        ),
+                      );
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('📋 Đã copy lời mời — dán vào Zalo/Messenger gửi nhân viên!'),
+                          content: Text(
+                            '📋 Đã copy lời mời — dán vào Zalo/Messenger gửi nhân viên!',
+                          ),
                           behavior: SnackBarBehavior.floating,
                           duration: Duration(seconds: 3),
-                        ));
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.share_rounded, size: 16),
                     label: const Text('Sao chép lời mời gửi nhân viên'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF1E1C5E),
-                      side: const BorderSide(color: Color(0xFF1E1C5E), width: 1.5),
+                      side: const BorderSide(
+                        color: Color(0xFF1E1C5E),
+                        width: 1.5,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       textStyle: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w700),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -651,12 +772,15 @@ class _StoreCodeCard extends StatelessWidget {
           Column(
             children: [
               Container(
-                width: 30, height: 30,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: color.withValues(alpha: 0.40), width: 1.5),
+                    color: color.withValues(alpha: 0.40),
+                    width: 1.5,
+                  ),
                 ),
                 child: Icon(icon, size: 15, color: color),
               ),
@@ -678,15 +802,23 @@ class _StoreCodeCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
-                  Text(title,
+                  Text(
+                    title,
                     style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w800,
-                      color: Color(0xFF1A1207))),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1A1207),
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(desc,
+                  Text(
+                    desc,
                     style: const TextStyle(
-                      fontSize: 11.5, color: Color(0xFF9E9085),
-                      height: 1.4)),
+                      fontSize: 11.5,
+                      color: Color(0xFF9E9085),
+                      height: 1.4,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -707,17 +839,25 @@ class _ModuleTile extends StatelessWidget {
   const _ModuleTile({required this.module, required this.onToggle});
 
   static final _moduleInfo = {
-    'pos':     (Icons.shopping_cart_rounded,  'Bán hàng',  Color(0xFF1E1C5E)),
-    'kho':     (Icons.inventory_2_rounded,    'Kho hàng',  Color(0xFF2E7D32)),
-    'finance': (Icons.account_balance_wallet_rounded, 'Thu Chi', Color(0xFFE85D20)),
-    'loyalty': (Icons.loyalty_rounded,        'Khách Hàng - Giảm Giá - Khuyến mãi', Color(0xFF7B1FA2)),
-    'report':  (Icons.bar_chart_rounded,      'Báo cáo',   Color(0xFF1565C0)),
+    'pos': (Icons.shopping_cart_rounded, 'Bán hàng', Color(0xFF1E1C5E)),
+    'kho': (Icons.inventory_2_rounded, 'Kho hàng', Color(0xFF2E7D32)),
+    'finance': (
+      Icons.account_balance_wallet_rounded,
+      'Thu Chi',
+      Color(0xFFE85D20),
+    ),
+    'loyalty': (
+      Icons.loyalty_rounded,
+      'Khách Hàng - Giảm Giá - Khuyến mãi',
+      Color(0xFF7B1FA2),
+    ),
+    'report': (Icons.bar_chart_rounded, 'Báo cáo', Color(0xFF1565C0)),
   };
 
   @override
   Widget build(BuildContext context) {
     final info = _moduleInfo[module.id];
-    final icon  = info?.$1 ?? Icons.extension_rounded;
+    final icon = info?.$1 ?? Icons.extension_rounded;
     final label = info?.$2 ?? module.id;
     final color = info?.$3 ?? const Color(0xFF9E9085);
 
@@ -731,17 +871,22 @@ class _ModuleTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.fromLTRB(14, 4, 10, 4),
         leading: Container(
-          width: 40, height: 40,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(11),
           ),
           child: Icon(icon, color: color, size: 20),
         ),
-        title: Text(label,
+        title: Text(
+          label,
           style: const TextStyle(
-            fontSize: 14, fontWeight: FontWeight.w700,
-            color: Color(0xFF1A1207))),
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1A1207),
+          ),
+        ),
         subtitle: Text(
           module.isActive ? 'Đang bật' : 'Đang tắt',
           style: TextStyle(
@@ -749,7 +894,8 @@ class _ModuleTile extends StatelessWidget {
             color: module.isActive
                 ? const Color(0xFF2E7D32)
                 : const Color(0xFF9E9085),
-          )),
+          ),
+        ),
         trailing: Switch.adaptive(
           value: module.isActive,
           onChanged: (v) {
@@ -775,13 +921,12 @@ class _LoyaltySettingsSheet extends ConsumerStatefulWidget {
       _LoyaltySettingsSheetState();
 }
 
-class _LoyaltySettingsSheetState
-    extends ConsumerState<_LoyaltySettingsSheet> {
+class _LoyaltySettingsSheetState extends ConsumerState<_LoyaltySettingsSheet> {
   static const _kPurple = Color(0xFF7B1FA2);
-  static const _kBg     = Color(0xFFFAF7F2);
+  static const _kBg = Color(0xFFFAF7F2);
   static const _kBorder = Color(0xFFE0D8CC);
-  static const _kMuted  = Color(0xFF9E9085);
-  static const _kInk    = Color(0xFF1A1207);
+  static const _kMuted = Color(0xFF9E9085);
+  static const _kInk = Color(0xFF1A1207);
 
   // Các preset tỷ lệ phổ biến (VND = 1 điểm)
   static const _presets = [5000.0, 10000.0, 20000.0, 50000.0];
@@ -829,7 +974,8 @@ class _LoyaltySettingsSheetState
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -841,30 +987,44 @@ class _LoyaltySettingsSheetState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Handle
-            Center(child: Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: _kBorder, borderRadius: BorderRadius.circular(2)),
-            )),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: _kBorder,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
 
             // Header
-            Row(children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _kPurple.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _kPurple.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.loyalty_rounded,
+                    color: _kPurple,
+                    size: 20,
+                  ),
                 ),
-                child: const Icon(Icons.loyalty_rounded,
-                    color: _kPurple, size: 20),
-              ),
-              const SizedBox(width: 10),
-              const Text('Cài đặt điểm thưởng',
+                const SizedBox(width: 10),
+                const Text(
+                  'Cài đặt điểm thưởng',
                   style: TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w900,
-                      color: _kInk)),
-            ]),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: _kInk,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
 
             // Preview box
@@ -874,38 +1034,55 @@ class _LoyaltySettingsSheetState
                 color: const Color(0xFFF3E5F5),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Row(children: [
-                const Icon(Icons.stars_rounded, color: _kPurple, size: 28),
-                const SizedBox(width: 12),
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Tỷ lệ hiện tại',
-                        style: TextStyle(fontSize: 12,
-                            color: _kPurple, fontWeight: FontWeight.w600)),
-                    Text(
-                      '${_fmtRate(_effectiveRate)}đ = 1 điểm',
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w900,
-                          color: _kPurple),
+              child: Row(
+                children: [
+                  const Icon(Icons.stars_rounded, color: _kPurple, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Tỷ lệ hiện tại',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _kPurple,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '${_fmtRate(_effectiveRate)}đ = 1 điểm',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: _kPurple,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Ví dụ: đơn 200,000đ → ${(200000 / _effectiveRate).floor()} điểm',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _kPurple.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Ví dụ: đơn 200,000đ → ${(200000 / _effectiveRate).floor()} điểm',
-                      style: TextStyle(fontSize: 11,
-                          color: _kPurple.withValues(alpha: 0.7)),
-                    ),
-                  ],
-                )),
-              ]),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
 
             // Preset chips
-            const Text('Chọn nhanh:',
-                style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w700,
-                    color: _kMuted)),
+            const Text(
+              'Chọn nhanh:',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: _kMuted,
+              ),
+            ),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -920,7 +1097,9 @@ class _LoyaltySettingsSheetState
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected ? _kPurple : Colors.white,
                       borderRadius: BorderRadius.circular(12),
@@ -928,18 +1107,23 @@ class _LoyaltySettingsSheetState
                         color: isSelected ? _kPurple : _kBorder,
                         width: isSelected ? 2 : 1,
                       ),
-                      boxShadow: isSelected ? [
-                        BoxShadow(
-                          color: _kPurple.withValues(alpha: 0.3),
-                          blurRadius: 8, offset: const Offset(0, 3)),
-                      ] : [],
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: _kPurple.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ]
+                          : [],
                     ),
                     child: Text(
                       '${_fmtRate(rate)}đ = 1đ',
                       style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: isSelected ? Colors.white : _kInk),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected ? Colors.white : _kInk,
+                      ),
                     ),
                   ),
                 );
@@ -948,9 +1132,14 @@ class _LoyaltySettingsSheetState
             const SizedBox(height: 16),
 
             // Custom input
-            const Text('Hoặc nhập thủ công:',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-                    color: _kMuted)),
+            const Text(
+              'Hoặc nhập thủ công:',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: _kMuted,
+              ),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: _customCtrl,
@@ -962,44 +1151,58 @@ class _LoyaltySettingsSheetState
                 hintStyle: const TextStyle(color: _kMuted, fontSize: 13),
                 suffixText: 'đ = 1 điểm',
                 suffixStyle: const TextStyle(color: _kMuted, fontSize: 13),
-                filled: true, fillColor: _kBg,
+                filled: true,
+                fillColor: _kBg,
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 12),
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _kBorder)),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: _kBorder),
+                ),
                 enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _kBorder)),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: _kBorder),
+                ),
                 focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _kPurple, width: 2)),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: _kPurple, width: 2),
+                ),
               ),
             ),
             const SizedBox(height: 20),
 
             // Save button
             SizedBox(
-              width: double.infinity, height: 52,
+              width: double.infinity,
+              height: 52,
               child: ElevatedButton.icon(
                 onPressed: _saving ? null : _save,
                 icon: _saving
                     ? const SizedBox(
-                        width: 18, height: 18,
+                        width: 18,
+                        height: 18,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Icon(Icons.check_circle_rounded),
                 label: Text(
                   _saving ? 'Đang lưu...' : 'Lưu cài đặt',
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w800),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kPurple,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
@@ -1014,25 +1217,36 @@ class _LoyaltySettingsSheetState
     if (rate <= 0) return;
     setState(() => _saving = true);
     try {
-      await ref.read(settingsRepositoryProvider)
+      await ref
+          .read(settingsRepositoryProvider)
           .set('loyalty_rate', rate.toStringAsFixed(0));
       ref.invalidate(loyaltyRateProvider);
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Row(children: [
-            const Icon(Icons.check_circle_rounded,
-                color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Text('Đã lưu: ${_fmtRate(rate)}đ = 1 điểm',
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-          ]),
-          backgroundColor: _kPurple,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(12),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Đã lưu: ${_fmtRate(rate)}đ = 1 điểm',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            backgroundColor: _kPurple,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -1063,37 +1277,59 @@ class _AccountTile extends ConsumerWidget {
           ListTile(
             contentPadding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
             leading: Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: const Color(0xFF1565C0).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: const Icon(Icons.person_rounded,
-                color: Color(0xFF1565C0), size: 20),
+              child: const Icon(
+                Icons.person_rounded,
+                color: Color(0xFF1565C0),
+                size: 20,
+              ),
             ),
-            title: Text(session?.displayName ?? 'Người dùng',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1207))),
-            subtitle: Text(session?.phone ?? '',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF9E9085))),
+            title: Text(
+              session?.displayName ?? 'Người dùng',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1207),
+              ),
+            ),
+            subtitle: Text(
+              session?.phone ?? '',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF9E9085)),
+            ),
           ),
           const Divider(height: 1, indent: 14, endIndent: 14),
           ListTile(
             contentPadding: const EdgeInsets.fromLTRB(14, 2, 14, 2),
             leading: Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: const Color(0xFFC62828).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: const Icon(Icons.logout_rounded,
-                color: Color(0xFFC62828), size: 20),
+              child: const Icon(
+                Icons.logout_rounded,
+                color: Color(0xFFC62828),
+                size: 20,
+              ),
             ),
-            title: const Text('Đăng xuất',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
-                color: Color(0xFFC62828))),
-            subtitle: const Text('Quay về màn hình đăng nhập',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9E9085))),
+            title: const Text(
+              'Đăng xuất',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFC62828),
+              ),
+            ),
+            subtitle: const Text(
+              'Quay về màn hình đăng nhập',
+              style: TextStyle(fontSize: 12, color: Color(0xFF9E9085)),
+            ),
             onTap: () => _confirmLogout(context, ref),
           ),
         ],
@@ -1106,12 +1342,19 @@ class _AccountTile extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Đăng xuất?',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-        content: const Text('Bạn sẽ cần đăng nhập lại để vào app.',
-          style: TextStyle(color: Color(0xFF9E9085))),
+        title: const Text(
+          'Đăng xuất?',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+        ),
+        content: const Text(
+          'Bạn sẽ cần đăng nhập lại để vào app.',
+          style: TextStyle(color: Color(0xFF9E9085)),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Huỷ')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Huỷ'),
+          ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -1124,7 +1367,10 @@ class _AccountTile extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC62828),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Đăng xuất'),
           ),
         ],
@@ -1140,8 +1386,11 @@ class _SectionHeader extends StatelessWidget {
   final IconData icon;
   final String title;
   final Color color;
-  const _SectionHeader({required this.icon, required this.title,
-    required this.color});
+  const _SectionHeader({
+    required this.icon,
+    required this.title,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -1150,11 +1399,15 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 6),
-        Text(title,
+        Text(
+          title,
           style: TextStyle(
-            fontSize: 12, fontWeight: FontWeight.w700,
-            color: color, letterSpacing: 0.5,
-          )),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: color,
+            letterSpacing: 0.5,
+          ),
+        ),
       ],
     ),
   );
@@ -1166,8 +1419,13 @@ class _SettingsTile extends StatelessWidget {
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
-  const _SettingsTile({required this.icon, required this.label,
-    required this.subtitle, required this.color, required this.onTap});
+  const _SettingsTile({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
@@ -1180,22 +1438,31 @@ class _SettingsTile extends StatelessWidget {
     child: ListTile(
       contentPadding: const EdgeInsets.fromLTRB(14, 6, 10, 6),
       leading: Container(
-        width: 40, height: 40,
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(11),
         ),
         child: Icon(icon, color: color, size: 20),
       ),
-      title: Text(label,
+      title: Text(
+        label,
         style: const TextStyle(
-          fontSize: 14, fontWeight: FontWeight.w700,
-          color: Color(0xFF1A1207))),
-      subtitle: Text(subtitle,
-        style: const TextStyle(
-          fontSize: 12, color: Color(0xFF9E9085))),
-      trailing: const Icon(Icons.chevron_right_rounded,
-        color: Color(0xFF9E9085), size: 20),
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF1A1207),
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 12, color: Color(0xFF9E9085)),
+      ),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        color: Color(0xFF9E9085),
+        size: 20,
+      ),
       onTap: () {
         HapticFeedback.selectionClick();
         onTap();
@@ -1248,11 +1515,11 @@ class _EditShopSheetState extends State<_EditShopSheet> {
   late final TextEditingController _nameCtrl;
   bool _saving = false;
 
-  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kNavy = Color(0xFF1E1C5E);
   static const _kOrange = Color(0xFFE85D20);
   static const _kBorder = Color(0xFFE0D8CC);
-  static const _kMuted  = Color(0xFF9E9085);
-  static const _kBg     = Color(0xFFFAF7F2);
+  static const _kMuted = Color(0xFF9E9085);
+  static const _kBg = Color(0xFFFAF7F2);
 
   @override
   void initState() {
@@ -1270,7 +1537,8 @@ class _EditShopSheetState extends State<_EditShopSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom),
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -1282,11 +1550,16 @@ class _EditShopSheetState extends State<_EditShopSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Handle
-            Center(child: Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: _kBorder, borderRadius: BorderRadius.circular(2)),
-            )),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: _kBorder,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
 
             // Title
@@ -1298,14 +1571,21 @@ class _EditShopSheetState extends State<_EditShopSheet> {
                     color: _kOrange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.store_rounded,
-                    color: _kOrange, size: 20),
+                  child: const Icon(
+                    Icons.store_rounded,
+                    color: _kOrange,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 10),
-                const Text('Thông tin quán',
+                const Text(
+                  'Thông tin quán',
                   style: TextStyle(
-                    fontSize: 17, fontWeight: FontWeight.w800,
-                    color: _kNavy)),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: _kNavy,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -1317,45 +1597,64 @@ class _EditShopSheetState extends State<_EditShopSheet> {
               decoration: InputDecoration(
                 labelText: 'Tên quán *',
                 labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
-                prefixIcon: const Icon(Icons.storefront_rounded,
-                  color: _kOrange, size: 18),
-                filled: true, fillColor: _kBg,
+                prefixIcon: const Icon(
+                  Icons.storefront_rounded,
+                  color: _kOrange,
+                  size: 18,
+                ),
+                filled: true,
+                fillColor: _kBg,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: _kBorder)),
+                  borderSide: const BorderSide(color: _kBorder),
+                ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: _kBorder)),
+                  borderSide: const BorderSide(color: _kBorder),
+                ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: _kOrange, width: 2)),
+                  borderSide: const BorderSide(color: _kOrange, width: 2),
+                ),
               ),
             ),
             const SizedBox(height: 8),
             const Text(
               '💡 Tên quán hiển thị trên Dashboard và hoá đơn.',
-              style: TextStyle(fontSize: 12, color: _kMuted)),
+              style: TextStyle(fontSize: 12, color: _kMuted),
+            ),
             const SizedBox(height: 20),
 
             // Save button
             SizedBox(
-              width: double.infinity, height: 52,
+              width: double.infinity,
+              height: 52,
               child: ElevatedButton.icon(
                 onPressed: _saving ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kOrange,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
                 icon: _saving
-                    ? const SizedBox(width: 18, height: 18,
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
                         child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Icon(Icons.save_rounded),
-                label: Text(_saving ? 'Đang lưu...' : 'Lưu thay đổi',
+                label: Text(
+                  _saving ? 'Đang lưu...' : 'Lưu thay đổi',
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 15)),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
               ),
             ),
           ],
@@ -1374,7 +1673,8 @@ class _EditShopSheetState extends State<_EditShopSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✅ Đã lưu tên quán'),
-          behavior: SnackBarBehavior.floating),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }
@@ -1393,17 +1693,17 @@ class _BillSettingsSheet extends ConsumerStatefulWidget {
 }
 
 class _BillSettingsSheetState extends ConsumerState<_BillSettingsSheet> {
-  final _phoneCtrl   = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
-  final _footerCtrl  = TextEditingController();
+  final _footerCtrl = TextEditingController();
   bool _loading = true;
-  bool _saving  = false;
+  bool _saving = false;
 
-  static const _kNavy   = Color(0xFF1E1C5E);
-  static const _kGreen  = Color(0xFF2E7D32);
+  static const _kNavy = Color(0xFF1E1C5E);
+  static const _kGreen = Color(0xFF2E7D32);
   static const _kBorder = Color(0xFFE0D8CC);
-  static const _kMuted  = Color(0xFF9E9085);
-  static const _kBg     = Color(0xFFFAF7F2);
+  static const _kMuted = Color(0xFF9E9085);
+  static const _kBg = Color(0xFFFAF7F2);
 
   @override
   void initState() {
@@ -1413,9 +1713,9 @@ class _BillSettingsSheetState extends ConsumerState<_BillSettingsSheet> {
 
   Future<void> _loadCurrent() async {
     final repo = ref.read(settingsRepositoryProvider);
-    _phoneCtrl.text   = await repo.shopPhone;
+    _phoneCtrl.text = await repo.shopPhone;
     _addressCtrl.text = await repo.shopAddress;
-    _footerCtrl.text  = await repo.billFooter;
+    _footerCtrl.text = await repo.billFooter;
     if (mounted) setState(() => _loading = false);
   }
 
@@ -1431,7 +1731,8 @@ class _BillSettingsSheetState extends ConsumerState<_BillSettingsSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -1439,65 +1740,109 @@ class _BillSettingsSheetState extends ConsumerState<_BillSettingsSheet> {
         ),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         child: _loading
-            ? const SizedBox(height: 160,
-                child: Center(child: CircularProgressIndicator()))
+            ? const SizedBox(
+                height: 160,
+                child: Center(child: CircularProgressIndicator()),
+              )
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(child: Container(
-                    width: 40, height: 4,
-                    decoration: BoxDecoration(
-                      color: _kBorder, borderRadius: BorderRadius.circular(2)),
-                  )),
-                  const SizedBox(height: 16),
-                  Row(children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
                       decoration: BoxDecoration(
-                        color: _kGreen.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10)),
-                      child: const Icon(Icons.receipt_long_rounded,
-                          color: _kGreen, size: 20),
+                        color: _kBorder,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                    const SizedBox(width: 10),
-                    const Text('Thông tin hoá đơn',
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: _kGreen.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.receipt_long_rounded,
+                          color: _kGreen,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Thông tin hoá đơn',
                         style: TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.w800,
-                            color: _kNavy)),
-                  ]),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: _kNavy,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
 
-                  _field(_phoneCtrl,   'SĐT quán',   Icons.phone_rounded,   TextInputType.phone),
+                  _field(
+                    _phoneCtrl,
+                    'SĐT quán',
+                    Icons.phone_rounded,
+                    TextInputType.phone,
+                  ),
                   const SizedBox(height: 12),
-                  _field(_addressCtrl, 'Địa chỉ',    Icons.location_on_rounded, TextInputType.streetAddress),
+                  _field(
+                    _addressCtrl,
+                    'Địa chỉ',
+                    Icons.location_on_rounded,
+                    TextInputType.streetAddress,
+                  ),
                   const SizedBox(height: 12),
-                  _field(_footerCtrl,  'Lời cuối hoá đơn',
-                      Icons.format_quote_rounded, TextInputType.text,
-                      hint: 'Cảm ơn quý khách!'),
+                  _field(
+                    _footerCtrl,
+                    'Lời cuối hoá đơn',
+                    Icons.format_quote_rounded,
+                    TextInputType.text,
+                    hint: 'Cảm ơn quý khách!',
+                  ),
                   const SizedBox(height: 8),
                   const Text(
                     '💡 Thông tin này sẽ in lên đầu/cuối mỗi hoá đơn.',
-                    style: TextStyle(fontSize: 12, color: _kMuted)),
+                    style: TextStyle(fontSize: 12, color: _kMuted),
+                  ),
                   const SizedBox(height: 20),
 
                   SizedBox(
-                    width: double.infinity, height: 52,
+                    width: double.infinity,
+                    height: 52,
                     child: ElevatedButton.icon(
                       onPressed: _saving ? null : _save,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _kGreen,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14))),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
                       icon: _saving
-                          ? const SizedBox(width: 18, height: 18,
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
                               child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2))
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
                           : const Icon(Icons.save_rounded),
-                      label: Text(_saving ? 'Đang lưu...' : 'Lưu cài đặt',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 15)),
+                      label: Text(
+                        _saving ? 'Đang lưu...' : 'Lưu cài đặt',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -1506,8 +1851,13 @@ class _BillSettingsSheetState extends ConsumerState<_BillSettingsSheet> {
     );
   }
 
-  Widget _field(TextEditingController ctrl, String label, IconData icon,
-      TextInputType type, {String? hint}) {
+  Widget _field(
+    TextEditingController ctrl,
+    String label,
+    IconData icon,
+    TextInputType type, {
+    String? hint,
+  }) {
     return TextField(
       controller: ctrl,
       keyboardType: type,
@@ -1516,18 +1866,25 @@ class _BillSettingsSheetState extends ConsumerState<_BillSettingsSheet> {
         hintText: hint,
         labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
         prefixIcon: Icon(icon, color: _kGreen, size: 18),
-        filled: true, fillColor: _kBg,
+        filled: true,
+        fillColor: _kBg,
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _kBorder)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _kBorder),
+        ),
         enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _kBorder)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _kBorder),
+        ),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _kGreen, width: 2)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _kGreen, width: 2),
+        ),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 14,
+        ),
       ),
     );
   }
@@ -1536,14 +1893,17 @@ class _BillSettingsSheetState extends ConsumerState<_BillSettingsSheet> {
     setState(() => _saving = true);
     try {
       final repo = ref.read(settingsRepositoryProvider);
-      await repo.set('shop_phone',   _phoneCtrl.text.trim());
+      await repo.set('shop_phone', _phoneCtrl.text.trim());
       await repo.set('shop_address', _addressCtrl.text.trim());
-      await repo.set('bill_footer',  _footerCtrl.text.trim());
+      await repo.set('bill_footer', _footerCtrl.text.trim());
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('✅ Đã lưu thông tin hoá đơn'),
-          behavior: SnackBarBehavior.floating));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Đã lưu thông tin hoá đơn'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -1555,75 +1915,22 @@ class _BillSettingsSheetState extends ConsumerState<_BillSettingsSheet> {
 // PIN TOGGLE TILE — Bật/Tắt khoá PIN trong Settings
 // ─────────────────────────────────────────────────────────────────────────────
 class _PinToggleTile extends ConsumerWidget {
-  static const _kNavy   = Color(0xFF1E1C5E);
-  static const _kBlue   = Color(0xFF1565C0);
-  static const _kMuted  = Color(0xFF9E9085);
+  static const _kNavy = Color(0xFF1E1C5E);
+  static const _kBlue = Color(0xFF1565C0);
+  static const _kMuted = Color(0xFF9E9085);
   static const _kBorder = Color(0xFFE0D8CC);
 
   const _PinToggleTile();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pinAsync  = ref.watch(pinEnabledProvider);
-    final enabled   = pinAsync.value ?? false;
+    final pinAsync = ref.watch(pinEnabledProvider);
+    final enabled = pinAsync.value ?? false;
     final settingsRepo = ref.read(settingsRepositoryProvider);
 
-    return Column(children: [
-      // ── Toggle ─────────────────────────────────────────────────────
-      Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _kBorder),
-        ),
-        child: SwitchListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          secondary: Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(
-              color: _kBlue.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.lock_rounded, color: _kBlue, size: 20),
-          ),
-          title: const Text('Khoá bằng PIN',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
-          subtitle: Text(
-            enabled ? 'Yêu cầu PIN khi mở ứng dụng' : 'Tắt — không cần PIN khi mở app',
-            style: const TextStyle(fontSize: 12, color: _kMuted)),
-          value: enabled,
-          activeColor: _kBlue,  // ignore: deprecated_member_use
-          onChanged: (v) async {
-            HapticFeedback.selectionClick();
-            if (v) {
-              // Bật PIN → mở màn hình đặt PIN
-              await showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.92,
-                  child: const PinLockScreen(mode: PinMode.set),
-                ),
-              );
-            } else {
-              // Tắt PIN
-              await settingsRepo.set('pin_enabled', 'false');
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('🔓 Đã tắt khoá PIN'),
-                    behavior: SnackBarBehavior.floating));
-              }
-            }
-            // Reactive: invalidate để rebuild
-            ref.invalidate(pinEnabledProvider);
-          },
-        ),
-      ),
-
-      // ── Đổi PIN (chỉ hiện khi bật) ─────────────────────────────────
-      if (enabled)
+    return Column(
+      children: [
+        // ── Toggle ─────────────────────────────────────────────────────
         Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
@@ -1631,35 +1938,119 @@ class _PinToggleTile extends ConsumerWidget {
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: _kBorder),
           ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            leading: Container(
-              width: 40, height: 40,
+          child: SwitchListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
+            ),
+            secondary: Container(
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: _kBlue.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.edit_rounded, color: _kBlue, size: 20),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.lock_rounded, color: _kBlue, size: 20),
             ),
-            title: const Text('Đổi mã PIN',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
-            subtitle: const Text('Thay đổi mã PIN hiện tại',
-              style: TextStyle(fontSize: 12, color: _kMuted)),
-            trailing: const Icon(Icons.chevron_right_rounded, color: _kMuted),
-            onTap: () async {
-              await showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.92,
-                  child: const PinLockScreen(mode: PinMode.change),
-                ),
-              );
+            title: const Text(
+              'Khoá bằng PIN',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: _kNavy,
+              ),
+            ),
+            subtitle: Text(
+              enabled
+                  ? 'Yêu cầu PIN khi mở ứng dụng'
+                  : 'Tắt — không cần PIN khi mở app',
+              style: const TextStyle(fontSize: 12, color: _kMuted),
+            ),
+            value: enabled,
+            activeColor: _kBlue, // ignore: deprecated_member_use
+            onChanged: (v) async {
+              HapticFeedback.selectionClick();
+              if (v) {
+                // Bật PIN → mở màn hình đặt PIN
+                await showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.92,
+                    child: const PinLockScreen(mode: PinMode.set),
+                  ),
+                );
+              } else {
+                // Tắt PIN
+                await settingsRepo.set('pin_enabled', 'false');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('🔓 Đã tắt khoá PIN'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
+              // Reactive: invalidate để rebuild
               ref.invalidate(pinEnabledProvider);
             },
           ),
         ),
-    ]);
+
+        // ── Đổi PIN (chỉ hiện khi bật) ─────────────────────────────────
+        if (enabled)
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _kBorder),
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: _kBlue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.edit_rounded, color: _kBlue, size: 20),
+              ),
+              title: const Text(
+                'Đổi mã PIN',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _kNavy,
+                ),
+              ),
+              subtitle: const Text(
+                'Thay đổi mã PIN hiện tại',
+                style: TextStyle(fontSize: 12, color: _kMuted),
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded, color: _kMuted),
+              onTap: () async {
+                await showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.92,
+                    child: const PinLockScreen(mode: PinMode.change),
+                  ),
+                );
+                ref.invalidate(pinEnabledProvider);
+              },
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -1669,9 +2060,9 @@ class _PinToggleTile extends ConsumerWidget {
 class _RecoveryEmailTile extends ConsumerWidget {
   const _RecoveryEmailTile();
 
-  static const _kNavy   = Color(0xFF1E1C5E);
-  static const _kBlue   = Color(0xFF4F9EFF);
-  static const _kMuted  = Color(0xFF9E9085);
+  static const _kNavy = Color(0xFF1E1C5E);
+  static const _kBlue = Color(0xFF4F9EFF);
+  static const _kMuted = Color(0xFF9E9085);
   static const _kBorder = Color(0xFFE0D8CC);
 
   @override
@@ -1686,31 +2077,43 @@ class _RecoveryEmailTile extends ConsumerWidget {
           color: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
-            side: const BorderSide(color: _kBorder)),
+            side: const BorderSide(color: _kBorder),
+          ),
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 4),
+              horizontal: 16,
+              vertical: 4,
+            ),
             leading: Container(
-              width: 38, height: 38,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: _kBlue.withValues(alpha: 0.12),
-                shape: BoxShape.circle),
-              child: const Icon(Icons.mail_outline_rounded,
-                color: _kBlue, size: 20),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.mail_outline_rounded,
+                color: _kBlue,
+                size: 20,
+              ),
             ),
-            title: const Text('Email khôi phục PIN',
+            title: const Text(
+              'Email khôi phục PIN',
               style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w700,
-                color: _kNavy)),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: _kNavy,
+              ),
+            ),
             subtitle: Text(
               email.isEmpty ? 'Chưa đặt — Nhấn để thêm' : email,
               style: TextStyle(
                 fontSize: 12,
                 color: email.isEmpty ? _kMuted : _kBlue,
-                fontStyle: email.isEmpty
-                    ? FontStyle.italic : FontStyle.normal)),
-            trailing: const Icon(Icons.edit_rounded,
-              color: _kMuted, size: 18),
+                fontStyle: email.isEmpty ? FontStyle.italic : FontStyle.normal,
+              ),
+            ),
+            trailing: const Icon(Icons.edit_rounded, color: _kMuted, size: 18),
             onTap: () => _showEditDialog(context, ref, email),
           ),
         );
@@ -1719,23 +2122,30 @@ class _RecoveryEmailTile extends ConsumerWidget {
   }
 
   void _showEditDialog(
-      BuildContext context, WidgetRef ref, String currentEmail) {
+    BuildContext context,
+    WidgetRef ref,
+    String currentEmail,
+  ) {
     final ctrl = TextEditingController(text: currentEmail);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20)),
-        title: const Text('Email khôi phục PIN',
-          style: TextStyle(
-            fontWeight: FontWeight.w800, fontSize: 16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Email khôi phục PIN',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
               'Dùng để nhận mã OTP khi quên PIN.\nNên dùng email bạn thường xuyên kiểm tra.',
-              style: TextStyle(fontSize: 13, color: Colors.black54,
-                height: 1.5)),
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
+                height: 1.5,
+              ),
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: ctrl,
@@ -1743,15 +2153,22 @@ class _RecoveryEmailTile extends ConsumerWidget {
               autofillHints: const [AutofillHints.email],
               decoration: InputDecoration(
                 hintText: 'your@email.com',
-                prefixIcon: const Icon(Icons.email_rounded,
-                  color: _kBlue, size: 18),
+                prefixIcon: const Icon(
+                  Icons.email_rounded,
+                  color: _kBlue,
+                  size: 18,
+                ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: _kBlue, width: 2)),
+                  borderSide: const BorderSide(color: _kBlue, width: 2),
+                ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 12),
+                  horizontal: 14,
+                  vertical: 12,
+                ),
               ),
             ),
           ],
@@ -1759,21 +2176,27 @@ class _RecoveryEmailTile extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy',
-              style: TextStyle(color: _kMuted))),
+            child: const Text('Hủy', style: TextStyle(color: _kMuted)),
+          ),
           ElevatedButton(
             onPressed: () async {
               final email = ctrl.text.trim();
               if (email.isEmpty || email.contains('@')) {
-                await ref.read(settingsRepositoryProvider)
+                await ref
+                    .read(settingsRepositoryProvider)
                     .set('recovery_email', email);
                 if (ctx.mounted) {
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(email.isEmpty
-                        ? '✅ Đã xóa email khôi phục'
-                        : '✅ Email khôi phục: $email'),
-                    behavior: SnackBarBehavior.floating));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        email.isEmpty
+                            ? '✅ Đã xóa email khôi phục'
+                            : '✅ Email khôi phục: $email',
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
                 }
               }
             },
@@ -1781,7 +2204,9 @@ class _RecoveryEmailTile extends ConsumerWidget {
               backgroundColor: _kBlue,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12))),
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Lưu'),
           ),
         ],
@@ -1796,17 +2221,18 @@ class _RecoveryEmailTile extends ConsumerWidget {
 class _QuickPinTile extends ConsumerWidget {
   const _QuickPinTile();
 
-  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kNavy = Color(0xFF1E1C5E);
   static const _kOrange = Color(0xFFE85D20);
-  static const _kMuted  = Color(0xFF9E9085);
+  static const _kMuted = Color(0xFF9E9085);
   static const _kBorder = Color(0xFFE0D8CC);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
     final canonical = StaffService.canonicalRole(session?.role ?? '');
-    final isManager = session?.isOwner == true ||
-        canonical == 'owner' || 
+    final isManager =
+        session?.isOwner == true ||
+        canonical == 'owner' ||
         canonical == 'manager';
 
     if (!isManager) return const SizedBox.shrink();
@@ -1823,17 +2249,31 @@ class _QuickPinTile extends ConsumerWidget {
             border: Border.all(color: _kBorder),
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
+            ),
             leading: Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: _kOrange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.offline_pin_rounded, color: _kOrange, size: 20),
+              child: const Icon(
+                Icons.offline_pin_rounded,
+                color: _kOrange,
+                size: 20,
+              ),
             ),
-            title: const Text('Mã PIN duyệt nhanh (6 số)',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
+            title: const Text(
+              'Mã PIN duyệt nhanh (6 số)',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: _kNavy,
+              ),
+            ),
             subtitle: Text(
               hasPin
                   ? 'Đã thiết lập — Nhấp để thay đổi'
@@ -1859,7 +2299,7 @@ class _QuickPinTile extends ConsumerWidget {
             },
           ),
         );
-      }
+      },
     );
   }
 }
@@ -1872,9 +2312,9 @@ class _ChangePasswordTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const _kNavy   = Color(0xFF1E1C5E);
+    const _kNavy = Color(0xFF1E1C5E);
     const _kOrange = Color(0xFFE85D20);
-    const _kMuted  = Color(0xFF9E9085);
+    const _kMuted = Color(0xFF9E9085);
     const _kBorder = Color(0xFFE0D8CC);
 
     return Container(
@@ -1887,17 +2327,26 @@ class _ChangePasswordTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: Container(
-          width: 40, height: 40,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: _kOrange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(Icons.password_rounded, color: _kOrange, size: 20),
         ),
-        title: const Text('Đổi mật khẩu tài khoản',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
-        subtitle: const Text('Thay đổi mật khẩu đăng nhập cá nhân',
-            style: TextStyle(fontSize: 12, color: _kMuted)),
+        title: const Text(
+          'Đổi mật khẩu tài khoản',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: _kNavy,
+          ),
+        ),
+        subtitle: const Text(
+          'Thay đổi mật khẩu đăng nhập cá nhân',
+          style: TextStyle(fontSize: 12, color: _kMuted),
+        ),
         trailing: const Icon(Icons.chevron_right_rounded, color: _kMuted),
         onTap: () {
           showModalBottomSheet(
@@ -1926,11 +2375,11 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
   String? _error;
   bool _saving = false;
 
-  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kNavy = Color(0xFF1E1C5E);
   static const _kOrange = Color(0xFFE85D20);
   static const _kBorder = Color(0xFFE0D8CC);
-  static const _kMuted  = Color(0xFF9E9085);
-  static const _kBg     = Color(0xFFFAF7F2);
+  static const _kMuted = Color(0xFF9E9085);
+  static const _kBg = Color(0xFFFAF7F2);
 
   @override
   void dispose() {
@@ -1943,7 +2392,9 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -1955,24 +2406,42 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                  color: _kBorder, borderRadius: BorderRadius.circular(2)),
-              )),
-              const SizedBox(height: 16),
-              Row(children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
-                    color: _kOrange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.password_rounded, color: _kOrange, size: 20),
+                    color: _kBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-                const SizedBox(width: 10),
-                Text('Đổi mật khẩu tài khoản',
-                    style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w800, color: _kNavy)),
-              ]),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _kOrange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.password_rounded,
+                      color: _kOrange,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Đổi mật khẩu tài khoản',
+                    style: GoogleFonts.outfit(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: _kNavy,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
 
               // Old Password
@@ -1982,13 +2451,30 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                 decoration: InputDecoration(
                   labelText: 'Mật khẩu hiện tại *',
                   labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
-                  prefixIcon: const Icon(Icons.lock_clock_rounded, color: _kOrange, size: 18),
-                  filled: true, fillColor: _kBg,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kOrange, width: 2)),
+                  prefixIcon: const Icon(
+                    Icons.lock_clock_rounded,
+                    color: _kOrange,
+                    size: 18,
+                  ),
+                  filled: true,
+                  fillColor: _kBg,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kOrange, width: 2),
+                  ),
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -2000,13 +2486,30 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                 decoration: InputDecoration(
                   labelText: 'Mật khẩu mới (từ 6 ký tự) *',
                   labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
-                  prefixIcon: const Icon(Icons.key_rounded, color: _kOrange, size: 18),
-                  filled: true, fillColor: _kBg,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kOrange, width: 2)),
+                  prefixIcon: const Icon(
+                    Icons.key_rounded,
+                    color: _kOrange,
+                    size: 18,
+                  ),
+                  filled: true,
+                  fillColor: _kBg,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kOrange, width: 2),
+                  ),
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -2018,36 +2521,75 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                 decoration: InputDecoration(
                   labelText: 'Xác nhận mật khẩu mới *',
                   labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
-                  prefixIcon: const Icon(Icons.check_circle_outline_rounded, color: _kOrange, size: 18),
-                  filled: true, fillColor: _kBg,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBorder)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kOrange, width: 2)),
+                  prefixIcon: const Icon(
+                    Icons.check_circle_outline_rounded,
+                    color: _kOrange,
+                    size: 18,
+                  ),
+                  filled: true,
+                  fillColor: _kBg,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kOrange, width: 2),
+                  ),
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
                 ),
               ),
 
               if (_error != null) ...[
                 const SizedBox(height: 12),
-                Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w600)),
+                Text(
+                  _error!,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
               const SizedBox(height: 24),
 
               SizedBox(
-                width: double.infinity, height: 52,
+                width: double.infinity,
+                height: 52,
                 child: ElevatedButton.icon(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kNavy,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   icon: _saving
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : const Icon(Icons.save_rounded),
-                  label: Text(_saving ? 'Đang cập nhật...' : 'Lưu mật khẩu mới',
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 15)),
+                  label: Text(
+                    _saving ? 'Đang cập nhật...' : 'Lưu mật khẩu mới',
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -2077,15 +2619,20 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
 
     setState(() => _saving = true);
     try {
-      final res = await UserAuthService.changePassword(oldPassword: oldP, newPassword: newP);
+      final res = await UserAuthService.changePassword(
+        oldPassword: oldP,
+        newPassword: newP,
+      );
       if (res['success'] == true) {
         if (mounted) {
           Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('✅ Đã đổi mật khẩu thành công!'),
-            backgroundColor: Color(0xFF2E7D32),
-            behavior: SnackBarBehavior.floating,
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Đã đổi mật khẩu thành công!'),
+              backgroundColor: Color(0xFF2E7D32),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
       } else {
         setState(() => _error = '❌ ${res['message']}');
@@ -2104,9 +2651,9 @@ class _PasswordRecoveryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const _kNavy   = Color(0xFF1E1C5E);
-    const _kGreen  = Color(0xFF2E7D32);
-    const _kMuted  = Color(0xFF9E9085);
+    const _kNavy = Color(0xFF1E1C5E);
+    const _kGreen = Color(0xFF2E7D32);
+    const _kMuted = Color(0xFF9E9085);
     const _kBorder = Color(0xFFE0D8CC);
 
     return Container(
@@ -2119,17 +2666,30 @@ class _PasswordRecoveryTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: Container(
-          width: 40, height: 40,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: _kGreen.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.help_center_rounded, color: _kGreen, size: 20),
+          child: const Icon(
+            Icons.help_center_rounded,
+            color: _kGreen,
+            size: 20,
+          ),
         ),
-        title: const Text('Khôi phục / Quên mật khẩu',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
-        subtitle: const Text('Các phương thức hỗ trợ cấp lại mật khẩu',
-            style: TextStyle(fontSize: 12, color: _kMuted)),
+        title: const Text(
+          'Khôi phục / Quên mật khẩu',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: _kNavy,
+          ),
+        ),
+        subtitle: const Text(
+          'Các phương thức hỗ trợ cấp lại mật khẩu',
+          style: TextStyle(fontSize: 12, color: _kMuted),
+        ),
         trailing: const Icon(Icons.chevron_right_rounded, color: _kMuted),
         onTap: () {
           showModalBottomSheet(
@@ -2147,11 +2707,11 @@ class _PasswordRecoveryTile extends StatelessWidget {
 class _PasswordRecoverySheet extends StatelessWidget {
   const _PasswordRecoverySheet();
 
-  static const _kNavy   = Color(0xFF1E1C5E);
-  static const _kGreen  = Color(0xFF2E7D32);
+  static const _kNavy = Color(0xFF1E1C5E);
+  static const _kGreen = Color(0xFF2E7D32);
   static const _kOrange = Color(0xFFE85D20);
   static const _kBorder = Color(0xFFE0D8CC);
-  static const _kBg     = Color(0xFFFAF7F2);
+  static const _kBg = Color(0xFFFAF7F2);
 
   @override
   Widget build(BuildContext context) {
@@ -2166,24 +2726,42 @@ class _PasswordRecoverySheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: _kBorder, borderRadius: BorderRadius.circular(2)),
-            )),
-            const SizedBox(height: 16),
-            Row(children: [
-              Container(
-                padding: const EdgeInsets.all(8),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: _kGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.lock_reset_rounded, color: _kGreen, size: 20),
+                  color: _kBorder,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-              const SizedBox(width: 10),
-              Text('Khôi phục & Quên mật khẩu',
-                  style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w800, color: _kNavy)),
-            ]),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _kGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.lock_reset_rounded,
+                    color: _kGreen,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Khôi phục & Quên mật khẩu',
+                  style: GoogleFonts.outfit(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: _kNavy,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
 
             // Card 1: Nhờ Chủ quán / Quản lý
@@ -2192,7 +2770,8 @@ class _PasswordRecoverySheet extends StatelessWidget {
               color: const Color(0xFF1565C0),
               stepNumber: 'CÁCH 1 (NHANH NHẤT)',
               title: 'Nhờ Chủ quán / Quản lý đặt lại tại chỗ',
-              description: 'Chủ quán hoặc Quản lý truy cập vào mục Nhân Viên → Tìm tên tài khoản của bạn → Bấm "Đặt lại mật khẩu" để tạo mật khẩu mới ngay tức thì.',
+              description:
+                  'Chủ quán hoặc Quản lý truy cập vào mục Nhân Viên → Tìm tên tài khoản của bạn → Bấm "Đặt lại mật khẩu" để tạo mật khẩu mới ngay tức thì.',
             ),
 
             const SizedBox(height: 12),
@@ -2203,7 +2782,8 @@ class _PasswordRecoverySheet extends StatelessWidget {
               color: _kOrange,
               stepNumber: 'CÁCH 2',
               title: 'Liên hệ Hotline Hỗ Trợ Kỹ Thuật 24/7',
-              description: 'Gọi trực tiếp Hotline: 0838.518.618 (LPM Digital) đọc Số điện thoại đăng ký tài khoản để kỹ thuật viên xác minh và khôi phục cho bạn.',
+              description:
+                  'Gọi trực tiếp Hotline: 0838.518.618 (LPM Digital) đọc Số điện thoại đăng ký tài khoản để kỹ thuật viên xác minh và khôi phục cho bạn.',
             ),
 
             const SizedBox(height: 12),
@@ -2214,21 +2794,31 @@ class _PasswordRecoverySheet extends StatelessWidget {
               color: _kGreen,
               stepNumber: 'CÁCH 3',
               title: 'Gửi yêu cầu khôi phục trực tiếp cho IT',
-              description: 'Sử dụng tính năng "Gửi phản hồi" ngay bên dưới để gửi yêu cầu cấp lại mật khẩu. Hệ thống sẽ tự động gói kèm ID tài khoản để kỹ thuật xử lý.',
+              description:
+                  'Sử dụng tính năng "Gửi phản hồi" ngay bên dưới để gửi yêu cầu cấp lại mật khẩu. Hệ thống sẽ tự động gói kèm ID tài khoản để kỹ thuật xử lý.',
             ),
 
             const SizedBox(height: 20),
 
             SizedBox(
-              width: double.infinity, height: 48,
+              width: double.infinity,
+              height: 48,
               child: OutlinedButton.icon(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: _kBorder),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
                 icon: const Icon(Icons.check_rounded, color: _kNavy),
-                label: Text('Đã hiểu', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: _kNavy)),
+                label: Text(
+                  'Đã hiểu',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    color: _kNavy,
+                  ),
+                ),
               ),
             ),
           ],
@@ -2267,14 +2857,33 @@ class _PasswordRecoverySheet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(stepNumber,
-                    style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
+                Text(
+                  stepNumber,
+                  style: GoogleFonts.outfit(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                    letterSpacing: 0.5,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(title,
-                    style: GoogleFonts.outfit(fontSize: 13.5, fontWeight: FontWeight.w800, color: _kNavy)),
+                Text(
+                  title,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: _kNavy,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(description,
-                    style: GoogleFonts.outfit(fontSize: 12, color: _kNavy.withValues(alpha: 0.75), height: 1.4)),
+                Text(
+                  description,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: _kNavy.withValues(alpha: 0.75),
+                    height: 1.4,
+                  ),
+                ),
               ],
             ),
           ),
@@ -2301,11 +2910,11 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
   String? _error;
   bool _saving = false;
 
-  static const _kNavy   = Color(0xFF1E1C5E);
+  static const _kNavy = Color(0xFF1E1C5E);
   static const _kOrange = Color(0xFFE85D20);
   static const _kBorder = Color(0xFFE0D8CC);
-  static const _kMuted  = Color(0xFF9E9085);
-  static const _kBg     = Color(0xFFFAF7F2);
+  static const _kMuted = Color(0xFF9E9085);
+  static const _kBg = Color(0xFFFAF7F2);
 
   @override
   void dispose() {
@@ -2318,7 +2927,8 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -2330,27 +2940,44 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                  color: _kBorder, borderRadius: BorderRadius.circular(2)),
-              )),
-              const SizedBox(height: 16),
-              Row(children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
-                    color: _kOrange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.offline_pin_rounded,
-                      color: _kOrange, size: 20),
+                    color: _kBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-                const SizedBox(width: 10),
-                Text(widget.hasPin ? 'Đổi mã PIN duyệt nhanh 6 số' : 'Mã PIN duyệt nhanh 6 số',
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _kOrange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.offline_pin_rounded,
+                      color: _kOrange,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    widget.hasPin
+                        ? 'Đổi mã PIN duyệt nhanh 6 số'
+                        : 'Mã PIN duyệt nhanh 6 số',
                     style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w800,
-                        color: _kNavy)),
-              ]),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: _kNavy,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
 
               // Card giải thích công dụng mã PIN
@@ -2364,18 +2991,32 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(children: [
-                      const Icon(Icons.info_outline_rounded, color: _kOrange, size: 16),
-                      const SizedBox(width: 6),
-                      Text('MÃ PIN DUYỆT NHANH DÙNG LÀM GÌ?',
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline_rounded,
+                          color: _kOrange,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'MÃ PIN DUYỆT NHANH DÙNG LÀM GÌ?',
                           style: GoogleFonts.outfit(
-                            fontSize: 12, fontWeight: FontWeight.w800, color: _kOrange)),
-                    ]),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: _kOrange,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       'Đây là mã PIN 6 chữ số được sử dụng để Quản lý hoặc Chủ quán phê duyệt nhanh tại chỗ khi nhân viên thực hiện các thao tác nhạy cảm như Hủy bàn hoặc Hủy món đã gửi bếp.\n\nSử dụng mã PIN này giúp bảo vệ doanh thu quán của bạn khỏi thất thoát mà không cần tiết lộ mật khẩu đăng nhập chính.',
                       style: GoogleFonts.outfit(
-                        fontSize: 12, color: _kNavy.withValues(alpha: 0.75), height: 1.45),
+                        fontSize: 12,
+                        color: _kNavy.withValues(alpha: 0.75),
+                        height: 1.45,
+                      ),
                     ),
                   ],
                 ),
@@ -2389,22 +3030,35 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                 obscureText: true,
                 maxLength: 6,
                 decoration: InputDecoration(
-                  labelText: widget.hasPin ? 'Mã PIN mới (6 chữ số)' : 'Mã PIN mới (6 chữ số)',
+                  labelText: widget.hasPin
+                      ? 'Mã PIN mới (6 chữ số)'
+                      : 'Mã PIN mới (6 chữ số)',
                   labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
-                  prefixIcon: const Icon(Icons.lock_outline_rounded, color: _kOrange, size: 18),
-                  filled: true, fillColor: _kBg,
+                  prefixIcon: const Icon(
+                    Icons.lock_outline_rounded,
+                    color: _kOrange,
+                    size: 18,
+                  ),
+                  filled: true,
+                  fillColor: _kBg,
                   counterText: '',
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _kBorder)),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
                   enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _kBorder)),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
                   focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _kOrange, width: 2)),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kOrange, width: 2),
+                  ),
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -2416,48 +3070,84 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                 obscureText: true,
                 maxLength: 6,
                 decoration: InputDecoration(
-                  labelText: widget.hasPin ? 'Xác nhận mã PIN mới (6 số)' : 'Xác nhận mã PIN mới (6 số)',
+                  labelText: widget.hasPin
+                      ? 'Xác nhận mã PIN mới (6 số)'
+                      : 'Xác nhận mã PIN mới (6 số)',
                   labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
-                  prefixIcon: const Icon(Icons.lock_outline_rounded, color: _kOrange, size: 18),
-                  filled: true, fillColor: _kBg,
+                  prefixIcon: const Icon(
+                    Icons.lock_outline_rounded,
+                    color: _kOrange,
+                    size: 18,
+                  ),
+                  filled: true,
+                  fillColor: _kBg,
                   counterText: '',
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _kBorder)),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
                   enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _kBorder)),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kBorder),
+                  ),
                   focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _kOrange, width: 2)),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _kOrange, width: 2),
+                  ),
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
                 ),
               ),
 
               if (_error != null) ...[
                 const SizedBox(height: 12),
-                Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w600)),
+                Text(
+                  _error!,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
               const SizedBox(height: 24),
 
               SizedBox(
-                width: double.infinity, height: 52,
+                width: double.infinity,
+                height: 52,
                 child: ElevatedButton.icon(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kOrange,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14))),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                   icon: _saving
-                      ? const SizedBox(width: 18, height: 18,
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
                           child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2))
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : const Icon(Icons.save_rounded),
-                  label: Text(_saving ? 'Đang lưu...' : (widget.hasPin ? 'Cập nhật mã PIN 6 số' : 'Lưu mã PIN 6 số'),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 15)),
+                  label: Text(
+                    _saving
+                        ? 'Đang lưu...'
+                        : (widget.hasPin
+                              ? 'Cập nhật mã PIN 6 số'
+                              : 'Lưu mã PIN 6 số'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -2490,11 +3180,16 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
       final ok = await UserAuthService.updateQuickPin(pin);
       if (ok && mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(widget.hasPin
-              ? '✅ Đã cập nhật mã PIN duyệt nhanh thành công!'
-              : '✅ Đã lưu mã PIN duyệt nhanh thành công!'),
-          behavior: SnackBarBehavior.floating));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.hasPin
+                  ? '✅ Đã cập nhật mã PIN duyệt nhanh thành công!'
+                  : '✅ Đã lưu mã PIN duyệt nhanh thành công!',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       } else {
         setState(() => _error = '❌ Không lưu được PIN. Lỗi kết nối.');
       }
@@ -2505,4 +3200,3 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
     }
   }
 }
-

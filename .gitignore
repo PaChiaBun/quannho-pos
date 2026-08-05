@@ -48,4 +48,14 @@ app.*.map.json
 android/key.properties
 *.jks
 *.jks.backup
+.env.staging.local
 release-builds/
+
+# Staging Runtime Files (Keep .example files tracked)
+supabase/kong.staging.yml
+supabase/docker-compose.staging.yml
+supabase/.env.staging.server
+supabase/.env.staging.local
+supabase/candidate_baseline_schema.sql
+supabase/backups/
+supabase/snapshots/
