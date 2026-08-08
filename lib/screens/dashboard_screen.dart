@@ -22,6 +22,7 @@ import 'module_picker_screen.dart';
 import '../modules/bill_printer/screens/bill_printer_hub.dart';
 import '../modules/ops/screens/ops_screen.dart';
 import '../modules/qr_order/screens/qr_order_screen.dart';
+import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import '../core/services/auto_update_service.dart';
 import '../core/utils/app_logger.dart';
 
@@ -120,6 +121,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       _silentRoleRefresh();
       _subscribeStoreRolesRealtime();
       AutoUpdateService.checkForUpdates(context);
+      try {
+        ref.read(printerSettingsProvider);
+      } catch (_) {}
     });
   }
 

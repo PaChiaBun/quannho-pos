@@ -18,10 +18,7 @@ Future<void> showCreateStoreSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _CreateStoreSheet(
-      ref: ref,
-      onSuccess: onSuccess,
-    ),
+    builder: (_) => _CreateStoreSheet(ref: ref, onSuccess: onSuccess),
   );
 }
 
@@ -37,14 +34,17 @@ class _CreateStoreSheet extends StatefulWidget {
 
 class _CreateStoreSheetState extends State<_CreateStoreSheet> {
   final _nameCtrl = TextEditingController();
-  bool   _loading = false;
-  String _error   = '';
+  bool _loading = false;
+  String _error = '';
 
-  static const _navy   = Color(0xFF1E1C5E);
+  static const _navy = Color(0xFF1E1C5E);
   static const _orange = Color(0xFFE85D20);
 
   @override
-  void dispose() { _nameCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     final name = _nameCtrl.text.trim();
@@ -52,11 +52,17 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
       setState(() => _error = 'Vui lòng nhập tên quán');
       return;
     }
-    setState(() { _loading = true; _error = ''; });
+    setState(() {
+      _loading = true;
+      _error = '';
+    });
 
     final session = widget.ref.read(sessionProvider);
     if (session == null) {
-      setState(() { _loading = false; _error = 'Phiên đăng nhập hết hạn.'; });
+      setState(() {
+        _loading = false;
+        _error = 'Phiên đăng nhập hết hạn.';
+      });
       return;
     }
 
@@ -70,11 +76,11 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
     if (res.isSuccess) {
       // Cập nhật session memory + SharedPreferences
       final membership = StoreMembership(
-        storeId:   res.storeId!,
+        storeId: res.storeId!,
         storeName: name,
         storeCode: res.storeCode!,
-        role:      'owner',
-        isOwner:   true,
+        role: 'owner',
+        isOwner: true,
       );
       widget.ref.read(sessionProvider.notifier).updateStore(membership);
       await UserAuthService.selectStore(membership);
@@ -85,7 +91,7 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
     } else {
       setState(() {
         _loading = false;
-        _error   = res.errorMessage ?? 'Có lỗi xảy ra, thử lại sau.';
+        _error = res.errorMessage ?? 'Có lỗi xảy ra, thử lại sau.';
       });
     }
   }
@@ -108,16 +114,19 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
           children: [
             // Handle
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2)),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
             const SizedBox(height: 24),
 
             // Icon lớn minh hoạ
             Container(
-              width: 72, height: 72,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF1E1C5E), Color(0xFFE85D20)],
@@ -133,21 +142,30 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.storefront_rounded,
-                color: Colors.white, size: 36),
+              child: const Icon(
+                Icons.storefront_rounded,
+                color: Colors.white,
+                size: 36,
+              ),
             ),
             const SizedBox(height: 16),
 
             // Tiêu đề
-            const Text('Tạo quán của bạn',
+            const Text(
+              'Tạo quán của bạn',
               style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w900,
-                color: _navy, letterSpacing: -0.5)),
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: _navy,
+                letterSpacing: -0.5,
+              ),
+            ),
             const SizedBox(height: 6),
             const Text(
               'Bạn sẽ là chủ quán và quản lý toàn bộ hệ thống',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Color(0xFF9E9085))),
+              style: TextStyle(fontSize: 13, color: Color(0xFF9E9085)),
+            ),
             const SizedBox(height: 24),
 
             // Ô nhập tên quán
@@ -156,11 +174,17 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
               autofocus: true,
               textCapitalization: TextCapitalization.words,
               style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w600, color: _navy),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: _navy,
+              ),
               decoration: InputDecoration(
                 labelText: 'Tên quán',
                 hintText: 'Ví dụ: Quán Trà Sữa Bình Dân',
-                prefixIcon: const Icon(Icons.storefront_rounded, color: _orange),
+                prefixIcon: const Icon(
+                  Icons.storefront_rounded,
+                  color: _orange,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: const BorderSide(color: Color(0xFFE0D8CC)),
@@ -181,7 +205,8 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
 
             // Nút tạo quán
             SizedBox(
-              width: double.infinity, height: 52,
+              width: double.infinity,
+              height: 52,
               child: ElevatedButton(
                 onPressed: _loading ? null : _submit,
                 style: ElevatedButton.styleFrom(
@@ -189,22 +214,31 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: _orange.withValues(alpha: 0.5),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   elevation: 0,
                 ),
                 child: _loading
                     ? const SizedBox(
-                        width: 22, height: 22,
+                        width: 22,
+                        height: 22,
                         child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2.5))
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
                     : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.add_rounded, size: 20),
                           SizedBox(width: 8),
-                          Text('Tạo quán ngay',
+                          Text(
+                            'Tạo quán ngay',
                             style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w800)),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ],
                       ),
               ),

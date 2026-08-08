@@ -4,6 +4,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/permission_provider.dart';
+import '../services/staff_service.dart';
 import '../providers/session_provider.dart';
 import '../services/user_auth_service.dart';
 
@@ -68,22 +70,88 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
     if (!mounted) return;
 
     if (res.isSuccess) {
-      // Tìm lại thông tin quán vừa kết nối từ membership để update session
-      // Do joinStoreByCode lưu prefs bên trong nên chỉ cần fetch lại membership hoặc tự tạo
-      final membership = StoreMembership(
+      final membership = res.membership ?? StoreMembership(
         storeId:   res.storeId!,
-        storeName: 'Quán ăn', // tên quán sẽ tự load lại khi refresh/fetch memberships
+        storeName: 'Quán ăn',
         storeCode: res.storeCode!,
         role:      'waiter',
         isOwner:   false,
       );
       
-      // Update session hiện tại
+      // Update session hiện tại ngay lập tức & invalidate perms
       widget.ref.read(sessionProvider.notifier).updateStore(membership);
+      widget.ref.invalidate(userActionPermsProvider);
       await UserAuthService.selectStore(membership);
 
       if (!mounted) return;
       Navigator.pop(context); // đóng sheet
+
+      // Hiển thị dialog thông báo thành công
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 28),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Kết nối thành công!',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Bạn đã tham gia thành công vào quán "${membership.storeName}".',
+                style: const TextStyle(fontSize: 14, color: Color(0xFF2D2B8A), fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE85D20).withValues(alpha: 0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('• Quán làm việc: ${membership.storeName}',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFFE85D20))),
+                    const SizedBox(height: 4),
+                    Text('• Mã quán: ${membership.storeCode}',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E1C5E))),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Ứng dụng đã tự động chuyển phiên làm việc và cập nhật danh sách Module & Quyền hạn của bạn tại quán này.',
+                style: TextStyle(fontSize: 12.5, color: Color(0xFF5A5260), height: 1.4),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E1C5E),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Bắt đầu làm việc'),
+            ),
+          ],
+        ),
+      );
+
       widget.onSuccess?.call();
     } else {
       setState(() {

@@ -44,17 +44,15 @@ final moduleRepositoryProvider = Provider<ModuleRepository>((ref) {
 });
 
 final posRepositoryProvider = Provider<PosRepository>((ref) {
-  final productRepo  = ref.watch(productRepositoryProvider);
+  final productRepo = ref.watch(productRepositoryProvider);
   final customerRepo = ref.watch(customerRepositoryProvider);
-  final khoProRepo   = ref.watch(khoProRepositoryProvider);
+  final khoProRepo = ref.watch(khoProRepositoryProvider);
   return PosRepository(productRepo, customerRepo, khoProRepo);
 });
 
 final financeRepositoryProvider = Provider<FinanceRepository>((ref) {
   return FinanceRepository();
 });
-
-
 
 final loyaltyRepositoryProvider = Provider<LoyaltyRepository>((ref) {
   return LoyaltyRepository();
@@ -76,13 +74,19 @@ final allProductsProvider = StreamProvider<List<ProductModel>>((ref) {
 
 /// Sản phẩm cho POS (chỉ active + available)
 final posProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) {
-  return ref.watch(allProductsProvider).whenData((products) => products
-      .where((p) =>
-          p.isActive &&
-          p.isAvailable &&
-          p.category != 'Nguyên liệu' &&
-          p.productType != 'ingredient')
-      .toList());
+  return ref
+      .watch(allProductsProvider)
+      .whenData(
+        (products) => products
+            .where(
+              (p) =>
+                  p.isActive &&
+                  p.isAvailable &&
+                  p.category != 'Nguyên liệu' &&
+                  p.productType != 'ingredient',
+            )
+            .toList(),
+      );
 });
 
 /// Tất cả khách hàng (reactive)
@@ -136,23 +140,24 @@ class _NavTabNotifier extends Notifier<int> {
 }
 
 final navTabProvider = NotifierProvider<_NavTabNotifier, int>(
-  _NavTabNotifier.new);
+  _NavTabNotifier.new,
+);
 
 class NavTab {
-  static const home      = 0;
-  static const pos       = 1;
+  static const home = 0;
+  static const pos = 1;
   static const inventory = 2;
-  static const finance   = 3;
-  static const loyalty   = 4;
-  static const report    = 5;
-  static const settings  = 6;
-  static const table     = 7;
-  static const kitchen   = 8;
-  static const staff     = 9;
-  static const chamcong  = 10;
-  static const khoPro    = 11;
+  static const finance = 3;
+  static const loyalty = 4;
+  static const report = 5;
+  static const settings = 6;
+  static const table = 7;
+  static const kitchen = 8;
+  static const staff = 9;
+  static const chamcong = 10;
+  static const khoPro = 11;
   static const tinhLuong = 12;
-  static const kayOps    = 13; // Module Vận Hành (KAY Ops)
+  static const kayOps = 13; // Module Vận Hành (KAY Ops)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -160,7 +165,7 @@ class NavTab {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class NavSlotsNotifier extends AsyncNotifier<List<int>> {
-  static const _prefKey  = 'nav_slots_v2'; // v2 → reset khi thêm Kho Pro
+  static const _prefKey = 'nav_slots_v2'; // v2 → reset khi thêm Kho Pro
   static const _defaults = [0, 1, 2, 11]; // Home, Bán hàng, Kho, Kho Pro
 
   @override
@@ -168,7 +173,11 @@ class NavSlotsNotifier extends AsyncNotifier<List<int>> {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_prefKey);
     if (saved != null) {
-      final parsed = saved.split(',').map(int.tryParse).whereType<int>().toList();
+      final parsed = saved
+          .split(',')
+          .map(int.tryParse)
+          .whereType<int>()
+          .toList();
       if (parsed.length == 4) return parsed;
     }
     return List<int>.from(_defaults);
@@ -184,16 +193,23 @@ class NavSlotsNotifier extends AsyncNotifier<List<int>> {
   }
 }
 
-final navSlotsProvider =
-    AsyncNotifierProvider<NavSlotsNotifier, List<int>>(NavSlotsNotifier.new);
+final navSlotsProvider = AsyncNotifierProvider<NavSlotsNotifier, List<int>>(
+  NavSlotsNotifier.new,
+);
 
-final openShiftCCProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
+final openShiftCCProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((
+  ref,
+) async {
   final s = ref.watch(sessionProvider);
-  if (s == null) return null;
-  try {
-    return await Supabase.instance.client
-        .from('staff_shifts').select('id,clock_in')
-        .eq('user_id', s.userId).eq('store_id', s.storeId ?? '')
-        .isFilter('clock_out', null).maybeSingle();
-  } catch (_) { return null; }
+  if (s == null || s.userId.isEmpty) return null;
+  final res = await Supabase.instance.client
+      .from('staff_shifts')
+      .select('id,clock_in')
+      .eq('user_id', s.userId)
+      .eq('store_id', s.storeId ?? '')
+      .isFilter('clock_out', null)
+      .order('clock_in', ascending: false)
+      .limit(1)
+      .maybeSingle();
+  return res;
 });

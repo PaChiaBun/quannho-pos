@@ -4024,7 +4024,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       final List<Map<String, dynamic>> itemRows = [];
       for (final item in unsent) {
         final pInfo = productInfoMap[item.productId];
-        final stationCode = pInfo?['station_code'] as String? ?? 'bep_nong';
+        final stationCode = pInfo?['station_code'] as String? ?? 'nong';
         itemRows.add({
           'id': const Uuid().v4(),
           'store_id': storeId,
@@ -4089,7 +4089,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         final List<BillItem> billItems = [];
         for (final item in unsent) {
           final pInfo = productInfoMap[item.productId];
-          final stationCode = pInfo?['station_code'] as String? ?? 'bep_nong';
+          final stationCode = pInfo?['station_code'] as String? ?? 'nong';
           billItems.add(
             BillItem(
               name: item.productName,

@@ -10,34 +10,74 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:crypto/crypto.dart';
 import 'staff_sync_service.dart';
+import 'user_auth_service.dart' show StoreMembershipWriter;
 import '../utils/app_logger.dart';
 
 // ── Module IDs (khớp với module system) ───────────────────────────────────────
-const kAllModules = ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'loyalty', 'staff', 'chamcong', 'tinhluong', 'kay_ops', 'log_viewer'];
+const kAllModules = [
+  'pos',
+  'kho',
+  'kho_pro',
+  'ban',
+  'kitchen',
+  'finance',
+  'report',
+  'loyalty',
+  'staff',
+  'chamcong',
+  'tinhluong',
+  'kay_ops',
+  'log_viewer',
+];
 
 // Quyền mặc định mỗi role (module-level)
 const kDefaultPerms = {
-  'owner':   ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'loyalty', 'staff', 'chamcong', 'tinhluong', 'kay_ops', 'log_viewer'],
-  'manager': ['pos', 'kho', 'kho_pro', 'ban', 'kitchen', 'finance', 'report', 'tinhluong', 'kay_ops', 'log_viewer'],
+  'owner': [
+    'pos',
+    'kho',
+    'kho_pro',
+    'ban',
+    'kitchen',
+    'finance',
+    'report',
+    'loyalty',
+    'staff',
+    'chamcong',
+    'tinhluong',
+    'kay_ops',
+    'log_viewer',
+  ],
+  'manager': [
+    'pos',
+    'kho',
+    'kho_pro',
+    'ban',
+    'kitchen',
+    'finance',
+    'report',
+    'tinhluong',
+    'kay_ops',
+    'log_viewer',
+  ],
   'cashier': ['pos', 'ban', 'kay_ops', 'chamcong'],
-  'waiter':  ['pos', 'ban', 'kitchen', 'kay_ops', 'chamcong', 'tinhluong'],
+  'waiter': ['pos', 'ban', 'kitchen', 'kay_ops', 'chamcong', 'tinhluong'],
   'kitchen': ['kitchen', 'kay_ops', 'chamcong'],
-  'stock':   ['kho', 'kho_pro', 'kay_ops', 'chamcong'],
+  'stock': ['kho', 'kho_pro', 'kay_ops', 'chamcong'],
 };
 
 // ── Action-level permissions ──────────────────────────────────────────────────
 // Key pattern: '{module}.{action}'
 const kAllActions = [
-  'pos.cancel_bill',      // Huỷ đơn hàng đã tạo
-  'pos.apply_discount',   // Áp dụng giảm giá thủ công
-  'pos.edit_price',       // Sửa giá bán tại quầy
-  'pos.view_history',     // Xem lịch sử đơn toàn quán
-  'pos.checkout',         // Thanh toán hoá đơn
+  'pos.cancel_bill', // Huỷ đơn hàng đã tạo
+  'pos.apply_discount', // Áp dụng giảm giá thủ công
+  'pos.edit_price', // Sửa giá bán tại quầy
+  'pos.view_history', // Xem lịch sử đơn toàn quán
+  'pos.checkout', // Thanh toán hoá đơn
   'ban.manage_structure', // Thêm/Sửa/Xoá bàn & khu vực
-  'kho.edit_quantity',    // Sửa số lượng tồn kho
-  'kho.delete_item',      // Xoá sản phẩm khỏi kho
-  'finance.view_all',     // Xem toàn bộ thu chi
-  'report.view',          // Xem báo cáo doanh thu
+  'kho.edit_quantity', // Sửa số lượng tồn kho
+  'kho.delete_item', // Xoá sản phẩm khỏi kho
+  'finance.view_all', // Xem toàn bộ thu chi
+  'report.view', // Xem báo cáo doanh thu
   'tinhluong.view_all',
   'tinhluong.manage_config',
   'tinhluong.approve_payroll',
@@ -47,36 +87,108 @@ const kAllActions = [
 
 // Label hiển thị trên UI — key → (tiêu đề, mô tả, module group)
 const kActionMeta = <String, (String, String, String)>{
-  'pos.cancel_bill':    ('Huỷ đơn hàng',         'Cho phép huỷ bill đã tạo', 'POS'),
-  'pos.apply_discount': ('Áp dụng giảm giá',      'Giảm giá thủ công trên bill', 'POS'),
-  'pos.edit_price':     ('Sửa giá bán',            'Đổi giá sản phẩm lúc tính tiền', 'POS'),
-  'pos.view_history':   ('Xem lịch sử đơn',        'Xem toàn bộ đơn hàng cũ', 'POS'),
-  'pos.checkout':       ('Thanh toán hoá đơn',     'Bấm nút thanh toán & in hoá đơn', 'POS'),
-  'ban.manage_structure': ('Thêm/Sửa bàn & khu vực', 'Quản lý danh sách bàn và khu vực', 'Quản lý bàn'),
-  'kho.edit_quantity':  ('Sửa số lượng tồn',       'Chỉnh tồn kho thủ công', 'Kho'),
-  'kho.delete_item':    ('Xoá sản phẩm kho',       'Xoá vĩnh viễn khỏi kho', 'Kho'),
-  'finance.view_all':   ('Xem toàn bộ thu chi',    'Xem doanh thu & chi phí', 'Thu Chi'),
-  'report.view':        ('Xem báo cáo doanh thu',  'Xem KPI, thống kê', 'Báo Cáo'),
-  'tinhluong.view_all':        ('Xem toàn bộ lương',       'Xem bảng lương của tất cả', 'Lương'),
-  'tinhluong.manage_config':   ('Quản lý thiết lập lương', 'Cấu hình lương cơ bản/chấm công', 'Lương'),
-  'tinhluong.approve_payroll': ('Chốt bảng lương',         'Tính toán và chốt lương cuối kỳ', 'Lương'),
-  'tinhluong.srm_settings':    ('Thiết lập ghi nhận',      'Cấu hình danh mục ghi nhận đóng góp', 'Lương'),
-  'tinhluong.srm_review':      ('Duyệt ghi nhận',          'Duyệt/từ chối đề xuất ghi nhận', 'Lương'),
+  'pos.cancel_bill': ('Huỷ đơn hàng', 'Cho phép huỷ bill đã tạo', 'POS'),
+  'pos.apply_discount': (
+    'Áp dụng giảm giá',
+    'Giảm giá thủ công trên bill',
+    'POS',
+  ),
+  'pos.edit_price': ('Sửa giá bán', 'Đổi giá sản phẩm lúc tính tiền', 'POS'),
+  'pos.view_history': ('Xem lịch sử đơn', 'Xem toàn bộ đơn hàng cũ', 'POS'),
+  'pos.checkout': (
+    'Thanh toán hoá đơn',
+    'Bấm nút thanh toán & in hoá đơn',
+    'POS',
+  ),
+  'ban.manage_structure': (
+    'Thêm/Sửa bàn & khu vực',
+    'Quản lý danh sách bàn và khu vực',
+    'Quản lý bàn',
+  ),
+  'kho.edit_quantity': ('Sửa số lượng tồn', 'Chỉnh tồn kho thủ công', 'Kho'),
+  'kho.delete_item': ('Xoá sản phẩm kho', 'Xoá vĩnh viễn khỏi kho', 'Kho'),
+  'finance.view_all': (
+    'Xem toàn bộ thu chi',
+    'Xem doanh thu & chi phí',
+    'Thu Chi',
+  ),
+  'report.view': ('Xem báo cáo doanh thu', 'Xem KPI, thống kê', 'Báo Cáo'),
+  'tinhluong.view_all': (
+    'Xem toàn bộ lương',
+    'Xem bảng lương của tất cả',
+    'Lương',
+  ),
+  'tinhluong.manage_config': (
+    'Quản lý thiết lập lương',
+    'Cấu hình lương cơ bản/chấm công',
+    'Lương',
+  ),
+  'tinhluong.approve_payroll': (
+    'Chốt bảng lương',
+    'Tính toán và chốt lương cuối kỳ',
+    'Lương',
+  ),
+  'tinhluong.srm_settings': (
+    'Thiết lập ghi nhận',
+    'Cấu hình danh mục ghi nhận đóng góp',
+    'Lương',
+  ),
+  'tinhluong.srm_review': (
+    'Duyệt ghi nhận',
+    'Duyệt/từ chối đề xuất ghi nhận',
+    'Lương',
+  ),
 };
 
 // Quyền action mặc định mỗi role (restrictive by default — owner luôn có tất cả)
 const kDefaultActionPerms = <String, List<String>>{
-  'owner':   ['pos.cancel_bill', 'pos.apply_discount', 'pos.edit_price', 'pos.view_history', 'pos.checkout', 'ban.manage_structure', 'kho.edit_quantity', 'kho.delete_item', 'finance.view_all', 'report.view', 'tinhluong.view_all', 'tinhluong.manage_config', 'tinhluong.approve_payroll', 'tinhluong.srm_settings', 'tinhluong.srm_review'],
-  'manager': ['pos.cancel_bill', 'pos.apply_discount', 'pos.edit_price', 'pos.view_history', 'pos.checkout', 'ban.manage_structure', 'kho.edit_quantity', 'kho.delete_item', 'finance.view_all', 'report.view', 'tinhluong.view_all', 'tinhluong.manage_config', 'tinhluong.approve_payroll', 'tinhluong.srm_settings', 'tinhluong.srm_review'],
+  'owner': [
+    'pos.cancel_bill',
+    'pos.apply_discount',
+    'pos.edit_price',
+    'pos.view_history',
+    'pos.checkout',
+    'ban.manage_structure',
+    'kho.edit_quantity',
+    'kho.delete_item',
+    'finance.view_all',
+    'report.view',
+    'tinhluong.view_all',
+    'tinhluong.manage_config',
+    'tinhluong.approve_payroll',
+    'tinhluong.srm_settings',
+    'tinhluong.srm_review',
+  ],
+  'manager': [
+    'pos.cancel_bill',
+    'pos.apply_discount',
+    'pos.edit_price',
+    'pos.view_history',
+    'pos.checkout',
+    'ban.manage_structure',
+    'kho.edit_quantity',
+    'kho.delete_item',
+    'finance.view_all',
+    'report.view',
+    'tinhluong.view_all',
+    'tinhluong.manage_config',
+    'tinhluong.approve_payroll',
+    'tinhluong.srm_settings',
+    'tinhluong.srm_review',
+  ],
   'cashier': ['pos.apply_discount', 'pos.view_history', 'pos.checkout'],
-  'waiter':  <String>[],
+  'waiter': <String>[],
   'kitchen': <String>[],
-  'stock':   ['kho.edit_quantity'],
+  'stock': ['kho.edit_quantity'],
 };
 
 class StaffService {
   static SupabaseClient? get _db {
-    try { return Supabase.instance.client; } catch (_) { return null; }
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -201,7 +313,9 @@ class StaffService {
       // 1. NGUỒN SỰ THẬT DUY NHẤT (Single Source of Truth) cho danh sách thành viên & vai trò: store_members
       final memberRows = await db
           .from('store_members')
-          .select('id, role, is_owner, user_id, user_accounts(id, phone, display_name)')
+          .select(
+            'id, role, is_owner, user_id, user_accounts(id, phone, display_name)',
+          )
           .eq('store_id', storeId);
 
       // 2. Lấy hồ sơ chi tiết (lương, mô tả...) từ staff_members (nếu có)
@@ -226,7 +340,7 @@ class StaffService {
             .select('user_id')
             .eq('store_id', storeId)
             .isFilter('clock_out', null);
-        activeIds = { for (var s in activeShifts) s['user_id'] as String };
+        activeIds = {for (var s in activeShifts) s['user_id'] as String};
       } catch (_) {}
 
       final resultList = <StaffMember>[];
@@ -238,31 +352,40 @@ class StaffService {
 
         final isOwnerFlag = (m['is_owner'] as bool?) ?? false;
         final role = (m['role'] as String?) ?? 'cashier';
-        final isOwnerRole = isOwnerFlag ||
+        final isOwnerRole =
+            isOwnerFlag ||
             role.toLowerCase() == 'owner' ||
             role.toLowerCase() == 'chủ quán' ||
             canonicalRole(role) == 'owner';
 
         // Lấy tên/sđt/lương từ staff_members profile (nếu có) hoặc user_accounts
         final memberId = m['id'] as String?;
-        final profile = staffProfileMap[userId] ?? (memberId != null ? staffProfileMap[memberId] : null);
-        final name = (profile?['name'] as String?) ?? (user?['display_name'] as String?) ?? 'Nhân viên';
-        final phone = (profile?['phone'] as String?) ?? (user?['phone'] as String?) ?? '';
+        final profile =
+            staffProfileMap[userId] ??
+            (memberId != null ? staffProfileMap[memberId] : null);
+        final name =
+            (profile?['name'] as String?) ??
+            (user?['display_name'] as String?) ??
+            'Nhân viên';
+        final phone =
+            (profile?['phone'] as String?) ?? (user?['phone'] as String?) ?? '';
         final hourlyRate = (profile?['hourly_rate'] as num?)?.toDouble() ?? 0;
 
-        resultList.add(StaffMember(
-          userId: userId,
-          name: name,
-          phone: phone,
-          role: role, // ⭐ NGUỒN SỰ THẬT DUY NHẤT: role từ store_members
-          isOwner: isOwnerRole,
-          hourlyRate: hourlyRate,
-          baseSalary: 0,
-          jobDesc: '',
-          startDate: null,
-          isClockedIn: activeIds.contains(userId),
-          shiftConfigId: null,
-        ));
+        resultList.add(
+          StaffMember(
+            userId: userId,
+            name: name,
+            phone: phone,
+            role: role, // ⭐ NGUỒN SỰ THẬT DUY NHẤT: role từ store_members
+            isOwner: isOwnerRole,
+            hourlyRate: hourlyRate,
+            baseSalary: 0,
+            jobDesc: '',
+            startDate: null,
+            isClockedIn: activeIds.contains(userId),
+            shiftConfigId: null,
+          ),
+        );
       }
 
       return resultList;
@@ -286,7 +409,9 @@ class StaffService {
     if (db == null) return AddStaffResult.error('Không kết nối được server.');
 
     if (role.toLowerCase() == 'owner') {
-      return AddStaffResult.error('Không thể gán vai trò Chủ quán cho nhân viên mới.');
+      return AddStaffResult.error(
+        'Không thể gán vai trò Chủ quán cho nhân viên mới.',
+      );
     }
 
     final rawPhone = phone.trim().replaceAll(RegExp(r'\s|-|\(|\)'), '');
@@ -305,7 +430,7 @@ class StaffService {
         '0${cleanDigits.substring(cleanDigits.length - 9)}',
         '+84${cleanDigits.substring(cleanDigits.length - 9)}',
         '84${cleanDigits.substring(cleanDigits.length - 9)}',
-      ]
+      ],
     }.toList();
 
     try {
@@ -327,59 +452,87 @@ class StaffService {
       String userName;
 
       if (userRes != null) {
-        userId   = userRes['id']           as String;
-        userName = (name != null && name.trim().isNotEmpty) ? name.trim() : (userRes['display_name'] as String);
+        userId = userRes['id'] as String;
+        userName = (name != null && name.trim().isNotEmpty)
+            ? name.trim()
+            : (userRes['display_name'] as String);
       } else {
         // Tự động tạo tài khoản nếu nhân viên chưa từng đăng ký tài khoản
         userId = const Uuid().v4();
-        userName = (name != null && name.trim().isNotEmpty) ? name.trim() : 'NV ${cleanDigits.isNotEmpty ? cleanDigits : phone}';
+        userName = (name != null && name.trim().isNotEmpty)
+            ? name.trim()
+            : 'NV ${cleanDigits.isNotEmpty ? cleanDigits : phone}';
 
         final pwdInput = '$p:123456:qn_pos_2024_salt';
         final defaultHash = sha256.convert(utf8.encode(pwdInput)).toString();
 
         try {
           await db.from('user_accounts').upsert({
-            'id':            userId,
-            'phone':         p,
-            'display_name':  userName,
+            'id': userId,
+            'phone': p,
+            'display_name': userName,
             'password_hash': defaultHash,
-            'created_at':    DateTime.now().toIso8601String(),
+            'created_at': DateTime.now().toIso8601String(),
           });
         } catch (e) {
-          debugPrint('[StaffService.addStaffByPhone] user_accounts upsert error: $e');
+          debugPrint(
+            '[StaffService.addStaffByPhone] user_accounts upsert error: $e',
+          );
         }
       }
 
       // Nạp mảng modules mặc định của Role để gán trực tiếp cho nhân viên mới
-      final initialModules = await getModulePermissions(storeId, role, userId: userId);
+      final initialModules = await getModulePermissions(
+        storeId,
+        role,
+        userId: userId,
+      );
       final initialModulesJson = jsonEncode(initialModules);
 
-      // 2. Thêm/Cập nhật vào staff_members (bảng chuẩn mới)
-      await db.from('staff_members').upsert({
-        'id': userId,
-        'store_id': storeId,
-        'name': userName,
-        'role': role,
-        'phone': p,
-        'modules': initialModulesJson,
-        'is_active': true,
-        'updated_at': DateTime.now().millisecondsSinceEpoch,
-      });
+      // 2. Thêm/Cập nhật vào staff_members (chỉ khi chưa thuộc quán khác để bảo vệ đa quán)
+      try {
+        final existingStaff = await db
+            .from('staff_members')
+            .select('store_id')
+            .eq('id', userId)
+            .maybeSingle();
+        final staffStoreId = existingStaff?['store_id'] as String?;
+        if (staffStoreId == null || staffStoreId == storeId) {
+          await db.from('staff_members').upsert({
+            'id': userId,
+            'store_id': storeId,
+            'name': userName,
+            'role': role,
+            'phone': p,
+            'modules': initialModulesJson,
+            'is_active': true,
+            'updated_at': DateTime.now().millisecondsSinceEpoch,
+          });
+        } else {
+          debugPrint(
+            '[StaffService.addStaffByPhone] Khách thuộc đa quán: Bỏ qua upsert staff_members để bảo vệ quán 1.',
+          );
+        }
+      } catch (e) {
+        debugPrint(
+          '[StaffService.addStaffByPhone] staff_members check error: $e',
+        );
+      }
 
-      // 3. Thêm/Cập nhật vào store_members (để duy trì tương thích)
-      await db.from('store_members').upsert({
-        'id': userId,
-        'user_id': userId,
-        'store_id': storeId,
-        'role': role,
-        'modules': initialModulesJson,
-        'is_owner': false,
-      });
+      // 3. Thêm/Cập nhật vào store_members (để duy trì tương thích đa quán an toàn)
+      await StoreMembershipWriter.upsertMembership(
+        db,
+        userId: userId,
+        storeId: storeId,
+        role: role,
+        isOwner: false,
+        modules: initialModulesJson,
+      );
 
       // 4. Tạo profile mặc định
       try {
         await db.from('staff_profiles').upsert({
-          'user_id':  userId,
+          'user_id': userId,
           'store_id': storeId,
           'job_desc': _defaultJobDesc(role),
           'start_date': DateTime.now().toIso8601String().split('T').first,
@@ -388,11 +541,11 @@ class StaffService {
 
       // Ghi log
       await _logPermChange(
-        storeId:    storeId,
-        byUser:     addedByUserId,
+        storeId: storeId,
+        byUser: addedByUserId,
         targetUser: userId,
-        action:     'add_staff',
-        detail:     {'role': role, 'name': userName},
+        action: 'add_staff',
+        detail: {'role': role, 'name': userName},
       );
 
       return AddStaffResult.success(userId: userId, userName: userName);
@@ -405,8 +558,20 @@ class StaffService {
     }
   }
 
+  static Future<Map<String, dynamic>?> Function(
+    String rpcName,
+    Map<String, dynamic> params,
+  )?
+  rpcTransportOverride;
+
+  static Future<void> Function({
+    required String storeId,
+    required String targetUserId,
+  })?
+  broadcastHandlerOverride;
+
   // ══════════════════════════════════════════════════════════════════════════
-  // XOÁ NHÂN VIÊN
+  // XOÁ NHÂN VIÊN (Atomic RPC Revocation — 0 Client Fallback)
   // ══════════════════════════════════════════════════════════════════════════
   static Future<void> removeStaff({
     required String storeId,
@@ -415,37 +580,71 @@ class StaffService {
     String staffName = '',
   }) async {
     final db = _db;
-    if (db == null) return;
-    // 1. Xoá quyền liên kết đăng nhập vào quán trong store_members
-    try {
-      await db.from('store_members')
-          .delete()
-          .eq('store_id', storeId)
-          .eq('user_id', userId);
-    } catch (e) {
-      debugPrint('[StaffService.removeStaff] store_members delete err: $e');
+    if (db == null && rpcTransportOverride == null) {
+      throw Exception('Không thể kết nối cơ sở dữ liệu server.');
     }
 
-    // 2. Set is_active = false trong staff_members để biến mất khỏi danh sách màn hình
+    dynamic rpcRes;
     try {
-      await db.from('staff_members')
-          .update({
-            'is_active': false,
-            'updated_at': DateTime.now().millisecondsSinceEpoch,
-          })
-          .eq('store_id', storeId)
-          .eq('id', userId);
+      if (rpcTransportOverride != null) {
+        rpcRes = await rpcTransportOverride!('revoke_store_member', {
+          'p_store_id': storeId,
+          'p_target_user_id': userId,
+          'p_actor_id': removedByUserId,
+        });
+      } else {
+        rpcRes = await db!.rpc(
+          'revoke_store_member',
+          params: {
+            'p_store_id': storeId,
+            'p_target_user_id': userId,
+            'p_actor_id': removedByUserId,
+          },
+        );
+      }
     } catch (e) {
-      debugPrint('[StaffService.removeStaff] staff_members update err: $e');
+      final errStr = e.toString();
+      if (errStr.contains('PGRST202') ||
+          errStr.contains('Could not find the function') ||
+          errStr.contains('revoke_store_member')) {
+        throw Exception('Server chưa cài migration thu hồi nhân viên.');
+      }
+      rethrow;
     }
 
-    await _logPermChange(
-      storeId: storeId, byUser: removedByUserId, targetUser: userId,
-      action: 'remove_staff', detail: {'name': staffName},
+    if (rpcRes != null && rpcRes is Map) {
+      final success = (rpcRes['success'] as bool?) ?? false;
+      final code = (rpcRes['code'] as String?) ?? '';
+      final msg =
+          (rpcRes['message'] as String?) ?? 'Thu hồi quyền nhân viên thất bại.';
+
+      if (!success) {
+        throw Exception(msg);
+      }
+
+      if (code == 'revoked' ||
+          code == 'reconciled' ||
+          code == 'already_removed') {
+        if (broadcastHandlerOverride != null) {
+          await broadcastHandlerOverride!(
+            storeId: storeId,
+            targetUserId: userId,
+          );
+        } else {
+          unawaited(
+            StaffSyncService.broadcastStaffRemoved(
+              storeId: storeId,
+              targetUserId: userId,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    throw Exception(
+      'Thu hồi quyền nhân viên từ server trả về kết quả không hợp lệ.',
     );
-    // Real-time: notify bị kick
-    unawaited(StaffSyncService.broadcastStaffRemoved(
-      storeId: storeId, targetUserId: userId));
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -468,10 +667,9 @@ class StaffService {
 
     // 1. Cập nhật ở bảng store_members (chỉ update các cột có sẵn: role)
     try {
-      await db.from('store_members')
-          .update({
-            'role': newRole,
-          })
+      await db
+          .from('store_members')
+          .update({'role': newRole})
           .eq('store_id', storeId)
           .eq('user_id', userId);
     } catch (e) {
@@ -480,7 +678,8 @@ class StaffService {
 
     // 2. Cập nhật ở bảng staff_members (nếu có)
     try {
-      await db.from('staff_members')
+      await db
+          .from('staff_members')
           .update({
             'role': newRole,
             'updated_at': DateTime.now().millisecondsSinceEpoch,
@@ -492,12 +691,20 @@ class StaffService {
     }
 
     await _logPermChange(
-      storeId: storeId, byUser: changedByUserId, targetUser: userId,
-      action: 'role_change', detail: {'old': oldRole, 'new': newRole},
+      storeId: storeId,
+      byUser: changedByUserId,
+      targetUser: userId,
+      action: 'role_change',
+      detail: {'old': oldRole, 'new': newRole},
     );
     // Real-time: notify nhân viên bị đổi role
-    unawaited(StaffSyncService.broadcastRoleChanged(
-      storeId: storeId, targetUserId: userId, newRole: newRole));
+    unawaited(
+      StaffSyncService.broadcastRoleChanged(
+        storeId: storeId,
+        targetUserId: userId,
+        newRole: newRole,
+      ),
+    );
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -514,14 +721,13 @@ class StaffService {
   }) async {
     final db = _db;
     if (db == null) return;
-    final data = <String, dynamic>{
-      'user_id': userId, 'store_id': storeId,
-    };
+    final data = <String, dynamic>{'user_id': userId, 'store_id': storeId};
     if (hourlyRate != null) data['hourly_rate'] = hourlyRate;
     if (baseSalary != null) data['base_salary'] = baseSalary;
-    if (jobDesc    != null) data['job_desc']     = jobDesc;
-    if (startDate  != null) data['start_date']   = startDate;
-    await db.from('staff_profiles')
+    if (jobDesc != null) data['job_desc'] = jobDesc;
+    if (startDate != null) data['start_date'] = startDate;
+    await db
+        .from('staff_profiles')
         .upsert(data, onConflict: 'user_id,store_id');
   }
 
@@ -541,7 +747,8 @@ class StaffService {
     final db = _db;
     if (db == null) return null;
     // Kiểm tra đã có ca mở chưa
-    final open = await db.from('staff_shifts')
+    final open = await db
+        .from('staff_shifts')
         .select('id, clock_in, note')
         .eq('user_id', userId)
         .eq('store_id', storeId)
@@ -552,25 +759,31 @@ class StaffService {
       final openClockInStr = open['clock_in'] as String;
       final openClockIn = DateTime.parse(openClockInStr).toLocal();
       final nowLocal = DateTime.now();
-      
-      final isOpenFromPastDay = openClockIn.year != nowLocal.year ||
+
+      final isOpenFromPastDay =
+          openClockIn.year != nowLocal.year ||
           openClockIn.month != nowLocal.month ||
           openClockIn.day != nowLocal.day;
 
       if (isOpenFromPastDay) {
         // Tự động đóng ca cũ cách đây hơn 1 ngày
         final autoClockOutTime = openClockIn.add(const Duration(hours: 8));
-        final finalClockOut = autoClockOutTime.isAfter(nowLocal) ? nowLocal : autoClockOutTime;
-        
+        final finalClockOut = autoClockOutTime.isAfter(nowLocal)
+            ? nowLocal
+            : autoClockOutTime;
+
         final existingNote = open['note'] as String? ?? '';
-        final newNote = existingNote.isEmpty 
-            ? '[Hệ thống tự động kết ca do quên đóng]' 
+        final newNote = existingNote.isEmpty
+            ? '[Hệ thống tự động kết ca do quên đóng]'
             : '$existingNote\n[Hệ thống tự động kết ca do quên đóng]';
-            
-        await db.from('staff_shifts').update({
-          'clock_out': finalClockOut.toUtc().toIso8601String(),
-          'note': newNote,
-        }).eq('id', openId);
+
+        await db
+            .from('staff_shifts')
+            .update({
+              'clock_out': finalClockOut.toUtc().toIso8601String(),
+              'note': newNote,
+            })
+            .eq('id', openId);
       } else {
         return openId;
       }
@@ -578,11 +791,24 @@ class StaffService {
 
     // ‼️ PREVENT ORPHAN SHIFTS: Đảm bảo userId có thông tin hồ sơ nhân viên chuẩn
     try {
-      final staffExists = await db.from('staff_members').select('id, name').eq('id', userId).maybeSingle();
+      final staffExists = await db
+          .from('staff_members')
+          .select('id, name')
+          .eq('id', userId)
+          .maybeSingle();
       final currentName = staffExists?['name'] as String?;
-      if (staffExists == null || currentName == null || currentName.trim().isEmpty || currentName == 'Nhân viên') {
-        final userAcc = await db.from('user_accounts').select('id, display_name, phone').eq('id', userId).maybeSingle();
-        final realName = (userAcc?['display_name'] as String?) ?? (userName?.isNotEmpty == true ? userName : null);
+      if (staffExists == null ||
+          currentName == null ||
+          currentName.trim().isEmpty ||
+          currentName == 'Nhân viên') {
+        final userAcc = await db
+            .from('user_accounts')
+            .select('id, display_name, phone')
+            .eq('id', userId)
+            .maybeSingle();
+        final realName =
+            (userAcc?['display_name'] as String?) ??
+            (userName?.isNotEmpty == true ? userName : null);
         if (realName != null && realName.trim().isNotEmpty) {
           await db.from('staff_members').upsert({
             'id': userId,
@@ -597,16 +823,20 @@ class StaffService {
     } catch (_) {}
 
     final data = <String, dynamic>{
-      'user_id':  userId,
+      'user_id': userId,
       'store_id': storeId,
-      'source':   'manual',
+      'source': 'manual',
     };
-    if (photoUrl    != null) data['photo_url']     = photoUrl;
-    if (latitude    != null) data['latitude']      = latitude;
-    if (longitude   != null) data['longitude']     = longitude;
-    if (address     != null) data['address']       = address;
+    if (photoUrl != null) data['photo_url'] = photoUrl;
+    if (latitude != null) data['latitude'] = latitude;
+    if (longitude != null) data['longitude'] = longitude;
+    if (address != null) data['address'] = address;
     if (driveFileId != null) data['drive_file_id'] = driveFileId;
-    final res = await db.from('staff_shifts').insert(data).select('id').single();
+    final res = await db
+        .from('staff_shifts')
+        .insert(data)
+        .select('id')
+        .single();
     AppLogger.info('auth', 'Nhan vien bat dau vao ca (Clock-In) thanh cong.');
     return res['id'] as String;
   }
@@ -624,10 +854,10 @@ class StaffService {
     final data = <String, dynamic>{
       'clock_out': DateTime.now().toUtc().toIso8601String(),
     };
-    if (photoUrl    != null) data['photo_url_out']     = photoUrl;
-    if (latitude    != null) data['latitude_out']      = latitude;
-    if (longitude   != null) data['longitude_out']     = longitude;
-    if (address     != null) data['address_out']       = address;
+    if (photoUrl != null) data['photo_url_out'] = photoUrl;
+    if (latitude != null) data['latitude_out'] = latitude;
+    if (longitude != null) data['longitude_out'] = longitude;
+    if (address != null) data['address_out'] = address;
     if (driveFileId != null) data['drive_file_id_out'] = driveFileId;
     await db.from('staff_shifts').update(data).eq('id', shiftId);
     AppLogger.info('auth', 'Nhan vien ket thuc ca lam (Clock-Out) thanh cong.');
@@ -642,8 +872,9 @@ class StaffService {
     final db = _db;
     if (db == null) return;
     final data = <String, dynamic>{};
-    if (clockIn  != null) data['clock_in']  = clockIn.toUtc().toIso8601String();
-    if (clockOut != null) data['clock_out'] = clockOut.toUtc().toIso8601String();
+    if (clockIn != null) data['clock_in'] = clockIn.toUtc().toIso8601String();
+    if (clockOut != null)
+      data['clock_out'] = clockOut.toUtc().toIso8601String();
     if (data.isEmpty) return;
     await db.from('staff_shifts').update(data).eq('id', shiftId);
     AppLogger.info('auth', 'Cap nhat ca lam viec $shiftId thanh cong.');
@@ -654,7 +885,10 @@ class StaffService {
     final db = _db;
     if (db == null) return false;
     try {
-      await db.from('staff_shifts').update({'user_id': newUserId}).eq('id', shiftId);
+      await db
+          .from('staff_shifts')
+          .update({'user_id': newUserId})
+          .eq('id', shiftId);
       return true;
     } catch (e) {
       debugPrint('[StaffService] reassignShift error: $e');
@@ -678,7 +912,8 @@ class StaffService {
   static Future<String?> getOpenShiftId(String userId, String storeId) async {
     final db = _db;
     if (db == null) return null;
-    final res = await db.from('staff_shifts')
+    final res = await db
+        .from('staff_shifts')
         .select('id')
         .eq('user_id', userId)
         .eq('store_id', storeId)
@@ -701,14 +936,16 @@ class StaffService {
       const sel = '*';
       final List<dynamic> rows;
       if (userId != null) {
-        rows = await db.from('staff_shifts')
+        rows = await db
+            .from('staff_shifts')
             .select(sel)
             .eq('store_id', storeId)
             .eq('user_id', userId)
             .order('clock_in', ascending: false)
             .limit(limit);
       } else {
-        rows = await db.from('staff_shifts')
+        rows = await db
+            .from('staff_shifts')
             .select(sel)
             .eq('store_id', storeId)
             .order('clock_in', ascending: false)
@@ -723,26 +960,27 @@ class StaffService {
         final uid = r['user_id'] as String;
         final name = nameMap[uid] ?? 'Nhân viên';
         return ShiftRecord(
-          id:                  r['id']       as String,
-          userId:              uid,
-          userName:            name,
-          clockIn:             DateTime.parse(r['clock_in'] as String).toLocal(),
-          clockOut:            r['clock_out'] != null
-              ? DateTime.parse(r['clock_out'] as String).toLocal() : null,
-          source:              'manual',
-          note:                '',
-          photoUrl:            r['photo_url']    as String?,
-          address:             r['address']      as String?,
-          latitude:            (r['latitude']    as num?)?.toDouble(),
-          longitude:           (r['longitude']   as num?)?.toDouble(),
-          driveFileId:         r['drive_file_id'] as String?,
-          isOtApproved:        (r['is_ot_approved'] as bool?) ?? false,
-          otReason:            r['ot_reason'] as String?,
-          otApprovedBy:        r['ot_approved_by'] as String?,
-          isForgotClockout:    (r['is_forgot_clockout'] as bool?) ?? false,
+          id: r['id'] as String,
+          userId: uid,
+          userName: name,
+          clockIn: DateTime.parse(r['clock_in'] as String).toLocal(),
+          clockOut: r['clock_out'] != null
+              ? DateTime.parse(r['clock_out'] as String).toLocal()
+              : null,
+          source: 'manual',
+          note: '',
+          photoUrl: r['photo_url'] as String?,
+          address: r['address'] as String?,
+          latitude: (r['latitude'] as num?)?.toDouble(),
+          longitude: (r['longitude'] as num?)?.toDouble(),
+          driveFileId: r['drive_file_id'] as String?,
+          isOtApproved: (r['is_ot_approved'] as bool?) ?? false,
+          otReason: r['ot_reason'] as String?,
+          otApprovedBy: r['ot_approved_by'] as String?,
+          isForgotClockout: (r['is_forgot_clockout'] as bool?) ?? false,
           isManagerOverridden: (r['is_manager_overridden'] as bool?) ?? false,
-          overrideReason:      r['override_reason'] as String?,
-          overrideBy:          r['override_by'] as String?,
+          overrideReason: r['override_reason'] as String?,
+          overrideBy: r['override_by'] as String?,
         );
       }).toList();
     } catch (e, st) {
@@ -764,12 +1002,15 @@ class StaffService {
     if (db == null) return [];
     try {
       final from = DateTime(year, month, 1).toUtc().toIso8601String();
-      final nextMonth = month == 12 ? DateTime(year + 1, 1, 1) : DateTime(year, month + 1, 1);
+      final nextMonth = month == 12
+          ? DateTime(year + 1, 1, 1)
+          : DateTime(year, month + 1, 1);
       final to = nextMonth.toUtc().toIso8601String();
       const sel = '*';
       final List<dynamic> rows;
       if (userId != null) {
-        rows = await db.from('staff_shifts')
+        rows = await db
+            .from('staff_shifts')
             .select(sel)
             .eq('store_id', storeId)
             .eq('user_id', userId)
@@ -777,7 +1018,8 @@ class StaffService {
             .lt('clock_in', to)
             .order('clock_in', ascending: false);
       } else {
-        rows = await db.from('staff_shifts')
+        rows = await db
+            .from('staff_shifts')
             .select(sel)
             .eq('store_id', storeId)
             .gte('clock_in', from)
@@ -793,29 +1035,32 @@ class StaffService {
         final uid = r['user_id'] as String;
         final name = nameMap[uid] ?? 'Nhân viên';
         return ShiftRecord(
-          id:                  r['id']      as String,
-          userId:              uid,
-          userName:            name,
-          clockIn:             DateTime.parse(r['clock_in']  as String).toLocal(),
-          clockOut:            r['clock_out'] != null
-              ? DateTime.parse(r['clock_out'] as String).toLocal() : null,
-          source:              'manual',
-          note:                '',
-          photoUrl:            r['photo_url']    as String?,
-          address:             r['address']      as String?,
-          latitude:            (r['latitude']    as num?)?.toDouble(),
-          longitude:           (r['longitude']   as num?)?.toDouble(),
-          driveFileId:         r['drive_file_id'] as String?,
-          isOtApproved:        (r['is_ot_approved'] as bool?) ?? false,
-          otReason:            r['ot_reason'] as String?,
-          otApprovedBy:        r['ot_approved_by'] as String?,
-          isForgotClockout:    (r['is_forgot_clockout'] as bool?) ?? false,
+          id: r['id'] as String,
+          userId: uid,
+          userName: name,
+          clockIn: DateTime.parse(r['clock_in'] as String).toLocal(),
+          clockOut: r['clock_out'] != null
+              ? DateTime.parse(r['clock_out'] as String).toLocal()
+              : null,
+          source: 'manual',
+          note: '',
+          photoUrl: r['photo_url'] as String?,
+          address: r['address'] as String?,
+          latitude: (r['latitude'] as num?)?.toDouble(),
+          longitude: (r['longitude'] as num?)?.toDouble(),
+          driveFileId: r['drive_file_id'] as String?,
+          isOtApproved: (r['is_ot_approved'] as bool?) ?? false,
+          otReason: r['ot_reason'] as String?,
+          otApprovedBy: r['ot_approved_by'] as String?,
+          isForgotClockout: (r['is_forgot_clockout'] as bool?) ?? false,
           isManagerOverridden: (r['is_manager_overridden'] as bool?) ?? false,
-          overrideReason:      r['override_reason'] as String?,
-          overrideBy:          r['override_by'] as String?,
+          overrideReason: r['override_reason'] as String?,
+          overrideBy: r['override_by'] as String?,
         );
       }).toList();
-    } catch (e) { return []; }
+    } catch (e) {
+      return [];
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -832,11 +1077,14 @@ class StaffService {
     final db = _db;
     if (db == null) return;
     try {
-      await db.from('staff_shifts').update({
-        'is_ot_approved': true,
-        'ot_reason': otReason,
-        'ot_approved_by': approvedBy,
-      }).eq('id', shiftId);
+      await db
+          .from('staff_shifts')
+          .update({
+            'is_ot_approved': true,
+            'ot_reason': otReason,
+            'ot_approved_by': approvedBy,
+          })
+          .eq('id', shiftId);
 
       await db.from('app_logs').insert({
         'store_id': storeId,
@@ -845,7 +1093,8 @@ class StaffService {
         'level': 'INFO',
         'tag': 'STAFF_SHIFT_AUDIT',
         'message': 'Duyệt Tăng Ca (OT) cho ${staffName ?? "Nhân viên"}',
-        'details': 'Lý do OT: $otReason | Người duyệt: $approvedBy | Shift ID: $shiftId',
+        'details':
+            'Lý do OT: $otReason | Người duyệt: $approvedBy | Shift ID: $shiftId',
         'created_at': DateTime.now().toUtc().toIso8601String(),
       });
     } catch (e) {
@@ -883,7 +1132,8 @@ class StaffService {
         'level': 'INFO',
         'tag': 'STAFF_SHIFT_AUDIT',
         'message': 'Điều chỉnh ca làm cho ${staffName ?? "Nhân viên"}',
-        'details': 'Lý do điều chỉnh: $overrideReason | Người duyệt: $approvedBy | Shift ID: $shiftId ${newClockOut != null ? "| ClockOut mới: ${newClockOut.toIso8601String()}" : ""}',
+        'details':
+            'Lý do điều chỉnh: $overrideReason | Người duyệt: $approvedBy | Shift ID: $shiftId ${newClockOut != null ? "| ClockOut mới: ${newClockOut.toIso8601String()}" : ""}',
         'created_at': DateTime.now().toUtc().toIso8601String(),
       });
     } catch (e) {
@@ -919,7 +1169,9 @@ class StaffService {
     }
 
     // 2. Tìm trong store_members (kèm user_accounts join) theo storeId
-    final missingIds1 = userIds.where((id) => !nameMap.containsKey(id)).toList();
+    final missingIds1 = userIds
+        .where((id) => !nameMap.containsKey(id))
+        .toList();
     if (missingIds1.isNotEmpty) {
       try {
         final storeMemberRows = await db
@@ -946,7 +1198,9 @@ class StaffService {
     }
 
     // 3. Tra cứu trực tiếp user_accounts theo ID cho các tài khoản còn thiếu
-    final missingIds2 = userIds.where((id) => !nameMap.containsKey(id)).toList();
+    final missingIds2 = userIds
+        .where((id) => !nameMap.containsKey(id))
+        .toList();
     if (missingIds2.isNotEmpty) {
       try {
         final userAccRows = await db
@@ -973,7 +1227,9 @@ class StaffService {
     // 4. Đối với các user_id cũ không còn tài khoản: dùng format NV-(4 ký tự cuối UUID) thay vì "Nhân viên"
     for (final uid in userIds) {
       if (!nameMap.containsKey(uid) || nameMap[uid]!.isEmpty) {
-        final shortId = uid.length >= 4 ? uid.substring(uid.length - 4).toUpperCase() : uid;
+        final shortId = uid.length >= 4
+            ? uid.substring(uid.length - 4).toUpperCase()
+            : uid;
         nameMap[uid] = 'Nhân viên ($shortId)';
       }
     }
@@ -985,10 +1241,13 @@ class StaffService {
   // PHÂN QUYỀN MODULE
   static String canonicalRole(String roleName) {
     final n = roleName.toLowerCase().trim();
-    if (n.contains('owner') || n.contains('chủ quán') || n.contains('chủ')) return 'owner';
+    if (n.contains('owner') || n.contains('chủ quán') || n.contains('chủ'))
+      return 'owner';
     if (n.contains('manager') || n.contains('quản lý')) return 'manager';
-    if (n.contains('cashier') || n.contains('thu ngân') || n.contains('quầy')) return 'cashier';
-    if (n.contains('waiter') || n.contains('phục vụ') || n.contains('chạy bàn')) return 'waiter';
+    if (n.contains('cashier') || n.contains('thu ngân') || n.contains('quầy'))
+      return 'cashier';
+    if (n.contains('waiter') || n.contains('phục vụ') || n.contains('chạy bàn'))
+      return 'waiter';
     if (n.contains('kitchen') || n.contains('bếp')) return 'kitchen';
     if (n.contains('stock') || n.contains('kho')) return 'stock';
     return roleName;
@@ -1005,11 +1264,23 @@ class StaffService {
       if (decoded is List) return decoded.map((e) => e.toString()).toList();
     } catch (_) {}
     // Fallback parse chuỗi dạng [ban,kitchen,kay_ops] hoặc ban,kitchen
-    final cleaned = str.replaceAll('[', '').replaceAll(']', '').replaceAll('"', '').replaceAll("'", '');
-    return cleaned.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    final cleaned = str
+        .replaceAll('[', '')
+        .replaceAll(']', '')
+        .replaceAll('"', '')
+        .replaceAll("'", '');
+    return cleaned
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
   }
 
-  static Future<List<String>> getModulePermissions(String storeId, String role, {String? userId}) async {
+  static Future<List<String>> getModulePermissions(
+    String storeId,
+    String role, {
+    String? userId,
+  }) async {
     final db = _db;
     final canonical = canonicalRole(role);
     if (db == null) return List<String>.from(kDefaultPerms[canonical] ?? []);
@@ -1020,14 +1291,17 @@ class StaffService {
 
       // 1. ƯU TIÊN SỐ 1: Đọc mảng modules trực tiếp từ store_roles mà Quản lý / Chủ quán đã thiết lập
       try {
-        final roleRows = await db.from('store_roles')
+        final roleRows = await db
+            .from('store_roles')
             .select('name, modules')
             .eq('store_id', storeId);
         if (roleRows is List && roleRows.isNotEmpty) {
           for (final row in roleRows) {
             final rName = (row['name'] as String?)?.trim() ?? '';
             final rCanon = canonicalRole(rName);
-            if (rName == role || rCanon == canonical || rName.toLowerCase() == role.toLowerCase()) {
+            if (rName == role ||
+                rCanon == canonical ||
+                rName.toLowerCase() == role.toLowerCase()) {
               if (row['modules'] != null) {
                 final mods = _parseModules(row['modules']);
                 if (mods.isNotEmpty) return mods;
@@ -1042,7 +1316,8 @@ class StaffService {
       // 2. ƯU TIÊN SỐ 2: Đọc mảng modules cá nhân nếu có gán riêng
       if (userId != null && userId.isNotEmpty) {
         try {
-          final staffRow = await db.from('staff_members')
+          final staffRow = await db
+              .from('staff_members')
               .select('modules')
               .eq('store_id', storeId)
               .eq('id', userId)
@@ -1056,7 +1331,8 @@ class StaffService {
 
       // 3. Fallback: app_settings perm_role (hệ thống cũ)
       try {
-        final resRows = await db.from('app_settings')
+        final resRows = await db
+            .from('app_settings')
             .select('value')
             .eq('store_id', storeId)
             .inFilter('key', ['perm_$role', 'perm_$canonical']);
@@ -1100,33 +1376,38 @@ class StaffService {
       };
       if (actionsJson != null) updateData['actions'] = actionsJson;
 
-      await db.from('staff_members')
+      await db
+          .from('staff_members')
           .update(updateData)
           .eq('store_id', storeId)
           .eq('id', userId);
     } catch (e) {
-      debugPrint('[StaffService] saveDirectPermissions staff_members error: $e');
+      debugPrint(
+        '[StaffService] saveDirectPermissions staff_members error: $e',
+      );
     }
 
     // 2. Cập nhật trực tiếp vào store_members
     try {
-      final updateData = <String, dynamic>{
-        'modules': modulesJson,
-      };
+      final updateData = <String, dynamic>{'modules': modulesJson};
       if (actionsJson != null) updateData['actions'] = actionsJson;
 
-      await db.from('store_members')
+      await db
+          .from('store_members')
           .update(updateData)
           .eq('store_id', storeId)
           .eq('user_id', userId);
     } catch (e) {
-      debugPrint('[StaffService] saveDirectPermissions store_members error: $e');
+      debugPrint(
+        '[StaffService] saveDirectPermissions store_members error: $e',
+      );
     }
 
     // 3. Ghi vết Audit Log
     AppLogger.logUserAction(
       tag: 'staff',
-      action: 'Gán trực tiếp phân quyền module cho nhân viên (${modules.length} modules)',
+      action:
+          'Gán trực tiếp phân quyền module cho nhân viên (${modules.length} modules)',
       details: {
         'target_user_id': userId,
         'by_user_id': changedByUserId,
@@ -1136,15 +1417,16 @@ class StaffService {
     );
 
     // 4. Phát lệnh Realtime Sync về thiết bị nhân viên
-    unawaited(StaffSyncService.broadcastRoleChanged(
-      storeId: storeId,
-      targetUserId: userId,
-      newRole: 'custom',
-    ));
-    unawaited(StaffSyncService.broadcastPermsChanged(
-      storeId: storeId,
-      role: 'all',
-    ));
+    unawaited(
+      StaffSyncService.broadcastRoleChanged(
+        storeId: storeId,
+        targetUserId: userId,
+        newRole: 'custom',
+      ),
+    );
+    unawaited(
+      StaffSyncService.broadcastPermsChanged(storeId: storeId, role: 'all'),
+    );
   }
 
   static Future<void> setModulePermissions({
@@ -1160,30 +1442,35 @@ class StaffService {
     // Chẹy 2 việc: (1) update store_roles.modules, (2) upsert app_settings làm backup
     try {
       // 1. Cập nhật store_roles.modules (nguồn chính xác — getModulePermissions đọc từ đây)
-      await db.from('store_roles')
+      await db
+          .from('store_roles')
           .update({'modules': jsonEncode(modules)})
           .eq('store_id', storeId)
           .eq('name', role);
     } catch (e) {
-      debugPrint('[StaffService] setModulePermissions store_roles update error: $e');
+      debugPrint(
+        '[StaffService] setModulePermissions store_roles update error: $e',
+      );
     }
     try {
       // 2. Backup vào app_settings (tương thích ngược — có thể bỏ sau này)
       await db.from('app_settings').upsert({
         'store_id': storeId,
-        'key':      'perm_$role',
-        'value':    jsonEncode(modules),
+        'key': 'perm_$role',
+        'value': jsonEncode(modules),
       }, onConflict: 'store_id,key');
     } catch (_) {} // silent — đây chỉ là backup
 
     await _logPermChange(
-      storeId: storeId, byUser: changedByUserId,
+      storeId: storeId,
+      byUser: changedByUserId,
       action: 'perm_change',
       detail: {'role': role, 'modules': modules},
     );
     // Real-time: notify tất cả nhân viên có role này
-    unawaited(StaffSyncService.broadcastPermsChanged(
-      storeId: storeId, role: role));
+    unawaited(
+      StaffSyncService.broadcastPermsChanged(storeId: storeId, role: role),
+    );
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -1192,7 +1479,10 @@ class StaffService {
 
   /// Lấy danh sách action được phép của một role.
   /// Fallback: kDefaultActionPerms nếu chưa cấu hình.
-  static Future<Set<String>> getActionPermissions(String storeId, String role) async {
+  static Future<Set<String>> getActionPermissions(
+    String storeId,
+    String role,
+  ) async {
     final canonical = canonicalRole(role);
     if (canonical == 'owner' || canonical == 'manager') {
       return Set<String>.from(kAllActions);
@@ -1202,7 +1492,8 @@ class StaffService {
       return guessDefaultPermsForRole(role); // offline fallback
     }
     try {
-      final res = await db.from('app_settings')
+      final res = await db
+          .from('app_settings')
           .select('value')
           .eq('store_id', storeId)
           .eq('key', 'action_perms_$role')
@@ -1212,11 +1503,9 @@ class StaffService {
         final perms = decoded.cast<String>().toSet();
         if (canonical == 'cashier' && !perms.contains('pos.checkout')) {
           perms.add('pos.checkout');
-          unawaited(setActionPermissions(
-            storeId: storeId,
-            role: role,
-            actions: perms,
-          ));
+          unawaited(
+            setActionPermissions(storeId: storeId, role: role, actions: perms),
+          );
         }
         return perms;
       }
@@ -1236,8 +1525,10 @@ class StaffService {
       return Set<String>.from(kDefaultActionPerms['cashier'] ?? []);
     }
     // Quản lý / Manager
-    if (n.contains('quản lý') || n.contains('manager') ||
-        n.contains('trưởng') || n.contains('giám sát')) {
+    if (n.contains('quản lý') ||
+        n.contains('manager') ||
+        n.contains('trưởng') ||
+        n.contains('giám sát')) {
       return Set<String>.from(kDefaultActionPerms['manager'] ?? []);
     }
     // Kho / Stock
@@ -1245,8 +1536,10 @@ class StaffService {
       return Set<String>.from(kDefaultActionPerms['stock'] ?? []);
     }
     // Bếp / Kitchen
-    if (n.contains('bếp') || n.contains('kitchen') ||
-        n.contains('đầu bếp') || n.contains('nấu')) {
+    if (n.contains('bếp') ||
+        n.contains('kitchen') ||
+        n.contains('đầu bếp') ||
+        n.contains('nấu')) {
       return Set<String>.from(kDefaultActionPerms['kitchen'] ?? []);
     }
     // Mặc định: không có quyền đặc biệt (phục vụ, bảo vệ, giao hàng...)
@@ -1267,21 +1560,23 @@ class StaffService {
     try {
       await db.from('app_settings').upsert({
         'store_id': storeId,
-        'key':      'action_perms_$role',
-        'value':    jsonEncode(actions.toList()),
+        'key': 'action_perms_$role',
+        'value': jsonEncode(actions.toList()),
       }, onConflict: 'store_id,key');
     } catch (e) {
       debugPrint('[StaffService] setActionPermissions error: $e');
     }
 
     await _logPermChange(
-      storeId: storeId, byUser: changedByUserId,
+      storeId: storeId,
+      byUser: changedByUserId,
       action: 'action_perm_change',
       detail: {'role': role, 'actions': actions.toList()},
     );
     // Real-time sync
-    unawaited(StaffSyncService.broadcastPermsChanged(
-      storeId: storeId, role: role));
+    unawaited(
+      StaffSyncService.broadcastPermsChanged(storeId: storeId, role: role),
+    );
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -1291,22 +1586,27 @@ class StaffService {
     final db = _db;
     if (db == null) return [];
     try {
-      final rows = await db.from('staff_perm_logs')
-          .select('id, action, detail, created_at, by_user, target_user, user_accounts!by_user(display_name)')
+      final rows = await db
+          .from('staff_perm_logs')
+          .select(
+            'id, action, detail, created_at, by_user, target_user, user_accounts!by_user(display_name)',
+          )
           .eq('store_id', storeId)
           .order('created_at', ascending: false)
           .limit(30);
       return rows.map<PermLog>((r) {
         final byUser = r['user_accounts'] as Map<String, dynamic>?;
         return PermLog(
-          id:        r['id']         as String,
-          action:    r['action']     as String? ?? '',
-          detail:    r['detail']     as String? ?? '{}',
+          id: r['id'] as String,
+          action: r['action'] as String? ?? '',
+          detail: r['detail'] as String? ?? '{}',
           createdAt: DateTime.parse(r['created_at'] as String),
           byUserName: byUser?['display_name'] as String? ?? '',
         );
       }).toList();
-    } catch (_) { return []; }
+    } catch (_) {
+      return [];
+    }
   }
 
   // ── Private helpers ────────────────────────────────────────────────────────
@@ -1319,11 +1619,11 @@ class StaffService {
   }) async {
     try {
       await _db?.from('staff_perm_logs').insert({
-        'store_id':    storeId,
-        'by_user':     byUser,
+        'store_id': storeId,
+        'by_user': byUser,
         'target_user': targetUser,
-        'action':      action,
-        'detail':      jsonEncode(detail),
+        'action': action,
+        'detail': jsonEncode(detail),
       });
       AppLogger.logUserAction(
         tag: 'staff',
@@ -1335,12 +1635,18 @@ class StaffService {
 
   static String _defaultJobDesc(String role) {
     switch (role) {
-      case 'manager': return 'Quản lý quán, hỗ trợ chủ quán điều hành và xử lý vấn đề phát sinh.';
-      case 'cashier': return 'Tiếp nhận đơn hàng, thanh toán và chăm sóc khách hàng tại quầy.';
-      case 'waiter':  return 'Phục vụ tại bàn, ghi nhận order và mang đồ uống/thức ăn cho khách.';
-      case 'kitchen': return 'Chuẩn bị và chế biến đồ uống/thức ăn theo phiếu bếp.';
-      case 'stock':   return 'Quản lý tồn kho, nhập hàng và kiểm tra nguyên liệu.';
-      default: return '';
+      case 'manager':
+        return 'Quản lý quán, hỗ trợ chủ quán điều hành và xử lý vấn đề phát sinh.';
+      case 'cashier':
+        return 'Tiếp nhận đơn hàng, thanh toán và chăm sóc khách hàng tại quầy.';
+      case 'waiter':
+        return 'Phục vụ tại bàn, ghi nhận order và mang đồ uống/thức ăn cho khách.';
+      case 'kitchen':
+        return 'Chuẩn bị và chế biến đồ uống/thức ăn theo phiếu bếp.';
+      case 'stock':
+        return 'Quản lý tồn kho, nhập hàng và kiểm tra nguyên liệu.';
+      default:
+        return '';
     }
   }
 }
@@ -1354,7 +1660,11 @@ extension StoreRolesService on StaffService {
 
 class StoreRoleService {
   static SupabaseClient? get _db {
-    try { return Supabase.instance.client; } catch (_) { return null; }
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
   }
 
   // ── Lấy danh sách role của quán ──────────────────────────────────────────
@@ -1389,23 +1699,29 @@ class StoreRoleService {
     final db = _db;
     if (db == null) return null;
     try {
-      final res = await db.from('store_roles').insert({
-        'store_id': storeId,
-        'name':     name.trim(),
-        'icon':     icon,
-        'color':    color,
-        'modules':  jsonEncode(modules),
-      }).select().single();
+      final res = await db
+          .from('store_roles')
+          .insert({
+            'store_id': storeId,
+            'name': name.trim(),
+            'icon': icon,
+            'color': color,
+            'modules': jsonEncode(modules),
+          })
+          .select()
+          .single();
       final role = StoreRole.fromMap(res);
 
       // 🔑 Auto-seed action permissions với defaults phù hợp tên vai trò.
       // Đảm bảo NV được gán role này có quyền hành động hợp lý ngay khi tạo,
       // không cần chủ quán phải vào Phân quyền → Hành động nhạy cảm → Lưu thủ công.
-      unawaited(StaffService.setActionPermissions(
-        storeId: storeId,
-        role:    role.name,
-        actions: StaffService.guessDefaultPermsForRole(role.name),
-      ));
+      unawaited(
+        StaffService.setActionPermissions(
+          storeId: storeId,
+          role: role.name,
+          actions: StaffService.guessDefaultPermsForRole(role.name),
+        ),
+      );
 
       return role;
     } on PostgrestException catch (e) {
@@ -1425,16 +1741,17 @@ class StoreRoleService {
     final db = _db;
     if (db == null) return;
     final data = <String, dynamic>{};
-    if (name    != null) data['name']    = name.trim();
-    if (icon    != null) data['icon']    = icon;
-    if (color   != null) data['color']   = color;
+    if (name != null) data['name'] = name.trim();
+    if (icon != null) data['icon'] = icon;
+    if (color != null) data['color'] = color;
     if (modules != null) data['modules'] = jsonEncode(modules);
     if (data.isEmpty) return;
 
     String? roleName;
     String? storeId;
     try {
-      final roleRow = await db.from('store_roles')
+      final roleRow = await db
+          .from('store_roles')
           .select('name, store_id')
           .eq('id', roleId)
           .maybeSingle();
@@ -1452,15 +1769,22 @@ class StoreRoleService {
       if (modules != null) {
         final modulesJson = jsonEncode(modules);
         try {
-          await db.from('staff_members')
-              .update({'modules': modulesJson, 'updated_at': DateTime.now().millisecondsSinceEpoch})
+          await db
+              .from('staff_members')
+              .update({
+                'modules': modulesJson,
+                'updated_at': DateTime.now().millisecondsSinceEpoch,
+              })
               .eq('store_id', storeId)
               .eq('role', targetRole);
         } catch (e) {
-          debugPrint('[StoreRoleService] updateRole staff_members modules sync error: $e');
+          debugPrint(
+            '[StoreRoleService] updateRole staff_members modules sync error: $e',
+          );
         }
         try {
-          await db.from('store_members')
+          await db
+              .from('store_members')
               .update({'modules': modulesJson})
               .eq('store_id', storeId)
               .eq('role', targetRole);
@@ -1471,13 +1795,18 @@ class StoreRoleService {
       if (name != null && roleName != null && roleName != name.trim()) {
         final newName = name.trim();
         try {
-          await db.from('staff_members')
-              .update({'role': newName, 'updated_at': DateTime.now().millisecondsSinceEpoch})
+          await db
+              .from('staff_members')
+              .update({
+                'role': newName,
+                'updated_at': DateTime.now().millisecondsSinceEpoch,
+              })
               .eq('store_id', storeId)
               .eq('role', roleName);
         } catch (_) {}
         try {
-          await db.from('store_members')
+          await db
+              .from('store_members')
               .update({'role': newName})
               .eq('store_id', storeId)
               .eq('role', roleName);
@@ -1512,7 +1841,10 @@ class StoreRoleService {
     try {
       await db
           .from('staff_members')
-          .update({'role': fallbackRole, 'updated_at': DateTime.now().millisecondsSinceEpoch})
+          .update({
+            'role': fallbackRole,
+            'updated_at': DateTime.now().millisecondsSinceEpoch,
+          })
           .eq('store_id', storeId)
           .eq('role', roleName);
     } catch (_) {}
@@ -1534,16 +1866,16 @@ class StoreRoleService {
 // DATA CLASSES
 // ─────────────────────────────────────────────────────────────────────────────
 class StaffMember {
-  final String  userId;
-  final String  name;
-  final String  phone;
-  final String  role;
-  final bool    isOwner;
-  final double  hourlyRate;
-  final double  baseSalary;
-  final String  jobDesc;
+  final String userId;
+  final String name;
+  final String phone;
+  final String role;
+  final bool isOwner;
+  final double hourlyRate;
+  final double baseSalary;
+  final String jobDesc;
   final String? startDate;
-  final bool    isClockedIn;
+  final bool isClockedIn;
   final String? shiftConfigId; // Ca làm việc được assign
 
   const StaffMember({
@@ -1562,25 +1894,25 @@ class StaffMember {
 }
 
 class ShiftRecord {
-  final String    id;
-  final String    userId;
-  final String    userName;
-  final DateTime  clockIn;
+  final String id;
+  final String userId;
+  final String userName;
+  final DateTime clockIn;
   final DateTime? clockOut;
-  final String    source;
-  final String    note;
-  final String?   photoUrl;   // ảnh vào ca
-  final double?   latitude;
-  final double?   longitude;
-  final String?   address;    // địa chỉ văn bản
-  final String?   driveFileId;
-  final bool      isOtApproved;
-  final String?   otReason;
-  final String?   otApprovedBy;
-  final bool      isForgotClockout;
-  final bool      isManagerOverridden;
-  final String?   overrideReason;
-  final String?   overrideBy;
+  final String source;
+  final String note;
+  final String? photoUrl; // ảnh vào ca
+  final double? latitude;
+  final double? longitude;
+  final String? address; // địa chỉ văn bản
+  final String? driveFileId;
+  final bool isOtApproved;
+  final String? otReason;
+  final String? otApprovedBy;
+  final bool isForgotClockout;
+  final bool isManagerOverridden;
+  final String? overrideReason;
+  final String? overrideBy;
 
   Duration get duration {
     final raw = (clockOut ?? DateTime.now()).difference(clockIn);
@@ -1659,24 +1991,31 @@ class ShiftRecord {
 }
 
 class AddStaffResult {
-  final bool    isSuccess;
+  final bool isSuccess;
   final String? userId;
   final String? userName;
   final String? errorMessage;
 
-  const AddStaffResult._({required this.isSuccess, this.userId, this.userName, this.errorMessage});
-  factory AddStaffResult.success({required String userId, required String userName}) =>
-      AddStaffResult._(isSuccess: true, userId: userId, userName: userName);
+  const AddStaffResult._({
+    required this.isSuccess,
+    this.userId,
+    this.userName,
+    this.errorMessage,
+  });
+  factory AddStaffResult.success({
+    required String userId,
+    required String userName,
+  }) => AddStaffResult._(isSuccess: true, userId: userId, userName: userName);
   factory AddStaffResult.error(String msg) =>
       AddStaffResult._(isSuccess: false, errorMessage: msg);
 }
 
 class PermLog {
-  final String   id;
-  final String   action;
-  final String   detail;
+  final String id;
+  final String action;
+  final String detail;
   final DateTime createdAt;
-  final String   byUserName;
+  final String byUserName;
 
   const PermLog({
     required this.id,
@@ -1691,12 +2030,12 @@ class PermLog {
 // StoreRole — vai trò tùy chỉnh của quán
 // ─────────────────────────────────────────────────────────────────────────────
 class StoreRole {
-  final String       id;
-  final String       storeId;
-  final String       name;
-  final String       icon;     // tên Material icon
-  final String       color;    // hex string '#RRGGBB'
-  final List<String> modules;  // ['pos','ban',...]
+  final String id;
+  final String storeId;
+  final String name;
+  final String icon; // tên Material icon
+  final String color; // hex string '#RRGGBB'
+  final List<String> modules; // ['pos','ban',...]
 
   const StoreRole({
     required this.id,
@@ -1709,11 +2048,11 @@ class StoreRole {
 
   factory StoreRole.fromMap(Map<String, dynamic> m) {
     return StoreRole(
-      id:      m['id']       as String,
+      id: m['id'] as String,
       storeId: m['store_id'] as String,
-      name:    m['name']     as String,
-      icon:    m['icon']     as String? ?? 'badge',
-      color:   m['color']    as String? ?? '#1C2151',
+      name: m['name'] as String,
+      icon: m['icon'] as String? ?? 'badge',
+      color: m['color'] as String? ?? '#1C2151',
       modules: StaffService._parseModules(m['modules']),
     );
   }
@@ -1729,12 +2068,16 @@ class StoreRole {
   }
 
   StoreRole copyWith({
-    String? name, String? icon, String? color, List<String>? modules,
+    String? name,
+    String? icon,
+    String? color,
+    List<String>? modules,
   }) => StoreRole(
-    id: id, storeId: storeId,
-    name:    name    ?? this.name,
-    icon:    icon    ?? this.icon,
-    color:   color   ?? this.color,
+    id: id,
+    storeId: storeId,
+    name: name ?? this.name,
+    icon: icon ?? this.icon,
+    color: color ?? this.color,
     modules: modules ?? this.modules,
   );
 }
@@ -1768,22 +2111,24 @@ class ShiftConfig {
   });
 
   factory ShiftConfig.fromMap(Map<String, dynamic> m) => ShiftConfig(
-    id:          m['id']            as String,
-    storeId:     m['store_id']      as String,
-    name:        m['name']          as String,
-    startHour:   (m['start_hour']   as num).toInt(),
+    id: m['id'] as String,
+    storeId: m['store_id'] as String,
+    name: m['name'] as String,
+    startHour: (m['start_hour'] as num).toInt(),
     startMinute: (m['start_minute'] as num?)?.toInt() ?? 0,
-    endHour:     (m['end_hour']     as num).toInt(),
-    endMinute:   (m['end_minute']   as num?)?.toInt() ?? 0,
-    color:       m['color']         as String? ?? '#1C2151',
-    sortOrder:   (m['sort_order']   as num?)?.toInt() ?? 0,
-    isActive:    m['is_active']     as bool? ?? true,
+    endHour: (m['end_hour'] as num).toInt(),
+    endMinute: (m['end_minute'] as num?)?.toInt() ?? 0,
+    color: m['color'] as String? ?? '#1C2151',
+    sortOrder: (m['sort_order'] as num?)?.toInt() ?? 0,
+    isActive: m['is_active'] as bool? ?? true,
   );
 
   /// Label giờ VD: "06:00 – 14:00"
   String get timeLabel {
-    final s = '${startHour.toString().padLeft(2,'0')}:${startMinute.toString().padLeft(2,'0')}';
-    final e = '${endHour.toString().padLeft(2,'0')}:${endMinute.toString().padLeft(2,'0')}';
+    final s =
+        '${startHour.toString().padLeft(2, '0')}:${startMinute.toString().padLeft(2, '0')}';
+    final e =
+        '${endHour.toString().padLeft(2, '0')}:${endMinute.toString().padLeft(2, '0')}';
     return '$s – $e';
   }
 
@@ -1791,34 +2136,42 @@ class ShiftConfig {
     try {
       final hex = color.replaceAll('#', '');
       return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) { return const Color(0xFF1C2151); }
+    } catch (_) {
+      return const Color(0xFF1C2151);
+    }
   }
 
   /// Kiểm tra giờ hiện tại có thuộc ca này không
   bool isCurrentShift(DateTime now) {
-    final nowMins   = now.hour * 60 + now.minute;
+    final nowMins = now.hour * 60 + now.minute;
     final startMins = startHour * 60 + startMinute;
-    final endMins   = endHour   * 60 + endMinute;
+    final endMins = endHour * 60 + endMinute;
     if (startMins < endMins) {
-      return nowMins >= startMins && nowMins < endMins;   // Ca bình thường
+      return nowMins >= startMins && nowMins < endMins; // Ca bình thường
     } else {
-      return nowMins >= startMins || nowMins < endMins;   // Ca qua đêm
+      return nowMins >= startMins || nowMins < endMins; // Ca qua đêm
     }
   }
 
   ShiftConfig copyWith({
-    String? name, int? startHour, int? startMinute,
-    int? endHour, int? endMinute, String? color, int? sortOrder,
+    String? name,
+    int? startHour,
+    int? startMinute,
+    int? endHour,
+    int? endMinute,
+    String? color,
+    int? sortOrder,
   }) => ShiftConfig(
-    id: id, storeId: storeId,
-    name:        name        ?? this.name,
-    startHour:   startHour   ?? this.startHour,
+    id: id,
+    storeId: storeId,
+    name: name ?? this.name,
+    startHour: startHour ?? this.startHour,
     startMinute: startMinute ?? this.startMinute,
-    endHour:     endHour     ?? this.endHour,
-    endMinute:   endMinute   ?? this.endMinute,
-    color:       color       ?? this.color,
-    sortOrder:   sortOrder   ?? this.sortOrder,
-    isActive:    isActive,
+    endHour: endHour ?? this.endHour,
+    endMinute: endMinute ?? this.endMinute,
+    color: color ?? this.color,
+    sortOrder: sortOrder ?? this.sortOrder,
+    isActive: isActive,
   );
 }
 
@@ -1827,13 +2180,17 @@ class ShiftConfig {
 // ─────────────────────────────────────────────────────────────────────────────
 class ShiftConfigService {
   static SupabaseClient? get _db {
-    try { return Supabase.instance.client; } catch (_) { return null; }
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
   }
 
   static const _kDefault = [
-    (n: 'Ca sáng',  sh: 6,  sm: 0, eh: 14, em: 0, c: '#0EA5E9', o: 0),
+    (n: 'Ca sáng', sh: 6, sm: 0, eh: 14, em: 0, c: '#0EA5E9', o: 0),
     (n: 'Ca chiều', sh: 14, sm: 0, eh: 22, em: 0, c: '#F59E0B', o: 1),
-    (n: 'Ca tối',   sh: 22, sm: 0, eh: 6,  em: 0, c: '#8B5CF6', o: 2),
+    (n: 'Ca tối', sh: 22, sm: 0, eh: 6, em: 0, c: '#8B5CF6', o: 2),
   ];
 
   /// Lấy danh sách ca — tự seed mặc định nếu chưa có
@@ -1866,55 +2223,86 @@ class ShiftConfigService {
 
   static Future<void> _seed(SupabaseClient db, String storeId) async {
     try {
-      await db.from('store_shift_configs').insert(
-        _kDefault.map((s) => {
-          'store_id': storeId, 'name': s.n,
-          'start_hour': s.sh, 'start_minute': s.sm,
-          'end_hour': s.eh,   'end_minute': s.em,
-          'color': s.c, 'sort_order': s.o, 'is_active': true,
-        }).toList(),
-      );
-    } catch (e) { debugPrint('[ShiftConfigService] seed: $e'); }
+      await db
+          .from('store_shift_configs')
+          .insert(
+            _kDefault
+                .map(
+                  (s) => {
+                    'store_id': storeId,
+                    'name': s.n,
+                    'start_hour': s.sh,
+                    'start_minute': s.sm,
+                    'end_hour': s.eh,
+                    'end_minute': s.em,
+                    'color': s.c,
+                    'sort_order': s.o,
+                    'is_active': true,
+                  },
+                )
+                .toList(),
+          );
+    } catch (e) {
+      debugPrint('[ShiftConfigService] seed: $e');
+    }
   }
 
   static Future<ShiftConfig?> createShift({
-    required String storeId, required String name,
-    required int startHour, required int startMinute,
-    required int endHour,   required int endMinute,
-    required String color,  int sortOrder = 99,
+    required String storeId,
+    required String name,
+    required int startHour,
+    required int startMinute,
+    required int endHour,
+    required int endMinute,
+    required String color,
+    int sortOrder = 99,
   }) async {
     final db = _db;
     if (db == null) throw Exception('DB chưa khởi tạo');
-    final res = await db.from('store_shift_configs').insert({
-      'store_id': storeId, 'name': name.trim(),
-      'start_hour': startHour, 'start_minute': startMinute,
-      'end_hour': endHour,     'end_minute': endMinute,
-      'color': color, 'sort_order': sortOrder, 'is_active': true,
-    }).select().single();
+    final res = await db
+        .from('store_shift_configs')
+        .insert({
+          'store_id': storeId,
+          'name': name.trim(),
+          'start_hour': startHour,
+          'start_minute': startMinute,
+          'end_hour': endHour,
+          'end_minute': endMinute,
+          'color': color,
+          'sort_order': sortOrder,
+          'is_active': true,
+        })
+        .select()
+        .single();
     return ShiftConfig.fromMap(res);
   }
 
   static Future<void> updateShift({
     required String shiftId,
-    String? name, int? startHour, int? startMinute,
-    int? endHour, int? endMinute, String? color,
+    String? name,
+    int? startHour,
+    int? startMinute,
+    int? endHour,
+    int? endMinute,
+    String? color,
   }) async {
     final db = _db;
     if (db == null) return;
     final d = <String, dynamic>{};
-    if (name        != null) d['name']         = name.trim();
-    if (startHour   != null) d['start_hour']   = startHour;
+    if (name != null) d['name'] = name.trim();
+    if (startHour != null) d['start_hour'] = startHour;
     if (startMinute != null) d['start_minute'] = startMinute;
-    if (endHour     != null) d['end_hour']     = endHour;
-    if (endMinute   != null) d['end_minute']   = endMinute;
-    if (color       != null) d['color']        = color;
+    if (endHour != null) d['end_hour'] = endHour;
+    if (endMinute != null) d['end_minute'] = endMinute;
+    if (color != null) d['color'] = color;
     if (d.isEmpty) return;
     await db.from('store_shift_configs').update(d).eq('id', shiftId);
   }
 
-  static Future<void> deleteShift(String shiftId) async =>
-      (await _db?.from('store_shift_configs')
-          .update({'is_active': false}).eq('id', shiftId));
+  static Future<void> deleteShift(String shiftId) async => (await _db
+      ?.from('store_shift_configs')
+      .update({'is_active': false})
+      .eq('id', shiftId));
 
   /// Assign 1 ca cho 1 nhân viên (1 nhân viên chỉ thuộc 1 ca)
   static Future<void> assignShiftToStaff({

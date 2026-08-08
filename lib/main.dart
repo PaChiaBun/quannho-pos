@@ -14,7 +14,8 @@ import 'core/services/supabase_service.dart';
 import 'core/services/update_checker_service.dart';
 import 'core/providers/app_providers.dart';
 import 'core/services/staff_service.dart';
-import 'core/services/user_auth_service.dart' show SessionData;
+import 'core/services/staff_shift_realtime_controller.dart';
+import 'core/services/user_auth_service.dart' show SessionData, UserAuthService;
 import 'dart:async';
 import 'package:printing/printing.dart';
 
@@ -43,41 +44,58 @@ import 'core/providers/session_provider.dart';
 import 'screens/role_manager_screen.dart' show storeRolesProvider;
 import 'screens/log_viewer_screen.dart';
 import 'core/utils/responsive.dart';
+import 'features/ai_assistant/screens/bum_chat_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // METADATA CHO TAB — icon + label (thêm module mới vào đây)
 // ─────────────────────────────────────────────────────────────────────────────
 const _kTabMeta = [
-  (icon: Icons.home_rounded,                   label: 'Trang chủ'),  // 0
-  (icon: Icons.shopping_cart_rounded,           label: 'Bán hàng'),   // 1
-  (icon: Icons.inventory_2_rounded,             label: 'Kho'),        // 2
-  (icon: Icons.account_balance_wallet_rounded,  label: 'Thu Chi'),    // 3
-  (icon: Icons.loyalty_rounded,                 label: 'Khách Hàng - Giảm Giá - Khuyến mãi'),       // 4
-  (icon: Icons.bar_chart_rounded,               label: 'Báo cáo'),    // 5
-  (icon: Icons.settings_rounded,                label: 'Cài đặt'),    // 6
-  (icon: Icons.table_restaurant_rounded,        label: 'Bàn'),        // 7 — Module Quản lý Bàn
-  (icon: Icons.local_fire_department_rounded,   label: 'Bếp'),        // 8 — Module Phiếu bếp
-  (icon: Icons.badge_rounded,                    label: 'Nhân viên'), // 9 — Module Nhân viên
-  (icon: Icons.fingerprint_rounded,              label: 'Chấm công'), // 10 — Module Chấm công
-  (icon: Icons.restaurant_menu_rounded,          label: 'Kho CN'),    // 11 — Module Kho Chuyên Nghiệp
-  (icon: Icons.payments_rounded,                 label: 'Tính lương'),// 12 — Module Tính Lương
-  (icon: Icons.checklist_rounded,                label: 'Vận Hành'),   // 13 — Module KAY Ops
-  (icon: Icons.history_edu_rounded,              label: 'Nhật ký'),   // 14 — Module Nhật ký Hệ thống
+  (icon: Icons.home_rounded, label: 'Trang chủ'), // 0
+  (icon: Icons.shopping_cart_rounded, label: 'Bán hàng'), // 1
+  (icon: Icons.inventory_2_rounded, label: 'Kho'), // 2
+  (icon: Icons.account_balance_wallet_rounded, label: 'Thu Chi'), // 3
+  (
+    icon: Icons.loyalty_rounded,
+    label: 'Khách Hàng - Giảm Giá - Khuyến mãi',
+  ), // 4
+  (icon: Icons.bar_chart_rounded, label: 'Báo cáo'), // 5
+  (icon: Icons.settings_rounded, label: 'Cài đặt'), // 6
+  (
+    icon: Icons.table_restaurant_rounded,
+    label: 'Bàn',
+  ), // 7 — Module Quản lý Bàn
+  (
+    icon: Icons.local_fire_department_rounded,
+    label: 'Bếp',
+  ), // 8 — Module Phiếu bếp
+  (icon: Icons.badge_rounded, label: 'Nhân viên'), // 9 — Module Nhân viên
+  (
+    icon: Icons.fingerprint_rounded,
+    label: 'Chấm công',
+  ), // 10 — Module Chấm công
+  (
+    icon: Icons.restaurant_menu_rounded,
+    label: 'Kho CN',
+  ), // 11 — Module Kho Chuyên Nghiệp
+  (icon: Icons.payments_rounded, label: 'Tính lương'), // 12 — Module Tính Lương
+  (icon: Icons.checklist_rounded, label: 'Vận Hành'), // 13 — Module KAY Ops
+  (
+    icon: Icons.history_edu_rounded,
+    label: 'Nhật ký',
+  ), // 14 — Module Nhật ký Hệ thống
 ];
 
 // Brand colors từ Quán Nhỏ Identity Sheet
-const _kNavy  = Color(0xFF1C2151);
+const _kNavy = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
-const _kCream  = Color(0xFFFFF8F0);
-
-
-
+const _kCream = Color(0xFFFFF8F0);
 
 class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
   }
 }
 
@@ -89,7 +107,9 @@ void main() async {
   }
 
   // Pre-cache fonts to avoid browser user-gesture print blocks
-  unawaited(PdfGoogleFonts.notoSansRegular().catchError((_) => null as dynamic));
+  unawaited(
+    PdfGoogleFonts.notoSansRegular().catchError((_) => null as dynamic),
+  );
   unawaited(PdfGoogleFonts.notoSansBold().catchError((_) => null as dynamic));
   unawaited(PdfGoogleFonts.robotoRegular().catchError((_) => null as dynamic));
   unawaited(PdfGoogleFonts.robotoBold().catchError((_) => null as dynamic));
@@ -104,11 +124,7 @@ void main() async {
     ),
   );
 
-  runApp(
-    const ProviderScope(
-      child: QuanNhoPOSApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: QuanNhoPOSApp()));
 }
 
 class QuanNhoPOSApp extends StatelessWidget {
@@ -128,18 +144,15 @@ class QuanNhoPOSApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('vi', 'VN'),
-        Locale('en', 'US'),
-      ],
+      supportedLocales: const [Locale('vi', 'VN'), Locale('en', 'US')],
       initialRoute: '/',
       routes: {
-        '/':              (context) => const SplashScreen(),
-        '/onboarding':    (context) => const OnboardingScreen(),
-        '/auth':          (context) => const AuthScreen(),
-        '/store_picker':  (context) => const StorePickerScreen(),
-        '/home':          (context) => const MainShell(),
-        '/qr_order':      (context) => const QrOrderScreen(),
+        '/': (context) => const SplashScreen(),
+        '/onboarding': (context) => const OnboardingScreen(),
+        '/auth': (context) => const AuthScreen(),
+        '/store_picker': (context) => const StorePickerScreen(),
+        '/home': (context) => const MainShell(),
+        '/qr_order': (context) => const QrOrderScreen(),
       },
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '');
@@ -164,7 +177,10 @@ class _SmoothScrollBehavior extends MaterialScrollBehavior {
 
   @override
   Widget buildOverscrollIndicator(
-      BuildContext context, Widget child, ScrollableDetails details) {
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
     return child;
   }
 
@@ -178,11 +194,31 @@ class _SmoothScrollBehavior extends MaterialScrollBehavior {
 // ✅ FIX #4 — Cache GoogleFonts TextStyle thành static const
 // Tránh tạo TextStyle object mới 28 lần mỗi khi sidebar rebuild
 // ─────────────────────────────────────────────────────────────────────────────
-final _kSidebarActiveStyle   = GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.w700, color: _kNavy);
-final _kSidebarInactiveStyle = GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.w400, color: const Color(0xFF9E9E9E));
-final _kSidebarActiveLgStyle   = GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy);
-final _kSidebarInactiveLgStyle = GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w400, color: const Color(0xFF9E9E9E));
-final _kSidebarFooterStyle     = GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFF9E9E9E));
+final _kSidebarActiveStyle = GoogleFonts.outfit(
+  fontSize: 9,
+  fontWeight: FontWeight.w700,
+  color: _kNavy,
+);
+final _kSidebarInactiveStyle = GoogleFonts.outfit(
+  fontSize: 9,
+  fontWeight: FontWeight.w400,
+  color: const Color(0xFF9E9E9E),
+);
+final _kSidebarActiveLgStyle = GoogleFonts.outfit(
+  fontSize: 12,
+  fontWeight: FontWeight.w700,
+  color: _kNavy,
+);
+final _kSidebarInactiveLgStyle = GoogleFonts.outfit(
+  fontSize: 12,
+  fontWeight: FontWeight.w400,
+  color: const Color(0xFF9E9E9E),
+);
+final _kSidebarFooterStyle = GoogleFonts.outfit(
+  fontSize: 10,
+  fontWeight: FontWeight.w600,
+  color: const Color(0xFF9E9E9E),
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN SHELL — 4 slot tuỳ chỉnh + Bum AI ở giữa
@@ -195,12 +231,12 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   int get _currentIndex => ref.watch(navTabProvider);
 
   // ── Tab-switch animation — lightweight fade only ──
   late final AnimationController _tabFadeCtrl;
-  late final Animation<double>   _tabFade;
+  late final Animation<double> _tabFade;
 
   // ── Children của IndexedStack — tạo 1 lần, không bao giờ recreate ──
   late final List<Widget> _bodyChildren;
@@ -211,10 +247,18 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 
   RealtimeChannel? _roleChannel;
+  late final StaffShiftRealtimeController _shiftController;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    _shiftController = StaffShiftRealtimeController(
+      onInvalidateOpenShift: () {
+        if (mounted) ref.invalidate(openShiftCCProvider);
+      },
+    );
 
     // Lightweight fade controller — 150ms thay vì 240ms
     _tabFadeCtrl = AnimationController(
@@ -233,6 +277,8 @@ class _MainShellState extends ConsumerState<MainShell>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(eventBridgeProvider);
       _startRoleWatcher();
+      _startShiftWatcher();
+      _validateMembershipOnResume();
       // Kiểm tra bản cập nhật sau 2 giây — cho UI render xong trước
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) UpdateCheckerService.checkForUpdate(context);
@@ -240,12 +286,65 @@ class _MainShellState extends ConsumerState<MainShell>
     });
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _validateMembershipOnResume();
+    }
+  }
+
+  bool _isNavigatingAway = false;
+
+  Future<void> _validateMembershipOnResume() async {
+    final session = ref.read(sessionProvider);
+    if (session == null ||
+        session.isOwner ||
+        session.storeId == null ||
+        session.storeId!.isEmpty) {
+      return;
+    }
+
+    final val = await UserAuthService.validateActiveMembership(
+      userId: session.userId,
+      storeId: session.storeId!,
+    );
+
+    if (!mounted) return;
+
+    if (!val.isActive && !val.isOffline) {
+      debugPrint(
+        '[MainShell] Membership revoked on resume -> clearing store context',
+      );
+      await ref.read(sessionProvider.notifier).clearStoreContext();
+      if (!mounted || _isNavigatingAway) return;
+      _isNavigatingAway = true;
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/store_picker', (route) => false);
+    } else if (val.isActive) {
+      // Sau khi validate thành công, mới refresh openShiftCCProvider
+      ref.invalidate(openShiftCCProvider);
+      _shiftController.manualReconnect();
+    }
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Lắng nghe session thay đổi — subscribe lại khi có storeId
-    // (dùng listen thủ công bằng Timer thay vì ref.listen vì đây là ConsumerState)
+  }
+
+  /// Lắng nghe thay đổi ca làm việc trong staff_shifts — chạy suốt vòng đời app
+  void _startShiftWatcher() {
+    final session = ref.read(sessionProvider);
+    if (session == null ||
+        session.storeId == null ||
+        session.storeId!.isEmpty ||
+        session.userId.isEmpty) {
+      _shiftController.stop();
+      return;
+    }
+
+    _shiftController.start(storeId: session.storeId!, userId: session.userId);
   }
 
   /// Lắng nghe thay đổi role trong store_members — chạy suốt vòng đời app
@@ -256,7 +355,7 @@ class _MainShellState extends ConsumerState<MainShell>
 
     final session = ref.read(sessionProvider);
     if (session == null || session.isOwner) return;
-    final userId  = session.userId;
+    final userId = session.userId;
     final storeId = session.storeId ?? '';
     if (userId.isEmpty || storeId.isEmpty) {
       // Retry sau 2 giây nếu chưa có store
@@ -270,13 +369,13 @@ class _MainShellState extends ConsumerState<MainShell>
       _roleChannel = Supabase.instance.client
           .channel('role_watch_${userId}_$storeId')
           .onPostgresChanges(
-            event:  PostgresChangeEvent.update,
+            event: PostgresChangeEvent.update,
             schema: 'public',
-            table:  'store_members',
+            table: 'store_members',
             filter: PostgresChangeFilter(
-              type:   PostgresChangeFilterType.eq,
+              type: PostgresChangeFilterType.eq,
               column: 'user_id',
-              value:  userId,
+              value: userId,
             ),
             callback: (payload) {
               final newRole = payload.newRecord['role'] as String?;
@@ -285,25 +384,29 @@ class _MainShellState extends ConsumerState<MainShell>
               if (cur == null || cur.role == newRole) return;
               debugPrint('[RoleWatcher] role changed: ${cur.role} → $newRole');
               // Cập nhật session → MainShell tự rebuild tabs ngay lập tức
-              ref.read(sessionProvider.notifier).setSession(
-                SessionData(
-                  userId:      cur.userId,
-                  phone:       cur.phone,
-                  displayName: cur.displayName,
-                  storeId:     cur.storeId,
-                  storeName:   cur.storeName,
-                  storeCode:   cur.storeCode,
-                  role:        newRole,
-                  isOwner:     cur.isOwner,
-                ),
-              );
+              ref
+                  .read(sessionProvider.notifier)
+                  .setSession(
+                    SessionData(
+                      userId: cur.userId,
+                      phone: cur.phone,
+                      displayName: cur.displayName,
+                      storeId: cur.storeId,
+                      storeName: cur.storeName,
+                      storeCode: cur.storeCode,
+                      role: newRole,
+                      isOwner: cur.isOwner,
+                    ),
+                  );
               // Hiện banner thông báo
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('🔄 Vai trò của bạn đã đổi sang: $newRole'),
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 4),
-                ));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('🔄 Vai trò của bạn đã đổi sang: $newRole'),
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
               }
             },
           )
@@ -315,8 +418,10 @@ class _MainShellState extends ConsumerState<MainShell>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tabFadeCtrl.dispose();
     _roleChannel?.unsubscribe();
+    _shiftController.dispose();
     super.dispose();
   }
 
@@ -326,36 +431,60 @@ class _MainShellState extends ConsumerState<MainShell>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => const _BumComingSoonSheet(),
+      useSafeArea: true,
+      builder: (_) => const BumChatScreen(),
     );
   }
 
   void _showSlotPicker(int slotIndex) {
     HapticFeedback.mediumImpact();
-    final session    = ref.read(sessionProvider);
+    final session = ref.read(sessionProvider);
     final storeRoles = ref.read(storeRolesProvider).value ?? [];
-    final allowed    = _navBarTabsForRole(
-        session?.role, storeRoles, session?.isOwner ?? false);
+    final allowed = _navBarTabsForRole(
+      session?.role,
+      storeRoles,
+      session?.isOwner ?? false,
+    );
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _SlotPickerSheet(
-        slotIndex: slotIndex,
-        allowedTabs: allowed,
-      ),
+      builder: (_) =>
+          _SlotPickerSheet(slotIndex: slotIndex, allowedTabs: allowed),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final idx        = ref.watch(navTabProvider);
+    ref.listen<SessionData?>(sessionProvider, (previous, next) {
+      if (previous?.storeId != next?.storeId ||
+          previous?.userId != next?.userId) {
+        _startRoleWatcher();
+        _startShiftWatcher();
+      }
+      if (previous?.storeId != null &&
+          next?.storeId == null &&
+          !_isNavigatingAway) {
+        _isNavigatingAway = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil('/store_picker', (route) => false);
+          }
+        });
+      }
+    });
+
+    final idx = ref.watch(navTabProvider);
     final slotsAsync = ref.watch(navSlotsProvider);
     // ✅ .select() — chỉ rebuild khi role hoặc isOwner thay đổi
     // Không rebuild khi storeName, token, hay các field khác update
-    final role     = ref.watch(sessionProvider.select((s) => s?.role));
-    final isOwner  = ref.watch(sessionProvider.select((s) => s?.isOwner ?? false));
-    final session  = ref.read(sessionProvider); // read full object chỉ khi cần
+    final role = ref.watch(sessionProvider.select((s) => s?.role));
+    final isOwner = ref.watch(
+      sessionProvider.select((s) => s?.isOwner ?? false),
+    );
+    final session = ref.read(sessionProvider); // read full object chỉ khi cần
     final rawSlots = slotsAsync.value ?? [0, 1, 2, 6];
 
     // Tabs trên nav bar theo role (tính từ store_roles modules)
@@ -367,12 +496,15 @@ class _MainShellState extends ConsumerState<MainShell>
     navBarTabs.add(13);
 
     // ⭐ Với nhân viên: Tạo displaySlots trực tiếp từ navBarTabs (đã bao gồm 13)
-    final isStaff = !(session?.isOwner ?? false) &&
-        session?.role != 'owner' && session?.role != 'manager';
+    final isStaff =
+        !(session?.isOwner ?? false) &&
+        session?.role != 'owner' &&
+        session?.role != 'manager';
     final List<int> displaySlots;
 
     if (isStaff) {
-      final staffAllowed = navBarTabs.where((t) => t != 0 && t != 6 && t != 13).toList()..sort();
+      final staffAllowed =
+          navBarTabs.where((t) => t != 0 && t != 6 && t != 13).toList()..sort();
       final mid = staffAllowed.isNotEmpty ? staffAllowed.first : 6;
       displaySlots = [0, 6, mid, 13];
     } else {
@@ -382,7 +514,9 @@ class _MainShellState extends ConsumerState<MainShell>
 
     // ✅ FIX #2: bỏ watch storeRolesProvider lần 2 — dùng lại giá trị storeRoles đã watch ở trên
     // (storeRoles.isNotEmpty đồng nghĩa provider đã load xong)
-    if (storeRoles.isNotEmpty && !navBarTabs.contains(idx) && displaySlots.isNotEmpty) {
+    if (storeRoles.isNotEmpty &&
+        !navBarTabs.contains(idx) &&
+        displaySlots.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(navTabProvider.notifier).goTo(displaySlots[0]);
       });
@@ -408,29 +542,28 @@ class _MainShellState extends ConsumerState<MainShell>
   //    → tiết kiệm 26 widget nodes + implicit animation reconcile mỗi tap
   // ─────────────────────────────────────────────────────────────
   static const _screens = [
-    DashboardScreen(),          // 0
-    PosScreen(),                // 1
-    InventoryScreen(),          // 2
-    FinanceScreen(),            // 3
-    LoyaltyScreen(),            // 4
-    ReportScreen(),             // 5
-    SettingsScreen(),           // 6
-    BanScreen(),                // 7
-    KitchenScreen(),            // 8
-    NhanVienScreen(),           // 9
-    ChamCongScreen(),           // 10
-    KhoProScreen(),             // 11
-    _TinhLuongRouteScreen(),    // 12
-    OpsScreen(),                // 13
-    const LogViewerScreen(),    // 14
+    DashboardScreen(), // 0
+    PosScreen(), // 1
+    InventoryScreen(), // 2
+    FinanceScreen(), // 3
+    LoyaltyScreen(), // 4
+    ReportScreen(), // 5
+    SettingsScreen(), // 6
+    BanScreen(), // 7
+    KitchenScreen(), // 8
+    NhanVienScreen(), // 9
+    ChamCongScreen(), // 10
+    KhoProScreen(), // 11
+    _TinhLuongRouteScreen(), // 12
+    OpsScreen(), // 13
+    const LogViewerScreen(), // 14
   ];
-
-
 
   Widget _buildBody(int idx) {
     // ── CLOCK-IN GUARD CHO NHÂN VIÊN ──
     final session = ref.watch(sessionProvider);
-    final isStaff = session != null &&
+    final isStaff =
+        session != null &&
         !(session.isOwner) &&
         session.role != 'owner' &&
         session.role != 'manager' &&
@@ -438,20 +571,26 @@ class _MainShellState extends ConsumerState<MainShell>
 
     if (isStaff && idx != 0 && idx != 10 && idx != 6) {
       final openShiftAsync = ref.watch(openShiftCCProvider);
-      final hasActiveShift = openShiftAsync.asData?.value != null;
-      if (!hasActiveShift) {
-        return _buildClockInRequiredScreen();
-      }
+      return openShiftAsync.when(
+        data: (open) {
+          if (open == null) {
+            return _buildClockInRequiredScreen();
+          }
+          return FadeTransition(
+            opacity: _tabFade,
+            child: IndexedStack(index: idx, children: _bodyChildren),
+          );
+        },
+        loading: () => _buildClockInCheckingScreen(),
+        error: (err, _) => _buildClockInErrorScreen(err),
+      );
     }
 
     // ✅ PERF: chỉ FadeTransition, bỏ SlideTransition
     // → giảm 50% repaint cost vì không cần transform matrix
     return FadeTransition(
       opacity: _tabFade,
-      child: IndexedStack(
-        index: idx,
-        children: _bodyChildren,
-      ),
+      child: IndexedStack(index: idx, children: _bodyChildren),
     );
   }
 
@@ -510,7 +649,9 @@ class _MainShellState extends ConsumerState<MainShell>
                   ),
                 ),
                 onPressed: () {
-                  ref.read(navTabProvider.notifier).goTo(10); // Chuyển sang tab Chấm công (ChamCongScreen)
+                  ref
+                      .read(navTabProvider.notifier)
+                      .goTo(10); // Chuyển sang tab Chấm công (ChamCongScreen)
                 },
                 icon: const Icon(Icons.fingerprint_rounded, size: 20),
                 label: Text(
@@ -528,15 +669,108 @@ class _MainShellState extends ConsumerState<MainShell>
     );
   }
 
+  Widget _buildClockInCheckingScreen() {
+    return Container(
+      color: const Color(0xFFFAF7F2),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(color: Color(0xFF1E1C5E)),
+            const SizedBox(height: 16),
+            Text(
+              'Đang kiểm tra ca làm việc...',
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: const Color(0xFF9E9085),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClockInErrorScreen(Object error) {
+    return Container(
+      color: const Color(0xFFFAF7F2),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDC2626).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.sync_problem_rounded,
+                color: Color(0xFFDC2626),
+                size: 56,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'LỖI ĐỒNG BỘ TRẠNG THÁI CA',
+              style: GoogleFonts.outfit(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF1E1C5E),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Không thể kết nối CSDL để kiểm tra ca làm việc.\nVui lòng kiểm tra kết nối mạng và bấm Thử lại.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: const Color(0xFF9E9085),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E1C5E),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                ref.invalidate(openShiftCCProvider);
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(
+                'Thử lại',
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ─────────────────────────────────────────────────────────────
   // LARGE LAYOUT — Navigation Rail + Content
   // ─────────────────────────────────────────────────────────────
-  Widget _buildLargeLayout(BuildContext context, int idx, Set<int> allowedTabs) {
-    final sortedTabs  = allowedTabs.toList()..sort();
-    final isDesktop   = Responsive.isDesktop(context);
+  Widget _buildLargeLayout(
+    BuildContext context,
+    int idx,
+    Set<int> allowedTabs,
+  ) {
+    final sortedTabs = allowedTabs.toList()..sort();
+    final isDesktop = Responsive.isDesktop(context);
     // ✅ FIX #5: bỏ ref.watch(sessionProvider) thừa — build() đã watch rồi
     // Dùng ref.read để lấy giá trị hiện tại mà không tạo thêm subscription
-    final storeName   = ref.read(sessionProvider)?.storeName ?? '';
+    final storeName = ref.read(sessionProvider)?.storeName ?? '';
 
     return Scaffold(
       body: SafeArea(
@@ -546,7 +780,10 @@ class _MainShellState extends ConsumerState<MainShell>
             _buildCustomSidebar(sortedTabs, idx, storeName, isDesktop),
             // ── Divider mảnh ────────────────────────────────────
             const VerticalDivider(
-              width: 1, thickness: 1, color: Color(0xFFEEEBE6)),
+              width: 1,
+              thickness: 1,
+              color: Color(0xFFEEEBE6),
+            ),
             // ── Nội dung chính ──────────────────────────────────
             Expanded(child: _buildBody(idx)),
           ],
@@ -557,7 +794,11 @@ class _MainShellState extends ConsumerState<MainShell>
 
   /// Custom sidebar thay thế NavigationRail — scrollable, không bị overflow
   Widget _buildCustomSidebar(
-      List<int> sortedTabs, int currentIdx, String storeName, bool isDesktop) {
+    List<int> sortedTabs,
+    int currentIdx,
+    String storeName,
+    bool isDesktop,
+  ) {
     final sidebarWidth = isDesktop ? 180.0 : 88.0;
     return Container(
       width: sidebarWidth,
@@ -578,15 +819,17 @@ class _MainShellState extends ConsumerState<MainShell>
             onTap: _showBumSheet,
             child: Container(
               width: double.infinity,
-              padding: EdgeInsets.fromLTRB(0, isDesktop ? 20 : 16, 0, isDesktop ? 16 : 12),
+              padding: EdgeInsets.fromLTRB(
+                0,
+                isDesktop ? 20 : 16,
+                0,
+                isDesktop ? 16 : 12,
+              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    _kNavy.withValues(alpha: 0.04),
-                    Colors.transparent,
-                  ],
+                  colors: [_kNavy.withValues(alpha: 0.04), Colors.transparent],
                 ),
               ),
               child: Column(
@@ -623,14 +866,17 @@ class _MainShellState extends ConsumerState<MainShell>
                       ),
                       padding: const EdgeInsets.all(2),
                       child: ClipOval(
-                        child: Image.asset('assets/branding/logo_head.png',
-                            fit: BoxFit.cover),
+                        child: Image.asset(
+                          'assets/branding/logo_head.png',
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
                   SizedBox(height: isDesktop ? 10 : 6),
                   // ── Tên AI ──
-                  Text('Bum AI',
+                  Text(
+                    'Bum AI',
                     style: GoogleFonts.outfit(
                       fontSize: isDesktop ? 14 : 11,
                       fontWeight: FontWeight.w800,
@@ -639,7 +885,8 @@ class _MainShellState extends ConsumerState<MainShell>
                     ),
                   ),
                   if (isDesktop)
-                    Text('Trợ lý thông minh',
+                    Text(
+                      'Trợ lý thông minh',
                       style: GoogleFonts.outfit(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
@@ -671,8 +918,8 @@ class _MainShellState extends ConsumerState<MainShell>
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
               itemCount: sortedTabs.length,
               itemBuilder: (context, i) {
-                final tabIdx  = sortedTabs[i];
-                final meta    = _kTabMeta[tabIdx];
+                final tabIdx = sortedTabs[i];
+                final meta = _kTabMeta[tabIdx];
                 final isActive = currentIdx == tabIdx;
                 return Material(
                   color: Colors.transparent,
@@ -689,7 +936,10 @@ class _MainShellState extends ConsumerState<MainShell>
                     child: Container(
                       height: isDesktop ? 48 : 64,
                       padding: isDesktop
-                          ? const EdgeInsets.symmetric(horizontal: 10, vertical: 4)
+                          ? const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            )
                           : const EdgeInsets.symmetric(vertical: 4),
                       margin: const EdgeInsets.symmetric(vertical: 1),
                       decoration: BoxDecoration(
@@ -704,7 +954,8 @@ class _MainShellState extends ConsumerState<MainShell>
                                 // ── Left accent pill ──
                                 if (isActive)
                                   Container(
-                                    width: 3, height: 24,
+                                    width: 3,
+                                    height: 24,
                                     margin: const EdgeInsets.only(right: 10),
                                     decoration: BoxDecoration(
                                       color: _kOrange,
@@ -714,21 +965,29 @@ class _MainShellState extends ConsumerState<MainShell>
                                 else
                                   const SizedBox(width: 13),
                                 Container(
-                                  width: 32, height: 32,
+                                  width: 32,
+                                  height: 32,
                                   decoration: BoxDecoration(
                                     color: isActive
                                         ? _kNavy.withValues(alpha: 0.10)
                                         : const Color(0xFFF5F5F5),
                                     borderRadius: BorderRadius.circular(9),
                                   ),
-                                  child: Icon(meta.icon,
+                                  child: Icon(
+                                    meta.icon,
                                     size: 18,
-                                    color: isActive ? _kNavy : Colors.grey.shade400),
+                                    color: isActive
+                                        ? _kNavy
+                                        : Colors.grey.shade400,
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
-                                  child: Text(meta.label,
-                                    style: isActive ? _kSidebarActiveLgStyle : _kSidebarInactiveLgStyle,
+                                  child: Text(
+                                    meta.label,
+                                    style: isActive
+                                        ? _kSidebarActiveLgStyle
+                                        : _kSidebarInactiveLgStyle,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -740,7 +999,8 @@ class _MainShellState extends ConsumerState<MainShell>
                                 // ── Active dot ──
                                 if (isActive)
                                   Container(
-                                    height: 3, width: 22,
+                                    height: 3,
+                                    width: 22,
                                     margin: const EdgeInsets.only(bottom: 3),
                                     decoration: BoxDecoration(
                                       color: _kOrange,
@@ -750,20 +1010,28 @@ class _MainShellState extends ConsumerState<MainShell>
                                 else
                                   const SizedBox(height: 6),
                                 Container(
-                                  width: 34, height: 34,
+                                  width: 34,
+                                  height: 34,
                                   decoration: BoxDecoration(
                                     color: isActive
                                         ? _kNavy.withValues(alpha: 0.10)
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: Icon(meta.icon,
+                                  child: Icon(
+                                    meta.icon,
                                     size: 20,
-                                    color: isActive ? _kNavy : Colors.grey.shade400),
+                                    color: isActive
+                                        ? _kNavy
+                                        : Colors.grey.shade400,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
-                                Text(meta.label,
-                                  style: isActive ? _kSidebarActiveStyle : _kSidebarInactiveStyle,
+                                Text(
+                                  meta.label,
+                                  style: isActive
+                                      ? _kSidebarActiveStyle
+                                      : _kSidebarInactiveStyle,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -794,19 +1062,24 @@ class _MainShellState extends ConsumerState<MainShell>
             child: Column(
               children: [
                 Container(
-                  width: 28, height: 28,
+                  width: 28,
+                  height: 28,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF5F0EA),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.storefront_rounded,
-                    size: 14, color: Colors.grey.shade400),
+                  child: Icon(
+                    Icons.storefront_rounded,
+                    size: 14,
+                    color: Colors.grey.shade400,
+                  ),
                 ),
                 if (isDesktop && storeName.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(storeName,
+                    child: Text(
+                      storeName,
                       style: _kSidebarFooterStyle,
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
@@ -822,7 +1095,11 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 
   /// Các tab hiển thị trên Bottom Nav Bar — tính từ store_roles.modules hoặc phân quyền nhân viên
-  Set<int> _navBarTabsForRole(String? role, List<dynamic> storeRoles, bool isOwner) {
+  Set<int> _navBarTabsForRole(
+    String? role,
+    List<dynamic> storeRoles,
+    bool isOwner,
+  ) {
     final canonical = StaffService.canonicalRole(role ?? '');
     if (isOwner || canonical == 'owner' || canonical == 'manager') {
       return {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
@@ -830,19 +1107,19 @@ class _MainShellState extends ConsumerState<MainShell>
 
     // Map module ID → tab index
     const moduleToTab = {
-      'pos':        1,
-      'kho':        2,
-      'finance':    3,
-      'loyalty':    4,
-      'report':     5,
-      'ban':        7,
-      'table':      7,
-      'kitchen':    8,
-      'staff':      9,
-      'chamcong':   10,
-      'kho_pro':    11,
-      'tinhluong':  12,
-      'kay_ops':    13,
+      'pos': 1,
+      'kho': 2,
+      'finance': 3,
+      'loyalty': 4,
+      'report': 5,
+      'ban': 7,
+      'table': 7,
+      'kitchen': 8,
+      'staff': 9,
+      'chamcong': 10,
+      'kho_pro': 11,
+      'tinhluong': 12,
+      'kay_ops': 13,
       'log_viewer': 14,
     };
 
@@ -850,7 +1127,9 @@ class _MainShellState extends ConsumerState<MainShell>
     final tabs = <int>{0, 6};
 
     // Tìm role trong store_roles (khớp trực tiếp tên hoặc qua canonicalRole)
-    debugPrint('[NavTabs] role=$role storeRoles=${storeRoles.map((r) => r.name).toList()} isOwner=$isOwner');
+    debugPrint(
+      '[NavTabs] role=$role storeRoles=${storeRoles.map((r) => r.name).toList()} isOwner=$isOwner',
+    );
     if (role != null && storeRoles.isNotEmpty) {
       for (final r in storeRoles) {
         final rName = r.name.toString();
@@ -869,11 +1148,16 @@ class _MainShellState extends ConsumerState<MainShell>
 
     // Fallback: role cũ hardcoded
     switch (canonical) {
-      case 'kitchen': return {0, 8, 6, 1, 13};
-      case 'cashier': return {0, 1, 7, 6, 13, 14};
-      case 'waiter':  return {0, 7, 8, 6, 13};
-      case 'stock':   return {0, 2, 1, 6, 13};
-      default:        return tabs.isEmpty ? {0, 1, 2, 6, 13} : (tabs..add(13));
+      case 'kitchen':
+        return {0, 8, 6, 1, 13};
+      case 'cashier':
+        return {0, 1, 7, 6, 13, 14};
+      case 'waiter':
+        return {0, 7, 8, 6, 13};
+      case 'stock':
+        return {0, 2, 1, 6, 13};
+      default:
+        return tabs.isEmpty ? {0, 1, 2, 6, 13} : (tabs..add(13));
     }
   }
 
@@ -891,7 +1175,6 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 
   Widget _buildBottomBar(List<int> slots) {
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -906,23 +1189,39 @@ class _MainShellState extends ConsumerState<MainShell>
             height: 72,
             child: Row(
               children: [
-                Expanded(child: _NavSlotItem(
-                  tabIndex: slots[0], isActive: _currentIndex == slots[0],
-                  onTap: () => _setTab(slots[0]),
-                  onLongPress: () => _showSlotPicker(0))),
-                Expanded(child: _NavSlotItem(
-                  tabIndex: slots[1], isActive: _currentIndex == slots[1],
-                  onTap: () => _setTab(slots[1]),
-                  onLongPress: () => _showSlotPicker(1))),
+                Expanded(
+                  child: _NavSlotItem(
+                    tabIndex: slots[0],
+                    isActive: _currentIndex == slots[0],
+                    onTap: () => _setTab(slots[0]),
+                    onLongPress: () => _showSlotPicker(0),
+                  ),
+                ),
+                Expanded(
+                  child: _NavSlotItem(
+                    tabIndex: slots[1],
+                    isActive: _currentIndex == slots[1],
+                    onTap: () => _setTab(slots[1]),
+                    onLongPress: () => _showSlotPicker(1),
+                  ),
+                ),
                 const SizedBox(width: 96),
-                Expanded(child: _NavSlotItem(
-                  tabIndex: slots[2], isActive: _currentIndex == slots[2],
-                  onTap: () => _setTab(slots[2]),
-                  onLongPress: () => _showSlotPicker(2))),
-                Expanded(child: _NavSlotItem(
-                  tabIndex: slots[3], isActive: _currentIndex == slots[3],
-                  onTap: () => _setTab(slots[3]),
-                  onLongPress: () => _showSlotPicker(3))),
+                Expanded(
+                  child: _NavSlotItem(
+                    tabIndex: slots[2],
+                    isActive: _currentIndex == slots[2],
+                    onTap: () => _setTab(slots[2]),
+                    onLongPress: () => _showSlotPicker(2),
+                  ),
+                ),
+                Expanded(
+                  child: _NavSlotItem(
+                    tabIndex: slots[3],
+                    isActive: _currentIndex == slots[3],
+                    onTap: () => _setTab(slots[3]),
+                    onLongPress: () => _showSlotPicker(3),
+                  ),
+                ),
               ],
             ),
           ),
@@ -930,9 +1229,7 @@ class _MainShellState extends ConsumerState<MainShell>
       ],
     );
   }
-
 } // end _MainShellState
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAV SLOT ITEM — ô tuỳ chỉnh, scale animation khi tap
@@ -967,9 +1264,10 @@ class _NavSlotItemState extends State<_NavSlotItem>
       duration: const Duration(milliseconds: 100),
       reverseDuration: const Duration(milliseconds: 200),
     );
-    _scaleAnim = Tween<double>(begin: 1.0, end: 0.80).animate(
-      CurvedAnimation(parent: _pressCtrl, curve: Curves.easeInOut),
-    );
+    _scaleAnim = Tween<double>(
+      begin: 1.0,
+      end: 0.80,
+    ).animate(CurvedAnimation(parent: _pressCtrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -1010,7 +1308,10 @@ class _NavSlotItemState extends State<_NavSlotItem>
               AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: widget.isActive ? _kOrange : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
@@ -1021,7 +1322,9 @@ class _NavSlotItemState extends State<_NavSlotItem>
                     meta.icon,
                     key: ValueKey('icon_${widget.tabIndex}_${widget.isActive}'),
                     size: 22,
-                    color: widget.isActive ? Colors.white : Colors.white.withValues(alpha: 0.70),
+                    color: widget.isActive
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.70),
                   ),
                 ),
               ),
@@ -1031,8 +1334,12 @@ class _NavSlotItemState extends State<_NavSlotItem>
                 duration: const Duration(milliseconds: 250),
                 style: GoogleFonts.outfit(
                   fontSize: 10,
-                  fontWeight: widget.isActive ? FontWeight.w700 : FontWeight.w400,
-                  color: widget.isActive ? Colors.white : Colors.white.withValues(alpha: 0.65),
+                  fontWeight: widget.isActive
+                      ? FontWeight.w700
+                      : FontWeight.w400,
+                  color: widget.isActive
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.65),
                 ),
                 child: Text(
                   meta.label,
@@ -1049,7 +1356,6 @@ class _NavSlotItemState extends State<_NavSlotItem>
   }
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // ARCH NOTCHED SHAPE — Vòm xanh ôm mascot Bum giữa thanh nav
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1059,12 +1365,13 @@ class _ArchNotchedShape extends NotchedShape {
   @override
   Path getOuterPath(Rect host, Rect? guest) {
     if (guest == null || !guest.overlaps(host)) {
-      return Path()
-        ..addRRect(RRect.fromRectAndCorners(
+      return Path()..addRRect(
+        RRect.fromRectAndCorners(
           host,
           topLeft: const Radius.circular(22),
           topRight: const Radius.circular(22),
-        ));
+        ),
+      );
     }
     final cx = guest.center.dx;
     final archR = guest.width / 2 + 12.0;
@@ -1077,7 +1384,14 @@ class _ArchNotchedShape extends NotchedShape {
       ..quadraticBezierTo(host.left, host.top, host.left + 22, host.top)
       ..lineTo(cx - archR - shoulder, host.top)
       ..cubicTo(cx - archR, host.top, cx - archR, peak, cx, peak)
-      ..cubicTo(cx + archR, peak, cx + archR, host.top, cx + archR + shoulder, host.top)
+      ..cubicTo(
+        cx + archR,
+        peak,
+        cx + archR,
+        host.top,
+        cx + archR + shoulder,
+        host.top,
+      )
       ..lineTo(host.right - 22, host.top)
       ..quadraticBezierTo(host.right, host.top, host.right, host.top + 22)
       ..lineTo(host.right, host.bottom)
@@ -1110,12 +1424,14 @@ class _BumButtonState extends State<_BumButton>
       duration: const Duration(milliseconds: 3000), // thở chậm hơn
     )..repeat(reverse: true);
 
-    _scaleAnim = Tween<double>(begin: 1.0, end: 1.04).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
-    _glowAnim = Tween<double>(begin: 0.25, end: 0.50).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
+    _scaleAnim = Tween<double>(
+      begin: 1.0,
+      end: 1.04,
+    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+    _glowAnim = Tween<double>(
+      begin: 0.25,
+      end: 0.50,
+    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -1139,10 +1455,7 @@ class _BumButtonState extends State<_BumButton>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white,
-            border: Border.all(
-              color: _kOrange,
-              width: 3.0,
-            ),
+            border: Border.all(color: _kOrange, width: 3.0),
             boxShadow: [
               BoxShadow(
                 color: _kOrange.withValues(alpha: 0.35),
@@ -1190,75 +1503,25 @@ class _BumButtonState extends State<_BumButton>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BUM COMING SOON SHEET
-// ─────────────────────────────────────────────────────────────────────────────
-class _BumComingSoonSheet extends StatelessWidget {
-  const _BumComingSoonSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-      decoration: BoxDecoration(
-        color: _kCream,
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 10),
-          Container(width: 40, height: 4,
-            decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(2))),
-          const SizedBox(height: 24),
-          Container(
-            width: 100, height: 100,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white,
-              border: Border.all(color: _kNavy, width: 3),
-              boxShadow: [BoxShadow(color: _kNavy.withValues(alpha: 0.15), blurRadius: 20, offset: const Offset(0, 6))]),
-            child: ClipOval(child: Image.asset('assets/branding/logo_head.png', fit: BoxFit.cover)),
-          ),
-          const SizedBox(height: 16),
-          Text('Xin chào! Mình là Bum 👋',
-            style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w800, color: _kNavy)),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28),
-            child: Text(
-              'Mình là trợ lý AI thông minh của Quán Nhỏ. Đang được xây dựng và sẽ sớm ra mắt!',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(fontSize: 14, height: 1.55, color: _kNavy.withValues(alpha: 0.65)),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-              color: _kOrange.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: _kOrange.withValues(alpha: 0.35)),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.construction_rounded, size: 15, color: _kOrange),
-              const SizedBox(width: 6),
-              Text('Đang xây dựng — Sắp ra mắt!',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 13, color: _kOrange)),
-            ]),
-          ),
-          const SizedBox(height: 28),
-        ],
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Màu accent cho từng tab (dùng trong SlotPicker)
 // ─────────────────────────────────────────────────────────────────────────────
 const _kTabColors = [
-  Color(0xFF1C2151), Color(0xFFE07B39), Color(0xFF00796B), Color(0xFF2E7D32),
-  Color(0xFFAD1457), Color(0xFF6A1B9A), Color(0xFF455A64), Color(0xFFF57F17),
-  Color(0xFFC62828), Color(0xFF1565C0), Color(0xFF283593), Color(0xFF00838F),
-  Color(0xFF558B2F), Color(0xFF4527A0),
+  Color(0xFF1C2151),
+  Color(0xFFE07B39),
+  Color(0xFF00796B),
+  Color(0xFF2E7D32),
+  Color(0xFFAD1457),
+  Color(0xFF6A1B9A),
+  Color(0xFF455A64),
+  Color(0xFFF57F17),
+  Color(0xFFC62828),
+  Color(0xFF1565C0),
+  Color(0xFF283593),
+  Color(0xFF00838F),
+  Color(0xFF558B2F),
+  Color(0xFF4527A0),
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1283,13 +1546,24 @@ class _SlotPickerSheetState extends ConsumerState<_SlotPickerSheet>
   void initState() {
     super.initState();
     final count = _kTabMeta.length;
-    _controllers = List.generate(count, (i) => AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 380),
-    ));
-    _fadeAnims = _controllers.map((c) => CurvedAnimation(parent: c, curve: Curves.easeOut)).toList();
-    _slideAnims = _controllers.map((c) => Tween<Offset>(
-      begin: const Offset(0, 0.35), end: Offset.zero,
-    ).animate(CurvedAnimation(parent: c, curve: Curves.easeOutCubic))).toList();
+    _controllers = List.generate(
+      count,
+      (i) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 380),
+      ),
+    );
+    _fadeAnims = _controllers
+        .map((c) => CurvedAnimation(parent: c, curve: Curves.easeOut))
+        .toList();
+    _slideAnims = _controllers
+        .map(
+          (c) => Tween<Offset>(
+            begin: const Offset(0, 0.35),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: c, curve: Curves.easeOutCubic)),
+        )
+        .toList();
 
     // Staggered entrance
     for (var i = 0; i < count; i++) {
@@ -1308,9 +1582,10 @@ class _SlotPickerSheetState extends ConsumerState<_SlotPickerSheet>
   @override
   Widget build(BuildContext context) {
     final slots = ref.watch(navSlotsProvider).value ?? [0, 1, 2, 6];
-    final allowedList = List.generate(_kTabMeta.length, (i) => i)
-        .where((i) => widget.allowedTabs.contains(i))
-        .toList();
+    final allowedList = List.generate(
+      _kTabMeta.length,
+      (i) => i,
+    ).where((i) => widget.allowedTabs.contains(i)).toList();
 
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 20),
@@ -1323,29 +1598,56 @@ class _SlotPickerSheetState extends ConsumerState<_SlotPickerSheet>
         children: [
           const SizedBox(height: 10),
           // Handle bar
-          Container(width: 40, height: 4,
-            decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: _kNavy.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const SizedBox(height: 20),
           // Title
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: _kNavy,
-                borderRadius: BorderRadius.circular(20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _kNavy,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Ô ${widget.slotIndex + 1}',
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-              child: Text(
-                'Ô ${widget.slotIndex + 1}',
-                style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+              const SizedBox(width: 10),
+              Text(
+                'Chọn mục hiển thị',
+                style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: _kNavy,
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Text('Chọn mục hiển thị',
-              style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy)),
-          ]),
+            ],
+          ),
           const SizedBox(height: 6),
-          Text('Giữ lâu vào ô để thay đổi',
-            style: GoogleFonts.outfit(fontSize: 11, color: _kNavy.withValues(alpha: 0.40))),
+          Text(
+            'Giữ lâu vào ô để thay đổi',
+            style: GoogleFonts.outfit(
+              fontSize: 11,
+              color: _kNavy.withValues(alpha: 0.40),
+            ),
+          ),
           const SizedBox(height: 16),
           Divider(height: 1, color: _kNavy.withValues(alpha: 0.07)),
           const SizedBox(height: 12),
@@ -1367,8 +1669,12 @@ class _SlotPickerSheetState extends ConsumerState<_SlotPickerSheet>
                   final tabIdx = allowedList[idx];
                   final meta = _kTabMeta[tabIdx];
                   final isSelected = slots[widget.slotIndex] == tabIdx;
-                  final usedElsewhere = slots.indexed.any((e) => e.$1 != widget.slotIndex && e.$2 == tabIdx);
-                  final color = _kTabColors.length > tabIdx ? _kTabColors[tabIdx] : _kNavy;
+                  final usedElsewhere = slots.indexed.any(
+                    (e) => e.$1 != widget.slotIndex && e.$2 == tabIdx,
+                  );
+                  final color = _kTabColors.length > tabIdx
+                      ? _kTabColors[tabIdx]
+                      : _kNavy;
 
                   return FadeTransition(
                     opacity: _fadeAnims[tabIdx],
@@ -1379,11 +1685,15 @@ class _SlotPickerSheetState extends ConsumerState<_SlotPickerSheet>
                         color: color,
                         isSelected: isSelected,
                         isDisabled: usedElsewhere,
-                        onTap: usedElsewhere ? null : () {
-                          HapticFeedback.lightImpact();
-                          ref.read(navSlotsProvider.notifier).updateSlot(widget.slotIndex, tabIdx);
-                          Navigator.pop(context);
-                        },
+                        onTap: usedElsewhere
+                            ? null
+                            : () {
+                                HapticFeedback.lightImpact();
+                                ref
+                                    .read(navSlotsProvider.notifier)
+                                    .updateSlot(widget.slotIndex, tabIdx);
+                                Navigator.pop(context);
+                              },
                       ),
                     ),
                   );
@@ -1404,25 +1714,41 @@ class _SlotTabTile extends StatefulWidget {
   final bool isSelected;
   final bool isDisabled;
   final VoidCallback? onTap;
-  const _SlotTabTile({required this.meta, required this.color, required this.isSelected, required this.isDisabled, required this.onTap});
+  const _SlotTabTile({
+    required this.meta,
+    required this.color,
+    required this.isSelected,
+    required this.isDisabled,
+    required this.onTap,
+  });
 
   @override
   State<_SlotTabTile> createState() => _SlotTabTileState();
 }
 
-class _SlotTabTileState extends State<_SlotTabTile> with SingleTickerProviderStateMixin {
+class _SlotTabTileState extends State<_SlotTabTile>
+    with SingleTickerProviderStateMixin {
   late AnimationController _scaleCtrl;
   late Animation<double> _scaleAnim;
 
   @override
   void initState() {
     super.initState();
-    _scaleCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 120));
-    _scaleAnim = Tween<double>(begin: 1.0, end: 0.93).animate(CurvedAnimation(parent: _scaleCtrl, curve: Curves.easeInOut));
+    _scaleCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    );
+    _scaleAnim = Tween<double>(
+      begin: 1.0,
+      end: 0.93,
+    ).animate(CurvedAnimation(parent: _scaleCtrl, curve: Curves.easeInOut));
   }
 
   @override
-  void dispose() { _scaleCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _scaleCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1438,55 +1764,81 @@ class _SlotTabTileState extends State<_SlotTabTile> with SingleTickerProviderSta
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
-            color: widget.isSelected ? widget.color.withValues(alpha: 0.08) : Colors.white,
+            color: widget.isSelected
+                ? widget.color.withValues(alpha: 0.08)
+                : Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: widget.isSelected ? widget.color : Colors.transparent,
               width: widget.isSelected ? 2 : 0,
             ),
-            boxShadow: widget.isSelected ? [] : [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
-            ],
+            boxShadow: widget.isSelected
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
           ),
           child: Opacity(
             opacity: opacity,
-            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              // Icon circle
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                width: 48, height: 48,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: widget.isSelected ? widget.color : widget.color.withValues(alpha: 0.10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon circle
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: widget.isSelected
+                        ? widget.color
+                        : widget.color.withValues(alpha: 0.10),
+                  ),
+                  child: Icon(
+                    widget.meta.icon,
+                    size: 22,
+                    color: widget.isSelected ? Colors.white : widget.color,
+                  ),
                 ),
-                child: Icon(widget.meta.icon, size: 22,
-                  color: widget.isSelected ? Colors.white : widget.color),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                widget.meta.label,
-                style: GoogleFonts.outfit(
-                  fontSize: 11,
-                  fontWeight: widget.isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: widget.isSelected ? widget.color : _kNavy.withValues(alpha: 0.75),
+                const SizedBox(height: 8),
+                Text(
+                  widget.meta.label,
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: widget.isSelected
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                    color: widget.isSelected
+                        ? widget.color
+                        : _kNavy.withValues(alpha: 0.75),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (widget.isSelected) ...[
-                const SizedBox(height: 4),
-                Container(width: 20, height: 3,
-                  decoration: BoxDecoration(color: widget.color, borderRadius: BorderRadius.circular(2))),
+                if (widget.isSelected) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 20,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: widget.color,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ],
               ],
-            ]),
+            ),
           ),
         ),
       ),
     );
   }
 }
-
 
 // Owner/Manager → TinhLuongScreen (quản lý bảng lương)
 // Staff → MyPayslipScreen (xem phiếu của chính mình)
@@ -1502,20 +1854,21 @@ class _TinhLuongRouteScreen extends ConsumerWidget {
     if (session == null) {
       return const Scaffold(
         backgroundColor: Color(0xFFFFF8F0),
-        body: Center(child: CircularProgressIndicator(color: Color(0xFF1C2151))),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF1C2151)),
+        ),
       );
     }
 
     // Owner hoặc các role quản lý → bảng quản lý lương
     final canonical = StaffService.canonicalRole(session.role);
-    final isManager = session.isOwner
-        || canonical == 'owner'
-        || canonical == 'manager'
-        || canonical == 'accountant'
-        || canonical == 'ketoan';
+    final isManager =
+        session.isOwner ||
+        canonical == 'owner' ||
+        canonical == 'manager' ||
+        canonical == 'accountant' ||
+        canonical == 'ketoan';
 
-    return isManager
-        ? const TinhLuongScreen()
-        : const MyPayslipScreen();
+    return isManager ? const TinhLuongScreen() : const MyPayslipScreen();
   }
 }

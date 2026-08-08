@@ -119,3 +119,28 @@ Sau khi đọc xong, tóm tắt ngắn gọn cho user biết:
   * Gói build: Version `1.0.2 (Build 4)` - Dung lượng 50.6 MB.
   * Chứng chỉ phát hành: `Apple Distribution Certificate` & Profile `QuanNhoPOS_AppStore`.
   * **Đã nộp duyệt thành công (Submit for Review) ngày 28/07/2026** (Trạng thái: 🟡 *Waiting for Review* | Submission ID: `51953799-d687-4464-a0a3-5a026c418b7f`).
+
+---
+
+## 6. Phân Hệ Trợ Lý AI Bum (AI Bum Assistant Pilot - Quán Kay) — Cập nhật 07/08/2026
+
+### Hạ tầng Máy chủ Server Host (`BunServer`)
+* **OS:** Ubuntu Desktop 24.04.4 LTS (Kernel `7.0.0-28-generic`).
+* **Tailscale IP:** `100.113.221.116`.
+* **Phần cứng:** Dual Intel Xeon E5-2680 v4 (56 threads), 128 GB RAM, NVIDIA GeForce RTX 2060 (6 GB VRAM, Driver `595.84`, CUDA `13.2`).
+* **Ổ đĩa:** Ubuntu trên Kingston SATA SSD `/dev/sda`. Ổ Windows 10 NVMe `/dev/nvme0n1` được bảo vệ nguyên vẹn 100% (Rollback Plan).
+* **An ninh & Vận hành:** Firewall UFW fail-closed (chỉ mở 22/SSH, 3389/XRDP trong Tailscale/LAN), mask 4 target sleep/suspend, Docker Engine `29.7.2` + NVIDIA Container Toolkit `1.19.1`.
+
+### Kiến trúc AI Bum Gateway & Engine
+* **Mô hình AI Local:** `Qwen2.5 3B 4-bit` chạy trên container Ollama GPU (`bum-ollama` port `127.0.0.1:11434`), đạt tốc độ **45–55 tokens/s**, TTFT `~0.25s`, VRAM chiếm `1.9 GB`.
+* **Flutter Client (`lib/features/ai_assistant/`):**
+  * `BumChatScreen`: Bottom Sheet Responsive (Mobile `< 600px`, Tablet/PC `>= 600px`).
+  * `IntentClassifier V1`: Phân loại ý định bằng Rules & Semantic Matching (**Accuracy 96.25%**, **Macro-F1 0.9643**).
+  * `RagEngine V1`: Tra cứu tài liệu nghiệp vụ 11 module (**Precision@1 96.67%**, **Precision@3 96.67%**).
+  * `PiiRedactor` & `OpenAiFallbackService`: Khử 100% SĐT, email, mã PIN trước khi gửi Cloud Fallback; hỗ trợ Circuit Breaker & Quota per Store.
+  * `FeedbackMemoryService`: Lưu phản hồi 👍/👎 và Trí nhớ riêng của quán cô lập theo `store_id`.
+  * `ShadowTestFeatureFlag`: Kích hoạt Shadow Mode thử nghiệm độc quyền cho **Quán Kay** và tài khoản Owner.
+* **Database Supabase (`supabase/migrations/20260807000000_ai_bum_phase2_readonly_tools.sql`):**
+  * 4 Bảng AI: `bum_conversations`, `bum_messages`, `bum_feedback`, `bum_memories` (có RLS).
+  * 10 Read-Only RPCs: `get_today_sales_summary`, `compare_sales_periods`, `get_top_products`, `get_slow_products`, `get_low_stock_items`, `get_stock_forecast_inputs`, `get_finance_summary`, `get_staff_on_shift`, `get_pending_operations_tasks`, `get_store_context_for_bum`.
+  * Khử 100% PII, cô lập tuyệt đối theo `store_id`.
