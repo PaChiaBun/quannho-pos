@@ -20,17 +20,15 @@ final userActionPermsProvider = FutureProvider<Set<String>>((ref) async {
   }
 
   final storeId = session.storeId;
-  final role    = session.role;
-  final userId  = session.userId;
+  final userId = session.userId;
 
-  if (storeId == null || storeId.isEmpty || role.isEmpty || userId.isEmpty) {
+  if (storeId == null || storeId.isEmpty || userId.isEmpty) {
     return <String>{};
   }
 
   final perms = await StaffService.getEffectiveActionPermissions(
     storeId: storeId,
     userId: userId,
-    role: role,
     isOwner: session.isOwner,
   );
   return Set<String>.from(perms);
@@ -42,9 +40,9 @@ extension PermissionRef on WidgetRef {
   bool canDo(String action) {
     final async = watch(userActionPermsProvider);
     return async.when(
-      data:    (perms) => perms.contains(action),
-      loading: ()      => false, // fail-closed
-      error:   (err, stack) => false, // fail-closed
+      data: (perms) => perms.contains(action),
+      loading: () => false, // fail-closed
+      error: (err, stack) => false, // fail-closed
     );
   }
 

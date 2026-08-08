@@ -197,7 +197,6 @@ class StaffService {
   static Future<List<String>> getEffectiveActionPermissions({
     required String storeId,
     required String userId,
-    required String role,
     required bool isOwner,
   }) async {
     if (isOwner) return List.from(kAllActions);
@@ -205,14 +204,26 @@ class StaffService {
     final db = _db;
     if (db == null) return []; // Fail-closed
 
-    final canonical = canonicalRole(role);
-    final defaultPerms = kDefaultActionPerms[canonical] ?? [];
-
     try {
       try {
         db.rest.headers['x-store-id'] = storeId;
         db.rest.headers['x-user-id'] = userId;
       } catch (_) {}
+
+      // Không tin role từ SharedPreferences: khi cài đè/nâng cấp ứng dụng,
+      // phiên Windows có thể vẫn giữ role cũ dù chủ quán đã đổi role trên DB.
+      // Đồng thời đây là chốt fail-closed khi membership đã bị thu hồi.
+      final membership = await db
+          .from('store_members')
+          .select('role')
+          .eq('store_id', storeId)
+          .eq('user_id', userId)
+          .maybeSingle();
+      final effectiveRole = (membership?['role'] as String?)?.trim() ?? '';
+      if (effectiveRole.isEmpty) return [];
+
+      final canonical = canonicalRole(effectiveRole);
+      final defaultPerms = kDefaultActionPerms[canonical] ?? [];
 
       // Màn hình Phân quyền lưu action theo vai trò trong app_settings.
       // Schema production hiện không có cột `actions` ở store_members hoặc
@@ -222,14 +233,14 @@ class StaffService {
           .from('app_settings')
           .select('value')
           .eq('store_id', storeId)
-          .eq('key', 'action_perms_$role')
+          .eq('key', 'action_perms_$effectiveRole')
           .maybeSingle();
 
       if (exactRoleSettings != null && exactRoleSettings['value'] != null) {
         return parseActionPermissions(exactRoleSettings['value']);
       }
 
-      if (role != canonical) {
+      if (effectiveRole != canonical) {
         final canonicalRoleSettings = await db
             .from('app_settings')
             .select('value')
@@ -242,13 +253,14 @@ class StaffService {
           return parseActionPermissions(canonicalRoleSettings['value']);
         }
       }
+
+      // Chưa từng cấu hình vai trò này: dùng mặc định theo role hiện hành
+      // đã được server xác nhận, không dùng role cache từ thiết bị.
+      return parseActionPermissions(defaultPerms);
     } catch (e) {
       // Lỗi truy vấn -> fail-closed: trả về mảng rỗng (deny all). Tuyệt đối không đoán quyền khi lỗi.
       return [];
     }
-
-    // Chưa từng cấu hình vai trò này: dùng mặc định theo role.
-    return parseActionPermissions(defaultPerms);
   }
 
   static List<String> parseActionPermissions(dynamic rawActions) {
