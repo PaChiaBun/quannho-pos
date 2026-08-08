@@ -211,33 +211,13 @@ class StaffService {
     try {
       try {
         db.rest.headers['x-store-id'] = storeId;
+        db.rest.headers['x-user-id'] = userId;
       } catch (_) {}
 
-      // 1. Kiểm tra store_members trước
-      final storeMemberResp = await db
-          .from('store_members')
-          .select('actions')
-          .eq('store_id', storeId)
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      if (storeMemberResp != null && storeMemberResp['actions'] != null) {
-        return parseActionPermissions(storeMemberResp['actions']);
-      }
-
-      // 2. Nếu null trong store_members, kiểm tra staff_members (fallback)
-      final staffMemberResp = await db
-          .from('staff_members')
-          .select('actions')
-          .eq('store_id', storeId)
-          .or('user_id.eq.$userId,id.eq.$userId') // Tương thích schema cũ
-          .maybeSingle();
-
-      if (staffMemberResp != null && staffMemberResp['actions'] != null) {
-        return parseActionPermissions(staffMemberResp['actions']);
-      }
-
-      // 3. Fallback to role app_settings
+      // Màn hình Phân quyền lưu action theo vai trò trong app_settings.
+      // Schema production hiện không có cột `actions` ở store_members hoặc
+      // staff_members; truy vấn các cột đó sẽ ném 42703 và fail-closed trước
+      // khi đọc được quyền đã lưu.
       final exactRoleSettings = await db
           .from('app_settings')
           .select('value')
@@ -267,7 +247,7 @@ class StaffService {
       return [];
     }
 
-    // 4. Fallback to hardcoded role default
+    // Chưa từng cấu hình vai trò này: dùng mặc định theo role.
     return parseActionPermissions(defaultPerms);
   }
 
