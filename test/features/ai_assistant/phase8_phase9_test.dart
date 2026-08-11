@@ -9,7 +9,8 @@ import 'package:quannho_pos/features/ai_assistant/dataset/dataset_qlora_config.d
 void main() {
   group('Phase 8 & Phase 9 Verification Tests', () {
     test('Kiểm tra tỷ lệ phân bổ Dataset V1 đủ 100%', () {
-      final totalShare = DatasetDistribution.moduleHelpShare +
+      final totalShare =
+          DatasetDistribution.moduleHelpShare +
           DatasetDistribution.classificationToolsShare +
           DatasetDistribution.posAnalysisShare +
           DatasetDistribution.privacyPermissionsShare +

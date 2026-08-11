@@ -151,6 +151,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 2200));
     if (!mounted) return;
 
+    // ‼️ RESTORE & VALIDATE POS JWT TRƯỚC KHI THỰC HIỆN BẤT KỲ QUERY NÀO
+    final jwtRestored = await UserAuthService.restoreSessionOnStartup();
+    if (!mounted) return;
+
+    if (!jwtRestored) {
+      // JWT không hợp lệ (hết hạn, sai store hoặc không tồn tại): Đưa về màn hình xác thực
+      await ref.read(sessionProvider.notifier).clear();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/auth');
+      return;
+    }
+
     // Kiểm tra session đăng nhập
     final session = await UserAuthService.getCurrentSession();
     if (!mounted) return;

@@ -102,7 +102,7 @@ void main() {
         'thank you Bum',
         'bạn là ai',
         'chào bạn',
-      ]
+      ],
     };
 
     test('Benchmark Macro-F1 and Accuracy across Test Dataset', () {
@@ -154,7 +154,9 @@ void main() {
 
       intentTotal.forEach((intent, total) {
         final hits = intentHits[intent] ?? 0;
-        print('Intent [$intent]: $hits / $total (${((hits / total) * 100).toStringAsFixed(1)}%)');
+        print(
+          'Intent [$intent]: $hits / $total (${((hits / total) * 100).toStringAsFixed(1)}%)',
+        );
       });
 
       expect(accuracy, greaterThanOrEqualTo(0.90));

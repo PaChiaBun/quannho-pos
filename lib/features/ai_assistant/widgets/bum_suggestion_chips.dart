@@ -29,7 +29,9 @@ class BumSuggestionChips extends StatelessWidget {
           return ActionChip(
             backgroundColor: Colors.white,
             side: BorderSide(color: kNavy.withValues(alpha: 0.15), width: 1),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             label: Text(
               suggestion,
               style: GoogleFonts.outfit(

@@ -45,7 +45,8 @@ class OpenAiFallbackService {
     if (_circuitBreakerOpen) {
       return FallbackResult(
         success: false,
-        content: 'Hệ thống Cloud Fallback tạm ngắt. Bum đang phục vụ bằng dữ liệu Local.',
+        content:
+            'Hệ thống Cloud Fallback tạm ngắt. Bum đang phục vụ bằng dữ liệu Local.',
         source: 'local_fallback',
         errorReason: 'circuit_breaker_open',
       );
@@ -55,7 +56,8 @@ class OpenAiFallbackService {
     if (currentUsage >= kMaxTokensPerStoreDaily) {
       return FallbackResult(
         success: false,
-        content: 'Quán Kay đã dùng hết hạn mức Cloud trong ngày. Bum tiếp tục phục vụ bằng dữ liệu Local.',
+        content:
+            'Quán Kay đã dùng hết hạn mức Cloud trong ngày. Bum tiếp tục phục vụ bằng dữ liệu Local.',
         source: 'local_fallback',
         errorReason: 'daily_budget_exceeded',
       );
@@ -65,7 +67,8 @@ class OpenAiFallbackService {
     final safeQuery = PiiRedactor.redact(userQuery);
 
     // 3. Prompt Composer cấu trúc cố định
-    final systemPrompt = '''
+    final systemPrompt =
+        '''
 Bạn là AI Bum - Cố vấn vận hành F&B cho Quán Kay.
 Nhiệm vụ: Diễn giải dữ liệu số liệu và hướng dẫn quy trình nghiệp vụ.
 
@@ -85,12 +88,14 @@ ${ragSources.join('\n')}
     try {
       if (apiKey == null || apiKey.isEmpty) {
         // Trong môi trường Local/Gateway: Trả về câu trả lời an toàn đã lọc PII
-        final mockTokenCost = (safeQuery.length / 4).ceil() + systemPrompt.length ~/ 10;
+        final mockTokenCost =
+            (safeQuery.length / 4).ceil() + systemPrompt.length ~/ 10;
         _dailyTokenUsage[storeId] = currentUsage + mockTokenCost;
 
         return FallbackResult(
           success: true,
-          content: 'Bum đã phân tích dữ liệu cho Quán Kay: $safeQuery. Kết quả vận hành ổn định.',
+          content:
+              'Bum đã phân tích dữ liệu cho Quán Kay: $safeQuery. Kết quả vận hành ổn định.',
           source: 'cloud_fallback_openai',
           tokensUsed: mockTokenCost,
         );
@@ -108,7 +113,8 @@ ${ragSources.join('\n')}
       debugPrint('[OpenAiFallbackService] Timeout after 10s');
       return FallbackResult(
         success: false,
-        content: 'Kết nối Cloud quá giờ (Timeout). Bum đã tự động chuyển sang chế độ Local.',
+        content:
+            'Kết nối Cloud quá giờ (Timeout). Bum đã tự động chuyển sang chế độ Local.',
         source: 'local_fallback',
         errorReason: 'timeout',
       );
@@ -116,7 +122,8 @@ ${ragSources.join('\n')}
       debugPrint('[OpenAiFallbackService] Exception: $e');
       return FallbackResult(
         success: false,
-        content: 'Lỗi kết nối Cloud API. Bum đã chuyển sang chế độ Local an toàn.',
+        content:
+            'Lỗi kết nối Cloud API. Bum đã chuyển sang chế độ Local an toàn.',
         source: 'local_fallback',
         errorReason: e.toString(),
       );

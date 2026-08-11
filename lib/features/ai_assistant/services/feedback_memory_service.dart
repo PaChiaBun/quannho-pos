@@ -65,7 +65,9 @@ class FeedbackMemoryService {
     String? feedbackText,
     String? reasonCode,
   }) {
-    final cleanText = feedbackText != null ? PiiRedactor.redact(feedbackText) : null;
+    final cleanText = feedbackText != null
+        ? PiiRedactor.redact(feedbackText)
+        : null;
 
     final entry = FeedbackEntry(
       id: id,
@@ -110,7 +112,9 @@ class FeedbackMemoryService {
 
   /// Truy vấn trí nhớ của một quán
   static List<StoreMemory> getMemoriesForStore(String storeId) {
-    return _memoryStore.where((m) => m.storeId == storeId && m.isVerified).toList();
+    return _memoryStore
+        .where((m) => m.storeId == storeId && m.isVerified)
+        .toList();
   }
 
   static int get pendingFeedbackCount => _feedbackQueue.length;

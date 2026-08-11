@@ -3,7 +3,17 @@
 // Intent Classifier V1 — Phân loại ý định bằng Rules & Semantic Pattern Matching
 // ─────────────────────────────────────────────────────────────────────────────
 
-enum BumDomain { sales, inventory, finance, staff, operations, help, advice, memory, general }
+enum BumDomain {
+  sales,
+  inventory,
+  finance,
+  staff,
+  operations,
+  help,
+  advice,
+  memory,
+  general,
+}
 
 class ClassificationResult {
   final BumDomain domain;
@@ -48,7 +58,18 @@ class IntentClassifier {
     final lower = rawText.toLowerCase();
 
     // 1. Intent: sales_comparison (Ưu tiên check trước revenue_summary để không bị nuốt câu)
-    if (_matchesKeywords(lower, ['so sánh', 'so với', 'tăng hay giảm', 'tăng giảm', 'hơn hôm qua', 'kém hôm qua', 'so sánh doanh', 'hơn hay kém', 'tốt hơn hôm qua', '2 ngày'])) {
+    if (_matchesKeywords(lower, [
+      'so sánh',
+      'so với',
+      'tăng hay giảm',
+      'tăng giảm',
+      'hơn hôm qua',
+      'kém hôm qua',
+      'so sánh doanh',
+      'hơn hay kém',
+      'tốt hơn hôm qua',
+      '2 ngày',
+    ])) {
       final timeRange = _extractTimeRange(lower);
       return ClassificationResult(
         domain: BumDomain.sales,
@@ -61,7 +82,16 @@ class IntentClassifier {
     }
 
     // 2. Intent: top_products
-    if (_matchesKeywords(lower, ['chạy nhất', 'bán chạy', 'món hot', 'đắt khách', 'bán nhiều nhất', 'top món', 'đắt hàng', 'danh sách món bán chạy'])) {
+    if (_matchesKeywords(lower, [
+      'chạy nhất',
+      'bán chạy',
+      'món hot',
+      'đắt khách',
+      'bán nhiều nhất',
+      'top món',
+      'đắt hàng',
+      'danh sách món bán chạy',
+    ])) {
       return ClassificationResult(
         domain: BumDomain.sales,
         intent: 'top_products',
@@ -73,7 +103,17 @@ class IntentClassifier {
     }
 
     // 3. Intent: slow_products
-    if (_matchesKeywords(lower, ['bán ế', 'bán chậm', 'ít người mua', 'ế nhất', 'chậm nhất', 'món ế', 'không ai mua', 'ế ẩm', 'bán ít nhất'])) {
+    if (_matchesKeywords(lower, [
+      'bán ế',
+      'bán chậm',
+      'ít người mua',
+      'ế nhất',
+      'chậm nhất',
+      'món ế',
+      'không ai mua',
+      'ế ẩm',
+      'bán ít nhất',
+    ])) {
       return ClassificationResult(
         domain: BumDomain.sales,
         intent: 'slow_products',
@@ -85,7 +125,19 @@ class IntentClassifier {
     }
 
     // 4. Intent: revenue_summary
-    if (_matchesKeywords(lower, ['doanh thu', 'doanh số', 'bán được bao nhiêu', 'bán dc bao nhiêu', 'tiền bán', 'tổng tiền bán', 'hôm nay bán sao', 'doanh so hom nay', 'bao nhiêu tiền', 'tiền hôm nay', 'bán hàng hôm nay'])) {
+    if (_matchesKeywords(lower, [
+      'doanh thu',
+      'doanh số',
+      'bán được bao nhiêu',
+      'bán dc bao nhiêu',
+      'tiền bán',
+      'tổng tiền bán',
+      'hôm nay bán sao',
+      'doanh so hom nay',
+      'bao nhiêu tiền',
+      'tiền hôm nay',
+      'bán hàng hôm nay',
+    ])) {
       final timeRange = _extractTimeRange(lower);
       return ClassificationResult(
         domain: BumDomain.sales,
@@ -98,7 +150,16 @@ class IntentClassifier {
     }
 
     // 5. Intent: low_stock
-    if (_matchesKeywords(lower, ['sắp hết', 'kho hết', 'hết hàng', 'cảnh báo kho', 'tồn kho thấp', 'thiếu nguyên liệu', 'gần hết', 'tồn kho'])) {
+    if (_matchesKeywords(lower, [
+      'sắp hết',
+      'kho hết',
+      'hết hàng',
+      'cảnh báo kho',
+      'tồn kho thấp',
+      'thiếu nguyên liệu',
+      'gần hết',
+      'tồn kho',
+    ])) {
       return ClassificationResult(
         domain: BumDomain.inventory,
         intent: 'low_stock',
@@ -110,7 +171,13 @@ class IntentClassifier {
     }
 
     // 6. Intent: purchase_forecast
-    if (_matchesKeywords(lower, ['dự báo kho', 'nhập thêm', 'cần mua thêm', 'dự trù nguyên liệu', 'dự báo mua hàng'])) {
+    if (_matchesKeywords(lower, [
+      'dự báo kho',
+      'nhập thêm',
+      'cần mua thêm',
+      'dự trù nguyên liệu',
+      'dự báo mua hàng',
+    ])) {
       return ClassificationResult(
         domain: BumDomain.inventory,
         intent: 'purchase_forecast',
@@ -122,7 +189,15 @@ class IntentClassifier {
     }
 
     // 7. Intent: finance_summary
-    if (_matchesKeywords(lower, ['thu chi', 'lợi nhuận', 'tiền lời', 'tiền lỗ', 'tổng chi', 'tổng thu', 'lời bao nhiêu'])) {
+    if (_matchesKeywords(lower, [
+      'thu chi',
+      'lợi nhuận',
+      'tiền lời',
+      'tiền lỗ',
+      'tổng chi',
+      'tổng thu',
+      'lời bao nhiêu',
+    ])) {
       return ClassificationResult(
         domain: BumDomain.finance,
         intent: 'finance_summary',
@@ -134,7 +209,17 @@ class IntentClassifier {
     }
 
     // 8. Intent: staff_on_shift
-    if (_matchesKeywords(lower, ['ai đang làm', 'ai đi ca', 'nhân viên', 'danh sách ca', 'ai trực', 'ai làm ca', 'ca làm', 'đi ca', 'đi làm'])) {
+    if (_matchesKeywords(lower, [
+      'ai đang làm',
+      'ai đi ca',
+      'nhân viên',
+      'danh sách ca',
+      'ai trực',
+      'ai làm ca',
+      'ca làm',
+      'đi ca',
+      'đi làm',
+    ])) {
       return ClassificationResult(
         domain: BumDomain.staff,
         intent: 'staff_on_shift',
@@ -146,7 +231,13 @@ class IntentClassifier {
     }
 
     // 9. Intent: pending_tasks
-    if (_matchesKeywords(lower, ['hủy món', 'hủy đơn', 'cảnh báo vận hành', 'vi phạm', 'bất thường'])) {
+    if (_matchesKeywords(lower, [
+      'hủy món',
+      'hủy đơn',
+      'cảnh báo vận hành',
+      'vi phạm',
+      'bất thường',
+    ])) {
       return ClassificationResult(
         domain: BumDomain.operations,
         intent: 'pending_tasks',
@@ -158,7 +249,14 @@ class IntentClassifier {
     }
 
     // 10. Intent: app_help
-    if (_matchesKeywords(lower, ['hướng dẫn', 'dùng thế nào', 'cách làm', 'làm sao để', 'chỉ tớ cách', 'giúp tớ với'])) {
+    if (_matchesKeywords(lower, [
+      'hướng dẫn',
+      'dùng thế nào',
+      'cách làm',
+      'làm sao để',
+      'chỉ tớ cách',
+      'giúp tớ với',
+    ])) {
       return ClassificationResult(
         domain: BumDomain.help,
         intent: 'app_help',
@@ -170,7 +268,17 @@ class IntentClassifier {
     }
 
     // 11. Intent: smalltalk
-    if (_matchesKeywords(lower, ['chào', 'hello', 'hi', 'bạn là ai', 'bum là ai', 'bạn tên gì', 'cảm ơn', 'tkx', 'thank'])) {
+    if (_matchesKeywords(lower, [
+      'chào',
+      'hello',
+      'hi',
+      'bạn là ai',
+      'bum là ai',
+      'bạn tên gì',
+      'cảm ơn',
+      'tkx',
+      'thank',
+    ])) {
       return ClassificationResult(
         domain: BumDomain.general,
         intent: 'smalltalk',

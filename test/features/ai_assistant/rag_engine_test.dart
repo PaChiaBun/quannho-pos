@@ -20,7 +20,7 @@ Muốn hủy món trên bàn đã gọi, thu ngân bấm vào món cần hủy, 
 
 ## Hướng dẫn in lại hóa đơn
 Vào danh sách đơn hàng đã thanh toán, chọn đơn hàng cần in và bấm nút "In lại bill".
-'''
+''',
         },
         {
           'path': '.docs/Ai_Bum/cac-module/bep.md',
@@ -32,7 +32,7 @@ Khi bếp nấu xong món, đầu bếp bấm nút "Hoàn thành" trên màn hì
 
 ## Phân chia bếp nóng và bếp bar
 Bếp nóng nhận các món xào nấu. Bếp bar nhận các món nước và giải khát. Mẫu in phiếu bếp được tách riêng biệt.
-'''
+''',
         },
         {
           'path': '.docs/Ai_Bum/cac-module/kho-hang.md',
@@ -44,7 +44,7 @@ Chủ quán vào Quản lý kho -> Sản phẩm -> Nhập số lượng "Tồn t
 
 ## Kiểm kê kho
 Định kỳ cuối tuần, quản lý vào mục Kiểm kê kho để nhập số lượng thực tế và cân bằng chênh lệch kho.
-'''
+''',
         },
         {
           'path': '.docs/Ai_Bum/cac-module/nhan-vien.md',
@@ -56,7 +56,7 @@ Vào Danh sách nhân viên -> Chọn nhân viên -> Phân quyền trực tiếp
 
 ## Đặt mã PIN duyệt nhanh
 Quản lý vào Cài đặt cá nhân -> Đổi mã PIN 6 số để duyệt các thao tác nhạy cảm như hủy bill hoặc giảm giá.
-'''
+''',
         },
         {
           'path': '.docs/Ai_Bum/cac-module/cham-cong.md',
@@ -65,7 +65,7 @@ Quản lý vào Cài đặt cá nhân -> Đổi mã PIN 6 số để duyệt cá
 # Module Chấm Công
 ## Chấm công bằng mã QR
 Nhân viên mở app Quán Nhỏ -> Chọn Chấm công -> Quét mã QR tại cửa hàng để ghi nhận giờ vào ca và giờ ra ca.
-'''
+''',
         },
         {
           'path': '.docs/Ai_Bum/cac-module/luong.md',
@@ -74,7 +74,7 @@ Nhân viên mở app Quán Nhỏ -> Chọn Chấm công -> Quét mã QR tại c�
 # Module Tính Lương
 ## Chốt bảng lương hàng tháng
 Chủ quán vào mục Tính lương -> Chọn tháng cần chốt -> Bấm "Tính bảng lương". Hệ thống tự động cộng tổng giờ làm và tiền phạt/thưởng.
-'''
+''',
         },
       ];
 
@@ -85,13 +85,28 @@ Chủ quán vào mục Tính lương -> Chọn tháng cần chốt -> Bấm "Tí
       final List<Map<String, String>> evalQueries = [
         {'query': 'Cách hủy món trên bàn', 'expectedModule': 'ban_hang'},
         {'query': 'Làm sao để in lại hóa đơn', 'expectedModule': 'ban_hang'},
-        {'query': 'Làm thế nào để báo hoàn thành món ở bếp', 'expectedModule': 'bep'},
+        {
+          'query': 'Làm thế nào để báo hoàn thành món ở bếp',
+          'expectedModule': 'bep',
+        },
         {'query': 'Phân biệt bếp nóng và bếp bar', 'expectedModule': 'bep'},
-        {'query': 'Cài đặt cảnh báo tồn kho tối thiểu', 'expectedModule': 'kho_hang'},
-        {'query': 'Cách cân bằng chênh lệch kiểm kê kho', 'expectedModule': 'kho_hang'},
-        {'query': 'Cách phân quyền trực tiếp cho nhân viên', 'expectedModule': 'nhan_vien'},
+        {
+          'query': 'Cài đặt cảnh báo tồn kho tối thiểu',
+          'expectedModule': 'kho_hang',
+        },
+        {
+          'query': 'Cách cân bằng chênh lệch kiểm kê kho',
+          'expectedModule': 'kho_hang',
+        },
+        {
+          'query': 'Cách phân quyền trực tiếp cho nhân viên',
+          'expectedModule': 'nhan_vien',
+        },
         {'query': 'Đổi mã PIN 6 số duyệt nhanh', 'expectedModule': 'nhan_vien'},
-        {'query': 'Hướng dẫn chấm công bằng mã QR', 'expectedModule': 'cham_cong'},
+        {
+          'query': 'Hướng dẫn chấm công bằng mã QR',
+          'expectedModule': 'cham_cong',
+        },
         {'query': 'Cách tính bảng lương hàng tháng', 'expectedModule': 'luong'},
         // 20 câu biến thể tiếng Việt bổ sung
         {'query': 'Hủy món đã gọi ở đâu', 'expectedModule': 'ban_hang'},
@@ -125,7 +140,8 @@ Chủ quán vào mục Tính lương -> Chọn tháng cần chốt -> Bấm "Tí
 
         final results = RagEngine.query(queryText, topK: 3);
 
-        if (results.isNotEmpty && results.first.chunk.module == expectedModule) {
+        if (results.isNotEmpty &&
+            results.first.chunk.module == expectedModule) {
           top1Hits++;
         }
 
@@ -139,8 +155,12 @@ Chủ quán vào mục Tính lương -> Chọn tháng cần chốt -> Bấm "Tí
 
       print('=== RAG ENGINE EVALUATION REPORT ===');
       print('Total Evaluation Queries: ${evalQueries.length}');
-      print('Top-1 Hits: $top1Hits / ${evalQueries.length} (${(precisionTop1 * 100).toStringAsFixed(1)}%)');
-      print('Top-3 Hits: $top3Hits / ${evalQueries.length} (${(precisionTop3 * 100).toStringAsFixed(1)}%)');
+      print(
+        'Top-1 Hits: $top1Hits / ${evalQueries.length} (${(precisionTop1 * 100).toStringAsFixed(1)}%)',
+      );
+      print(
+        'Top-3 Hits: $top3Hits / ${evalQueries.length} (${(precisionTop3 * 100).toStringAsFixed(1)}%)',
+      );
       print('Precision@1: ${precisionTop1.toStringAsFixed(4)}');
       print('Precision@3: ${precisionTop3.toStringAsFixed(4)}');
       print('Total Chunks Indexed: ${RagEngine.totalChunks}');

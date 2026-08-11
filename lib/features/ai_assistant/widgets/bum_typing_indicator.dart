@@ -26,24 +26,24 @@ class BumTypingIndicator extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: List.generate(3, (index) {
           return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: kOrange,
-              shape: BoxShape.circle,
-            ),
-          )
-          .animate(onPlay: (controller) => controller.repeat())
-          .scaleXY(
-            begin: 0.5,
-            end: 1.0,
-            duration: 400.ms,
-            curve: Curves.easeInOutSine,
-            delay: (index * 150).ms,
-          )
-          .then(duration: 400.ms)
-          .scaleXY(begin: 1.0, end: 0.5, curve: Curves.easeInOutSine);
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: kOrange,
+                  shape: BoxShape.circle,
+                ),
+              )
+              .animate(onPlay: (controller) => controller.repeat())
+              .scaleXY(
+                begin: 0.5,
+                end: 1.0,
+                duration: 400.ms,
+                curve: Curves.easeInOutSine,
+                delay: (index * 150).ms,
+              )
+              .then(duration: 400.ms)
+              .scaleXY(begin: 1.0, end: 0.5, curve: Curves.easeInOutSine);
         }),
       ),
     );

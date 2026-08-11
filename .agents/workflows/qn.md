@@ -33,8 +33,11 @@ Sau khi đọc, ghi nhớ và áp dụng các nguyên tắc này trong suốt h�
 Bao gồm: quy tắc làm việc, nguyên tắc code, thiết kế UI, responsive rules.
 
 ## Bước 6 — Đọc nhật ký công việc
-Đọc file: `/Users/banhbao/Quan Nho/quan_nho/.docs/nhat-ky.md`
+Đọc file duy nhất: `/Users/banhbao/Quan Nho/quan_nho/nhat_ky.md`
 Ghi nhớ mục **"Tiếp theo"** của ngày gần nhất — đây là context quan trọng nhất.
+
+> **Quy ước:** `nhat_ky.md` ở thư mục gốc là nhật ký chuẩn duy nhất của dự án.
+> Không tạo thêm `.docs/nhat-ky.md`, `nhat-ky.md` hoặc nhật ký trùng lặp ở vị trí khác.
 
 ## Bước 7 — Báo cáo
 Sau khi đọc xong, tóm tắt ngắn gọn cho user biết:

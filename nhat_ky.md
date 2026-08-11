@@ -5,6 +5,74 @@
 
 ---
 
+## 2026-08-12 — Release Candidate AI Bum Pilot — RELEASE CANDIDATE LOCAL SẴN SÀNG, CHƯA DEPLOY
+
+- 📦 **Trạng thái Release**: RELEASE CANDIDATE LOCAL SẴN SÀNG, CHƯA DEPLOY. Đã đóng gói tại `/Users/banhbao/Quan Nho/releases/ai-bum-pilot-20260812-0126/`.
+- 🛡️ **Cách Ly Tuyệt Đối Với P0 POS JWT/RLS**: Đóng gói từ worktree cách ly `/tmp/ai_bum_release_worktree` từ HEAD baseline `1638184b8f45c953fe68560eef5a328ba352c147`. Loại bỏ 100% các file P0 JWT/RLS đang trong trạng thái BLOCKED.
+- 🔒 **Feature Flag Fail-Closed**: AI Bum Pilot chỉ bật cho Quán Kay và tài khoản Owner (`ShadowTestFeatureFlag`).
+- 🧪 **Kết Quả Kiểm Thử**:
+  - `dart format`: **Sạch (0 changed)**.
+  - `flutter analyze`: **0 ERRORS, 0 WARNINGS**.
+  - `flutter test test/features/ai_assistant/`: **30 PASS / 0 FAIL / 0 SKIP**.
+  - `flutter build web`: **Thành công (`--base-href "/pos/"`)**.
+  - SHA256 pos-web.tar.gz: `658e659121afdb62faede22c97e4063c831bfb29e77164e9603279ad4db87db0`.
+
+---
+
+## 2026-08-12 — P0 RLS Supabase Overhaul — CHƯA NGHIỆM THU (BLOCKED: Chờ môi trường Staging DB thật & Gateway Server)
+
+- 🔲 **Hiện trạng nghiệm thu**: CHƯA NGHIỆM THU (BLOCKED: Chờ môi trường Staging DB thật). `quannho-staging.lpm.vn` hiện không resolve DNS/HTTP.
+- ✅ **Chặn Luồng Đổi Quán & Khóa Mutex Scope (`UserAuthService.selectStore`)**:
+  - `UserAuthService.selectStore` bắt buộc nhận `password`, từ chối mật khẩu rỗng/thiếu credential, lập tức fail-closed.
+  - Bọc toàn bộ thao tác async (`SharedPreferences`, `getStoredPosJwt`, `requestPosJwt`) sau khi set `_isStoreSwitching = true` bên trong khối `try/finally` duy nhất $\rightarrow$ đảm bảo giải phóng khóa mutex trong MỌI trường hợp nảy sinh exception.
+  - Snapshot `originalStoreId`, `originalToken`, v.v... được lưu trước khi mutation. Hàm `_rollbackSnapshot` kiểm tra `applied` result của `applyAuthToSupabase(oldToken)`. Nếu restore old auth thất bại hoặc throw exception $\rightarrow$ lập tự fail-closed xóa sạch token và toàn bộ store prefs liên quan (`remove(_kStoreId)`, etc.).
+  - Xóa bỏ alias thừa `selectStoreWithPassword`. Cập nhật 100% callsite (`store_picker_screen`, `settings_screen`, `create_store_sheet`, `join_store_sheet`) gọi duy nhất API `selectStore`.
+  - Luồng `_silentRoleRefresh` tại `dashboard_screen` gọi `updateSameStoreRoleInPrefs` chỉ cập nhật vai trò trong cùng một `store_id`, không trigger đổi quán hoặc bypass JWT.
+- ✅ **Khắc Phục Hủy Xác Thực & Lỗi Cấp POS JWT (`create_store_sheet` & `join_store_sheet`)**:
+  - Khi người dùng hủy dialog mật khẩu hoặc khi `selectStore` trả về `false`, lập tức `_loading = false`, hiển thị thông báo lỗi và **trả về ngay (return)**.
+  - Tuyệt đối KHÔNG hiển thị dialog "Kết nối thành công!", KHÔNG cập nhật session, KHÔNG invalidate perms khi chưa nhận JWT hợp lệ.
+  - Xóa bỏ import dư thừa `staff_service.dart` tại `join_store_sheet.dart`. Đã bổ sung `pwdCtrl.dispose()` và kiểm tra `mounted` sau các lệnh async.
+- ✅ **Áp Dụng Token Fail-Closed Thực Tế (`PosJwtAuthService.applyAuthToSupabase`)**:
+  - Xóa bỏ hoàn toàn nhánh fallback test-mode fail-open khỏi mã nguồn production. Nếu `client.rest.setAuth` hoặc `client.realtime.setAuth` nảy sinh exception, lập tức trả về `false` (Fail-Closed).
+  - Hỗ trợ Dependency Injection `authApplier` cho unit test để giả lập và kiểm thử các kịch bản nảy sinh lỗi apply/storage nguyên tử.
+- ✅ **Artifact Web Server Framework Adapter (`services/pos_jwt_route_adapter.py`)**:
+  - Artifact adapter chuẩn Flask Blueprint & FastAPI Router được tạo trong repo. Đánh dấu trạng thái **BLOCKED / ARTIFACT CHƯA TÍCH HỢP** do phụ thuộc Flask/FastAPI và mã nguồn gateway server chưa có tại repo local.
+- ✅ **Kết Quả Kiểm Thử Thực Tế (100% Deterministic Unit Tests, 0 Network, 0 Test Fake)**:
+  - **Python Backend Unit Suite** (`python3 -m unittest test/backend/test_pos_jwt_auth_service.py -v`): **10 PASS / 0 FAIL / 0 SKIP** (0.006s).
+  - **Flutter POS JWT Unit Suite** (`test/core/pos_jwt_auth_service_test.dart`): **5 PASS / 0 FAIL / 0 SKIP** (bao gồm test `applyAuthToSupabase` exception rollback).
+  - **Flutter UserAuth Wiring & Lifecycle Suite** (`test/core/user_auth_service_pos_jwt_test.dart`): **7 PASS / 0 FAIL / 0 SKIP** (bao gồm test `selectStore` snapshot rollback phục hồi old token/prefs khi restore auth thành công, test snapshot rollback fail-closed xóa prefs/token khi restore auth thất bại, và test `restoreSessionOnStartup` kiểm tra `applied == false` thu hồi context). Total Flutter Unit: **12 PASS / 0 FAIL / 0 SKIP**.
+  - **Flutter RLS Integration Suite** (`test/core/rls_stale_header_security_test.dart`): **0 PASS / 0 FAIL / 4 SKIP (BLOCKED)** (Báo đúng 0 PASS / 4 SKIP khi chưa có Staging DB).
+- 🔲 **Checklist BLOCKED Cần Môi Trường Staging Thật**:
+  1. [ ] Cấu hình domain/host `quannho-staging.lpm.vn` hoặc staging database thật.
+  2. [ ] Thực thi file `20260812000000_strict_server_jwt_rls_p0.sql` lên Staging DB.
+  3. [ ] Gắn `services/pos_jwt_route_adapter.py` vào web gateway server.
+  4. [ ] Chạy `flutter test test/core/rls_stale_header_security_test.dart --dart-define=ENABLE_RLS_INTEGRATION_TEST=true ...` trên môi trường Staging thật.
+
+---
+
+## 2026-08-11 — AI Bum Feedback Pipeline Phase C1.5-B — ĐÃ NGHIỆM THU
+
+### Kết quả cuối cùng
+
+- ✅ Flutter dùng đúng một luồng bootstrap tại đăng nhập: gửi `phone` + `password` + `store_id` qua HTTPS, nhận opaque session token và chỉ lưu token trong `FlutterSecureStorage`. UUID người dùng không còn được dùng làm credential.
+- ✅ Backend production fail-closed: bắt buộc store context, danh tính đã xác minh và role `owner`/`manager`; đã xóa store mặc định, fallback user/owner và toàn bộ nhánh mock/backdoor.
+- ✅ Đã sửa lỗi nhánh thành công gọi thuộc tính `self.db_mgr` không tồn tại; session token nay được ghi nguyên tử qua database manager thật.
+- ✅ Khi feedback trả 401, client xóa token và yêu cầu đăng nhập lại; không auto-exchange, không retry vòng lặp.
+- ✅ Pairing recovery có hợp đồng riêng: mã được tạo qua internal secret, sống 5 phút, dùng một lần, khóa sau lỗi lặp và bind sẵn user/store/role. Pairing không nhận UUID/JWT giả.
+- ✅ CORS production: origin `https://quannho.lpm.vn` nhận preflight 204; origin lạ nhận 403; POST luôn trả JSON.
+- ✅ Kiểm tra production bằng dữ liệu giả: thiếu store 400, sai mật khẩu 401, bare UUID 401; nhánh cấp token và pairing single-use được kiểm tra bằng database tạm, không dùng tài khoản thật.
+- ✅ Backend `/home/pachiabun/ai-bum-lab`: **59/59 test PASS**.
+- ✅ Flutter feedback: **15/15 PASS**; toàn module AI Assistant: **30/30 PASS**; full suite: **163 PASS, 13 SKIP, 0 FAIL**.
+- ✅ `dart format`, `git diff --check` và analyze các file production liên quan đều sạch; phạm vi test rộng hơn còn 15 lint `avoid_print` không ảnh hưởng runtime.
+- ✅ Các script vá production tạm của Anti đã được dọn khỏi `scratch/`; production chạy bằng `ai-bum-feedback.service` dưới `systemd`, không còn tiến trình khởi chạy tay.
+
+### Ghi chú vận hành
+
+- User thuộc đúng một store được bootstrap tự động lúc login. User nhiều store phải chọn store rồi dùng pairing recovery; server không tự đoán store mặc định.
+- Bản production trước sửa được lưu tại `/home/pachiabun/ai-bum-lab/backups/` để rollback khi cần.
+
+---
+
 ## 2026-08-08 — Khắc Phục Lỗi P0 “Thu Hồi Quyền Nhân Viên & Single Source of Truth Authorization”
 
 ### Đã hoàn thành
@@ -2336,5 +2404,3 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
 - 🟢 **Command 5**: `flutter test`
   - Exit Code: **0**
   - Result: **All 104 tests passed (4 skipped)!**
-
-

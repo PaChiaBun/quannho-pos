@@ -12,10 +12,10 @@ import 'package:quannho_pos/features/ai_assistant/widgets/bum_suggestion_chips.d
 void main() {
   setUpAll(() async {
     GoogleFonts.config.allowRuntimeFetching = false;
-    
+
     // Tải font Roboto (có full Tiếng Việt) và đăng ký đúng cho tất cả các family font mà google_fonts sử dụng
     final robotoData = File('test/Roboto-Regular.ttf').readAsBytesSync();
-    
+
     final fontFamilies = [
       'Outfit',
       'Outfit_regular',
@@ -33,34 +33,34 @@ void main() {
 
   Widget createWidgetUnderTest() {
     return const ProviderScope(
-      child: MaterialApp(
-        home: Scaffold(
-          body: BumChatScreen(),
-        ),
-      ),
+      child: MaterialApp(home: Scaffold(body: BumChatScreen())),
     );
   }
 
   group('BumChatScreen Detailed Tests', () {
-    testWidgets('1. Mở và đóng bottom sheet bằng showModalBottomSheet', (WidgetTester tester) async {
-      await tester.pumpWidget(ProviderScope(
-        child: MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (_) => const BumChatScreen(),
-                  );
-                },
-                child: const Text('Open'),
+    testWidgets('1. Mở và đóng bottom sheet bằng showModalBottomSheet', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (_) => const BumChatScreen(),
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
               ),
             ),
           ),
         ),
-      ));
+      );
 
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
@@ -73,7 +73,9 @@ void main() {
       expect(find.byType(BumChatScreen), findsNothing);
     });
 
-    testWidgets('2. Suggestion chip hiển thị đúng 4 câu và bấm được', (WidgetTester tester) async {
+    testWidgets('2. Suggestion chip hiển thị đúng 4 câu và bấm được', (
+      WidgetTester tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
 
@@ -82,7 +84,7 @@ void main() {
 
       expect(find.text('Hôm nay bán được bao nhiêu?'), findsOneWidget);
       expect(find.text('Món nào bán chạy nhất?'), findsOneWidget);
-      
+
       await tester.drag(find.byType(BumSuggestionChips), const Offset(-500, 0));
       await tester.pumpAndSettle();
 
@@ -93,8 +95,8 @@ void main() {
       await tester.pump();
 
       expect(find.text('Kho có gì sắp hết?'), findsWidgets);
-      await tester.pumpAndSettle(const Duration(seconds: 10)); 
-      
+      await tester.pumpAndSettle(const Duration(seconds: 10));
+
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
@@ -104,7 +106,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final initialBubbles = find.byType(BumMessageBubble).evaluate().length;
-      
+
       await tester.enterText(find.byType(TextField), '   ');
       await tester.tap(find.byIcon(Icons.send_rounded));
       await tester.pump();
@@ -113,7 +115,9 @@ void main() {
       expect(initialBubbles, newBubbles);
     });
 
-    testWidgets('4. Khóa gửi khi xử lý và Streaming', (WidgetTester tester) async {
+    testWidgets('4. Khóa gửi khi xử lý và Streaming', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
@@ -139,20 +143,28 @@ void main() {
       );
 
       // Bơm đủ để qua giai đoạn loading, nhận một vài từ
-      await tester.pump(const Duration(milliseconds: 1200)); 
-      
+      await tester.pump(const Duration(milliseconds: 1200));
+
       // Lúc này AI đang streaming văn bản chưa hoàn chỉnh
       expect(find.byType(BumTypingIndicator), findsNothing);
 
       // Bơm đến completed
       await tester.pumpAndSettle(const Duration(seconds: 10));
-      expect(find.textContaining('Quán Kay'), findsWidgets);
+      // Widget test không có phiên đăng nhập/store thật: Bum phải fail-closed
+      // và tuyệt đối không dựng số liệu quán giả.
+      expect(find.textContaining('chưa kết nối được dữ liệu'), findsWidgets);
     });
 
-    testWidgets('6. Render goldens (mobile & tablet)', (WidgetTester tester) async {
+    testWidgets('6. Render goldens (mobile & tablet)', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await precacheImage(
+        const AssetImage('assets/branding/logo_head.png'),
+        tester.element(find.byType(BumChatScreen)),
+      );
       await tester.pumpAndSettle();
-      
+
       await expectLater(
         find.byType(BumChatScreen),
         matchesGoldenFile('goldens/bum_chat_mobile.png'),
@@ -161,13 +173,17 @@ void main() {
       tester.view.physicalSize = const Size(1024, 768);
       tester.view.devicePixelRatio = 1.0;
       await tester.pumpWidget(createWidgetUnderTest());
+      await precacheImage(
+        const AssetImage('assets/branding/logo_head.png'),
+        tester.element(find.byType(BumChatScreen)),
+      );
       await tester.pumpAndSettle();
 
       await expectLater(
         find.byType(BumChatScreen),
         matchesGoldenFile('goldens/bum_chat_tablet.png'),
       );
-      
+
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });

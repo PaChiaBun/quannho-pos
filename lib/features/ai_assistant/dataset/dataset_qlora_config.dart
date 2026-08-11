@@ -21,7 +21,8 @@ class QloraConfig {
   static const int loraAlpha = 32;
   static const double loraDropout = 0.05;
   static const String targetModules = 'q_proj,k_proj,v_proj,o_proj';
-  static const String hardwareTarget = 'MacBook Pro M3 Pro 18GB (MLX) / RTX 2060 6GB';
+  static const String hardwareTarget =
+      'MacBook Pro M3 Pro 18GB (MLX) / RTX 2060 6GB';
 }
 
 class ShadowTestFeatureFlag {
@@ -33,9 +34,14 @@ class ShadowTestFeatureFlag {
   }) {
     // Phase 9 Rollout: Chỉ bật cho Quán Kay và vị trí Chủ quán / Quản lý
     if (storeId.isEmpty) return false;
-    
+
     // Đảm bảo fail-closed: Chỉ cho phép Owner/Manager thử nghiệm Shadow Mode tại Quán Kay
-    final isKayStore = storeId.contains('kay') || storeId == '00000000-0000-0000-0000-000000009999';
-    return isKayStore && (isOwner || userRole.toLowerCase() == 'owner' || userRole.toLowerCase() == 'manager');
+    final isKayStore =
+        storeId.contains('kay') ||
+        storeId == '00000000-0000-0000-0000-000000009999';
+    return isKayStore &&
+        (isOwner ||
+            userRole.toLowerCase() == 'owner' ||
+            userRole.toLowerCase() == 'manager');
   }
 }

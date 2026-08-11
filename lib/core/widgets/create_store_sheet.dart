@@ -82,12 +82,68 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
         role: 'owner',
         isOwner: true,
       );
-      widget.ref.read(sessionProvider.notifier).updateStore(membership);
-      await UserAuthService.selectStore(membership);
+      if (!mounted) return;
+      final session = await UserAuthService.getCurrentSession();
+      if (!mounted) return;
+      final pwdCtrl = TextEditingController();
+      String? pwd;
+      try {
+        pwd = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('Xác thực tạo $name'),
+            content: TextField(
+              controller: pwdCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Nhập mật khẩu tài khoản để cấp JWT',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(null),
+                child: const Text('Hủy'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(pwdCtrl.text.trim()),
+                child: const Text('Xác nhận'),
+              ),
+            ],
+          ),
+        );
+      } finally {
+        pwdCtrl.dispose();
+      }
 
       if (!mounted) return;
-      Navigator.pop(context); // đóng sheet
-      widget.onSuccess?.call();
+
+      if (pwd == null || pwd.trim().isEmpty) {
+        setState(() {
+          _loading = false;
+          _error = 'Hủy xác thực mật khẩu. Chưa thể kích hoạt quán mới.';
+        });
+        return;
+      }
+
+      final ok = await UserAuthService.selectStore(
+        membership,
+        password: pwd,
+        phone: session?.phone,
+      );
+
+      if (!mounted) return;
+
+      if (ok) {
+        widget.ref.read(sessionProvider.notifier).updateStore(membership);
+        Navigator.pop(context);
+        widget.onSuccess?.call();
+      } else {
+        setState(() {
+          _loading = false;
+          _error = 'Xác thực mật khẩu hoặc cấp POS JWT cho quán mới thất bại.';
+        });
+      }
     } else {
       setState(() {
         _loading = false;

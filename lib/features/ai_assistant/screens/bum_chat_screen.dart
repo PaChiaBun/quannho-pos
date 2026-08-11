@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/providers/session_provider.dart';
 import '../providers/bum_chat_provider.dart';
+import '../services/feedback_service.dart';
 import '../widgets/bum_message_bubble.dart';
 import '../widgets/bum_suggestion_chips.dart';
 
@@ -25,7 +27,7 @@ class _BumChatScreenState extends ConsumerState<BumChatScreen> {
     'Hôm nay bán được bao nhiêu?',
     'Món nào bán chạy nhất?',
     'Kho có gì sắp hết?',
-    'Hôm nay ai đang làm?'
+    'Hôm nay ai đang làm?',
   ];
 
   @override
@@ -64,8 +66,15 @@ class _BumChatScreenState extends ConsumerState<BumChatScreen> {
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(bumChatProvider);
+    final session = ref.watch(sessionProvider);
 
-    final bool isTyping = messages.isNotEmpty &&
+    final bool isOwnerOrManager =
+        session?.isOwner == true ||
+        session?.role == 'owner' ||
+        session?.role == 'manager';
+
+    final bool isTyping =
+        messages.isNotEmpty &&
         (messages.last.isLoading || messages.last.isStreaming);
 
     ref.listen(bumChatProvider, (previous, next) {
@@ -82,7 +91,11 @@ class _BumChatScreenState extends ConsumerState<BumChatScreen> {
           scrolledUnderElevation: 0,
           centerTitle: true,
           leading: IconButton(
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _kNavy, size: 32),
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: _kNavy,
+              size: 32,
+            ),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Row(
@@ -133,8 +146,132 @@ class _BumChatScreenState extends ConsumerState<BumChatScreen> {
                         final msg = messages[index];
                         return BumMessageBubble(
                           message: msg,
+                          isOwnerOrManager: isOwnerOrManager,
                           onSuggestionTap: _sendMessage,
                           onRetryTap: _retryMessage,
+                          onPairingRequest: (rawCode) async {
+                            final res = await FeedbackService()
+                                .exchangePairingCode(rawCode: rawCode);
+                            if (!context.mounted) return;
+                            if (res['success'] == true) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Ghép nối thiết bị thành công! Đang gửi lại phản hồi...',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              final subRes = await ref
+                                  .read(bumChatProvider.notifier)
+                                  .submitFeedbackForMessage(
+                                    msg.id,
+                                    rating: msg.feedbackRating ?? 'thumbs_down',
+                                    reasonCode: msg.feedbackReason,
+                                    proposedAnswer: msg.proposedAnswer,
+                                  );
+                              if (!context.mounted) return;
+                              if (subRes['success'] == true) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Đã gửi để kiểm duyệt. AI Bum chưa tự học nội dung này.',
+                                    ),
+                                    backgroundColor: _kNavy,
+                                  ),
+                                );
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Kết nối thiết bị thất bại: ${res['message'] ?? 'Mã ghép nối không hợp lệ'}',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          onFeedbackTap: (rating, {reasonCode, proposedAnswer}) async {
+                            final res = await ref
+                                .read(bumChatProvider.notifier)
+                                .submitFeedbackForMessage(
+                                  msg.id,
+                                  rating: rating,
+                                  reasonCode: reasonCode,
+                                  proposedAnswer: proposedAnswer,
+                                );
+                            if (!context.mounted) return;
+                            if (res['success'] == true) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Đã gửi để kiểm duyệt. AI Bum chưa tự học nội dung này.',
+                                  ),
+                                  backgroundColor: _kNavy,
+                                ),
+                              );
+                            } else if (res['error'] == 'UNAUTHORIZED' ||
+                                res['error'] == 'PAIRING_REQUIRED' ||
+                                res['status'] == 401) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Phiên làm việc hết hạn hoặc chưa đăng nhập. Vui lòng đăng nhập lại.',
+                                  ),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                            } else if (res['error'] == 'FORBIDDEN' ||
+                                res['status'] == 403) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Bạn không có quyền thực hiện thao tác này.',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            } else if (res['error'] == 'CONFLICT' ||
+                                res['status'] == 409) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Phản hồi cho câu trả lời này đã được gửi trước đó.',
+                                  ),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                            } else if (res['error'] == 'RATE_LIMITED' ||
+                                res['status'] == 429) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Thao tác quá nhanh, vui lòng thử lại sau giây lát.',
+                                  ),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                            } else if (res['error'] == 'NETWORK_ERROR') {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Không thể kết nối máy chủ, vui lòng kiểm tra kết nối mạng.',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Gửi phản hồi thất bại: ${res['message'] ?? 'Lỗi hệ thống'}',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
                         );
                       },
                     ),
@@ -155,7 +292,12 @@ class _BumChatScreenState extends ConsumerState<BumChatScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (!isTyping && (messages.isEmpty || messages.last.isUser || (messages.last.isBum && (messages.last.suggestions == null || messages.last.suggestions!.isEmpty))))
+                        if (!isTyping &&
+                            (messages.isEmpty ||
+                                messages.last.isUser ||
+                                (messages.last.isBum &&
+                                    (messages.last.suggestions == null ||
+                                        messages.last.suggestions!.isEmpty))))
                           Padding(
                             padding: const EdgeInsets.only(top: 12.0),
                             child: BumSuggestionChips(
@@ -177,12 +319,21 @@ class _BumChatScreenState extends ConsumerState<BumChatScreen> {
                                   ),
                                   child: TextField(
                                     controller: _textController,
-                                    style: GoogleFonts.outfit(color: _kNavy, fontSize: 15),
+                                    style: GoogleFonts.outfit(
+                                      color: _kNavy,
+                                      fontSize: 15,
+                                    ),
                                     decoration: InputDecoration(
                                       hintText: 'Hỏi Bum bất kỳ điều gì...',
-                                      hintStyle: GoogleFonts.outfit(color: Colors.grey.shade500),
+                                      hintStyle: GoogleFonts.outfit(
+                                        color: Colors.grey.shade500,
+                                      ),
                                       border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 14,
+                                          ),
                                     ),
                                     onSubmitted: isTyping ? null : _sendMessage,
                                   ),
@@ -197,13 +348,17 @@ class _BumChatScreenState extends ConsumerState<BumChatScreen> {
                                   decoration: BoxDecoration(
                                     color: isTyping ? Colors.grey : _kOrange,
                                     shape: BoxShape.circle,
-                                    boxShadow: isTyping ? null : [
-                                      BoxShadow(
-                                        color: _kOrange.withValues(alpha: 0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
+                                    boxShadow: isTyping
+                                        ? null
+                                        : [
+                                            BoxShadow(
+                                              color: _kOrange.withValues(
+                                                alpha: 0.3,
+                                              ),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
                                   ),
                                   child: const Icon(
                                     Icons.send_rounded,

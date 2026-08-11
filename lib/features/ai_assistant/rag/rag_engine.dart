@@ -60,14 +60,16 @@ class RagEngine {
 
         final checksum = sha256.convert(utf8.encode(cleanContent)).toString();
 
-        _index.add(RagChunk(
-          id: '${module}_chunk_$i',
-          sourcePath: path,
-          heading: heading.isNotEmpty ? heading : module,
-          module: module,
-          content: cleanContent,
-          checksum: checksum,
-        ));
+        _index.add(
+          RagChunk(
+            id: '${module}_chunk_$i',
+            sourcePath: path,
+            heading: heading.isNotEmpty ? heading : module,
+            module: module,
+            content: cleanContent,
+            checksum: checksum,
+          ),
+        );
       }
     }
   }
@@ -75,9 +77,18 @@ class RagEngine {
   /// Lọc bỏ thông tin nhạy cảm trước khi index
   static String _sanitizeContent(String text) {
     var sanitized = text;
-    sanitized = sanitized.replaceAll(RegExp(r'password\s*=\s*[^\s]+', caseSensitive: false), 'password=[REDACTED]');
-    sanitized = sanitized.replaceAll(RegExp(r'secret\s*=\s*[^\s]+', caseSensitive: false), 'secret=[REDACTED]');
-    sanitized = sanitized.replaceAll(RegExp(r'key\s*=\s*eyJ[^\s]+', caseSensitive: false), 'key=[REDACTED]');
+    sanitized = sanitized.replaceAll(
+      RegExp(r'password\s*=\s*[^\s]+', caseSensitive: false),
+      'password=[REDACTED]',
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r'secret\s*=\s*[^\s]+', caseSensitive: false),
+      'secret=[REDACTED]',
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r'key\s*=\s*eyJ[^\s]+', caseSensitive: false),
+      'key=[REDACTED]',
+    );
     return sanitized;
   }
 
@@ -112,7 +123,12 @@ class RagEngine {
   }
 
   static Set<String> _tokenize(String text) {
-    final clean = text.toLowerCase().replaceAll(RegExp(r'[^\w\sàáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]'), ' ');
+    final clean = text.toLowerCase().replaceAll(
+      RegExp(
+        r'[^\w\sàáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]',
+      ),
+      ' ',
+    );
     return clean.split(RegExp(r'\s+')).where((t) => t.length >= 2).toSet();
   }
 

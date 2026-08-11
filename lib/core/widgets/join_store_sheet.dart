@@ -5,7 +5,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/permission_provider.dart';
-import '../services/staff_service.dart';
 import '../providers/session_provider.dart';
 import '../services/user_auth_service.dart';
 
@@ -20,10 +19,7 @@ Future<void> showJoinStoreSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _JoinStoreSheet(
-      ref: ref,
-      onSuccess: onSuccess,
-    ),
+    builder: (_) => _JoinStoreSheet(ref: ref, onSuccess: onSuccess),
   );
 }
 
@@ -39,14 +35,17 @@ class _JoinStoreSheet extends StatefulWidget {
 
 class _JoinStoreSheetState extends State<_JoinStoreSheet> {
   final _codeCtrl = TextEditingController();
-  bool   _loading = false;
-  String _error   = '';
+  bool _loading = false;
+  String _error = '';
 
-  static const _navy   = Color(0xFF1E1C5E);
+  static const _navy = Color(0xFF1E1C5E);
   static const _orange = Color(0xFFE85D20);
 
   @override
-  void dispose() { _codeCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _codeCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     final code = _codeCtrl.text.trim();
@@ -54,11 +53,17 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
       setState(() => _error = 'Vui lòng nhập mã quán');
       return;
     }
-    setState(() { _loading = true; _error = ''; });
+    setState(() {
+      _loading = true;
+      _error = '';
+    });
 
     final session = widget.ref.read(sessionProvider);
     if (session == null) {
-      setState(() { _loading = false; _error = 'Phiên đăng nhập hết hạn.'; });
+      setState(() {
+        _loading = false;
+        _error = 'Phiên đăng nhập hết hạn.';
+      });
       return;
     }
 
@@ -70,30 +75,95 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
     if (!mounted) return;
 
     if (res.isSuccess) {
-      final membership = res.membership ?? StoreMembership(
-        storeId:   res.storeId!,
-        storeName: 'Quán ăn',
-        storeCode: res.storeCode!,
-        role:      'waiter',
-        isOwner:   false,
-      );
-      
-      // Update session hiện tại ngay lập tức & invalidate perms
-      widget.ref.read(sessionProvider.notifier).updateStore(membership);
-      widget.ref.invalidate(userActionPermsProvider);
-      await UserAuthService.selectStore(membership);
+      final membership =
+          res.membership ??
+          StoreMembership(
+            storeId: res.storeId!,
+            storeName: 'Quán ăn',
+            storeCode: res.storeCode!,
+            role: 'waiter',
+            isOwner: false,
+          );
 
       if (!mounted) return;
+      final session = await UserAuthService.getCurrentSession();
+      if (!mounted) return;
+      final pwdCtrl = TextEditingController();
+      String? pwd;
+      try {
+        pwd = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Xác thực tham gia quán'),
+            content: TextField(
+              controller: pwdCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Nhập mật khẩu tài khoản để cấp JWT',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(null),
+                child: const Text('Hủy'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(pwdCtrl.text.trim()),
+                child: const Text('Xác nhận'),
+              ),
+            ],
+          ),
+        );
+      } finally {
+        pwdCtrl.dispose();
+      }
+
+      if (!mounted) return;
+
+      if (pwd == null || pwd.trim().isEmpty) {
+        setState(() {
+          _loading = false;
+          _error = 'Hủy xác thực mật khẩu. Chưa thể kết nối tới quán.';
+        });
+        return;
+      }
+
+      final ok = await UserAuthService.selectStore(
+        membership,
+        password: pwd,
+        phone: session?.phone,
+      );
+
+      if (!mounted) return;
+
+      if (!ok) {
+        setState(() {
+          _loading = false;
+          _error = 'Xác thực mật khẩu hoặc cấp POS JWT thất bại.';
+        });
+        return;
+      }
+
+      widget.ref.read(sessionProvider.notifier).updateStore(membership);
+      widget.ref.invalidate(userActionPermsProvider);
       Navigator.pop(context); // đóng sheet
 
       // Hiển thị dialog thông báo thành công
+      if (!mounted) return;
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Row(
             children: [
-              Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 28),
+              Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF2E7D32),
+                size: 28,
+              ),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -109,7 +179,11 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
             children: [
               Text(
                 'Bạn đã tham gia thành công vào quán "${membership.storeName}".',
-                style: const TextStyle(fontSize: 14, color: Color(0xFF2D2B8A), fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF2D2B8A),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 10),
               Container(
@@ -118,23 +192,41 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF3E0),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE85D20).withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: const Color(0xFFE85D20).withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('• Quán làm việc: ${membership.storeName}',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFFE85D20))),
+                    Text(
+                      '• Quán làm việc: ${membership.storeName}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFE85D20),
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text('• Mã quán: ${membership.storeCode}',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E1C5E))),
+                    Text(
+                      '• Mã quán: ${membership.storeCode}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1E1C5E),
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 10),
               const Text(
                 'Ứng dụng đã tự động chuyển phiên làm việc và cập nhật danh sách Module & Quyền hạn của bạn tại quán này.',
-                style: TextStyle(fontSize: 12.5, color: Color(0xFF5A5260), height: 1.4),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Color(0xFF5A5260),
+                  height: 1.4,
+                ),
               ),
             ],
           ),
@@ -144,7 +236,9 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1E1C5E),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: const Text('Bắt đầu làm việc'),
             ),
@@ -156,7 +250,7 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
     } else {
       setState(() {
         _loading = false;
-        _error   = res.errorMessage ?? 'Có lỗi xảy ra, thử lại sau.';
+        _error = res.errorMessage ?? 'Có lỗi xảy ra, thử lại sau.';
       });
     }
   }
@@ -179,16 +273,19 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
           children: [
             // Handle
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2)),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
             const SizedBox(height: 24),
 
             // Icon lớn minh hoạ
             Container(
-              width: 72, height: 72,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF1E1C5E), Color(0xFFFF6B35)],
@@ -204,21 +301,30 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.qr_code_scanner_rounded,
-                color: Colors.white, size: 36),
+              child: const Icon(
+                Icons.qr_code_scanner_rounded,
+                color: Colors.white,
+                size: 36,
+              ),
             ),
             const SizedBox(height: 16),
 
             // Tiêu đề
-            const Text('Kết nối vào quán',
+            const Text(
+              'Kết nối vào quán',
               style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w900,
-                color: _navy, letterSpacing: -0.5)),
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: _navy,
+                letterSpacing: -0.5,
+              ),
+            ),
             const SizedBox(height: 6),
             const Text(
               'Nhập mã quán do chủ quán cung cấp (ví dụ: QN-XXXX)',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Color(0xFF9E9085))),
+              style: TextStyle(fontSize: 13, color: Color(0xFF9E9085)),
+            ),
             const SizedBox(height: 24),
 
             // Ô nhập mã quán
@@ -227,7 +333,11 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
               autofocus: true,
               textCapitalization: TextCapitalization.characters,
               style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w800, color: _navy, letterSpacing: 2),
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: _navy,
+                letterSpacing: 2,
+              ),
               decoration: InputDecoration(
                 labelText: 'Mã kết nối quán',
                 hintText: 'QN-XXXX',
@@ -252,7 +362,8 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
 
             // Nút kết nối
             SizedBox(
-              width: double.infinity, height: 52,
+              width: double.infinity,
+              height: 52,
               child: ElevatedButton(
                 onPressed: _loading ? null : _submit,
                 style: ElevatedButton.styleFrom(
@@ -260,22 +371,31 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: _orange.withValues(alpha: 0.5),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   elevation: 0,
                 ),
                 child: _loading
                     ? const SizedBox(
-                        width: 22, height: 22,
+                        width: 22,
+                        height: 22,
                         child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2.5))
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
                     : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.link_rounded, size: 20),
                           SizedBox(width: 8),
-                          Text('Kết nối ngay',
+                          Text(
+                            'Kết nối ngay',
                             style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w800)),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ],
                       ),
               ),

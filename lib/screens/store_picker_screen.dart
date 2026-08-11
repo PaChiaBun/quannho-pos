@@ -12,12 +12,13 @@ import '../core/widgets/join_store_sheet.dart';
 class StorePickerScreen extends ConsumerWidget {
   const StorePickerScreen({super.key});
 
-  static const _bg     = Color(0xFF131128);
+  static const _bg = Color(0xFF131128);
   static const _orange = Color(0xFFFF6B35);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
     final stores = (args?['stores'] as List<StoreMembership>?) ?? [];
     final session = ref.watch(sessionProvider);
 
@@ -30,13 +31,22 @@ class StorePickerScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 24),
-              Text('Xin chào, ${session?.displayName ?? ''}!',
+              Text(
+                'Xin chào, ${session?.displayName ?? ''}!',
                 style: const TextStyle(
-                  color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 8),
-              Text('Bạn muốn thực hiện thao tác nào hôm nay?',
+              Text(
+                'Bạn muốn thực hiện thao tác nào hôm nay?',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5), fontSize: 14)),
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 14,
+                ),
+              ),
               const SizedBox(height: 32),
 
               // Danh sách quán hoặc thông báo chưa có quán
@@ -95,16 +105,49 @@ class StorePickerScreen extends ConsumerWidget {
                           Expanded(
                             child: ListView.separated(
                               itemCount: stores.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 12),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 12),
                               itemBuilder: (_, i) {
                                 final store = stores[i];
                                 return _StoreCard(
                                   store: store,
                                   onTap: () async {
-                                    await UserAuthService.selectStore(store);
-                                    ref.read(sessionProvider.notifier).updateStore(store);
-                                    if (context.mounted) {
-                                      Navigator.of(context).pushReplacementNamed('/home');
+                                    final pwd = await _promptPassword(
+                                      context,
+                                      store.storeName,
+                                    );
+                                    if (pwd == null || pwd.trim().isEmpty)
+                                      return;
+                                    final session =
+                                        await UserAuthService.getCurrentSession();
+                                    final phone = session?.phone ?? '';
+                                    final ok =
+                                        await UserAuthService.selectStore(
+                                          store,
+                                          password: pwd,
+                                          phone: phone,
+                                        );
+                                    if (ok) {
+                                      ref
+                                          .read(sessionProvider.notifier)
+                                          .updateStore(store);
+                                      if (context.mounted) {
+                                        Navigator.of(
+                                          context,
+                                        ).pushReplacementNamed('/home');
+                                      }
+                                    } else {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Xác thực đổi quán thất bại. Vui lòng kiểm tra lại mật khẩu.',
+                                            ),
+                                          ),
+                                        );
+                                      }
                                     }
                                   },
                                 );
@@ -136,9 +179,12 @@ class StorePickerScreen extends ConsumerWidget {
                         foregroundColor: _orange,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         textStyle: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w800),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                     ),
                   ),
@@ -159,9 +205,12 @@ class StorePickerScreen extends ConsumerWidget {
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         textStyle: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w800),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                         elevation: 0,
                       ),
                     ),
@@ -181,9 +230,15 @@ class StorePickerScreen extends ConsumerWidget {
                       Navigator.of(context).pushReplacementNamed('/auth');
                     }
                   },
-                  icon: const Icon(Icons.logout_rounded, color: Colors.white38, size: 16),
-                  label: const Text('Đăng xuất tài khoản',
-                    style: TextStyle(color: Colors.white38, fontSize: 13)),
+                  icon: const Icon(
+                    Icons.logout_rounded,
+                    color: Colors.white38,
+                    size: 16,
+                  ),
+                  label: const Text(
+                    'Đăng xuất tài khoản',
+                    style: TextStyle(color: Colors.white38, fontSize: 13),
+                  ),
                 ),
               ),
             ],
@@ -200,18 +255,18 @@ class _StoreCard extends StatelessWidget {
   const _StoreCard({required this.store, required this.onTap});
 
   static const _roleLabels = {
-    'owner':   ('Chủ quán',  Color(0xFFFFB347)),
-    'manager': ('Quản lý',   Color(0xFF4F9EFF)),
-    'cashier': ('Thu ngân',  Color(0xFF2DD4BF)),
-    'waiter':  ('Phục vụ',   Color(0xFFA78BFA)),
-    'kitchen': ('Bếp',       Color(0xFFFF6B6B)),
-    'stock':   ('Kho',       Color(0xFF86EFAC)),
+    'owner': ('Chủ quán', Color(0xFFFFB347)),
+    'manager': ('Quản lý', Color(0xFF4F9EFF)),
+    'cashier': ('Thu ngân', Color(0xFF2DD4BF)),
+    'waiter': ('Phục vụ', Color(0xFFA78BFA)),
+    'kitchen': ('Bếp', Color(0xFFFF6B6B)),
+    'stock': ('Kho', Color(0xFF86EFAC)),
   };
 
   @override
   Widget build(BuildContext context) {
     final label = _roleLabels[store.role];
-    final roleName  = label?.$1 ?? store.role;
+    final roleName = label?.$1 ?? store.role;
     final roleColor = label?.$2 ?? Colors.white54;
 
     return GestureDetector(
@@ -226,39 +281,62 @@ class _StoreCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 48, height: 48,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: const Color(0xFF1E1C5E),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(Icons.storefront_rounded,
-                color: Color(0xFFFF6B35), size: 24),
+              child: const Icon(
+                Icons.storefront_rounded,
+                color: Color(0xFFFF6B35),
+                size: 24,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(store.storeName,
+                  Text(
+                    store.storeName,
                     style: const TextStyle(
-                      color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: roleColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(roleName,
-                        style: TextStyle(color: roleColor, fontSize: 11,
-                          fontWeight: FontWeight.w600)),
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                     ),
-                    const SizedBox(width: 8),
-                    Text(store.storeCode,
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.3),
-                        fontSize: 11)),
-                  ]),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: roleColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          roleName,
+                          style: TextStyle(
+                            color: roleColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        store.storeCode,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -268,4 +346,32 @@ class _StoreCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<String?> _promptPassword(BuildContext context, String storeName) async {
+  final controller = TextEditingController();
+  return showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text('Xác thực chọn $storeName'),
+      content: TextField(
+        controller: controller,
+        obscureText: true,
+        decoration: const InputDecoration(
+          labelText: 'Nhập mật khẩu tài khoản',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(null),
+          child: const Text('Hủy'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+          child: const Text('Xác nhận'),
+        ),
+      ],
+    ),
+  );
 }

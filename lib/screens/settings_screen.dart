@@ -1656,28 +1656,72 @@ void _showStorePicker(BuildContext context, WidgetRef ref) async {
                     onTap: () async {
                       Navigator.pop(ctx);
                       if (isCurrent) return;
-                      await UserAuthService.selectStore(st);
-                      ref.read(sessionProvider.notifier).updateStore(st);
-                      ref.invalidate(userActionPermsProvider);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(
-                                  Icons.swap_horiz_rounded,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Đã chuyển sang làm việc tại "${st.storeName}" (${st.storeCode})',
-                                ),
-                              ],
+                      final pwdCtrl = TextEditingController();
+                      final pwd = await showDialog<String>(
+                        context: context,
+                        builder: (dCtx) => AlertDialog(
+                          title: Text('Xác thực chuyển sang ${st.storeName}'),
+                          content: TextField(
+                            controller: pwdCtrl,
+                            obscureText: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Nhập mật khẩu tài khoản',
+                              border: OutlineInputBorder(),
                             ),
-                            backgroundColor: const Color(0xFF2E7D32),
-                            behavior: SnackBarBehavior.floating,
                           ),
-                        );
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(dCtx).pop(null),
+                              child: const Text('Hủy'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () =>
+                                  Navigator.of(dCtx).pop(pwdCtrl.text.trim()),
+                              child: const Text('Xác nhận'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (pwd == null || pwd.isEmpty) return;
+                      final session = await UserAuthService.getCurrentSession();
+                      final ok = await UserAuthService.selectStore(
+                        st,
+                        password: pwd,
+                        phone: session?.phone,
+                      );
+                      if (ok) {
+                        ref.read(sessionProvider.notifier).updateStore(st);
+                        ref.invalidate(userActionPermsProvider);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.swap_horiz_rounded,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Đã chuyển sang làm việc tại "${st.storeName}" (${st.storeCode})',
+                                  ),
+                                ],
+                              ),
+                              backgroundColor: const Color(0xFF2E7D32),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Xác thực đổi quán thất bại. Vui lòng kiểm tra mật khẩu.',
+                              ),
+                            ),
+                          );
+                        }
                       }
                     },
                   ),

@@ -1,43 +1,66 @@
-// lib/features/ai_assistant/services/pii_redactor.dart
-// ─────────────────────────────────────────────────────────────────────────────
-// PII Redactor — Khử 100% Thông tin Cá nhân Nhạy cảm trước khi gửi Cloud
-// ─────────────────────────────────────────────────────────────────────────────
-
 class PiiRedactor {
-  /// Lọc bỏ các thông tin PII: SĐT, Email, Mật khẩu, Mã PIN, Token, Thẻ ngân hàng
-  static String redact(String input) {
-    if (input.isEmpty) return input;
+  static final RegExp _phoneRegex = RegExp(
+    r'(?:\+84|0)(?:3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])\d{7}\b',
+  );
+  static final RegExp _emailRegex = RegExp(
+    r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b',
+  );
+  static final RegExp _secretKeyRegex = RegExp(
+    r'\b(?:sk-[a-zA-Z0-9]{20,}|eyJ[a-zA-Z0-9._-]{20,})\b',
+  );
 
-    var text = input;
+  // Contextual PIN/OTP regex: matches 4-6 digit numbers ONLY when preceded by context keywords
+  static final RegExp _contextualPinRegex = RegExp(
+    r'\b(?:pin|otp|mã xác thực|mật khẩu|password|code|token)\s*[:=]?\s*(\d{4,6})\b',
+    caseSensitive: false,
+  );
 
-    // 1. Khử SĐT Việt Nam (09x, 03x, 07x, 08x, 05x, +84x)
-    text = text.replaceAll(
-      RegExp(r'(\+84|84|0)(3|5|7|8|9)[0-9]{8}\b'),
-      '[REDACTED_PHONE]',
-    );
-    text = text.replaceAll(
-      RegExp(r'\b\d{4}[-.\s]?\d{3}[-.\s]?\d{3}\b'),
-      '[REDACTED_PHONE]',
-    );
+  static String redact(String? text) {
+    if (text == null || text.trim().isEmpty) return text ?? '';
+    var result = text;
+    result = result.replaceAll(_phoneRegex, '[REDACTED_PHONE]');
+    result = result.replaceAll(_emailRegex, '[REDACTED_EMAIL]');
+    result = result.replaceAll(_secretKeyRegex, '[REDACTED_SECRET]');
 
-    // 2. Khử Email
-    text = text.replaceAll(
-      RegExp(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'),
-      '[REDACTED_EMAIL]',
-    );
+    // Replace contextual PIN/OTP with [REDACTED_SECRET]
+    result = result.replaceAllMapped(_contextualPinRegex, (match) {
+      final fullMatch = match.group(0)!;
+      final digits = match.group(1)!;
+      return fullMatch.replaceAll(digits, '[REDACTED_SECRET]');
+    });
 
-    // 3. Khử Mã PIN 6 số hoặc Password
-    text = text.replaceAll(
-      RegExp(r'\b(pin|mật khẩu|pass|password)\s*[:=]\s*\w+', caseSensitive: false),
-      r'\1: [REDACTED_SECRET]',
-    );
+    return result;
+  }
 
-    // 4. Khử JWT Token / Bearer Key
-    text = text.replaceAll(
-      RegExp(r'eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*'),
-      '[REDACTED_TOKEN]',
-    );
+  static Map<String, dynamic>? sanitizeEvidenceReference(
+    Map<String, dynamic>? rawEvidence,
+  ) {
+    if (rawEvidence == null) return null;
+    const allowlist = {
+      'tool_name',
+      'latency_ms',
+      'route',
+      'status',
+      'intent',
+      'query_id',
+    };
+    final Map<String, dynamic> clean = {};
 
-    return text;
+    for (final entry in rawEvidence.entries) {
+      if (allowlist.contains(entry.key)) {
+        final val = entry.value;
+        if (val is Map || val is List) {
+          throw ArgumentError(
+            'NESTED_STRUCTURE_REJECTED: key ${entry.key} contains nested structure',
+          );
+        }
+        if (val is String) {
+          clean[entry.key] = redact(val);
+        } else {
+          clean[entry.key] = val;
+        }
+      }
+    }
+    return clean;
   }
 }

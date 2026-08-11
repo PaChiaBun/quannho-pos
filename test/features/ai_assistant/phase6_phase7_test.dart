@@ -11,7 +11,8 @@ import 'package:quannho_pos/features/ai_assistant/services/feedback_memory_servi
 void main() {
   group('Phase 6: PII Redaction & OpenAI Fallback Security Tests', () {
     test('Khử 100% SĐT Việt Nam, Email và mã PIN', () {
-      const rawText = 'Gọi cho anh Nam số 0912345678 hoặc email test@gmail.com, password: 123456';
+      const rawText =
+          'Gọi cho anh Nam số 0912345678 hoặc email test@gmail.com, password: 123456';
       final cleanText = PiiRedactor.redact(rawText);
 
       expect(cleanText.contains('0912345678'), isFalse);
@@ -78,31 +79,36 @@ void main() {
       expect(entry.feedbackText!.contains('0987654321'), isFalse);
     });
 
-    test('Trí nhớ riêng từng quán (Store Memory) cô lập 100% theo store_id', () {
-      FeedbackMemoryService.addStoreMemory(
-        id: 'mem_1',
-        storeId: 'store_kay_01',
-        category: 'pricing',
-        key: 'giam_gia_sinh_nhat',
-        value: 'Giảm 15% cho khách sinh nhật trong tháng',
-        createdBy: 'owner_kay',
-        isOwner: true,
-      );
+    test(
+      'Trí nhớ riêng từng quán (Store Memory) cô lập 100% theo store_id',
+      () {
+        FeedbackMemoryService.addStoreMemory(
+          id: 'mem_1',
+          storeId: 'store_kay_01',
+          category: 'pricing',
+          key: 'giam_gia_sinh_nhat',
+          value: 'Giảm 15% cho khách sinh nhật trong tháng',
+          createdBy: 'owner_kay',
+          isOwner: true,
+        );
 
-      FeedbackMemoryService.addStoreMemory(
-        id: 'mem_2',
-        storeId: 'store_khac_99',
-        category: 'pricing',
-        key: 'giam_gia_sinh_nhat',
-        value: 'Giảm 50% cho quán khác',
-        createdBy: 'owner_khac',
-        isOwner: true,
-      );
+        FeedbackMemoryService.addStoreMemory(
+          id: 'mem_2',
+          storeId: 'store_khac_99',
+          category: 'pricing',
+          key: 'giam_gia_sinh_nhat',
+          value: 'Giảm 50% cho quán khác',
+          createdBy: 'owner_khac',
+          isOwner: true,
+        );
 
-      final kayMemories = FeedbackMemoryService.getMemoriesForStore('store_kay_01');
-      expect(kayMemories.length, equals(1));
-      expect(kayMemories.first.value, contains('15%'));
-      expect(kayMemories.first.value.contains('50%'), isFalse);
-    });
+        final kayMemories = FeedbackMemoryService.getMemoriesForStore(
+          'store_kay_01',
+        );
+        expect(kayMemories.length, equals(1));
+        expect(kayMemories.first.value, contains('15%'));
+        expect(kayMemories.first.value.contains('50%'), isFalse);
+      },
+    );
   });
 }

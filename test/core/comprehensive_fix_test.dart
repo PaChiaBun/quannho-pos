@@ -205,6 +205,9 @@ class FakeUserAuthRepository implements UserAuthRepository {
   int upsertMemberCount = 0;
 
   @override
+  Future<List<Map<String, dynamic>>> queryStoresByOwner(String ownerUserId) async => [];
+
+  @override
   Future<List<Map<String, dynamic>>> queryStaffMembers(String userId) async {
     if (staffQueryThrows) throw Exception('DB error query staff_members');
     return staffMembers;
