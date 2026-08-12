@@ -5,17 +5,20 @@
 
 ---
 
-## 2026-08-12 — Release Candidate AI Bum Pilot — RELEASE CANDIDATE LOCAL SẴN SÀNG, CHƯA DEPLOY
+## 2026-08-12 — AI Bum Multi-Store & Action Permission Rollout — DEPLOYED TO PRODUCTION VPS (https://quannho.lpm.vn/pos/)
 
-- 📦 **Trạng thái Release**: RELEASE CANDIDATE LOCAL SẴN SÀNG, CHƯA DEPLOY. Đã đóng gói tại `/Users/banhbao/Quan Nho/releases/ai-bum-pilot-20260812-0126/`.
-- 🛡️ **Cách Ly Tuyệt Đối Với P0 POS JWT/RLS**: Đóng gói từ worktree cách ly `/tmp/ai_bum_release_worktree` từ HEAD baseline `1638184b8f45c953fe68560eef5a328ba352c147`. Loại bỏ 100% các file P0 JWT/RLS đang trong trạng thái BLOCKED.
-- 🔒 **Feature Flag Fail-Closed**: AI Bum Pilot chỉ bật cho Quán Kay và tài khoản Owner (`ShadowTestFeatureFlag`).
-- 🧪 **Kết Quả Kiểm Thử**:
-  - `dart format`: **Sạch (0 changed)**.
-  - `flutter analyze`: **0 ERRORS, 0 WARNINGS**.
-  - `flutter test test/features/ai_assistant/`: **30 PASS / 0 FAIL / 0 SKIP**.
-  - `flutter build web`: **Thành công (`--base-href "/pos/"`)**.
-  - SHA256 pos-web.tar.gz: `658e659121afdb62faede22c97e4063c831bfb29e77164e9603279ad4db87db0`.
+- 🚀 **Trạng thái Deployment**: **ĐÃ DEPLOY THÀNH CÔNG LÊN PRODUCTION VPS `45.32.104.228`**.
+  - URL POS Web: `https://quannho.lpm.vn/pos/`
+  - Thư mục web server: `/var/www/quannho/pos/`
+  - Backup phiên bản trước: `/var/www/quannho/pos_backup_20260812_161314`
+  - Mã băm SHA-256 `main.dart.js` trên VPS: `29b70c335399f018f71a4e45f845345924d0e2457a862c1e47c948428d89bdc5` (Khớp 100% bản build release).
+  - Nginx Reload: **200 OK**, `cache-control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0`.
+- 🛡️ **Cách Ly Tuyệt Đối Với P0 POS JWT/RLS**: 0 file P0 bị chỉnh sửa. 100% cách ly an toàn.
+- 🔐 **Live Permission Guard & Multi-Store Rollout**:
+  - Mở AI Bum cho mọi Chủ quán của mọi cửa hàng (xác minh tự động qua `store_members` Supabase server).
+  - Thêm 9 AI actions vào màn hình Phân Quyền Nhạy Cảm cho Nhân viên (`ai_bum.help`, `ai_bum.my_shift`, `ai_bum.my_payroll`, `ai_bum.team_shift`, `ai_bum.sales`, `ai_bum.inventory`, `ai_bum.finance`, `ai_bum.operations`, `ai_bum.all_payroll`).
+  - Chặn ngay trước business query nếu thiếu quyền (0 DB query). Lọc gợi ý động theo `actionPermissions`.
+- 🧪 **Kiểm Thử Production**: `permission_guard_test.dart` (8/8 PASS), `test/features/ai_assistant/` (40/40 PASS), full suite (150 PASS), `flutter analyze` (0 ERRORS), `git diff --check` (0 EXIT).
 
 ---
 
