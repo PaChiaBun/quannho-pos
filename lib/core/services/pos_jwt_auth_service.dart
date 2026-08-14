@@ -8,11 +8,15 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const String _kPosJwtStorageKey = 'pos_supabase_jwt';
+const String _kConfiguredPosJwtBackendUrl = String.fromEnvironment(
+  'POS_JWT_AUTH_URL',
+  defaultValue: '',
+);
 
 typedef SupabaseAuthApplier = Future<void> Function(String? token);
 
 class PosJwtAuthService {
-  final String backendUrl;
+  final String _backendUrl;
   final http.Client httpClient;
   final FlutterSecureStorage secureStorage;
   final SupabaseAuthApplier? authApplier;
@@ -21,11 +25,25 @@ class PosJwtAuthService {
     String? backendUrl,
     http.Client? httpClient,
     FlutterSecureStorage? secureStorage,
-    SupabaseAuthApplier? authApplier,
-  }) : backendUrl = backendUrl ?? 'https://bunserver.tailcaeae7.ts.net',
+    this.authApplier,
+  }) : _backendUrl = (backendUrl ?? _kConfiguredPosJwtBackendUrl)
+           .trim()
+           .replaceFirst(RegExp(r'/+$'), ''),
        httpClient = httpClient ?? http.Client(),
-       secureStorage = secureStorage ?? const FlutterSecureStorage(),
-       authApplier = authApplier;
+       secureStorage = secureStorage ?? const FlutterSecureStorage();
+
+  /// POS JWT chỉ được bật khi bản build khai báo một endpoint production.
+  /// Không để hoạt động cốt lõi của POS phụ thuộc ngầm vào BunServer/Tailscale.
+  bool get isConfigured {
+    final uri = Uri.tryParse(_backendUrl);
+    return uri != null &&
+        uri.scheme == 'https' &&
+        uri.host.isNotEmpty &&
+        uri.userInfo.isEmpty &&
+        !uri.hasQuery &&
+        !uri.hasFragment &&
+        uri.path.isEmpty;
+  }
 
   /// Retrieve cached POS JWT from secure storage
   Future<String?> getStoredPosJwt() async {
@@ -116,6 +134,15 @@ class PosJwtAuthService {
     String endpointPath = '/api/auth/pos-jwt',
     Duration timeoutDuration = const Duration(seconds: 10),
   }) async {
+    if (!isConfigured) {
+      return {
+        'success': false,
+        'status': 503,
+        'error': 'POS_JWT_NOT_CONFIGURED',
+        'message': 'Máy chủ POS JWT chưa được cấu hình cho bản phát hành này',
+      };
+    }
+
     if (phone.trim().isEmpty ||
         password.trim().isEmpty ||
         storeId.trim().isEmpty) {
@@ -136,7 +163,7 @@ class PosJwtAuthService {
     try {
       final response = await httpClient
           .post(
-            Uri.parse('$backendUrl$endpointPath'),
+            Uri.parse('$_backendUrl$endpointPath'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(payload),
           )

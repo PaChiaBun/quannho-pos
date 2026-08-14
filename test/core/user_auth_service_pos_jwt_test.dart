@@ -35,15 +35,21 @@ void main() {
     );
 
     test(
-      '2. restoreSessionOnStartup returns false when token is missing or invalid',
+      '2. restoreSessionOnStartup keeps valid local session when POS JWT is disabled',
       () async {
         SharedPreferences.setMockInitialValues({
           'auth_user_id': 'user-123',
           'auth_store_id': 'store-456',
         });
 
-        final restored = await UserAuthService.restoreSessionOnStartup();
-        expect(restored, false);
+        final disabledService = DisabledPosJwtService();
+        final restored = await UserAuthService.restoreSessionOnStartup(
+          jwtService: disabledService,
+        );
+        expect(restored, true);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('auth_store_id'), 'store-456');
+        expect(disabledService.applyCount, 0);
       },
     );
 
@@ -178,6 +184,7 @@ void main() {
         });
 
         final service = PosJwtAuthService(
+          backendUrl: 'https://auth.example.com',
           authApplier: (token) async {
             throw Exception('REST setAuth failed');
           },
@@ -210,6 +217,9 @@ class MockPosJwtService extends PosJwtAuthService {
   Future<String?> getStoredPosJwt() async => storedToken;
 
   @override
+  bool get isConfigured => true;
+
+  @override
   Future<Map<String, dynamic>> requestPosJwt({
     required String phone,
     required String password,
@@ -225,5 +235,24 @@ class MockPosJwtService extends PosJwtAuthService {
   }) async {
     if (!mockApplyResult) return false;
     return token != null;
+  }
+}
+
+class DisabledPosJwtService extends PosJwtAuthService {
+  int applyCount = 0;
+
+  @override
+  bool get isConfigured => false;
+
+  @override
+  Future<void> clearPosJwt() async {}
+
+  @override
+  Future<bool> applyAuthToSupabase(
+    String? token, {
+    String? expectedStoreId,
+  }) async {
+    applyCount++;
+    return true;
   }
 }

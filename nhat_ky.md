@@ -2486,3 +2486,34 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
 - Build/deploy bản mới, sau đó thử tại quán với hai thiết bị đăng nhập đồng thời:
   - Tài khoản Bếp phải nghe chuông phiếu mới và cảnh báo trễ 30 phút.
   - Tài khoản Thu ngân không được phát bất kỳ âm thanh Phiếu Bếp nào.
+
+---
+
+## 2026-08-14: Sửa đăng nhập Windows — Tách POS khỏi máy chủ AI/Tailscale
+
+### Nguyên nhân
+- Luồng đăng nhập POS bắt buộc gọi `https://bunserver.tailcaeae7.ts.net/api/auth/pos-jwt` sau khi Supabase đã xác thực thành công.
+- Đây là địa chỉ Tailscale riêng của máy chủ AI Bum, không phải hạ tầng xác thực production của POS. Máy Thu ngân không có đường kết nối phù hợp nên bị báo “Kết nối máy chủ xác thực bị gián đoạn”.
+- Kiểm tra endpoint thực tế cho thấy địa chỉ trên đang trả HTML của AI Bum Dashboard thay vì JSON JWT; vì vậy kể cả có kết nối mạng, nó cũng chưa phải endpoint POS JWT hợp lệ.
+
+### Thay đổi
+- Xóa URL BunServer/Tailscale được hardcode khỏi `PosJwtAuthService`.
+- POS JWT trở thành tính năng opt-in qua compile-time define `POS_JWT_AUTH_URL`:
+  - Không cấu hình: POS đăng nhập bằng phiên Supabase hiện có và không phụ thuộc máy chủ AI Bum.
+  - Có cấu hình: chỉ chấp nhận HTTPS origin sạch; mọi lỗi cấp/kiểm tra JWT vẫn fail-closed như trước.
+- Khi khởi động, bản mặc định giữ phiên Supabase hợp lệ và chỉ xóa POS JWT cũ; không tự đăng xuất người dùng vì thiếu một dịch vụ chưa được triển khai.
+- Khi đổi cửa hàng mà POS JWT chưa bật, hệ thống xác thực lại mật khẩu qua Supabase và kiểm tra membership trước khi áp dụng cửa hàng đích.
+- Việc đổi session sang AI Bum chạy nền và không được phép chặn đăng nhập POS.
+- Không thay đổi schema database, tài khoản nhân viên, quyền cửa hàng hay repository contract.
+
+### Kiểm tra
+- Target `flutter analyze`: **Không có issue**.
+- `flutter test --no-pub`: **190 passed, 8 skipped, 0 failed**.
+- `git diff --check`: **Đạt**.
+- `flutter build apk --release --no-pub --no-tree-shake-icons`: **Thành công**.
+  - APK: `build/app/outputs/flutter-apk/app-release.apk` (103,3 MB).
+
+### Cấu hình phát hành
+- Bản Windows/POS thông thường: không truyền `POS_JWT_AUTH_URL`.
+- Chỉ bật POS JWT sau khi có endpoint production HTTPS thật sự trả JSON đúng contract, có secret ký token được quản lý an toàn và đã qua staging test.
+- Không dùng URL Tailscale hoặc AI Bum Dashboard làm endpoint xác thực lõi của POS.

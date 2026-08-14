@@ -3,6 +3,7 @@
 // User Auth Service — Đăng ký / Đăng nhập bằng SĐT + Mật khẩu
 // ─────────────────────────────────────────────────────────────────────────────
 import 'dart:convert';
+import 'dart:async';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -391,6 +392,7 @@ class UserAuthService {
   static Future<AuthResult> login({
     required String phone,
     required String password,
+    PosJwtAuthService? jwtService,
   }) async {
     final normalizedPhone = _normalizePhone(phone);
 
@@ -702,21 +704,26 @@ class UserAuthService {
         }
       }
 
-      // Nếu chỉ có 1 quán → cấp POS JWT trước khi lưu full session
+      // Nếu chỉ có 1 quán: POS JWT chỉ bắt buộc khi endpoint production
+      // được cấu hình rõ bằng POS_JWT_AUTH_URL. Bản build bình thường tiếp tục
+      // dùng phiên Supabase hiện hữu và không phụ thuộc BunServer/Tailscale.
       if (stores.length == 1) {
         final storeId = stores.first.storeId;
-        final jwtRes = await PosJwtAuthService().requestPosJwt(
-          phone: normalizedPhone,
-          password: password,
-          storeId: storeId,
-        );
-        if (jwtRes['success'] != true) {
-          await PosJwtAuthService().clearPosJwt();
-          await PosJwtAuthService().applyAuthToSupabase(null);
-          return AuthResult.error(
-            jwtRes['message'] as String? ??
-                'Cấp token xác thực cửa hàng thất bại.',
+        final posJwtService = jwtService ?? PosJwtAuthService();
+        if (posJwtService.isConfigured) {
+          final jwtRes = await posJwtService.requestPosJwt(
+            phone: normalizedPhone,
+            password: password,
+            storeId: storeId,
           );
+          if (jwtRes['success'] != true) {
+            await posJwtService.clearPosJwt();
+            await posJwtService.applyAuthToSupabase(null);
+            return AuthResult.error(
+              jwtRes['message'] as String? ??
+                  'Cấp token xác thực cửa hàng thất bại.',
+            );
+          }
         }
 
         await _saveFullSession(
@@ -726,13 +733,15 @@ class UserAuthService {
           membership: stores.first,
         );
 
-        try {
-          await FeedbackService().exchangeSessionWithPassword(
+        final feedbackService = FeedbackService();
+        // AI Bum là dịch vụ bổ sung: chạy nền và không được chặn đăng nhập POS.
+        unawaited(
+          feedbackService.exchangeSessionWithPassword(
             phone: normalizedPhone,
             password: password,
             storeId: storeId,
-          );
-        } catch (_) {}
+          ),
+        );
       } else {
         // Nhiều quán hoặc 0 quán → lưu session cơ bản
         await _saveSession(
@@ -1059,7 +1068,7 @@ class UserAuthService {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // CHỌN QUÁN (Mandatory Password POS JWT Verification & Atomic Rollback)
+  // CHỌN QUÁN (Password Verification + Optional POS JWT + Atomic Rollback)
   // ═══════════════════════════════════════════════════════════════════════════
   static bool _isStoreSwitching = false;
 
@@ -1093,26 +1102,50 @@ class UserAuthService {
       originalStoreCode = prefs.getString(_kStoreCode);
       originalRole = prefs.getString(_kRole);
       originalIsOwner = prefs.getBool(_kIsOwner);
-      originalToken = await posJwtService.getStoredPosJwt();
+      if (posJwtService.isConfigured) {
+        originalToken = await posJwtService.getStoredPosJwt();
 
-      final jwtRes = await posJwtService.requestPosJwt(
-        phone: effectivePhone,
-        password: password.trim(),
-        storeId: membership.storeId,
-      );
-
-      if (jwtRes['success'] != true) {
-        await _rollbackSnapshot(
-          posJwtService: posJwtService,
-          prefs: prefs,
-          token: originalToken,
-          storeId: originalStoreId,
-          storeName: originalStoreName,
-          storeCode: originalStoreCode,
-          role: originalRole,
-          isOwner: originalIsOwner,
+        final jwtRes = await posJwtService.requestPosJwt(
+          phone: effectivePhone,
+          password: password.trim(),
+          storeId: membership.storeId,
         );
-        return false;
+
+        if (jwtRes['success'] != true) {
+          await _rollbackSnapshot(
+            posJwtService: posJwtService,
+            prefs: prefs,
+            token: originalToken,
+            storeId: originalStoreId,
+            storeName: originalStoreName,
+            storeCode: originalStoreCode,
+            role: originalRole,
+            isOwner: originalIsOwner,
+          );
+          return false;
+        }
+      } else {
+        // Không có POS JWT endpoint: xác minh lại mật khẩu qua luồng Supabase
+        // chuẩn trước khi đổi quán, không bỏ qua bước xác thực người dùng.
+        final authResult = await login(
+          phone: effectivePhone,
+          password: password.trim(),
+          jwtService: posJwtService,
+        );
+        final hasMembership = authResult.stores.any(
+          (store) => store.storeId == membership.storeId,
+        );
+        if (!authResult.isSuccess || !hasMembership) {
+          await _restoreLegacySnapshot(
+            prefs: prefs,
+            storeId: originalStoreId,
+            storeName: originalStoreName,
+            storeCode: originalStoreCode,
+            role: originalRole,
+            isOwner: originalIsOwner,
+          );
+          return false;
+        }
       }
 
       await _applyMembershipToPrefs(prefs, membership);
@@ -1120,20 +1153,66 @@ class UserAuthService {
     } catch (_) {
       try {
         final prefs = await SharedPreferences.getInstance();
-        await _rollbackSnapshot(
-          posJwtService: posJwtService,
-          prefs: prefs,
-          token: originalToken,
-          storeId: originalStoreId,
-          storeName: originalStoreName,
-          storeCode: originalStoreCode,
-          role: originalRole,
-          isOwner: originalIsOwner,
-        );
+        if (posJwtService.isConfigured) {
+          await _rollbackSnapshot(
+            posJwtService: posJwtService,
+            prefs: prefs,
+            token: originalToken,
+            storeId: originalStoreId,
+            storeName: originalStoreName,
+            storeCode: originalStoreCode,
+            role: originalRole,
+            isOwner: originalIsOwner,
+          );
+        } else {
+          await _restoreLegacySnapshot(
+            prefs: prefs,
+            storeId: originalStoreId,
+            storeName: originalStoreName,
+            storeCode: originalStoreCode,
+            role: originalRole,
+            isOwner: originalIsOwner,
+          );
+        }
       } catch (_) {}
       return false;
     } finally {
       _isStoreSwitching = false;
+    }
+  }
+
+  static Future<void> _restoreLegacySnapshot({
+    required SharedPreferences prefs,
+    required String? storeId,
+    required String? storeName,
+    required String? storeCode,
+    required String? role,
+    required bool? isOwner,
+  }) async {
+    if (storeId != null) {
+      await prefs.setString(_kStoreId, storeId);
+    } else {
+      await prefs.remove(_kStoreId);
+    }
+    if (storeName != null) {
+      await prefs.setString(_kStoreName, storeName);
+    } else {
+      await prefs.remove(_kStoreName);
+    }
+    if (storeCode != null) {
+      await prefs.setString(_kStoreCode, storeCode);
+    } else {
+      await prefs.remove(_kStoreCode);
+    }
+    if (role != null) {
+      await prefs.setString(_kRole, role);
+    } else {
+      await prefs.remove(_kRole);
+    }
+    if (isOwner != null) {
+      await prefs.setBool(_kIsOwner, isOwner);
+    } else {
+      await prefs.remove(_kIsOwner);
     }
   }
 
@@ -1193,6 +1272,14 @@ class UserAuthService {
   }) async {
     final posJwtService = jwtService ?? PosJwtAuthService();
     final session = await getCurrentSession();
+
+    if (!posJwtService.isConfigured) {
+      // Một process mới chưa mang auth token cũ trong Supabase client. Chỉ dọn
+      // secure storage và giữ phiên đăng nhập Supabase hiện hữu của POS.
+      await posJwtService.clearPosJwt();
+      return session != null && session.storeId != null;
+    }
+
     if (session == null || session.storeId == null) {
       await posJwtService.applyAuthToSupabase(null);
       return false;

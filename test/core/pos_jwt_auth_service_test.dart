@@ -90,6 +90,7 @@ void main() {
         );
 
         final service = PosJwtAuthService(
+          backendUrl: 'https://auth.example.com',
           httpClient: mockClient,
           secureStorage: mockStorage,
         );
@@ -155,6 +156,7 @@ void main() {
         );
 
         final service = PosJwtAuthService(
+          backendUrl: 'https://auth.example.com',
           httpClient: mockClient,
           secureStorage: mockStorage,
           authApplier: (token) async {},
@@ -193,6 +195,7 @@ void main() {
       );
 
       final service = PosJwtAuthService(
+        backendUrl: 'https://auth.example.com',
         httpClient: mockClient,
         secureStorage: mockStorage,
       );
@@ -243,5 +246,36 @@ void main() {
         expect(applied, isFalse);
       },
     );
+
+    test(
+      '6. disabled by default when no production endpoint is configured',
+      () {
+        final service = PosJwtAuthService();
+        expect(service.isConfigured, isFalse);
+      },
+    );
+
+    test('7. accepts only a clean HTTPS production origin', () {
+      expect(
+        PosJwtAuthService(backendUrl: 'https://auth.example.com/').isConfigured,
+        isTrue,
+      );
+      expect(
+        PosJwtAuthService(backendUrl: 'http://auth.example.com').isConfigured,
+        isFalse,
+      );
+      expect(
+        PosJwtAuthService(
+          backendUrl: 'https://user:pass@auth.example.com',
+        ).isConfigured,
+        isFalse,
+      );
+      expect(
+        PosJwtAuthService(
+          backendUrl: 'https://auth.example.com/base',
+        ).isConfigured,
+        isFalse,
+      );
+    });
   });
 }
