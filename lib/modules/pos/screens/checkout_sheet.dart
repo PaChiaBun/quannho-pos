@@ -13,6 +13,7 @@ import '../../../modules/finance/providers/finance_providers.dart'; // invalidat
 import '../../../modules/loyalty/repository/loyalty_repository.dart';
 import '../../../modules/bill_printer/screens/bill_preview_screen.dart';
 import '../../../modules/bill_printer/providers/printer_settings_provider.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../screens/pos_screen.dart' show billPrinterModuleActiveProvider;
 import '../models/coupon_model.dart';
@@ -678,7 +679,18 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
         // Tự động in bill phân trạm
         try {
           final settings = ref.read(printerSettingsProvider);
-          if (_billData != null && shouldAutoPrintLocally(isWeb: kIsWeb, centralRoutingEnabled: settings.centralPrintRoutingEnabled)) {
+          final hasPrintServerOwner = settings.ownerState != null;
+          if (settings.centralPrintRoutingEnabled && !hasPrintServerOwner) {
+            AppLogger.info(
+              'printer',
+              '[Checkout Print] Local fallback: central routing enabled but Print Server Owner is missing.',
+            );
+          }
+          if (_billData != null && shouldAutoPrintLocally(
+            isWeb: kIsWeb,
+            centralRoutingEnabled: settings.centralPrintRoutingEnabled,
+            hasPrintServerOwner: hasPrintServerOwner,
+          )) {
             if (settings.autoPrintCheckout && settings.autoPrintKitchen) {
               StationPrinterDispatcher.printBill(_billData!, settings);
             } else if (settings.autoPrintCheckout) {

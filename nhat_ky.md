@@ -2517,3 +2517,35 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
 - Bản Windows/POS thông thường: không truyền `POS_JWT_AUTH_URL`.
 - Chỉ bật POS JWT sau khi có endpoint production HTTPS thật sự trả JSON đúng contract, có secret ký token được quản lý an toàn và đã qua staging test.
 - Không dùng URL Tailscale hoặc AI Bum Dashboard làm endpoint xác thực lõi của POS.
+
+---
+
+## 2026-08-14: Sửa không in bill thanh toán khi chưa có Print Server Owner
+
+### Nguyên nhân
+- Cấu hình cửa hàng đang bật `centralPrintRoutingEnabled=true` và `autoPrintCheckout=true`, nhưng chưa có thiết bị nào nhận vai trò `Print Server Owner`.
+- Chính sách cũ chặn in cục bộ ngay khi định tuyến trung tâm được bật, không kiểm tra Print Server Owner có thực sự tồn tại hay không.
+- Vì vậy bill tạm tính vẫn in được qua thao tác in trực tiếp, còn luồng thanh toán bị chặn trước khi gọi `StationPrinterDispatcher`; không có thiết bị nào nhận việc in bill thanh toán.
+
+### Thay đổi
+- Mở rộng `shouldAutoPrintLocally` với trạng thái `hasPrintServerOwner`.
+- Trên ứng dụng native Windows/Android:
+  - Định tuyến trung tâm tắt: tiếp tục in cục bộ như cũ.
+  - Định tuyến trung tâm bật và có Owner: không in cục bộ, chỉ Owner xử lý để tránh in trùng.
+  - Định tuyến trung tâm bật nhưng thiếu Owner: tự động fallback về in cục bộ để bill thanh toán không bị mất.
+- Flutter Web vẫn tuyệt đối không tự động in nền.
+- Áp dụng cùng một chính sách tại cả luồng thanh toán POS và thanh toán tại Bàn; luồng phiếu bếp tại Bàn cũng dùng đủ trạng thái Owner.
+- Thêm log `[Checkout Print] Local fallback...` khi fallback được kích hoạt và log lỗi trạm Thu ngân nếu dispatch thất bại.
+- Không thay đổi schema Supabase, repository contract, cấu hình máy in hoặc kiến trúc Print Server.
+
+### Kiểm tra
+- `git diff --check`: **Đạt**.
+- `flutter analyze` trên 4 file liên quan: **không có compile error**; còn warning/info cũ trong các màn hình lớn.
+- Bổ sung test khóa chính sách cho Web, native có Owner, native thiếu Owner và chế độ không định tuyến trung tâm.
+- `flutter test --no-pub`: **190 passed, 8 skipped, 0 failed**.
+- Bản Android release đã build thành công trong vòng kiểm tra trước đó với cùng thay đổi logic.
+
+### Phát hành Windows
+- Đây là thay đổi logic Dart nằm trong ứng dụng client, nên **bắt buộc build và cài bản Windows mới**; thay đổi cấu hình Supabase không thể tự cập nhật phần sửa này vào bản đang cài.
+- Chưa kích hoạt workflow phát hành Windows trong bước sửa mã này.
+- Sau khi cài bản mới, thử cả thanh toán tiền mặt và chuyển khoản. Khi cửa hàng chưa có Print Server Owner, log phải có dòng fallback và máy Thu ngân phải in đúng một bill thanh toán.

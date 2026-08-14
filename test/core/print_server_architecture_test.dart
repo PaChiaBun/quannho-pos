@@ -99,10 +99,31 @@ void main() {
 
   group('Print Server Architecture & Web Protection Integration Test Suite', () {
     test('1. shouldAutoPrintLocally Policy enforces single source of truth', () {
-      expect(shouldAutoPrintLocally(isWeb: true, centralRoutingEnabled: false), isFalse);
-      expect(shouldAutoPrintLocally(isWeb: true, centralRoutingEnabled: true), isFalse);
-      expect(shouldAutoPrintLocally(isWeb: false, centralRoutingEnabled: true), isFalse);
-      expect(shouldAutoPrintLocally(isWeb: false, centralRoutingEnabled: false), isTrue);
+      expect(shouldAutoPrintLocally(
+        isWeb: true,
+        centralRoutingEnabled: false,
+        hasPrintServerOwner: false,
+      ), isFalse);
+      expect(shouldAutoPrintLocally(
+        isWeb: true,
+        centralRoutingEnabled: true,
+        hasPrintServerOwner: false,
+      ), isFalse);
+      expect(shouldAutoPrintLocally(
+        isWeb: false,
+        centralRoutingEnabled: true,
+        hasPrintServerOwner: true,
+      ), isFalse);
+      expect(shouldAutoPrintLocally(
+        isWeb: false,
+        centralRoutingEnabled: true,
+        hasPrintServerOwner: false,
+      ), isTrue, reason: 'Native checkout must print locally when central routing has no owner');
+      expect(shouldAutoPrintLocally(
+        isWeb: false,
+        centralRoutingEnabled: false,
+        hasPrintServerOwner: false,
+      ), isTrue);
     });
 
     test('2. shouldBootstrapLegacyOwner Pure Function Rules', () {

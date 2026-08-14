@@ -911,8 +911,9 @@ class PrinterConfig {
 bool shouldAutoPrintLocally({
   required bool isWeb,
   required bool centralRoutingEnabled,
+  required bool hasPrintServerOwner,
 }) =>
-    !isWeb && !centralRoutingEnabled;
+    !isWeb && (!centralRoutingEnabled || !hasPrintServerOwner);
 
 bool shouldBootstrapLegacyOwner({
   required bool isWeb,

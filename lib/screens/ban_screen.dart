@@ -3706,8 +3706,20 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
       // Tự động in hóa đơn thu ngân khi thanh toán tại bàn (nếu bật cấu hình)
       try {
+        final hasPrintServerOwner = printerSettingsCached.ownerState != null;
+        if (printerSettingsCached.centralPrintRoutingEnabled &&
+            !hasPrintServerOwner) {
+          AppLogger.info(
+            'printer',
+            '[Checkout Print] Local fallback: central routing enabled but Print Server Owner is missing.',
+          );
+        }
         if (printerSettingsCached.autoPrintCheckout &&
-            shouldAutoPrintLocally(isWeb: kIsWeb, centralRoutingEnabled: printerSettingsCached.centralPrintRoutingEnabled)) {
+            shouldAutoPrintLocally(
+              isWeb: kIsWeb,
+              centralRoutingEnabled: printerSettingsCached.centralPrintRoutingEnabled,
+              hasPrintServerOwner: hasPrintServerOwner,
+            )) {
           final List<BillItem> billItems = [];
           for (final item in items) {
             billItems.add(
@@ -3741,11 +3753,17 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             waiterName: _resolveWaiterName(items, session?.displayName),
           );
 
-          await StationPrinterDispatcher.printBill(
+          final dispatchResult = await StationPrinterDispatcher.printBill(
             billData,
             printerSettingsCached,
             onlyReceipt: true,
           );
+          if (!dispatchResult.isStationSuccess('cashier')) {
+            AppLogger.info(
+              'printer',
+              '[Checkout Print] In hoa don thanh toan that bai: ${dispatchResult.stationResults['cashier']?.errorMessage ?? 'UNKNOWN_PRINT_ERROR'}',
+            );
+          }
         }
       } catch (e) {
         debugPrint('[Checkout Print] ❌ Lỗi in hóa đơn thanh toán bàn: $e');
@@ -4087,7 +4105,11 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     try {
       final settings = ref.read(printerSettingsProvider);
       if (settings.autoPrintKitchen &&
-          shouldAutoPrintLocally(isWeb: kIsWeb, centralRoutingEnabled: settings.centralPrintRoutingEnabled)) {
+          shouldAutoPrintLocally(
+            isWeb: kIsWeb,
+            centralRoutingEnabled: settings.centralPrintRoutingEnabled,
+            hasPrintServerOwner: settings.ownerState != null,
+          )) {
         final List<BillItem> billItems = [];
         for (final item in unsent) {
           final pInfo = productInfoMap[item.productId];
