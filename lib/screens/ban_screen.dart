@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
@@ -3706,7 +3707,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       // Tự động in hóa đơn thu ngân khi thanh toán tại bàn (nếu bật cấu hình)
       try {
         if (printerSettingsCached.autoPrintCheckout &&
-            !printerSettingsCached.autoPrintServer) {
+            shouldAutoPrintLocally(isWeb: kIsWeb, centralRoutingEnabled: printerSettingsCached.centralPrintRoutingEnabled)) {
           final List<BillItem> billItems = [];
           for (final item in items) {
             billItems.add(
@@ -4085,7 +4086,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     // Tự động in bếp bằng StationPrinterDispatcher (hỗ trợ phân chia 4 trạm in mới)
     try {
       final settings = ref.read(printerSettingsProvider);
-      if (settings.autoPrintKitchen && !settings.autoPrintServer) {
+      if (settings.autoPrintKitchen &&
+          shouldAutoPrintLocally(isWeb: kIsWeb, centralRoutingEnabled: settings.centralPrintRoutingEnabled)) {
         final List<BillItem> billItems = [];
         for (final item in unsent) {
           final pInfo = productInfoMap[item.productId];

@@ -83,6 +83,7 @@ const kAllActions = [
   'tinhluong.approve_payroll',
   'tinhluong.srm_settings',
   'tinhluong.srm_review',
+  'printer.manage_server',
 ];
 
 // Label hiển thị trên UI — key → (tiêu đề, mô tả, module group)
@@ -138,6 +139,11 @@ const kActionMeta = <String, (String, String, String)>{
     'Duyệt/từ chối đề xuất ghi nhận',
     'Lương',
   ),
+  'printer.manage_server': (
+    'Quản lý Máy chủ in',
+    'Đăng ký, chuyển đổi & cấu hình Print Server',
+    'Máy in',
+  ),
 };
 
 // Quyền action mặc định mỗi role (restrictive by default — owner luôn có tất cả)
@@ -158,6 +164,7 @@ const kDefaultActionPerms = <String, List<String>>{
     'tinhluong.approve_payroll',
     'tinhluong.srm_settings',
     'tinhluong.srm_review',
+    'printer.manage_server',
   ],
   'manager': [
     'pos.cancel_bill',
@@ -175,6 +182,7 @@ const kDefaultActionPerms = <String, List<String>>{
     'tinhluong.approve_payroll',
     'tinhluong.srm_settings',
     'tinhluong.srm_review',
+    'printer.manage_server',
   ],
   'cashier': ['pos.apply_discount', 'pos.view_history', 'pos.checkout'],
   'waiter': <String>[],

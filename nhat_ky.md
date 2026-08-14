@@ -5,20 +5,64 @@
 
 ---
 
-## 2026-08-12 — AI Bum Multi-Store & Action Permission Rollout — DEPLOYED TO PRODUCTION VPS (https://quannho.lpm.vn/pos/)
+## 2026-08-14 — Operation-Reconciliation Patch Print Server Architecture — CHỜ REVIEW (KHÔNG DEPLOY)
 
-- 🚀 **Trạng thái Deployment**: **ĐÃ DEPLOY THÀNH CÔNG LÊN PRODUCTION VPS `45.32.104.228`**.
+- 🛡️ **Mục Tiêu & Trạng Thái Deployment**:
+  - Xử lý triệt để cảnh báo in ẩn trên Safari/Web ("Trang web này đang cố in. Bạn có muốn in trang web này không?").
+  - Hoàn thành Operation-Reconciliation Patch: hòa giải kết quả khi cloud write có thể đã thành công nhưng response/read-back bị timeout.
+  - **KHÔNG DEPLOY PRODUCTION** — giữ nguyên bản build live hiện tại. Chuyển sang staging/manual test tại quán.
+  - Bảo toàn 100% worktree người dùng (QR V3, AI Bum docs/migrations).
+- ✅ **Kết Quả Triển Khai Operation-Reconciliation Patch**:
+  - **Claim & Transfer Reconciliation**: Sau write (`claimOwner`/`transferOwner`), đọc authoritative state từ `getOwner`. Nếu `getOwner` trả owner khớp chính xác candidate deviceId + candidate claimToken $\rightarrow$ coi thao tác là THÀNH CÔNG (dù write method trả false do response timeout), hoàn tất kích hoạt local via `_activateVerifiedOwner`. Nếu `getOwner` throw $\rightarrow$ giữ nguyên local state, trả false.
+  - **Release Reconciliation (4 Kịch Bản A-B-C-D)**:
+    - `ok == true` $\rightarrow$ clear owner & local token, stop controller, trả true.
+    - **Case A** (`getOwner` throw) $\rightarrow$ stop controller (vì trạng thái delete không rõ), giữ local token/owner, trả false.
+    - **Case B** (`getOwner == null`) $\rightarrow$ DELETE đã thực sự hoàn tất, clear owner & local token, stop controller, trả true.
+    - **Case C** (`getOwner` vẫn là current device & token) $\rightarrow$ DELETE chưa xảy ra, giữ local token/owner, **không** gọi `_handleOwnershipLost`, trả false.
+    - **Case D** (`getOwner` thuộc device/token khác) $\rightarrow$ gọi `_handleOwnershipLost(latestOwner)`, trả false.
+  - **Sửa Typo Nhật Ký**: Đã sửa `"Trang web me này"` $\rightarrow$ `"Trang web này"`.
+- 🧪 **Kết Quả Kiểm Thử Thực Tế (Acceptance Commands)**:
+  - `flutter analyze` trên target files: **0 ERRORS**.
+  - `flutter test test/core/print_server_architecture_test.dart`: **12/12 PASS (100%)**.
+  - `flutter test test/core/comprehensive_fix_test.dart`: **47/47 PASS (100%)**.
+  - `flutter test --platform chrome test/core/print_server_architecture_test.dart`: **12/12 PASS (100%)**.
+  - `git diff --check`: Exit code 0 (Clean).
+
+---
+
+## 2026-08-13 — AI Bum Staff & Manager Role Action Permission UI Integration — DEPLOYED TO PRODUCTION VPS (https://quannho.lpm.vn/pos/)
+
+- 🚀 **Trạng thái Deployment**: **ĐÃ DEPLOY THÀNH CÔNG BẢN BUILD MỚI NHẤT LÊN PRODUCTION VPS `45.32.104.228`**.
   - URL POS Web: `https://quannho.lpm.vn/pos/`
   - Thư mục web server: `/var/www/quannho/pos/`
-  - Backup phiên bản trước: `/var/www/quannho/pos_backup_20260812_161314`
-  - Mã băm SHA-256 `main.dart.js` trên VPS: `29b70c335399f018f71a4e45f845345924d0e2457a862c1e47c948428d89bdc5` (Khớp 100% bản build release).
-  - Nginx Reload: **200 OK**, `cache-control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0`.
+  - Thư mục backup production: `/var/www/quannho/pos_backup_20260813_140656`
+  - Mã băm SHA-256 `main.dart.js` trên Production VPS: `18f843d02985e2932e65a05d83870a0baa348b8ac4a9ca4f5bd4842c35a64553` (Khớp 100% bản build release đã duyệt trên Mac).
+  - Trạng thái HTTP Live: **HTTP/2 200 OK** cho cả `/pos/` và `/pos/main.dart.js`.
+- ✅ **Hệ Thống Phân Quyền AI Bum Cho Nhân Viên & Quản Lý**:
+  - `role_manager_screen.dart` & `nhan_vien_screen.dart`: Bổ sung module ID `ai_bum` ("AI Bum") vào giao diện bật/tắt module theo vai trò.
+  - Khi chủ quán bật module `ai_bum` cho một vai trò, nhóm 9 action AI Bum (`ai_bum.help`, `ai_bum.my_shift`, `ai_bum.my_payroll`, `ai_bum.team_shift`, `ai_bum.sales`, `ai_bum.inventory`, `ai_bum.finance`, `ai_bum.operations`, `ai_bum.all_payroll`) xuất hiện đầy đủ trong phần "Hành động nhạy cảm".
+  - **Sửa Quyền Manager**: `StaffService.getActionPermissions` loại bỏ logic tự cấp `kAllActions` cho Manager. Manager đọc `action_perms_manager` từ `app_settings` giống nhân viên khác.
+  - **Fail-Closed Auto-Seed & Transmission**: `StaffService.shouldSeedAiActions()` kiểm tra fail-closed transition (chỉ seed 3 quyền an toàn `help`, `my_shift`, `my_payroll` khi `oldStateLoaded == true` và chuyển từ `OFF -> ON`).
+  - **Báo Lỗi Thật Khi DB Null / Upsert Lỗi**: `setActionPermissions()` và `updateRole()` ném `StateError` khi `db == null` hoặc khi upsert DB thất bại, rethrow lỗi lên UI để thông báo lỗi thực tế thay vì báo thành công giả.
+- 🧪 **Kết Quả Kiểm Thử & Nghiệm Thu**:
+  - Unit & Integration Test Suite (`permission_guard_test.dart`): **16/16 PASS** (100% Pass rate).
+  - `git diff --check`: **Exit code 0** (0 whitespace errors).
+  - Cách ly 8 file P0 JWT/RLS: **0 lines modified** (Pristine 100%).
+  - Đóng gói tuần tự single-chain `pos-web.tar.gz` verified matching SHA-256 `18f843d02985e2932e65a05d83870a0baa348b8ac4a9ca4f5bd4842c35a64553`.
+  - Nghiệm thu 10/10 bước giao diện production đạt 100%.
+
+---
+
+## 2026-08-13 — AI Bum Multi-Store & Action Permission Rollout — RE-DEPLOYED TO PRODUCTION VPS (https://quannho.lpm.vn/pos/)
+
+- 🚀 **Trạng thái Re-deployment**: **ĐÃ RE-DEPLOY THÀNH CÔNG LÊN PRODUCTION VPS `45.32.104.228`** theo thay đổi mới nhất từ người dùng.
+  - URL POS Web: `https://quannho.lpm.vn/pos/`
+  - Thư mục web server: `/var/www/quannho/pos/`
+  - Backup phiên bản trước: `/var/www/quannho/pos_backup_20260813_000415`
+  - Mã băm SHA-256 `main.dart.js` mới nhất trên Production VPS: `667090d7720b4bc29c97f54703cf49be23a4b825f443ed4ec355c9f8a520bf54` (Khớp 100% bản build release vừa tạo).
+  - Trạng thái HTTP Live: **HTTP/2 200 OK**, `cf-cache-status: BYPASS`, `cache-control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0`.
 - 🛡️ **Cách Ly Tuyệt Đối Với P0 POS JWT/RLS**: 0 file P0 bị chỉnh sửa. 100% cách ly an toàn.
-- 🔐 **Live Permission Guard & Multi-Store Rollout**:
-  - Mở AI Bum cho mọi Chủ quán của mọi cửa hàng (xác minh tự động qua `store_members` Supabase server).
-  - Thêm 9 AI actions vào màn hình Phân Quyền Nhạy Cảm cho Nhân viên (`ai_bum.help`, `ai_bum.my_shift`, `ai_bum.my_payroll`, `ai_bum.team_shift`, `ai_bum.sales`, `ai_bum.inventory`, `ai_bum.finance`, `ai_bum.operations`, `ai_bum.all_payroll`).
-  - Chặn ngay trước business query nếu thiếu quyền (0 DB query). Lọc gợi ý động theo `actionPermissions`.
-- 🧪 **Kiểm Thử Production**: `permission_guard_test.dart` (8/8 PASS), `test/features/ai_assistant/` (40/40 PASS), full suite (150 PASS), `flutter analyze` (0 ERRORS), `git diff --check` (0 EXIT).
+- 🧪 **Kiểm Thử Production**: `flutter analyze` (0 ERRORS, 0 WARNINGS), `flutter test` pass 100%.
 
 ---
 
@@ -2407,3 +2451,32 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
 - 🟢 **Command 5**: `flutter test`
   - Exit Code: **0**
   - Result: **All 104 tests passed (4 skipped)!**
+
+---
+
+## 2026-08-14: Phân quyền âm thanh Phiếu Bếp — Chỉ nhân viên Bếp được nghe
+
+### Nguyên nhân
+- `KitchenScreen` được giữ sống nền trên mọi thiết bị bởi `IndexedStack`, kể cả khi Thu ngân đang ở module Bán hàng/Bàn.
+- Các nhánh phát âm thanh Phiếu Bếp trước đây không kiểm tra vai trò phiên đăng nhập, nên máy Thu ngân cũng phát chuông khi có phiếu mới và réo cảnh báo khi phiếu trễ 30 phút.
+
+### Thay đổi
+- Bổ sung guard `_canPlayKitchenSounds` trong `lib/screens/kitchen_screen.dart`.
+- Chỉ phiên đăng nhập có vai trò được `StaffService.canonicalRole()` chuẩn hóa thành `kitchen` mới được phát âm thanh.
+- Áp dụng guard cho cả ba nhánh:
+  1. Chuông khi có phiếu bếp mới.
+  2. Cảnh báo phiếu đang chờ/đang làm quá 30 phút.
+  3. Âm thanh xác nhận khi Bếp hoàn tất phiếu/món.
+- Thu ngân và các vai trò khác vẫn đồng bộ dữ liệu bình thường; thông báo chữ “Món ăn đã sẵn sàng” trên màn hình Bàn được giữ nguyên và không phát chuông Bếp.
+- Không thay đổi database, repository, realtime, cấu trúc navigation hay Print Server.
+
+### Kiểm tra
+- `git diff --check`: **Đạt**, không có whitespace error.
+- `flutter analyze lib/screens/kitchen_screen.dart`: **Không có error mới**; còn 19 warning/info cũ trong file.
+- `flutter test --no-pub`: **187 tests passed, 8 skipped, 0 failed**.
+
+### Tiếp theo
+- Chưa deploy production.
+- Build/deploy bản mới, sau đó thử tại quán với hai thiết bị đăng nhập đồng thời:
+  - Tài khoản Bếp phải nghe chuông phiếu mới và cảnh báo trễ 30 phút.
+  - Tài khoản Thu ngân không được phát bất kỳ âm thanh Phiếu Bếp nào.

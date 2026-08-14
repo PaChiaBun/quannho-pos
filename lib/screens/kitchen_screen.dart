@@ -9,7 +9,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/providers/app_providers.dart';
+import '../core/providers/session_provider.dart';
 import '../core/repositories/kitchen_repository.dart';
+import '../core/services/staff_service.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
 import '../core/utils/responsive.dart';
@@ -221,6 +223,14 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   final Set<String> _overdueCardIds    = {};
   Timer? _overdueCheckTimer;
 
+  /// Âm thanh Phiếu Bếp thuộc riêng phiên đăng nhập của nhân viên Bếp.
+  /// KitchenScreen luôn được giữ sống trong IndexedStack, kể cả trên máy Thu ngân,
+  /// nên không thể dùng trạng thái mounted/visible để quyết định phát chuông.
+  bool get _canPlayKitchenSounds {
+    final role = ref.read(sessionProvider)?.role ?? '';
+    return StaffService.canonicalRole(role) == 'kitchen';
+  }
+
   // Optimistic UI state
   final Set<String> _optimisticStartedTickets = {};
   final Set<String> _optimisticDoneTickets = {};
@@ -309,7 +319,9 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
       }
     }
 
-    if (hasNewOverdue) _KitchenSoundService.playAlarm();
+    if (hasNewOverdue && _canPlayKitchenSounds) {
+      _KitchenSoundService.playAlarm();
+    }
     if (mounted) {
       setState(() {
         _overdueCardIds
@@ -320,7 +332,9 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   }
 
   void _onNewTicket() {
-    _KitchenSoundService.playBell();
+    if (_canPlayKitchenSounds) {
+      _KitchenSoundService.playBell();
+    }
     setState(() => _newTicketBlink = true);
     _blinkTimer?.cancel();
     _blinkTimer = Timer(const Duration(seconds: 5), () {
@@ -748,7 +762,9 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           if (!item.done) repo.toggleItemDone(item.id, ticket.id, true);
         }
       }
-      _KitchenSoundService.playDone();
+      if (_canPlayKitchenSounds) {
+        _KitchenSoundService.playDone();
+      }
     } else if (action == 'reopen') {
       setState(() {
         if (stationFilter == 'all') {

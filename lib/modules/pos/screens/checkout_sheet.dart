@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/services.dart';
@@ -677,7 +678,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
         // Tự động in bill phân trạm
         try {
           final settings = ref.read(printerSettingsProvider);
-          if (_billData != null && !settings.autoPrintServer) {
+          if (_billData != null && shouldAutoPrintLocally(isWeb: kIsWeb, centralRoutingEnabled: settings.centralPrintRoutingEnabled)) {
             if (settings.autoPrintCheckout && settings.autoPrintKitchen) {
               StationPrinterDispatcher.printBill(_billData!, settings);
             } else if (settings.autoPrintCheckout) {
