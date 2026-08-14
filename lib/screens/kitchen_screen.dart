@@ -32,6 +32,11 @@ const _kCardBorder = Color(0xFF2D3748);
 // Alias cho backward compat với code cũ còn dùng _TicketWithItems
 typedef _TicketWithItems = TicketWithItems;
 
+@visibleForTesting
+bool shouldPlayKitchenSoundsForRole(String? role) {
+  return StaffService.canonicalRole(role ?? '') == 'kitchen';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PROVIDERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -227,8 +232,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   /// KitchenScreen luôn được giữ sống trong IndexedStack, kể cả trên máy Thu ngân,
   /// nên không thể dùng trạng thái mounted/visible để quyết định phát chuông.
   bool get _canPlayKitchenSounds {
-    final role = ref.read(sessionProvider)?.role ?? '';
-    return StaffService.canonicalRole(role) == 'kitchen';
+    return shouldPlayKitchenSoundsForRole(ref.read(sessionProvider)?.role);
   }
 
   // Optimistic UI state

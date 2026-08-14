@@ -2473,7 +2473,13 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
 ### Kiểm tra
 - `git diff --check`: **Đạt**, không có whitespace error.
 - `flutter analyze lib/screens/kitchen_screen.dart`: **Không có error mới**; còn 19 warning/info cũ trong file.
-- `flutter test --no-pub`: **187 tests passed, 8 skipped, 0 failed**.
+- Bổ sung `test/screens/kitchen_sound_policy_test.dart` để khóa hành vi theo vai trò:
+  - `kitchen`, `Bếp`, `Bếp nóng`: được phát âm thanh.
+  - `cashier`, `Thu ngân`, `Phục vụ`, `Quản lý`, `owner` và phiên chưa đăng nhập: không được phát âm thanh.
+- `flutter test --no-pub`: **188 tests passed, 8 skipped, 0 failed**.
+- `flutter build apk --release --no-pub --no-tree-shake-icons`: **Thành công**.
+  - APK: `build/app/outputs/flutter-apk/app-release.apk` (103,3 MB theo Flutter build output).
+  - SHA-256: `5b5e8f96dd858520b0859077891ecfe420cae6f827d4a57259943a2b15b81820`.
 
 ### Tiếp theo
 - Chưa deploy production.
