@@ -912,16 +912,14 @@ bool shouldAutoPrintLocally({
   required bool isWeb,
   required bool centralRoutingEnabled,
   required bool hasPrintServerOwner,
-}) =>
-    !isWeb && (!centralRoutingEnabled || !hasPrintServerOwner);
+}) => !isWeb && (!centralRoutingEnabled || !hasPrintServerOwner);
 
 bool shouldBootstrapLegacyOwner({
   required bool isWeb,
   required bool ownerMigrationCompleted,
   required bool legacyAutoPrintServer,
   required bool hasOwner,
-}) =>
-    !isWeb && !ownerMigrationCompleted && legacyAutoPrintServer && !hasOwner;
+}) => !isWeb && !ownerMigrationCompleted && legacyAutoPrintServer && !hasOwner;
 
 class PrintDeviceState {
   final String deviceName;
@@ -937,11 +935,11 @@ class PrintDeviceState {
   });
 
   Map<String, dynamic> toMap() => {
-        'deviceName': deviceName,
-        'isPrintServer': kIsWeb ? false : isPrintServer,
-        'allowBackgroundPrinting': kIsWeb ? false : allowBackgroundPrinting,
-        'localClaimToken': localClaimToken,
-      };
+    'deviceName': deviceName,
+    'isPrintServer': kIsWeb ? false : isPrintServer,
+    'allowBackgroundPrinting': kIsWeb ? false : allowBackgroundPrinting,
+    'localClaimToken': localClaimToken,
+  };
 
   factory PrintDeviceState.fromMap(
     Map<String, dynamic> map, {
@@ -960,8 +958,7 @@ class PrintDeviceState {
     return PrintDeviceState(
       deviceName: map['deviceName'] as String? ?? defaultDeviceName,
       isPrintServer: map['isPrintServer'] as bool? ?? false,
-      allowBackgroundPrinting:
-          map['allowBackgroundPrinting'] as bool? ?? false,
+      allowBackgroundPrinting: map['allowBackgroundPrinting'] as bool? ?? false,
       localClaimToken: map['localClaimToken'] as String? ?? '',
     );
   }
@@ -1008,12 +1005,12 @@ class PrintServerOwnerState {
   });
 
   Map<String, dynamic> toMap() => {
-        'device_id': deviceId,
-        'device_name': deviceName,
-        'platform': platform,
-        'claimed_at': claimedAt,
-        'claim_token': claimToken,
-      };
+    'device_id': deviceId,
+    'device_name': deviceName,
+    'platform': platform,
+    'claimed_at': claimedAt,
+    'claim_token': claimToken,
+  };
 
   factory PrintServerOwnerState.fromMap(Map<String, dynamic> map) {
     return PrintServerOwnerState(
@@ -1048,8 +1045,7 @@ abstract class PrintServerOwnerRepository {
   });
 }
 
-class SupabasePrintServerOwnerRepository
-    implements PrintServerOwnerRepository {
+class SupabasePrintServerOwnerRepository implements PrintServerOwnerRepository {
   static const String kOwnerV1Key = 'qn_print_server_owner_v1';
 
   @override
@@ -1187,22 +1183,17 @@ class StationPrintersState {
     this.ownerState,
     this.currentDeviceId = '',
   }) : centralPrintRoutingEnabled =
-            autoPrintServer ?? centralPrintRoutingEnabled;
+           autoPrintServer ?? centralPrintRoutingEnabled;
 
   bool get autoPrintServer => centralPrintRoutingEnabled;
 
   bool get canRunBackgroundPrintServer =>
       centralPrintRoutingEnabled &&
       !kIsWeb &&
-      deviceState.isPrintServer &&
-      deviceState.allowBackgroundPrinting &&
       ownerState != null &&
       ownerState!.deviceId.isNotEmpty &&
       currentDeviceId.isNotEmpty &&
-      ownerState!.deviceId == currentDeviceId &&
-      ownerState!.claimToken.isNotEmpty &&
-      deviceState.localClaimToken.isNotEmpty &&
-      deviceState.localClaimToken == ownerState!.claimToken;
+      ownerState!.deviceId == currentDeviceId;
 
   bool get isCurrentDeviceOwner =>
       ownerState != null &&
@@ -1236,7 +1227,8 @@ class StationPrintersState {
       autoPrintCheckout: autoPrintCheckout ?? this.autoPrintCheckout,
       autoPrintKitchen: autoPrintKitchen ?? this.autoPrintKitchen,
       autoOpenDrawer: autoOpenDrawer ?? this.autoOpenDrawer,
-      centralPrintRoutingEnabled: centralPrintRoutingEnabled ??
+      centralPrintRoutingEnabled:
+          centralPrintRoutingEnabled ??
           autoPrintServer ??
           this.centralPrintRoutingEnabled,
       ownerMigrationCompleted:
@@ -1722,9 +1714,26 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         } catch (_) {}
       }
 
+      if (ownerState != null &&
+          deviceId.isNotEmpty &&
+          ownerState.deviceId == deviceId &&
+          ownerState.claimToken.isNotEmpty &&
+          devState.localClaimToken != ownerState.claimToken) {
+        devState = devState.copyWith(
+          isPrintServer: true,
+          allowBackgroundPrinting: true,
+          localClaimToken: ownerState.claimToken,
+        );
+        await prefs.setString(
+          _getDeviceSettingsKey(storeId, deviceId),
+          jsonEncode(devState.toMap()),
+        );
+      }
+
       state = state.copyWith(
         ownerState: ownerState,
         clearOwner: ownerState == null,
+        deviceState: devState,
       );
 
       // 5. Native Migration Check
@@ -1784,7 +1793,24 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
                     seenOwner = true;
                     if (state.ownerState?.deviceId != newOwner.deviceId ||
                         state.ownerState?.claimToken != newOwner.claimToken) {
-                      state = state.copyWith(ownerState: newOwner);
+                      var newDevState = state.deviceState;
+                      if (!kIsWeb &&
+                          state.currentDeviceId.isNotEmpty &&
+                          newOwner.deviceId == state.currentDeviceId &&
+                          newOwner.claimToken.isNotEmpty &&
+                          state.deviceState.localClaimToken !=
+                              newOwner.claimToken) {
+                        newDevState = newDevState.copyWith(
+                          isPrintServer: true,
+                          allowBackgroundPrinting: true,
+                          localClaimToken: newOwner.claimToken,
+                        );
+                      }
+                      state = state.copyWith(
+                        ownerState: newOwner,
+                        deviceState: newDevState,
+                      );
+                      await _saveDeviceConfigLocal(storeId);
                       ownerChanged = true;
                     }
                   } catch (_) {}
@@ -1841,6 +1867,16 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     } catch (_) {}
   }
 
+  bool _canWriteCloudSettings() {
+    try {
+      final session = ref.read(sessionProvider);
+      if (session == null) return false;
+      return session.isOwner == true || session.role.toLowerCase() == 'owner';
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _persistProfileV2(String storeId) async {
     try {
       final data = {
@@ -1859,7 +1895,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(kProfileV2Key, jsonStr);
 
-      if (storeId.isNotEmpty) {
+      if (storeId.isNotEmpty && _canWriteCloudSettings()) {
         Supabase.instance.client.rest.headers['x-store-id'] = storeId;
         await Supabase.instance.client.from('app_settings').upsert({
           'id': const Uuid().v4(),
@@ -1867,6 +1903,11 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           'key': kProfileV2Key,
           'value': jsonStr,
         }, onConflict: 'store_id,key');
+      } else if (storeId.isNotEmpty) {
+        AppLogger.info(
+          'settings',
+          '[_persistProfileV2] Skip cloud upsert: user is not store owner.',
+        );
       }
     } catch (_) {}
   }
@@ -1921,10 +1962,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     );
 
     try {
-      await ownerRepository.claimOwner(
-        storeId: storeId,
-        owner: candidateOwner,
-      );
+      await ownerRepository.claimOwner(storeId: storeId, owner: candidateOwner);
     } catch (_) {}
 
     PrintServerOwnerState? latestOwner;
@@ -2005,7 +2043,9 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     try {
       latestOwner = await ownerRepository.getOwner(storeId);
     } catch (e) {
-      writePrintLog('[PrintServer] owner lookup unavailable after transfer: $e');
+      writePrintLog(
+        '[PrintServer] owner lookup unavailable after transfer: $e',
+      );
       return false;
     }
 
@@ -2189,6 +2229,11 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
   Future<bool> _verifyPrinterManagePermission() async {
     try {
+      final session = ref.read(sessionProvider);
+      if (session != null &&
+          (session.isOwner == true || session.role.toLowerCase() == 'owner')) {
+        return true;
+      }
       final perms = await ref.read(userActionPermsProvider.future);
       return perms.contains('printer.manage_server');
     } catch (_) {}

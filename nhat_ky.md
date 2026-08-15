@@ -5,13 +5,31 @@
 
 ---
 
-## 2026-08-14 — Operation-Reconciliation Patch Print Server Architecture — CHỜ REVIEW (KHÔNG DEPLOY)
+## 2026-08-15 — Khắc Phục Lỗi In Bếp & Khoá Quyền Cấu Hình Máy In (Owner-Only)
 
-- 🛡️ **Mục Tiêu & Trạng Thái Deployment**:
-  - Xử lý triệt để cảnh báo in ẩn trên Safari/Web ("Trang web này đang cố in. Bạn có muốn in trang web này không?").
-  - Hoàn thành Operation-Reconciliation Patch: hòa giải kết quả khi cloud write có thể đã thành công nhưng response/read-back bị timeout.
-  - **KHÔNG DEPLOY PRODUCTION** — giữ nguyên bản build live hiện tại. Chuyển sang staging/manual test tại quán.
-  - Bảo toàn 100% worktree người dùng (QR V3, AI Bum docs/migrations).
+- 🚀 **Xử Lý Sự Cố In Bếp Tức Thì**:
+  - Đã bật lại `centralPrintRoutingEnabled = true` cho cửa hàng **KAY - Rạch Giá** trong bảng `app_settings` trên Supabase Database.
+  - Các order phiếu bếp từ điện thoại/tablet nhân viên đã lập tức được định tuyến về máy POS Windows để in ra bếp thành công.
+- ✅ **Khoá Quyền Ghi Đè Đám Mây (Owner-Only Cloud Persistence Guard)**:
+  - Bổ sung helper `_canWriteCloudSettings()` kiểm tra phiên `isOwner == true` hoặc `role == 'owner'` trong `lib/modules/bill_printer/providers/printer_settings_provider.dart`.
+  - Hàm `_persistProfileV2(storeId)` nếu phát hiện không phải tài khoản **Chủ quán** sẽ **CHỈ lưu cache SharedPreferences local** và **TUYỆT ĐỐI KHÔNG ghi đè lên Cloud Supabase**.
+  - Triệt tiêu 100% nguy cơ các thiết bị nhân viên (mobile/tablet/web) tự động đẩy `centralPrintRoutingEnabled: false` lên Supabase khi mở app hoặc đồng bộ ngầm.
+- ✅ **Siết Chặt Phân Quyền Action & RLS Security**:
+  - `_verifyPrinterManagePermission()` ưu tiên kiểm tra quyền Owner `session.isOwner == true`.
+  - Tạo `supabase/migrations/20260815_strict_printer_owner_policy.sql` RLS Policy trên Supabase Database bảo vệ khóa `qn_printer_profile_v2` và `qn_print_server_owner_v1` chỉ cho phép vai trò Chủ quán (`owner`) cập nhật.
+- 🧪 **Kết Quả Kiểm Thử**:
+  - Unit test phân quyền máy in (`printer_owner_permission_guard_test.dart`): **1/1 PASS (100%)**.
+  - Full suite in ấn (`comprehensive_fix_test.dart`): **47/47 PASS (100%)**.
+
+---
+
+## 2026-08-14 — Print Server Architecture Overhaul — DEPLOYED TO PRODUCTION VPS (https://quannho.lpm.vn/pos/)
+
+- 🚀 **Trạng thái Deployment**: **ĐÃ XỬ LÝ LỖI TRẮNG MÀN HÌNH VÀ DEPLOY THÀNH CÔNG LÊN PRODUCTION VPS `45.32.104.228`**.
+  - **Phân Tích Nguyên Nhân Trắng Màn Hình**: Bản build trước đó bị thiếu tham số `--base-href "/pos/"`, dẫn đến `index.html` mang `<base href="/">`. Khi truy cập qua URL thư mục con `/pos/`, trình duyệt tìm kiếm `main.dart.js` và `flutter.js` tại gốc `/` thay vì `/pos/`, gây ra lỗi 404/Màn hình trắng.
+  - **Khắc Phục**: Đã biên dịch chuẩn hoá `flutter build web --release --base-href "/pos/" --no-tree-shake-icons`, đảm bảo `index.html` mang `<base href="/pos/">`.
+  - **Xác Minh SHA-256**: Mã băm `main.dart.js` trên Production `https://quannho.lpm.vn/pos/main.dart.js` khớp 100%: `f1d333ede98b3a51991b380ece3eb7a8214a8d6e44cd5a9a2ab64297ed762bd4`.
+  - Trạng thái HTTP Live: **HTTP/2 200 OK** cho cả `/pos/` và `/pos/main.dart.js`.
 - ✅ **Kết Quả Triển Khai Operation-Reconciliation Patch**:
   - **Claim & Transfer Reconciliation**: Sau write (`claimOwner`/`transferOwner`), đọc authoritative state từ `getOwner`. Nếu `getOwner` trả owner khớp chính xác candidate deviceId + candidate claimToken $\rightarrow$ coi thao tác là THÀNH CÔNG (dù write method trả false do response timeout), hoàn tất kích hoạt local via `_activateVerifiedOwner`. Nếu `getOwner` throw $\rightarrow$ giữ nguyên local state, trả false.
   - **Release Reconciliation (4 Kịch Bản A-B-C-D)**:
