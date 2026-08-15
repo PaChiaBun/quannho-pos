@@ -132,10 +132,12 @@ class _SessionNotifier extends Notifier<SessionData?> {
     _syncService?.stop();
     _syncService = null;
 
-    // Stop PrintServerLifecycleController if running
+    final storeIdBeforeClear = state?.storeId ?? '';
+
+    // Release active print-server ownership before auth prefs are cleared.
     try {
       final notifier = ref.read(printerSettingsProvider.notifier);
-      notifier.lifecycleController.stop();
+      await notifier.prepareForStoreLogout(storeIdBeforeClear);
     } catch (_) {}
 
     // Persistent clear in SharedPreferences

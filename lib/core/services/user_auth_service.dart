@@ -1390,7 +1390,6 @@ class UserAuthService {
     await prefs.remove('store_id');
     await prefs.remove('store_code');
     await prefs.remove('store_name');
-    await prefs.remove('device_id');
     await prefs.remove('device_role');
 
     // Clear POS PostgREST JWT and Supabase REST/Realtime auth

@@ -17,9 +17,10 @@
 - ✅ **Siết Chặt Phân Quyền Action & RLS Security**:
   - `_verifyPrinterManagePermission()` ưu tiên kiểm tra quyền Owner `session.isOwner == true`.
   - Tạo `supabase/migrations/20260815_strict_printer_owner_policy.sql` RLS Policy trên Supabase Database bảo vệ khóa `qn_printer_profile_v2` và `qn_print_server_owner_v1` chỉ cho phép vai trò Chủ quán (`owner`) cập nhật.
-- 🧪 **Kết Quả Kiểm Thử**:
-  - Unit test phân quyền máy in (`printer_owner_permission_guard_test.dart`): **1/1 PASS (100%)**.
-  - Full suite in ấn (`comprehensive_fix_test.dart`): **47/47 PASS (100%)**.
+- 🚀 **DEPLOYMENT VPS THÀNH CÔNG (https://quannho.lpm.vn/pos/)**:
+  - Đã biên dịch Web release sạch sẽ và upload nén `pos-web.tar.gz` qua SFTP (SSH Key `id_ed25519_lpm_deploy`) giải nén đè trực tiếp lên `/var/www/quannho/pos` trên VPS `45.32.104.228`.
+  - Kiểm tra Nginx response: **HTTP/2 200 OK** live cho `https://quannho.lpm.vn/pos/flutter_bootstrap.js`.
+  - Bản Web POS mới đã tích hợp ô tick **"Máy in"** trong màn hình Phân quyền vai trò và áp dụng bộ lọc khoá quyền ghi đè đám mây cho nhân viên.
 
 ---
 

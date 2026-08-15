@@ -921,6 +921,21 @@ bool shouldBootstrapLegacyOwner({
   required bool hasOwner,
 }) => !isWeb && !ownerMigrationCompleted && legacyAutoPrintServer && !hasOwner;
 
+bool shouldRestorePrintServerOwner({
+  required bool isWeb,
+  required bool centralRoutingEnabled,
+  required bool hasOwner,
+  required bool deviceMarkedPrintServer,
+  required bool allowBackgroundPrinting,
+  required String currentDeviceId,
+}) =>
+    !isWeb &&
+    centralRoutingEnabled &&
+    !hasOwner &&
+    deviceMarkedPrintServer &&
+    allowBackgroundPrinting &&
+    currentDeviceId.isNotEmpty;
+
 class PrintDeviceState {
   final String deviceName;
   final bool isPrintServer;
@@ -1188,12 +1203,7 @@ class StationPrintersState {
   bool get autoPrintServer => centralPrintRoutingEnabled;
 
   bool get canRunBackgroundPrintServer =>
-      centralPrintRoutingEnabled &&
-      !kIsWeb &&
-      ownerState != null &&
-      ownerState!.deviceId.isNotEmpty &&
-      currentDeviceId.isNotEmpty &&
-      ownerState!.deviceId == currentDeviceId;
+      centralPrintRoutingEnabled && !kIsWeb && isCurrentDeviceOwner;
 
   bool get isCurrentDeviceOwner =>
       ownerState != null &&
@@ -1759,6 +1769,23 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           );
           await _saveDeviceConfigLocal(storeId);
         }
+      } else if (shouldRestorePrintServerOwner(
+        isWeb: kIsWeb,
+        centralRoutingEnabled: state.centralPrintRoutingEnabled,
+        hasOwner: ownerState != null,
+        deviceMarkedPrintServer: devState.isPrintServer,
+        allowBackgroundPrinting: devState.allowBackgroundPrinting,
+        currentDeviceId: deviceId,
+      )) {
+        final reclaimed = await transferPrintServerOwner(
+          storeId,
+          devState.deviceName,
+        );
+        if (!reclaimed) {
+          writePrintLog(
+            '[PrintServer] Could not restore owner automatically for device $deviceId.',
+          );
+        }
       } else if (ownerState != null && !state.ownerMigrationCompleted) {
         state = state.copyWith(ownerMigrationCompleted: true);
         await _persistProfileV2(storeId);
@@ -2134,6 +2161,50 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       latestOwner,
     );
     return false;
+  }
+
+  Future<void> prepareForStoreLogout(String storeId) async {
+    if (kIsWeb || storeId.isEmpty) {
+      _controller.stop();
+      return;
+    }
+
+    final deviceId = state.currentDeviceId;
+    final currentOwner = state.ownerState;
+    final currentToken = state.deviceState.localClaimToken;
+    final shouldReleaseOwner =
+        currentOwner != null &&
+        currentOwner.deviceId == deviceId &&
+        currentToken.isNotEmpty;
+
+    if (!shouldReleaseOwner) {
+      _controller.stop();
+      return;
+    }
+
+    try {
+      await ownerRepository.releaseOwner(
+        storeId: storeId,
+        deviceId: deviceId,
+        expectedToken: currentToken,
+      );
+      writePrintLog(
+        '[PrintServer] Released owner during logout for device $deviceId.',
+      );
+    } catch (e) {
+      writePrintLog('[PrintServer] Failed to release owner during logout: $e');
+    } finally {
+      state = state.copyWith(
+        clearOwner: true,
+        deviceState: state.deviceState.copyWith(
+          isPrintServer: true,
+          allowBackgroundPrinting: true,
+          localClaimToken: '',
+        ),
+      );
+      await _saveDeviceConfigLocal(storeId);
+      _controller.stop();
+    }
   }
 
   Future<void> saveConfig(String station, PrinterConfig config) async {
