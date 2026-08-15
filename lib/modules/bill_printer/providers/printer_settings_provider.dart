@@ -1777,9 +1777,10 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         allowBackgroundPrinting: devState.allowBackgroundPrinting,
         currentDeviceId: deviceId,
       )) {
-        final reclaimed = await transferPrintServerOwner(
+        final reclaimed = await _upsertPrintServerOwner(
           storeId,
           devState.deviceName,
+          forceTransfer: true,
         );
         if (!reclaimed) {
           writePrintLog(
@@ -1970,10 +1971,11 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     await _setupPrintServerListener(storeId);
   }
 
-  Future<bool> claimPrintServerOwner(String storeId, String deviceName) async {
-    if (kIsWeb) return false;
-    if (!await _verifyPrinterManagePermission()) return false;
-
+  Future<bool> _upsertPrintServerOwner(
+    String storeId,
+    String deviceName, {
+    required bool forceTransfer,
+  }) async {
     final deviceId = state.currentDeviceId.isNotEmpty
         ? state.currentDeviceId
         : await _getDeviceId();
@@ -1989,14 +1991,26 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     );
 
     try {
-      await ownerRepository.claimOwner(storeId: storeId, owner: candidateOwner);
+      if (forceTransfer) {
+        await ownerRepository.transferOwner(
+          storeId: storeId,
+          owner: candidateOwner,
+        );
+      } else {
+        await ownerRepository.claimOwner(
+          storeId: storeId,
+          owner: candidateOwner,
+        );
+      }
     } catch (_) {}
 
     PrintServerOwnerState? latestOwner;
     try {
       latestOwner = await ownerRepository.getOwner(storeId);
     } catch (e) {
-      writePrintLog('[PrintServer] owner lookup unavailable after claim: $e');
+      writePrintLog(
+        '[PrintServer] owner lookup unavailable after ${forceTransfer ? 'transfer' : 'claim'}: $e',
+      );
       return false;
     }
 
@@ -2015,6 +2029,12 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
     _handleOwnershipLost(storeId, deviceId, deviceName, latestOwner);
     return false;
+  }
+
+  Future<bool> claimPrintServerOwner(String storeId, String deviceName) async {
+    if (kIsWeb) return false;
+    if (!await _verifyPrinterManagePermission()) return false;
+    return _upsertPrintServerOwner(storeId, deviceName, forceTransfer: false);
   }
 
   void _handleOwnershipLost(
@@ -2044,53 +2064,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   ) async {
     if (kIsWeb) return false;
     if (!await _verifyPrinterManagePermission()) return false;
-
-    final deviceId = state.currentDeviceId.isNotEmpty
-        ? state.currentDeviceId
-        : await _getDeviceId();
-
-    final newToken = const Uuid().v4();
-    final platformStr = defaultTargetPlatform.name;
-    final candidateOwner = PrintServerOwnerState(
-      deviceId: deviceId,
-      deviceName: deviceName,
-      platform: platformStr,
-      claimedAt: DateTime.now().toUtc().toIso8601String(),
-      claimToken: newToken,
-    );
-
-    try {
-      await ownerRepository.transferOwner(
-        storeId: storeId,
-        owner: candidateOwner,
-      );
-    } catch (_) {}
-
-    PrintServerOwnerState? latestOwner;
-    try {
-      latestOwner = await ownerRepository.getOwner(storeId);
-    } catch (e) {
-      writePrintLog(
-        '[PrintServer] owner lookup unavailable after transfer: $e',
-      );
-      return false;
-    }
-
-    if (latestOwner != null &&
-        latestOwner.deviceId == deviceId &&
-        latestOwner.claimToken == newToken) {
-      await _activateVerifiedOwner(
-        storeId,
-        deviceId,
-        deviceName,
-        latestOwner,
-        newToken,
-      );
-      return true;
-    }
-
-    _handleOwnershipLost(storeId, deviceId, deviceName, latestOwner);
-    return false;
+    return _upsertPrintServerOwner(storeId, deviceName, forceTransfer: true);
   }
 
   Future<bool> releasePrintServerOwner(String storeId) async {
