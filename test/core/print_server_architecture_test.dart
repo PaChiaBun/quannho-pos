@@ -469,6 +469,48 @@ void main() {
     );
 
     test(
+      '3c. Central routing hard-locks the native Windows cashier as print coordinator',
+      () {
+        expect(
+          shouldHardLockWindowsPrintCoordinator(
+            isWeb: false,
+            isWindows: true,
+            centralRoutingEnabled: true,
+            hasAnyEnabledPrinter: true,
+          ),
+          isTrue,
+        );
+        expect(
+          shouldHardLockWindowsPrintCoordinator(
+            isWeb: true,
+            isWindows: true,
+            centralRoutingEnabled: true,
+            hasAnyEnabledPrinter: true,
+          ),
+          isFalse,
+        );
+        expect(
+          shouldHardLockWindowsPrintCoordinator(
+            isWeb: false,
+            isWindows: false,
+            centralRoutingEnabled: true,
+            hasAnyEnabledPrinter: true,
+          ),
+          isFalse,
+        );
+        expect(
+          shouldHardLockWindowsPrintCoordinator(
+            isWeb: false,
+            isWindows: true,
+            centralRoutingEnabled: false,
+            hasAnyEnabledPrinter: true,
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
       '4. Real Repository Concurrent Claim via ownerRepository: Only 1 winner wins claim',
       () async {
         final repo = FakePrintServerOwnerRepository();

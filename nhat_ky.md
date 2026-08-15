@@ -5,6 +5,23 @@
 
 ---
 
+## 2026-08-15 — Fix bản Windows #73 không in bill thanh toán và phiếu bếp
+
+- 🔎 **Bằng chứng production**:
+  - Build Windows #73 chạy đúng commit `2b569df` và máy in `IN BILL Ne` vẫn in bill tạm tính thành công (`_dispatchPrint Result: true`).
+  - Thanh toán `QN-20260815-037` lúc 14:01 và các phiếu bếp B13/A05 được ghi vào Supabase, nhưng máy Windows không có log dispatch/process tương ứng.
+  - Device đang chạy là `56d039ee-...`, trong khi owner cloud cũ còn trỏ tới `59501ad0-...`; trạng thái điều phối lưu local theo device ID khiến listener bị chặn sau cài đặt/đăng nhập lại.
+- ✅ **Khoá cứng máy Windows làm điều phối khi định tuyến trung tâm bật**:
+  - Khi `centralPrintRoutingEnabled = true` và có máy in được bật, app Windows tự đặt `isPrintServer = true` và `allowBackgroundPrinting = true`, lưu lại theo device hiện tại.
+  - Web/điện thoại/Mac không được tự nhận vai trò này.
+  - Owner token chỉ còn phục vụ theo dõi/heartbeat, không còn là điều kiện cho listener in.
+- ✅ **Fail-safe khi tải cloud lỗi**:
+  - Không nuốt lỗi im lặng; ghi log `[PrintServer] Load cloud settings failed`.
+  - Dùng profile cache để khởi động lại listener Realtime + polling, tránh mất in sau logout/login hoặc lỗi RLS/network tạm thời.
+- 🧪 `flutter test test/core/print_server_architecture_test.dart`: **17/17 PASS**; analyze target: **0 error, 0 warning** (còn 3 info style cũ).
+
+---
+
 ## 2026-08-15 — Khắc Phục Lỗi In Bếp & Khoá Quyền Cấu Hình Máy In (Owner-Only)
 
 - 🚀 **Xử Lý Sự Cố In Bếp Tức Thì**:

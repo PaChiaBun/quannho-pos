@@ -985,6 +985,13 @@ bool shouldPromoteStalePrintServerOwner({
     hasAnyEnabledPrinter &&
     currentDeviceId.isNotEmpty;
 
+bool shouldHardLockWindowsPrintCoordinator({
+  required bool isWeb,
+  required bool isWindows,
+  required bool centralRoutingEnabled,
+  required bool hasAnyEnabledPrinter,
+}) => !isWeb && isWindows && centralRoutingEnabled && hasAnyEnabledPrinter;
+
 class PrintDeviceState {
   final String deviceName;
   final bool isPrintServer;
@@ -1819,6 +1826,13 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         }
       }
 
+      devState = await _hardLockWindowsPrintCoordinator(
+        storeId: storeId,
+        deviceId: deviceId,
+        deviceState: devState,
+        prefs: prefs,
+      );
+
       // 4. Process Owner State
       PrintServerOwnerState? ownerState;
       if (ownerRow != null && ownerRow['value'] != null) {
@@ -1845,9 +1859,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
             ownerClaimToken: ownerState.claimToken,
           ) &&
           devState.localClaimToken != ownerState.claimToken) {
-        devState = devState.copyWith(
-          localClaimToken: ownerState.claimToken,
-        );
+        devState = devState.copyWith(localClaimToken: ownerState.claimToken);
         await prefs.setString(
           _getDeviceSettingsKey(storeId, deviceId),
           jsonEncode(devState.toMap()),
@@ -1996,7 +2008,60 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
               _setupOwnerRecoveryMonitor(storeId);
             }
           });
-    } catch (_) {}
+    } catch (e) {
+      writePrintLog('[PrintServer] Load cloud settings failed: $e');
+
+      // Không để lỗi cloud/RLS làm máy thu ngân Windows mất listener in.
+      // Keep the designated Windows coordinator alive from the cached profile.
+      final localProfile =
+          prefs.getString(kProfileV2Key) ?? prefs.getString(kLegacyKey);
+      if (localProfile != null) {
+        _applyProfileJson(localProfile);
+      }
+      await _hardLockWindowsPrintCoordinator(
+        storeId: storeId,
+        deviceId: deviceId,
+        deviceState: state.deviceState,
+        prefs: prefs,
+      );
+      await _setupPrintServerListener(storeId);
+      _setupOwnerRecoveryMonitor(storeId);
+    }
+  }
+
+  Future<PrintDeviceState> _hardLockWindowsPrintCoordinator({
+    required String storeId,
+    required String deviceId,
+    required PrintDeviceState deviceState,
+    required SharedPreferences prefs,
+  }) async {
+    final hasAnyEnabledPrinter =
+        state.cashier.enabled ||
+        state.bepNong.enabled ||
+        state.bepBar.enabled ||
+        state.barLabel.enabled;
+    if (!shouldHardLockWindowsPrintCoordinator(
+      isWeb: kIsWeb,
+      isWindows: defaultTargetPlatform == TargetPlatform.windows,
+      centralRoutingEnabled: state.centralPrintRoutingEnabled,
+      hasAnyEnabledPrinter: hasAnyEnabledPrinter,
+    )) {
+      return deviceState;
+    }
+
+    final lockedState = deviceState.copyWith(
+      isPrintServer: true,
+      allowBackgroundPrinting: true,
+    );
+    state = state.copyWith(currentDeviceId: deviceId, deviceState: lockedState);
+    await prefs.setString(
+      _getDeviceSettingsKey(storeId, deviceId),
+      jsonEncode(lockedState.toMap()),
+    );
+    writePrintLog(
+      '[PrintServer] Windows coordinator hard-locked for device $deviceId.',
+    );
+    return lockedState;
   }
 
   bool _canThisDeviceRecoverPrintServerOwner() {
@@ -2053,8 +2118,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
     final shouldRecoverStaleOwner = shouldPromoteStalePrintServerOwner(
       isWeb: kIsWeb,
-      isCurrentPlatformWindows:
-          defaultTargetPlatform == TargetPlatform.windows,
+      isCurrentPlatformWindows: defaultTargetPlatform == TargetPlatform.windows,
       centralRoutingEnabled: state.centralPrintRoutingEnabled,
       hasStaleOwner: hasStaleOwner,
       deviceMarkedPrintServer: state.deviceState.isPrintServer,
