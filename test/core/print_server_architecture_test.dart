@@ -384,7 +384,7 @@ void main() {
     );
 
     test(
-      '3. Fencing Token Strict Fail-Closed Match (No Empty Token Fallback)',
+      '3. Owner token remains strict for ownership, but designated print server listener no longer depends on it',
       () {
         final validSettings = StationPrintersState(
           cashier: const PrinterConfig(name: '', type: 'system', enabled: true),
@@ -422,10 +422,49 @@ void main() {
 
         if (!kIsWeb) {
           expect(validSettings.canRunBackgroundPrintServer, isTrue);
+          expect(validSettings.isDesignatedPrintServerDevice, isTrue);
           expect(validSettings.isCurrentDeviceOwner, isTrue);
         }
-        expect(emptyTokenSettings.canRunBackgroundPrintServer, isFalse);
+        expect(emptyTokenSettings.canRunBackgroundPrintServer, isTrue);
+        expect(emptyTokenSettings.isDesignatedPrintServerDevice, isTrue);
         expect(emptyTokenSettings.isCurrentDeviceOwner, isFalse);
+      },
+    );
+
+    test(
+      '3b. Designated Print Server device can run background listener without owner token',
+      () {
+        final designatedWithoutOwner = StationPrintersState(
+          cashier: const PrinterConfig(name: '', type: 'system', enabled: true),
+          bepNong: const PrinterConfig(name: '', type: 'system', enabled: true),
+          bepBar: const PrinterConfig(name: '', type: 'system', enabled: false),
+          barLabel: const PrinterConfig(
+            name: '',
+            type: 'system',
+            enabled: false,
+          ),
+          centralPrintRoutingEnabled: true,
+          deviceState: const PrintDeviceState(
+            deviceName: 'Windows Cashier',
+            isPrintServer: true,
+            allowBackgroundPrinting: true,
+            localClaimToken: '',
+          ),
+          ownerState: const PrintServerOwnerState(
+            deviceId: 'legacy-owner',
+            deviceName: 'Old Windows POS',
+            platform: 'windows',
+            claimedAt: '2026-08-15T03:54:43Z',
+            claimToken: 'legacy-token',
+          ),
+          currentDeviceId: 'cashier-win',
+        );
+
+        if (!kIsWeb) {
+          expect(designatedWithoutOwner.isDesignatedPrintServerDevice, isTrue);
+          expect(designatedWithoutOwner.isCurrentDeviceOwner, isFalse);
+          expect(designatedWithoutOwner.canRunBackgroundPrintServer, isTrue);
+        }
       },
     );
 

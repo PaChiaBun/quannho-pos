@@ -1297,8 +1297,13 @@ class StationPrintersState {
 
   bool get autoPrintServer => centralPrintRoutingEnabled;
 
+  bool get isDesignatedPrintServerDevice =>
+      currentDeviceId.isNotEmpty &&
+      deviceState.isPrintServer &&
+      deviceState.allowBackgroundPrinting;
+
   bool get canRunBackgroundPrintServer =>
-      centralPrintRoutingEnabled && !kIsWeb && isCurrentDeviceOwner;
+      centralPrintRoutingEnabled && !kIsWeb && isDesignatedPrintServerDevice;
 
   bool get isCurrentDeviceOwner =>
       ownerState != null &&
@@ -2541,23 +2546,6 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     return false;
   }
 
-  Future<bool> _stillOwnsPrintServer(
-    String storeId,
-    String expectedToken,
-  ) async {
-    if (kIsWeb) return false;
-    if (expectedToken.isEmpty) return false;
-
-    final currentOwner = await ownerRepository.getOwner(storeId);
-    if (currentOwner != null &&
-        currentOwner.deviceId == state.currentDeviceId &&
-        currentOwner.claimToken == expectedToken &&
-        state.deviceState.localClaimToken == expectedToken) {
-      return true;
-    }
-    return false;
-  }
-
   Future<void> _refreshOwnerHeartbeatIfNeeded(String storeId) async {
     if (kIsWeb || !state.isCurrentDeviceOwner) return;
     final ownerState = state.ownerState;
@@ -2680,29 +2668,6 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         );
       }
 
-      final currentToken = state.deviceState.localClaimToken;
-      try {
-        final owns = await _stillOwnsPrintServer(storeId, currentToken);
-        if (!owns) {
-          PrintServerOwnerState? latestOwner;
-          try {
-            latestOwner = await ownerRepository.getOwner(storeId);
-          } catch (_) {}
-          _handleOwnershipLost(
-            storeId,
-            state.currentDeviceId,
-            state.deviceState.deviceName,
-            latestOwner,
-          );
-          return;
-        }
-      } catch (e) {
-        writePrintLog(
-          '[Process Ticket] Ownership verification unavailable (network error): $e',
-        );
-        return;
-      }
-
       if (!state.canRunBackgroundPrintServer) return;
 
       await _coordinator.processTicketData(
@@ -2799,29 +2764,6 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         type: BillType.receipt,
         note: orderData['note'] as String? ?? '',
       );
-
-      final currentToken = state.deviceState.localClaimToken;
-      try {
-        final owns = await _stillOwnsPrintServer(storeId, currentToken);
-        if (!owns) {
-          PrintServerOwnerState? latestOwner;
-          try {
-            latestOwner = await ownerRepository.getOwner(storeId);
-          } catch (_) {}
-          _handleOwnershipLost(
-            storeId,
-            state.currentDeviceId,
-            state.deviceState.deviceName,
-            latestOwner,
-          );
-          return;
-        }
-      } catch (e) {
-        writePrintLog(
-          '[Process Order] Ownership verification unavailable (network error): $e',
-        );
-        return;
-      }
 
       if (!state.canRunBackgroundPrintServer) return;
 
