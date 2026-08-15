@@ -827,6 +827,9 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                 isWeb: kIsWeb,
                 centralRoutingEnabled: settings.centralPrintRoutingEnabled,
                 hasPrintServerOwner: hasPrintServerOwner,
+                allowPrintServerFallback:
+                    settings.deviceState.isPrintServer &&
+                    settings.deviceState.allowBackgroundPrinting,
               )) {
             if (settings.autoPrintCheckout && settings.autoPrintKitchen) {
               StationPrinterDispatcher.printBill(_billData!, settings);

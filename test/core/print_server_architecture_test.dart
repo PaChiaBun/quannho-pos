@@ -115,6 +115,7 @@ void main() {
           isWeb: true,
           centralRoutingEnabled: false,
           hasPrintServerOwner: false,
+          allowPrintServerFallback: false,
         ),
         isFalse,
       );
@@ -123,6 +124,7 @@ void main() {
           isWeb: true,
           centralRoutingEnabled: true,
           hasPrintServerOwner: false,
+          allowPrintServerFallback: true,
         ),
         isFalse,
       );
@@ -131,6 +133,7 @@ void main() {
           isWeb: false,
           centralRoutingEnabled: true,
           hasPrintServerOwner: true,
+          allowPrintServerFallback: true,
         ),
         isFalse,
       );
@@ -139,18 +142,31 @@ void main() {
           isWeb: false,
           centralRoutingEnabled: true,
           hasPrintServerOwner: false,
+          allowPrintServerFallback: true,
         ),
         isTrue,
         reason:
-            'Native checkout must print locally when central routing has no owner',
+            'Designated Print Server must print locally when central routing has no active owner',
       );
       expect(
         shouldAutoPrintLocally(
           isWeb: false,
           centralRoutingEnabled: false,
           hasPrintServerOwner: false,
+          allowPrintServerFallback: false,
         ),
         isTrue,
+      );
+      expect(
+        shouldAutoPrintLocally(
+          isWeb: false,
+          centralRoutingEnabled: true,
+          hasPrintServerOwner: false,
+          allowPrintServerFallback: false,
+        ),
+        isFalse,
+        reason:
+            'Non-Print-Server devices must not bypass central routing when owner is stale or missing',
       );
     });
 
@@ -240,7 +256,60 @@ void main() {
     );
 
     test(
-      '2c. shouldPromoteStalePrintServerOwner promotes stale owner only on Windows devices with printers',
+      '2b1. shouldSyncOwnerClaimTokenToDesignatedDevice only syncs token for pre-designated print server device',
+      () {
+        expect(
+          shouldSyncOwnerClaimTokenToDesignatedDevice(
+            isWeb: false,
+            deviceMarkedPrintServer: true,
+            allowBackgroundPrinting: true,
+            currentDeviceId: 'dev-1',
+            ownerDeviceId: 'dev-1',
+            ownerClaimToken: 'token-1',
+          ),
+          isTrue,
+        );
+
+        expect(
+          shouldSyncOwnerClaimTokenToDesignatedDevice(
+            isWeb: false,
+            deviceMarkedPrintServer: false,
+            allowBackgroundPrinting: true,
+            currentDeviceId: 'dev-1',
+            ownerDeviceId: 'dev-1',
+            ownerClaimToken: 'token-1',
+          ),
+          isFalse,
+        );
+
+        expect(
+          shouldSyncOwnerClaimTokenToDesignatedDevice(
+            isWeb: false,
+            deviceMarkedPrintServer: true,
+            allowBackgroundPrinting: false,
+            currentDeviceId: 'dev-1',
+            ownerDeviceId: 'dev-1',
+            ownerClaimToken: 'token-1',
+          ),
+          isFalse,
+        );
+
+        expect(
+          shouldSyncOwnerClaimTokenToDesignatedDevice(
+            isWeb: false,
+            deviceMarkedPrintServer: true,
+            allowBackgroundPrinting: true,
+            currentDeviceId: 'dev-1',
+            ownerDeviceId: 'dev-2',
+            ownerClaimToken: 'token-1',
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      '2c. shouldPromoteStalePrintServerOwner promotes stale owner only on designated Windows Print Server devices',
       () {
         expect(
           shouldPromoteStalePrintServerOwner(
@@ -248,6 +317,8 @@ void main() {
             isCurrentPlatformWindows: true,
             centralRoutingEnabled: true,
             hasStaleOwner: true,
+            deviceMarkedPrintServer: true,
+            allowBackgroundPrinting: true,
             hasAnyEnabledPrinter: true,
             currentDeviceId: 'dev-1',
           ),
@@ -260,6 +331,8 @@ void main() {
             isCurrentPlatformWindows: false,
             centralRoutingEnabled: true,
             hasStaleOwner: true,
+            deviceMarkedPrintServer: true,
+            allowBackgroundPrinting: true,
             hasAnyEnabledPrinter: true,
             currentDeviceId: 'dev-1',
           ),
@@ -272,6 +345,36 @@ void main() {
             isCurrentPlatformWindows: true,
             centralRoutingEnabled: true,
             hasStaleOwner: true,
+            deviceMarkedPrintServer: false,
+            allowBackgroundPrinting: true,
+            hasAnyEnabledPrinter: true,
+            currentDeviceId: 'dev-1',
+          ),
+          isFalse,
+        );
+
+        expect(
+          shouldPromoteStalePrintServerOwner(
+            isWeb: false,
+            isCurrentPlatformWindows: true,
+            centralRoutingEnabled: true,
+            hasStaleOwner: true,
+            deviceMarkedPrintServer: true,
+            allowBackgroundPrinting: false,
+            hasAnyEnabledPrinter: true,
+            currentDeviceId: 'dev-1',
+          ),
+          isFalse,
+        );
+
+        expect(
+          shouldPromoteStalePrintServerOwner(
+            isWeb: false,
+            isCurrentPlatformWindows: true,
+            centralRoutingEnabled: true,
+            hasStaleOwner: true,
+            deviceMarkedPrintServer: true,
+            allowBackgroundPrinting: true,
             hasAnyEnabledPrinter: false,
             currentDeviceId: 'dev-1',
           ),

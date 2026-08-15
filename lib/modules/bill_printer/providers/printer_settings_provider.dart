@@ -912,7 +912,11 @@ bool shouldAutoPrintLocally({
   required bool isWeb,
   required bool centralRoutingEnabled,
   required bool hasPrintServerOwner,
-}) => !isWeb && (!centralRoutingEnabled || !hasPrintServerOwner);
+  required bool allowPrintServerFallback,
+}) =>
+    !isWeb &&
+    (!centralRoutingEnabled ||
+        (!hasPrintServerOwner && allowPrintServerFallback));
 
 const Duration kPrintServerOwnerHeartbeatTtl = Duration(seconds: 45);
 
@@ -947,11 +951,28 @@ bool shouldRestorePrintServerOwner({
     allowBackgroundPrinting &&
     currentDeviceId.isNotEmpty;
 
+bool shouldSyncOwnerClaimTokenToDesignatedDevice({
+  required bool isWeb,
+  required bool deviceMarkedPrintServer,
+  required bool allowBackgroundPrinting,
+  required String currentDeviceId,
+  required String ownerDeviceId,
+  required String ownerClaimToken,
+}) =>
+    !isWeb &&
+    deviceMarkedPrintServer &&
+    allowBackgroundPrinting &&
+    currentDeviceId.isNotEmpty &&
+    ownerDeviceId == currentDeviceId &&
+    ownerClaimToken.isNotEmpty;
+
 bool shouldPromoteStalePrintServerOwner({
   required bool isWeb,
   required bool isCurrentPlatformWindows,
   required bool centralRoutingEnabled,
   required bool hasStaleOwner,
+  required bool deviceMarkedPrintServer,
+  required bool allowBackgroundPrinting,
   required bool hasAnyEnabledPrinter,
   required String currentDeviceId,
 }) =>
@@ -959,6 +980,8 @@ bool shouldPromoteStalePrintServerOwner({
     isCurrentPlatformWindows &&
     centralRoutingEnabled &&
     hasStaleOwner &&
+    deviceMarkedPrintServer &&
+    allowBackgroundPrinting &&
     hasAnyEnabledPrinter &&
     currentDeviceId.isNotEmpty;
 
@@ -1588,6 +1611,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   StreamSubscription? _subscription;
   bool _isWarmedUp = false;
   DateTime? _lastOwnerHeartbeatAt;
+  Timer? _ownerRecoveryTimer;
+  bool _isRecoveringOwner = false;
 
   PrintServerOwnerRepository ownerRepository =
       SupabasePrintServerOwnerRepository();
@@ -1629,6 +1654,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
     ref.onDispose(() {
       _subscription?.cancel();
+      _ownerRecoveryTimer?.cancel();
       _controller.stop();
     });
 
@@ -1805,13 +1831,16 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           state.barLabel.enabled;
 
       if (ownerState != null &&
-          deviceId.isNotEmpty &&
-          ownerState.deviceId == deviceId &&
-          ownerState.claimToken.isNotEmpty &&
+          shouldSyncOwnerClaimTokenToDesignatedDevice(
+            isWeb: kIsWeb,
+            deviceMarkedPrintServer: devState.isPrintServer,
+            allowBackgroundPrinting: devState.allowBackgroundPrinting,
+            currentDeviceId: deviceId,
+            ownerDeviceId: ownerState.deviceId,
+            ownerClaimToken: ownerState.claimToken,
+          ) &&
           devState.localClaimToken != ownerState.claimToken) {
         devState = devState.copyWith(
-          isPrintServer: true,
-          allowBackgroundPrinting: true,
           localClaimToken: ownerState.claimToken,
         );
         await prefs.setString(
@@ -1873,6 +1902,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
             defaultTargetPlatform == TargetPlatform.windows,
         centralRoutingEnabled: state.centralPrintRoutingEnabled,
         hasStaleOwner: hasStaleOwner,
+        deviceMarkedPrintServer: devState.isPrintServer,
+        allowBackgroundPrinting: devState.allowBackgroundPrinting,
         hasAnyEnabledPrinter: hasAnyEnabledPrinter,
         currentDeviceId: deviceId,
       )) {
@@ -1892,6 +1923,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       }
 
       await _setupPrintServerListener(storeId);
+      _setupOwnerRecoveryMonitor(storeId);
 
       // 6. Realtime Subscription to app_settings
       _subscription?.cancel();
@@ -1921,15 +1953,19 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
                     if (state.ownerState?.deviceId != newOwner.deviceId ||
                         state.ownerState?.claimToken != newOwner.claimToken) {
                       var newDevState = state.deviceState;
-                      if (!kIsWeb &&
-                          state.currentDeviceId.isNotEmpty &&
-                          newOwner.deviceId == state.currentDeviceId &&
-                          newOwner.claimToken.isNotEmpty &&
+                      if (shouldSyncOwnerClaimTokenToDesignatedDevice(
+                            isWeb: kIsWeb,
+                            deviceMarkedPrintServer:
+                                state.deviceState.isPrintServer,
+                            allowBackgroundPrinting:
+                                state.deviceState.allowBackgroundPrinting,
+                            currentDeviceId: state.currentDeviceId,
+                            ownerDeviceId: newOwner.deviceId,
+                            ownerClaimToken: newOwner.claimToken,
+                          ) &&
                           state.deviceState.localClaimToken !=
                               newOwner.claimToken) {
                         newDevState = newDevState.copyWith(
-                          isPrintServer: true,
-                          allowBackgroundPrinting: true,
                           localClaimToken: newOwner.claimToken,
                         );
                       }
@@ -1952,9 +1988,102 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
             if (profileChanged || ownerChanged) {
               await _setupPrintServerListener(storeId);
+              _setupOwnerRecoveryMonitor(storeId);
             }
           });
     } catch (_) {}
+  }
+
+  bool _canThisDeviceRecoverPrintServerOwner() {
+    final hasAnyEnabledPrinter =
+        state.cashier.enabled ||
+        state.bepNong.enabled ||
+        state.bepBar.enabled ||
+        state.barLabel.enabled;
+
+    return !kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.windows &&
+        state.deviceState.isPrintServer &&
+        state.deviceState.allowBackgroundPrinting &&
+        state.currentDeviceId.isNotEmpty &&
+        hasAnyEnabledPrinter;
+  }
+
+  void _setupOwnerRecoveryMonitor(String storeId) {
+    _ownerRecoveryTimer?.cancel();
+    _ownerRecoveryTimer = null;
+
+    if (storeId.isEmpty ||
+        kIsWeb ||
+        !state.centralPrintRoutingEnabled ||
+        !_canThisDeviceRecoverPrintServerOwner()) {
+      return;
+    }
+
+    _ownerRecoveryTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      _attemptRecoverPrintServerOwner(storeId);
+    });
+  }
+
+  Future<void> _attemptRecoverPrintServerOwner(String storeId) async {
+    if (_isRecoveringOwner ||
+        storeId.isEmpty ||
+        !state.centralPrintRoutingEnabled ||
+        !_canThisDeviceRecoverPrintServerOwner()) {
+      return;
+    }
+
+    final owner = state.ownerState;
+    final hasActiveOwner = hasActivePrintServerOwner(owner);
+    final hasStaleOwner = owner != null && !hasActiveOwner;
+
+    final shouldRecoverMissingOwner = shouldRestorePrintServerOwner(
+      isWeb: kIsWeb,
+      centralRoutingEnabled: state.centralPrintRoutingEnabled,
+      hasOwner: hasActiveOwner,
+      deviceMarkedPrintServer: state.deviceState.isPrintServer,
+      allowBackgroundPrinting: state.deviceState.allowBackgroundPrinting,
+      currentDeviceId: state.currentDeviceId,
+    );
+
+    final shouldRecoverStaleOwner = shouldPromoteStalePrintServerOwner(
+      isWeb: kIsWeb,
+      isCurrentPlatformWindows:
+          defaultTargetPlatform == TargetPlatform.windows,
+      centralRoutingEnabled: state.centralPrintRoutingEnabled,
+      hasStaleOwner: hasStaleOwner,
+      deviceMarkedPrintServer: state.deviceState.isPrintServer,
+      allowBackgroundPrinting: state.deviceState.allowBackgroundPrinting,
+      hasAnyEnabledPrinter:
+          state.cashier.enabled ||
+          state.bepNong.enabled ||
+          state.bepBar.enabled ||
+          state.barLabel.enabled,
+      currentDeviceId: state.currentDeviceId,
+    );
+
+    if (!shouldRecoverMissingOwner && !shouldRecoverStaleOwner) {
+      return;
+    }
+
+    _isRecoveringOwner = true;
+    try {
+      final ok = await _upsertPrintServerOwner(
+        storeId,
+        state.deviceState.deviceName,
+        forceTransfer: true,
+      );
+      if (ok) {
+        writePrintLog(
+          '[PrintServer] Auto-recovered owner on designated device ${state.currentDeviceId}.',
+        );
+        await _setupPrintServerListener(storeId);
+      }
+    } catch (e) {
+      writePrintLog('[PrintServer] Auto-recover owner failed: $e');
+    } finally {
+      _isRecoveringOwner = false;
+    }
   }
 
   void _applyProfileJson(String jsonStr) {
@@ -2319,13 +2448,35 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       if (!await _verifyPrinterManagePermission()) return;
     }
 
+    final session = ref.read(sessionProvider);
+    final storeId =
+        session?.storeId ??
+        (await StoreAuthService.getStoreInfo())['store_id'] ??
+        '';
     final targetRouting = printServer ?? state.centralPrintRoutingEnabled;
-    if (targetRouting && state.ownerState == null) {
-      AppLogger.info(
-        'settings',
-        'Khong the bat central routing vi chua dang ky Print Server Owner.',
+    final hasActiveOwner = hasActivePrintServerOwner(state.ownerState);
+
+    if (targetRouting && !hasActiveOwner) {
+      if (!_canThisDeviceRecoverPrintServerOwner()) {
+        AppLogger.info(
+          'settings',
+          'Khong the bat central routing vi chua co Print Server Owner hoat dong tren thiet bi duoc chi dinh.',
+        );
+        return;
+      }
+
+      final recovered = await _upsertPrintServerOwner(
+        storeId,
+        state.deviceState.deviceName,
+        forceTransfer: true,
       );
-      return;
+      if (!recovered) {
+        AppLogger.info(
+          'settings',
+          'Khong the bat central routing vi that bai khi khoi phuc Print Server Owner.',
+        );
+        return;
+      }
     }
 
     state = state.copyWith(
@@ -2338,15 +2489,11 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       'settings',
       'Thay doi tuy chon in tu dong: PrintCheckout=$checkout, PrintKitchen=$kitchen, OpenDrawer=$openDrawer, CentralRouting=$printServer',
     );
-    final session = ref.read(sessionProvider);
-    final storeId =
-        session?.storeId ??
-        (await StoreAuthService.getStoreInfo())['store_id'] ??
-        '';
     await _persistProfileV2(storeId);
 
     if (storeId.isNotEmpty) {
       await _setupPrintServerListener(storeId);
+      _setupOwnerRecoveryMonitor(storeId);
     }
   }
 

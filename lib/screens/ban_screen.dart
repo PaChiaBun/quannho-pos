@@ -3722,6 +3722,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               centralRoutingEnabled:
                   printerSettingsCached.centralPrintRoutingEnabled,
               hasPrintServerOwner: hasPrintServerOwner,
+              allowPrintServerFallback:
+                  printerSettingsCached.deviceState.isPrintServer &&
+                  printerSettingsCached.deviceState.allowBackgroundPrinting,
             )) {
           final List<BillItem> billItems = [];
           for (final item in items) {
@@ -4112,6 +4115,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             isWeb: kIsWeb,
             centralRoutingEnabled: settings.centralPrintRoutingEnabled,
             hasPrintServerOwner: hasActivePrintServerOwner(settings.ownerState),
+            allowPrintServerFallback:
+                settings.deviceState.isPrintServer &&
+                settings.deviceState.allowBackgroundPrinting,
           )) {
         final List<BillItem> billItems = [];
         for (final item in unsent) {
