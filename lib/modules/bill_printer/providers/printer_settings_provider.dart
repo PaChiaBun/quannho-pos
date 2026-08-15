@@ -914,6 +914,17 @@ bool shouldAutoPrintLocally({
   required bool hasPrintServerOwner,
 }) => !isWeb && (!centralRoutingEnabled || !hasPrintServerOwner);
 
+const Duration kPrintServerOwnerHeartbeatTtl = Duration(seconds: 45);
+
+DateTime? _tryParseOwnerTimestamp(String value) {
+  if (value.isEmpty) return null;
+  try {
+    return DateTime.parse(value).toUtc();
+  } catch (_) {
+    return null;
+  }
+}
+
 bool shouldBootstrapLegacyOwner({
   required bool isWeb,
   required bool ownerMigrationCompleted,
@@ -1010,6 +1021,7 @@ class PrintServerOwnerState {
   final String platform;
   final String claimedAt;
   final String claimToken;
+  final String lastSeenAt;
 
   const PrintServerOwnerState({
     required this.deviceId,
@@ -1017,7 +1029,11 @@ class PrintServerOwnerState {
     required this.platform,
     required this.claimedAt,
     required this.claimToken,
+    this.lastSeenAt = '',
   });
+
+  DateTime? get claimedAtUtc => _tryParseOwnerTimestamp(claimedAt);
+  DateTime? get lastSeenAtUtc => _tryParseOwnerTimestamp(lastSeenAt);
 
   Map<String, dynamic> toMap() => {
     'device_id': deviceId,
@@ -1025,7 +1041,26 @@ class PrintServerOwnerState {
     'platform': platform,
     'claimed_at': claimedAt,
     'claim_token': claimToken,
+    'last_seen_at': lastSeenAt,
   };
+
+  PrintServerOwnerState copyWith({
+    String? deviceId,
+    String? deviceName,
+    String? platform,
+    String? claimedAt,
+    String? claimToken,
+    String? lastSeenAt,
+  }) {
+    return PrintServerOwnerState(
+      deviceId: deviceId ?? this.deviceId,
+      deviceName: deviceName ?? this.deviceName,
+      platform: platform ?? this.platform,
+      claimedAt: claimedAt ?? this.claimedAt,
+      claimToken: claimToken ?? this.claimToken,
+      lastSeenAt: lastSeenAt ?? this.lastSeenAt,
+    );
+  }
 
   factory PrintServerOwnerState.fromMap(Map<String, dynamic> map) {
     return PrintServerOwnerState(
@@ -1034,6 +1069,8 @@ class PrintServerOwnerState {
       platform: map['platform'] as String? ?? 'unknown',
       claimedAt: map['claimed_at'] as String? ?? '',
       claimToken: map['claim_token'] as String? ?? '',
+      lastSeenAt:
+          map['last_seen_at'] as String? ?? map['claimed_at'] as String? ?? '',
     );
   }
 
@@ -1041,6 +1078,26 @@ class PrintServerOwnerState {
     final map = jsonDecode(jsonStr) as Map<String, dynamic>;
     return PrintServerOwnerState.fromMap(map);
   }
+}
+
+bool isPrintServerOwnerFresh(
+  PrintServerOwnerState owner, {
+  DateTime? now,
+  Duration ttl = kPrintServerOwnerHeartbeatTtl,
+}) {
+  final referenceTime = owner.lastSeenAtUtc ?? owner.claimedAtUtc;
+  if (referenceTime == null) return false;
+  final age = (now ?? DateTime.now().toUtc()).difference(referenceTime);
+  return age <= ttl;
+}
+
+bool hasActivePrintServerOwner(
+  PrintServerOwnerState? owner, {
+  DateTime? now,
+  Duration ttl = kPrintServerOwnerHeartbeatTtl,
+}) {
+  if (owner == null) return false;
+  return isPrintServerOwnerFresh(owner, now: now, ttl: ttl);
 }
 
 abstract class PrintServerOwnerRepository {
@@ -1515,6 +1572,7 @@ class PrintServerLifecycleController {
 class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   StreamSubscription? _subscription;
   bool _isWarmedUp = false;
+  DateTime? _lastOwnerHeartbeatAt;
 
   PrintServerOwnerRepository ownerRepository =
       SupabasePrintServerOwnerRepository();
@@ -1723,6 +1781,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
           ownerState = PrintServerOwnerState.fromJsonString(val);
         } catch (_) {}
       }
+      final hasActiveOwner = hasActivePrintServerOwner(ownerState);
 
       if (ownerState != null &&
           deviceId.isNotEmpty &&
@@ -1751,7 +1810,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         isWeb: kIsWeb,
         ownerMigrationCompleted: state.ownerMigrationCompleted,
         legacyAutoPrintServer: legacyAutoPrintServer,
-        hasOwner: ownerState != null,
+        hasOwner: hasActiveOwner,
       )) {
         final claimed = await claimPrintServerOwner(
           storeId,
@@ -1772,7 +1831,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       } else if (shouldRestorePrintServerOwner(
         isWeb: kIsWeb,
         centralRoutingEnabled: state.centralPrintRoutingEnabled,
-        hasOwner: ownerState != null,
+        hasOwner: hasActiveOwner,
         deviceMarkedPrintServer: devState.isPrintServer,
         allowBackgroundPrinting: devState.allowBackgroundPrinting,
         currentDeviceId: deviceId,
@@ -1955,8 +2014,14 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     PrintServerOwnerState verifiedOwner,
     String newToken,
   ) async {
+    final nowIso = DateTime.now().toUtc().toIso8601String();
+    final refreshedOwner = verifiedOwner.copyWith(
+      lastSeenAt: verifiedOwner.lastSeenAt.isNotEmpty
+          ? verifiedOwner.lastSeenAt
+          : nowIso,
+    );
     state = state.copyWith(
-      ownerState: verifiedOwner,
+      ownerState: refreshedOwner,
       ownerMigrationCompleted: true,
       currentDeviceId: deviceId,
       deviceState: state.deviceState.copyWith(
@@ -1966,6 +2031,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         localClaimToken: newToken,
       ),
     );
+    _lastOwnerHeartbeatAt =
+        refreshedOwner.lastSeenAtUtc ?? DateTime.now().toUtc();
     await _saveDeviceConfigLocal(storeId);
     await _persistProfileV2(storeId);
     await _setupPrintServerListener(storeId);
@@ -1981,13 +2048,15 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         : await _getDeviceId();
 
     final newToken = const Uuid().v4();
+    final nowIso = DateTime.now().toUtc().toIso8601String();
     final platformStr = defaultTargetPlatform.name;
     final candidateOwner = PrintServerOwnerState(
       deviceId: deviceId,
       deviceName: deviceName,
       platform: platformStr,
-      claimedAt: DateTime.now().toUtc().toIso8601String(),
+      claimedAt: nowIso,
       claimToken: newToken,
+      lastSeenAt: nowIso,
     );
 
     try {
@@ -2302,6 +2371,33 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     return false;
   }
 
+  Future<void> _refreshOwnerHeartbeatIfNeeded(String storeId) async {
+    if (kIsWeb || !state.isCurrentDeviceOwner) return;
+    final ownerState = state.ownerState;
+    if (ownerState == null) return;
+
+    final now = DateTime.now().toUtc();
+    if (_lastOwnerHeartbeatAt != null &&
+        now.difference(_lastOwnerHeartbeatAt!) < const Duration(seconds: 15)) {
+      return;
+    }
+
+    final refreshedOwner = ownerState.copyWith(
+      lastSeenAt: now.toIso8601String(),
+    );
+
+    try {
+      await ownerRepository.transferOwner(
+        storeId: storeId,
+        owner: refreshedOwner,
+      );
+      state = state.copyWith(ownerState: refreshedOwner);
+      _lastOwnerHeartbeatAt = now;
+    } catch (e) {
+      writePrintLog('[PrintServer] Failed to refresh owner heartbeat: $e');
+    }
+  }
+
   Future<void> _processTicket(String ticketId, String storeId) async {
     if (_printCache.isTicketPrinted(ticketId)) return;
     if (!state.canRunBackgroundPrintServer) return;
@@ -2554,6 +2650,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
 
   Future<void> _pollActiveTicketsAndOrders(String storeId) async {
     try {
+      await _refreshOwnerHeartbeatIfNeeded(storeId);
       final cutoff24h = DateTime.now()
           .subtract(const Duration(hours: 24))
           .toIso8601String();

@@ -3706,18 +3706,21 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
       // Tự động in hóa đơn thu ngân khi thanh toán tại bàn (nếu bật cấu hình)
       try {
-        final hasPrintServerOwner = printerSettingsCached.ownerState != null;
+        final hasPrintServerOwner = hasActivePrintServerOwner(
+          printerSettingsCached.ownerState,
+        );
         if (printerSettingsCached.centralPrintRoutingEnabled &&
             !hasPrintServerOwner) {
           AppLogger.info(
             'printer',
-            '[Checkout Print] Local fallback: central routing enabled but Print Server Owner is missing.',
+            '[Checkout Print] Local fallback: central routing enabled but Print Server Owner is missing or stale.',
           );
         }
         if (printerSettingsCached.autoPrintCheckout &&
             shouldAutoPrintLocally(
               isWeb: kIsWeb,
-              centralRoutingEnabled: printerSettingsCached.centralPrintRoutingEnabled,
+              centralRoutingEnabled:
+                  printerSettingsCached.centralPrintRoutingEnabled,
               hasPrintServerOwner: hasPrintServerOwner,
             )) {
           final List<BillItem> billItems = [];
@@ -4108,7 +4111,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           shouldAutoPrintLocally(
             isWeb: kIsWeb,
             centralRoutingEnabled: settings.centralPrintRoutingEnabled,
-            hasPrintServerOwner: settings.ownerState != null,
+            hasPrintServerOwner: hasActivePrintServerOwner(settings.ownerState),
           )) {
         final List<BillItem> billItems = [];
         for (final item in unsent) {
