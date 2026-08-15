@@ -152,7 +152,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (!mounted) return;
 
     // ‼️ RESTORE & VALIDATE POS JWT TRƯỚC KHI THỰC HIỆN BẤT KỲ QUERY NÀO
-    final jwtRestored = await UserAuthService.restoreSessionOnStartup();
+    bool jwtRestored;
+    try {
+      jwtRestored = await UserAuthService.restoreSessionOnStartup().timeout(
+        const Duration(seconds: 10),
+      );
+    } catch (e) {
+      // Splash phải luôn có điểm thoát. Plugin lỗi hoặc server chậm không được
+      // giữ người dùng vô hạn ở màn logo; đưa về đăng nhập để có thể thử lại.
+      debugPrint('[Splash] restore session error: $e');
+      jwtRestored = false;
+    }
     if (!mounted) return;
 
     if (!jwtRestored) {

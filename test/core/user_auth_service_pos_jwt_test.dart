@@ -50,6 +50,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
         expect(prefs.getString('auth_store_id'), 'store-456');
         expect(disabledService.applyCount, 0);
+        expect(disabledService.clearCount, 0);
       },
     );
 
@@ -240,12 +241,15 @@ class MockPosJwtService extends PosJwtAuthService {
 
 class DisabledPosJwtService extends PosJwtAuthService {
   int applyCount = 0;
+  int clearCount = 0;
 
   @override
   bool get isConfigured => false;
 
   @override
-  Future<void> clearPosJwt() async {}
+  Future<void> clearPosJwt() async {
+    clearCount++;
+  }
 
   @override
   Future<bool> applyAuthToSupabase(

@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'dart:async';
 import 'package:quannho_pos/core/services/user_auth_service.dart';
+import 'package:quannho_pos/core/services/pos_jwt_auth_service.dart';
 import 'package:quannho_pos/core/services/staff_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,6 +10,9 @@ class FakeUserAuthRepository implements UserAuthRepository {
   List<Map<String, dynamic>> staffMembers = [];
   List<Map<String, dynamic>> stores = [];
   bool queryStoreMembersThrows = false;
+  bool queryStoreMemberHangs = false;
+  final List<Object?> queryStoreMemberSequence = [];
+  int queryStoreMemberCalls = 0;
 
   @override
   Future<List<Map<String, dynamic>>> queryStoreMembers(String userId) async {
@@ -52,6 +57,15 @@ class FakeUserAuthRepository implements UserAuthRepository {
     String storeId,
     String userId,
   ) async {
+    queryStoreMemberCalls++;
+    if (queryStoreMemberHangs) {
+      return Completer<Map<String, dynamic>?>().future;
+    }
+    if (queryStoreMemberSequence.isNotEmpty) {
+      final next = queryStoreMemberSequence.removeAt(0);
+      if (next is Exception) throw next;
+      return next as Map<String, dynamic>?;
+    }
     if (queryStoreMembersThrows) throw Exception('DB queryStoreMember error');
     final list = storeMembers
         .where((m) => m['store_id'] == storeId && m['user_id'] == userId)
@@ -194,10 +208,12 @@ void main() {
         final res = await UserAuthService.validateActiveMembership(
           userId: 'u_revoked',
           storeId: 's1',
+          emptyConfirmationDelay: Duration.zero,
         );
 
         expect(res.isActive, false);
         expect(res.isOffline, false);
+        expect(fakeRepo.queryStoreMemberCalls, 2);
       },
     );
 
@@ -229,6 +245,79 @@ void main() {
         final res = await UserAuthService.validateActiveMembership(
           userId: 'u_any',
           storeId: 's1',
+        );
+
+        expect(res.isActive, true);
+        expect(res.isOffline, true);
+      },
+    );
+
+    test(
+      '6A. transient empty membership is confirmed again before session revocation',
+      () async {
+        fakeRepo.queryStoreMemberSequence.addAll([
+          null,
+          {
+            'user_id': 'u_active',
+            'store_id': 's1',
+            'role': 'cashier',
+            'is_owner': false,
+          },
+        ]);
+
+        final res = await UserAuthService.validateActiveMembership(
+          userId: 'u_active',
+          storeId: 's1',
+          emptyConfirmationDelay: Duration.zero,
+        );
+
+        expect(res.isActive, true);
+        expect(res.isOffline, false);
+        expect(fakeRepo.queryStoreMemberCalls, 2);
+      },
+    );
+
+    test(
+      '6B. startup restores a missing local store context from one server membership',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'auth_user_id': 'u_active',
+          'auth_user_phone': '+84900000000',
+          'auth_user_name': 'Thu ngân',
+        });
+        fakeRepo.storeMembers.add({
+          'user_id': 'u_active',
+          'store_id': 's1',
+          'role': 'cashier',
+          'is_owner': false,
+          'stores': {
+            'id': 's1',
+            'name': 'KAY-Rạch Giá',
+            'store_code': 'QN-4EJP',
+          },
+        });
+
+        final restored = await UserAuthService.restoreSessionOnStartup(
+          jwtService: _DisabledPosJwtService(),
+        );
+        final prefs = await SharedPreferences.getInstance();
+
+        expect(restored, true);
+        expect(prefs.getString('auth_store_id'), 's1');
+        expect(prefs.getString('store_id'), 's1');
+        expect(prefs.getString('auth_role'), 'cashier');
+      },
+    );
+
+    test(
+      '6C. membership timeout preserves the local session and exits promptly',
+      () async {
+        fakeRepo.queryStoreMemberHangs = true;
+
+        final res = await UserAuthService.validateActiveMembership(
+          userId: 'u_active',
+          storeId: 's1',
+          serverQueryTimeout: const Duration(milliseconds: 10),
         );
 
         expect(res.isActive, true);
@@ -390,4 +479,12 @@ void main() {
       },
     );
   });
+}
+
+class _DisabledPosJwtService extends PosJwtAuthService {
+  @override
+  bool get isConfigured => false;
+
+  @override
+  Future<void> clearPosJwt() async {}
 }

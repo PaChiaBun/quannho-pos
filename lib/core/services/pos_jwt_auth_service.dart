@@ -65,7 +65,13 @@ class PosJwtAuthService {
 
   /// Clear stored POS JWT token from secure storage
   Future<void> clearPosJwt() async {
-    await secureStorage.delete(key: _kPosJwtStorageKey);
+    try {
+      await secureStorage.delete(key: _kPosJwtStorageKey);
+    } catch (_) {
+      // Một số bản Flutter Web không đăng ký flutter_secure_storage_web dù
+      // dependency vẫn có trong pubspec. Dọn token là best-effort và tuyệt đối
+      // không được làm treo splash/logout của POS.
+    }
   }
 
   /// Decode JWT and verify 'exp' claim has at least 30 seconds remaining and store_id matches

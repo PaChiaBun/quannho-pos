@@ -42,7 +42,12 @@ class FeedbackService {
 
   /// Clear stored pairing session token
   Future<void> clearSessionToken() async {
-    await secureStorage.delete(key: _keySessionToken);
+    try {
+      await secureStorage.delete(key: _keySessionToken);
+    } catch (_) {
+      // AI Bum chạy nền và độc lập với phiên POS. Lỗi plugin storage trên web
+      // không được phép làm gián đoạn đăng nhập/đăng xuất của thu ngân.
+    }
   }
 
   /// Store opaque session token received from backend pairing exchange
@@ -107,16 +112,15 @@ class FeedbackService {
       };
     }
 
-    final keys = await getOrGenerateEd25519Keypair();
-
-    final payload = {
-      'device_public_key': keys['public_key'],
-      'phone': phone.trim(),
-      'password': password.trim(),
-      'store_id': storeId.trim(),
-    };
-
     try {
+      final keys = await getOrGenerateEd25519Keypair();
+      final payload = {
+        'device_public_key': keys['public_key'],
+        'phone': phone.trim(),
+        'password': password.trim(),
+        'store_id': storeId.trim(),
+      };
+
       final response = await httpClient.post(
         Uri.parse('$backendUrl$transportPath'),
         headers: {'Content-Type': 'application/json'},

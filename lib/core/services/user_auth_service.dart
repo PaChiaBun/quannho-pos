@@ -865,20 +865,31 @@ class UserAuthService {
   static Future<({bool isActive, bool isOffline})> validateActiveMembership({
     required String userId,
     required String storeId,
+    Duration emptyConfirmationDelay = const Duration(milliseconds: 500),
+    Duration serverQueryTimeout = const Duration(seconds: 6),
   }) async {
     if (userId.isEmpty || storeId.isEmpty) {
       return (isActive: false, isOffline: false);
     }
     try {
-      final member = await authRepository.queryStoreMember(storeId, userId);
-      if (member != null) {
+      if (await _hasActiveMembershipOnServer(
+        userId: userId,
+        storeId: storeId,
+      ).timeout(serverQueryTimeout)) {
         return (isActive: true, isOffline: false);
       }
 
-      // Check if user is owner of the store
-      final store = await authRepository.queryStoreById(storeId);
-      if (store != null &&
-          (store['owner_user_id'] == userId || store['owner_id'] == userId)) {
+      // Không thu hồi store context chỉ vì một lần đọc rỗng. Ngay sau deploy,
+      // resume hoặc reconnect, PostgREST có thể trả kết quả rỗng tạm thời dù
+      // membership vẫn tồn tại. Lần đọc thứ hai là xác nhận bắt buộc trước khi
+      // caller được phép xoá session local.
+      if (emptyConfirmationDelay > Duration.zero) {
+        await Future<void>.delayed(emptyConfirmationDelay);
+      }
+      if (await _hasActiveMembershipOnServer(
+        userId: userId,
+        storeId: storeId,
+      ).timeout(serverQueryTimeout)) {
         return (isActive: true, isOffline: false);
       }
 
@@ -888,6 +899,20 @@ class UserAuthService {
       // Khi gặp lỗi mạng/timeout: bảo lưu session local, không tự logout nhầm
       return (isActive: true, isOffline: true);
     }
+  }
+
+  static Future<bool> _hasActiveMembershipOnServer({
+    required String userId,
+    required String storeId,
+  }) async {
+    final member = await authRepository.queryStoreMember(storeId, userId);
+    if (member != null) return true;
+
+    // Chủ quán có thể được xác định trực tiếp từ stores ngay cả khi chưa có
+    // row tương ứng trong store_members.
+    final store = await authRepository.queryStoreById(storeId);
+    return store != null &&
+        (store['owner_user_id'] == userId || store['owner_id'] == userId);
   }
 
   /// Nhân viên gia nhập quán bằng mã storeCode (QN-XXXX)
@@ -1274,10 +1299,31 @@ class UserAuthService {
     final session = await getCurrentSession();
 
     if (!posJwtService.isConfigured) {
-      // Một process mới chưa mang auth token cũ trong Supabase client. Chỉ dọn
-      // secure storage và giữ phiên đăng nhập Supabase hiện hữu của POS.
-      await posJwtService.clearPosJwt();
-      return session != null && session.storeId != null;
+      // POS JWT bị tắt: không đụng flutter_secure_storage. Một số Flutter Web
+      // release không đăng ký plugin này và sẽ ném MissingPluginException,
+      // khiến splash đứng vĩnh viễn trước khi app kịp điều hướng.
+      if (session == null) return false;
+      if (session.storeId != null && session.storeId!.isNotEmpty) return true;
+
+      // Bản deploy trước có thể đã xoá nhầm store context sau một lần validate
+      // rỗng. Nếu server vẫn xác nhận đúng một membership, tự phục hồi toàn bộ
+      // auth_store_* và legacy store_* để người dùng không bị kẹt ở CTA tạo quán.
+      try {
+        final stores = await getUserStores(
+          session.userId,
+        ).timeout(const Duration(seconds: 8));
+        if (stores.length != 1) return false;
+        await _saveFullSession(
+          userId: session.userId,
+          phone: session.phone,
+          name: session.displayName,
+          membership: stores.single,
+        );
+        return true;
+      } catch (e) {
+        debugPrint('[restoreSessionOnStartup] recover store context error: $e');
+        return false;
+      }
     }
 
     if (session == null || session.storeId == null) {
