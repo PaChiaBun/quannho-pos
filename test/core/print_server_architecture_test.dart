@@ -240,6 +240,47 @@ void main() {
     );
 
     test(
+      '2c. shouldPromoteStalePrintServerOwner promotes stale owner only on Windows devices with printers',
+      () {
+        expect(
+          shouldPromoteStalePrintServerOwner(
+            isWeb: false,
+            isCurrentPlatformWindows: true,
+            centralRoutingEnabled: true,
+            hasStaleOwner: true,
+            hasAnyEnabledPrinter: true,
+            currentDeviceId: 'dev-1',
+          ),
+          isTrue,
+        );
+
+        expect(
+          shouldPromoteStalePrintServerOwner(
+            isWeb: false,
+            isCurrentPlatformWindows: false,
+            centralRoutingEnabled: true,
+            hasStaleOwner: true,
+            hasAnyEnabledPrinter: true,
+            currentDeviceId: 'dev-1',
+          ),
+          isFalse,
+        );
+
+        expect(
+          shouldPromoteStalePrintServerOwner(
+            isWeb: false,
+            isCurrentPlatformWindows: true,
+            centralRoutingEnabled: true,
+            hasStaleOwner: true,
+            hasAnyEnabledPrinter: false,
+            currentDeviceId: 'dev-1',
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
       '3. Fencing Token Strict Fail-Closed Match (No Empty Token Fallback)',
       () {
         final validSettings = StationPrintersState(

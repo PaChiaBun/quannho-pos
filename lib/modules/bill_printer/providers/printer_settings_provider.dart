@@ -947,6 +947,21 @@ bool shouldRestorePrintServerOwner({
     allowBackgroundPrinting &&
     currentDeviceId.isNotEmpty;
 
+bool shouldPromoteStalePrintServerOwner({
+  required bool isWeb,
+  required bool isCurrentPlatformWindows,
+  required bool centralRoutingEnabled,
+  required bool hasStaleOwner,
+  required bool hasAnyEnabledPrinter,
+  required String currentDeviceId,
+}) =>
+    !isWeb &&
+    isCurrentPlatformWindows &&
+    centralRoutingEnabled &&
+    hasStaleOwner &&
+    hasAnyEnabledPrinter &&
+    currentDeviceId.isNotEmpty;
+
 class PrintDeviceState {
   final String deviceName;
   final bool isPrintServer;
@@ -1782,6 +1797,12 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         } catch (_) {}
       }
       final hasActiveOwner = hasActivePrintServerOwner(ownerState);
+      final hasStaleOwner = ownerState != null && !hasActiveOwner;
+      final hasAnyEnabledPrinter =
+          state.cashier.enabled ||
+          state.bepNong.enabled ||
+          state.bepBar.enabled ||
+          state.barLabel.enabled;
 
       if (ownerState != null &&
           deviceId.isNotEmpty &&
@@ -1844,6 +1865,25 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         if (!reclaimed) {
           writePrintLog(
             '[PrintServer] Could not restore owner automatically for device $deviceId.',
+          );
+        }
+      } else if (shouldPromoteStalePrintServerOwner(
+        isWeb: kIsWeb,
+        isCurrentPlatformWindows:
+            defaultTargetPlatform == TargetPlatform.windows,
+        centralRoutingEnabled: state.centralPrintRoutingEnabled,
+        hasStaleOwner: hasStaleOwner,
+        hasAnyEnabledPrinter: hasAnyEnabledPrinter,
+        currentDeviceId: deviceId,
+      )) {
+        final claimed = await _upsertPrintServerOwner(
+          storeId,
+          devState.deviceName,
+          forceTransfer: true,
+        );
+        if (!claimed) {
+          writePrintLog(
+            '[PrintServer] Stale owner promotion failed for Windows device $deviceId.',
           );
         }
       } else if (ownerState != null && !state.ownerMigrationCompleted) {
