@@ -9,6 +9,11 @@ import '../services/staff_sync_service.dart';
 import 'permission_provider.dart';
 import '../../modules/bill_printer/providers/printer_settings_provider.dart';
 
+bool shouldRouteToStorePickerOnSessionChange(
+  SessionData? previous,
+  SessionData? next,
+) => previous?.storeId != null && next != null && next.storeId == null;
+
 // ── Session state ─────────────────────────────────────────────────────────────
 class _SessionNotifier extends Notifier<SessionData?> {
   StaffSyncService? _syncService;
@@ -165,11 +170,21 @@ class _SessionNotifier extends Notifier<SessionData?> {
   }
 
   Future<void> clear() async {
-    await clearStoreContext();
+    _syncService?.stop();
+    _syncService = null;
+
+    final storeIdBeforeClear = state?.storeId ?? '';
+    try {
+      final notifier = ref.read(printerSettingsProvider.notifier);
+      await notifier.prepareForStoreLogout(storeIdBeforeClear);
+    } catch (_) {}
+
     await UserAuthService.logout();
     state = null;
+    AppLogger.updateSession(storeId: null, staffName: null);
     try {
       Supabase.instance.client.rest.headers.remove('x-user-id');
+      Supabase.instance.client.rest.headers.remove('x-store-id');
     } catch (_) {}
   }
 }

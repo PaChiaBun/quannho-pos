@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../core/utils/money_formatter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -35,6 +36,10 @@ const _kMuted = Color(0xFF9E9085);
 const _kBg = Color(0xFFFAF7F2);
 const _kRed = Color(0xFFC62828);
 const _kBorder = Color(0xFFE0D8CC);
+
+bool _reducePosMotion(BuildContext context) =>
+    MediaQuery.disableAnimationsOf(context) ||
+    (kIsWeb && defaultTargetPlatform == TargetPlatform.android);
 
 /// Provider kiểm tra module Bàn có đang bật không
 /// Dùng allModulesProvider — tự refresh khi module config thay đổi
@@ -89,8 +94,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'Tất cả';
   final _searchCtrl = TextEditingController();
-  // Hướng 1: lưu tất cả sessionIds của đơn hiện tại — close hết sau checkout
-  final List<String> _kitchenSessionIds = [];
 
   final GlobalKey _cartKey = GlobalKey();
   int _cartPopTrigger = 0;
@@ -119,7 +122,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(posProductsProvider);
-    final cart = ref.watch(cartProvider);
+    final cartIsEmpty = ref.watch(cartProvider.select((cart) => cart.isEmpty));
 
     // ── Desktop/Tablet: layout 2 cột ──────────────────────────────
     if (Responsive.isLargeScreen(context)) {
@@ -197,15 +200,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               ? _buildEmptyProducts()
                               : _buildProductGrid(filtered),
                         ),
-                        if (!cart.isEmpty) const SizedBox(height: 90),
+                        if (!cartIsEmpty) const SizedBox(height: 90),
                       ],
                     ),
-                    if (!cart.isEmpty)
+                    if (!cartIsEmpty)
                       Positioned(
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        child: _buildCartBar(cart),
+                        child: Consumer(builder: (context, ref, _) {
+                          return _buildCartBar(ref.watch(cartProvider));
+                        }),
                       ),
                   ],
                 );
@@ -262,13 +267,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   // TOP BAR
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildTopBar() {
-    final cart = ref.watch(cartProvider);
     final now = DateTime.now();
     final timeStr =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     final dateStr = '${now.day}/${now.month}/${now.year}';
 
-    return Container(
+    return Consumer(builder: (context, ref, _) {
+      final cart = ref.watch(cartProvider);
+      return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF1A1860), _kNavy],
@@ -550,13 +556,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           ),
         ),
       ),
-    );
+      );
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
   // SEARCH BAR
   Widget _buildSearchBar() {
-    final cart = ref.watch(cartProvider);
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -788,6 +794,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   // PRODUCT GRID
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildProductGrid(List<ProductModel> products) {
+    final reduceMotion = _reducePosMotion(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         // Dùng width thực của khu vực (không phải width màn hình tổng)
@@ -815,10 +822,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
             gridDelegate: delegate,
             itemCount: products.length,
-            itemBuilder: (_, i) => _ProductCard(
-              product: products[i],
-              onTapWithDetails: (details) => _addToCart(products[i], details),
-            ).animate(delay: (i * 40).ms).fadeIn(duration: 250.ms),
+            itemBuilder: (_, i) {
+              final card = _ProductCard(
+                product: products[i],
+                onTapWithDetails: (details) => _addToCart(products[i], details),
+              );
+              return reduceMotion
+                  ? card
+                  : card.animate(delay: (i * 40).ms).fadeIn(duration: 250.ms);
+            },
           );
         }
 
@@ -882,11 +894,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   delegate: SliverChildBuilderDelegate((_, i) {
                     final idx = globalIdx;
                     globalIdx++;
-                    return _ProductCard(
+                    final card = _ProductCard(
                       product: grouped[cat]![i],
                       onTapWithDetails: (details) =>
                           _addToCart(grouped[cat]![i], details),
-                    ).animate(delay: (idx * 30).ms).fadeIn(duration: 220.ms);
+                    );
+                    return reduceMotion
+                        ? card
+                        : card.animate(delay: (idx * 30).ms).fadeIn(duration: 220.ms);
                   }, childCount: grouped[cat]!.length),
                   gridDelegate: delegate,
                 ),
@@ -1133,15 +1148,18 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   void _openCheckout() {
-    final sessionsToClose = List<String>.from(_kitchenSessionIds);
-    showModalBottomSheet(
+    final sessionsToClose = Set<String>.from(
+      ref.read(cartProvider).kitchenSessionIds,
+    );
+    showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       isDismissible: false,
       enableDrag: false,
       builder: (_) => const CheckoutSheet(),
-    ).then((_) async {
+    ).then((checkoutCompleted) async {
+      if (checkoutCompleted != true) return;
       // Đóng tất cả ban_sessions Mang đi của đơn này
       for (final sid in sessionsToClose) {
         try {
@@ -1157,7 +1175,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           debugPrint('[POS] closeSession err: $e');
         }
       }
-      if (mounted) _kitchenSessionIds.clear();
     });
   }
 
@@ -1345,11 +1362,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       ref
           .read(cartProvider.notifier)
           .markLinesSent(unsentLines.map((l) => l.lineId).toList());
-      _kitchenSessionIds.add(sessionId);
+      ref.read(cartProvider.notifier).addKitchenSession(sessionId);
 
       if (mounted) {
         final sentCount = unsentLines.fold(0, (s, l) => s + l.quantity.toInt());
-        final batchNum = _kitchenSessionIds.length;
+        final batchNum = ref.read(cartProvider).kitchenSessionIds.length;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1487,14 +1504,9 @@ class _ProductCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cart = ref.watch(cartProvider);
-    final inCartLines = cart.lines
-        .where((l) => l.productId == product.id)
-        .toList();
-    final inCartQty = inCartLines.fold<int>(
-      0,
-      (s, l) => s + l.quantity.toInt(),
-    );
+    final inCartQty = ref.watch(cartProvider.select((cart) => cart.lines
+        .where((line) => line.productId == product.id)
+        .fold<int>(0, (sum, line) => sum + line.quantity.toInt())));
     final isOutOfStock = product.stockQty <= 0 && product.minStock > 0;
     final isLowStock =
         !isOutOfStock &&
@@ -1556,6 +1568,10 @@ class _ProductCard extends ConsumerWidget {
                 ? 13.0
                 : 17.0;
             final radius = isCompact ? 16.0 : 22.0;
+            final imageCacheWidth = (w * MediaQuery.devicePixelRatioOf(ctx2))
+                .round()
+                .clamp(128, 1024)
+                .toInt();
             // Format giá ngắn gọn cho card: 20K, 150K, 1.5Tr
             String fmtCard(int v) {
               if (v >= 1000000)
@@ -1596,6 +1612,9 @@ class _ProductCard extends ConsumerWidget {
                         child: Image.network(
                           product.imageUrl!,
                           fit: BoxFit.cover,
+                          cacheWidth: imageCacheWidth,
+                          filterQuality: FilterQuality.low,
+                          gaplessPlayback: true,
                           errorBuilder: (_, __, ___) => const SizedBox(),
                         ),
                       ),

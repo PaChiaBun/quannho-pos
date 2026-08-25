@@ -15,6 +15,7 @@ export '../../../core/providers/app_providers.dart' show posRepositoryProvider;
 class CartState {
   final List<CartLine> lines;
   final Set<String> sentLineIds; // lineIds đã gửi bếp — ẩn -/+
+  final Set<String> kitchenSessionIds; // ban_sessions đã tạo cho đơn POS
   final String? customerId;
   final String? customerName;
   final String? tableId;             // Bàn gán vào đơn
@@ -37,6 +38,7 @@ class CartState {
   const CartState({
     this.lines = const [],
     this.sentLineIds = const {},
+    this.kitchenSessionIds = const {},
     this.customerId,
     this.customerName,
     this.tableId,
@@ -69,6 +71,7 @@ class CartState {
   CartState copyWith({
     List<CartLine>? lines,
     Set<String>? sentLineIds,
+    Set<String>? kitchenSessionIds,
     String? Function()? customerId,
     String? Function()? customerName,
     String? Function()? tableId,
@@ -89,6 +92,7 @@ class CartState {
       CartState(
         lines: lines ?? this.lines,
         sentLineIds: sentLineIds ?? this.sentLineIds,
+        kitchenSessionIds: kitchenSessionIds ?? this.kitchenSessionIds,
         customerId: customerId != null ? customerId() : this.customerId,
         customerName:
             customerName != null ? customerName() : this.customerName,
@@ -228,6 +232,13 @@ class CartNotifier extends Notifier<CartState> {
   void markLinesSent(List<String> lineIds) {
     _updateState(state.copyWith(
       sentLineIds: {...state.sentLineIds, ...lineIds},
+    ));
+  }
+
+  /// Giữ phiên bếp cùng với giỏ hàng để không mất khi đổi module.
+  void addKitchenSession(String sessionId) {
+    _updateState(state.copyWith(
+      kitchenSessionIds: {...state.kitchenSessionIds, sessionId},
     ));
   }
 
@@ -383,13 +394,13 @@ final cartItemCountProvider = Provider<int>((ref) {
 });
 
 /// Đơn hàng hôm nay (reactive)
-final todayOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+final todayOrdersProvider = StreamProvider.autoDispose<List<OrderModel>>((ref) {
   return ref.watch(posRepositoryProvider).watchTodayOrders();
 });
 
 /// Stats POS của ngày hôm nay — KHÔNG dùng tên todayStatsProvider để tránh
 /// xung đột với dashboard_providers.dart (DashboardStats khác PosStats)
-final posTodayStatsProvider = FutureProvider<PosStats>((ref) async {
+final posTodayStatsProvider = FutureProvider.autoDispose<PosStats>((ref) async {
   // Invalidate mỗi khi có đơn hàng mới
   ref.watch(todayOrdersProvider);
   return ref.read(posRepositoryProvider).getTodayStats();

@@ -1395,10 +1395,11 @@ class _AccountTile extends ConsumerWidget {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await UserAuthService.logout();
-              ref.read(sessionProvider.notifier).clear();
+              await ref.read(sessionProvider.notifier).clear();
               if (context.mounted) {
-                Navigator.of(context).pushReplacementNamed('/auth');
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/auth', (route) => false);
               }
             },
             style: ElevatedButton.styleFrom(

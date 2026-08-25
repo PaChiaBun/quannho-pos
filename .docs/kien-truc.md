@@ -63,6 +63,13 @@ lib/
 - `navSlotsProvider` — 4 ô thanh điều hướng tuỳ chỉnh
 - `eventBridgeProvider` — cầu nối sự kiện giữa các module
 
+### Vòng đời module và truy vấn
+
+- `MainShell` dùng `ActiveModuleHost`: chỉ module đang hiển thị được mount. Không dùng `IndexedStack` để giữ sống toàn bộ module.
+- Stream/Future gắn với UI module phải dùng `autoDispose`; rời module phải dừng polling, realtime và timer không thiết yếu.
+- Repository có thể giữ cache RAM theo `store_id` để quay lại module hiển thị ngay, nhưng chỉ phát state khi snapshot thực sự thay đổi.
+- Tác vụ nền bắt buộc như điều phối in phải là service riêng, giới hạn theo vai trò/thiết bị; không giữ sống cả screen để chạy nền.
+
 ## Hệ Thống Sự Kiện (Event Bus)
 - `core/event_bus/` — giao tiếp giữa các module mà không phụ thuộc nhau
 - `core/services/event_bridge_service.dart` — cầu nối phía service

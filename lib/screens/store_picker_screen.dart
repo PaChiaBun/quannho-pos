@@ -5,9 +5,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/user_auth_service.dart';
+import '../core/services/pos_jwt_auth_service.dart';
 import '../core/providers/session_provider.dart';
 import '../core/widgets/create_store_sheet.dart';
 import '../core/widgets/join_store_sheet.dart';
+
+const storePickerPostLoginKey = 'post_login_selection';
 
 class StorePickerScreen extends ConsumerWidget {
   const StorePickerScreen({super.key});
@@ -20,6 +23,7 @@ class StorePickerScreen extends ConsumerWidget {
     final args =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
     final stores = (args?['stores'] as List<StoreMembership>?) ?? [];
+    final isPostLoginSelection = args?[storePickerPostLoginKey] == true;
     final session = ref.watch(sessionProvider);
 
     return Scaffold(
@@ -112,6 +116,35 @@ class StorePickerScreen extends ConsumerWidget {
                                 return _StoreCard(
                                   store: store,
                                   onTap: () async {
+                                    if (isPostLoginSelection &&
+                                        !PosJwtAuthService().isConfigured) {
+                                      final verifiedMembership =
+                                          await UserAuthService.selectStoreAfterLogin(
+                                            store,
+                                          );
+                                      if (verifiedMembership != null) {
+                                        ref
+                                            .read(sessionProvider.notifier)
+                                            .updateStore(verifiedMembership);
+                                        if (context.mounted) {
+                                          Navigator.of(
+                                            context,
+                                          ).pushReplacementNamed('/home');
+                                        }
+                                      } else if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Không thể xác minh quyền vào quán trên Supabase. Vui lòng đăng nhập lại.',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      return;
+                                    }
+
                                     final pwd = await _promptPassword(
                                       context,
                                       store.storeName,
@@ -224,10 +257,11 @@ class StorePickerScreen extends ConsumerWidget {
               Center(
                 child: TextButton.icon(
                   onPressed: () async {
-                    await UserAuthService.logout();
-                    ref.read(sessionProvider.notifier).clear();
+                    await ref.read(sessionProvider.notifier).clear();
                     if (context.mounted) {
-                      Navigator.of(context).pushReplacementNamed('/auth');
+                      Navigator.of(
+                        context,
+                      ).pushNamedAndRemoveUntil('/auth', (route) => false);
                     }
                   },
                   icon: const Icon(

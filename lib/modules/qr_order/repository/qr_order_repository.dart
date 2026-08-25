@@ -260,13 +260,15 @@ class QrOrderRepository {
       final combined = <QrRequestModel>[];
       final seenIds = <String>{};
 
-      // Gọi fetch các trạng thái nằm trong hàng đợi active: pending_staff, processing, confirmed
-      for (final status in ['pending_staff', 'processing', 'confirmed']) {
-        final res = await _sb.rpc(
-          'get_pending_qr_requests_v3',
-          params: {'p_raw_token': rawToken, 'p_filter_status': status},
-        );
+      // Backend production hiện còn RPC theo từng status. Chạy song song để
+      // không chặn luồng POS bằng ba round-trip tuần tự.
+      const activeStatuses = ['pending_staff', 'processing', 'confirmed'];
+      final responses = await Future.wait(activeStatuses.map((status) => _sb.rpc(
+        'get_pending_qr_requests_v3',
+        params: {'p_raw_token': rawToken, 'p_filter_status': status},
+      )));
 
+      for (final res in responses) {
         if (res is List) {
           for (final item in res) {
             final model = QrRequestModel.fromMap(item as Map<String, dynamic>);

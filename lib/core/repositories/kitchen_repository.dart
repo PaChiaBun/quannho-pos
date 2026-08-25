@@ -134,7 +134,7 @@ class KitchenRepository {
       final id = info['store_id'];
       if (id != null && id.isNotEmpty) return id;
     } catch (_) {}
-    return '79fd45e9-14c3-4dd2-81ba-aa288a45b472'; // Store ID mặc định Quán Nhỏ
+    return null;
   }
 
   // ── Watch tickets (polling + realtime) ─────────────────────────────────────
@@ -143,21 +143,25 @@ class KitchenRepository {
     RealtimeChannel? channel;
     Timer? fallbackTimer;
     List<TicketWithItems>? lastSuccessfulResult;
+    bool isCancelled = false;
 
-    ctrl = StreamController<List<TicketWithItems>>(onCancel: () {
-      channel?.unsubscribe();
+    ctrl = StreamController<List<TicketWithItems>>(onCancel: () async {
+      isCancelled = true;
+      await channel?.unsubscribe();
       fallbackTimer?.cancel();
+      if (!ctrl.isClosed) await ctrl.close();
     });
 
     Future<void> refresh(String storeId) async {
-      if (ctrl.isClosed) return;
+      if (isCancelled || ctrl.isClosed) return;
       try {
         final result = await _fetchActiveTickets(storeId);
+        if (isCancelled || ctrl.isClosed) return;
         lastSuccessfulResult = result;
-        if (!ctrl.isClosed) ctrl.add(result);
+        ctrl.add(result);
       } catch (e, stack) {
         debugPrint('[KitchenRepo] refresh error: $e\n$stack');
-        if (!ctrl.isClosed) {
+        if (!isCancelled && !ctrl.isClosed) {
           if (lastSuccessfulResult != null) {
             ctrl.add(lastSuccessfulResult!);
           } else {
@@ -169,15 +173,21 @@ class KitchenRepository {
 
     Future<void> start() async {
       try {
-        final storeId = await _storeId() ?? '79fd45e9-14c3-4dd2-81ba-aa288a45b472';
+        final storeId = await _storeId();
+        if (isCancelled || ctrl.isClosed) return;
+        if (storeId == null) {
+          ctrl.add([]);
+          return;
+        }
         
         // Phát dữ liệu ban đầu ngay lập tức để thoát cờ AsyncLoading của Riverpod trong 1ms
-        if (!ctrl.isClosed) {
+        if (!isCancelled && !ctrl.isClosed) {
           ctrl.add(lastSuccessfulResult ?? []);
         }
 
         // Initial load
         await refresh(storeId);
+        if (isCancelled || ctrl.isClosed) return;
 
         // Realtime subscription
         try {
@@ -192,13 +202,17 @@ class KitchenRepository {
                   column: 'store_id',
                   value: storeId,
                 ),
-                callback: (_) => refresh(storeId),
+              callback: (_) {
+                if (!isCancelled) refresh(storeId);
+              },
               )
               .onPostgresChanges(
                 event: PostgresChangeEvent.all,
                 schema: 'public',
                 table: 'kitchen_ticket_items',
-                callback: (_) => refresh(storeId),
+              callback: (_) {
+                if (!isCancelled) refresh(storeId);
+              },
               );
           channel!.subscribe();
         } catch (e) {
@@ -207,7 +221,7 @@ class KitchenRepository {
 
         // Fallback polling (5s)
         fallbackTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-          refresh(storeId);
+          if (!isCancelled) refresh(storeId);
         });
       } catch (e) {
         debugPrint('[KitchenRepo] start error: $e');
@@ -655,10 +669,13 @@ Stream<List<VoidNoticeModel>> watchVoidNotices(String storeId) async* {
   // ‼️ FALLBACK: Poll mỗi 45s để đảm bảo banner luôn hiện dù Realtime lag/fail
   final pollTimer = Timer.periodic(const Duration(seconds: 45), (_) => fetch());
 
-  yield* ctrl.stream;
-
-  // cleanup
-  pollTimer.cancel();
+  try {
+    yield* ctrl.stream;
+  } finally {
+    pollTimer.cancel();
+    await channel.unsubscribe();
+    await ctrl.close();
+  }
 }
 
 class _KitchenDayStats {

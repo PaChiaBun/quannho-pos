@@ -11,12 +11,13 @@ import '../services/store_auth_service.dart';
 class CoreProductRepository {
   static SupabaseClient get _sb => Supabase.instance.client;
   final _uuid = const Uuid();
+  final Map<String, List<ProductModel>> _productsCacheByStore = {};
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   Future<String?> _storeId() async {
     final info = await StoreAuthService.getStoreInfo();
-    final id = info['store_id'] as String?;
+    final id = info['store_id'];
     assert(() { debugPrint('[CoreProductRepo] _storeId() → $id'); return true; }());
     return id;
   }
@@ -31,13 +32,22 @@ class CoreProductRepository {
       yield []; return;
     }
 
+    // Khi quay lại POS/Kho, hiển thị cache RAM ngay thay vì nháy loading.
+    final cachedProducts = _productsCacheByStore[storeId];
+    if (cachedProducts != null) {
+      yield cachedProducts;
+    }
+
     try {
       final initial = await _fetchAll(storeId);
       assert(() { debugPrint('[CoreProductRepo] watchAll → ${initial.length} items'); return true; }());
-      yield initial;
+      if (!sameProductSnapshot(_productsCacheByStore[storeId], initial)) {
+        _productsCacheByStore[storeId] = initial;
+        yield initial;
+      }
     } catch (e) {
       debugPrint('[CoreProductRepo] watchAll initial fetch error: $e');
-      yield [];
+      if (_productsCacheByStore[storeId] == null) yield [];
     }
 
     // Thay thế WebSockets stream bằng Polling qua REST API để gửi kèm HTTP headers (x-store-id)
@@ -46,11 +56,48 @@ class CoreProductRepository {
       await Future.delayed(const Duration(seconds: 15));
       try {
         final products = await _fetchAll(storeId);
-        yield products;
+        if (!sameProductSnapshot(_productsCacheByStore[storeId], products)) {
+          _productsCacheByStore[storeId] = products;
+          yield products;
+        }
       } catch (e) {
         // Bỏ qua lỗi mạng tạm thời
       }
     }
+  }
+
+  @visibleForTesting
+  static bool sameProductSnapshot(
+    List<ProductModel>? previous,
+    List<ProductModel> next,
+  ) {
+    if (previous == null || previous.length != next.length) return false;
+    for (var i = 0; i < next.length; i++) {
+      final a = previous[i];
+      final b = next[i];
+      if (a.id != b.id ||
+          a.storeId != b.storeId ||
+          a.name != b.name ||
+          a.sku != b.sku ||
+          a.category != b.category ||
+          a.unit != b.unit ||
+          a.productType != b.productType ||
+          a.stockQty != b.stockQty ||
+          a.minStock != b.minStock ||
+          a.sellPrice != b.sellPrice ||
+          a.costPrice != b.costPrice ||
+          a.costPriceLatest != b.costPriceLatest ||
+          a.imageUrl != b.imageUrl ||
+          a.stationCode != b.stationCode ||
+          a.isAvailable != b.isAvailable ||
+          a.isActive != b.isActive ||
+          a.isDeleted != b.isDeleted ||
+          a.isTopping != b.isTopping ||
+          a.toppingUnit != b.toppingUnit) {
+        return false;
+      }
+    }
+    return true;
   }
 
 

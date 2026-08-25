@@ -1206,6 +1206,55 @@ class UserAuthService {
     }
   }
 
+  /// Kích hoạt quán ngay sau một lần đăng nhập thành công.
+  ///
+  /// Luồng này không nhận hoặc lưu lại mật khẩu. Thay vào đó, nó đọc lại danh
+  /// sách membership từ Supabase và chỉ áp dụng đúng bản ghi authoritative của
+  /// user đang đăng nhập. Đổi quán từ bên trong app vẫn phải dùng [selectStore]
+  /// để xác minh lại mật khẩu và giữ nguyên cơ chế rollback fail-closed.
+  static Future<StoreMembership?> selectStoreAfterLogin(
+    StoreMembership requestedMembership, {
+    PosJwtAuthService? jwtService,
+  }) async {
+    if (_isStoreSwitching) return null;
+
+    final posJwtService = jwtService ?? PosJwtAuthService();
+
+    // POS JWT là token theo từng store. Khi endpoint này được bật, không được
+    // bỏ qua bước cấp token bằng mật khẩu cho store đích.
+    if (posJwtService.isConfigured) return null;
+
+    _isStoreSwitching = true;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString(_kUserId);
+      if (userId == null || userId.isEmpty) return null;
+
+      // Chỉ dành cho trạng thái vừa đăng nhập nhưng chưa có store active.
+      final activeStoreId = prefs.getString(_kStoreId);
+      if (activeStoreId != null && activeStoreId.isNotEmpty) return null;
+
+      final authoritativeStores = await getUserStores(userId);
+      StoreMembership? authoritativeMembership;
+      for (final store in authoritativeStores) {
+        if (store.storeId == requestedMembership.storeId) {
+          authoritativeMembership = store;
+          break;
+        }
+      }
+      if (authoritativeMembership == null) return null;
+
+      await _applyMembershipToPrefs(prefs, authoritativeMembership);
+      return authoritativeMembership;
+    } catch (e) {
+      debugPrint('[selectStoreAfterLogin] membership verification failed: $e');
+      return null;
+    } finally {
+      _isStoreSwitching = false;
+    }
+  }
+
   static Future<void> _restoreLegacySnapshot({
     required SharedPreferences prefs,
     required String? storeId,
@@ -1412,6 +1461,17 @@ class UserAuthService {
     await prefs.setString(_kUserId, userId);
     await prefs.setString(_kUserPhone, phone);
     await prefs.setString(_kUserName, name);
+    // Session cơ bản chỉ được dùng khi chưa chọn quán. Xóa store context cũ để
+    // không vô tình mang store/role của tài khoản hoặc lần đăng nhập trước sang.
+    await prefs.remove(_kStoreId);
+    await prefs.remove(_kStoreName);
+    await prefs.remove(_kStoreCode);
+    await prefs.remove(_kRole);
+    await prefs.remove(_kIsOwner);
+    await prefs.remove('store_id');
+    await prefs.remove('store_name');
+    await prefs.remove('store_code');
+    await prefs.remove('device_role');
   }
 
   static Future<void> _saveFullSession({

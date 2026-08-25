@@ -128,7 +128,7 @@ Chủ quán/Quản lý gán trực tiếp module X cho nhân viên (trong NhanVi
 | # | Việc cần làm | File | Ví dụ chamcong |
 |---|---|---|---|
 | **0** | **Bọc màn hình bằng `ResponsiveLayout`** | màn hình mới | xem mẫu bên dưới |
-| 1 | Thêm screen vào IndexedStack | `main.dart` | index 10 |
+| 1 | Đăng ký screen trong `ActiveModuleHost` | `main.dart` | index 10; chỉ mount khi active |
 | 2 | Khai báo `_kTabMeta` | `main.dart` | `chamcong` |
 | 3 | Khai báo `kModuleConfigs` | `shared/widgets/module_tile.dart` | route `/chamcong` |
 | 4 | Seed vào SQLite local | `core/database/app_database.dart` | migration v12 + beforeOpen |

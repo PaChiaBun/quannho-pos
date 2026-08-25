@@ -44,6 +44,7 @@ import 'core/providers/session_provider.dart';
 import 'screens/role_manager_screen.dart' show storeRolesProvider;
 import 'screens/log_viewer_screen.dart';
 import 'core/utils/responsive.dart';
+import 'core/widgets/active_module_host.dart';
 import 'features/ai_assistant/screens/bum_chat_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -238,8 +239,6 @@ class _MainShellState extends ConsumerState<MainShell>
   late final AnimationController _tabFadeCtrl;
   late final Animation<double> _tabFade;
 
-  // ── Children của IndexedStack — tạo 1 lần, không bao giờ recreate ──
-  late final List<Widget> _bodyChildren;
   void _setTab(int i) {
     if (i == ref.read(navTabProvider)) return;
     ref.read(navTabProvider.notifier).goTo(i);
@@ -267,12 +266,6 @@ class _MainShellState extends ConsumerState<MainShell>
       value: 1.0,
     );
     _tabFade = CurvedAnimation(parent: _tabFadeCtrl, curve: Curves.easeOut);
-
-    // Cache children một lần — IndexedStack sử dụng lại, không tạo mới
-    _bodyChildren = List.generate(
-      _screens.length,
-      (i) => RepaintBoundary(child: _screens[i]),
-    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(eventBridgeProvider);
@@ -462,8 +455,7 @@ class _MainShellState extends ConsumerState<MainShell>
         _startRoleWatcher();
         _startShiftWatcher();
       }
-      if (previous?.storeId != null &&
-          next?.storeId == null &&
+      if (shouldRouteToStorePickerOnSessionChange(previous, next) &&
           !_isNavigatingAway) {
         _isNavigatingAway = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -537,9 +529,8 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 
   // ─────────────────────────────────────────────────────────────
-  // BODY — IndexedStack giữ state + chỉ animate screen đang active
-  // ✅ FIX #1: bỏ List.generate + AnimatedOpacity/Slide cho 13 screens inactive
-  //    → tiết kiệm 26 widget nodes + implicit animation reconcile mỗi tap
+  // BODY — chỉ mount module đang active.
+  // Module ẩn bị dispose để dừng provider/timer/realtime gắn với UI.
   // ─────────────────────────────────────────────────────────────
   static const _screens = [
     DashboardScreen(), // 0
@@ -578,7 +569,7 @@ class _MainShellState extends ConsumerState<MainShell>
           }
           return FadeTransition(
             opacity: _tabFade,
-            child: IndexedStack(index: idx, children: _bodyChildren),
+            child: ActiveModuleHost(index: idx, modules: _screens),
           );
         },
         loading: () => _buildClockInCheckingScreen(),
@@ -590,7 +581,7 @@ class _MainShellState extends ConsumerState<MainShell>
     // → giảm 50% repaint cost vì không cần transform matrix
     return FadeTransition(
       opacity: _tabFade,
-      child: IndexedStack(index: idx, children: _bodyChildren),
+      child: ActiveModuleHost(index: idx, modules: _screens),
     );
   }
 

@@ -9,25 +9,28 @@ export '../../../core/providers/app_providers.dart' show khoRepositoryProvider;
 // STREAM PROVIDERS — Reactive data
 // ─────────────────────────────────────────────────────────────────────────────
 
-final allStockProvider = StreamProvider<List<StockItem>>((ref) {
+final allStockProvider = StreamProvider.autoDispose<List<StockItem>>((ref) {
   return ref.watch(khoRepositoryProvider).watchAllStock();
 });
 
-final lowStockKhoProvider = StreamProvider<List<StockItem>>((ref) {
-  return ref.watch(khoRepositoryProvider).watchLowStock();
+final lowStockKhoProvider = Provider.autoDispose<AsyncValue<List<StockItem>>>((ref) {
+  return ref.watch(allStockProvider).whenData((items) => items
+      .where((item) => item.minStock > 0 && item.stockQty <= item.minStock)
+      .toList());
 });
 
-final outOfStockProvider = StreamProvider<List<StockItem>>((ref) {
-  return ref.watch(khoRepositoryProvider).watchOutOfStock();
+final outOfStockProvider = Provider.autoDispose<AsyncValue<List<StockItem>>>((ref) {
+  return ref.watch(allStockProvider).whenData(
+      (items) => items.where((item) => item.stockQty <= 0).toList());
 });
 
 final recentMovementsProvider =
-    StreamProvider<List<StockMovementModel>>((ref) {
+    StreamProvider.autoDispose<List<StockMovementModel>>((ref) {
   return ref.watch(khoRepositoryProvider).watchRecentMovements();
 });
 
 final productMovementsProvider =
-    StreamProvider.family<List<StockMovementModel>, String>((ref, productId) {
+    StreamProvider.autoDispose.family<List<StockMovementModel>, String>((ref, productId) {
   return ref.watch(khoRepositoryProvider).watchMovements(productId);
 });
 
@@ -35,11 +38,11 @@ final suppliersProvider = FutureProvider.autoDispose<List<SupplierModel>>((ref) 
   return ref.read(khoRepositoryProvider).fetchSuppliers();
 });
 
-final purchaseOrdersProvider = StreamProvider<List<PurchaseOrderModel>>((ref) {
+final purchaseOrdersProvider = StreamProvider.autoDispose<List<PurchaseOrderModel>>((ref) {
   return ref.watch(khoRepositoryProvider).watchPurchaseOrders();
 });
 
-final khoStatsProvider = FutureProvider<KhoStats>((ref) async {
+final khoStatsProvider = FutureProvider.autoDispose<KhoStats>((ref) async {
   ref.watch(allStockProvider); // depend để auto-refresh
   return ref.read(khoRepositoryProvider).getStats();
 });
@@ -96,7 +99,7 @@ final stockFilterProvider =
   StockFilterNotifier.new,
 );
 
-final filteredStockProvider = Provider<AsyncValue<List<StockItem>>>((ref) {
+final filteredStockProvider = Provider.autoDispose<AsyncValue<List<StockItem>>>((ref) {
   final filter   = ref.watch(stockFilterProvider);
   final allAsync = ref.watch(allStockProvider);
   return allAsync.whenData((items) => filter.apply(items));

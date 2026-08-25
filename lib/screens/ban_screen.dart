@@ -109,6 +109,38 @@ const _kZoneIconCodes = <int>[
   0xe206, // local_fire_department
 ];
 
+/// Dùng các IconData hằng để Flutter web có thể tree-shake font icon.
+IconData _zoneIconForCode(int code) {
+  switch (code) {
+    case 0xe318:
+      return Icons.home_outlined;
+    case 0xe1a7:
+      return Icons.deck_outlined;
+    case 0xe7f4:
+      return Icons.star_border_rounded;
+    case 0xe838:
+      return Icons.emoji_events_outlined;
+    case 0xe56c:
+      return Icons.restaurant_menu_rounded;
+    case 0xe555:
+      return Icons.local_cafe_outlined;
+    case 0xe51c:
+      return Icons.nightlight_round;
+    case 0xe0da:
+      return Icons.flag_outlined;
+    case 0xe01a:
+      return Icons.weekend_outlined;
+    case 0xe206:
+      return Icons.local_fire_department_outlined;
+    case 0xe145:
+      return Icons.add_rounded;
+    case 0xe1b1:
+      return Icons.grid_view_rounded;
+    default:
+      return Icons.table_restaurant_outlined;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PROVIDERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -143,7 +175,7 @@ final sessionItemsProvider = StreamProvider.autoDispose
 
 /// Stream modifiers của 1 sản phẩm (query Supabase thật)
 final productModifiersProvider =
-    StreamProvider.family<List<Map<String, dynamic>>, String>((
+    StreamProvider.autoDispose.family<List<Map<String, dynamic>>, String>((
       ref,
       productId,
     ) async* {
@@ -167,7 +199,7 @@ final productModifiersProvider =
 
 // ── Topping catalog — lấy từ bảng products có is_topping=true ─────────────
 final toppingCatalogProvider =
-    StreamProvider.family<List<Map<String, dynamic>>, String>((
+    StreamProvider.autoDispose.family<List<Map<String, dynamic>>, String>((
       ref,
       storeId,
     ) async* {
@@ -1028,10 +1060,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Icon(
-                                                IconData(
-                                                  zone.iconCode,
-                                                  fontFamily: 'MaterialIcons',
-                                                ),
+                                                _zoneIconForCode(zone.iconCode),
                                                 color: Colors.white,
                                                 size: 14,
                                               ),
@@ -1723,7 +1752,7 @@ class _ZoneChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              IconData(iconCode, fontFamily: 'MaterialIcons'),
+              _zoneIconForCode(iconCode),
               size: 16,
               color: isSelected ? Colors.white : color,
             ),
@@ -1885,7 +1914,7 @@ class _TableCard extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Icon(
-                      IconData(zone.iconCode, fontFamily: 'MaterialIcons'),
+                      _zoneIconForCode(zone.iconCode),
                       size: iconSizeVal,
                       color: isOccupied
                           ? Colors.white.withValues(alpha: 0.8)
@@ -2145,10 +2174,7 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        IconData(
-                          widget.zone.iconCode,
-                          fontFamily: 'MaterialIcons',
-                        ),
+                        _zoneIconForCode(widget.zone.iconCode),
                         size: 20,
                         color: zoneColor,
                       ),
@@ -10214,7 +10240,7 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                           ),
                           child: Center(
                             child: Icon(
-                              IconData(iconCp, fontFamily: 'MaterialIcons'),
+                              _zoneIconForCode(iconCp),
                               size: 22,
                               color: isSel ? _selectedColor : _kNavy,
                             ),
@@ -10492,10 +10518,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                IconData(
-                                  zone.iconCode,
-                                  fontFamily: 'MaterialIcons',
-                                ),
+                                _zoneIconForCode(zone.iconCode),
                                 size: 14,
                                 color: isSel ? Colors.white : zoneColor,
                               ),

@@ -83,7 +83,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                 ),
                 const Spacer(),
                 IconButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(context, false),
                   icon: const Icon(Icons.close_rounded, color: _kMuted),
                 ),
               ],
@@ -701,7 +701,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _kNavy,
                 foregroundColor: Colors.white,

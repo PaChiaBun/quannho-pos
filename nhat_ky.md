@@ -192,7 +192,7 @@
 - ✅ **J. Kiểm Thử & Xác Minh Minh Bạch**:
   - `dart format`: 5/5 files format chuẩn (exit code 0).
   - `git diff --check`: Exit code 0, 0 lặt vặt whitespace.
-  - `flutter analyze`: Exit code 1 (676 warnings/infos cũ từ AI Bùm/out of scope, 0 syntax error trong file sửa).
+  - `flutter analyze`: Exit code 1 (676 warnings/infos cũ từ AI Bum/out of scope, 0 syntax error trong file sửa).
   - `flutter test test/core/comprehensive_fix_test.dart`: 47/47 target unit tests PASS (exit code 0).
   - `flutter test`: Full suite 118/118 tests PASS (exit code 0, 4 skipped do mock storage).
 
@@ -2585,3 +2585,138 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
 - Đây là thay đổi logic Dart nằm trong ứng dụng client, nên **bắt buộc build và cài bản Windows mới**; thay đổi cấu hình Supabase không thể tự cập nhật phần sửa này vào bản đang cài.
 - Chưa kích hoạt workflow phát hành Windows trong bước sửa mã này.
 - Sau khi cài bản mới, thử cả thanh toán tiền mặt và chuyển khoản. Khi cửa hàng chưa có Print Server Owner, log phải có dòng fallback và máy Thu ngân phải in đúng một bill thanh toán.
+
+---
+
+## 2026-08-21: Chuẩn hóa context dự án, tài liệu triển khai và CodeGraph
+
+### Công việc đã thực hiện
+
+- Hoàn tất vòng khảo sát nghiệp vụ tổng thể Quán Nhỏ POS, bao gồm tài khoản/cửa hàng, POS, Bàn, Bếp, thanh toán, Kho, Thu Chi, nhân sự, QR, khách hàng, báo cáo, offline, backup và định hướng AI Bum.
+- Chốt ưu tiên triển khai:
+  - P0 tập trung POS → Bàn → Bếp → Thanh toán → Kho/Thu Chi.
+  - Offline thuộc bản nâng cấp đầu; truyền POS → KDS qua LAN khi mất Internet để sau.
+  - Kiến trúc/database chuẩn bị multi-store ngay, giao diện quản lý nhiều cửa hàng hoàn chỉnh làm sau.
+  - Pilot tại quán KAY; kiểm thử thủ công cho vòng pilot, còn kiểm thử idempotency/concurrency/crash là nợ P0 trước khi mở rộng.
+- Gộp hai file context trùng tên thành **một file chuẩn duy nhất**:
+  - `.agents/workflows/qn.md` — context ngắn, quy tắc lõi, tài liệu định tuyến và cách dùng CodeGraph.
+  - Đã xóa `.docs/qn.md` để tránh gọi nhầm.
+- Chuyển toàn bộ nội dung chi tiết sang:
+  - `.docs/trien-khai-sap-toi.md` — quyết định nghiệp vụ, hiện trạng code, nợ kỹ thuật và P0/P1/P2.
+  - `.docs/quy-chuan-agent-chi-tiet.md` — quy chuẩn agent cũ để tra cứu khi cần, không nạp toàn bộ theo mặc định.
+- Cài và cấu hình CodeGraph `1.5.0` cho Codex qua MCP toàn cục; index riêng của repo nằm trong `.codegraph/`.
+- Đồng bộ và xác minh CodeGraph hoạt động với **249 file, 7.036 node và 19.277 liên kết**; thử `codegraph explore` đã tìm đúng luồng `BanRepository`, `openSession`, `addSessionItems` và caller liên quan.
+- Workflow `/qn` yêu cầu dùng CodeGraph để tìm symbol/call path/phạm vi ảnh hưởng trước khi đọc và sửa code, nhưng vẫn phải đối chiếu code, schema/migration và kiểm thử thực tế.
+
+### Quy ước nhật ký
+
+- `nhat_ky.md` tại root repo là **nhật ký dự án chuẩn duy nhất**.
+- Không tạo thêm `.docs/nhat-ky.md`, `.docs/nhat_ky.md` hoặc file nhật ký dự án trùng lặp.
+- `.docs/Ai_Bum/Ai_Bum.md` chỉ là tài liệu/nhật ký nội bộ của riêng module AI Bum, không thay thế `nhat_ky.md`.
+
+### Phạm vi thay đổi
+
+- Chỉ tái cấu trúc tài liệu, workflow và cấu hình CodeGraph.
+- Không sửa mã ứng dụng, schema/migration hoặc dữ liệu Supabase.
+
+### Tiếp theo
+
+- Khi bắt đầu task mới, chỉ gọi `.agents/workflows/qn.md`.
+- Agent đọc context ngắn, mở đúng phần trong `trien-khai-sap-toi.md`, dùng CodeGraph kiểm tra code và triển khai P0 theo phạm vi người dùng yêu cầu.
+
+---
+
+## 2026-08-24: Sửa đăng nhập yêu cầu mật khẩu hai lần và điều hướng đăng xuất
+
+### Nguyên nhân
+
+- `AuthScreen` luôn chuyển sang `StorePickerScreen` sau đăng nhập thành công, kể cả tài khoản chỉ thuộc một quán và `UserAuthService.login()` đã chọn/lưu quán đó.
+- `StorePickerScreen` tiếp tục hỏi mật khẩu rồi gọi `selectStore()`, khiến mật khẩu được xác minh lần thứ hai ngay sau lần đăng nhập đầu.
+- Luồng đăng xuất gọi `UserAuthService.logout()` trực tiếp rồi gọi tiếp `sessionProvider.clear()`, trong khi `clear()` lại logout lần nữa. Trạng thái trung gian `user còn nhưng storeId=null` còn kích hoạt listener chuyển sang màn Chọn quán trước khi UI chuyển về màn Đăng nhập.
+
+### Thay đổi
+
+- Tài khoản một quán đi thẳng từ đăng nhập vào `/home`.
+- Tài khoản nhiều quán chỉ nhập mật khẩu một lần; sau khi chọn quán, app đọc lại membership authoritative từ Supabase rồi mới ghi `store_id`, tên quán và vai trò.
+- Không truyền hoặc lưu mật khẩu qua route. Nếu membership không tồn tại/lỗi truy vấn thì fail-closed và không kích hoạt quán.
+- Giữ nguyên `selectStore()` cùng yêu cầu mật khẩu, mutex và rollback cho thao tác **Đổi quán** từ bên trong app.
+- Thêm mutex cho chọn quán sau đăng nhập để double-tap/concurrency không thể kích hoạt hai quán đồng thời.
+- Session cơ bản chưa chọn quán xóa toàn bộ store/role cache cũ, tránh mang context của lần đăng nhập trước sang tài khoản mới.
+- Full logout chỉ chạy một chuỗi cleanup được `await`, về `/auth` và không bị listener chuyển sang Store Picker; luồng thu hồi membership vẫn giữ hành vi về Store Picker.
+- Sửa smoke-test harness: bọc `ProviderScope` và cho fake clock chạy hết timeout fail-closed của Splash.
+
+### Kiểm tra
+
+- Test auth/navigation mới: **8/8 PASS**, gồm một quán, nhiều quán, không hỏi mật khẩu lần hai, Supabase authoritative membership, fail-closed, concurrency, logout và membership revocation.
+- Test mục tiêu auth/JWT/revocation: **27/27 PASS** trước khi bổ sung widget test cuối.
+- Full Flutter suite: **207 PASS, 8 SKIP, 0 FAIL**; 8 test integration tiếp tục skip do cần staging/Supabase thật.
+- Vòng QC độc lập sau triển khai chạy lại full suite: **207 PASS, 8 SKIP, 0 FAIL**.
+- Analyze target: **0 compile error**; còn warning/info cũ trong các màn hình lớn.
+- `git diff --check`: đạt.
+- Web release build đúng `--base-href "/pos/" --no-tree-shake-icons`: **thành công**; `build/web/index.html` có `<base href="/pos/">` và SHA-256 `main.dart.js` là `9040e605482fb6c44236abc2946c1213ea5bfc4381b1c8712f00e495b44c1578`.
+
+### Phát hành
+
+- Đã build Web release local để xác minh compile; chưa deploy Web và chưa build/cài Windows hoặc Android.
+
+---
+
+## 2026-08-25: Tối ưu lifecycle module và POS Web cho Android cấu hình thấp
+
+### Nguyên nhân
+
+- `MainShell` dùng `IndexedStack` mount cùng lúc 15 module, làm provider, timer và realtime của màn hình ẩn vẫn hoạt động.
+- POS và từng card sản phẩm cùng watch toàn bộ giỏ hàng; thay đổi một món kéo theo rebuild rộng.
+- Sản phẩm poll toàn bộ mỗi 15 giây và luôn phát list mới. Kho còn tạo ba subscription sản phẩm cho tất cả/sắp hết/hết hàng.
+- QR POS gọi ba RPC tuần tự mỗi 3,5 giây và phát state dù snapshot không đổi.
+
+### Thay đổi
+
+- Thêm `ActiveModuleHost`, chỉ mount module đang active; module ẩn được dispose.
+- Chuyển các provider UI nóng của Dashboard, POS, Kho, Thu Chi, Bếp, Loyalty và QR sang `autoDispose`.
+- Repository sản phẩm giữ cache RAM cô lập theo `store_id`, hiển thị cache ngay khi quay lại và không emit snapshot giống nhau.
+- Kho dùng một stream sản phẩm; danh sách sắp hết/hết hàng được lọc từ state chung.
+- POS chỉ rebuild card có quantity thay đổi, giới hạn decode ảnh và tắt entrance animation trên Android Web.
+- QR fetch ba trạng thái song song, poll mỗi 6 giây và không emit snapshot không đổi; không thay schema/RPC production.
+
+### Kiểm tra
+
+- Test lifecycle/snapshot mới: **3/3 PASS**.
+- Full Flutter suite: **210 PASS, 8 SKIP, 0 FAIL**.
+- Target auth + performance + print architecture: **28/28 PASS**.
+- Web release `--base-href "/pos/" --no-tree-shake-icons`: **build thành công**.
+- Analyze target: **0 compile error**; còn warning/info cũ trong các screen lớn.
+
+### Phát hành
+
+- Chưa deploy production. Cần test profiling trên thiết bị Android thực tại KAY trước khi phát hành.
+
+---
+
+## 2026-08-25: QC hardening lifecycle trước deploy
+
+### Lỗi logic đã khóa
+
+- Chuyển danh sách `ban_sessions` của luồng POS → Bếp vào `CartState`, không còn mất khi rời POS rồi quay lại thanh toán.
+- Checkout chỉ đóng các phiên Bếp khi thanh toán thành công; nút đóng sheet không còn bị hiểu là thanh toán.
+- `kitchenReadyStreamProvider` theo dõi repository trực tiếp, giữ đúng subscription khi màn Bàn active và không phát lại thông báo cũ khi remount.
+- Chặn phát chuông phiếu cũ/cảnh báo quá hạn cũ khi vào lại Bếp.
+- Cleanup đầy đủ timer, realtime channel và controller của Bếp; chặn kết nối khởi động muộn sau khi màn hình đã dispose.
+- Bỏ store UUID fallback hard-code trong `KitchenRepository`; khi không xác định được quán thì fail-closed.
+- Cache sản phẩm được tách theo `store_id`, loại race request quán cũ ghi đè cache quán mới.
+- Polling modifier/topping của Bàn chuyển sang `autoDispose`, không tích luỹ mỗi khi nhân viên xem thêm sản phẩm.
+- QR dừng xử lý ngay nếu request hoàn thành sau khi provider đã dispose.
+- Thay `IconData` tạo động bằng bảng ánh xạ icon hằng, khôi phục web build mặc định có tree-shaking.
+
+### Kiểm tra
+
+- Test lifecycle/POS mới: **5/5 PASS**.
+- Full Flutter suite: **212 PASS, 8 SKIP, 0 FAIL**; 8 test integration cần staging/Supabase thật.
+- Analyze nhóm repository/provider trọng yếu: **0 compile error**; còn info cũ về public API dùng private type.
+- `flutter build web --base-href "/pos/"` với tree-shaking mặc định: **thành công**.
+- `git diff --check`: **Đạt**.
+
+### Phát hành
+
+- Mã nguồn đã qua cổng QC tự động; chưa thực hiện deploy production trong task này.
+- Khi phát hành KAY, cần smoke test trên máy Android thực với luồng gửi Bếp → đổi module → thanh toán và ra/vào Bếp nhiều lần.
