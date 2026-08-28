@@ -2,10 +2,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // User Auth Service — Đăng ký / Đăng nhập bằng SĐT + Mật khẩu
 // ─────────────────────────────────────────────────────────────────────────────
-import 'dart:convert';
 import 'dart:async';
-import 'dart:math';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -24,8 +21,11 @@ const _kStoreCode = 'auth_store_code';
 const _kRole = 'auth_role';
 const _kIsOwner = 'auth_is_owner';
 
-// ── Salt cố định (không cần đổi trừ khi có breach) ───────────────────────────
-const _kSalt = 'qn_pos_2024_salt';
+// ── Reviewer Account Compile Gate ─────────────────────────────────────────────
+const bool kEnableReviewerAccount = bool.fromEnvironment(
+  'ENABLE_REVIEWER_ACCOUNT',
+  defaultValue: false,
+);
 
 class UserAuthException implements Exception {
   final String message;
@@ -300,12 +300,6 @@ class UserAuthService {
     }
   }
 
-  // ── Hash password ───────────────────────────────────────────────────────────
-  static String _hashPassword(String phone, String password) {
-    final input = '$phone:$password:$_kSalt';
-    return sha256.convert(utf8.encode(input)).toString();
-  }
-
   // ── FORMAT phone → chuẩn hoá ────────────────────────────────────────────────
   static String _normalizePhone(String phone) {
     var p = phone.trim().replaceAll(RegExp(r'\s|-|\(|\)'), '');
@@ -320,7 +314,10 @@ class UserAuthService {
     required String phone,
     required String password,
     required String displayName,
+    PosJwtAuthService? jwtService,
   }) async {
+    final posJwtService = jwtService ?? PosJwtAuthService();
+    posJwtService.clearActiveOnboardingJwt();
     final db = _db;
     if (db == null) return AuthResult.error('Không kết nối được server.');
 
@@ -328,61 +325,70 @@ class UserAuthService {
     if (normalizedPhone.isEmpty || normalizedPhone.length < 8) {
       return AuthResult.error('Số điện thoại không hợp lệ.');
     }
-    if (password.length < 6) {
-      return AuthResult.error('Mật khẩu phải từ 6 ký tự trở lên.');
+    if (password.length < 8) {
+      return AuthResult.error('Mật khẩu phải từ 8 ký tự trở lên.');
     }
     if (displayName.trim().isEmpty) {
       return AuthResult.error('Vui lòng nhập tên của bạn.');
     }
 
     try {
-      // Kiểm tra SĐT đã tồn tại chưa
-      final existing = await db
-          .from('user_accounts')
-          .select('id')
-          .eq('phone', normalizedPhone)
-          .maybeSingle();
-      if (existing != null) {
+      final rpcRes = await db.rpc(
+        'register_user_account_v4',
+        params: {
+          'p_phone': normalizedPhone,
+          'p_password': password,
+          'p_display_name': displayName.trim(),
+        },
+      );
+      if (rpcRes is! Map) {
         return AuthResult.error(
-          'Số điện thoại này đã được đăng ký.\nVui lòng đăng nhập.',
+          'Dịch vụ đăng ký an toàn chưa sẵn sàng. Vui lòng thử lại sau.',
         );
       }
 
-      // Tạo tài khoản
-      final res = await db
-          .from('user_accounts')
-          .insert({
-            'phone': normalizedPhone,
-            'password_hash': _hashPassword(normalizedPhone, password),
-            'display_name': displayName.trim(),
-          })
-          .select('id, phone, display_name')
-          .single();
+      final map = Map<String, dynamic>.from(rpcRes);
+      if (map['success'] != true) {
+        return AuthResult.error(
+          map['message'] as String? ?? 'Đăng ký tài khoản không thành công.',
+        );
+      }
 
-      final userId = res['id'] as String;
+      final userId = map['user_id'] as String;
+      final phoneStr = (map['phone'] as String?) ?? normalizedPhone;
+      final nameStr = (map['display_name'] as String?) ?? displayName.trim();
 
-      // Lưu session tạm (chưa có store)
-      await _saveSession(
-        userId: userId,
+      if (!posJwtService.isConfigured) {
+        return AuthResult.error(
+          'Tài khoản đã được tạo nhưng máy chủ phiên an toàn chưa được cấu hình. '
+          'Vui lòng đăng nhập lại sau khi hệ thống sẵn sàng.',
+        );
+      }
+      final onbRes = await posJwtService.requestOnboardingJwt(
         phone: normalizedPhone,
-        name: displayName.trim(),
+        password: password,
       );
+      if (onbRes['success'] != true ||
+          posJwtService.activeOnboardingJwtFor(userId) == null) {
+        return AuthResult.error(
+          onbRes['message'] as String? ??
+              'Tài khoản đã được tạo nhưng không thể mở phiên an toàn. '
+                  'Vui lòng đăng nhập lại.',
+        );
+      }
 
+      await _saveSession(userId: userId, phone: phoneStr, name: nameStr);
       return AuthResult.success(
         userId: userId,
-        phone: normalizedPhone,
-        displayName: displayName.trim(),
+        phone: phoneStr,
+        displayName: nameStr,
         stores: [],
       );
-    } on PostgrestException catch (e) {
-      if (e.code == '23505') {
-        return AuthResult.error(
-          'Số điện thoại đã tồn tại. Vui lòng đăng nhập.',
-        );
-      }
-      return AuthResult.error('Lỗi: ${e.message}');
     } catch (e) {
-      return AuthResult.error('Lỗi không xác định: $e');
+      debugPrint('[UserAuthService.register] secure RPC unavailable: $e');
+      return AuthResult.error(
+        'Dịch vụ đăng ký an toàn chưa sẵn sàng. Vui lòng thử lại sau.',
+      );
     }
   }
 
@@ -395,373 +401,153 @@ class UserAuthService {
     PosJwtAuthService? jwtService,
   }) async {
     final normalizedPhone = _normalizePhone(phone);
+    final posJwtService = jwtService ?? PosJwtAuthService();
+    posJwtService.clearActiveOnboardingJwt();
 
-    // ── FALLBACK CHO GOOGLE PLAY & APP STORE REVIEW ─────────────────────────────
-    // Cho phép các tài khoản test đăng nhập offline ngay cả khi không có internet
-    final rawP = phone.trim().replaceAll(RegExp(r'\s|-|\(|\)'), '');
-    final isReviewerPhone =
-        (normalizedPhone.contains('9999') &&
-            normalizedPhone.endsWith('6666')) ||
-        (rawP.contains('9999') && rawP.endsWith('6666')) ||
-        normalizedPhone == '+84999996666' ||
-        normalizedPhone == '+849999996666' ||
-        rawP == '0999996666' ||
-        rawP == '09999996666' ||
-        rawP == '999996666' ||
-        rawP == '9999996666';
-    if (isReviewerPhone && (password == '112233' || password.isNotEmpty)) {
-      final userId = '99999966-6666-6666-6666-999999666666';
-      final displayName = 'Quản Nhỏ POS';
-      final store = StoreMembership(
-        storeId: '00000000-0000-0000-0000-000000009999',
-        storeName: 'Quán Nhỏ POS',
-        storeCode: 'DEMO99',
-        role: 'owner',
-        isOwner: true,
-      );
-      await _saveFullSession(
-        userId: userId,
-        phone: normalizedPhone,
-        name: displayName,
-        membership: store,
-      );
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('store_id', '00000000-0000-0000-0000-000000009999');
-      await prefs.setString('store_code', 'DEMO99');
-      await prefs.setString('store_name', 'Quán Nhỏ POS');
-      await prefs.setString('device_role', 'owner');
-      return AuthResult.success(
-        userId: userId,
-        phone: normalizedPhone,
-        displayName: displayName,
-        stores: [store],
-        selectedStore: store,
-      );
+    // ── FALLBACK CHO GOOGLE PLAY & APP STORE REVIEW (COMPILE-GATED) ─────────────
+    // Chỉ kích hoạt khi build chủ động với --dart-define=ENABLE_REVIEWER_ACCOUNT=true.
+    // Debug mode đơn thuần không được tự mở một owner session.
+    if (kEnableReviewerAccount) {
+      final rawP = phone.trim().replaceAll(RegExp(r'\s|-|\(|\)'), '');
+      final isReviewerPhone =
+          (normalizedPhone.contains('9999') &&
+              normalizedPhone.endsWith('6666')) ||
+          (rawP.contains('9999') && rawP.endsWith('6666')) ||
+          normalizedPhone == '+84999996666' ||
+          normalizedPhone == '+849999996666' ||
+          rawP == '0999996666' ||
+          rawP == '09999996666' ||
+          rawP == '999996666' ||
+          rawP == '9999996666';
+      if (isReviewerPhone && password == '112233') {
+        final userId = '99999966-6666-6666-6666-999999666666';
+        final displayName = 'Quán Nhỏ POS (Demo)';
+        final store = StoreMembership(
+          storeId: '00000000-0000-0000-0000-000000009999',
+          storeName: 'Quán Nhỏ POS (Demo)',
+          storeCode: 'DEMO99',
+          role: 'owner',
+          isOwner: true,
+        );
+        await _saveFullSession(
+          userId: userId,
+          phone: normalizedPhone,
+          name: displayName,
+          membership: store,
+        );
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          'store_id',
+          '00000000-0000-0000-0000-000000009999',
+        );
+        await prefs.setString('store_code', 'DEMO99');
+        await prefs.setString('store_name', 'Quán Nhỏ POS (Demo)');
+        await prefs.setString('device_role', 'owner');
+        return AuthResult.success(
+          userId: userId,
+          phone: normalizedPhone,
+          displayName: displayName,
+          stores: [store],
+          selectedStore: store,
+        );
+      }
     }
 
     final db = _db;
     if (db == null) return AuthResult.error('Không kết nối được server.');
 
     try {
-      // 1. Chuẩn bị các biến thể SĐT (09xxx, +849xxx, 849xxx, raw)
-      final rawPhone = phone.trim().replaceAll(RegExp(r'\s|-|\(|\)'), '');
-      final cleanDigits = rawPhone.replaceAll(RegExp(r'\D'), '');
-      final phoneVariants = <String>{
-        normalizedPhone,
-        rawPhone,
-        if (cleanDigits.length >= 9) ...[
-          '0${cleanDigits.substring(cleanDigits.length - 9)}',
-          '+84${cleanDigits.substring(cleanDigits.length - 9)}',
-          '84${cleanDigits.substring(cleanDigits.length - 9)}',
-        ],
-      }.toList();
-
-      // 2. Tìm tài khoản trong user_accounts theo danh sách biến thể SĐT
-      Map<String, dynamic>? userRes;
-      for (final p in phoneVariants) {
-        final res = await db
-            .from('user_accounts')
-            .select('id, phone, display_name, password_hash')
-            .eq('phone', p)
-            .limit(1)
-            .maybeSingle();
-        if (res != null) {
-          userRes = res;
-          break;
-        }
+      final rpcRes = await db.rpc(
+        'verify_user_login_v4',
+        params: {'p_phone': normalizedPhone, 'p_password': password},
+      );
+      if (rpcRes is! Map) {
+        return AuthResult.error(
+          'Dịch vụ đăng nhập an toàn chưa sẵn sàng. Vui lòng thử lại sau.',
+        );
       }
 
-      // 3. Fallback: Nếu không thấy trong user_accounts → tìm trong staff_members (bảng nhân viên chuẩn mới)
-      if (userRes == null) {
-        // Ưu tiên 3A: Gọi RPC lookup_staff_by_phone để bypass RLS ở màn hình Login
-        try {
-          final rpcRes = await db.rpc(
-            'lookup_staff_by_phone',
-            params: {'phone_input': normalizedPhone},
-          );
-          if (rpcRes != null && rpcRes is List && rpcRes.isNotEmpty) {
-            final first = Map<String, dynamic>.from(rpcRes.first as Map);
-            final staffId = first['id'] as String;
-            final staffName = (first['name'] as String?) ?? 'Nhân viên';
-            final staffRole = (first['role'] as String?) ?? 'cashier';
-            final storeId = first['store_id'] as String;
-            final dbPhone = (first['phone'] as String?) ?? normalizedPhone;
-
-            final pwdHash = _hashPassword(dbPhone, password);
-            try {
-              await db.from('user_accounts').upsert({
-                'id': staffId,
-                'phone': dbPhone,
-                'display_name': staffName,
-                'password_hash': pwdHash,
-              });
-
-              await StoreMembershipWriter.upsertMembership(
-                db,
-                userId: staffId,
-                storeId: storeId,
-                role: staffRole,
-                isOwner: staffRole.toLowerCase() == 'owner',
-              );
-            } catch (e) {
-              debugPrint(
-                '[UserAuthService.login] RPC auto-provision error: $e',
-              );
-            }
-
-            userRes = {
-              'id': staffId,
-              'phone': dbPhone,
-              'display_name': staffName,
-              'password_hash': pwdHash,
-            };
-          }
-        } catch (e) {
-          debugPrint(
-            '[UserAuthService.login] RPC lookup_staff_by_phone error: $e',
-          );
-        }
-
-        // Ưu tiên 3B: Tra cứu trực tiếp từ staff_members theo phoneVariants
-        if (userRes == null) {
-          for (final p in phoneVariants) {
-            final staffRow = await db
-                .from('staff_members')
-                .select('id, store_id, name, role, phone')
-                .eq('phone', p)
-                .limit(1)
-                .maybeSingle();
-
-            if (staffRow != null) {
-              final staffId = staffRow['id'] as String;
-              final staffName = (staffRow['name'] as String?) ?? 'Nhân viên';
-              final staffRole = (staffRow['role'] as String?) ?? 'cashier';
-              final storeId = staffRow['store_id'] as String;
-              final dbPhone = (staffRow['phone'] as String?) ?? normalizedPhone;
-
-              // Auto-provision tài khoản user_accounts & store_members tương ứng
-              final pwdHash = _hashPassword(dbPhone, password);
-              try {
-                await db.from('user_accounts').upsert({
-                  'id': staffId,
-                  'phone': dbPhone,
-                  'display_name': staffName,
-                  'password_hash': pwdHash,
-                });
-
-                await StoreMembershipWriter.upsertMembership(
-                  db,
-                  userId: staffId,
-                  storeId: storeId,
-                  role: staffRole,
-                  isOwner: staffRole.toLowerCase() == 'owner',
-                );
-              } catch (e) {
-                debugPrint(
-                  '[UserAuthService.login] Direct auto-provision error: $e',
-                );
-              }
-
-              userRes = {
-                'id': staffId,
-                'phone': dbPhone,
-                'display_name': staffName,
-                'password_hash': pwdHash,
-              };
-              break;
-            }
-          }
-        }
+      final map = Map<String, dynamic>.from(rpcRes);
+      if (map['success'] != true) {
+        return AuthResult.error(
+          map['message'] as String? ??
+              'Số điện thoại hoặc mật khẩu không chính xác.',
+        );
       }
 
-      if (userRes == null) {
-        return AuthResult.error('Số điện thoại chưa được đăng ký.');
-      }
-
-      final userId = userRes['id'] as String;
-      final displayName = userRes['display_name'] as String;
-      final storedPhone = userRes['phone'] as String? ?? normalizedPhone;
-      final storedHash = userRes['password_hash'] as String?;
-
-      // 4. Kiểm tra mật khẩu (hỗ trợ kiểm tra theo mọi biến thể SĐT chuẩn hoá & raw)
-      final p0 = cleanDigits.length >= 9
-          ? '0${cleanDigits.substring(cleanDigits.length - 9)}'
-          : rawPhone;
-      final p84 = cleanDigits.length >= 9
-          ? '+84${cleanDigits.substring(cleanDigits.length - 9)}'
-          : normalizedPhone;
-
-      final expectedHashNorm = _hashPassword(normalizedPhone, password);
-      final expectedHashRaw = _hashPassword(rawPhone, password);
-      final expectedHashDb = _hashPassword(storedPhone, password);
-      final expectedHashP0 = _hashPassword(p0, password);
-      final expectedHashP84 = _hashPassword(p84, password);
-
-      final isPasswordCorrect =
-          (storedHash == expectedHashNorm) ||
-          (storedHash == expectedHashRaw) ||
-          (storedHash == expectedHashDb) ||
-          (storedHash == expectedHashP0) ||
-          (storedHash == expectedHashP84) ||
-          (storedHash == password);
-
-      if (!isPasswordCorrect) {
-        return AuthResult.error('Mật khẩu không đúng.');
-      }
-
-      // Cập nhật chuẩn hoá password_hash nếu vừa khớp qua biến thể cũ
-      if (storedHash != expectedHashNorm) {
-        try {
-          await db
-              .from('user_accounts')
-              .update({
-                'password_hash': expectedHashNorm,
-                'phone': normalizedPhone,
-              })
-              .eq('id', userId);
-        } catch (_) {}
-      }
-
-      // 5. Lấy danh sách quán từ store_members
-      final memberships = await db
-          .from('store_members')
-          .select('role, is_owner, store_id, stores(id, name, store_code)')
-          .eq('user_id', userId);
-
-      List<StoreMembership> stores = [];
-      for (final m in memberships) {
-        Map<String, dynamic>? store = m['stores'] as Map<String, dynamic>?;
-        final storeId = m['store_id'] as String?;
-
-        if (store == null && storeId != null) {
-          try {
-            store = await db
-                .from('stores')
-                .select('id, name, store_code')
-                .eq('id', storeId)
-                .maybeSingle();
-          } catch (_) {}
-        }
-
-        if (store != null) {
-          stores.add(
+      final userId = map['user_id'] as String;
+      final displayName = (map['display_name'] as String?) ?? 'Người dùng';
+      final phoneStr = (map['phone'] as String?) ?? normalizedPhone;
+      final storesRaw = map['stores'] as List<dynamic>? ?? [];
+      final stores = <StoreMembership>[
+        for (final value in storesRaw)
+          if (value is Map)
             StoreMembership(
-              storeId: store['id'] as String,
-              storeName: (store['name'] as String?) ?? 'Quán Nhỏ',
-              storeCode: (store['store_code'] as String?) ?? '',
-              role: (m['role'] as String?) ?? 'cashier',
-              isOwner: (m['is_owner'] as bool?) ?? false,
+              storeId: value['store_id'] as String,
+              storeName: (value['store_name'] as String?) ?? 'Quán Nhỏ',
+              storeCode: (value['store_code'] as String?) ?? '',
+              role: (value['role'] as String?) ?? 'cashier',
+              isOwner: (value['is_owner'] as bool?) ?? false,
             ),
-          );
-        }
-      }
+      ];
+      final selectedStore = stores.length == 1 ? stores.first : null;
 
-      // 6. Fallback: Nếu store_members rỗng → kiểm tra từ staff_members
       if (stores.isEmpty) {
-        final staffRows = await db
-            .from('staff_members')
-            .select('role, store_id, stores(id, name, store_code)')
-            .eq('id', userId);
-
-        for (final s in staffRows) {
-          Map<String, dynamic>? store = s['stores'] as Map<String, dynamic>?;
-          final storeId = s['store_id'] as String?;
-
-          // Nếu FK embedding bị null → tra cứu trực tiếp từ bảng stores theo store_id
-          if (store == null && storeId != null) {
-            try {
-              store = await db
-                  .from('stores')
-                  .select('id, name, store_code')
-                  .eq('id', storeId)
-                  .maybeSingle();
-            } catch (_) {}
-          }
-
-          if (store != null) {
-            final role = (s['role'] as String?) ?? 'cashier';
-            final isOwner = role.toLowerCase() == 'owner';
-            final m = StoreMembership(
-              storeId: store['id'] as String,
-              storeName: (store['name'] as String?) ?? 'Quán Nhỏ',
-              storeCode: (store['store_code'] as String?) ?? '',
-              role: role,
-              isOwner: isOwner,
-            );
-            stores.add(m);
-
-            // Đồng bộ sang store_members để đảm bảo nhất quán
-            try {
-              await StoreMembershipWriter.upsertMembership(
-                db,
-                userId: userId,
-                storeId: m.storeId,
-                role: role,
-                isOwner: isOwner,
-              );
-            } catch (_) {}
-          }
+        if (!posJwtService.isConfigured) {
+          return AuthResult.error(
+            'Máy chủ phiên an toàn chưa được cấu hình. Vui lòng thử lại sau.',
+          );
+        }
+        final onbRes = await posJwtService.requestOnboardingJwt(
+          phone: normalizedPhone,
+          password: password,
+        );
+        if (onbRes['success'] != true ||
+            posJwtService.activeOnboardingJwtFor(userId) == null) {
+          return AuthResult.error(
+            onbRes['message'] as String? ??
+                'Không thể mở phiên an toàn. Vui lòng đăng nhập lại.',
+          );
         }
       }
 
-      // Nếu chỉ có 1 quán: POS JWT chỉ bắt buộc khi endpoint production
-      // được cấu hình rõ bằng POS_JWT_AUTH_URL. Bản build bình thường tiếp tục
-      // dùng phiên Supabase hiện hữu và không phụ thuộc BunServer/Tailscale.
-      if (stores.length == 1) {
-        final storeId = stores.first.storeId;
-        final posJwtService = jwtService ?? PosJwtAuthService();
-        if (posJwtService.isConfigured) {
-          final jwtRes = await posJwtService.requestPosJwt(
-            phone: normalizedPhone,
-            password: password,
-            storeId: storeId,
+      if (selectedStore != null && posJwtService.isConfigured) {
+        final jwtRes = await posJwtService.requestPosJwt(
+          phone: normalizedPhone,
+          password: password,
+          storeId: selectedStore.storeId,
+        );
+        if (jwtRes['success'] != true) {
+          await posJwtService.clearPosJwt();
+          await posJwtService.applyAuthToSupabase(null);
+          return AuthResult.error(
+            jwtRes['message'] as String? ?? 'Xác thực phiên làm việc thất bại.',
           );
-          if (jwtRes['success'] != true) {
-            await posJwtService.clearPosJwt();
-            await posJwtService.applyAuthToSupabase(null);
-            return AuthResult.error(
-              jwtRes['message'] as String? ??
-                  'Cấp token xác thực cửa hàng thất bại.',
-            );
-          }
         }
+      }
 
+      if (selectedStore != null) {
         await _saveFullSession(
           userId: userId,
-          phone: normalizedPhone,
+          phone: phoneStr,
           name: displayName,
-          membership: stores.first,
-        );
-
-        final feedbackService = FeedbackService();
-        // AI Bum là dịch vụ bổ sung: chạy nền và không được chặn đăng nhập POS.
-        unawaited(
-          feedbackService.exchangeSessionWithPassword(
-            phone: normalizedPhone,
-            password: password,
-            storeId: storeId,
-          ),
+          membership: selectedStore,
         );
       } else {
-        // Nhiều quán hoặc 0 quán → lưu session cơ bản
-        await _saveSession(
-          userId: userId,
-          phone: normalizedPhone,
-          name: displayName,
-        );
+        await _saveSession(userId: userId, phone: phoneStr, name: displayName);
       }
-
       return AuthResult.success(
         userId: userId,
-        phone: normalizedPhone,
+        phone: phoneStr,
         displayName: displayName,
         stores: stores,
-        selectedStore: stores.length == 1 ? stores.first : null,
+        selectedStore: selectedStore,
       );
-    } on PostgrestException catch (e) {
-      return AuthResult.error('Lỗi kết nối: ${e.message}');
     } catch (e) {
-      return AuthResult.error('Lỗi không xác định: $e');
+      debugPrint('[UserAuthService.login] secure RPC unavailable: $e');
+      return AuthResult.error(
+        'Dịch vụ đăng nhập an toàn chưa sẵn sàng. Vui lòng thử lại sau.',
+      );
     }
   }
 
@@ -917,116 +703,91 @@ class UserAuthService {
 
   /// Nhân viên gia nhập quán bằng mã storeCode (QN-XXXX)
   static Future<CreateStoreResult> joinStoreByCode({
-    required String userId,
     required String storeCode,
+    required String userId,
+    String? onboardingJwt,
+    PosJwtAuthService? jwtService,
   }) async {
     final code = storeCode.trim().toUpperCase();
     if (code.isEmpty) {
       return CreateStoreResult.error('Vui lòng nhập mã quán.');
     }
 
+    final posJwtService = jwtService ?? PosJwtAuthService();
+    if (!posJwtService.isConfigured) {
+      return CreateStoreResult.error(
+        'Máy chủ phiên an toàn chưa được cấu hình.',
+        errorCode: 'POS_JWT_NOT_CONFIGURED',
+      );
+    }
+    if (onboardingJwt != null) {
+      posJwtService.setActiveOnboardingJwt(onboardingJwt);
+    }
+    final effectiveOnboardingJwt = posJwtService.activeOnboardingJwtFor(userId);
+    if (effectiveOnboardingJwt == null) {
+      return CreateStoreResult.error(
+        'Phiên đăng ký đã hết hạn. Vui lòng đăng nhập lại để tham gia quán.',
+        errorCode: 'ONBOARDING_TOKEN_REQUIRED',
+      );
+    }
+
+    final db = _db;
+    if (db == null) {
+      return CreateStoreResult.error('Không kết nối được server.');
+    }
     try {
-      final storeRes = await authRepository.queryStoreByCode(code);
-      if (storeRes == null || storeRes.isEmpty) {
+      final rpcRes = await db.rpc(
+        'join_store_by_code_v4',
+        params: {'p_store_code': code},
+      );
+      if (rpcRes is! Map) {
         return CreateStoreResult.error(
-          'Mã quán "$code" không tồn tại.\nVui lòng kiểm tra lại hoặc hỏi chủ quán.',
+          'Dịch vụ tham gia quán an toàn chưa sẵn sàng.',
         );
       }
-
-      final status = storeRes['status'] as String?;
-      if (status == 'suspended' || status == 'deleted') {
+      if (rpcRes['success'] != true) {
         return CreateStoreResult.error(
-          'Quán này đã bị khóa hoặc ngừng hoạt động.',
+          rpcRes['message'] as String? ?? 'Không thể tham gia quán.',
         );
       }
+      final storeId = rpcRes['store_id'] as String;
+      final storeCodeResult = rpcRes['store_code'] as String? ?? code;
+      final membership = StoreMembership(
+        storeId: storeId,
+        storeName: rpcRes['store_name'] as String? ?? 'Quán Nhỏ',
+        storeCode: storeCodeResult,
+        role: rpcRes['role'] as String? ?? 'waiter',
+        isOwner: rpcRes['is_owner'] as bool? ?? false,
+      );
 
-      final storeId = storeRes['id'] as String;
-      final storeName = storeRes['name'] as String;
+      final exchangeRes = await posJwtService.exchangeStoreJwt(
+        onboardingJwt: effectiveOnboardingJwt,
+        storeId: storeId,
+      );
 
-      // 2. Kiểm tra xem user đã là thành viên trong store_members chưa
-      final existing = await authRepository.queryStoreMember(storeId, userId);
-
-      if (existing != null) {
-        // ĐÃ LÀ THÀNH VIÊN HỢP LỆ: Đọc membership hiện có, chuyển session ngay và trả success
-        final role = (existing['role'] as String?) ?? 'cashier';
-        final isOwner = (existing['is_owner'] as bool?) ?? false;
-        final membership = StoreMembership(
+      if (exchangeRes['success'] != true) {
+        return CreateStoreResult.error(
+          exchangeRes['message'] as String? ??
+              'Không thể đổi phiên làm việc cho quán.',
+          errorCode: exchangeRes['error'] as String? ?? 'EXCHANGE_FAILED',
           storeId: storeId,
-          storeName: storeName,
-          storeCode: code,
-          role: role,
-          isOwner: isOwner,
-        );
-        final prefs = await SharedPreferences.getInstance();
-        await _applyMembershipToPrefs(prefs, membership);
-        return CreateStoreResult.success(
-          storeId: storeId,
-          storeCode: code,
+          storeCode: storeCodeResult,
           membership: membership,
         );
       }
 
-      // 3. Kiểm tra xem Quản lý đã thêm nhân viên này trước đó trong staff_members chưa để lấy vai trò chính xác
-      String assignedRole = 'waiter';
-      try {
-        final staffRow = await authRepository.queryStaffMember(storeId, userId);
-        if (staffRow != null && staffRow['role'] != null) {
-          assignedRole = staffRow['role'] as String;
-        }
-      } catch (_) {}
-
-      // 4. Thêm bản ghi mới vào store_members
-      await membershipWriter.upsert(
-        storeId: storeId,
-        userId: userId,
-        role: assignedRole,
-        isOwner: false,
-      );
-
-      // 5. Kiểm tra trước khi sync sang staff_members: Nếu staff_members với id=userId đã thuộc quán khác -> BỎ QUA không upsert đè
-      try {
-        final existingStaff = await authRepository.queryStaffMemberSimple(
-          userId,
-        );
-
-        final currentStaffStoreId = existingStaff?['store_id'] as String?;
-        if (currentStaffStoreId == null || currentStaffStoreId == storeId) {
-          final userAcc = await authRepository.queryUserAccount(userId);
-          await authRepository.upsertStaffMember({
-            'id': userId,
-            'store_id': storeId,
-            'name': userAcc?['display_name'] ?? 'Nhân viên mới',
-            'phone': userAcc?['phone'] ?? '',
-            'role': assignedRole,
-            'is_active': true,
-          });
-        } else {
-          debugPrint(
-            '[joinStoreByCode] Khách thuộc đa quán: Bỏ qua upsert staff_members để không làm đè store_id của quán 1.',
-          );
-        }
-      } catch (e) {
-        debugPrint('[joinStoreByCode] staff_members sync check error: $e');
-      }
-
-      // 6. Tự động lưu và kích hoạt phiên làm việc (Session) mới cho quán này ngay lập tức
-      final membership = StoreMembership(
-        storeId: storeId,
-        storeName: storeName,
-        storeCode: code,
-        role: assignedRole,
-        isOwner: false,
-      );
       final prefs = await SharedPreferences.getInstance();
       await _applyMembershipToPrefs(prefs, membership);
-
       return CreateStoreResult.success(
         storeId: storeId,
-        storeCode: code,
+        storeCode: storeCodeResult,
         membership: membership,
       );
     } catch (e) {
-      return CreateStoreResult.error('Lỗi: $e');
+      debugPrint('[UserAuthService] join_store_by_code_v4 unavailable: $e');
+      return CreateStoreResult.error(
+        'Dịch vụ tham gia quán an toàn chưa sẵn sàng.',
+      );
     }
   }
 
@@ -1036,59 +797,90 @@ class UserAuthService {
   static Future<CreateStoreResult> createStore({
     required String userId,
     required String storeName,
+    String? onboardingJwt,
+    PosJwtAuthService? jwtService,
   }) async {
-    if (storeName.trim().isEmpty) {
+    final cleanName = storeName.trim();
+    if (cleanName.isEmpty) {
       return CreateStoreResult.error('Vui lòng nhập tên quán.');
     }
 
-    try {
-      final code = _generateCode();
-
-      final storeRes = await authRepository.insertStore({
-        'store_code': code,
-        'name': storeName.trim(),
-        'status': 'trial',
-        'owner_user_id': userId,
-      });
-
-      final storeId = storeRes['id'] as String;
-      final storeCode = storeRes['store_code'] as String;
-      final name = storeRes['name'] as String;
-
-      await membershipWriter.upsert(
-        storeId: storeId,
-        userId: userId,
-        role: 'owner',
-        isOwner: true,
+    final posJwtService = jwtService ?? PosJwtAuthService();
+    if (!posJwtService.isConfigured) {
+      return CreateStoreResult.error(
+        'Máy chủ phiên an toàn chưa được cấu hình.',
+        errorCode: 'POS_JWT_NOT_CONFIGURED',
       );
+    }
+    if (onboardingJwt != null) {
+      posJwtService.setActiveOnboardingJwt(onboardingJwt);
+    }
+    final effectiveOnboardingJwt = posJwtService.activeOnboardingJwtFor(userId);
+    if (effectiveOnboardingJwt == null) {
+      return CreateStoreResult.error(
+        'Phiên đăng ký đã hết hạn. Vui lòng đăng nhập lại để tạo quán.',
+        errorCode: 'ONBOARDING_TOKEN_REQUIRED',
+      );
+    }
 
+    final db = _db;
+    if (db == null) {
+      return CreateStoreResult.error('Không kết nối được server.');
+    }
+    try {
+      final rpcRes = await db.rpc(
+        'create_store_with_owner_v4',
+        params: {'p_store_name': cleanName},
+      );
+      if (rpcRes is! Map) {
+        return CreateStoreResult.error(
+          'Dịch vụ tạo quán an toàn chưa sẵn sàng.',
+        );
+      }
+      if (rpcRes['success'] != true) {
+        return CreateStoreResult.error(
+          rpcRes['message'] as String? ?? 'Không thể tạo quán.',
+        );
+      }
+      final storeId = rpcRes['store_id'] as String;
+      final storeCodeResult = rpcRes['store_code'] as String;
       final membership = StoreMembership(
         storeId: storeId,
-        storeName: name,
-        storeCode: storeCode,
+        storeName: rpcRes['store_name'] as String? ?? cleanName,
+        storeCode: storeCodeResult,
         role: 'owner',
         isOwner: true,
       );
 
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        await _applyMembershipToPrefs(prefs, membership);
-      } catch (_) {}
+      final exchangeRes = await posJwtService.exchangeStoreJwt(
+        onboardingJwt: effectiveOnboardingJwt,
+        storeId: storeId,
+      );
 
-      final db = _db;
-      if (db != null) {
-        try {
-          await StoreAuthService.seedDefaults(db, storeId);
-        } catch (_) {}
+      if (exchangeRes['success'] != true) {
+        return CreateStoreResult.error(
+          exchangeRes['message'] as String? ??
+              'Không thể đổi phiên làm việc cho quán mới.',
+          errorCode: exchangeRes['error'] as String? ?? 'EXCHANGE_FAILED',
+          storeId: storeId,
+          storeCode: storeCodeResult,
+          membership: membership,
+        );
       }
 
+      final prefs = await SharedPreferences.getInstance();
+      await _applyMembershipToPrefs(prefs, membership);
+      await StoreAuthService.seedDefaults(db, storeId);
       return CreateStoreResult.success(
         storeId: storeId,
-        storeCode: storeCode,
+        storeCode: storeCodeResult,
         membership: membership,
       );
     } catch (e) {
-      return CreateStoreResult.error('Lỗi: $e');
+      debugPrint(
+        '[UserAuthService] create_store_with_owner_v4 unavailable: $e',
+      );
+      return CreateStoreResult.error('Dịch vụ tạo quán an toàn chưa sẵn sàng.');
     }
   }
 
@@ -1443,8 +1235,10 @@ class UserAuthService {
 
     // Clear POS PostgREST JWT and Supabase REST/Realtime auth
     try {
-      await PosJwtAuthService().clearPosJwt();
-      await PosJwtAuthService().applyAuthToSupabase(null);
+      final posJwtService = PosJwtAuthService();
+      posJwtService.clearActiveOnboardingJwt();
+      await posJwtService.clearPosJwt();
+      await posJwtService.applyAuthToSupabase(null);
       await FeedbackService().clearSessionToken();
     } catch (e) {
       debugPrint('[UserAuthService] Logout auth cleanup notice: $e');
@@ -1504,35 +1298,29 @@ class UserAuthService {
     await prefs.setString('device_role', m.role);
   }
 
-  static String _generateCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final rng = Random.secure();
-    final suffix = List.generate(
-      4,
-      (_) => chars[rng.nextInt(chars.length)],
-    ).join();
-    return 'QN-$suffix';
-  }
-
   // ═══════════════════════════════════════════════════════════════════════════
   // QUỐC PIN DUYỆT NHANH (QUẢN LÝ / CHỦ QUÁN)
   // ═══════════════════════════════════════════════════════════════════════════
 
   /// Cập nhật mã PIN duyệt nhanh 6 số cho tài khoản hiện tại
   static Future<bool> updateQuickPin(String pin) async {
+    final cleanPin = pin.trim();
+    if (cleanPin.length != 6 || !RegExp(r'^\d{6}$').hasMatch(cleanPin)) {
+      return false;
+    }
     final db = _db;
     if (db == null) return false;
-    final session = await getCurrentSession();
-    if (session == null) return false;
     try {
-      final hash = _hashPassword(session.phone, pin);
-      await db
-          .from('user_accounts')
-          .update({'quick_pin': hash})
-          .eq('id', session.userId);
-      return true;
+      final rpcRes = await db.rpc(
+        'set_user_quick_pin_v4',
+        params: {'p_pin': cleanPin},
+      );
+      if (rpcRes is Map && rpcRes['success'] == true) {
+        return true;
+      }
+      return false;
     } catch (e) {
-      debugPrint('[UserAuthService] updateQuickPin error: $e');
+      debugPrint('[UserAuthService] set_user_quick_pin_v4 unavailable: $e');
       return false;
     }
   }
@@ -1549,48 +1337,39 @@ class UserAuthService {
     final session = await getCurrentSession();
     if (session == null) return {'success': false, 'message': 'Chưa đăng nhập'};
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
       return {
         'success': false,
-        'message': 'Mật khẩu mới phải từ 6 ký tự trở lên',
+        'message': 'Mật khẩu mới phải từ 8 ký tự trở lên',
       };
     }
 
     try {
-      final userRes = await db
-          .from('user_accounts')
-          .select('password_hash, phone')
-          .eq('id', session.userId)
-          .maybeSingle();
-
-      if (userRes == null) {
+      final rpcRes = await db.rpc(
+        'change_user_password_v4',
+        params: {'p_old_password': oldPassword, 'p_new_password': newPassword},
+      );
+      if (rpcRes is! Map) {
         return {
           'success': false,
-          'message': 'Không tìm thấy thông tin tài khoản',
+          'message': 'Dịch vụ đổi mật khẩu an toàn chưa sẵn sàng',
         };
       }
-
-      final storedHash = userRes['password_hash'] as String?;
-      final phone = userRes['phone'] as String? ?? session.phone;
-      final expectedOldHash = _hashPassword(phone, oldPassword);
-
-      if (storedHash != expectedOldHash && storedHash != oldPassword) {
-        return {
-          'success': false,
-          'message': 'Mật khẩu hiện tại không chính xác',
-        };
-      }
-
-      final newHash = _hashPassword(phone, newPassword);
-      await db
-          .from('user_accounts')
-          .update({'password_hash': newHash})
-          .eq('id', session.userId);
-
-      return {'success': true, 'message': 'Đổi mật khẩu thành công'};
+      final map = Map<String, dynamic>.from(rpcRes);
+      return {
+        'success': map['success'] == true,
+        'message':
+            map['message'] as String? ??
+            (map['success'] == true
+                ? 'Đổi mật khẩu thành công'
+                : 'Đổi mật khẩu thất bại'),
+      };
     } catch (e) {
       debugPrint('[UserAuthService] changePassword error: $e');
-      return {'success': false, 'message': 'Lỗi cập nhật: $e'};
+      return {
+        'success': false,
+        'message': 'Dịch vụ đổi mật khẩu an toàn chưa sẵn sàng',
+      };
     }
   }
 
@@ -1598,19 +1377,14 @@ class UserAuthService {
   static Future<bool> hasQuickPin() async {
     final db = _db;
     if (db == null) return false;
-    final session = await getCurrentSession();
-    if (session == null) return false;
     try {
-      final res = await db
-          .from('user_accounts')
-          .select('quick_pin')
-          .eq('id', session.userId)
-          .maybeSingle();
-      if (res == null) return false;
-      final qp = res['quick_pin'] as String?;
-      return qp != null && qp.isNotEmpty;
+      final rpcRes = await db.rpc('has_user_quick_pin_v4');
+      if (rpcRes is Map && rpcRes['success'] == true) {
+        return rpcRes['has_quick_pin'] == true;
+      }
+      return false;
     } catch (e) {
-      debugPrint('[UserAuthService] hasQuickPin error: $e');
+      debugPrint('[UserAuthService] has_user_quick_pin_v4 unavailable: $e');
       return false;
     }
   }
@@ -1621,93 +1395,30 @@ class UserAuthService {
     String storeId,
     String pin,
   ) async {
+    final cleanPin = pin.trim();
+    if (cleanPin.length != 6 || !RegExp(r'^\d{6}$').hasMatch(cleanPin)) {
+      return null;
+    }
     final db = _db;
     if (db == null) return null;
+
     try {
-      final members = await db
-          .from('store_members')
-          .select(
-            'role, is_owner, user_accounts(id, phone, display_name, quick_pin)',
-          )
-          .eq('store_id', storeId);
-
-      for (final m in members) {
-        final role = m['role'] as String? ?? '';
-        final isOwner = m['is_owner'] as bool? ?? false;
-        final user = m['user_accounts'] as Map<String, dynamic>?;
-        if (user == null) continue;
-
-        final rLower = role.toLowerCase().trim();
-        final isCanonicalManager =
-            rLower.contains('owner') ||
-            rLower.contains('chủ') ||
-            rLower.contains('manager') ||
-            rLower.contains('quản lý');
-        if (isCanonicalManager || isOwner) {
-          final phone = user['phone'] as String? ?? '';
-          final storedHash = user['quick_pin'] as String?;
-          if (storedHash == null || storedHash.isEmpty) continue;
-
-          final normPhone = _normalizePhone(phone);
-          final inputHash1 = _hashPassword(phone, pin);
-          final inputHash2 = _hashPassword(normPhone, pin);
-
-          if (storedHash == inputHash1 || storedHash == inputHash2) {
-            return {
-              'id': user['id'] as String,
-              'name': user['display_name'] as String? ?? 'Quản lý',
-            };
-          }
+      final rpcRes = await db.rpc(
+        'verify_manager_quick_pin_v4',
+        params: {'p_store_id': storeId, 'p_pin': cleanPin},
+      );
+      if (rpcRes is Map && rpcRes['success'] == true) {
+        final managerId = rpcRes['manager_id'] as String?;
+        final managerName = rpcRes['manager_name'] as String? ?? 'Quản lý';
+        if (managerId != null && managerId.isNotEmpty) {
+          return {'id': managerId, 'name': managerName};
         }
       }
-
-      // Fallback: Tra cứu quản lý trực tiếp từ staff_members
-      try {
-        final staffRows = await db
-            .from('staff_members')
-            .select('id, name, phone, role, pin_hash')
-            .eq('store_id', storeId);
-
-        for (final s in staffRows) {
-          final role = s['role'] as String? ?? '';
-          final rLower = role.toLowerCase().trim();
-          final isManager =
-              rLower.contains('owner') ||
-              rLower.contains('chủ') ||
-              rLower.contains('manager') ||
-              rLower.contains('quản lý');
-          if (!isManager) continue;
-
-          final phone = s['phone'] as String? ?? '';
-          final storedPinHash = s['pin_hash'] as String?;
-          final id = s['id'] as String;
-
-          // Tra cứu quick_pin trong user_accounts nếu pin_hash ở staff_members rỗng
-          String? storedHash = storedPinHash;
-          if (storedHash == null || storedHash.isEmpty) {
-            final u = await db
-                .from('user_accounts')
-                .select('quick_pin')
-                .eq('id', id)
-                .maybeSingle();
-            storedHash = u?['quick_pin'] as String?;
-          }
-
-          if (storedHash == null || storedHash.isEmpty) continue;
-
-          final normPhone = _normalizePhone(phone);
-          final inputHash1 = _hashPassword(phone, pin);
-          final inputHash2 = _hashPassword(normPhone, pin);
-
-          if (storedHash == inputHash1 || storedHash == inputHash2) {
-            return {'id': id, 'name': (s['name'] as String?) ?? 'Quản lý'};
-          }
-        }
-      } catch (_) {}
-
       return null;
     } catch (e) {
-      debugPrint('[UserAuthService] verifyManagerQuickPin error: $e');
+      debugPrint(
+        '[UserAuthService] verify_manager_quick_pin_v4 unavailable: $e',
+      );
       return null;
     }
   }
@@ -1800,6 +1511,7 @@ class CreateStoreResult {
   final String? storeCode;
   final StoreMembership? membership;
   final String? errorMessage;
+  final String? errorCode;
 
   const CreateStoreResult._({
     required this.isSuccess,
@@ -1807,6 +1519,7 @@ class CreateStoreResult {
     this.storeCode,
     this.membership,
     this.errorMessage,
+    this.errorCode,
   });
 
   factory CreateStoreResult.success({
@@ -1820,6 +1533,18 @@ class CreateStoreResult {
     membership: membership,
   );
 
-  factory CreateStoreResult.error(String msg) =>
-      CreateStoreResult._(isSuccess: false, errorMessage: msg);
+  factory CreateStoreResult.error(
+    String msg, {
+    String? errorCode,
+    String? storeId,
+    String? storeCode,
+    StoreMembership? membership,
+  }) => CreateStoreResult._(
+    isSuccess: false,
+    errorMessage: msg,
+    errorCode: errorCode,
+    storeId: storeId,
+    storeCode: storeCode,
+    membership: membership,
+  );
 }

@@ -74,77 +74,71 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
     if (!mounted) return;
 
     if (res.isSuccess) {
-      // Cập nhật session memory + SharedPreferences
-      final membership = StoreMembership(
-        storeId: res.storeId!,
-        storeName: name,
-        storeCode: res.storeCode!,
-        role: 'owner',
-        isOwner: true,
-      );
-      if (!mounted) return;
-      final session = await UserAuthService.getCurrentSession();
-      if (!mounted) return;
-      final pwdCtrl = TextEditingController();
-      String? pwd;
-      try {
-        pwd = await showDialog<String>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text('Xác thực tạo $name'),
-            content: TextField(
-              controller: pwdCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Nhập mật khẩu tài khoản để cấp JWT',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(null),
-                child: const Text('Hủy'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(ctx).pop(pwdCtrl.text.trim()),
-                child: const Text('Xác nhận'),
-              ),
-            ],
-          ),
-        );
-      } finally {
-        pwdCtrl.dispose();
-      }
-
-      if (!mounted) return;
-
-      if (pwd == null || pwd.trim().isEmpty) {
-        setState(() {
-          _loading = false;
-          _error = 'Hủy xác thực mật khẩu. Chưa thể kích hoạt quán mới.';
-        });
-        return;
-      }
-
-      final ok = await UserAuthService.selectStore(
-        membership,
-        password: pwd,
-        phone: session?.phone,
-      );
-
-      if (!mounted) return;
-
-      if (ok) {
-        widget.ref.read(sessionProvider.notifier).updateStore(membership);
-        Navigator.pop(context);
-        widget.onSuccess?.call();
-      } else {
-        setState(() {
-          _loading = false;
-          _error = 'Xác thực mật khẩu hoặc cấp POS JWT cho quán mới thất bại.';
-        });
-      }
+      final membership =
+          res.membership ??
+          StoreMembership(
+            storeId: res.storeId!,
+            storeName: name,
+            storeCode: res.storeCode!,
+            role: 'owner',
+            isOwner: true,
+          );
+      widget.ref.read(sessionProvider.notifier).updateStore(membership);
+      Navigator.pop(context);
+      widget.onSuccess?.call();
     } else {
+      // Chỉ khôi phục khi RPC đã tạo membership nhưng bước đổi JWT thất bại.
+      // Lỗi preflight không được dựng membership giả hay hỏi lại mật khẩu.
+      if (res.membership != null && res.storeId?.isNotEmpty == true) {
+        final membership = res.membership!;
+        {
+          final pwdCtrl = TextEditingController();
+          String? pwd;
+          try {
+            pwd = await showDialog<String>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text('Xác thực tạo $name'),
+                content: TextField(
+                  controller: pwdCtrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Nhập mật khẩu để cấp POS JWT cho quán',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(null),
+                    child: const Text('Hủy'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(pwdCtrl.text.trim()),
+                    child: const Text('Xác nhận'),
+                  ),
+                ],
+              ),
+            );
+          } finally {
+            pwdCtrl.dispose();
+          }
+
+          if (pwd != null && pwd.trim().isNotEmpty) {
+            final ok = await UserAuthService.selectStore(
+              membership,
+              password: pwd,
+              phone: session.phone,
+            );
+            if (mounted && ok) {
+              widget.ref.read(sessionProvider.notifier).updateStore(membership);
+              Navigator.pop(context);
+              widget.onSuccess?.call();
+              return;
+            }
+          }
+        }
+      }
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = res.errorMessage ?? 'Có lỗi xảy ra, thử lại sau.';

@@ -233,6 +233,7 @@ class MockPosJwtService extends PosJwtAuthService {
   Future<bool> applyAuthToSupabase(
     String? token, {
     String? expectedStoreId,
+    bool allowOnboardingToken = false,
   }) async {
     if (!mockApplyResult) return false;
     return token != null;
@@ -255,6 +256,7 @@ class DisabledPosJwtService extends PosJwtAuthService {
   Future<bool> applyAuthToSupabase(
     String? token, {
     String? expectedStoreId,
+    bool allowOnboardingToken = false,
   }) async {
     applyCount++;
     return true;

@@ -1,5 +1,13 @@
 # Quán Nhỏ POS — Features & Modules
 
+## QR Gọi Món — mục tiêu đang chờ triển khai
+
+- Một QR gọi món tại bàn dùng chung và một QR mang đi tại quầy cho mỗi cửa hàng.
+- Sau khi khách xác nhận, web hiển thị QR động của đơn; nhân viên quét, chọn bàn cho TABLE, đọc lại và chỉnh món trước khi gửi Bếp.
+- TABLE xuất hiện trong module Bàn sau bước gán bàn và thanh toán toàn bộ bàn sau; COUNTER thanh toán trước Bếp và không vào module Bàn.
+- Nhân viên dùng tài khoản/mã quán/phân quyền hiện hành, không ghép POS device riêng.
+- Đây là phạm vi mục tiêu, chưa phải tính năng production. Xem `.docs/qr-order-kien-truc-muc-tieu.md`.
+
 ## Màn Hình Chính
 
 ### 🏠 Dashboard (index 0)

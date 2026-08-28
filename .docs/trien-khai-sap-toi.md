@@ -590,24 +590,24 @@ Hệ thống ghi nhận toàn bộ hoạt động nghiệp vụ của nhân viê
 
 ---
 
-## ⚡ 14. Module QR Gọi Món (MVP - Chế Độ TABLE & COUNTER)
+## ⚡ 14. Module QR Gọi Món — Kiến Trúc Mục Tiêu 2026-08-26
 
-Ứng dụng đã hoàn thành tích hợp Module **QR Gọi Món** cho phép khách hàng tự gọi món qua điện thoại bằng cách quét mã QR tại bàn hoặc tại quầy thu ngân:
+Source hiện tại là V3 chưa triển khai database và chưa khớp luồng đã chốt. Đặc tả mục tiêu nằm tại `.docs/qr-order-kien-truc-muc-tieu.md`; kế hoạch thực hiện nằm tại `.docs/ke-hoach-trien-khai-qr-order.md`. Không coi mã Dart V3 hoặc migration chưa apply là tính năng production hoàn chỉnh.
 
 ### 1. Luồng Nghiệp Vụ Chính:
-* **2 Chế độ:**
-  * **TABLE (Gọi tại bàn):** Khách quét QR bàn $\rightarrow$ Đơn tạo ở trạng thái `pending_staff` $\rightarrow$ Nhân viên thực hiện 3 bước **nhận đơn $\rightarrow$ xác nhận món/giá $\rightarrow$ gửi bếp**. Khi gửi bếp, món được ghi vào phiên bàn và tạo phiếu bếp.
-  * **COUNTER (Gọi tại quầy):** Khách quét QR quầy $\rightarrow$ Đơn tạo sinh mã **Pickup Code** dạng `#Q01`, `#Q02`... $\rightarrow$ POS Thu ngân hiển thị badge **`⚡ QR Quầy (N) #Q01`** trên Header Bar $\rightarrow$ Nhân viên duyệt món vào Bàn Mang đi hệ thống (`kSysPosTakeawayTableId = 00000000-0000-0000-0001-000000000002`).
-* **Quy tắc thanh toán COUNTER:** Đơn QR tại quầy/mang đi phải thanh toán thành công trước khi được gửi bếp.
-* **Phương án tương lai đang cân nhắc:** Sau khi khách gọi món trên web, web sinh QR riêng cho đơn. Nhân viên quét QR này, đối chiếu với khách, xác nhận rồi gửi bếp. Code hiện tại chưa có QR xác nhận đơn hoặc camera quét phía nhân viên; hiện nhân viên nhận đơn từ hàng chờ trên POS.
-* **Nợ kỹ thuật checkout QR:** Khi gửi bếp, RPC V3 tạo `orders` trạng thái `open`. QR tại bàn hiện có thể tạo thêm order mới lúc thanh toán thay vì hoàn tất order QR; QR tại quầy chưa có luồng hoàn tất thanh toán, trừ kho và ghi tài chính khép kín. Cần hội tụ vào một order duy nhất.
+* Mỗi cửa hàng có đúng hai QR tĩnh: một `TABLE_SHARED` dùng chung cho mọi bàn và một `COUNTER` chỉ dùng cho mang đi.
+* **TABLE_SHARED:** Khách đặt món rồi nhận QR bàn giao động. Nhân viên đã đăng nhập và tham gia quán bằng mã quán quét QR, atomic claim, chọn bàn, đọc lại/chỉnh món, gắn đúng một order vào `ban_session`, sau đó gửi Bếp. TABLE thanh toán toàn bộ bàn sau và không trừ kho khi gửi Bếp.
+* **COUNTER:** Khách đặt mang đi rồi nhận QR bàn giao động/pickup code. Nhân viên quét, kiểm tra/chỉnh món; order phải thanh toán thành công bởi actor có `pos.checkout` trước khi gửi Bếp. COUNTER không chọn bàn và không xuất hiện trong module Bàn.
+* Không dùng POS device pairing/PIN riêng cho QR. Nhân viên dùng session account + `store_members` + quyền action hiện hành; `device_id` chỉ có thể là metadata audit/idempotency.
+* Mỗi request hội tụ vào đúng một `order_id`; retry không được tạo trùng order, payment, finance, stock movement hoặc kitchen ticket.
+* Code hiện tại chưa có camera quét QR bàn giao, còn giả định QR per-table, còn `PosDeviceTokenService` và tạo order tại kitchen dispatch. Đây là phạm vi cần thay thế, không phải phương án tương lai tùy chọn.
 
-### 2. Kiến Trúc Bảo Mật & Commit Boundary 2 Giai Đoạn:
-* **Khóa Atomic Claim (`claim_qr_request`):** Đảm bảo tính nguyên tử, ngăn chặn 2 nhân viên cùng mở và duyệt trùng 1 đơn QR.
+### 2. Kiến Trúc Bảo Mật & Commit Boundary:
+* **Khóa Atomic Claim:** QR bàn giao động dùng token một lần, bind request/order/store; đảm bảo hai nhân viên quét đồng thời chỉ một người claim thành công.
 * **Tự động tính giá Authoritative:** Hàm SQL RPC `submit_qr_order` tự động đọc giá sản phẩm và topping (`is_topping = true` + `product_topping_links`) trực tiếp từ DB server, không tin tưởng giá client.
-* **Quy tắc Rollback 2 Giai Đoạn:**
-  * **Phase 1 (Pre-Commit Rollback):** Xóa dữ liệu chèn dở dang nếu lỗi tạo ticket/session item và khôi phục đơn về `pending_staff`.
-  * **Phase 2 (Post-Commit Status Sync):** Việc tạo vé bếp và đánh dấu `da_gui` được coi là Kitchen Commit Boundary thành công. Nếu lỗi mạng khi cập nhật status `sent_kitchen`, hệ thống retry 3 lần và KHÔNG rollback để tránh in trùng vé bếp.
+* **Auth server-side:** Staff RPC dùng account/membership hiện hành, cô lập `store_id` và kiểm tra action phía server; không dùng UI hoặc device token riêng làm biên bảo mật.
+* **Kitchen Commit:** Sau khi vé Bếp đã commit, retry chỉ reconcile trạng thái idempotent và không rollback nếu có thể gây in trùng.
+* **Payment Commit:** COUNTER chỉ dispatch sau `paid`; TABLE checkout toàn bộ order hợp lệ trong `ban_session` và không tạo order QR lần hai.
 
 ### 2.1 Quy tắc hủy món và phê duyệt quản lý:
 * Món chưa gửi bếp là đơn nháp; nhân viên được phép thêm, sửa hoặc xóa.
@@ -629,14 +629,17 @@ Hệ thống ghi nhận toàn bộ hoạt động nghiệp vụ của nhân viê
 * **Lỗi hiện tại cần sửa:** POS và màn hình gọi món tại bàn đang disable sản phẩm khi `stockQty <= 0 && minStock > 0`; web QR chặn khi `stockQty <= 0`. Ba luồng phải đổi thành cảnh báo thống nhất, không chặn bán chỉ vì số tồn.
 * **Lỗi availability cần sửa:** RPC web QR đã filter và validate `is_active=true`, `is_available=true`, `is_deleted=false`. POS và màn hình bàn hiện chưa filter/chặn `is_available=false`. Checkout phải validate lại phía server để không bán món vừa bị tạm ngừng trên thiết bị khác.
 
-### 3. File Mã Nguồn Module:
+### 3. Tài liệu và mã nguồn:
 * Thư mục module: `lib/modules/qr_order/`
-* Tài liệu kỹ thuật chi tiết: `maqr.md`
-* File SQL Migration: `supabase/migration_qr_ordering.sql`
+* Đặc tả mục tiêu: `.docs/qr-order-kien-truc-muc-tieu.md`
+* Kế hoạch triển khai: `.docs/ke-hoach-trien-khai-qr-order.md`
+* Tài liệu V3 legacy: `maqr.md`
+* Migration V3 hiện có: `supabase/migrations/20260731_*qr*` và `20260814*qr_v3*`; chưa apply và phải được thay/squash sau khi xác minh schema thật.
 
 ### 4. Trạng Thái Hiện Tại:
-* 🟢 Mã nguồn Dart đã hoàn thiện 100%, tích hợp sạch **0 errors** trên `flutter analyze`.
-* ⚠️ **Trạng thái Deployment:** **CHƯA apply migration SQL lên Supabase production, CHƯA deploy web/mobile, CHƯA commit/push git.**
+* 🟡 Source V3 có một phần UI/repository/RPC nhưng không khớp kiến trúc mục tiêu.
+* ⚠️ Migration QR V3 chưa apply Supabase production theo xác nhận của Chủ quán.
+* 🔲 Chưa triển khai scanner, chọn bàn sau claim, dynamic handoff token, bỏ POS device pairing, COUNTER payment gate và checkout một-order.
 
 ---
 

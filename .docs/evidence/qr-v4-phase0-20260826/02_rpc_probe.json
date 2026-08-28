@@ -1,0 +1,276 @@
+{
+  "timestamp": "2026-08-26T00:57:12.623210+07:00",
+  "target": "https://quannho.lpm.vn/supabase/rest/v1/",
+  "results": {
+    "get_qr_menu": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.get_qr_menu without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.get_qr_menu without parameters in the schema cache"
+      }
+    },
+    "submit_qr_order": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.submit_qr_order without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.submit_qr_order without parameters in the schema cache"
+      }
+    },
+    "get_qr_request_status": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.get_qr_request_status without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.get_qr_request_status without parameters in the schema cache"
+      }
+    },
+    "claim_qr_request": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.claim_qr_request without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.claim_qr_request without parameters in the schema cache"
+      }
+    },
+    "get_qr_menu_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.get_qr_menu_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.get_qr_menu_v3 without parameters in the schema cache"
+      }
+    },
+    "submit_qr_order_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.submit_qr_order_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.submit_qr_order_v3 without parameters in the schema cache"
+      }
+    },
+    "get_qr_request_status_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.get_qr_request_status_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.get_qr_request_status_v3 without parameters in the schema cache"
+      }
+    },
+    "issue_pos_device_session_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.issue_pos_device_session_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.issue_pos_device_session_v3 without parameters in the schema cache"
+      }
+    },
+    "get_pending_qr_requests_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.get_pending_qr_requests_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.get_pending_qr_requests_v3 without parameters in the schema cache"
+      }
+    },
+    "claim_qr_request_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.claim_qr_request_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.claim_qr_request_v3 without parameters in the schema cache"
+      }
+    },
+    "reject_qr_request_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.reject_qr_request_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.reject_qr_request_v3 without parameters in the schema cache"
+      }
+    },
+    "confirm_qr_request_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.confirm_qr_request_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.confirm_qr_request_v3 without parameters in the schema cache"
+      }
+    },
+    "send_to_kitchen_qr_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.send_to_kitchen_qr_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.send_to_kitchen_qr_v3 without parameters in the schema cache"
+      }
+    },
+    "bootstrap_first_pos_device_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.bootstrap_first_pos_device_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.bootstrap_first_pos_device_v3 without parameters in the schema cache"
+      }
+    },
+    "generate_pos_pairing_code_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.generate_pos_pairing_code_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.generate_pos_pairing_code_v3 without parameters in the schema cache"
+      }
+    },
+    "pair_pos_device_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.pair_pos_device_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.pair_pos_device_v3 without parameters in the schema cache"
+      }
+    },
+    "revoke_pos_device_session_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.revoke_pos_device_session_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.revoke_pos_device_session_v3 without parameters in the schema cache"
+      }
+    },
+    "list_pos_device_sessions_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.list_pos_device_sessions_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.list_pos_device_sessions_v3 without parameters in the schema cache"
+      }
+    },
+    "list_qr_channels_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.list_qr_channels_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.list_qr_channels_v3 without parameters in the schema cache"
+      }
+    },
+    "upsert_qr_channel_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.upsert_qr_channel_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.upsert_qr_channel_v3 without parameters in the schema cache"
+      }
+    },
+    "rotate_qr_channel_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.rotate_qr_channel_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.rotate_qr_channel_v3 without parameters in the schema cache"
+      }
+    },
+    "set_qr_channel_active_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.set_qr_channel_active_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.set_qr_channel_active_v3 without parameters in the schema cache"
+      }
+    },
+    "get_qr_settings_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.get_qr_settings_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.get_qr_settings_v3 without parameters in the schema cache"
+      }
+    },
+    "save_qr_settings_v3": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.save_qr_settings_v3 without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.save_qr_settings_v3 without parameters in the schema cache"
+      }
+    },
+    "verify_pos_token_internal": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.verify_pos_token_internal without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.verify_pos_token_internal without parameters in the schema cache"
+      }
+    },
+    "check_pos_staff_action_permission": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.check_pos_staff_action_permission without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.check_pos_staff_action_permission without parameters in the schema cache"
+      }
+    },
+    "has_active_store_access": {
+      "http_status": 404,
+      "status": "RPC_RESPONSE",
+      "error": {
+        "code": "PGRST202",
+        "details": "Searched for the function public.has_active_store_access without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+        "hint": null,
+        "message": "Could not find the function public.has_active_store_access without parameters in the schema cache"
+      }
+    }
+  }
+}

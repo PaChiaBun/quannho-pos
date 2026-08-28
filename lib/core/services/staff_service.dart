@@ -7,10 +7,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
-import 'package:crypto/crypto.dart';
 import 'staff_sync_service.dart';
-import 'user_auth_service.dart' show StoreMembershipWriter;
 import '../utils/app_logger.dart';
 
 // ── Module IDs (khớp với module system) ───────────────────────────────────────
@@ -423,113 +420,43 @@ class StaffService {
       p = '+$p';
     }
 
-    final phoneVariants = <String>{
-      p,
-      rawPhone,
-      if (cleanDigits.length >= 9) ...[
-        '0${cleanDigits.substring(cleanDigits.length - 9)}',
-        '+84${cleanDigits.substring(cleanDigits.length - 9)}',
-        '84${cleanDigits.substring(cleanDigits.length - 9)}',
-      ],
-    }.toList();
-
     try {
-      // 1. Tìm user theo SĐT trong user_accounts (kiểm tra tất cả các biến thể SĐT)
-      Map<String, dynamic>? userRes;
-      for (final variant in phoneVariants) {
-        final res = await db
-            .from('user_accounts')
-            .select('id, display_name, phone')
-            .eq('phone', variant)
-            .maybeSingle();
-        if (res != null) {
-          userRes = res;
-          break;
-        }
-      }
+      // 1. Thêm nhân viên qua Server-Side Security Definer RPC
+      final rpcRes = await db.rpc(
+        'admin_create_staff_member_v4',
+        params: {
+          'p_store_id': storeId,
+          'p_name': (name != null && name.trim().isNotEmpty)
+              ? name.trim()
+              : 'NV ${cleanDigits.isNotEmpty ? cleanDigits : phone}',
+          'p_phone': p,
+          'p_role': role,
+        },
+      );
 
       String userId;
       String userName;
 
-      if (userRes != null) {
-        userId = userRes['id'] as String;
-        userName = (name != null && name.trim().isNotEmpty)
-            ? name.trim()
-            : (userRes['display_name'] as String);
+      if (rpcRes is Map) {
+        final map = Map<String, dynamic>.from(rpcRes);
+        if (map['success'] != true) {
+          return AddStaffResult.error(
+            map['message'] as String? ?? 'Không thể thêm nhân viên.',
+          );
+        }
+        userId = map['staff_id'] as String;
+        userName =
+            (map['name'] as String?) ??
+            ((name != null && name.trim().isNotEmpty)
+                ? name.trim()
+                : 'NV $cleanDigits');
       } else {
-        // Tự động tạo tài khoản nếu nhân viên chưa từng đăng ký tài khoản
-        userId = const Uuid().v4();
-        userName = (name != null && name.trim().isNotEmpty)
-            ? name.trim()
-            : 'NV ${cleanDigits.isNotEmpty ? cleanDigits : phone}';
-
-        final pwdInput = '$p:123456:qn_pos_2024_salt';
-        final defaultHash = sha256.convert(utf8.encode(pwdInput)).toString();
-
-        try {
-          await db.from('user_accounts').upsert({
-            'id': userId,
-            'phone': p,
-            'display_name': userName,
-            'password_hash': defaultHash,
-            'created_at': DateTime.now().toIso8601String(),
-          });
-        } catch (e) {
-          debugPrint(
-            '[StaffService.addStaffByPhone] user_accounts upsert error: $e',
-          );
-        }
-      }
-
-      // Nạp mảng modules mặc định của Role để gán trực tiếp cho nhân viên mới
-      final initialModules = await getModulePermissions(
-        storeId,
-        role,
-        userId: userId,
-      );
-      final initialModulesJson = jsonEncode(initialModules);
-
-      // 2. Thêm/Cập nhật vào staff_members (chỉ khi chưa thuộc quán khác để bảo vệ đa quán)
-      try {
-        final existingStaff = await db
-            .from('staff_members')
-            .select('store_id')
-            .eq('id', userId)
-            .maybeSingle();
-        final staffStoreId = existingStaff?['store_id'] as String?;
-        if (staffStoreId == null || staffStoreId == storeId) {
-          await db.from('staff_members').upsert({
-            'id': userId,
-            'store_id': storeId,
-            'name': userName,
-            'role': role,
-            'phone': p,
-            'modules': initialModulesJson,
-            'is_active': true,
-            'updated_at': DateTime.now().millisecondsSinceEpoch,
-          });
-        } else {
-          debugPrint(
-            '[StaffService.addStaffByPhone] Khách thuộc đa quán: Bỏ qua upsert staff_members để bảo vệ quán 1.',
-          );
-        }
-      } catch (e) {
-        debugPrint(
-          '[StaffService.addStaffByPhone] staff_members check error: $e',
+        return AddStaffResult.error(
+          'Dịch vụ quản trị nhân viên chưa sẵn sàng.',
         );
       }
 
-      // 3. Thêm/Cập nhật vào store_members (để duy trì tương thích đa quán an toàn)
-      await StoreMembershipWriter.upsertMembership(
-        db,
-        userId: userId,
-        storeId: storeId,
-        role: role,
-        isOwner: false,
-        modules: initialModulesJson,
-      );
-
-      // 4. Tạo profile mặc định
+      // 2. Tạo profile mặc định (best effort)
       try {
         await db.from('staff_profiles').upsert({
           'user_id': userId,
@@ -584,29 +511,25 @@ class StaffService {
       throw Exception('Không thể kết nối cơ sở dữ liệu server.');
     }
 
+    final rpcParams = {'p_store_id': storeId, 'p_staff_id': userId};
+
     dynamic rpcRes;
     try {
       if (rpcTransportOverride != null) {
-        rpcRes = await rpcTransportOverride!('revoke_store_member', {
-          'p_store_id': storeId,
-          'p_target_user_id': userId,
-          'p_actor_id': removedByUserId,
-        });
+        rpcRes = await rpcTransportOverride!(
+          'admin_revoke_staff_membership_v4',
+          rpcParams,
+        );
       } else {
         rpcRes = await db!.rpc(
-          'revoke_store_member',
-          params: {
-            'p_store_id': storeId,
-            'p_target_user_id': userId,
-            'p_actor_id': removedByUserId,
-          },
+          'admin_revoke_staff_membership_v4',
+          params: rpcParams,
         );
       }
     } catch (e) {
       final errStr = e.toString();
       if (errStr.contains('PGRST202') ||
-          errStr.contains('Could not find the function') ||
-          errStr.contains('revoke_store_member')) {
+          errStr.contains('Could not find the function')) {
         throw Exception('Server chưa cài migration thu hồi nhân viên.');
       }
       rethrow;
@@ -614,7 +537,6 @@ class StaffService {
 
     if (rpcRes != null && rpcRes is Map) {
       final success = (rpcRes['success'] as bool?) ?? false;
-      final code = (rpcRes['code'] as String?) ?? '';
       final msg =
           (rpcRes['message'] as String?) ?? 'Thu hồi quyền nhân viên thất bại.';
 
@@ -622,24 +544,17 @@ class StaffService {
         throw Exception(msg);
       }
 
-      if (code == 'revoked' ||
-          code == 'reconciled' ||
-          code == 'already_removed') {
-        if (broadcastHandlerOverride != null) {
-          await broadcastHandlerOverride!(
+      if (broadcastHandlerOverride != null) {
+        await broadcastHandlerOverride!(storeId: storeId, targetUserId: userId);
+      } else {
+        unawaited(
+          StaffSyncService.broadcastStaffRemoved(
             storeId: storeId,
             targetUserId: userId,
-          );
-        } else {
-          unawaited(
-            StaffSyncService.broadcastStaffRemoved(
-              storeId: storeId,
-              targetUserId: userId,
-            ),
-          );
-        }
-        return;
+          ),
+        );
       }
+      return;
     }
 
     throw Exception(
@@ -659,35 +574,39 @@ class StaffService {
     List<String>? directModules,
   }) async {
     final db = _db;
-    if (db == null) return;
+    if (db == null) {
+      throw StateError('Không thể kết nối cơ sở dữ liệu server.');
+    }
     if (newRole.toLowerCase() == 'owner') {
       debugPrint('[StaffService] updateRole blocked: cannot assign owner role');
       return;
     }
 
-    // 1. Cập nhật ở bảng store_members (chỉ update các cột có sẵn: role)
     try {
-      await db
-          .from('store_members')
-          .update({'role': newRole})
-          .eq('store_id', storeId)
-          .eq('user_id', userId);
+      final rpcRes = await db.rpc(
+        'admin_update_staff_role_v4',
+        params: {
+          'p_store_id': storeId,
+          'p_staff_id': userId,
+          'p_new_role': newRole,
+        },
+      );
+      if (rpcRes is Map) {
+        final map = Map<String, dynamic>.from(rpcRes);
+        if (map['success'] != true) {
+          throw StateError(
+            map['message'] as String? ??
+                'Không thể cập nhật vai trò nhân viên.',
+          );
+        }
+      } else {
+        throw StateError(
+          'Dịch vụ quản trị nhân viên trả về kết quả không hợp lệ.',
+        );
+      }
     } catch (e) {
-      debugPrint('[StaffService] updateRole store_members error: $e');
-    }
-
-    // 2. Cập nhật ở bảng staff_members (nếu có)
-    try {
-      await db
-          .from('staff_members')
-          .update({
-            'role': newRole,
-            'updated_at': DateTime.now().millisecondsSinceEpoch,
-          })
-          .eq('store_id', storeId)
-          .or('id.eq.$userId,user_id.eq.$userId');
-    } catch (e) {
-      debugPrint('[StaffService] updateRole staff_members error: $e');
+      debugPrint('[StaffService] updateRole RPC error: $e');
+      rethrow;
     }
 
     await _logPermChange(
@@ -873,8 +792,9 @@ class StaffService {
     if (db == null) return;
     final data = <String, dynamic>{};
     if (clockIn != null) data['clock_in'] = clockIn.toUtc().toIso8601String();
-    if (clockOut != null)
+    if (clockOut != null) {
       data['clock_out'] = clockOut.toUtc().toIso8601String();
+    }
     if (data.isEmpty) return;
     await db.from('staff_shifts').update(data).eq('id', shiftId);
     AppLogger.info('auth', 'Cap nhat ca lam viec $shiftId thanh cong.');
@@ -1241,13 +1161,18 @@ class StaffService {
   // PHÂN QUYỀN MODULE
   static String canonicalRole(String roleName) {
     final n = roleName.toLowerCase().trim();
-    if (n.contains('owner') || n.contains('chủ quán') || n.contains('chủ'))
+    if (n.contains('owner') || n.contains('chủ quán') || n.contains('chủ')) {
       return 'owner';
+    }
     if (n.contains('manager') || n.contains('quản lý')) return 'manager';
-    if (n.contains('cashier') || n.contains('thu ngân') || n.contains('quầy'))
+    if (n.contains('cashier') || n.contains('thu ngân') || n.contains('quầy')) {
       return 'cashier';
-    if (n.contains('waiter') || n.contains('phục vụ') || n.contains('chạy bàn'))
+    }
+    if (n.contains('waiter') ||
+        n.contains('phục vụ') ||
+        n.contains('chạy bàn')) {
       return 'waiter';
+    }
     if (n.contains('kitchen') || n.contains('bếp')) return 'kitchen';
     if (n.contains('stock') || n.contains('kho')) return 'stock';
     return roleName;
@@ -1295,7 +1220,7 @@ class StaffService {
             .from('store_roles')
             .select('name, modules')
             .eq('store_id', storeId);
-        if (roleRows is List && roleRows.isNotEmpty) {
+        if (roleRows.isNotEmpty) {
           for (final row in roleRows) {
             final rName = (row['name'] as String?)?.trim() ?? '';
             final rCanon = canonicalRole(rName);
@@ -1336,7 +1261,7 @@ class StaffService {
             .select('value')
             .eq('store_id', storeId)
             .inFilter('key', ['perm_$role', 'perm_$canonical']);
-        if (resRows is List && resRows.isNotEmpty) {
+        if (resRows.isNotEmpty) {
           for (final res in resRows) {
             if (res['value'] != null) {
               final mods = _parseModules(res['value']);

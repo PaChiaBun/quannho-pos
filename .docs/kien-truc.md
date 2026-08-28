@@ -1,5 +1,15 @@
 # Quán Nhỏ POS — Kiến Trúc
 
+## QR Order — ranh giới kiến trúc mục tiêu
+
+- QR Order dùng hai public channel theo cửa hàng: `TABLE_SHARED` và `COUNTER`; không tạo channel/QR riêng từng bàn.
+- Public web chỉ xem menu, submit idempotent và theo dõi request qua opaque token. Mỗi submit tạo một request và một order chuẩn duy nhất.
+- App nhân viên tái sử dụng account session, `store_members`, `store_id` và action permissions hiện hành. QR không có bước POS device pairing riêng.
+- QR bàn giao động là capability một lần để tìm/claim request; nó không thay thế staff auth và không tự gán bàn, thanh toán hoặc gửi Bếp.
+- TABLE chỉ gán `ban_dining_tables`/`ban_sessions` sau khi nhân viên claim và chọn bàn; sau đó module Bàn là nơi vận hành order. TABLE thanh toán toàn bộ session sau.
+- COUNTER là mang đi độc lập, không vào module Bàn và có payment gate bắt buộc trước kitchen dispatch.
+- Chi tiết và trạng thái triển khai xem `.docs/qr-order-kien-truc-muc-tieu.md` và `.docs/ke-hoach-trien-khai-qr-order.md`.
+
 ## Cấu Trúc `lib/`
 ```
 lib/

@@ -74,8 +74,9 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
 
     if (!mounted) return;
 
+    StoreMembership? membership;
     if (res.isSuccess) {
-      final membership =
+      membership =
           res.membership ??
           StoreMembership(
             storeId: res.storeId!,
@@ -84,14 +85,13 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
             role: 'waiter',
             isOwner: false,
           );
-
-      if (!mounted) return;
-      final session = await UserAuthService.getCurrentSession();
-      if (!mounted) return;
+    } else if (res.membership != null && res.storeId?.isNotEmpty == true) {
+      // Membership đã được tạo nhưng exchange JWT thất bại: xác thực lại để
+      // khôi phục đúng store session, không bắt người dùng join lần thứ hai.
       final pwdCtrl = TextEditingController();
-      String? pwd;
+      String? password;
       try {
-        pwd = await showDialog<String>(
+        password = await showDialog<String>(
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('Xác thực tham gia quán'),
@@ -99,7 +99,7 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
               controller: pwdCtrl,
               obscureText: true,
               decoration: const InputDecoration(
-                labelText: 'Nhập mật khẩu tài khoản để cấp JWT',
+                labelText: 'Nhập mật khẩu để cấp POS JWT cho quán',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -118,41 +118,28 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
       } finally {
         pwdCtrl.dispose();
       }
-
       if (!mounted) return;
-
-      if (pwd == null || pwd.trim().isEmpty) {
-        setState(() {
-          _loading = false;
-          _error = 'Hủy xác thực mật khẩu. Chưa thể kết nối tới quán.';
-        });
-        return;
+      if (password != null && password.trim().isNotEmpty) {
+        final recovered = await UserAuthService.selectStore(
+          res.membership!,
+          password: password,
+          phone: session.phone,
+        );
+        if (!mounted) return;
+        if (recovered) membership = res.membership;
       }
+    }
 
-      final ok = await UserAuthService.selectStore(
-        membership,
-        password: pwd,
-        phone: session?.phone,
-      );
-
-      if (!mounted) return;
-
-      if (!ok) {
-        setState(() {
-          _loading = false;
-          _error = 'Xác thực mật khẩu hoặc cấp POS JWT thất bại.';
-        });
-        return;
-      }
-
-      widget.ref.read(sessionProvider.notifier).updateStore(membership);
+    if (membership != null) {
+      final resolvedMembership = membership;
+      widget.ref.read(sessionProvider.notifier).updateStore(resolvedMembership);
       widget.ref.invalidate(userActionPermsProvider);
-      Navigator.pop(context); // đóng sheet
+      final navigator = Navigator.of(context);
+      navigator.pop(); // đóng sheet
 
       // Hiển thị dialog thông báo thành công
-      if (!mounted) return;
       showDialog(
-        context: context,
+        context: navigator.context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -178,7 +165,7 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Bạn đã tham gia thành công vào quán "${membership.storeName}".',
+                'Bạn đã tham gia thành công vào quán "${resolvedMembership.storeName}".',
                 style: const TextStyle(
                   fontSize: 14,
                   color: Color(0xFF2D2B8A),
@@ -200,7 +187,7 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '• Quán làm việc: ${membership.storeName}',
+                      '• Quán làm việc: ${resolvedMembership.storeName}',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -209,7 +196,7 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '• Mã quán: ${membership.storeCode}',
+                      '• Mã quán: ${resolvedMembership.storeCode}',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -248,6 +235,7 @@ class _JoinStoreSheetState extends State<_JoinStoreSheet> {
 
       widget.onSuccess?.call();
     } else {
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = res.errorMessage ?? 'Có lỗi xảy ra, thử lại sau.';

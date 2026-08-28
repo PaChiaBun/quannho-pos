@@ -3,7 +3,25 @@
 # Framework Integration Adapters for /api/auth/pos-jwt
 # Provides Flask Blueprint, FastAPI APIRouter, and WSGI/ASGI route handlers.
 # ─────────────────────────────────────────────────────────────────────────────
+import ipaddress
+import os
+
 from services.pos_jwt_auth_service import handle_pos_jwt_auth_request
+
+
+def _resolve_client_ip(remote_addr, forwarded_for):
+    """Trust X-Forwarded-For only from explicitly configured proxy peers."""
+    peer = str(remote_addr or "127.0.0.1").strip()
+    trusted_raw = os.environ.get("POS_TRUSTED_PROXY_IPS", "")
+    trusted = {value.strip() for value in trusted_raw.split(",") if value.strip()}
+    if peer not in trusted or not forwarded_for:
+        return peer
+
+    candidate = str(forwarded_for).split(",", 1)[0].strip()
+    try:
+        return str(ipaddress.ip_address(candidate))
+    except ValueError:
+        return peer
 
 def create_flask_blueprint():
     """Create Flask Blueprint for /api/auth/pos-jwt."""
@@ -14,7 +32,10 @@ def create_flask_blueprint():
         @bp.route("/api/auth/pos-jwt", methods=["POST"])
         def pos_jwt_endpoint():
             raw_body = request.get_data()
-            client_ip = request.headers.get("X-Forwarded-For", request.remote_addr or "127.0.0.1").split(",")[0].strip()
+            client_ip = _resolve_client_ip(
+                request.remote_addr,
+                request.headers.get("X-Forwarded-For"),
+            )
             res = handle_pos_jwt_auth_request(raw_body, client_ip=client_ip)
             return jsonify(res), res.get("status", 200)
 
@@ -33,7 +54,11 @@ def create_fastapi_router():
         @router.post("/api/auth/pos-jwt")
         async def pos_jwt_endpoint(request: Request):
             raw_body = await request.body()
-            client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "127.0.0.1").split(",")[0].strip()
+            remote_addr = request.client.host if request.client else "127.0.0.1"
+            client_ip = _resolve_client_ip(
+                remote_addr,
+                request.headers.get("x-forwarded-for"),
+            )
             res = handle_pos_jwt_auth_request(raw_body, client_ip=client_ip)
             return Response(
                 content=json.dumps(res),

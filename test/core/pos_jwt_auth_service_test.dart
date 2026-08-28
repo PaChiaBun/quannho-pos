@@ -32,7 +32,7 @@ void main() {
         final validPayload = base64Url
             .encode(
               utf8.encode(
-                '{"sub":"u1","exp":${nowSec + 3600},"store_id":"s1"}',
+                '{"sub":"u1","role":"authenticated","iss":"supabase","aud":"authenticated","iat":$nowSec,"nbf":$nowSec,"exp":${nowSec + 3600},"jti":"j1","store_id":"s1"}',
               ),
             )
             .replaceAll('=', '');
@@ -48,7 +48,9 @@ void main() {
         // Token expiring in less than 30 seconds (future skew check)
         final expSoonPayload = base64Url
             .encode(
-              utf8.encode('{"sub":"u1","exp":${nowSec + 15},"store_id":"s1"}'),
+              utf8.encode(
+                '{"sub":"u1","role":"authenticated","iss":"supabase","aud":"authenticated","iat":$nowSec,"nbf":$nowSec,"exp":${nowSec + 15},"jti":"j2","store_id":"s1"}',
+              ),
             )
             .replaceAll('=', '');
         final expSoonJwt = '$validHeader.$expSoonPayload.sig';
@@ -57,7 +59,9 @@ void main() {
         // Expired token
         final expiredPayload = base64Url
             .encode(
-              utf8.encode('{"sub":"u1","exp":${nowSec - 10},"store_id":"s1"}'),
+              utf8.encode(
+                '{"sub":"u1","role":"authenticated","iss":"supabase","aud":"authenticated","iat":$nowSec,"nbf":$nowSec,"exp":${nowSec - 10},"jti":"j3","store_id":"s1"}',
+              ),
             )
             .replaceAll('=', '');
         final expiredJwt = '$validHeader.$expiredPayload.sig';
@@ -135,7 +139,7 @@ void main() {
         final p = base64Url
             .encode(
               utf8.encode(
-                '{"sub":"u1","exp":${nowSec + 3600},"store_id":"s1"}',
+                '{"sub":"u1","role":"authenticated","iss":"supabase","aud":"authenticated","iat":$nowSec,"nbf":$nowSec,"exp":${nowSec + 3600},"jti":"j4","store_id":"s1"}',
               ),
             )
             .replaceAll('=', '');
@@ -233,7 +237,7 @@ void main() {
         final p = base64Url
             .encode(
               utf8.encode(
-                '{"sub":"u1","exp":${nowSec + 3600},"store_id":"s1"}',
+                '{"sub":"u1","role":"authenticated","iss":"supabase","aud":"authenticated","iat":$nowSec,"nbf":$nowSec,"exp":${nowSec + 3600},"jti":"j5","store_id":"s1"}',
               ),
             )
             .replaceAll('=', '');

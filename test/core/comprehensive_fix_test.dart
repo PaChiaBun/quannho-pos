@@ -205,7 +205,9 @@ class FakeUserAuthRepository implements UserAuthRepository {
   int upsertMemberCount = 0;
 
   @override
-  Future<List<Map<String, dynamic>>> queryStoresByOwner(String ownerUserId) async => [];
+  Future<List<Map<String, dynamic>>> queryStoresByOwner(
+    String ownerUserId,
+  ) async => [];
 
   @override
   Future<List<Map<String, dynamic>>> queryStaffMembers(String userId) async {
@@ -1337,22 +1339,21 @@ void main() {
     );
 
     test(
-      '36. Production UserAuthService.createStore calls Writer, payload omits id=userId',
+      '36. createStore fails closed instead of using direct membership writer',
       () async {
         final res = await UserAuthService.createStore(
           userId: 'user_owner_1',
           storeName: 'Quán Mới 1',
         );
 
-        expect(res.isSuccess, true);
-        expect(trackingWriter.writeCount, 1);
-        expect(trackingWriter.lastPayload!['user_id'], 'user_owner_1');
-        expect(trackingWriter.lastPayload!.containsKey('id'), false);
+        expect(res.isSuccess, false);
+        expect(trackingWriter.writeCount, 0);
+        expect(trackingWriter.lastPayload, isNull);
       },
     );
 
     test(
-      '37. Production joinStoreByCode uses production service path',
+      '37. joinStoreByCode fails closed instead of direct repository mutation',
       () async {
         fakeAuthRepo.stores['QN-TARGET'] = {
           'id': 's_target',
@@ -1365,7 +1366,8 @@ void main() {
           userId: 'u_join',
           storeCode: 'QN-TARGET',
         );
-        expect(res.isSuccess, true);
+        expect(res.isSuccess, false);
+        expect(trackingWriter.writeCount, 0);
       },
     );
 

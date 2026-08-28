@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../models/qr_order_model.dart';
 import '../counter_qr_print_screen.dart';
 
@@ -642,10 +643,22 @@ class CounterQrDesignTab extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          Icon(
-                            Icons.qr_code_2_rounded,
+                          QrImageView(
+                            data:
+                                counterUrl ??
+                                'https://quannho.lpm.vn/pos/goi-mon/?code=${counterChannel?.channelCode ?? ""}',
+                            version: QrVersions.auto,
                             size: 130,
-                            color: Colors.grey.shade900,
+                            backgroundColor: Colors.white,
+                            errorCorrectionLevel: QrErrorCorrectLevel.M,
+                            eyeStyle: const QrEyeStyle(
+                              eyeShape: QrEyeShape.square,
+                              color: Colors.black87,
+                            ),
+                            dataModuleStyle: const QrDataModuleStyle(
+                              dataModuleShape: QrDataModuleShape.square,
+                              color: Colors.black87,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(

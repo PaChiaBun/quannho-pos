@@ -49,6 +49,10 @@ import '../modules/bill_printer/providers/bill_template_provider.dart';
 import '../core/services/vietqr_service.dart';
 import '../modules/qr_order/providers/qr_order_providers.dart';
 import '../modules/qr_order/widgets/qr_order_review_sheet.dart';
+import '../modules/qr_order/widgets/qr_scanner_dialog.dart';
+import '../modules/qr_order/services/settlement_operation_manager.dart';
+import '../modules/qr_order/models/qr_order_model.dart'
+    show QrErrorCode, AuthoritativeQuote;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BRAND COLORS
@@ -174,11 +178,8 @@ final sessionItemsProvider = StreamProvider.autoDispose
     });
 
 /// Stream modifiers của 1 sản phẩm (query Supabase thật)
-final productModifiersProvider =
-    StreamProvider.autoDispose.family<List<Map<String, dynamic>>, String>((
-      ref,
-      productId,
-    ) async* {
+final productModifiersProvider = StreamProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, productId) async* {
       // Poll mỗi 30s (Supabase realtime không hỗ trợ arbitrary tables dễ)
       while (true) {
         try {
@@ -198,11 +199,8 @@ final productModifiersProvider =
     });
 
 // ── Topping catalog — lấy từ bảng products có is_topping=true ─────────────
-final toppingCatalogProvider =
-    StreamProvider.autoDispose.family<List<Map<String, dynamic>>, String>((
-      ref,
-      storeId,
-    ) async* {
+final toppingCatalogProvider = StreamProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, storeId) async* {
       while (true) {
         try {
           final rows = await Supabase.instance.client
@@ -678,6 +676,33 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner_rounded, color: _kNavy),
+            tooltip: 'Quét QR bàn giao của khách',
+            onPressed: () async {
+              final claimed = await QrScannerDialog.show(context);
+              if (claimed != null && context.mounted) {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => QrOrderReviewSheet(
+                    request: claimed,
+                    onApproved: () {
+                      ref.invalidate(banZonesProvider);
+                      ref.invalidate(qrActivePipelineStreamProvider);
+                      ref.invalidate(pendingTableQrRequestsProvider);
+                    },
+                    onRejected: () {
+                      ref.invalidate(banZonesProvider);
+                      ref.invalidate(qrActivePipelineStreamProvider);
+                      ref.invalidate(pendingTableQrRequestsProvider);
+                    },
+                  ),
+                );
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.add_location_alt_rounded, color: _kNavy),
             tooltip: 'Thêm khu vực',
@@ -1816,16 +1841,11 @@ class _TableCard extends ConsumerWidget {
         .toSet()
         .join(', ');
 
-    // QR Calling check for this table
-    final pendingQrReqs = ref.watch(pendingTableQrRequestsProvider);
-    final pendingForTable = pendingQrReqs
-        .where((r) => r.tableId == table.id)
-        .toList();
-    final hasPendingQr = pendingForTable.isNotEmpty;
-
+    // QR Calling check for this table (chỉ hiển thị khi đơn đã được gán assignedTableId)
     final activeForTable = ref.watch(
       activeQrRequestsForTableProvider(table.id),
     );
+    final hasPendingQr = activeForTable.isNotEmpty;
     final hasActiveQr = activeForTable.isNotEmpty;
 
     // Kích thước động theo cardSize
@@ -1938,7 +1958,7 @@ class _TableCard extends ConsumerWidget {
                               color: Colors.black,
                             ),
                             Text(
-                              'QR (${pendingForTable.first.items.length})',
+                              'QR (${activeForTable.first.items.length})',
                               style: GoogleFonts.outfit(
                                 fontSize: statusFontSize,
                                 fontWeight: FontWeight.w900,
@@ -2393,6 +2413,7 @@ class _TableSessionSheet extends ConsumerStatefulWidget {
 
 class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   bool _isCancelling = false;
+  final _settlementOpManager = SettlementOperationManager();
   // Map lưu TextEditingController theo item.id — tránh tạo mới mỗi build
   final Map<String, TextEditingController> _noteControllers = {};
   final Map<String, FocusNode> _noteFocusNodes = {};
@@ -3276,7 +3297,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   } // end _updateItemQty
 
   Future<void> _checkout(
-    double total,
+    double amountBeforeSurcharge,
     String payMethod,
     List<BanSessionItemModel> items, {
     String? customerId,
@@ -3284,6 +3305,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     double discount = 0,
     String? couponCode,
     double surcharge = 0,
+    bool allowQuoteReconfirmation = true,
   }) async {
     final banRepoCached = ref.read(banRepositoryProvider);
     final khoProRepoCached = ref.read(khoProRepositoryProvider);
@@ -3300,6 +3322,229 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       final storeId = storeInfo['store_id'] as String?;
       if (storeId == null)
         throw Exception('Không lấy được store_id — vui lòng đăng nhập lại');
+
+      // 0a. Kiểm tra nếu phiên bàn có QR Orders (bảng ban_session_orders) - 100% FAIL-CLOSED
+      bool hasQrOrders = false;
+      try {
+        final bsoRes = await sb
+            .from('ban_session_orders')
+            .select('id')
+            .eq('session_id', widget.session.id)
+            .limit(1);
+        hasQrOrders = (bsoRes as List).isNotEmpty;
+      } catch (e) {
+        // FAIL-CLOSED: Lookup lỗi (network, RLS, schema...) -> Chặn ngay, báo lỗi người dùng, KHÔNG fallback legacy!
+        throw Exception(
+          'Không thể kiểm tra trạng thái đơn QR của bàn: $e. Vui lòng thử lại.',
+        );
+      }
+
+      if (hasQrOrders) {
+        // Sinh / giữ idempotency key cố định cho session checkout theo financial intent
+        final checkoutIdempKey = _settlementOpManager.getOrCreateKey(
+          sessionId: widget.session.id,
+          paymentMethod: payMethod,
+          customerId: customerId,
+          pointsUsed: ptsUsed,
+          couponCode: couponCode,
+          surcharge: surcharge,
+          discount: discount,
+        );
+        final settleRes = await banRepoCached.settleBanSession(
+          sessionId: widget.session.id,
+          storeId: storeId,
+          paymentMethod: payMethod,
+          idempotencyKey: checkoutIdempKey,
+          customerId: customerId,
+          pointsUsed: ptsUsed,
+          discount: discount,
+          couponCode: couponCode,
+          surcharge: surcharge,
+        );
+
+        if (settleRes['success'] != true) {
+          final errCode = settleRes['error_code'] as String?;
+          final errMsg = settleRes['message'] as String?;
+
+          if (errCode == QrErrorCode.financialQuoteChanged) {
+            if (!allowQuoteReconfirmation) {
+              _settlementOpManager.clear();
+              throw Exception(
+                'Báo giá hệ thống vừa tiếp tục thay đổi. Vui lòng mở lại trang thanh toán để kiểm tra lại.',
+              );
+            }
+
+            final dataMap =
+                settleRes['data'] as Map<String, dynamic>? ??
+                <String, dynamic>{};
+            final quote = AuthoritativeQuote.fromMap(dataMap);
+            final oldExpectedTotal =
+                SettlementQuoteHelper.computeOldPayableTotal(
+                  amountBeforeSurcharge: amountBeforeSurcharge,
+                  surcharge: surcharge,
+                );
+
+            if (!mounted) return;
+            final confirmed = await _showAuthoritativeQuoteDialog(
+              oldTotal: oldExpectedTotal,
+              quote: quote,
+            );
+
+            if (confirmed == true && mounted) {
+              final newAmountBeforeSurcharge =
+                  SettlementQuoteHelper.computeConfirmedAmountBeforeSurcharge(
+                    quoteTotal: quote.total,
+                    quoteSurcharge: quote.surcharge,
+                  );
+              // Người dùng xác nhận quote authoritative mới -> Retry đúng 1 lần duy nhất với quote mới (sinh key mới)
+              return _checkout(
+                newAmountBeforeSurcharge,
+                payMethod,
+                items,
+                customerId: customerId,
+                ptsUsed: ptsUsed,
+                discount: quote.discount,
+                couponCode: couponCode,
+                surcharge: quote.surcharge,
+                allowQuoteReconfirmation: false,
+              );
+            } else {
+              // Người dùng hủy -> Giữ nguyên phiên chưa thanh toán, không side-effect
+              _settlementOpManager.clear();
+              return;
+            }
+          }
+
+          final userMsg = QrErrorCode.toUserMessage(errCode, errMsg);
+          throw Exception(userMsg);
+        }
+
+        // Giải phóng pending key khi thanh toán thành công
+        _settlementOpManager.clear();
+
+        final settleData =
+            settleRes['data'] as Map<String, dynamic>? ?? <String, dynamic>{};
+        final settlementId =
+            (settleData['settlement_id'] as String?) ?? widget.session.id;
+        final serverFinalTotal =
+            ((settleData['total_amount'] as num?) ??
+                    (amountBeforeSurcharge + surcharge))
+                .toDouble();
+        final serverSubtotal =
+            ((settleData['subtotal'] as num?) ??
+                    (amountBeforeSurcharge + discount))
+                .toDouble();
+        final serverDiscount = ((settleData['discount'] as num?) ?? discount)
+            .toDouble();
+        final serverSurcharge = ((settleData['surcharge'] as num?) ?? surcharge)
+            .toDouble();
+
+        // RPC đã xử lý toàn bộ: canonical orders hoàn tất, manual items nếu có, 1 settlement, 1 finance record, trừ kho/recipe & đóng session.
+        AppLogger.info(
+          'checkout',
+          'Thanh toan hoa don QR thanh cong tai ${widget.zone.name} - ${widget.table.label}. Tong: ${serverFinalTotal.toInt()}d, Hinh thuc: ${payMethod.toUpperCase()}',
+        );
+
+        // In hóa đơn thu ngân thật bằng StationPrinterDispatcher
+        try {
+          final hasPrintServerOwner = hasActivePrintServerOwner(
+            printerSettingsCached.ownerState,
+          );
+          if (printerSettingsCached.centralPrintRoutingEnabled &&
+              !hasPrintServerOwner) {
+            AppLogger.info(
+              'printer',
+              '[Checkout Print] Local fallback: central routing enabled but Print Server Owner is missing or stale.',
+            );
+          }
+
+          if (printerSettingsCached.autoPrintCheckout &&
+              shouldAutoPrintLocally(
+                isWeb: kIsWeb,
+                centralRoutingEnabled:
+                    printerSettingsCached.centralPrintRoutingEnabled,
+                hasPrintServerOwner: hasPrintServerOwner,
+                allowPrintServerFallback:
+                    printerSettingsCached.deviceState.isPrintServer &&
+                    printerSettingsCached.deviceState.allowBackgroundPrinting,
+              )) {
+            final List<BillItem> billItems = [];
+            for (final item in items) {
+              billItems.add(
+                BillItem(
+                  name: item.productName,
+                  qty: item.quantity.toInt(),
+                  price: item.price,
+                  note: item.note,
+                ),
+              );
+            }
+            if (serverSurcharge > 0) {
+              billItems.add(
+                BillItem(
+                  name: 'Phí dịch vụ / Ship',
+                  qty: 1,
+                  price: serverSurcharge,
+                ),
+              );
+            }
+
+            final session = ref.read(sessionProvider);
+            final billData = BillData(
+              shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
+              shopAddress: storeInfo['address'] ?? '',
+              shopPhone: storeInfo['phone'] ?? '',
+              orderNumber: 'QRT-${settlementId.substring(0, 6).toUpperCase()}',
+              createdAt: DateTime.now(),
+              tableName: widget.table.label,
+              items: billItems,
+              subtotal: serverSubtotal + serverSurcharge,
+              discount: serverDiscount,
+              total: serverFinalTotal,
+              type: BillType.receipt,
+              note: couponCode != null ? '[Voucher: $couponCode]' : '',
+              waiterName: _resolveWaiterName(items, session?.displayName),
+            );
+
+            final dispatchResult = await StationPrinterDispatcher.printBill(
+              billData,
+              printerSettingsCached,
+              onlyReceipt: true,
+            );
+            if (!dispatchResult.isStationSuccess('cashier')) {
+              AppLogger.info(
+                'printer',
+                '[Checkout Print] In hoa don thanh toan QR that bai: ${dispatchResult.stationResults['cashier']?.errorMessage ?? 'UNKNOWN_PRINT_ERROR'}',
+              );
+            }
+          }
+        } catch (e) {
+          debugPrint('[Checkout Print] ❌ Lỗi in hóa đơn thanh toán bàn QR: $e');
+        }
+
+        if (mounted) {
+          ref.invalidate(activeSessionsProvider);
+          ref.invalidate(todayStatsProvider);
+          ref.invalidate(financeRecordsProvider);
+          ref.invalidate(financeStatsProvider);
+          ref.invalidate(todayFinanceStatsProvider);
+          try {
+            final ch = Supabase.instance.client.channel('store_broadcast');
+            ch.subscribe();
+            ch
+                .sendBroadcastMessage(event: 'checkout_completed', payload: {})
+                .then((_) => ch.unsubscribe());
+          } catch (_) {}
+
+          try {
+            final player = AudioPlayer();
+            player.play(AssetSource('sounds/payment_success.mp3'));
+          } catch (_) {}
+
+          Navigator.of(context).pop();
+        }
+        return;
+      }
 
       // 0b. Tạo orderNumber sequential (giống POS screen — dùng count từ DB)
       final today = DateTime.now();
@@ -3352,7 +3597,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       // 1. Core: Tạo order
       // Lấy loyalty_rate trước để tính ptsEarned
       double ptsEarned = 0;
-      final finalPaidTotal = total + surcharge;
+      final finalPaidTotal = amountBeforeSurcharge + surcharge;
       if (customerId != null) {
         try {
           final rate =
@@ -3408,8 +3653,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         'store_id': storeId,
         'order_number': orderNumber,
         'customer_id': customerId,
-        'subtotal':
-            total + discount + surcharge, // subtotal trước giảm + phí dịch vụ
+        'subtotal': amountBeforeSurcharge + discount,
         'discount': discount,
         'tax': 0,
         'total': finalPaidTotal,
@@ -3629,7 +3873,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 'id': const Uuid().v4(),
                 'store_id': storeId,
                 'type': 'income',
-                'amount': total,
+                'amount': finalPaidTotal,
                 'description': 'Doanh thu bàn $orderNumber',
                 'reference_id': orderId,
                 'is_auto': true,
@@ -3687,7 +3931,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   .from('customers')
                   .update({
                     'loyalty_pts': newPts,
-                    'total_spent': currentSpent + (total + discount),
+                    'total_spent':
+                        currentSpent + (amountBeforeSurcharge + discount),
                     'visit_count': currentVisit + 1,
                     'stamp_count': newStampCount,
                     'stamp_total': newStampTotal + 1,
@@ -3722,12 +3967,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       });
 
       // 6. Đóng session
-      await banRepoCached.closeSession(widget.session.id, total);
+      await banRepoCached.closeSession(widget.session.id, finalPaidTotal);
 
       // LOG HOẠT ĐỘNG
       AppLogger.info(
         'checkout',
-        'Thanh toan hoa don thanh cong tai ${widget.zone.name} - ${widget.table.label}. Tong: ${total.toInt()}d, Hinh thuc: ${payMethod.toUpperCase()}',
+        'Thanh toan hoa don thanh cong tai ${widget.zone.name} - ${widget.table.label}. Tong: ${finalPaidTotal.toInt()}d, Hinh thuc: ${payMethod.toUpperCase()}',
       );
 
       // Tự động in hóa đơn thu ngân khi thanh toán tại bàn (nếu bật cấu hình)
@@ -3778,8 +4023,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             createdAt: DateTime.now(),
             tableName: widget.table.label,
             items: billItems,
-            subtotal: total + discount + surcharge,
-            total: total + surcharge,
+            subtotal: amountBeforeSurcharge + discount + surcharge,
+            total: finalPaidTotal,
             type: BillType.receipt,
             note: '',
             waiterName: _resolveWaiterName(items, session?.displayName),
@@ -3867,7 +4112,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    fmtVnd(total),
+                    fmtVnd(finalPaidTotal),
                     style: GoogleFonts.outfit(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
@@ -3902,6 +4147,147 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         );
       }
     }
+  }
+
+  /// Hiển thị dialog thông báo thay đổi báo giá tài chính từ server và yêu cầu xác nhận
+  Future<bool?> _showAuthoritativeQuoteDialog({
+    required double oldTotal,
+    required AuthoritativeQuote quote,
+  }) async {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline, color: Colors.orange),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Báo giá hóa đơn thay đổi',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Số tiền giảm giá hoặc chiết khấu trên hệ thống đã được cập nhật lại theo dữ liệu mới nhất từ máy chủ:',
+              style: GoogleFonts.outfit(fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Tổng tiền dự kiến cũ:',
+                        style: GoogleFonts.outfit(),
+                      ),
+                      Text(
+                        fmtVnd(oldTotal),
+                        style: GoogleFonts.outfit(
+                          decoration: TextDecoration.lineThrough,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Tạm tính mới:', style: GoogleFonts.outfit()),
+                      Text(fmtVnd(quote.subtotal), style: GoogleFonts.outfit()),
+                    ],
+                  ),
+                  if (quote.discount > 0)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Giảm giá mới:', style: GoogleFonts.outfit()),
+                        Text(
+                          '-${fmtVnd(quote.discount)}',
+                          style: GoogleFonts.outfit(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (quote.surcharge > 0)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Phụ phí mới:', style: GoogleFonts.outfit()),
+                        Text(
+                          '+${fmtVnd(quote.surcharge)}',
+                          style: GoogleFonts.outfit(),
+                        ),
+                      ],
+                    ),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Tổng thanh toán mới:',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        fmtVnd(quote.total),
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Bạn có muốn xác nhận và tiếp tục thanh toán theo số tiền mới không?',
+              style: GoogleFonts.outfit(fontSize: 13, color: Colors.black87),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: Text('Hủy bỏ', style: GoogleFonts.outfit()),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6600),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: Text(
+              'Xác nhận & Thanh toán',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // A2: Mở checkout sheet — 2-step confirm
@@ -3947,12 +4333,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       final customerId = result['customerId'] as String?;
       final ptsUsed = (result['ptsUsed'] as int?) ?? 0;
       final discount = ((result['discount'] as num?) ?? 0).toDouble();
-      final finalTotal =
+      final amountBeforeSurcharge =
           (total - discount).clamp(0.0, double.infinity) as double;
       final couponCode = result['couponCode'] as String?;
       final surcharge = ((result['surcharge'] as num?) ?? 0).toDouble();
       await _checkout(
-        finalTotal,
+        amountBeforeSurcharge,
         payMethod,
         items,
         customerId: customerId,

@@ -21,7 +21,7 @@ Quy tắc nghiệp vụ lõi:
 - Nhiều nhân viên được order cùng bàn; lưu người mở bàn và người thêm từng món.
 - Món đã gửi Bếp chỉ Chủ quán/Quản lý được hủy, bắt buộc lý do, phê duyệt và audit.
 - Chỉ trừ kho sau thanh toán. Thiếu tồn chỉ cảnh báo; `is_available=false` mới khóa bán.
-- QR/COUNTER phải thanh toán trước khi gửi Bếp.
+- QR COUNTER/mang đi phải thanh toán trước khi gửi Bếp. QR TABLE được gán vào phiên bàn sau khi nhân viên quét/xác nhận và thanh toán toàn bộ bàn theo luồng TABLE.
 - AI Bum chỉ tư vấn/nhắc nhở, không tự tạo hiệu lực kho hoặc tài chính.
 
 ## 2. Quy chuẩn sản phẩm đã hợp nhất
@@ -53,8 +53,10 @@ Quy tắc nghiệp vụ lõi:
 
 ### QR Order và AI Bum
 
-- QR TABLE/COUNTER phải dùng giá authoritative từ server, atomic claim chống hai nhân viên duyệt trùng và commit boundary rõ ràng. Không rollback sau khi vé Bếp đã commit nếu việc đó có thể in trùng; retry chỉ cập nhật trạng thái idempotent.
-- Không có QR Payment tự động trong phạm vi cũ; “thanh toán trước khi gửi Bếp” là bước nhân viên xác nhận qua luồng thanh toán hiện hành, không được tự giả định đã thu tiền.
+- Mỗi cửa hàng dùng một QR TABLE_SHARED chung và một QR COUNTER mang đi; không in QR riêng từng bàn. Sau khi khách submit, web sinh QR bàn giao động; nhân viên dùng account/membership hiện hành quét, atomic claim, chọn bàn cho TABLE, đọc lại/chỉnh món rồi gửi Bếp.
+- QR TABLE/COUNTER phải dùng giá authoritative từ server, atomic claim chống hai nhân viên duyệt trùng và commit boundary rõ ràng. Một request hội tụ vào đúng một order; không rollback sau khi vé Bếp đã commit nếu việc đó có thể in trùng; retry chỉ reconcile trạng thái idempotent.
+- QR COUNTER phải thanh toán trước Bếp bởi Thu ngân hoặc actor có `pos.checkout`. QR TABLE gửi Bếp trước và thanh toán toàn bộ `ban_session` sau. Không có QR Payment tự động trong phạm vi hiện tại; không được tự giả định đã thu tiền chỉ vì đã hiển thị VietQR.
+- Nhân viên đã kết nối quán bằng tài khoản + mã quán; QR không tạo POS device pairing/PIN riêng. `device_id` nếu dùng chỉ là metadata audit/idempotency, không phải credential người dùng.
 - AI Bum phải read-only với nghiệp vụ, khử PII trước cloud fallback, có quota/circuit breaker và cô lập conversation/feedback/memory theo `store_id`.
 
 ## 3. Phân vai hai graph

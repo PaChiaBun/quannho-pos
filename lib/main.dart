@@ -157,7 +157,12 @@ class QuanNhoPOSApp extends StatelessWidget {
       },
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '');
-        if (uri.path == '/qr_order' || uri.path.endsWith('/qr_order')) {
+        final path = uri.path;
+        if (path == '/qr_order' ||
+            path.endsWith('/qr_order') ||
+            path == '/goi-mon' ||
+            path.endsWith('/goi-mon') ||
+            path.endsWith('/goi-mon/')) {
           final code = uri.queryParameters['code'];
           if (code != null && code.isNotEmpty) {
             return MaterialPageRoute(

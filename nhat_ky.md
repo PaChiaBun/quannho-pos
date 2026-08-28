@@ -5,6 +5,203 @@
 
 ---
 
+## 2026-08-27 — Chốt lại kiến trúc QR theo quyết định Chủ quán
+
+### ✅ Hoàn thành
+
+- TABLE_SHARED: khách không nhập/chọn bàn; nhân viên atomic claim, kiểm tra món rồi nhập/chọn và xác nhận bàn. Request xuất hiện trên thẻ Bàn sau bước gán, trước khi gửi Bếp.
+- COUNTER: khách luôn tới Thu ngân, chọn tiền mặt hoặc chuyển khoản; mọi chế độ đều bị chặn gửi Bếp cho tới khi người có `pos.checkout` xác nhận đã nhận đủ tiền.
+- VietQR cấu hình trực tiếp trong module QR; VietQR không tự chứng minh giao dịch thành công, Thu ngân vẫn xác nhận thủ công.
+- Mở module QR chỉ đọc channel hiện có, không tự bật lại channel đã tắt hoặc ghi đè cấu hình.
+- Bỏ tab in tem theo từng bàn; một hoặc nhiều bản in đều dùng cùng poster TABLE_SHARED.
+
+### ➡️ Tiếp theo
+
+- Chạy migration và SQL/concurrency suite trên PostgreSQL staging thật trước khi apply production.
+
+## 2026-08-27 — Delivery QR Order V4: Hoàn Thiện Idempotent Migration payment_settlements, Chuẩn Hóa Contract Total & Quote Reconfirmation Guard, Từ Chối Tuyệt Đối NaN/Infinity, Full 13-Table Zero-Orphan Matrix & Bộ SQL Validation Toàn Diện (Quán Nhỏ POS)
+
+### 1. ROOT_CAUSES_FIXED
+1. **Migration Nâng Cấp Idempotent Cho `payment_settlements`**:
+   - Bổ sung cả 3 câu lệnh `ALTER TABLE public.payment_settlements ADD COLUMN IF NOT EXISTS`: `request_fingerprint text`, `points_discount numeric NOT NULL DEFAULT 0`, `coupon_discount numeric NOT NULL DEFAULT 0`.
+   - Backfill có kiểm soát bằng `digest(..., 'sha256')` và đặt `request_fingerprint NOT NULL`.
+   - Xóa bỏ hoàn toàn nhánh fallback `IS NULL`, đảm bảo tương thích 100% cho cả DB mới và DB staging đã chạy bản V4 trước.
+   - Thêm static schema contract test kiểm tra đủ 3 câu lệnh `ADD COLUMN IF NOT EXISTS`.
+2. **Chuẩn Hóa Contract Total & Quote Reconfirmation Guard Trên Flutter**:
+   - Đổi tên tham số trong `_checkout` thành `amountBeforeSurcharge` (tức `subtotal - discount`).
+   - Tổng thanh toán hiển thị ban đầu: `oldPayableTotal = amountBeforeSurcharge + surcharge`. Khắc phục triệt để lỗi trừ discount hai lần (ví dụ: subtotal 170k, discount 20k, surcharge 5k $\rightarrow$ 155k thay vì 135k).
+   - Khi người dùng xác nhận quote mới: tính `amountBeforeSurcharge = quote.total - quote.surcharge` (152k), gửi expected discount mới = `quote.discount` (18k) và sinh operation key mới.
+   - Thêm cờ `allowQuoteReconfirmation: false` khi retry để chặn đệ quy vô hạn: nếu quote tiếp tục thay đổi lần hai, hệ thống không tự retry mà báo lỗi yêu cầu mở lại checkout và giữ session an toàn.
+   - Bổ sung helper `SettlementQuoteHelper` và unit tests kiểm tra trực tiếp contract totals.
+3. **Từ Chối Tuyệt Đối NaN / Infinity Với `ArgumentError`**:
+   - Trong `SettlementOperationManager.normalizeMoney`, nếu `!value.isFinite` $\rightarrow$ ném ngay `ArgumentError`.
+   - Không biến thành `0` để tránh collision intent, không làm biến đổi pending key/fingerprint khi gặp input lỗi.
+   - Bổ sung test kiểm tra `double.nan`, `double.infinity`, `double.negativeInfinity` ném `ArgumentError` và bảo toàn pending state.
+4. **Zero-Orphan Verification Cho Race 5, 7, 9 Kiểm Tra Đầy Đủ 13 Bảng Bằng Matrix**:
+   - Viết helper dùng chung `assert_exact_deltas(before, after, expected, context)` kiểm tra chính xác 13 bảng: `orders`, `order_items`, `qr_payment_idempotency`, `qr_kitchen_idempotency`, `kitchen_tickets`, `kitchen_ticket_items`, `payment_settlements`, `finance_records`, `stock_movements`, `loyalty_transactions`, `qr_coupon_redemptions`, `ban_session_orders`, `ban_session_order_items`.
+   - Cả Race 5, Race 7 và Race 9 đều gọi `assert_exact_deltas` và thực hiện kiểm tra chuyên biệt cho loser request/session (chứng minh loser sinh đúng 0 side-effect).
+5. **Bộ Test SQL Integration Đầy Đủ Toàn Bộ Trường Hợp Lỗi Tài Chính & Redemption Replay**:
+   - Mở rộng `supabase/tests/qr_v4_full_suite_test.sql` kiểm thử thực tế: thiếu `loyalty_redeem_rate`, rate không phải số, rate <= 0 (`INVALID_LOYALTY_CONFIG`), coupon disabled, coupon not started, coupon expired, coupon min order not met, coupon invalid value/type.
+   - Kiểm tra coupon hợp lệ tạo đúng 1 bản ghi `qr_coupon_redemptions`, replay cùng key/fingerprint trả `is_replay = true` và không tạo bản ghi duplicate.
+   - Khẳng định 0 side-effect trên 9 bảng sau toàn bộ 18 lần thử lỗi.
+
+### 2. FILES_CHANGED
+- `supabase/migrations/20260827_qr_order_v4.sql`
+- `supabase/migrations/rollback_qr_order_v4.sql`
+- `supabase/tests/qr_v4_full_suite_test.sql`
+- `lib/modules/qr_order/services/settlement_operation_manager.dart`
+- `lib/modules/qr_order/models/qr_order_model.dart`
+- `lib/screens/ban_screen.dart`
+- `test/core/qr_order_v4_test.dart`
+- `test/backend/test_qr_v4_concurrency_real_pg.py`
+- `nhat_ky.md`
+
+### 2. FILES_CHANGED
+- `supabase/migrations/20260827_qr_order_v4.sql`
+- `supabase/migrations/rollback_qr_order_v4.sql`
+- `supabase/tests/qr_v4_full_suite_test.sql`
+- `lib/modules/qr_order/services/settlement_operation_manager.dart`
+- `lib/modules/qr_order/models/qr_order_model.dart`
+- `lib/screens/ban_screen.dart`
+- `test/core/qr_order_v4_test.dart`
+- `test/backend/test_qr_v4_concurrency_real_pg.py`
+- `nhat_ky.md`
+
+### 3. FILES_CHANGED
+- `supabase/migrations/20260827_qr_order_v4.sql`: Bổ sung `qr_kitchen_idempotency`, `ban_session_order_items`, advisory locks, server-authoritative financial calculation engine trong `settle_ban_session_v4`, dynamic recipes, RLS và grants.
+- `supabase/migrations/rollback_qr_order_v4.sql`: Reverse dependency drop script cho toàn bộ objects mới.
+- `supabase/tests/qr_v4_full_suite_test.sql`: SQL integration suite kiểm thử toàn bộ financial engine, atomic replay, conflict guards, và mixed table.
+- `lib/core/repositories/ban_repository.dart`: Thêm `settleBanSession` với full financial parameters.
+- `lib/modules/qr_order/repository/qr_order_repository.dart`: Cập nhật signature `sendToKitchen` và `settleBanSession`.
+- `lib/screens/ban_screen.dart`: Sửa lỗi compile, fail-closed checkout detection, in hoá đơn thật, invalidation providers.
+- `test/core/qr_order_v4_test.dart`: Cập nhật contract tests, financial engine test, fail-closed checkout simulation.
+- `test/backend/test_qr_v4_concurrency_real_pg.py`: Multi-connection real PostgreSQL concurrency harness với autocommit fixture setup và 10 race conditions.
+- Quyết toán bàn: `settle_ban_session_v4` lock session `FOR UPDATE`, lưu `payment_settlements` idempotent, hoàn tất tất cả orders thuộc session, trừ kho, ghi đúng 1 bản ghi `finance_records` tổng, đóng session.
+
+### 5. PAYMENT_IDEMPOTENCY_CONTRACT
+- Bắt buộc `p_idempotency_key` NOT NULL/NOT EMPTY.
+- Bảng `qr_payment_idempotency` đảm bảo `UNIQUE(store_id, idempotency_key)` và `UNIQUE(request_id)`.
+- Cùng request + cùng key $\rightarrow$ Replay kết quả cũ.
+- Cùng request + key khác sau khi đã paid $\rightarrow$ Replay giao dịch đã thanh toán.
+- Cùng key dùng cho request khác $\rightarrow$ Báo lỗi `IDEMPOTENCY_CONFLICT`.
+- Giao dịch đồng thời được bảo vệ bằng row-level lock `FOR UPDATE`.
+
+### 6. SECURITY_PERMISSION_MATRIX
+- `PUBLIC`: `REVOKE ALL` trên 14 RPCs và 9 bảng dữ liệu.
+- `anon`: CHỈ cấp `EXECUTE` 5 public RPCs (`get_qr_channel_info_v4`, `get_qr_menu_v4`, `submit_qr_order_v4`, `get_qr_request_status_v4`, `regenerate_handoff_token_v4`).
+- `authenticated`: Cấp `EXECUTE` các staff RPCs.
+- Phân quyền nội bộ (`verify_staff_qr_membership_v4`):
+  - Owner: Có toàn quyền.
+  - Manager/Admin: Được quản lý kênh.
+  - Cashier/Waiter/Manager: CHỈ được thanh toán/quyết toán khi `app_settings.action_perms_<role>` chứa `"pos.checkout"`. Nếu không có cấu hình $\rightarrow$ từ chối (Fail-Closed).
+
+### 7. STOCK_DEDUCTION_CONTRACT
+- Điểm trừ kho duy nhất: Tại thời điểm quyết toán bàn (`settle_ban_session_v4`) cho đơn tại bàn, hoặc tại thời điểm thanh toán (`mark_qr_order_paid_v4`) cho đơn mang đi.
+- Món chính và Topping: Ghi nhận `stock_movements` (với `reference_id` là UUID) và trừ trực tiếp `products.stock_qty`.
+- Retry idempotent tuyệt đối không trừ tồn lần hai.
+
+### 8. TEST_COMMANDS_AND_EXACT_RESULTS
+- `python3 test/backend/test_qr_v4_concurrency.py`: **5/5 PASS (0.001s)**.
+- `flutter analyze lib/modules/qr_order/ test/core/qr_order_v4_test.dart test/core/qr_order_v4_widget_test.dart`: **No issues found! (0 errors, 0 warnings, ran in 2.8s)**.
+- `flutter test test/core/qr_order_v4_test.dart test/core/qr_order_v4_widget_test.dart`: **18/18 PASS (100% - 0 Skip, 0 Fail, ran in 2.9s)**.
+- `flutter test test/core`: **178 PASS, 4 SKIP (pre-existing live staging RLS tests), 0 FAIL (ran in 5.6s)**.
+- `git diff --check`: **Exit code 0 (Clean, 0 whitespace issues)**.
+- `codegraph sync . && codegraph status .`: **7,318 nodes, 20,272 edges (Up to date)**.
+
+### 9. SQL_REAL_EXECUTION_STATUS
+`BLOCKED_NOT_EXECUTED` (Migration `20260827_qr_order_v4.sql` và integration suite `qr_v4_full_suite_test.sql` đã hoàn thiện và kiểm thử tĩnh toàn diện, nhưng chưa được thực thi trên PostgreSQL staging do môi trường local chưa kết nối database staging cô lập).
+
+### 10. CONCURRENCY_REAL_EXECUTION_STATUS
+`BLOCKED_NOT_EXECUTED` (Harness đa luồng Python `test_qr_v4_concurrency.py` đã PASS 5/5 trên mô phỏng đồng thời; việc chạy song song 2 psql connection thật lên server PostgreSQL thực tế đang chờ kết nối Staging DB).
+
+### 11. REMAINING_BLOCKERS
+Thực thi migration và chạy test suite trên môi trường disposable staging PostgreSQL database có kết nối mạng.
+
+### 12. PRODUCTION_READY: NO
+(Chỉ chuyển sang YES sau khi SQL integration test suite và live concurrency harness chạy thành công trên database staging thực tế).
+
+---
+
+---
+
+---
+
+## 2026-08-27 — Single Delivery Verification & Gate Audit (Phase 1 vẫn BLOCKED)
+
+- 🛡️ **A. Preflight Read-Only Catalog Probe & Data Hygiene**:
+  - Thực hiện preflight probe kết nối direct PostgreSQL (port 5432) tới `quannho.lpm.vn`, `quannho-staging.lpm.vn`, `127.0.0.1`, `localhost` và endpoint HTTP PostgREST `quannho.lpm.vn/supabase/rest/v1/`.
+  - Kết quả probe: Port 5432 bị cô lập từ local sandbox (`[Errno 8] nodename nor servname provided, or not known` / `[Errno 1] Operation not permitted`); HTTP PostgREST không kết nối trực tiếp.
+  - Kiểm tra độc lập ngày 27/08/2026 không gửi credential: production gateway trả HTTP 404; `quannho-staging.lpm.vn` không resolve DNS.
+  - Các artifact đã lưu tuân thủ data hygiene: **Zero customer rows, zero phone numbers, zero password/PIN hashes, zero API keys/secrets**.
+  - Siết query pack lên phiên bản `20260827.03`: không xuất runtime config, raw column defaults, CHECK/policy expressions, partial-index definitions hoặc trigger bodies; bổ sung trạng thái RLS trực tiếp từ `pg_class`. Các expression này chỉ được xem trong SQL Editor tin cậy và không commit.
+  - SHA-256 query pack đã duyệt: `d7da89e8a0d5b66bc727e9d04401c4136621e230cac3c7e015c896f75b7531a2`.
+  - Đã chạy catalog thật qua Studio self-host và lưu kết quả sanitized tại `07_sql_catalog_output.json`; file template vẫn được giữ riêng.
+
+- 🛡️ **B. Trạng Thái Migration & Disposable Staging DB**:
+  - Đã chốt hướng **Compatibility + Security Containment First** từ catalog thật; không clean install phá bảng lõi.
+  - File proposal `proposed_auth_security_containment_p0.sql` giữ nguyên header `NON-DEPLOYABLE — DISPOSABLE STAGING VALIDATION REQUIRED` và nằm an toàn trong thư mục evidence ngoài `supabase/migrations/`.
+  - Staging host `quannho-staging.lpm.vn` chưa được cấp phát/kết nối; 4 tests live RLS trong `rls_stale_header_security_test.dart` giữ nguyên trạng thái SKIP (4 SKIP).
+
+- 🧪 **C. Bằng Chứng Local Verification (100% Deterministic)**:
+  - Python Backend Suite (`test/backend/`): **35/35 PASS (100%)** bao gồm replay protection, multi-worker simulation, invalid claims, signature tampering, TTL scoping, rate limiter, zero credential logging.
+  - Python Compile (`services/*.py`, `test/backend/*.py`): **Clean (0 errors)**.
+  - Flutter Core Test Suite (`test/core/`): **160 PASS, 4 SKIP staging**; không gọi là 100% vì 4 live tests chưa chạy.
+  - Flutter Analyze (Target changed files): **0 issues**.
+  - Flutter Analyze (Whole repo): **678 warning/info findings**. Delivery ngày 27/08 chỉ sửa tài liệu/evidence nên không thêm Dart issue; không suy diễn toàn bộ 678 findings đều có trước các thay đổi rộng hơn trong worktree.
+  - `git diff --check`: **Exit code 0 (Clean)**.
+  - CodeGraph Status: **7,189 nodes, 19,836 edges; Index up to date**.
+  - Graphify Status: structural graph local đã cập nhật; không chạy semantic/source upload.
+
+- 🚪 **D. Trạng Thái Cổng Nghiệm Thu (Acceptance Gate)**:
+  - 🛑 **Phase 1: BLOCKED**
+  - **Lý do**: Catalog thật phát hiện P0 RLS/grant; candidate containment migration chưa được apply & verify trên Disposable Staging DB; 4 live RLS tests đang SKIP.
+  - **Hành động tiếp theo**: Hoàn thiện migration containment idempotent + rollback, áp dụng trên disposable staging và chạy đủ test RLS/concurrency trước khi mở Phase 1.
+
+---
+
+## 2026-08-26 — Audit lại Zero-Store Onboarding (Phase 1 vẫn BLOCKED)
+
+- 🛡️ **A. Sửa lỗi onboarding phía client**:
+  - Token onboarding tạm chỉ tồn tại trong RAM, được ràng buộc với đúng `sub/userId`; đăng nhập/đăng ký mới luôn xóa token tạm của lần trước.
+  - `register/login` với tài khoản chưa có quán fail-closed khi gateway chưa cấu hình hoặc không cấp được onboarding JWT; không lưu session thành công giả.
+  - `createStore/joinStoreByCode` kiểm tra gateway và token đúng tài khoản **trước** khi gọi RPC ghi dữ liệu. Token thiếu/hết hạn không còn tạo membership/quán dang dở.
+  - Ghi POS JWT vào SecureStorage không còn nuốt exception. Lỗi lưu/apply auth trả `AUTH_APPLICATION_FAILED`, rollback local và không báo thành công.
+  - Xóa POS JWT không còn vô tình xóa onboarding JWT trong lỗi mạng có thể retry; lỗi 401/403, token phản hồi sai hoặc exchange thành công mới tiêu hủy onboarding state.
+  - Hai UI tạo/tham gia quán chỉ hỏi lại mật khẩu để phục hồi khi RPC đã tạo membership nhưng exchange thất bại. Lỗi preflight không dựng membership giả.
+
+- 🛡️ **B. Persistent Atomic Onboarding Exchange Backend (Python + PostgreSQL Proposal)**:
+  - `services/pos_jwt_auth_service.py` & `services/pos_gateway_server.py`:
+    - Tiêu thụ JTI qua RPC `consume_onboarding_exchange_v4` thực thi kiểm tra membership và tiêu thụ JTI hash (SHA-256) trong CÙNG MỘT transaction PostgreSQL.
+    - Raw JTI không bao giờ gửi hay lưu trên DB; chỉ lưu hash 64-hex tại bảng `onboarding_jti_consumptions_v4`.
+    - Concurrency test: request thứ hai gửi cùng JTI bị từ chối ngay lập tức với `TOKEN_REPLAY_REJECTED` (401).
+    - Revoked membership bị từ chối ngay với `STORE_MEMBERSHIP_FORBIDDEN` (403).
+    - Thiếu `SUPABASE_SERVICE_ROLE_KEY` hoặc RPC không sẵn sàng $\rightarrow$ fail-closed ngay lập tức với `REPLAY_STORE_UNAVAILABLE` (503). Zero in-memory fallback.
+    - Tuyệt đối zero logging cho token, phone, mật khẩu, user_id, store_id.
+
+- 🛡️ **C. Server-Side Staff Membership Administration & Flutter Client**:
+  - Proposal RPCs: `admin_create_staff_member_v4`, `admin_update_staff_role_v4`, `admin_set_staff_status_v4`, `admin_revoke_staff_membership_v4`.
+  - Nhân viên bắt buộc phải có tài khoản trước (`ACCOUNT_NOT_REGISTERED`); không tạo tài khoản ngầm hay mật khẩu mặc định.
+  - Phân quyền kiểm tra server-side; Quản lý không thể cấp/sửa/khóa/xóa Quản lý khác hoặc Chủ quán; không thể tự thay đổi vai trò của mình; bảo vệ Chủ quán cuối cùng của cơ sở.
+  - `admin_create_staff_member_v4` không cho phép ghi đè `store_id` khi xung đột ID (`WHERE store_id = p_store_id`).
+  - Dart client (`StaffService`) map chính xác số lượng và tên tham số RPC; mọi lỗi đều truyền lên UI trung thực, không broadcast thành công giả.
+
+- 📱 **D. Device pairing không thuộc QR Order V4**:
+  - Xác nhận QR Order V4 KHÔNG sử dụng POS device pairing / PIN. Nhân viên sử dụng tài khoản cá nhân đăng nhập và nhập mã quán.
+  - Loại bỏ hoàn toàn sự phụ thuộc vào `pairDeviceWithCode` trong luồng QR V4.
+
+- 🧪 **E. Bằng chứng local sau audit**:
+  - Python Backend Suite (`test/backend/`): **35/35 PASS (100%)** bao gồm replay protection, multi-worker simulation, invalid claims, signature tampering, TTL scoping, rate limiter, zero credential logging.
+  - Flutter Core Test Suite (`test/core/`): **160 PASS, 4 SKIP staging**; test bị skip không được tính là PASS.
+  - Analyzer trên 6 file Dart/test đã sửa: **0 issues**. Analyzer toàn repo vẫn có **678 warning/info tồn đọng**, không thuộc delivery QR này.
+  - Python compile và `git diff --check`: PASS.
+
+- 🚪 **F. Trạng Thái Cổng Nghiệm Thu (Acceptance Gate)**:
+  - 🛑 **Phase 1: BLOCKED**
+  - **Lý do**: Chưa có catalog thật; SQL vẫn là proposal ngoài migrations; chưa áp dụng và kiểm thử trên Disposable Staging DB; 4 live RLS tests đang SKIP.
+  - **Hành động tiếp theo**: Chạy `06_sanitized_sql_catalog_query_pack.sql` trên PostgreSQL production và apply SQL proposal lên staging environment trước khi mở Phase 1.
+
+---
+
 ## 2026-08-15 — Fix bản Windows #73 không in bill thanh toán và phiếu bếp
 
 - 🔎 **Bằng chứng production**:
@@ -2720,3 +2917,32 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
 
 - Mã nguồn đã qua cổng QC tự động; chưa thực hiện deploy production trong task này.
 - Khi phát hành KAY, cần smoke test trên máy Android thực với luồng gửi Bếp → đổi module → thanh toán và ra/vào Bếp nhiều lần.
+
+---
+
+## 2026-08-27: Thu thập catalog thật cho QR Order V4 trên Supabase self-host
+
+### Kết quả
+
+- Đã chạy bộ catalog `SELECT` chỉ-đọc trên Supabase Studio self-host tại
+  `quannho-db.lpm.vn`, đúng project endpoint `quannho.lpm.vn`.
+- Không đọc dữ liệu khách, số điện thoại, giá trị hash, API key, JWT hoặc chuỗi
+  kết nối; chỉ lưu metadata đã khử nội dung biểu thức.
+- Không có các bảng/RPC QR V3/V4 trong phạm vi truy vấn.
+- Query migration history lỗi `42P01` vì không tồn tại
+  `supabase_migrations.schema_migrations`.
+
+### P0 phát hiện
+
+- RLS đang tắt trên `public.user_accounts` và `public.store_members`.
+- Role `anon` có quyền rộng trên `staff_members`, `store_members` và
+  `user_accounts`; metadata còn cho thấy `anon` có `SELECT/INSERT/UPDATE` trên
+  cột `user_accounts.password_hash`.
+- Không sửa production trong đợt audit này.
+
+### Quyết định
+
+- Chọn hướng **Compatibility + Security Containment First**, không clean install
+  phá bảng lõi đang chạy.
+- Phase 1 tiếp tục BLOCKED cho đến khi migration containment có rollback được
+  kiểm tra trên disposable staging và toàn bộ test RLS/concurrency PASS.

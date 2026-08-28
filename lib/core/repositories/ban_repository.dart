@@ -843,6 +843,52 @@ class BanRepository {
       return false;
     }
   }
+
+  /// Quyết toán phiên bàn có đơn QR Order V4 qua RPC settle_ban_session_v4
+  Future<Map<String, dynamic>> settleBanSession({
+    required String sessionId,
+    required String storeId,
+    required String paymentMethod,
+    required String idempotencyKey,
+    String? customerId,
+    int pointsUsed = 0,
+    double discount = 0,
+    String? couponCode,
+    double surcharge = 0,
+  }) async {
+    try {
+      final res = await _sb.rpc(
+        'settle_ban_session_v4',
+        params: {
+          'p_session_id': sessionId,
+          'p_store_id': storeId,
+          'p_payment_method': paymentMethod,
+          'p_idempotency_key': idempotencyKey,
+          'p_customer_id': customerId,
+          'p_points_used': pointsUsed,
+          'p_discount': discount,
+          'p_coupon_code': couponCode,
+          'p_surcharge': surcharge,
+        },
+      );
+
+      if (res is Map) {
+        return Map<String, dynamic>.from(res);
+      }
+      return {
+        'success': false,
+        'error_code': 'RPC_ERROR',
+        'message': 'Quyết toán phiên bàn thất bại',
+      };
+    } catch (e) {
+      debugPrint('[BanRepository] settleBanSession error: $e');
+      return {
+        'success': false,
+        'error_code': 'NETWORK_ERROR',
+        'message': 'Lỗi kết nối quyết toán bàn: $e',
+      };
+    }
+  }
 }
 
 int _toMs(dynamic val) {

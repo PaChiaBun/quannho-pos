@@ -1,5 +1,24 @@
 # Quán Nhỏ POS — Kiến Trúc Data
 
+## QR Order — quan hệ dữ liệu mục tiêu
+
+```text
+stores
+  └─ qr_channels (TABLE_SHARED hoặc COUNTER, unique theo store/type)
+       └─ qr_requests
+            ├─ qr_request_items + edit audit
+            ├─ qr_handoff_tokens (hash, one-time, expiry)
+            └─ orders (đúng một order cho mỗi request)
+                 ├─ TABLE → ban_sessions → ban_session_items → kitchen_tickets
+                 └─ COUNTER → payment paid → kitchen_tickets
+```
+
+- TABLE request chưa biết bàn khi khách submit; `table_id`/`session_id` chỉ được ghi bởi RPC gán bàn sau atomic claim.
+- TABLE checkout thanh toán toàn bộ order hợp lệ chưa thanh toán của `ban_session` nhưng không hợp nhất/xóa audit từng request/order.
+- COUNTER không có `table_id`/`session_id` và phải `paid` trước kitchen dispatch.
+- `store_id`, unique source key và idempotency key phải được cưỡng chế trong migration/RPC; không tin dữ liệu client.
+- Bộ migration QR V3 hiện có chưa apply và còn schema per-table/device-pairing; không coi đó là schema mục tiêu.
+
 > 📌 Đọc file này trước khi tạo module mới để hiểu luồng data toàn hệ thống.
 > Cập nhật: 2026-05-02
 

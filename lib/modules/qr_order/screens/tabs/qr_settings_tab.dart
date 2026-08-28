@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/services/store_auth_service.dart';
+import '../../../../core/services/vietqr_service.dart';
 import '../../models/qr_order_model.dart';
 import '../../providers/qr_order_providers.dart';
-
-import 'pos_device_session_card.dart';
 
 class QrSettingsTab extends ConsumerWidget {
   final QrOrderSettingsModel settings;
@@ -22,6 +22,14 @@ class QrSettingsTab extends ConsumerWidget {
     required this.testOpenDomain,
   });
 
+  Future<void> _saveQrSettings(
+    WidgetRef ref,
+    QrOrderSettingsModel updated,
+  ) async {
+    await ref.read(qrOrderRepoProvider).saveSettings(updated);
+    ref.invalidate(qrOrderSettingsProvider);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeUrl = baseUrlCtrl.text.trim();
@@ -32,9 +40,7 @@ class QrSettingsTab extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const PosDeviceSessionCard(),
-          const SizedBox(height: 20),
-
+          // Domain Verification Status Banner
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -102,6 +108,7 @@ class QrSettingsTab extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
+          // Channel Enable / Disable Cards
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -138,14 +145,14 @@ class QrSettingsTab extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Chế độ Gọi Món Tại Bàn (TABLE)',
+                            'Chế độ Gọi Món Tại Bàn (TABLE_SHARED)',
                             style: GoogleFonts.outfit(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
                             ),
                           ),
                           Text(
-                            'Khách quét mã tại bàn, đơn chuyển tới BanScreen để nhân viên duyệt',
+                            'Khách quét QR chung, nhập số bàn gợi ý; nhân viên quét QR động để gán bàn và gửi bếp',
                             style: GoogleFonts.outfit(
                               fontSize: 12,
                               color: Colors.grey.shade600,
@@ -157,12 +164,35 @@ class QrSettingsTab extends ConsumerWidget {
                     Switch(
                       value: settings.isTableEnabled,
                       activeThumbColor: const Color(0xFF8B5CF6),
-                      onChanged: (val) {
-                        ref
-                            .read(qrOrderRepoProvider)
-                            .saveSettings(
-                              settings.copyWith(isTableEnabled: val),
-                            );
+                      onChanged: (val) async {
+                        final repo = ref.read(qrOrderRepoProvider);
+                        final storeInfo = await StoreAuthService.getStoreInfo();
+                        final storeId = storeInfo['store_id'] ?? '';
+                        if (storeId.isNotEmpty) {
+                          final res = await repo.manageQrChannel(
+                            storeId: storeId,
+                            type: 'TABLE_SHARED',
+                            isActive: val,
+                            paymentMode: 'CASHIER_CONFIRM',
+                          );
+                          if (!res.isSuccess) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    res.message ??
+                                        'Cập nhật kênh bàn thất bại!',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                            return;
+                          }
+                        }
+                        await repo.saveSettings(
+                          settings.copyWith(isTableEnabled: val),
+                        );
                         ref.invalidate(qrOrderSettingsProvider);
                       },
                     ),
@@ -188,14 +218,14 @@ class QrSettingsTab extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Chế độ Gọi Món Tại Quầy (COUNTER)',
+                            'Chế độ Gọi Món Tại Quầy (COUNTER_TAKEAWAY)',
                             style: GoogleFonts.outfit(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
                             ),
                           ),
                           Text(
-                            'Khách tự chọn món tại quầy, sinh mã pickup code #Q01 để lấy món tại POS',
+                            'Khách tự chọn món tại quầy mang đi, sinh mã pickup #Q01',
                             style: GoogleFonts.outfit(
                               fontSize: 12,
                               color: Colors.grey.shade600,
@@ -207,22 +237,147 @@ class QrSettingsTab extends ConsumerWidget {
                     Switch(
                       value: settings.isCounterEnabled,
                       activeThumbColor: Colors.orange,
-                      onChanged: (val) {
-                        ref
-                            .read(qrOrderRepoProvider)
-                            .saveSettings(
-                              settings.copyWith(isCounterEnabled: val),
-                            );
+                      onChanged: (val) async {
+                        final repo = ref.read(qrOrderRepoProvider);
+                        final storeInfo = await StoreAuthService.getStoreInfo();
+                        final storeId = storeInfo['store_id'] ?? '';
+                        if (storeId.isNotEmpty) {
+                          final res = await repo.manageQrChannel(
+                            storeId: storeId,
+                            type: 'COUNTER_TAKEAWAY',
+                            isActive: val,
+                            paymentMode: 'CASHIER_CONFIRM',
+                          );
+                          if (!res.isSuccess) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    res.message ??
+                                        'Cập nhật kênh quầy thất bại!',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                            return;
+                          }
+                        }
+                        await repo.saveSettings(
+                          settings.copyWith(
+                            isCounterEnabled: val,
+                            counterPaymentMode: 'CASHIER_CONFIRM',
+                          ),
+                        );
                         ref.invalidate(qrOrderSettingsProvider);
                       },
                     ),
                   ],
                 ),
+                if (settings.isCounterEnabled) ...[
+                  const Divider(height: 24),
+                  Text(
+                    'Thanh toán đơn mang đi tại quầy',
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.orange.shade200),
+                    ),
+                    child: Text(
+                      'Khách tới Thu ngân, chọn tiền mặt hoặc chuyển khoản. Thu ngân phải xác nhận đã nhận đủ tiền trước khi hệ thống cho phép gửi Bếp.',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.orange.shade900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'VietQR chuyển khoản',
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: settings.transferBankBin,
+                    decoration: InputDecoration(
+                      labelText: 'Ngân hàng nhận tiền',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    items: VietQrService.banks
+                        .map(
+                          (bank) => DropdownMenuItem(
+                            value: bank.bin,
+                            child: Text(bank.shortName),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        _saveQrSettings(
+                          ref,
+                          settings.copyWith(transferBankBin: value),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    initialValue: settings.transferAccountNo,
+                    decoration: InputDecoration(
+                      labelText: 'Số tài khoản',
+                      hintText: 'Nhập số tài khoản nhận tiền',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onFieldSubmitted: (value) => _saveQrSettings(
+                      ref,
+                      settings.copyWith(transferAccountNo: value.trim()),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    initialValue: settings.transferAccountName,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      labelText: 'Tên chủ tài khoản',
+                      hintText: 'NGUYEN VAN A',
+                      helperText: 'Nhấn Xong trên bàn phím để lưu từng trường.',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onFieldSubmitted: (value) => _saveQrSettings(
+                      ref,
+                      settings.copyWith(
+                        transferAccountName: value.trim().toUpperCase(),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
           const SizedBox(height: 20),
 
+          // Custom Domain Configuration Card
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -236,7 +391,7 @@ class QrSettingsTab extends ConsumerWidget {
                 color: Color(0xFF8B5CF6),
               ),
               title: Text(
-                'Cấu hình Tên miền Tùy chỉnh (Nâng cao / Custom Base URL)',
+                'Cấu hình Tên miền Tùy chỉnh (Custom Base URL)',
                 style: GoogleFonts.outfit(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,

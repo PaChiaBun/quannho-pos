@@ -361,13 +361,21 @@ void main() {
         );
 
         expect(recordedRpcCalls.length, 2);
-        expect(recordedRpcCalls[0]['p_target_user_id'], 'user_target_A');
+        expect(
+          recordedRpcCalls[0]['rpcName'],
+          'admin_revoke_staff_membership_v4',
+        );
+        expect(recordedRpcCalls[0]['p_staff_id'], 'user_target_A');
         expect(recordedRpcCalls[0]['p_store_id'], 's1');
-        expect(recordedRpcCalls[0]['p_actor_id'], 'owner1');
+        expect(recordedRpcCalls[0], hasLength(3));
 
-        expect(recordedRpcCalls[1]['p_target_user_id'], 'user_target_B');
+        expect(
+          recordedRpcCalls[1]['rpcName'],
+          'admin_revoke_staff_membership_v4',
+        );
+        expect(recordedRpcCalls[1]['p_staff_id'], 'user_target_B');
         expect(recordedRpcCalls[1]['p_store_id'], 's1');
-        expect(recordedRpcCalls[1]['p_actor_id'], 'owner1');
+        expect(recordedRpcCalls[1], hasLength(3));
 
         expect(recordedBroadcasts.length, 2);
         expect(recordedBroadcasts[0]['targetUserId'], 'user_target_A');

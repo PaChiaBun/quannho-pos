@@ -2,15 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../core/repositories/ban_repository.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../models/qr_order_model.dart';
 import '../providers/qr_order_providers.dart';
-import 'table_qr_print_screen.dart';
-import 'tabs/qr_settings_tab.dart';
-import 'tabs/table_qr_list_tab.dart';
-import 'tabs/batch_table_print_tab.dart';
 import 'tabs/counter_qr_design_tab.dart';
+import 'tabs/qr_settings_tab.dart';
+import 'tabs/table_shared_poster_tab.dart';
 
 class QrOrderScreen extends ConsumerStatefulWidget {
   const QrOrderScreen({super.key});
@@ -23,44 +20,11 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _baseUrlCtrl = TextEditingController();
-  final TextEditingController _tableSearchCtrl = TextEditingController();
-  final BanRepository _banRepo = BanRepository();
 
-  List<BanZoneModel> _zones = [];
-  List<BanTableModel> _tables = [];
-  Map<String, QrChannelModel?> _channelsByTableId = {};
+  QrChannelModel? _tableSharedChannel;
   QrChannelModel? _counterChannel;
-  bool _loadingTables = true;
   String _storeId = '';
   String _storeName = 'Quán Nhỏ';
-  String _selectedZoneFilter = 'all';
-
-  // Batch Print Tab State Variables
-  String _batchSelectMode = 'all';
-  String _batchSelectedZoneId = 'all';
-  final Set<String> _selectedTableIds = {};
-
-  String _decalPreset = '70x100';
-  final TextEditingController _decalWidthCtrl = TextEditingController(
-    text: '70',
-  );
-  final TextEditingController _decalHeightCtrl = TextEditingController(
-    text: '100',
-  );
-  double _bleedMm = 2.0;
-  bool _showCropMarks = true;
-
-  final TextEditingController _tplTitleCtrl = TextEditingController(
-    text: 'QUÉT QR GỌI MÓN',
-  );
-  final TextEditingController _tplInstructionCtrl = TextEditingController(
-    text:
-        'Quét mã QR bằng ứng dụng Zalo, Camera hoặc trình duyệt di động để xem Menu',
-  );
-  final TextEditingController _tplConfirmNoteCtrl = TextEditingController(
-    text:
-        'Sau khi đặt xong, vui lòng gọi nhân viên đến đọc lại và xác nhận món. Món chỉ được gửi xuống bếp sau khi nhân viên xác nhận.',
-  );
 
   // Counter Poster Config State Variables
   String _ctrPreset = 'classic_orange';
@@ -91,22 +55,17 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
   final TextEditingController _openingHoursCtrl = TextEditingController();
   final TextEditingController _promoFooterCtrl = TextEditingController();
 
-  static const String kSysPosTakeawayZoneId =
-      '00000000-0000-0000-0001-000000000001';
-  static const String kSysPosTakeawayTableId =
-      '00000000-0000-0000-0001-000000000002';
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadData();
   }
 
   Future<void> _loadData() async {
     final info = await StoreAuthService.getStoreInfo();
-    _storeId = info['store_id'] as String? ?? '';
-    _storeName = info['store_name'] as String? ?? 'Quán Nhỏ';
+    _storeId = info['store_id'] ?? '';
+    _storeName = info['store_name'] ?? 'Quán Nhỏ';
 
     final settings = await ref.read(qrOrderRepoProvider).getSettings();
     _baseUrlCtrl.text = settings.customBaseUrl;
@@ -127,78 +86,45 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
     _promoFooterCtrl.text = settings.promoFooter;
 
     try {
-      final rawZones = await _banRepo.getZones();
-      final rawTables = await _banRepo.getAllTables();
-
-      final zones =
-          rawZones.where((z) => z.id != kSysPosTakeawayZoneId).toList()
-            ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-
-      final tables =
-          rawTables
-              .where(
-                (t) =>
-                    t.id != kSysPosTakeawayTableId &&
-                    t.zoneId != kSysPosTakeawayZoneId,
-              )
-              .toList()
-            ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-
       final repo = ref.read(qrOrderRepoProvider);
+      var tblCh = await repo.getChannelByType(
+        storeId: _storeId,
+        type: 'TABLE_SHARED',
+      );
+      var ctrCh = await repo.getChannelByType(
+        storeId: _storeId,
+        type: 'COUNTER_TAKEAWAY',
+      );
 
-      final channelMap = <String, QrChannelModel?>{};
-      for (final table in tables) {
-        final ch = await repo.ensureChannelForTable(
-          storeId: _storeId,
-          tableId: table.id,
-          tableName: table.label,
-        );
-        channelMap[table.id] = ch;
-      }
-
-      final counterCh = await repo.ensureCounterChannel(storeId: _storeId);
+      // Only create a missing channel. Never mutate an existing channel merely
+      // because the settings screen was opened.
+      tblCh ??= (await repo.manageQrChannel(
+        storeId: _storeId,
+        type: 'TABLE_SHARED',
+        isActive: settings.isTableEnabled,
+        paymentMode: 'CASHIER_CONFIRM',
+      )).data;
+      ctrCh ??= (await repo.manageQrChannel(
+        storeId: _storeId,
+        type: 'COUNTER_TAKEAWAY',
+        isActive: settings.isCounterEnabled,
+        paymentMode: 'CASHIER_CONFIRM',
+      )).data;
 
       if (mounted) {
         setState(() {
-          _zones = zones;
-          _tables = tables;
-          _channelsByTableId = channelMap;
-          _counterChannel = counterCh;
-          _selectedTableIds.addAll(tables.map((t) => t.id));
-          _loadingTables = false;
+          _tableSharedChannel = tblCh;
+          _counterChannel = ctrCh;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _loadingTables = false);
+      // Keep the screen usable; individual tabs show missing-channel state.
     }
   }
 
-  String _normalizeUrl(String url) {
-    var trimmed = url.trim();
-    while (trimmed.endsWith('/')) {
-      trimmed = trimmed.substring(0, trimmed.length - 1);
-    }
-    return trimmed;
-  }
+  String _normalizeUrl(String url) => QrUrlBuilder.normalizeUrl(url);
 
-  bool _isValidPublicUrl(String? url) {
-    if (url == null) return false;
-    final normalized = _normalizeUrl(url);
-    if (normalized.isEmpty) return false;
-    final uri = Uri.tryParse(normalized);
-    if (uri == null) return false;
-    if (uri.scheme != 'https') return false;
-
-    final host = uri.host.toLowerCase();
-    if (host.isEmpty ||
-        host == 'localhost' ||
-        host == '127.0.0.1' ||
-        host.startsWith('192.168.') ||
-        host.startsWith('10.')) {
-      return false;
-    }
-    return true;
-  }
+  bool _isValidPublicUrl(String? url) => QrUrlBuilder.isValidPublicUrl(url);
 
   String? _getActiveBaseUrl() {
     final custom = _baseUrlCtrl.text.trim();
@@ -211,48 +137,25 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
     return null;
   }
 
-  String _formatQrUrl(String baseUrl, String channelCode) {
-    var trimmed = baseUrl.trim();
-    if (trimmed.contains('{code}')) {
-      return trimmed.replaceAll('{code}', channelCode);
-    }
-    while (trimmed.endsWith('/')) {
-      trimmed = trimmed.substring(0, trimmed.length - 1);
-    }
-    if (trimmed.contains('/#')) {
-      trimmed = trimmed.substring(0, trimmed.indexOf('/#'));
-    }
-    final subpathsToStrip = ['/menu', '/goi-mon', '/pos', '/qr_order'];
-    for (final sub in subpathsToStrip) {
-      if (trimmed.endsWith(sub)) {
-        trimmed = trimmed.substring(0, trimmed.length - sub.length);
-        break;
-      }
-    }
-    while (trimmed.endsWith('/')) {
-      trimmed = trimmed.substring(0, trimmed.length - 1);
-    }
-    return '$trimmed/goi-mon/?code=$channelCode';
-  }
+  String _formatQrUrl(String baseUrl, String channelCode) =>
+      QrUrlBuilder.formatQrUrl(baseUrl, channelCode);
 
-  String? _buildTableQrUrl(BanTableModel table) {
-    final ch = _channelsByTableId[table.id];
-    if (ch == null || ch.channelCode.isEmpty) return null;
-
+  String? _buildTableSharedQrUrl() {
+    if (_tableSharedChannel == null ||
+        _tableSharedChannel!.channelCode.isEmpty) {
+      return null;
+    }
     final baseUrl = _getActiveBaseUrl();
     if (baseUrl == null) return null;
-
-    return _formatQrUrl(baseUrl, ch.channelCode);
+    return _formatQrUrl(baseUrl, _tableSharedChannel!.channelCode);
   }
 
   String? _buildCounterQrUrl() {
     if (_counterChannel == null || _counterChannel!.channelCode.isEmpty) {
       return null;
     }
-
     final baseUrl = _getActiveBaseUrl();
     if (baseUrl == null) return null;
-
     return _formatQrUrl(baseUrl, _counterChannel!.channelCode);
   }
 
@@ -276,115 +179,6 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     } catch (_) {}
-  }
-
-  void _showQrPreviewDialog(
-    BuildContext context,
-    BanTableModel table,
-    String? url,
-  ) {
-    final ch = _channelsByTableId[table.id];
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(
-              Icons.qr_code_2_rounded,
-              color: Color(0xFF8B5CF6),
-              size: 28,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Mã QR ${table.label}',
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.purple.shade50,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.purple.shade100),
-              ),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.qr_code_scanner_rounded,
-                    size: 100,
-                    color: Color(0xFF8B5CF6),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    ch?.channelCode ?? 'CTR_CHUA_MIGRATE',
-                    style: GoogleFonts.outfit(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: Colors.purple.shade900,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            if (url != null) ...[
-              SelectableText(
-                url,
-                style: GoogleFonts.outfit(
-                  fontSize: 12,
-                  color: Colors.blue.shade800,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ] else
-              Text(
-                '🔒 Chưa thể xuất URL do chưa cấu hình tên miền HTTPS hoặc chưa chạy migration DB.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(fontSize: 12, color: Colors.red),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Đóng'),
-          ),
-          if (url != null)
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8B5CF6),
-                foregroundColor: Colors.white,
-              ),
-              icon: const Icon(Icons.print_rounded, size: 18),
-              label: const Text('In Mã QR Bàn'),
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TableQrPrintScreen(
-                      title: table.label,
-                      qrUrl: url,
-                      storeName: _storeName,
-                    ),
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
-    );
   }
 
   Future<void> _saveCounterSettings() async {
@@ -445,12 +239,6 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
   void dispose() {
     _tabController.dispose();
     _baseUrlCtrl.dispose();
-    _tableSearchCtrl.dispose();
-    _decalWidthCtrl.dispose();
-    _decalHeightCtrl.dispose();
-    _tplTitleCtrl.dispose();
-    _tplInstructionCtrl.dispose();
-    _tplConfirmNoteCtrl.dispose();
     _ctrWidthCtrl.dispose();
     _ctrHeightCtrl.dispose();
     _ctrTitleCtrl.dispose();
@@ -476,7 +264,7 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(
-          'QR Gọi Món (Bàn & Quầy)',
+          'QR Gọi Món V4 (Bàn & Quầy)',
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF8B5CF6),
@@ -495,12 +283,11 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
             Tab(icon: Icon(Icons.settings_rounded), text: 'Thiết Lập'),
             Tab(
               icon: Icon(Icons.table_restaurant_rounded),
-              text: 'QR Theo Bàn',
+              text: 'QR Dùng Chung Bàn',
             ),
-            Tab(icon: Icon(Icons.print_rounded), text: 'In Tem Bàn'),
             Tab(
               icon: Icon(Icons.point_of_sale_rounded),
-              text: 'Thiết Kế QR Quầy',
+              text: 'QR Quầy Mang Đi',
             ),
           ],
         ),
@@ -515,55 +302,12 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
             normalizeUrl: _normalizeUrl,
             testOpenDomain: _testOpenDomain,
           ),
-          TableQrListTab(
-            loadingTables: _loadingTables,
+          TableSharedPosterTab(
+            tableSharedChannel: _tableSharedChannel,
+            tableSharedUrl: _buildTableSharedQrUrl(),
             activeBaseUrl: activeBaseUrl,
-            zones: _zones,
-            tables: _tables,
-            channelsByTableId: _channelsByTableId,
-            tableSearchCtrl: _tableSearchCtrl,
-            onSearchChanged: (val) => setState(() {}),
-            selectedZoneFilter: _selectedZoneFilter,
-            onZoneFilterChanged: (val) =>
-                setState(() => _selectedZoneFilter = val),
             storeName: _storeName,
-            buildTableQrUrl: _buildTableQrUrl,
-            showQrPreviewDialog: _showQrPreviewDialog,
-          ),
-          BatchTablePrintTab(
-            loadingTables: _loadingTables,
-            activeBaseUrl: activeBaseUrl,
-            zones: _zones,
-            tables: _tables,
-            batchSelectMode: _batchSelectMode,
-            onBatchSelectModeChanged: (val) =>
-                setState(() => _batchSelectMode = val),
-            batchSelectedZoneId: _batchSelectedZoneId,
-            onBatchZoneIdChanged: (val) =>
-                setState(() => _batchSelectedZoneId = val),
-            selectedTableIds: _selectedTableIds,
-            onToggleTableSelected: (id, val) {
-              setState(() {
-                if (val) {
-                  _selectedTableIds.add(id);
-                } else {
-                  _selectedTableIds.remove(id);
-                }
-              });
-            },
-            decalPreset: _decalPreset,
-            onDecalPresetChanged: (val) => setState(() => _decalPreset = val),
-            decalWidthCtrl: _decalWidthCtrl,
-            decalHeightCtrl: _decalHeightCtrl,
-            bleedMm: _bleedMm,
-            onBleedMmChanged: (val) => setState(() => _bleedMm = val),
-            showCropMarks: _showCropMarks,
-            onCropMarksChanged: (val) => setState(() => _showCropMarks = val),
-            tplTitleCtrl: _tplTitleCtrl,
-            tplInstructionCtrl: _tplInstructionCtrl,
-            tplConfirmNoteCtrl: _tplConfirmNoteCtrl,
-            storeName: _storeName,
-            buildTableQrUrl: _buildTableQrUrl,
+            testOpenDomain: _testOpenDomain,
           ),
           CounterQrDesignTab(
             counterChannel: _counterChannel,
