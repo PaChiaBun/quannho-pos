@@ -509,7 +509,7 @@ class QrOrderRepository {
   }) async {
     try {
       final res = await _sb.rpc(
-        'settle_ban_session_v4',
+        'settle_ban_session_v5',
         params: {
           'p_session_id': sessionId,
           'p_store_id': storeId,

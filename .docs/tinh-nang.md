@@ -1,5 +1,17 @@
 # Quán Nhỏ POS — Features & Modules
 
+## Bản sửa checkout V5 đang kiểm thử (chưa production)
+
+- Đã chạy PostgreSQL thật cô lập: hai nhánh có/không coupons, race 50 callers, POS/Bàn cùng phiên, ví đồng thời và rollback khi ghi thu chi lỗi. Chưa kiểm thử máy Windows/máy in thực tế.
+- POS có nút phục hồi giao dịch bị gián đoạn kể cả sau restart/giỏ trống; kết quả được giữ đến khi người dùng xác nhận. Không tự in lại khi reconcile.
+- Món hủy không tính tiền/trừ kho; canonical orders và tổng điểm được phân bổ khớp một settlement. Thu nhập nạp ví không bị cộng vào dashboard bán hàng.
+- Giảm giá thủ công POS kiểm tra quyền server và audit; đóng phiên POS gửi bếp cùng transaction thu tiền.
+
+- Chống click thanh toán lặp, giữ khóa retry POS sau timeout/restart và chặn đổi phương thức khi giao dịch trước chưa rõ kết quả.
+- Thanh toán ví POS có trừ số dư/lịch sử ví cùng transaction; bonus hết hạn không được dùng, thiếu ví từ chối trước ghi đơn.
+- Điểm thưởng quy đổi theo cấu hình quán; bill dùng tổng server; báo cáo voucher mở đúng order UUID.
+- Chưa tuyên bố hoàn tất trước PostgreSQL runtime gate, Windows/print E2E và đối soát dữ liệu trùng lịch sử được chủ quán phê duyệt.
+
 ## QR Gọi Món — mục tiêu đang chờ triển khai
 
 - Một QR gọi món tại bàn dùng chung và một QR mang đi tại quầy cho mỗi cửa hàng.

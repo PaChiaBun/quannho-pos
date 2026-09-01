@@ -1644,6 +1644,31 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   PrintServerLifecycleController get lifecycleController => _controller;
   PrintCache get cache => _printCache;
 
+  /// In hóa đơn checkout bằng task key bền vững `<settlementId>:cashier`.
+  /// Gọi lại cùng settlement chỉ trả skipped, không đẩy thêm job vật lý.
+  Future<PrintDispatchResult> printCheckoutReceipt({
+    required String storeId,
+    required String settlementId,
+    required BillData billData,
+  }) async {
+    final ready = await _printCache.init(storeId);
+    if (!ready || _printCache.isDegraded) {
+      return PrintDispatchResult({
+        'cashier': StationPrintResult(
+          stationCode: 'cashier',
+          status: StationPrintStatus.failed,
+          errorMessage:
+              _printCache.lastError ?? 'Không thể mở cache chống in trùng',
+        ),
+      });
+    }
+    return _coordinator.processOrderData(
+      orderId: settlementId,
+      billData: billData,
+      settings: state,
+    );
+  }
+
   @override
   StationPrintersState build() {
     ref.listen<SessionData?>(sessionProvider, (previous, next) {

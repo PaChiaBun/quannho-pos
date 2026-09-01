@@ -10,13 +10,146 @@ import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/session_provider.dart';
 import '../../../core/providers/dashboard_providers.dart'; // invalidate sau checkout
 import '../../../modules/finance/providers/finance_providers.dart'; // invalidate financeStats
-import '../../../modules/loyalty/repository/loyalty_repository.dart';
 import '../../../modules/bill_printer/screens/bill_preview_screen.dart';
 import '../../../modules/bill_printer/providers/printer_settings_provider.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../core/services/store_auth_service.dart';
 import '../../../screens/pos_screen.dart' show billPrinterModuleActiveProvider;
 import '../models/coupon_model.dart';
+import '../repository/pos_repository.dart';
+
+final _checkoutNavigators = <NavigatorState>{};
+
+/// Shared by mobile cart, desktop panel and the quick checkout button.
+/// The guard is acquired synchronously, before even reading durable storage.
+Future<void> openPosCheckout(BuildContext context, WidgetRef ref) async {
+  final navigator = Navigator.of(context);
+  if (ref.read(cartProvider).isProcessing ||
+      !_checkoutNavigators.add(navigator))
+    return;
+  try {
+    if (await recoverPendingPosSale(context, ref)) return;
+    if (!context.mounted || ref.read(cartProvider).isEmpty) return;
+    await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: false,
+      enableDrag: false,
+      builder: (_) => const CheckoutSheet(),
+    );
+  } finally {
+    _checkoutNavigators.remove(navigator);
+  }
+}
+
+/// Available even with an empty cart after restarting the application.
+Future<bool> recoverPendingPosSale(BuildContext context, WidgetRef ref) async {
+  final repo = ref.read(posRepositoryProvider);
+  try {
+    final pending = await repo.pendingSale();
+    if (!context.mounted || pending == null) return false;
+    final intent = pending['intent'] as Map?;
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thanh toán chưa đối soát'),
+        content: Text(
+          'Đơn cũ: ${intent?['expected_total'] ?? '?'}đ · ${intent?['payment_method'] ?? '?'}\n'
+          'Tiếp tục đúng giao dịch đã lưu. Nếu server đã thu tiền, chỉ lấy lại kết quả; không thu lần hai. '
+          'Sau khi xác nhận thành công sẽ xóa giỏ đang hiển thị để tránh bán lại đơn cũ.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Để sau'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Đối soát / tiếp tục đơn cũ'),
+          ),
+        ],
+      ),
+    );
+    if (proceed != true || !context.mounted) return true;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _PosRecoveryDialog(
+        repo: repo,
+        onRecovered: () {
+          ref.read(cartProvider.notifier).clearCart();
+          ref.invalidate(todayOrdersProvider);
+          ref.invalidate(posTodayStatsProvider);
+        },
+      ),
+    );
+    return true;
+  } catch (e) {
+    if (context.mounted)
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    return true; // fail closed: do not open a new checkout
+  }
+}
+
+class _PosRecoveryDialog extends StatefulWidget {
+  final PosRepository repo;
+  final VoidCallback onRecovered;
+  const _PosRecoveryDialog({required this.repo, required this.onRecovered});
+  @override
+  State<_PosRecoveryDialog> createState() => _PosRecoveryDialogState();
+}
+
+class _PosRecoveryDialogState extends State<_PosRecoveryDialog> {
+  late final Future<PosSaleResult> _result = widget.repo.recoverSale();
+  bool _acknowledging = false;
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: false,
+    child: FutureBuilder<PosSaleResult>(
+      future: _result,
+      builder: (context, snapshot) {
+        return AlertDialog(
+          title: const Text('Đối soát thanh toán'),
+          content: Text(
+            snapshot.hasData
+                ? 'Đã thanh toán: ${snapshot.data!.orderNumber}\n${snapshot.data!.totalAmount}đ\nKhông tự in lại. Có thể mở bill trong lịch sử để in thủ công.'
+                : snapshot.hasError
+                ? '${snapshot.error}'
+                : 'Đang đối soát với server. Không thanh toán lại trên thiết bị khác.',
+          ),
+          actions: [
+            if (snapshot.connectionState == ConnectionState.done)
+              TextButton(
+                onPressed: _acknowledging
+                    ? null
+                    : () async {
+                        if (snapshot.hasData) {
+                          setState(() => _acknowledging = true);
+                          try {
+                            await widget.repo.acknowledgeSale(snapshot.data!);
+                            widget.onRecovered();
+                          } catch (e) {
+                            if (context.mounted) {
+                              setState(() => _acknowledging = false);
+                              ScaffoldMessenger.of(
+                                context,
+                              ).showSnackBar(SnackBar(content: Text('$e')));
+                            }
+                            return;
+                          }
+                        }
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                child: const Text('Đã hiểu'),
+              ),
+          ],
+        );
+      },
+    ),
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CHECKOUT BOTTOM SHEET
@@ -34,6 +167,36 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   bool _success = false;
   String? _orderNumber;
   BillData? _billData; // lưu để in sau khi thanh toán
+  bool _redeemRateReady = false;
+  PosSaleResult? _saleResult;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedPayment = ref.read(cartProvider).paymentMethod;
+    Future.microtask(_loadRedeemRate);
+  }
+
+  Future<void> _loadRedeemRate() async {
+    try {
+      final storeId =
+          (await StoreAuthService.getStoreInfo())['store_id'] as String?;
+      if (storeId == null) return;
+      final row = await Supabase.instance.client
+          .from('app_settings')
+          .select('value')
+          .eq('store_id', storeId)
+          .eq('key', 'loyalty_redeem_rate')
+          .maybeSingle()
+          .timeout(const Duration(seconds: 5));
+      final rate = row == null ? 1000.0 : double.parse(row['value'].toString());
+      if (!mounted) return;
+      ref.read(cartProvider.notifier).setLoyaltyRedeemRate(rate);
+      setState(() => _redeemRateReady = true);
+    } catch (e) {
+      if (mounted) ref.read(cartProvider.notifier).setLoyaltyPtsUsed(0);
+    }
+  }
 
   static const _kNavy = Color(0xFF1E1C5E);
   static const _kInk = Color(0xFF1A1207);
@@ -47,139 +210,147 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
 
     if (_success) return _buildSuccessView();
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          const SizedBox(height: 12),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE0D8CC),
-              borderRadius: BorderRadius.circular(2),
-            ),
+    return PopScope(
+      canPop: !_isProcessingLocal && !cart.isProcessing,
+      child: AbsorbPointer(
+        absorbing: _isProcessingLocal || cart.isProcessing,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
-          const SizedBox(height: 16),
-
-          // Title
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                const Text(
-                  'Thanh toán',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: _kInk,
-                    letterSpacing: -0.5,
-                  ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0D8CC),
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  icon: const Icon(Icons.close_rounded, color: _kMuted),
-                ),
-              ],
-            ),
-          ),
-
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Order summary ──────────────────────────────────────
-                  _buildOrderSummary(cart),
-                  const SizedBox(height: 20),
-
-                  // ── Payment method ─────────────────────────────────────
-                  const Text(
-                    'Phương thức',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: _kMuted,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _buildPaymentMethods(),
-                  const SizedBox(height: 20),
-
-                  // ── Loyalty section ────────────────────────────────────
-                  // FIX #2: ẩn khi dùng ví (tránh double discount)
-                  if (cart.customerId != null &&
-                      cart.loyaltyPtsAvailable > 0 &&
-                      _selectedPayment != 'wallet')
-                    _buildLoyaltySection(cart),
-
-                  // ── Voucher section ────────────────────────────────────
-                  _buildVoucherSection(cart),
-
-                  // ── Total breakdown ────────────────────────────────────
-                  _buildTotalBreakdown(cart),
-                  const SizedBox(height: 24),
-
-                  // ── Confirm button ─────────────────────────────────────
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed:
-                          (cart.isProcessing || _isWalletInsufficient(cart))
-                          ? null
-                          : _doCheckout,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _kNavy,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: cart.isProcessing
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          : _isWalletInsufficient(cart)
-                          ? Text(
-                              '⚠️ Ví không đủ — cần thêm tiền mặt',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFFFFA000),
-                              ),
-                            )
-                          : Text(
-                              'Xác nhận • ${fmtVnd(cart.total.toInt())}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: MediaQuery.of(context).viewInsets.bottom + 8,
-                  ),
-                ],
               ),
-            ),
+              const SizedBox(height: 16),
+
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Thanh toán',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: _kInk,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      icon: const Icon(Icons.close_rounded, color: _kMuted),
+                    ),
+                  ],
+                ),
+              ),
+
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Order summary ──────────────────────────────────────
+                      _buildOrderSummary(cart),
+                      const SizedBox(height: 20),
+
+                      // ── Payment method ─────────────────────────────────────
+                      const Text(
+                        'Phương thức',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: _kMuted,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildPaymentMethods(),
+                      const SizedBox(height: 20),
+
+                      // ── Loyalty section ────────────────────────────────────
+                      // FIX #2: ẩn khi dùng ví (tránh double discount)
+                      if (cart.customerId != null &&
+                          cart.loyaltyPtsAvailable > 0 &&
+                          _selectedPayment != 'wallet')
+                        _buildLoyaltySection(cart),
+
+                      // ── Voucher section ────────────────────────────────────
+                      _buildVoucherSection(cart),
+
+                      // ── Total breakdown ────────────────────────────────────
+                      _buildTotalBreakdown(cart),
+                      const SizedBox(height: 24),
+
+                      // ── Confirm button ─────────────────────────────────────
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed:
+                              (cart.isProcessing ||
+                                  _isProcessingLocal ||
+                                  _isWalletInsufficient(cart))
+                              ? null
+                              : _doCheckout,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kNavy,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: (cart.isProcessing || _isProcessingLocal)
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : _isWalletInsufficient(cart)
+                              ? Text(
+                                  '⚠️ Ví không đủ — cần thêm tiền mặt',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFFFA000),
+                                  ),
+                                )
+                              : Text(
+                                  'Xác nhận • ${fmtVnd(cart.total.toInt())}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).viewInsets.bottom + 8,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -540,7 +711,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                     ),
                     Text(
                       used > 0
-                          ? 'Đang dùng $used điểm (-${fmtVnd(used)})'
+                          ? 'Đang dùng $used điểm (-${fmtVnd(cart.pointsDiscount.toInt())})'
                           : 'Có thể dùng tối đa $maxUse điểm',
                       style: const TextStyle(
                         fontSize: 12,
@@ -554,11 +725,15 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                 value: used > 0,
                 activeThumbColor: const Color(0xFF2E7D32),
                 activeTrackColor: const Color(0xFFA5D6A7),
-                onChanged: (v) {
-                  ref
-                      .read(cartProvider.notifier)
-                      .setLoyaltyPtsUsed(v ? cart.loyaltyPtsAvailable : 0);
-                },
+                onChanged: !_redeemRateReady
+                    ? null
+                    : (v) {
+                        ref
+                            .read(cartProvider.notifier)
+                            .setLoyaltyPtsUsed(
+                              v ? cart.loyaltyPtsAvailable : 0,
+                            );
+                      },
               ),
             ],
           ),
@@ -590,7 +765,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             const SizedBox(height: 8),
             _TotalRow(
               'Dùng điểm',
-              -cart.loyaltyPtsUsed.toInt(),
+              -cart.pointsDiscount.toInt(),
               color: const Color(0xFF2E7D32),
             ),
           ],
@@ -687,6 +862,14 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                   ),
                 ),
                 onPressed: () {
+                  AppLogger.logUserAction(
+                    tag: 'printer',
+                    action: 'Manual POS receipt reprint',
+                    details: {
+                      'order_id': _saleResult?.orderId,
+                      'order_number': _orderNumber,
+                    },
+                  );
                   final settings = ref.read(printerSettingsProvider);
                   StationPrinterDispatcher.printBill(
                     _billData!,
@@ -701,7 +884,23 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () async {
+                try {
+                  if (_saleResult != null) {
+                    await ref
+                        .read(posRepositoryProvider)
+                        .acknowledgeSale(_saleResult!);
+                  }
+                  if (!mounted) return;
+                  Navigator.pop(this.context, true);
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(
+                      this.context,
+                    ).showSnackBar(SnackBar(content: Text('$e')));
+                  }
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: _kNavy,
                 foregroundColor: Colors.white,
@@ -729,7 +928,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   // ── Checkout action ────────────────────────────────────────────────────────
   Future<void> _doCheckout() async {
     if (_isProcessingLocal) return;
-    _isProcessingLocal = true;
+    setState(() => _isProcessingLocal = true);
     HapticFeedback.mediumImpact();
     try {
       final cartSnapshot = ref.read(cartProvider);
@@ -764,28 +963,33 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
       final billFooter = results[3] as String;
       final loyaltyRate = results[4] as double;
 
-      // Thực hiện giao dịch checkout với timeout 15 giây
-      final orderId = await ref
+      // Await the actual operation. An outer Future.timeout does not cancel
+      // checkout and used to clear the cart silently after the UI showed failure.
+      final saleResult = await ref
           .read(cartProvider.notifier)
           .checkout(
             ref.read(posRepositoryProvider),
             loyaltyRate: loyaltyRate,
             moduleRepo: ref.read(moduleRepositoryProvider),
-          )
-          .timeout(const Duration(seconds: 15));
+          );
+      final orderId = saleResult.orderId;
+      final paymentLabel = cartSnapshot.paymentMethod == 'wallet'
+          ? 'Ví (${saleResult.walletRealUsed.toInt()}đ thật + ${saleResult.walletBonusUsed.toInt()}đ bonus)'
+          : cartSnapshot.paymentMethod;
 
       // Đánh dấu thành công ngay lập tức để chuyển sang màn hình success!
       // Tránh việc bất kỳ tác vụ phụ nào sau đó (lấy thông tin, invalidation) bị lỗi/timeout làm sập màn hình thanh toán về 0đ.
       if (mounted) {
         setState(() {
           _success = true;
-          _orderNumber = orderId.substring(0, 8); // số đơn mặc định ban đầu
+          _saleResult = saleResult;
+          _orderNumber = saleResult.orderNumber;
           _billData = BillData(
             shopName: shopName,
             shopPhone: shopPhone.isNotEmpty ? shopPhone : null,
             shopAddress: shopAddress.isNotEmpty ? shopAddress : null,
             footer: billFooter.isNotEmpty ? billFooter : null,
-            orderNumber: orderId.substring(0, 8),
+            orderNumber: saleResult.orderNumber,
             createdAt: DateTime.now(),
             tableName: cartSnapshot.tableName,
             items: cartSnapshot.lines
@@ -798,10 +1002,10 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                   ),
                 )
                 .toList(),
-            subtotal: cartSnapshot.subtotal,
-            discount: cartSnapshot.discount,
-            total: cartSnapshot.total,
-            paymentMethod: cartSnapshot.paymentMethod,
+            subtotal: saleResult.subtotal,
+            discount: saleResult.discount,
+            total: saleResult.totalAmount,
+            paymentMethod: paymentLabel,
             customerName: cartSnapshot.customerName,
             loyaltyPoints: cartSnapshot.loyaltyPtsUsed > 0
                 ? cartSnapshot.loyaltyPtsUsed.round()
@@ -822,7 +1026,8 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               '[Checkout Print] Local fallback: central routing enabled but Print Server Owner is missing or stale.',
             );
           }
-          if (_billData != null &&
+          if (!saleResult.isReplay &&
+              _billData != null &&
               shouldAutoPrintLocally(
                 isWeb: kIsWeb,
                 centralRoutingEnabled: settings.centralPrintRoutingEnabled,
@@ -831,17 +1036,41 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                     settings.deviceState.isPrintServer &&
                     settings.deviceState.allowBackgroundPrinting,
               )) {
-            if (settings.autoPrintCheckout && settings.autoPrintKitchen) {
-              StationPrinterDispatcher.printBill(_billData!, settings);
-            } else if (settings.autoPrintCheckout) {
-              StationPrinterDispatcher.printBill(
-                _billData!,
-                settings,
-                onlyReceipt: true,
-              );
-            } else if (settings.autoPrintKitchen) {
-              StationPrinterDispatcher.printBill(
-                _billData!,
+            if (settings.autoPrintCheckout) {
+              await ref
+                  .read(printerSettingsProvider.notifier)
+                  .printCheckoutReceipt(
+                    storeId:
+                        (await StoreAuthService.getStoreInfo())['store_id']
+                            as String,
+                    settlementId: orderId,
+                    billData: _billData!,
+                  );
+            }
+            final unsentItems = cartSnapshot.lines
+                .where((line) => !cartSnapshot.isLineSent(line.lineId))
+                .toList();
+            if (settings.autoPrintKitchen && unsentItems.isNotEmpty) {
+              await StationPrinterDispatcher.printBill(
+                BillData(
+                  shopName: shopName,
+                  orderNumber: saleResult.orderNumber,
+                  createdAt: DateTime.now(),
+                  tableName: cartSnapshot.tableName,
+                  subtotal: saleResult.subtotal,
+                  total: saleResult.totalAmount,
+                  items: unsentItems
+                      .map(
+                        (line) => BillItem(
+                          name: line.productName,
+                          qty: line.quantity.toInt(),
+                          price: line.unitPrice,
+                          note: line.note,
+                          stationCode: line.stationCode,
+                        ),
+                      )
+                      .toList(),
+                ),
                 settings,
                 onlyKitchen: true,
               );
@@ -854,34 +1083,6 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
 
       // Chạy các tác vụ phụ âm thầm & bảo vệ
       try {
-        String walletPayLabel = cartSnapshot.paymentMethod;
-        if (cartSnapshot.paymentMethod == 'wallet' &&
-            cartSnapshot.customerId != null) {
-          try {
-            final loyaltyRepo = ref.read(loyaltyRepositoryProvider);
-            final result = await loyaltyRepo
-                .spendWallet(
-                  customerId: cartSnapshot.customerId!,
-                  bill: cartSnapshot.total,
-                  orderId: orderId,
-                )
-                .timeout(const Duration(seconds: 10));
-
-            final realUsed = result['realUsed'] ?? 0;
-            final bonusUsed = result['bonusUsed'] ?? 0;
-            walletPayLabel =
-                'Ví (${realUsed.toInt()}đ thật + ${bonusUsed.toInt()}đ bonus)';
-          } catch (e) {
-            debugPrint('[Wallet] spendWallet error: $e');
-          }
-        }
-
-        // Lấy thông tin đơn hàng vừa tạo với timeout 5 giây
-        final order = await ref
-            .read(posRepositoryProvider)
-            .getOrderById(orderId)
-            .timeout(const Duration(seconds: 5), onTimeout: () => null);
-
         try {
           ref.invalidate(todayStatsProvider);
           ref.invalidate(financeRecordsProvider);
@@ -898,13 +1099,13 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
 
         if (mounted) {
           setState(() {
-            _orderNumber = order?.orderNumber ?? orderId.substring(0, 8);
+            _orderNumber = saleResult.orderNumber;
             _billData = BillData(
               shopName: shopName,
               shopPhone: shopPhone.isNotEmpty ? shopPhone : null,
               shopAddress: shopAddress.isNotEmpty ? shopAddress : null,
               footer: billFooter.isNotEmpty ? billFooter : null,
-              orderNumber: order?.orderNumber ?? orderId.substring(0, 8),
+              orderNumber: saleResult.orderNumber,
               createdAt: DateTime.now(),
               tableName: cartSnapshot.tableName,
               items: cartSnapshot.lines
@@ -917,10 +1118,10 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                     ),
                   )
                   .toList(),
-              subtotal: cartSnapshot.subtotal,
-              discount: cartSnapshot.discount,
-              total: cartSnapshot.total,
-              paymentMethod: walletPayLabel,
+              subtotal: saleResult.subtotal,
+              discount: saleResult.discount,
+              total: saleResult.totalAmount,
+              paymentMethod: paymentLabel,
               customerName: cartSnapshot.customerName,
               loyaltyPoints: cartSnapshot.loyaltyPtsUsed > 0
                   ? cartSnapshot.loyaltyPtsUsed.round()
@@ -935,7 +1136,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
         );
       }
     } catch (e) {
-      _isProcessingLocal = false; // Giải phóng trạng thái chống nhấn đúp
+      if (mounted) setState(() => _isProcessingLocal = false);
       if (mounted) {
         String userFriendlyError = 'Lỗi: $e';
         if (e is TimeoutException) {

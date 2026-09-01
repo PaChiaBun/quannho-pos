@@ -18,7 +18,7 @@ class DashboardRepository {
 
   Stream<DashboardStats> watchTodayStats() {
     final controller = StreamController<DashboardStats>();
-    
+
     // Fetch ban đầu
     getTodayStats().then((stats) {
       if (!controller.isClosed) controller.add(stats);
@@ -26,13 +26,15 @@ class DashboardRepository {
 
     // Lắng nghe sự kiện Broadcast gọn nhẹ tự phát giữa các thiết bị (không dùng Supabase DB Realtime)
     final channel = _sb.channel('store_broadcast');
-    channel.onBroadcast(
-      event: 'checkout_completed',
-      callback: (payload) async {
-        final stats = await getTodayStats();
-        if (!controller.isClosed) controller.add(stats);
-      },
-    ).subscribe();
+    channel
+        .onBroadcast(
+          event: 'checkout_completed',
+          callback: (payload) async {
+            final stats = await getTodayStats();
+            if (!controller.isClosed) controller.add(stats);
+          },
+        )
+        .subscribe();
 
     controller.onCancel = () {
       channel.unsubscribe();
@@ -45,9 +47,17 @@ class DashboardRepository {
     final storeId = await _storeId();
     if (storeId == null) return DashboardStats.empty;
 
-    final now        = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day).toUtc().toIso8601String();
-    final endOfDay   = DateTime(now.year, now.month, now.day + 1).toUtc().toIso8601String();
+    final now = DateTime.now();
+    final startOfDay = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).toUtc().toIso8601String();
+    final endOfDay = DateTime(
+      now.year,
+      now.month,
+      now.day + 1,
+    ).toUtc().toIso8601String();
 
     final orders = await _sb
         .from('orders')
@@ -56,8 +66,12 @@ class DashboardRepository {
         .eq('status', 'completed')
         .gte('created_at', startOfDay)
         .lt('created_at', endOfDay);
-
-    return _aggregateStats(orders);
+    final payments = await _loadCanonicalPayments(
+      storeId,
+      startOfDay,
+      endOfDay,
+    );
+    return _aggregateStats(orders, payments);
   }
 
   /// Lấy tổng hợp huỷ món / huỷ bàn hôm nay
@@ -65,9 +79,17 @@ class DashboardRepository {
     final storeId = await _storeId();
     if (storeId == null) return {'amount': 0.0, 'count': 0};
 
-    final now        = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day).toUtc().toIso8601String();
-    final endOfDay   = DateTime(now.year, now.month, now.day + 1).toUtc().toIso8601String();
+    final now = DateTime.now();
+    final startOfDay = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).toUtc().toIso8601String();
+    final endOfDay = DateTime(
+      now.year,
+      now.month,
+      now.day + 1,
+    ).toUtc().toIso8601String();
 
     try {
       final logs = await _sb
@@ -82,10 +104,7 @@ class DashboardRepository {
         totalAmount += (log['amount'] as num?)?.toDouble() ?? 0;
       }
 
-      return {
-        'amount': totalAmount,
-        'count': logs.length,
-      };
+      return {'amount': totalAmount, 'count': logs.length};
     } catch (e) {
       return {'amount': 0.0, 'count': 0};
     }
@@ -94,16 +113,25 @@ class DashboardRepository {
   // ── Top products hôm nay ──────────────────────────────────────────────────
 
   Future<List<TopProduct>> getTopProductsToday({int limit = 5}) async {
-    final now        = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day).toUtc().toIso8601String();
+    final now = DateTime.now();
+    final startOfDay = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).toUtc().toIso8601String();
     // ‼️ FIX Bug #20: dùng midnight ngày kế (exclusive) thay vì DateTime.now().toUtc()
     // Trước đây bỏ sót đơn phát sinh sau lần query đến hết ngày
-    final endOfDay   = DateTime(now.year, now.month, now.day + 1).toUtc().toIso8601String();
+    final endOfDay = DateTime(
+      now.year,
+      now.month,
+      now.day + 1,
+    ).toUtc().toIso8601String();
     return getTopProductsForRange(startOfDay, endOfDay, limit: limit);
   }
 
   Future<List<TopProduct>> getTopProductsForRange(
-    String from, String to, {
+    String from,
+    String to, {
     int limit = 10,
     String? category, // ‼️ FIX: thêm category filter
   }) async {
@@ -116,7 +144,10 @@ class DashboardRepository {
         .eq('store_id', storeId)
         .eq('status', 'completed')
         .gte('created_at', from)
-        .lt('created_at', to); // ‼️ FIX: lt (exclusive) — caller truyền midnight ngày kế
+        .lt(
+          'created_at',
+          to,
+        ); // ‼️ FIX: lt (exclusive) — caller truyền midnight ngày kế
 
     if (orders.isEmpty) return [];
     final orderIds = orders.map((o) => o['id'] as String).toList();
@@ -126,8 +157,16 @@ class DashboardRepository {
     const chunkSize = 100;
     final futures = <Future<List<Map<String, dynamic>>>>[];
     for (int i = 0; i < orderIds.length; i += chunkSize) {
-      final chunk = orderIds.sublist(i, (i + chunkSize).clamp(0, orderIds.length));
-      futures.add(_sb.from('order_items').select('product_id, product_name, name, quantity, qty, subtotal').inFilter('order_id', chunk));
+      final chunk = orderIds.sublist(
+        i,
+        (i + chunkSize).clamp(0, orderIds.length),
+      );
+      futures.add(
+        _sb
+            .from('order_items')
+            .select('product_id, product_name, name, quantity, qty, subtotal')
+            .inFilter('order_id', chunk),
+      );
     }
     final results = await Future.wait(futures);
     for (final res in results) {
@@ -138,10 +177,14 @@ class DashboardRepository {
     for (final item in items) {
       final productId = item['product_id'] as String? ?? '';
       if (productId.isEmpty) continue;
-      final agg = map[productId] ??= _ProductAgg(item['product_name'] as String? ?? item['name'] as String? ?? '');
+      final agg = map[productId] ??= _ProductAgg(
+        item['product_name'] as String? ?? item['name'] as String? ?? '',
+      );
       // Fallback: quantity (extended col) → qty (legacy col)
-      agg.qty     += (item['quantity'] as num?)?.toDouble()
-                  ?? (item['qty'] as num?)?.toDouble() ?? 0;
+      agg.qty +=
+          (item['quantity'] as num?)?.toDouble() ??
+          (item['qty'] as num?)?.toDouble() ??
+          0;
       agg.revenue += (item['subtotal'] as num?)?.toDouble() ?? 0;
     }
 
@@ -166,25 +209,28 @@ class DashboardRepository {
 
     // ‼️ FIX Bug #35: ..take(limit) là Iterable không gán lại — limit vô hiệu
     // Fix: build → sort → sublist để đảm bảo limit đúng
-    final sorted = entries
-        .map((e) => TopProduct(
-              productId:    e.key,
-              productName:  e.value.name,
-              totalQty:     e.value.qty,
-              totalRevenue: e.value.revenue,
-            ))
-        .toList()
-      ..sort((a, b) => b.totalRevenue.compareTo(a.totalRevenue));
+    final sorted =
+        entries
+            .map(
+              (e) => TopProduct(
+                productId: e.key,
+                productName: e.value.name,
+                totalQty: e.value.qty,
+                totalRevenue: e.value.revenue,
+              ),
+            )
+            .toList()
+          ..sort((a, b) => b.totalRevenue.compareTo(a.totalRevenue));
     return sorted.length > limit ? sorted.sublist(0, limit) : sorted;
   }
-
-
 
   // ── Compat methods — nhận int (ms) thay vì String ISO ────────────────────
 
   /// Report screen dùng int (millisecondsSinceEpoch) → chuyển sang ISO
   Future<DashboardStats> getStatsForRange(int from, int to) {
-    final f = DateTime.fromMillisecondsSinceEpoch(from).toUtc().toIso8601String();
+    final f = DateTime.fromMillisecondsSinceEpoch(
+      from,
+    ).toUtc().toIso8601String();
     final t = DateTime.fromMillisecondsSinceEpoch(to).toUtc().toIso8601String();
     return _getStatsForRange(f, t);
   }
@@ -198,14 +244,78 @@ class DashboardRepository {
         .eq('store_id', storeId)
         .eq('status', 'completed')
         .gte('created_at', from)
-        .lt('created_at', to); // ‼️ FIX: lt (exclusive) — nhất quán với finance_repository
-    return _aggregateStats(orders);
+        .lt(
+          'created_at',
+          to,
+        ); // ‼️ FIX: lt (exclusive) — nhất quán với finance_repository
+    final payments = await _loadCanonicalPayments(storeId, from, to);
+    return _aggregateStats(orders, payments);
   }
 
-  Future<DashboardStats> _aggregateStats(List<dynamic> orders) async {
-    final revenue = orders.fold<double>(0, (s, o) => s + ((o['total_amount'] as num?)?.toDouble() ?? 0));
+  Future<List<Map<String, dynamic>>> _loadCanonicalPayments(
+    String storeId,
+    String from,
+    String to,
+  ) async {
+    final financeRows = await _sb
+        .from('finance_records')
+        .select('amount, reference_id, fund_type')
+        .eq('store_id', storeId)
+        .eq('type', 'income')
+        .eq('is_auto', true)
+        .gte('recorded_at', from)
+        .lt('recorded_at', to);
+    final refs = financeRows
+        .map((row) => row['reference_id'] as String?)
+        .whereType<String>()
+        .toSet()
+        .toList();
+    if (refs.isEmpty) return const [];
+
+    final settlements = await _sb
+        .from('payment_settlements')
+        .select('id, payment_method, cashier_staff_id')
+        .eq('store_id', storeId)
+        .eq('status', 'completed')
+        .inFilter('id', refs);
+    final orders = await _sb
+        .from('orders')
+        .select('id, payment_method, staff_id')
+        .eq('store_id', storeId)
+        .eq('status', 'completed')
+        .inFilter('id', refs);
+    final metadata = <String, Map<String, dynamic>>{
+      for (final row in settlements)
+        row['id'] as String: {
+          'payment_method': row['payment_method'],
+          'staff_id': row['cashier_staff_id'],
+        },
+      for (final row in orders)
+        row['id'] as String: {
+          'payment_method': row['payment_method'],
+          'staff_id': row['staff_id'],
+        },
+    };
+    return [
+      for (final row in financeRows)
+        if (metadata.containsKey(row['reference_id']))
+          {...row, ...metadata[row['reference_id']]!},
+    ];
+  }
+
+  Future<DashboardStats> _aggregateStats(
+    List<dynamic> orders,
+    List<Map<String, dynamic>> payments,
+  ) async {
+    final revenue = payments.fold<double>(
+      0,
+      (sum, row) => sum + ((row['amount'] as num?)?.toDouble() ?? 0),
+    );
     final orderCnt = orders.length;
-    final customerSet = orders.where((o) => o['customer_id'] != null).map((o) => o['customer_id'] as String).toSet();
+    final customerSet = orders
+        .where((o) => o['customer_id'] != null)
+        .map((o) => o['customer_id'] as String)
+        .toSet();
 
     double cashRevenue = 0;
     double transferRevenue = 0;
@@ -214,9 +324,13 @@ class DashboardRepository {
     final staffDetailsRaw = <String, Map<String, double>>{};
     final waiterCountsRaw = <String, int>{};
 
-    for (final o in orders) {
-      final amount = (o['total_amount'] as num?)?.toDouble() ?? 0;
-      final rawMethod = o['payment_method'] as String? ?? 'cash';
+    for (final payment in payments) {
+      final amount = (payment['amount'] as num?)?.toDouble() ?? 0;
+      final rawMethod =
+          payment['payment_method'] as String? ??
+          (payment['fund_type'] == 'bank'
+              ? 'transfer'
+              : payment['fund_type'] as String? ?? 'cash');
       final String method;
       if (rawMethod == 'cash') {
         method = 'cash';
@@ -224,19 +338,30 @@ class DashboardRepository {
       } else if (rawMethod == 'card') {
         method = 'card';
         cardRevenue += amount;
+      } else if (rawMethod == 'wallet') {
+        method = 'wallet';
       } else {
         method = 'transfer';
         transferRevenue += amount;
       }
 
-      final staffId = (o['staff_id'] as String?)?.isNotEmpty == true ? o['staff_id'] as String : 'unassigned';
+      final staffId = (payment['staff_id'] as String?)?.isNotEmpty == true
+          ? payment['staff_id'] as String
+          : 'unassigned';
       staffRevenuesRaw[staffId] = (staffRevenuesRaw[staffId] ?? 0) + amount;
-      
-      final details = staffDetailsRaw[staffId] ??= {'cash': 0, 'transfer': 0, 'card': 0, 'total': 0};
+
+      final details = staffDetailsRaw[staffId] ??= {
+        'cash': 0,
+        'transfer': 0,
+        'card': 0,
+        'total': 0,
+      };
       details[method] = (details[method] ?? 0) + amount;
       details['total'] = (details['total'] ?? 0) + amount;
+    }
 
-      // Đọc waiter_id từ orders (phục vụ bàn)
+    // Order chỉ dùng cho customer count, số order/món và nhân viên phục vụ.
+    for (final o in orders) {
       final waiterId = o['waiter_id'] as String?;
       if (waiterId != null && waiterId.isNotEmpty) {
         waiterCountsRaw[waiterId] = (waiterCountsRaw[waiterId] ?? 0) + 1;
@@ -248,15 +373,17 @@ class DashboardRepository {
 
     if (staffRevenuesRaw.isNotEmpty) {
       try {
-        final staffIds = staffRevenuesRaw.keys.where((id) => id != 'unassigned').toList();
+        final staffIds = staffRevenuesRaw.keys
+            .where((id) => id != 'unassigned')
+            .toList();
         final nameMap = <String, String>{'unassigned': 'Không rõ thu ngân'};
-        
+
         if (staffIds.isNotEmpty) {
           final memberRows = await _sb
               .from('staff_members')
               .select('id, name')
               .inFilter('id', staffIds);
-          
+
           for (final r in memberRows) {
             final id = r['id'] as String;
             nameMap[id] = (r['name'] as String?) ?? 'Chưa rõ';
@@ -281,11 +408,15 @@ class DashboardRepository {
       } catch (e) {
         debugPrint('[DashboardRepository] Error mapping cashier names: $e');
         staffRevenuesRaw.forEach((staffId, val) {
-          final name = staffId == 'unassigned' ? 'Không rõ thu ngân' : 'NV-${staffId.substring(0, 4)}';
+          final name = staffId == 'unassigned'
+              ? 'Không rõ thu ngân'
+              : 'NV-${staffId.substring(0, 4)}';
           cashierRevenue[name] = val;
         });
         staffDetailsRaw.forEach((staffId, details) {
-          final name = staffId == 'unassigned' ? 'Không rõ thu ngân' : 'NV-${staffId.substring(0, 4)}';
+          final name = staffId == 'unassigned'
+              ? 'Không rõ thu ngân'
+              : 'NV-${staffId.substring(0, 4)}';
           cashierDetails[name] = CashierDetail(
             cash: details['cash'] ?? 0,
             transfer: details['transfer'] ?? 0,
@@ -304,7 +435,7 @@ class DashboardRepository {
             .from('staff_members')
             .select('id, name')
             .inFilter('id', waiterIds);
-        
+
         final nameMap = <String, String>{};
         for (final r in memberRows) {
           final id = r['id'] as String;
@@ -340,7 +471,9 @@ class DashboardRepository {
   Future<List<DailyRevenue>> getDailyRevenue(int from, int to) async {
     final storeId = await _storeId();
     if (storeId == null) return [];
-    final f = DateTime.fromMillisecondsSinceEpoch(from).toUtc().toIso8601String();
+    final f = DateTime.fromMillisecondsSinceEpoch(
+      from,
+    ).toUtc().toIso8601String();
     final t = DateTime.fromMillisecondsSinceEpoch(to).toUtc().toIso8601String();
     final orders = await _sb
         .from('orders')
@@ -353,29 +486,31 @@ class DashboardRepository {
     for (final o in orders) {
       final dt = DateTime.tryParse(o['created_at'] as String? ?? '')?.toLocal();
       if (dt == null) continue;
-      final key = '${dt.year}-${dt.month.toString().padLeft(2,'0')}-${dt.day.toString().padLeft(2,'0')}';
+      final key =
+          '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
       final agg = dayMap[key] ??= _DayAgg(dt);
-      
+
       final amount = (o['total_amount'] as num?)?.toDouble() ?? 0;
       final disc = (o['discount'] as num?)?.toDouble() ?? 0;
       final method = o['payment_method'] as String? ?? 'cash';
-      
+
       agg.revenue += amount;
       agg.orders++;
       agg.discount += disc;
       if (method == 'cash') {
         agg.cashRevenue += amount;
-      } else {
+      } else if (method != 'wallet') {
         agg.transferRevenue += amount;
       }
     }
     // Fill tất cả ngày trong kỳ
     final startDate = DateTime.fromMillisecondsSinceEpoch(from);
-    final endDate   = DateTime.fromMillisecondsSinceEpoch(to);
-    final dayCount  = endDate.difference(startDate).inDays;
+    final endDate = DateTime.fromMillisecondsSinceEpoch(to);
+    final dayCount = endDate.difference(startDate).inDays;
     return List.generate(dayCount, (i) {
       final day = DateTime(startDate.year, startDate.month, startDate.day + i);
-      final key = '${day.year}-${day.month.toString().padLeft(2,'0')}-${day.day.toString().padLeft(2,'0')}';
+      final key =
+          '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
       final agg = dayMap[key];
       return DailyRevenue(
         date: day,
@@ -396,7 +531,9 @@ class DashboardRepository {
   Future<List<String>> getProductCategoriesSold(int from, int to) async {
     final storeId = await _storeId();
     if (storeId == null) return [];
-    final f = DateTime.fromMillisecondsSinceEpoch(from).toUtc().toIso8601String();
+    final f = DateTime.fromMillisecondsSinceEpoch(
+      from,
+    ).toUtc().toIso8601String();
     final t = DateTime.fromMillisecondsSinceEpoch(to).toUtc().toIso8601String();
     final orders = await _sb
         .from('orders')
@@ -412,24 +549,50 @@ class DashboardRepository {
     const chunkSize = 100;
     final futures = <Future<List<Map<String, dynamic>>>>[];
     for (int i = 0; i < orderIds.length; i += chunkSize) {
-      final chunk = orderIds.sublist(i, (i + chunkSize).clamp(0, orderIds.length));
-      futures.add(_sb.from('order_items').select('product_id').inFilter('order_id', chunk));
+      final chunk = orderIds.sublist(
+        i,
+        (i + chunkSize).clamp(0, orderIds.length),
+      );
+      futures.add(
+        _sb
+            .from('order_items')
+            .select('product_id')
+            .inFilter('order_id', chunk),
+      );
     }
     final results = await Future.wait(futures);
     for (final res in results) {
       items.addAll(res);
     }
 
-    final productIds = items.map((i) => i['product_id'] as String? ?? '').where((id) => id.isNotEmpty).toSet().toList();
+    final productIds = items
+        .map((i) => i['product_id'] as String? ?? '')
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList();
     if (productIds.isEmpty) return [];
-    final products = await _sb.from('products').select('category').inFilter('id', productIds);
-    return products.map((p) => p['category'] as String? ?? '').where((c) => c.isNotEmpty).toSet().toList()..sort();
+    final products = await _sb
+        .from('products')
+        .select('category')
+        .inFilter('id', productIds);
+    return products
+        .map((p) => p['category'] as String? ?? '')
+        .where((c) => c.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
   }
 
   // Thêm category filter cho getTopProductsForRange compat
   Future<List<TopProduct>> getTopProductsForRangeCompat(
-    int from, int to, {String? category, int limit = 10}) async {
-    final f = DateTime.fromMillisecondsSinceEpoch(from).toUtc().toIso8601String();
+    int from,
+    int to, {
+    String? category,
+    int limit = 10,
+  }) async {
+    final f = DateTime.fromMillisecondsSinceEpoch(
+      from,
+    ).toUtc().toIso8601String();
     final t = DateTime.fromMillisecondsSinceEpoch(to).toUtc().toIso8601String();
     // ‼️ FIX: truyền category xuống getTopProductsForRange — trước đây bị drop silently
     return getTopProductsForRange(f, t, category: category, limit: limit);
@@ -441,14 +604,19 @@ class DashboardRepository {
     final storeId = await _storeId();
     if (storeId == null) return [];
 
-    final now  = DateTime.now();
-    final from = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(days: 6))
-        .toUtc()
-        .toIso8601String();
+    final now = DateTime.now();
+    final from = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 6)).toUtc().toIso8601String();
     // ‼️ FIX Bug #36: thêm upper bound exclusive — trước đây không có .lt() →
     // đơn future-dated hoặc clock skew bị tính vào doanh thu 7 ngày
-    final to   = DateTime(now.year, now.month, now.day + 1).toUtc().toIso8601String();
+    final to = DateTime(
+      now.year,
+      now.month,
+      now.day + 1,
+    ).toUtc().toIso8601String();
 
     final orders = await _sb
         .from('orders')
@@ -461,9 +629,10 @@ class DashboardRepository {
     // Group by date
     final dayMap = <String, _DayAgg>{};
     for (final o in orders) {
-      final dt  = DateTime.tryParse(o['created_at'] as String? ?? '')?.toLocal();
+      final dt = DateTime.tryParse(o['created_at'] as String? ?? '')?.toLocal();
       if (dt == null) continue;
-      final key = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+      final key =
+          '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
       final agg = dayMap[key] ??= _DayAgg(dt);
       agg.revenue += (o['total_amount'] as num?)?.toDouble() ?? 0;
       agg.orders++;
@@ -472,14 +641,21 @@ class DashboardRepository {
     // 7 ngày đủ
     final result = <DailyRevenue>[];
     for (int i = 6; i >= 0; i--) {
-      final day = DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
-      final key = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+      final day = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: i));
+      final key =
+          '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
       final agg = dayMap[key];
-      result.add(DailyRevenue(
-        date:    day,
-        revenue: agg?.revenue ?? 0,
-        orders:  agg?.orders  ?? 0,
-      ));
+      result.add(
+        DailyRevenue(
+          date: day,
+          revenue: agg?.revenue ?? 0,
+          orders: agg?.orders ?? 0,
+        ),
+      );
     }
     return result;
   }
@@ -490,9 +666,17 @@ class DashboardRepository {
     final storeId = await _storeId();
     if (storeId == null) return _emptyHourly();
 
-    final startOfDay = DateTime(date.year, date.month, date.day).toUtc().toIso8601String();
+    final startOfDay = DateTime(
+      date.year,
+      date.month,
+      date.day,
+    ).toUtc().toIso8601String();
     // Dùng midnight ngày kế (exclusive) — 23:59:59 bỏ sót 23:59:59.001 – 23:59:59.999
-    final endOfDay   = DateTime(date.year, date.month, date.day + 1).toUtc().toIso8601String();
+    final endOfDay = DateTime(
+      date.year,
+      date.month,
+      date.day + 1,
+    ).toUtc().toIso8601String();
 
     final orders = await _sb
         .from('orders')
@@ -500,12 +684,11 @@ class DashboardRepository {
         .eq('store_id', storeId)
         .eq('status', 'completed')
         .gte('created_at', startOfDay)
-        .lt('created_at', endOfDay);  // exclusive upper — nhất quán với finance
-
+        .lt('created_at', endOfDay); // exclusive upper — nhất quán với finance
 
     final hourMap = <int, _HourAgg>{};
     for (final o in orders) {
-      final dt  = DateTime.tryParse(o['created_at'] as String? ?? '')?.toLocal();
+      final dt = DateTime.tryParse(o['created_at'] as String? ?? '')?.toLocal();
       if (dt == null) continue;
       final agg = hourMap[dt.hour] ??= _HourAgg();
       agg.revenue += (o['total_amount'] as num?)?.toDouble() ?? 0;
@@ -522,7 +705,13 @@ class DashboardRepository {
 }
 
 // ── Private helpers ────────────────────────────────────────────────────────────
-class _ProductAgg { final String name; double qty = 0; double revenue = 0; _ProductAgg(this.name); }
+class _ProductAgg {
+  final String name;
+  double qty = 0;
+  double revenue = 0;
+  _ProductAgg(this.name);
+}
+
 class _DayAgg {
   DateTime date;
   double revenue = 0;
@@ -532,7 +721,11 @@ class _DayAgg {
   double discount = 0;
   _DayAgg(this.date);
 }
-class _HourAgg { double revenue = 0; int orders = 0; }
+
+class _HourAgg {
+  double revenue = 0;
+  int orders = 0;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA CLASSES
@@ -553,14 +746,14 @@ class CashierDetail {
 
 class DashboardStats {
   final double todayRevenue;
-  final int    todayOrders;
-  final int    todayCustomers;
+  final int todayOrders;
+  final int todayCustomers;
   final double avgOrderValue;
   final double cashRevenue;
   final double transferRevenue;
   final double cardRevenue;
   final Map<String, double> cashierRevenue;
-  final Map<String, int>    waiterOrders;
+  final Map<String, int> waiterOrders;
   final Map<String, CashierDetail> cashierDetails;
 
   const DashboardStats({
@@ -577,8 +770,14 @@ class DashboardStats {
   });
 
   static const empty = DashboardStats(
-    todayRevenue: 0, todayOrders: 0, todayCustomers: 0, avgOrderValue: 0,
-    cashRevenue: 0, transferRevenue: 0, cardRevenue: 0, cashierRevenue: {},
+    todayRevenue: 0,
+    todayOrders: 0,
+    todayCustomers: 0,
+    avgOrderValue: 0,
+    cashRevenue: 0,
+    transferRevenue: 0,
+    cardRevenue: 0,
+    cashierRevenue: {},
     waiterOrders: {},
     cashierDetails: {},
   );
@@ -591,18 +790,20 @@ class TopProduct {
   final double totalRevenue;
 
   const TopProduct({
-    required this.productId, required this.productName,
-    required this.totalQty, required this.totalRevenue,
+    required this.productId,
+    required this.productName,
+    required this.totalQty,
+    required this.totalRevenue,
   });
 }
 
 class DailyRevenue {
   final DateTime date;
-  final double   revenue;
-  final int      orders;
-  final double   cashRevenue;
-  final double   transferRevenue;
-  final double   discount;
+  final double revenue;
+  final int orders;
+  final double cashRevenue;
+  final double transferRevenue;
+  final double discount;
 
   const DailyRevenue({
     required this.date,
@@ -615,8 +816,12 @@ class DailyRevenue {
 }
 
 class HourlyRevenue {
-  final int    hour;
+  final int hour;
   final double revenue;
-  final int    orders;
-  const HourlyRevenue({required this.hour, required this.revenue, required this.orders});
+  final int orders;
+  const HourlyRevenue({
+    required this.hour,
+    required this.revenue,
+    required this.orders,
+  });
 }

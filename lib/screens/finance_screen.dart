@@ -19,16 +19,16 @@ import '../core/widgets/order_detail_dialog.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE
 // ─────────────────────────────────────────────────────────────────────────────
-const _kNavy   = Color(0xFF1E1C5E);
-const _kNavyL  = Color(0xFF2D2B8A);
+const _kNavy = Color(0xFF1E1C5E);
+const _kNavyL = Color(0xFF2D2B8A);
 const _kOrange = Color(0xFFE85D20);
-const _kGreen  = Color(0xFF2E7D32);
-const _kRed    = Color(0xFFC62828);
-const _kInk    = Color(0xFF1A1207);
-const _kMuted  = Color(0xFF9E9085);
-const _kBg     = Color(0xFFFAF7F2);
+const _kGreen = Color(0xFF2E7D32);
+const _kRed = Color(0xFFC62828);
+const _kInk = Color(0xFF1A1207);
+const _kMuted = Color(0xFF9E9085);
+const _kBg = Color(0xFFFAF7F2);
 const _kBorder = Color(0xFFE0D8CC);
-const _kWhite  = Colors.white;
+const _kWhite = Colors.white;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FINANCE SCREEN — Màn hình Thu Chi
@@ -41,8 +41,11 @@ class FinanceScreen extends ConsumerStatefulWidget {
 }
 
 class _FinanceScreenState extends ConsumerState<FinanceScreen> {
-
-  Future<void> _selectCustomDateRange(BuildContext context, WidgetRef ref, DateRange current) async {
+  Future<void> _selectCustomDateRange(
+    BuildContext context,
+    WidgetRef ref,
+    DateRange current,
+  ) async {
     final now = DateTime.now();
     final picked = await showDateRangePicker(
       context: context,
@@ -82,13 +85,17 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     );
     // Nếu ghi thành công → invalidate tất cả finance providers
     if (result == true) {
-      ref.invalidate(financeRecordsProvider);     // list giao dịch
-      ref.invalidate(financeStatsProvider);       // stats header kỳ đang chọn
-      ref.invalidate(todayFinanceStatsProvider);  // stats header hôm nay
+      ref.invalidate(financeRecordsProvider); // list giao dịch
+      ref.invalidate(financeStatsProvider); // stats header kỳ đang chọn
+      ref.invalidate(todayFinanceStatsProvider); // stats header hôm nay
     }
   }
 
-  void _showPeriodSelectionSheet(BuildContext context, WidgetRef ref, DateRange current) {
+  void _showPeriodSelectionSheet(
+    BuildContext context,
+    WidgetRef ref,
+    DateRange current,
+  ) {
     final periods = [
       ('today', 'Hôm nay'),
       ('yesterday', 'Hôm qua'),
@@ -114,7 +121,14 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Chọn thời gian báo cáo', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: _kNavy)),
+                Text(
+                  'Chọn thời gian báo cáo',
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: _kNavy,
+                  ),
+                ),
                 IconButton(
                   icon: const Icon(Icons.close_rounded, size: 20),
                   onPressed: () => Navigator.pop(ctx),
@@ -123,7 +137,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             ),
             const SizedBox(height: 8),
             ...periods.map((p) {
-              final active = current.label == p.$2 ||
+              final active =
+                  current.label == p.$2 ||
                   (p.$1 == 'today' && current.label == 'Hôm nay') ||
                   (p.$1 == 'yesterday' && current.label == 'Hôm qua') ||
                   (p.$1 == '7days' && current.label == '7 ngày qua') ||
@@ -132,10 +147,14 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                   (p.$1 == 'last_month' && current.label == 'Tháng trước');
 
               return ListTile(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 tileColor: active ? const Color(0xFFE3F2FD) : null,
                 leading: Icon(
-                  p.$1 == 'custom' ? Icons.calendar_month_rounded : Icons.access_time_rounded,
+                  p.$1 == 'custom'
+                      ? Icons.calendar_month_rounded
+                      : Icons.access_time_rounded,
                   color: active ? _kNavy : _kMuted,
                   size: 20,
                 ),
@@ -147,17 +166,37 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                     color: active ? _kNavy : _kInk,
                   ),
                 ),
-                trailing: active ? const Icon(Icons.check_circle_rounded, color: _kNavy, size: 20) : null,
+                trailing: active
+                    ? const Icon(
+                        Icons.check_circle_rounded,
+                        color: _kNavy,
+                        size: 20,
+                      )
+                    : null,
                 onTap: () async {
                   Navigator.pop(ctx);
                   switch (p.$1) {
-                    case 'today':      ref.read(periodProvider.notifier).setToday(); break;
-                    case 'yesterday':  ref.read(periodProvider.notifier).setYesterday(); break;
-                    case '7days':      ref.read(periodProvider.notifier).setLast7Days(); break;
-                    case 'week':       ref.read(periodProvider.notifier).setThisWeek(); break;
-                    case 'month':      ref.read(periodProvider.notifier).setThisMonth(); break;
-                    case 'last_month': ref.read(periodProvider.notifier).setLastMonth(); break;
-                    case 'custom':     await _selectCustomDateRange(context, ref, current); break;
+                    case 'today':
+                      ref.read(periodProvider.notifier).setToday();
+                      break;
+                    case 'yesterday':
+                      ref.read(periodProvider.notifier).setYesterday();
+                      break;
+                    case '7days':
+                      ref.read(periodProvider.notifier).setLast7Days();
+                      break;
+                    case 'week':
+                      ref.read(periodProvider.notifier).setThisWeek();
+                      break;
+                    case 'month':
+                      ref.read(periodProvider.notifier).setThisMonth();
+                      break;
+                    case 'last_month':
+                      ref.read(periodProvider.notifier).setLastMonth();
+                      break;
+                    case 'custom':
+                      await _selectCustomDateRange(context, ref, current);
+                      break;
                   }
                 },
               );
@@ -171,8 +210,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   @override
   Widget build(BuildContext context) {
     final periodState = ref.watch(periodProvider);
-    final statsAsync  = ref.watch(financeStatsProvider);
-    final filterType  = ref.watch(financeFilterProvider);
+    final statsAsync = ref.watch(financeStatsProvider);
+    final filterType = ref.watch(financeFilterProvider);
     final recordsAsync = ref.watch(filteredRecordsProvider);
     final selectedFund = ref.watch(selectedFundProvider);
 
@@ -213,7 +252,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     );
   }
 
-
   // ─────────────────────────────────────────────────────────────────────────
   // HEADER
   // ─────────────────────────────────────────────────────────────────────────
@@ -234,17 +272,29 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Title ──
-              Row(children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('Thu Chi',
-                    style: TextStyle(
-                      color: _kWhite, fontSize: 24,
-                      fontWeight: FontWeight.w900, letterSpacing: -0.8)),
-                  const SizedBox(height: 1),
-                  const Text('Doanh thu POS · Chi phí vận hành',
-                    style: TextStyle(color: Colors.white38, fontSize: 11)),
-                ]),
-              ]),
+              Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Thu Chi',
+                        style: TextStyle(
+                          color: _kWhite,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      const Text(
+                        'Doanh thu POS · Chi phí vận hành',
+                        style: TextStyle(color: Colors.white38, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
               const SizedBox(height: 18),
 
               // ── Stats ──
@@ -255,62 +305,96 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Lợi nhuận ròng (Gross Profit)
-                    Row(children: [
-                      Expanded(child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('LỢI NHUẬN', style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.45), fontSize: 10,
-                            fontWeight: FontWeight.w700, letterSpacing: 0.8)),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${stats.profit >= 0 ? "+" : ""}${fmtVnd(stats.profit)}',
-                            style: TextStyle(
-                              color: stats.profit >= 0
-                                ? const Color(0xFF69F0AE)
-                                : const Color(0xFFFF5252),
-                              fontSize: 26, fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'LỢI NHUẬN',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.45),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${stats.profit >= 0 ? "+" : ""}${fmtVnd(stats.profit)}',
+                                style: TextStyle(
+                                  color: stats.profit >= 0
+                                      ? const Color(0xFF69F0AE)
+                                      : const Color(0xFFFF5252),
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Biên lợi nhuận: ${stats.profitMargin.toStringAsFixed(1)}%',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.38),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 2),
-                          Text('Biên lợi nhuận: ${stats.profitMargin.toStringAsFixed(1)}%',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.38), fontSize: 11)),
-                        ],
-                      )),
-                      if (stats.prevIncome > 0) _GrowthBadge(pct: stats.incomeGrowth),
-                    ]),
+                        ),
+                        if (stats.prevIncome > 0)
+                          _GrowthBadge(pct: stats.incomeGrowth),
+                      ],
+                    ),
                     const SizedBox(height: 14),
 
                     // Tổng thu / Tổng chi — 2 tile
-                    Row(children: [
-                      _StatTile(label: 'Tổng thu', value: stats.income,
-                        icon: Icons.trending_up_rounded, color: const Color(0xFF81C784)),
-                      const SizedBox(width: 10),
-                      _StatTile(label: 'Tổng chi', value: stats.expense,
-                        icon: Icons.trending_down_rounded, color: const Color(0xFFEF9A9A)),
-                    ]),
+                    Row(
+                      children: [
+                        _StatTile(
+                          label: 'Tổng thu',
+                          value: stats.income,
+                          icon: Icons.trending_up_rounded,
+                          color: const Color(0xFF81C784),
+                        ),
+                        const SizedBox(width: 10),
+                        _StatTile(
+                          label: 'Tổng chi',
+                          value: stats.expense,
+                          icon: Icons.trending_down_rounded,
+                          color: const Color(0xFFEF9A9A),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
 
                     // ── 2 Action buttons — đồng nhất, solid ──
-                    Row(children: [
-                      // GHI THU — xanh solid
-                      Expanded(child: _ActionBtn(
-                        label: '+ Ghi thu',
-                        bgColor: const Color(0xFF2E7D32),
-                        textColor: Colors.white,
-                        shadowColor: const Color(0xFF1B5E20),
-                        onTap: () => _openAddSheet(type: 'income'),
-                      )),
-                      const SizedBox(width: 10),
-                      // GHI CHI — đỏ solid
-                      Expanded(child: _ActionBtn(
-                        label: '− Ghi chi',
-                        bgColor: const Color(0xFFC62828),
-                        textColor: Colors.white,
-                        shadowColor: const Color(0xFF7F0000),
-                        onTap: () => _openAddSheet(type: 'expense'),
-                      )),
-                    ]),
+                    Row(
+                      children: [
+                        // GHI THU — xanh solid
+                        Expanded(
+                          child: _ActionBtn(
+                            label: '+ Ghi thu',
+                            bgColor: const Color(0xFF2E7D32),
+                            textColor: Colors.white,
+                            shadowColor: const Color(0xFF1B5E20),
+                            onTap: () => _openAddSheet(type: 'income'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // GHI CHI — đỏ solid
+                        Expanded(
+                          child: _ActionBtn(
+                            label: '− Ghi chi',
+                            bgColor: const Color(0xFFC62828),
+                            textColor: Colors.white,
+                            shadowColor: const Color(0xFF7F0000),
+                            onTap: () => _openAddSheet(type: 'expense'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -320,7 +404,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       ),
     );
   }
-
 
   // ─────────────────────────────────────────────────────────────────────────
   // PERIOD CHIPS — Banner hiển thị ngày đang xem & nút chọn ngày linh hoạt
@@ -352,11 +435,18 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               Expanded(
                 child: Text(
                   'Đang xem: ${current.label} ($rangeText)',
-                  style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: _kNavy),
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _kNavy,
+                  ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: _kNavy,
                   borderRadius: BorderRadius.circular(8),
@@ -364,11 +454,19 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.calendar_month_rounded, size: 12, color: Colors.white),
+                    const Icon(
+                      Icons.calendar_month_rounded,
+                      size: 12,
+                      color: Colors.white,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Đổi ngày',
-                      style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
                   ],
                 ),
@@ -383,16 +481,24 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   // ─────────────────────────────────────────────────────────────────────────
   // FILTER TABS
   // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildFilterTabs(String? filterType, AsyncValue<List<FinanceRecordModel>> recordsAsync) {
+  Widget _buildFilterTabs(
+    String? filterType,
+    AsyncValue<List<FinanceRecordModel>> recordsAsync,
+  ) {
     return Container(
       color: _kWhite,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          const Text('Giao dịch',
+          const Text(
+            'Giao dịch',
             style: TextStyle(
-              fontSize: 15, fontWeight: FontWeight.w800,
-              color: _kInk, letterSpacing: -0.3)),
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: _kInk,
+              letterSpacing: -0.3,
+            ),
+          ),
           const Spacer(),
           _FilterChip(
             label: 'Tất cả',
@@ -412,8 +518,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             label: '↓ Chi',
             active: filterType == 'expense',
             color: _kRed,
-            onTap: () =>
-                ref.read(financeFilterProvider.notifier).showExpense(),
+            onTap: () => ref.read(financeFilterProvider.notifier).showExpense(),
           ),
           const SizedBox(width: 10),
           // Nút xuất báo cáo Excel/CSV cho kế toán kiểm soát
@@ -421,8 +526,13 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             onPressed: _exporting ? null : () => _exportToCSV(recordsAsync),
             icon: _exporting
                 ? const SizedBox(
-                    width: 16, height: 16,
-                    child: CircularProgressIndicator(color: _kNavy, strokeWidth: 2))
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      color: _kNavy,
+                      strokeWidth: 2,
+                    ),
+                  )
                 : const Icon(Icons.download_rounded, color: _kNavy, size: 22),
             tooltip: 'Xuất tệp CSV cho kế toán',
             style: IconButton.styleFrom(
@@ -484,13 +594,17 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
   bool _exporting = false;
 
-  Future<void> _exportToCSV(AsyncValue<List<FinanceRecordModel>> recordsAsync) async {
+  Future<void> _exportToCSV(
+    AsyncValue<List<FinanceRecordModel>> recordsAsync,
+  ) async {
     final records = recordsAsync.asData?.value;
     if (records == null || records.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Không có dữ liệu để xuất file!'),
-        backgroundColor: _kRed,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không có dữ liệu để xuất file!'),
+          backgroundColor: _kRed,
+        ),
+      );
       return;
     }
 
@@ -525,26 +639,36 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
       // 3. Build CSV string
       final csvBuffer = StringBuffer();
-      
+
       // UTF-8 BOM so Excel opens with Vietnamese characters properly formatted
       csvBuffer.write('\uFEFF');
 
       // Title & metadata
-      final fundName = selectedFund == 'cash' ? 'TIỀN MẶT' : 'TIỀN GỬI NGÂN HÀNG';
+      final fundName = selectedFund == 'cash'
+          ? 'TIỀN MẶT'
+          : 'TIỀN GỬI NGÂN HÀNG';
       csvBuffer.writeln('SỔ CHI TIẾT QUỸ $fundName');
       csvBuffer.writeln('Kỳ báo cáo: ${periodState.label}');
-      csvBuffer.writeln('Thời gian xuất: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}');
+      csvBuffer.writeln(
+        'Thời gian xuất: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}',
+      );
       csvBuffer.writeln();
 
       // Headers
-      csvBuffer.writeln('Ngày chứng từ,Số phiếu thu,Số phiếu chi,Diễn giải,Số tiền thu,Số tiền chi,Số tiền còn lại');
+      csvBuffer.writeln(
+        'Ngày chứng từ,Số phiếu thu,Số phiếu chi,Diễn giải,Số tiền thu,Số tiền chi,Số tiền còn lại',
+      );
 
       // Row 1: Starting balance (Số tồn đầu kỳ)
-      csvBuffer.writeln(',,,Số tồn đầu kỳ,,,${startingBalance.toStringAsFixed(0)}');
+      csvBuffer.writeln(
+        ',,,Số tồn đầu kỳ,,,${startingBalance.toStringAsFixed(0)}',
+      );
 
       double currentBalance = startingBalance;
       for (final r in sortedRecords) {
-        final dateStr = DateFormat('dd/MM/yyyy HH:mm').format(r.recordedAt.toLocal());
+        final dateStr = DateFormat(
+          'dd/MM/yyyy HH:mm',
+        ).format(r.recordedAt.toLocal());
         final isIncome = r.type == 'income';
         final amt = r.amount;
 
@@ -554,23 +678,31 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           currentBalance -= amt;
         }
 
-        final receiptNo = isIncome ? 'PT-${r.id.substring(0, 8).toUpperCase()}' : '';
-        final paymentNo = !isIncome ? 'PC-${r.id.substring(0, 8).toUpperCase()}' : '';
-        
+        final receiptNo = isIncome
+            ? 'PT-${r.id.substring(0, 8).toUpperCase()}'
+            : '';
+        final paymentNo = !isIncome
+            ? 'PC-${r.id.substring(0, 8).toUpperCase()}'
+            : '';
+
         // Clean description to avoid CSV breaking on commas
-        final cleanDesc = (r.description ?? '').replaceAll(',', ' ').replaceAll('\n', ' ');
+        final cleanDesc = (r.description ?? '')
+            .replaceAll(',', ' ')
+            .replaceAll('\n', ' ');
 
         final thuAmt = isIncome ? amt.toStringAsFixed(0) : '0';
         final chiAmt = !isIncome ? amt.toStringAsFixed(0) : '0';
         final tonAmt = currentBalance.toStringAsFixed(0);
 
-        csvBuffer.writeln('$dateStr,$receiptNo,$paymentNo,$cleanDesc,$thuAmt,$chiAmt,$tonAmt');
+        csvBuffer.writeln(
+          '$dateStr,$receiptNo,$paymentNo,$cleanDesc,$thuAmt,$chiAmt,$tonAmt',
+        );
       }
 
       // 4. Write to temp file and share/download
       final stamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
       final filename = 'So_Chi_Tiet_Quy_${selectedFund}_$stamp.csv';
-      
+
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/$filename');
       await file.writeAsString(csvBuffer.toString());
@@ -583,10 +715,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Lỗi xuất file: $e'),
-          backgroundColor: _kRed,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi xuất file: $e'), backgroundColor: _kRed),
+        );
       }
     } finally {
       if (mounted) setState(() => _exporting = false);
@@ -610,8 +741,12 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         String? lastKey;
         for (final r in records) {
           final dt = r.recordedAt.toLocal();
-          final key = '${dt.year}${dt.month.toString().padLeft(2,'0')}${dt.day.toString().padLeft(2,'0')}';
-          if (key != lastKey) { lastKey = key; items.add(dt); }
+          final key =
+              '${dt.year}${dt.month.toString().padLeft(2, '0')}${dt.day.toString().padLeft(2, '0')}';
+          if (key != lastKey) {
+            lastKey = key;
+            items.add(dt);
+          }
           items.add(r);
         }
         return ListView.builder(
@@ -624,9 +759,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             if (item is DateTime) return _DateHeader(date: item);
             final r = item as FinanceRecordModel;
             return _TransactionCard(
-              record: r,
-              onDelete: r.isAuto ? null : () => _confirmDelete(r),
-            )
+                  record: r,
+                  onDelete: r.isAuto ? null : () => _confirmDelete(r),
+                )
                 .animate(delay: (i * 25).ms)
                 .fadeIn(duration: 200.ms)
                 .slideY(begin: 0.04, end: 0, duration: 200.ms);
@@ -640,16 +775,25 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.receipt_long_rounded,
-          size: 72, color: _kMuted.withValues(alpha: 0.3)),
+        Icon(
+          Icons.receipt_long_rounded,
+          size: 72,
+          color: _kMuted.withValues(alpha: 0.3),
+        ),
         const SizedBox(height: 16),
-        const Text('Chưa có giao dịch nào',
+        const Text(
+          'Chưa có giao dịch nào',
           style: TextStyle(
-            fontSize: 15, fontWeight: FontWeight.w600,
-            color: _kMuted)),
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: _kMuted,
+          ),
+        ),
         const SizedBox(height: 8),
-        const Text('Nhấn nút bên dưới để ghi thu/chi',
-          style: TextStyle(fontSize: 13, color: _kMuted)),
+        const Text(
+          'Nhấn nút bên dưới để ghi thu/chi',
+          style: TextStyle(fontSize: 13, color: _kMuted),
+        ),
       ],
     ),
   );
@@ -658,13 +802,15 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
-        title: const Text('Xoá giao dịch?',
-          style: TextStyle(fontWeight: FontWeight.w800)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Xoá giao dịch?',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         content: Text(
           '${record.description ?? 'Giao dịch này'} sẽ bị xoá vĩnh viễn.',
-          style: const TextStyle(color: _kMuted)),
+          style: const TextStyle(color: _kMuted),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -683,7 +829,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               backgroundColor: _kRed,
               foregroundColor: _kWhite,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: const Text('Xoá'),
           ),
@@ -705,7 +852,7 @@ class _TransactionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIncome = record.type == 'income';
-    final color    = isIncome ? _kGreen : _kRed;
+    final color = isIncome ? _kGreen : _kRed;
     final dt = record.recordedAt.toLocal();
     final timeStr =
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
@@ -745,7 +892,8 @@ class _TransactionCard extends StatelessWidget {
         child: ListTile(
           contentPadding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
           leading: Container(
-            width: 44, height: 44,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(13),
@@ -754,14 +902,17 @@ class _TransactionCard extends StatelessWidget {
               isIncome
                   ? Icons.arrow_downward_rounded
                   : Icons.arrow_upward_rounded,
-              color: color, size: 22,
+              color: color,
+              size: 22,
             ),
           ),
           title: Text(
             record.description ?? (isIncome ? 'Thu tiền' : 'Chi tiền'),
             style: const TextStyle(
-              fontSize: 14, fontWeight: FontWeight.w700,
-              color: _kInk),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: _kInk,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -773,26 +924,39 @@ class _TransactionCard extends StatelessWidget {
                     final desc = record.description ?? 'giao dịch';
                     ScaffoldMessenger.of(context)
                       ..hideCurrentSnackBar()
-                      ..showSnackBar(SnackBar(
-                        content: Row(children: [
-                          const Icon(Icons.info_outline_rounded,
-                            color: Colors.white, size: 16),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(
-                            'Tự động từ: $desc. Không thể xóa thủ công.',
-                            style: const TextStyle(fontSize: 12))),
-                        ]),
-                        duration: const Duration(seconds: 3),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: _kNavy,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      ));
+                      ..showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(
+                                Icons.info_outline_rounded,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Tự động từ: $desc. Không thể xóa thủ công.',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                          duration: const Duration(seconds: 3),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: _kNavy,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      );
                   },
                   child: Container(
                     margin: const EdgeInsets.only(right: 6),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: _kNavy.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -800,13 +964,20 @@ class _TransactionCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Auto',
+                        const Text(
+                          'Auto',
                           style: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.w700,
-                            color: _kNavy)),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: _kNavy,
+                          ),
+                        ),
                         const SizedBox(width: 2),
-                        Icon(Icons.info_outline_rounded,
-                          size: 9, color: _kNavy.withValues(alpha: 0.5)),
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 9,
+                          color: _kNavy.withValues(alpha: 0.5),
+                        ),
                       ],
                     ),
                   ),
@@ -820,32 +991,49 @@ class _TransactionCard extends StatelessWidget {
           trailing: Text(
             '${isIncome ? '+' : '-'}${_fmtMoney(record.amount.toInt())}',
             style: TextStyle(
-              fontSize: 15, fontWeight: FontWeight.w800,
-              color: color),
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
           ),
           onTap: () {
             final orderNum = extractOrderNumber(record.description);
-            if (orderNum != null) {
-              showOrderDetailDialog(context, orderNum);
+            if (record.referenceId != null || orderNum != null) {
+              showOrderDetailDialog(
+                context,
+                orderNum ?? record.referenceId!,
+                orderId: record.referenceId,
+              );
             } else if (record.isAuto) {
               final desc = record.description ?? 'giao dịch';
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
-                ..showSnackBar(SnackBar(
-                  content: Row(children: [
-                    const Icon(Icons.info_outline_rounded,
-                      color: Colors.white, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(
-                      'Tự động từ: $desc. Không thể xóa thủ công.',
-                      style: const TextStyle(fontSize: 12))),
-                  ]),
-                  duration: const Duration(seconds: 3),
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: _kNavy,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                ));
+                ..showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Tự động từ: $desc. Không thể xóa thủ công.',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                    duration: const Duration(seconds: 3),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: _kNavy,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
             }
           },
           onLongPress: onDelete,
@@ -874,8 +1062,12 @@ class _StatTile extends StatelessWidget {
   final double value;
   final IconData icon;
   final Color color;
-  const _StatTile({required this.label, required this.value,
-    required this.icon, required this.color});
+  const _StatTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) => Expanded(
@@ -893,14 +1085,22 @@ class _StatTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
+                Text(
+                  label,
                   style: const TextStyle(
-                    fontSize: 11, color: Colors.white54,
-                    fontWeight: FontWeight.w500)),
-                Text('${_fmtShort(value)}',
+                    fontSize: 11,
+                    color: Colors.white54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  '${_fmtShort(value)}',
                   style: TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w800,
-                    color: color)),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                ),
               ],
             ),
           ),
@@ -931,16 +1131,17 @@ class _GrowthBadge extends StatelessWidget {
           Icon(
             isUp ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
             size: 12,
-            color: isUp
-                ? const Color(0xFF81C784)
-                : const Color(0xFFEF9A9A)),
+            color: isUp ? const Color(0xFF81C784) : const Color(0xFFEF9A9A),
+          ),
           const SizedBox(width: 2),
-          Text('${pct.abs().toStringAsFixed(1)}%',
+          Text(
+            '${pct.abs().toStringAsFixed(1)}%',
             style: TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w700,
-              color: isUp
-                  ? const Color(0xFF81C784)
-                  : const Color(0xFFEF9A9A))),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isUp ? const Color(0xFF81C784) : const Color(0xFFEF9A9A),
+            ),
+          ),
         ],
       ),
     );
@@ -952,8 +1153,12 @@ class _FilterChip extends StatelessWidget {
   final bool active;
   final Color color;
   final VoidCallback onTap;
-  const _FilterChip({required this.label, required this.active,
-    required this.color, required this.onTap});
+  const _FilterChip({
+    required this.label,
+    required this.active,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -967,13 +1172,16 @@ class _FilterChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: active ? color : _kBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: active ? color : _kBorder),
+        border: Border.all(color: active ? color : _kBorder),
       ),
-      child: Text(label,
+      child: Text(
+        label,
         style: TextStyle(
-          fontSize: 12, fontWeight: FontWeight.w600,
-          color: active ? _kWhite : _kMuted)),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: active ? _kWhite : _kMuted,
+        ),
+      ),
     ),
   );
 }
@@ -985,38 +1193,78 @@ class _ActionBtn extends StatefulWidget {
   final String label;
   final Color bgColor, textColor, shadowColor;
   final VoidCallback onTap;
-  const _ActionBtn({required this.label, required this.bgColor,
-    required this.textColor, required this.shadowColor, required this.onTap});
-  @override State<_ActionBtn> createState() => _ActionBtnState();
+  const _ActionBtn({
+    required this.label,
+    required this.bgColor,
+    required this.textColor,
+    required this.shadowColor,
+    required this.onTap,
+  });
+  @override
+  State<_ActionBtn> createState() => _ActionBtnState();
 }
-class _ActionBtnState extends State<_ActionBtn> with SingleTickerProviderStateMixin {
+
+class _ActionBtnState extends State<_ActionBtn>
+    with SingleTickerProviderStateMixin {
   late AnimationController _c;
   late Animation<double> _s;
-  @override void initState() { super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 100));
-    _s = Tween<double>(begin: 1.0, end: 0.93).animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut)); }
-  @override void dispose() { _c.dispose(); super.dispose(); }
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _s = Tween<double>(
+      begin: 1.0,
+      end: 0.93,
+    ).animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTapDown: (_) { HapticFeedback.lightImpact(); _c.forward(); },
-    onTapUp: (_) { _c.reverse(); widget.onTap(); },
+    onTapDown: (_) {
+      HapticFeedback.lightImpact();
+      _c.forward();
+    },
+    onTapUp: (_) {
+      _c.reverse();
+      widget.onTap();
+    },
     onTapCancel: () => _c.reverse(),
-    child: AnimatedBuilder(animation: _s,
+    child: AnimatedBuilder(
+      animation: _s,
       builder: (_, ch) => Transform.scale(scale: _s.value, child: ch),
       child: Container(
         height: 44,
         decoration: BoxDecoration(
           color: widget.bgColor,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(
-            color: widget.shadowColor.withValues(alpha: 0.45),
-            blurRadius: 10, offset: const Offset(0, 4))]),
-        child: Center(child: Text(widget.label,
-          style: TextStyle(
-            color: widget.textColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.2))),
+          boxShadow: [
+            BoxShadow(
+              color: widget.shadowColor.withValues(alpha: 0.45),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              color: widget.textColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
       ),
     ),
   );
@@ -1031,8 +1279,9 @@ class _HeaderSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const SizedBox(
     height: 130,
-    child: Center(child: CircularProgressIndicator(
-      color: Colors.white54, strokeWidth: 2)),
+    child: Center(
+      child: CircularProgressIndicator(color: Colors.white54, strokeWidth: 2),
+    ),
   );
 }
 
@@ -1047,38 +1296,50 @@ class _DateHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     String label;
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day) {
       label = 'Hôm nay';
     } else {
       final yd = now.subtract(const Duration(days: 1));
-      if (date.year == yd.year && date.month == yd.month && date.day == yd.day) {
+      if (date.year == yd.year &&
+          date.month == yd.month &&
+          date.day == yd.day) {
         label = 'Hôm qua';
       } else {
         const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-        label = '${days[date.weekday % 7]}, ${date.day.toString().padLeft(2,'0')}/${date.month.toString().padLeft(2,'0')}';
+        label =
+            '${days[date.weekday % 7]}, ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
       }
     }
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 14, 4, 6),
-      child: Row(children: [
-        Text(label,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800,
-              color: _kMuted, letterSpacing: 0.3)),
-        const SizedBox(width: 8),
-        Expanded(child: Divider(color: _kBorder, height: 1)),
-      ]),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: _kMuted,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Divider(color: _kBorder, height: 1)),
+        ],
+      ),
     );
   }
 }
-
-
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 String _fmtMoney(int v) => v.toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+  RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+  (m) => '${m[1]},',
+);
 
 String _fmtShort(double v) => fmtMoney(v);
 
@@ -1110,33 +1371,36 @@ class _FinanceRightPanel extends StatelessWidget {
                 child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
               ),
               error: (_, __) => const Text('Lỗi'),
-              data: (stats) => Column(children: [
-                _FStatRow(
-                  label: 'Thu',
-                  value: fmtMoney(stats.income),
-                  color: _kGreen,
-                ),
-                const Divider(height: 1),
-                _FStatRow(
-                  label: 'Chi',
-                  value: fmtMoney(stats.expense),
-                  color: _kRed,
-                ),
-                const Divider(height: 1),
-                _FStatRow(
-                  label: 'Lãi ròng',
-                  value: '${stats.profit >= 0 ? '+' : ''}${fmtMoney(stats.profit)}',
-                  color: stats.profit >= 0 ? _kGreen : _kRed,
-                ),
-                if (stats.profitMargin != 0) ...[
+              data: (stats) => Column(
+                children: [
+                  _FStatRow(
+                    label: 'Thu',
+                    value: fmtMoney(stats.income),
+                    color: _kGreen,
+                  ),
                   const Divider(height: 1),
                   _FStatRow(
-                    label: 'Biên LN',
-                    value: '${stats.profitMargin.toStringAsFixed(1)}%',
-                    color: _kNavy,
+                    label: 'Chi',
+                    value: fmtMoney(stats.expense),
+                    color: _kRed,
                   ),
+                  const Divider(height: 1),
+                  _FStatRow(
+                    label: 'Lãi ròng',
+                    value:
+                        '${stats.profit >= 0 ? '+' : ''}${fmtMoney(stats.profit)}',
+                    color: stats.profit >= 0 ? _kGreen : _kRed,
+                  ),
+                  if (stats.profitMargin != 0) ...[
+                    const Divider(height: 1),
+                    _FStatRow(
+                      label: 'Biên LN',
+                      value: '${stats.profitMargin.toStringAsFixed(1)}%',
+                      color: _kNavy,
+                    ),
+                  ],
                 ],
-              ]),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -1155,10 +1419,11 @@ class _FinanceRightPanel extends StatelessWidget {
                 if (records.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Text('Chưa có giao dịch',
+                    child: Text(
+                      'Chưa có giao dịch',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                        fontSize: 12, color: _kMuted)),
+                      style: GoogleFonts.outfit(fontSize: 12, color: _kMuted),
+                    ),
                   );
                 }
                 final recent = records.take(5).toList();
@@ -1167,46 +1432,62 @@ class _FinanceRightPanel extends StatelessWidget {
                     final isIncome = r.type == 'income';
                     final color = isIncome ? _kGreen : _kRed;
                     final dt = r.recordedAt.toLocal();
-                    final time = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                    final time =
+                        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(children: [
-                        Container(
-                          width: 28, height: 28,
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              isIncome
+                                  ? Icons.arrow_downward_rounded
+                                  : Icons.arrow_upward_rounded,
+                              size: 14,
+                              color: color,
+                            ),
                           ),
-                          child: Icon(
-                            isIncome ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                            size: 14, color: color),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                r.description ?? (isIncome ? 'Thu' : 'Chi'),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.outfit(
-                                  fontSize: 12, fontWeight: FontWeight.w600,
-                                  color: _kInk),
-                              ),
-                              Text(time,
-                                style: GoogleFonts.outfit(
-                                  fontSize: 10, color: _kMuted)),
-                            ],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  r.description ?? (isIncome ? 'Thu' : 'Chi'),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: _kInk,
+                                  ),
+                                ),
+                                Text(
+                                  time,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 10,
+                                    color: _kMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        Text(
-                          '${isIncome ? '+' : '-'}${fmtMoney(r.amount)}',
-                          style: GoogleFonts.outfit(
-                            fontSize: 12, fontWeight: FontWeight.w700,
-                            color: color),
-                        ),
-                      ]),
+                          Text(
+                            '${isIncome ? '+' : '-'}${fmtMoney(r.amount)}',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: color,
+                            ),
+                          ),
+                        ],
+                      ),
                     );
                   }).toList(),
                 );
@@ -1223,46 +1504,88 @@ class _FRightCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Widget child;
-  const _FRightCard({required this.title, required this.icon, required this.child});
+  const _FRightCard({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
-      boxShadow: [BoxShadow(
-        color: _kNavy.withValues(alpha: 0.07), blurRadius: 8, offset: const Offset(0, 2))],
+      boxShadow: [
+        BoxShadow(
+          color: _kNavy.withValues(alpha: 0.07),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
     ),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-        child: Row(children: [
-          Icon(icon, size: 16, color: _kNavy),
-          const SizedBox(width: 6),
-          Text(title, style: GoogleFonts.outfit(
-            fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
-        ]),
-      ),
-      const Divider(height: 1),
-      Padding(padding: const EdgeInsets.all(14), child: child),
-    ]),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: _kNavy),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: _kNavy,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Padding(padding: const EdgeInsets.all(14), child: child),
+      ],
+    ),
   );
 }
 
 class _FStatRow extends StatelessWidget {
   final String label, value;
   final Color color;
-  const _FStatRow({required this.label, required this.value, required this.color});
+  const _FStatRow({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Row(children: [
-      Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 8),
-      Expanded(child: Text(label, style: GoogleFonts.outfit(fontSize: 13, color: _kNavy))),
-      Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
-    ]),
+    child: Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.outfit(fontSize: 13, color: _kNavy),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    ),
   );
 }
 
@@ -1298,7 +1621,7 @@ class _FundTabButton extends StatelessWidget {
                     color: const Color(0xFF1E1C5E).withValues(alpha: 0.2),
                     blurRadius: 6,
                     offset: const Offset(0, 3),
-                  )
+                  ),
                 ]
               : null,
         ),
@@ -1314,4 +1637,3 @@ class _FundTabButton extends StatelessWidget {
     );
   }
 }
-

@@ -1,5 +1,11 @@
 # Quán Nhỏ POS — Kiến Trúc
 
+## Checkout V5 — bản sửa local, chưa phát hành
+
+Luồng POS: CheckoutSheet → CartNotifier → PosRepository → persistent PosSaleOperationManager → `complete_pos_sale_v1`. RPC là ranh giới commit duy nhất cho đơn/thu chi/kho/loyalty/ví/đóng phiên bếp. Flutter không được gọi `spendWallet()` hay đóng phiên sau commit. UI khóa thao tác khi đang xử lý, không dùng timeout ngoài Future làm mất kết quả; receipt dùng snapshot server; replay không tự in. Pending lưu cả intent trước RPC, giữ đến khi thu ngân xác nhận kết quả. Nút Đối soát trên POS hoạt động kể cả giỏ trống sau restart; chỉ gửi lại nguyên request đã lưu khi người dùng đồng ý. Lỗi từ chối trước commit mới được giải phóng key. Khóa cũ thiếu payload chỉ reconcile, không được xóa nếu server chưa có kết quả.
+
+Đây là mã nguồn đang kiểm thử, không phải xác nhận migration đã apply. Runtime PostgreSQL và kiểm thử Windows/máy in thực tế vẫn là release gate.
+
 ## QR Order — ranh giới kiến trúc mục tiêu
 
 - QR Order dùng hai public channel theo cửa hàng: `TABLE_SHARED` và `COUNTER`; không tạo channel/QR riêng từng bàn.

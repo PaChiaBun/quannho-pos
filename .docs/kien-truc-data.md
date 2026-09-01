@@ -1,5 +1,16 @@
 # Quán Nhỏ POS — Kiến Trúc Data
 
+## Checkout V5 — source đang kiểm thử, chưa deploy
+
+Cập nhật rà soát 02/09: `finance_records.checkout_reference_id` được trigger suy ra chỉ khi reference là order/settlement cùng store; unique trên `(store_id, checkout_reference_id)` không chặn nạp ví lặp dùng customer ID. `guard_ban_item_financial_change_v5` serialize thay đổi món với khóa phiên, cấm sửa tiền/hủy sau thanh toán nhưng vẫn cho KDS cập nhật tiến độ. POS truyền `p_kitchen_session_ids`; RPC khóa các phiên, ghi liên kết order và đóng phiên cùng transaction. `reconcile_pos_sale_v1` đọc kết quả theo khóa cho pending phiên bản cũ. PostgreSQL 17.11 local đã qua gate hai database fixture; chưa đối chiếu đầy đủ schema/RLS production.
+
+- `20260902_atomic_settlement_v5.sql` bổ sung settlement/idempotency POS và khóa giao dịch theo cửa hàng.
+- `complete_pos_sale_v1` ghi order/items/finance/stock/loyalty và trừ ví trong cùng transaction. Customer được khóa `FOR UPDATE`; replay trả snapshot ví đã dùng, không trừ lại.
+- `pos_idempotency_operations.wallet_real_used/wallet_bonus_used` lưu giá trị canonical; `finance_records.fund_type='wallet'` tách khỏi cash/bank. Không coi tiền ví là tiền mặt mới thu.
+- `p_expected_total` đối chiếu số tiền nhân viên xác nhận trước ghi dữ liệu. Giá/điểm/voucher cuối cùng do server xác định.
+- SharedPreferences có thêm khóa checkout pending (metadata phục hồi, không phải database offline). POS chưa rõ kết quả phải giữ key và không cho đổi intent.
+- Cần chạy PostgreSQL runtime/concurrency gate và kiểm tra schema production trước phát hành. Xem `.docs/duplicate-bill-settlement-v5.md` và nhật ký ngày 2026-09-02.
+
 ## QR Order — quan hệ dữ liệu mục tiêu
 
 ```text

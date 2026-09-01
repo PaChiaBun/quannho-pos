@@ -3858,6 +3858,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
 
         final group = tempGroups.putIfAbsent(code, () => []);
         group.add(_VoucherUseRow(
+          orderId: o['id'] as String,
           orderNumber: orderNumber,
           createdAt: createdAt,
           discount: discount,
@@ -4173,7 +4174,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                         Expanded(
                           flex: 3,
                           child: InkWell(
-                            onTap: () => showOrderDetailDialog(context, row.orderNumber),
+                            onTap: () => showOrderDetailDialog(context, row.orderNumber, orderId: row.orderId),
                             borderRadius: BorderRadius.circular(4),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 2),
@@ -4239,12 +4240,14 @@ class _VoucherGroup {
 }
 
 class _VoucherUseRow {
+  final String orderId;
   final String orderNumber;
   final DateTime createdAt;
   final double discount;
   final String cashierName;
 
   _VoucherUseRow({
+    required this.orderId,
     required this.orderNumber,
     required this.createdAt,
     required this.discount,
