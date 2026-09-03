@@ -40,7 +40,25 @@ Quy tắc nghiệp vụ lõi:
 ### Data, quyền và audit
 
 - `staff_members` là bảng nhân viên chuẩn; tra cứu tên theo `staff_members.id → name`.
-- **Lego Modules (`store_roles.modules`) là nguồn sự thật duy nhất cho phân quyền vai trò**: Mọi quyền hành động (bao gồm thanh toán hoá đơn `pos.checkout`) được tự động suy ra trực tiếp từ danh sách Modules của vai trò (`pos`, `ban`, `kitchen`, `kho`, v.v.) hoặc vai trò chuẩn (`owner`, `manager`, `cashier`); tuyệt đối không bắt buộc phải tạo hay phụ thuộc vào bản ghi phụ trong `app_settings` để tránh lỗi khóa quyền nhân viên/thu ngân mới.
+- **Lego Modules (`store_roles.modules`) là nguồn sự thật duy nhất cho phân quyền vai trò (Single Source of Truth)**:
+  1. **Không tạo hay phụ thuộc bảng phụ `app_settings`**: Phân quyền nhân viên được cấu hình trực tiếp bằng việc bật/tắt các Lego Modules trong vai trò (`store_roles.modules`). Client và Server tuyệt đối không bắt buộc phải có bản ghi cấu hình `app_settings` (`action_perms_*`) thì mới cho phép thao tác.
+  2. **Cơ chế suy diễn quyền hành động tự động (`deriveActionPermsFromModules`)**:
+     - `pos` $\rightarrow$ Tự động cấp các quyền: `pos.checkout`, `pos.cancel_bill`, `pos.apply_discount`, `pos.edit_price`, `pos.view_history`.
+     - `ban` $\rightarrow$ Tự động cấp: `ban.manage_structure`, `pos.checkout`.
+     - `kho` / `kho_pro` $\rightarrow$ Tự động cấp: `kho.edit_quantity`, `kho.delete_item`.
+     - `finance` $\rightarrow$ Tự động cấp: `finance.view_all`.
+     - `report` $\rightarrow$ Tự động cấp: `report.view`.
+     - `tinhluong` $\rightarrow$ Tự động cấp: `tinhluong.view_all`, `tinhluong.manage_config`, `tinhluong.approve_payroll`, `tinhluong.srm_settings`, `tinhluong.srm_review`.
+     - `bill_printer` $\rightarrow$ Tự động cấp: `printer.manage_server`.
+  3. **Vai trò chuẩn & Fail-safe mặc nhiên**:
+     - Vai trò `owner` / `manager` (hoặc `is_owner = true`): Có toàn quyền tất cả action permissions.
+     - Vai trò `cashier` hoặc tên vai trò có chứa `"thu ngân"`, `"quầy"`: Mặc nhiên có quyền thanh toán `pos.checkout`, xem lịch sử `pos.view_history`, giảm giá `pos.apply_discount`.
+  4. **Quy chuẩn Server RPC xác thực quyền (`verify_staff_qr_membership_v4`, `settle_ban_session_v5`)**:
+     - Xác thực nhận diện user qua 4 tầng: `auth.uid()`, `request.jwt.claim.sub`, `request.headers -> x-user-id`, `request.header.x-user-id`.
+     - Kiểm tra quyền ưu tiên: `is_owner OR role IN ('owner', 'manager', 'cashier', 'admin') OR store_roles.modules ? 'pos'/'ban' OR app_settings fallback`.
+     - `GRANT EXECUTE` bắt buộc cho cả 3 vai trò: `anon, authenticated, service_role`.
+  5. **Quy chuẩn RLS & SELECT cho Thống kê / Báo cáo / Dashboard**:
+     - Các bảng giao dịch: `payment_settlements`, `ban_session_orders`, `ban_session_order_items`, `finance_records`, `orders`, `order_items` bắt buộc phải được `GRANT SELECT` cho `anon, authenticated, service_role` và tạo chính sách RLS `CREATE POLICY ... FOR ALL TO public USING (true)` để các stream báo cáo, biểu đồ doanh thu theo giờ và doanh thu thu ngân không bị nghẽn (42501 Unauthorized) làm xoay vô tận màn hình.
 - `app_logs` dùng cho lỗi/hoạt động; `void_audit_logs` cho hủy món/bill; `coupons` cho khuyến mãi. Khi có sự cố, ưu tiên log/stack trace và dữ kiện thiết bị, không đoán mò.
 - Thu chi phải phân biệt tiền mặt/tiền gửi, hoàn đúng nguồn khi rollback và xuất báo cáo có tồn đầu kỳ/running balance khi nghiệp vụ yêu cầu.
 - Dọn dữ liệu chỉ khi được phép và phải xét FK theo luồng `kitchen_tickets → ban_sessions → orders → finance_records → stock_movements`; không dùng chuỗi này như lệnh xóa tự động.

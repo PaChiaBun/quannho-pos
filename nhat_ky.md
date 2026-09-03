@@ -5,27 +5,36 @@
 
 ---
 
-## 2026-09-03 — Thống nhất Phân quyền Lego Modules & Sửa dứt điểm Lỗi Thu ngân mới không thể Thanh toán
+## 2026-09-03 — Thống nhất Phân quyền Lego Modules, Sửa Lỗi In Tên Bàn, Nâng cấp Dialog Thanh Toán & Fix Lỗi Báo Cáo Xoay
 
 ### ✅ Hoàn thành
 
 - **Quy về 1 nguồn sự thật duy nhất (Single Source of Truth): Lego Modules (`store_roles.modules`)**:
   - Loại bỏ hoàn toàn sự phụ thuộc vào bảng phụ `app_settings` (`action_perms_*`) khi cấp quyền chức năng.
-  - Bổ sung `StaffService.deriveActionPermsFromModules()`: Tự động suy ra toàn bộ action permissions tương ứng với Modules mà vai trò sở hữu.
-  - Bất kỳ vai trò nào có module `pos` (Bán hàng) hoặc `ban` (Quản lý bàn), hoặc vai trò chuẩn (`owner`, `manager`, `cashier`, `"Thu ngân"`) đều **mặc nhiên 100% có quyền Thanh toán hoá đơn (`pos.checkout`)**.
+  - Bổ sung `StaffService.deriveActionPermsFromModules()`: Tự động suy ra toàn bộ action permissions tương ứng với Modules mà vai trò sở hữu (`pos` $\rightarrow$ checkout, discount, edit_price, cancel_bill, view_history; `ban` $\rightarrow$ manage_structure, checkout; `kho` $\rightarrow$ edit_qty, delete_item; `finance` $\rightarrow$ view_all; `report` $\rightarrow$ view; `tinhluong` $\rightarrow$ payroll perms; `bill_printer` $\rightarrow$ printer_server).
+  - Bất kỳ vai trò nào có module `pos` hoặc `ban`, hoặc vai trò chuẩn (`owner`, `manager`, `cashier`, `"Thu ngân"`, `"Quầy"`) đều **mặc nhiên 100% có quyền Thanh toán hoá đơn (`pos.checkout`)**.
   - Không còn xảy ra tình trạng nhân viên mới hoặc vai trò mới tạo bị chặn thanh toán do thiếu row `action_perms_...` trong `app_settings`.
 - **Cập nhật Client (`ban_screen.dart` & `permission_provider.dart`)**:
   - `userActionPermsProvider` tự động tải modules từ `store_roles` và suy luận đầy đủ quyền.
   - `_openCheckout` trong `ban_screen.dart` bổ sung fail-safe check vai trò (`owner`, `manager`, `cashier`).
-- **Cập nhật Database RPC (`verify_staff_qr_membership_v4`)**:
+- **Cập nhật Database RPC (`verify_staff_qr_membership_v4`, `settle_ban_session_v5`)**:
   - Trong `20260901_settlement_v5_prerequisites.sql`: Nâng cấp kiểm tra quyền checkout: ưu tiên vai trò chuẩn (`owner`, `manager`, `cashier`), kiểm tra modules `pos`/`ban` từ `store_roles`, `staff_members`, và fallback `app_settings` cũ.
+  - Hỗ trợ trích xuất `user_id` qua 4 tầng: `auth.uid()`, `request.jwt.claim.sub`, PostgREST header `x-user-id` và `x-store-id`.
+  - Cấp `GRANT EXECUTE` cho `anon, authenticated, service_role` trên tất cả settlement & auth RPCs.
 - **Fix `search_path` cho Extension `pgcrypto`**:
-  - Khi triển khai lên Supabase Production, extension `pgcrypto` nằm trong schema `extensions`.
-  - Cập nhật `SET search_path = public, extensions, pg_temp` cho toàn bộ các RPC auth (`verify_user_login_v4`, `verify_password_hash_v4`, v.v.) để giải quyết triệt để lỗi `"Dịch vụ đăng nhập an toàn chưa sẵn sàng"`. Đã kiểm tra thành công trên Production DB và API REST.
-- **Cập nhật Kiểm thử & Workflow**:
-  - Thêm unit test cho `StaffService.deriveActionPermsFromModules` trong `test/core/services/permission_parser_test.dart`.
-  - Cập nhật test ma trận quyền trong `test/core/qr_order_v4_test.dart`.
-  - Cập nhật quy chuẩn kiến trúc phân quyền trong `.agents/workflows/qn.md`.
+  - Cập nhật `SET search_path = public, extensions, pg_temp` cho toàn bộ các RPC auth (`verify_user_login_v4`, `verify_password_hash_v4`, v.v.) giải quyết triệt để lỗi `"Dịch vụ đăng nhập an toàn chưa sẵn sàng"` trên máy Windows.
+- **Sửa Lỗi In Tên Bàn Thành "Mang về" Khi Thanh Toán Bàn**:
+  - RPC `settle_ban_session_v5` khi tạo canonical order gán đúng `source_type = 'ban'` và `source_id = v_session.table_id` (thay vì session UUID).
+  - Nâng cấp `printer_settings_provider.dart`: hỗ trợ nhận diện cả `ban`, `ban_manual`, `ban_session` và tự động truy ngược `session_id -> table_id -> table_name`, ưu tiên `name` ('A 04', 'A 05') hơn `label` trống. Hóa đơn in ra giấy hiển thị chuẩn xác tên bàn.
+- **Thiết kế lại Hộp thoại "Thanh toán thành công" (UI/UX)**:
+  - Thay thế `AlertDialog` mặc định bằng `Dialog` card bo góc 24px hiện đại: Icon tích xanh 72px nền mềm, tiêu đề Outfit 22px đậm, tag Tên bàn rõ ràng, khung số tiền thanh toán màu xanh ngọc nổi bật với số tiền **28px siêu đậm (w900)**, và nút **"ĐÓNG" full-width cao 50px màu cam thương hiệu** cực kỳ dễ bấm.
+- **Sửa dứt điểm Lỗi Module Báo cáo / Doanh thu / Thu chi Cứ Xoay và Hiện 0đ**:
+  - **Nguyên nhân:** Bảng `payment_settlements` bật RLS nhưng thiếu `GRANT SELECT` cho vai trò `anon` và thiếu policy, khiến câu truy vấn của `_loadCanonicalPayments` bị lỗi `42501 Unauthorized`, làm treo stream `watchHourlyRevenue`.
+  - **Khắc phục:** Đã cấp `GRANT SELECT` và tạo `POLICY` cho `payment_settlements`, `ban_session_orders`, `ban_session_order_items`, `qr_audit_logs`, `qr_coupon_redemptions` cho `anon, authenticated, service_role`.
+  - **Xác minh:** Kiểm tra REST API trả về 200 OK với đầy đủ dữ liệu thanh toán các bàn, màn hình Báo cáo và Dashboard tải tức thì không còn bị xoay.
+- **Đồng bộ Kiến trúc & Đồ thị Mã nguồn**:
+  - Cập nhật chi tiết đặc tả phân quyền Lego Modules 2 lớp vào `.agents/workflows/qn.md`.
+  - Đồng bộ và cập nhật 100% CodeGraph (`codegraph sync .`) và Graphify (`graphify update .`).
 
 ---
 
