@@ -1738,19 +1738,19 @@ BEGIN
   IF v_result IS NULL THEN RETURN jsonb_build_object('success', false, 'error_code', 'RESULT_NOT_FOUND'); END IF;
   RETURN jsonb_build_object('success', true, 'data', v_result);
 END $$;
-REVOKE ALL ON FUNCTION public.reconcile_pos_sale_v1(uuid, text) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.reconcile_pos_sale_v1(uuid, text) TO authenticated;
+REVOKE ALL ON FUNCTION public.reconcile_pos_sale_v1(uuid, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.reconcile_pos_sale_v1(uuid, text) TO anon, authenticated, service_role;
 
-REVOKE ALL ON FUNCTION public.generate_daily_order_number_v1(uuid, text, text) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.generate_daily_order_number_v1(uuid, text, text) TO authenticated;
+REVOKE ALL ON FUNCTION public.generate_daily_order_number_v1(uuid, text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.generate_daily_order_number_v1(uuid, text, text) TO anon, authenticated, service_role;
 
-REVOKE ALL ON FUNCTION public.reconcile_ban_settlement_v1(uuid, uuid, text) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.reconcile_ban_settlement_v1(uuid, uuid, text) TO authenticated;
+REVOKE ALL ON FUNCTION public.reconcile_ban_settlement_v1(uuid, uuid, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.reconcile_ban_settlement_v1(uuid, uuid, text) TO anon, authenticated, service_role;
 
-REVOKE ALL ON FUNCTION public.settle_ban_session_v5(uuid, uuid, text, text, uuid, integer, numeric, text, numeric) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.settle_ban_session_v5(uuid, uuid, text, text, uuid, integer, numeric, text, numeric) TO authenticated;
+REVOKE ALL ON FUNCTION public.settle_ban_session_v5(uuid, uuid, text, text, uuid, integer, numeric, text, numeric) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.settle_ban_session_v5(uuid, uuid, text, text, uuid, integer, numeric, text, numeric) TO anon, authenticated, service_role;
 
-REVOKE ALL ON FUNCTION public.complete_pos_sale_v1(uuid, text, jsonb, text, uuid, numeric, numeric, text, text, text, text, numeric, uuid[]) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.complete_pos_sale_v1(uuid, text, jsonb, text, uuid, numeric, numeric, text, text, text, text, numeric, uuid[]) TO authenticated;
+REVOKE ALL ON FUNCTION public.complete_pos_sale_v1(uuid, text, jsonb, text, uuid, numeric, numeric, text, text, text, text, numeric, uuid[]) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.complete_pos_sale_v1(uuid, text, jsonb, text, uuid, numeric, numeric, text, text, text, text, numeric, uuid[]) TO anon, authenticated, service_role;
 
 COMMIT;

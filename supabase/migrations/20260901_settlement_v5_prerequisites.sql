@@ -138,6 +138,20 @@ BEGIN
       v_uid := NULL;
     END;
   END IF;
+  IF v_uid IS NULL THEN
+    BEGIN
+      v_uid := NULLIF((current_setting('request.headers', true)::jsonb)->>'x-user-id', '')::uuid;
+    EXCEPTION WHEN OTHERS THEN
+      v_uid := NULL;
+    END;
+  END IF;
+  IF v_uid IS NULL THEN
+    BEGIN
+      v_uid := NULLIF(current_setting('request.header.x-user-id', true), '')::uuid;
+    EXCEPTION WHEN OTHERS THEN
+      v_uid := NULL;
+    END;
+  END IF;
   IF v_uid IS NULL OR p_store_id IS NULL THEN
     RAISE EXCEPTION 'PERMISSION_DENIED: authenticated store context is required'
       USING ERRCODE = '42501';
@@ -261,8 +275,8 @@ GRANT SELECT ON public.qr_audit_logs, public.ban_session_orders,
   public.qr_coupon_redemptions TO authenticated;
 
 REVOKE ALL ON FUNCTION public.verify_staff_qr_membership_v4(uuid, boolean, boolean)
-  FROM PUBLIC, anon;
+  FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.verify_staff_qr_membership_v4(uuid, boolean, boolean)
-  TO authenticated, service_role;
+  TO anon, authenticated, service_role;
 
 COMMIT;

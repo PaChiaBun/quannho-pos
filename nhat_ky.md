@@ -19,6 +19,9 @@
   - `_openCheckout` trong `ban_screen.dart` bổ sung fail-safe check vai trò (`owner`, `manager`, `cashier`).
 - **Cập nhật Database RPC (`verify_staff_qr_membership_v4`)**:
   - Trong `20260901_settlement_v5_prerequisites.sql`: Nâng cấp kiểm tra quyền checkout: ưu tiên vai trò chuẩn (`owner`, `manager`, `cashier`), kiểm tra modules `pos`/`ban` từ `store_roles`, `staff_members`, và fallback `app_settings` cũ.
+- **Fix `search_path` cho Extension `pgcrypto`**:
+  - Khi triển khai lên Supabase Production, extension `pgcrypto` nằm trong schema `extensions`.
+  - Cập nhật `SET search_path = public, extensions, pg_temp` cho toàn bộ các RPC auth (`verify_user_login_v4`, `verify_password_hash_v4`, v.v.) để giải quyết triệt để lỗi `"Dịch vụ đăng nhập an toàn chưa sẵn sàng"`. Đã kiểm tra thành công trên Production DB và API REST.
 - **Cập nhật Kiểm thử & Workflow**:
   - Thêm unit test cho `StaffService.deriveActionPermsFromModules` trong `test/core/services/permission_parser_test.dart`.
   - Cập nhật test ma trận quyền trong `test/core/qr_order_v4_test.dart`.
