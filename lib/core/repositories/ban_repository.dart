@@ -1004,20 +1004,22 @@ class BanRepository {
         'error_code': 'RPC_ERROR',
         'message': 'Quyết toán phiên bàn thất bại',
       };
-    } catch (e) {
-      debugPrint('[BanRepository] settleBanSession error: $e');
+    } catch (e, st) {
+      AppLogger.error(
+        'checkout',
+        'settle_ban_session_v5 failed before a confirmed response',
+        e,
+        st,
+      );
       final reconciled = await reconcileBanSettlement(
         sessionId: sessionId,
         storeId: storeId,
         idempotencyKey: idempotencyKey,
       );
       if (reconciled['success'] == true) return reconciled;
-      return {
-        'success': false,
-        'error_code': 'NETWORK_UNCERTAIN',
-        'message':
-            'Chưa xác định được trạng thái thanh toán. Không bấm lại với nội dung khác; hãy thử lại để hệ thống đối soát.',
-      };
+
+      final classified = classifyBanSettlementTransportFailure(e);
+      return {'success': false, ...classified};
     }
   }
 
@@ -1045,6 +1047,51 @@ class BanRepository {
       'message': 'Chưa tìm thấy kết quả quyết toán đã commit.',
     };
   }
+}
+
+/// Phân loại lỗi transport/schema sau khi reconcile không tìm thấy kết quả.
+/// Lỗi không nhận diện được luôn fail-closed thành NETWORK_UNCERTAIN để client
+/// giữ nguyên idempotency key và không tạo một ý định thanh toán mới.
+Map<String, dynamic> classifyBanSettlementTransportFailure(Object error) {
+  final code = error is PostgrestException
+      ? (error.code ?? '').toUpperCase()
+      : '';
+  final message = error.toString().toLowerCase();
+
+  final isMissingOrDriftedSchema =
+      code == 'PGRST202' ||
+      code == '42883' ||
+      code == '42P01' ||
+      code == '42703' ||
+      message.contains('could not find the function') ||
+      message.contains('schema cache') ||
+      (message.contains('settle_ban_session_v5') &&
+          message.contains('does not exist'));
+  if (isMissingOrDriftedSchema) {
+    return {
+      'error_code': 'SERVER_SCHEMA_OUTDATED',
+      'message':
+          'Máy chủ thanh toán chưa được cập nhật đồng bộ với ứng dụng. Chưa ghi nhận thanh toán; vui lòng báo quản lý kỹ thuật.',
+    };
+  }
+
+  final isPermissionFailure =
+      code == '42501' ||
+      message.contains('pos_checkout_permission_denied') ||
+      message.contains('staff_membership_required') ||
+      message.contains('permission denied');
+  if (isPermissionFailure) {
+    return {
+      'error_code': 'PERMISSION_DENIED',
+      'message': 'Tài khoản hiện tại không có quyền thanh toán tại quán này.',
+    };
+  }
+
+  return {
+    'error_code': 'NETWORK_UNCERTAIN',
+    'message':
+        'Chưa xác định được trạng thái thanh toán. Không đổi nội dung thanh toán; hãy thử lại để hệ thống đối soát.',
+  };
 }
 
 int _toMs(dynamic val) {

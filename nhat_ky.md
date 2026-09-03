@@ -5,6 +5,32 @@
 
 ---
 
+## 2026-09-03 — Chẩn đoán lỗi thanh toán bàn A10 sau khi cài Windows
+
+### ✅ Hoàn thành
+
+- Đối chiếu luồng Bàn → `settle_ban_session_v5` và phát hiện exception RPC bị gom sai thành `NETWORK_UNCERTAIN`; lỗi cuối chỉ `debugPrint` nên module Nhật ký hệ thống không có đủ bằng chứng.
+- Phân loại rõ lỗi schema/RPC production chưa đồng bộ (`SERVER_SCHEMA_OUTDATED`), lỗi quyền (`PERMISSION_DENIED`) và lỗi transport thật sự chưa xác định (`NETWORK_UNCERTAIN`).
+- Ghi đầy đủ lỗi checkout vào `AppLogger` với bàn, session, phương thức, mã lỗi và stack trace để cả log cục bộ lẫn `app_logs` có thể truy vết.
+- Chỉ giữ persistent idempotency key khi trạng thái còn không chắc chắn/đang xử lý; structured rejection trước commit được kết thúc an toàn. Không tạo fallback checkout cũ và không làm yếu cơ chế chống bill trùng.
+- Bổ sung 3 test hồi quy cho missing RPC, permission failure và transport uncertainty.
+
+### Kiểm tra
+
+- Bộ test mục tiêu và hồi quy thanh toán: **90 passed, 0 failed**.
+- Full Flutter suite: **287 passed, 8 skipped, 0 failed**; các test skip cần staging thật.
+- Python static/behavior/schema/runner: **68 passed, 0 failed**.
+- PostgreSQL 17 runtime gate trên hai database cô lập có/không coupon: **PASS hoàn toàn**, gồm SQL integration, 50-worker concurrency, replay, POS/Bàn race và cleanup.
+- Trong vòng runtime phát hiện runner trực tiếp thiếu repo root trong `sys.path`; đã sửa và thêm unit test khóa lỗi, tránh gate dừng trước concurrency.
+- Analyzer toàn dự án không có compile error; còn 676 warning/info legacy. Analyzer ba file Dart trọng yếu còn 115 warning/info legacy, không có error mới.
+- `git diff --check` và Python compile: đạt; CodeGraph đã đồng bộ và up to date. PostgreSQL test đã tắt, port loopback không còn lắng nghe.
+
+### ➡️ Tiếp theo
+
+- Chưa deploy migration, chưa build/cài lại Windows và chưa sửa dữ liệu bàn A10.
+- Source và runtime gate đã đủ điều kiện để tạo **bản Windows kiểm thử nội bộ**. Sau khi cài, thử A10 đúng một lần và đọc log tag `checkout` để xác định mã lỗi production.
+- Nếu hiện `SERVER_SCHEMA_OUTDATED`, phải kiểm tra/apply migration V5 trên staging rồi production theo gate; không fallback về checkout legacy.
+
 ## 2026-08-27 — Chốt lại kiến trúc QR theo quyết định Chủ quán
 
 ### ✅ Hoàn thành

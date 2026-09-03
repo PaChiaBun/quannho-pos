@@ -59,6 +59,14 @@ import unittest
 import threading
 from pathlib import Path
 
+# Runner được gọi trực tiếp bằng đường dẫn file từ repo root. Khi đó Python chỉ
+# thêm test/backend vào sys.path, nên import `test.backend...` sẽ thất bại đúng
+# lúc bắt đầu concurrency gate. Gắn repo root theo vị trí file, không phụ thuộc
+# current working directory hay PYTHONPATH của máy chạy.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 BASE_CANONICAL_SCHEMA_SQL = """
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 

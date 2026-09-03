@@ -32,11 +32,7 @@ import '../core/theme/app_colors.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
 import '../modules/bill_printer/screens/bill_preview_screen.dart'
-    show
-        BillData,
-        BillItem,
-        BillType,
-        StationPrinterDispatcher;
+    show BillData, BillItem, BillType, StationPrinterDispatcher;
 import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import 'kitchen_screen.dart' show kitchenReadyStreamProvider;
 import '../core/utils/responsive.dart';
@@ -3338,6 +3334,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
       if (response['success'] != true) {
         final errorCode = response['error_code'] as String?;
+        final serverMessage = response['message'] as String?;
+        AppLogger.warning(
+          'checkout',
+          'Thanh toán bàn ${widget.table.label} bị từ chối; '
+              'session=${widget.session.id}; method=$payMethod; '
+              'code=${errorCode ?? 'UNKNOWN'}; '
+              'message=${serverMessage ?? 'Không có thông báo từ máy chủ'}',
+        );
         if (errorCode == QrErrorCode.financialQuoteChanged) {
           if (!allowQuoteReconfirmation) {
             await _settlementOpManager.clearPersistent(
@@ -3385,10 +3389,18 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           return;
         }
 
-        final message = QrErrorCode.toUserMessage(
-          errorCode,
-          response['message'] as String?,
-        );
+        final message = QrErrorCode.toUserMessage(errorCode, serverMessage);
+
+        // NETWORK_UNCERTAIN có thể đã commit nhưng response bị mất: phải giữ
+        // key để lần thử lại chỉ reconcile/replay. Các lỗi còn lại đã xác định
+        // không commit nên có thể kết thúc operation hiện tại an toàn.
+        if (errorCode != QrErrorCode.networkUncertain &&
+            errorCode != QrErrorCode.checkoutInProgress) {
+          await _settlementOpManager.clearPersistent(
+            storeId: storeId,
+            sessionId: widget.session.id,
+          );
+        }
         throw Exception(message);
       }
 
@@ -3508,7 +3520,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       );
       if (mounted) Navigator.of(context).pop();
     } catch (e, st) {
-      debugPrint('[Checkout V5] $e\n$st');
+      AppLogger.error(
+        'checkout',
+        'Thanh toán bàn ${widget.table.label} thất bại; '
+            'session=${widget.session.id}; method=$payMethod',
+        e,
+        st,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

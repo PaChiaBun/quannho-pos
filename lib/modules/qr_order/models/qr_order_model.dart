@@ -37,6 +37,9 @@ class QrErrorCode {
   static const String invalidPaymentMethod = 'INVALID_PAYMENT_METHOD';
   static const String sessionAlreadySettled = 'SESSION_ALREADY_SETTLED';
   static const String invalidSessionItems = 'INVALID_SESSION_ITEMS';
+  static const String serverSchemaOutdated = 'SERVER_SCHEMA_OUTDATED';
+  static const String networkUncertain = 'NETWORK_UNCERTAIN';
+  static const String checkoutInProgress = 'CHECKOUT_IN_PROGRESS';
 
   static String toUserMessage(String? code, [String? fallback]) {
     switch (code) {
@@ -107,6 +110,12 @@ class QrErrorCode {
         return 'Phiên bàn này đã được thanh toán quyết toán trước đó.';
       case invalidSessionItems:
         return 'Phiên bàn không có món ăn để thanh toán.';
+      case serverSchemaOutdated:
+        return 'Máy chủ thanh toán chưa được cập nhật đồng bộ với ứng dụng. Chưa ghi nhận thanh toán; vui lòng báo quản lý kỹ thuật.';
+      case networkUncertain:
+        return 'Chưa xác định được trạng thái thanh toán. Không đổi nội dung thanh toán; hãy thử lại để hệ thống đối soát.';
+      case checkoutInProgress:
+        return 'Bàn này đang được xử lý thanh toán. Vui lòng chờ.';
       default:
         return fallback ?? 'Đã xảy ra lỗi. Vui lòng thử lại!';
     }

@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:quannho_pos/core/repositories/ban_repository.dart';
+import 'package:quannho_pos/modules/qr_order/models/qr_order_model.dart';
 import 'package:quannho_pos/modules/qr_order/services/settlement_operation_manager.dart';
 
 class _MemorySettlementStorage implements SettlementOperationStorage {
@@ -20,6 +22,35 @@ class _MemorySettlementStorage implements SettlementOperationStorage {
 }
 
 void main() {
+  group('Settlement V5 error classification', () {
+    test('missing RPC is reported as server schema mismatch', () {
+      final result = classifyBanSettlementTransportFailure(
+        Exception(
+          'PGRST202 Could not find the function public.settle_ban_session_v5 in the schema cache',
+        ),
+      );
+
+      expect(result['error_code'], QrErrorCode.serverSchemaOutdated);
+      expect(result['message'], contains('chưa được cập nhật'));
+    });
+
+    test('permission failure is not mislabeled as a network timeout', () {
+      final result = classifyBanSettlementTransportFailure(
+        Exception('POS_CHECKOUT_PERMISSION_DENIED'),
+      );
+
+      expect(result['error_code'], QrErrorCode.permissionDenied);
+    });
+
+    test('unknown transport failure remains fail-closed and uncertain', () {
+      final result = classifyBanSettlementTransportFailure(
+        Exception('connection reset after request'),
+      );
+
+      expect(result['error_code'], QrErrorCode.networkUncertain);
+    });
+  });
+
   group('Settlement V5 persistent idempotency', () {
     test('restart with same store/session/intent reuses key', () async {
       final storage = _MemorySettlementStorage();

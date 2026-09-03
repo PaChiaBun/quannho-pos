@@ -24,9 +24,11 @@ import os
 import sys
 import unittest
 import urllib.parse
+from pathlib import Path
 from unittest.mock import patch, MagicMock, call
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+RUNNER_PATH = Path(__file__).with_name("run_phase1_real_pg_gate.py")
 from test.backend.run_phase1_real_pg_gate import (
     sanitize_url,
     validate_and_parse_base_url,
@@ -37,6 +39,14 @@ from test.backend.run_phase1_real_pg_gate import (
 )
 
 class TestPhase1GateRunnerUnit(unittest.TestCase):
+    def test_direct_runner_bootstraps_repo_root_for_concurrency_imports(self):
+        source = RUNNER_PATH.read_text(encoding="utf-8")
+        self.assertIn(
+            'REPO_ROOT = Path(__file__).resolve().parents[2]',
+            source,
+        )
+        self.assertIn('sys.path.insert(0, str(REPO_ROOT))', source)
+
     def test_01_sanitized_target_hides_both_username_and_password(self):
         raw = "postgresql://my_cashier_user:super_secret_password@127.0.0.1:5432/quannho_test?sslmode=require&application_name=pos"
         sanitized = sanitize_url(raw)
