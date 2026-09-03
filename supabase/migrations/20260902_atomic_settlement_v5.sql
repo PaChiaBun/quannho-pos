@@ -37,7 +37,7 @@ CREATE OR REPLACE FUNCTION public.generate_daily_order_number_v1(
 RETURNS text
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public
+SET search_path = public, extensions, pg_catalog, pg_temp
 AS $$
 DECLARE
   v_staff record;
@@ -167,7 +167,7 @@ END $$;
 -- canonical checkout reference participates in the uniqueness constraint.
 ALTER TABLE public.finance_records ADD COLUMN IF NOT EXISTS checkout_reference_id uuid;
 CREATE OR REPLACE FUNCTION public.classify_checkout_income_v1()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_catalog, pg_temp AS $$
 BEGIN
   NEW.checkout_reference_id := NULL;
   IF NEW.is_auto AND NEW.type = 'income' AND (
@@ -213,7 +213,7 @@ WHERE checkout_reference_id IS NOT NULL;
 -- Serialize financial item changes with checkout's parent-session lock.
 -- Kitchen progress after payment remains allowed; cancel/quantity/price do not.
 CREATE OR REPLACE FUNCTION public.guard_ban_item_financial_change_v5()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_catalog, pg_temp AS $$
 DECLARE v_status text; v_store uuid;
 BEGIN
   IF TG_OP = 'UPDATE' THEN
@@ -250,7 +250,7 @@ CREATE OR REPLACE FUNCTION public.reconcile_ban_settlement_v1(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public
+SET search_path = public, extensions, pg_catalog, pg_temp
 AS $$
 DECLARE
   v_staff record;
@@ -384,7 +384,7 @@ CREATE OR REPLACE FUNCTION public.settle_ban_session_v5(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public
+SET search_path = public, extensions, pg_catalog, pg_temp
 AS $$
 DECLARE
   v_staff record;
@@ -1208,7 +1208,7 @@ CREATE OR REPLACE FUNCTION public.complete_pos_sale_v1(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public
+SET search_path = public, extensions, pg_catalog, pg_temp
 AS $$
 DECLARE
   v_staff record;
@@ -1723,7 +1723,7 @@ $$;
 
 -- ── 9. GRANTS VÀ PHÂN QUYỀN CHẶT CHẼ ──────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.reconcile_pos_sale_v1(p_store_id uuid, p_idempotency_key text)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_catalog, pg_temp AS $$
 DECLARE v_result jsonb;
 BEGIN
   PERFORM public.verify_staff_qr_membership_v4(p_store_id, p_require_checkout => true);

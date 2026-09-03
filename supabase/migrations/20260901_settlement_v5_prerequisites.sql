@@ -116,7 +116,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public
+SET search_path = public, extensions, pg_catalog, pg_temp
 AS $$
 DECLARE
   v_uid uuid;

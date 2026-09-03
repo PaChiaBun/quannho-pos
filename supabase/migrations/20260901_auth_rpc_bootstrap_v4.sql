@@ -87,7 +87,7 @@ CREATE OR REPLACE FUNCTION public.consume_onboarding_exchange_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_rows integer;
@@ -143,7 +143,7 @@ RETURNS text
 LANGUAGE sql
 IMMUTABLE
 STRICT
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
   SELECT CASE
     WHEN length(regexp_replace(p_phone, '\D', '', 'g')) >= 9
@@ -161,7 +161,7 @@ RETURNS boolean
 LANGUAGE plpgsql
 IMMUTABLE
 STRICT
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_digits text := regexp_replace(p_phone, '\D', '', 'g');
@@ -204,7 +204,7 @@ RETURNS boolean
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
   SELECT auth.uid() IS NOT NULL
      AND (
@@ -229,7 +229,7 @@ CREATE OR REPLACE FUNCTION public.verify_user_login_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_phone text := public.normalize_phone_digits_v4(COALESCE(p_phone, ''));
@@ -358,7 +358,7 @@ CREATE OR REPLACE FUNCTION public.register_user_account_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_phone text := public.normalize_phone_digits_v4(COALESCE(p_phone, ''));
@@ -412,7 +412,7 @@ CREATE OR REPLACE FUNCTION public.change_user_password_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_user record;
@@ -466,7 +466,7 @@ CREATE OR REPLACE FUNCTION public.set_user_quick_pin_v4(p_pin text)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_user_id uuid := auth.uid();
@@ -501,7 +501,7 @@ CREATE OR REPLACE FUNCTION public.has_user_quick_pin_v4()
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_user_id uuid := auth.uid();
@@ -534,7 +534,7 @@ CREATE OR REPLACE FUNCTION public.verify_manager_quick_pin_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_caller_id uuid := auth.uid();
@@ -650,7 +650,7 @@ CREATE OR REPLACE FUNCTION public.create_store_with_owner_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_user_id uuid := auth.uid();
@@ -705,7 +705,7 @@ CREATE OR REPLACE FUNCTION public.join_store_by_code_v4(p_store_code text)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_user_id uuid := auth.uid();
@@ -865,7 +865,7 @@ CREATE OR REPLACE FUNCTION public.create_device_pairing_code_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_caller_id uuid := auth.uid();
@@ -928,7 +928,7 @@ CREATE OR REPLACE FUNCTION public.claim_device_pairing_code_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_clean_code text := upper(trim(COALESCE(p_pairing_code, '')));
@@ -984,7 +984,7 @@ CREATE OR REPLACE FUNCTION public.revoke_device_pairing_code_v4(p_pairing_id uui
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_caller_id uuid := auth.uid();
@@ -1015,7 +1015,7 @@ CREATE OR REPLACE FUNCTION public.list_active_device_sessions_v4(p_store_id uuid
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_caller_id uuid := auth.uid();
@@ -1047,7 +1047,7 @@ CREATE OR REPLACE FUNCTION public.revoke_device_session_v4(p_session_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_caller_id uuid := auth.uid();
@@ -1090,7 +1090,7 @@ CREATE OR REPLACE FUNCTION public.admin_create_staff_member_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_caller_id uuid := auth.uid();
@@ -1186,7 +1186,7 @@ CREATE OR REPLACE FUNCTION public.admin_update_staff_role_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_caller_id uuid := auth.uid();
@@ -1259,7 +1259,7 @@ CREATE OR REPLACE FUNCTION public.admin_set_staff_status_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_caller_id uuid := auth.uid();
@@ -1315,7 +1315,7 @@ CREATE OR REPLACE FUNCTION public.admin_revoke_staff_membership_v4(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   v_caller_id uuid := auth.uid();
