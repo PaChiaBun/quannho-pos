@@ -813,8 +813,8 @@ BEGIN
       payment_method, status, source_type, source_id, staff_id, waiter_id, receipt_printed, created_at, note
     ) VALUES (
       v_manual_order_id, p_store_id, v_manual_order_num, v_manual_subtotal, 0, 0, v_manual_subtotal, v_manual_subtotal,
-      p_payment_method, 'completed', 'ban_manual', p_session_id::text, v_staff_member_id, v_session.waiter_id, false, now(),
-      'Món thanh toán tại bàn ' || COALESCE(v_table.label, v_table.name, 'bàn')
+      p_payment_method, 'completed', 'ban', v_session.table_id::text, v_staff_member_id, v_session.waiter_id, false, now(),
+      'Món thanh toán tại bàn ' || COALESCE(v_table.name, v_table.label, 'bàn')
     );
 
     INSERT INTO public.ban_session_orders (

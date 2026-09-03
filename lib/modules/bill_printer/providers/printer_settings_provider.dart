@@ -2805,17 +2805,38 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       String tableName = 'Mang về';
       final sourceId = orderData['source_id'] as String?;
       final sourceType = orderData['source_type'] as String?;
-      if ((sourceType == 'table' || sourceType == 'ban') && sourceId != null) {
-        final tableRow = await Supabase.instance.client
+      if ((sourceType == 'table' ||
+              sourceType == 'ban' ||
+              sourceType == 'ban_manual' ||
+              sourceType == 'ban_session') &&
+          sourceId != null) {
+        var tableRow = await Supabase.instance.client
             .from('ban_dining_tables')
             .select('name, label')
             .eq('id', sourceId)
             .maybeSingle();
+
+        if (tableRow == null) {
+          final sessionRow = await Supabase.instance.client
+              .from('ban_sessions')
+              .select('table_id')
+              .eq('id', sourceId)
+              .maybeSingle();
+          if (sessionRow != null && sessionRow['table_id'] != null) {
+            tableRow = await Supabase.instance.client
+                .from('ban_dining_tables')
+                .select('name, label')
+                .eq('id', sessionRow['table_id'])
+                .maybeSingle();
+          }
+        }
+
         if (tableRow != null) {
-          tableName =
-              (tableRow['name'] as String?) ??
-              (tableRow['label'] as String?) ??
-              'Mang về';
+          final name = (tableRow['name'] as String?)?.trim();
+          final label = (tableRow['label'] as String?)?.trim();
+          tableName = (name != null && name.isNotEmpty)
+              ? name
+              : ((label != null && label.isNotEmpty) ? label : 'Mang về');
         }
       }
 
