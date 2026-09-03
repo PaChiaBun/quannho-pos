@@ -18,7 +18,6 @@ class SplashScreen extends ConsumerStatefulWidget {
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
-
   // ── Logo ─────────────────────────────────────────────────────────────────
   late AnimationController _logoCtrl;
   late Animation<double> _logoScale;
@@ -46,10 +45,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late AnimationController _bgCtrl;
   late Animation<double> _bgAnim;
 
-  static const _navy   = Color(0xFF1E1C5E);
-  static const _deep   = Color(0xFF12103A);
+  static const _navy = Color(0xFF1E1C5E);
+  static const _deep = Color(0xFF12103A);
   static const _orange = Color(0xFFFF6B35);
-  static const _amber  = Color(0xFFFFB347);
+  static const _amber = Color(0xFFFFB347);
 
   @override
   void initState() {
@@ -63,18 +62,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 3000),
     )..repeat(reverse: true);
-    _bgAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _bgCtrl, curve: Curves.easeInOut),
-    );
+    _bgAnim = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _bgCtrl, curve: Curves.easeInOut));
 
     // Logo scale in with elastic
     _logoCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
-    _logoScale = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _logoCtrl, curve: Curves.elasticOut),
-    );
+    _logoScale = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _logoCtrl, curve: Curves.elasticOut));
     _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _logoCtrl,
@@ -87,12 +88,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat(reverse: true);
-    _glowRadius = Tween<double>(begin: 88, end: 110).animate(
-      CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut),
-    );
-    _glowOpacity = Tween<double>(begin: 0.28, end: 0.60).animate(
-      CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut),
-    );
+    _glowRadius = Tween<double>(
+      begin: 88,
+      end: 110,
+    ).animate(CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut));
+    _glowOpacity = Tween<double>(
+      begin: 0.28,
+      end: 0.60,
+    ).animate(CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut));
 
     // Text slide up + fade
     _textCtrl = AnimationController(
@@ -105,27 +108,30 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
       ),
     );
-    _textSlide = Tween<double>(begin: 28.0, end: 0.0).animate(
-      CurvedAnimation(parent: _textCtrl, curve: Curves.easeOutCubic),
-    );
+    _textSlide = Tween<double>(
+      begin: 28.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _textCtrl, curve: Curves.easeOutCubic));
 
     // Tagline
     _tagCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    _tagOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _tagCtrl, curve: Curves.easeOut),
-    );
+    _tagOpacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _tagCtrl, curve: Curves.easeOut));
 
     // Loading bar
     _barCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
     );
-    _barProgress = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _barCtrl, curve: Curves.easeInOut),
-    );
+    _barProgress = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _barCtrl, curve: Curves.easeInOut));
 
     _runSequence();
   }
@@ -145,11 +151,51 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 2200));
     if (!mounted) return;
 
+    // ‼️ RESTORE & VALIDATE POS JWT TRƯỚC KHI THỰC HIỆN BẤT KỲ QUERY NÀO
+    bool jwtRestored;
+    try {
+      jwtRestored = await UserAuthService.restoreSessionOnStartup().timeout(
+        const Duration(seconds: 10),
+      );
+    } catch (e) {
+      // Splash phải luôn có điểm thoát. Plugin lỗi hoặc server chậm không được
+      // giữ người dùng vô hạn ở màn logo; đưa về đăng nhập để có thể thử lại.
+      debugPrint('[Splash] restore session error: $e');
+      jwtRestored = false;
+    }
+    if (!mounted) return;
+
+    if (!jwtRestored) {
+      // JWT không hợp lệ (hết hạn, sai store hoặc không tồn tại): Đưa về màn hình xác thực
+      await ref.read(sessionProvider.notifier).clear();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/auth');
+      return;
+    }
+
     // Kiểm tra session đăng nhập
     final session = await UserAuthService.getCurrentSession();
     if (!mounted) return;
 
     if (session != null) {
+      if (session.storeId != null && session.storeId!.isNotEmpty) {
+        // ‼️ KIỂM TRA MEMBERSHIP CHỦ ĐỘNG (Server Validation)
+        final val = await UserAuthService.validateActiveMembership(
+          userId: session.userId,
+          storeId: session.storeId!,
+        );
+
+        if (!mounted) return;
+
+        if (!val.isActive && !val.isOffline) {
+          // Server xác nhận thành viên đã bị thu hồi khỏi quán
+          await ref.read(sessionProvider.notifier).clearStoreContext();
+          if (!mounted) return;
+          Navigator.of(context).pushReplacementNamed('/store_picker');
+          return;
+        }
+      }
+
       ref.read(sessionProvider.notifier).setSession(session);
       Navigator.of(context).pushReplacementNamed('/home');
     } else {
@@ -223,7 +269,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                 boxShadow: [
                                   BoxShadow(
                                     color: _orange.withValues(
-                                        alpha: _glowOpacity.value),
+                                      alpha: _glowOpacity.value,
+                                    ),
                                     blurRadius: 40,
                                     spreadRadius: 8,
                                   ),
@@ -256,7 +303,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       height: 160,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Color(0xFF1C2151), // match splash bg — no white ring
+                        color: Color(
+                          0xFF1C2151,
+                        ), // match splash bg — no white ring
                       ),
                       child: ClipOval(
                         child: Image.asset(
@@ -317,10 +366,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   // ── Tagline ───────────────────────────────────────────
                   AnimatedBuilder(
                     animation: _tagCtrl,
-                    builder: (_, child) => Opacity(
-                      opacity: _tagOpacity.value,
-                      child: child,
-                    ),
+                    builder: (_, child) =>
+                        Opacity(opacity: _tagOpacity.value, child: child),
                     child: const Text(
                       'Quản lý cửa hàng, đơn giản hơn',
                       style: TextStyle(
@@ -376,10 +423,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   // ── Bottom branding — LPM.VN ─────────────────────
                   AnimatedBuilder(
                     animation: _tagCtrl,
-                    builder: (_, child) => Opacity(
-                      opacity: _tagOpacity.value,
-                      child: child,
-                    ),
+                    builder: (_, child) =>
+                        Opacity(opacity: _tagOpacity.value, child: child),
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 28),
                       child: Column(
@@ -471,11 +516,11 @@ class _Particle {
   final double x, y, size, speed, phase;
 
   _Particle(math.Random rng)
-      : x = rng.nextDouble(),
-        y = rng.nextDouble(),
-        size = rng.nextDouble() * 3 + 1,
-        speed = rng.nextDouble() * 0.3 + 0.1,
-        phase = rng.nextDouble() * math.pi * 2;
+    : x = rng.nextDouble(),
+      y = rng.nextDouble(),
+      size = rng.nextDouble() * 3 + 1,
+      speed = rng.nextDouble() * 0.3 + 0.1,
+      phase = rng.nextDouble() * math.pi * 2;
 }
 
 class _ParticlePainter extends CustomPainter {
@@ -489,8 +534,8 @@ class _ParticlePainter extends CustomPainter {
     for (final p in particles) {
       // Gentle float upward, wrapping
       final yPos = (p.y - t * p.speed) % 1.0;
-      final opacity = (math.sin(t * 2 * math.pi * p.speed + p.phase) * 0.5 + 0.5)
-          * 0.35;
+      final opacity =
+          (math.sin(t * 2 * math.pi * p.speed + p.phase) * 0.5 + 0.5) * 0.35;
 
       canvas.drawCircle(
         Offset(p.x * size.width, yPos * size.height),
@@ -518,7 +563,7 @@ class _LpmBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(40),
-        color: Colors.white,                   // white bg vì logo có nền trắng
+        color: Colors.white, // white bg vì logo có nền trắng
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.18),

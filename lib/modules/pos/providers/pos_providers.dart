@@ -15,28 +15,31 @@ export '../../../core/providers/app_providers.dart' show posRepositoryProvider;
 class CartState {
   final List<CartLine> lines;
   final Set<String> sentLineIds; // lineIds đã gửi bếp — ẩn -/+
+  final Set<String> kitchenSessionIds; // ban_sessions đã tạo cho đơn POS
   final String? customerId;
   final String? customerName;
-  final String? tableId;             // Bàn gán vào đơn
+  final String? tableId; // Bàn gán vào đơn
   final String? tableName;
-  final String? orderNote;          // Ghi chú cả đơn
+  final String? orderNote; // Ghi chú cả đơn
   final double loyaltyPtsAvailable; // điểm khách đang có
-  final double loyaltyPtsUsed;      // điểm dùng cho đơn này
+  final double loyaltyPtsUsed; // điểm dùng cho đơn này
+  final double loyaltyRedeemRate;
   final double discount;
-  final String paymentMethod;       // 'cash' | 'transfer' | 'card' | 'wallet'
+  final String paymentMethod; // 'cash' | 'transfer' | 'card' | 'wallet'
   final bool isProcessing;
   final CouponModel? appliedCoupon;
   final double manualDiscount;
 
   // ── Wallet fields ─────────────────────────────────────────────────────────
-  final double walletRealAvailable;   // ví thật (tiền thật)
-  final double walletBonusAvailable;  // ví bonus
-  final int    walletBonusCapPct;     // % tối đa dùng bonus/bill
+  final double walletRealAvailable; // ví thật (tiền thật)
+  final double walletBonusAvailable; // ví bonus
+  final int walletBonusCapPct; // % tối đa dùng bonus/bill
   final DateTime? walletBonusExpiresAt;
 
   const CartState({
     this.lines = const [],
     this.sentLineIds = const {},
+    this.kitchenSessionIds = const {},
     this.customerId,
     this.customerName,
     this.tableId,
@@ -44,6 +47,7 @@ class CartState {
     this.orderNote,
     this.loyaltyPtsAvailable = 0,
     this.loyaltyPtsUsed = 0,
+    this.loyaltyRedeemRate = 1000,
     this.discount = 0,
     this.paymentMethod = 'cash',
     this.isProcessing = false,
@@ -60,8 +64,9 @@ class CartState {
 
   // ── Computed properties ───────────────────────────────────────────────────
   double get subtotal => lines.fold(0, (s, l) => s + l.subtotal);
+  double get pointsDiscount => loyaltyPtsUsed * loyaltyRedeemRate;
   double get total =>
-      (subtotal - discount - loyaltyPtsUsed).clamp(0, double.infinity);
+      (subtotal - discount - pointsDiscount).clamp(0, double.infinity);
   int get itemCount => lines.fold(0, (s, l) => s + l.quantity.toInt());
   bool get isEmpty => lines.isEmpty;
   bool isLineSent(String lineId) => sentLineIds.contains(lineId);
@@ -69,6 +74,7 @@ class CartState {
   CartState copyWith({
     List<CartLine>? lines,
     Set<String>? sentLineIds,
+    Set<String>? kitchenSessionIds,
     String? Function()? customerId,
     String? Function()? customerName,
     String? Function()? tableId,
@@ -76,6 +82,7 @@ class CartState {
     String? Function()? orderNote,
     double? loyaltyPtsAvailable,
     double? loyaltyPtsUsed,
+    double? loyaltyRedeemRate,
     double? discount,
     String? paymentMethod,
     bool? isProcessing,
@@ -85,30 +92,30 @@ class CartState {
     double? walletBonusAvailable,
     int? walletBonusCapPct,
     DateTime? Function()? walletBonusExpiresAt,
-  }) =>
-      CartState(
-        lines: lines ?? this.lines,
-        sentLineIds: sentLineIds ?? this.sentLineIds,
-        customerId: customerId != null ? customerId() : this.customerId,
-        customerName:
-            customerName != null ? customerName() : this.customerName,
-        tableId: tableId != null ? tableId() : this.tableId,
-        tableName: tableName != null ? tableName() : this.tableName,
-        orderNote: orderNote != null ? orderNote() : this.orderNote,
-        loyaltyPtsAvailable:
-            loyaltyPtsAvailable ?? this.loyaltyPtsAvailable,
-        loyaltyPtsUsed: loyaltyPtsUsed ?? this.loyaltyPtsUsed,
-        discount: discount ?? this.discount,
-        paymentMethod: paymentMethod ?? this.paymentMethod,
-        isProcessing: isProcessing ?? this.isProcessing,
-        appliedCoupon: appliedCoupon != null ? appliedCoupon() : this.appliedCoupon,
-        manualDiscount: manualDiscount ?? this.manualDiscount,
-        walletRealAvailable: walletRealAvailable ?? this.walletRealAvailable,
-        walletBonusAvailable: walletBonusAvailable ?? this.walletBonusAvailable,
-        walletBonusCapPct: walletBonusCapPct ?? this.walletBonusCapPct,
-        walletBonusExpiresAt: walletBonusExpiresAt != null
-            ? walletBonusExpiresAt() : this.walletBonusExpiresAt,
-      );
+  }) => CartState(
+    lines: lines ?? this.lines,
+    sentLineIds: sentLineIds ?? this.sentLineIds,
+    kitchenSessionIds: kitchenSessionIds ?? this.kitchenSessionIds,
+    customerId: customerId != null ? customerId() : this.customerId,
+    customerName: customerName != null ? customerName() : this.customerName,
+    tableId: tableId != null ? tableId() : this.tableId,
+    tableName: tableName != null ? tableName() : this.tableName,
+    orderNote: orderNote != null ? orderNote() : this.orderNote,
+    loyaltyPtsAvailable: loyaltyPtsAvailable ?? this.loyaltyPtsAvailable,
+    loyaltyPtsUsed: loyaltyPtsUsed ?? this.loyaltyPtsUsed,
+    loyaltyRedeemRate: loyaltyRedeemRate ?? this.loyaltyRedeemRate,
+    discount: discount ?? this.discount,
+    paymentMethod: paymentMethod ?? this.paymentMethod,
+    isProcessing: isProcessing ?? this.isProcessing,
+    appliedCoupon: appliedCoupon != null ? appliedCoupon() : this.appliedCoupon,
+    manualDiscount: manualDiscount ?? this.manualDiscount,
+    walletRealAvailable: walletRealAvailable ?? this.walletRealAvailable,
+    walletBonusAvailable: walletBonusAvailable ?? this.walletBonusAvailable,
+    walletBonusCapPct: walletBonusCapPct ?? this.walletBonusCapPct,
+    walletBonusExpiresAt: walletBonusExpiresAt != null
+        ? walletBonusExpiresAt()
+        : this.walletBonusExpiresAt,
+  );
 } // end CartState
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -137,8 +144,14 @@ class CartNotifier extends Notifier<CartState> {
 
     // Also recalculate loyaltyPtsUsed to make sure it doesn't exceed subtotal - discount
     final maxPts = state.loyaltyPtsAvailable;
-    final maxByOrder = (state.subtotal - computedDiscount).clamp(0.0, double.infinity);
-    final cappedPts = state.loyaltyPtsUsed.clamp(0.0, maxPts < maxByOrder ? maxPts : maxByOrder);
+    final maxByOrder =
+        ((state.subtotal - computedDiscount).clamp(0.0, double.infinity) /
+                state.loyaltyRedeemRate)
+            .floorToDouble();
+    final cappedPts = state.loyaltyPtsUsed.clamp(
+      0.0,
+      maxPts < maxByOrder ? maxPts : maxByOrder,
+    );
 
     state = state.copyWith(
       discount: computedDiscount,
@@ -158,35 +171,44 @@ class CartNotifier extends Notifier<CartState> {
     final lines = List<CartLine>.from(state.lines);
     // Chỉ merge vào dòng không có ghi chú
     final idx = lines.indexWhere(
-        (l) => l.productId == product.id && (l.note == null || l.note!.isEmpty));
+      (l) => l.productId == product.id && (l.note == null || l.note!.isEmpty),
+    );
 
     if (idx >= 0) {
       lines[idx] = lines[idx].copyWith(quantity: lines[idx].quantity + qty);
     } else {
-      lines.add(CartLine(
-        productId: product.id,
-        productName: product.name,
-        quantity: qty,
-        unitPrice: product.sellPrice,
-        costPrice: product.costPrice,
-        stationCode: product.stationCode,
-      ));
+      lines.add(
+        CartLine(
+          productId: product.id,
+          productName: product.name,
+          quantity: qty,
+          unitPrice: product.sellPrice,
+          costPrice: product.costPrice,
+          stationCode: product.stationCode,
+        ),
+      );
     }
     _updateState(state.copyWith(lines: lines));
   }
 
   /// Thêm sản phẩm với ghi chú riêng — luôn tạo CartLine mới
-  void addProductWithNote(ProductModel product, {required double qty, String? note}) {
+  void addProductWithNote(
+    ProductModel product, {
+    required double qty,
+    String? note,
+  }) {
     final lines = List<CartLine>.from(state.lines);
-    lines.add(CartLine(
-      productId: product.id,
-      productName: product.name,
-      quantity: qty,
-      unitPrice: product.sellPrice,
-      costPrice: product.costPrice,
-      note: note?.isEmpty == true ? null : note,
-      stationCode: product.stationCode,
-    ));
+    lines.add(
+      CartLine(
+        productId: product.id,
+        productName: product.name,
+        quantity: qty,
+        unitPrice: product.sellPrice,
+        costPrice: product.costPrice,
+        note: note?.isEmpty == true ? null : note,
+        stationCode: product.stationCode,
+      ),
+    );
     _updateState(state.copyWith(lines: lines));
   }
 
@@ -219,97 +241,132 @@ class CartNotifier extends Notifier<CartState> {
   }
 
   void removeLine(String lineId) {
-    _updateState(state.copyWith(
-      lines: state.lines.where((l) => l.lineId != lineId).toList(),
-    ));
+    _updateState(
+      state.copyWith(
+        lines: state.lines.where((l) => l.lineId != lineId).toList(),
+      ),
+    );
   }
 
   /// Đánh dấu các line đã gửi bếp — Ẩn nút -/+ cho các line này
   void markLinesSent(List<String> lineIds) {
-    _updateState(state.copyWith(
-      sentLineIds: {...state.sentLineIds, ...lineIds},
-    ));
+    _updateState(
+      state.copyWith(sentLineIds: {...state.sentLineIds, ...lineIds}),
+    );
+  }
+
+  /// Giữ phiên bếp cùng với giỏ hàng để không mất khi đổi module.
+  void addKitchenSession(String sessionId) {
+    _updateState(
+      state.copyWith(
+        kitchenSessionIds: {...state.kitchenSessionIds, sessionId},
+      ),
+    );
   }
 
   void setItemNote(String lineId, String? note) {
     final lines = List<CartLine>.from(state.lines);
     final idx = lines.indexWhere((l) => l.lineId == lineId);
     if (idx < 0) return;
-    lines[idx] = lines[idx].copyWith(note: () => note?.isEmpty == true ? null : note);
+    lines[idx] = lines[idx].copyWith(
+      note: () => note?.isEmpty == true ? null : note,
+    );
     _updateState(state.copyWith(lines: lines));
   }
 
   void setOrderNote(String? note) {
-    _updateState(state.copyWith(orderNote: () => note?.isEmpty == true ? null : note));
+    _updateState(
+      state.copyWith(orderNote: () => note?.isEmpty == true ? null : note),
+    );
   }
 
   void clearCart() => state = const CartState();
 
   // ── Customer ──────────────────────────────────────────────────────────────
 
-  void setCustomer(String id, String name, double loyaltyPts, {
+  void setCustomer(
+    String id,
+    String name,
+    double loyaltyPts, {
     double walletReal = 0,
     double walletBonus = 0,
     int bonusCapPct = 15,
     DateTime? bonusExpiresAt,
   }) {
-    _updateState(state.copyWith(
-      customerId: () => id,
-      customerName: () => name,
-      loyaltyPtsAvailable: loyaltyPts,
-      loyaltyPtsUsed: 0,
-      walletRealAvailable: walletReal,
-      walletBonusAvailable: walletBonus,
-      walletBonusCapPct: bonusCapPct,
-      walletBonusExpiresAt: () => bonusExpiresAt,
-    ));
+    _updateState(
+      state.copyWith(
+        customerId: () => id,
+        customerName: () => name,
+        loyaltyPtsAvailable: loyaltyPts,
+        loyaltyPtsUsed: 0,
+        walletRealAvailable: walletReal,
+        walletBonusAvailable: walletBonus,
+        walletBonusCapPct: bonusCapPct,
+        walletBonusExpiresAt: () => bonusExpiresAt,
+      ),
+    );
   }
 
   void clearCustomer() {
-    _updateState(state.copyWith(
-      customerId: () => null,
-      customerName: () => null,
-      loyaltyPtsAvailable: 0,
-      loyaltyPtsUsed: 0,
-      walletRealAvailable: 0,
-      walletBonusAvailable: 0,
-      walletBonusCapPct: 15,
-      walletBonusExpiresAt: () => null,
-    ));
+    _updateState(
+      state.copyWith(
+        customerId: () => null,
+        customerName: () => null,
+        loyaltyPtsAvailable: 0,
+        loyaltyPtsUsed: 0,
+        walletRealAvailable: 0,
+        walletBonusAvailable: 0,
+        walletBonusCapPct: 15,
+        walletBonusExpiresAt: () => null,
+      ),
+    );
   }
 
   void setTable(String id, String name) {
-    _updateState(state.copyWith(
-      tableId: () => id,
-      tableName: () => name,
-    ));
+    _updateState(state.copyWith(tableId: () => id, tableName: () => name));
   }
 
   void clearTable() {
-    _updateState(state.copyWith(
-      tableId: () => null,
-      tableName: () => null,
-    ));
+    _updateState(state.copyWith(tableId: () => null, tableName: () => null));
   }
 
   void setLoyaltyPtsUsed(double pts) {
     // ‼️ FIX: cap = min(available, subtotal-discount) — tránh dùng pts > giá trị đơn
     final maxByBalance = state.loyaltyPtsAvailable;
-    final maxByOrder   = (state.subtotal - state.discount).clamp(0.0, double.infinity);
-    final capped = pts.clamp(0.0, maxByBalance < maxByOrder ? maxByBalance : maxByOrder);
-    _updateState(state.copyWith(loyaltyPtsUsed: capped));
+    final maxByOrder =
+        ((state.subtotal - state.discount).clamp(0.0, double.infinity) /
+                state.loyaltyRedeemRate)
+            .floorToDouble();
+    final capped = pts.clamp(
+      0.0,
+      maxByBalance < maxByOrder ? maxByBalance : maxByOrder,
+    );
+    _updateState(state.copyWith(loyaltyPtsUsed: capped.floorToDouble()));
+  }
+
+  void setLoyaltyRedeemRate(double rate) {
+    if (!rate.isFinite || rate <= 0)
+      throw ArgumentError('Tỷ lệ đổi điểm không hợp lệ');
+    _updateState(state.copyWith(loyaltyRedeemRate: rate));
   }
 
   // ── Payment ───────────────────────────────────────────────────────────────
 
-  void setPaymentMethod(String method) =>
-      _updateState(state.copyWith(paymentMethod: method));
+  void setPaymentMethod(String method) => _updateState(
+    state.copyWith(
+      paymentMethod: method,
+      loyaltyPtsUsed: method == 'wallet' ? 0 : state.loyaltyPtsUsed,
+    ),
+  );
 
   void setDiscount(double amount) {
-    _updateState(state.copyWith(
-      manualDiscount: amount.clamp(0, state.subtotal),
-      appliedCoupon: () => null, // clear coupon when manually setting discount
-    ));
+    _updateState(
+      state.copyWith(
+        manualDiscount: amount.clamp(0, state.subtotal),
+        appliedCoupon: () =>
+            null, // clear coupon when manually setting discount
+      ),
+    );
   }
 
   void applyCoupon(CouponModel? coupon) {
@@ -317,33 +374,36 @@ class CartNotifier extends Notifier<CartState> {
       removeCoupon();
       return;
     }
-    _updateState(state.copyWith(
-      appliedCoupon: () => coupon,
-      manualDiscount: 0, // override manual discount when coupon is applied
-    ));
+    _updateState(
+      state.copyWith(
+        appliedCoupon: () => coupon,
+        manualDiscount: 0, // override manual discount when coupon is applied
+      ),
+    );
   }
 
   void removeCoupon() {
-    _updateState(state.copyWith(
-      appliedCoupon: () => null,
-    ));
+    _updateState(state.copyWith(appliedCoupon: () => null));
   }
 
   // ── Checkout ──────────────────────────────────────────────────────────────
 
-  /// Trả về orderId nếu thành công, throw nếu lỗi
-  Future<String> checkout(
+  /// Trả về kết quả canonical của RPC (bao gồm replay) nếu thành công.
+  Future<PosSaleResult> checkout(
     PosRepository repo, {
     double loyaltyRate = 10000,
     ModuleRepository? moduleRepo,
   }) async {
     if (state.lines.isEmpty) throw Exception('Giỏ hàng trống');
+    if (state.isProcessing) {
+      throw StateError('Thanh toán đang được xử lý');
+    }
 
     state = state.copyWith(isProcessing: true);
     final lines = List<CartLine>.from(state.lines); // snapshot trước khi clear
     try {
       final session = ref.read(sessionProvider);
-      final orderId = await repo.completeSale(
+      final result = await repo.completeSale(
         lines: lines,
         paymentMethod: state.paymentMethod,
         customerId: state.customerId,
@@ -353,15 +413,18 @@ class CartNotifier extends Notifier<CartState> {
         loyaltyRate: loyaltyRate,
         note: state.appliedCoupon != null
             ? ((state.orderNote ?? '').isEmpty
-                ? '[Voucher: ${state.appliedCoupon!.code}]'
-                : '${state.orderNote} | [Voucher: ${state.appliedCoupon!.code}]')
+                  ? '[Voucher: ${state.appliedCoupon!.code}]'
+                  : '${state.orderNote} | [Voucher: ${state.appliedCoupon!.code}]')
             : state.orderNote,
         sourceType: state.tableId != null ? 'ban' : 'pos',
         sourceId: state.tableId,
         staffId: session?.userId,
+        couponCode: state.appliedCoupon?.code,
+        expectedTotal: state.total,
+        kitchenSessionIds: state.kitchenSessionIds.toList()..sort(),
       );
       state = const CartState(); // clear sau khi thành công
-      return orderId;
+      return result;
     } catch (e) {
       state = state.copyWith(isProcessing: false);
       rethrow;
@@ -383,13 +446,13 @@ final cartItemCountProvider = Provider<int>((ref) {
 });
 
 /// Đơn hàng hôm nay (reactive)
-final todayOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+final todayOrdersProvider = StreamProvider.autoDispose<List<OrderModel>>((ref) {
   return ref.watch(posRepositoryProvider).watchTodayOrders();
 });
 
 /// Stats POS của ngày hôm nay — KHÔNG dùng tên todayStatsProvider để tránh
 /// xung đột với dashboard_providers.dart (DashboardStats khác PosStats)
-final posTodayStatsProvider = FutureProvider<PosStats>((ref) async {
+final posTodayStatsProvider = FutureProvider.autoDispose<PosStats>((ref) async {
   // Invalidate mỗi khi có đơn hàng mới
   ref.watch(todayOrdersProvider);
   return ref.read(posRepositoryProvider).getTodayStats();

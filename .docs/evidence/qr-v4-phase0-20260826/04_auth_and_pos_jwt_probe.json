@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-08-26T00:58:16.472614+07:00",
+  "pos_jwt_auth_url_build_default": "",
+  "pos_jwt_auth_service_code": "lib/core/services/pos_jwt_auth_service.dart",
+  "gateway_probe_quannho_lpm_vn": {
+    "url": "https://quannho.lpm.vn/api/auth/pos-jwt",
+    "http_status": 404,
+    "state": "ENDPOINT_NOT_DEPLOYED_OR_ROUTE_MISSING"
+  },
+  "gateway_probe_tailscale_bunserver": {
+    "url": "https://bunserver.tailcaeae7.ts.net/api/auth/pos-jwt",
+    "http_status": 200,
+    "content_type": "text/html",
+    "state": "TAILSCALE_LANDING_PAGE_NOT_PROD_REST_ENDPOINT"
+  },
+  "project_log_record": "nhat_ky.md:L105-134 (2026-08-12: P0 RLS Overhaul BLOCKED pending staging DB & Gateway server)",
+  "staff_auth_reality": {
+    "canonical_user_table": "public.user_accounts (phone, password_hash, display_name)",
+    "membership_table": "public.store_members (user_id, store_id, role, is_owner)",
+    "operational_staff_table": "public.staff_members (id, store_id, name, role, phone, is_active)",
+    "permission_store": "public.app_settings (key: action_perms_{role})",
+    "client_headers": "x-user-id, x-store-id (Set by SessionProvider in SharedPreferences/Memory)"
+  },
+  "conclusion": "BLOCKED: no deployed production POS JWT gateway or captured signed staff principal. auth.uid() is not proven for the current custom login flow. Staff QR RPC implementation must wait for a server-signed principal and forged-header rejection test."
+}

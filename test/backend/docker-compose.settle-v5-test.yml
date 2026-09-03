@@ -1,0 +1,59 @@
+# Docker Compose for Phase 1 Isolated PostgreSQL Test Environment
+# Purpose: Disposable local PostgreSQL 16 for settle_v5 runtime gate.
+# SAFETY:
+#   - Container, network, and volume all prefixed with "settle-v5-test-".
+#   - PostgreSQL only binds to 127.0.0.1 (localhost). Never exposed externally.
+#   - Credentials are test-only — not related to any live or real database.
+#   - No reference to DATABASE_URL or STAGING_DATABASE_URL.
+# Startup: docker compose -f docker-compose.settle-v5-test.yml up -d
+# Teardown: docker compose -f docker-compose.settle-v5-test.yml down -v
+
+name: settle-v5-test
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: settle-v5-test-postgres
+    restart: "no"
+    ports:
+      # Bind ONLY to localhost - never exposed to external network
+      - "127.0.0.1:15432:5432"
+    environment:
+      POSTGRES_USER: settle_v5_test_user
+      POSTGRES_PASSWORD: settle_v5_test_pass_local_only
+      POSTGRES_DB: postgres
+      # Prevent PostgreSQL from reading any host pg_hba.conf
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - settle-v5-test-pgdata:/var/lib/postgresql/data/pgdata
+      - ./settle-v5-test-init.sql:/docker-entrypoint-initdb.d/00_init_roles.sql:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "pg_isready -U settle_v5_test_user -d postgres -h 127.0.0.1 -p 5432"
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+    networks:
+      - settle-v5-test-net
+    # Resource limits - lightweight test database
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+networks:
+  settle-v5-test-net:
+    name: settle-v5-test-net
+    driver: bridge
+    # internal: true — DB container has no need for outbound network access.
+    # Docker pulls the image BEFORE creating this network, so internal=true
+    # does not interfere with image pull. The container is accessible via
+    # 127.0.0.1:15432 because Docker maps the port at the host level,
+    # independent of the bridge network's internal flag.
+    internal: true
+
+volumes:
+  settle-v5-test-pgdata:
+    name: settle-v5-test-pgdata

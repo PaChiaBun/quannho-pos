@@ -37,8 +37,13 @@ class FinanceRepository {
     if (storeId == null) throw Exception('Chưa chọn quán');
     final id = _uuid.v4();
     await _sb.from('finance_categories').insert({
-      'id': id, 'store_id': storeId, 'name': name,
-      'type': type, 'icon': icon, 'color': color, 'is_system': false,
+      'id': id,
+      'store_id': storeId,
+      'name': name,
+      'type': type,
+      'icon': icon,
+      'color': color,
+      'is_system': false,
     });
     return id;
   }
@@ -56,27 +61,31 @@ class FinanceRepository {
   }) async {
     final storeId = await _storeId();
     if (storeId == null) throw Exception('Chưa chọn quán');
-    final id  = _uuid.v4();
+    final id = _uuid.v4();
     final now = DateTime.now().toUtc().toIso8601String();
     await _sb.from('finance_records').insert({
-      'id':           id,
-      'store_id':     storeId,
-      'type':         type,
-      'amount':       amount,
-      'category_id':  categoryId,
-      'description':  description,
+      'id': id,
+      'store_id': storeId,
+      'type': type,
+      'amount': amount,
+      'category_id': categoryId,
+      'description': description,
       'reference_id': referenceId,
-      'is_auto':      isAuto,
-      'recorded_at':  now,
-      'fund_type':    fundType,
+      'is_auto': isAuto,
+      'recorded_at': now,
+      'fund_type': fundType,
     });
-    AppLogger.info('checkout', 'Tao phieu ${type == "income" ? "Thu" : "Chi"} moi: $description - So tien: ${amount.toInt()}d.');
+    AppLogger.info(
+      'checkout',
+      'Tao phieu ${type == "income" ? "Thu" : "Chi"} moi: $description - So tien: ${amount.toInt()}d.',
+    );
     return id;
   }
 
   Future<void> deleteRecord(String id) async {
     // Chỉ xóa giao dịch thủ công
-    await _sb.from('finance_records')
+    await _sb
+        .from('finance_records')
         .delete()
         .eq('id', id)
         .eq('is_auto', false);
@@ -106,19 +115,24 @@ class FinanceRepository {
     // Realtime connection with fallback to polling on async errors (e.g. RealtimeSubscribeException)
     while (true) {
       try {
-        final stream = _sb.from(table).stream(primaryKey: ['id']).eq(columnFilter, valueFilter);
+        final stream = _sb
+            .from(table)
+            .stream(primaryKey: ['id'])
+            .eq(columnFilter, valueFilter);
         await for (final rows in stream) {
           yield mapper(rows);
         }
       } catch (e) {
-        print('[RobustStream] Realtime err on $table: $e. Falling back to poll 10s.');
-        
+        print(
+          '[RobustStream] Realtime err on $table: $e. Falling back to poll 10s.',
+        );
+
         // Polling âm thầm 10 giây (chia làm 2 lần 5s) trước khi thử kết nối lại Realtime
         await Future.delayed(const Duration(seconds: 5));
         try {
           yield await fetch();
         } catch (_) {}
-        
+
         await Future.delayed(const Duration(seconds: 5));
         try {
           yield await fetch();
@@ -134,17 +148,37 @@ class FinanceRepository {
     String? fundType,
   }) async* {
     final storeId = await _storeId();
-    if (storeId == null) { yield []; return; }
+    if (storeId == null) {
+      yield [];
+      return;
+    }
 
     // ⚠️ Supabase stream() không hỗ trợ .gte()/.lt() trực tiếp —
     // Dùng polling + emit ngay lần đầu để giảm bandwidth.
     // Tải 1 lần đầu
-    yield await _fetchRecords(storeId: storeId, from: from, to: to, type: type, fundType: fundType);
+    yield await _fetchRecords(
+      storeId: storeId,
+      from: from,
+      to: to,
+      type: type,
+      fundType: fundType,
+    );
 
     // Sau đó listen realtime (không filter date ở DB được) — chỉ emit khi có change
     // Dùng stream bắt signal, rồi refetch server-side để đúng range
-    await for (final _ in _robustStream('finance_records', 'store_id', storeId, (rows) => rows)) {
-      yield await _fetchRecords(storeId: storeId, from: from, to: to, type: type, fundType: fundType);
+    await for (final _ in _robustStream(
+      'finance_records',
+      'store_id',
+      storeId,
+      (rows) => rows,
+    )) {
+      yield await _fetchRecords(
+        storeId: storeId,
+        from: from,
+        to: to,
+        type: type,
+        fundType: fundType,
+      );
     }
   }
 
@@ -168,8 +202,6 @@ class FinanceRepository {
     return rows.map(FinanceRecordModel.fromMap).toList();
   }
 
-
-
   // ── Stats ─────────────────────────────────────────────────────────────────
 
   Future<FinanceStats> getStats(DateRange range, {String? fundType}) async {
@@ -189,7 +221,7 @@ class FinanceRepository {
     double income = 0, expense = 0;
     for (final r in rows) {
       final amt = (r['amount'] as num?)?.toDouble() ?? 0;
-      if (r['type'] == 'income')  income  += amt;
+      if (r['type'] == 'income') income += amt;
       if (r['type'] == 'expense') expense += amt;
     }
 
@@ -199,13 +231,14 @@ class FinanceRepository {
     final expenseByCategory = <String, double>{};
     for (final r in rows.where((r) => r['type'] == 'expense')) {
       final cat = catMap[r['category_id'] as String? ?? ''] ?? 'Khác';
-      expenseByCategory[cat] = (expenseByCategory[cat] ?? 0) +
+      expenseByCategory[cat] =
+          (expenseByCategory[cat] ?? 0) +
           ((r['amount'] as num?)?.toDouble() ?? 0);
     }
 
     // So sánh kỳ trước
     final periodLen = range.to.difference(range.from);
-    final prevFrom  = range.from.subtract(periodLen);
+    final prevFrom = range.from.subtract(periodLen);
     var prevQuery = _sb
         .from('finance_records')
         // ‼️ FIX Bug #34: chỉ cần type + amount cho so sánh kỳ trước
@@ -217,15 +250,18 @@ class FinanceRepository {
     final prevRows = await prevQuery;
     final prevIncome = prevRows
         .where((r) => r['type'] == 'income')
-        .fold<double>(0, (s, r) => s + ((r['amount'] as num?)?.toDouble() ?? 0));
+        .fold<double>(
+          0,
+          (s, r) => s + ((r['amount'] as num?)?.toDouble() ?? 0),
+        );
 
     return FinanceStats(
-      income:            income,
-      expense:           expense,
-      profit:            income - expense,
-      prevIncome:        prevIncome,
+      income: income,
+      expense: expense,
+      profit: income - expense,
+      prevIncome: prevIncome,
       expenseByCategory: expenseByCategory,
-      transactionCount:  rows.length,
+      transactionCount: rows.length,
     );
   }
 }
@@ -242,48 +278,48 @@ class DateRange {
   const DateRange({required this.from, required this.to, required this.label});
 
   static DateRange today() {
-    final now        = DateTime.now();
+    final now = DateTime.now();
     final startLocal = DateTime(now.year, now.month, now.day);
-    final endLocal   = DateTime(now.year, now.month, now.day + 1);
+    final endLocal = DateTime(now.year, now.month, now.day + 1);
     return DateRange(
-      from:  startLocal.toUtc(),
-      to:    endLocal.toUtc(),
+      from: startLocal.toUtc(),
+      to: endLocal.toUtc(),
       label: 'Hôm nay',
     );
   }
 
   static DateRange yesterday() {
-    final now        = DateTime.now();
-    final yest       = now.subtract(const Duration(days: 1));
+    final now = DateTime.now();
+    final yest = now.subtract(const Duration(days: 1));
     final startLocal = DateTime(yest.year, yest.month, yest.day);
-    final endLocal   = DateTime(now.year, now.month, now.day);
+    final endLocal = DateTime(now.year, now.month, now.day);
     return DateRange(
-      from:  startLocal.toUtc(),
-      to:    endLocal.toUtc(),
+      from: startLocal.toUtc(),
+      to: endLocal.toUtc(),
       label: 'Hôm qua',
     );
   }
 
   static DateRange last7Days() {
-    final now        = DateTime.now();
-    final start      = now.subtract(const Duration(days: 6));
+    final now = DateTime.now();
+    final start = now.subtract(const Duration(days: 6));
     final startLocal = DateTime(start.year, start.month, start.day);
-    final endLocal   = DateTime(now.year, now.month, now.day + 1);
+    final endLocal = DateTime(now.year, now.month, now.day + 1);
     return DateRange(
-      from:  startLocal.toUtc(),
-      to:    endLocal.toUtc(),
+      from: startLocal.toUtc(),
+      to: endLocal.toUtc(),
       label: '7 ngày qua',
     );
   }
 
   static DateRange thisWeek() {
-    final now    = DateTime.now();
+    final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final startLocal = DateTime(monday.year, monday.month, monday.day);
-    final endLocal   = DateTime(now.year, now.month, now.day + 1);
+    final endLocal = DateTime(now.year, now.month, now.day + 1);
     return DateRange(
-      from:  startLocal.toUtc(),
-      to:    endLocal.toUtc(),
+      from: startLocal.toUtc(),
+      to: endLocal.toUtc(),
       label: 'Tuần này',
     );
   }
@@ -292,20 +328,20 @@ class DateRange {
     final now = DateTime.now();
     final endLocal = DateTime(now.year, now.month, now.day + 1);
     return DateRange(
-      from:  DateTime(now.year, now.month, 1).toUtc(),
-      to:    endLocal.toUtc(),
+      from: DateTime(now.year, now.month, 1).toUtc(),
+      to: endLocal.toUtc(),
       label: 'Tháng này',
     );
   }
 
   static DateRange last30Days() {
-    final now        = DateTime.now();
-    final start      = now.subtract(const Duration(days: 29));
+    final now = DateTime.now();
+    final start = now.subtract(const Duration(days: 29));
     final startLocal = DateTime(start.year, start.month, start.day);
-    final endLocal   = DateTime(now.year, now.month, now.day + 1);
+    final endLocal = DateTime(now.year, now.month, now.day + 1);
     return DateRange(
-      from:  startLocal.toUtc(),
-      to:    endLocal.toUtc(),
+      from: startLocal.toUtc(),
+      to: endLocal.toUtc(),
       label: '30 ngày qua',
     );
   }
@@ -313,23 +349,34 @@ class DateRange {
   static DateRange lastMonth() {
     final now = DateTime.now();
     final firstDayThisMonth = DateTime(now.year, now.month, 1);
-    final lastDayLastMonth  = firstDayThisMonth.subtract(const Duration(days: 1));
-    final firstDayLastMonth = DateTime(lastDayLastMonth.year, lastDayLastMonth.month, 1);
+    final lastDayLastMonth = firstDayThisMonth.subtract(
+      const Duration(days: 1),
+    );
+    final firstDayLastMonth = DateTime(
+      lastDayLastMonth.year,
+      lastDayLastMonth.month,
+      1,
+    );
     return DateRange(
-      from:  firstDayLastMonth.toUtc(),
-      to:    firstDayThisMonth.toUtc(),
+      from: firstDayLastMonth.toUtc(),
+      to: firstDayThisMonth.toUtc(),
       label: 'Tháng trước',
     );
   }
 
-  static DateRange custom(DateTime fromDate, DateTime toDate, {String? customLabel}) {
+  static DateRange custom(
+    DateTime fromDate,
+    DateTime toDate, {
+    String? customLabel,
+  }) {
     final startLocal = DateTime(fromDate.year, fromDate.month, fromDate.day);
-    final endLocal   = DateTime(toDate.year, toDate.month, toDate.day + 1);
-    final labelStr   = customLabel ??
+    final endLocal = DateTime(toDate.year, toDate.month, toDate.day + 1);
+    final labelStr =
+        customLabel ??
         '${fromDate.day.toString().padLeft(2, '0')}/${fromDate.month.toString().padLeft(2, '0')} - ${toDate.day.toString().padLeft(2, '0')}/${toDate.month.toString().padLeft(2, '0')}';
     return DateRange(
-      from:  startLocal.toUtc(),
-      to:    endLocal.toUtc(),
+      from: startLocal.toUtc(),
+      to: endLocal.toUtc(),
       label: labelStr,
     );
   }
@@ -354,17 +401,18 @@ class FinanceCategoryModel {
 
   factory FinanceCategoryModel.fromMap(Map<String, dynamic> m) =>
       FinanceCategoryModel(
-        id:       m['id'] as String,
-        name:     m['name'] as String,
-        type:     m['type'] as String,
-        icon:     m['icon'] as String?,
-        color:    m['color'] as String?,
+        id: m['id'] as String,
+        name: m['name'] as String,
+        type: m['type'] as String,
+        icon: m['icon'] as String?,
+        color: m['color'] as String?,
         isSystem: m['is_system'] as bool? ?? false,
       );
 }
 
 class FinanceRecordModel {
   final String id;
+  final String? referenceId;
   final String type;
   final double amount;
   final String? categoryId;
@@ -375,6 +423,7 @@ class FinanceRecordModel {
 
   const FinanceRecordModel({
     required this.id,
+    this.referenceId,
     required this.type,
     required this.amount,
     this.categoryId,
@@ -384,18 +433,22 @@ class FinanceRecordModel {
     required this.fundType,
   });
 
-  factory FinanceRecordModel.fromMap(Map<String, dynamic> m) =>
-      FinanceRecordModel(
-        id:          m['id'] as String,
-        type:        m['type'] as String,
-        amount:      (m['amount'] as num).toDouble(),
-        categoryId:  m['category_id'] as String?,
-        description: m['description'] as String?,
-        isAuto:      m['is_auto'] as bool? ?? false,
-        // Parse UTC rồi giữ UTC — UI dùng .toLocal() khi hiển thị (finance_screen.dart line 278, 369)
-        recordedAt:  (DateTime.tryParse(m['recorded_at'] as String? ?? '') ?? DateTime.now()).toUtc(),
-        fundType:    m['fund_type'] as String? ?? 'cash',
-      );
+  factory FinanceRecordModel.fromMap(
+    Map<String, dynamic> m,
+  ) => FinanceRecordModel(
+    id: m['id'] as String,
+    referenceId: m['reference_id'] as String?,
+    type: m['type'] as String,
+    amount: (m['amount'] as num).toDouble(),
+    categoryId: m['category_id'] as String?,
+    description: m['description'] as String?,
+    isAuto: m['is_auto'] as bool? ?? false,
+    // Parse UTC rồi giữ UTC — UI dùng .toLocal() khi hiển thị (finance_screen.dart line 278, 369)
+    recordedAt:
+        (DateTime.tryParse(m['recorded_at'] as String? ?? '') ?? DateTime.now())
+            .toUtc(),
+    fundType: m['fund_type'] as String? ?? 'cash',
+  );
 }
 
 class FinanceStats {
@@ -415,11 +468,16 @@ class FinanceStats {
     required this.transactionCount,
   });
 
-  double get profitMargin   => income > 0 ? (profit / income * 100) : 0;
-  double get incomeGrowth   => prevIncome > 0 ? ((income - prevIncome) / prevIncome * 100) : 0;
+  double get profitMargin => income > 0 ? (profit / income * 100) : 0;
+  double get incomeGrowth =>
+      prevIncome > 0 ? ((income - prevIncome) / prevIncome * 100) : 0;
 
   static const empty = FinanceStats(
-    income: 0, expense: 0, profit: 0, prevIncome: 0,
-    expenseByCategory: {}, transactionCount: 0,
+    income: 0,
+    expense: 0,
+    profit: 0,
+    prevIncome: 0,
+    expenseByCategory: {},
+    transactionCount: 0,
   );
 }

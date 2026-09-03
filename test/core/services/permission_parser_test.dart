@@ -55,4 +55,42 @@ void main() {
       expect(result, ['pos.cancel_bill', 'tinhluong.view_all']);
     });
   });
+
+  group('StaffService.deriveActionPermsFromModules (Lego Modules)', () {
+    test('role có module pos phải tự động có toàn bộ quyền pos.* kể cả checkout', () {
+      final perms = StaffService.deriveActionPermsFromModules(['pos']);
+      expect(perms.contains('pos.checkout'), isTrue);
+      expect(perms.contains('pos.apply_discount'), isTrue);
+      expect(perms.contains('pos.cancel_bill'), isTrue);
+    });
+
+    test('role có module ban phải tự động có pos.checkout và ban.manage_structure', () {
+      final perms = StaffService.deriveActionPermsFromModules(['ban']);
+      expect(perms.contains('pos.checkout'), isTrue);
+      expect(perms.contains('ban.manage_structure'), isTrue);
+    });
+
+    test('role Thu ngân tiếng Việt mới tạo chưa có app_settings vẫn tự động có pos.checkout', () {
+      final perms = StaffService.deriveActionPermsFromModules(
+        ['pos', 'ban'],
+        roleName: 'Thu ngân',
+      );
+      expect(perms.contains('pos.checkout'), isTrue);
+      expect(perms.contains('pos.view_history'), isTrue);
+    });
+
+    test('role Quản lý / Manager tự động có toàn bộ kAllActions', () {
+      final perms = StaffService.deriveActionPermsFromModules(
+        ['pos', 'kho'],
+        roleName: 'Quản lý',
+      );
+      expect(perms.containsAll(kAllActions), isTrue);
+    });
+
+    test('role chỉ có kho_pro chỉ có quyền kho, không có pos.checkout', () {
+      final perms = StaffService.deriveActionPermsFromModules(['kho_pro']);
+      expect(perms.contains('kho.edit_quantity'), isTrue);
+      expect(perms.contains('pos.checkout'), isFalse);
+    });
+  });
 }

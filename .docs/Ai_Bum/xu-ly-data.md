@@ -79,13 +79,29 @@ Khi user mở chat với Bum, Flutter app sẽ tự động thu thập và injec
 
 ---
 
-## Phân Cấp Quyền Xem Data
+## Phân Cấp Quyền Xem Data & AI Bum Action Permissions
 
-| Vai trò | Data được thấy |
-|---------|---------------|
-| Owner | Tất cả — doanh thu, nhân viên, lương, lợi nhuận |
-| Manager | Doanh thu, nhân viên, kho — không thấy chi tiết tài chính nội bộ |
-| Staff | Chỉ data liên quan đến module họ được cấp quyền |
+Bum áp dụng **Pre-Query Security Guard** kiểm tra quyền người dùng ngay trước khi thực thi bất kỳ truy vấn dữ liệu kinh doanh nào (`BumReadOnlyDataService`).
+
+### 🔑 9 Action Permissions Của AI Bum (`ai_bum.*`)
+1. `ai_bum.help`: Trợ giúp & hướng dẫn sử dụng app (An toàn - Auto-seed).
+2. `ai_bum.my_shift`: Xem lịch làm việc & ca cá nhân (An toàn - Auto-seed).
+3. `ai_bum.my_payroll`: Xem bảng lương cá nhân (An toàn - Auto-seed).
+4. `ai_bum.team_shift`: Xem ca làm việc của đồng nghiệp/toàn quán.
+5. `ai_bum.sales`: Hỏi đáp & báo cáo doanh thu / bán hàng.
+6. `ai_bum.inventory`: Hỏi đáp & báo cáo kho hàng.
+7. `ai_bum.finance`: Hỏi đáp & báo cáo thu chi / dòng tiền.
+8. `ai_bum.operations`: Hỏi đáp & báo cáo nhiệm vụ vận hành.
+9. `ai_bum.all_payroll`: Xem bảng lương & thu nhập của tất cả nhân viên.
+
+### 🛡️ Quy Tắc Kiểm Soát Truy Vấn
+| Vai trò | Phân Quyền & Kiểm Soát |
+|---------|------------------------|
+| **Owner (Chủ quán)** | Xác nhận qua `store_members` hoặc `stores.owner_user_id` $\rightarrow$ Toàn bộ 9 quyền AI Bum cố định. |
+| **Manager (Quản lý)** | Đọc `action_perms_manager` từ `app_settings`. Không tự động vượt quyền — nếu không được cấp `ai_bum.sales` sẽ bị chặn khi hỏi doanh thu. |
+| **Staff (Nhân viên)** | Chỉ dùng được AI Bum nếu vai trò được bật module `ai_bum`. Khi chuyển module từ OFF $\rightarrow$ ON, tự động cấp 3 quyền an toàn (`help`, `my_shift`, `my_payroll`). Các quyền nhạy cảm khác do Chủ quán bật/tắt trong mục **Hành động nhạy cảm**. |
+
+> **Fail-Closed Security Guarantee:** Nếu thiếu quyền tương ứng với Intent hoặc module `ai_bum` bị tắt, Bum lập tức trả lời *"Chưa được cấp quyền"* và **tuyệt đối không thực thi SQL/Database Query**.
 
 ---
 

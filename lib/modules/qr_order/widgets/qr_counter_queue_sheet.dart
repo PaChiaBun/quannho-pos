@@ -6,7 +6,7 @@ import '../providers/qr_order_providers.dart';
 
 /// Sheet hiển thị Hàng Chờ Đơn QR Quầy (Counter QR Orders Queue)
 /// Cho phép nhân viên xem danh sách toàn bộ các đơn quầy đang chờ hoặc đang xử lý,
-/// lọc theo trạng thái và chọn từng đơn cụ thể để duyệt thay vì chỉ mở đơn đầu tiên!
+/// lọc theo trạng thái và chọn từng đơn cụ thể để duyệt
 class QrCounterQueueSheet extends ConsumerWidget {
   const QrCounterQueueSheet({super.key});
 
@@ -189,7 +189,6 @@ class QrCounterQueueSheet extends ConsumerWidget {
                           ),
                         ),
                         onPressed: () {
-                          // Trả về QrRequestModel được chọn cho màn hình POS caller
                           Navigator.pop(context, req);
                         },
                         child: Text(
@@ -212,12 +211,23 @@ class QrCounterQueueSheet extends ConsumerWidget {
 
   Color _statusColor(String status) {
     switch (status) {
+      case 'customer_submitted':
       case 'pending_staff':
         return Colors.orange;
+      case 'claimed':
       case 'processing':
         return Colors.blue;
+      case 'staff_review':
       case 'confirmed':
+        return Colors.teal;
+      case 'awaiting_payment':
         return Colors.amber.shade900;
+      case 'ready_for_kitchen':
+      case 'sent_kitchen':
+        return Colors.green;
+      case 'cancelled':
+      case 'rejected':
+        return Colors.red;
       default:
         return Colors.grey;
     }
@@ -225,12 +235,24 @@ class QrCounterQueueSheet extends ConsumerWidget {
 
   String _statusLabel(String status) {
     switch (status) {
+      case 'customer_submitted':
       case 'pending_staff':
         return 'Chờ nhận';
+      case 'claimed':
       case 'processing':
         return 'Đang kiểm';
+      case 'staff_review':
       case 'confirmed':
-        return 'Đã xác nhận';
+        return 'Đã duyệt';
+      case 'awaiting_payment':
+        return 'Chờ thu tiền';
+      case 'ready_for_kitchen':
+        return 'Đã thu tiền';
+      case 'sent_kitchen':
+        return 'Đã gửi bếp';
+      case 'cancelled':
+      case 'rejected':
+        return 'Đã hủy';
       default:
         return status;
     }
