@@ -3557,7 +3557,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'Bàn: ${widget.table.label.isNotEmpty ? widget.table.label : (widget.table.name.isNotEmpty ? widget.table.name : 'Bàn')}',
+                    'Bàn: ${widget.table.label.isNotEmpty ? widget.table.label : 'Bàn'}',
                     style: GoogleFonts.outfit(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
