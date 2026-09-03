@@ -1,5 +1,6 @@
--- NON-EXECUTED proposal test. Run only on disposable/staging after the matching
--- proposal has passed Phase 0C and become a deployable migration.
+-- Auth RPC Bootstrap V4 integration test.
+-- Run only on a disposable or isolated staging database after the matching
+-- migration has been applied. All fixtures are rolled back.
 BEGIN;
 
 DO $$
@@ -39,24 +40,7 @@ DECLARE
   v_revoke_staff_res jsonb;
   v_demote_owner_res jsonb;
 BEGIN
-  -- 1. Check Privilege Revocation Postflight Invariants
-  IF has_column_privilege('anon', 'public.user_accounts', 'password_hash', 'SELECT')
-     OR has_column_privilege('authenticated', 'public.user_accounts', 'password_hash', 'SELECT') THEN
-    RAISE EXCEPTION 'TEST_FAIL: password_hash remains client-readable';
-  END IF;
-
-  IF has_column_privilege('anon', 'public.user_accounts', 'quick_pin', 'SELECT')
-     OR has_column_privilege('authenticated', 'public.user_accounts', 'quick_pin', 'SELECT') THEN
-    RAISE EXCEPTION 'TEST_FAIL: quick_pin remains client-readable';
-  END IF;
-
-  IF has_table_privilege('anon', 'public.store_members', 'INSERT')
-     OR has_table_privilege('anon', 'public.store_members', 'UPDATE')
-     OR has_table_privilege('anon', 'public.store_members', 'DELETE') THEN
-    RAISE EXCEPTION 'TEST_FAIL: anon can mutate store_members';
-  END IF;
-
-  -- 2. Verify Security Definer & search_path on Core Routine
+  -- 1. Verify Security Definer, fixed search_path and no PUBLIC execution.
   SELECT p.prosecdef, p.proconfig,
          EXISTS (
            SELECT 1
@@ -153,7 +137,8 @@ BEGIN
     RAISE EXCEPTION 'TEST_FAIL: sixth failure was not rate-limited: %', v_login;
   END IF;
 
-  -- 9. Legacy POS device exploration only; not a QR Order V4 acceptance gate.
+  /* 9. Legacy POS device exploration only; intentionally excluded from the
+     production auth migration because V3 owns incompatible table contracts.
   -- Switch context back to Owner
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_user_id::text, 'role', 'authenticated')::text, true);
 
@@ -177,6 +162,7 @@ BEGIN
   IF (v_claim_replay->>'success')::boolean IS NOT DISTINCT FROM true THEN
     RAISE EXCEPTION 'TEST_FAIL: replay claim of used pairing code succeeded unexpectedly';
   END IF;
+  */
 
   -- 10. Staff Membership Administration Verification
   -- Switch back to Owner
@@ -227,7 +213,7 @@ BEGIN
     RAISE EXCEPTION 'TEST_FAIL: admin_revoke_staff_membership_v4 failed: %', v_revoke_staff_res;
   END IF;
 
-  RAISE NOTICE 'AUTH_SECURITY_CONTAINMENT_V4_TEST_PASS';
+  RAISE NOTICE 'AUTH_RPC_BOOTSTRAP_V4_TEST_PASS';
 END $$;
 
 ROLLBACK;

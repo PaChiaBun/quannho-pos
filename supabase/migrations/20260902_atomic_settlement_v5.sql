@@ -11,6 +11,8 @@
 --   7. RPC complete_pos_sale_v1: Atomic POS bán nhanh Fail-Closed
 -- ============================================================================
 
+BEGIN;
+
 -- ── 1. BẢNG BỘ ĐẾM SỐ ĐƠN NGUYÊN TỬ THEO NGÀY ────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.daily_order_counters (
   store_id uuid NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
@@ -483,7 +485,11 @@ BEGIN
     RETURN jsonb_build_object('success', false, 'error_code', 'INVALID_STATE', 'message', 'Không tìm thấy phiên bàn');
   END IF;
 
-  SELECT * INTO v_table FROM public.ban_dining_tables WHERE id = v_session.table_id;
+  -- Live schema keeps dining-table ids as text while ban_sessions.table_id is
+  -- UUID for historical compatibility. Compare through the canonical text id.
+  SELECT * INTO v_table
+  FROM public.ban_dining_tables
+  WHERE id = v_session.table_id::text AND store_id = p_store_id;
 
   -- 5. Băm Financial Intent Fingerprint SHA-256
   v_request_fingerprint := encode(digest(
@@ -808,7 +814,7 @@ BEGIN
     ) VALUES (
       v_manual_order_id, p_store_id, v_manual_order_num, v_manual_subtotal, 0, 0, v_manual_subtotal, v_manual_subtotal,
       p_payment_method, 'completed', 'ban_manual', p_session_id::text, v_staff_member_id, v_session.waiter_id, false, now(),
-      'Món thanh toán tại bàn ' || COALESCE(v_table.label, 'bàn')
+      'Món thanh toán tại bàn ' || COALESCE(v_table.label, v_table.name, 'bàn')
     );
 
     INSERT INTO public.ban_session_orders (
@@ -948,7 +954,12 @@ BEGIN
 
     -- Trừ kho sản phẩm & công thức
     FOR v_item IN
-      SELECT oi.id, oi.product_id, bsi.product_name, bsi.quantity, oi.modifiers_json
+      SELECT oi.id, oi.product_id, bsi.product_name, bsi.quantity,
+        CASE
+          WHEN oi.modifiers_json IS NULL OR btrim(oi.modifiers_json::text) = ''
+            THEN '[]'::jsonb
+          ELSE oi.modifiers_json::jsonb
+        END AS modifiers_json
       FROM public.order_items oi
       JOIN public.ban_session_order_items link ON link.order_item_id = oi.id
       JOIN public.ban_session_items bsi ON bsi.id = link.session_item_id
@@ -966,7 +977,7 @@ BEGIN
           SELECT EXISTS (
             SELECT 1 FROM public.recipes r
             JOIN public.recipe_ingredients ri ON ri.recipe_id = r.id
-            WHERE r.pos_product_id = $1 AND r.is_deleted = false
+            WHERE r.pos_product_id::text = $1::text AND r.is_deleted = false
           )
         ' INTO v_has_recipe USING v_item.product_id;
       END IF;
@@ -976,7 +987,7 @@ BEGIN
           SELECT ri.ingredient_id, ri.quantity, ri.yield_factor
           FROM public.recipes r
           JOIN public.recipe_ingredients ri ON ri.recipe_id = r.id
-          WHERE r.pos_product_id = $1 AND r.is_deleted = false AND ri.ingredient_id IS NOT NULL
+          WHERE r.pos_product_id::text = $1::text AND r.is_deleted = false AND ri.ingredient_id IS NOT NULL
         ' USING v_item.product_id
         LOOP
           v_actual_ing_qty := (v_rec_ing.quantity / COALESCE(NULLIF(v_rec_ing.yield_factor, 0), 1.0)) * v_item.quantity;
@@ -984,21 +995,21 @@ BEGIN
           INSERT INTO public.stock_movements (
             id, store_id, product_id, delta, reason, reference_id, note, created_at
           ) VALUES (
-            gen_random_uuid(), p_store_id, v_rec_ing.ingredient_id, -v_actual_ing_qty,
-            'recipe_usage', v_settlement_id, 'Xuất kho công thức bàn ' || COALESCE(v_table.label, 'bàn') || ': ' || v_item.product_name, now()
+            gen_random_uuid(), p_store_id, v_rec_ing.ingredient_id::uuid, -v_actual_ing_qty,
+            'recipe_usage', v_settlement_id, 'Xuất kho công thức bàn ' || COALESCE(v_table.label, v_table.name, 'bàn') || ': ' || v_item.product_name, now()
           );
 
           UPDATE public.products
           SET stock_qty = COALESCE(stock_qty, 0) - v_actual_ing_qty,
               updated_at = extract(epoch from now()) * 1000
-          WHERE id = v_rec_ing.ingredient_id AND store_id = p_store_id;
+          WHERE id = v_rec_ing.ingredient_id::uuid AND store_id = p_store_id;
         END LOOP;
       ELSE
         INSERT INTO public.stock_movements (
           id, store_id, product_id, delta, reason, reference_id, note, created_at
         ) VALUES (
           gen_random_uuid(), p_store_id, v_item.product_id, -v_item.quantity,
-          'sale', v_settlement_id, 'Bán hàng bàn ' || COALESCE(v_table.label, 'bàn'), now()
+          'sale', v_settlement_id, 'Bán hàng bàn ' || COALESCE(v_table.label, v_table.name, 'bàn'), now()
         );
 
         UPDATE public.products
@@ -1022,7 +1033,7 @@ BEGIN
                 SELECT EXISTS (
                   SELECT 1 FROM public.recipes r
                   JOIN public.recipe_ingredients ri ON ri.recipe_id = r.id
-                  WHERE r.pos_product_id = $1 AND r.is_deleted = false
+                  WHERE r.pos_product_id::text = $1::text AND r.is_deleted = false
                 )
               ' INTO v_has_recipe USING (v_mod->>'id')::uuid;
             END IF;
@@ -1032,7 +1043,7 @@ BEGIN
                 SELECT ri.ingredient_id, ri.quantity, ri.yield_factor
                 FROM public.recipes r
                 JOIN public.recipe_ingredients ri ON ri.recipe_id = r.id
-                WHERE r.pos_product_id = $1 AND r.is_deleted = false AND ri.ingredient_id IS NOT NULL
+                WHERE r.pos_product_id::text = $1::text AND r.is_deleted = false AND ri.ingredient_id IS NOT NULL
               ' USING (v_mod->>'id')::uuid
               LOOP
                 v_actual_ing_qty := (v_rec_ing.quantity / COALESCE(NULLIF(v_rec_ing.yield_factor, 0), 1.0)) * ((COALESCE((v_mod->>'quantity')::numeric, 1)) * v_item.quantity);
@@ -1040,14 +1051,14 @@ BEGIN
                 INSERT INTO public.stock_movements (
                   id, store_id, product_id, delta, reason, reference_id, note, created_at
                 ) VALUES (
-                  gen_random_uuid(), p_store_id, v_rec_ing.ingredient_id, -v_actual_ing_qty,
-                  'recipe_usage', v_settlement_id, 'Xuất kho topping công thức bàn ' || COALESCE(v_table.label, 'bàn'), now()
+                  gen_random_uuid(), p_store_id, v_rec_ing.ingredient_id::uuid, -v_actual_ing_qty,
+                  'recipe_usage', v_settlement_id, 'Xuất kho topping công thức bàn ' || COALESCE(v_table.label, v_table.name, 'bàn'), now()
                 );
 
                 UPDATE public.products
                 SET stock_qty = COALESCE(stock_qty, 0) - v_actual_ing_qty,
                     updated_at = extract(epoch from now()) * 1000
-                WHERE id = v_rec_ing.ingredient_id AND store_id = p_store_id;
+                WHERE id = v_rec_ing.ingredient_id::uuid AND store_id = p_store_id;
               END LOOP;
             ELSE
               INSERT INTO public.stock_movements (
@@ -1055,7 +1066,7 @@ BEGIN
               ) VALUES (
                 gen_random_uuid(), p_store_id, (v_mod->>'id')::uuid,
                 -((COALESCE((v_mod->>'quantity')::numeric, 1)) * v_item.quantity),
-                'sale', v_settlement_id, 'Bán topping bàn ' || COALESCE(v_table.label, 'bàn'), now()
+                'sale', v_settlement_id, 'Bán topping bàn ' || COALESCE(v_table.label, v_table.name, 'bàn'), now()
               );
 
               UPDATE public.products
@@ -1074,7 +1085,7 @@ BEGIN
     id, store_id, type, amount, description, reference_id, is_auto, recorded_at, fund_type
   ) VALUES (
     gen_random_uuid(), p_store_id, 'income', v_final_total,
-    'Thanh toán bàn ' || COALESCE(v_table.label, 'bàn') || CASE WHEN p_coupon_code IS NOT NULL THEN ' [Voucher: ' || p_coupon_code || ']' ELSE '' END,
+    'Thanh toán bàn ' || COALESCE(v_table.label, v_table.name, 'bàn') || CASE WHEN p_coupon_code IS NOT NULL THEN ' [Voucher: ' || p_coupon_code || ']' ELSE '' END,
     v_settlement_id, true, now(), v_fund_type
   );
 
@@ -1112,19 +1123,13 @@ BEGIN
       ) VALUES (
         gen_random_uuid(), p_store_id, p_customer_id, v_settlement_id,
         v_pts_earned, v_actual_points_used,
-        'Thanh toán bàn ' || COALESCE(v_table.label, 'bàn'), now()
+        'Thanh toán bàn ' || COALESCE(v_table.label, v_table.name, 'bàn'), now()
       );
     END IF;
   END IF;
 
-  -- 15.9. Cập nhật Bàn ăn về trạng thái 'empty'
-  IF v_session.table_id IS NOT NULL THEN
-    UPDATE public.ban_dining_tables
-    SET status = 'empty'
-    WHERE id = v_session.table_id AND store_id = p_store_id;
-  END IF;
-
-  -- 15.10. Đóng Session bàn
+  -- 15.9. Đóng Session bàn. Trạng thái bàn được suy ra từ phiên đang mở;
+  -- production ban_dining_tables không có cột status.
   UPDATE public.ban_sessions
   SET status = 'closed',
       closed_at = now(),
@@ -1628,7 +1633,7 @@ BEGIN
         SELECT EXISTS (
           SELECT 1 FROM public.recipes r
           JOIN public.recipe_ingredients ri ON ri.recipe_id = r.id
-          WHERE r.pos_product_id = $1 AND r.is_deleted = false
+          WHERE r.pos_product_id::text = $1::text AND r.is_deleted = false
         )
       ' INTO v_has_recipe USING v_prod.id;
     END IF;
@@ -1638,7 +1643,7 @@ BEGIN
         SELECT ri.ingredient_id, ri.quantity, ri.yield_factor
         FROM public.recipes r
         JOIN public.recipe_ingredients ri ON ri.recipe_id = r.id
-        WHERE r.pos_product_id = $1
+        WHERE r.pos_product_id::text = $1::text
           AND r.is_deleted = false
           AND ri.ingredient_id IS NOT NULL
       ' USING v_prod.id
@@ -1649,14 +1654,14 @@ BEGIN
         INSERT INTO public.stock_movements (
           id, store_id, product_id, delta, reason, reference_id, note, created_at
         ) VALUES (
-          gen_random_uuid(), p_store_id, v_rec_ing.ingredient_id,
+          gen_random_uuid(), p_store_id, v_rec_ing.ingredient_id::uuid,
           -v_actual_ing_qty, 'recipe_usage', v_order_id,
           'POS công thức #' || v_order_number || ': ' || v_prod.name, now()
         );
         UPDATE public.products
         SET stock_qty = COALESCE(stock_qty, 0) - v_actual_ing_qty,
             updated_at = extract(epoch from now()) * 1000
-        WHERE id = v_rec_ing.ingredient_id AND store_id = p_store_id;
+        WHERE id = v_rec_ing.ingredient_id::uuid AND store_id = p_store_id;
       END LOOP;
     ELSE
       INSERT INTO public.stock_movements (
@@ -1747,3 +1752,5 @@ GRANT EXECUTE ON FUNCTION public.settle_ban_session_v5(uuid, uuid, text, text, u
 
 REVOKE ALL ON FUNCTION public.complete_pos_sale_v1(uuid, text, jsonb, text, uuid, numeric, numeric, text, text, text, text, numeric, uuid[]) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.complete_pos_sale_v1(uuid, text, jsonb, text, uuid, numeric, numeric, text, text, text, text, numeric, uuid[]) TO authenticated;
+
+COMMIT;

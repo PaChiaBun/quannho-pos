@@ -499,16 +499,31 @@ void main() {
       },
     );
 
-    test('Simulate 100% Fail-Closed Permission Matrix for pos.checkout', () {
+    test('Simulate Lego Modules & Role-Based Permission Matrix for pos.checkout', () {
       bool hasCheckoutPermission({
         required String role,
         required bool isOwner,
+        List<String>? modules,
         Map<String, dynamic>? appSettingsPerms,
       }) {
         // 1. Owner always allowed
         if (isOwner || role == 'owner') return true;
 
-        // 2. Strict Fail-Closed: only allowed if app_settings action_perms_<role> contains 'pos.checkout'
+        // 2. Canonical role check (manager, cashier, thu ngân)
+        final canon = StaffService.canonicalRole(role);
+        if (canon == 'manager' ||
+            canon == 'cashier' ||
+            role.toLowerCase().contains('thu ngân')) {
+          return true;
+        }
+
+        // 3. Lego modules check (pos or ban)
+        if (modules != null &&
+            (modules.contains('pos') || modules.contains('ban'))) {
+          return true;
+        }
+
+        // 4. app_settings fallback override
         if (appSettingsPerms != null &&
             appSettingsPerms.containsKey('action_perms_$role')) {
           final val = appSettingsPerms['action_perms_$role'];
@@ -517,32 +532,37 @@ void main() {
           }
         }
 
-        // NO fallback based on role name!
         return false;
       }
 
       // Owner always allowed
       expect(hasCheckoutPermission(role: 'owner', isOwner: true), isTrue);
 
-      // Cashier without explicit app_settings config -> DENIED (Fail-closed)
-      expect(hasCheckoutPermission(role: 'cashier', isOwner: false), isFalse);
+      // Cashier without explicit app_settings config -> ALLOWED (Lego module / canonical role)
+      expect(hasCheckoutPermission(role: 'cashier', isOwner: false), isTrue);
+      expect(hasCheckoutPermission(role: 'Thu ngân', isOwner: false), isTrue);
 
-      // Manager without explicit app_settings config -> DENIED (Fail-closed)
-      expect(hasCheckoutPermission(role: 'manager', isOwner: false), isFalse);
+      // Manager without explicit app_settings config -> ALLOWED
+      expect(hasCheckoutPermission(role: 'manager', isOwner: false), isTrue);
 
-      // Waiter without config -> DENIED
-      expect(hasCheckoutPermission(role: 'waiter', isOwner: false), isFalse);
-
-      // Cashier granted pos.checkout in app_settings -> ALLOWED
+      // Custom role with module 'pos' -> ALLOWED
       expect(
         hasCheckoutPermission(
-          role: 'cashier',
+          role: 'Pha chế',
           isOwner: false,
-          appSettingsPerms: {
-            'action_perms_cashier': ['pos.checkout', 'pos.view_history'],
-          },
+          modules: ['pos', 'ban'],
         ),
         isTrue,
+      );
+
+      // Waiter without pos/ban modules -> DENIED
+      expect(
+        hasCheckoutPermission(
+          role: 'waiter',
+          isOwner: false,
+          modules: ['kitchen'],
+        ),
+        isFalse,
       );
 
       // Waiter granted pos.checkout in app_settings -> ALLOWED
@@ -555,18 +575,6 @@ void main() {
           },
         ),
         isTrue,
-      );
-
-      // Cashier revoked pos.checkout in app_settings -> DENIED
-      expect(
-        hasCheckoutPermission(
-          role: 'cashier',
-          isOwner: false,
-          appSettingsPerms: {
-            'action_perms_cashier': ['pos.view_history'],
-          },
-        ),
-        isFalse,
       );
     });
 

@@ -1,12 +1,15 @@
 -- ============================================================================
--- MIGRATION: QR Order V4 (Quán Nhỏ POS)
--- Target: Staging & Production Compatible (Zero Drift, Strict Contract)
+-- NON-DEPLOYABLE PROPOSAL: QR Order V4 (Quán Nhỏ POS)
+-- Production uses text dining-table identifiers; this historical proposal
+-- assumes UUID identifiers and must not be included in an automatic rollout.
 -- Security: SECURITY DEFINER, SET search_path = pg_catalog, public, Fail-Closed
 -- Contract Verified: orders, order_items, finance_records, ban_sessions,
 --                    ban_session_items, kitchen_tickets, kitchen_ticket_items,
 --                    stock_movements, products, store_members, staff_members,
 --                    user_accounts, app_settings, customers, loyalty_transactions.
 -- ============================================================================
+
+BEGIN;
 
 -- ── 0. TIỆN ÍCH EXTENSIONS ───────────────────────────────────────────────────
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -3230,3 +3233,5 @@ GRANT EXECUTE ON FUNCTION public.send_qr_order_to_kitchen_v4(uuid, uuid, text, t
 GRANT EXECUTE ON FUNCTION public.settle_ban_session_v4(uuid, uuid, text, text, uuid, integer, numeric, text, numeric) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.cancel_qr_order_v4(uuid, uuid, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.manage_qr_channel_v4(uuid, text, boolean, text) TO authenticated;
+
+COMMIT;

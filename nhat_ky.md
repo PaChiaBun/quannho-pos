@@ -5,6 +5,113 @@
 
 ---
 
+## 2026-09-03 — Thống nhất Phân quyền Lego Modules & Sửa dứt điểm Lỗi Thu ngân mới không thể Thanh toán
+
+### ✅ Hoàn thành
+
+- **Quy về 1 nguồn sự thật duy nhất (Single Source of Truth): Lego Modules (`store_roles.modules`)**:
+  - Loại bỏ hoàn toàn sự phụ thuộc vào bảng phụ `app_settings` (`action_perms_*`) khi cấp quyền chức năng.
+  - Bổ sung `StaffService.deriveActionPermsFromModules()`: Tự động suy ra toàn bộ action permissions tương ứng với Modules mà vai trò sở hữu.
+  - Bất kỳ vai trò nào có module `pos` (Bán hàng) hoặc `ban` (Quản lý bàn), hoặc vai trò chuẩn (`owner`, `manager`, `cashier`, `"Thu ngân"`) đều **mặc nhiên 100% có quyền Thanh toán hoá đơn (`pos.checkout`)**.
+  - Không còn xảy ra tình trạng nhân viên mới hoặc vai trò mới tạo bị chặn thanh toán do thiếu row `action_perms_...` trong `app_settings`.
+- **Cập nhật Client (`ban_screen.dart` & `permission_provider.dart`)**:
+  - `userActionPermsProvider` tự động tải modules từ `store_roles` và suy luận đầy đủ quyền.
+  - `_openCheckout` trong `ban_screen.dart` bổ sung fail-safe check vai trò (`owner`, `manager`, `cashier`).
+- **Cập nhật Database RPC (`verify_staff_qr_membership_v4`)**:
+  - Trong `20260901_settlement_v5_prerequisites.sql`: Nâng cấp kiểm tra quyền checkout: ưu tiên vai trò chuẩn (`owner`, `manager`, `cashier`), kiểm tra modules `pos`/`ban` từ `store_roles`, `staff_members`, và fallback `app_settings` cũ.
+- **Cập nhật Kiểm thử & Workflow**:
+  - Thêm unit test cho `StaffService.deriveActionPermsFromModules` trong `test/core/services/permission_parser_test.dart`.
+  - Cập nhật test ma trận quyền trong `test/core/qr_order_v4_test.dart`.
+  - Cập nhật quy chuẩn kiến trúc phân quyền trong `.agents/workflows/qn.md`.
+
+---
+
+## 2026-09-03 — CHECKPOINT QUOTA: đã chốt nguyên nhân backend, đang ở cổng triển khai
+
+### Kết luận đã xác minh trực tiếp
+
+- Production hiện **không có** các RPC `verify_user_login_v4`, `settle_ban_session_v5`, `reconcile_ban_settlement_v1` và `verify_staff_qr_membership_v4` trong `pg_proc`.
+- Production cũng **không có** bảng `payment_settlements`. Vì vậy bản Windows mới gọi contract V4/V5 nhưng backend chưa được nâng cấp: đăng nhập báo “dịch vụ đăng nhập an toàn chưa sẵn sàng”, còn thanh toán A10 không thể xác nhận trạng thái.
+- Đây không phải lỗi mật khẩu và cũng không phải lỗi riêng của bàn A10. Không được tiếp tục build/cài Windows cho đến khi backend và gateway vượt qua gate.
+- Workflow Windows hiện chưa truyền `POS_JWT_AUTH_URL`; VPS chưa chạy POS JWT gateway và Nginx chưa có route `/api/auth/`.
+- Dữ liệu production có khác biệt quan trọng với proposal cũ: `ban_dining_tables.id` là `text`, `ban_sessions.table_id` là `uuid`, bảng bàn không có cột `status`, `order_items.modifiers_json` là `text`, và các bảng QR V4 chưa tồn tại.
+- `user_accounts` và `store_members` hiện chưa bật RLS; chưa được bật hardening toàn phần trong đợt này vì sẽ khóa các client cũ chưa nhận JWT.
+
+### Mã đã chuẩn bị trong worktree — CHƯA deploy production
+
+- Chuyển migration QR V4 không tương thích ra khỏi thư mục migration tự động sang `.docs/evidence/qr-v4-phase0-20260826/proposed_qr_order_v4.sql` và đánh dấu không được deploy.
+- Tạo `supabase/migrations/20260901_auth_rpc_bootstrap_v4.sql`: bootstrap RPC đăng nhập/QR membership theo kiểu tương thích; chỉ siết quyền thực thi function, **chưa** bật hardening RLS bảng toàn phần.
+- Tạo `supabase/migrations/20260901_settlement_v5_prerequisites.sql`: bổ sung các prerequisite tối thiểu cho settlement V5, gồm `payment_settlements` và helper membership.
+- Sửa `supabase/migrations/20260902_atomic_settlement_v5.sql` theo schema production thật: cast ID phù hợp, dùng `label/name`, bỏ cập nhật cột `status` không tồn tại, parse `modifiers_json`, chuẩn hóa kiểu recipe/ingredient và bọc transaction.
+- Tạo `supabase/tests/auth_rpc_bootstrap_v4_test.sql` và `supabase/tests/settlement_v5_production_schema_test.sql`.
+- Các thay đổi trên vẫn chưa commit; phải giữ nguyên worktree, không reset/checkout hoặc xóa file.
+
+### Gate đã PASS
+
+- Đã tạo một database clone schema-only từ production trong PostgreSQL staging cô lập: `qn_prod_schema_gate_20260903`.
+- Chuỗi migration sạch `auth bootstrap -> settlement prerequisites -> atomic settlement V5` đã apply thành công trên clone.
+- Test auth trả `AUTH_RPC_BOOTSTRAP_V4_TEST_PASS`.
+- Test settlement theo đúng schema production trả `SETTLEMENT_V5_PRODUCTION_SCHEMA_TEST_PASS`.
+- Trước lần thử staging đã có backup tại `/var/backups/quannho-staging/pre_settlement_auth_20260903.dump`.
+- Production chưa bị thay đổi, chưa build Windows mới, chưa push Git.
+
+### Việc đang dang dở đúng điểm dừng
+
+- Hai file tạm đã được chuẩn bị nhưng **chưa upload/chạy**:
+  - `/private/tmp/qn_settlement_v5_concurrency_setup.sql`
+  - `/private/tmp/qn_run_settlement_concurrency.sh`
+- Bước kế tiếp duy nhất: chạy gate 50 worker trên database clone staging và xác nhận invariant `1 payment_settlement | 1 order | 1 finance_record | 1 stock_movement | session closed | stock 99`.
+- Sau gate concurrency: chạy `git diff --check`, test Python gateway, test Flutter mục tiêu và rà validator để loại mọi tham chiếu tới migration QR proposal cũ.
+- Sau đó mới: backup production -> apply ba migration theo thứ tự -> reload PostgREST schema -> kiểm tra catalog/grants -> triển khai POS JWT gateway loopback -> thêm Nginx `/api/auth/` -> health check.
+- Cập nhật workflow Windows để build với `POS_JWT_AUTH_URL=https://quannho.lpm.vn`; chỉ build/cài Windows sau khi đăng nhập và settlement backend smoke test đạt.
+- Hardening RLS toàn phần được để thành phase sau, chỉ thực hiện khi mọi client đang hoạt động đã dùng JWT; không trộn vào bản vá phục hồi đăng nhập/thanh toán hiện tại.
+
+### Quy tắc tiếp tục để không tạo vòng lặp
+
+1. Không điều tra lại từ đầu và không yêu cầu thao tác UI/module Log; bằng chứng database trực tiếp đã đủ chốt nguyên nhân.
+2. Không sửa thêm UI trước khi backend/gateway được triển khai và kiểm thử.
+3. Không deploy proposal QR V4 và không bật RLS toàn phần trong cùng lượt phục hồi.
+4. Không thử thanh toán lặp trên dữ liệu bàn thật; dùng fixture transaction/rollback hoặc bàn thử được kiểm soát.
+5. Không tuyên bố hoàn tất trước khi concurrency gate, production preflight/backup, gateway health, login smoke và settlement invariant đều PASS.
+
+---
+
+## 2026-09-03 — CHECKPOINT TẠM DỪNG: Windows vẫn lỗi đăng nhập và thanh toán
+
+### Trạng thái đã xác minh
+
+- Nhánh phát hành hiện tại: `feature/ai-bum-ui`, commit `335a86f`; local đã đồng bộ với `origin/feature/ai-bum-ui` và worktree sạch tại thời điểm kiểm tra.
+- 7 file sửa phía client/test của lỗi thanh toán đã được commit, không còn nằm riêng ở Changes.
+- Máy thu ngân Windows sau khi đăng xuất không đăng nhập lại được; UI báo: `Dịch vụ đăng nhập an toàn chưa sẵn sàng. Vui lòng thử lại sau.`
+- Thông báo trên chỉ xuất hiện khi lời gọi `verify_user_login_v4` ném exception hoặc phản hồi không đúng contract `Map`; đây không phải thông báo sai mật khẩu thông thường.
+- Probe production bằng anon key và payload rỗng trả `PGRST202` cho `verify_user_login_v4`, `settle_ban_session_v5` và `reconcile_ban_settlement_v1`, với mô tả không tìm thấy overload **không tham số**. Kết quả này chứng minh schema cache không khớp payload rỗng, nhưng **chưa đủ một mình để kết luận hàm hoàn toàn không tồn tại**; lần làm tiếp phải kiểm tra trực tiếp `pg_proc`, chữ ký, grants và schema cache.
+- Workflow `.github/workflows/windows-release.yml` hiện build Windows mà chưa truyền `--dart-define=POS_JWT_AUTH_URL=...`; cần kiểm tra/deploy POS JWT gateway trước khi bắt buộc cấu hình URL này.
+- Chưa apply migration production, chưa reload schema cache và chưa sửa dữ liệu bàn A10 trong phiên làm việc này.
+
+### Bảo mật
+
+- Ảnh lỗi đăng nhập người dùng gửi đã vô tình hiển thị mật khẩu. Chủ tài khoản phải đổi mật khẩu này trước khi tiếp tục kiểm thử và không tái sử dụng mật khẩu đã lộ.
+- Không ghi số điện thoại, mật khẩu, anon key hoặc token vào nhật ký này.
+
+### Nguyên tắc tiếp tục — tránh vòng lặp
+
+1. Không build/cài lại Windows thêm lần nào trước khi vượt qua backend preflight.
+2. Dùng SQL **chỉ đọc** trên production để kiểm tra `pg_proc` cho đúng chữ ký, `proacl`/grant, PostgREST schema cache và trạng thái migration của ba RPC.
+3. Đối chiếu lời gọi Flutter với chữ ký thực tế; không thêm fallback về login/checkout legacy và không làm yếu idempotency/RLS.
+4. Chuẩn hóa migration chính thức, rollback và test; không apply trực tiếp file proposal trong `.docs/evidence/`.
+5. Chạy migration và toàn bộ auth/settlement/concurrency gate trên PostgreSQL staging cô lập.
+6. Chỉ sau khi staging PASS và Chủ quán xác nhận quyền thay đổi production: backup, apply production, reload PostgREST schema cache và chạy smoke test read-only/controlled.
+7. Deploy/kiểm tra POS JWT gateway, bổ sung secret/variable build an toàn cho `POS_JWT_AUTH_URL`, rồi mới build Windows mới.
+8. Nghiệm thu theo thứ tự: đăng nhập → mở đúng store → thanh toán một bàn thử đúng một lần → đối chiếu `payment_settlements`, `orders`, `finance_records`, `stock_movements` và log `checkout`.
+
+### Việc đầu tiên khi quay lại
+
+- Đọc mục checkpoint này và `qn.md`.
+- Không điều tra lại từ đầu và không thao tác thanh toán trên máy thu ngân.
+- Thực hiện production backend preflight read-only; chốt chính xác lỗi là thiếu RPC, sai overload, thiếu grant, schema cache stale hay gateway chưa cấu hình trước khi sửa/deploy.
+
+---
+
 ## 2026-09-03 — Chẩn đoán lỗi thanh toán bàn A10 sau khi cài Windows
 
 ### ✅ Hoàn thành

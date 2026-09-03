@@ -1,15 +1,23 @@
--- NON-DEPLOYABLE DESIGN ARTIFACT — Phase S0 auth containment proposal.
--- Do not copy this file into supabase/migrations or apply it until all Phase 0C
--- catalog gates and the dependent quick-PIN/create-store/join-store flows have
--- been converted to authenticated server RPCs and verified on staging.
--- Known unresolved gates: the onboarding principal/exchange is only a local
--- prototype until this proposal and its persistent replay store pass staging;
--- create/join idempotency must be derived from the real catalog. Device pairing
--- is not a QR Order V4 credential and must not be made a QR dependency.
+-- Auth RPC Bootstrap V4 — compatibility-safe production migration.
+-- Creates the fail-closed RPC contracts needed by login and the POS JWT
+-- gateway, but deliberately preserves legacy table grants/RLS during the
+-- Windows rollout. Full table hardening is a separate post-rollout gate.
 
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Production baseline 2026-08-26 does not yet have this column, while the
+-- quick-PIN RPCs below require it. Keep the upgrade idempotent for databases
+-- where an earlier auth rollout already added the column.
+ALTER TABLE public.user_accounts
+  ADD COLUMN IF NOT EXISTS quick_pin text;
+
+-- The production staff baseline also predates per-user module overrides.
+-- Admin RPCs and the current Flutter permission service both read/write this
+-- field, so create it before compiling those routines.
+ALTER TABLE public.staff_members
+  ADD COLUMN IF NOT EXISTS modules jsonb NOT NULL DEFAULT '[]'::jsonb;
 
 DO $$
 DECLARE
@@ -798,6 +806,12 @@ $$;
 -- treats device_id only as audit/idempotency metadata. Remove this entire
 -- section from any QR V4 migration candidate after the real catalog is known.
 
+/*
+ * Intentionally excluded from this migration. Production already owns legacy
+ * store_pairing_codes/pos_device_sessions tables with an incompatible V3
+ * contract. Reusing those names would either fail the migration or corrupt the
+ * active device-session subsystem. QR/Auth V4 does not consume these RPCs.
+
 CREATE TABLE IF NOT EXISTS public.store_pairing_codes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   store_id uuid NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
@@ -1058,6 +1072,8 @@ BEGIN
   RETURN jsonb_build_object('success', true, 'status', 200, 'message', 'Ngắt kết nối thiết bị thành công');
 END;
 $$;
+
+*/
 
 -- ═════════════════════════════════════════════════════════════════════════════
 -- 7. SERVER-SIDE STAFF MEMBERSHIP ADMINISTRATION (PHẦN C)
@@ -1347,6 +1363,10 @@ $$;
 -- ─────────────────────────────────────────────────────────────────────────────
 -- RLS POLICIES & GRANTS
 -- ─────────────────────────────────────────────────────────────────────────────
+/* Deferred until every active client is built with POS_JWT_AUTH_URL and the
+   gateway health/login smoke tests pass. Applying this block earlier would
+   lock currently deployed anonymous clients out of all store data. */
+/*
 DO $$
 DECLARE
   v_policy record;
@@ -1355,7 +1375,7 @@ BEGIN
     SELECT schemaname, tablename, policyname
     FROM pg_policies
     WHERE schemaname = 'public'
-      AND tablename IN ('user_accounts', 'store_members', 'staff_members', 'store_pairing_codes', 'pos_device_sessions')
+      AND tablename IN ('user_accounts', 'store_members', 'staff_members')
   LOOP
     EXECUTE format(
       'DROP POLICY IF EXISTS %I ON %I.%I',
@@ -1406,6 +1426,8 @@ CREATE POLICY store_members_store_select_v4 ON public.store_members
 CREATE POLICY staff_members_store_select_v4 ON public.staff_members
   FOR SELECT TO authenticated USING (public.has_active_store_access_v4(store_id));
 
+*/
+
 REVOKE ALL ON FUNCTION public.normalize_phone_digits_v4(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.verify_password_hash_v4(text, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.consume_onboarding_exchange_v4(text, bigint, uuid, uuid) FROM PUBLIC;
@@ -1418,12 +1440,6 @@ REVOKE ALL ON FUNCTION public.has_user_quick_pin_v4() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.verify_manager_quick_pin_v4(uuid, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.create_store_with_owner_v4(text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.join_store_by_code_v4(text) FROM PUBLIC;
-
-REVOKE ALL ON FUNCTION public.create_device_pairing_code_v4(uuid, text, text, integer) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.claim_device_pairing_code_v4(text, text, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.revoke_device_pairing_code_v4(uuid) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.list_active_device_sessions_v4(uuid) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.revoke_device_session_v4(uuid) FROM PUBLIC;
 
 REVOKE ALL ON FUNCTION public.admin_create_staff_member_v4(uuid, text, text, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_update_staff_role_v4(uuid, uuid, text) FROM PUBLIC;
@@ -1451,17 +1467,6 @@ GRANT EXECUTE ON FUNCTION public.join_store_by_code_v4(text)
 GRANT EXECUTE ON FUNCTION public.has_active_store_access_v4(uuid)
   TO authenticated, service_role;
 
-GRANT EXECUTE ON FUNCTION public.create_device_pairing_code_v4(uuid, text, text, integer)
-  TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.claim_device_pairing_code_v4(text, text, text)
-  TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.revoke_device_pairing_code_v4(uuid)
-  TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.list_active_device_sessions_v4(uuid)
-  TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.revoke_device_session_v4(uuid)
-  TO authenticated, service_role;
-
 GRANT EXECUTE ON FUNCTION public.admin_create_staff_member_v4(uuid, text, text, text, text)
   TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.admin_update_staff_role_v4(uuid, uuid, text)
@@ -1471,6 +1476,7 @@ GRANT EXECUTE ON FUNCTION public.admin_set_staff_status_v4(uuid, uuid, boolean)
 GRANT EXECUTE ON FUNCTION public.admin_revoke_staff_membership_v4(uuid, uuid)
   TO authenticated, service_role;
 
+/* Full-hardening postflight; deferred with the table RLS/grant block above.
 DO $$
 BEGIN
   IF has_column_privilege('anon', 'public.user_accounts', 'password_hash', 'SELECT')
@@ -1487,5 +1493,6 @@ BEGIN
     RAISE EXCEPTION 'AUTH_POSTFLIGHT_FAILED: anon can still mutate memberships';
   END IF;
 END $$;
+*/
 
 COMMIT;

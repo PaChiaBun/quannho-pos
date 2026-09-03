@@ -197,8 +197,86 @@ class StaffService {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // QUYỀN ACTIONS MỚI (P3)
   // ══════════════════════════════════════════════════════════════════════════
+  // QUYỀN ACTIONS — TỰ ĐỘNG SUY TỪ LEGO MODULES (Nguồn sự thật duy nhất)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /// Suy ra danh sách action permissions từ danh sách Lego Modules mà vai trò sở hữu.
+  static Set<String> deriveActionPermsFromModules(
+    List<String> modules, {
+    String? roleName,
+  }) {
+    final perms = <String>{};
+    final mods = modules.map((m) => m.toLowerCase().trim()).toSet();
+
+    // Module pos (Bán hàng): có toàn bộ quyền pos.* bao gồm thanh toán
+    if (mods.contains('pos')) {
+      perms.addAll([
+        'pos.cancel_bill',
+        'pos.apply_discount',
+        'pos.edit_price',
+        'pos.view_history',
+        'pos.checkout',
+      ]);
+    }
+
+    // Module ban (Quản lý bàn): có quyền quản lý bàn + checkout bàn
+    if (mods.contains('ban')) {
+      perms.add('ban.manage_structure');
+      perms.add('pos.checkout');
+    }
+
+    // Module kho & kho_pro
+    if (mods.contains('kho') || mods.contains('kho_pro')) {
+      perms.add('kho.edit_quantity');
+      perms.add('kho.delete_item');
+    }
+
+    // Module finance (Thu chi)
+    if (mods.contains('finance')) {
+      perms.add('finance.view_all');
+    }
+
+    // Module report (Báo cáo)
+    if (mods.contains('report')) {
+      perms.add('report.view');
+    }
+
+    // Module tinhluong (Lương & SRM)
+    if (mods.contains('tinhluong')) {
+      perms.addAll([
+        'tinhluong.view_all',
+        'tinhluong.manage_config',
+        'tinhluong.approve_payroll',
+        'tinhluong.srm_settings',
+        'tinhluong.srm_review',
+      ]);
+    }
+
+    // Module bill_printer (Máy in)
+    if (mods.contains('bill_printer')) {
+      perms.add('printer.manage_server');
+    }
+
+    // Bổ trợ theo tên vai trò chuẩn (owner / manager / cashier)
+    if (roleName != null && roleName.isNotEmpty) {
+      final canon = canonicalRole(roleName);
+      if (canon == 'owner' || canon == 'manager') {
+        perms.addAll(kAllActions);
+      } else if (canon == 'cashier' ||
+          roleName.toLowerCase().contains('thu ngân') ||
+          roleName.toLowerCase().contains('quầy')) {
+        perms.addAll([
+          'pos.apply_discount',
+          'pos.view_history',
+          'pos.checkout',
+        ]);
+      }
+    }
+
+    return perms;
+  }
+
   static Future<List<String>> getEffectiveActionPermissions({
     required String storeId,
     required String userId,
@@ -228,12 +306,22 @@ class StaffService {
       if (effectiveRole.isEmpty) return [];
 
       final canonical = canonicalRole(effectiveRole);
-      final defaultPerms = kDefaultActionPerms[canonical] ?? [];
+      if (canonical == 'owner' || canonical == 'manager') {
+        return List.from(kAllActions);
+      }
 
-      // Màn hình Phân quyền lưu action theo vai trò trong app_settings.
-      // Schema production hiện không có cột `actions` ở store_members hoặc
-      // staff_members; truy vấn các cột đó sẽ ném 42703 và fail-closed trước
-      // khi đọc được quyền đã lưu.
+      // 1. NGUỒN SỰ THẬT CHÍNH: Lấy danh sách Lego Modules mà vai trò/nhân viên sở hữu
+      final modules = await getModulePermissions(
+        storeId,
+        effectiveRole,
+        userId: userId,
+      );
+      final derivedPerms = deriveActionPermsFromModules(
+        modules,
+        roleName: effectiveRole,
+      );
+
+      // 2. Tùy biến override từ app_settings nếu chủ quán có cấu hình chi tiết
       final exactRoleSettings = await db
           .from('app_settings')
           .select('value')
@@ -242,7 +330,18 @@ class StaffService {
           .maybeSingle();
 
       if (exactRoleSettings != null && exactRoleSettings['value'] != null) {
-        return parseActionPermissions(exactRoleSettings['value']);
+        final parsed = parseActionPermissions(exactRoleSettings['value']);
+        if (parsed.isNotEmpty) {
+          final merged = Set<String>.from(parsed);
+          // Đảm bảo nếu vai trò có module pos/ban thì không bị mất pos.checkout
+          if (modules.contains('pos') ||
+              modules.contains('ban') ||
+              canonical == 'cashier' ||
+              effectiveRole.toLowerCase().contains('thu ngân')) {
+            merged.add('pos.checkout');
+          }
+          return merged.toList();
+        }
       }
 
       if (effectiveRole != canonical) {
@@ -255,15 +354,30 @@ class StaffService {
 
         if (canonicalRoleSettings != null &&
             canonicalRoleSettings['value'] != null) {
-          return parseActionPermissions(canonicalRoleSettings['value']);
+          final parsed = parseActionPermissions(canonicalRoleSettings['value']);
+          if (parsed.isNotEmpty) {
+            final merged = Set<String>.from(parsed);
+            if (modules.contains('pos') ||
+                modules.contains('ban') ||
+                canonical == 'cashier' ||
+                effectiveRole.toLowerCase().contains('thu ngân')) {
+              merged.add('pos.checkout');
+            }
+            return merged.toList();
+          }
         }
       }
 
-      // Chưa từng cấu hình vai trò này: dùng mặc định theo role hiện hành
-      // đã được server xác nhận, không dùng role cache từ thiết bị.
+      // 3. Nếu chưa từng cấu hình app_settings: dùng derivedPerms từ Lego Modules
+      if (derivedPerms.isNotEmpty) {
+        return derivedPerms.toList();
+      }
+
+      // 4. Fallback mặc định theo vai trò chuẩn
+      final defaultPerms = kDefaultActionPerms[canonical] ?? [];
       return parseActionPermissions(defaultPerms);
     } catch (e) {
-      // Lỗi truy vấn -> fail-closed: trả về mảng rỗng (deny all). Tuyệt đối không đoán quyền khi lỗi.
+      // Lỗi truy vấn -> fail-closed: trả về mảng rỗng (deny all).
       return [];
     }
   }

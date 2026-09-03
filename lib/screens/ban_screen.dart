@@ -4563,7 +4563,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     _isCheckingOut = true;
     try {
       final perms = await ref.read(userActionPermsProvider.future);
-      final hasPerm = perms.contains('pos.checkout');
+      final session = ref.read(sessionProvider);
+      final isPrivileged = session?.isOwner == true ||
+          StaffService.canonicalRole(session?.role ?? '') == 'owner' ||
+          StaffService.canonicalRole(session?.role ?? '') == 'manager' ||
+          StaffService.canonicalRole(session?.role ?? '') == 'cashier';
+      final hasPerm = perms.contains('pos.checkout') || isPrivileged;
       if (!hasPerm) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
