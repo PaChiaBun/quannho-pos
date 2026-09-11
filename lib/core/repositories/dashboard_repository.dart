@@ -257,57 +257,144 @@ class DashboardRepository {
     String from,
     String to,
   ) async {
-    final financeRows = await _sb
-        .from('finance_records')
-        .select('amount, reference_id, fund_type')
-        .eq('store_id', storeId)
-        .eq('type', 'income')
-        .eq('is_auto', true)
-        .gte('recorded_at', from)
-        .lt('recorded_at', to);
-    final refs = financeRows
-        .map((row) => row['reference_id'] as String?)
-        .whereType<String>()
-        .toSet()
-        .toList();
-    if (refs.isEmpty) return const [];
+    try {
+      final financeRows = await _sb
+          .from('finance_records')
+          .select('amount, reference_id, fund_type')
+          .eq('store_id', storeId)
+          .eq('type', 'income')
+          .eq('is_auto', true)
+          .gte('recorded_at', from)
+          .lt('recorded_at', to);
+      final refs = financeRows
+          .map((row) => row['reference_id'] as String?)
+          .whereType<String>()
+          .toSet()
+          .toList();
+      if (refs.isNotEmpty) {
+        final settlements = await _sb
+            .from('payment_settlements')
+            .select('id, payment_method, cashier_staff_id')
+            .eq('store_id', storeId)
+            .eq('status', 'completed')
+            .gte('created_at', from)
+            .lt('created_at', to);
+        final orders = await _sb
+            .from('orders')
+            .select('id, payment_method, staff_id')
+            .eq('store_id', storeId)
+            .eq('status', 'completed')
+            .gte('created_at', from)
+            .lt('created_at', to);
+        final metadata = <String, Map<String, dynamic>>{
+          for (final row in settlements)
+            row['id'] as String: {
+              'payment_method': row['payment_method'],
+              'staff_id': row['cashier_staff_id'],
+            },
+          for (final row in orders)
+            row['id'] as String: {
+              'payment_method': row['payment_method'],
+              'staff_id': row['staff_id'],
+            },
+        };
 
-    final settlements = await _sb
-        .from('payment_settlements')
-        .select('id, payment_method, cashier_staff_id')
-        .eq('store_id', storeId)
-        .eq('status', 'completed')
-        .inFilter('id', refs);
-    final orders = await _sb
-        .from('orders')
-        .select('id, payment_method, staff_id')
-        .eq('store_id', storeId)
-        .eq('status', 'completed')
-        .inFilter('id', refs);
-    final metadata = <String, Map<String, dynamic>>{
-      for (final row in settlements)
-        row['id'] as String: {
-          'payment_method': row['payment_method'],
-          'staff_id': row['cashier_staff_id'],
-        },
-      for (final row in orders)
-        row['id'] as String: {
-          'payment_method': row['payment_method'],
-          'staff_id': row['staff_id'],
-        },
-    };
-    return [
-      for (final row in financeRows)
-        if (metadata.containsKey(row['reference_id']))
-          {...row, ...metadata[row['reference_id']]!},
-    ];
+        // Bổ sung chunking 50 cho các refs chưa có trong dải ngày (phòng ngừa boundary lệch)
+        final missingRefs = refs.where((r) => !metadata.containsKey(r)).toList();
+        if (missingRefs.isNotEmpty) {
+          const chunkSize = 50;
+          for (int i = 0; i < missingRefs.length; i += chunkSize) {
+            final chunk = missingRefs.sublist(
+              i,
+              (i + chunkSize).clamp(0, missingRefs.length),
+            );
+            try {
+              final sChunk = await _sb
+                  .from('payment_settlements')
+                  .select('id, payment_method, cashier_staff_id')
+                  .eq('store_id', storeId)
+                  .inFilter('id', chunk);
+              for (final row in sChunk) {
+                metadata[row['id'] as String] = {
+                  'payment_method': row['payment_method'],
+                  'staff_id': row['cashier_staff_id'],
+                };
+              }
+              final oChunk = await _sb
+                  .from('orders')
+                  .select('id, payment_method, staff_id')
+                  .eq('store_id', storeId)
+                  .inFilter('id', chunk);
+              for (final row in oChunk) {
+                metadata[row['id'] as String] = {
+                  'payment_method': row['payment_method'],
+                  'staff_id': row['staff_id'],
+                };
+              }
+            } catch (_) {}
+          }
+        }
+
+        final result = [
+          for (final row in financeRows)
+            if (metadata.containsKey(row['reference_id']))
+              {...row, ...metadata[row['reference_id']]!},
+        ];
+        if (result.isNotEmpty) return result;
+      }
+    } catch (e) {
+      debugPrint('[DashboardRepository] _loadCanonicalPayments finance error: $e');
+    }
+
+    // Fallback tầng 2: Query trực tiếp từ payment_settlements
+    try {
+      final settlements = await _sb
+          .from('payment_settlements')
+          .select('id, total_amount, payment_method, cashier_staff_id')
+          .eq('store_id', storeId)
+          .eq('status', 'completed')
+          .gte('created_at', from)
+          .lt('created_at', to);
+      if (settlements.isNotEmpty) {
+        return [
+          for (final s in settlements)
+            {
+              'amount': s['total_amount'],
+              'reference_id': s['id'],
+              'fund_type': s['payment_method'] == 'cash' ? 'cash' : 'bank',
+              'payment_method': s['payment_method'],
+              'staff_id': s['cashier_staff_id'],
+            },
+        ];
+      }
+    } catch (e) {
+      debugPrint('[DashboardRepository] _loadCanonicalPayments settlements fallback error: $e');
+    }
+
+    return const [];
   }
 
   Future<DashboardStats> _aggregateStats(
     List<dynamic> orders,
     List<Map<String, dynamic>> payments,
   ) async {
-    final revenue = payments.fold<double>(
+    // Fallback tầng 3: Nếu payments rỗng nhưng orders có dữ liệu -> tổng hợp từ orders
+    final effectivePayments = List<Map<String, dynamic>>.from(payments);
+    if (effectivePayments.isEmpty && orders.isNotEmpty) {
+      for (final o in orders) {
+        final amount = (o['total_amount'] as num?)?.toDouble() ?? 0;
+        final pm = o['payment_method'] as String? ?? 'cash';
+        effectivePayments.add({
+          'amount': amount,
+          'reference_id': o['id'],
+          'fund_type': pm == 'cash' ? 'cash' : 'bank',
+          'payment_method': pm,
+          'staff_id': o['staff_id'],
+        });
+      }
+    }
+
+    final revenue = effectivePayments.fold<double>(
       0,
       (sum, row) => sum + ((row['amount'] as num?)?.toDouble() ?? 0),
     );
@@ -324,7 +411,7 @@ class DashboardRepository {
     final staffDetailsRaw = <String, Map<String, double>>{};
     final waiterCountsRaw = <String, int>{};
 
-    for (final payment in payments) {
+    for (final payment in effectivePayments) {
       final amount = (payment['amount'] as num?)?.toDouble() ?? 0;
       final rawMethod =
           payment['payment_method'] as String? ??
@@ -663,41 +750,46 @@ class DashboardRepository {
   // ── Hourly revenue hôm nay ────────────────────────────────────────────────
 
   Future<List<HourlyRevenue>> getHourlyRevenue(DateTime date) async {
-    final storeId = await _storeId();
-    if (storeId == null) return _emptyHourly();
+    try {
+      final storeId = await _storeId();
+      if (storeId == null) return _emptyHourly();
 
-    final startOfDay = DateTime(
-      date.year,
-      date.month,
-      date.day,
-    ).toUtc().toIso8601String();
-    // Dùng midnight ngày kế (exclusive) — 23:59:59 bỏ sót 23:59:59.001 – 23:59:59.999
-    final endOfDay = DateTime(
-      date.year,
-      date.month,
-      date.day + 1,
-    ).toUtc().toIso8601String();
+      final startOfDay = DateTime(
+        date.year,
+        date.month,
+        date.day,
+      ).toUtc().toIso8601String();
+      // Dùng midnight ngày kế (exclusive) — 23:59:59 bỏ sót 23:59:59.001 – 23:59:59.999
+      final endOfDay = DateTime(
+        date.year,
+        date.month,
+        date.day + 1,
+      ).toUtc().toIso8601String();
 
-    final orders = await _sb
-        .from('orders')
-        .select('created_at, total_amount')
-        .eq('store_id', storeId)
-        .eq('status', 'completed')
-        .gte('created_at', startOfDay)
-        .lt('created_at', endOfDay); // exclusive upper — nhất quán với finance
+      final orders = await _sb
+          .from('orders')
+          .select('created_at, total_amount')
+          .eq('store_id', storeId)
+          .eq('status', 'completed')
+          .gte('created_at', startOfDay)
+          .lt('created_at', endOfDay); // exclusive upper — nhất quán với finance
 
-    final hourMap = <int, _HourAgg>{};
-    for (final o in orders) {
-      final dt = DateTime.tryParse(o['created_at'] as String? ?? '')?.toLocal();
-      if (dt == null) continue;
-      final agg = hourMap[dt.hour] ??= _HourAgg();
-      agg.revenue += (o['total_amount'] as num?)?.toDouble() ?? 0;
-      agg.orders++;
+      final hourMap = <int, _HourAgg>{};
+      for (final o in orders) {
+        final dt = DateTime.tryParse(o['created_at'] as String? ?? '')?.toLocal();
+        if (dt == null) continue;
+        final agg = hourMap[dt.hour] ??= _HourAgg();
+        agg.revenue += (o['total_amount'] as num?)?.toDouble() ?? 0;
+        agg.orders++;
+      }
+      return List.generate(24, (h) {
+        final agg = hourMap[h] ?? _HourAgg();
+        return HourlyRevenue(hour: h, revenue: agg.revenue, orders: agg.orders);
+      });
+    } catch (e) {
+      debugPrint('[DashboardRepository] getHourlyRevenue error: $e');
+      return _emptyHourly();
     }
-    return List.generate(24, (h) {
-      final agg = hourMap[h] ?? _HourAgg();
-      return HourlyRevenue(hour: h, revenue: agg.revenue, orders: agg.orders);
-    });
   }
 
   List<HourlyRevenue> _emptyHourly() =>

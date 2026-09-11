@@ -153,10 +153,32 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         },
       );
     } else {
+      final errCode = result.errorCode;
+      final shouldSwitchToLogin = errCode == 'PHONE_ALREADY_EXISTS' ||
+          errCode == 'ACCOUNT_CREATED_LOGIN_REQUIRED';
+
       setState(() {
         _loading = false;
         _error = result.errorMessage!;
+        if (shouldSwitchToLogin) {
+          _loginPhoneCtrl.text = _regPhoneCtrl.text.trim();
+          _tab = 0;
+        }
       });
+
+      if (shouldSwitchToLogin) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              errCode == 'ACCOUNT_CREATED_LOGIN_REQUIRED'
+                  ? 'Tài khoản đã được tạo thành công! Vui lòng đăng nhập để tiếp tục nhập mã quán.'
+                  : 'Số điện thoại này đã có tài khoản. Vui lòng đăng nhập để tiếp tục.',
+            ),
+            backgroundColor: _orange,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
   }
 

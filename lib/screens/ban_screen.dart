@@ -4774,6 +4774,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       await _sendToKitchenImpl(updatedItems);
     } catch (e, st) {
       debugPrint('[Kitchen] ❌ _sendToKitchen crash: $e\n$st');
+      AppLogger.error(
+        'order',
+        'Gui bep that bai tai ${widget.zone.name} - ${widget.table.label}: $e',
+        e,
+        st,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -4797,36 +4803,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     final unsent = items.where((i) => i.kitchenStatus == 'chua_gui').toList();
     if (unsent.isEmpty) return;
 
-    final ticketId = const Uuid().v4();
-    final now = DateTime.now().toUtc().toIso8601String();
-
-    // Đếm đợt hiện tại
-    final ticketsResp = await Supabase.instance.client
-        .from('kitchen_tickets')
-        .select('id')
-        .eq('session_id', widget.session.id);
-    final round = (ticketsResp as List).length + 1;
-
     // Lấy store_id — cần cho NOT NULL constraint
     final storeInfo = await StoreAuthService.getStoreInfo();
     final storeId = storeInfo['store_id'];
     if (storeId == null) throw Exception('storeId null — chưa đăng nhập ?');
 
-    final session = ref.read(sessionProvider);
-    // 1. Tạo KitchenTicket
-    await Supabase.instance.client.from('kitchen_tickets').insert({
-      'id': ticketId,
-      'store_id': storeId,
-      'session_id': widget.session.id,
-      'table_label': widget.table.label,
-      'zone_label': widget.zone.name,
-      'round': round,
-      'status': 'cho',
-      'sent_at': now,
-      'note': session?.displayName,
-    });
-
-    // ‼️ FIX #2: Batch lookup station code — 1 query thay vì N queries
+    // ‼️ BƯỚC 1: Batch lookup station code TRƯỚC KHI tạo ticket trong DB
     final productIds = unsent.map((i) => i.productId).toList();
     try {
       Supabase.instance.client.rest.headers['x-store-id'] = storeId;
@@ -4839,8 +4821,33 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       for (final r in productRows) r['id'] as String: r,
     };
 
-    // 2. Tạo KitchenTicketItems + cập nhật kitchenStatus (BATCHED)
+    // Đếm đợt hiện tại
+    final ticketsResp = await Supabase.instance.client
+        .from('kitchen_tickets')
+        .select('id')
+        .eq('session_id', widget.session.id);
+    final round = (ticketsResp as List).length + 1;
+
+    final ticketId = const Uuid().v4();
+    final now = DateTime.now().toUtc().toIso8601String();
+    final session = ref.read(sessionProvider);
+
+    // ‼️ BƯỚC 2: Tạo KitchenTicket + KitchenTicketItems trong cùng 1 khối bảo vệ nguyên tử
+    bool ticketCreated = false;
     try {
+      await Supabase.instance.client.from('kitchen_tickets').insert({
+        'id': ticketId,
+        'store_id': storeId,
+        'session_id': widget.session.id,
+        'table_label': widget.table.label,
+        'zone_label': widget.zone.name,
+        'round': round,
+        'status': 'cho',
+        'sent_at': now,
+        'note': session?.displayName,
+      });
+      ticketCreated = true;
+
       final List<Map<String, dynamic>> itemRows = [];
       for (final item in unsent) {
         final pInfo = productInfoMap[item.productId];
@@ -4888,18 +4895,25 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         'Gui bep thanh cong tai ${widget.zone.name} - ${widget.table.label}: $itemsSummary',
       );
     } catch (e) {
-      debugPrint('[Kitchen] ❌ Lỗi insert items: $e');
-      // Rollback: xóa ticket để tránh phiếu rỗng
-      await Supabase.instance.client
-          .from('kitchen_tickets')
-          .delete()
-          .eq('id', ticketId);
+      debugPrint('[Kitchen] ❌ Lỗi gửi bếp: $e');
+      if (ticketCreated) {
+        try {
+          await Supabase.instance.client
+              .from('kitchen_tickets')
+              .delete()
+              .eq('id', ticketId);
+        } catch (delErr) {
+          debugPrint('[Kitchen] ❌ Không thể rollback ticket $ticketId: $delErr');
+        }
+      }
       final unsentIds = unsent.map((i) => i.id).toList();
-      await Supabase.instance.client
-          .from('ban_session_items')
-          .update({'kitchen_status': 'chua_gui'})
-          .inFilter('id', unsentIds);
-      rethrow; // đẩy lỗi lên wrapper để hiện SnackBar
+      try {
+        await Supabase.instance.client
+            .from('ban_session_items')
+            .update({'kitchen_status': 'chua_gui'})
+            .inFilter('id', unsentIds);
+      } catch (_) {}
+      rethrow; // đẩy lỗi lên wrapper để hiện SnackBar và ghi AppLogger
     }
 
     // Tự động in bếp bằng StationPrinterDispatcher (hỗ trợ phân chia 4 trạm in mới)

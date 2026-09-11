@@ -2,11 +2,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Flutter Unit & Wiring Security Tests for UserAuthService & POS JWT Lifecycle
 // ─────────────────────────────────────────────────────────────────────────────
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:quannho_pos/core/services/user_auth_service.dart';
 import 'package:quannho_pos/core/services/pos_jwt_auth_service.dart';
+import 'package:quannho_pos/screens/auth_screen.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +17,13 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     FlutterSecureStorage.setMockInitialValues({});
+    UserAuthService.rpcOverride = null;
+    UserAuthService.jwtServiceOverride = null;
+  });
+
+  tearDown(() {
+    UserAuthService.rpcOverride = null;
+    UserAuthService.jwtServiceOverride = null;
   });
 
   group('UserAuthService POS JWT Lifecycle & Wiring Tests', () {
@@ -200,16 +210,224 @@ void main() {
         expect(prefs.getString('auth_store_id'), isNull);
       },
     );
+
+    test(
+      '10. Register preflight fails closed when POS JWT is unconfigured without touching DB',
+      () async {
+        final disabledService = DisabledPosJwtService();
+        final result = await UserAuthService.register(
+          phone: '0901234567',
+          password: 'valid_password_123',
+          displayName: 'Test Staff',
+          jwtService: disabledService,
+        );
+
+        expect(result.isSuccess, false);
+        expect(result.errorCode, 'POS_JWT_NOT_CONFIGURED');
+      },
+    );
+
+    test(
+      '11. JoinStoreByCode validates QN-XXXX format strictly',
+      () async {
+        final mockJwt = MockPosJwtService();
+        // Rejects QN-A, QN-ABCDE, QN-@#$%, 123456, ABCD
+        for (final badCode in ['QN-A', 'QN-ABCDE', 'QN-@#\$%', '123456', 'ABCD']) {
+          final res = await UserAuthService.joinStoreByCode(
+            storeCode: badCode,
+            userId: 'user-123',
+            jwtService: mockJwt,
+          );
+          expect(res.isSuccess, false, reason: 'Failed for $badCode');
+          expect(res.errorCode, 'INVALID_STORE_CODE_FORMAT', reason: 'Failed for $badCode');
+        }
+
+        final resEmpty = await UserAuthService.joinStoreByCode(
+          storeCode: '',
+          userId: 'user-123',
+          jwtService: mockJwt,
+        );
+        expect(resEmpty.isSuccess, false);
+        expect(resEmpty.errorCode, 'STORE_CODE_REQUIRED');
+
+        // Accepts QN-AB12
+        UserAuthService.rpcOverride = (fn, {params}) async {
+          if (fn == 'join_store_by_code_v4') {
+            return {
+              'success': true,
+              'store_id': 'store-123',
+              'store_code': 'QN-AB12',
+              'store_name': 'Quán Nhỏ Test',
+              'role': 'waiter',
+              'is_owner': false,
+            };
+          }
+          return {'success': false};
+        };
+        final successMockJwt = MockPosJwtService(
+          mockExchangeResult: {'success': true, 'token': 'jwt-store-123'},
+          mockOnboardingResult: {'success': true, 'token': 'onb-token'},
+        );
+        final resValid = await UserAuthService.joinStoreByCode(
+          storeCode: 'QN-AB12',
+          userId: 'user-123',
+          onboardingJwt: 'valid-token',
+          jwtService: successMockJwt,
+        );
+        expect(resValid.isSuccess, true);
+        expect(resValid.storeCode, 'QN-AB12');
+        expect(resValid.membership?.role, 'waiter');
+      },
+    );
+
+    test('12. JoinStoreByCode uses direct error_code from RPC without guessing', () async {
+      UserAuthService.rpcOverride = (fn, {params}) async {
+        return {
+          'success': false,
+          'error_code': 'STORE_NOT_FOUND',
+          'message': 'Cửa hàng không tồn tại trong hệ thống',
+        };
+      };
+      final mockJwt = MockPosJwtService(
+        mockOnboardingResult: {'success': true, 'token': 'onb-token'},
+      );
+      final res = await UserAuthService.joinStoreByCode(
+        storeCode: 'QN-AB12',
+        userId: 'user-123',
+        onboardingJwt: 'valid-token',
+        jwtService: mockJwt,
+      );
+      expect(res.isSuccess, false);
+      expect(res.errorCode, 'STORE_NOT_FOUND');
+    });
+
+    test('13. Register transaction boundary: returns ACCOUNT_CREATED_LOGIN_REQUIRED when RPC succeeds but onboarding fails', () async {
+      UserAuthService.rpcOverride = (fn, {params}) async {
+        if (fn == 'register_user_account_v4') {
+          return {
+            'success': true,
+            'user_id': 'staff-user-1',
+            'phone': '+84901234567',
+            'display_name': 'Staff One',
+          };
+        }
+        return {'success': false};
+      };
+
+      final mockJwt = MockPosJwtService(
+        mockOnboardingResult: {'success': false, 'error': 'UPSTREAM_GATEWAY_TIMEOUT'},
+      );
+
+      final res = await UserAuthService.register(
+        phone: '0901234567',
+        password: 'password123',
+        displayName: 'Staff One',
+        jwtService: mockJwt,
+      );
+
+      expect(res.isSuccess, false);
+      expect(res.errorCode, 'ACCOUNT_CREATED_LOGIN_REQUIRED');
+      expect(res.errorMessage, contains('Tài khoản đã được tạo thành công!'));
+    });
+
+    test('14. Register uses direct error_code from RPC', () async {
+      UserAuthService.rpcOverride = (fn, {params}) async {
+        return {
+          'success': false,
+          'error_code': 'PHONE_ALREADY_EXISTS',
+          'message': 'Số điện thoại này đã được đăng ký tài khoản.',
+        };
+      };
+
+      final mockJwt = MockPosJwtService();
+      final res = await UserAuthService.register(
+        phone: '0901234567',
+        password: 'password123',
+        displayName: 'Staff One',
+        jwtService: mockJwt,
+      );
+
+      expect(res.isSuccess, false);
+      expect(res.errorCode, 'PHONE_ALREADY_EXISTS');
+    });
+
+    testWidgets(
+      '15. AuthScreen switches to Login tab and pre-fills phone on ACCOUNT_CREATED_LOGIN_REQUIRED',
+      (tester) async {
+        UserAuthService.rpcOverride = (fn, {params}) async {
+          if (fn == 'register_user_account_v4') {
+            return {
+              'success': true,
+              'user_id': 'staff-user-1',
+              'phone': '+84901234567',
+              'display_name': 'Staff One',
+            };
+          }
+          return {'success': false};
+        };
+        UserAuthService.jwtServiceOverride = MockPosJwtService(
+          mockOnboardingResult: {'success': false, 'error': 'SERVER_ERROR'},
+        );
+
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(
+              home: AuthScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Switch to Register tab
+        await tester.tap(find.text('Đăng ký'));
+        await tester.pumpAndSettle();
+
+        // Fill registration form
+        final textFields = find.byType(TextField);
+        expect(textFields, findsNWidgets(4));
+
+        await tester.enterText(textFields.at(0), 'Staff One');
+        await tester.enterText(textFields.at(1), '0901234567');
+        await tester.enterText(textFields.at(2), 'password123');
+        await tester.enterText(textFields.at(3), 'password123');
+        await tester.pumpAndSettle();
+
+        // Ensure "Tạo tài khoản" button is scrolled into view and tap
+        await tester.ensureVisible(find.text('Tạo tài khoản'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Tạo tài khoản'));
+        await tester.pumpAndSettle();
+
+        // Should switch back to Login tab (which has 2 TextFields)
+        expect(find.byType(TextField), findsNWidgets(2));
+        final loginPhoneField = tester.widget<TextField>(find.byType(TextField).first);
+        expect(loginPhoneField.controller?.text, '0901234567');
+
+        // SnackBar should be displayed
+        expect(
+          find.text('Tài khoản đã được tạo thành công! Vui lòng đăng nhập để tiếp tục nhập mã quán.'),
+          findsOneWidget,
+        );
+      },
+    );
   });
 }
 
 class MockPosJwtService extends PosJwtAuthService {
   final Map<String, dynamic> mockRequestResult;
+  final Map<String, dynamic> mockOnboardingResult;
+  final Map<String, dynamic> mockExchangeResult;
   final bool mockApplyResult;
   final String? storedToken;
 
   MockPosJwtService({
     this.mockRequestResult = const {'success': false, 'error': 'AUTH_FAILED'},
+    this.mockOnboardingResult = const {'success': false, 'error': 'AUTH_FAILED'},
+    this.mockExchangeResult = const {'success': false, 'error': 'AUTH_FAILED'},
     this.mockApplyResult = true,
     this.storedToken,
   }) : super(authApplier: (token) async {});
@@ -228,6 +446,26 @@ class MockPosJwtService extends PosJwtAuthService {
     String endpointPath = '/api/auth/pos-jwt',
     Duration timeoutDuration = const Duration(seconds: 10),
   }) async => mockRequestResult;
+
+  @override
+  Future<Map<String, dynamic>> requestOnboardingJwt({
+    required String phone,
+    required String password,
+    String endpointPath = '/api/auth/onboarding-jwt',
+    Duration timeoutDuration = const Duration(seconds: 10),
+  }) async => mockOnboardingResult;
+
+  @override
+  Future<Map<String, dynamic>> exchangeStoreJwt({
+    required String onboardingJwt,
+    required String storeId,
+    String endpointPath = '/api/auth/exchange-store-jwt',
+    Duration timeoutDuration = const Duration(seconds: 10),
+  }) async => mockExchangeResult;
+
+  @override
+  String? activeOnboardingJwtFor(String userId) =>
+      mockOnboardingResult['success'] == true ? 'mock-onboarding-token' : null;
 
   @override
   Future<bool> applyAuthToSupabase(

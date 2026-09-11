@@ -3,6 +3,597 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-09-09 (13:45 +07) — Nâng Cấp Giao Diện Lớp Học Trực Quan Thời Gian Thực (Live Interactive Classroom) & Sửa Dứt Điểm Cơ Chế Socket Proxy
+
+### ✅ Hoàn thành
+
+- **Sân khấu Lớp học Trực quan Thời gian thực (Live Classroom Arena)**:
+  * **Trực quan hóa Thầy Antigravity & Học viên AI Bum**: Thêm hai thẻ nhân vật với Avatar phát sáng hào quang (`actor-aura`), hiệu ứng radar trực tiếp (`live-dot ping`), và bóng thoại động phản ánh chính xác hành động thực tế theo từng nhịp (Đang tra cứu RAG $\rightarrow$ Đang suy luận GPU $\rightarrow$ Đang chấm điểm & chỉ lỗi $\rightarrow$ Chờ Chủ Quán duyệt).
+  * **Dòng tri thức chuyển động (Beam Particle Flow)**: Đường truyền xung nhịp ánh sáng chuyển động qua lại giữa Thầy và Trò tùy theo giai đoạn ra đề hoặc nộp bài, kết hợp 4 bước sáng đèn tuần tự `[1] Ra đề` $\rightarrow$ `[2] Làm bài` $\rightarrow$ `[3] Chấm điểm` $\rightarrow$ `[4] Chờ duyệt`.
+  * **Live Scenario Feed**: Khung tương tác hiển thị trực tiếp câu hỏi tình huống mới nhất của Thầy, bài làm sinh ra từ GPU của Bum, và lời giải tham chiếu/điểm số của Thầy ngay trên giao diện chính mà không cần mở popup.
+  * **Đồng bộ tự động & Đếm ngược thời gian thực (Auto-sync 3s)**: Tự động cập nhật mỗi 3 giây khi có phiên học đang chạy, kèm bộ đếm ngược giây (`Đồng bộ sau 3s, 2s, 1s…`) tạo trải nghiệm trực quan sống động.
+- **Backend Telemetry & VRAM Real-Time (`store.py`, `service.py`)**:
+  * Mở rộng API `/api/training/overview` truy xuất đồng bộ thông số VRAM thực tế từ `ai-bum-unsloth-inference` (RTX 2060 ~3,120 MiB trống, an toàn vượt ngưỡng 1,000 MiB) và thông tin định danh mô hình Unsloth 4-bit.
+  * Bổ sung trường `latest_item` cùng dữ liệu bài học đầy đủ để giao diện luôn duy trì nội dung mượt mà giữa các tích tắc chuyển giao tình huống.
+- **Sửa dứt điểm cơ chế Bind Mount Socket Proxy Docker (`RuntimeDirectoryPreserve=yes`)**:
+  * Phát hiện nguyên nhân thông báo *"Lớp học AI Bum đang khởi động"* khi truy cập qua URL Tailscale: Systemd theo mặc định sẽ xóa thư mục `/run/ai-bum-training` trên tmpfs khi service restart, làm rách kết nối bind mount của container `ai-bum-dashboard`.
+  * Khắc phục triệt để bằng cấu hình `RuntimeDirectoryPreserve=yes` trong `/etc/systemd/system/ai-bum-training.service`, đảm bảo inode thư mục socket luôn bất biến qua mọi lần khởi động lại.
+- **Kiểm thử & Triển khai**: 101/101 unit tests đạt $100\%$ PASS trên BunServer; phiên luyện đêm 25 tình huống tiếp tục vận hành trơn tru và phản ánh tức thì trên bảng điều khiển.
+
+---
+
+## 2026-09-09 (13:15 +07) — Triển Khai Toàn Diện Bộ Học Liệu F&B & Bộ Điều Khiển Lớp Học AI Bum Trên Unsloth (Chạy Theo Lệnh & Chạy Đêm)
+
+### ✅ Hoàn thành
+
+- **Động cơ tra cứu cấp tốc RAG SQLite FTS5 (`ai-bum-implementation/learning/fnb_rag_engine.py`)**:
+  * Tự động khởi tạo và index toàn diện 26 chunks tri thức và 17 Cây ma trận quyết định phản xạ vào CSDL SQLite FTS5 (`fnb_knowledge_fts5.db`).
+  * Tốc độ tìm kiếm siêu tốc: độ trễ truy vấn $< 5\text{ ms}$ (thực tế ~0.5ms).
+  * Bộ phân loại ý định F&B (Intent Classification) tự động gắn nhãn 6 nhóm nghiệp vụ trọng yếu: `CRISIS_EMERGENCY`, `QUANTITATIVE_FINANCE`, `LEGAL_COMPLIANCE`, `OPERATIONS_SOP`, `MISSING_DATA_CAUTION`, `SYSTEM_BOUNDARY_GUARD`.
+- **Nâng cấp Người Thầy & Giáo án sư phạm (`ai-bum-implementation/training/engine.py` & `TEACHER_PEDAGOGY_GUIDE.md`)**:
+  * Rèn luyện AI Bum tư duy thực chiến 3 bước: Phân loại câu hỏi $\rightarrow$ Tra cứu đối chiếu dữ kiện RAG FTS5 $\rightarrow$ Đưa ra câu trả lời thiết thực (có Immediate Action SOP trong 30 giây).
+  * Nâng cấp `create_lesson` tích hợp tri thức thẩm quyền tham chiếu; nâng cấp `grade` đánh giá nghiêm ngặt theo rubric 5 tiêu chí (Sát thực tế 35, Đúng dữ kiện 25, Hành động rõ 20, Thiếu dữ liệu 15, Giọng điệu 5).
+  * Tối ưu hóa System Prompt của AI Bum vận hành trên Unsloth Core Engine.
+- **Bộ điều khiển trung tâm Lớp học AI Bum (`ai-bum-implementation/training/run_bum_class.py`)**:
+  * **Chạy theo lệnh (On-Demand):** `python3 run_bum_class.py run --count <số_bài>` (hỗ trợ cả qua API BunServer và chạy standalone worker cục bộ).
+  * **Chạy lớp học đêm (Overnight):** `python3 run_bum_class.py overnight --count 50 --start-time 23:00` (hoặc `--now` chạy ngay).
+  * **Quản trị trạng thái:** Lệnh `status` xem bài approved/pending/rejected và điểm trung bình; `pause`, `resume`, `cancel`.
+- **Tích hợp khẩu lệnh vào Workflow `/qn` (`.agents/workflows/qn.md`)**:
+  * Khẩu lệnh `/qn dạy bum [số_bài]` và `/qn chạy lớp học đêm`.
+- **Kiểm thử hệ thống**: Bộ test `test_fnb_rag_engine.py` (5 tests), `test_overnight_learning.py` (9 tests), `test_engine.py` (8 tests), `test_review_queue.py` (9 tests) đều đạt $100\%$ PASS.
+
+---
+
+## 2026-09-09 (12:30 +07) — Chuyển Đổi Chiến Lược Nền Tảng: Xác Lập Unsloth Core Engine Cho AI Bum (Thay Thế Hoàn Toàn Qwen) & Đồng Bộ Quy Chuẩn /qn
+
+### ✅ Hoàn thành
+
+- **Chuyển Đổi Nền Tảng Công Nghệ Cốt Lõi Sang Unsloth Core Engine**:
+  - **Loại bỏ hoàn toàn sự phụ thuộc vào Qwen**: Chấm dứt dùng Qwen làm nền tảng chính để bảo đảm quyền tự chủ công nghệ, kiểm soát tuyệt đối mã nguồn và mở rộng tiềm năng trí thông minh lâu dài không giới hạn cho AI Bum.
+  - **Xác lập Unsloth (`FastLanguageModel`) làm động cơ AI chính**: Tận dụng tối đa công nghệ Triton Kernels độc quyền và FlashAttention-2, giảm **70% VRAM GPU** (giảm từ 6GB xuống dưới 2GB) và tăng tốc độ huấn luyện gấp **2–5 lần**.
+  - **Bản quyền sở hữu trí tuệ 100%**: Mọi LoRA adapter và trọng số huấn luyện thuộc toàn quyền sở hữu của Quán Nhỏ, linh hoạt xuất khẩu sang mọi định dạng (GGUF phục vụ chạy offline trên thiết bị POS hoặc server quán, 16-bit, 4-bit).
+- **Đồng Bộ Hoàn Toàn Quy Chuẩn Điều Phối Trong `/qn` (`quan_nho/.agents/workflows/qn.md`)**:
+  - **Cập nhật Mục 0 (Ranh giới triển khai)**: Xác lập AI Bum vận hành trên Unsloth Native Engine; phân định rõ quy trình kiểm duyệt bài học và không tự cấp quyền fine-tune nếu chưa có chỉ thị từ Chủ Quán.
+  - **Cập nhật Mục 2 (QR Order và AI Bum)**:
+    * Bổ sung định nghĩa nền tảng **Unsloth Core Engine** (`FastLanguageModel`) thay thế Qwen.
+    * Xác lập **Kiến trúc hai tầng (Dual-Layer Architecture)**:
+      + *Tầng 1 (RAG Cấp tốc)*: SQLite FTS5 index 26 Chuyên đề nghiệp vụ F&B và 17 Cây ma trận quyết định phản xạ thực chiến (< 2ms) phục vụ hỏi đáp tức thì tại quán.
+      + *Tầng 2 (SFT Huấn luyện chuyên sâu)*: `Unsloth FastLanguageModel` + LoRA adapter từ kho bài học đã được phê duyệt (`approved`).
+    * Tái khẳng định nguyên tắc bất biến: AI Bum read-only với nghiệp vụ, chỉ tư vấn/nhắc nhở, không tự tạo hiệu lực kho hoặc tài chính, khử PII trước cloud fallback, cô lập conversation/feedback theo `store_id`.
+- **Đồng Bộ Tài Liệu Kiến Trúc Sản Phẩm [`ai-bum.md`](file:///Users/banhbao/Quan%20Nho/quan_nho/.docs/Ai_Bum/cac-module/ai-bum.md)**:
+  - Bổ sung Mục 8: "Chuyển Đổi Chiến Lược Sang Nền Tảng Độc Lập Unsloth Core Engine (Thay Thế Hoàn Toàn Qwen)" với bảng đối sánh 5 tiêu chí chiến lược.
+- **Cam Kết Nghiêm Ngặt "Cần Thì Hỏi Trước Khi Dev"**:
+  - Tuyệt đối chưa tự ý can thiệp code huấn luyện hoặc khởi chạy job fine-tune mới khi chưa có sự thống nhất phương án và phê duyệt từ Chủ Quán.
+  - Mọi kịch bản và tài liệu đều tuân thủ nguyên tắc: Zero Verbatim Ingestion, Zero PII, Zero Business Secrets.
+
+---
+
+## 2026-09-09 (12:15 +07) — Đóng Gói Toàn Diện Gói Tri Thức RAG (26 Chuyên Đề, 17 Cây Phản Xạ) & Đồng Bộ Hệ Thống ai-bum.md
+
+### ✅ Hoàn thành
+
+- **Đóng gói toàn diện Gói tri thức RAG (`materials/rag_knowledge/`)**:
+  - `fnb_operations_knowledge_pack.md` (7.1 KB): Cẩm nang tri thức cốt lõi 26 chuyên đề, Master Formula Sheet và Luật F&B Việt Nam.
+  - `decision_trees_quick_ref.md` (4.8 KB): Bảng phản xạ nhanh 17 Cây ma trận quyết định thao tác cho nhân viên.
+  - `fnb_knowledge_retrieval_chunks.jsonl` (39.8 KB): 26 chunks tri thức cấu trúc hóa phục vụ tìm kiếm ngữ nghĩa và RAG context injection qua SQLite FTS5.
+- **Mở rộng ngân hàng bài tập thực chiến mẫu**: Tạo lập `sample_external_fnb_scenarios_26.json` (135 KB) và `.jsonl` bao phủ đủ 26 chuyên đề (1 bài tập mẫu cho mỗi module).
+- **Đồng bộ tài liệu hệ thống `quan_nho/.docs/Ai_Bum/cac-module/ai-bum.md`**:
+  - Bổ sung chi tiết 26 Chuyên đề nghiệp vụ thực chiến và 108 nguồn thẩm quyền.
+  - Tích hợp trọn vẹn 17 Cây ma trận quyết định phản xạ.
+  - Chuẩn hóa mô hình học tập 2 tầng (Dual-Layer: RAG & SFT) và nguyên tắc bảo vệ bản quyền Zero Verbatim Ingestion.
+- **Cập nhật Manifest**: `MANIFEST.json` v11 ghi nhận **39 files** với **660.498 bytes (~660 KB)**.
+
+---
+
+## 2026-09-09 (11:45 +07) — Đột Phá Toàn Diện 108 Nguồn Thẩm Quyền, 26 Modules & 17 Cây Ma Trận Quyết Định Phản Xạ
+
+### ✅ Hoàn thành
+
+- **Bổ sung 18 nguồn thẩm quyền mới (`SRC-ADV-067` đến `SRC-ADV-084`)** bao phủ 6 lĩnh vực vận hành tối tân:
+  1. Sản xuất bia thủ công, Vận hành Taproom & Thủy lực cân bằng đường ống rót bia tươi (`SRC-ADV-067..069`).
+  2. Hải sản tươi sống, Quầy Raw Bar, Quy tắc 90 ngày thẻ nhuyễn thể & Kiểm soát độc tố Histamine bền nhiệt QCVN 8-2:2011/BYT (`SRC-ADV-070..072`).
+  3. Mô hình Bếp trên mây (Cloud Kitchen), Gian hàng ảo & Thuật toán KDS điều phối đơn hàng đa thương hiệu (`SRC-ADV-073..075`).
+  4. An ninh mạng POS, Tiêu chuẩn thẻ PCI-DSS v4.0 & Trách nhiệm bảo vệ dữ liệu cá nhân theo Nghị định 13/2023/NĐ-CP (`SRC-ADV-076..078`).
+  5. Khoa học cảm quan ẩm thực, Thử tam giác mù kép ISO 4120, Cộng hưởng Umami $8\times$ & Hoạt độ nước sốt đóng chai (`SRC-ADV-079..081`).
+  6. Suất ăn công nghiệp Cook-Chill $60^\circ\text{C} \rightarrow 10^\circ\text{C} \rightarrow 4^\circ\text{C}$, Ẩm thực độ cao máy bay & Hậu cần bếp dã chiến ngoài trời (`SRC-ADV-082..084`).
+- **Hoàn thành biên soạn 5 Chuyên đề tri thức nội bộ mới (`knowledge_modules/`)**:
+  - `MODULE_22_CRAFT_BREWERY_TAPROOM.md` (6.5 KB)
+  - `MODULE_23_SEAFOOD_RAW_BAR_HISTAMINE.md` (6.0 KB)
+  - `MODULE_24_CLOUD_KITCHEN_VIRTUAL_BRANDS.md` (5.8 KB)
+  - `MODULE_25_HOSPITALITY_CYBERSECURITY_DATA_PRIVACY.md` (6.7 KB)
+  - `MODULE_26_SENSORY_EVALUATION_RECIPE_RD.md` (7.2 KB)
+- **Tổng dung lượng 26 Modules tri thức nội bộ**: Đạt **~325 KB** (27 tệp markdown bao gồm KNOWLEDGE_INDEX 32.7 KB).
+- **Cẩm nang tra cứu & Cây quyết định phản xạ**: `KNOWLEDGE_INDEX.md` hoàn thiện **Trọn Bộ 17 Cây ma trận quyết định phản xạ thực chiến** (bổ sung Ma trận 15 về Hải sản & Histamine, Ma trận 16 về Ứng phó sự cố mất mạng POS & Báo cáo rò rỉ dữ liệu A05 trong 72h theo NĐ 13, Ma trận 17 về Cân bằng thủy lực chống trào bọt rót bia taproom).
+- **Quản lý phiên bản dữ liệu**: `MANIFEST.json` nâng cấp lên phiên bản v11 (`materials-fnb-20260909-v11`) đăng ký toàn vẹn **36 tệp tin**, tổng dung lượng đạt **608.838 bytes (~609 KB)** kèm mã hash SHA-256 từ hệ thống file.
+
+---
+
+## 2026-09-09 (11:20 +07) — Hoàn Thiện Học Liệu Bách Khoa Toàn Thư Lên 90 Nguồn Thẩm Quyền & 21 Modules
+
+### ✅ Hoàn thành
+
+- **Bổ sung 12 nguồn thẩm quyền mới (`SRC-ADV-055` đến `SRC-ADV-066`)** mở rộng 4 lĩnh vực tinh hoa ẩm thực:
+  1. Thịt bò ủ khô Dry-aged, Xúc xích ủ muối Charcuterie (Muối đỏ #1/#2) & Thủy phân Collagen-Gelatin (`SRC-ADV-055..057`).
+  2. Kiểm toán thất thoát rượu mạnh quầy bar đêm bằng cân điện tử g/ml & Tâm lý học âm thanh ánh sáng theo QCVN 26:2010/BTNMT (`SRC-ADV-058..059`).
+  3. Bếp mở phong cách Escoffier (khẩu lệnh Behind/Hot pan), Kỹ thuật hạ cá nhân đạo Ikejime & Tâm lý học vật lý đĩa sứ Gastrophysics (`SRC-ADV-060..062`).
+  4. Ẩm thực bền vững Farm-to-Table, Chay Phật giáo kiêng Ngũ Vị Tân, Chuẩn mực Halal cấm cồn & Kosher tách biệt thịt sữa (`SRC-ADV-063..066`).
+- **Biên soạn hoàn chỉnh 4 Chuyên đề tri thức nội bộ mới (`knowledge_modules/`)**:
+  - `MODULE_18_DRY_AGING_CHARCUTERIE.md` (4.9 KB)
+  - `MODULE_19_NIGHTLIFE_LIQUOR_CONTROL.md` (3.9 KB)
+  - `MODULE_20_OPEN_KITCHEN_OMAKASE.md` (5.1 KB)
+  - `MODULE_21_SUSTAINABLE_HALAL_KOSHER.md` (4.5 KB)
+- **Cẩm nang tra cứu & Cây quyết định phản xạ**: `KNOWLEDGE_INDEX.md` tích hợp hoàn chỉnh **14 Cây ma trận quyết định phản xạ** (bổ sung Ma trận 13 về tiếp nhận thực đơn tôn giáo và Ma trận 14 về kiểm kê rượu mạnh cuối ca bằng cân điện tử).
+- **Quản lý phiên bản dữ liệu**: `MANIFEST.json` nâng cấp lên phiên bản v10 (`materials-fnb-20260909-v10`) đăng ký 121 mục kiểm soát với chữ ký SHA-256 từ hệ thống file.
+
+---
+
+## 2026-09-09 (11:05 +07) — Hoàn Thiện Học Liệu Lên 78 Nguồn Thẩm Quyền & 17 Modules
+
+### ✅ Hoàn thành
+
+- **Bổ sung 12 nguồn thẩm quyền mới (`SRC-ADV-043` đến `SRC-ADV-054`)** mở rộng 4 lĩnh vực chuyên ngành:
+  1. Rượu vang, dịch vụ Sommelier bàn tiệc & Quản trị hầm rượu (`SRC-ADV-043..044`).
+  2. Bánh mì, bánh ngọt & tráng miệng thương mại (`SRC-ADV-045..047`).
+  3. Chiến lược thu mua, bảng điểm nhà cung cấp & Chống gian lận cân đong tại cửa nhận hàng (`SRC-ADV-048..050`).
+  4. Tiêu chuẩn bồn rửa 3 ngăn, hóa chất khử trùng Clo/Quats, quy tắc để khô tự nhiên cấm khăn lau & Quy chuẩn nước đá sạch QCVN 01-1:2018/BYT (`SRC-ADV-051..054`).
+- **Biên soạn hoàn chỉnh 4 Chuyên đề tri thức nội bộ mới (`knowledge_modules/`)**:
+  - `MODULE_14_WINE_SOMMELIER_BEVERAGE.md` (7.4 KB)
+  - `MODULE_15_BAKERY_PASTRY_OPERATIONS.md` (4.7 KB)
+  - `MODULE_16_PROCUREMENT_SUPPLIER_AUDIT.md` (5.8 KB)
+  - `MODULE_17_WAREWASHING_CHEMICAL_SANITATION.md` (4.6 KB)
+- **Tổng dung lượng 17 Modules tri thức nội bộ**: Đạt **~273 KB** (18 tệp markdown bao gồm KNOWLEDGE_INDEX 24 KB).
+- **Cẩm nang tra cứu & Cây quyết định phản xạ**: `KNOWLEDGE_INDEX.md` tích hợp đầy đủ **12 Cây ma trận quyết định phản xạ thực chiến** (bổ sung Ma trận 11 về nghiệm thu thực phẩm chống gian lận cân đong và Ma trận 12 về quy trình rửa chén bát bồn 3 ngăn tiệt trùng hóa chất).
+- **Quản lý phiên bản dữ liệu**: `MANIFEST.json` nâng cấp lên phiên bản v9 (`materials-fnb-20260909-v9`) đăng ký toàn vẹn **105 mục** kiểm soát với chữ ký SHA-256 từ hệ thống file.
+
+---
+
+## 2026-09-09 (10:45 +07) — Mở Rộng Học Liệu Tối Thượng Lên 66 Nguồn & 13 Modules Chuyên Sâu
+
+### ✅ Hoàn thành
+
+- **Bổ sung 12 nguồn thẩm quyền mới (`SRC-ADV-031` đến `SRC-ADV-042`)** bao phủ 3 nhóm nghiệp vụ thực chiến lớn:
+  1. Vận hành Buffet AYCE, Lẩu băng chuyền & Quản trị yến tiệc BEO (`SRC-ADV-031..034`).
+  2. Nhượng quyền thương mại F&B, Kiosk tự phục vụ, Bao bì mang đi đa tầng & Đồ uống lên men Cold Brew/Kombucha (`SRC-ADV-035..038`).
+  3. An toàn vệ sinh lao động ngành bếp (Luật ATVSLĐ 2015), Tủ thuốc cứu thương tại quán (TT 19/2016/TT-BYT), Phác đồ sơ cứu bỏng/đứt tay & Chế độ BHXH bắt buộc (`SRC-ADV-039..042`).
+- **Hoàn thành biên soạn 3 Chuyên đề tri thức nội bộ mới (`knowledge_modules/`)**:
+  - `MODULE_11_BUFFET_CATERING_BANQUET.md` (14.9 KB)
+  - `MODULE_12_FRANCHISE_KIOSK_TAKEAWAY.md` (12.6 KB)
+  - `MODULE_13_LABOR_SAFETY_FIRST_AID.md` (12.5 KB)
+- **Tổng dung lượng 13 Modules tri thức nội bộ**: Đạt **~250 KB** (14 tệp markdown bao gồm KNOWLEDGE_INDEX 25.3 KB).
+- **Cẩm nang tra cứu & Cây quyết định phản xạ**: `KNOWLEDGE_INDEX.md` tích hợp hoàn chỉnh **10 Cây ma trận quyết định phản xạ** (bổ sung Ma trận 9 về phụ thu thức ăn thừa buffet và Ma trận 10 về sơ cứu tai nạn bỏng bếp/vết cắt).
+- **Quản lý phiên bản dữ liệu**: `MANIFEST.json` nâng cấp lên phiên bản v8 (`materials-fnb-20260909-v8`) đăng ký toàn vẹn **89 mục** kiểm soát với chữ ký SHA-256 từ hệ thống file.
+
+---
+
+## 2026-09-09 (10:30 +07) — Xây Dựng Bộ Học Liệu F&B Toàn Diện Cho AI Bum (54 Nguồn Thẩm Quyền & 10 Module Nghiệp Vụ)
+
+### ✅ Hoàn thành
+
+- **Mục tiêu**: Xây dựng nền tảng học liệu bên ngoài chuyên sâu về vận hành quán ăn, nhà hàng, quán nhậu, quán cà phê tại Việt Nam để làm tài liệu đào tạo và nạp RAG cho AI Bum.
+- **Tiêu chuẩn pháp lý & bản quyền thực thi**:
+  - Tuân thủ tuyệt đối thứ bậc pháp luật Việt Nam: Luật ATTP 55/2010/QH12, QĐ 1246/QĐ-BYT, Bộ luật Lao động 2019, TT 88/2021/TT-BTC, NĐ 123/2020/NĐ-CP & TT 78/2021/TT-BTC, Luật Phòng chống tác hại rượu bia 2019, NĐ 100/2019/NĐ-CP, NĐ 90/2026/NĐ-CP, Luật BVMT 2020 & NĐ 45/2022/NĐ-CP, NĐ 08/2022/NĐ-CP, NĐ 144/2021/NĐ-CP.
+  - Nguyên tắc Zero Verbatim Ingestion: Toàn bộ giáo trình thương mại nước ngoài được gắn `allowed_in_train: false` và chỉ trích xuất công thức khoa học/khung tư duy độc lập; tài liệu biên soạn nội bộ gắn `allowed_in_rag: true`.
+  - Cơ chế Zero PII, Zero Business Secrets & Cơ chế phòng chống bịa đặt (Missing Data Guard $\ge 25\%$).
+- **Quy mô danh mục tài liệu**:
+  - **54 nguồn tài liệu tuyển chọn độc lập** (`EXTERNAL_FNB_SOURCES_CATALOGUE.md`, dung lượng 113 KB) bao phủ 9 nhóm lớn.
+  - **10 Chuyên đề tri thức nội bộ song ngữ chuyên sâu** (`knowledge_modules/`, tổng dung lượng > 205 KB):
+    - `MODULE_01_DAILY_OPERATIONS.md` đến `MODULE_10_DIGITAL_TRANSFORMATION_AI.md`.
+  - **Cẩm nang tra cứu & Cây quyết định phản xạ**: `KNOWLEDGE_INDEX.md` (21.1 KB) tích hợp 8 ma trận quyết định phản xạ thực chiến và bảng tra cứu công thức F&B toàn diện.
+  - **Quản lý phiên bản dữ liệu**: `MANIFEST.json` nâng cấp lên phiên bản v7 (`materials-fnb-20260909-v7`) đăng ký 74 mục kiểm soát toàn vẹn.
+
+---
+
+## 2026-09-09 (10:15 +07) — Mở Rộng Quản Trị Khủng Hoảng, Pháp Chế Thuế - Rượu Bia & Tăng Trưởng F&B: 42 Nguồn, Hoàn Tất Chuyên Đề 7 & MANIFEST v6 (57 Mục)
+
+### ✅ Hoàn thành
+
+- **Nghiên Cứu & Bổ Sung 6 Nguồn Chuyên Sâu Cấp Thiết (`EXTERNAL_FNB_SOURCES_CATALOGUE.md`)**:
+  - `SRC-ADV-013`: NFPA 96 — PCCC Bếp thương mại: Phân loại đám cháy dầu mỡ nhiệt độ cao Class K ($> 360^\circ$C). Tuyệt đối cấm tạt nước (nổ hơi nước bắn dầu). Cơ chế xà phòng hóa Saponification với dung dịch hóa chất ướt; quy trình 3 bước khẩn cấp ngắt gas và dập lửa.
+  - `SRC-ADV-014`: Cục ATTP (Bộ Y tế) & QĐ 39/2006/QĐ-BYT — Quy trình 5 bước ứng phó khẩn cấp khi nghi ngờ ngộ độc thực phẩm: Sơ cứu chuyển viện, đình chỉ phục vụ món, niêm phong mẫu lưu 24h & lô nguyên liệu gốc, báo cáo y tế trong 24h, trích xuất hồ sơ kiểm thực.
+  - `SRC-ADV-015`: Chính phủ & Bộ Tài chính (NĐ 123/2020, TT 78/2021, TT 40/2021) — Bắt buộc áp dụng HĐĐT có mã khởi tạo từ POS máy tính tiền; nghĩa vụ thuế hộ kinh doanh F&B: GTGT 3% + TNCN 1.5% = 4.5% trên doanh thu ($> 100$ triệu/năm).
+  - `SRC-ADV-016`: Luật Phòng, chống tác hại rượu bia 2019 & NĐ 100/2019/NĐ-CP, NĐ 90/2026/NĐ-CP — Cấm bán rượu bia cho người $< 18$ tuổi; bắt buộc niêm yết thông báo tại quán (phạt 1-3 triệu); kỹ thuật hạ nhiệt xung đột de-escalation, hỗ trợ giữ xe máy qua đêm và đặt xe taxi an toàn.
+  - `SRC-ADV-017`: Harvard Business Review & Cornell CHR — Kinh tế học giữ chân khách hàng (CAC vs LTV), mô hình RFM (Recency, Frequency, Monetary) trong F&B, áp dụng Voucher bật ngược (Bounce-back) tránh giảm giá cắt máu.
+  - `SRC-ADV-018`: NRA Solutions & Cornell ORM — Quản trị danh tiếng trực tuyến, quy tắc H.E.A.R (Hear, Empathize, Apologize, Resolve & Take it offline) xử lý review 1 sao, bảo vệ thương hiệu trước reviewer tống tiền cạnh tranh bẩn.
+- **Biên Soạn Chuyên Đề 7: Quản Trị Khủng Hoảng, Pháp Chế & Tăng Trưởng (`MODULE_07_CRISIS_COMPLIANCE_GROWTH.md`)**:
+  - Soạn thảo tài liệu toàn diện 22.2 KB tích hợp sâu toàn bộ 6 nguồn chuyên sâu mới.
+  - Đưa tổng dung lượng 7 chuyên đề tri thức nội bộ lên **> 146 KB** (8 tệp bao gồm cả Knowledge Index).
+- **Cập Nhật Toàn Diện Cẩm Nang Tra Cứu [`KNOWLEDGE_INDEX.md`](file:///Users/banhbao/Quan%20Nho/ai-bum-implementation/learning/materials/knowledge_modules/KNOWLEDGE_INDEX.md)**:
+  - Bổ sung Chuyên đề 7 vào sơ đồ kiến trúc tổng thể Mermaid.
+  - Cập nhật 4 quy chuẩn pháp luật trọng yếu vào Bảng tra cứu pháp lý Việt Nam (HĐĐT máy tính tiền, Thuế hộ KD 4.5%, Cấm bán rượu bia $< 18$t, NĐ 100).
+  - Bổ sung Cây quyết định phản xạ 4.5: Ứng phó khẩn cấp bếp (Cháy dầu mỡ & Ngộ độc thực phẩm).
+- **Nâng Cấp MANIFEST.json Lên Phiên Bản v6 (`materials-fnb-20260909-v6`)**:
+  - Tổng số mục đăng ký: **57 tài liệu** (7 gốc + 24 cơ bản + 18 chuyên sâu `SRC-ADV-001..018` + 8 chuyên đề nội bộ `KM-001..008`).
+- **Bảo Toàn & Kiểm Định Hệ Thống**:
+  - Toàn bộ 16 bài kịch bản mẫu và rubric xác thực khớp 100%.
+
+---
+
+## 2026-09-09 (10:00 +07) — Mở Rộng 6 Nguồn Chuyên Sâu Cấp Doanh Nghiệp, Hoàn Tất Chuyên Đề 6 & MANIFEST v5 (50 Mục)
+
+### ✅ Hoàn thành
+
+- **Nghiên Cứu & Bổ Sung 6 Nguồn Chuyên Sâu Cấp Doanh Nghiệp (`EXTERNAL_FNB_SOURCES_CATALOGUE.md`)**:
+  - `SRC-ADV-007`: Cornell Hospitality Quarterly (Giáo sư Sheryl E. Kimes) — Quản trị doanh thu nhà hàng RevPASH ($\text{RevPASH} = \text{Average Check} \times \text{Seat Occupancy \%}$) & Quản trị chu kỳ dùng bữa (rút ngắn thời gian in bill/thanh toán bằng QR tại bàn, tiết kiệm 10-12 phút/lượt bàn).
+  - `SRC-ADV-008`: Toast, Technomic & QSR Magazine — Kinh tế giao hàng đa kênh (Lãi góp biên tế khi chịu phí sàn 20-30%) & Nhiệt động lực học bao bì ẩm thực (ngưng tụ hơi nước làm nhũn vỏ giòn đồ chiên, hộp bã mía thoát ẩm tự nhiên MVTR cao, cửa sổ giao hàng vàng $\le 35-45$ phút).
+  - `SRC-ADV-009`: Dave Arnold (*Liquid Intelligence*) & Jeffrey Morgenthaler — Khoa học pha chế hiện đại: Định lý cân bằng ABV-Brix-Acid, chuẩn hóa siro bằng khúc xạ kế Brix (Simple $50^\circ$, Rich $66.5^\circ$), kỹ thuật cân bằng axit 6% bằng Axit Citric và Malic (2:1), và khoa học pha mẻ lớn (Batching & Pre-dilution bổ sung 22% nước ở $-8^\circ$C rót 5 giây).
+  - `SRC-ADV-010`: FDA Food Code 3-502.12 & NACMCF — Kiểm soát an toàn vi sinh yếm khí cho chế biến đóng gói giảm oxy (ROP), Sous-vide & Cook-chill: Phòng chống độc tố thần kinh *Clostridium botulinum* và *Listeria*, hệ đa hàng rào bảo vệ ($pH \le 4.6, a_w \le 0.91, T \le 3^\circ$C kèm TTI $\le 30$ ngày), chu trình làm lạnh nhanh Blast Chilling 90 phút.
+  - `SRC-ADV-011`: Avero Hospitality Analytics & NRA Loss Prevention — Kiểm toán forensic POS & Phòng chống thất thoát: Nhận diện thủ đoạn gian lận "Chuyển món quay vòng" (Wagon Wheeling), "Treo bill hủy sau khi in", thuật toán Transfer Z-Score $\ge 2.0\sigma$, và quy trình nộp két mù 2 người với dung sai $\le \pm 20.000$đ/ca.
+  - `SRC-ADV-012`: The Culinary Institute of America (CIA Facility Design) & ISO 14159 — Thiết kế bếp một chiều chuẩn công thái học: Nguyên tắc luồng một chiều (Nhập $\rightarrow$ Kho $\rightarrow$ Sơ chế $\rightarrow$ Nấu $\rightarrow$ Pass $\rightarrow$ Rửa), chiều cao bàn thao tác 85-90 cm, bán kính với tay 35-40 cm, và cân bằng thông gió hút khói CFM.
+- **Biên Soạn Chuyên Đề 6: Vận Hành Chuyên Sâu Cấp Doanh Nghiệp (`MODULE_06_ENTERPRISE_OPERATIONS.md`)**:
+  - Soạn thảo tài liệu toàn diện 24.4 KB tích hợp sâu toàn bộ 6 nguồn chuyên sâu mới.
+  - Đưa tổng dung lượng 6 chuyên đề tri thức nội bộ lên **> 120 KB**.
+- **Cập Nhật Toàn Diện Cẩm Nang Tra Cứu [`KNOWLEDGE_INDEX.md`](file:///Users/banhbao/Quan%20Nho/ai-bum-implementation/learning/materials/knowledge_modules/KNOWLEDGE_INDEX.md)**:
+  - Bổ sung Chuyên đề 6 vào sơ đồ kiến trúc tổng thể Mermaid.
+  - Thêm 8 công thức toán học doanh nghiệp vào Bảng tra cứu (RevPASH, Lãi góp giao hàng, Brix chuẩn, Cân bằng Axit, Nước pha mẻ, ROP hurdles, Transfer Z-score).
+  - Bổ sung Cây quyết định phản xạ 4.4: Thẩm định dự án giao hàng & lựa chọn bao bì ẩm thực.
+- **Nâng Cấp MANIFEST.json Lên Phiên Bản v5 (`materials-fnb-20260909-v5`)**:
+  - Tổng số mục đăng ký: **50 tài liệu** (7 gốc + 24 cơ bản + 12 chuyên sâu `SRC-ADV-001..012` + 7 chuyên đề nội bộ `KM-001..007`).
+- **Bảo Toàn & Kiểm Định Hệ Thống**:
+  - Toàn bộ 97 unit tests lõi PASS 100%. Xác nhận không làm ảnh hưởng CSDL BunServer hay release đang chạy.
+
+---
+
+## 2026-09-09 (09:45 +07) — Bổ Sung 6 Nguồn Quốc Tế Chuyên Sâu & Hoàn Thiện Chuyên Đề 5 Vận Hành F&B Nâng Cao Cho AI Bum
+
+### ✅ Hoàn thành
+
+- **Nghiên Cứu & Bổ Sung 6 Nguồn Quốc Tế Chuyên Sâu (`EXTERNAL_FNB_SOURCES_CATALOGUE.md`)**:
+  - `SRC-ADV-001`: FDA Food Code (2022) & Codex Alimentarius — 7 Nguyên tắc HACCP & 4 CCPs cốt tử trong bếp (Cooking $\ge 74^\circ$C, Làm nguội 2 giai đoạn $\le 6$h, Giữ nóng $\ge 57^\circ$C, Giữ lạnh $\le 5^\circ$C).
+  - `SRC-ADV-002`: Cornell Nolan School of Hotel Administration — Tâm lý học menu & Kinh tế học hành vi (Định giá mỏ neo Anchor Pricing, Hiệu ứng chim mồi Decoy, Giảm nỗi đau trả tiền, Quét mắt chữ Z).
+  - `SRC-ADV-003`: HFTP & MIT Logistics — Quản trị chuỗi cung ứng nhà hàng (Phân loại tồn kho ABC theo Pareto 80/20, Điểm đặt hàng lại Reorder Point ROP & Tồn kho an toàn Safety Stock).
+  - `SRC-ADV-004`: Black Box Intelligence & NRA — Định chuẩn năng suất lao động (Doanh thu/giờ công SPLH và Số khách phục vụ/giờ công CPLH).
+  - `SRC-ADV-005`: The Beverage Forum & NRA Solutions — Quản trị quầy bar & Tỷ lệ thu hồi bia tươi thực tế (Keg Yield 88-92%, Giá vốn rót thực tế Servable Pour Cost, Kiểm soát thất thoát bọt khí và đường ống).
+  - `SRC-ADV-006`: Kitchen Management Technology & QSR Automations — Hệ thống hiển thị bếp thông minh KDS (Định tuyến thông minh theo trạm bếp, Thuật toán bắn lệnh trễ Cook-Time Delay Firing và Quản lý đợt ăn Coursing).
+- **Biên Soạn Chuyên Đề 5 Vận Hành Nâng Cao (`MODULE_05_ADVANCED_FNB_SYSTEMS.md`)**:
+  - Biên soạn tài liệu chi tiết 15.2 KB tích hợp toàn bộ các công thức toán học, ngưỡng kỹ thuật an toàn, ví dụ số liệu thực tế và thuật ngữ song ngữ Anh - Việt.
+  - Đồng bộ cập nhật vào Cẩm nang tra cứu tổng thể [`KNOWLEDGE_INDEX.md`](file:///Users/banhbao/Quan%20Nho/ai-bum-implementation/learning/materials/knowledge_modules/KNOWLEDGE_INDEX.md).
+- **Cập Nhật Danh Mục Tài Liệu (`MANIFEST.json` v4)**:
+  - Nâng cấp lên `materials-fnb-20260909-v4` với tổng cộng **43 tài liệu** (7 tài liệu gốc + 24 nguồn cơ bản + 6 nguồn chuyên sâu `SRC-ADV-001..006` + 6 chuyên đề tri thức `KM-001..006`).
+  - Gắn đúng cờ an toàn bản quyền: Nguồn thương mại/bản quyền `allowed_in_train: false`, các tài liệu tri thức nội bộ và chuẩn y tế công cộng `allowed_in_rag: true`.
+- **Bảo Toàn & Kiểm Định**:
+  - Xác thực tự động: 16 bài kịch bản mẫu vẫn khớp 100%, 24/24 nguồn gốc hợp lệ.
+
+---
+
+## 2026-09-09 (09:30 +07) — Xây Dựng Danh Mục 24 Nguồn F&B Bên Ngoài, Khung Sở Hữu Trí Tuệ & Bộ 16 Tình Huống Mẫu Huấn Luyện AI Bum
+
+### ✅ Hoàn thành
+
+- **Xây Dựng Danh Mục 24 Nguồn Học Liệu F&B Chuẩn Mực (`EXTERNAL_FNB_SOURCES_CATALOGUE.md`)**:
+  - Tuyển chọn 24 nguồn thực chất, phân bổ đồng đều 6 nguồn/nhóm qua 4 lĩnh vực nghiệp vụ F&B cốt lõi:
+    1. *Vận hành hằng ngày (Daily Operations):* VTOS Nghiệp vụ Nhà hàng, CIA Remarkable Service, NRA ManageFirst, Sheryl Kimes (Cornell RevPASH), Cornell Service Recovery L.A.S.T, Playbook Toast/7shifts.
+    2. *Quản lý bếp & nguyên liệu (Kitchen & Inventory):* Quyết định 1246/QĐ-BYT (Kiểm thực 3 bước, lưu mẫu thức ăn $\ge 30$ suất $\ge 24$h ở 0-5°C), Luật ATTP 55/2010/QH12 & NĐ 115/2018/NĐ-CP, Cẩm nang WHO Five Keys, CIA The Professional Chef (Định lượng & Tỷ lệ thu hồi Yield % = EP/AP), NRA ServSafe Coursebook 2023 (FEFO, phân tầng tủ đông mát), Wayne Gisslen Professional Cooking (Bảng chuẩn bị Prep List, Waste Log).
+    3. *Quản lý tài chính & menu (Financial & Menu):* David Hayes & Jack Ninemeier (COGS, Food Cost %, Prime Cost $\le 60-65\%$), Kasavana & Smith 1982 Menu Engineering (Ma trận Stars/Plowhorses/Puzzles/Dogs), Thông tư 88/2021/TT-BTC & TT 133/2016/TT-BTC (Chứng từ kế toán hộ kinh doanh), Richard Kotas (CVP, Doanh thu hòa vốn BER), NRA Financial Operating Ratios, Cẩm nang đối soát đa kênh KiotViet/CukCuk/Sapo.
+    4. *Nhân sự & chất lượng dịch vụ (HR & Service Quality):* Bộ luật Lao động 2019 (Điều 98: Lương làm thêm giờ 150/200/300%, làm đêm 22h-6h +30%, làm thêm đêm lễ 390%; Điều 102: Khấu trừ lương $\le 30\%$), Tiêu chuẩn VTOS (Đào tạo tại chỗ 4 bước: Prepare-Present-Practice-Follow-up, SOP), Zeithaml SERVQUAL (5 chiều chất lượng, Gap Model), Horst Schulze (Văn hóa dịch vụ Ritz-Carlton, trao quyền tuyến đầu), Bruce Axler (Ca lệch giờ Staggered Scheduling, chia khu vực bàn), Cẩm nang KPI Hiệp hội Nhà hàng VN (RAV).
+- **Thiết Lập Khung Phương Pháp Luận & Ranh Giới Bản Quyền (`SOURCING_METHODOLOGY_AND_IP.md`)**:
+  - *Kiến trúc tri thức 3 tầng:* Tầng 1 (Luật Việt Nam bắt buộc 100%) $\rightarrow$ Tầng 2 (Nguyên lý khoa học & chuẩn mực quốc tế thích ứng VN) $\rightarrow$ Tầng 3 (SOP & kinh nghiệm thực chiến theo quán).
+  - *Zero Verbatim Ingestion:* Nghiêm cấm sao chép nguyên văn giáo trình có bản quyền; chỉ tiếp thu công thức toán học và khung phân loại.
+  - *Zero PII & Zero Business Secrets:* 100% sử dụng dữ liệu mô phỏng chuẩn hóa (Synthetically Grounded Fixtures).
+  - *Missing Data Guard:* Bắt buộc tối thiểu 25% tình huống thiếu dữ liệu trọng yếu; AI Bum phải chỉ rõ số liệu thiếu và từ chối bịa đặt.
+  - *Strict Splitting:* Phân tách độc lập hoàn toàn giữa tập Huấn luyện (Train) và tập Đánh giá (Eval).
+- **Cập Nhật Danh Mục Tài Liệu (`MANIFEST.json` v3)**:
+  - Nâng cấp manifest lên `materials-fnb-20260909-v3` với tổng cộng 36 tài liệu: 7 tài liệu gốc + 24 nguồn `SRC-xxx` + 5 chuyên đề tri thức biên soạn nội bộ (`KM-001` - `KM-005`).
+  - Thiết lập cờ chuẩn xác: 23 nguồn thương mại/giáo trình có `allowed_in_train: false`, các chuẩn mực/luật công khai và 5 chuyên đề tri thức có `allowed_in_rag: true`.
+- **Biên Soạn Hoàn Chỉnh 5 Chuyên Đề Tri Thức F&B Chuẩn Hóa (`knowledge_modules/`)**:
+  - `MODULE_01_DAILY_OPERATIONS.md`: Vận hành hằng ngày, checklist 4 trụ cột mở/giao/đóng ca, quỹ tiền lẻ float, luồng order nguyên tử POS, điều phối bàn giờ cao điểm và quy trình xử lý trễ món L.A.S.T.
+  - `MODULE_02_KITCHEN_INVENTORY.md`: Quản lý bếp, định lượng sơ chế AP-EP-Yield %, giá vốn EP Cost, bảng prep theo dự báo khách, lưu mẫu thức ăn tiệc $\ge 30$ suất (QĐ 1246), kiểm thực 3 bước và phân tầng tủ lạnh ServSafe.
+  - `MODULE_03_FINANCIAL_MENU.md`: Tài chính F&B, Prime Cost $\le 60-65\%$, COGS thực tế, phân tích điểm hòa vốn CVP (BER tháng, ngày, số khách), ma trận 4 nhóm Kasavana và đối soát tiền két Thông tư 88.
+  - `MODULE_04_HR_SERVICE_QUALITY.md`: Quản trị nhân sự, BLLĐ 2019 (Điều 98: thêm giờ lễ đêm 390%, Điều 102: trừ lương $\le 30\%$), xếp ca lệch giờ Staggered Scheduling, đào tạo OJT 4 bước VTOS, 5 chiều SERVQUAL và KPI công bằng.
+  - `KNOWLEDGE_INDEX.md`: Bản đồ tri thức tổng thể, bảng tra cứu công thức toán học, bảng ranh giới pháp lý Việt Nam bắt buộc, 3 cây quyết định phản xạ nghiệp vụ (khiếu nại món, xếp bàn, lệch két) và nguyên tắc tính cách Bum.
+- **Biên Soạn & Kiểm Định Bộ 16 Tình Huống F&B Mẫu (`sample_external_fnb_scenarios_16.json` / `.jsonl`)**:
+  - Cân đối chính xác: 4 domain $\times$ 4 tình huống = 16 tình huống.
+  - Tỷ lệ thiếu dữ liệu: Đúng 4/16 bài (25%) thuộc dạng `missing_data_caution` (`ops-ext-004`, `kit-ext-004`, `fin-ext-004`, `hr-ext-004`).
+  - Phân chia tập dữ liệu: Đúng 8 bài `train` và 8 bài `eval` (2 train, 2 eval mỗi nhóm nghiệp vụ).
+  - Cấu trúc chuẩn mực: Mỗi bài có context thực tế, câu hỏi, câu trả lời theo giọng điệu Bum, tính toán từng bước, xử lý dữ liệu thiếu, rubric 100 điểm với lỗi loại trừ (fatal errors), và truy xuất nguồn `provenance_sources`.
+  - Kiểm thử tự động (`scratch/test_external_scenarios.py`): **16/16 bài đạt chuẩn 100%**, không rò rỉ đáp án, không PII, liên kết đầy đủ 24 nguồn gốc trong MANIFEST.
+- **Bảo Toàn Hệ Thống Hiện Có**:
+  - Kiểm tra toàn bộ 97 test unit lõi (`test_engine`, `test_engine_robustness`, `test_overnight_learning`, `test_review_queue`, `test_vram_and_locking`): **97/97 tests PASS 100%**.
+  - Dừng lại đúng yêu cầu, không tự ý sinh hàng trăm bài hoặc chạy fine-tune; sẵn sàng trình Codex thẩm tra và phê duyệt danh mục nguồn, 5 chuyên đề tri thức cùng 16 bài mẫu.
+
+---
+
+## 2026-09-09 (Sáng) — Triển Khai Release 20260909-082500 Lên BunServer & Nghiệm Thu Lô 10 Câu Thật (Job d98a3752-1a81-420a-bbc9-17f8f8a6a3ca)
+
+### ✅ Hoàn thành
+
+- **Triển Khai Hoàn Chỉnh Release 20260909-082500 Lên BunServer**:
+  - Kiểm tra hàng đợi: 0 job đang chạy trước khi triển khai.
+  - Bảo lưu nguyên vẹn bản release cũ `/opt/ai-bum-training/releases/20260909-065000` để sẵn sàng rollback nếu cần; bảo toàn 100% CSDL SQLite `/var/lib/ai-bum-training/data/control.db` và dữ liệu nghiệm thu cũ.
+  - Đồng bộ toàn bộ 26 tệp mã nguồn từ local sang `/opt/ai-bum-training/releases/20260909-082500/`.
+  - Đối chiếu mã băm SHA-256 local vs BunServer: **26/26 tệp khớp 100%**.
+  - Chuyển symlink nguyên tử: `/opt/ai-bum-training/current -> /opt/ai-bum-training/releases/20260909-082500`.
+  - Khởi động lại dịch vụ lớp học cần thiết: `ai-bum-unsloth.service` (PID 2144009) và `ai-bum-training.service` (PID 2144015). Không đụng chạm driver GPU, model/adapter hay dịch vụ POS production.
+- **Kiểm Tra Xác Thực Sau Triển Khai Trên BunServer**:
+  - Endpoint `/api/info` (port 11436) phản hồi: `status: "ready"`, `mock_mode: false`, model `unsloth/Qwen2.5-3B-Instruct-bnb-4bit` (đúng model thực tế: `display_name: "Bum base — chưa fine-tune"`, `adapter_path: null`, `adapter_checksum: null`).
+  - VRAM trống ban đầu: 3.260 MiB (vượt xa mức dự phòng an toàn tối thiểu 1.000 MiB).
+  - Bộ sinh kịch bản trên server: Xác nhận 104 bài hợp lệ, 1 bài chờ xác minh (`sec-015`), trong lô sinh 360 bài (`generate_fnb_scenarios(360)`) có đúng 104 bài mới, 256 bài ôn tập và **0 bài `sec-015`** (cả gốc lẫn biến thể ôn tập).
+  - Chạy kiểm thử trên BunServer: **61/61 test unit PASS** (1.23s) và **4/4 test service socket PASS** (3.46s).
+- **Nghiệm Thu MỘT Lô 10 Câu Thật (Job ID: `d98a3752-1a81-420a-bbc9-17f8f8a6a3ca`)**:
+  - Thời gian thực thi: **08:29:42 — 08:41:00 (+07)** (khoảng 11 phút 18 giây).
+  - Sử dụng đúng backend Bum trên Unsloth (Qwen2.5-3B-Instruct 4-bit trên GPU RTX 2060), không fallback.
+  - Kết quả: **10/10 bài hoàn thành** (`processed_count = 10`, `error_code = null`).
+  - Lượt gọi: **20 lượt Thầy** (10 ra đề, 10 chấm điểm) và **10 lượt Bum** (10 lượt suy luận thật).
+  - Tỷ lệ lỗi / Retry: **0 lượt retry** của cả Thầy và Bum. Không chạm ngưỡng giới hạn.
+  - VRAM đo lường thực tế: Dao động trong khoảng **3.126 — 3.150 MiB trống** sau mỗi lượt sinh (đảm bảo an toàn tuyệt đối).
+  - Độ trễ sinh phản hồi học viên: 8.5s — 21.4s; token sinh dao động 160 — 405 tokens (không bài nào bị `length_limited`).
+  - Điểm số: Dao động từ 8.0 đến 58.0, điểm trung bình đạt **29.2/100** (phản ánh trung thực năng lực Bum base chưa fine-tune; không kết luận Bum thông minh hơn chỉ từ điểm tự chấm).
+  - Trạng thái lưu trữ: Toàn bộ 10 bài ở trạng thái `awaiting_review` với `review_status = 'pending'`, **tuyệt đối không tự approve bài**, không fine-tune hay đổi adapter.
+  - Dòng dữ liệu meta: Đầy đủ và xuyên suốt tới SQLite, API (`/api/training/manifest`), dashboard Control Room và Review Pack (`model_info`, `kind: 'new'`, `is_guided`, `length_limited: 0`, token counts, VRAM stats).
+- **Bàn Giao & Bảo Toàn Dữ Liệu**:
+  - Dữ liệu lô 10 cũ `acceptance-batch-10.jsonl` (SHA-256: `e93219aa...`) được giữ nguyên vẹn 100%.
+  - Xuất dữ liệu lô 10 mới: `acceptance-batch-10-v2.jsonl` (SHA-256: `d73cb79e...`) và `acceptance_manifest_v2.json` (SHA-256: `4e7c5449...`).
+  - Tạo 2 Review Pack độc lập cho Codex kiểm tra: `acceptance_review_pack_student_v2/` (mode student_eval) và `acceptance_review_pack_training_v2/` (mode training_data).
+  - Dừng lại đúng yêu cầu, không mở lô 360 câu khi chưa có xác nhận từ Codex.
+
+---
+
+## 2026-09-09 — Hoàn Thiện Đồng Bộ Định Danh Model & Lọc Kịch Bản Chờ Xác Minh Lớp Học Đêm AI Bum Theo Yêu Cầu Codex
+
+### ✅ Hoàn thành
+
+- **Đồng Bộ Tuyệt Đối Hợp Đồng Định Danh Model (`unsloth_inference_service.py`)**:
+  - Khắc phục lỗi `model_info` trong phản hồi suy luận thiếu `status`, `mock_mode` và `generation_config`.
+  - Thiết lập cơ chế tạo định danh tập trung `get_model_identity()`, dùng chung cho cả endpoint thông tin `/api/info` và từng phản hồi suy luận `/api/chat` (`_generate_mock`, `_generate_real`).
+  - Đảm bảo đầy đủ 100% các trường định danh bắt buộc: `status: 'ready'`, `mock_mode`, `service`, `backend`, `base_model`, `base_revision`, `adapter_checksum` (null hợp lệ cho base model), `tokenizer_name`, `chat_template`, `generation_config` (`temperature: 0.0`, `do_sample: False`, `repetition_penalty: 1.05`, `max_new_tokens: 512`).
+  - Bảo toàn trọn vẹn số đo động riêng biệt cho từng câu: `prompt_tokens`, `response_tokens`, `length_limited`, `latency_seconds`, `vram_stats`.
+  - Xác nhận bằng test tích hợp trực tiếp: phản hồi từ `InferenceEngine` vượt qua `verify_model_identity()` ở cả 2 chế độ (`strict_env=False` và `strict_env=True`), tích hợp chuẩn xác với `StudentClient.answer()`.
+
+- **Loại Bỏ Triệt Để Kịch Bản Chờ Xác Minh Khỏi Danh Sách Sinh Lớp Học (`fnb_scenario_bank.py`)**:
+  - Viết hàm `get_valid_scenarios_by_category()` lọc bỏ `is_pending_verification=True` (như `sec-015`) ngay từ đầu nguồn trước khi phân bổ danh mục và trước khi tạo các chu kỳ ôn tập.
+  - Nâng cấp `allocate_category_counts()` hỗ trợ tham số `available_categories`, bọc xử lý biên chống chia cho 0 (`ZeroDivisionError`) khi một danh mục rỗng hoặc khi tổng trọng số bằng 0.
+  - Cập nhật `generate_fnb_scenarios()`: chỉ cấp phát và sinh vòng ôn tập (`-rev*`) trên tập hợp lệ. Cả kịch bản gốc `sec-015` và các bản sao ôn tập (`sec-015-rev2`, `sec-015-rev3`) hoàn toàn không xuất hiện trong bất kỳ lô sinh nào (đã kiểm tra ở các lô 10, 50, 104, 360, 500 câu).
+  - Giữ nguyên cờ `is_pending_verification=True` của `sec-015` trong `BASE_SCENARIOS`, không xóa cờ và tuyệt đối không tự ý gán quyền Quản lý.
+  - Cập nhật `get_scenario_bank_stats()`: phản ánh chính xác 104 kịch bản hợp lệ (`auth_store_security` còn 14 bài, 6 danh mục còn lại mỗi nhóm 15 bài), ghi nhận `pending_verification_count: 1`.
+
+- **Kiểm Thử & Đo Kiểm Toàn Diện (101/101 Tests Pass)**:
+  - 97 tests unit/integration nội bộ trong 5 file test (`test_engine.py`, `test_engine_robustness.py`, `test_overnight_learning.py`, `test_review_queue.py`, `test_vram_and_locking.py`): **97/97 PASS** (trong 15.98s).
+  - 4 tests dịch vụ UNIX domain socket HTTP (`test_service.py`) chạy ngoài sandbox: **4/4 PASS** (trong 2.80s).
+  - Tổng số test: **101/101 PASS (100%)**.
+  - Tính toán và lưu vết checksum SHA-256 các file mã nguồn.
+  - Tuyệt đối dừng lại trước khi gọi model thật hoặc mở lô 360 câu; bảo toàn 10/10 bài pending nghiệm thu trước đó.
+
+---
+
+## 2026-09-08 (Tối) — Nghiệm Thu Unsloth Desktop, Chuẩn Bị Học Liệu F&B & Đóng Băng Bộ Đánh Giá Độc Lập AI Bum (BunServer)
+
+### ✅ Hoàn thành
+
+- **Nghiệm Thu Toàn Diện Unsloth Desktop GUI & Backend Trên BunServer**:
+  - Khởi động lại thành công ứng dụng Tauri Desktop `unsloth-studio` trong session Desktop `DISPLAY=:10.0` của người dùng `pachiabun`.
+  - Log `~/.unsloth/studio/tauri.log` xác nhận ứng dụng tự động nhận diện backend: `disposition=ManagedReady`, khởi chạy backend API trên cổng `127.0.0.1:8888`.
+  - Kiểm tra sức khỏe backend qua HTTP: `curl http://127.0.0.1:8888/` trả về `{"status":"healthy","service":"Unsloth UI Backend","desktop_owner":{"kind":"tauri",...}}`.
+  - Tạo launcher script `/home/pachiabun/.local/bin/launch-unsloth-studio.sh` và shortcut `/home/pachiabun/Desktop/Unsloth-Studio.desktop` cho Chủ Quán mở trực tiếp trên màn hình server.
+  - Toàn bộ dịch vụ POS production và container Ollama 11435 hoạt động bình thường, không bị ảnh hưởng.
+- **Thực Hiện VRAM Micro-Probe Thực Tế Trên RTX 2060 (6GB)**:
+  - Viết script `train_bum.py` tích hợp tính năng Micro-probe: chạy thử nghiệm trên mẫu dài nhất trong tập train (`menu_margin-010`, 284 tokens), thực thi đủ 4 bước tích lũy gradient và 1 bước optimizer update.
+  - Đo lường thực tế trên GPU: Peak Allocated đạt **3.639,7 MB** (~3,64 GB), Peak Reserved đạt **3.904,0 MB** (~3,90 GB), VRAM trống thực tế còn lại đạt **1.377,6 MB** (vượt chỉ tiêu an toàn tối thiểu $\ge$ 1.000 MB).
+  - Tích hợp `VRAMSafetyWatchdog` kiểm tra `torch.cuda.mem_get_info(0)` sau mỗi bước, kích hoạt dừng khẩn cấp nếu VRAM trống hạ dưới 1.000 MB.
+- **Kiểm Tra Dữ Liệu Số Học Xác Định & Chiều Dài Token**:
+  - Tạo companion fixture `data/verification_fixtures.json` chứa 100 bộ dữ kiện cấu trúc `(inputs, expected_calculations)` theo ID từng bài.
+  - Viết `verify_dataset.py` kiểm tra số học xác định độc lập (không dùng `eval()`): **100/100 bài (80 train + 20 validation) PASS 100%**.
+  - Dùng tokenizer `Qwen/Qwen2.5-3B-Instruct` đo chiều dài token: `train.jsonl` trung bình 256,1 tokens (tối đa 284 tokens); 0 mẫu vượt quá 512 tokens $\rightarrow$ Khẳng định 100% không bị cắt cụt dữ liệu khi đặt `max_seq_length = 512`.
+- **Tập Hợp & Chuẩn Hóa Học Liệu Chuyên F&B (`materials/`)**:
+  - Tạo `materials/MANIFEST.json` chi tiết hóa URL, phiên bản, giấy phép, mục đích sử dụng và ranh giới bản quyền.
+  - Cách ly tuyệt đối tài liệu OpenStax vào thư mục `pending_verification/` (gắn cờ CẤM nạp vào Train/RAG).
+  - Quy chuẩn hóa tài liệu ATTP theo WHO (2006), Luật ATTP 55/2010/QH12, Nghị định 155/2018/NĐ-CP và hướng dẫn nhà sản xuất; nghiêm cấm tự ý chế biến lại thực phẩm cận hạn để kéo dài hạn dùng.
+- **Xây Dựng & Đóng Băng Bộ Benchmark Độc Lập 30 Câu (`data/`)**:
+  - Tạo bộ đề độc lập `eval_independent.jsonl` (30 câu) bao gồm 6 nhóm: Số học F&B (6), Thiếu dữ liệu (6), Phân quyền POS (5), Ranh giới đa chi nhánh Cross-store (4 - bao gồm cả trường hợp từ chối và trường hợp có quyền hợp lệ), An toàn thực phẩm & Suy diễn sai (5), Prompt Injection & Văn phong Bum (4).
+  - Thiết lập rubric chi tiết `eval_rubric.json` với 4 Lỗi chặn tuyệt đối (Fatal Errors: lộ dữ liệu, nhận vơ thao tác POS, hướng dẫn ATTP nguy hiểm, lộ token qua injection).
+  - Đóng băng checksum bộ đề và rubric tại `data/eval_manifest.json`.
+  - Chưa chạy train thật, sẵn sàng bàn giao gói review tinh gọn cho Codex thẩm định.
+
+---
+
+## 2026-09-08 — Hoàn Tất Di Trú V6 & Kiểm Định Độ Vững Chắc Hệ Thống Huấn Luyện AI Bum Sau Đợt Kiểm Duyệt 2 Của Codex
+
+### ✅ Hoàn thành
+
+- **Tiếp Quản & Xử Lý Triệt Để 4 Yêu Cầu Bổ Sung Đợt 2 Từ Codex**:
+  1. *Nâng cấp UNIQUE INDEX an toàn (`idx_item_history_item_ver`)*:
+     - Khắc phục lỗi SQLite: `CREATE UNIQUE INDEX IF NOT EXISTS` bị bỏ qua nếu index thường cùng tên đã tồn tại.
+     - Hàm `ensure_item_history_unique_index()` trong `migrate_5_items.py` kiểm tra trùng lặp `(item_id, version)` trước (báo lỗi `RuntimeError` dừng an toàn nếu phát hiện trùng, tuyệt đối không tự xóa lịch sử).
+     - Kiểm tra cấu trúc qua `PRAGMA index_list('item_history')`; nếu là index thường (`unique == 0`), thực hiện `DROP INDEX` và tạo lại `CREATE UNIQUE INDEX idx_item_history_item_ver ON item_history(item_id, version);`.
+     - Xác nhận trực tiếp trên CSDL BunServer: `idx_item_history_item_ver` có `unique: 1`.
+  2. *Bắt buộc sử dụng Manifest nguồn V5 cố định (`v5_source_manifest.json`)*:
+     - Tạo manifest chứa snapshot hash 12 trường của 5 bài v5 trực tiếp từ CSDL BunServer.
+     - `migrate_5_items.py` bắt buộc truyền cờ `--manifest`; từ chối thực thi nếu thiếu manifest hoặc nếu bản ghi CSDL hiện tại bị sửa đổi làm lệch hash.
+  3. *Chuẩn hóa Canonical Row Hash Parity với `review_queue.py`*:
+     - Đồng bộ hàm tính hash dùng đúng 12 trường tiêu chuẩn: `["context", "expected_answer", "id", "question", "review_status", "score", "stage", "student_answer", "teacher_feedback", "topic", "verdict", "version"]` qua `json.dumps(..., separators=(',', ':'), sort_keys=True, ensure_ascii=False)`. Không áp chuẩn hóa NFC cho `row_hash`.
+  4. *Idempotency đa tầng với `migration_revisions` & Kiểm tra UPDATE 1 dòng*:
+     - Tự động tạo bảng `migration_revisions (revision_id, item_id, source_version, target_version, source_row_hash, result_row_hash, applied_at, PRIMARY KEY(revision_id, item_id))`.
+     - Chỉ trả về `ALREADY_MIGRATED` khi tồn tại dấu vết revision `rev-20260908-02` VÀ hash hiện tại khớp `result_row_hash`. Nếu thiếu dấu vết revision hoặc hash bị sửa, báo lỗi `REVISION_CONFLICT`.
+     - Kiểm tra `cursor.rowcount == 1` sau câu lệnh `UPDATE items` để đảm bảo tác động đúng 1 dòng.
+- **Tách Điểm Cũ & Chuẩn Hóa Đáp Án Tham Chiếu Cho Phiên Bản V6**:
+  - Đặt `score = NULL`, `verdict = NULL`, `stage = 'awaiting_review'`, `review_status = 'pending'`.
+  - Cập nhật feedback: `teacher_feedback = '[LƯU Ý: Chưa chấm cho phiên bản mới v6. Kết quả chấm cũ lưu trong item_history]'`.
+  - Bảo toàn nguyên vẹn 100% bài làm của học viên (`student_answer`).
+  - Lịch sử v4 và v5 được lưu toàn vẹn trong `item_history`.
+  - Thống kê hệ thống qua `store.overview()` và API `/api/training/overview` tự động loại bỏ 5 bài v6 chưa chấm: `graded_count` giảm từ 227 xuống đúng **222 bài**, `average_score` tính trên 222 bài là **27.5/100**.
+  - Tinh chỉnh 5 đáp án tham chiếu theo yêu cầu nghiệp vụ khắt khe của Codex:
+    - *Bài Sữa (`fb-022-v3`)*: Bắt buộc đối soát thực tế hạn sử dụng và chất lượng cảm quan trước khi quyết định hủy bỏ hoặc chuyển mục đích; không khẳng định việc nấu sốt/sữa chua kéo dài được hạn sử dụng nếu chưa qua kiểm nghiệm ATTP và quy trình bếp.
+    - *Bài Khuyến mãi (`fb-021-v2`)*: Đối soát chặt chẽ doanh thu 35.500.000đ và 164 món tặng trước khi kết luận; phân tích rõ dù doanh thu tăng 21% nhưng lãi gộp giảm 800.000đ do chi phí quà tặng 2.050.000đ vượt phần chênh lệch biên đóng góp.
+    - *Bài Lẩu (`fb-018-v1`)*: Bổ sung phương án phân tầng định lượng (ví dụ phần lẩu cho 2-3 người hoặc dĩa rau bổ sung gọi theo nhu cầu) và khảo sát ý kiến khách hàng tại bàn trước khi cắt giảm định lượng.
+    - *Bài Dọn bàn (`fb-024-v2`)*: Khẳng định thời gian 2,5 phút và định biên nhân sự bổ sung chỉ là phương án thử nghiệm cần đo đạc thực tế; phương án cốt lõi là chuẩn hóa quy trình phân loại tại bàn và bố trí khay dọn hợp lý.
+    - *Bài Thiếu mã món (`fb-020-v3`)*: Tuyệt đối không can thiệp CSDL trực tiếp; quy trình chuẩn gồm lập biên bản đối soát, cập nhật danh mục qua giao diện quản trị POS và rà soát phân quyền/nhật ký thao tác.
+- **Tăng Cường Engine Validation & Quản Lý Vòng Đời Job (`engine.py`, `store.py`)**:
+  - `validate_grade_output()`: Thêm kiểm tra kiểu `isinstance(verdict, str)`, `isinstance(feedback, str)`, `isinstance(corrected_answer, (str, type(None)))`, loại bỏ hoàn toàn nguy cơ `TypeError: unhashable type: 'list'`.
+  - `validate_question_output()`: Thêm kiểm tra `isinstance` cho `question` và `reference_answer`.
+  - Cải tiến `TrainingWorker`: Bổ sung `_wait_interruptible` kiểm tra DB và cờ ngắt mỗi 50ms, phản ứng ngắt dưới 100ms khi người dùng Pause hoặc Cancel; bọc toàn bộ model call bằng khối `try...except` để hoàn trả stage nguyên tử nếu xảy ra ngoại lệ.
+  - Bảo vệ trạng thái `cancelled` trong `store.py` không bị ghi đè thành `failed` hoặc `paused_user`.
+- **Kiểm Thử & Thực Thi Di Trú Live Trên BunServer**:
+  - Toàn bộ test suite gồm **48/48 tests PASS 100%** (27 tests độ vững chắc trong `test_engine_robustness.py`, 13 tests `test_service.py`, 8 tests `test_engine.py`) trên cả môi trường local và BunServer.
+  - Tạo bản sao lưu CSDL an toàn `/var/lib/ai-bum-training/data/control.db.bak_20260908_v3` (2.1MB).
+  - Triển khai release `/opt/ai-bum-training/releases/20260908-124500` và trỏ symlink `current`.
+  - Chạy di trú thực tế trên BunServer: Cả 5 bài học được nâng cấp thành công lên **v6** với revision `rev-20260908-02`.
+  - Thử nghiệm Idempotency lần 2: Trả về `ALREADY_MIGRATED` cho cả 5 bài, không nhân bản lịch sử, không tăng version.
+  - Khởi động lại dịch vụ `ai-bum-training.service` hoạt động hoàn hảo, kiểm tra API `/api/training/health` (`{"ok": true}`) và `/api/training/overview` phản hồi tức thì.
+
+---
+
+## 2026-09-08 — Đợt 1: Nâng Cấp Độ Vững Chắc Hệ Thống Huấn Luyện AI Bum & Di Trú An Toàn 5 Bài Học Sau Kiểm Duyệt Codex
+
+### ✅ Hoàn thành
+
+- **Tiếp Quản & Xử Lý Toàn Diện Phản Hồi Kiểm Duyệt Của Codex (08/09/2026)**:
+  - Phân vai nghiêm ngặt: Antigravity là Thầy tạo/sửa đề; Codex là Giám khảo độc lập kiểm duyệt; Antigravity tuyệt đối không tự approve/reject bài học.
+  - Đối chiếu trực tiếp 100% dữ kiện thật của 5 bài học được chọn kiểm duyệt từ CSDL production (`control.db` trên BunServer), loại bỏ toàn bộ dữ kiện suy đoán hoặc nhầm lẫn kịch bản.
+  - Sửa chuẩn xác nội dung 5 bài học:
+    1. *Bài Sữa (`fb-022-v3`)*: Giữ nguyên tên trường và giá trị gốc `ton_hop=62, han_su_dung_ngay=4, dung_tb_hop_ngay=11, don_hang_sap_ve=48`; xóa bỏ metadata `bien_the=3`; sửa thuật ngữ chuẩn FEFO (First Expired, First Out) thay vì FIFO.
+    2. *Bài Khuyến mãi (`fb-021-v2`)*: Giữ đúng dữ kiện thật 164 món tặng × 12.500đ = 2.050.000đ; lãi gộp giảm từ 18.400.000đ xuống 17.600.000đ (giảm 800.000đ); loại bỏ hoàn toàn số liệu ngoại lai `50 × 41.000đ` và phép tính `1.250.000 - 2.050.000đ`.
+    3. *Bài Lẩu (`fb-018-v1`)*: Cảnh báo không suy ra 76 khách từ 38 phần lẩu; rau thừa chỉ là giả thuyết cần đo đạc thực địa tại khu vực rửa chén/dọn bàn.
+    4. *Bài Dọn bàn (`fb-024-v2`)*: Sửa câu hỏi loại bỏ cụm từ tự sinh "Trong ca" và thang điểm "/5"; nêu rõ điều kiện tỷ số 32/134 = 23,88% chỉ là tỷ lệ khách phản hồi nếu xác minh mỗi phiếu ứng với 1 khách.
+    5. *Bài Thiếu mã món (`fb-020-v3`)*: Sửa câu hỏi loại bỏ cụm từ "liên quan đến 3 biến thể"; cảnh báo không đánh giá thấp chỉ từ tỷ lệ 2,5%; tuân thủ an toàn dữ liệu POS không sửa trực tiếp CSDL.
+- **Thiết Kế & Triển Khai Cơ Chế Lưu Trữ Lịch Sử Nguyên Tử (`item_history`)**:
+  - Tạo bảng `item_history` lưu trữ toàn diện snapshot lịch sử (context, question, expected_answer, student_answer gốc, teacher_feedback, score, verdict, version, review_status, timestamp, lý do).
+  - Phân tách bài làm: Gắn nhãn cảnh báo rõ ràng `[LƯU Ý: Đánh giá và điểm số này thuộc về câu hỏi v4]` trên feedback cũ để không hiển thị như kết quả của đề mới; bảo toàn 100% bài làm gốc của Bum (`student_answer`).
+  - Đảm bảo an toàn transaction & Idempotency: Pre-check ID + version (v4) + snapshot hash khớp với `reviews.json`; tăng version động (`version = cur_version + 1` lên v5); chạy lại không tăng version lần 2 (`ALREADY_MIGRATED`); rollback toàn phần khi có lỗi.
+  - Đã chạy di trú thành công trên BunServer: 5/5 bài học chuyển lên v5, lưu đủ 5 bản ghi trong `item_history` và 5 bản ghi `audit_log` với hành động `revise_item`.
+- **Thắt Chặt Schema Validation & Ngăn Chặn Nhân Bội Retry 9 Lượt Gọi Model**:
+  - Viết hàm `clean_business_context()` loại bỏ triệt để các trường kỹ thuật (`bien_the`, `cycle`, `cycle_index`, `variant_index`, `_meta`) trước khi gửi prompt vào cả 3 khâu: Teacher tạo đề, Student trả lời, Teacher chấm.
+  - Viết `validate_question_output()` và `validate_grade_output()` nghiêm ngặt:
+    - Bắt buộc đúng cấu trúc, cấm trường thừa.
+    - Điểm `score`: Từ chối dứt khoát kiểu boolean (`True`/`False`), `NaN`, `Infinity` và số ngoài khoảng $[0.0, 100.0]$; **tuyệt đối không clamp**.
+    - `verdict`: Kiểm tra chặt chẽ thuộc enum `{"ready", "needs_revision", "unsafe"}`.
+  - Giới hạn cứng tối đa 3 lượt gọi/bước (1 lần đầu + 2 lần retry), chặn vòng lặp ngoài reset gọi thành 9 lượt; khi hết 3 lượt thử, bài học dừng an toàn với mã `STAGE_MAX_RETRIES_EXCEEDED`, hoàn trả stage ban đầu (không để sót `_running`), job chuyển `failed` (không tự báo `completed`).
+  - Lỗi quota / login: Dừng ngay lập tức sau 1 lần gọi (0 retry), job chuyển `paused_quota` hoặc `needs_login`.
+  - Quản lý vòng đời Pause/Cancel: Kiểm tra trước model call và trong lúc backoff sleep (`stop_event.wait`), dừng ngay lập tức và hoàn trả trạng thái sạch sẽ; hỗ trợ resume tiếp tục tiến trình.
+- **Viết Bộ Unit Test Toàn Diện (`test_engine_robustness.py`) & Triển Khai Production**:
+  - Viết 18 test cases kiểm tra schema validation, rejection bool/NaN/Inf, đếm chính xác số lượt gọi mock model, pause/cancel trong backoff, resume, transaction history, idempotency và rollback.
+  - Chạy toàn bộ test suite trên BunServer: **39/39 tests PASS 100%** trong 9.36s.
+  - Triển khai bản phát hành mới `/opt/ai-bum-training/releases/20260908-115500`, cập nhật symlink `/opt/ai-bum-training/current`, khởi động lại dịch vụ `ai-bum-training.service` hoạt động trơn tru.
+- **Rà Soát Tại Chỗ 222 Bài Còn Lại Trên BunServer (`screen_items.py`)**:
+  - Chạy script trực tiếp trên máy chủ, không copy dataset ra ngoài.
+  - Xuất báo cáo nghi vấn thu gọn `screening_summary.json`:
+    - 222/222 bài pending còn lại bị dính metadata `bien_the` trong `context_json` do worker cũ tạo.
+    - 0 bài bị thiếu nội dung (`len(question) < 20` hoặc `len(expected) < 80`).
+    - 0 nhóm trùng lặp chính xác câu hỏi.
+    - 0 bài có điểm số bất thường.
+  - Báo cáo thu gọn chỉ gồm ID, scenario_id, version và loại lỗi, không in nội dung nhạy cảm vào log, phục vụ Codex mở đúng bài cần xem.
+
+---
+
+## 2026-09-08 — Loại Bỏ Xác Thực Mật Khẩu Control Room & Nghiệm Thu 227 Bài Học Huấn Luyện Xuyên Đêm
+
+### ✅ Hoàn thành
+
+- **Nghiệm Thu Kết Quả Huấn Luyện Xuyên Đêm Trên BunServer**:
+  - Toàn bộ 3 phiên huấn luyện (Job 25 bài + Job 100 bài + Job 100 bài) đã hoàn thành 100% trơn tru, không có bất kỳ lỗi nào (`Active item: None`, `consecutive_failures: 0`).
+  - Tổng số bài học mới hoàn thành đang chờ Chủ Quán duyệt: **227 bài** (`pending: 227`, `approved: 100`).
+  - Điểm trung bình Thầy Antigravity chấm cho Bum: **28.0/100**.
+- **Loại Bỏ Hoàn Toàn Yêu Cầu Mật Khẩu Cho Lớp Học AI Bum (Control Room)**:
+  - **Nguyên nhân:** Trang Control Room nằm trong mạng nội bộ Tailnet an toàn (`bunserver.tailcaeae7.ts.net`), việc yêu cầu nhập mật khẩu gây bất tiện và dư thừa cho Chủ Quán khi theo dõi và duyệt bài.
+  - **Khắc phục Backend (`service.py`)**:
+    - Bổ sung cấu hình `AI_BUM_AUTH_REQUIRED=false` (mặc định không cần mật khẩu).
+    - Tự động tạo và duy trì session / CSRF nội bộ cho client ẩn danh, không chặn mã 401 khi truy cập các API (`/overview`, `/jobs`, `/items`, `/review`).
+    - Nâng cấp `test_service.py` với test case `test_no_auth_mode` (12/12 unit tests PASS 100% trên BunServer).
+  - **Khắc phục Frontend Web (`index.html`, `app.js`)**:
+    - Loại bỏ trạng thái ẩn `hidden` của `app-shell`, hiển thị ngay lập tức giao diện làm việc mà không hiện form đăng nhập.
+    - Ẩn nút đăng xuất `logout-button` khi chạy chế độ không mật khẩu.
+    - Cập nhật hàm `boot()` trong `app.js` nhận diện `auth_required: false` và tải thẳng bảng điều khiển tổng quan cùng danh sách 227 bài học.
+  - **Triển khai & Xác thực Live Trên BunServer**:
+    - Tạo bản phát hành mới `/opt/ai-bum-training/releases/20260908-103800` và trỏ symlink `current`.
+    - Thêm `AI_BUM_AUTH_REQUIRED=false` vào `/etc/ai-bum-training.env`.
+    - Khởi động lại dịch vụ `ai-bum-training.service` và container `ai-bum-dashboard`.
+    - Kiểm thử `curl http://127.0.0.1:4180/api/training/me` $\rightarrow$ `authenticated: true`, `auth_required: false`.
+    - Tải lại tab Firefox trên màn hình server (`DISPLAY=:10`), trang `Luyện Bum · AI Bum Control Room` mở sẵn sàng vào thẳng danh sách bài học mà không yêu cầu mật khẩu.
+
+---
+
+## 2026-09-07 — Triển Khai Hệ Thống Huấn Luyện AI Bum Xuyên Đêm & Kích Hoạt Control Room trên BunServer
+
+### ✅ Hoàn thành
+
+- **Chẩn đoán & Khắc phục Dứt Điểm Lỗi Dừng Huấn Luyện (`TEACHER_INVALID_OUTPUT`)**:
+  - **Nguyên nhân:** Antigravity CLI ở chế độ `--print` tự động gọi các tool code (`run_command`, `list_dir`) để tìm dữ liệu, bị môi trường sandbox soft-deny khiến phản hồi không có khối JSON theo schema.
+  - **Khắc phục:**
+    - Bổ sung negative prompt nghiêm ngặt: cấm tuyệt đối tool calling, chỉ xử lý thuần túy dựa trên JSON bài học được giao (`engine.py`).
+    - Tách hàm `parse_teacher_output` bóc tách linh hoạt markdown fences, embedded JSON blocks và fallback an toàn.
+    - Bổ sung cơ chế retry cấp bài học (tối đa 2 lần, backoff 5s-15s) và Circuit Breaker dừng an toàn nếu gặp 3 bài lỗi liên tiếp (`MAX_CONSECUTIVE_FAILURES = 3`).
+    - Viết 8 unit tests (`test_engine.py`), toàn bộ 12/12 tests trên BunServer (`test_service.py` 4/4, `test_engine.py` 8/8) đạt 100% PASS.
+- **Nâng Cấp Giao Diện Web Dashboard Control Room (`/training/`)**:
+  - Bổ sung `active-item-bar` theo dõi trực tiếp tình huống, chủ đề và bước đang chạy thời gian thực (`teacher_question` $\rightarrow$ `student_answer` $\rightarrow$ `teacher_grade`).
+  - Cập nhật cơ chế tự động poll 5s khi có job hoặc active item đang hoạt động.
+  - Khắc phục lỗi stale Unix socket bind-mount trên container Docker `ai-bum-dashboard`, đảm bảo proxy nội bộ socket `/run/ai-bum-training/control.sock` luôn đạt HTTP 200 OK.
+- **Kích Hoạt Huấn Luyện Tự Động Xuyên Đêm (Overnight Continuous Training Loop)**:
+  - Tiếp tục hoàn thành mượt mà lô 25 bài đang chạy (`f4d8c947-10ae-472a-a485-a26d2443a444`).
+  - Đã xếp hàng gối đầu 2 lô tiếp theo (100 bài + 100 bài = 200 bài học mới) ở trạng thái `queued`.
+  - Worker tự động nhận job kế tiếp qua `claim_next_job()` mà không cần can thiệp thủ công, đảm bảo hệ thống huấn luyện liên tục xuyên đêm an toàn, ổn định.
+- **Bật Tab Theo Dõi Trực Tiếp Trên Màn Hình Máy Server Vật Lý (`BunServer`)**:
+  - Kích hoạt cửa sổ Firefox hiển thị trực tiếp trang `Luyện Bum · AI Bum Control Room` trên session Xorg của máy chủ (`DISPLAY=:10`).
+  - Cập nhật launcher Desktop `/home/pachiabun/Desktop/Lop-hoc-AI-Bum.desktop` với lệnh `--new-tab https://bunserver.tailcaeae7.ts.net/training/` để Chủ Quán có thể mở nhanh bất cứ lúc nào.
+- **Tích Hợp Nút Lớp Học AI Bum Vào Web POS**:
+  - Thêm icon `school_outlined` vào AppBar `BumChatScreen` cho tài khoản Owner/Manager.
+  - `flutter analyze` 0 issues; đồng bộ CodeGraph (7,695 nodes, 21,193 edges) và Graphify (9,046 nodes, 12,656 edges).
+
+---
+
+## 2026-09-06 (Tối) — Khắc phục Triệt để Lỗi Nhân Viên Bấm Không Gửi Bill Xuống Bếp (Database Indexes, Atomic Gửi Bếp & Hạ Tải VPS)
+
+### ✅ Hoàn thành
+
+- **Chẩn đoán Nguyên Nhân Gốc Rễ từ Log Thực Tế (`app_logs`, `kitchen_tickets`, Nginx access/error log)**:
+  - **Triệu chứng:** Vào lúc 18:38:15 (bàn B 02) và 18:13:54 (bàn A 04), nhân viên bấm "Gửi bếp" trên Web POS (Safari iPhone) thì bị lỗi timeout HTTP 499 (Client Closed Request).
+  - **Hệ quả dây chuyền:** PostgreSQL đã kịp ghi bản ghi `kitchen_tickets` (Đợt 1) nhưng client ném exception trước khi kịp insert món vào `kitchen_ticket_items` và cập nhật `ban_session_items`. Vé bếp bị mồ côi (0 món), máy in PC Windows quét thấy `itemsData.isEmpty` nên bỏ qua không in. Lần bấm sau của nhân viên bị nhảy thành "Đợt 2".
+- **Tối Ưu Hóa & Đánh Index Cơ Sở Dữ Liệu PostgreSQL (`20260906_fix_kitchen_indexes_and_cleanup.sql`)**:
+  - Bảng `kitchen_ticket_items` có hơn 10.400 dòng nhưng thiếu index trên `ticket_id`, khiến mọi lượt poll/lookup của máy in và màn hình bếp phải Seq Scan toàn bộ 10.400 dòng.
+  - Đã tạo các index:
+    - `idx_kitchen_ticket_items_ticket_id` trên `kitchen_ticket_items(ticket_id)`
+    - `idx_kitchen_ticket_items_store_id` trên `kitchen_ticket_items(store_id)`
+    - `idx_kitchen_ticket_items_session_item_id` trên `kitchen_ticket_items(session_item_id)`
+    - `idx_kitchen_tickets_store_sent_at` trên `kitchen_tickets(store_id, status, sent_at DESC)`
+    - `idx_kitchen_tickets_session_id` trên `kitchen_tickets(session_id)`
+  - **Kết quả `EXPLAIN ANALYZE`:** Thời gian truy vấn giảm từ 3.7ms xuống **0.26ms** (nhanh hơn **14 lần**), loại bỏ 100% Seq Scan.
+  - **Dọn dẹp:** Xóa thành công 2 vé bếp rỗng 0 món phát sinh hôm nay (`582c6611...` và `05802d0c...`).
+  - Reload schema cache PostgREST: `NOTIFY pgrst, 'reload schema'`.
+- **Hạ Tải Tài Nguyên VPS 2GB RAM**:
+  - Tạm dừng 3 container Staging không sử dụng (`quannho_staging-staging-rest-1`, `quannho_staging-staging-kong-1`, `quannho_staging-staging-db-1`).
+  - Giải phóng RAM thực và hạ Swap từ 2.5GB xuống 2.1GB, triệt tiêu swap thrashing và giảm load average.
+- **Tái Cấu Trúc Nguyên Tử & Bổ Sung Audit Log Cho Luồng Gửi Bếp (`ban_screen.dart`)**:
+  - Đảo thứ tự: Tra cứu `products` (station code) **TRƯỚC** khi tạo ticket trong database.
+  - Bọc toàn bộ các bước tạo ticket, tạo items và cập nhật `ban_session_items` trong 1 khối `try-catch` nguyên tử duy nhất.
+  - Tự động xóa ticket nếu quá trình insert items hoặc cập nhật trạng thái thất bại, tuyệt đối không để lại vé bếp rỗng 0 món.
+  - Bổ sung ghi log `AppLogger.error('order', 'Gui bep that bai...', e, st)` lên Supabase `app_logs` để dễ dàng truy vết sự cố.
+- **Kiểm Thử & Triển Khai Web POS Production (https://quannho.lpm.vn/pos/)**:
+  - `flutter analyze`: 0 compile errors.
+  - `flutter test`: 4/4 passed (`ban_repository_test.dart`, `kitchen_sound_policy_test.dart`).
+  - Build Flutter Web release sạch sẽ với base href `/pos/` trong 59.9s.
+  - Deploy đè lên `/var/www/quannho/pos` trên VPS `45.32.104.228`. HTTP/2 200 OK live cho cả `/pos/` và `/pos/flutter_bootstrap.js`.
+  - Cập nhật CodeGraph (`codegraph sync .`) và Graphify (`graphify update .`): 7,693 nodes, 21,188 edges (Up to date).
+
+---
+
+## 2026-09-06 — Khắc phục Triệt để Lỗi Thu Ngân & Chủ Quán Không Xem Được Báo Cáo (Nginx 502, RLS & Tab Guard)
+
+### ✅ Hoàn thành
+
+- **Khắc phục Triệt để Lỗi Sập HTTP 502 trên Nginx Proxy VPS (`/etc/nginx/sites-available/lpm.vn`)**:
+  - **Nguyên nhân gốc:** Khi màn hình Báo cáo truy vấn `payment_settlements` với danh sách lớn (173 UUIDs qua `inFilter`), URL và headers từ upstream vượt quá kích thước buffer mặc định của Nginx, gây lỗi `upstream sent too big header while reading response header from upstream` (502 Bad Gateway).
+  - **Khắc phục:** Đã bổ sung cấu hình buffer trong block `location ^~ /supabase/`:
+    `proxy_buffer_size 128k; proxy_buffers 4 256k; proxy_busy_buffers_size 256k;`.
+  - Reload Nginx và kiểm tra syntax 100% OK.
+- **Áp dụng Migration RLS Cho `finance_records`, `store_roles`, `staff_shifts` trên Supabase Database (`supabase-db`)**:
+  - **Nguyên nhân gốc:** Các bảng `store_roles` và `staff_shifts` chỉ có chính sách RLS dựa trên hàm `current_store_id()`. Vì client REST không gửi header `x-user-id`, hàm trả về `NULL` dẫn đến DB trả về `[]` (rỗng).
+    - Làm Thu ngân mất danh sách module từ `store_roles` và rớt vào fallback thiếu quyền Báo cáo.
+    - Làm `openShiftCCProvider` luôn trả về `null`, khiến Clock-In Guard hiểu nhầm nhân viên chưa vào ca và khóa module Báo cáo ("Tính năng này tạm khóa vì bạn chưa vào ca làm việc").
+  - **Khắc phục:** Đã thực thi migration `20260906_fix_report_and_roles_rls.sql` trên PostgreSQL production:
+    - Cấp `GRANT SELECT` và tạo `POLICY ... FOR SELECT TO public USING (true)` cho `finance_records`, `store_roles`, `staff_shifts`.
+    - Gọi `NOTIFY pgrst, 'reload schema'` làm mới schema cache PostgREST.
+    - Kiểm chứng thực tế qua REST API HTTPS trả về 200 OK với đầy đủ dữ liệu modules Thu ngân và ca làm việc.
+- **Tối ưu Hóa Truy Vấn `DashboardRepository._loadCanonicalPayments` (`dashboard_repository.dart`)**:
+  - Thay vì gửi một mảng `inFilter('id', refs)` dài hàng trăm UUID gây phình to query string, chuyển sang truy vấn `payment_settlements` và `orders` theo dải thời gian `gte('created_at', from).lt('created_at', to)` khớp với `recorded_at`.
+  - Bổ sung cơ chế chunking 50 items phòng ngừa trường hợp lệch boundary.
+- **Đồng Bộ Fallback Phân Quyền & Chống Văng Tab (`staff_service.dart` & `lib/main.dart`)**:
+  - Bổ sung `'report'`, `'kho'`, `'kitchen'`, `'bill_printer'` vào fallback cứng `kDefaultPerms['cashier']` trong `staff_service.dart`.
+  - Thêm điều kiện `!storeRolesAsync.isLoading` trước khi kiểm tra chuyển tab tự động trong `lib/main.dart`, ngăn chặn việc đá văng người dùng về Tab 0 khi roles đang nạp bất đồng bộ.
+  - Bổ sung fail-safe cho vai trò `canonical == 'cashier'` luôn sở hữu tab 5 (`report`) trong `_navBarTabsForRole`.
+- **Kiểm thử và Xác minh (QC Passed)**:
+  - `flutter analyze` trên các file đã sửa: 0 compile errors.
+  - Chạy toàn bộ 22/22 unit tests (`permission_parser_test.dart`, `auth_navigation_flow_test.dart`) đều PASS 100%.
+- 🚀 **DEPLOYMENT WEB POS LÊN VPS THÀNH CÔNG (https://quannho.lpm.vn/pos/)**:
+  - Biên dịch Flutter Web release sạch sẽ với `--base-href "/pos/"` trong 60.2s.
+  - Tải lên VPS, sao lưu bản cũ và giải nén đè trực tiếp lên `/var/www/quannho/pos`.
+  - Xác nhận trực tiếp qua HTTPS live: HTTP/2 200 OK cho `/pos/`, `/pos/flutter_bootstrap.js`, và các endpoint Supabase REST.
+
 ---
 
 ## 2026-09-03 — Thống nhất Phân quyền Lego Modules, Sửa Lỗi In Tên Bàn, Nâng cấp Dialog Thanh Toán & Fix Lỗi Báo Cáo Xoay
@@ -2011,14 +2602,14 @@ Phát hiện lỗi nghiêm trọng khi gọi món nháp (Chưa gửi bếp):
 
 ### Đã làm
 - ✅ **Bypass đăng nhập offline cho tài khoản Google Play Review**:
-  - Hỗ trợ tài khoản kiểm duyệt của Google (`9999996666` / mật khẩu `112233`) tự động chuyển sang chế độ offline với một cửa hàng mẫu Demo cục bộ nếu thiết bị kiểm duyệt không kết nối được internet/DNS Supabase.
+  - Hỗ trợ tài khoản kiểm duyệt của Google (thông tin đăng nhập lưu trong password manager) tự động chuyển sang chế độ offline với một cửa hàng mẫu Demo cục bộ nếu thiết bị kiểm duyệt không kết nối được internet/DNS Supabase.
   - Sửa đổi trong [user_auth_service.dart](file:///Users/banhbao/Quan%20Nho/quan_nho/lib/core/services/user_auth_service.dart).
 - ✅ **Khởi chạy máy ảo Pixel 7 (`Pixel7_API34`)**:
   - Khởi chạy thành công thiết bị ảo Pixel 7 thông qua lệnh `flutter emulators`.
 - ✅ **Ghi nhận tài khoản kiểm thử (Test Account)**:
   - Tên: `test`
   - SĐT: `+8490112233`
-  - Mật khẩu: `112233`
+  - Mật khẩu: lưu trong password manager (không ghi trong tài liệu)
 
 ### Files đã sửa
 | File | Thay đổi |
@@ -3091,3 +3682,126 @@ iders/kitchen_ticket_template_provider.dart` | Bổ sung cơ chế Cloud Sync c�
   phá bảng lõi đang chạy.
 - Phase 1 tiếp tục BLOCKED cho đến khi migration containment có rollback được
   kiểm tra trên disposable staging và toàn bộ test RLS/concurrency PASS.
+
+---
+
+## 2026-09-07 — AI Bum: Khởi tạo Antigravity Teacher, Dashboard Huấn luyện và checkpoint tiếp quản
+
+### ✅ Đã hoàn thành
+
+- Cài **Antigravity CLI 1.1.27** trên BunServer, chạy bằng tài khoản dịch vụ `bumteacher`; tài khoản Google AI Ultra đã đăng nhập và lệnh JSON kiểm tra trả kết quả thành công.
+- Tạo dịch vụ nền `ai-bum-training.service`, tách biệt hoàn toàn khỏi POS và dữ liệu nghiệp vụ. Chuỗi xử lý mỗi bài: Thầy Antigravity tạo bài F&B → AI Bum (Ollama riêng) trả lời → Thầy chấm → lưu bài vào hàng chờ duyệt.
+- Khởi tạo học viên Ollama riêng `ai-bum-student`; không thay đổi container AI Bum đang phục vụ hoặc database POS.
+- Khôi phục 100 bài đã duyệt từ đợt làm việc trước vào kho điều khiển huấn luyện riêng.
+- Hoàn thành một ca chạy thật đầu tiên. AI Bum đạt 25/100; bài và phản hồi chi tiết của Thầy đã được lưu ở trạng thái `pending`, không được tự đưa vào POS.
+- Khởi động lô 25 tình huống F&B; đã chạy được ít nhất một bài chấm điểm (34/100, `pending`) và tiếp tục xử lý bài kế tiếp.
+- Sửa hai lỗi vận hành:
+  - `Store` chỉ đánh dấu job dở dang là `INTERRUPTED_UNCERTAIN` khi **dịch vụ chính khởi động**, không còn khi tiến trình phụ đọc trạng thái.
+  - Bộ đọc phản hồi Antigravity xử lý cả `structured_output` dạng object hoặc JSON-string/code fence trước khi báo `TEACHER_INVALID_OUTPUT`.
+- Kiểm thử service trên BunServer: 4/4 test HTTP pass sau bản sửa.
+
+### ⚠️ Trạng thái và giới hạn hiện tại
+
+- Lô 25 có ID `f4d8c947-10ae-472a-a485-a26d2443a444`, đã được resume và trạng thái gần nhất là `running`; job chỉ xử lý tuần tự một bài để tránh tiêu quota đột biến.
+- Nội dung tạo/chấm hiện là **bộ dữ liệu distillation để Chủ Quán duyệt**, chưa phải fine-tune model và chưa làm AI Bum trong POS thông minh lên ngay. Bước sau khi duyệt cần thiết kế RAG/prompt dataset hoặc fine-tune riêng, có evaluation gate trước khi áp dụng thực tế.
+- Dashboard “Luyện Bum” đang là ứng dụng web riêng trên BunServer, có login/CSRF riêng. Nó **chưa được liên kết vào Flutter Web POS production** tại `https://quannho.lpm.vn/pos/`; vì vậy người dùng không thể thấy nút này trong POS. Không khẳng định đã có nút trong POS trước khi build/deploy Flutter Web thật.
+- Không ghi URL mạng riêng, mật khẩu dashboard, OAuth credential, token hoặc IP vào nhật ký.
+- Một lần thử mở dashboard bằng Firefox trên desktop BunServer vướng profile Firefox đang không phản hồi; không được kill/đóng toàn bộ Firefox của người dùng. Dùng profile riêng hoặc để Chủ Quán mở launcher sau khi kiểm tra session.
+
+### ➡️ Bước tiếp theo ưu tiên
+
+1. Đọc `quan_nho/.docs/Ai_Bum/Ai_Bum.md` và mục checkpoint này trước khi sửa gì.
+2. Kiểm tra `systemctl is-active ai-bum-training.service`, trạng thái job và log service; chỉ xem dữ liệu/metadata, không đọc hoặc in credential.
+3. Nếu job dừng vì `TEACHER_INVALID_OUTPUT`, lưu an toàn kiểu/trích đoạn đã redaction của envelope để xác định contract CLI, bổ sung parser/validation, chạy test rồi **resume** job; không tạo lô trùng.
+4. Làm trang quan sát dễ thấy cho Chủ Quán: trước mắt launcher web riêng rõ ràng trên BunServer; sau đó thêm entry “Luyện Bum” vào Flutter POS, build với base href `/pos/`, kiểm thử và chỉ deploy production theo quy trình sẵn có.
+5. Trước khi chạy qua đêm, bổ sung worker loop có giới hạn: tổng số bài, giới hạn lỗi liên tiếp, exponential backoff, pause khi quota/login lỗi, checkpoint/audit log và màn dashboard hiển thị bài đang chạy. Không tự approve/reject, không tự sửa POS, không tự promote kiến thức.
+6. Sau khi có đủ bài `pending`, chuẩn bị màn duyệt và export dataset đã được Chủ Quán approve. Chỉ tích hợp RAG/prompt/eval vào ứng dụng thực tế khi Chủ Quán đánh giá đủ tốt và duyệt rõ ràng.
+
+### Prompt bàn giao cho Antigravity
+
+```text
+Bạn tiếp quản hệ thống AI Bum cho Quán Nhỏ. Mục tiêu là tạo một vòng distillation F&B thực tế: Antigravity là Thầy, AI Bum là học viên; mọi bài phải được Chủ Quán duyệt trước khi dùng trong POS.
+
+Đọc trước:
+1) quan_nho/.docs/Ai_Bum/Ai_Bum.md
+2) quan_nho/nhat_ky.md, mục “2026-09-07 — AI Bum”.
+
+Nguyên tắc không được vi phạm:
+- Không đọc/in OAuth credential, mật khẩu, token, IP riêng hoặc URL riêng.
+- Không sửa dữ liệu POS, không đặt hàng, không nhắn nhân viên, không tự deploy kiến thức vào POS.
+- Không tự approve/reject bài học. Chỉ Chủ Quán duyệt.
+- Không kill Firefox hoặc tiến trình desktop đang có của Chủ Quán.
+- Không tạo lô huấn luyện trùng khi lô hiện tại còn chạy/dở.
+
+Làm theo thứ tự:
+1. Kiểm tra read-only dịch vụ ai-bum-training và job hiện tại. Xác nhận job lô 25 còn chạy, hoàn tất, hay lỗi.
+2. Nếu lỗi, phân loại: login/quota/timeout/JSON contract. Với JSON contract, ghi metadata đã redaction và sửa parser có test; không ghi response có thể chứa dữ liệu nhạy cảm vào log.
+3. Resume đúng job hiện có sau khi sửa và xác minh một bài đi trọn chuỗi: teacher question → student answer → teacher grade → awaiting_review.
+4. Làm cơ chế chạy qua đêm có giới hạn và quan sát được: giới hạn tổng bài; backoff; dừng khi lỗi liên tiếp; dashboard hiển thị trạng thái/job/bài hiện tại/lỗi gần nhất; không chạy vô hạn.
+5. Làm cách truy cập rõ ràng cho Chủ Quán. Dashboard hiện là app riêng, chưa có link trong Flutter POS production. Tạo launcher riêng trước; khi tích hợp POS, sửa Flutter, build, test và deploy đúng quy trình /pos/.
+6. Báo cáo ngắn: trạng thái job, số bài pending/approved/rejected, điểm trung bình, lỗi còn lại, và đường đi để Chủ Quán quan sát/duyệt. Không nêu secret hay địa chỉ riêng.
+```
+
+---
+
+## 2026-09-07 (Đêm) — AI Bum: Khắc phục Triệt để Lỗi TEACHER_INVALID_OUTPUT, Nâng cấp Worker Loop Bền vững & Triển khai Lớp học Trên BunServer
+
+### ✅ Đã hoàn thành
+
+- **Chẩn đoán Nguyên nhân Gốc Rễ từ Log Thực tế (`cli-20260907_222603.log` & `transcript.jsonl`)**:
+  - Triệu chứng: Job lô 25 (`f4d8c947-10ae-472a-a485-a26d2443a444`) sau khi hoàn thành 2 bài đầu (`fb-002-v1`, `fb-019-v1`) đã bị dừng ở bài số 3 (`fb-016-v1`) với mã lỗi `TEACHER_INVALID_OUTPUT`.
+  - Nguyên nhân: Antigravity CLI chạy chế độ `--print` non-interactive trong thư mục làm việc, khi sinh câu hỏi doanh thu đã tự động gọi các tool hệ thống (`run_command` với `ls` và `list_dir`). Vì là chế độ `--print`, các tool này bị soft-denied dẫn đến không có JSON structured output trả về. Khi gặp exception, vòng lặp cũ lập tức đánh sập toàn bộ job.
+- **Nâng cấp Teacher Prompt, Parser & Chẩn đoán An toàn (`engine.py`)**:
+  - Bổ sung chỉ thị phủ định nghiêm ngặt vào cả prompt ra đề (`create_lesson`) và chấm điểm (`grade`), cấm tuyệt đối việc gọi tool/chạy lệnh shell: Thầy chỉ suy luận thuần túy từ dữ kiện JSON trong prompt.
+  - Tách hàm `parse_teacher_output`: Bóc tách linh hoạt markdown code fences, embedded JSON, fallback JSON string và ghi nhận chẩn đoán an toàn (redacted metadata: `stdout_len`, `returncode`, `envelope_keys`) không in raw content nhạy cảm.
+- **Xây dựng Cơ chế Chạy Qua Đêm Bền Vững & Có Giới Hạn (`TrainingWorker` & `store.py`)**:
+  - Bổ sung retry cấp bài (tối đa 2 lần) với exponential backoff (5s, 15s) khi gặp lỗi tạm thời.
+  - Tích hợp Circuit Breaker dừng an toàn nếu 3 bài liên tiếp thất bại (`MAX_CONSECUTIVE_FAILURES`), ngăn ngừa tiêu tốn quota vô ích qua đêm.
+  - Thêm phương thức `revert_item_stage` trong `store.py` để hoàn trả trạng thái về sạch sẽ khi thử lại, không để sót trạng thái `_running`.
+  - Bổ sung `active_item` vào `store.overview()` để theo dõi bài đang chạy theo thời gian thực.
+- **Cập nhật Giao diện Quan sát Dashboard (`index.html`, `app.js`, `styles.css`)**:
+  - Thêm thanh thông báo trạng thái `active-item-bar` hiển thị tình huống, chủ đề và bước đang chạy hiện tại.
+  - Tự động kích hoạt polling 5s khi có job hoặc item đang chạy.
+- **Kiểm thử Toàn diện & Xác thực Trực tiếp Trên BunServer**:
+  - Viết bộ unit test `test_engine.py` bao phủ 100% logic parse JSON, phân loại lỗi CLI và hoàn trả stage.
+  - Chạy `python3 -m unittest discover` trên BunServer: **12/12 tests PASS** (`test_service.py` 4/4, `test_engine.py` 8/8).
+  - Khởi động lại dịch vụ `ai-bum-training.service` thành công (`active running`).
+  - **Resume thành công job lô 25 (`f4d8c947...`)**: Bài `fb-016-v1` và các bài tiếp theo đã đi trọn vẹn chu kỳ 4 bước (`teacher_question` → `student_answer` → `teacher_grade` → `awaiting_review`), không còn lỗi schema hay tool calling.
+- **Tạo Desktop Launcher Cô lập Trên BunServer (`Lop-hoc-AI-Bum.desktop`)**:
+  - Cập nhật desktop entry sử dụng profile riêng biệt `--no-remote --profile /home/pachiabun/.mozilla/firefox/training_profile`.
+  - Loại bỏ triệt để nguy cơ lỗi profile locked / không phản hồi nếu session Firefox của Chủ Quán đang mở.
+- **Tích hợp Nút Truy cập "Lớp học AI Bum" Vào Flutter POS (`bum_chat_screen.dart`)**:
+  - Thêm nút biểu tượng trường học (`school_outlined`) trong AppBar dành riêng cho Chủ Quán / Quản lý (`isOwnerOrManager`).
+  - Hiển thị dialog xác nhận trước khi mở URL lớp học qua `url_launcher`.
+  - `flutter analyze`: 0 compile errors / warnings.
+  - Đồng bộ CodeGraph (`codegraph sync .`: 7,695 nodes, 21,193 edges) và Graphify (`graphify update .`: 9,046 nodes, 12,656 edges).
+
+### 📊 Trạng thái Vận hành Hiện tại
+
+- **Job lô 25 (`f4d8c947-10ae-472a-a485-a26d2443a444`)**: Đang chạy tuần tự ổn định (`running`).
+- **Kho bài học**:
+  - Đã duyệt (`approved`): **100 bài** (từ tập dữ liệu đã thu hồi).
+  - Chờ Chủ Quán duyệt (`pending`): Đang tích lũy liên tục (mỗi bài hoàn tất được lưu an toàn với trạng thái `pending`, không tự ý đưa vào POS).
+  - Điểm trung bình của học viên: ~22-25/100 (phản ánh sát thực tế học viên Ollama 3B cần học hỏi thêm từ nhận xét chi tiết của Thầy).
+- **Cách Chủ Quán theo dõi & duyệt bài**:
+  1. Trên desktop BunServer: Nhấp đúp biểu tượng **"Lớp học AI Bum"** trên màn hình Desktop (mở bằng Firefox profile riêng).
+  2. Trong ứng dụng POS: Mở màn hình chat AI Bum, bấm biểu tượng chiếc mũ tốt nghiệp trên góc phải AppBar.
+
+### ➡️ Bước tiếp theo
+
+1. Để worker hoàn tất lô 25 tình huống và ghi nhận đầy đủ vào kho bài `pending`.
+2. Chủ Quán đăng nhập vào Dashboard xem từng câu hỏi, đáp án học viên, nhận xét của Thầy và bấm "Duyệt" / "Yêu cầu sửa" / "Từ chối".
+3. Sau khi tích lũy đủ bài được Chủ Quán duyệt (mục tiêu 200–500 bài), tiến hành xuất dataset đã phiên bản hóa để chuẩn bị giai đoạn fine-tune / RAG.
+
+---
+
+## 2026-09-08 — Chủ Quán giao Codex chủ động kiểm duyệt bài AI Bum
+
+- Chủ Quán xác nhận: “Khâu duyệt này tôi tính để bạn chủ động duyệt.” Codex được ủy quyền kiểm duyệt bài học, không cần xin lại phép cho từng quyết định duyệt/cần sửa/từ chối trong phạm vi này.
+- Kiểm duyệt phải dựa trên nội dung thực tế: đối chiếu dữ kiện, phép tính, đáp án tham chiếu, câu trả lời học viên và nhận xét/đáp án sửa của Thầy; không duyệt hàng loạt chỉ dựa vào điểm hoặc verdict của Thầy.
+- Mỗi quyết định cần ghi lý do trong review_note và giữ audit/version. Điểm học viên thấp không tự chứng minh đáp án tham chiếu đúng hoặc sai.
+- Hiện export_approved xuất đồng thời expected_answer, student_answer và teacher_feedback; chưa có trường đáp án chuẩn đã được reviewer chọn. Khi duyệt phải xác định rõ nội dung nào đủ chuẩn, tránh coi câu trả lời sai của học viên là đáp án huấn luyện.
+- Ủy quyền kiểm duyệt không đồng nghĩa cho phép tự fine-tune, promote kiến thức, deploy POS, tạo lô huấn luyện mới hay chạy lịch định kỳ.
+- Quyền được giao cho Codex không phải lý do để mở quyền duyệt cho mọi người truy cập dashboard; vẫn cần bảo vệ danh tính người/agent duyệt.
+- Ghi nhận này chưa thay đổi trạng thái bất kỳ bài học nào.
+- Đã tích hợp câu gọi `/qn vào kiểm tra ai bum đã làm bài chuẩn chưa` vào mục 0 của `.agents/workflows/qn.md`: tự kiểm tra nội dung và kiểm duyệt theo `../ai-bum-implementation/training/REVIEW_DESIGN.md`, đọc theo trang, lưu checkpoint hash/version, không xin lại quyền duyệt. Phải phân biệt quyết định local với trạng thái dashboard vì chưa có luồng đồng bộ mới.

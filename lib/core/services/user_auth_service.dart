@@ -291,6 +291,8 @@ class SupabaseUserAuthRepository implements UserAuthRepository {
 class UserAuthService {
   static UserAuthRepository authRepository = SupabaseUserAuthRepository();
   static StoreMembershipWriter membershipWriter = StoreMembershipWriter();
+  static Future<dynamic> Function(String fn, {Map<String, dynamic>? params})? rpcOverride;
+  static PosJwtAuthService? jwtServiceOverride;
 
   static SupabaseClient? get _db {
     try {
@@ -316,78 +318,117 @@ class UserAuthService {
     required String displayName,
     PosJwtAuthService? jwtService,
   }) async {
-    final posJwtService = jwtService ?? PosJwtAuthService();
+    final posJwtService = jwtService ?? jwtServiceOverride ?? PosJwtAuthService();
     posJwtService.clearActiveOnboardingJwt();
-    final db = _db;
-    if (db == null) return AuthResult.error('Không kết nối được server.');
 
     final normalizedPhone = _normalizePhone(phone);
     if (normalizedPhone.isEmpty || normalizedPhone.length < 8) {
-      return AuthResult.error('Số điện thoại không hợp lệ.');
+      return AuthResult.error('Số điện thoại không hợp lệ.', errorCode: 'INVALID_PHONE');
     }
     if (password.length < 8) {
-      return AuthResult.error('Mật khẩu phải từ 8 ký tự trở lên.');
+      return AuthResult.error('Mật khẩu phải từ 8 ký tự trở lên.', errorCode: 'PASSWORD_TOO_SHORT');
     }
     if (displayName.trim().isEmpty) {
-      return AuthResult.error('Vui lòng nhập tên của bạn.');
+      return AuthResult.error('Vui lòng nhập tên của bạn.', errorCode: 'NAME_REQUIRED');
+    }
+
+    // 1. Preflight Gateway trước khi ghi dữ liệu vào database
+    if (!posJwtService.isConfigured) {
+      try {
+        AppLogger.warning('auth', 'Registration preflight failed: POS_JWT_NOT_CONFIGURED');
+      } catch (_) {}
+      return AuthResult.error(
+        'Máy chủ phiên an toàn chưa được cấu hình. Vui lòng thử lại sau.',
+        errorCode: 'POS_JWT_NOT_CONFIGURED',
+      );
+    }
+
+    final db = _db;
+    if (db == null && rpcOverride == null) {
+      return AuthResult.error('Không kết nối được server.', errorCode: 'NETWORK_ERROR');
     }
 
     try {
-      final rpcRes = await db.rpc(
-        'register_user_account_v4',
-        params: {
-          'p_phone': normalizedPhone,
-          'p_password': password,
-          'p_display_name': displayName.trim(),
-        },
-      );
+      AppLogger.info('auth', 'Staff self-registration request initiated');
+    } catch (_) {}
+
+    try {
+      final rpcRes = rpcOverride != null
+          ? await rpcOverride!(
+              'register_user_account_v4',
+              params: {
+                'p_phone': normalizedPhone,
+                'p_password': password,
+                'p_display_name': displayName.trim(),
+              },
+            )
+          : await db!.rpc(
+              'register_user_account_v4',
+              params: {
+                'p_phone': normalizedPhone,
+                'p_password': password,
+                'p_display_name': displayName.trim(),
+              },
+            );
       if (rpcRes is! Map) {
         return AuthResult.error(
           'Dịch vụ đăng ký an toàn chưa sẵn sàng. Vui lòng thử lại sau.',
+          errorCode: 'GATEWAY_UNAVAILABLE',
         );
       }
 
       final map = Map<String, dynamic>.from(rpcRes);
       if (map['success'] != true) {
-        return AuthResult.error(
-          map['message'] as String? ?? 'Đăng ký tài khoản không thành công.',
-        );
+        final msg = map['message'] as String? ?? 'Đăng ký tài khoản không thành công.';
+        final rpcErrorCode = (map['error_code'] as String?)?.trim();
+        final errCode = rpcErrorCode != null && rpcErrorCode.isNotEmpty
+            ? rpcErrorCode
+            : 'REGISTRATION_FAILED';
+        try {
+          AppLogger.warning('auth', 'Registration failed with code: $errCode');
+        } catch (_) {}
+        return AuthResult.error(msg, errorCode: errCode);
       }
 
       final userId = map['user_id'] as String;
       final phoneStr = (map['phone'] as String?) ?? normalizedPhone;
       final nameStr = (map['display_name'] as String?) ?? displayName.trim();
 
-      if (!posJwtService.isConfigured) {
-        return AuthResult.error(
-          'Tài khoản đã được tạo nhưng máy chủ phiên an toàn chưa được cấu hình. '
-          'Vui lòng đăng nhập lại sau khi hệ thống sẵn sàng.',
-        );
-      }
+      // 2. Transaction Boundary: User đã được tạo trong user_accounts.
+      // Nếu bước cấp Onboarding JWT thất bại, trả về ACCOUNT_CREATED_LOGIN_REQUIRED để UI chuyển sang Đăng nhập,
+      // tuyệt đối không báo lỗi chung chung khiến user đăng ký lại gây trùng SĐT.
       final onbRes = await posJwtService.requestOnboardingJwt(
         phone: normalizedPhone,
         password: password,
       );
       if (onbRes['success'] != true ||
           posJwtService.activeOnboardingJwtFor(userId) == null) {
+        try {
+          AppLogger.warning('auth', 'Registration post-RPC onboarding token failed: ACCOUNT_CREATED_LOGIN_REQUIRED');
+        } catch (_) {}
         return AuthResult.error(
-          onbRes['message'] as String? ??
-              'Tài khoản đã được tạo nhưng không thể mở phiên an toàn. '
-                  'Vui lòng đăng nhập lại.',
+          'Tài khoản đã được tạo thành công! Vui lòng chuyển sang Đăng nhập để tiếp tục nhập mã quán.',
+          errorCode: 'ACCOUNT_CREATED_LOGIN_REQUIRED',
         );
       }
 
       await _saveSession(userId: userId, phone: phoneStr, name: nameStr);
+      try {
+        AppLogger.info('auth', 'Staff self-registration successful');
+      } catch (_) {}
       return AuthResult.success(
         userId: userId,
         phone: phoneStr,
         displayName: nameStr,
         stores: [],
       );
-    } catch (e) {
-      debugPrint('[UserAuthService.register] secure RPC unavailable: $e');
+    } catch (_) {
+      try {
+        AppLogger.warning('auth', 'Registration secure RPC error: GATEWAY_UNAVAILABLE');
+      } catch (_) {}
       return AuthResult.error(
         'Dịch vụ đăng ký an toàn chưa sẵn sàng. Vui lòng thử lại sau.',
+        errorCode: 'GATEWAY_UNAVAILABLE',
       );
     }
   }
@@ -401,7 +442,7 @@ class UserAuthService {
     PosJwtAuthService? jwtService,
   }) async {
     final normalizedPhone = _normalizePhone(phone);
-    final posJwtService = jwtService ?? PosJwtAuthService();
+    final posJwtService = jwtService ?? jwtServiceOverride ?? PosJwtAuthService();
     posJwtService.clearActiveOnboardingJwt();
 
     // ── FALLBACK CHO GOOGLE PLAY & APP STORE REVIEW (COMPILE-GATED) ─────────────
@@ -469,9 +510,17 @@ class UserAuthService {
 
       final map = Map<String, dynamic>.from(rpcRes);
       if (map['success'] != true) {
+        final rpcErrorCode = (map['error_code'] as String?)?.trim();
+        final errCode = rpcErrorCode != null && rpcErrorCode.isNotEmpty
+            ? rpcErrorCode
+            : 'INVALID_CREDENTIALS';
+        try {
+          AppLogger.warning('auth', 'Login failed: $errCode');
+        } catch (_) {}
         return AuthResult.error(
           map['message'] as String? ??
               'Số điện thoại hoặc mật khẩu không chính xác.',
+          errorCode: errCode,
         );
       }
 
@@ -494,8 +543,12 @@ class UserAuthService {
 
       if (stores.isEmpty) {
         if (!posJwtService.isConfigured) {
+          try {
+            AppLogger.warning('auth', 'Zero-store login failed: POS_JWT_NOT_CONFIGURED');
+          } catch (_) {}
           return AuthResult.error(
             'Máy chủ phiên an toàn chưa được cấu hình. Vui lòng thử lại sau.',
+            errorCode: 'POS_JWT_NOT_CONFIGURED',
           );
         }
         final onbRes = await posJwtService.requestOnboardingJwt(
@@ -504,11 +557,18 @@ class UserAuthService {
         );
         if (onbRes['success'] != true ||
             posJwtService.activeOnboardingJwtFor(userId) == null) {
+          try {
+            AppLogger.warning('auth', 'Zero-store onboarding token request failed');
+          } catch (_) {}
           return AuthResult.error(
             onbRes['message'] as String? ??
                 'Không thể mở phiên an toàn. Vui lòng đăng nhập lại.',
+            errorCode: 'ONBOARDING_TOKEN_FAILED',
           );
         }
+        try {
+          AppLogger.info('auth', 'Staff zero-store login successful; onboarding token issued');
+        } catch (_) {}
       }
 
       if (selectedStore != null && posJwtService.isConfigured) {
@@ -520,8 +580,12 @@ class UserAuthService {
         if (jwtRes['success'] != true) {
           await posJwtService.clearPosJwt();
           await posJwtService.applyAuthToSupabase(null);
+          try {
+            AppLogger.warning('auth', 'Store POS JWT authentication failed');
+          } catch (_) {}
           return AuthResult.error(
             jwtRes['message'] as String? ?? 'Xác thực phiên làm việc thất bại.',
+            errorCode: 'STORE_JWT_FAILED',
           );
         }
       }
@@ -543,10 +607,13 @@ class UserAuthService {
         stores: stores,
         selectedStore: selectedStore,
       );
-    } catch (e) {
-      debugPrint('[UserAuthService.login] secure RPC unavailable: $e');
+    } catch (_) {
+      try {
+        AppLogger.warning('auth', 'Login secure RPC error: GATEWAY_UNAVAILABLE');
+      } catch (_) {}
       return AuthResult.error(
         'Dịch vụ đăng nhập an toàn chưa sẵn sàng. Vui lòng thử lại sau.',
+        errorCode: 'GATEWAY_UNAVAILABLE',
       );
     }
   }
@@ -710,10 +777,16 @@ class UserAuthService {
   }) async {
     final code = storeCode.trim().toUpperCase();
     if (code.isEmpty) {
-      return CreateStoreResult.error('Vui lòng nhập mã quán.');
+      return CreateStoreResult.error('Vui lòng nhập mã quán.', errorCode: 'STORE_CODE_REQUIRED');
+    }
+    if (!RegExp(r'^QN-[A-Z0-9]{4}$').hasMatch(code)) {
+      return CreateStoreResult.error(
+        'Mã quán không đúng định dạng (Ví dụ: QN-ABCD).',
+        errorCode: 'INVALID_STORE_CODE_FORMAT',
+      );
     }
 
-    final posJwtService = jwtService ?? PosJwtAuthService();
+    final posJwtService = jwtService ?? jwtServiceOverride ?? PosJwtAuthService();
     if (!posJwtService.isConfigured) {
       return CreateStoreResult.error(
         'Máy chủ phiên an toàn chưa được cấu hình.',
@@ -732,22 +805,41 @@ class UserAuthService {
     }
 
     final db = _db;
-    if (db == null) {
-      return CreateStoreResult.error('Không kết nối được server.');
+    if (db == null && rpcOverride == null) {
+      return CreateStoreResult.error('Không kết nối được server.', errorCode: 'NETWORK_ERROR');
     }
     try {
-      final rpcRes = await db.rpc(
-        'join_store_by_code_v4',
-        params: {'p_store_code': code},
-      );
+      try {
+        AppLogger.info('auth', 'Staff store join request initiated with code QN-XXXX');
+      } catch (_) {}
+
+      final rpcRes = rpcOverride != null
+          ? await rpcOverride!(
+              'join_store_by_code_v4',
+              params: {'p_store_code': code},
+            )
+          : await db!.rpc(
+              'join_store_by_code_v4',
+              params: {'p_store_code': code},
+            );
       if (rpcRes is! Map) {
         return CreateStoreResult.error(
           'Dịch vụ tham gia quán an toàn chưa sẵn sàng.',
+          errorCode: 'GATEWAY_UNAVAILABLE',
         );
       }
       if (rpcRes['success'] != true) {
+        final msg = rpcRes['message'] as String? ?? 'Không thể tham gia quán.';
+        final rpcErrorCode = (rpcRes['error_code'] as String?)?.trim();
+        final errCode = rpcErrorCode != null && rpcErrorCode.isNotEmpty
+            ? rpcErrorCode
+            : 'STORE_JOIN_FAILED';
+        try {
+          AppLogger.warning('auth', 'Staff store join failed: $errCode');
+        } catch (_) {}
         return CreateStoreResult.error(
-          rpcRes['message'] as String? ?? 'Không thể tham gia quán.',
+          msg,
+          errorCode: errCode,
         );
       }
       final storeId = rpcRes['store_id'] as String;
@@ -766,10 +858,14 @@ class UserAuthService {
       );
 
       if (exchangeRes['success'] != true) {
+        final errCode = exchangeRes['error'] as String? ?? 'EXCHANGE_FAILED';
+        try {
+          AppLogger.warning('auth', 'Staff store join token exchange failed: $errCode');
+        } catch (_) {}
         return CreateStoreResult.error(
           exchangeRes['message'] as String? ??
               'Không thể đổi phiên làm việc cho quán.',
-          errorCode: exchangeRes['error'] as String? ?? 'EXCHANGE_FAILED',
+          errorCode: errCode,
           storeId: storeId,
           storeCode: storeCodeResult,
           membership: membership,
@@ -778,15 +874,21 @@ class UserAuthService {
 
       final prefs = await SharedPreferences.getInstance();
       await _applyMembershipToPrefs(prefs, membership);
+      try {
+        AppLogger.info('auth', 'Staff successfully joined store and exchanged POS JWT');
+      } catch (_) {}
       return CreateStoreResult.success(
         storeId: storeId,
         storeCode: storeCodeResult,
         membership: membership,
       );
-    } catch (e) {
-      debugPrint('[UserAuthService] join_store_by_code_v4 unavailable: $e');
+    } catch (_) {
+      try {
+        AppLogger.warning('auth', 'Staff store join RPC error');
+      } catch (_) {}
       return CreateStoreResult.error(
         'Dịch vụ tham gia quán an toàn chưa sẵn sàng.',
+        errorCode: 'GATEWAY_UNAVAILABLE',
       );
     }
   }
@@ -805,7 +907,7 @@ class UserAuthService {
       return CreateStoreResult.error('Vui lòng nhập tên quán.');
     }
 
-    final posJwtService = jwtService ?? PosJwtAuthService();
+    final posJwtService = jwtService ?? jwtServiceOverride ?? PosJwtAuthService();
     if (!posJwtService.isConfigured) {
       return CreateStoreResult.error(
         'Máy chủ phiên an toàn chưa được cấu hình.',
@@ -876,10 +978,10 @@ class UserAuthService {
         storeCode: storeCodeResult,
         membership: membership,
       );
-    } catch (e) {
-      debugPrint(
-        '[UserAuthService] create_store_with_owner_v4 unavailable: $e',
-      );
+    } catch (_) {
+      try {
+        AppLogger.warning('auth', 'Create store RPC error');
+      } catch (_) {}
       return CreateStoreResult.error('Dịch vụ tạo quán an toàn chưa sẵn sàng.');
     }
   }
@@ -906,7 +1008,7 @@ class UserAuthService {
     String? originalRole;
     bool? originalIsOwner;
     String? originalToken;
-    final posJwtService = jwtService ?? PosJwtAuthService();
+    final posJwtService = jwtService ?? jwtServiceOverride ?? PosJwtAuthService();
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -1010,7 +1112,7 @@ class UserAuthService {
   }) async {
     if (_isStoreSwitching) return null;
 
-    final posJwtService = jwtService ?? PosJwtAuthService();
+    final posJwtService = jwtService ?? jwtServiceOverride ?? PosJwtAuthService();
 
     // POS JWT là token theo từng store. Khi endpoint này được bật, không được
     // bỏ qua bước cấp token bằng mật khẩu cho store đích.
@@ -1136,7 +1238,7 @@ class UserAuthService {
   static Future<bool> restoreSessionOnStartup({
     PosJwtAuthService? jwtService,
   }) async {
-    final posJwtService = jwtService ?? PosJwtAuthService();
+    final posJwtService = jwtService ?? jwtServiceOverride ?? PosJwtAuthService();
     final session = await getCurrentSession();
 
     if (!posJwtService.isConfigured) {
@@ -1475,6 +1577,7 @@ class AuthResult {
   final List<StoreMembership> stores;
   final StoreMembership? selectedStore;
   final String? errorMessage;
+  final String? errorCode;
 
   const AuthResult._({
     required this.isSuccess,
@@ -1484,6 +1587,7 @@ class AuthResult {
     this.stores = const [],
     this.selectedStore,
     this.errorMessage,
+    this.errorCode,
   });
 
   factory AuthResult.success({
@@ -1501,8 +1605,8 @@ class AuthResult {
     selectedStore: selectedStore,
   );
 
-  factory AuthResult.error(String message) =>
-      AuthResult._(isSuccess: false, errorMessage: message);
+  factory AuthResult.error(String message, {String? errorCode}) =>
+      AuthResult._(isSuccess: false, errorMessage: message, errorCode: errorCode);
 }
 
 class CreateStoreResult {

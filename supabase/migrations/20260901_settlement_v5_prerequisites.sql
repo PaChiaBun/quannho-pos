@@ -273,7 +273,7 @@ REVOKE ALL ON public.qr_audit_logs, public.ban_session_orders,
 
 GRANT SELECT ON public.qr_audit_logs, public.ban_session_orders,
   public.ban_session_order_items, public.payment_settlements,
-  public.qr_coupon_redemptions TO anon, authenticated, service_role;
+  public.qr_coupon_redemptions, public.finance_records TO anon, authenticated, service_role;
 
 DROP POLICY IF EXISTS payment_settlements_all ON public.payment_settlements;
 CREATE POLICY payment_settlements_all ON public.payment_settlements
@@ -294,6 +294,10 @@ CREATE POLICY qr_audit_logs_all ON public.qr_audit_logs
 DROP POLICY IF EXISTS qr_coupon_redemptions_all ON public.qr_coupon_redemptions;
 CREATE POLICY qr_coupon_redemptions_all ON public.qr_coupon_redemptions
   FOR ALL TO public USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS finance_records_select_all ON public.finance_records;
+CREATE POLICY finance_records_select_all ON public.finance_records
+  FOR SELECT TO public USING (true);
 
 REVOKE ALL ON FUNCTION public.verify_staff_qr_membership_v4(uuid, boolean, boolean)
   FROM PUBLIC;

@@ -10,7 +10,14 @@ class BumReadOnlyDataService {
 
   final SupabaseClient _db;
 
+  void _validateStoreId(String storeId) {
+    if (storeId.trim().isEmpty) {
+      throw ArgumentError.value(storeId, 'storeId', 'Store ID must not be empty');
+    }
+  }
+
   Future<BumTodaySummary> getTodaySummary(String storeId) async {
+    _validateStoreId(storeId);
     final range = _todayRange();
     final yesterdayStart = range.start.subtract(const Duration(days: 1));
     final rows = await _db
@@ -48,6 +55,7 @@ class BumReadOnlyDataService {
     String storeId, {
     int limit = 3,
   }) async {
+    _validateStoreId(storeId);
     final range = _todayRange();
     final orders = await _db
         .from('orders')
@@ -124,6 +132,7 @@ class BumReadOnlyDataService {
   }
 
   Future<List<BumStockAlert>> getLowStock(String storeId) async {
+    _validateStoreId(storeId);
     final rows = await _db
         .from('products')
         .select('name,stock_qty,min_stock')
@@ -147,6 +156,7 @@ class BumReadOnlyDataService {
   }
 
   Future<BumShiftSummary> getStaffOnShift(String storeId) async {
+    _validateStoreId(storeId);
     final range = _todayRange();
     final shifts = await _db
         .from('staff_shifts')

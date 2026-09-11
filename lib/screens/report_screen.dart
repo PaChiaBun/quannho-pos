@@ -279,12 +279,17 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
 
 // ── Month revenue provider ─────────────────────────────────────────────────────
 final _monthRevProvider = FutureProvider.autoDispose<double>((ref) async {
-  final repo = ref.read(dashboardRepositoryProvider);
-  final now  = DateTime.now();
-  final from = DateTime(now.year, now.month, 1).millisecondsSinceEpoch;
-  final to   = DateTime(now.year, now.month + 1, 1).millisecondsSinceEpoch;
-  final stats = await repo.getStatsForRange(from, to);
-  return stats.todayRevenue; // getStatsForRange trả về tổng trong khoảng
+  try {
+    final repo = ref.read(dashboardRepositoryProvider);
+    final now  = DateTime.now();
+    final from = DateTime(now.year, now.month, 1).millisecondsSinceEpoch;
+    final to   = DateTime(now.year, now.month + 1, 1).millisecondsSinceEpoch;
+    final stats = await repo.getStatsForRange(from, to);
+    return stats.todayRevenue; // getStatsForRange trả về tổng trong khoảng
+  } catch (e) {
+    debugPrint('[ReportScreen] _monthRevProvider error: $e');
+    return 0.0;
+  }
 });
 
 // ── _HeroCard ──────────────────────────────────────────────────────────────
@@ -433,18 +438,30 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
     setState(() { _loading = true; _selectedBar = null; });
     await _hourSub?.cancel();
     _hourSub = null;
-    final repo = ref.read(dashboardRepositoryProvider);
-    final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth, selectedDay: _selectedDay);
-    final stats = await repo.getStatsForRange(from, to);
-    if (!mounted) return;
-    if (_period == ReportPeriod.today) {
-      setState(() { _stats = stats; _days = []; });
-      _hourSub = repo.watchHourlyRevenue(_selectedDay).listen((h) {
-        if (mounted) setState(() { _hours = h; _loading = false; });
-      });
-    } else {
-      final d = await repo.getDailyRevenue(from, to);
-      if (mounted) setState(() { _stats = stats; _days = d; _hours = []; _loading = false; });
+    try {
+      final repo = ref.read(dashboardRepositoryProvider);
+      final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth, selectedDay: _selectedDay);
+      final stats = await repo.getStatsForRange(from, to);
+      if (!mounted) return;
+      if (_period == ReportPeriod.today) {
+        setState(() { _stats = stats; _days = []; });
+        _hourSub = repo.watchHourlyRevenue(_selectedDay).listen((h) {
+          if (mounted) setState(() { _hours = h; _loading = false; });
+        }, onError: (e) {
+          debugPrint('[ReportScreen] watchHourlyRevenue error: $e');
+          if (mounted) setState(() { _hours = []; _loading = false; });
+        });
+      } else {
+        final d = await repo.getDailyRevenue(from, to);
+        if (mounted) setState(() { _stats = stats; _days = d; _hours = []; _loading = false; });
+      }
+    } catch (e) {
+      debugPrint('[ReportScreen] _load error: $e');
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -1352,26 +1369,35 @@ class _ProductTabState extends ConsumerState<_ProductTab> {
   Future<void> _load({bool refreshCategories = true}) async {
     if (!mounted) return;
     setState(() => _loading = true);
-    final repo = ref.read(dashboardRepositoryProvider);
-    final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth, selectedDay: _selectedDay);
+    try {
+      final repo = ref.read(dashboardRepositoryProvider);
+      final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth, selectedDay: _selectedDay);
 
-    if (refreshCategories || _categories.isEmpty) {
-      final results = await Future.wait([
-        repo.getTopProductsForRangeCompat(from, to, category: _category, limit: 20),
-        repo.getProductCategoriesSold(from, to),
-      ]);
-      if (mounted) {
-        setState(() {
-          _products = results[0] as List<TopProduct>;
-          _categories = results[1] as List<String>;
-          _loading = false;
-        });
+      if (refreshCategories || _categories.isEmpty) {
+        final results = await Future.wait([
+          repo.getTopProductsForRangeCompat(from, to, category: _category, limit: 20),
+          repo.getProductCategoriesSold(from, to),
+        ]);
+        if (mounted) {
+          setState(() {
+            _products = results[0] as List<TopProduct>;
+            _categories = results[1] as List<String>;
+            _loading = false;
+          });
+        }
+      } else {
+        final products = await repo.getTopProductsForRangeCompat(from, to, category: _category, limit: 20);
+        if (mounted) {
+          setState(() {
+            _products = products;
+            _loading = false;
+          });
+        }
       }
-    } else {
-      final products = await repo.getTopProductsForRangeCompat(from, to, category: _category, limit: 20);
+    } catch (e) {
+      debugPrint('[ReportScreen] _ProductTab _load error: $e');
       if (mounted) {
         setState(() {
-          _products = products;
           _loading = false;
         });
       }

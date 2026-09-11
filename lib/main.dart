@@ -41,6 +41,7 @@ import 'modules/tinhluong/screens/tinhluong_screen.dart';
 import 'modules/tinhluong/screens/my_payslip_screen.dart';
 import 'modules/ops/screens/ops_screen.dart';
 import 'core/providers/session_provider.dart';
+import 'core/providers/permission_provider.dart';
 import 'screens/role_manager_screen.dart' show storeRolesProvider;
 import 'screens/log_viewer_screen.dart';
 import 'core/utils/responsive.dart';
@@ -438,10 +439,12 @@ class _MainShellState extends ConsumerState<MainShell>
     HapticFeedback.mediumImpact();
     final session = ref.read(sessionProvider);
     final storeRoles = ref.read(storeRolesProvider).value ?? [];
+    final actionPerms = ref.read(userActionPermsProvider).value ?? {};
     final allowed = _navBarTabsForRole(
       session?.role,
       storeRoles,
       session?.isOwner ?? false,
+      actionPerms,
     );
     showModalBottomSheet(
       context: context,
@@ -484,36 +487,36 @@ class _MainShellState extends ConsumerState<MainShell>
     final session = ref.read(sessionProvider); // read full object chỉ khi cần
     final rawSlots = slotsAsync.value ?? [0, 1, 2, 6];
 
-    // Tabs trên nav bar theo role (tính từ store_roles modules)
-    // ✅ FIX #3: đọc .value trực tiếp — storeRolesProvider đã keepAlive ở định nghĩa
-    final storeRoles = ref.watch(storeRolesProvider).value ?? [];
-    final navBarTabs = _navBarTabsForRole(role, storeRoles, isOwner);
+    // Tabs trên nav bar theo role (tính từ store_roles modules + action perms)
+    // ✅ FIX #3: đọc storeRolesAsync để kiểm soát trạng thái loading tránh redirect nhầm
+    final storeRolesAsync = ref.watch(storeRolesProvider);
+    final storeRoles = storeRolesAsync.value ?? [];
+    final actionPerms = ref.watch(userActionPermsProvider).value ?? {};
+    final navBarTabs = _navBarTabsForRole(role, storeRoles, isOwner, actionPerms);
 
     // ⭐ Vận Hành (tab 13) luôn accessible cho mọi nhân viên — phải add TRƯỚC khi filter slots
     navBarTabs.add(13);
 
-    // ⭐ Với nhân viên: Tạo displaySlots trực tiếp từ navBarTabs (đã bao gồm 13)
+    // ⭐ Với nhân viên: Tôn trọng cấu hình slot đã chọn nếu hợp lệ, nếu là slot mặc định thì pad hợp lý
     final isStaff =
         !(session?.isOwner ?? false) &&
         session?.role != 'owner' &&
         session?.role != 'manager';
     final List<int> displaySlots;
 
-    if (isStaff) {
+    final validSlots = rawSlots.where((t) => navBarTabs.contains(t)).toList();
+    if (isStaff && validSlots.length < 4 && listEquals(rawSlots, const [0, 1, 2, 6])) {
       final staffAllowed =
           navBarTabs.where((t) => t != 0 && t != 6 && t != 13).toList()..sort();
-      final mid = staffAllowed.isNotEmpty ? staffAllowed.first : 6;
-      displaySlots = [0, 6, mid, 13];
+      final mid = staffAllowed.isNotEmpty ? staffAllowed.first : 1;
+      displaySlots = _padSlots([0, mid, 13, 6].where((t) => navBarTabs.contains(t)).toList(), navBarTabs);
     } else {
-      final slots = rawSlots.where((t) => navBarTabs.contains(t)).toList();
-      displaySlots = _padSlots(slots, navBarTabs);
+      displaySlots = _padSlots(validSlots, navBarTabs);
     }
 
-    // ✅ FIX #2: bỏ watch storeRolesProvider lần 2 — dùng lại giá trị storeRoles đã watch ở trên
-    // (storeRoles.isNotEmpty đồng nghĩa provider đã load xong)
-    if (storeRoles.isNotEmpty &&
-        !navBarTabs.contains(idx) &&
-        displaySlots.isNotEmpty) {
+    // Tự động chuyển về tab đầu tiên nếu tab hiện tại không nằm trong danh sách được phép
+    // Chỉ kích hoạt redirect khi roles đã nạp xong (tránh đá văng tab khi provider đang async loading)
+    if (!storeRolesAsync.isLoading && !navBarTabs.contains(idx) && displaySlots.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(navTabProvider.notifier).goTo(displaySlots[0]);
       });
@@ -1094,8 +1097,9 @@ class _MainShellState extends ConsumerState<MainShell>
   Set<int> _navBarTabsForRole(
     String? role,
     List<dynamic> storeRoles,
-    bool isOwner,
-  ) {
+    bool isOwner, [
+    Set<String>? actionPerms,
+  ]) {
     final canonical = StaffService.canonicalRole(role ?? '');
     if (isOwner || canonical == 'owner' || canonical == 'manager') {
       return {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
@@ -1135,6 +1139,12 @@ class _MainShellState extends ConsumerState<MainShell>
             if (tab != null) tabs.add(tab);
           }
           tabs.add(13); // ⭐ Vận Hành — mọi nhân viên đều có quyền truy cập
+          if (actionPerms != null && actionPerms.contains('report.view')) {
+            tabs.add(5);
+          }
+          if (canonical == 'cashier') {
+            tabs.add(5); // Fail-safe: Thu ngân luôn có quyền xem báo cáo
+          }
           debugPrint('[NavTabs] matched role=$role ($rName) → tabs=$tabs');
           return tabs;
         }
@@ -1145,16 +1155,26 @@ class _MainShellState extends ConsumerState<MainShell>
     // Fallback: role cũ hardcoded
     switch (canonical) {
       case 'kitchen':
-        return {0, 8, 6, 1, 13};
+        tabs.addAll({0, 8, 6, 1, 13});
+        break;
       case 'cashier':
-        return {0, 1, 7, 6, 13, 14};
+        tabs.addAll({0, 1, 5, 7, 6, 13, 14});
+        break;
       case 'waiter':
-        return {0, 7, 8, 6, 13};
+        tabs.addAll({0, 7, 8, 6, 13});
+        break;
       case 'stock':
-        return {0, 2, 1, 6, 13};
+        tabs.addAll({0, 2, 1, 6, 13});
+        break;
       default:
-        return tabs.isEmpty ? {0, 1, 2, 6, 13} : (tabs..add(13));
+        tabs.addAll({0, 1, 2, 6, 13});
+        break;
     }
+    if (actionPerms != null && actionPerms.contains('report.view')) {
+      tabs.add(5);
+    }
+    tabs.add(13);
+    return tabs;
   }
 
   /// Đảm bảo luôn có đủ 4 slot cho bottom bar (padding với các allowed tabs khác nhau)

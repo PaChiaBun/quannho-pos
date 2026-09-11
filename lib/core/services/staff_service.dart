@@ -56,7 +56,16 @@ const kDefaultPerms = {
     'kay_ops',
     'log_viewer',
   ],
-  'cashier': ['pos', 'ban', 'kay_ops', 'chamcong'],
+  'cashier': [
+    'pos',
+    'ban',
+    'kay_ops',
+    'chamcong',
+    'report',
+    'kho',
+    'kitchen',
+    'bill_printer',
+  ],
   'waiter': ['pos', 'ban', 'kitchen', 'kay_ops', 'chamcong', 'tinhluong'],
   'kitchen': ['kitchen', 'kay_ops', 'chamcong'],
   'stock': ['kho', 'kho_pro', 'kay_ops', 'chamcong'],
@@ -815,6 +824,7 @@ class StaffService {
             .update({
               'clock_out': finalClockOut.toUtc().toIso8601String(),
               'note': newNote,
+              'is_forgot_clockout': true,
             })
             .eq('id', openId);
       } else {
@@ -1015,6 +1025,8 @@ class StaffService {
           isManagerOverridden: (r['is_manager_overridden'] as bool?) ?? false,
           overrideReason: r['override_reason'] as String?,
           overrideBy: r['override_by'] as String?,
+          isLate: (r['is_late'] as bool?) ?? false,
+          lateMinutes: (r['late_minutes'] as num?)?.toInt() ?? 0,
         );
       }).toList();
     } catch (e, st) {
@@ -1090,6 +1102,8 @@ class StaffService {
           isManagerOverridden: (r['is_manager_overridden'] as bool?) ?? false,
           overrideReason: r['override_reason'] as String?,
           overrideBy: r['override_by'] as String?,
+          isLate: (r['is_late'] as bool?) ?? false,
+          lateMinutes: (r['late_minutes'] as num?)?.toInt() ?? 0,
         );
       }).toList();
     } catch (e) {
@@ -1952,6 +1966,8 @@ class ShiftRecord {
   final bool isManagerOverridden;
   final String? overrideReason;
   final String? overrideBy;
+  final bool isLate;
+  final int lateMinutes;
 
   Duration get duration {
     final raw = (clockOut ?? DateTime.now()).difference(clockIn);
@@ -1994,6 +2010,8 @@ class ShiftRecord {
     this.isManagerOverridden = false,
     this.overrideReason,
     this.overrideBy,
+    this.isLate = false,
+    this.lateMinutes = 0,
   });
 
   ShiftRecord copyWith({
@@ -2004,6 +2022,8 @@ class ShiftRecord {
     bool? isManagerOverridden,
     String? overrideReason,
     String? overrideBy,
+    bool? isLate,
+    int? lateMinutes,
   }) {
     return ShiftRecord(
       id: id,
@@ -2025,6 +2045,8 @@ class ShiftRecord {
       isManagerOverridden: isManagerOverridden ?? this.isManagerOverridden,
       overrideReason: overrideReason ?? this.overrideReason,
       overrideBy: overrideBy ?? this.overrideBy,
+      isLate: isLate ?? this.isLate,
+      lateMinutes: lateMinutes ?? this.lateMinutes,
     );
   }
 }

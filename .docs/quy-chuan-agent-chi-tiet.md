@@ -637,7 +637,7 @@ Sau khi đọc xong, tóm tắt ngắn gọn cho user biết:
 * **Mã định danh App (Bundle ID):** `vn.lpm.quannhoPos`.
 * **Tài khoản Reviewer mặc định (Embedded Auth):**
   * SĐT Đăng nhập: `0999996666`
-  * Mật khẩu: `112233`
+  * Mật khẩu: lưu trong password manager (không ghi trong tài liệu)
   *(Đã tích hợp sẵn fallback trong `UserAuthService` giúp người kiểm duyệt của Apple / Google đăng nhập ngay lập tức cả online lẫn offline).*
 * **Trạng thái nộp duyệt App Store:** 
   * Gói build: Version `1.0.2 (Build 4)` - Dung lượng 50.6 MB.

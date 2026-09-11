@@ -14,10 +14,13 @@ from services.pos_gateway_server import wsgi_app
 
 
 class TestPosGatewayServer(unittest.TestCase):
-    def _call_wsgi(self, path="/", method="GET", body=b"", headers=None, remote_addr="127.0.0.1"):
+    def _call_wsgi(self, path="/", method="GET", body=b"", headers=None, remote_addr="127.0.0.1", query_string=""):
         headers = headers or {}
+        path_info = path.split("?", 1)[0]
+        qs = query_string or (path.split("?", 1)[1] if "?" in path else "")
         environ = {
-            "PATH_INFO": path,
+            "PATH_INFO": path_info,
+            "QUERY_STRING": qs,
             "REQUEST_METHOD": method,
             "CONTENT_LENGTH": str(len(body)),
             "wsgi.input": io.BytesIO(body),
@@ -189,6 +192,82 @@ class TestPosGatewayServer(unittest.TestCase):
         self.assertTrue(data["success"])
         self.assertEqual(data["pos_jwt"], "exchanged_pos_token")
         mock_handler.assert_called_once_with(body, auth_header="Bearer onb_token", client_ip="127.0.0.1")
+
+    def test_10_health_check_readiness_missing_env_returns_503(self):
+        with patch.dict(os.environ, {}, clear=True):
+            res = self._call_wsgi(path="/api/auth/health?check=readiness", method="GET")
+        self.assertTrue(res["status"].startswith("503"))
+        data = json.loads(res["body"].decode("utf-8"))
+        self.assertEqual(data["status"], "unhealthy")
+        self.assertEqual(data["error"], "CONFIG_INCOMPLETE")
+
+    @patch("urllib.request.urlopen")
+    def test_11_health_check_readiness_probe_200_returns_ready(self, mock_urlopen):
+        mock_resp = unittest.mock.MagicMock()
+        mock_resp.status = 200
+        mock_resp.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
+
+        env = {
+            "SUPABASE_URL": "https://test.supabase.co",
+            "SUPABASE_ANON_KEY": "anon_key",
+            "SUPABASE_JWT_SECRET": "jwt_secret",
+            "SUPABASE_SERVICE_ROLE_KEY": "service_role_key",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            res = self._call_wsgi(path="/api/auth/health?check=readiness", method="GET")
+        self.assertTrue(res["status"].startswith("200"))
+        data = json.loads(res["body"].decode("utf-8"))
+        self.assertEqual(data["status"], "ok")
+        self.assertEqual(data["readiness"], "ready")
+
+    @patch("urllib.request.urlopen")
+    def test_12_health_check_readiness_probe_401_or_403_returns_upstream_auth_failed(self, mock_urlopen):
+        import urllib.error
+        mock_urlopen.side_effect = urllib.error.HTTPError("url", 401, "Unauthorized", {}, None)
+
+        env = {
+            "SUPABASE_URL": "https://test.supabase.co",
+            "SUPABASE_ANON_KEY": "bad_anon_key",
+            "SUPABASE_JWT_SECRET": "jwt_secret",
+            "SUPABASE_SERVICE_ROLE_KEY": "service_role_key",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            res = self._call_wsgi(path="/api/auth/health?check=readiness", method="GET")
+        self.assertTrue(res["status"].startswith("503"))
+        data = json.loads(res["body"].decode("utf-8"))
+        self.assertEqual(data["status"], "degraded")
+        self.assertEqual(data["error"], "UPSTREAM_AUTH_FAILED")
+
+    @patch("urllib.request.urlopen")
+    def test_13_health_check_readiness_probe_500_or_timeout_returns_upstream_unavailable(self, mock_urlopen):
+        import urllib.error
+        mock_urlopen.side_effect = urllib.error.URLError("Connection refused")
+
+        env = {
+            "SUPABASE_URL": "https://test.supabase.co",
+            "SUPABASE_ANON_KEY": "anon_key",
+            "SUPABASE_JWT_SECRET": "jwt_secret",
+            "SUPABASE_SERVICE_ROLE_KEY": "service_role_key",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            res = self._call_wsgi(path="/api/auth/health?check=readiness", method="GET")
+        self.assertTrue(res["status"].startswith("503"))
+        data = json.loads(res["body"].decode("utf-8"))
+        self.assertEqual(data["status"], "degraded")
+        self.assertEqual(data["error"], "UPSTREAM_UNAVAILABLE")
+
+    def test_14_trusted_proxy_separate_client_ips_do_not_share_rate_limit(self):
+        from services.pos_jwt_auth_service import _rate_limiter
+        ip_a = "203.0.113.10"
+        ip_b = "198.51.100.25"
+        # Simulate IP A exhausting its attempts
+        for _ in range(5):
+            _rate_limiter.record_attempt(ip_a, "phone_a")
+
+        self.assertTrue(_rate_limiter.is_rate_limited(ip_a, "phone_a"))
+        # IP B must NOT be rate limited
+        self.assertFalse(_rate_limiter.is_rate_limited(ip_b, "phone_b"))
 
 
 if __name__ == "__main__":

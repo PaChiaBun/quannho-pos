@@ -6,6 +6,37 @@ description: Điều phối Graphify để hiểu kiến trúc và CodeGraph đ�
 
 Đây là workflow `qn.md` chuẩn của dự án. Khi gọi `/qn` hoặc đính kèm file này, làm việc theo luồng dưới đây. Không gọi hai graph lặp lại cho cùng mục đích.
 
+## 0. Điều phối nhanh — kiểm duyệt bài AI Bum
+
+Khi Chủ Quán gọi **`/qn vào kiểm tra ai bum đã làm bài chuẩn chưa`**, hoặc diễn đạt tương đương như “kiểm duyệt bài Bum”, “xem Bum học tới đâu, bài có đúng không”, tự chọn nhánh này. Đây là yêu cầu **kiểm tra nội dung và chủ động kiểm duyệt**, không chỉ xem dịch vụ/job còn chạy. Nếu người dùng nói rõ chỉ xem trạng thái, chỉ báo cáo, hoặc không duyệt thì tuân theo phạm vi hẹp đó.
+
+**Ủy quyền đã có:** Chủ Quán giao Codex quyết định `approved` / `needs_revision` / `rejected`, kèm lý do; không hỏi lại quyền duyệt từng bài hoặc mỗi lần gọi. Tiết kiệm quota là yêu cầu mặc định.
+
+Luồng thực hiện:
+
+1. Đọc đúng `../ai-bum-implementation/training/REVIEW_DESIGN.md` (đường dẫn tính từ root `quan_nho`), rồi manifest/checkpoint kiểm duyệt hiện có. Không nạp lại toàn bộ nhật ký, source, bài cũ hoặc hai graph cho công việc đọc/duyệt dataset thông thường. Chỉ dùng quy trình điều tra code bên dưới nếu phát hiện lỗi cần truy nguyên.
+2. Kiểm tra metadata hiện tại của dịch vụ/job và số bài chờ duyệt. Không tạo/resume lô mới chỉ để kiểm duyệt; không coi nhật ký cũ là trạng thái đang chạy.
+3. Dùng `review_queue.py pack` theo tài liệu thiết kế trên snapshot được phép xử lý. Đọc manifest rồi lần lượt các trang chưa có quyết định; ưu tiên xử lý tại nơi lưu dữ liệu, không tự sao chép toàn bộ kho sang máy khác. Nếu quyền truy cập hoặc công cụ chưa sẵn sàng, nói rõ phần bị chặn, không báo đã kiểm tra nội dung khi mới xem số lượng.
+4. Đọc đầy đủ dữ kiện, câu hỏi và đáp án dự tuyển; dùng phép tính deterministic hỗ trợ. Chỉ mở bài làm/nhận xét của Thầy khi cần đối chiếu. Gộp duyệt chỉ cho nội dung trùng chính xác; không duyệt theo điểm, theo mẫu đại diện cho bài khác nội dung hoặc theo bản tóm tắt bị cắt ngắn.
+5. Ghi quyết định ngắn theo hash/version, đáp án được duyệt và danh tính reviewer. Lưu checkpoint sau mỗi trang; tiếp tục phần còn lại, không đọc lại nhóm đã duyệt còn nguyên phiên bản. Bài không đủ căn cứ phải giữ chờ hoặc đánh dấu cần sửa, không cố duyệt cho hết.
+6. Phân biệt hai kết luận: **Bum làm đúng hay sai** và **đáp án chuẩn có đủ tốt để dạy Bum hay không**. Điểm học viên thấp vẫn có thể đi cùng đáp án tham chiếu tốt. Nếu đáp án tham chiếu sai, không duyệt nó chỉ vì phần feedback có đáp án sửa đúng.
+7. Báo ngắn: số bài/nhóm đã kiểm tra; duyệt/cần sửa/từ chối/còn chờ; lỗi chính; checkpoint và trạng thái đồng bộ. Không chép lại cả bài làm hoặc mọi lý do vào câu trả lời.
+
+**Ranh giới triển khai hiện tại (08/09/2026):** Công cụ kiểm duyệt mới và ledger chạy local; chưa tích hợp ghi quyết định về dashboard. Quyết định local không được báo thành trạng thái đã đổi trên BunServer. Khi đã có đường ghi server được xác minh, dùng kiểm tra hash/version và audit; chưa có thì giữ ledger và báo rõ thiếu đồng bộ. Không dùng export cũ làm dataset chuẩn vì còn lẫn câu trả lời học viên. AI Bum hiện sử dụng Qwen2.5 làm base model, được nạp và tối ưu huấn luyện/suy luận bằng framework Unsloth. Quán Nhỏ sở hữu dữ liệu tự tạo và LoRA adapter do dự án huấn luyện, trong phạm vi giấy phép của base model và các dependency liên quan. Kiểm duyệt không tự cấp quyền fine-tune, promote kiến thức, deploy POS, tạo job hoặc chạy lịch định kỳ khi chưa có chỉ thị từ Chủ Quán.
+
+### Kích hoạt chương trình dạy AI Bum (Theo lệnh & Chạy đêm)
+
+Chủ Quán có thể điều phối chương trình đào tạo của AI Bum qua các khẩu lệnh:
+- **Theo lệnh tức thì:** Khi Chủ Quán gọi **`/qn dạy bum [số_bài]`** (ví dụ: `/qn dạy bum 10 bài`), thực hiện lệnh:
+  `python3 ../ai-bum-implementation/training/run_bum_class.py run --count [số_bài]` (tính từ root `quan_nho`).
+- **Chạy lớp học đêm:** Khi Chủ Quán gọi **`/qn chạy lớp học đêm`**, thực hiện lệnh:
+  `python3 ../ai-bum-implementation/training/run_bum_class.py overnight --count [số_bài] --start-time 23:00` (hoặc cờ `--now` nếu Chủ Quán yêu cầu chạy ngay).
+- **Kiểm tra trạng thái:** Dùng `python3 ../ai-bum-implementation/training/run_bum_class.py status` để báo cáo số bài đã duyệt, chờ duyệt và điểm trung bình hiện tại.
+- **Quy tắc an toàn lớp học:**
+  1. Người Thầy (Codex) ra đề và chấm bài rèn luyện tư duy 3 bước: Phân loại câu hỏi $\rightarrow$ Tra cứu đối chiếu dữ kiện RAG SQLite FTS5 $\rightarrow$ Đưa ra câu trả lời thiết thực (có Immediate Action SOP trong 30 giây).
+  2. Tuyệt đối không tự ý can thiệp CSDL production hay POS; toàn bộ bài học dừng ở trạng thái `pending` cho tới khi được duyệt.
+
+
 ## 1. Context cố định
 
 - Quán Nhỏ POS là ứng dụng quản lý F&B viết bằng Flutter; Android/Web đã hoạt động, iOS đang phát hành.
@@ -51,7 +82,8 @@ Quy tắc nghiệp vụ lõi:
      - `tinhluong` $\rightarrow$ Tự động cấp: `tinhluong.view_all`, `tinhluong.manage_config`, `tinhluong.approve_payroll`, `tinhluong.srm_settings`, `tinhluong.srm_review`.
      - `bill_printer` $\rightarrow$ Tự động cấp: `printer.manage_server`.
   3. **Vai trò chuẩn & Fail-safe mặc nhiên**:
-     - Vai trò `owner` / `manager` (hoặc `is_owner = true`): Có toàn quyền tất cả action permissions.
+     - Vai trò `owner` (hoặc `is_owner = true`): Có toàn quyền tất cả action permissions trong POS và toàn bộ 9 quyền AI Bum.
+     - Vai trò `manager`: Có toàn quyền tất cả action permissions của POS (`kAllActions`: bán hàng, bàn, kho, thu chi, báo cáo, tính lương, máy in) để điều hành ca làm việc tại quán; nhưng **tuyệt đối KHÔNG tự động được cấp các quyền dữ liệu nhạy cảm qua AI Bum** (`ai_bum.sales`, `ai_bum.inventory`, `ai_bum.finance`, `ai_bum.operations`, `ai_bum.team_shift`, `ai_bum.all_payroll`). Mặc định qua AI Bum, Manager chỉ có 3 quyền an toàn cá nhân (`ai_bum.help`, `ai_bum.my_shift`, `ai_bum.my_payroll`), các quyền nhạy cảm khác phải suy trực tiếp từ Lego Modules (`store_roles.modules`) hoặc được Chủ Quán cấp chủ động; nếu chưa được cấp phải **fail-closed**.
      - Vai trò `cashier` hoặc tên vai trò có chứa `"thu ngân"`, `"quầy"`: Mặc nhiên có quyền thanh toán `pos.checkout`, xem lịch sử `pos.view_history`, giảm giá `pos.apply_discount`.
   4. **Quy chuẩn Server RPC xác thực quyền (`verify_staff_qr_membership_v4`, `settle_ban_session_v5`)**:
      - Xác thực nhận diện user qua 4 tầng: `auth.uid()`, `request.jwt.claim.sub`, `request.headers -> x-user-id`, `request.header.x-user-id`.
@@ -76,7 +108,11 @@ Quy tắc nghiệp vụ lõi:
 - QR TABLE/COUNTER phải dùng giá authoritative từ server, atomic claim chống hai nhân viên duyệt trùng và commit boundary rõ ràng. Một request hội tụ vào đúng một order; không rollback sau khi vé Bếp đã commit nếu việc đó có thể in trùng; retry chỉ reconcile trạng thái idempotent.
 - QR COUNTER phải thanh toán trước Bếp bởi Thu ngân hoặc actor có `pos.checkout`. QR TABLE gửi Bếp trước và thanh toán toàn bộ `ban_session` sau. Không có QR Payment tự động trong phạm vi hiện tại; không được tự giả định đã thu tiền chỉ vì đã hiển thị VietQR.
 - Nhân viên đã kết nối quán bằng tài khoản + mã quán; QR không tạo POS device pairing/PIN riêng. `device_id` nếu dùng chỉ là metadata audit/idempotency, không phải credential người dùng.
-- AI Bum phải read-only với nghiệp vụ, khử PII trước cloud fallback, có quota/circuit breaker và cô lập conversation/feedback/memory theo `store_id`.
+- **Nền tảng công nghệ AI Bum (Qwen2.5 + Unsloth Framework):** AI Bum hiện sử dụng Qwen2.5 làm base model, được nạp và tối ưu huấn luyện/suy luận bằng framework Unsloth (`FastLanguageModel`). Quán Nhỏ sở hữu dữ liệu tự tạo và LoRA adapter do dự án huấn luyện, trong phạm vi giấy phép của base model và các dependency liên quan. Các tuyên bố hiệu năng như giảm 70% VRAM hay tăng tốc 2–5x là số liệu tham khảo của framework Unsloth, không phải kết quả đã nghiệm thu của dự án trên cấu hình BunServer. `MAX_SEQ_LENGTH = 512` là cấu hình hiện hành đã được sử dụng/quan sát với ngưỡng VRAM guard; 1024 chưa được nghiệm thu trên BunServer. Không nâng lên 1024 trong đợt này.
+- **Kiến trúc hai tầng của AI Bum (Dual-Layer Architecture):**
+  - **Tầng 1 (RAG Cấp tốc):** Tra cứu tức thì qua SQLite FTS5 index 26 Chuyên đề nghiệp vụ F&B và 17 Cây ma trận quyết định phản xạ thực chiến (< 2ms) phục vụ hỏi đáp thời gian thực cho nhân viên quán mà không tiêu hao tài nguyên mô hình lớn.
+  - **Tầng 2 (SFT Huấn luyện chuyên sâu):** Sử dụng framework Unsloth (`FastLanguageModel`) nạp base model Qwen2.5 + LoRA adapter từ kho dữ liệu bài học đã được kiểm duyệt/phê duyệt, tuyệt đối tuân thủ Zero Verbatim Ingestion, Zero PII, Zero Business Secrets.
+- AI Bum phải read-only với nghiệp vụ, chỉ đóng vai trò trợ lý/tư vấn/nhắc nhở, không tự tạo hiệu lực kho hoặc tài chính, khử PII trước cloud fallback, có quota/circuit breaker và cô lập conversation/feedback/memory theo `store_id`.
 
 ## 3. Phân vai hai graph
 

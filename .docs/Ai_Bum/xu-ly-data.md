@@ -97,9 +97,10 @@ Bum áp dụng **Pre-Query Security Guard** kiểm tra quyền người dùng ng
 ### 🛡️ Quy Tắc Kiểm Soát Truy Vấn
 | Vai trò | Phân Quyền & Kiểm Soát |
 |---------|------------------------|
-| **Owner (Chủ quán)** | Xác nhận qua `store_members` hoặc `stores.owner_user_id` $\rightarrow$ Toàn bộ 9 quyền AI Bum cố định. |
-| **Manager (Quản lý)** | Đọc `action_perms_manager` từ `app_settings`. Không tự động vượt quyền — nếu không được cấp `ai_bum.sales` sẽ bị chặn khi hỏi doanh thu. |
-| **Staff (Nhân viên)** | Chỉ dùng được AI Bum nếu vai trò được bật module `ai_bum`. Khi chuyển module từ OFF $\rightarrow$ ON, tự động cấp 3 quyền an toàn (`help`, `my_shift`, `my_payroll`). Các quyền nhạy cảm khác do Chủ quán bật/tắt trong mục **Hành động nhạy cảm**. |
+| **Owner (Chủ quán)** | Xác nhận qua `store_members` hoặc `stores.owner_user_id` (`is_owner = true`) $\rightarrow$ Toàn bộ 9 quyền AI Bum cố định (`permission_guard_test.dart` Test 1). |
+| **Manager (Quản lý)** | **[CHỜ XÁC MINH - PENDING VERIFICATION]**: Code thực tế POS (`permission_guard_test.dart` Test 0b & Test 2) xác nhận Manager không phải Owner và mặc định chỉ có 3 quyền an toàn (`help`, `my_shift`, `my_payroll`), bị loại trừ các quyền nhạy cảm (`sales`, `inventory`, `finance`, `operations`, `all_payroll`). `nhat_ky.md` (L664) ghi nhận bỏ tự cấp `kAllActions`. Giữ nguyên trạng thái [Chờ xác minh], cô lập kịch bản học liên quan, không tự ý sửa phân quyền POS thật. |
+| **Cashier (Thu ngân)** | Vai trò `cashier` hoặc tên chứa `"thu ngân"`, `"quầy"` mặc nhiên có quyền thanh toán, xem lịch sử, giảm giá và hỏi đáp bán hàng (`ai_bum.sales`) khi có module `ai_bum`. |
+| **Staff (Nhân viên)** | Quản lý bằng việc bật/tắt module `ai_bum` trong Lego Modules (`store_roles.modules` — Single Source of Truth, không phụ thuộc `app_settings`). Khi bật module từ OFF $\rightarrow$ ON, tự động cấp 3 quyền an toàn (`help`, `my_shift`, `my_payroll`). Các quyền nhạy cảm khác do Chủ quán cấp hoặc suy ra từ Lego Modules liên quan (`deriveActionPermsFromModules`). |
 
 > **Fail-Closed Security Guarantee:** Nếu thiếu quyền tương ứng với Intent hoặc module `ai_bum` bị tắt, Bum lập tức trả lời *"Chưa được cấp quyền"* và **tuyệt đối không thực thi SQL/Database Query**.
 

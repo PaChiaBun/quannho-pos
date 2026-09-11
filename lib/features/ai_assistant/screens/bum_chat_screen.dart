@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/providers/session_provider.dart';
 import '../providers/bum_chat_provider.dart';
@@ -63,6 +64,46 @@ class _BumChatScreenState extends ConsumerState<BumChatScreen> {
     _scrollToBottom();
   }
 
+  void _openTrainingRoom() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Lớp học AI Bum',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: _kNavy),
+        ),
+        content: const Text(
+          'Mở phòng luyện AI Bum nội bộ trên BunServer để theo dõi tiến độ và duyệt bài học F&B?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('HỦY', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kOrange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              Navigator.of(ctx).pop();
+              final uri = Uri.parse('https://bunserver.tailcaeae7.ts.net/training/');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } else {
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Không thể mở liên kết lớp học.')),
+                );
+              }
+            },
+            child: const Text('MỞ LỚP HỌC'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(bumChatProvider);
@@ -121,6 +162,12 @@ class _BumChatScreenState extends ConsumerState<BumChatScreen> {
             ],
           ),
           actions: [
+            if (isOwnerOrManager)
+              IconButton(
+                icon: const Icon(Icons.school_outlined, color: _kNavy),
+                tooltip: 'Lớp học AI Bum',
+                onPressed: _openTrainingRoom,
+              ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded, color: _kNavy),
               onPressed: () {

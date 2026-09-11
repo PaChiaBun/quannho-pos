@@ -7,6 +7,9 @@
 import json
 import logging
 import os
+import urllib.error
+import urllib.parse
+import urllib.request
 from http.server import BaseHTTPRequestHandler
 from wsgiref.simple_server import make_server
 
@@ -22,6 +25,60 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("pos_gateway_server")
+
+
+def _check_health_and_readiness(query_string=""):
+    """
+    Health check handler:
+    - Pure liveness (default, no query or check!=readiness):
+      Returns (200, {"status": "ok", "service": "pos_jwt_gateway"})
+    - Readiness (check=readiness):
+      1. Verifies all 4 environment variables: SUPABASE_URL, SUPABASE_ANON_KEY,
+         SUPABASE_JWT_SECRET, SUPABASE_SERVICE_ROLE_KEY.
+         If any missing -> (503, {"status": "unhealthy", "error": "CONFIG_INCOMPLETE"})
+         (Zero secret disclosure: does not leak variable names or values).
+      2. Upstream PostgREST probe (Read-only, non-mutating):
+         GET {SUPABASE_URL}/rest/v1/ with header apikey: {SUPABASE_ANON_KEY}, timeout=3.0s.
+         - Status 200 -> (200, {"status": "ok", "service": "pos_jwt_gateway", "readiness": "ready"})
+         - Status 401/403 -> (503, {"status": "degraded", "error": "UPSTREAM_AUTH_FAILED"})
+         - Other status / timeout / error -> (503, {"status": "degraded", "error": "UPSTREAM_UNAVAILABLE"})
+    """
+    params = urllib.parse.parse_qs(query_string or "")
+    is_readiness = params.get("check", [""])[0] == "readiness"
+
+    if not is_readiness:
+        return 200, {"status": "ok", "service": "pos_jwt_gateway"}
+
+    supabase_url = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
+    supabase_anon_key = os.environ.get("SUPABASE_ANON_KEY", "").strip()
+    supabase_jwt_secret = os.environ.get("SUPABASE_JWT_SECRET", "").strip()
+    supabase_service_role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+
+    if not (supabase_url and supabase_anon_key and supabase_jwt_secret and supabase_service_role_key):
+        return 503, {"status": "unhealthy", "error": "CONFIG_INCOMPLETE"}
+
+    probe_url = f"{supabase_url}/rest/v1/"
+    req = urllib.request.Request(
+        probe_url,
+        headers={
+            "apikey": supabase_anon_key,
+            "User-Agent": "pos-jwt-gateway-health-probe/1.0",
+        },
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            status_code = resp.status if hasattr(resp, "status") else resp.getcode()
+            if status_code == 200:
+                return 200, {"status": "ok", "service": "pos_jwt_gateway", "readiness": "ready"}
+            return 503, {"status": "degraded", "error": "UPSTREAM_UNAVAILABLE"}
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403):
+            return 503, {"status": "degraded", "error": "UPSTREAM_AUTH_FAILED"}
+        return 503, {"status": "degraded", "error": "UPSTREAM_UNAVAILABLE"}
+    except Exception:
+        return 503, {"status": "degraded", "error": "UPSTREAM_UNAVAILABLE"}
+
 
 
 def _cors_headers(origin):
@@ -83,8 +140,10 @@ def wsgi_app(environ, start_response):
 
     # 2. Health Check Route
     if path in ("/api/auth/health", "/health"):
-        start_response("200 OK", headers)
-        return [json.dumps({"status": "ok", "service": "pos_jwt_gateway"}).encode("utf-8")]
+        query_string = environ.get("QUERY_STRING", "")
+        status_code, body = _check_health_and_readiness(query_string)
+        start_response(_status_line(status_code), headers)
+        return [json.dumps(body).encode("utf-8")]
 
     # 3. Request Body Extraction
     try:
@@ -161,11 +220,14 @@ class StandaloneGatewayHandler(BaseHTTPRequestHandler):
             self._send_cors_headers()
             self.end_headers()
             return
-        if self.path in ("/api/auth/health", "/health"):
-            self.send_response(200)
+        path_only = self.path.split("?", 1)[0]
+        query_string = self.path.split("?", 1)[1] if "?" in self.path else ""
+        if path_only in ("/api/auth/health", "/health"):
+            status_code, body = _check_health_and_readiness(query_string)
+            self.send_response(status_code)
             self._send_cors_headers()
             self.end_headers()
-            self.wfile.write(json.dumps({"status": "ok", "service": "pos_jwt_gateway"}).encode("utf-8"))
+            self.wfile.write(json.dumps(body).encode("utf-8"))
         else:
             self.send_response(404)
             self._send_cors_headers()

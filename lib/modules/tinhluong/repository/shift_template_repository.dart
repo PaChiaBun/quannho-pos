@@ -347,22 +347,35 @@ class ShiftTemplateRepository {
       final shiftStartMin   = int.parse(startParts[1]);
       final graceMinutes    = tRow['late_grace_minutes'] as int? ?? 15;
 
-      // Tính deadline = giờ bắt đầu ca + grace
-      final deadline = DateTime(today.year, today.month, today.day,
-          shiftStartHour, shiftStartMin)
-          .add(Duration(minutes: graceMinutes));
+      // Giờ bắt đầu ca chuẩn
+      final expectedStart = DateTime(
+        today.year,
+        today.month,
+        today.day,
+        shiftStartHour,
+        shiftStartMin,
+      );
+      // Deadline ân hạn = giờ bắt đầu ca + grace
+      final deadline = expectedStart.add(Duration(minutes: graceMinutes));
 
       if (clockInTime.isBefore(deadline) || clockInTime.isAtSameMomentAs(deadline)) {
         // Đúng giờ hoặc trong grace period
         return LateDetectionResult(
-          isLate: false, lateMinutes: 0,
-          templateId: templateId, assignmentId: assignId);
+          isLate: false,
+          lateMinutes: 0,
+          templateId: templateId,
+          assignmentId: assignId,
+        );
       }
 
-      final lateMinutes = clockInTime.difference(deadline).inMinutes;
+      // Vượt quá thời gian ân hạn: tính số phút muộn từ giờ bắt đầu ca chuẩn
+      final lateMinutes = clockInTime.difference(expectedStart).inMinutes;
       return LateDetectionResult(
-        isLate: true, lateMinutes: lateMinutes,
-        templateId: templateId, assignmentId: assignId);
+        isLate: true,
+        lateMinutes: lateMinutes,
+        templateId: templateId,
+        assignmentId: assignId,
+      );
     } catch (e) {
       debugPrint('[ShiftTemplateRepository] detectLateArrival error: $e');
       return LateDetectionResult.noShift;
