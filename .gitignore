@@ -33,6 +33,13 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local CodeGraph index and generated database code
+.codegraph/
+lib/core/database/app_database.g.dart
+
+# Local Graphify knowledge graph and interactive architecture artifacts
+graphify-out/
+
 # Symbolication related
 app.*.symbols
 

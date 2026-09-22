@@ -8,6 +8,8 @@
 >
 > **Nguyên tắc thực thi:** Làm từng phase, báo cáo và chờ duyệt trước khi sang phase tiếp theo
 
+> **Điều kiện hạ tầng mới:** Trước khi triển khai backend/model trên server local, phải hoàn thành và nghiệm thu kế hoạch `.docs/Ai_Bum/ke-hoach-cai-ubuntu-usb-server-ai-bum.md`. Không được triển khai Supabase Staging hoặc AI Gateway lên máy Windows 10 hiện tại.
+
 ---
 
 ## 1. BỐI CẢNH ANTIGRAVITY PHẢI ĐỌC TRƯỚC KHI LÀM

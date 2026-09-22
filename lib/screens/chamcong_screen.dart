@@ -21,35 +21,43 @@ import '../core/repositories/module_repository.dart';
 import '../core/providers/app_providers.dart';
 import '../core/utils/watermark_helper.dart';
 
-const _kNavy   = Color(0xFF1C2151);
-const _kBg     = Color(0xFFF5F7FF);
-const _kMuted  = Color(0xFF9E9085);
-const _kGreen  = Color(0xFF16A34A);
-const _kRed    = Color(0xFFDC2626);
+const _kNavy = Color(0xFF1C2151);
+const _kBg = Color(0xFFF5F7FF);
+const _kMuted = Color(0xFF9E9085);
+const _kGreen = Color(0xFF16A34A);
+const _kRed = Color(0xFFDC2626);
 const _kOrange = Color(0xFFEA580C);
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
-final _realtimeEarningsProvider = FutureProvider.autoDispose<RealtimeMonthlyEarnings?>((ref) async {
-  final s = ref.watch(sessionProvider);
-  if (s == null || s.storeId == null) return null;
-  return TinhLuongRepository.fetchRealtimeMonthlyEarnings(
-    storeId: s.storeId!,
-    userId: s.userId,
-  );
-});
+final _realtimeEarningsProvider =
+    FutureProvider.autoDispose<RealtimeMonthlyEarnings?>((ref) async {
+      final s = ref.watch(sessionProvider);
+      if (s == null || s.storeId == null) return null;
+      return TinhLuongRepository.fetchRealtimeMonthlyEarnings(
+        storeId: s.storeId!,
+        userId: s.userId,
+      );
+    });
 
-final _myShiftsProvider = FutureProvider.autoDispose<List<ShiftRecord>>((ref) async {
+final _myShiftsProvider = FutureProvider.autoDispose<List<ShiftRecord>>((
+  ref,
+) async {
   final s = ref.watch(sessionProvider);
   if (s?.storeId == null) {
-    debugPrint('[ChamCong] ⚠️ storeId=null | userId=${s?.userId} | role=${s?.role} | isOwner=${s?.isOwner}');
+    debugPrint(
+      '[ChamCong] ⚠️ storeId=null | userId=${s?.userId} | role=${s?.role} | isOwner=${s?.isOwner}',
+    );
     return [];
   }
-  final isManager = s!.isOwner || 
-      s.role == 'owner' || 
+  final isManager =
+      s!.isOwner ||
+      s.role == 'owner' ||
       s.role == 'manager' ||
       s.role.toLowerCase() == 'quản lý';
-  debugPrint('[ChamCong] getShifts → storeId=${s.storeId} | isManager=$isManager | role=${s.role}');
+  debugPrint(
+    '[ChamCong] getShifts → storeId=${s.storeId} | isManager=$isManager | role=${s.role}',
+  );
   final result = await StaffService.getShifts(
     storeId: s.storeId!,
     userId: isManager ? null : s.userId,
@@ -59,22 +67,21 @@ final _myShiftsProvider = FutureProvider.autoDispose<List<ShiftRecord>>((ref) as
   return result;
 });
 
-final _storeLocationProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final repo = AppSettingsRepository();
-  final lat = await repo.attendanceLat;
-  final lng = await repo.attendanceLng;
-  final radius = await repo.attendanceRadius;
-  return {
-    'lat': lat,
-    'lng': lng,
-    'radius': radius,
-  };
-});
+final _storeLocationProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
+  (ref) async {
+    final repo = AppSettingsRepository();
+    final lat = await repo.attendanceLat;
+    final lng = await repo.attendanceLng;
+    final radius = await repo.attendanceRadius;
+    return {'lat': lat, 'lng': lng, 'radius': radius};
+  },
+);
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 class ChamCongScreen extends ConsumerStatefulWidget {
   const ChamCongScreen({super.key});
-  @override ConsumerState<ChamCongScreen> createState() => _ChamCongScreenState();
+  @override
+  ConsumerState<ChamCongScreen> createState() => _ChamCongScreenState();
 }
 
 class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
@@ -92,8 +99,10 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
-    _pulseAnim = Tween<double>(begin: 1.0, end: 1.14).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+    _pulseAnim = Tween<double>(
+      begin: 1.0,
+      end: 1.14,
+    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
     // Cleanup ảnh điểm danh cũ > 60 ngày (chỉ Supabase fallback)
     // Google Drive giữ vĩnh viễn — là bằng chứng pháp lý dài hạn
@@ -107,10 +116,7 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
           retentionDays: 90,
         );
         // Google Drive cleanup (sử dụng cùng service account chấm công)
-        DriveService.cleanupOldDrivePhotos(
-          storeId: storeId,
-          retentionDays: 90,
-        );
+        DriveService.cleanupOldDrivePhotos(storeId: storeId, retentionDays: 90);
       }
     });
   }
@@ -119,7 +125,8 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
     if (_durationTimer?.isActive == true) return; // đã chạy rồi
     _elapsed = DateTime.now().difference(clockIn);
     _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _elapsed = DateTime.now().difference(clockIn));
+      if (mounted)
+        setState(() => _elapsed = DateTime.now().difference(clockIn));
     });
   }
 
@@ -137,8 +144,8 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
 
   bool get _isManager {
     final s = ref.read(sessionProvider);
-    return s?.isOwner == true || 
-        s?.role == 'owner' || 
+    return s?.isOwner == true ||
+        s?.role == 'owner' ||
         s?.role == 'manager' ||
         s?.role.toLowerCase() == 'quản lý';
   }
@@ -158,7 +165,9 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
         double? currentLat = initialLat;
         double? currentLng = initialLng;
         String? currentAddr = initialAddr;
-        final radiusCtrl = TextEditingController(text: initialRadius.toInt().toString());
+        final radiusCtrl = TextEditingController(
+          text: initialRadius.toInt().toString(),
+        );
         bool isLocating = false;
 
         return StatefulBuilder(
@@ -166,12 +175,23 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
             return AlertDialog(
               backgroundColor: Colors.white,
               surfaceTintColor: Colors.transparent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Row(children: [
-                Icon(Icons.location_on_rounded, color: _kNavy),
-                SizedBox(width: 8),
-                Text('Định vị của quán', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: _kNavy)),
-              ]),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.location_on_rounded, color: _kNavy),
+                  SizedBox(width: 8),
+                  Text(
+                    'Định vị của quán',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                      color: _kNavy,
+                    ),
+                  ),
+                ],
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -192,16 +212,36 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('VỊ TRÍ ĐÃ LƯU:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _kNavy)),
+                          const Text(
+                            'VỊ TRÍ ĐÃ LƯU:',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: _kNavy,
+                            ),
+                          ),
                           const SizedBox(height: 6),
                           if (currentLat != null && currentLng != null) ...[
-                            Text('Tọa độ: ${currentLat!.toStringAsFixed(6)}, ${currentLng!.toStringAsFixed(6)}',
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            Text(
+                              'Tọa độ: ${currentLat!.toStringAsFixed(6)}, ${currentLng!.toStringAsFixed(6)}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            Text('Địa chỉ: ${currentAddr ?? "Chưa lấy địa chỉ"}',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF374151))),
+                            Text(
+                              'Địa chỉ: ${currentAddr ?? "Chưa lấy địa chỉ"}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF374151),
+                              ),
+                            ),
                           ] else ...[
-                            const Text('Chưa thiết lập vị trí.', style: TextStyle(fontSize: 12, color: _kRed)),
+                            const Text(
+                              'Chưa thiết lập vị trí.',
+                              style: TextStyle(fontSize: 12, color: _kRed),
+                            ),
                           ],
                         ],
                       ),
@@ -215,56 +255,98 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
                           backgroundColor: _kNavy,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                        onPressed: isLocating ? null : () async {
-                          setDialogState(() => isLocating = true);
-                          try {
-                            final perm = await Geolocator.checkPermission();
-                            if (perm == LocationPermission.denied) {
-                              await Geolocator.requestPermission();
-                            }
-                            final pos = await Geolocator.getCurrentPosition(
-                              locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-                            );
-                            final marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
-                            String? addr;
-                            if (marks.isNotEmpty) {
-                              final m = marks.first;
-                              addr = [m.street, m.subAdministrativeArea, m.administrativeArea]
-                                  .where((s) => s?.isNotEmpty == true).join(', ');
-                            }
-                            setDialogState(() {
-                              currentLat = pos.latitude;
-                              currentLng = pos.longitude;
-                              currentAddr = addr;
-                              isLocating = false;
-                            });
-                          } catch (e) {
-                            setDialogState(() => isLocating = false);
-                            if (ctx.mounted) {
-                              ScaffoldMessenger.of(ctx).showSnackBar(
-                                SnackBar(content: Text('Lỗi lấy vị trí: $e')),
-                              );
-                            }
-                          }
-                        },
+                        onPressed: isLocating
+                            ? null
+                            : () async {
+                                setDialogState(() => isLocating = true);
+                                try {
+                                  final perm =
+                                      await Geolocator.checkPermission();
+                                  if (perm == LocationPermission.denied) {
+                                    await Geolocator.requestPermission();
+                                  }
+                                  final pos =
+                                      await Geolocator.getCurrentPosition(
+                                        locationSettings:
+                                            const LocationSettings(
+                                              accuracy: LocationAccuracy.high,
+                                            ),
+                                      );
+                                  final marks = await placemarkFromCoordinates(
+                                    pos.latitude,
+                                    pos.longitude,
+                                  );
+                                  String? addr;
+                                  if (marks.isNotEmpty) {
+                                    final m = marks.first;
+                                    addr =
+                                        [
+                                              m.street,
+                                              m.subAdministrativeArea,
+                                              m.administrativeArea,
+                                            ]
+                                            .where((s) => s?.isNotEmpty == true)
+                                            .join(', ');
+                                  }
+                                  setDialogState(() {
+                                    currentLat = pos.latitude;
+                                    currentLng = pos.longitude;
+                                    currentAddr = addr;
+                                    isLocating = false;
+                                  });
+                                } catch (e) {
+                                  setDialogState(() => isLocating = false);
+                                  if (ctx.mounted) {
+                                    ScaffoldMessenger.of(ctx).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Lỗi lấy vị trí: $e'),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
                         icon: isLocating
-                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Icon(Icons.my_location_rounded, size: 16),
-                        label: Text(isLocating ? 'Đang lấy vị trí...' : 'Lấy vị trí hiện tại của quán'),
+                        label: Text(
+                          isLocating
+                              ? 'Đang lấy vị trí...'
+                              : 'Lấy vị trí hiện tại của quán',
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Bán kính cho phép (mét):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Bán kính cho phép (mét):',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: radiusCtrl,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         hintText: 'Mặc định: 200',
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ],
@@ -280,12 +362,18 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
                     backgroundColor: _kGreen,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   onPressed: () async {
                     if (currentLat == null || currentLng == null) {
                       ScaffoldMessenger.of(ctx).showSnackBar(
-                        const SnackBar(content: Text('Vui lòng lấy vị trí quán trước khi lưu.')),
+                        const SnackBar(
+                          content: Text(
+                            'Vui lòng lấy vị trí quán trước khi lưu.',
+                          ),
+                        ),
                       );
                       return;
                     }
@@ -298,7 +386,9 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
                     );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Đã lưu cấu hình định vị của quán.')),
+                        const SnackBar(
+                          content: Text('Đã lưu cấu hình định vị của quán.'),
+                        ),
                       );
                       ref.invalidate(_myShiftsProvider);
                     }
@@ -317,36 +407,39 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
-    if (session == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (session == null)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     final name = session.displayName ?? '';
     final date = DateFormat('EEEE, dd/MM/yyyy', 'vi').format(DateTime.now());
 
     final mainBody = CustomScrollView(
-        slivers: [
-          _buildAppBar(name, date),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
-              child: _isManager ? const _ManagerView() : _buildStaffView(),
-            ),
+      slivers: [
+        _buildAppBar(name, date),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+            child: _isManager ? const _ManagerView() : _buildStaffView(),
           ),
-        ],
-      );
+        ),
+      ],
+    );
 
     return Scaffold(
       backgroundColor: _kBg,
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth > 700) {
-            return Row(children: [
-              Expanded(flex: 3, child: mainBody),
-              SizedBox(
-                width: 280,
-                child: _ChamCongRightPanel(
-                  shiftsAsync: ref.watch(_myShiftsProvider),
+            return Row(
+              children: [
+                Expanded(flex: 3, child: mainBody),
+                SizedBox(
+                  width: 280,
+                  child: _ChamCongRightPanel(
+                    shiftsAsync: ref.watch(_myShiftsProvider),
+                  ),
                 ),
-              ),
-            ]);
+              ],
+            );
           }
           return mainBody;
         },
@@ -358,44 +451,70 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
     expandedHeight: 110,
     pinned: true,
     backgroundColor: _kNavy,
-    actions: _isManager ? [
-      IconButton(
-        icon: const Icon(Icons.settings_outlined, color: Colors.white),
-        tooltip: 'Cài đặt định vị quán',
-        onPressed: () => _showLocationSettingsDialog(context),
-      ),
-    ] : null,
+    actions: _isManager
+        ? [
+            IconButton(
+              icon: const Icon(Icons.settings_outlined, color: Colors.white),
+              tooltip: 'Cài đặt định vị quán',
+              onPressed: () => _showLocationSettingsDialog(context),
+            ),
+          ]
+        : null,
     flexibleSpace: FlexibleSpaceBar(
       titlePadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      title: Row(children: [
-        Container(
-          width: 30, height: 30,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
+      title: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                ),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Chấm công',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
-            Text(date, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 10)),
-          ],
-        )),
-      ]),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Chấm công',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+                Text(
+                  date,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
       background: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF1C2151), Color(0xFF0284C7)],
-            begin: Alignment.topLeft, end: Alignment.bottomRight),
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
       ),
     ),
@@ -418,45 +537,61 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
         }
         final isClockedIn = open != null;
 
-        return Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-          const _StaffRealtimeEarningsCard(),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const _StaffRealtimeEarningsCard(),
 
-          // ── Circular clock button ──
-          _ClockButton(
-            isClockedIn: isClockedIn,
-            elapsed: _elapsed,
-            pulseAnim: _pulseAnim,
-            loading: _loading,
-            onTap: () => _handleClockAction(open),
-          ),
-
-          // ── Stats ──
-          shiftsAsync.when(
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-            data: (list) => _StatsRow(shifts: list, openShift: open),
-          ),
-          const SizedBox(height: 24),
-          // ── History ──
-          Row(children: [
-            const Text('Lịch sử ca',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy)),
-            const Spacer(),
-            shiftsAsync.maybeWhen(
-              data: (l) => Text('${l.length} ca',
-                style: const TextStyle(fontSize: 12, color: _kMuted)),
-              orElse: () => const SizedBox.shrink(),
+            // ── Circular clock button ──
+            _ClockButton(
+              isClockedIn: isClockedIn,
+              elapsed: _elapsed,
+              pulseAnim: _pulseAnim,
+              loading: _loading,
+              onTap: () => _handleClockAction(open),
             ),
-          ]),
-          const SizedBox(height: 12),
-          shiftsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator(color: _kNavy)),
-            error: (e, _) => Text('Lỗi: $e'),
-            data: (list) => list.isEmpty
-                ? const _EmptyShifts()
-                : Column(children: list.map((s) => _ShiftRow(shift: s)).toList()),
-          ),
-        ]);
+
+            // ── Stats ──
+            shiftsAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (list) => _StatsRow(shifts: list, openShift: open),
+            ),
+            const SizedBox(height: 24),
+            // ── History ──
+            Row(
+              children: [
+                const Text(
+                  'Lịch sử ca',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: _kNavy,
+                  ),
+                ),
+                const Spacer(),
+                shiftsAsync.maybeWhen(
+                  data: (l) => Text(
+                    '${l.length} ca',
+                    style: const TextStyle(fontSize: 12, color: _kMuted),
+                  ),
+                  orElse: () => const SizedBox.shrink(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            shiftsAsync.when(
+              loading: () =>
+                  const Center(child: CircularProgressIndicator(color: _kNavy)),
+              error: (e, _) => Text('Lỗi: $e'),
+              data: (list) => list.isEmpty
+                  ? const _EmptyShifts()
+                  : Column(
+                      children: list.map((s) => _ShiftRow(shift: s)).toList(),
+                    ),
+            ),
+          ],
+        );
       },
     );
   }
@@ -472,12 +607,19 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (_) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(children: [
-            Icon(Icons.logout_rounded, color: _kRed, size: 22),
-            SizedBox(width: 8),
-            Text('Xác nhận ra ca', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-          ]),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.logout_rounded, color: _kRed, size: 22),
+              SizedBox(width: 8),
+              Text(
+                'Xác nhận ra ca',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+              ),
+            ],
+          ),
           content: Text(
             'Ra ca lúc ${DateFormat('HH:mm').format(DateTime.now())}?\nThời gian làm việc và tiền ca sẽ được ghi nhận tự động.',
             style: const TextStyle(fontSize: 14, height: 1.5),
@@ -490,10 +632,16 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _kRed, foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                backgroundColor: _kRed,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              child: const Text('Ra ca', style: TextStyle(fontWeight: FontWeight.w700)),
+              child: const Text(
+                'Ra ca',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ),
@@ -503,16 +651,23 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       setState(() => _loading = true);
       try {
         final session = ref.read(sessionProvider);
-        if (session == null) { setState(() => _loading = false); return; }
+        if (session == null) {
+          setState(() => _loading = false);
+          return;
+        }
 
         final String shiftId = openShift['id'] as String;
-        final DateTime clockInTime = DateTime.parse(openShift['clock_in'] as String).toLocal();
+        final DateTime clockInTime = DateTime.parse(
+          openShift['clock_in'] as String,
+        ).toLocal();
         final DateTime clockOutTime = DateTime.now();
 
         await StaffService.clockOut(shiftId);
 
         // Fetch salary config & calculate single shift earnings
-        final config = await StaffSalaryConfigRepo.fetchByUserId(session.userId);
+        final config = await StaffSalaryConfigRepo.fetchByUserId(
+          session.userId,
+        );
         final shiftRecord = ShiftRecord(
           id: shiftId,
           userId: session.userId,
@@ -534,10 +689,11 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
 
         RealtimeMonthlyEarnings? updatedMonthly;
         if (session.storeId != null) {
-          updatedMonthly = await TinhLuongRepository.fetchRealtimeMonthlyEarnings(
-            storeId: session.storeId!,
-            userId: session.userId,
-          );
+          updatedMonthly =
+              await TinhLuongRepository.fetchRealtimeMonthlyEarnings(
+                storeId: session.storeId!,
+                userId: session.userId,
+              );
         }
 
         if (mounted) {
@@ -546,9 +702,14 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
 
         // 📡 Broadcast — subscribe trước, send, rồi unsubscribe để tránh channel leak
         try {
-          final ch = Supabase.instance.client.channel('shifts_sender_${session.storeId}');
+          final ch = Supabase.instance.client.channel(
+            'shifts_sender_${session.storeId}',
+          );
           await ch.subscribe();
-          await ch.sendBroadcastMessage(event: 'shift_changed', payload: {'action': 'clock_out'});
+          await ch.sendBroadcastMessage(
+            event: 'shift_changed',
+            payload: {'action': 'clock_out'},
+          );
           await ch.unsubscribe();
         } catch (_) {}
       } catch (e) {
@@ -567,12 +728,14 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       Uint8List? bytes;
       try {
         final picker = ImagePicker();
-        final xfile = await picker.pickImage(
-          source: ImageSource.camera,
-          preferredCameraDevice: CameraDevice.front,
-          imageQuality: 50,
-          maxWidth: 600,
-        ).timeout(const Duration(seconds: 45));
+        final xfile = await picker
+            .pickImage(
+              source: ImageSource.camera,
+              preferredCameraDevice: CameraDevice.front,
+              imageQuality: 50,
+              maxWidth: 600,
+            )
+            .timeout(const Duration(seconds: 45));
         if (xfile != null) {
           bytes = await xfile.readAsBytes();
           if (!kIsWeb) file = File(xfile.path);
@@ -609,24 +772,30 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: const Row(children: [
-                Icon(Icons.gavel_rounded, color: Colors.red, size: 24),
-                SizedBox(width: 8),
-                Text('Yêu cầu chụp ảnh trực tiếp'),
-              ]),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.gavel_rounded, color: Colors.red, size: 24),
+                  SizedBox(width: 8),
+                  Text('Yêu cầu chụp ảnh trực tiếp'),
+                ],
+              ),
               content: const Text(
                 'Để chống gian lận điểm danh, hệ thống yêu cầu nhân viên bắt buộc phải chụp ảnh selfie trực tiếp từ camera tại quán.\n\n'
                 '• Không hỗ trợ chọn ảnh sẵn từ thư viện.\n'
                 '• Không hỗ trợ điểm danh không có ảnh.\n\n'
-                'Vui lòng cấp quyền truy cập máy ảnh và thực hiện chụp ảnh thực tế để vào ca!'
+                'Vui lòng cấp quyền truy cập máy ảnh và thực hiện chụp ảnh thực tế để vào ca!',
               ),
               actions: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kNavy,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('Đã hiểu'),
@@ -643,17 +812,26 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       double? lat, lng;
       try {
         final perm = await Geolocator.checkPermission();
-        if (perm == LocationPermission.denied) await Geolocator.requestPermission();
+        if (perm == LocationPermission.denied)
+          await Geolocator.requestPermission();
         final pos = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+          ),
         ).timeout(const Duration(seconds: 5));
-        lat = pos.latitude; lng = pos.longitude;
-        final marks = await placemarkFromCoordinates(lat, lng)
-            .timeout(const Duration(seconds: 3));
+        lat = pos.latitude;
+        lng = pos.longitude;
+        final marks = await placemarkFromCoordinates(
+          lat,
+          lng,
+        ).timeout(const Duration(seconds: 3));
         if (marks.isNotEmpty) {
           final m = marks.first;
-          address = [m.street, m.subAdministrativeArea, m.administrativeArea]
-              .where((s) => s?.isNotEmpty == true).join(', ');
+          address = [
+            m.street,
+            m.subAdministrativeArea,
+            m.administrativeArea,
+          ].where((s) => s?.isNotEmpty == true).join(', ');
         }
       } catch (_) {} // GPS là optional
 
@@ -662,24 +840,37 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       final storeLat = await repo.attendanceLat;
       final storeLng = await repo.attendanceLng;
       final storeRadius = await repo.attendanceRadius;
-      
+
       if (storeLat != null && storeLng != null && lat != null && lng != null) {
-        final distance = Geolocator.distanceBetween(lat, lng, storeLat, storeLng);
+        final distance = Geolocator.distanceBetween(
+          lat,
+          lng,
+          storeLat,
+          storeLng,
+        );
         if (distance > storeRadius) {
           if (mounted) {
             final confirmCC = await showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                title: const Row(children: [
-                  Icon(Icons.warning_amber_rounded, color: _kOrange, size: 24),
-                  SizedBox(width: 8),
-                  Text('Định vị lệch phạm vi'),
-                ]),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                title: const Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: _kOrange,
+                      size: 24,
+                    ),
+                    SizedBox(width: 8),
+                    Text('Định vị lệch phạm vi'),
+                  ],
+                ),
                 content: Text(
                   'Hệ thống phát hiện bạn đang cách quán khoảng ${distance.toInt()}m '
                   '(vượt quá giới hạn ${storeRadius.toInt()}m).\n\n'
-                  'Ca chấm công này của bạn sẽ bị gắn cờ "Lệch vị trí" gửi đến chủ quán. Bạn có muốn tiếp tục?'
+                  'Ca chấm công này của bạn sẽ bị gắn cờ "Lệch vị trí" gửi đến chủ quán. Bạn có muốn tiếp tục?',
                 ),
                 actions: [
                   TextButton(
@@ -690,7 +881,9 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _kOrange,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     onPressed: () => Navigator.pop(ctx, true),
                     child: const Text('Tiếp tục'),
@@ -716,7 +909,9 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
 
       final session = ref.read(sessionProvider)!;
       final ts = DateFormat('yyyy-MM-dd_HH-mm').format(DateTime.now());
-      final safeName = SupabaseStorageFallback.sanitizeKey(session.displayName.replaceAll(' ', '_'));
+      final safeName = SupabaseStorageFallback.sanitizeKey(
+        session.displayName.replaceAll(' ', '_'),
+      );
       final fileName = '${ts}_$safeName.jpg';
       final subFolder = DateFormat('yyyy-MM').format(DateTime.now());
 
@@ -740,7 +935,7 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
             );
             if (driveResult != null) {
               driveFileId = driveResult.fileId;
-              photoUrl    = driveResult.viewLink;
+              photoUrl = driveResult.viewLink;
             } else {
               photoUrl = await SupabaseStorageFallback.uploadPhoto(
                 storeId: session.storeId ?? '',
@@ -765,22 +960,28 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: const Row(children: [
-                Icon(Icons.cloud_off_rounded, color: _kOrange, size: 24),
-                SizedBox(width: 8),
-                Text('Tải ảnh thất bại'),
-              ]),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.cloud_off_rounded, color: _kOrange, size: 24),
+                  SizedBox(width: 8),
+                  Text('Tải ảnh thất bại'),
+                ],
+              ),
               content: const Text(
                 'Tải ảnh selfie lên hệ thống không thành công do kết nối mạng yếu hoặc gián đoạn.\n\n'
-                'Vui lòng kiểm tra lại kết nối Wifi/4G và thực hiện bấm điểm danh lại để đảm bảo ảnh selfie được lưu đầy đủ!'
+                'Vui lòng kiểm tra lại kết nối Wifi/4G và thực hiện bấm điểm danh lại để đảm bảo ảnh selfie được lưu đầy đủ!',
               ),
               actions: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kNavy,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('Thử lại'),
@@ -793,45 +994,62 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       }
 
       // 4. Ghi DB vào ca
-      final shiftId = await StaffService.clockIn(session.userId, session.storeId ?? '',
-          userName: session.displayName,
-          photoUrl: photoUrl, latitude: lat, longitude: lng,
-          address: address, driveFileId: driveFileId);
+      final shiftId = await StaffService.clockIn(
+        session.userId,
+        session.storeId ?? '',
+        userName: session.displayName,
+        photoUrl: photoUrl,
+        latitude: lat,
+        longitude: lng,
+        address: address,
+        driveFileId: driveFileId,
+      );
 
       // ‼️ FIX Bug #25: Phát hiện đi muộn ngay sau clockIn
       // detectLateArrival so sánh giờ vào ca với ca được phân công hôm đó
       if (shiftId != null) {
         try {
           final lateResult = await ShiftTemplateRepository.detectLateArrival(
-            storeId:     session.storeId ?? '',
-            userId:      session.userId,
+            storeId: session.storeId ?? '',
+            userId: session.userId,
             clockInTime: DateTime.now(), // giờ local
           );
           if (lateResult.isLate) {
             // Update is_late và late_minutes vào DB để aggregateShifts tính đúng
-            await Supabase.instance.client.from('staff_shifts').update({
-              'is_late':      true,
-              'late_minutes': lateResult.lateMinutes,
-              'assignment_id': lateResult.assignmentId,
-            }).eq('id', shiftId);
+            await Supabase.instance.client
+                .from('staff_shifts')
+                .update({
+                  'is_late': true,
+                  'late_minutes': lateResult.lateMinutes,
+                  'assignment_id': lateResult.assignmentId,
+                })
+                .eq('id', shiftId);
           }
         } catch (_) {} // silent fail — late detection không block clock-in
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Row(children: [
-            const Icon(Icons.login_rounded, color: Colors.white, size: 18),
-            const SizedBox(width: 10),
-            Text('Đã vào ca lúc ${DateFormat('HH:mm').format(DateTime.now())}',
-              style: const TextStyle(fontWeight: FontWeight.w700)),
-          ]),
-          backgroundColor: _kGreen,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          duration: const Duration(milliseconds: 2500),
-          margin: const EdgeInsets.all(16),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.login_rounded, color: Colors.white, size: 18),
+                const SizedBox(width: 10),
+                Text(
+                  'Đã vào ca lúc ${DateFormat('HH:mm').format(DateTime.now())}',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+            backgroundColor: _kGreen,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            duration: const Duration(milliseconds: 2500),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
       }
 
       ref.invalidate(openShiftCCProvider);
@@ -839,9 +1057,14 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
 
       // 📡 Broadcast — subscribe trước, send, rồi unsubscribe để tránh channel leak
       try {
-        final ch = Supabase.instance.client.channel('shifts_sender_${session.storeId}');
+        final ch = Supabase.instance.client.channel(
+          'shifts_sender_${session.storeId}',
+        );
         await ch.subscribe();
-        await ch.sendBroadcastMessage(event: 'shift_changed', payload: {'action': 'clock_in'});
+        await ch.sendBroadcastMessage(
+          event: 'shift_changed',
+          payload: {'action': 'clock_in'},
+        );
         await ch.unsubscribe();
       } catch (_) {}
     } catch (e) {
@@ -862,7 +1085,7 @@ class _ManagerView extends ConsumerStatefulWidget {
 class _ManagerViewState extends ConsumerState<_ManagerView> {
   int _filterIdx = 0;
   DateTime _weekStart = _mondayOf(DateTime.now());
-  int _navYear  = DateTime.now().year;
+  int _navYear = DateTime.now().year;
   int _navMonth = DateTime.now().month;
   RealtimeChannel? _shiftsChannel;
   Timer? _liveTimer;
@@ -878,8 +1101,8 @@ class _ManagerViewState extends ConsumerState<_ManagerView> {
     super.initState();
     final now = DateTime.now();
     _weekStart = _mondayOf(now);
-    _navYear   = now.year;
-    _navMonth  = now.month;
+    _navYear = now.year;
+    _navMonth = now.month;
     WidgetsBinding.instance.addPostFrameCallback((_) => _subscribeRealtime());
     _liveTimer = Timer.periodic(const Duration(seconds: 60), (_) {
       if (mounted) setState(() {});
@@ -896,7 +1119,11 @@ class _ManagerViewState extends ConsumerState<_ManagerView> {
           schema: 'public',
           table: 'staff_shifts',
           callback: (_) {
-            if (mounted) ref.invalidate(_myShiftsProvider);
+            if (mounted) {
+              ref.invalidate(_myShiftsProvider);
+              ref.invalidate(openShiftCCProvider);
+              ref.invalidate(_realtimeEarningsProvider);
+            }
           },
         )
         .subscribe();
@@ -919,9 +1146,9 @@ class _ManagerViewState extends ConsumerState<_ManagerView> {
       lastDate: now,
       helpText: 'Chọn ngày trong tuần muốn xem',
       builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: _kNavy),
-        ),
+        data: Theme.of(
+          ctx,
+        ).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
         child: child!,
       ),
     );
@@ -940,15 +1167,15 @@ class _ManagerViewState extends ConsumerState<_ManagerView> {
       lastDate: now,
       helpText: 'Chọn tháng muốn xem',
       builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: _kNavy),
-        ),
+        data: Theme.of(
+          ctx,
+        ).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
         child: child!,
       ),
     );
     if (picked != null && mounted) {
       setState(() {
-        _navYear  = picked.year;
+        _navYear = picked.year;
         _navMonth = picked.month;
       });
     }
@@ -960,13 +1187,16 @@ class _ManagerViewState extends ConsumerState<_ManagerView> {
       final ci = s.clockIn.toLocal();
       switch (_filterIdx) {
         case 0: // Hôm nay — cố định
-          return ci.year == now.year && ci.month == now.month && ci.day == now.day;
+          return ci.year == now.year &&
+              ci.month == now.month &&
+              ci.day == now.day;
         case 1: // Tuần đã chọn
           final weekEnd = _weekStart.add(const Duration(days: 7));
           return !ci.isBefore(_weekStart) && ci.isBefore(weekEnd);
         case 2: // Tháng đã chọn
           return ci.year == _navYear && ci.month == _navMonth;
-        default: return true;
+        default:
+          return true;
       }
     }).toList();
   }
@@ -981,25 +1211,29 @@ class _ManagerViewState extends ConsumerState<_ManagerView> {
       ),
       error: (e, _) => Padding(
         padding: const EdgeInsets.only(top: 40),
-        child: Column(children: [
-          const Icon(Icons.error_outline_rounded, color: _kRed, size: 40),
-          const SizedBox(height: 8),
-          Text('Lỗi tải dữ liệu:\n$e',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: _kMuted, fontSize: 13)),
-          const SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: () => ref.invalidate(_myShiftsProvider),
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Thử lại'),
-          ),
-        ]),
+        child: Column(
+          children: [
+            const Icon(Icons.error_outline_rounded, color: _kRed, size: 40),
+            const SizedBox(height: 8),
+            Text(
+              'Lỗi tải dữ liệu:\n$e',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: _kMuted, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: () => ref.invalidate(_myShiftsProvider),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Thử lại'),
+            ),
+          ],
+        ),
       ),
       data: (all) {
         final filtered = _applyFilter(all);
         // active = đang làm trong toàn bộ ca (không filter ngày)
         final activeAll = all.where((s) => s.isOpen).toList();
-        final done     = filtered.where((s) => !s.isOpen).toList();
+        final done = filtered.where((s) => !s.isOpen).toList();
         // Group done by employee
         final Map<String, List<ShiftRecord>> grouped = {};
         for (final s in done) {
@@ -1019,7 +1253,11 @@ class _ManagerViewState extends ConsumerState<_ManagerView> {
               ),
             ),
             // Stats
-            _ManagerStatsRow(allShifts: all, filtered: filtered, filterIdx: _filterIdx),
+            _ManagerStatsRow(
+              allShifts: all,
+              filtered: filtered,
+              filterIdx: _filterIdx,
+            ),
             const SizedBox(height: 16),
             // Tab Hôm nay / Tuần / Tháng
             _MgrFilterBar(
@@ -1031,12 +1269,16 @@ class _ManagerViewState extends ConsumerState<_ManagerView> {
               const SizedBox(height: 8),
               _WeekNavBar(
                 weekStart: _weekStart,
-                canGoNext: _weekStart.add(const Duration(days: 7)).isBefore(
-                  DateTime.now().add(const Duration(days: 1))),
-                onPrev: () => setState(() =>
-                  _weekStart = _weekStart.subtract(const Duration(days: 7))),
-                onNext: () => setState(() =>
-                  _weekStart = _weekStart.add(const Duration(days: 7))),
+                canGoNext: _weekStart
+                    .add(const Duration(days: 7))
+                    .isBefore(DateTime.now().add(const Duration(days: 1))),
+                onPrev: () => setState(
+                  () =>
+                      _weekStart = _weekStart.subtract(const Duration(days: 7)),
+                ),
+                onNext: () => setState(
+                  () => _weekStart = _weekStart.add(const Duration(days: 7)),
+                ),
                 onPick: () => _pickWeek(context),
               ),
             ],
@@ -1045,15 +1287,24 @@ class _ManagerViewState extends ConsumerState<_ManagerView> {
               _MonthNavBar(
                 year: _navYear,
                 month: _navMonth,
-                canGoNext: !(_navYear == DateTime.now().year &&
-                             _navMonth == DateTime.now().month),
+                canGoNext:
+                    !(_navYear == DateTime.now().year &&
+                        _navMonth == DateTime.now().month),
                 onPrev: () => setState(() {
-                  if (_navMonth == 1) { _navYear--; _navMonth = 12; }
-                  else { _navMonth--; }
+                  if (_navMonth == 1) {
+                    _navYear--;
+                    _navMonth = 12;
+                  } else {
+                    _navMonth--;
+                  }
                 }),
                 onNext: () => setState(() {
-                  if (_navMonth == 12) { _navYear++; _navMonth = 1; }
-                  else { _navMonth++; }
+                  if (_navMonth == 12) {
+                    _navYear++;
+                    _navMonth = 1;
+                  } else {
+                    _navMonth++;
+                  }
                 }),
                 onPick: () => _pickMonth(context),
               ),
@@ -1080,15 +1331,17 @@ class _ManagerViewState extends ConsumerState<_ManagerView> {
             ),
             const SizedBox(height: 8),
             if (done.isEmpty)
-              _EmptyShifts(message: _filterIdx == 0
-                ? 'Chưa có ca nào hôm nay'
-                : _filterIdx == 1
-                  ? 'Không có ca trong tuần này'
-                  : 'Không có ca trong tháng này')
-            else ...grouped.entries.map((e) => _EmployeeGroup(
-              name: e.key,
-              shifts: e.value,
-            )),
+              _EmptyShifts(
+                message: _filterIdx == 0
+                    ? 'Chưa có ca nào hôm nay'
+                    : _filterIdx == 1
+                    ? 'Không có ca trong tuần này'
+                    : 'Không có ca trong tháng này',
+              )
+            else
+              ...grouped.entries.map(
+                (e) => _EmployeeGroup(name: e.key, shifts: e.value),
+              ),
           ],
         );
       },
@@ -1110,7 +1363,9 @@ class _MgrFilterBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8),
+        ],
       ),
       child: Row(
         children: List.generate(labels.length, (i) {
@@ -1125,7 +1380,8 @@ class _MgrFilterBar extends StatelessWidget {
                   color: isOn ? _kNavy : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(labels[i],
+                child: Text(
+                  labels[i],
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
@@ -1148,19 +1404,27 @@ class _WeekNavBar extends StatelessWidget {
   final bool canGoNext;
   final VoidCallback onPrev, onNext, onPick;
   const _WeekNavBar({
-    required this.weekStart, required this.canGoNext,
-    required this.onPrev, required this.onNext, required this.onPick,
+    required this.weekStart,
+    required this.canGoNext,
+    required this.onPrev,
+    required this.onNext,
+    required this.onPick,
   });
 
   @override
   Widget build(BuildContext context) {
-    final weekEnd  = weekStart.add(const Duration(days: 6));
-    final weekNum  = _isoWeek(weekStart);
+    final weekEnd = weekStart.add(const Duration(days: 6));
+    final weekNum = _isoWeek(weekStart);
     final startStr = DateFormat('dd/MM').format(weekStart);
-    final endStr   = DateFormat('dd/MM').format(weekEnd);
-    final label    = 'Tuần $weekNum · $startStr–$endStr';
-    return _NavBar(label: label, canGoNext: canGoNext,
-      onPrev: onPrev, onNext: onNext, onPick: onPick);
+    final endStr = DateFormat('dd/MM').format(weekEnd);
+    final label = 'Tuần $weekNum · $startStr–$endStr';
+    return _NavBar(
+      label: label,
+      canGoNext: canGoNext,
+      onPrev: onPrev,
+      onNext: onNext,
+      onPick: onPick,
+    );
   }
 
   static int _isoWeek(DateTime d) {
@@ -1175,15 +1439,24 @@ class _MonthNavBar extends StatelessWidget {
   final bool canGoNext;
   final VoidCallback onPrev, onNext, onPick;
   const _MonthNavBar({
-    required this.year, required this.month, required this.canGoNext,
-    required this.onPrev, required this.onNext, required this.onPick,
+    required this.year,
+    required this.month,
+    required this.canGoNext,
+    required this.onPrev,
+    required this.onNext,
+    required this.onPick,
   });
 
   @override
   Widget build(BuildContext context) {
     final label = 'Tháng $month / $year';
-    return _NavBar(label: label, canGoNext: canGoNext,
-      onPrev: onPrev, onNext: onNext, onPick: onPick);
+    return _NavBar(
+      label: label,
+      canGoNext: canGoNext,
+      onPrev: onPrev,
+      onNext: onNext,
+      onPick: onPick,
+    );
   }
 }
 
@@ -1193,8 +1466,11 @@ class _NavBar extends StatefulWidget {
   final bool canGoNext;
   final VoidCallback onPrev, onNext, onPick;
   const _NavBar({
-    required this.label, required this.canGoNext,
-    required this.onPrev, required this.onNext, required this.onPick,
+    required this.label,
+    required this.canGoNext,
+    required this.onPrev,
+    required this.onNext,
+    required this.onPick,
   });
 
   @override
@@ -1233,76 +1509,89 @@ class _NavBarState extends State<_NavBar> {
       height: 44,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_kNavy.withValues(alpha: 0.06), _kNavy.withValues(alpha: 0.04)],
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
+          colors: [
+            _kNavy.withValues(alpha: 0.06),
+            _kNavy.withValues(alpha: 0.04),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _kNavy.withValues(alpha: 0.10), width: 1),
       ),
-      child: Row(children: [
-        // ── Nút Trước ──
-        _NavBtn(
-          icon: Icons.chevron_left_rounded,
-          onTap: _onPrev,
-        ),
-        // ── Label với hiệu ứng slide ──
-        Expanded(
-          child: GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              widget.onPick();
-            },
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 280),
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeInCubic,
-              transitionBuilder: (child, animation) {
-                final offset = Tween<Offset>(
-                  begin: Offset(_slideDir * 0.35, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(position: offset, child: child),
-                );
+      child: Row(
+        children: [
+          // ── Nút Trước ──
+          _NavBtn(icon: Icons.chevron_left_rounded, onTap: _onPrev),
+          // ── Label với hiệu ứng slide ──
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                widget.onPick();
               },
-              child: Container(
-                key: ValueKey(widget.label),
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(widget.label,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
-                        color: _kNavy,
-                        letterSpacing: -0.2,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 280),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  final offset =
+                      Tween<Offset>(
+                        begin: Offset(_slideDir * 0.35, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
+                        ),
+                      );
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(position: offset, child: child),
+                  );
+                },
+                child: Container(
+                  key: ValueKey(widget.label),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.label,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: _kNavy,
+                          letterSpacing: -0.2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 5),
-                    Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        color: _kNavy.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(5),
+                      const SizedBox(width: 5),
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: _kNavy.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Icon(
+                          Icons.calendar_month_rounded,
+                          size: 11,
+                          color: _kNavy,
+                        ),
                       ),
-                      child: const Icon(Icons.calendar_month_rounded,
-                        size: 11, color: _kNavy),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        // ── Nút Tiếp ──
-        _NavBtn(
-          icon: Icons.chevron_right_rounded,
-          onTap: widget.canGoNext ? _onNext : null,
-        ),
-      ]),
+          // ── Nút Tiếp ──
+          _NavBtn(
+            icon: Icons.chevron_right_rounded,
+            onTap: widget.canGoNext ? _onNext : null,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1322,13 +1611,21 @@ class _NavBtnState extends State<_NavBtn> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 120));
-    _scale = Tween<double>(begin: 1.0, end: 0.82).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    );
+    _scale = Tween<double>(
+      begin: 1.0,
+      end: 0.82,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   void _tap() {
     if (widget.onTap == null) return;
@@ -1343,23 +1640,30 @@ class _NavBtnState extends State<_NavBtn> with SingleTickerProviderStateMixin {
       onTap: _tap,
       child: AnimatedBuilder(
         animation: _scale,
-        builder: (_, child) => Transform.scale(scale: _scale.value, child: child),
+        builder: (_, child) =>
+            Transform.scale(scale: _scale.value, child: child),
         child: Container(
-          width: 40, height: 40,
+          width: 40,
+          height: 40,
           margin: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            color: active
-              ? Colors.white
-              : Colors.transparent,
+            color: active ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
-            boxShadow: active ? [
-              BoxShadow(
-                color: _kNavy.withValues(alpha: 0.10),
-                blurRadius: 6, offset: const Offset(0, 2)),
-            ] : null,
+            boxShadow: active
+                ? [
+                    BoxShadow(
+                      color: _kNavy.withValues(alpha: 0.10),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
-          child: Icon(widget.icon, size: 20,
-            color: active ? _kNavy : _kMuted.withValues(alpha: 0.3)),
+          child: Icon(
+            widget.icon,
+            size: 20,
+            color: active ? _kNavy : _kMuted.withValues(alpha: 0.3),
+          ),
         ),
       ),
     );
@@ -1371,20 +1675,38 @@ class _MgrSectionHeader extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String title, count;
-  const _MgrSectionHeader({required this.icon, required this.color, required this.title, required this.count});
+  const _MgrSectionHeader({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.count,
+  });
 
   @override
-  Widget build(BuildContext context) => Row(children: [
-    Container(
-      width: 28, height: 28,
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-      child: Icon(icon, size: 15, color: color),
-    ),
-    const SizedBox(width: 8),
-    Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: color)),
-    const Spacer(),
-    Text(count, style: const TextStyle(fontSize: 12, color: _kMuted)),
-  ]);
+  Widget build(BuildContext context) => Row(
+    children: [
+      Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, size: 15, color: color),
+      ),
+      const SizedBox(width: 8),
+      Text(
+        title,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+      const Spacer(),
+      Text(count, style: const TextStyle(fontSize: 12, color: _kMuted)),
+    ],
+  );
 }
 
 // ── Employee group (collapsible) ──────────────────────────────────────────────
@@ -1401,9 +1723,12 @@ class _EmployeeGroupState extends State<_EmployeeGroup> {
 
   @override
   Widget build(BuildContext context) {
-    final totalMin = widget.shifts.fold<int>(0, (s, r) => s + r.duration.inMinutes);
+    final totalMin = widget.shifts.fold<int>(
+      0,
+      (s, r) => s + r.duration.inMinutes,
+    );
     final totalStr = totalMin >= 60
-        ? '${totalMin ~/ 60}h${(totalMin % 60).toString().padLeft(2,'0')}'
+        ? '${totalMin ~/ 60}h${(totalMin % 60).toString().padLeft(2, '0')}'
         : '${totalMin}p';
     final caCount = widget.shifts.length;
 
@@ -1413,7 +1738,9 @@ class _EmployeeGroupState extends State<_EmployeeGroup> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8),
+        ],
       ),
       child: Column(
         children: [
@@ -1423,38 +1750,63 @@ class _EmployeeGroupState extends State<_EmployeeGroup> {
             borderRadius: BorderRadius.circular(16),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(children: [
-                // Avatar
-                Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    color: _kNavy.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
+              child: Row(
+                children: [
+                  // Avatar
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: _kNavy.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        widget.name.isNotEmpty
+                            ? widget.name[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: _kNavy,
+                        ),
+                      ),
+                    ),
                   ),
-                  child: Center(
-                    child: Text(widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy)),
+                  const SizedBox(width: 12),
+                  // Name + summary
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            color: _kNavy,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$caCount ca · $totalStr làm việc',
+                          style: const TextStyle(fontSize: 12, color: _kMuted),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                // Name + summary
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.name,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _kNavy)),
-                    const SizedBox(height: 2),
-                    Text('$caCount ca · $totalStr làm việc',
-                      style: const TextStyle(fontSize: 12, color: _kMuted)),
-                  ],
-                )),
-                // Arrow
-                AnimatedRotation(
-                  turns: _expanded ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: const Icon(Icons.keyboard_arrow_down_rounded, color: _kMuted, size: 20),
-                ),
-              ]),
+                  // Arrow
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: _kMuted,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           // Expandable shifts
@@ -1466,7 +1818,9 @@ class _EmployeeGroupState extends State<_EmployeeGroup> {
                 ...widget.shifts.map((s) => _ShiftRowCompact(shift: s)),
               ],
             ),
-            crossFadeState: _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 220),
           ),
         ],
@@ -1483,67 +1837,117 @@ class _ShiftRowCompact extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
-    final isManager = session?.isOwner == true ||
+    final isManager =
+        session?.isOwner == true ||
         session?.role == 'owner' ||
         session?.role == 'manager' ||
         session?.role.toLowerCase() == 'quản lý';
 
     final ci = DateFormat('HH:mm').format(shift.clockIn.toLocal());
     final co = shift.clockOut != null
-        ? DateFormat('HH:mm').format(shift.clockOut!.toLocal()) : 'Đang làm';
+        ? DateFormat('HH:mm').format(shift.clockOut!.toLocal())
+        : 'Đang làm';
     final date = DateFormat('dd/MM').format(shift.clockIn.toLocal());
 
     return InkWell(
       onTap: () => _showPhotoAuditDialog(context, ref, shift, isManager),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-        child: Row(children: [
-        // Photo thumbnail
-        if (shift.photoUrl != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(shift.photoUrl!, width: 36, height: 36, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _smallAvatar()),
-          )
-        else _smallAvatar(),
-        const SizedBox(width: 10),
-        // Time
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(children: [
-              Text(date, style: const TextStyle(fontSize: 10, color: _kMuted)),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: (shift.isOpen ? _kGreen : _kNavy).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(5),
+            // Photo thumbnail
+            if (shift.photoUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  shift.photoUrl!,
+                  width: 36,
+                  height: 36,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _smallAvatar(),
                 ),
-                child: Text('$ci → $co',
-                  style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w700,
-                    color: shift.isOpen ? _kGreen : _kNavy)),
+              )
+            else
+              _smallAvatar(),
+            const SizedBox(width: 10),
+            // Time
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        date,
+                        style: const TextStyle(fontSize: 10, color: _kMuted),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (shift.isOpen ? _kGreen : _kNavy).withValues(
+                            alpha: 0.08,
+                          ),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          '$ci → $co',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: shift.isOpen ? _kGreen : _kNavy,
+                          ),
+                        ),
+                      ),
+                      if (shift.isOpen)
+                        Container(
+                          margin: const EdgeInsets.only(left: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _kGreen,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'LIVE',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      _buildLocationBadge(ref),
+                    ],
+                  ),
+                  if (shift.address != null)
+                    Text(
+                      shift.address!,
+                      style: const TextStyle(fontSize: 10, color: _kMuted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
               ),
-              if (shift.isOpen) Container(
-                margin: const EdgeInsets.only(left: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(color: _kGreen, borderRadius: BorderRadius.circular(4)),
-                child: const Text('LIVE', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900)),
+            ),
+            // Duration
+            Text(
+              shift.durationStr,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: shift.isOpen ? _kGreen : _kNavy,
+                fontSize: 13,
               ),
-              _buildLocationBadge(ref),
-            ]),
-            if (shift.address != null)
-              Text(shift.address!, style: const TextStyle(fontSize: 10, color: _kMuted),
-                maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
           ],
-        )),
-        // Duration
-        Text(shift.durationStr,
-          style: TextStyle(fontWeight: FontWeight.w800, color: shift.isOpen ? _kGreen : _kNavy, fontSize: 13)),
-      ]),
-    ),
-  );
+        ),
+      ),
+    );
   }
 
   Widget _buildLocationBadge(WidgetRef ref) {
@@ -1554,7 +1958,8 @@ class _ShiftRowCompact extends ConsumerWidget {
         final storeLng = config['lng'] as double?;
         final storeRadius = config['radius'] as double? ?? 200.0;
 
-        if (storeLat == null || storeLng == null) return const SizedBox.shrink();
+        if (storeLat == null || storeLng == null)
+          return const SizedBox.shrink();
 
         if (shift.latitude == null || shift.longitude == null) {
           return Container(
@@ -1566,14 +1971,22 @@ class _ShiftRowCompact extends ConsumerWidget {
             ),
             child: const Text(
               '⚠️ Không GPS',
-              style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 8,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           );
         }
 
         final distance = Geolocator.distanceBetween(
-          shift.latitude!, shift.longitude!, storeLat, storeLng);
-        
+          shift.latitude!,
+          shift.longitude!,
+          storeLat,
+          storeLng,
+        );
+
         final isOut = distance > storeRadius;
         return Container(
           margin: const EdgeInsets.only(left: 4),
@@ -1598,8 +2011,12 @@ class _ShiftRowCompact extends ConsumerWidget {
   }
 
   Widget _smallAvatar() => Container(
-    width: 36, height: 36,
-    decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(8)),
+    width: 36,
+    height: 36,
+    decoration: BoxDecoration(
+      color: _kNavy.withValues(alpha: 0.07),
+      borderRadius: BorderRadius.circular(8),
+    ),
     child: const Icon(Icons.person_rounded, color: _kNavy, size: 18),
   );
 }
@@ -1611,78 +2028,127 @@ class _ClockButton extends StatelessWidget {
   final Animation<double> pulseAnim;
   final VoidCallback onTap;
   const _ClockButton({
-    required this.isClockedIn, required this.elapsed,
-    required this.pulseAnim, required this.loading, required this.onTap,
+    required this.isClockedIn,
+    required this.elapsed,
+    required this.pulseAnim,
+    required this.loading,
+    required this.onTap,
   });
 
   String _fmtElapsed(Duration d) {
     final h = d.inHours;
     final m = d.inMinutes % 60;
     final s = d.inSeconds % 60;
-    if (h > 0) return '${h}h ${m.toString().padLeft(2,'0')}m ${s.toString().padLeft(2,'0')}s';
-    return '${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}';
+    if (h > 0)
+      return '${h}h ${m.toString().padLeft(2, '0')}m ${s.toString().padLeft(2, '0')}s';
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
     final color = isClockedIn ? _kRed : _kGreen;
     final label = isClockedIn ? 'RA CA' : 'VÀO CA';
-    final icon  = isClockedIn ? Icons.logout_rounded : Icons.login_rounded;
+    final icon = isClockedIn ? Icons.logout_rounded : Icons.login_rounded;
 
-    return Column(children: [
-      // Pulse ring + button
-      GestureDetector(
-        onTap: loading ? null : onTap,
-        child: AnimatedBuilder(
-          animation: pulseAnim,
-          builder: (_, child) => Transform.scale(
-            scale: pulseAnim.value,
-            child: child,
-          ),
-          child: Container(
-            width: 160, height: 160,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color,
-              boxShadow: [
-                BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 32, spreadRadius: 8),
-                BoxShadow(color: color.withValues(alpha: 0.15), blurRadius: 60, spreadRadius: 20),
-              ],
+    return Column(
+      children: [
+        // Pulse ring + button
+        GestureDetector(
+          onTap: loading ? null : onTap,
+          child: AnimatedBuilder(
+            animation: pulseAnim,
+            builder: (_, child) =>
+                Transform.scale(scale: pulseAnim.value, child: child),
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.35),
+                    blurRadius: 32,
+                    spreadRadius: 8,
+                  ),
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.15),
+                    blurRadius: 60,
+                    spreadRadius: 20,
+                  ),
+                ],
+              ),
+              child: loading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(icon, color: Colors.white, size: 36),
+                        const SizedBox(height: 6),
+                        Text(
+                          label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
-            child: loading
-                ? const Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-                : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Icon(icon, color: Colors.white, size: 36),
-                    const SizedBox(height: 6),
-                    Text(label, style: const TextStyle(
-                      color: Colors.white, fontSize: 20,
-                      fontWeight: FontWeight.w900, letterSpacing: 2)),
-                  ]),
           ),
         ),
-      ),
-      const SizedBox(height: 16),
-      // Sub-label
-      AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: isClockedIn
-            ? Column(key: const ValueKey('in'), children: [
-                Text(_fmtElapsed(elapsed),
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900,
-                    color: _kNavy, letterSpacing: 1)),
-                const SizedBox(height: 4),
-                const Text('Thời gian đang làm',
-                  style: TextStyle(fontSize: 12, color: _kMuted)),
-              ])
-            : Column(key: const ValueKey('out'), children: [
-                const Text('Chưa vào ca',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _kNavy)),
-                const SizedBox(height: 4),
-                const Text('Nhấn để bắt đầu ca làm việc',
-                  style: TextStyle(fontSize: 12, color: _kMuted)),
-              ]),
-      ),
-    ]);
+        const SizedBox(height: 16),
+        // Sub-label
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: isClockedIn
+              ? Column(
+                  key: const ValueKey('in'),
+                  children: [
+                    Text(
+                      _fmtElapsed(elapsed),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: _kNavy,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Thời gian đang làm',
+                      style: TextStyle(fontSize: 12, color: _kMuted),
+                    ),
+                  ],
+                )
+              : Column(
+                  key: const ValueKey('out'),
+                  children: [
+                    const Text(
+                      'Chưa vào ca',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _kNavy,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Nhấn để bắt đầu ca làm việc',
+                      style: TextStyle(fontSize: 12, color: _kMuted),
+                    ),
+                  ],
+                ),
+        ),
+      ],
+    );
   }
 }
 
@@ -1695,50 +2161,101 @@ class _StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final todayShifts = shifts.where((s) =>
-      s.clockIn.year == now.year && s.clockIn.month == now.month && s.clockIn.day == now.day
-    ).toList();
+    final todayShifts = shifts
+        .where(
+          (s) =>
+              s.clockIn.year == now.year &&
+              s.clockIn.month == now.month &&
+              s.clockIn.day == now.day,
+        )
+        .toList();
     // ‼️ FIX: truncate weekStart về 00:00:00 để không loại ca vào thứ 2 sáng sớm
     final nowMon = now.subtract(Duration(days: now.weekday - 1));
-    final weekStart = DateTime(nowMon.year, nowMon.month, nowMon.day); // midnight
+    final weekStart = DateTime(
+      nowMon.year,
+      nowMon.month,
+      nowMon.day,
+    ); // midnight
     final weekMin = shifts
         .where((s) => !s.clockIn.isBefore(weekStart))
         .fold<int>(0, (sum, s) => sum + s.duration.inMinutes);
-    final todayMin = todayShifts.fold<int>(0, (sum, s) => sum + s.duration.inMinutes);
+    final todayMin = todayShifts.fold<int>(
+      0,
+      (sum, s) => sum + s.duration.inMinutes,
+    );
 
-    return Row(children: [
-      _StatChip('Ca hôm nay', '${todayShifts.length}', Icons.today_rounded, _kNavy),
-      const SizedBox(width: 10),
-      _StatChip('Giờ hôm nay', '${todayMin ~/ 60}h${(todayMin % 60).toString().padLeft(2,'0')}', Icons.timer_rounded, _kOrange),
-      const SizedBox(width: 10),
-      _StatChip('Giờ tuần', '${weekMin ~/ 60}h${(weekMin % 60).toString().padLeft(2,'0')}', Icons.date_range_rounded, _kGreen),
-    ]);
+    return Row(
+      children: [
+        _StatChip(
+          'Ca hôm nay',
+          '${todayShifts.length}',
+          Icons.today_rounded,
+          _kNavy,
+        ),
+        const SizedBox(width: 10),
+        _StatChip(
+          'Giờ hôm nay',
+          '${todayMin ~/ 60}h${(todayMin % 60).toString().padLeft(2, '0')}',
+          Icons.timer_rounded,
+          _kOrange,
+        ),
+        const SizedBox(width: 10),
+        _StatChip(
+          'Giờ tuần',
+          '${weekMin ~/ 60}h${(weekMin % 60).toString().padLeft(2, '0')}',
+          Icons.date_range_rounded,
+          _kGreen,
+        ),
+      ],
+    );
   }
 }
 
-Widget _StatChip(String label, String value, IconData icon, Color color) => Expanded(
-  child: Container(
-    padding: const EdgeInsets.symmetric(vertical: 12),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: color.withValues(alpha: 0.15)),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
-    ),
-    child: Column(children: [
-      Icon(icon, color: color, size: 18),
-      const SizedBox(height: 5),
-      Text(value, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w900)),
-      Text(label, style: const TextStyle(color: _kMuted, fontSize: 9, fontWeight: FontWeight.w600)),
-    ]),
-  ),
-);
+Widget _StatChip(String label, String value, IconData icon, Color color) =>
+    Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(height: 5),
+            Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            Text(
+              label,
+              style: const TextStyle(
+                color: _kMuted,
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
 
 // ── Manager stats ─────────────────────────────────────────────────────────────
 class _ManagerStatsRow extends StatelessWidget {
-  final List<ShiftRecord> allShifts;   // toàn bộ ca — để tính 'Đang làm'
-  final List<ShiftRecord> filtered;    // ca đã filter theo period
-  final int filterIdx;                 // 0=hôm nay, 1=tuần, 2=tháng
+  final List<ShiftRecord> allShifts; // toàn bộ ca — để tính 'Đang làm'
+  final List<ShiftRecord> filtered; // ca đã filter theo period
+  final int filterIdx; // 0=hôm nay, 1=tuần, 2=tháng
   const _ManagerStatsRow({
     required this.allShifts,
     required this.filtered,
@@ -1764,35 +2281,62 @@ class _ManagerStatsRow extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF1C2151), Color(0xFF2D3180)],
-          begin: Alignment.topLeft, end: Alignment.bottomRight),
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(children: [
-        _MgrStat('$active', 'Đang làm', Icons.people_rounded, Colors.white),
-        _divider(),
-        _MgrStat('${filtered.length}', label, Icons.today_rounded, Colors.white),
-        _divider(),
-        _MgrStat('${totalMin ~/ 60}h${(totalMin % 60).toString().padLeft(2, '0')}',
-          'Tổng giờ', Icons.timer_rounded, Colors.white),
-      ]),
+      child: Row(
+        children: [
+          _MgrStat('$active', 'Đang làm', Icons.people_rounded, Colors.white),
+          _divider(),
+          _MgrStat(
+            '${filtered.length}',
+            label,
+            Icons.today_rounded,
+            Colors.white,
+          ),
+          _divider(),
+          _MgrStat(
+            '${totalMin ~/ 60}h${(totalMin % 60).toString().padLeft(2, '0')}',
+            'Tổng giờ',
+            Icons.timer_rounded,
+            Colors.white,
+          ),
+        ],
+      ),
     );
   }
 
   Widget _divider() => Container(
-    width: 1, height: 36,
+    width: 1,
+    height: 36,
     color: Colors.white.withValues(alpha: 0.2),
     margin: const EdgeInsets.symmetric(horizontal: 12),
   );
 }
 
-Widget _MgrStat(String value, String label, IconData icon, Color color) => Expanded(
-  child: Column(children: [
-    Icon(icon, color: color.withValues(alpha: 0.8), size: 16),
-    const SizedBox(height: 4),
-    Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.w900)),
-    Text(label, style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 9)),
-  ]),
-);
+Widget _MgrStat(String value, String label, IconData icon, Color color) =>
+    Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: color.withValues(alpha: 0.8), size: 16),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 9),
+          ),
+        ],
+      ),
+    );
 
 // ── Shift history row ─────────────────────────────────────────────────────────
 class _ShiftRow extends ConsumerWidget {
@@ -1803,14 +2347,16 @@ class _ShiftRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
-    final isManager = session?.isOwner == true ||
+    final isManager =
+        session?.isOwner == true ||
         session?.role == 'owner' ||
         session?.role == 'manager' ||
         session?.role.toLowerCase() == 'quản lý';
 
-    final clockIn  = DateFormat('HH:mm').format(shift.clockIn.toLocal());
+    final clockIn = DateFormat('HH:mm').format(shift.clockIn.toLocal());
     final clockOut = shift.clockOut != null
-        ? DateFormat('HH:mm').format(shift.clockOut!.toLocal()) : null;
+        ? DateFormat('HH:mm').format(shift.clockOut!.toLocal())
+        : null;
     final date = DateFormat('dd/MM').format(shift.clockIn.toLocal());
     final isOpen = shift.isOpen;
     final borderColor = isOpen ? _kGreen : const Color(0xFFE5E7EB);
@@ -1824,135 +2370,234 @@ class _ShiftRow extends ConsumerWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+            ),
+          ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: IntrinsicHeight(
-            child: Row(children: [
-              // Left accent
-              Container(width: 4, color: isOpen ? _kGreen : const Color(0xFFE5E7EB)),
-              // Photo
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: shift.photoUrl != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(shift.photoUrl!, width: 44, height: 44, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const _AvatarPh()))
-                    : const _AvatarPh(),
-              ),
-              // Info
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    if (showName) Text(shift.userName.trim().isNotEmpty ? shift.userName : 'Nhân viên',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kNavy)),
-                    Row(children: [
-                      Text(date, style: const TextStyle(fontSize: 11, color: _kMuted)),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: (isOpen ? _kGreen : _kNavy).withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          isOpen ? '$clockIn → Đang làm' : '$clockIn → ${clockOut ?? ''}',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                            color: isOpen ? _kGreen : _kNavy),
-                        ),
-                      ),
-                      if (isOpen) Container(
-                        margin: const EdgeInsets.only(left: 6),
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _kGreen, borderRadius: BorderRadius.circular(5)),
-                        child: const Text('LIVE',
-                          style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
-                      ),
-                      _buildLocationBadge(ref),
-                    ]),
-                    if (shift.address != null) ...[
-                      const SizedBox(height: 3),
-                      Text(shift.address!,
-                        style: const TextStyle(fontSize: 10, color: _kMuted),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ],
-                    if (shift.checkIsForgotClockout) ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _kRed.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: _kRed.withValues(alpha: 0.3)),
-                        ),
-                        child: const Text(
-                          '🔴 Quên chốt ca (>14h) - Trừ 50% lương',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kRed),
-                        ),
-                      ),
-                    ],
-                    if (shift.isManagerOverridden) ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          '🛡️ Điều chỉnh bởi ${shift.overrideBy ?? "Quản lý"}: ${shift.overrideReason ?? "Khôi phục lương"}',
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF0284C7)),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                    if (shift.duration.inHours >= 8) ...[
-                      const SizedBox(height: 4),
-                      if (shift.isOtApproved)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _kGreen.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
+            child: Row(
+              children: [
+                // Left accent
+                Container(
+                  width: 4,
+                  color: isOpen ? _kGreen : const Color(0xFFE5E7EB),
+                ),
+                // Photo
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: shift.photoUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            shift.photoUrl!,
+                            width: 44,
+                            height: 44,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const _AvatarPh(),
                           ),
-                          child: Text(
-                            '🟢 OT đã duyệt (${shift.otApprovedBy ?? "Quản lý"}): ${shift.otReason ?? "Tăng ca"}',
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kGreen),
+                        )
+                      : const _AvatarPh(),
+                ),
+                // Info
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (showName)
+                          Text(
+                            shift.userName.trim().isNotEmpty
+                                ? shift.userName
+                                : 'Nhân viên',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: _kNavy,
+                            ),
+                          ),
+                        Row(
+                          children: [
+                            Text(
+                              date,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: _kMuted,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (isOpen ? _kGreen : _kNavy).withValues(
+                                  alpha: 0.08,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                isOpen
+                                    ? '$clockIn → Đang làm'
+                                    : '$clockIn → ${clockOut ?? ''}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: isOpen ? _kGreen : _kNavy,
+                                ),
+                              ),
+                            ),
+                            if (isOpen)
+                              Container(
+                                margin: const EdgeInsets.only(left: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _kGreen,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: const Text(
+                                  'LIVE',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            _buildLocationBadge(ref),
+                          ],
+                        ),
+                        if (shift.address != null) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            shift.address!,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: _kMuted,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        )
-                      else
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _kOrange.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
+                        ],
+                        if (shift.checkIsForgotClockout) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _kRed.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: _kRed.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: const Text(
+                              '🔴 Quên chốt ca (>14h) - Trừ 50% lương',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: _kRed,
+                              ),
+                            ),
                           ),
-                          child: const Text(
-                            '🟡 Chờ Quản lý duyệt OT',
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _kOrange),
+                        ],
+                        if (shift.isManagerOverridden) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFF0284C7,
+                              ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '🛡️ Điều chỉnh bởi ${shift.overrideBy ?? "Quản lý"}: ${shift.overrideReason ?? "Khôi phục lương"}',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0284C7),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                    ],
-                  ]),
+                        ],
+                        if (shift.duration.inHours >= 8) ...[
+                          const SizedBox(height: 4),
+                          if (shift.isOtApproved)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _kGreen.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '🟢 OT đã duyệt (${shift.otApprovedBy ?? "Quản lý"}): ${shift.otReason ?? "Tăng ca"}',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: _kGreen,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _kOrange.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                '🟡 Chờ Quản lý duyệt OT',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: _kOrange,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              // Duration
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Text(shift.durationStr,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: isOpen ? _kGreen : _kNavy,
-                    fontSize: 15)),
-              ),
-            ]),
+                // Duration
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Text(
+                    shift.durationStr,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: isOpen ? _kGreen : _kNavy,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1967,7 +2612,8 @@ class _ShiftRow extends ConsumerWidget {
         final storeLng = config['lng'] as double?;
         final storeRadius = config['radius'] as double? ?? 200.0;
 
-        if (storeLat == null || storeLng == null) return const SizedBox.shrink();
+        if (storeLat == null || storeLng == null)
+          return const SizedBox.shrink();
 
         if (shift.latitude == null || shift.longitude == null) {
           return Container(
@@ -1979,14 +2625,22 @@ class _ShiftRow extends ConsumerWidget {
             ),
             child: const Text(
               '⚠️ Không GPS',
-              style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 8,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           );
         }
 
         final distance = Geolocator.distanceBetween(
-          shift.latitude!, shift.longitude!, storeLat, storeLng);
-        
+          shift.latitude!,
+          shift.longitude!,
+          storeLat,
+          storeLng,
+        );
+
         final isOut = distance > storeRadius;
         return Container(
           margin: const EdgeInsets.only(left: 6),
@@ -2015,7 +2669,8 @@ class _AvatarPh extends StatelessWidget {
   const _AvatarPh();
   @override
   Widget build(BuildContext context) => Container(
-    width: 44, height: 44,
+    width: 44,
+    height: 44,
     decoration: BoxDecoration(
       color: _kNavy.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(10),
@@ -2027,18 +2682,27 @@ class _AvatarPh extends StatelessWidget {
 class _ClockSkeleton extends StatelessWidget {
   const _ClockSkeleton();
   @override
-  Widget build(BuildContext context) => Column(children: [
-    Container(
-      width: 160, height: 160,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.grey.shade200,
+  Widget build(BuildContext context) => Column(
+    children: [
+      Container(
+        width: 160,
+        height: 160,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.grey.shade200,
+        ),
       ),
-    ),
-    const SizedBox(height: 12),
-    Container(width: 100, height: 14,
-      decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(7))),
-  ]);
+      const SizedBox(height: 12),
+      Container(
+        width: 100,
+        height: 14,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(7),
+        ),
+      ),
+    ],
+  );
 }
 
 class _EmptyShifts extends StatelessWidget {
@@ -2047,19 +2711,33 @@ class _EmptyShifts extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(32),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Icon(Icons.fingerprint_rounded, size: 52, color: Colors.grey.shade300),
-      const SizedBox(height: 12),
-      Text(message ?? 'Chưa có ca nào',
-        style: const TextStyle(color: _kMuted, fontWeight: FontWeight.w700, fontSize: 14)),
-      const SizedBox(height: 4),
-      const Text('Nhấn nút để bắt đầu ca làm việc đầu tiên',
-        style: TextStyle(color: _kMuted, fontSize: 11), textAlign: TextAlign.center),
-    ]),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.fingerprint_rounded, size: 52, color: Colors.grey.shade300),
+        const SizedBox(height: 12),
+        Text(
+          message ?? 'Chưa có ca nào',
+          style: const TextStyle(
+            color: _kMuted,
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Nhấn nút để bắt đầu ca làm việc đầu tiên',
+          style: TextStyle(color: _kMuted, fontSize: 11),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    ),
   );
 }
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TABLET RIGHT PANEL — Chamcong Stats Sidebar
@@ -2090,15 +2768,33 @@ class _ChamCongRightPanel extends StatelessWidget {
           _CCCard(
             title: 'Tổng quan',
             icon: Icons.fingerprint_rounded,
-            child: Column(children: [
-              _CCRow(label: 'Tổng ca', value: '${shifts.length}', color: _kNavy),
-              const Divider(height: 1),
-              _CCRow(label: 'Đang làm', value: '$activeCount', color: _kGreen),
-              const Divider(height: 1),
-              _CCRow(label: 'Hôm nay', value: '${todayShifts.length} ca', color: _kOrange),
-              const Divider(height: 1),
-              _CCRow(label: 'Tổng giờ', value: '${totalHours.toStringAsFixed(1)}h', color: _kNavy),
-            ]),
+            child: Column(
+              children: [
+                _CCRow(
+                  label: 'Tổng ca',
+                  value: '${shifts.length}',
+                  color: _kNavy,
+                ),
+                const Divider(height: 1),
+                _CCRow(
+                  label: 'Đang làm',
+                  value: '$activeCount',
+                  color: _kGreen,
+                ),
+                const Divider(height: 1),
+                _CCRow(
+                  label: 'Hôm nay',
+                  value: '${todayShifts.length} ca',
+                  color: _kOrange,
+                ),
+                const Divider(height: 1),
+                _CCRow(
+                  label: 'Tổng giờ',
+                  value: '${totalHours.toStringAsFixed(1)}h',
+                  color: _kNavy,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -2117,22 +2813,38 @@ class _CCCard extends StatelessWidget {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
-      boxShadow: [BoxShadow(
-        color: _kNavy.withValues(alpha: 0.07), blurRadius: 8, offset: const Offset(0, 2))],
+      boxShadow: [
+        BoxShadow(
+          color: _kNavy.withValues(alpha: 0.07),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
     ),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-        child: Row(children: [
-          Icon(icon, size: 16, color: _kNavy),
-          const SizedBox(width: 6),
-          Text(title, style: GoogleFonts.outfit(
-            fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
-        ]),
-      ),
-      const Divider(height: 1),
-      Padding(padding: const EdgeInsets.all(14), child: child),
-    ]),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: _kNavy),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: _kNavy,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Padding(padding: const EdgeInsets.all(14), child: child),
+      ],
+    ),
   );
 }
 
@@ -2144,12 +2856,30 @@ class _CCRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Row(children: [
-      Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 8),
-      Expanded(child: Text(label, style: GoogleFonts.outfit(fontSize: 13, color: _kNavy))),
-      Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
-    ]),
+    child: Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.outfit(fontSize: 13, color: _kNavy),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    ),
   );
 }
 
@@ -2196,16 +2926,17 @@ Future<Uint8List> _addWatermarkToImage(
       ),
     );
 
-    builder.pushStyle(ui.TextStyle(
-      color: const Color(0xFFFFD700), // Màu vàng rực rỡ
-      fontWeight: FontWeight.bold,
-    ));
+    builder.pushStyle(
+      ui.TextStyle(
+        color: const Color(0xFFFFD700), // Màu vàng rực rỡ
+        fontWeight: FontWeight.bold,
+      ),
+    );
     builder.addText('THOI GIAN: $dateTimeText\n');
 
-    builder.pushStyle(ui.TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.w600,
-    ));
+    builder.pushStyle(
+      ui.TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+    );
     builder.addText('VI TRI: $locationText');
 
     final ui.Paragraph paragraph = builder.build();
@@ -2216,11 +2947,17 @@ Future<Uint8List> _addWatermarkToImage(
     final double overlayHeight = paragraph.height + (padding * 2);
 
     final Paint backgroundPaint = Paint()
-      ..color = const Color(0xD9000000) // Đen 85% opacity
+      ..color =
+          const Color(0xD9000000) // Đen 85% opacity
       ..style = PaintingStyle.fill;
 
     canvas.drawRect(
-      Rect.fromLTWH(0, targetHeight - overlayHeight, targetWidth, overlayHeight),
+      Rect.fromLTWH(
+        0,
+        targetHeight - overlayHeight,
+        targetWidth,
+        overlayHeight,
+      ),
       backgroundPaint,
     );
 
@@ -2240,9 +2977,14 @@ Future<Uint8List> _addWatermarkToImage(
     );
 
     final ui.Picture picture = recorder.endRecording();
-    final ui.Image watermarkedImage = await picture.toImage(targetWidth.toInt(), targetHeight.toInt());
+    final ui.Image watermarkedImage = await picture.toImage(
+      targetWidth.toInt(),
+      targetHeight.toInt(),
+    );
 
-    final ByteData? byteData = await watermarkedImage.toByteData(format: ui.ImageByteFormat.png);
+    final ByteData? byteData = await watermarkedImage.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
 
     image.dispose();
     watermarkedImage.dispose();
@@ -2259,8 +3001,15 @@ Future<Uint8List> _addWatermarkToImage(
 // ─────────────────────────────────────────────────────────────────────────────
 // DIALOG KIỂM TRA NGẪU NHIÊN ẢNH CHỤP ĐIỂM DANH LIVE CỦA NHÂN VIÊN
 // ─────────────────────────────────────────────────────────────────────────────
-void _showPhotoAuditDialog(BuildContext context, WidgetRef ref, ShiftRecord shift, bool isManager) {
-  final clockInStr = DateFormat('HH:mm dd/MM/yyyy').format(shift.clockIn.toLocal());
+void _showPhotoAuditDialog(
+  BuildContext context,
+  WidgetRef ref,
+  ShiftRecord shift,
+  bool isManager,
+) {
+  final clockInStr = DateFormat(
+    'HH:mm dd/MM/yyyy',
+  ).format(shift.clockIn.toLocal());
   final clockOutStr = shift.clockOut != null
       ? DateFormat('HH:mm dd/MM/yyyy').format(shift.clockOut!.toLocal())
       : 'Đang trong ca (LIVE)';
@@ -2289,7 +3038,11 @@ void _showPhotoAuditDialog(BuildContext context, WidgetRef ref, ShiftRecord shif
                       color: _kNavy.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.verified_user_rounded, color: _kNavy, size: 22),
+                    child: const Icon(
+                      Icons.verified_user_rounded,
+                      color: _kNavy,
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -2297,16 +3050,24 @@ void _showPhotoAuditDialog(BuildContext context, WidgetRef ref, ShiftRecord shif
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          shift.userName.isNotEmpty ? shift.userName : 'Nhân viên',
+                          shift.userName.isNotEmpty
+                              ? shift.userName
+                              : 'Nhân viên',
                           style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: _kNavy,
+                          ),
                         ),
                         Text(
-                          shift.isOpen ? '🟢 Đang làm việc' : '⚪ Đã kết thúc ca',
+                          shift.isOpen
+                              ? '🟢 Đang làm việc'
+                              : '⚪ Đã kết thúc ca',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: shift.isOpen ? _kGreen : _kMuted),
+                            color: shift.isOpen ? _kGreen : _kMuted,
+                          ),
                         ),
                       ],
                     ),
@@ -2336,9 +3097,19 @@ void _showPhotoAuditDialog(BuildContext context, WidgetRef ref, ShiftRecord shif
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey),
+                                    Icon(
+                                      Icons.broken_image_rounded,
+                                      size: 40,
+                                      color: Colors.grey,
+                                    ),
                                     SizedBox(height: 8),
-                                    Text('Không tải được ảnh', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                    Text(
+                                      'Không tải được ảnh',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -2351,11 +3122,19 @@ void _showPhotoAuditDialog(BuildContext context, WidgetRef ref, ShiftRecord shif
                         color: Colors.grey.shade100,
                         child: const Column(
                           children: [
-                            Icon(Icons.no_photography_rounded, size: 48, color: Colors.grey),
+                            Icon(
+                              Icons.no_photography_rounded,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
                             SizedBox(height: 10),
                             Text(
                               'Chưa có ảnh chụp selfie ca này',
-                              style: TextStyle(fontWeight: FontWeight.w700, color: _kNavy, fontSize: 13),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: _kNavy,
+                                fontSize: 13,
+                              ),
                             ),
                             SizedBox(height: 4),
                             Text(
@@ -2367,189 +3146,255 @@ void _showPhotoAuditDialog(BuildContext context, WidgetRef ref, ShiftRecord shif
                         ),
                       ),
               ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Chi tiết ca
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: FutureBuilder<Map<String, double?>>(
-                future: () async {
-                  final repo = AppSettingsRepository();
-                  final lat = await repo.attendanceLat;
-                  final lng = await repo.attendanceLng;
-                  final radius = await repo.attendanceRadius;
-                  return {'lat': lat, 'lng': lng, 'radius': radius};
-                }(),
-                builder: (context, snapshot) {
-                  String locationText = 'Chấm công tại vị trí quán';
-                  String? distanceBadge;
-                  Color? badgeColor;
+              // Chi tiết ca
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: FutureBuilder<Map<String, double?>>(
+                  future: () async {
+                    final repo = AppSettingsRepository();
+                    final lat = await repo.attendanceLat;
+                    final lng = await repo.attendanceLng;
+                    final radius = await repo.attendanceRadius;
+                    return {'lat': lat, 'lng': lng, 'radius': radius};
+                  }(),
+                  builder: (context, snapshot) {
+                    String locationText = 'Chấm công tại vị trí quán';
+                    String? distanceBadge;
+                    Color? badgeColor;
 
-                  if (shift.address != null && shift.address!.isNotEmpty) {
-                    locationText = shift.address!;
-                  } else if (shift.latitude != null && shift.longitude != null) {
-                    locationText = '${shift.latitude!.toStringAsFixed(5)}, ${shift.longitude!.toStringAsFixed(5)}';
-                  }
+                    if (shift.address != null && shift.address!.isNotEmpty) {
+                      locationText = shift.address!;
+                    } else if (shift.latitude != null &&
+                        shift.longitude != null) {
+                      locationText =
+                          '${shift.latitude!.toStringAsFixed(5)}, ${shift.longitude!.toStringAsFixed(5)}';
+                    }
 
-                  if (snapshot.hasData && shift.latitude != null && shift.longitude != null) {
-                    final storeLat = snapshot.data!['lat'];
-                    final storeLng = snapshot.data!['lng'];
-                    final radius = snapshot.data!['radius'] ?? 100.0;
+                    if (snapshot.hasData &&
+                        shift.latitude != null &&
+                        shift.longitude != null) {
+                      final storeLat = snapshot.data!['lat'];
+                      final storeLng = snapshot.data!['lng'];
+                      final radius = snapshot.data!['radius'] ?? 100.0;
 
-                    if (storeLat != null && storeLng != null) {
-                      final distance = Geolocator.distanceBetween(
-                        shift.latitude!, shift.longitude!, storeLat, storeLng,
-                      );
-                      final meters = distance.round();
-                      if (distance <= radius) {
-                        distanceBadge = '✓ Chuẩn vị trí quán (cách ${meters}m)';
-                        badgeColor = _kGreen;
-                      } else {
-                        distanceBadge = '⚠️ Lệch vị trí (cách quán ${meters}m)';
-                        badgeColor = _kOrange;
+                      if (storeLat != null && storeLng != null) {
+                        final distance = Geolocator.distanceBetween(
+                          shift.latitude!,
+                          shift.longitude!,
+                          storeLat,
+                          storeLng,
+                        );
+                        final meters = distance.round();
+                        if (distance <= radius) {
+                          distanceBadge =
+                              '✓ Chuẩn vị trí quán (cách ${meters}m)';
+                          badgeColor = _kGreen;
+                        } else {
+                          distanceBadge =
+                              '⚠️ Lệch vị trí (cách quán ${meters}m)';
+                          badgeColor = _kOrange;
+                        }
                       }
                     }
-                  }
 
-                  return Column(
-                    children: [
-                      _auditDetailRow(Icons.access_time_filled_rounded, 'Vào ca:', clockInStr),
-                      const SizedBox(height: 8),
-                      _auditDetailRow(Icons.logout_rounded, 'Ra ca:', clockOutStr),
-                      const SizedBox(height: 8),
-                      _auditDetailRow(Icons.location_on_rounded, 'Vị trí Check-in:', locationText),
-                      if (distanceBadge != null) ...[
+                    return Column(
+                      children: [
+                        _auditDetailRow(
+                          Icons.access_time_filled_rounded,
+                          'Vào ca:',
+                          clockInStr,
+                        ),
                         const SizedBox(height: 8),
                         _auditDetailRow(
-                          Icons.straighten_rounded,
-                          'Khoảng cách quán:',
-                          distanceBadge,
-                          valueColor: badgeColor,
+                          Icons.logout_rounded,
+                          'Ra ca:',
+                          clockOutStr,
                         ),
+                        const SizedBox(height: 8),
+                        _auditDetailRow(
+                          Icons.location_on_rounded,
+                          'Vị trí Check-in:',
+                          locationText,
+                        ),
+                        if (distanceBadge != null) ...[
+                          const SizedBox(height: 8),
+                          _auditDetailRow(
+                            Icons.straighten_rounded,
+                            'Khoảng cách quán:',
+                            distanceBadge,
+                            valueColor: badgeColor,
+                          ),
+                        ],
                       ],
-                    ],
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            if (isManager) ...[
-              if (shift.duration.inHours >= 8 && !shift.isOtApproved) ...[
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kGreen,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                  ),
-                  icon: const Icon(Icons.stars_rounded, size: 18),
-                  label: const Text('Duyệt Tăng Ca (OT)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                  onPressed: () async {
-                    Navigator.pop(ctx);
-                    await _showApproveOtDialog(context, ref, shift);
-                  },
-                ),
-                const SizedBox(height: 8),
-              ],
-              if (shift.checkIsForgotClockout || shift.duration.inHours >= 14) ...[
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0284C7),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                  ),
-                  icon: const Icon(Icons.shield_rounded, size: 18),
-                  label: const Text('Xác nhận ca quên chốt', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                  onPressed: () async {
-                    Navigator.pop(ctx);
-                    await _showOverrideShiftDialog(context, ref, shift);
-                  },
-                ),
-                const SizedBox(height: 8),
-              ],
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1565C0),
-                  side: const BorderSide(color: Color(0xFF1565C0)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 11),
-                ),
-                icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-                label: const Text('Gán lại tên nhân viên', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  await _openReassignShiftSheet(context, ref, shift);
-                },
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFC62828),
-                  side: const BorderSide(color: Color(0xFFC62828)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 11),
-                ),
-                icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                label: const Text('Xoá ca rác / ca thử này', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (c) => AlertDialog(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      title: const Text('Xoá ca làm việc này?'),
-                      content: Text('Bạn có chắc muốn xoá ca làm việc của "${shift.userName}" (${DateFormat('HH:mm dd/MM').format(shift.clockIn)}) không?'),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Huỷ')),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
-                          onPressed: () => Navigator.pop(c, true),
-                          child: const Text('Xoá'),
-                        ),
-                      ],
+              if (isManager) ...[
+                if (shift.duration.inHours >= 8 && !shift.isOtApproved) ...[
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _kGreen,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
                     ),
-                  );
-                  if (confirm == true) {
+                    icon: const Icon(Icons.stars_rounded, size: 18),
+                    label: const Text(
+                      'Duyệt Tăng Ca (OT)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      await _showApproveOtDialog(context, ref, shift);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (shift.checkIsForgotClockout ||
+                    shift.duration.inHours >= 14) ...[
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0284C7),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                    ),
+                    icon: const Icon(Icons.shield_rounded, size: 18),
+                    label: const Text(
+                      'Xác nhận ca quên chốt',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      await _showOverrideShiftDialog(context, ref, shift);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF1565C0),
+                    side: const BorderSide(color: Color(0xFF1565C0)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                  ),
+                  icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                  label: const Text(
+                    'Gán lại tên nhân viên',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                  onPressed: () async {
                     Navigator.pop(ctx);
-                    await StaffService.deleteShift(shift.id);
-                    ref.invalidate(_myShiftsProvider);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('✅ Đã xoá ca làm việc'),
-                        behavior: SnackBarBehavior.floating,
-                      ));
+                    await _openReassignShiftSheet(context, ref, shift);
+                  },
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFC62828),
+                    side: const BorderSide(color: Color(0xFFC62828)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                  ),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: const Text(
+                    'Xoá ca rác / ca thử này',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (c) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: const Text('Xoá ca làm việc này?'),
+                        content: Text(
+                          'Bạn có chắc muốn xoá ca làm việc của "${shift.userName}" (${DateFormat('HH:mm dd/MM').format(shift.clockIn)}) không?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, false),
+                            child: const Text('Huỷ'),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFC62828),
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => Navigator.pop(c, true),
+                            child: const Text('Xoá'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      Navigator.pop(ctx);
+                      await StaffService.deleteShift(shift.id);
+                      ref.invalidate(_myShiftsProvider);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('✅ Đã xoá ca làm việc'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
                     }
-                  }
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
 
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _kNavy,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kNavy,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Đóng'),
               ),
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Đóng'),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ),
-  ),
-);
+  );
 }
 
-Future<void> _openReassignShiftSheet(BuildContext context, WidgetRef ref, ShiftRecord shift) async {
+Future<void> _openReassignShiftSheet(
+  BuildContext context,
+  WidgetRef ref,
+  ShiftRecord shift,
+) async {
   final session = ref.read(sessionProvider);
   if (session?.storeId == null) return;
   final staffList = await StaffService.getStaffList(session!.storeId!);
@@ -2570,11 +3415,30 @@ Future<void> _openReassignShiftSheet(BuildContext context, WidgetRef ref, ShiftR
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
-          Text('Gán ca này cho nhân viên:', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy)),
+          Text(
+            'Gán ca này cho nhân viên:',
+            style: GoogleFonts.outfit(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: _kNavy,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text('Ca lúc ${DateFormat('HH:mm dd/MM/yyyy').format(shift.clockIn)}', style: const TextStyle(fontSize: 12, color: _kMuted)),
+          Text(
+            'Ca lúc ${DateFormat('HH:mm dd/MM/yyyy').format(shift.clockIn)}',
+            style: const TextStyle(fontSize: 12, color: _kMuted),
+          ),
           const SizedBox(height: 16),
           Flexible(
             child: ListView.separated(
@@ -2584,23 +3448,48 @@ Future<void> _openReassignShiftSheet(BuildContext context, WidgetRef ref, ShiftR
               itemBuilder: (_, i) {
                 final staff = staffList[i];
                 return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   leading: CircleAvatar(
                     backgroundColor: _kNavy.withValues(alpha: 0.1),
-                    child: Text(staff.name.isNotEmpty ? staff.name[0].toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.w800, color: _kNavy)),
+                    child: Text(
+                      staff.name.isNotEmpty ? staff.name[0].toUpperCase() : '?',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: _kNavy,
+                      ),
+                    ),
                   ),
-                  title: Text(staff.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                  subtitle: Text(staff.phone.isNotEmpty ? staff.phone : staff.role, style: const TextStyle(fontSize: 12, color: _kMuted)),
+                  title: Text(
+                    staff.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  subtitle: Text(
+                    staff.phone.isNotEmpty ? staff.phone : staff.role,
+                    style: const TextStyle(fontSize: 12, color: _kMuted),
+                  ),
                   onTap: () async {
                     Navigator.pop(ctx);
-                    final ok = await StaffService.reassignShift(shift.id, staff.userId);
+                    final ok = await StaffService.reassignShift(
+                      shift.id,
+                      staff.userId,
+                    );
                     if (ok) {
                       ref.invalidate(_myShiftsProvider);
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('✅ Đã gán ca cho nhân viên ${staff.name}'),
-                          behavior: SnackBarBehavior.floating,
-                        ));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '✅ Đã gán ca cho nhân viên ${staff.name}',
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
                       }
                     }
                   },
@@ -2614,20 +3503,34 @@ Future<void> _openReassignShiftSheet(BuildContext context, WidgetRef ref, ShiftR
   );
 }
 
-Widget _auditDetailRow(IconData icon, String label, String value, {Color? valueColor}) {
+Widget _auditDetailRow(
+  IconData icon,
+  String label,
+  String value, {
+  Color? valueColor,
+}) {
   return Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Icon(icon, size: 15, color: valueColor ?? _kNavy),
       const SizedBox(width: 6),
-      Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kNavy)),
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: _kNavy,
+        ),
+      ),
       const SizedBox(width: 6),
       Expanded(
         child: Text(
           value,
           style: TextStyle(
             fontSize: 11,
-            fontWeight: valueColor != null ? FontWeight.w700 : FontWeight.normal,
+            fontWeight: valueColor != null
+                ? FontWeight.w700
+                : FontWeight.normal,
             color: valueColor ?? _kMuted,
           ),
           maxLines: 2,
@@ -2658,18 +3561,27 @@ void _showClockOutEarningsDialog(
       title: Column(
         children: [
           Container(
-            width: 52, height: 52,
+            width: 52,
+            height: 52,
             decoration: const BoxDecoration(
               color: Color(0xFFDCFCE7),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check_circle_rounded, color: _kGreen, size: 32),
+            child: const Icon(
+              Icons.check_circle_rounded,
+              color: _kGreen,
+              size: 32,
+            ),
           ),
           const SizedBox(height: 12),
           const Text(
             'ĐÃ RA CA THÀNH CÔNG',
             textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: _kNavy),
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              color: _kNavy,
+            ),
           ),
           Text(
             'Ra ca lúc ${DateFormat('HH:mm - dd/MM/yyyy').format(DateTime.now())}',
@@ -2692,7 +3604,11 @@ void _showClockOutEarningsDialog(
               children: [
                 const Text(
                   'CỘNG VÀO LƯƠNG CA NÀY',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kMuted),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: _kMuted,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -2713,7 +3629,11 @@ void _showClockOutEarningsDialog(
                     ),
                     Text(
                       '+${currencyFmt.format(calc.regularPay)}đ',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _kNavy,
+                      ),
                     ),
                   ],
                 ),
@@ -2728,7 +3648,11 @@ void _showClockOutEarningsDialog(
                       ),
                       Text(
                         '+${currencyFmt.format(calc.overtimePay)}đ',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kGreen),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: _kGreen,
+                        ),
                       ),
                     ],
                   ),
@@ -2757,7 +3681,11 @@ void _showClockOutEarningsDialog(
                       SizedBox(width: 6),
                       Text(
                         'KHẤU TRỪ & LÝ DO LỖI',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _kRed),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: _kRed,
+                        ),
                       ),
                     ],
                   ),
@@ -2768,14 +3696,22 @@ void _showClockOutEarningsDialog(
                         padding: const EdgeInsets.only(bottom: 2),
                         child: Text(
                           '• $reason',
-                          style: const TextStyle(fontSize: 12, color: _kRed, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: _kRed,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     )
                   else
                     Text(
                       '• Khấu trừ vi phạm ca làm: -${currencyFmt.format(calc.deductionLate)}đ',
-                      style: const TextStyle(fontSize: 12, color: _kRed, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: _kRed,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                 ],
               ),
@@ -2796,17 +3732,29 @@ void _showClockOutEarningsDialog(
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.account_balance_wallet_rounded, size: 16, color: _kNavy),
+                      Icon(
+                        Icons.account_balance_wallet_rounded,
+                        size: 16,
+                        color: _kNavy,
+                      ),
                       SizedBox(width: 6),
                       Text(
                         'Lương tích lũy tháng:',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: _kNavy,
+                        ),
                       ),
                     ],
                   ),
                   Text(
                     '${currencyFmt.format(monthly.totalEarnings)}đ',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _kNavy),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: _kNavy,
+                    ),
                   ),
                 ],
               ),
@@ -2823,9 +3771,14 @@ void _showClockOutEarningsDialog(
               backgroundColor: _kNavy,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: const Text('Đã hiểu', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+            child: const Text(
+              'Đã hiểu',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+            ),
           ),
         ),
       ],
@@ -2852,7 +3805,9 @@ class _StaffRealtimeEarningsCard extends ConsumerWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: const Center(child: CircularProgressIndicator(color: _kNavy, strokeWidth: 2)),
+        child: const Center(
+          child: CircularProgressIndicator(color: _kNavy, strokeWidth: 2),
+        ),
       ),
       error: (_, __) => const SizedBox.shrink(),
       data: (earnings) {
@@ -2884,7 +3839,11 @@ class _StaffRealtimeEarningsCard extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.stars_rounded, color: Color(0xFFFBBF24), size: 18),
+                      const Icon(
+                        Icons.stars_rounded,
+                        color: Color(0xFFFBBF24),
+                        size: 18,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         'LƯƠNG TÍCH LŨY THÁNG ${now.month}/${now.year}',
@@ -2898,14 +3857,21 @@ class _StaffRealtimeEarningsCard extends ConsumerWidget {
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${earnings.shiftCount} ca làm',
-                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -2928,7 +3894,10 @@ class _StaffRealtimeEarningsCard extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
@@ -2954,7 +3923,8 @@ class _StaffRealtimeEarningsCard extends ConsumerWidget {
                       icon: Icons.warning_rounded,
                       color: const Color(0xFFF87171),
                       label: 'Khấu trừ',
-                      value: '-${currencyFmt.format(earnings.totalDeductions)}đ',
+                      value:
+                          '-${currencyFmt.format(earnings.totalDeductions)}đ',
                     ),
                   ],
                 ),
@@ -2981,23 +3951,41 @@ class _SubStatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, size: 14, color: color),
+      const SizedBox(width: 4),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(color: Colors.white60, fontSize: 9, fontWeight: FontWeight.w600)),
-              Text(value, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
-            ],
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
-      );
+      ),
+    ],
+  );
 }
 
 // ─── MANAGER APPROVE OT & OVERRIDE DIALOGS ────────────────────────────────────
 
-Future<void> _showApproveOtDialog(BuildContext context, WidgetRef ref, ShiftRecord shift) async {
+Future<void> _showApproveOtDialog(
+  BuildContext context,
+  WidgetRef ref,
+  ShiftRecord shift,
+) async {
   final session = ref.read(sessionProvider);
   if (session?.storeId == null) return;
   final controller = TextEditingController(text: 'Đông khách cuối ngày');
@@ -3010,7 +3998,10 @@ Future<void> _showApproveOtDialog(BuildContext context, WidgetRef ref, ShiftReco
         children: [
           Icon(Icons.stars_rounded, color: _kGreen, size: 22),
           SizedBox(width: 8),
-          Text('Duyệt Tăng Ca (OT)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          Text(
+            'Duyệt Tăng Ca (OT)',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          ),
         ],
       ),
       content: Column(
@@ -3019,7 +4010,14 @@ Future<void> _showApproveOtDialog(BuildContext context, WidgetRef ref, ShiftReco
         children: [
           Text('Xác nhận duyệt OT cho ${shift.userName}?'),
           const SizedBox(height: 12),
-          const Text('Lý do tăng ca (bắt buộc):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy)),
+          const Text(
+            'Lý do tăng ca (bắt buộc):',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: _kNavy,
+            ),
+          ),
           const SizedBox(height: 6),
           TextField(
             controller: controller,
@@ -3027,17 +4025,29 @@ Future<void> _showApproveOtDialog(BuildContext context, WidgetRef ref, ShiftReco
               hintText: 'Nhập lý do tăng ca...',
               filled: true,
               fillColor: const Color(0xFFF3F4F6),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
             ),
           ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ', style: TextStyle(color: _kMuted))),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Huỷ', style: TextStyle(color: _kMuted)),
+        ),
         ElevatedButton(
           onPressed: () => Navigator.pop(ctx, true),
-          style: ElevatedButton.styleFrom(backgroundColor: _kGreen, foregroundColor: Colors.white),
-          child: const Text('Xác nhận Duyệt OT', style: TextStyle(fontWeight: FontWeight.w700)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _kGreen,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text(
+            'Xác nhận Duyệt OT',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     ),
@@ -3055,16 +4065,25 @@ Future<void> _showApproveOtDialog(BuildContext context, WidgetRef ref, ShiftReco
     ref.invalidate(_realtimeEarningsProvider);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Đã duyệt OT & ghi nhật ký hệ thống'), behavior: SnackBarBehavior.floating),
+        const SnackBar(
+          content: Text('✅ Đã duyệt OT & ghi nhật ký hệ thống'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }
 }
 
-Future<void> _showOverrideShiftDialog(BuildContext context, WidgetRef ref, ShiftRecord shift) async {
+Future<void> _showOverrideShiftDialog(
+  BuildContext context,
+  WidgetRef ref,
+  ShiftRecord shift,
+) async {
   final session = ref.read(sessionProvider);
   if (session?.storeId == null) return;
-  final controller = TextEditingController(text: 'Xác nhận điều chỉnh ca quên chốt cho nhân viên');
+  final controller = TextEditingController(
+    text: 'Xác nhận điều chỉnh ca quên chốt cho nhân viên',
+  );
 
   final confirmed = await showDialog<bool>(
     context: context,
@@ -3074,16 +4093,28 @@ Future<void> _showOverrideShiftDialog(BuildContext context, WidgetRef ref, Shift
         children: [
           Icon(Icons.shield_rounded, color: Color(0xFF0284C7), size: 22),
           SizedBox(width: 8),
-          Text('Xác nhận ca quên chốt', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          Text(
+            'Xác nhận ca quên chốt',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          ),
         ],
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Hủy khấu trừ 50% do quên chốt ca và khôi phục 100% lương cho ${shift.userName}?'),
+          Text(
+            'Hủy khấu trừ 50% do quên chốt ca và khôi phục 100% lương cho ${shift.userName}?',
+          ),
           const SizedBox(height: 12),
-          const Text('Lý do điều chỉnh (bắt buộc):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kNavy)),
+          const Text(
+            'Lý do điều chỉnh (bắt buộc):',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: _kNavy,
+            ),
+          ),
           const SizedBox(height: 6),
           TextField(
             controller: controller,
@@ -3091,17 +4122,29 @@ Future<void> _showOverrideShiftDialog(BuildContext context, WidgetRef ref, Shift
               hintText: 'Nhập lý do điều chỉnh...',
               filled: true,
               fillColor: const Color(0xFFF3F4F6),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
             ),
           ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ', style: TextStyle(color: _kMuted))),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Huỷ', style: TextStyle(color: _kMuted)),
+        ),
         ElevatedButton(
           onPressed: () => Navigator.pop(ctx, true),
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0284C7), foregroundColor: Colors.white),
-          child: const Text('Xác nhận điều chỉnh', style: TextStyle(fontWeight: FontWeight.w700)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0284C7),
+            foregroundColor: Colors.white,
+          ),
+          child: const Text(
+            'Xác nhận điều chỉnh',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     ),
@@ -3119,7 +4162,10 @@ Future<void> _showOverrideShiftDialog(BuildContext context, WidgetRef ref, Shift
     ref.invalidate(_realtimeEarningsProvider);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🛡️ Đã xác nhận điều chỉnh và ghi nhật ký hệ thống'), behavior: SnackBarBehavior.floating),
+        const SnackBar(
+          content: Text('🛡️ Đã xác nhận điều chỉnh và ghi nhật ký hệ thống'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }

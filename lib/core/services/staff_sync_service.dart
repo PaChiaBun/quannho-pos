@@ -10,6 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'user_auth_service.dart';
 
 class StaffSyncService {
   final String storeId;
@@ -38,6 +39,7 @@ class StaffSyncService {
 
   // ── Khởi động lắng nghe ───────────────────────────────────────────────────
   RealtimeChannel? _rolesChannel; // channel riêng cho store_roles changes
+  RealtimeChannel? _membersChannel; // channel cho store_members DELETE events
 
   Future<void> start() async {
     try {
@@ -50,7 +52,7 @@ class StaffSyncService {
           event: 'role_changed',
           callback: (payload) {
             final targetId = payload['userId'] as String?;
-            final newRole  = payload['newRole'] as String?;
+            final newRole = payload['newRole'] as String?;
             if (targetId == currentUserId && newRole != null) {
               debugPrint('[StaffSync] Role changed → $newRole');
               onRoleChanged?.call(newRole);
@@ -62,7 +64,9 @@ class StaffSyncService {
           callback: (payload) {
             final role = payload['role'] as String?;
             if (role == null || role == currentRole) {
-              debugPrint('[StaffSync] Perms changed (broadcast) for role: $role');
+              debugPrint(
+                '[StaffSync] Perms changed (broadcast) for role: $role',
+              );
               onPermsChanged?.call();
             }
           },
@@ -72,7 +76,7 @@ class StaffSyncService {
           callback: (payload) {
             final targetId = payload['userId'] as String?;
             if (targetId == currentUserId) {
-              debugPrint('[StaffSync] Removed from store');
+              debugPrint('[StaffSync] Removed from store (broadcast)');
               onRemoved?.call();
             }
           },
@@ -80,8 +84,6 @@ class StaffSyncService {
       await _channel!.subscribe();
 
       // ── 2. Postgres Realtime — watch store_roles table trực tiếp ─────────
-      // Đây là nguồn tin cậy hơn broadcast: khi chủ lưu modules, DB thay đổi
-      // → staff nhận event ngay lập tức, không phụ thuộc broadcast
       _rolesChannel = db
           .channel('store_roles_changes_$storeId')
           .onPostgresChanges(
@@ -94,19 +96,78 @@ class StaffSyncService {
               value: storeId,
             ),
             callback: (payload) {
-              // Kiểm tra đây là role của mình
               final updatedRole = (payload.newRecord['name'] as String?)
                   ?.trim()
                   .toLowerCase();
               final myRole = currentRole.trim().toLowerCase();
-              debugPrint('[StaffSync] store_roles updated: $updatedRole (mine: $myRole)');
+              debugPrint(
+                '[StaffSync] store_roles updated: $updatedRole (mine: $myRole)',
+              );
               if (updatedRole == null || updatedRole == myRole) {
                 onPermsChanged?.call();
               }
             },
           );
       await _rolesChannel!.subscribe();
-      debugPrint('[StaffSync] Subscribed to $channelName + store_roles realtime');
+
+      // ── 3. Postgres Realtime — watch store_members DELETE trực tiếp ───────
+      // Nguồn tin cậy DB Realtime: khi record store_members của user bị xoá
+      _membersChannel = db
+          .channel('store_members_changes_${storeId}_$currentUserId')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.delete,
+            schema: 'public',
+            table: 'store_members',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'store_id',
+              value: storeId,
+            ),
+            callback: (payload) async {
+              final deletedStoreId = payload.oldRecord['store_id'] as String?;
+              final deletedUserId =
+                  payload.oldRecord['user_id'] as String? ??
+                  payload.oldRecord['id'] as String?;
+              debugPrint(
+                '[StaffSync] store_members DELETE event: deletedStoreId=$deletedStoreId, deletedUserId=$deletedUserId, mine=$currentUserId',
+              );
+
+              if (deletedUserId != null && deletedUserId.isNotEmpty) {
+                if (deletedUserId == currentUserId &&
+                    (deletedStoreId == null || deletedStoreId == storeId)) {
+                  debugPrint(
+                    '[StaffSync] Target user match -> triggering onRemoved',
+                  );
+                  onRemoved?.call();
+                } else {
+                  debugPrint(
+                    '[StaffSync] DELETE event targeting another user ($deletedUserId != $currentUserId) -> ignoring',
+                  );
+                }
+              } else {
+                // If oldRecord is empty (e.g. before REPLICA IDENTITY FULL), validate with server authoritatively
+                debugPrint(
+                  '[StaffSync] oldRecord empty/missing userId -> validating membership with server authoritatively',
+                );
+                try {
+                  final val = await UserAuthService.validateActiveMembership(
+                    userId: currentUserId,
+                    storeId: storeId,
+                  );
+                  if (!val.isActive && !val.isOffline) {
+                    onRemoved?.call();
+                  }
+                } catch (e) {
+                  debugPrint('[StaffSync] Authoritative validation error: $e');
+                }
+              }
+            },
+          );
+      await _membersChannel!.subscribe();
+
+      debugPrint(
+        '[StaffSync] Subscribed to $channelName + store_roles + store_members realtime',
+      );
     } catch (e) {
       debugPrint('[StaffSync] start error: $e');
     }
@@ -128,7 +189,9 @@ class StaffSyncService {
         payload: {'userId': targetUserId, 'newRole': newRole},
       );
       await ch.unsubscribe();
-      debugPrint('[StaffSync] Broadcast role_changed → $targetUserId: $newRole');
+      debugPrint(
+        '[StaffSync] Broadcast role_changed → $targetUserId: $newRole',
+      );
     } catch (e) {
       debugPrint('[StaffSync] broadcastRoleChanged error: $e');
     }
@@ -177,8 +240,10 @@ class StaffSyncService {
   Future<void> stop() async {
     await _channel?.unsubscribe();
     await _rolesChannel?.unsubscribe();
+    await _membersChannel?.unsubscribe();
     _channel = null;
     _rolesChannel = null;
+    _membersChannel = null;
     debugPrint('[StaffSync] Unsubscribed');
   }
 }

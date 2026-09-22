@@ -9,6 +9,7 @@ class TableQrPrintScreen extends StatelessWidget {
   final String qrUrl;
   final String storeName;
   final List<TableQrItemData>? batchItems;
+  final bool renderAsA4Sheet;
 
   final double widthMm;
   final double heightMm;
@@ -24,6 +25,7 @@ class TableQrPrintScreen extends StatelessWidget {
     required this.qrUrl,
     required this.storeName,
     this.batchItems,
+    this.renderAsA4Sheet = false,
     this.widthMm = 70.0,
     this.heightMm = 100.0,
     this.bleedMm = 2.0,
@@ -39,6 +41,18 @@ class TableQrPrintScreen extends StatelessWidget {
     final itemsToPrint = batchItems != null && batchItems!.isNotEmpty
         ? batchItems!
         : [TableQrItemData(title: title, qrUrl: qrUrl, tableName: title)];
+
+    if (renderAsA4Sheet) {
+      return QrPdfService.generateA4DecalSheetPdf(
+        storeName: storeName,
+        items: itemsToPrint,
+        widthMm: widthMm,
+        heightMm: heightMm,
+        headerTitle: headerTitle,
+        instructionText: instructionText,
+        confirmNote: confirmNote,
+      );
+    }
 
     return QrPdfService.generateDecalPdf(
       storeName: storeName,
@@ -56,9 +70,9 @@ class TableQrPrintScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final count = batchItems?.length ?? 1;
-    final pageTitle = count > 1
-        ? 'In Hàng Loạt $count Tem Bàn'
-        : 'In Tem Bàn — $title';
+    final pageTitle = renderAsA4Sheet
+        ? 'Sheet A4 $count Tem Bàn'
+        : (count > 1 ? 'In Hàng Loạt $count Tem Bàn' : 'In Tem Bàn — $title');
 
     return Scaffold(
       appBar: AppBar(

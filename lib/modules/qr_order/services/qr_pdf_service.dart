@@ -18,6 +18,126 @@ class TableQrItemData {
 }
 
 class QrPdfService {
+  static pw.Widget _buildDecalCard({
+    required String storeName,
+    required TableQrItemData item,
+    required double widthPt,
+    required double heightPt,
+    required double widthMm,
+    required String headerTitle,
+    required String instructionText,
+    required String confirmNote,
+  }) {
+    final qrSize = (widthMm * 0.45 * PdfPageFormat.mm).clamp(65.0, 140.0);
+    final titleFontSize = (widthMm * 0.22).clamp(10.0, 18.0);
+
+    return pw.Container(
+      width: widthPt,
+      height: heightPt,
+      padding: const pw.EdgeInsets.all(8),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.white,
+        border: pw.Border.all(color: PdfColors.purple800, width: 2),
+        borderRadius: pw.BorderRadius.circular(8),
+      ),
+      child: pw.Column(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.Column(
+            children: [
+              pw.Text(
+                storeName.toUpperCase(),
+                style: pw.TextStyle(
+                  fontSize: 12,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.purple900,
+                ),
+                textAlign: pw.TextAlign.center,
+              ),
+              pw.SizedBox(height: 2),
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 2,
+                ),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.orange,
+                  borderRadius: pw.BorderRadius.circular(6),
+                ),
+                child: pw.Text(
+                  headerTitle,
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.purple50,
+              borderRadius: pw.BorderRadius.circular(6),
+              border: pw.Border.all(color: PdfColors.purple300, width: 1),
+            ),
+            child: pw.Text(
+              item.title,
+              style: pw.TextStyle(
+                fontSize: titleFontSize,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.purple900,
+              ),
+            ),
+          ),
+          pw.Container(
+            padding: const pw.EdgeInsets.all(4),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.white,
+              border: pw.Border.all(color: PdfColors.grey300, width: 1),
+              borderRadius: pw.BorderRadius.circular(6),
+            ),
+            child: pw.BarcodeWidget(
+              barcode: pw.Barcode.qrCode(),
+              data: item.qrUrl,
+              width: qrSize,
+              height: qrSize,
+            ),
+          ),
+          pw.Text(
+            instructionText,
+            style: pw.TextStyle(
+              fontSize: 7.0,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey800,
+            ),
+            textAlign: pw.TextAlign.center,
+          ),
+          if (confirmNote.isNotEmpty)
+            pw.Container(
+              padding: const pw.EdgeInsets.all(4),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.amber50,
+                borderRadius: pw.BorderRadius.circular(6),
+                border: pw.Border.all(color: PdfColors.amber400, width: 0.8),
+              ),
+              child: pw.Text(
+                confirmNote,
+                style: pw.TextStyle(
+                  fontSize: 6.0,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.brown900,
+                ),
+                textAlign: pw.TextAlign.center,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   /// Generates vector decal PDF with prepress bleed & crop marks.
   /// Artwork extends to the full page bounds (width + 2*bleed, height + 2*bleed),
   /// while crop marks indicate the exact trim line (finished product dimensions width x height).
@@ -48,9 +168,6 @@ class QrPdfService {
 
     final pageFormat = PdfPageFormat(totalWidthPt, totalHeightPt, marginAll: 0);
 
-    final qrSize = (widthMm * 0.45 * PdfPageFormat.mm).clamp(65.0, 140.0);
-    final titleFontSize = (widthMm * 0.22).clamp(10.0, 18.0);
-
     for (final item in items) {
       pdf.addPage(
         pw.Page(
@@ -77,123 +194,15 @@ class QrPdfService {
                   child: pw.SizedBox(
                     width: widthPt,
                     height: heightPt,
-                    child: pw.Container(
-                      padding: const pw.EdgeInsets.all(8),
-                      decoration: pw.BoxDecoration(
-                        color: PdfColors.white,
-                        border: pw.Border.all(
-                          color: PdfColors.purple800,
-                          width: 2,
-                        ),
-                        borderRadius: pw.BorderRadius.circular(8),
-                      ),
-                      child: pw.Column(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: pw.CrossAxisAlignment.center,
-                        children: [
-                          pw.Column(
-                            children: [
-                              pw.Text(
-                                storeName.toUpperCase(),
-                                style: pw.TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: pw.FontWeight.bold,
-                                  color: PdfColors.purple900,
-                                ),
-                                textAlign: pw.TextAlign.center,
-                              ),
-                              pw.SizedBox(height: 2),
-                              pw.Container(
-                                padding: const pw.EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: pw.BoxDecoration(
-                                  color: PdfColors.orange,
-                                  borderRadius: pw.BorderRadius.circular(6),
-                                ),
-                                child: pw.Text(
-                                  headerTitle,
-                                  style: pw.TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: pw.FontWeight.bold,
-                                    color: PdfColors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          pw.Container(
-                            padding: const pw.EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 3,
-                            ),
-                            decoration: pw.BoxDecoration(
-                              color: PdfColors.purple50,
-                              borderRadius: pw.BorderRadius.circular(6),
-                              border: pw.Border.all(
-                                color: PdfColors.purple300,
-                                width: 1,
-                              ),
-                            ),
-                            child: pw.Text(
-                              item.title,
-                              style: pw.TextStyle(
-                                fontSize: titleFontSize,
-                                fontWeight: pw.FontWeight.bold,
-                                color: PdfColors.purple900,
-                              ),
-                            ),
-                          ),
-                          pw.Container(
-                            padding: const pw.EdgeInsets.all(4),
-                            decoration: pw.BoxDecoration(
-                              color: PdfColors.white,
-                              border: pw.Border.all(
-                                color: PdfColors.grey300,
-                                width: 1,
-                              ),
-                              borderRadius: pw.BorderRadius.circular(6),
-                            ),
-                            child: pw.BarcodeWidget(
-                              barcode: pw.Barcode.qrCode(),
-                              data: item.qrUrl,
-                              width: qrSize,
-                              height: qrSize,
-                            ),
-                          ),
-                          pw.Text(
-                            instructionText,
-                            style: pw.TextStyle(
-                              fontSize: 7.0,
-                              fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.grey800,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                          if (confirmNote.isNotEmpty)
-                            pw.Container(
-                              padding: const pw.EdgeInsets.all(4),
-                              decoration: pw.BoxDecoration(
-                                color: PdfColors.amber50,
-                                borderRadius: pw.BorderRadius.circular(6),
-                                border: pw.Border.all(
-                                  color: PdfColors.amber400,
-                                  width: 0.8,
-                                ),
-                              ),
-                              child: pw.Text(
-                                confirmNote,
-                                style: pw.TextStyle(
-                                  fontSize: 6.0,
-                                  fontWeight: pw.FontWeight.bold,
-                                  color: PdfColors.brown900,
-                                ),
-                                textAlign: pw.TextAlign.center,
-                              ),
-                            ),
-                        ],
-                      ),
+                    child: _buildDecalCard(
+                      storeName: storeName,
+                      item: item,
+                      widthPt: widthPt,
+                      heightPt: heightPt,
+                      widthMm: widthMm,
+                      headerTitle: headerTitle,
+                      instructionText: instructionText,
+                      confirmNote: confirmNote,
                     ),
                   ),
                 ),
@@ -204,6 +213,76 @@ class QrPdfService {
                     bleedPt: bleedPt,
                     widthPt: widthPt,
                     heightPt: heightPt,
+                  ),
+              ],
+            );
+          },
+        ),
+      );
+    }
+
+    return pdf.save();
+  }
+
+  static Future<Uint8List> generateA4DecalSheetPdf({
+    required String storeName,
+    required List<TableQrItemData> items,
+    double widthMm = 70.0,
+    double heightMm = 100.0,
+    String headerTitle = 'QUÉT QR GỌI MÓN',
+    String instructionText =
+        'Quét mã QR bằng ứng dụng Zalo, Camera hoặc trình duyệt di động để xem Menu',
+    String confirmNote =
+        'Sau khi đặt xong, vui lòng gọi nhân viên đến đọc lại và xác nhận món. Món chỉ được gửi xuống bếp sau khi nhân viên xác nhận.',
+  }) async {
+    final fontRegular = await PdfGoogleFonts.notoSansRegular();
+    final fontBold = await PdfGoogleFonts.notoSansBold();
+    final theme = pw.ThemeData.withFont(base: fontRegular, bold: fontBold);
+
+    final pdf = pw.Document(theme: theme);
+    final pageFormat = PdfPageFormat.a4;
+    final pageWidth = pageFormat.availableWidth;
+    final pageHeight = pageFormat.availableHeight;
+
+    final labelWidthPt = widthMm * PdfPageFormat.mm;
+    final labelHeightPt = heightMm * PdfPageFormat.mm;
+    const pagePaddingPt = 10.0;
+    const gapPt = 8.0;
+
+    final usableWidth = pageWidth - (pagePaddingPt * 2);
+    final usableHeight = pageHeight - (pagePaddingPt * 2);
+
+    final columns = ((usableWidth + gapPt) / (labelWidthPt + gapPt))
+        .floor()
+        .clamp(1, 12);
+    final rows = ((usableHeight + gapPt) / (labelHeightPt + gapPt))
+        .floor()
+        .clamp(1, 20);
+    final itemsPerPage = (columns * rows).clamp(1, 9999);
+
+    for (var start = 0; start < items.length; start += itemsPerPage) {
+      final pageItems = items.skip(start).take(itemsPerPage).toList();
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: pageFormat,
+          theme: theme,
+          margin: const pw.EdgeInsets.all(pagePaddingPt),
+          build: (context) {
+            return pw.Wrap(
+              spacing: gapPt,
+              runSpacing: gapPt,
+              children: [
+                for (final item in pageItems)
+                  _buildDecalCard(
+                    storeName: storeName,
+                    item: item,
+                    widthPt: labelWidthPt,
+                    heightPt: labelHeightPt,
+                    widthMm: widthMm,
+                    headerTitle: headerTitle,
+                    instructionText: instructionText,
+                    confirmNote: confirmNote,
                   ),
               ],
             );

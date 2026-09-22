@@ -18,24 +18,24 @@ final _loyaltyRepoProvider = Provider<LoyaltyRepository>((ref) {
   return LoyaltyRepository();
 });
 
-final _topCustomersProvider = StreamProvider<List<LoyaltyCustomerModel>>((ref) {
+final _topCustomersProvider = StreamProvider.autoDispose<List<LoyaltyCustomerModel>>((ref) {
   return ref.watch(_loyaltyRepoProvider).watchTopCustomers(limit: 30);
 });
 
-final _allCustomersProvider = StreamProvider<List<LoyaltyCustomerModel>>((ref) {
+final _allCustomersProvider = StreamProvider.autoDispose<List<LoyaltyCustomerModel>>((ref) {
   return ref.watch(_loyaltyRepoProvider).watchCustomers();
 });
 
-final _loyaltyStatsProvider = FutureProvider<LoyaltyStats>((ref) {
+final _loyaltyStatsProvider = FutureProvider.autoDispose<LoyaltyStats>((ref) {
   ref.watch(_topCustomersProvider); // auto-refresh
   return ref.read(_loyaltyRepoProvider).getStats();
 });
 
-final _rewardsProvider = StreamProvider<List<LoyaltyRewardModel>>((ref) {
+final _rewardsProvider = StreamProvider.autoDispose<List<LoyaltyRewardModel>>((ref) {
   return ref.watch(_loyaltyRepoProvider).watchRewards();
 });
 
-final _packagesProvider = FutureProvider<List<TopupPackageModel>>((ref) async {
+final _packagesProvider = FutureProvider.autoDispose<List<TopupPackageModel>>((ref) async {
   return ref.read(_loyaltyRepoProvider).getPackages();
 });
 

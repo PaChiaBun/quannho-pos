@@ -22,25 +22,26 @@ import 'module_picker_screen.dart';
 import '../modules/bill_printer/screens/bill_printer_hub.dart';
 import '../modules/ops/screens/ops_screen.dart';
 import '../modules/qr_order/screens/qr_order_screen.dart';
+import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import '../core/services/auto_update_service.dart';
 import '../core/utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MÀU LOCAL
 // ─────────────────────────────────────────────────────────────────────────────
-const _kNavy      = Color(0xFF1E1C5E);
+const _kNavy = Color(0xFF1E1C5E);
 const _kNavyLight = Color(0xFF2D2B8A);
-const _kOrange    = Color(0xFFE85D20);
-const _kInk       = Color(0xFF1A1207);
-const _kMuted     = Color(0xFF9E9085);
-const _kBg        = Color(0xFFFAF7F2);
-const _kGreen     = Color(0xFF2E7D32);
-const _kGreenBg   = Color(0xFFE8F5E9);
-const _kRedBg     = Color(0xFFFFEBEE);
-const _kRed       = Color(0xFFC62828);
-const _kWhite20   = Color(0x33FFFFFF);
-const _kWhite60   = Color(0x99FFFFFF);
-const _kWhite85   = Color(0xD9FFFFFF);
+const _kOrange = Color(0xFFE85D20);
+const _kInk = Color(0xFF1A1207);
+const _kMuted = Color(0xFF9E9085);
+const _kBg = Color(0xFFFAF7F2);
+const _kGreen = Color(0xFF2E7D32);
+const _kGreenBg = Color(0xFFE8F5E9);
+const _kRedBg = Color(0xFFFFEBEE);
+const _kRed = Color(0xFFC62828);
+const _kWhite20 = Color(0x33FFFFFF);
+const _kWhite60 = Color(0x99FFFFFF);
+const _kWhite85 = Color(0xD9FFFFFF);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROVIDER: Fetch quyền module của staff từ Supabase
@@ -49,27 +50,37 @@ class StoreRoleKey {
   final String storeId;
   final String role;
   const StoreRoleKey({required this.storeId, required this.role});
-  @override bool operator ==(Object o) =>
+  @override
+  bool operator ==(Object o) =>
       o is StoreRoleKey && o.storeId == storeId && o.role == role;
-  @override int get hashCode => Object.hash(storeId, role);
+  @override
+  int get hashCode => Object.hash(storeId, role);
 }
 
 // ── Provider đếm version perm — increment khi server báo perms thay đổi
 // Dashboard watch provider này → tự refetch _staffPermsProvider
 class _PermsVersionNotifier extends Notifier<int> {
-  @override int build() => 0;
+  @override
+  int build() => 0;
   void bump() => state++;
 }
-final permsVersionProvider = NotifierProvider<_PermsVersionNotifier, int>(
-  _PermsVersionNotifier.new);
 
-final _staffPermsProvider = FutureProvider.family<List<String>, StoreRoleKey>(
-  (ref, key) {
-    ref.watch(permsVersionProvider); // ← watch version → auto-refetch khi bump()
-    final session = ref.watch(sessionProvider);
-    return StaffService.getModulePermissions(key.storeId, key.role, userId: session?.userId);
-  },
+final permsVersionProvider = NotifierProvider<_PermsVersionNotifier, int>(
+  _PermsVersionNotifier.new,
 );
+
+final _staffPermsProvider = FutureProvider.family<List<String>, StoreRoleKey>((
+  ref,
+  key,
+) {
+  ref.watch(permsVersionProvider); // ← watch version → auto-refetch khi bump()
+  final session = ref.watch(sessionProvider);
+  return StaffService.getModulePermissions(
+    key.storeId,
+    key.role,
+    userId: session?.userId,
+  );
+});
 
 final dashboardShopNameProvider = FutureProvider<String>((ref) async {
   final session = ref.watch(sessionProvider);
@@ -107,8 +118,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   // ✨ Animation state
   String? _newlyAddedModuleId; // tile vừa được thêm → play entrance anim
-  final Set<String> _removingIds   = {}; // tiles đang fade-out để xóa
-  final Set<String> _editRemovedIds = {}; // modules đã xóa trong session edit hiện tại
+  final Set<String> _removingIds = {}; // tiles đang fade-out để xóa
+  final Set<String> _editRemovedIds =
+      {}; // modules đã xóa trong session edit hiện tại
 
   // 📡 Realtime subscription cho store_roles
   RealtimeChannel? _rolesChannel;
@@ -120,6 +132,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       _silentRoleRefresh();
       _subscribeStoreRolesRealtime();
       AutoUpdateService.checkForUpdates(context);
+      try {
+        ref.read(printerSettingsProvider);
+      } catch (_) {}
     });
   }
 
@@ -150,9 +165,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           callback: (payload) {
             if (!mounted) return;
             final updatedRole = (payload.newRecord['name'] as String?)
-                ?.trim().toLowerCase();
+                ?.trim()
+                .toLowerCase();
             final myRole = (session.role).trim().toLowerCase();
-            debugPrint('[Dashboard] store_roles updated: $updatedRole (mine: $myRole)');
+            debugPrint(
+              '[Dashboard] store_roles updated: $updatedRole (mine: $myRole)',
+            );
             // Refresh cho role mình HOẶC nếu không xác định được
             if (updatedRole == null || updatedRole == myRole) {
               ref.read(permsVersionProvider.notifier).bump();
@@ -160,7 +178,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           },
         );
     _rolesChannel!.subscribe();
-    debugPrint('[Dashboard] Subscribed to store_roles realtime for store: $storeId');
+    debugPrint(
+      '[Dashboard] Subscribed to store_roles realtime for store: $storeId',
+    );
   }
 
   /// Check role hiện tại từ Supabase, nếu khác session cached → update
@@ -168,13 +188,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final session = ref.read(sessionProvider);
     if (session == null || !session.hasStore) return;
     try {
-      final membership = await UserAuthService.fetchStoreMembership(session.userId);
+      final membership = await UserAuthService.fetchStoreMembership(
+        session.userId,
+      );
       if (!mounted || membership == null) return;
       // Nếu role đổi (chủ quán thay đổi quyền) → cập nhật session
-      if (membership.role != session.role || membership.isOwner != session.isOwner) {
-        debugPrint('[Dashboard] Role changed: ${session.role} → ${membership.role}');
+      if (membership.role != session.role ||
+          membership.isOwner != session.isOwner) {
+        debugPrint(
+          '[Dashboard] Role changed: ${session.role} → ${membership.role}',
+        );
         ref.read(sessionProvider.notifier).updateStore(membership);
-        await UserAuthService.selectStore(membership);
+        await UserAuthService.updateSameStoreRoleInPrefs(membership);
       }
     } catch (e) {
       debugPrint('[Dashboard] _silentRoleRefresh error: $e');
@@ -183,26 +208,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final modulesAsync  = ref.watch(allModulesProvider);
+    final modulesAsync = ref.watch(allModulesProvider);
     final lowStockAsync = ref.watch(lowStockKhoProvider);
-    final todayStats    = ref.watch(todayStatsProvider);
-    final session       = ref.watch(sessionProvider); // Watch để rebuild khi session update
-    ref.watch(openShiftCCProvider); // Watch để luôn có data ca làm việc của nhân viên
+    final todayStats = ref.watch(todayStatsProvider);
+    final session = ref.watch(
+      sessionProvider,
+    ); // Watch để rebuild khi session update
+    ref.watch(
+      openShiftCCProvider,
+    ); // Watch để luôn có data ca làm việc của nhân viên
 
     // Lấy quyền thực tế từ Supabase (không dùng kDefaultPerms hardcode)
-    final staffPermsAsync = (session != null && !session.isOwner && session.hasStore)
-        ? ref.watch(_staffPermsProvider(StoreRoleKey(
-            storeId: session.storeId!,
-            role: session.role,
-          )))
+    final staffPermsAsync =
+        (session != null && !session.isOwner && session.hasStore)
+        ? ref.watch(
+            _staffPermsProvider(
+              StoreRoleKey(storeId: session.storeId!, role: session.role),
+            ),
+          )
         : null;
 
     return Scaffold(
       backgroundColor: _kBg,
       body: modulesAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: _kNavy),
-        ),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(color: _kNavy)),
         error: (e, _) => Center(child: Text('Lỗi: $e')),
         data: (modules) {
           // Map: local module id → permission key (tương ứng kAllModules)
@@ -221,11 +251,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           List<String>? allowedPerms;
           if (session != null && !session.isOwner && session.hasStore) {
             final canonical = StaffService.canonicalRole(session.role);
-            final rawPerms = staffPermsAsync?.when(
-              data: (p) => p,
-              loading: () => kDefaultPerms[canonical] ?? kDefaultPerms['cashier']!,
-              error: (_, __) => kDefaultPerms[canonical] ?? kDefaultPerms['cashier']!,
-            ) ?? kDefaultPerms[canonical] ?? kDefaultPerms['cashier']!;
+            final rawPerms =
+                staffPermsAsync?.when(
+                  data: (p) => p,
+                  loading: () =>
+                      kDefaultPerms[canonical] ?? kDefaultPerms['cashier']!,
+                  error: (_, __) =>
+                      kDefaultPerms[canonical] ?? kDefaultPerms['cashier']!,
+                ) ??
+                kDefaultPerms[canonical] ??
+                kDefaultPerms['cashier']!;
             // ⭐ kay_ops luôn available cho mọi nhân viên
             allowedPerms = rawPerms.contains('kay_ops')
                 ? rawPerms
@@ -235,18 +270,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           // Lấy modules được phép:
           // - Chủ quán: isActive=true (chủ tự chỉnh)
           // - Nhân viên: theo quyền Supabase, BỎ QUA isActive
-          final activeModules = modules
-              .where((m) {
-                // Chỉ hiện module có UI config — tránh data Supabase cũ gây lỗi
-                if (!kModuleConfigs.containsKey(m.id)) return false;
-                if (allowedPerms == null) return m.isActive; // chủ quán: theo isActive
-                // Nhân viên: bỏ qua isActive, chỉ xét permission
-                final permKey = permMap[m.id];
-                if (permKey == null) return false;
-                return allowedPerms!.contains(permKey);
-              })
-              .toList()
-            ..sort((a, b) => a.position.compareTo(b.position));
+          final activeModules = modules.where((m) {
+            // Chỉ hiện module có UI config — tránh data Supabase cũ gây lỗi
+            if (!kModuleConfigs.containsKey(m.id)) return false;
+            if (allowedPerms == null)
+              return m.isActive; // chủ quán: theo isActive
+            // Nhân viên: bỏ qua isActive, chỉ xét permission
+            final permKey = permMap[m.id];
+            if (permKey == null) return false;
+            return allowedPerms!.contains(permKey);
+          }).toList()..sort((a, b) => a.position.compareTo(b.position));
 
           // Reset order khi role thay đổi (vd: staff vừa được detect vào quán)
           final currentRole = session?.role;
@@ -265,7 +298,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             final activeSet = activeIdsList.toSet();
             _moduleOrder.removeWhere((id) => !activeSet.contains(id));
             for (final m in activeModules) {
-              if (!_moduleOrder.contains(m.id) && !_editRemovedIds.contains(m.id)) {
+              if (!_moduleOrder.contains(m.id) &&
+                  !_editRemovedIds.contains(m.id)) {
                 _moduleOrder.add(m.id);
               }
             }
@@ -275,9 +309,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             physics: const ClampingScrollPhysics(),
             slivers: [
               // ── HEADER ─────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: RepaintBoundary(child: _buildHeader()),
-              ),
+              SliverToBoxAdapter(child: RepaintBoundary(child: _buildHeader())),
 
               // ── BODY ───────────────────────────────────────────────
               SliverToBoxAdapter(
@@ -311,10 +343,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           error: (_, __) => const SizedBox.shrink(),
                           data: (lowStocks) => lowStocks.isEmpty
                               ? const SizedBox.shrink()
-                              : _buildLowStockWarning(lowStocks
-                                  .map((p) => p.name)
-                                  .take(3)
-                                  .toList()),
+                              : _buildLowStockWarning(
+                                  lowStocks.map((p) => p.name).take(3).toList(),
+                                ),
                         ),
 
                         const SizedBox(height: 80),
@@ -331,16 +362,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           return LayoutBuilder(
             builder: (context, constraints) {
               if (constraints.maxWidth > 700) {
-                return Row(children: [
-                  Expanded(flex: 3, child: mainContent),
-                  SizedBox(
-                    width: 280,
-                    child: _DashboardRightPanel(
-                      todayStats: todayStats,
-                      lowStockAsync: lowStockAsync,
+                return Row(
+                  children: [
+                    Expanded(flex: 3, child: mainContent),
+                    SizedBox(
+                      width: 280,
+                      child: _DashboardRightPanel(
+                        todayStats: todayStats,
+                        lowStockAsync: lowStockAsync,
+                      ),
                     ),
-                  ),
-                ]);
+                  ],
+                );
               }
               return mainContent;
             },
@@ -356,10 +389,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget _buildHeader() {
     final now = DateTime.now();
     // format ngày kiểu Việt Nam
-    final weekdays = ['', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+    final weekdays = [
+      '',
+      'Thứ 2',
+      'Thứ 3',
+      'Thứ 4',
+      'Thứ 5',
+      'Thứ 6',
+      'Thứ 7',
+      'Chủ nhật',
+    ];
     final dayStr = weekdays[now.weekday];
-    final dateStr =
-        '$dayStr, ${DateFormat('dd/MM/yyyy').format(now)}';
+    final dateStr = '$dayStr, ${DateFormat('dd/MM/yyyy').format(now)}';
 
     return Container(
       decoration: const BoxDecoration(
@@ -396,491 +437,584 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-              // Top row
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Consumer(builder: (_, ref, __) {
-                          final nameAsync = ref.watch(shopNameProvider);
-                          final session = ref.watch(sessionProvider);
-                          final isOwner = session?.isOwner ?? true;
-
-                          if (!isOwner && session != null && session.hasStore) {
-                            // Staff: hiện tên nhân viên
-                            return Text(
-                              session.displayName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.8,
-                              ),
-                            );
-                          }
-
-                          // Chủ quán: hiện tên quán (giữ nguyên)
-                          final displayName = session?.storeName?.isNotEmpty == true
-                              ? session!.storeName!
-                              : nameAsync.when(
-                                  data: (n) => n,
-                                  loading: () => 'Quán Nhỏ',
-                                  error: (_, __) => 'Quán Nhỏ',
-                                );
-                          return Text(
-                            displayName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.8,
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 3),
-                        Row(
+                  // Top row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Chip: "Quán Nhỏ - POS" (chủ) hoặc "Thuộc quán X" (staff)
-                            Consumer(builder: (_, ref, __) {
-                              final session = ref.watch(sessionProvider);
-                              final isOwner = session?.isOwner ?? true;
-                              final shopNameAsync = ref.watch(dashboardShopNameProvider);
-                              final shopName = shopNameAsync.when(
-                                data: (name) => name,
-                                loading: () => session?.storeName ?? 'Quán Nhỏ',
-                                error: (_, __) => session?.storeName ?? 'Quán Nhỏ',
-                              );
+                            Consumer(
+                              builder: (_, ref, __) {
+                                final nameAsync = ref.watch(shopNameProvider);
+                                final session = ref.watch(sessionProvider);
+                                final isOwner = session?.isOwner ?? true;
 
-                              if (!isOwner && session != null && session.hasStore) {
-                                // Staff — pill rõ với border trắng
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 9, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.40),
-                                      width: 1,
+                                if (!isOwner &&
+                                    session != null &&
+                                    session.hasStore) {
+                                  // Staff: hiện tên nhân viên
+                                  return Text(
+                                    session.displayName,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -0.8,
                                     ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.storefront_rounded,
-                                          size: 11, color: Colors.white),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        shopName,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.2,
-                                        ),
-                                      ),
-                                    ],
+                                  );
+                                }
+
+                                // Chủ quán: hiện tên quán (giữ nguyên)
+                                final displayName =
+                                    session?.storeName?.isNotEmpty == true
+                                    ? session!.storeName!
+                                    : nameAsync.when(
+                                        data: (n) => n,
+                                        loading: () => 'Quán Nhỏ',
+                                        error: (_, __) => 'Quán Nhỏ',
+                                      );
+                                return Text(
+                                  displayName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.8,
                                   ),
                                 );
-                              }
-                              // Owner — badge cam nổi bật
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFF6B2C),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFFFF6B2C).withValues(alpha: 0.45),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.storefront_rounded,
-                                        size: 11, color: Colors.white),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      shopName,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.3,
+                              },
+                            ),
+                            const SizedBox(height: 3),
+                            Row(
+                              children: [
+                                // Chip: "Quán Nhỏ - POS" (chủ) hoặc "Thuộc quán X" (staff)
+                                Consumer(
+                                  builder: (_, ref, __) {
+                                    final session = ref.watch(sessionProvider);
+                                    final isOwner = session?.isOwner ?? true;
+                                    final shopNameAsync = ref.watch(
+                                      dashboardShopNameProvider,
+                                    );
+                                    final shopName = shopNameAsync.when(
+                                      data: (name) => name,
+                                      loading: () =>
+                                          session?.storeName ?? 'Quán Nhỏ',
+                                      error: (_, __) =>
+                                          session?.storeName ?? 'Quán Nhỏ',
+                                    );
+
+                                    if (!isOwner &&
+                                        session != null &&
+                                        session.hasStore) {
+                                      // Staff — pill rõ với border trắng
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 9,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.18,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.40,
+                                            ),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.storefront_rounded,
+                                              size: 11,
+                                              color: Colors.white,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              shopName,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.2,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }
+                                    // Owner — badge cam nổi bật
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
                                       ),
-                                    ),
-                                  ],
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFF6B2C),
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(
+                                              0xFFFF6B2C,
+                                            ).withValues(alpha: 0.45),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.storefront_rounded,
+                                            size: 11,
+                                            color: Colors.white,
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            shopName,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w800,
+                                              letterSpacing: 0.3,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
-                              );
-                            }),
-                            const SizedBox(width: 6),
-                            Text(
-                              dateStr,
-                              style: const TextStyle(
-                                color: _kWhite60,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  dateStr,
+                                  style: const TextStyle(
+                                    color: _kWhite60,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                   // Notification bell → hiện hàng sắp hết khi bấm
-                  Consumer(builder: (ctx, r, __) {
-                    final lowStockAsync = r.watch(lowStockKhoProvider);
-                    final lowCount = lowStockAsync.value?.length ?? 0;
-                    return GestureDetector(
-                      onTap: () {
-                        final items = lowStockAsync.value ?? [];
-                        if (items.isEmpty) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: const Text('✅ Kho ổn định, không có hàng sắp hết'),
-                              behavior: SnackBarBehavior.floating,
-                              duration: const Duration(seconds: 2),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
-                          );
-                          return;
-                        }
-                        showModalBottomSheet(
-                          context: ctx,
-                          backgroundColor: const Color(0xFF1A2233),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                          ),
-                          builder: (_) => Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Center(
-                                  child: Container(
-                                    width: 36, height: 4,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white24,
-                                      borderRadius: BorderRadius.circular(2),
+                      ),
+                      // Notification bell → hiện hàng sắp hết khi bấm
+                      Consumer(
+                        builder: (ctx, r, __) {
+                          final lowStockAsync = r.watch(lowStockKhoProvider);
+                          final lowCount = lowStockAsync.value?.length ?? 0;
+                          return GestureDetector(
+                            onTap: () {
+                              final items = lowStockAsync.value ?? [];
+                              if (items.isEmpty) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                      '✅ Kho ổn định, không có hàng sắp hết',
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(seconds: 2),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  '⚠️ Hàng sắp hết (${items.length} mặt hàng)',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 16,
+                                );
+                                return;
+                              }
+                              showModalBottomSheet(
+                                context: ctx,
+                                backgroundColor: const Color(0xFF1A2233),
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(20),
                                   ),
                                 ),
-                                const SizedBox(height: 12),
-                                ...items.take(8).map((p) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: Row(
+                                builder: (_) => Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    20,
+                                    16,
+                                    20,
+                                    32,
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      const Icon(Icons.inventory_2_outlined,
-                                          size: 16, color: Color(0xFFF59E0B)),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          p.name,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 14,
+                                      Center(
+                                        child: Container(
+                                          width: 36,
+                                          height: 4,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white24,
+                                            borderRadius: BorderRadius.circular(
+                                              2,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0x33EF4444),
-                                          borderRadius: BorderRadius.circular(6),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        '⚠️ Hàng sắp hết (${items.length} mặt hàng)',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16,
                                         ),
-                                        child: Text(
-                                          'Còn ${p.stockQty.toStringAsFixed(p.stockQty % 1 == 0 ? 0 : 1)} ${p.unit}',
-                                          style: const TextStyle(
-                                            color: Color(0xFFEF4444),
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      ...items
+                                          .take(8)
+                                          .map(
+                                            (p) => Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 8,
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.inventory_2_outlined,
+                                                    size: 16,
+                                                    color: Color(0xFFF59E0B),
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Expanded(
+                                                    child: Text(
+                                                      p.name,
+                                                      style: const TextStyle(
+                                                        color: Colors.white70,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 3,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0x33EF4444,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            6,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      'Còn ${p.stockQty.toStringAsFixed(p.stockQty % 1 == 0 ? 0 : 1)} ${p.unit}',
+                                                      style: const TextStyle(
+                                                        color: Color(
+                                                          0xFFEF4444,
+                                                        ),
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: lowCount > 0
+                                        ? const Color(0x33F59E0B)
+                                        : _kWhite20,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: lowCount > 0
+                                        ? Border.all(
+                                            color: const Color(0x66F59E0B),
+                                          )
+                                        : null,
+                                  ),
+                                  child: Icon(
+                                    lowCount > 0
+                                        ? Icons.notifications_active_rounded
+                                        : Icons.notifications_outlined,
+                                    color: lowCount > 0
+                                        ? const Color(0xFFF59E0B)
+                                        : Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                if (lowCount > 0)
+                                  Positioned(
+                                    top: -4,
+                                    right: -4,
+                                    child: Container(
+                                      width: 16,
+                                      height: 16,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFEF4444),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '$lowCount',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      // Avatar → Settings
+                      GestureDetector(
+                        onTap: () => ref
+                            .read(navTabProvider.notifier)
+                            .goTo(NavTab.settings),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _kOrange,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'QN',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Revenue display — hoặc CTA tạo quán nếu chưa có quán
+                  Consumer(
+                    builder: (ctx, r, __) {
+                      final hasStore = r.watch(hasStoreProvider);
+                      if (!hasStore) {
+                        // ── CTA: Chưa có quán ───────────────────────────────────
+                        return _CreateStoreCta(
+                          onTap: () => showCreateStoreSheet(ctx, r),
+                        );
+                      }
+                      // ── Kiểm tra quyền xem doanh thu (Ẩn đối với nhân viên thường) ──────
+                      final session = r.watch(sessionProvider);
+                      final isStaff =
+                          session != null &&
+                          !(session.isOwner) &&
+                          session.role != 'owner' &&
+                          session.role != 'manager' &&
+                          session.role.toLowerCase() != 'quản lý';
+
+                      if (isStaff) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'XIN CHÀO, ${session.displayName.toUpperCase()}',
+                                        style: const TextStyle(
+                                          color: _kWhite60,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 1.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      const Text(
+                                        'Chúc bạn một ngày làm việc vui vẻ!',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ],
                                   ),
-                                )),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: lowCount > 0
-                                  ? const Color(0x33F59E0B)
-                                  : _kWhite20,
-                              borderRadius: BorderRadius.circular(12),
-                              border: lowCount > 0
-                                  ? Border.all(color: const Color(0x66F59E0B))
-                                  : null,
-                            ),
-                            child: Icon(
-                              lowCount > 0
-                                  ? Icons.notifications_active_rounded
-                                  : Icons.notifications_outlined,
-                              color: lowCount > 0
-                                  ? const Color(0xFFF59E0B)
-                                  : Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                          if (lowCount > 0)
-                            Positioned(
-                              top: -4,
-                              right: -4,
-                              child: Container(
-                                width: 16,
-                                height: 16,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFEF4444),
-                                  shape: BoxShape.circle,
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    '$lowCount',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w900,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0x334CAF50),
+                                    borderRadius: BorderRadius.circular(30),
+                                    border: Border.all(
+                                      color: const Color(0x664CAF50),
                                     ),
                                   ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.store_rounded,
+                                        size: 12,
+                                        color: Color(0xFF81C784),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Sẵn sàng',
+                                        style: TextStyle(
+                                          color: Color(0xFF81C784),
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      }
+
+                      // ── Doanh thu bình thường (chỉ hiện cho chủ quán/quản lý) ──────────────────
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'DOANH THU HÔM NAY',
+                                      style: TextStyle(
+                                        color: _kWhite60,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    // LIVE revenue
+                                    Builder(
+                                      builder: (_) {
+                                        final s = r.watch(todayStatsProvider);
+                                        final rev = s.value?.todayRevenue ?? 0;
+                                        return Text(
+                                          _fmtRevenue(rev),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 42,
+                                            letterSpacing: -0.5,
+                                            height: 1.0,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                    );
-                  }),
-                  const SizedBox(width: 8),
-                  // Avatar → Settings
-                  GestureDetector(
-                    onTap: () => ref.read(navTabProvider.notifier).goTo(NavTab.settings),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: _kOrange,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'QN',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
+                              // Quick badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0x334CAF50),
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: const Color(0x664CAF50),
+                                  ),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.store_rounded,
+                                      size: 12,
+                                      color: Color(0xFF81C784),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Sẵn sàng',
+                                      style: TextStyle(
+                                        color: Color(0xFF81C784),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                    ),
+                          const SizedBox(height: 16),
+                          // Pills row — live data
+                          Builder(
+                            builder: (_) {
+                              final s = r.watch(todayStatsProvider);
+                              final orders = s.value?.todayOrders ?? 0;
+                              final customers = s.value?.todayCustomers ?? 0;
+                              return Row(
+                                children: [
+                                  _HeaderPill(
+                                    icon: Icons.receipt_long_rounded,
+                                    label: 'Số đơn',
+                                    value: '$orders',
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _HeaderPill(
+                                    icon: Icons.people_rounded,
+                                    label: 'Khách',
+                                    value: '$customers',
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              // Revenue display — hoặc CTA tạo quán nếu chưa có quán
-              Consumer(builder: (ctx, r, __) {
-                final hasStore = r.watch(hasStoreProvider);
-                if (!hasStore) {
-                  // ── CTA: Chưa có quán ───────────────────────────────────
-                  return _CreateStoreCta(
-                    onTap: () => showCreateStoreSheet(ctx, r),
-                  );
-                }
-                // ── Kiểm tra quyền xem doanh thu (Ẩn đối với nhân viên thường) ──────
-                final session = r.watch(sessionProvider);
-                final isStaff = session != null &&
-                    !(session.isOwner) &&
-                    session.role != 'owner' &&
-                    session.role != 'manager' &&
-                    session.role.toLowerCase() != 'quản lý';
-
-                if (isStaff) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'XIN CHÀO, ${session.displayName.toUpperCase()}',
-                                  style: const TextStyle(
-                                    color: _kWhite60,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                const Text(
-                                  'Chúc bạn một ngày làm việc vui vẻ!',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: const Color(0x334CAF50),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(color: const Color(0x664CAF50)),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.store_rounded,
-                                    size: 12, color: Color(0xFF81C784)),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Sẵn sàng',
-                                  style: TextStyle(
-                                    color: Color(0xFF81C784),
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                }
-
-                // ── Doanh thu bình thường (chỉ hiện cho chủ quán/quản lý) ──────────────────
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'DOANH THU HÔM NAY',
-                                style: TextStyle(
-                                  color: _kWhite60,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              // LIVE revenue
-                              Builder(builder: (_) {
-                                final s   = r.watch(todayStatsProvider);
-                                final rev = s.value?.todayRevenue ?? 0;
-                                return Text(
-                                  _fmtRevenue(rev),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 42,
-                                    letterSpacing: -0.5,
-                                    height: 1.0,
-                                  ),
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
-                        // Quick badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: const Color(0x334CAF50),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: const Color(0x664CAF50)),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.store_rounded,
-                                  size: 12, color: Color(0xFF81C784)),
-                              SizedBox(width: 4),
-                              Text(
-                                'Sẵn sàng',
-                                style: TextStyle(
-                                  color: Color(0xFF81C784),
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // Pills row — live data
-                      Builder(builder: (_) {
-                        final s         = r.watch(todayStatsProvider);
-                        final orders    = s.value?.todayOrders ?? 0;
-                        final customers = s.value?.todayCustomers ?? 0;
-                        return Row(
-                          children: [
-                            _HeaderPill(
-                              icon: Icons.receipt_long_rounded,
-                              label: 'Số đơn',
-                              value: '$orders',
-                            ),
-                            const SizedBox(width: 8),
-                            _HeaderPill(
-                              icon: Icons.people_rounded,
-                              label: 'Khách',
-                              value: '$customers',
-                            ),
-                          ],
-                        );
-                      }),
-                    ],
-                  );
-                }),
-              ],
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // SECTION HEADER (Module Grid title + edit toggle)
@@ -908,9 +1042,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   : '${activeModules.length} đang bật • Giữ để sắp xếp',
               style: TextStyle(
                 fontSize: 11.5,
-                color: _isEditMode
-                    ? _kOrange.withValues(alpha: 0.85)
-                    : _kMuted,
+                color: _isEditMode ? _kOrange.withValues(alpha: 0.85) : _kMuted,
                 fontWeight: _isEditMode ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
@@ -929,8 +1061,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.lock_outline_rounded,
-                  size: 13, color: Colors.grey.shade500),
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: 13,
+                  color: Colors.grey.shade500,
+                ),
                 const SizedBox(width: 5),
                 Text(
                   'Nhân viên không có quyền\nchỉnh sửa',
@@ -963,7 +1098,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               return GestureDetector(
                 onTap: _toggleEditMode,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: bgColor,
                     borderRadius: BorderRadius.circular(22),
@@ -986,7 +1124,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           child: FadeTransition(opacity: anim, child: child),
                         ),
                         child: Icon(
-                          _isEditMode ? Icons.check_rounded : Icons.tune_rounded,
+                          _isEditMode
+                              ? Icons.check_rounded
+                              : Icons.tune_rounded,
                           key: ValueKey(_isEditMode),
                           color: Colors.white,
                           size: 15,
@@ -1084,29 +1224,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               curve: Curves.easeInBack,
             )
             .fadeOut(duration: 450.ms)
-            .slideY(
-              begin: 0,
-              end: 0.2,
-              duration: 550.ms,
-              curve: Curves.easeIn,
-            );
+            .slideY(begin: 0, end: 0.2, duration: 550.ms, curve: Curves.easeIn);
       }
 
       return KeyedSubtree(key: ValueKey(id), child: tile);
     }).toList();
 
     if (_isEditMode) {
-      tiles.add(KeyedSubtree(
-        key: const ValueKey('__add__'),
-        child: AddModuleTile(onTap: _openModulePicker),
-      ));
+      tiles.add(
+        KeyedSubtree(
+          key: const ValueKey('__add__'),
+          child: AddModuleTile(onTap: _openModulePicker),
+        ),
+      );
     }
 
-    return _isEditMode
-        ? _buildReorderableGrid(tiles)
-        : _buildStaticGrid(tiles);
+    return _isEditMode ? _buildReorderableGrid(tiles) : _buildStaticGrid(tiles);
   }
-
 
   /// Static grid — GridView responsive (2/3/4 cột tuỳ màn hình)
   Widget _buildStaticGrid(List<Widget> tiles) {
@@ -1121,7 +1255,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         crossAxisCount: cols,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: cols >= 4 ? 1.75 : cols >= 3 ? 1.55 : 1.15,
+        childAspectRatio: cols >= 4
+            ? 1.75
+            : cols >= 3
+            ? 1.55
+            : 1.15,
       ),
       itemCount: tiles.length,
       itemBuilder: (_, i) => tiles[i],
@@ -1141,7 +1279,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         crossAxisCount: cols,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: cols >= 4 ? 1.75 : cols >= 3 ? 1.55 : 1.15,
+        childAspectRatio: cols >= 4
+            ? 1.75
+            : cols >= 3
+            ? 1.55
+            : 1.15,
       ),
       itemCount: tiles.length,
       itemBuilder: (_, i) => tiles[i],
@@ -1162,8 +1304,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.view_module_rounded,
-                  size: 40, color: _kMuted),
+              const Icon(Icons.view_module_rounded, size: 40, color: _kMuted),
               const SizedBox(height: 12),
               const Text(
                 'Chưa có module nào',
@@ -1176,7 +1317,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 8),
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: _kNavy,
                   borderRadius: BorderRadius.circular(20),
@@ -1202,62 +1345,70 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildEditModeHint() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            _kOrange.withValues(alpha: 0.10),
-            _kOrange.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _kOrange.withValues(alpha: 0.28),
-          width: 1.2,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: _kOrange.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Icon(Icons.touch_app_rounded,
-                size: 17, color: _kOrange.withValues(alpha: 0.9)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Đang chỉnh sửa modules',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: _kOrange.withValues(alpha: 0.95),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Nhấn – đỏ để xoá  •  Nhấn + để thêm',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: _kOrange.withValues(alpha: 0.70),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                _kOrange.withValues(alpha: 0.10),
+                _kOrange.withValues(alpha: 0.05),
               ],
             ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: _kOrange.withValues(alpha: 0.28),
+              width: 1.2,
+            ),
           ),
-        ],
-      ),
-    )
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: _kOrange.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(
+                  Icons.touch_app_rounded,
+                  size: 17,
+                  color: _kOrange.withValues(alpha: 0.9),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Đang chỉnh sửa modules',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: _kOrange.withValues(alpha: 0.95),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Nhấn – đỏ để xoá  •  Nhấn + để thêm',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _kOrange.withValues(alpha: 0.70),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        )
         .animate()
-        .slideY(begin: -0.3, end: 0, duration: 280.ms, curve: Curves.easeOutCubic)
+        .slideY(
+          begin: -0.3,
+          end: 0,
+          duration: 280.ms,
+          curve: Curves.easeOutCubic,
+        )
         .fadeIn(duration: 220.ms);
   }
 
@@ -1268,8 +1419,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     AsyncValue<DashboardStats> statsAsync,
     AsyncValue<List<dynamic>> lowStockAsync,
   ) {
-    final stats = statsAsync.value ?? const DashboardStats(
-        todayRevenue: 0, todayOrders: 0, todayCustomers: 0, avgOrderValue: 0);
+    final stats =
+        statsAsync.value ??
+        const DashboardStats(
+          todayRevenue: 0,
+          todayOrders: 0,
+          todayCustomers: 0,
+          avgOrderValue: 0,
+        );
     final lowCount = (lowStockAsync.value ?? []).length;
     final isLoading = statsAsync.isLoading && !statsAsync.hasValue;
 
@@ -1282,21 +1439,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Section header
-        Row(children: [
-          const Text(
-            'Hôm nay',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kInk, letterSpacing: -0.3),
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(20)),
-            child: Text(
-              DateFormat('HH:mm').format(DateTime.now()),
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kNavy, letterSpacing: 0.5),
+        Row(
+          children: [
+            const Text(
+              'Hôm nay',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: _kInk,
+                letterSpacing: -0.3,
+              ),
             ),
-          ),
-        ]),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: _kNavy.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                DateFormat('HH:mm').format(DateTime.now()),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: _kNavy,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
 
         // Unified white card
@@ -1306,58 +1478,99 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 14, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: isLoading
-              ? const SizedBox(height: 80, child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: _kNavy)))
-              : Column(children: [
-                  // Row 1
-                  Row(children: [
-                    _TodayStat(
-                      label: 'Giá TB / đơn',
-                      value: fmtMoney(stats.avgOrderValue),
-                      icon: Icons.trending_up_rounded,
-                      color: const Color(0xFF388E3C),
+              ? const SizedBox(
+                  height: 80,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: _kNavy,
                     ),
-                    Container(width: 1, height: 44, color: const Color(0xFFF0EDE8), margin: const EdgeInsets.symmetric(horizontal: 12)),
-                    _TodayStat(
-                      label: 'Số đơn',
-                      value: '${stats.todayOrders}',
-                      icon: Icons.receipt_long_rounded,
-                      color: const Color(0xFF1976D2),
+                  ),
+                )
+              : Column(
+                  children: [
+                    // Row 1
+                    Row(
+                      children: [
+                        _TodayStat(
+                          label: 'Giá TB / đơn',
+                          value: fmtMoney(stats.avgOrderValue),
+                          icon: Icons.trending_up_rounded,
+                          color: const Color(0xFF388E3C),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 44,
+                          color: const Color(0xFFF0EDE8),
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        _TodayStat(
+                          label: 'Số đơn',
+                          value: '${stats.todayOrders}',
+                          icon: Icons.receipt_long_rounded,
+                          color: const Color(0xFF1976D2),
+                        ),
+                      ],
                     ),
-                  ]),
-                  const Divider(height: 20, color: Color(0xFFF0EDE8)),
-                  // Row 2
-                  Row(children: [
-                    _TodayStat(
-                      label: 'Khách hôm nay',
-                      value: '${stats.todayCustomers}',
-                      icon: Icons.people_alt_rounded,
-                      color: const Color(0xFF7B1FA2),
+                    const Divider(height: 20, color: Color(0xFFF0EDE8)),
+                    // Row 2
+                    Row(
+                      children: [
+                        _TodayStat(
+                          label: 'Khách hôm nay',
+                          value: '${stats.todayCustomers}',
+                          icon: Icons.people_alt_rounded,
+                          color: const Color(0xFF7B1FA2),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 44,
+                          color: const Color(0xFFF0EDE8),
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        _TodayStat(
+                          label: 'Sắp hết hàng',
+                          value: lowCount == 0
+                              ? 'Ổn định'
+                              : '$lowCount sản phẩm',
+                          icon: lowCount == 0
+                              ? Icons.check_circle_rounded
+                              : Icons.warning_amber_rounded,
+                          color: lowCount == 0
+                              ? const Color(0xFF00796B)
+                              : const Color(0xFFE53935),
+                        ),
+                      ],
                     ),
-                    Container(width: 1, height: 44, color: const Color(0xFFF0EDE8), margin: const EdgeInsets.symmetric(horizontal: 12)),
-                    _TodayStat(
-                      label: 'Sắp hết hàng',
-                      value: lowCount == 0 ? 'Ổn định' : '$lowCount sản phẩm',
-                      icon: lowCount == 0 ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
-                      color: lowCount == 0 ? const Color(0xFF00796B) : const Color(0xFFE53935),
+                    const Divider(height: 20, color: Color(0xFFF0EDE8)),
+                    // Row 3
+                    Row(
+                      children: [
+                        _TodayStat(
+                          label: 'Huỷ Bàn / Huỷ Bill',
+                          value: '$voidCount lượt',
+                          icon: Icons.delete_sweep_rounded,
+                          color: const Color(0xFFE65100),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 44,
+                          color: Colors.transparent,
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        const Expanded(child: SizedBox()),
+                      ],
                     ),
-                  ]),
-                  const Divider(height: 20, color: Color(0xFFF0EDE8)),
-                  // Row 3
-                  Row(children: [
-                    _TodayStat(
-                      label: 'Huỷ Bàn / Huỷ Bill',
-                      value: '$voidCount lượt',
-                      icon: Icons.delete_sweep_rounded,
-                      color: const Color(0xFFE65100),
-                    ),
-                    Container(width: 1, height: 44, color: Colors.transparent, margin: const EdgeInsets.symmetric(horizontal: 12)),
-                    const Expanded(child: SizedBox()),
-                  ]),
-                ]),
+                  ],
+                ),
         ),
       ],
     );
@@ -1368,85 +1581,85 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildLowStockWarning(List<String> productNames) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF8F0),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFFFCC80),
-          width: 1.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0x1FFF6F00),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.inventory_rounded,
-                  color: Color(0xFFE65100),
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Sắp hết hàng',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFFE65100),
-                ),
-              ),
-              const Spacer(),
-              const Text(
-                'Nhập thêm →',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: _kOrange,
-                ),
-              ),
-            ],
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF8F0),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFFFCC80), width: 1.5),
           ),
-          if (productNames.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            ...productNames.asMap().entries.map((e) => Padding(
-                  padding:
-                      EdgeInsets.only(bottom: e.key < productNames.length - 1 ? 8 : 0),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFFE65100),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          e.value,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _kInk,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0x1FFF6F00),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.inventory_rounded,
+                      color: Color(0xFFE65100),
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Sắp hết hàng',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFE65100),
+                    ),
+                  ),
+                  const Spacer(),
+                  const Text(
+                    'Nhập thêm →',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _kOrange,
+                    ),
+                  ),
+                ],
+              ),
+              if (productNames.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                ...productNames.asMap().entries.map(
+                  (e) => Padding(
+                    padding: EdgeInsets.only(
+                      bottom: e.key < productNames.length - 1 ? 8 : 0,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFFE65100),
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            e.value,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: _kInk,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                )),
-          ],
-        ],
-      ),
-    )
+                ),
+              ],
+            ],
+          ),
+        )
         .animate()
         .slideX(begin: 0.1, end: 0, duration: 300.ms)
         .fadeIn(duration: 250.ms);
@@ -1461,8 +1674,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       [Color(0xFFF9A825), Color(0xFFFBC02D)], // gold
       [Color(0xFF78909C), Color(0xFF90A4AE)], // silver
       [Color(0xFF8D6E63), Color(0xFFA1887F)], // bronze
-      [_kNavy,            Color(0xFF2D2B8A)], // navy
-      [_kNavy,            Color(0xFF2D2B8A)], // navy
+      [_kNavy, Color(0xFF2D2B8A)], // navy
+      [_kNavy, Color(0xFF2D2B8A)], // navy
     ];
 
     return Column(
@@ -1497,208 +1710,228 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
             ),
             const Spacer(),
-            Consumer(builder: (_, ref, __) {
-              final productsAsync = ref.watch(allProductsProvider);
-              return productsAsync.when(
-                data: (p) => Text(
-                  '${p.length} sản phẩm',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: _kMuted,
-                    fontWeight: FontWeight.w500,
+            Consumer(
+              builder: (_, ref, __) {
+                final productsAsync = ref.watch(allProductsProvider);
+                return productsAsync.when(
+                  data: (p) => Text(
+                    '${p.length} sản phẩm',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _kMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
-              );
-            }),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                );
+              },
+            ),
           ],
         ),
         const SizedBox(height: 12),
-        Consumer(builder: (_, ref, __) {
-          final productsAsync = ref.watch(allProductsProvider);
-          return productsAsync.when(
-            loading: () => const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: CircularProgressIndicator(color: _kNavy),
+        Consumer(
+          builder: (_, ref, __) {
+            final productsAsync = ref.watch(allProductsProvider);
+            return productsAsync.when(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: CircularProgressIndicator(color: _kNavy),
+                ),
               ),
-            ),
-            error: (e, _) => Text('Lỗi: $e'),
-            data: (products) {
-              if (products.isEmpty) {
+              error: (e, _) => Text('Lỗi: $e'),
+              data: (products) {
+                if (products.isEmpty) {
+                  return Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Chưa có sản phẩm nào',
+                        style: TextStyle(color: _kMuted, fontSize: 14),
+                      ),
+                    ),
+                  );
+                }
+
+                final displayProducts = products.take(5).toList();
+                // max price for progress bars
+                final maxPrice = displayProducts
+                    .map((p) => p.sellPrice)
+                    .reduce((a, b) => a > b ? a : b);
+
                 return Container(
-                  padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 12,
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: const Center(
-                    child: Text(
-                      'Chưa có sản phẩm nào',
-                      style: TextStyle(color: _kMuted, fontSize: 14),
-                    ),
-                  ),
-                );
-              }
+                  child: Column(
+                    children: displayProducts.asMap().entries.map((e) {
+                      final p = e.value;
+                      final rank = e.key;
+                      final isLast = rank == displayProducts.length - 1;
+                      final isLow = p.minStock > 0 && p.stockQty <= p.minStock;
+                      final colors =
+                          rankColors[rank.clamp(0, rankColors.length - 1)];
+                      final progress = maxPrice > 0
+                          ? p.sellPrice / maxPrice
+                          : 0.0;
 
-              final displayProducts = products.take(5).toList();
-              // max price for progress bars
-              final maxPrice = displayProducts
-                  .map((p) => p.sellPrice)
-                  .reduce((a, b) => a > b ? a : b);
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: displayProducts.asMap().entries.map((e) {
-                    final p = e.value;
-                    final rank = e.key;
-                    final isLast = rank == displayProducts.length - 1;
-                    final isLow = p.minStock > 0 && p.stockQty <= p.minStock;
-                    final colors = rankColors[rank.clamp(0, rankColors.length - 1)];
-                    final progress = maxPrice > 0 ? p.sellPrice / maxPrice : 0.0;
-
-                    return Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-                          child: Row(
-                            children: [
-                              // Rank badge with gradient
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: colors,
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: colors[0].withValues(alpha: 0.4),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                            child: Row(
+                              children: [
+                                // Rank badge with gradient
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: colors,
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
                                     ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    rank == 0 ? '🥇' : rank == 1 ? '🥈' : rank == 2 ? '🥉' : '${rank + 1}',
-                                    style: TextStyle(
-                                      fontSize: rank <= 2 ? 16 : 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: colors[0].withValues(alpha: 0.4),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      rank == 0
+                                          ? '🥇'
+                                          : rank == 1
+                                          ? '🥈'
+                                          : rank == 2
+                                          ? '🥉'
+                                          : '${rank + 1}',
+                                      style: TextStyle(
+                                        fontSize: rank <= 2 ? 16 : 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            p.name,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: _kInk,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        if (isLow)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 6, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: _kRedBg,
-                                              borderRadius: BorderRadius.circular(6),
-                                            ),
-                                            child: const Text(
-                                              '⚠️ Hết',
-                                              style: TextStyle(
-                                                fontSize: 10,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              p.name,
+                                              style: const TextStyle(
+                                                fontSize: 14,
                                                 fontWeight: FontWeight.w700,
-                                                color: _kRed,
+                                                color: _kInk,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          if (isLow)
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: _kRedBg,
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                              ),
+                                              child: const Text(
+                                                '⚠️ Hết',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: _kRed,
+                                                ),
                                               ),
                                             ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      // Progress bar
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: LinearProgressIndicator(
+                                          value: progress,
+                                          minHeight: 4,
+                                          backgroundColor: const Color(
+                                            0xFFF0ECE6,
                                           ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    // Progress bar
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: LinearProgressIndicator(
-                                        value: progress,
-                                        minHeight: 4,
-                                        backgroundColor: const Color(0xFFF0ECE6),
-                                        valueColor: AlwaysStoppedAnimation(
-                                          colors[0],
+                                          valueColor: AlwaysStoppedAnimation(
+                                            colors[0],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Tồn: ${p.stockQty.toStringAsFixed(0)} ${p.unit}',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: _kMuted,
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Tồn: ${p.stockQty.toStringAsFixed(0)} ${p.unit}',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: _kMuted,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                '${_formatCurrency(p.sellPrice)}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: _kGreen,
+                                const SizedBox(width: 10),
+                                Text(
+                                  '${_formatCurrency(p.sellPrice)}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: _kGreen,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        if (!isLast)
-                          const Divider(
-                            height: 1,
-                            indent: 60,
-                            color: Color(0xFFF0ECE6),
-                          ),
-                      ],
-                    );
-                  }).toList(),
-                ),
-              );
-            },
-          );
-        }),
+                          if (!isLast)
+                            const Divider(
+                              height: 1,
+                              indent: 60,
+                              color: Color(0xFFF0ECE6),
+                            ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ],
     );
   }
@@ -1818,7 +2051,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFC62828).withValues(alpha: 0.35),
+                            color: const Color(
+                              0xFFC62828,
+                            ).withValues(alpha: 0.35),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -1872,9 +2107,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Future<void> _openModulePicker() async {
     final result = await Navigator.of(context).push<String>(
       MaterialPageRoute(
-        builder: (_) => ModulePickerScreen(
-          activeModuleIds: List.from(_moduleOrder),
-        ),
+        builder: (_) =>
+            ModulePickerScreen(activeModuleIds: List.from(_moduleOrder)),
       ),
     );
 
@@ -1901,7 +2135,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     // ── CLOCK-IN GUARD CHO NHÂN VIÊN ──
     final session = ref.read(sessionProvider);
-    final isStaff = session != null &&
+    final isStaff =
+        session != null &&
         !(session.isOwner) &&
         session.role != 'owner' &&
         session.role != 'manager' &&
@@ -1913,7 +2148,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Đang kiểm tra ca làm việc, vui lòng thử lại sau giây lát...'),
+              content: Text(
+                'Đang kiểm tra ca làm việc, vui lòng thử lại sau giây lát...',
+              ),
               duration: Duration(milliseconds: 1500),
             ),
           );
@@ -1927,15 +2164,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           builder: (ctx) => AlertDialog(
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Row(children: [
-              Icon(Icons.lock_clock_rounded, color: _kOrange, size: 24),
-              SizedBox(width: 8),
-              Text('Yêu cầu chấm công', style: TextStyle(fontWeight: FontWeight.w800, color: _kNavy)),
-            ]),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Row(
+              children: [
+                Icon(Icons.lock_clock_rounded, color: _kOrange, size: 24),
+                SizedBox(width: 8),
+                Text(
+                  'Yêu cầu chấm công',
+                  style: TextStyle(fontWeight: FontWeight.w800, color: _kNavy),
+                ),
+              ],
+            ),
             content: const Text(
               'Tính năng này tạm khóa vì bạn chưa vào ca làm việc.\n\n'
-              'Vui lòng thực hiện chấm công để mở khóa các module của quán.'
+              'Vui lòng thực hiện chấm công để mở khóa các module của quán.',
             ),
             actions: [
               TextButton(
@@ -1947,7 +2191,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   backgroundColor: _kNavy,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 onPressed: () {
                   Navigator.pop(ctx);
@@ -1977,19 +2223,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       return;
     }
     final tabMap = {
-      '/pos':      1,
-      '/kho':      2,
-      '/finance':  3,
-      '/loyalty':  4,
-      '/report':   5,
-      '/table':    7,  // Module Quản lý Bàn — BanScreen tại index 7
-      '/kitchen':  8,  // Module Phiếu bếp — KitchenScreen tại index 8
-      '/staff':    9,  // Module Nhân viên — NhanVienScreen tại index 9
+      '/pos': 1,
+      '/kho': 2,
+      '/finance': 3,
+      '/loyalty': 4,
+      '/report': 5,
+      '/table': 7, // Module Quản lý Bàn — BanScreen tại index 7
+      '/kitchen': 8, // Module Phiếu bếp — KitchenScreen tại index 8
+      '/staff': 9, // Module Nhân viên — NhanVienScreen tại index 9
       '/chamcong': 10, // Module Chấm công — ChamCongScreen tại index 10
-      '/kho_pro':  11, // Module Kho Hàng Chuyên Nghiệp — KhoProScreen tại index 11
+      '/kho_pro':
+          11, // Module Kho Hàng Chuyên Nghiệp — KhoProScreen tại index 11
       '/tinhluong': 12, // Module Tính Lương — TinhLuongScreen tại index 12
-      '/kay_ops':   13, // Module Vận Hành — OpsScreen tại index 13
-      '/log_viewer': 14, // Module Nhật ký hệ thống — LogViewerScreen tại index 14
+      '/kay_ops': 13, // Module Vận Hành — OpsScreen tại index 13
+      '/log_viewer':
+          14, // Module Nhật ký hệ thống — LogViewerScreen tại index 14
     };
     final idx = tabMap[route];
     if (idx != null) {
@@ -2019,10 +2267,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       pageBuilder: (_, __, ___) => page,
       transitionsBuilder: (_, animation, secondaryAnimation, child) {
         final fade = CurvedAnimation(parent: animation, curve: Curves.easeOut);
-        final slide = Tween<Offset>(
-          begin: const Offset(0, 0.06),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+        final slide =
+            Tween<Offset>(
+              begin: const Offset(0, 0.06),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            );
         final scale = Tween<double>(begin: 0.96, end: 1.0).animate(
           CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
         );
@@ -2046,44 +2297,45 @@ class _HeaderPill extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  const _HeaderPill({required this.icon, required this.label, required this.value});
+  const _HeaderPill({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        decoration: BoxDecoration(
-          color: _kWhite20,
-          borderRadius: const BorderRadius.all(Radius.circular(30)),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.12),
-            width: 1,
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+    decoration: BoxDecoration(
+      color: _kWhite20,
+      borderRadius: const BorderRadius.all(Radius.circular(30)),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: _kWhite60),
+        const SizedBox(width: 7),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: _kWhite60),
-            const SizedBox(width: 7),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                color: _kWhite60,
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: _kWhite60,
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+          ),
         ),
-      );
+      ],
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2094,25 +2346,56 @@ class _TodayStat extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
-  const _TodayStat({required this.label, required this.value, required this.icon, required this.color});
+  const _TodayStat({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) => Expanded(
     child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, size: 20, color: color),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _kInk, letterSpacing: -0.5), overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w500)),
-        ])),
-      ]),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 20, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: _kInk,
+                    letterSpacing: -0.5,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: _kMuted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -2135,58 +2418,63 @@ class _PremiumStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: gradient.colors.first.withValues(alpha: 0.35),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: gradient.colors.first.withValues(alpha: 0.35),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Icon circle
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: Colors.white),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icon circle
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: Colors.white),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
+                  height: 1.1,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.75),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: -0.5,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.white.withValues(alpha: 0.75),
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
-            ),
-          ),
-        ],
-      ),
-    )
+        )
         .animate(delay: Duration(milliseconds: delay))
         .fadeIn(duration: 300.ms)
-        .slideY(begin: 0.15, end: 0, duration: 300.ms, curve: Curves.easeOutCubic);
+        .slideY(
+          begin: 0.15,
+          end: 0,
+          duration: 300.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }
 
@@ -2215,11 +2503,13 @@ class _CreateStoreCtaState extends ConsumerState<_CreateStoreCta> {
     if (session == null || session.hasStore) return;
     // Không auto-check nếu là chủ (isOwner flag chưa set)
     // Chỉ check silent — không hiện loading
-    final membership = await UserAuthService.fetchStoreMembership(session.userId);
+    final membership = await UserAuthService.fetchStoreMembership(
+      session.userId,
+    );
     if (!mounted) return;
     if (membership != null) {
       ref.read(sessionProvider.notifier).updateStore(membership);
-      await UserAuthService.selectStore(membership);
+      await UserAuthService.updateSameStoreRoleInPrefs(membership);
     }
   }
 
@@ -2227,24 +2517,32 @@ class _CreateStoreCtaState extends ConsumerState<_CreateStoreCta> {
     final session = ref.read(sessionProvider);
     if (session == null) return;
     setState(() => _checking = true);
-    final membership = await UserAuthService.fetchStoreMembership(session.userId);
+    final membership = await UserAuthService.fetchStoreMembership(
+      session.userId,
+    );
     if (!mounted) return;
     setState(() => _checking = false);
     if (membership != null) {
       ref.read(sessionProvider.notifier).updateStore(membership);
-      await UserAuthService.selectStore(membership);
+      await UserAuthService.updateSameStoreRoleInPrefs(membership);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('✅ Đã kết nối quán: ${membership.storeName}'),
-          behavior: SnackBarBehavior.floating,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Đã kết nối quán: ${membership.storeName}'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Chưa được thêm vào quán nào. Liên hệ chủ quán để được thêm.'),
-          behavior: SnackBarBehavior.floating,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Chưa được thêm vào quán nào. Liên hệ chủ quán để được thêm.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
   }
@@ -2252,100 +2550,135 @@ class _CreateStoreCtaState extends ConsumerState<_CreateStoreCta> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.18),
-          width: 1.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.18),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE85D20).withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.storefront_rounded,
-                  color: Colors.white, size: 24),
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE85D20).withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.storefront_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Chưa có quán nào',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          'Tạo quán mới hoặc kiểm tra xem chủ đã thêm bạn chưa',
+                          style: TextStyle(color: Colors.white60, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 14),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Chưa có quán nào',
-                      style: TextStyle(
-                        color: Colors.white, fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      )),
-                    SizedBox(height: 3),
-                    Text('Tạo quán mới hoặc kiểm tra xem chủ đã thêm bạn chưa',
-                      style: TextStyle(
-                        color: Colors.white60, fontSize: 12,
-                      )),
-                  ],
-                ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  // Nút Kiểm tra lại
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _checking ? null : _checkMembership,
+                      icon: _checking
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white70,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.refresh_rounded,
+                              size: 16,
+                              color: Colors.white70,
+                            ),
+                      label: Text(
+                        _checking ? 'Đang kiểm tra...' : 'Kiểm tra lại',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Nút Tạo quán
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: widget.onTap,
+                      icon: const Icon(Icons.add_rounded, size: 16),
+                      label: const Text(
+                        'Tạo quán',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE85D20),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              // Nút Kiểm tra lại
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _checking ? null : _checkMembership,
-                  icon: _checking
-                      ? const SizedBox(width: 14, height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70))
-                      : const Icon(Icons.refresh_rounded, size: 16, color: Colors.white70),
-                  label: Text(_checking ? 'Đang kiểm tra...' : 'Kiểm tra lại',
-                    style: const TextStyle(color: Colors.white70, fontSize: 13)),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Nút Tạo quán
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: widget.onTap,
-                  icon: const Icon(Icons.add_rounded, size: 16),
-                  label: const Text('Tạo quán',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE85D20),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    elevation: 0,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    )
+        )
         .animate()
         .fadeIn(duration: 350.ms)
-        .slideY(begin: 0.15, end: 0, duration: 350.ms, curve: Curves.easeOutCubic);
+        .slideY(
+          begin: 0.15,
+          end: 0,
+          duration: 350.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FORMAT HELPERS
@@ -2389,17 +2722,39 @@ class _DashboardRightPanel extends ConsumerWidget {
           _DRightCard(
             title: 'Hôm nay',
             icon: Icons.insights_rounded,
-            child: Column(children: [
-              _DStatRow(label: 'Doanh thu', value: _fmtShort(s.todayRevenue), color: _kGreen),
-              const Divider(height: 1),
-              _DStatRow(label: 'Số đơn', value: '${s.todayOrders}', color: _kOrange),
-              const Divider(height: 1),
-              _DStatRow(label: 'Khách', value: '${s.todayCustomers}', color: _kNavy),
-              const Divider(height: 1),
-              _DStatRow(label: 'TB/đơn', value: _fmtShort(s.avgOrderValue), color: const Color(0xFFF9A825)),
-              const Divider(height: 1),
-              _DStatRow(label: 'Huỷ Bàn / Huỷ Bill', value: '$voidCount lượt', color: const Color(0xFFE65100)),
-            ]),
+            child: Column(
+              children: [
+                _DStatRow(
+                  label: 'Doanh thu',
+                  value: _fmtShort(s.todayRevenue),
+                  color: _kGreen,
+                ),
+                const Divider(height: 1),
+                _DStatRow(
+                  label: 'Số đơn',
+                  value: '${s.todayOrders}',
+                  color: _kOrange,
+                ),
+                const Divider(height: 1),
+                _DStatRow(
+                  label: 'Khách',
+                  value: '${s.todayCustomers}',
+                  color: _kNavy,
+                ),
+                const Divider(height: 1),
+                _DStatRow(
+                  label: 'TB/đơn',
+                  value: _fmtShort(s.avgOrderValue),
+                  color: const Color(0xFFF9A825),
+                ),
+                const Divider(height: 1),
+                _DStatRow(
+                  label: 'Huỷ Bàn / Huỷ Bill',
+                  value: '$voidCount lượt',
+                  color: const Color(0xFFE65100),
+                ),
+              ],
+            ),
           ),
           if (lowStocks.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -2410,22 +2765,45 @@ class _DashboardRightPanel extends ConsumerWidget {
                 children: lowStocks.take(5).map<Widget>((p) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(children: [
-                      const Icon(Icons.inventory_2_outlined, size: 14, color: Color(0xFFF59E0B)),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(p.name,
-                        style: GoogleFonts.outfit(fontSize: 12, color: _kInk),
-                        maxLines: 1, overflow: TextOverflow.ellipsis)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0x33EF4444),
-                          borderRadius: BorderRadius.circular(4)),
-                        child: Text(
-                          'Còn ${p.stockQty.toStringAsFixed(p.stockQty % 1 == 0 ? 0 : 1)} ${p.unit}',
-                          style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w700, color: _kRed)),
-                      ),
-                    ]),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.inventory_2_outlined,
+                          size: 14,
+                          color: Color(0xFFF59E0B),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            p.name,
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: _kInk,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0x33EF4444),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Còn ${p.stockQty.toStringAsFixed(p.stockQty % 1 == 0 ? 0 : 1)} ${p.unit}',
+                            style: GoogleFonts.outfit(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: _kRed,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 }).toList(),
               ),
@@ -2441,45 +2819,87 @@ class _DRightCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Widget child;
-  const _DRightCard({required this.title, required this.icon, required this.child});
+  const _DRightCard({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
-      boxShadow: [BoxShadow(
-        color: _kNavy.withValues(alpha: 0.07), blurRadius: 8, offset: const Offset(0, 2))],
+      boxShadow: [
+        BoxShadow(
+          color: _kNavy.withValues(alpha: 0.07),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
     ),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-        child: Row(children: [
-          Icon(icon, size: 16, color: _kNavy),
-          const SizedBox(width: 6),
-          Text(title, style: GoogleFonts.outfit(
-            fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
-        ]),
-      ),
-      const Divider(height: 1),
-      Padding(padding: const EdgeInsets.all(14), child: child),
-    ]),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: _kNavy),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: _kNavy,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        Padding(padding: const EdgeInsets.all(14), child: child),
+      ],
+    ),
   );
 }
 
 class _DStatRow extends StatelessWidget {
   final String label, value;
   final Color color;
-  const _DStatRow({required this.label, required this.value, required this.color});
+  const _DStatRow({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Row(children: [
-      Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 8),
-      Expanded(child: Text(label, style: GoogleFonts.outfit(fontSize: 13, color: _kInk))),
-      Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
-    ]),
+    child: Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.outfit(fontSize: 13, color: _kInk),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    ),
   );
 }

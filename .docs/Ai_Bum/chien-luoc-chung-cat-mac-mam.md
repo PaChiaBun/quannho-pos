@@ -135,16 +135,15 @@ Bum không được tự huấn luyện trực tiếp từ mọi cuộc trò chu
 | Thiết bị | Cấu hình hiện có | Vai trò |
 |---|---|---|
 | MacBook Pro 14" 2023 | M3 Pro, RAM 18 GB | Chuẩn bị dataset, QLoRA bằng MLX, đánh giá checkpoint, quantize và thử nghiệm model |
-| Server local | Dual Xeon, RAM 136 GB, RTX 2060 | AI Gateway 24/7, Classification, RAG, RPC, lưu log, hàng đợi và inference Qwen local |
+| Server local | 2 × Xeon E5-2680 v4, RAM 128 GB, RTX 2060 6 GB, SSD NVMe 1 TB + SSD SATA 447 GB | AI Gateway 24/7, Classification, RAG, RPC, lưu log, hàng đợi và inference Qwen local |
 
 ### RTX 2060
 
-Cần chạy `nvidia-smi` để xác nhận card là bản 6 GB hay 12 GB VRAM.
+Đã xác nhận bằng `nvidia-smi`: RTX 2060 bản 6 GB VRAM.
 
-- **6 GB:** Ưu tiên Qwen3-4B Q4; Qwen 8B cần giảm context hoặc offload một phần sang CPU.
-- **12 GB:** Qwen3-4B chạy thoải mái hơn; có thể thử inference 8B và QLoRA 4B bằng CUDA.
+- Ưu tiên Qwen3-4B Q4; Qwen 8B cần giảm context hoặc offload một phần sang CPU.
 
-RAM 136 GB đủ cho model, cache, RAG và CPU offload. Tốc độ thực tế phụ thuộc chính xác model CPU, VRAM, context và số người hỏi đồng thời; phải benchmark trước khi cam kết tải.
+RAM 128 GB đủ cho model, cache, RAG và CPU offload. Tốc độ thực tế phụ thuộc model, CPU dual-socket, VRAM, context và số người hỏi đồng thời; phải benchmark trước khi cam kết tải.
 
 ### Chưa mua thêm phần cứng
 

@@ -51,7 +51,7 @@ extension ReportPeriodX on ReportPeriod {
     final now = DateTime.now();
     switch (this) {
       case ReportPeriod.today:
-        // ‼️ FIX: dùng midnight ngày kế (exclusive) thay vì 23:59:59 (bỏ sót 59.001–999ms)
+        // Midnight ngày kế (exclusive)
         final d = selectedDay ?? now;
         final start   = DateTime(d.year, d.month, d.day);
         final endExcl = DateTime(d.year, d.month, d.day + 1);
@@ -59,22 +59,16 @@ extension ReportPeriodX on ReportPeriod {
       case ReportPeriod.week:
         final mon    = weekStart ?? now.subtract(Duration(days: now.weekday - 1));
         final monDay = DateTime(mon.year, mon.month, mon.day);
-        // ‼️ FIX: capEnd dùng midnight ngày kế thay vì DateTime.now() (mid-day boundary)
-        final endDay = monDay.add(const Duration(days: 7)); // midnight tuần kế (exclusive)
-        final capEnd = endDay.isAfter(DateTime(now.year, now.month, now.day + 1))
-            ? DateTime(now.year, now.month, now.day + 1)
-            : endDay;
-        return (monDay.millisecondsSinceEpoch, capEnd.millisecondsSinceEpoch);
+        // Midnight tuần kế (exclusive) — phản ánh trọn vẹn chu kỳ 7 ngày lịch sử
+        final endDay = DateTime(monDay.year, monDay.month, monDay.day + 7);
+        return (monDay.millisecondsSinceEpoch, endDay.millisecondsSinceEpoch);
       case ReportPeriod.month:
         final y     = navYear  ?? now.year;
         final m     = navMonth ?? now.month;
         final start = DateTime(y, m, 1);
-        // ‼️ FIX: midnight ngày 1 tháng kế (exclusive) thay vì (y, m+1, 0, 23:59:59)
-        final endExcl   = DateTime(y, m + 1, 1);
-        final capEnd    = endExcl.isAfter(DateTime(now.year, now.month, now.day + 1))
-            ? DateTime(now.year, now.month, now.day + 1)
-            : endExcl;
-        return (start.millisecondsSinceEpoch, capEnd.millisecondsSinceEpoch);
+        // Midnight ngày 1 tháng kế (exclusive) — phản ánh trọn vẹn chu kỳ tháng lịch sử
+        final endExcl = DateTime(y, m + 1, 1);
+        return (start.millisecondsSinceEpoch, endExcl.millisecondsSinceEpoch);
     }
   }
 
@@ -279,12 +273,17 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
 
 // ── Month revenue provider ─────────────────────────────────────────────────────
 final _monthRevProvider = FutureProvider.autoDispose<double>((ref) async {
-  final repo = ref.read(dashboardRepositoryProvider);
-  final now  = DateTime.now();
-  final from = DateTime(now.year, now.month, 1).millisecondsSinceEpoch;
-  final to   = DateTime(now.year, now.month + 1, 1).millisecondsSinceEpoch;
-  final stats = await repo.getStatsForRange(from, to);
-  return stats.todayRevenue; // getStatsForRange trả về tổng trong khoảng
+  try {
+    final repo = ref.read(dashboardRepositoryProvider);
+    final now  = DateTime.now();
+    final from = DateTime(now.year, now.month, 1).millisecondsSinceEpoch;
+    final to   = DateTime(now.year, now.month + 1, 1).millisecondsSinceEpoch;
+    final stats = await repo.getStatsForRange(from, to);
+    return stats.todayRevenue; // getStatsForRange trả về tổng trong khoảng
+  } catch (e) {
+    debugPrint('[ReportScreen] _monthRevProvider error: $e');
+    return 0.0;
+  }
 });
 
 // ── _HeroCard ──────────────────────────────────────────────────────────────
@@ -416,6 +415,7 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
   bool _loading = true;
   int? _selectedBar;
   StreamSubscription<List<HourlyRevenue>>? _hourSub;
+  int _loadRequestId = 0;
 
   static DateTime _mondayOf(DateTime d) {
     final m = d.subtract(Duration(days: d.weekday - 1));
@@ -430,21 +430,44 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
 
   Future<void> _load() async {
     if (!mounted) return;
+    final requestId = ++_loadRequestId;
     setState(() { _loading = true; _selectedBar = null; });
     await _hourSub?.cancel();
     _hourSub = null;
-    final repo = ref.read(dashboardRepositoryProvider);
-    final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth, selectedDay: _selectedDay);
-    final stats = await repo.getStatsForRange(from, to);
-    if (!mounted) return;
-    if (_period == ReportPeriod.today) {
-      setState(() { _stats = stats; _days = []; });
-      _hourSub = repo.watchHourlyRevenue(_selectedDay).listen((h) {
-        if (mounted) setState(() { _hours = h; _loading = false; });
-      });
-    } else {
-      final d = await repo.getDailyRevenue(from, to);
-      if (mounted) setState(() { _stats = stats; _days = d; _hours = []; _loading = false; });
+    if (!mounted || requestId != _loadRequestId) return;
+    try {
+      final repo = ref.read(dashboardRepositoryProvider);
+      final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth, selectedDay: _selectedDay);
+      if (_period == ReportPeriod.today) {
+        final stats = await repo.getStatsForRange(from, to);
+        if (!mounted || requestId != _loadRequestId) return;
+        setState(() { _stats = stats; _days = []; });
+        _hourSub = repo.watchHourlyRevenue(_selectedDay).listen((h) {
+          if (mounted && requestId == _loadRequestId) setState(() { _hours = h; _loading = false; });
+        }, onError: (e) {
+          debugPrint('[ReportScreen] watchHourlyRevenue error: $e');
+          if (mounted && requestId == _loadRequestId) setState(() { _hours = []; _loading = false; });
+        });
+      } else {
+        final results = await Future.wait([
+          repo.getStatsForRange(from, to),
+          repo.getDailyRevenue(from, to),
+        ]);
+        if (!mounted || requestId != _loadRequestId) return;
+        setState(() {
+          _stats = results[0] as DashboardStats;
+          _days = results[1] as List<DailyRevenue>;
+          _hours = [];
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[ReportScreen] _load error: $e');
+      if (mounted && requestId == _loadRequestId) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -454,14 +477,19 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
     String formatVnd(double v) => '${moneyFormatter.format(v)} đ';
 
     final String titleStr;
+    final String periodLabel;
     if (_period == ReportPeriod.week) {
-      titleStr = 'BÁO CÁO DOANH THU TUẦN';
+      final endDay = _weekStart.add(const Duration(days: 6));
+      periodLabel = 'Tuần ${DateFormat('dd/MM').format(_weekStart)} - ${DateFormat('dd/MM').format(endDay)}';
+      titleStr = 'BÁO CÁO DOANH THU $periodLabel'.toUpperCase();
     } else if (_period == ReportPeriod.month) {
-      titleStr = 'BÁO CÁO DOANH THU THÁNG';
+      periodLabel = 'Tháng $_navMonth/$_navYear';
+      titleStr = 'BÁO CÁO DOANH THU $periodLabel'.toUpperCase();
     } else {
       final d = _selectedDay;
       final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
       final sel = DateTime(d.year, d.month, d.day);
+      periodLabel = DateFormat('dd/MM/yyyy').format(d);
       if (sel == today) {
         titleStr = 'BÁO CÁO DOANH THU HÔM NAY';
       } else if (sel == today.subtract(const Duration(days: 1))) {
@@ -469,7 +497,7 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
       } else if (sel == today.subtract(const Duration(days: 2))) {
         titleStr = 'BÁO CÁO DOANH THU HÔM KIA';
       } else {
-        titleStr = 'BÁO CÁO DOANH THU NGÀY ' + DateFormat('dd/MM/yyyy').format(d);
+        titleStr = 'BÁO CÁO DOANH THU NGÀY $periodLabel';
       }
     }
 
@@ -492,7 +520,7 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
                   child: pw.Text(titleStr, style: pw.TextStyle(font: fontBold, fontSize: 13, fontWeight: pw.FontWeight.bold)),
                 ),
                 pw.Center(
-                  child: pw.Text('Kỳ báo cáo: ${_period.label}', style: pw.TextStyle(font: font, fontSize: 9)),
+                  child: pw.Text('Kỳ báo cáo: $periodLabel', style: pw.TextStyle(font: font, fontSize: 9)),
                 ),
                 pw.Center(
                   child: pw.Text('Giờ in: $nowStr', style: pw.TextStyle(font: font, fontSize: 8)),
@@ -620,9 +648,12 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
       if (settings.cashier.enabled && settings.cashier.name.isNotEmpty) {
         await StationPrinterDispatcher.printReport(await doc.save(), settings);
       } else {
+        final safeName = periodLabel
+            .replaceAll(RegExp(r'[^\w\d_-]+'), '_')
+            .replaceAll(RegExp(r'_+'), '_');
         await Printing.layoutPdf(
           onLayout: (PdfPageFormat format) async => doc.save(),
-          name: 'Bao_cao_doanh_thu_${_period.label}',
+          name: 'Bao_cao_doanh_thu_$safeName',
         );
       }
     } catch (e) {
@@ -1340,6 +1371,7 @@ class _ProductTabState extends ConsumerState<_ProductTab> {
   List<TopProduct> _products   = [];
   List<String>     _categories = [];
   bool _loading = true;
+  int _loadRequestId = 0;
 
   static DateTime _mondayOf(DateTime d) {
     final m = d.subtract(Duration(days: d.weekday - 1));
@@ -1351,27 +1383,53 @@ class _ProductTabState extends ConsumerState<_ProductTab> {
 
   Future<void> _load({bool refreshCategories = true}) async {
     if (!mounted) return;
+    final requestId = ++_loadRequestId;
     setState(() => _loading = true);
-    final repo = ref.read(dashboardRepositoryProvider);
-    final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth, selectedDay: _selectedDay);
+    try {
+      final repo = ref.read(dashboardRepositoryProvider);
+      final (from, to) = _period.rangeFor(weekStart: _weekStart, navYear: _navYear, navMonth: _navMonth, selectedDay: _selectedDay);
 
-    if (refreshCategories || _categories.isEmpty) {
-      final results = await Future.wait([
-        repo.getTopProductsForRangeCompat(from, to, category: _category, limit: 20),
-        repo.getProductCategoriesSold(from, to),
-      ]);
-      if (mounted) {
-        setState(() {
-          _products = results[0] as List<TopProduct>;
-          _categories = results[1] as List<String>;
-          _loading = false;
-        });
+      if (refreshCategories || _categories.isEmpty) {
+        final results = await Future.wait([
+          repo.getTopProductsForRangeCompat(from, to, category: _category, limit: 20),
+          repo.getProductCategoriesSold(from, to),
+        ]);
+        if (mounted && requestId == _loadRequestId) {
+          final newCats = results[1] as List<String>;
+          final validCategory =
+              (_category != null && newCats.contains(_category))
+                  ? _category
+                  : null;
+          var products = results[0] as List<TopProduct>;
+          if (_category != null && validCategory == null && newCats.isNotEmpty) {
+            products = await repo.getTopProductsForRangeCompat(
+              from,
+              to,
+              category: null,
+              limit: 20,
+            );
+            if (!mounted || requestId != _loadRequestId) return;
+          }
+          setState(() {
+            _products = products;
+            _categories = newCats;
+            _category = validCategory;
+            _loading = false;
+          });
+        }
+      } else {
+        final products = await repo.getTopProductsForRangeCompat(from, to, category: _category, limit: 20);
+        if (mounted && requestId == _loadRequestId) {
+          setState(() {
+            _products = products;
+            _loading = false;
+          });
+        }
       }
-    } else {
-      final products = await repo.getTopProductsForRangeCompat(from, to, category: _category, limit: 20);
-      if (mounted) {
+    } catch (e) {
+      debugPrint('[ReportScreen] _ProductTab _load error: $e');
+      if (mounted && requestId == _loadRequestId) {
         setState(() {
-          _products = products;
           _loading = false;
         });
       }
@@ -1590,12 +1648,124 @@ class _CatPill extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════
 // TAB 3 — TÀI CHÍNH
 // ═══════════════════════════════════════════════════════════════════════════════
-class _FinanceTab extends ConsumerWidget {
+class _FinanceTab extends ConsumerStatefulWidget {
   const _FinanceTab();
+  @override
+  ConsumerState<_FinanceTab> createState() => _FinanceTabState();
+}
+
+class _FinanceTabState extends ConsumerState<_FinanceTab> {
+  ReportPeriod _period = ReportPeriod.today;
+  DateTime _selectedDay = DateTime.now();
+  DateTime _weekStart = _mondayOf(DateTime.now());
+  int _navYear = DateTime.now().year;
+  int _navMonth = DateTime.now().month;
+
+  static DateTime _mondayOf(DateTime d) {
+    final m = d.subtract(Duration(days: d.weekday - 1));
+    return DateTime(m.year, m.month, m.day);
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final period = ref.watch(periodProvider);
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncPeriod());
+  }
+
+  void _syncPeriod() {
+    if (!mounted) return;
+    final (from, to) = _period.rangeFor(
+      weekStart: _weekStart,
+      navYear: _navYear,
+      navMonth: _navMonth,
+      selectedDay: _selectedDay,
+    );
+    final startUtc = DateTime.fromMillisecondsSinceEpoch(from).toUtc();
+    final endUtc = DateTime.fromMillisecondsSinceEpoch(to).toUtc();
+
+    final String label;
+    if (_period == ReportPeriod.today) {
+      final now = DateTime.now();
+      final isToday = now.year == _selectedDay.year &&
+          now.month == _selectedDay.month &&
+          now.day == _selectedDay.day;
+      label = isToday ? 'Hôm nay' : DateFormat('dd/MM/yyyy').format(_selectedDay);
+    } else if (_period == ReportPeriod.week) {
+      final endDay = DateTime.fromMillisecondsSinceEpoch(to).subtract(const Duration(days: 1));
+      label = 'Tuần ${DateFormat('dd/MM').format(_weekStart)} - ${DateFormat('dd/MM').format(endDay)}';
+    } else {
+      label = 'Tháng $_navMonth/$_navYear';
+    }
+
+    ref.read(periodProvider.notifier).setDateRange(DateRange(
+      from: startUtc,
+      to: endUtc,
+      label: label,
+    ));
+  }
+
+  Future<void> _pickDay(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: _selectedDay,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn ngày muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _selectedDay = picked);
+      _syncPeriod();
+    }
+  }
+
+  Future<void> _pickWeek(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: _weekStart,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn tuần muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _weekStart = _mondayOf(picked));
+      _syncPeriod();
+    }
+  }
+
+  Future<void> _pickMonth(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: DateTime(_navYear, _navMonth),
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn tháng muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _navYear = picked.year;
+        _navMonth = picked.month;
+      });
+      _syncPeriod();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final statsA = ref.watch(financeStatsProvider);
 
     final moneyFormatter = NumberFormat('#,###', 'vi_VN');
@@ -1658,21 +1828,95 @@ class _FinanceTab extends ConsumerWidget {
       }).toList();
     }
 
-    return statsA.when(
-      loading: () => const Center(child: CircularProgressIndicator(color: _kNavy)),
-      error: (e, _) => Center(child: Text('Lỗi: $e')),
-      data: (stats) => ListView(padding: const EdgeInsets.fromLTRB(16, 20, 16, 80), children: [
-        // Period pills — sync Finance screen
-        Container(padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(color: _kNavy.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(12)),
-          child: Row(children: [
-            _FinBtn(label: 'Hôm nay',   active: period.label == 'Hôm nay',   onTap: () => ref.read(periodProvider.notifier).setToday()),
-            _FinBtn(label: 'Tuần này',  active: period.label == 'Tuần này',  onTap: () => ref.read(periodProvider.notifier).setThisWeek()),
-            _FinBtn(label: 'Tháng này', active: period.label == 'Tháng này', onTap: () => ref.read(periodProvider.notifier).setThisMonth()),
-          ])),
-        const SizedBox(height: 20),
-        // Profit hero card
-        Container(
+    return ListView(padding: const EdgeInsets.fromLTRB(16, 20, 16, 80), children: [
+      _PeriodPills(
+        current: _period,
+        onChanged: (p) {
+          setState(() => _period = p);
+          _syncPeriod();
+        },
+      ),
+        if (_period == ReportPeriod.today) ...[
+          const SizedBox(height: 8),
+          _ReportNavBar.day(
+            date: _selectedDay,
+            canGoNext: DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day)
+                .isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)),
+            onPrev: () {
+              setState(() => _selectedDay = _selectedDay.subtract(const Duration(days: 1)));
+              _syncPeriod();
+            },
+            onNext: () {
+              setState(() => _selectedDay = _selectedDay.add(const Duration(days: 1)));
+              _syncPeriod();
+            },
+            onPick: () => _pickDay(context),
+          ),
+        ],
+        if (_period == ReportPeriod.week) ...[
+          const SizedBox(height: 8),
+          _ReportNavBar.week(
+            weekStart: _weekStart,
+            canGoNext: _weekStart.add(const Duration(days: 7)).isBefore(
+              DateTime.now().add(const Duration(days: 1)),
+            ),
+            onPrev: () {
+              setState(() => _weekStart = _weekStart.subtract(const Duration(days: 7)));
+              _syncPeriod();
+            },
+            onNext: () {
+              setState(() => _weekStart = _weekStart.add(const Duration(days: 7)));
+              _syncPeriod();
+            },
+            onPick: () => _pickWeek(context),
+          ),
+        ],
+        if (_period == ReportPeriod.month) ...[
+          const SizedBox(height: 8),
+          _ReportNavBar.month(
+            year: _navYear,
+            month: _navMonth,
+            canGoNext: !(_navYear == DateTime.now().year && _navMonth == DateTime.now().month),
+            onPrev: () {
+              setState(() {
+                if (_navMonth == 1) {
+                  _navYear--;
+                  _navMonth = 12;
+                } else {
+                  _navMonth--;
+                }
+              });
+              _syncPeriod();
+            },
+            onNext: () {
+              setState(() {
+                if (_navMonth == 12) {
+                  _navYear++;
+                  _navMonth = 1;
+                } else {
+                  _navMonth++;
+                }
+              });
+              _syncPeriod();
+            },
+            onPick: () => _pickMonth(context),
+          ),
+        ],
+      const SizedBox(height: 20),
+      statsA.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 40),
+          child: Center(child: CircularProgressIndicator(color: _kNavy)),
+        ),
+        error: (e, _) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40),
+          child: Center(child: Text('Lỗi: $e', style: const TextStyle(color: _kRed))),
+        ),
+        data: (stats) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Profit hero card
+            Container(
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -1817,23 +2061,12 @@ class _FinanceTab extends ConsumerWidget {
                   style: TextStyle(fontSize: 11, color: (stats.incomeGrowth > 0 ? _kGreen : _kRed).withValues(alpha: 0.8))),
               ])),
             ])),
+          ],
         ],
-      ]),
-    );
-  }
+      ),
+    ),
+  ]);
 }
-
-class _FinBtn extends StatelessWidget {
-  final String label; final bool active; final VoidCallback onTap;
-  const _FinBtn({required this.label, required this.active, required this.onTap});
-  @override
-  Widget build(BuildContext context) => Expanded(child: GestureDetector(onTap: onTap,
-    child: AnimatedContainer(duration: const Duration(milliseconds: 220),
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      decoration: BoxDecoration(color: active ? _kNavy : Colors.transparent, borderRadius: BorderRadius.circular(9),
-        boxShadow: active ? [BoxShadow(color: _kNavy.withValues(alpha: 0.25), blurRadius: 6, offset: const Offset(0, 2))] : null),
-      child: Text(label, textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: active ? Colors.white : _kMuted)))));
 }
 
 class _FinStat extends StatelessWidget {
@@ -2073,12 +2306,24 @@ class _KhoTab extends ConsumerStatefulWidget {
 }
 
 class _KhoTabState extends ConsumerState<_KhoTab> {
-  // Dữ liệu purchase_orders tháng này
+  ReportPeriod _period = ReportPeriod.month;
+  DateTime _selectedDay = DateTime.now();
+  DateTime _weekStart = _mondayOf(DateTime.now());
+  int _navYear = DateTime.now().year;
+  int _navMonth = DateTime.now().month;
+
+  static DateTime _mondayOf(DateTime d) {
+    final m = d.subtract(Duration(days: d.weekday - 1));
+    return DateTime(m.year, m.month, m.day);
+  }
+
+  // Dữ liệu purchase_orders trong kỳ
   double _totalCost  = 0;
   int    _totalOrders = 0;
   List<Map<String,dynamic>> _topProducts = [];
   bool _loading = true;
   String? _error;
+  int _loadRequestId = 0;
 
   @override
   void initState() {
@@ -2088,26 +2333,36 @@ class _KhoTabState extends ConsumerState<_KhoTab> {
 
   Future<void> _load() async {
     if (!mounted) return;
+    final requestId = ++_loadRequestId;
     setState(() { _loading = true; _error = null; });
     try {
       // Lấy store_id — dùng getStoreInfo() để handle cả 2 key variants
       final info = await StoreAuthService.getStoreInfo();
       final storeId = info['store_id'];
-      if (storeId == null) { if (mounted) setState(() => _loading = false); return; }
+      if (storeId == null) {
+        if (mounted && requestId == _loadRequestId) setState(() => _loading = false);
+        return;
+      }
 
-      final sb    = Supabase.instance.client;
-      final now   = DateTime.now();
-      // Dùng lt + midnight tháng kế (exclusive) — nhất quán toàn hệ thống
-      final start = DateTime(now.year, now.month, 1).toIso8601String();
-      final end   = DateTime(now.year, now.month + 1, 1).toIso8601String();
+      final sb = Supabase.instance.client;
+      final (from, to) = _period.rangeFor(
+        weekStart: _weekStart,
+        navYear: _navYear,
+        navMonth: _navMonth,
+        selectedDay: _selectedDay,
+      );
+      final start = DateTime.fromMillisecondsSinceEpoch(from).toUtc().toIso8601String();
+      final end   = DateTime.fromMillisecondsSinceEpoch(to).toUtc().toIso8601String();
 
-      // ── Query 1: Lấy purchase_orders của store trong tháng ────────────────
+      // ── Query 1: Lấy purchase_orders của store trong kỳ ────────────────
       final pos = await sb
           .from('purchase_orders')
           .select('id, total_amount')
           .eq('store_id', storeId)
           .gte('created_at', start)
           .lt('created_at', end);
+
+      if (!mounted || requestId != _loadRequestId) return;
 
       double total = 0;
       for (final p in pos) {
@@ -2118,35 +2373,107 @@ class _KhoTabState extends ConsumerState<_KhoTab> {
       // Tương tự pattern getTopProductsForRange() trong dashboard_repository
       final Map<String, Map<String, dynamic>> grouped = {};
       if (pos.isNotEmpty) {
-        final poIds = pos.map((p) => p['id'] as String).toList();
-        final items = await sb
-            .from('purchase_items')
-            .select('product_name, quantity, subtotal')
-            .inFilter('po_id', poIds);
+        final poIds = pos
+            .map((p) => p['id']?.toString())
+            .whereType<String>()
+            .where((id) => id.isNotEmpty)
+            .toList();
+        if (poIds.isNotEmpty) {
+          final items = await sb
+              .from('purchase_items')
+              .select('product_name, quantity, subtotal')
+              .inFilter('po_id', poIds);
 
-        for (final it in items) {
-          final name = it['product_name'] as String? ?? '?';
-          grouped.putIfAbsent(name, () => {'name': name, 'qty': 0.0, 'cost': 0.0});
-          grouped[name]!['qty']  = (grouped[name]!['qty']  as double) + ((it['quantity'] as num?)?.toDouble() ?? 0);
-          grouped[name]!['cost'] = (grouped[name]!['cost'] as double) + ((it['subtotal'] as num?)?.toDouble() ?? 0);
+          for (final it in items) {
+            final name = it['product_name']?.toString() ?? '?';
+            grouped.putIfAbsent(name, () => {'name': name, 'qty': 0.0, 'cost': 0.0});
+            grouped[name]!['qty']  = (grouped[name]!['qty']  as double) + ((it['quantity'] as num?)?.toDouble() ?? 0);
+            grouped[name]!['cost'] = (grouped[name]!['cost'] as double) + ((it['subtotal'] as num?)?.toDouble() ?? 0);
+          }
         }
       }
 
       final sorted = grouped.values.toList()
         ..sort((a, b) => (b['cost'] as double).compareTo(a['cost'] as double));
 
-      if (mounted) { setState(() {
-        _totalCost   = total;
-        _totalOrders = pos.length;
-        _topProducts = sorted.take(5).toList();
-        _loading     = false;
-      }); }
+      if (mounted && requestId == _loadRequestId) {
+        setState(() {
+          _totalCost   = total;
+          _totalOrders = pos.length;
+          _topProducts = sorted.take(5).toList();
+          _loading     = false;
+        });
+      }
     } catch (e) {
       // Hiện error thực sự để debug — không dùng message generic
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted && requestId == _loadRequestId) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
   }
 
+  Future<void> _pickDay(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: _selectedDay,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn ngày muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _selectedDay = picked);
+      _load();
+    }
+  }
+
+  Future<void> _pickWeek(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: _weekStart,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn tuần muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _weekStart = _mondayOf(picked));
+      _load();
+    }
+  }
+
+  Future<void> _pickMonth(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: DateTime(_navYear, _navMonth),
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn tháng muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _navYear = picked.year;
+        _navMonth = picked.month;
+      });
+      _load();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2177,34 +2504,121 @@ class _KhoTabState extends ConsumerState<_KhoTab> {
       );
     }
 
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: _kNavy));
+    final String periodLabel;
+    if (_period == ReportPeriod.today) {
+      final now = DateTime.now();
+      final isToday = now.year == _selectedDay.year &&
+          now.month == _selectedDay.month &&
+          now.day == _selectedDay.day;
+      periodLabel = isToday ? 'hôm nay' : 'ngày ${DateFormat('dd/MM/yyyy').format(_selectedDay)}';
+    } else if (_period == ReportPeriod.week) {
+      periodLabel = 'tuần ${DateFormat('dd/MM').format(_weekStart)}';
+    } else {
+      periodLabel = 'tháng $_navMonth/$_navYear';
     }
-    if (_error != null) {
-      return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.cloud_off_rounded, size: 40, color: _kMuted),
-        const SizedBox(height: 8),
-        const Text('Không tải được dữ liệu kho', style: TextStyle(color: _kMuted)),
-        const SizedBox(height: 6),
-        // Hiện error thực sự để debug
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: SelectableText(_error!,
-            style: const TextStyle(fontSize: 10, color: _kRed),
-            textAlign: TextAlign.center)),
-        const SizedBox(height: 8),
-        TextButton.icon(
-          onPressed: _load,
-          icon: const Icon(Icons.refresh_rounded, size: 16),
-          label: const Text('Thử lại')),
-      ]));
-    }
-
-    final now = DateTime.now();
-    final monthLabel = 'Tháng ${now.month}/${now.year}';
 
     return ListView(padding: const EdgeInsets.fromLTRB(16, 20, 16, 80), children: [
-      // Hero banner — Tổng nhập tháng
-      Container(
+      _PeriodPills(
+        current: _period,
+        onChanged: (p) {
+          setState(() => _period = p);
+          _load();
+        },
+      ),
+      if (_period == ReportPeriod.today) ...[
+        const SizedBox(height: 8),
+        _ReportNavBar.day(
+          date: _selectedDay,
+          canGoNext: DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day)
+              .isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)),
+          onPrev: () {
+            setState(() => _selectedDay = _selectedDay.subtract(const Duration(days: 1)));
+            _load();
+          },
+          onNext: () {
+            setState(() => _selectedDay = _selectedDay.add(const Duration(days: 1)));
+            _load();
+          },
+          onPick: () => _pickDay(context),
+        ),
+      ],
+      if (_period == ReportPeriod.week) ...[
+        const SizedBox(height: 8),
+        _ReportNavBar.week(
+          weekStart: _weekStart,
+          canGoNext: _weekStart.add(const Duration(days: 7)).isBefore(
+            DateTime.now().add(const Duration(days: 1)),
+          ),
+          onPrev: () {
+            setState(() => _weekStart = _weekStart.subtract(const Duration(days: 7)));
+            _load();
+          },
+          onNext: () {
+            setState(() => _weekStart = _weekStart.add(const Duration(days: 7)));
+            _load();
+          },
+          onPick: () => _pickWeek(context),
+        ),
+      ],
+      if (_period == ReportPeriod.month) ...[
+        const SizedBox(height: 8),
+        _ReportNavBar.month(
+          year: _navYear,
+          month: _navMonth,
+          canGoNext: !(_navYear == DateTime.now().year && _navMonth == DateTime.now().month),
+          onPrev: () {
+            setState(() {
+              if (_navMonth == 1) {
+                _navYear--;
+                _navMonth = 12;
+              } else {
+                _navMonth--;
+              }
+            });
+            _load();
+          },
+          onNext: () {
+            setState(() {
+              if (_navMonth == 12) {
+                _navYear++;
+                _navMonth = 1;
+              } else {
+                _navMonth++;
+              }
+            });
+            _load();
+          },
+          onPick: () => _pickMonth(context),
+        ),
+      ],
+      const SizedBox(height: 16),
+      if (_loading)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 40),
+          child: Center(child: CircularProgressIndicator(color: _kNavy)),
+        )
+      else if (_error != null)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.cloud_off_rounded, size: 40, color: _kMuted),
+            const SizedBox(height: 8),
+            const Text('Không tải được dữ liệu kho', style: TextStyle(color: _kMuted)),
+            const SizedBox(height: 6),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: SelectableText(_error!,
+                style: const TextStyle(fontSize: 10, color: _kRed),
+                textAlign: TextAlign.center)),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _load,
+              icon: const Icon(Icons.refresh_rounded, size: 16),
+              label: const Text('Thử lại')),
+          ]),
+        )
+      else ...[
+        // Hero banner — Tổng nhập kỳ
+        Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -2221,7 +2635,7 @@ class _KhoTabState extends ConsumerState<_KhoTab> {
             child: const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 24)),
           const SizedBox(width: 14),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Nhập hàng $monthLabel',
+            Text('Nhập hàng $periodLabel',
               style: const TextStyle(color: Colors.white70, fontSize: 11,
                 fontWeight: FontWeight.w600)),
             Text(_fmt(_totalCost),
@@ -2244,7 +2658,7 @@ class _KhoTabState extends ConsumerState<_KhoTab> {
         title: 'Sản phẩm nhập nhiều nhất'),
       const SizedBox(height: 12),
       if (_topProducts.isEmpty)
-        _EmptyState(icon: Icons.inbox_rounded, message: 'Chưa có phiếu nhập nào tháng này')
+        _EmptyState(icon: Icons.inbox_rounded, message: 'Chưa có phiếu nhập nào trong kỳ')
       else
         ..._topProducts.asMap().entries.map((e) {
           final p    = e.value;
@@ -2301,12 +2715,13 @@ class _KhoTabState extends ConsumerState<_KhoTab> {
 
       const SizedBox(height: 16),
       // Nút refresh
-      Center(child: TextButton.icon(
-        onPressed: _load,
-        icon: const Icon(Icons.refresh_rounded, size: 16, color: _kMuted),
-        label: const Text('Làm mới',
-          style: TextStyle(color: _kMuted, fontSize: 12)),
-      )),
+        Center(child: TextButton.icon(
+          onPressed: _load,
+          icon: const Icon(Icons.refresh_rounded, size: 16, color: _kMuted),
+          label: const Text('Làm mới',
+            style: TextStyle(color: _kMuted, fontSize: 12)),
+        )),
+      ],
     ]);
   }
 }
@@ -2332,8 +2747,8 @@ class _ReportRightPanel extends ConsumerWidget {
 
     final voidAsync = ref.watch(todayVoidStatsProvider);
     final voidStats = voidAsync.value ?? {'amount': 0.0, 'count': 0};
-    final double voidAmount = voidStats['amount'] as double;
-    final int voidCount = voidStats['count'] as int;
+    final double voidAmount = (voidStats['amount'] as num?)?.toDouble() ?? 0.0;
+    final int voidCount = (voidStats['count'] as num?)?.toInt() ?? 0;
 
     return Container(
       color: const Color(0xFFF5F0EA),
@@ -2369,6 +2784,10 @@ class _ReportRightPanel extends ConsumerWidget {
             icon: Icons.delete_sweep_rounded,
             child: Column(children: [
               _RPRow(label: 'Hôm nay', value: '$voidCount lượt', color: _kNavy),
+              if (voidAmount > 0) ...[
+                const Divider(height: 1),
+                _RPRow(label: 'Tiền huỷ', value: _fmtShort(voidAmount), color: _kRed),
+              ],
             ]),
           ),
           const SizedBox(height: 12),
@@ -2445,12 +2864,14 @@ class _VoidAuditTab extends ConsumerStatefulWidget {
 
 class _VoidAuditTabState extends ConsumerState<_VoidAuditTab> {
   ReportPeriod _period = ReportPeriod.today;
+  DateTime _selectedDay = DateTime.now();
   DateTime _weekStart = _mondayOf(DateTime.now());
   int _navYear = DateTime.now().year;
   int _navMonth = DateTime.now().month;
   List<Map<String, dynamic>> _logs = [];
   bool _loading = true;
   String? _error;
+  int _loadRequestId = 0;
 
   static DateTime _mondayOf(DateTime d) {
     final m = d.subtract(Duration(days: d.weekday - 1));
@@ -2465,6 +2886,7 @@ class _VoidAuditTabState extends ConsumerState<_VoidAuditTab> {
 
   Future<void> _load() async {
     if (!mounted) return;
+    final requestId = ++_loadRequestId;
     setState(() {
       _loading = true;
       _error = null;
@@ -2473,7 +2895,7 @@ class _VoidAuditTabState extends ConsumerState<_VoidAuditTab> {
       final info = await StoreAuthService.getStoreInfo();
       final storeId = info['store_id'];
       if (storeId == null) {
-        if (mounted) setState(() => _loading = false);
+        if (mounted && requestId == _loadRequestId) setState(() => _loading = false);
         return;
       }
 
@@ -2482,9 +2904,10 @@ class _VoidAuditTabState extends ConsumerState<_VoidAuditTab> {
         weekStart: _weekStart,
         navYear: _navYear,
         navMonth: _navMonth,
+        selectedDay: _selectedDay,
       );
-      final start = DateTime.fromMillisecondsSinceEpoch(from).toIso8601String();
-      final end = DateTime.fromMillisecondsSinceEpoch(to).toIso8601String();
+      final start = DateTime.fromMillisecondsSinceEpoch(from).toUtc().toIso8601String();
+      final end = DateTime.fromMillisecondsSinceEpoch(to).toUtc().toIso8601String();
 
       final res = await sb
           .from('void_audit_logs')
@@ -2494,19 +2917,40 @@ class _VoidAuditTabState extends ConsumerState<_VoidAuditTab> {
           .lt('created_at', end)
           .order('created_at', ascending: false);
 
-      if (mounted) {
+      if (mounted && requestId == _loadRequestId) {
         setState(() {
           _logs = List<Map<String, dynamic>>.from(res);
           _loading = false;
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && requestId == _loadRequestId) {
         setState(() {
           _error = e.toString();
           _loading = false;
         });
       }
+    }
+  }
+
+  Future<void> _pickDay(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: _selectedDay,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn ngày muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(
+          colorScheme: const ColorScheme.light(primary: _kNavy),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _selectedDay = picked);
+      _load();
     }
   }
 
@@ -2577,6 +3021,23 @@ class _VoidAuditTabState extends ConsumerState<_VoidAuditTab> {
               _load();
             },
           ),
+          if (_period == ReportPeriod.today) ...[
+            const SizedBox(height: 8),
+            _ReportNavBar.day(
+              date: _selectedDay,
+              canGoNext: DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day)
+                  .isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)),
+              onPrev: () {
+                setState(() => _selectedDay = _selectedDay.subtract(const Duration(days: 1)));
+                _load();
+              },
+              onNext: () {
+                setState(() => _selectedDay = _selectedDay.add(const Duration(days: 1)));
+                _load();
+              },
+              onPick: () => _pickDay(context),
+            ),
+          ],
           if (_period == ReportPeriod.week) ...[
             const SizedBox(height: 8),
             _ReportNavBar.week(
@@ -3260,6 +3721,7 @@ class _StaffAttendanceTab extends ConsumerStatefulWidget {
 
 class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
   ReportPeriod _period = ReportPeriod.month;
+  DateTime _selectedDay = DateTime.now();
   DateTime _weekStart = _mondayOf(DateTime.now());
   int _navYear = DateTime.now().year;
   int _navMonth = DateTime.now().month;
@@ -3271,6 +3733,7 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
   double _totalHours = 0;
   int _totalLate = 0;
   int _totalMismatch = 0;
+  int _loadRequestId = 0;
 
   List<_StaffReportRow> _staffRows = [];
 
@@ -3287,6 +3750,7 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
 
   Future<void> _load() async {
     if (!mounted) return;
+    final requestId = ++_loadRequestId;
     setState(() {
       _loading = true;
       _error = null;
@@ -3296,7 +3760,7 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
       final info = await StoreAuthService.getStoreInfo();
       final storeId = info['store_id'];
       if (storeId == null) {
-        if (mounted) setState(() => _loading = false);
+        if (mounted && requestId == _loadRequestId) setState(() => _loading = false);
         return;
       }
 
@@ -3316,9 +3780,10 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
 
       final Map<String, _StaffInfo> memberMap = {};
       for (final m in (membersRes as List)) {
-        final userId = m['id'] as String;
-        final role = m['role'] as String? ?? 'cashier';
-        final name = m['name'] as String? ?? 'Nhân viên';
+        final userId = m['id']?.toString();
+        if (userId == null || userId.isEmpty) continue;
+        final role = m['role']?.toString() ?? 'cashier';
+        final name = m['name']?.toString() ?? 'Nhân viên';
         memberMap[userId] = _StaffInfo(name: name, role: role);
       }
 
@@ -3327,9 +3792,10 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
         weekStart: _weekStart,
         navYear: _navYear,
         navMonth: _navMonth,
+        selectedDay: _selectedDay,
       );
-      final start = DateTime.fromMillisecondsSinceEpoch(from).toIso8601String();
-      final end = DateTime.fromMillisecondsSinceEpoch(to).toIso8601String();
+      final start = DateTime.fromMillisecondsSinceEpoch(from).toUtc().toIso8601String();
+      final end = DateTime.fromMillisecondsSinceEpoch(to).toUtc().toIso8601String();
 
       final shiftsRes = await db
           .from('staff_shifts')
@@ -3338,29 +3804,35 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
           .gte('clock_in', start)
           .lt('clock_in', end);
 
-      // Reset statistics
-      _totalShifts = 0;
-      _totalHours = 0;
-      _totalLate = 0;
-      _totalMismatch = 0;
+      if (!mounted || requestId != _loadRequestId) return;
 
+      int totalShifts = 0;
+      double totalHours = 0;
+      int totalLate = 0;
+      int totalMismatch = 0;
       final Map<String, _StaffStatsAccumulator> accumulators = {};
 
       for (final s in (shiftsRes as List)) {
-        final userId = s['user_id'] as String;
-        final clockInStr = s['clock_in'] as String;
-        final clockOutStr = s['clock_out'] as String?;
-        final isLate = s['is_late'] as bool? ?? false;
-        final double? lat = s['latitude'] != null ? (s['latitude'] as num).toDouble() : null;
-        final double? lng = s['longitude'] != null ? (s['longitude'] as num).toDouble() : null;
+        final userId = s['user_id']?.toString();
+        if (userId == null || userId.isEmpty) continue;
+        final clockInStr = s['clock_in']?.toString();
+        if (clockInStr == null) continue;
+        final clockIn = DateTime.tryParse(clockInStr)?.toLocal();
+        if (clockIn == null) continue;
 
-        final clockIn = DateTime.parse(clockInStr).toLocal();
-        final clockOut = clockOutStr != null ? DateTime.parse(clockOutStr).toLocal() : DateTime.now();
+        final clockOutStr = s['clock_out']?.toString();
+        final clockOut = clockOutStr != null
+            ? (DateTime.tryParse(clockOutStr)?.toLocal() ?? DateTime.now())
+            : DateTime.now();
         final double hours = clockOut.difference(clockIn).inMinutes / 60.0;
 
-        _totalShifts++;
-        _totalHours += hours;
-        if (isLate) _totalLate++;
+        totalShifts++;
+        totalHours += hours;
+        final isLate = s['is_late'] as bool? ?? false;
+        if (isLate) totalLate++;
+
+        final double? lat = s['latitude'] != null ? (s['latitude'] as num).toDouble() : null;
+        final double? lng = s['longitude'] != null ? (s['longitude'] as num).toDouble() : null;
 
         bool isLocationMismatch = false;
         bool isNoGps = false;
@@ -3371,7 +3843,7 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
           final distance = Geolocator.distanceBetween(lat, lng, storeLat, storeLng);
           if (distance > storeRadius) {
             isLocationMismatch = true;
-            _totalMismatch++;
+            totalMismatch++;
           }
         }
 
@@ -3401,14 +3873,18 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
       // Sắp xếp theo tổng số giờ làm giảm dần
       rows.sort((a, b) => b.hours.compareTo(a.hours));
 
-      if (mounted) {
+      if (mounted && requestId == _loadRequestId) {
         setState(() {
+          _totalShifts = totalShifts;
+          _totalHours = totalHours;
+          _totalLate = totalLate;
+          _totalMismatch = totalMismatch;
           _staffRows = rows;
           _loading = false;
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && requestId == _loadRequestId) {
         setState(() {
           _error = e.toString();
           _loading = false;
@@ -3432,6 +3908,25 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
     );
     if (picked != null && mounted) {
       setState(() => _weekStart = _mondayOf(picked));
+      _load();
+    }
+  }
+
+  Future<void> _pickDay(BuildContext ctx) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: ctx,
+      initialDate: _selectedDay,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn ngày muốn xem',
+      builder: (c, child) => Theme(
+        data: Theme.of(c).copyWith(colorScheme: const ColorScheme.light(primary: _kNavy)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _selectedDay = picked);
       _load();
     }
   }
@@ -3460,107 +3955,105 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: _kNavy));
-    }
-    if (_error != null) {
-      return Center(child: Text('Lỗi: $_error', style: const TextStyle(color: _kRed)));
-    }
-
-    return Column(
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 80),
       children: [
-        _buildPeriodSelector(),
-        _buildSummaryCards(),
-        Expanded(child: _buildStaffList()),
-      ],
-    );
-  }
-
-  Widget _buildPeriodSelector() {
-    final now = DateTime.now();
-    final isThisMonth = _navYear == now.year && _navMonth == now.month;
-    final isMobile = MediaQuery.of(context).size.width <= 700;
-
-    final chipsList = ReportPeriod.values.map((p) {
-      final isSel = _period == p;
-      return Padding(
-        padding: const EdgeInsets.only(right: 6),
-        child: ChoiceChip(
-          label: Text(
-            p.label,
-            style: GoogleFonts.outfit(
-              fontSize: 12,
-              fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-              color: isSel ? Colors.white : _kNavy.withValues(alpha: 0.8),
-            ),
-          ),
-          selected: isSel,
-          onSelected: (val) {
-            if (val) {
-              setState(() => _period = p);
-              _load();
-            }
+        _PeriodPills(
+          current: _period,
+          onChanged: (p) {
+            setState(() => _period = p);
+            _load();
           },
-          selectedColor: _kNavy,
-          backgroundColor: const Color(0xFFF5F7FF),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          side: BorderSide.none,
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         ),
-      );
-    }).toList();
-
-    Widget buildActionBtn() {
-      if (_period == ReportPeriod.week) {
-        return TextButton.icon(
-          onPressed: () => _pickWeek(context),
-          icon: const Icon(Icons.date_range_rounded, size: 16, color: _kOrange),
-          label: Text('T${DateFormat('dd/MM').format(_weekStart)}', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
-        );
-      }
-      if (_period == ReportPeriod.month) {
-        return TextButton.icon(
-          onPressed: () => _pickMonth(context),
-          icon: const Icon(Icons.calendar_month_rounded, size: 16, color: _kOrange),
-          label: Text(isThisMonth ? 'Tháng này' : 'T$_navMonth/$_navYear', style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.bold)),
-        );
-      }
-      return const SizedBox.shrink();
-    }
-
-    if (isMobile) {
-      return Container(
-        color: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              ...chipsList,
-              const SizedBox(width: 12),
-              buildActionBtn(),
-            ],
+        if (_period == ReportPeriod.today) ...[
+          const SizedBox(height: 8),
+          _ReportNavBar.day(
+            date: _selectedDay,
+            canGoNext: DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day)
+                .isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)),
+            onPrev: () {
+              setState(() => _selectedDay = _selectedDay.subtract(const Duration(days: 1)));
+              _load();
+            },
+            onNext: () {
+              setState(() => _selectedDay = _selectedDay.add(const Duration(days: 1)));
+              _load();
+            },
+            onPick: () => _pickDay(context),
           ),
-        ),
-      );
-    }
-
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          ...chipsList,
-          const Spacer(),
-          buildActionBtn(),
         ],
-      ),
+        if (_period == ReportPeriod.week) ...[
+          const SizedBox(height: 8),
+          _ReportNavBar.week(
+            weekStart: _weekStart,
+            canGoNext: _weekStart.add(const Duration(days: 7)).isBefore(
+              DateTime.now().add(const Duration(days: 1)),
+            ),
+            onPrev: () {
+              setState(() => _weekStart = _weekStart.subtract(const Duration(days: 7)));
+              _load();
+            },
+            onNext: () {
+              setState(() => _weekStart = _weekStart.add(const Duration(days: 7)));
+              _load();
+            },
+            onPick: () => _pickWeek(context),
+          ),
+        ],
+        if (_period == ReportPeriod.month) ...[
+          const SizedBox(height: 8),
+          _ReportNavBar.month(
+            year: _navYear,
+            month: _navMonth,
+            canGoNext: !(_navYear == DateTime.now().year && _navMonth == DateTime.now().month),
+            onPrev: () {
+              setState(() {
+                if (_navMonth == 1) {
+                  _navYear--;
+                  _navMonth = 12;
+                } else {
+                  _navMonth--;
+                }
+              });
+              _load();
+            },
+            onNext: () {
+              setState(() {
+                if (_navMonth == 12) {
+                  _navYear++;
+                  _navMonth = 1;
+                } else {
+                  _navMonth++;
+                }
+              });
+              _load();
+            },
+            onPick: () => _pickMonth(context),
+          ),
+        ],
+        const SizedBox(height: 16),
+        if (_loading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: Center(child: CircularProgressIndicator(color: _kNavy)),
+          )
+        else if (_error != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Center(child: Text('Lỗi: $_error', style: const TextStyle(color: _kRed))),
+          )
+        else ...[
+          _buildSummaryCards(),
+          const SizedBox(height: 16),
+          _buildStaffList(),
+        ],
+      ],
     );
   }
 
   Widget _buildSummaryCards() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: EdgeInsets.zero,
       child: GridView.count(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -3607,13 +4100,18 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
 
   Widget _buildStaffList() {
     if (_staffRows.isEmpty) {
-      return Center(
-        child: Text('Không có dữ liệu chấm công trong kỳ.', style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Text('Không có dữ liệu chấm công trong kỳ.', style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
+        ),
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       itemCount: _staffRows.length,
       itemBuilder: (context, idx) {
         final row = _staffRows[idx];
@@ -3779,6 +4277,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
 
   int _totalOrders = 0;
   double _totalDiscount = 0;
+  int _loadRequestId = 0;
 
   List<_VoucherGroup> _groups = [];
 
@@ -3795,8 +4294,90 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
     _load();
   }
 
+  static Future<Map<String, String>> _resolveStaffNames(
+    SupabaseClient db,
+    String storeId,
+    List<String> staffIds,
+  ) async {
+    final Map<String, String> nameMap = {};
+    if (staffIds.isEmpty) return nameMap;
+
+    // 1. staff_members
+    try {
+      final staffRows = await db
+          .from('staff_members')
+          .select('id, name')
+          .eq('store_id', storeId)
+          .inFilter('id', staffIds);
+      for (final r in (staffRows as List)) {
+        final id = r['id']?.toString();
+        final name = r['name']?.toString();
+        if (id != null && name != null && name.trim().isNotEmpty) {
+          nameMap[id] = name.trim();
+        }
+      }
+    } catch (e) {
+      debugPrint('[_VoucherTab] staff_members err: $e');
+    }
+
+    // 2. store_members with user_accounts join
+    final missingIds1 = staffIds.where((id) => !nameMap.containsKey(id)).toList();
+    if (missingIds1.isNotEmpty) {
+      try {
+        final smRows = await db
+            .from('store_members')
+            .select('id, user_id, display_name, user_accounts(id, display_name, phone)')
+            .eq('store_id', storeId);
+        for (final m in (smRows as List)) {
+          final mid = m['id']?.toString();
+          final uid = m['user_id']?.toString();
+          final ua = m['user_accounts'] as Map<String, dynamic>?;
+          final dn = ua?['display_name']?.toString() ?? m['display_name']?.toString();
+          final ph = ua?['phone']?.toString();
+          final resolved = (dn != null && dn.trim().isNotEmpty)
+              ? dn.trim()
+              : (ph != null && ph.trim().isNotEmpty ? 'NV ($ph)' : null);
+          if (resolved != null) {
+            if (mid != null && missingIds1.contains(mid)) nameMap[mid] = resolved;
+            if (uid != null && missingIds1.contains(uid)) nameMap[uid] = resolved;
+          }
+        }
+      } catch (e) {
+        debugPrint('[_VoucherTab] store_members err: $e');
+      }
+    }
+
+    // 3. user_accounts direct lookup
+    final missingIds2 = staffIds.where((id) => !nameMap.containsKey(id)).toList();
+    if (missingIds2.isNotEmpty) {
+      try {
+        final uaRows = await db
+            .from('user_accounts')
+            .select('id, display_name, phone')
+            .inFilter('id', missingIds2);
+        for (final u in (uaRows as List)) {
+          final id = u['id']?.toString();
+          final dn = u['display_name']?.toString();
+          final ph = u['phone']?.toString();
+          if (id != null) {
+            if (dn != null && dn.trim().isNotEmpty) {
+              nameMap[id] = dn.trim();
+            } else if (ph != null && ph.trim().isNotEmpty) {
+              nameMap[id] = 'NV ($ph)';
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[_VoucherTab] user_accounts err: $e');
+      }
+    }
+
+    return nameMap;
+  }
+
   Future<void> _load() async {
     if (!mounted) return;
+    final requestId = ++_loadRequestId;
     setState(() {
       _loading = true;
       _error = null;
@@ -3806,58 +4387,253 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
       final info = await StoreAuthService.getStoreInfo();
       final storeId = info['store_id'];
       if (storeId == null) {
-        if (mounted) setState(() => _loading = false);
+        if (mounted && requestId == _loadRequestId) setState(() => _loading = false);
         return;
       }
 
       final db = Supabase.instance.client;
 
-      // Lấy danh sách hóa đơn có giảm giá trong khoảng thời gian lọc
+      // Lấy danh sách hóa đơn có giảm giá trong khoảng thời gian lọc chuẩn UTC
       final (from, to) = _period.rangeFor(
         weekStart: _weekStart,
         navYear: _navYear,
         navMonth: _navMonth,
         selectedDay: _selectedDay,
       );
-      final start = DateTime.fromMillisecondsSinceEpoch(from).toIso8601String();
-      final end = DateTime.fromMillisecondsSinceEpoch(to).toIso8601String();
+      final start = DateTime.fromMillisecondsSinceEpoch(from).toUtc().toIso8601String();
+      final end = DateTime.fromMillisecondsSinceEpoch(to).toUtc().toIso8601String();
 
-      // Query các hóa đơn có discount > 0 và có note
-      final ordersRes = await db
-          .from('orders')
-          .select('id, order_number, discount, note, created_at, staff_members!orders_staff_id_fkey(name)')
-          .eq('store_id', storeId)
-          .gte('created_at', start)
-          .lt('created_at', end)
-          .gt('discount', 0)
-          .not('note', 'is', null);
+      List ordersRes = [];
+      List settlementsRes = [];
 
-      _totalOrders = 0;
-      _totalDiscount = 0;
+      // Query song song an toàn, bắt lỗi độc lập (nếu role bị chặn RLS settlements thì POS vẫn hiển thị)
+      await Future.wait([
+        (() async {
+          try {
+            final res = await db
+                .from('orders')
+                .select('id, order_number, discount, note, created_at, staff_id, waiter_id')
+                .eq('store_id', storeId)
+                .gte('created_at', start)
+                .lt('created_at', end)
+                .gt('discount', 0);
+            ordersRes = res as List;
+          } catch (e) {
+            debugPrint('[_VoucherTab] orders query error: $e');
+          }
+        })(),
+        (() async {
+          try {
+            final res = await db
+                .from('payment_settlements')
+                .select('id, session_id, coupon_code, coupon_discount, discount, cashier_staff_id, created_at')
+                .eq('store_id', storeId)
+                .gte('created_at', start)
+                .lt('created_at', end)
+                .not('coupon_code', 'is', null);
+            settlementsRes = res as List;
+          } catch (e) {
+            debugPrint('[_VoucherTab] settlements query error: $e');
+          }
+        })(),
+      ]);
+
+      if (!mounted || requestId != _loadRequestId) return;
+
+      // Lấy thông tin phiên bàn (ban_sessions) và bàn ăn (ban_dining_tables) cho settlements
+      final sessionIds = settlementsRes
+          .map((s) => s['session_id']?.toString())
+          .whereType<String>()
+          .where((id) => id.trim().isNotEmpty)
+          .toSet()
+          .toList();
+
+      final Map<String, Map<String, dynamic>> sessionMap = {};
+      final Map<String, String> tableMap = {};
+      final Set<String> linkedOrderIds = {};
+
+      if (sessionIds.isNotEmpty) {
+        try {
+          final sessions = await db
+              .from('ban_sessions')
+              .select('id, table_id, waiter_id')
+              .eq('store_id', storeId)
+              .inFilter('id', sessionIds);
+          for (final s in (sessions as List)) {
+            final sid = s['id']?.toString();
+            if (sid != null && sid.isNotEmpty) {
+              sessionMap[sid] = Map<String, dynamic>.from(s);
+            }
+          }
+
+          final tableIds = sessions
+              .map((s) => s['table_id']?.toString())
+              .whereType<String>()
+              .where((id) => id.trim().isNotEmpty)
+              .toSet()
+              .toList();
+
+          if (tableIds.isNotEmpty) {
+            final tables = await db
+                .from('ban_dining_tables')
+                .select('id, name, label')
+                .eq('store_id', storeId)
+                .inFilter('id', tableIds);
+            for (final t in (tables as List)) {
+              final id = t['id']?.toString();
+              final name = t['name']?.toString().trim();
+              final label = t['label']?.toString().trim();
+              final display = (name != null && name.isNotEmpty)
+                  ? name
+                  : ((label != null && label.isNotEmpty) ? label : 'Bàn');
+              if (id != null && id.isNotEmpty) tableMap[id] = display;
+            }
+          }
+
+          // Ghi nhận ban_session_orders để tránh đếm trùng nếu đơn đã chốt qua bàn
+          final bsoRes = await db
+              .from('ban_session_orders')
+              .select('session_id, order_id')
+              .inFilter('session_id', sessionIds);
+          for (final r in (bsoRes as List)) {
+            final oid = r['order_id']?.toString();
+            if (oid != null && oid.isNotEmpty) linkedOrderIds.add(oid);
+          }
+        } catch (e) {
+          debugPrint('[_VoucherTab] sessions/tables error: $e');
+        }
+      }
+
+      if (!mounted || requestId != _loadRequestId) return;
+
+      // Thu thập toàn bộ ID nhân viên để resolve tên hàng loạt
+      final allStaffIds = <String>{
+        for (final o in ordersRes) ...[
+          if (o['staff_id'] != null) o['staff_id'].toString(),
+          if (o['waiter_id'] != null) o['waiter_id'].toString(),
+        ],
+        for (final s in settlementsRes)
+          if (s['cashier_staff_id'] != null) s['cashier_staff_id'].toString(),
+        for (final ses in sessionMap.values)
+          if (ses['waiter_id'] != null) ses['waiter_id'].toString(),
+      }.where((id) => id.trim().isNotEmpty).toList();
+
+      final staffNameMap = await _resolveStaffNames(db, storeId, allStaffIds);
+
+      if (!mounted || requestId != _loadRequestId) return;
+
+      String resolveStaff(String? primaryId, [String? secondaryId, String fallback = 'Thu ngân']) {
+        if (primaryId != null && staffNameMap.containsKey(primaryId) && staffNameMap[primaryId]!.isNotEmpty) {
+          return staffNameMap[primaryId]!;
+        }
+        if (secondaryId != null && staffNameMap.containsKey(secondaryId) && staffNameMap[secondaryId]!.isNotEmpty) {
+          return staffNameMap[secondaryId]!;
+        }
+        final id = (primaryId != null && primaryId.isNotEmpty)
+            ? primaryId
+            : ((secondaryId != null && secondaryId.isNotEmpty) ? secondaryId : null);
+        if (id != null) {
+          final short = id.length >= 4 ? id.substring(id.length - 4).toUpperCase() : id;
+          return 'NV-$short';
+        }
+        return fallback;
+      }
+
+      final voucherRegex = RegExp(r'\[Voucher:\s*([^\]]+)\]', caseSensitive: false);
+      final altVoucherRegex = RegExp(r'(?:Voucher|Mã giảm giá|Coupon):\s*([A-Za-z0-9_-]+)', caseSensitive: false);
+
+      int totalOrders = 0;
+      double totalDiscount = 0;
       final Map<String, List<_VoucherUseRow>> tempGroups = {};
+      final Set<String> processedSettleIds = {};
 
-      for (final o in (ordersRes as List)) {
-        final note = o['note'] as String? ?? '';
-        // Kiểm tra xem note có chứa tag [Voucher: CODE] không
-        if (!note.contains('[Voucher: ')) continue;
+      // 1. Xử lý dữ liệu bàn ăn (payment_settlements)
+      for (final s in settlementsRes) {
+        final rawCode = s['coupon_code']?.toString();
+        if (rawCode == null || rawCode.trim().isEmpty) continue;
+        final code = rawCode.trim().toUpperCase();
 
-        // Parse code
-        final startIndex = note.indexOf('[Voucher: ') + '[Voucher: '.length;
-        final endIndex = note.indexOf(']', startIndex);
-        if (endIndex == -1) continue;
-        final code = note.substring(startIndex, endIndex).trim().toUpperCase();
+        final double discount = (s['coupon_discount'] as num?)?.toDouble() ??
+            (s['discount'] as num?)?.toDouble() ??
+            0;
+        if (discount <= 0) continue;
 
-        final orderNumber = o['order_number'] as String? ?? o['id'].toString().substring(0, 8);
-        final double discount = (o['discount'] as num?)?.toDouble() ?? 0;
-        final createdAt = DateTime.parse(o['created_at'] as String).toLocal();
-        final staff = o['staff_members!orders_staff_id_fkey'] as Map<String, dynamic>?;
-        final cashierName = staff?['name'] as String? ?? 'Thu ngân';
+        final sId = s['id']?.toString() ?? '';
+        if (sId.isEmpty) continue;
+        processedSettleIds.add(sId);
 
-        _totalOrders++;
-        _totalDiscount += discount;
+        final sessionId = s['session_id']?.toString();
+        final session = sessionId != null ? sessionMap[sessionId] : null;
+        final tableId = session?['table_id']?.toString();
+        final tableName = tableId != null ? tableMap[tableId] : null;
+
+        final createdAt = DateTime.tryParse(s['created_at']?.toString() ?? '')?.toLocal() ?? DateTime.now();
+        final cashierName = resolveStaff(
+          s['cashier_staff_id']?.toString(),
+          session?['waiter_id']?.toString(),
+          'Thu ngân bàn',
+        );
+
+        final shortSId = sId.length >= 6 ? sId.substring(0, 6).toUpperCase() : sId.toUpperCase();
+        final orderNumber = tableName != null
+            ? '$tableName (QRT-$shortSId)'
+            : 'QRT-$shortSId';
+
+        totalOrders++;
+        totalDiscount += discount;
 
         final group = tempGroups.putIfAbsent(code, () => []);
         group.add(_VoucherUseRow(
+          orderId: sId,
+          orderNumber: orderNumber,
+          createdAt: createdAt,
+          discount: discount,
+          cashierName: cashierName,
+          tableName: tableName,
+        ));
+      }
+
+      // 2. Xử lý dữ liệu đơn POS/bán nhanh (orders)
+      for (final o in ordersRes) {
+        final oId = o['id']?.toString() ?? '';
+        if (oId.isEmpty) continue;
+        // Tránh ghi nhận trùng lặp nếu đơn đã nằm trong session bàn đã thanh toán
+        if (linkedOrderIds.contains(oId) || processedSettleIds.contains(oId)) {
+          continue;
+        }
+
+        final note = o['note']?.toString() ?? '';
+        String? code;
+        final match = voucherRegex.firstMatch(note);
+        if (match != null) {
+          code = match.group(1)?.trim().toUpperCase();
+        } else {
+          final altMatch = altVoucherRegex.firstMatch(note);
+          if (altMatch != null) {
+            code = altMatch.group(1)?.trim().toUpperCase();
+          }
+        }
+
+        if (code == null || code.isEmpty) continue;
+
+        final double discount = (o['discount'] as num?)?.toDouble() ?? 0;
+        if (discount <= 0) continue;
+
+        final orderNumber = o['order_number']?.toString() ??
+            (oId.length >= 8 ? oId.substring(0, 8) : oId);
+        final createdAt = DateTime.tryParse(o['created_at']?.toString() ?? '')?.toLocal() ?? DateTime.now();
+        final cashierName = resolveStaff(
+          o['staff_id']?.toString(),
+          o['waiter_id']?.toString(),
+          'Thu ngân',
+        );
+
+        totalOrders++;
+        totalDiscount += discount;
+
+        final group = tempGroups.putIfAbsent(code, () => []);
+        group.add(_VoucherUseRow(
+          orderId: oId,
           orderNumber: orderNumber,
           createdAt: createdAt,
           discount: discount,
@@ -3881,14 +4657,16 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
       // Sắp xếp theo tổng tiền giảm dần
       groups.sort((a, b) => b.totalDiscount.compareTo(a.totalDiscount));
 
-      if (mounted) {
+      if (mounted && requestId == _loadRequestId) {
         setState(() {
           _groups = groups;
+          _totalOrders = totalOrders;
+          _totalDiscount = totalDiscount;
           _loading = false;
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && requestId == _loadRequestId) {
         setState(() {
           _error = e.toString();
           _loading = false;
@@ -4110,7 +4888,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: _groups.length,
       itemBuilder: (context, idx) {
         final g = _groups[idx];
@@ -4126,15 +4904,19 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
           child: ExpansionTile(
             title: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _kOrange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    g.code,
-                    style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: _kOrange),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _kOrange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      g.code,
+                      style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: _kOrange),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -4144,9 +4926,13 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                 ),
               ],
             ),
-            trailing: Text(
-              _fmtVnd(g.totalDiscount),
-              style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: _kRed),
+            trailing: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                _fmtVnd(g.totalDiscount),
+                style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: _kRed),
+              ),
             ),
             childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
@@ -4158,10 +4944,17 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   children: [
-                    Expanded(flex: 3, child: Text('Số đơn', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold))),
-                    Expanded(flex: 3, child: Text('Thời gian', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold))),
-                    Expanded(flex: 3, child: Text('Giảm giá', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), textAlign: TextAlign.right)),
-                    Expanded(flex: 3, child: Text('Nhân viên', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), textAlign: TextAlign.right)),
+                    Expanded(flex: 4, child: Text('Mã đơn / Bàn', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, maxLines: 1)),
+                    Expanded(flex: 3, child: Text('Thời gian', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, maxLines: 1)),
+                    Expanded(
+                      flex: 2,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text('Giảm giá', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), textAlign: TextAlign.right),
+                      ),
+                    ),
+                    Expanded(flex: 3, child: Text('Nhân viên', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), textAlign: TextAlign.right, overflow: TextOverflow.ellipsis, maxLines: 1)),
                   ],
                 ),
               ),
@@ -4171,9 +4964,9 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                     child: Row(
                       children: [
                         Expanded(
-                          flex: 3,
+                          flex: 4,
                           child: InkWell(
-                            onTap: () => showOrderDetailDialog(context, row.orderNumber),
+                            onTap: () => showOrderDetailDialog(context, row.orderNumber, orderId: row.orderId),
                             borderRadius: BorderRadius.circular(4),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 2),
@@ -4185,23 +4978,33 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                                   color: const Color(0xFF1565C0),
                                   decoration: TextDecoration.underline,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),
                         ),
                         Expanded(
                           flex: 3,
-                          child: Text(
-                            DateFormat('dd/MM HH:mm').format(row.createdAt),
-                            style: GoogleFonts.outfit(fontSize: 11, color: _kMuted),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              DateFormat('dd/MM HH:mm').format(row.createdAt),
+                              style: GoogleFonts.outfit(fontSize: 11, color: _kMuted),
+                            ),
                           ),
                         ),
                         Expanded(
-                          flex: 3,
-                          child: Text(
-                            _fmtVnd(row.discount),
-                            style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kRed),
-                            textAlign: TextAlign.right,
+                          flex: 2,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              _fmtVnd(row.discount),
+                              style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kRed),
+                              textAlign: TextAlign.right,
+                            ),
                           ),
                         ),
                         Expanded(
@@ -4211,6 +5014,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                             style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: _kNavyL),
                             textAlign: TextAlign.right,
                             overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         ),
                       ],
@@ -4239,15 +5043,19 @@ class _VoucherGroup {
 }
 
 class _VoucherUseRow {
+  final String orderId;
   final String orderNumber;
   final DateTime createdAt;
   final double discount;
   final String cashierName;
+  final String? tableName;
 
   _VoucherUseRow({
+    required this.orderId,
     required this.orderNumber,
     required this.createdAt,
     required this.discount,
     required this.cashierName,
+    this.tableName,
   });
 }

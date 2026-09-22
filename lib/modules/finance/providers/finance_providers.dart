@@ -53,7 +53,7 @@ final selectedFundProvider = NotifierProvider<FundNotifier, String>(
 
 /// Tất cả records trong kỳ đang chọn (reactive khi period thay đổi và fund thay đổi)
 final financeRecordsProvider =
-    StreamProvider<List<FinanceRecordModel>>((ref) {
+    StreamProvider.autoDispose<List<FinanceRecordModel>>((ref) {
   final range = ref.watch(periodProvider);
   final fund  = ref.watch(selectedFundProvider);
   return ref.watch(financeRepositoryProvider).watchRecords(
@@ -64,7 +64,7 @@ final financeRecordsProvider =
 });
 
 /// Finance stats của kỳ đang chọn
-final financeStatsProvider = FutureProvider<FinanceStats>((ref) async {
+final financeStatsProvider = FutureProvider.autoDispose<FinanceStats>((ref) async {
   final range = ref.watch(periodProvider);
   final fund  = ref.watch(selectedFundProvider);
   ref.watch(financeRecordsProvider); // depend để auto-refresh
@@ -72,7 +72,7 @@ final financeStatsProvider = FutureProvider<FinanceStats>((ref) async {
 });
 
 /// Finance stats luôn là hôm nay — dùng cho header
-final todayFinanceStatsProvider = FutureProvider<FinanceStats>((ref) async {
+final todayFinanceStatsProvider = FutureProvider.autoDispose<FinanceStats>((ref) async {
   final fund  = ref.watch(selectedFundProvider);
   ref.watch(financeRecordsProvider);
   return ref.read(financeRepositoryProvider).getStats(DateRange.today(), fundType: fund == 'all' ? null : fund);
@@ -80,12 +80,12 @@ final todayFinanceStatsProvider = FutureProvider<FinanceStats>((ref) async {
 
 /// Danh mục theo loại — Future-based (ít thay đổi)
 final incomeCategoriesProvider =
-    FutureProvider<List<FinanceCategoryModel>>((ref) {
+    FutureProvider.autoDispose<List<FinanceCategoryModel>>((ref) {
   return ref.watch(financeRepositoryProvider).getCategories(type: 'income');
 });
 
 final expenseCategoriesProvider =
-    FutureProvider<List<FinanceCategoryModel>>((ref) {
+    FutureProvider.autoDispose<List<FinanceCategoryModel>>((ref) {
   return ref.watch(financeRepositoryProvider).getCategories(type: 'expense');
 });
 
@@ -108,7 +108,7 @@ final financeFilterProvider =
 
 /// Filtered records (period + type filter)
 final filteredRecordsProvider =
-    Provider<AsyncValue<List<FinanceRecordModel>>>((ref) {
+    Provider.autoDispose<AsyncValue<List<FinanceRecordModel>>>((ref) {
   final filter  = ref.watch(financeFilterProvider);
   final records = ref.watch(financeRecordsProvider);
   return records.whenData((list) => filter == null

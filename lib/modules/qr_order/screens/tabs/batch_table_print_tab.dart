@@ -508,84 +508,186 @@ class BatchTablePrintTab extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: validTargetTables.isNotEmpty
-                    ? const Color(0xFF8B5CF6)
-                    : Colors.grey.shade400,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              icon: const Icon(Icons.picture_as_pdf_rounded),
-              label: Text(
-                validTargetTables.isNotEmpty
-                    ? 'XUẤT FILE PDF VECTOR GỬI NHÀ IN (${validTargetTables.length} TEM)'
-                    : 'CHƯA SẴN SÀNG IN (CẦN CẤU HÌNH DOMAIN HTTPS & DB)',
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-              onPressed: validTargetTables.isNotEmpty
-                  ? () {
-                      final items = validTargetTables.map((t) {
-                        final zone = zones.firstWhere(
-                          (z) => z.id == t.zoneId,
-                          orElse: () => BanZoneModel(
-                            id: '',
-                            storeId: '',
-                            name: 'Khu chung',
-                            colorValue: 0,
-                            iconCode: 0,
-                            sortOrder: 0,
-                            isActive: true,
-                          ),
-                        );
-                        return TableQrItemData(
-                          title: t.label,
-                          qrUrl: buildTableQrUrl(t)!,
-                          zoneName: zone.name,
-                          tableName: t.label,
-                        );
-                      }).toList();
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => TableQrPrintScreen(
-                            title: 'Hàng Loạt ${items.length} Tem',
-                            qrUrl: items.first.qrUrl,
-                            storeName: storeName,
-                            batchItems: items,
-                            widthMm: widthMm,
-                            heightMm: heightMm,
-                            bleedMm: bleedMm,
-                            showCropMarks: showCropMarks,
-                            headerTitle: tplTitleCtrl.text.trim(),
-                            instructionText: tplInstructionCtrl.text.trim(),
-                            confirmNote: tplConfirmNoteCtrl.text.trim(),
-                          ),
-                        ),
-                      );
-                    }
-                  : () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Không có bàn nào sẵn sàng để xuất PDF. Vui lòng kiểm tra Tên miền HTTPS và DB.',
-                          ),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                    },
+          Text(
+            '4. Xuất File Cho Nhà In:',
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            'PDF decal giữ nguyên kích thước thật của từng tem. Sheet A4 sẽ tự ghép nhiều tem lên một trang A4 để gửi thẳng cho chỗ in decal.',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: validTargetTables.isNotEmpty
+                          ? const Color(0xFF8B5CF6)
+                          : Colors.grey.shade400,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    icon: const Icon(Icons.picture_as_pdf_rounded),
+                    label: Text(
+                      validTargetTables.isNotEmpty
+                          ? 'PDF TEM RỜI'
+                          : 'CHƯA SẴN SÀNG IN',
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    onPressed: () => _handleExport(
+                      context: context,
+                      validTargetTables: validTargetTables,
+                      zones: zones,
+                      storeName: storeName,
+                      widthMm: widthMm,
+                      heightMm: heightMm,
+                      bleedMm: bleedMm,
+                      showCropMarks: showCropMarks,
+                      headerTitle: tplTitleCtrl.text.trim(),
+                      instructionText: tplInstructionCtrl.text.trim(),
+                      confirmNote: tplConfirmNoteCtrl.text.trim(),
+                      buildTableQrUrl: buildTableQrUrl,
+                      renderAsA4Sheet: false,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: validTargetTables.isNotEmpty
+                          ? const Color(0xFF8B5CF6)
+                          : Colors.grey.shade500,
+                      side: BorderSide(
+                        color: validTargetTables.isNotEmpty
+                            ? const Color(0xFF8B5CF6)
+                            : Colors.grey.shade300,
+                        width: 1.4,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    icon: const Icon(Icons.grid_view_rounded),
+                    label: Text(
+                      validTargetTables.isNotEmpty
+                          ? 'SHEET A4'
+                          : 'CHƯA SẴN SÀNG IN',
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    onPressed: () => _handleExport(
+                      context: context,
+                      validTargetTables: validTargetTables,
+                      zones: zones,
+                      storeName: storeName,
+                      widthMm: widthMm,
+                      heightMm: heightMm,
+                      bleedMm: bleedMm,
+                      showCropMarks: showCropMarks,
+                      headerTitle: tplTitleCtrl.text.trim(),
+                      instructionText: tplInstructionCtrl.text.trim(),
+                      confirmNote: tplConfirmNoteCtrl.text.trim(),
+                      buildTableQrUrl: buildTableQrUrl,
+                      renderAsA4Sheet: true,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  void _handleExport({
+    required BuildContext context,
+    required List<BanTableModel> validTargetTables,
+    required List<BanZoneModel> zones,
+    required String storeName,
+    required double widthMm,
+    required double heightMm,
+    required double bleedMm,
+    required bool showCropMarks,
+    required String headerTitle,
+    required String instructionText,
+    required String confirmNote,
+    required String? Function(BanTableModel) buildTableQrUrl,
+    required bool renderAsA4Sheet,
+  }) {
+    if (validTargetTables.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Không có bàn nào sẵn sàng để xuất PDF. Vui lòng kiểm tra Tên miền HTTPS và DB.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final items = validTargetTables.map((t) {
+      final zone = zones.firstWhere(
+        (z) => z.id == t.zoneId,
+        orElse: () => BanZoneModel(
+          id: '',
+          storeId: '',
+          name: 'Khu chung',
+          colorValue: 0,
+          iconCode: 0,
+          sortOrder: 0,
+          isActive: true,
+        ),
+      );
+      return TableQrItemData(
+        title: t.label,
+        qrUrl: buildTableQrUrl(t)!,
+        zoneName: zone.name,
+        tableName: t.label,
+      );
+    }).toList();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TableQrPrintScreen(
+          title: renderAsA4Sheet
+              ? 'Sheet A4 ${items.length} Tem'
+              : 'Hàng Loạt ${items.length} Tem',
+          qrUrl: items.first.qrUrl,
+          storeName: storeName,
+          batchItems: items,
+          renderAsA4Sheet: renderAsA4Sheet,
+          widthMm: widthMm,
+          heightMm: heightMm,
+          bleedMm: bleedMm,
+          showCropMarks: showCropMarks,
+          headerTitle: headerTitle,
+          instructionText: instructionText,
+          confirmNote: confirmNote,
+        ),
       ),
     );
   }

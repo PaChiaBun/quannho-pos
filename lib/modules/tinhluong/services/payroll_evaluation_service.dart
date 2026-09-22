@@ -102,6 +102,8 @@ class PayrollEvaluationService {
           isManagerOverridden: m['is_manager_overridden'] as bool? ?? false,
           overrideReason: m['override_reason'] as String?,
           overrideBy: m['override_by'] as String?,
+          isLate: (m['is_late'] as bool?) ?? false,
+          lateMinutes: (m['late_minutes'] as num?)?.toInt() ?? 0,
         );
       }).toList();
 
@@ -138,7 +140,8 @@ class PayrollEvaluationService {
 
         double staffHours = 0;
         double staffOtHours = 0;
-        int staffLateCount = existing?.lateCount ?? 0;
+        int shiftLateCount = 0;
+        double shiftForgotPenalties = 0;
         final Set<String> uniqueDays = {};
 
         for (final s in shifts) {
@@ -147,13 +150,34 @@ class PayrollEvaluationService {
           final hours = duration.inMinutes / 60.0;
           if (hours <= 0) continue;
 
-          staffHours += hours;
-          
+          if (s.isLate) {
+            shiftLateCount++;
+          }
+
+          final otThreshold = cfg.otThresholdHours;
           if (s.isOtApproved) {
-            final otThreshold = cfg.otThresholdHours;
             if (hours > otThreshold) {
               staffOtHours += (hours - otThreshold);
+              staffHours += otThreshold;
+            } else {
+              staffHours += hours;
             }
+          } else {
+            // OT chưa duyệt: chỉ tính tối đa đến ngưỡng otThreshold
+            if (hours > otThreshold) {
+              staffHours += otThreshold;
+            } else {
+              staffHours += hours;
+            }
+          }
+
+          // Phạt quên chốt ca (ca > 14h và chưa được override)
+          if (s.checkIsForgotClockout && !s.isManagerOverridden) {
+            final hourlyRate = cfg.salaryMode == 'M5'
+                ? cfg.hourlyRate
+                : (cfg.hourlyRate > 0 ? cfg.hourlyRate : 25000.0);
+            final eligibleHours = hours > otThreshold ? otThreshold : hours;
+            shiftForgotPenalties += eligibleHours * hourlyRate * 0.5;
           }
 
           final local = s.clockIn.toLocal();
@@ -175,10 +199,26 @@ class PayrollEvaluationService {
         final allowTotal = savedAllowance != 0 ? savedAllowance : configuredExtras.allowance;
         
         final absentDays = existing?.absentDays ?? (() {
-          final expected = cfg.expectedDays;
-          final absent = expected - workedDays;
+          // Tính số ngày của kỳ lương
+          final fromParts = fromDateStr.split('-').map(int.parse).toList();
+          final toParts = toDateStr.split('-').map(int.parse).toList();
+          final fromDt = DateTime(fromParts[0], fromParts[1], fromParts[2]);
+          final toDt = DateTime(toParts[0], toParts[1], toParts[2]);
+          final periodDays = toDt.difference(fromDt).inDays + 1;
+
+          int effectiveExpected = cfg.expectedDays;
+          if (periodDays < 20 && periodDays > 0) {
+            effectiveExpected = (periodDays * (cfg.expectedDays / 30.0)).round();
+            if (effectiveExpected < 1) effectiveExpected = 1;
+          }
+
+          final absent = effectiveExpected - workedDays;
           return absent < 0 ? 0 : absent;
         })();
+
+        int staffLateCount = existing?.lateCount != null && existing!.lateCount > 0
+            ? existing.lateCount
+            : shiftLateCount;
         
         final input = PayrollInput(
           userId: uid,
@@ -198,9 +238,12 @@ class PayrollEvaluationService {
           deductionPerAbsent: (() {
             final mode = cfg.salaryMode;
             final base = cfg.baseSalary;
-            if (mode == 'M2' || mode == 'M3') return base / 26;
+            if (mode == 'M2' || mode == 'M3') {
+              final days = cfg.expectedDays > 0 ? cfg.expectedDays : 26;
+              return base / days;
+            }
             if (mode == 'M4') {
-              return cfg.dailyRate > 0 ? cfg.dailyRate : base;
+              return 0.0; // M4 trả theo ngày công thực tế, không trừ kép
             }
             return 0.0;
           })(),
@@ -217,7 +260,8 @@ class PayrollEvaluationService {
         final createdAt = existing?.createdAt ?? nowStr;
         final paymentStatus = existing?.paymentStatus ?? 'pending';
         
-        double computedNet = res.grossPay;
+        final totalLateDeduction = res.deductionLate + shiftForgotPenalties;
+        double computedNet = res.grossPay - shiftForgotPenalties;
         if (existing != null && dedAbs != res.deductionAbsent) {
           computedNet = computedNet + res.deductionAbsent - dedAbs;
         }
@@ -241,7 +285,7 @@ class PayrollEvaluationService {
           overtimePay: res.overtimePay,
           bonusRevenue: bonusRev,
           bonusManual: bonusMan,
-          deductionLate: res.deductionLate,
+          deductionLate: totalLateDeduction,
           deductionAbsent: dedAbs,
           deductionManual: dedMan,
           allowanceTotal: allowTotal,

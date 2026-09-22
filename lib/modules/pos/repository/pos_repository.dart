@@ -8,17 +8,46 @@ import '../../../core/repositories/core_customer_repository.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart';
 import '../models/coupon_model.dart';
+import '../services/pos_sale_operation_manager.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POS REPOSITORY — 100% Supabase
 // Không dùng Drift. Ghi orders + order_items lên Supabase.
 // ─────────────────────────────────────────────────────────────────────────────
+class PosSaleResult {
+  final String orderId;
+  final String orderNumber;
+  final double totalAmount;
+  final bool isReplay;
+  final double subtotal;
+  final double discount;
+  final double walletRealUsed;
+  final double walletBonusUsed;
+  final String? operationKey;
+  final String? storeId;
+
+  const PosSaleResult({
+    required this.orderId,
+    required this.orderNumber,
+    required this.totalAmount,
+    required this.isReplay,
+    this.subtotal = 0,
+    this.discount = 0,
+    this.walletRealUsed = 0,
+    this.walletBonusUsed = 0,
+    this.operationKey,
+    this.storeId,
+  });
+}
+
 class PosRepository {
   static SupabaseClient get _sb => Supabase.instance.client;
   final CoreProductRepository _productRepo;
   final CoreCustomerRepository _customerRepo;
-  final KhoProRepository _khoProRepo;  // inject qua DI — không tạo thủ công nữa
+  final KhoProRepository _khoProRepo; // inject qua DI — không tạo thủ công nữa
   final _uuid = const Uuid();
+  final _saleOperationManager = PosSaleOperationManager();
+  static final Map<String, Future<PosSaleResult>> _saleFlights = {};
 
   PosRepository(this._productRepo, this._customerRepo, this._khoProRepo);
 
@@ -50,19 +79,24 @@ class PosRepository {
     // Realtime connection with fallback to polling on async errors (e.g. RealtimeSubscribeException)
     while (true) {
       try {
-        final stream = _sb.from(table).stream(primaryKey: ['id']).eq(columnFilter, valueFilter);
+        final stream = _sb
+            .from(table)
+            .stream(primaryKey: ['id'])
+            .eq(columnFilter, valueFilter);
         await for (final rows in stream) {
           yield mapper(rows);
         }
       } catch (e) {
-        print('[RobustStream] Realtime err on $table: $e. Falling back to poll 10s.');
-        
+        print(
+          '[RobustStream] Realtime err on $table: $e. Falling back to poll 10s.',
+        );
+
         // Polling âm thầm 10 giây (chia làm 2 lần 5s) trước khi thử kết nối lại Realtime
         await Future.delayed(const Duration(seconds: 5));
         try {
           yield await fetch();
         } catch (_) {}
-        
+
         await Future.delayed(const Duration(seconds: 5));
         try {
           yield await fetch();
@@ -73,23 +107,41 @@ class PosRepository {
 
   Stream<List<OrderModel>> watchTodayOrders() async* {
     final storeId = await _storeId();
-    if (storeId == null) { yield []; return; }
+    if (storeId == null) {
+      yield [];
+      return;
+    }
 
-    final now        = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day) // ‼️ FIX: DateTime(y,m,d) thay copyWith — tránh sai DST
-        .toUtc().toIso8601String();
-    final endOfDay   = DateTime(now.year, now.month, now.day + 1).toUtc().toIso8601String();
+    final now = DateTime.now();
+    final startOfDay =
+        DateTime(
+              now.year,
+              now.month,
+              now.day,
+            ) // ‼️ FIX: DateTime(y,m,d) thay copyWith — tránh sai DST
+            .toUtc()
+            .toIso8601String();
+    final endOfDay = DateTime(
+      now.year,
+      now.month,
+      now.day + 1,
+    ).toUtc().toIso8601String();
 
     yield* _robustStream(
-      'orders', 'store_id', storeId,
-      (rows) => rows
-        .where((r) =>
-            r['status'] == 'completed' &&
-            (r['created_at'] as String).compareTo(startOfDay) >= 0 &&
-            (r['created_at'] as String).compareTo(endOfDay) < 0) // ‼️ FIX: thêm upper bound
-        .map(OrderModel.fromMap)
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt))
+      'orders',
+      'store_id',
+      storeId,
+      (rows) =>
+          rows
+              .where(
+                (r) =>
+                    r['status'] == 'completed' &&
+                    (r['created_at'] as String).compareTo(startOfDay) >= 0 &&
+                    (r['created_at'] as String).compareTo(endOfDay) < 0,
+              ) // ‼️ FIX: thêm upper bound
+              .map(OrderModel.fromMap)
+              .toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
     );
   }
 
@@ -101,16 +153,264 @@ class PosRepository {
   }
 
   Future<List<OrderItemModel>> getOrderItems(String orderId) async {
-    final rows = await _sb
-        .from('order_items')
-        .select()
-        .eq('order_id', orderId);
+    final rows = await _sb.from('order_items').select().eq('order_id', orderId);
     return rows.map(OrderItemModel.fromMap).toList();
   }
 
   // ── Complete Sale ─────────────────────────────────────────────────────────
 
-  Future<String> completeSale({
+  Future<PosSaleResult> completeSale({
+    required List<CartLine> lines,
+    required String paymentMethod,
+    String? customerId,
+    String? customerName,
+    double discount = 0,
+    double loyaltyPtsUsed = 0,
+    double loyaltyRate = 10000,
+    String? note,
+    String? sourceType,
+    String? sourceId,
+    String? staffId,
+    String? couponCode,
+    double? expectedTotal,
+    List<String> kitchenSessionIds = const [],
+  }) async {
+    final storeId = await _storeId();
+    if (storeId == null) throw Exception('Chưa chọn quán');
+    if (lines.isEmpty) throw Exception('Giỏ hàng trống');
+
+    final payloadLines = [
+      for (final line in lines)
+        {
+          'product_id': line.productId,
+          'quantity': line.quantity,
+          'expected_unit_price': line.unitPrice,
+        },
+    ];
+    final intent = <String, dynamic>{
+      'store_id': storeId,
+      'lines': payloadLines,
+      'payment_method': paymentMethod.trim().toLowerCase(),
+      'customer_id': customerId,
+      'discount': discount,
+      'loyalty_pts_used': loyaltyPtsUsed,
+      'coupon_code': (couponCode ?? '').trim().toLowerCase(),
+      'source_type': sourceType ?? 'pos',
+      'source_id': sourceId,
+      'expected_total': expectedTotal,
+      'kitchen_session_ids': kitchenSessionIds,
+      'note': note,
+    };
+    final idempotencyKey = await _saleOperationManager.getOrCreateKey(
+      storeId: storeId,
+      intent: intent,
+    );
+    final flightScope = '$storeId:$idempotencyKey';
+    final existing = _saleFlights[flightScope];
+    if (existing != null) return existing;
+
+    final flight = _completeSaleAtomic(
+      storeId: storeId,
+      idempotencyKey: idempotencyKey,
+      payloadLines: payloadLines,
+      paymentMethod: paymentMethod,
+      customerId: customerId,
+      discount: discount,
+      loyaltyPtsUsed: loyaltyPtsUsed,
+      note: note,
+      couponCode: couponCode,
+      sourceType: sourceType,
+      sourceId: sourceId,
+      expectedTotal: expectedTotal,
+      kitchenSessionIds: kitchenSessionIds,
+    );
+    _saleFlights[flightScope] = flight;
+    return flight.whenComplete(() {
+      if (identical(_saleFlights[flightScope], flight)) {
+        _saleFlights.remove(flightScope);
+      }
+    });
+  }
+
+  Future<PosSaleResult> _completeSaleAtomic({
+    required String storeId,
+    required String idempotencyKey,
+    required List<Map<String, dynamic>> payloadLines,
+    required String paymentMethod,
+    String? customerId,
+    double discount = 0,
+    double loyaltyPtsUsed = 0,
+    String? note,
+    String? couponCode,
+    String? sourceType,
+    String? sourceId,
+    double? expectedTotal,
+    List<String> kitchenSessionIds = const [],
+  }) async {
+    final raw = await _sb.rpc(
+      'complete_pos_sale_v1',
+      params: {
+        'p_store_id': storeId,
+        'p_idempotency_key': idempotencyKey,
+        'p_lines': payloadLines,
+        'p_payment_method': paymentMethod,
+        'p_customer_id': customerId,
+        'p_discount': discount,
+        'p_loyalty_pts_used': loyaltyPtsUsed,
+        'p_note': note,
+        'p_coupon_code': couponCode,
+        'p_source_type': sourceType ?? 'pos',
+        'p_source_id': sourceId,
+        'p_expected_total': expectedTotal,
+        'p_kitchen_session_ids': kitchenSessionIds,
+      },
+    );
+    if (raw is! Map) throw Exception('Phản hồi thanh toán POS không hợp lệ');
+    final response = Map<String, dynamic>.from(raw);
+    if (response['success'] != true) {
+      // Only structured, pre-commit rejection can release the pending intent.
+      // Transport exceptions and key conflicts must keep it for reconciliation.
+      const rejectedBeforeCommit = {
+        'DISCOUNT_PERMISSION_DENIED',
+        'SESSION_NOT_OPEN',
+        'SESSION_CART_CHANGED',
+        'EMPTY_CART',
+        'INVALID_PAYMENT_METHOD',
+        'INVALID_QUANTITY',
+        'PRODUCT_NOT_FOUND',
+        'INVALID_POINTS',
+        'CUSTOMER_REQUIRED',
+        'CUSTOMER_NOT_FOUND',
+        'INSUFFICIENT_POINTS',
+        'WALLET_SCHEMA_UNAVAILABLE',
+        'INVALID_WALLET_CONFIG',
+        'INSUFFICIENT_WALLET',
+        'INVALID_LOYALTY_CONFIG',
+        'COUPON_SCHEMA_UNAVAILABLE',
+        'COUPON_NOT_FOUND',
+        'COUPON_DISABLED',
+        'COUPON_NOT_STARTED',
+        'COUPON_EXPIRED',
+        'COUPON_MIN_ORDER_NOT_MET',
+        'INVALID_COUPON_TYPE',
+        'FINANCIAL_QUOTE_CHANGED',
+      };
+      if (rejectedBeforeCommit.contains(response['error_code'])) {
+        await _saleOperationManager.clear(
+          storeId,
+          idempotencyKey: idempotencyKey,
+        );
+      }
+      throw Exception(
+        response['message'] ?? response['error_code'] ?? 'Thanh toán thất bại',
+      );
+    }
+    final data = Map<String, dynamic>.from(response['data'] as Map);
+    final orderId = data['order_id'] as String?;
+    if (orderId == null || orderId.isEmpty) {
+      throw Exception('Server không trả order_id hợp lệ');
+    }
+    AppLogger.logUserAction(
+      tag: 'checkout',
+      action: 'Atomic POS sale ${data['order_number'] ?? orderId}',
+      details: {
+        'order_id': orderId,
+        'is_replay': data['is_replay'] == true,
+        'total': data['total_amount'],
+      },
+    );
+    return PosSaleResult(
+      orderId: orderId,
+      orderNumber: data['order_number'] as String? ?? orderId.substring(0, 8),
+      totalAmount: ((data['total_amount'] as num?) ?? 0).toDouble(),
+      isReplay: data['is_replay'] == true,
+      subtotal: ((data['subtotal'] as num?) ?? 0).toDouble(),
+      discount: ((data['discount'] as num?) ?? 0).toDouble(),
+      walletRealUsed: ((data['wallet_real_used'] as num?) ?? 0).toDouble(),
+      walletBonusUsed: ((data['wallet_bonus_used'] as num?) ?? 0).toDouble(),
+      operationKey: idempotencyKey,
+      storeId: storeId,
+    );
+  }
+
+  /// A success stays durable until the cashier has seen and acknowledged it.
+  Future<void> acknowledgeSale(PosSaleResult result) async {
+    if (result.storeId != null && result.operationKey != null) {
+      await _saleOperationManager.clear(
+        result.storeId!,
+        idempotencyKey: result.operationKey!,
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>?> pendingSale() async {
+    final storeId = await _storeId();
+    return storeId == null ? null : _saleOperationManager.pending(storeId);
+  }
+
+  /// Explicit recovery replays the exact durable intent, never the current cart.
+  Future<PosSaleResult> recoverSale() async {
+    final storeId = await _storeId();
+    if (storeId == null) throw StateError('Chưa chọn quán');
+    final pending = await _saleOperationManager.pending(storeId);
+    if (pending == null) throw StateError('Không còn giao dịch chờ đối soát');
+    final key = pending['idempotency_key'] as String;
+    if (pending['intent'] is! Map) {
+      final raw = await _sb.rpc(
+        'reconcile_pos_sale_v1',
+        params: {'p_store_id': storeId, 'p_idempotency_key': key},
+      );
+      if (raw is! Map || raw['success'] != true) {
+        throw StateError(
+          'Chưa tìm thấy kết quả đơn cũ và thiếu dữ liệu gửi lại. Giữ khóa để đối soát; không xóa khóa thủ công.',
+        );
+      }
+      final data = Map<String, dynamic>.from(raw['data'] as Map);
+      return PosSaleResult(
+        orderId: data['order_id'] as String,
+        orderNumber: data['order_number'] as String,
+        totalAmount: (data['total_amount'] as num).toDouble(),
+        subtotal: (data['subtotal'] as num).toDouble(),
+        discount: (data['discount'] as num).toDouble(),
+        walletRealUsed: (data['wallet_real_used'] as num).toDouble(),
+        walletBonusUsed: (data['wallet_bonus_used'] as num).toDouble(),
+        isReplay: true,
+        operationKey: key,
+        storeId: storeId,
+      );
+    }
+    final intent = Map<String, dynamic>.from(pending['intent'] as Map);
+    final scope = '$storeId:$key';
+    final existing = _saleFlights[scope];
+    if (existing != null) return existing;
+    final flight = _completeSaleAtomic(
+      storeId: storeId,
+      idempotencyKey: key,
+      payloadLines: (intent['lines'] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+      paymentMethod: intent['payment_method'] as String,
+      customerId: intent['customer_id'] as String?,
+      discount: (intent['discount'] as num).toDouble(),
+      loyaltyPtsUsed: (intent['loyalty_pts_used'] as num).toDouble(),
+      note: intent['note'] as String?,
+      couponCode: intent['coupon_code'] as String?,
+      sourceType: intent['source_type'] as String?,
+      sourceId: intent['source_id'] as String?,
+      expectedTotal: (intent['expected_total'] as num?)?.toDouble(),
+      kitchenSessionIds: (intent['kitchen_session_ids'] as List? ?? [])
+          .cast<String>(),
+    );
+    _saleFlights[scope] = flight;
+    return flight.whenComplete(() {
+      if (identical(_saleFlights[scope], flight)) _saleFlights.remove(scope);
+    });
+  }
+
+  /* Legacy non-atomic sale removed from executable code. It remains in this
+     review-only comment until the additive migration is approved.
+  @Deprecated('Legacy non-atomic sale; retained temporarily for diff audit')
+  Future<String> _completeSaleLegacyUnused({
     required List<CartLine> lines,
     required String paymentMethod,
     String? customerId,
@@ -128,13 +428,16 @@ class PosRepository {
 
     assert(lines.isNotEmpty, 'Cart phải có ít nhất 1 món');
 
-    final orderId     = _uuid.v4();
+    final orderId = _uuid.v4();
     final orderNumber = await _generateOrderNumber(storeId);
-    final now         = DateTime.now().toUtc().toIso8601String();
+    final now = DateTime.now().toUtc().toIso8601String();
 
-    final subtotal    = lines.fold<double>(0, (s, l) => s + l.subtotal);
-    final totalAmount = (subtotal - discount - loyaltyPtsUsed).clamp(0.0, double.infinity);
-    final ptsEarned   = (totalAmount / loyaltyRate).floorToDouble();
+    final subtotal = lines.fold<double>(0, (s, l) => s + l.subtotal);
+    final totalAmount = (subtotal - discount - loyaltyPtsUsed).clamp(
+      0.0,
+      double.infinity,
+    );
+    final ptsEarned = (totalAmount / loyaltyRate).floorToDouble();
 
     // Tìm staff_members.id trực tiếp hoặc đồng bộ từ store_members
     String? memberRecordId;
@@ -159,7 +462,8 @@ class PosRepository {
           if (memberRow != null) {
             memberRecordId = memberRow['id'] as String?;
             final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
-            final displayName = userAcc?['display_name'] as String? ?? 'Thu ngân';
+            final displayName =
+                userAcc?['display_name'] as String? ?? 'Thu ngân';
             final phone = userAcc?['phone'] as String?;
             final role = memberRow['role'] as String? ?? 'cashier';
 
@@ -183,31 +487,32 @@ class PosRepository {
 
     // 1. Ghi order — map cả cột gốc schema lẫn cột mở rộng
     await _sb.from('orders').insert({
-      'id':                 orderId,
-      'store_id':           storeId,
-      'order_number':       orderNumber,
-      'customer_id':        customerId,
-      'customer_name':      customerName,
-      'subtotal':           subtotal,
-      'discount':           discount,
-      'tax':                0,
-      'total':              totalAmount,      // cột gốc schema
-      'total_amount':       totalAmount,      // cột mở rộng
-      'payment_method':     paymentMethod,
+      'id': orderId,
+      'store_id': storeId,
+      'order_number': orderNumber,
+      'customer_id': customerId,
+      'customer_name': customerName,
+      'subtotal': subtotal,
+      'discount': discount,
+      'tax': 0,
+      'total': totalAmount, // cột gốc schema
+      'total_amount': totalAmount, // cột mở rộng
+      'payment_method': paymentMethod,
       'loyalty_pts_earned': ptsEarned,
-      'loyalty_pts_used':   loyaltyPtsUsed,
-      'status':             'completed',
-      'source_type':        sourceType ?? 'pos',
-      'source_id':          sourceId,
-      'staff_id':           memberRecordId,
-      'note':               note,
-      'receipt_printed':    false,
-      'created_at':         now,
+      'loyalty_pts_used': loyaltyPtsUsed,
+      'status': 'completed',
+      'source_type': sourceType ?? 'pos',
+      'source_id': sourceId,
+      'staff_id': memberRecordId,
+      'note': note,
+      'receipt_printed': false,
+      'created_at': now,
     });
 
     AppLogger.logUserAction(
       tag: 'checkout',
-      action: 'Thanh toán & tạo đơn hàng #$orderNumber (${totalAmount.toInt()}đ)',
+      action:
+          'Thanh toán & tạo đơn hàng #$orderNumber (${totalAmount.toInt()}đ)',
       details: {
         'order_id': orderId,
         'order_number': orderNumber,
@@ -218,19 +523,23 @@ class PosRepository {
     );
 
     // 2. Ghi order_items — map đúng tên cột schema
-    final itemRows = lines.map((l) => {
-      'id':           _uuid.v4(),
-      'store_id':     storeId,
-      'order_id':     orderId,
-      'product_id':   l.productId,
-      'name':         l.productName,  // NOT NULL trong schema gốc
-      'product_name': l.productName,  // cột mở rộng
-      'qty':          l.quantity.toInt(), // cột gốc
-      'quantity':     l.quantity,     // cột mở rộng
-      'unit_price':   l.unitPrice,
-      'cost_price':   l.costPrice,
-      'subtotal':     l.subtotal,
-    }).toList();
+    final itemRows = lines
+        .map(
+          (l) => {
+            'id': _uuid.v4(),
+            'store_id': storeId,
+            'order_id': orderId,
+            'product_id': l.productId,
+            'name': l.productName, // NOT NULL trong schema gốc
+            'product_name': l.productName, // cột mở rộng
+            'qty': l.quantity.toInt(), // cột gốc
+            'quantity': l.quantity, // cột mở rộng
+            'unit_price': l.unitPrice,
+            'cost_price': l.costPrice,
+            'subtotal': l.subtotal,
+          },
+        )
+        .toList();
     await _sb.from('order_items').insert(itemRows);
 
     // 3 + 3b. Cross-module: Trừ kho — phân biệt sản phẩm CÓ/KHÔNG có công thức
@@ -241,7 +550,9 @@ class PosRepository {
         for (final r in allRecipes)
           if (r.posProductId != null) r.posProductId!: r,
       };
-    } catch (e) { debugPrint('[POS] ❌ fetchRecipes err: $e'); }
+    } catch (e) {
+      debugPrint('[POS] ❌ fetchRecipes err: $e');
+    }
 
     for (final l in lines) {
       final recipe = recipeByPosId[l.productId];
@@ -249,28 +560,33 @@ class PosRepository {
         // Sản phẩm CÓ công thức → deductIngredients trừ NL + ghi COGS
         try {
           await _khoProRepo.deductIngredients(
-            recipe:      recipe,
-            quantity:    l.quantity,
-            reason:      'sale',
-            note:        'POS bán "${l.productName}" × ${l.quantity.toStringAsFixed(0)} (Đơn $orderNumber)',
+            recipe: recipe,
+            quantity: l.quantity,
+            reason: 'sale',
+            note:
+                'POS bán "${l.productName}" × ${l.quantity.toStringAsFixed(0)} (Đơn $orderNumber)',
             referenceId: orderId,
           );
-        } catch (e) { debugPrint('[POS] ❌ deductIngredients err: $e'); }
+        } catch (e) {
+          debugPrint('[POS] ❌ deductIngredients err: $e');
+        }
       } else {
         // Sản phẩm KHÔNG có công thức → trừ stock thô
         try {
           await _productRepo.updateStockQty(l.productId, -l.quantity);
           await _sb.from('stock_movements').insert({
-            'id':           _uuid.v4(),
-            'store_id':     storeId,
-            'product_id':   l.productId,
-            'delta':        double.parse((-l.quantity).toStringAsFixed(3)),
-            'reason':       'sale',
+            'id': _uuid.v4(),
+            'store_id': storeId,
+            'product_id': l.productId,
+            'delta': double.parse((-l.quantity).toStringAsFixed(3)),
+            'reason': 'sale',
             'reference_id': orderId,
-            'note':         'Bán hàng #$orderNumber',
-            'created_at':   now,
+            'note': 'Bán hàng #$orderNumber',
+            'created_at': now,
           });
-        } catch (e) { debugPrint('[POS] ❌ stock err: $e'); }
+        } catch (e) {
+          debugPrint('[POS] ❌ stock err: $e');
+        }
       }
     }
 
@@ -286,17 +602,20 @@ class PosRepository {
           .eq('is_auto', true)
           .maybeSingle();
       if (existIncome == null) {
-        final fundType = (paymentMethod == 'transfer' || paymentMethod == 'card') ? 'bank' : 'cash';
+        final fundType =
+            (paymentMethod == 'transfer' || paymentMethod == 'card')
+            ? 'bank'
+            : 'cash';
         await _sb.from('finance_records').insert({
-          'id':           _uuid.v4(),
-          'store_id':     storeId,
-          'type':         'income',
-          'amount':       totalAmount,
-          'description':  'Bán hàng #$orderNumber',
+          'id': _uuid.v4(),
+          'store_id': storeId,
+          'type': 'income',
+          'amount': totalAmount,
+          'description': 'Bán hàng #$orderNumber',
           'reference_id': orderId,
-          'is_auto':      true,
-          'recorded_at':  now,
-          'fund_type':    fundType,
+          'is_auto': true,
+          'recorded_at': now,
+          'fund_type': fundType,
         });
       }
     } catch (e) {
@@ -308,9 +627,9 @@ class PosRepository {
       try {
         await _customerRepo.recordPurchase(
           customerId,
-          amount:     totalAmount,
-          ptsEarned:  ptsEarned,
-          ptsUsed:    loyaltyPtsUsed,
+          amount: totalAmount,
+          ptsEarned: ptsEarned,
+          ptsUsed: loyaltyPtsUsed,
         );
         // ‼️ Idempotent: upsert theo order_id — tránh duplicate loyalty pts nếu retry
         final existLoyalty = await _sb
@@ -320,14 +639,14 @@ class PosRepository {
             .maybeSingle();
         if (existLoyalty == null) {
           await _sb.from('loyalty_transactions').insert({
-            'id':          _uuid.v4(),
-            'store_id':    storeId,
+            'id': _uuid.v4(),
+            'store_id': storeId,
             'customer_id': customerId,
-            'order_id':    orderId,
-            'pts_earned':  ptsEarned,
-            'pts_used':    loyaltyPtsUsed,
-            'note':        'Mua hàng #$orderNumber',
-            'created_at':  now,
+            'order_id': orderId,
+            'pts_earned': ptsEarned,
+            'pts_used': loyaltyPtsUsed,
+            'note': 'Mua hàng #$orderNumber',
+            'created_at': now,
           });
         }
       } catch (_) {} // Loyalty module không bật — bỏ qua
@@ -335,6 +654,8 @@ class PosRepository {
 
     return orderId;
   }
+
+  */
 
   /// Hủy đơn
   Future<void> cancelOrder(String orderId, {String? reason}) async {
@@ -351,14 +672,12 @@ class PosRepository {
       return;
     }
 
-    await _sb.from('orders').update({
-      'status': 'cancelled',
-    }).eq('id', orderId);
+    await _sb.from('orders').update({'status': 'cancelled'}).eq('id', orderId);
 
     // Hoàn lại tồn kho — phân biệt sản phẩm có/không có công thức
     final storeId = await _storeId();
     if (storeId == null) return;
-    final now   = DateTime.now().toUtc().toIso8601String();
+    final now = DateTime.now().toUtc().toIso8601String();
     final items = await getOrderItems(orderId);
 
     // Lấy map recipe theo posProductId (silent fail nếu Kho CN chưa bật)
@@ -382,34 +701,41 @@ class PosRepository {
               .where((i) => i.ingredientId != null)
               .map((i) => i.ingredientId!)
               .toList();
-          final unitRows = ingIds.isEmpty ? [] : await _sb
-              .from('products')
-              .select('id, unit')
-              .inFilter('id', ingIds);
+          final unitRows = ingIds.isEmpty
+              ? []
+              : await _sb
+                    .from('products')
+                    .select('id, unit')
+                    .inFilter('id', ingIds);
           final unitMap = <String, String>{
             for (final r in (unitRows as List))
               (r as Map<String, dynamic>)['id'] as String:
-              r['unit'] as String? ?? 'gram',
+                  r['unit'] as String? ?? 'gram',
           };
 
           for (final ing in recipe.ingredients) {
             if (ing.ingredientId == null) continue;
-            final prodUnit   = unitMap[ing.ingredientId] ?? ing.unit;
+            final prodUnit = unitMap[ing.ingredientId] ?? ing.unit;
             final actualUsed = ing.actualQuantity * item.quantity;
-            final stockDelta = _khoProRepo.convertToProductUnit(actualUsed, ing.unit, prodUnit);
+            final stockDelta = _khoProRepo.convertToProductUnit(
+              actualUsed,
+              ing.unit,
+              prodUnit,
+            );
 
             // Cộng lại tồn kho
             await _productRepo.updateStockQty(ing.ingredientId!, stockDelta);
             // Ghi stock_movement hoàn kho
             await _sb.from('stock_movements').insert({
-              'id':           _uuid.v4(),
-              'store_id':     storeId,
-              'product_id':   ing.ingredientId,
-              'delta':        double.parse(stockDelta.toStringAsFixed(3)),
-              'reason':       'cancel_reversal',
+              'id': _uuid.v4(),
+              'store_id': storeId,
+              'product_id': ing.ingredientId,
+              'delta': double.parse(stockDelta.toStringAsFixed(3)),
+              'reason': 'cancel_reversal',
               'reference_id': orderId,
-              'note':         'Hoàn kho hủy đơn: ${recipe.name} × ${item.quantity.toStringAsFixed(0)} phần',
-              'created_at':   now,
+              'note':
+                  'Hoàn kho hủy đơn: ${recipe.name} × ${item.quantity.toStringAsFixed(0)} phần',
+              'created_at': now,
             });
           }
         } catch (e) {
@@ -420,14 +746,14 @@ class PosRepository {
         await _productRepo.updateStockQty(item.productId, item.quantity);
         try {
           await _sb.from('stock_movements').insert({
-            'id':           _uuid.v4(),
-            'store_id':     storeId,
-            'product_id':   item.productId,
-            'delta':        double.parse(item.quantity.toStringAsFixed(3)),
-            'reason':       'cancel_reversal',
+            'id': _uuid.v4(),
+            'store_id': storeId,
+            'product_id': item.productId,
+            'delta': double.parse(item.quantity.toStringAsFixed(3)),
+            'reason': 'cancel_reversal',
             'reference_id': orderId,
-            'note':         'Hoàn kho hủy đơn: ${item.productName}',
-            'created_at':   now,
+            'note': 'Hoàn kho hủy đơn: ${item.productName}',
+            'created_at': now,
           });
         } catch (_) {}
       }
@@ -435,41 +761,53 @@ class PosRepository {
 
     // ‼️ FIX: Hoàn lại loyalty points — trước đây hủy đơn không trừ pts đã cộng
     try {
-      final orderRow = await _sb.from('orders')
-          .select('customer_id, total_amount, loyalty_pts_earned, loyalty_pts_used')
+      final orderRow = await _sb
+          .from('orders')
+          .select(
+            'customer_id, total_amount, loyalty_pts_earned, loyalty_pts_used',
+          )
           .eq('id', orderId)
           .maybeSingle();
       final customerId = orderRow?['customer_id'] as String?;
       if (customerId != null) {
-        final ptsEarned = (orderRow?['loyalty_pts_earned'] as num?)?.toDouble() ?? 0;
-        final ptsUsed   = (orderRow?['loyalty_pts_used']   as num?)?.toDouble() ?? 0;
-        final totalAmt  = (orderRow?['total_amount']       as num?)?.toDouble() ?? 0;
-        final customer  = await _sb.from('customers')
+        final ptsEarned =
+            (orderRow?['loyalty_pts_earned'] as num?)?.toDouble() ?? 0;
+        final ptsUsed =
+            (orderRow?['loyalty_pts_used'] as num?)?.toDouble() ?? 0;
+        final totalAmt = (orderRow?['total_amount'] as num?)?.toDouble() ?? 0;
+        final customer = await _sb
+            .from('customers')
             .select('loyalty_pts, total_spent, visit_count')
             .eq('id', customerId)
             .maybeSingle();
         if (customer != null) {
-          final curPts   = (customer['loyalty_pts']  as num?)?.toDouble() ?? 0;
-          final curSpent = (customer['total_spent']  as num?)?.toDouble() ?? 0;
-          final curVisit = (customer['visit_count']  as num?)?.toInt()    ?? 0;
-          await _sb.from('customers').update({
-            // Trừ điểm đã cộng + hoàn điểm đã xài (vì đơn bị hủy)
-            'loyalty_pts': (curPts - ptsEarned + ptsUsed).clamp(0, double.infinity),
-            'total_spent': (curSpent - totalAmt).clamp(0, double.infinity),
-            'visit_count': (curVisit - 1).clamp(0, 999999),
-            'updated_at':  now,
-          }).eq('id', customerId);
+          final curPts = (customer['loyalty_pts'] as num?)?.toDouble() ?? 0;
+          final curSpent = (customer['total_spent'] as num?)?.toDouble() ?? 0;
+          final curVisit = (customer['visit_count'] as num?)?.toInt() ?? 0;
+          await _sb
+              .from('customers')
+              .update({
+                // Trừ điểm đã cộng + hoàn điểm đã xài (vì đơn bị hủy)
+                'loyalty_pts': (curPts - ptsEarned + ptsUsed).clamp(
+                  0,
+                  double.infinity,
+                ),
+                'total_spent': (curSpent - totalAmt).clamp(0, double.infinity),
+                'visit_count': (curVisit - 1).clamp(0, 999999),
+                'updated_at': now,
+              })
+              .eq('id', customerId);
           // Ghi loyalty_transaction hoàn điểm
           if (ptsEarned > 0 || ptsUsed > 0) {
             await _sb.from('loyalty_transactions').insert({
-              'id':          _uuid.v4(),
-              'store_id':    storeId,
+              'id': _uuid.v4(),
+              'store_id': storeId,
               'customer_id': customerId,
-              'order_id':    orderId,
-              'pts_earned':  -ptsEarned, // âm = hoàn lại
-              'pts_used':    -ptsUsed,   // âm = trả lại điểm đã xài
-              'note':        'Hoàn điểm hủy đơn',
-              'created_at':  now,
+              'order_id': orderId,
+              'pts_earned': -ptsEarned, // âm = hoàn lại
+              'pts_used': -ptsUsed, // âm = trả lại điểm đã xài
+              'note': 'Hoàn điểm hủy đơn',
+              'created_at': now,
             });
           }
         }
@@ -482,7 +820,8 @@ class PosRepository {
     // Tránh: query expense sau insert → match chính cái expense "Hoàn thu" vừa tạo
     List cogsSnapshot = [];
     try {
-      cogsSnapshot = await _sb.from('finance_records')
+      cogsSnapshot = await _sb
+          .from('finance_records')
           .select('amount')
           .eq('store_id', storeId)
           .eq('reference_id', orderId)
@@ -492,7 +831,8 @@ class PosRepository {
 
     // Hoàn lại finance_record thu nhập (insert sau khi đã snapshot COGS)
     try {
-      final orderRow = await _sb.from('orders')
+      final orderRow = await _sb
+          .from('orders')
           .select('total_amount, order_number')
           .eq('id', orderId)
           .maybeSingle();
@@ -500,14 +840,14 @@ class PosRepository {
       final orderNum = orderRow?['order_number'] as String? ?? orderId;
       if (totalAmt > 0) {
         await _sb.from('finance_records').insert({
-          'id':           _uuid.v4(),
-          'store_id':     storeId,
-          'type':         'expense',     // dùng expense để void income
-          'amount':       totalAmt,
-          'description':  'Hoàn thu hủy đơn $orderNum',
+          'id': _uuid.v4(),
+          'store_id': storeId,
+          'type': 'expense', // dùng expense để void income
+          'amount': totalAmt,
+          'description': 'Hoàn thu hủy đơn $orderNum',
           'reference_id': orderId,
-          'is_auto':      true,
-          'recorded_at':  now,
+          'is_auto': true,
+          'recorded_at': now,
         });
       }
     } catch (e) {
@@ -520,14 +860,14 @@ class PosRepository {
         final cogsAmt = (rec['amount'] as num?)?.toDouble() ?? 0;
         if (cogsAmt <= 0) continue;
         await _sb.from('finance_records').insert({
-          'id':           _uuid.v4(),
-          'store_id':     storeId,
-          'type':         'income',    // income để void COGS expense
-          'amount':       cogsAmt,
-          'description':  'Hoàn COGS hủy đơn',
+          'id': _uuid.v4(),
+          'store_id': storeId,
+          'type': 'income', // income để void COGS expense
+          'amount': cogsAmt,
+          'description': 'Hoàn COGS hủy đơn',
           'reference_id': orderId,
-          'is_auto':      true,
-          'recorded_at':  now,
+          'is_auto': true,
+          'recorded_at': now,
         });
       }
     } catch (e) {
@@ -542,12 +882,15 @@ class PosRepository {
     if (storeId == null) return PosStats.empty;
 
     final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day)
-        .toUtc()
-        .toIso8601String();
-    final endOfDay = DateTime(now.year, now.month, now.day + 1) // exclusive midnight thứ hai
-        .toUtc()
-        .toIso8601String();
+    final startOfDay = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).toUtc().toIso8601String();
+    final endOfDay =
+        DateTime(now.year, now.month, now.day + 1) // exclusive midnight thứ hai
+            .toUtc()
+            .toIso8601String();
 
     final orders = await _sb
         .from('orders')
@@ -555,9 +898,15 @@ class PosRepository {
         .eq('store_id', storeId)
         .eq('status', 'completed')
         .gte('created_at', startOfDay)
-        .lt('created_at', endOfDay); // ‼️ FIX: thêm lt upper bound — trước đây không có ghép vào ngày mai
+        .lt(
+          'created_at',
+          endOfDay,
+        ); // ‼️ FIX: thêm lt upper bound — trước đây không có ghép vào ngày mai
 
-    final revenue = orders.fold<double>(0, (s, o) => s + ((o['total_amount'] as num?)?.toDouble() ?? 0));
+    final revenue = orders.fold<double>(
+      0,
+      (s, o) => s + ((o['total_amount'] as num?)?.toDouble() ?? 0),
+    );
     final uniqueCustomers = orders
         .where((o) => o['customer_id'] != null)
         .map((o) => o['customer_id'] as String)
@@ -568,29 +917,46 @@ class PosRepository {
     double costTotal = 0;
     if (orders.isNotEmpty) {
       final orderIds = orders.map((o) => o['id'] as String).toList();
-      final items = await _sb.from('order_items').select().inFilter('order_id', orderIds);
+      final items = await _sb
+          .from('order_items')
+          .select()
+          .inFilter('order_id', orderIds);
       costTotal = items.fold<double>(
-          0, (s, i) => s + ((i['cost_price'] as num?)?.toDouble() ?? 0) * ((i['quantity'] as num?)?.toDouble() ?? 0));
+        0,
+        (s, i) =>
+            s +
+            ((i['cost_price'] as num?)?.toDouble() ?? 0) *
+                ((i['quantity'] as num?)?.toDouble() ?? 0),
+      );
     }
 
     return PosStats(
-      orderCount:     orders.length,
-      revenue:        revenue,
-      profit:         revenue - costTotal,
-      avgOrderValue:  orders.isEmpty ? 0 : revenue / orders.length,
-      customerCount:  uniqueCustomers,
+      orderCount: orders.length,
+      revenue: revenue,
+      profit: revenue - costTotal,
+      avgOrderValue: orders.isEmpty ? 0 : revenue / orders.length,
+      customerCount: uniqueCustomers,
     );
   }
 
   // ── Private ───────────────────────────────────────────────────────────────
 
   Future<String> _generateOrderNumber(String storeId) async {
-    final now    = DateTime.now();
-    final prefix = 'QN-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
-    final startOfDay = DateTime(now.year, now.month, now.day).toUtc().toIso8601String();
+    final now = DateTime.now();
+    final prefix =
+        'QN-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final startOfDay = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).toUtc().toIso8601String();
     // ‼️ FIX Bug #24: thêm lt(endOfDay) exclusive upper bound
     // Trước đây không có upper bound → count bị lệch nếu server UTC khác timezone local
-    final endOfDay   = DateTime(now.year, now.month, now.day + 1).toUtc().toIso8601String();
+    final endOfDay = DateTime(
+      now.year,
+      now.month,
+      now.day + 1,
+    ).toUtc().toIso8601String();
 
     final count = await _sb
         .from('orders')
@@ -667,15 +1033,15 @@ class CartLine {
   double get subtotal => quantity * unitPrice;
 
   CartLine copyWith({double? quantity, String? Function()? note}) => CartLine(
-        lineId:      lineId,
-        productId:   productId,
-        productName: productName,
-        quantity:    quantity ?? this.quantity,
-        unitPrice:   unitPrice,
-        costPrice:   costPrice,
-        note:        note != null ? note() : this.note,
-        stationCode: stationCode,
-      );
+    lineId: lineId,
+    productId: productId,
+    productName: productName,
+    quantity: quantity ?? this.quantity,
+    unitPrice: unitPrice,
+    costPrice: costPrice,
+    note: note != null ? note() : this.note,
+    stationCode: stationCode,
+  );
 }
 
 class OrderModel {
@@ -712,21 +1078,21 @@ class OrderModel {
   });
 
   factory OrderModel.fromMap(Map<String, dynamic> m) => OrderModel(
-        id:                m['id'] as String,
-        storeId:           m['store_id'] as String? ?? '',
-        orderNumber:       m['order_number'] as String? ?? '',
-        customerId:        m['customer_id'] as String?,
-        customerName:      m['customer_name'] as String?,
-        subtotal:          (m['subtotal'] as num?)?.toDouble() ?? 0,
-        discount:          (m['discount'] as num?)?.toDouble() ?? 0,
-        totalAmount:       (m['total_amount'] as num?)?.toDouble() ?? 0,
-        paymentMethod:     m['payment_method'] as String? ?? 'cash',
-        loyaltyPtsEarned:  (m['loyalty_pts_earned'] as num?)?.toDouble() ?? 0,
-        loyaltyPtsUsed:    (m['loyalty_pts_used'] as num?)?.toDouble() ?? 0,
-        status:            m['status'] as String? ?? 'completed',
-        note:              m['note'] as String?,
-        createdAt:         m['created_at'] as String? ?? '',
-      );
+    id: m['id'] as String,
+    storeId: m['store_id'] as String? ?? '',
+    orderNumber: m['order_number'] as String? ?? '',
+    customerId: m['customer_id'] as String?,
+    customerName: m['customer_name'] as String?,
+    subtotal: (m['subtotal'] as num?)?.toDouble() ?? 0,
+    discount: (m['discount'] as num?)?.toDouble() ?? 0,
+    totalAmount: (m['total_amount'] as num?)?.toDouble() ?? 0,
+    paymentMethod: m['payment_method'] as String? ?? 'cash',
+    loyaltyPtsEarned: (m['loyalty_pts_earned'] as num?)?.toDouble() ?? 0,
+    loyaltyPtsUsed: (m['loyalty_pts_used'] as num?)?.toDouble() ?? 0,
+    status: m['status'] as String? ?? 'completed',
+    note: m['note'] as String?,
+    createdAt: m['created_at'] as String? ?? '',
+  );
 }
 
 class OrderItemModel {
@@ -751,20 +1117,20 @@ class OrderItemModel {
   });
 
   factory OrderItemModel.fromMap(Map<String, dynamic> m) => OrderItemModel(
-        id:          m['id'] as String,
-        orderId:     m['order_id'] as String,
-        productId:   m['product_id'] as String? ?? '',
-        // Fallback: product_name (extended col) → name (legacy NOT NULL col)
-        productName: m['product_name'] as String? ?? m['name'] as String? ?? '',
-        // Fallback: quantity (extended col) → qty (legacy col) — tránh cancelOrder hoàn kho 0
-        quantity:    (m['quantity'] as num?)?.toDouble()
-                  ?? (m['qty'] as num?)?.toDouble()
-                  ?? 0,
-        unitPrice:   (m['unit_price'] as num?)?.toDouble() ?? 0,
-        costPrice:   (m['cost_price'] as num?)?.toDouble() ?? 0,
-        subtotal:    (m['subtotal'] as num?)?.toDouble() ?? 0,
-      );
-
+    id: m['id'] as String,
+    orderId: m['order_id'] as String,
+    productId: m['product_id'] as String? ?? '',
+    // Fallback: product_name (extended col) → name (legacy NOT NULL col)
+    productName: m['product_name'] as String? ?? m['name'] as String? ?? '',
+    // Fallback: quantity (extended col) → qty (legacy col) — tránh cancelOrder hoàn kho 0
+    quantity:
+        (m['quantity'] as num?)?.toDouble() ??
+        (m['qty'] as num?)?.toDouble() ??
+        0,
+    unitPrice: (m['unit_price'] as num?)?.toDouble() ?? 0,
+    costPrice: (m['cost_price'] as num?)?.toDouble() ?? 0,
+    subtotal: (m['subtotal'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 class PosStats {
@@ -783,6 +1149,10 @@ class PosStats {
   });
 
   static const empty = PosStats(
-    orderCount: 0, revenue: 0, profit: 0, avgOrderValue: 0, customerCount: 0,
+    orderCount: 0,
+    revenue: 0,
+    profit: 0,
+    avgOrderValue: 0,
+    customerCount: 0,
   );
 }

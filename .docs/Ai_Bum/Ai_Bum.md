@@ -93,28 +93,41 @@ Vận Hành
 93:   └── cac-module/
 94:        ├── ban-hang.md
 95:        ├── kho-hang.md
-96:        ├── thu-chi.md
-97:        ├── khach-hang.md
-98:        ├── bao-cao.md
-99:        ├── quan-ly-ban.md
-100:        ├── bep.md
-101:        ├── nhan-vien.md
-102:        └── cham-cong.md
-103: ```
-104: 
-105: ---
-106: 
-107: ## 📝 Nhật Ký Cập Nhật
-108: 
-109: | Ngày | Nội dung |
-110: |------|----------|
-111: | 29/04/2026 | Khởi tạo toàn bộ cấu trúc Ai_Bum v1.0 |
-112: | 16/05/2026 | Cập nhật `diem-tich.md` — Loyalty Wallet v2 (Real/Bonus wallet, gói nạp, stamp card, balance_transactions) |
-113: | 16/05/2026 | Thêm 2 module vào bảng danh sách: Kho Chuyên Nghiệp + Tính Lương (cần tạo doc) |
-114: | 16/05/2026 | Cập nhật sơ đồ kết nối module — bổ sung Tính Lương + Thu Chi auto-record |
-115: | 17/05/2026 | **[Nhân Viên]** Thêm hệ thống Ca làm việc: tạo ca (4 preset chip), gán NV vào ca, store_shift_configs table, store_members.shift_config_id |
-116: | 17/05/2026 | **[Vận Hành]** Tạo doc mới van-hanh.md — Checklist công việc theo ca với shift-gating logic, 3 tabs (Nhiệm Vụ/Cấu Hình/Báo Cáo), template badges, current shift indicator |
-117: | 23/07/2026 | **[AI Bum Strategy]** Thêm [`chien-luoc-chung-cat-mac-mam.md`](file:///Users/banhbao/Quan%20Nho/quan_nho/.docs/Ai_Bum/chien-luoc-chung-cat-mac-mam.md): Định hình AI Bum thành Thư ký/Cố vấn Chủ quán F&B, Chiến lược Dữ liệu Hybrid 70/30, và Kiến trúc Hạ tầng Local Server Mac Mâm 24/7. |
-118: 
-119: > **Quy tắc:** Sau mỗi tính năng mới hoàn thành → cập nhật file module tương ứng + nhật ký này.
+## 📁 Cấu Trúc Thư Mục
 
+```
+.docs/Ai_Bum/
+  ├── Ai_Bum.md                       ← File này (tổng quan + system prompt chính)
+  ├── chien-luoc-chung-cat-mac-mam.md  ← Chiến lược Chưng cất AI & Hạ tầng Server Mac Mâm (I Mâm)
+  ├── tinh-cach-bum.md                ← Tính cách, tone, cách xưng hô
+  ├── ky-uc-bum.md                    ← Kiến trúc memory system
+  ├── xu-ly-data.md                   ← Data context Bum được phép đọc
+  └── cac-module/
+       ├── ban-hang.md
+       ├── kho-hang.md
+       ├── thu-chi.md
+       ├── khach-hang.md
+       ├── bao-cao.md
+       ├── quan-ly-ban.md
+       ├── bep.md
+       ├── nhan-vien.md
+       ├── cham-cong.md
+       └── ai-bum.md
+```
+
+---
+
+## 📝 Nhật Ký Cập Nhật
+
+| Ngày | Nội dung |
+|------|----------|
+| 29/04/2026 | Khởi tạo toàn bộ cấu trúc Ai_Bum v1.0 |
+| 16/05/2026 | Cập nhật `diem-tich.md` — Loyalty Wallet v2 (Real/Bonus wallet, gói nạp, stamp card, balance_transactions) |
+| 16/05/2026 | Thêm 2 module vào bảng danh sách: Kho Chuyên Nghiệp + Tính Lương (cần tạo doc) |
+| 16/05/2026 | Cập nhật sơ đồ kết nối module — bổ sung Tính Lương + Thu Chi auto-record |
+| 17/05/2026 | **[Nhân Viên]** Thêm hệ thống Ca làm việc: tạo ca (4 preset chip), gán NV vào ca, store_shift_configs table, store_members.shift_config_id |
+| 17/05/2026 | **[Vận Hành]** Tạo doc mới van-hanh.md — Checklist công việc theo ca với shift-gating logic, 3 tabs (Nhiệm Vụ/Cấu Hình/Báo Cáo), template badges, current shift indicator |
+| 23/07/2026 | **[AI Bum Strategy]** Thêm [`chien-luoc-chung-cat-mac-mam.md`](file:///Users/banhbao/Quan%20Nho/quan_nho/.docs/Ai_Bum/chien-luoc-chung-cat-mac-mam.md): Định hình AI Bum thành Thư ký/Cố vấn Chủ quán F&B, Chiến lược Dữ liệu Hybrid 70/30, và Kiến trúc Hạ tầng Local Server Mac Mâm 24/7. |
+| 13/08/2026 | **[AI Bum Action Permissions]** Tích hợp module `ai_bum` vào UI Phân Quyền Vai Trò (`role_manager_screen`, `nhan_vien_screen`). Triển khai 9 Action Permissions (`ai_bum.*`), Pre-Query Security Guard, Sửa quyền Manager không tự động vượt quyền, Fail-closed auto-seeding. |
+
+> **Quy tắc:** Sau mỗi tính năng mới hoàn thành → cập nhật file module tương ứng + nhật ký này.

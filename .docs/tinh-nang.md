@@ -1,5 +1,25 @@
 # Quán Nhỏ POS — Features & Modules
 
+## Bản sửa checkout V5 đang kiểm thử (chưa production)
+
+- Đã chạy PostgreSQL thật cô lập: hai nhánh có/không coupons, race 50 callers, POS/Bàn cùng phiên, ví đồng thời và rollback khi ghi thu chi lỗi. Chưa kiểm thử máy Windows/máy in thực tế.
+- POS có nút phục hồi giao dịch bị gián đoạn kể cả sau restart/giỏ trống; kết quả được giữ đến khi người dùng xác nhận. Không tự in lại khi reconcile.
+- Món hủy không tính tiền/trừ kho; canonical orders và tổng điểm được phân bổ khớp một settlement. Thu nhập nạp ví không bị cộng vào dashboard bán hàng.
+- Giảm giá thủ công POS kiểm tra quyền server và audit; đóng phiên POS gửi bếp cùng transaction thu tiền.
+
+- Chống click thanh toán lặp, giữ khóa retry POS sau timeout/restart và chặn đổi phương thức khi giao dịch trước chưa rõ kết quả.
+- Thanh toán ví POS có trừ số dư/lịch sử ví cùng transaction; bonus hết hạn không được dùng, thiếu ví từ chối trước ghi đơn.
+- Điểm thưởng quy đổi theo cấu hình quán; bill dùng tổng server; báo cáo voucher mở đúng order UUID.
+- Chưa tuyên bố hoàn tất trước PostgreSQL runtime gate, Windows/print E2E và đối soát dữ liệu trùng lịch sử được chủ quán phê duyệt.
+
+## QR Gọi Món — mục tiêu đang chờ triển khai
+
+- Một QR gọi món tại bàn dùng chung và một QR mang đi tại quầy cho mỗi cửa hàng.
+- Sau khi khách xác nhận, web hiển thị QR động của đơn; nhân viên quét, chọn bàn cho TABLE, đọc lại và chỉnh món trước khi gửi Bếp.
+- TABLE xuất hiện trong module Bàn sau bước gán bàn và thanh toán toàn bộ bàn sau; COUNTER thanh toán trước Bếp và không vào module Bàn.
+- Nhân viên dùng tài khoản/mã quán/phân quyền hiện hành, không ghép POS device riêng.
+- Đây là phạm vi mục tiêu, chưa phải tính năng production. Xem `.docs/qr-order-kien-truc-muc-tieu.md`.
+
 ## Màn Hình Chính
 
 ### 🏠 Dashboard (index 0)
@@ -128,7 +148,7 @@ Chủ quán/Quản lý gán trực tiếp module X cho nhân viên (trong NhanVi
 | # | Việc cần làm | File | Ví dụ chamcong |
 |---|---|---|---|
 | **0** | **Bọc màn hình bằng `ResponsiveLayout`** | màn hình mới | xem mẫu bên dưới |
-| 1 | Thêm screen vào IndexedStack | `main.dart` | index 10 |
+| 1 | Đăng ký screen trong `ActiveModuleHost` | `main.dart` | index 10; chỉ mount khi active |
 | 2 | Khai báo `_kTabMeta` | `main.dart` | `chamcong` |
 | 3 | Khai báo `kModuleConfigs` | `shared/widgets/module_tile.dart` | route `/chamcong` |
 | 4 | Seed vào SQLite local | `core/database/app_database.dart` | migration v12 + beforeOpen |
