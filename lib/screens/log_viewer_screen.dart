@@ -53,6 +53,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     'checkout': '💳 Thanh toán',
     'settings': '⚙️ Cài đặt',
     'printer': '🖨️ Máy in',
+    'inventory': '📦 Kho hàng',
     'system': '💻 Hệ thống',
   };
 

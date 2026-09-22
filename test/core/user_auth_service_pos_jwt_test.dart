@@ -414,6 +414,127 @@ void main() {
         );
       },
     );
+
+    test('16. CreateStore applies onboarding JWT, calls create_store_with_owner_v4, and exchanges for owner POS JWT', () async {
+      UserAuthService.rpcOverride = (fn, {params}) async {
+        if (fn == 'create_store_with_owner_v4') {
+          return {
+            'success': true,
+            'store_id': 'store-new-owner-1',
+            'store_code': 'QN-NW01',
+            'store_name': 'Quán Nhỏ Tân Phú',
+            'role': 'owner',
+            'is_owner': true,
+          };
+        }
+        return {'success': false};
+      };
+
+      final mockJwt = MockPosJwtService(
+        mockOnboardingResult: {'success': true, 'token': 'onb-token-123'},
+        mockExchangeResult: {
+          'success': true,
+          'pos_jwt': 'pos-owner-jwt-456',
+          'store_id': 'store-new-owner-1',
+          'role': 'owner',
+        },
+      );
+
+      final res = await UserAuthService.createStore(
+        userId: 'user-owner-1',
+        storeName: 'Quán Nhỏ Tân Phú',
+        onboardingJwt: 'onb-token-123',
+        jwtService: mockJwt,
+      );
+
+      expect(res.isSuccess, true);
+      expect(res.storeId, 'store-new-owner-1');
+      expect(res.storeCode, 'QN-NW01');
+      expect(res.membership?.role, 'owner');
+      expect(res.membership?.isOwner, true);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('auth_store_id'), 'store-new-owner-1');
+      expect(prefs.getString('auth_store_code'), 'QN-NW01');
+      expect(prefs.getString('auth_role'), 'owner');
+    });
+
+    test('17. CreateStore fails closed when onboarding token is expired or missing', () async {
+      final mockJwt = MockPosJwtService(
+        mockOnboardingResult: {'success': false, 'error': 'TOKEN_EXPIRED'},
+      );
+
+      final res = await UserAuthService.createStore(
+        userId: 'user-owner-1',
+        storeName: 'Quán Nhỏ Mới',
+        jwtService: mockJwt,
+      );
+
+      expect(res.isSuccess, false);
+      expect(res.errorCode, 'ONBOARDING_TOKEN_REQUIRED');
+      expect(res.errorMessage, contains('Phiên đăng ký đã hết hạn'));
+    });
+
+    test('18. CreateStore validates empty store name and propagates INVALID_STORE_NAME', () async {
+      final mockJwt = MockPosJwtService(
+        mockOnboardingResult: {'success': true, 'token': 'onb-token-123'},
+      );
+
+      final res = await UserAuthService.createStore(
+        userId: 'user-owner-1',
+        storeName: '   ',
+        jwtService: mockJwt,
+      );
+
+      expect(res.isSuccess, false);
+      expect(res.errorCode, 'INVALID_STORE_NAME');
+      expect(res.errorMessage, contains('Vui lòng nhập tên quán'));
+    });
+
+    test('19. CreateStore handles RPC gateway failure with GATEWAY_UNAVAILABLE', () async {
+      UserAuthService.rpcOverride = (fn, {params}) async {
+        return 'not-a-map'; // corrupt response
+      };
+
+      final mockJwt = MockPosJwtService(
+        mockOnboardingResult: {'success': true, 'token': 'onb-token-123'},
+      );
+
+      final res = await UserAuthService.createStore(
+        userId: 'user-owner-1',
+        storeName: 'Quán Nhỏ Test',
+        jwtService: mockJwt,
+      );
+
+      expect(res.isSuccess, false);
+      expect(res.errorCode, 'GATEWAY_UNAVAILABLE');
+    });
+
+    test('20. JoinStoreByCode and CreateStore fail-closed when RPC returns empty or null store_id', () async {
+      final mockJwt = MockPosJwtService(
+        mockOnboardingResult: {'success': true, 'token': 'onb-token-123'},
+      );
+
+      UserAuthService.rpcOverride = (fn, {params}) async {
+        return {'success': true, 'store_id': null, 'store_code': 'QN-AB12'};
+      };
+
+      final joinRes = await UserAuthService.joinStoreByCode(
+        userId: 'user-1',
+        storeCode: 'QN-AB12',
+        jwtService: mockJwt,
+      );
+      expect(joinRes.isSuccess, false);
+      expect(joinRes.errorCode, 'INVALID_STORE_ID');
+
+      final createRes = await UserAuthService.createStore(
+        userId: 'user-1',
+        storeName: 'Quán Test',
+        jwtService: mockJwt,
+      );
+      expect(createRes.isSuccess, false);
+      expect(createRes.errorCode, 'INVALID_STORE_ID');
+    });
   });
 }
 
@@ -464,8 +585,18 @@ class MockPosJwtService extends PosJwtAuthService {
   }) async => mockExchangeResult;
 
   @override
+  Future<void> storeOnboardingJwt(String token) async {}
+
+  @override
+  Future<void> clearOnboardingJwt() async {}
+
+  @override
   String? activeOnboardingJwtFor(String userId) =>
       mockOnboardingResult['success'] == true ? 'mock-onboarding-token' : null;
+
+  @override
+  Future<String?> getStoredOnboardingJwtFor(String userId) async =>
+      activeOnboardingJwtFor(userId);
 
   @override
   Future<bool> applyAuthToSupabase(
@@ -474,7 +605,8 @@ class MockPosJwtService extends PosJwtAuthService {
     bool allowOnboardingToken = false,
   }) async {
     if (!mockApplyResult) return false;
-    return token != null;
+    if (token != null && token.trim().isEmpty) return false;
+    return true;
   }
 }
 

@@ -166,8 +166,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (!mounted) return;
 
     if (!jwtRestored) {
-      // JWT không hợp lệ (hết hạn, sai store hoặc không tồn tại): Đưa về màn hình xác thực
-      await ref.read(sessionProvider.notifier).clear();
+      // POS JWT chưa được khôi phục (hết hạn hoặc chưa đăng nhập).
+      // TUYỆT ĐỐI không gọi clear() xóa sạch session local và số điện thoại của nhân viên/chủ quán!
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed('/auth');
       return;
@@ -197,7 +197,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       }
 
       ref.read(sessionProvider.notifier).setSession(session);
-      Navigator.of(context).pushReplacementNamed('/home');
+      if (session.storeId != null && session.storeId!.isNotEmpty) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      } else {
+        Navigator.of(context).pushReplacementNamed(
+          '/store_picker',
+          arguments: {
+            'stores': <StoreMembership>[],
+            'userId': session.userId,
+            'name': session.displayName,
+          },
+        );
+      }
     } else {
       Navigator.of(context).pushReplacementNamed('/auth');
     }

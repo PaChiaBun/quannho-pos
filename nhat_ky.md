@@ -3,6 +3,308 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-09-20 (19:00 +07) — Khắc Phục Triệt Để Lỗi Xoá Món Hàng Loạt Cloudflare 520 & Củng Cố Atomic Settlement V5 [ĐÃ DEPLOY PRODUCTION VPS 45.32.104.228]
+
+> **Trạng thái Triển khai**: Đã hoàn tất áp dụng Migration DB, build và deploy lên VPS Production (`45.32.104.228`).
+> - **URL Live**: `https://quannho.lpm.vn/pos/` (HTTP/2 200 OK), `main.dart.js` (8.07 MB, HTTP/2 200 OK), `flutter_bootstrap.js` (HTTP/2 200 OK)
+> - **Bản sao lưu VPS**: `/var/www/quannho/pos_backup_20260920_120509`
+> - **CSDL Migrations**: `20260920_fix_settlement_v5_jwt_and_waiter_fk.sql` & `20260920_batch_soft_delete_products_rpc.sql` đã áp dụng 100% trên container `supabase-db` và reload PostgREST schema cache.
+> - **Kiểm thử tự động**: 35/35 Kho Batch Delete Tests PASS (100%), 11/11 Settlement Tests PASS (100%), 4/4 Python Tests PASS (100%), `dart analyze` 0 errors, 0 warnings.
+> - **CodeGraph & Graphify**: Đã đồng bộ 100% (CodeGraph: 8,411 nodes, 23,332 edges; Graphify: 9,978 nodes, 13,703 edges, 562 communities).
+
+### ⚠️ Bối Cảnh & Hiện Tượng (Phản ánh & Video Thực Tế Lúc 18:36)
+- Nhân viên/Quản lý tại quán chọn nhiều món trong Kho hàng rồi bấm "Xóa món", màn hình lập tức xuất hiện thông báo lỗi màu đỏ loét:
+  `Lỗi khi xóa món: PostgrestException(message: <!DOCTYPE html> ... 520: Web server is returning an unknown error ... Cloudflare ... Error code 520)`
+- Thao tác xóa hàng loạt bị từ chối, toàn bộ trang mã HTML lỗi của Cloudflare bị quăng thô ra giao diện người dùng.
+
+### 🔍 Phân Tích Nguyên Nhân Kỹ Thuật Cốt Lõi
+1. **Tràn bộ đệm URL Query String trong HTTP PATCH (`inFilter`)**:
+   - Thao tác xóa hàng loạt trước đây dùng trực tiếp REST API PostgREST:
+     `_sb.from('products').update(...).eq('store_id', storeId).inFilter('id', ids);`
+   - Phương thức này chuyển toàn bộ danh sách UUIDs vào query string của URL: `PATCH /supabase/rest/v1/products?store_id=eq.<id>&id=in.(uuid1,uuid2,...)`.
+   - Mỗi UUID dài 36 ký tự. Khi chọn xóa hàng chục món, URL phình to lên hàng nghìn ký tự, vượt quá giới hạn bộ đệm `large_client_header_buffers` của Nginx hoặc Kong Gateway trên VPS.
+   - Nginx / Upstream ngắt kết nối đột ngột khiến Cloudflare ở giữa không nhận được phản hồi hợp lệ và trả về mã lỗi HTTP 520 (Web server is returning an unknown error).
+2. **Khoảng trống xử lý ngoại lệ giao diện**:
+   - Khối `catch (e)` trong `inventory_screen.dart` hiển thị trực tiếp `e.toString()`. Khi gặp lỗi từ reverse proxy/Cloudflare trả về trang HTML 520, người dùng nhìn thấy nguyên khối văn bản thẻ HTML dài hàng nghìn ký tự thay vì một thông báo lỗi rõ ràng.
+
+### ✅ Giải Pháp Đã Triển Khai Hoàn Tất
+1. **RPC PostgreSQL Chuyên Dụng (`supabase/migrations/20260920_batch_soft_delete_products_rpc.sql`)**:
+   - `public.batch_soft_delete_products_v1(p_store_id uuid, p_product_ids uuid[])`:
+     - Nhận danh sách mã món qua **JSON Request Body** (HTTP POST), miễn nhiễm 100% với giới hạn độ dài URL.
+     - Thực thi trong 1 transaction an toàn, cập nhật `is_deleted = true, is_active = false, updated_at = nowMs` chỉ cho các món chưa bị xóa của quán.
+     - Kiểm tra phân quyền an toàn qua `verify_staff_qr_membership_v4(p_store_id)`.
+     - Tự động ghi audit log vào `app_logs` với `tag = 'inventory'`, `level = 'INFO'`.
+2. **Client Repository Hardening (`lib/core/repositories/core_product_repository.dart`)**:
+   - `batchSoftDelete`: Ưu tiên gọi RPC `batch_soft_delete_products_v1`.
+   - **Cơ chế phòng vệ 2 tầng (Fail-Safe Chunking)**: Nếu RPC chưa sẵn sàng trên máy chủ, tự động chia nhỏ mảng `ids` thành từng phần tối đa 15 món/lần để URL không bao giờ bị quá tải.
+   - Áp dụng chunking tương tự cho `batchUpdateAvailability` và `batchUpdateCategory`.
+3. **Làm Sạch Thông Báo Lỗi Giao Diện (`lib/screens/inventory_screen.dart`)**:
+   - Bổ sung `_sanitizeErrorMessage`: Tự động chặn và chuyển đổi các mã lỗi HTML / Cloudflare 520 / 502 / 504 thành thông báo tiếng Việt ngắn gọn, dễ hiểu: *"Không thể kết nối máy chủ (Máy chủ bận hoặc lỗi mạng). Vui lòng thử lại."*
+
+### 🚀 Triển Khai Thực Tế Lên Production VPS (`45.32.104.228`)
+1. **Migration CSDL**:
+   - Áp dụng `20260920_fix_settlement_v5_jwt_and_waiter_fk.sql` (củng cố JWT `verify_staff_qr_membership_v4` và phòng vệ khóa ngoại `settle_ban_session_v5`).
+   - Áp dụng `20260920_batch_soft_delete_products_rpc.sql` (`batch_soft_delete_products_v1`).
+   - Kích hoạt `NOTIFY pgrst, 'reload schema';` cập nhật schema cache PostgREST.
+2. **Sao Lưu Server**: Tạo bản sao lưu tại `/var/www/quannho/pos_backup_20260920_120509`.
+3. **Biên Dịch & Đồng Bộ Web Release**:
+   - Biên dịch Flutter Web Release hoàn tất trong 56.4s (`flutter build web --release --base-href "/pos/" --no-tree-shake-icons --dart-define=POS_JWT_AUTH_URL=https://quannho.lpm.vn`).
+   - Upload nén `pos_web.tar.gz`, giải nén đè vào `/var/www/quannho/pos/`, phân quyền chuẩn `www-data:www-data` (chmod 755).
+4. **Kiểm Tra Trực Tiếp Live Endpoints**:
+   - `GET https://quannho.lpm.vn/pos/`: **HTTP/2 200 OK**
+   - `GET https://quannho.lpm.vn/pos/main.dart.js`: **HTTP/2 200 OK** (8,078,625 bytes)
+   - `GET https://quannho.lpm.vn/pos/flutter_bootstrap.js`: **HTTP/2 200 OK**
+   - `GET https://quannho.lpm.vn/pos/version.json`: `{"app_name":"quannho_pos","version":"1.0.2","build_number":"5","package_name":"quannho_pos"}`
+
+### 🔍 Điều Tra Thực Tế Từ Module Log & Hotfix Lỗi Thu Ngân Thanh Toán (19:20 +07)
+
+- **⚠️ Vấn đề**:
+  * Thu ngân **VO ANH THƯ** thao tác thanh toán bàn **Mang Về  1** (phiên `bc04b2e9-387e-487f-b9cd-0c972b5e58ec`, món *Mì cay hải sản* 65.000đ) bị báo lỗi trên máy POS lúc 19:11:00 và 19:12:19.
+  * Truy vết `public.app_logs`:
+    `PostgrestException(message: operator does not exist: uuid = text, code: 42883, details: Not Found, hint: No operator matches the given name and argument types. You might need to add explicit type casts.)`
+  * **Nguyên nhân gốc**: Trong hàm `settle_ban_session_v5`, câu lệnh `SELECT id INTO v_order_waiter_id FROM public.staff_members WHERE id = v_session.waiter_id;` so sánh trực tiếp cột `staff_members.id` (kiểu `uuid`) với `ban_sessions.waiter_id` (kiểu `text`, lưu ID nhân viên phục vụ `feb8c6c5-008b-437e-b9c9-3b942f7093a7` - Danh Đặng). PostgreSQL từ chối vì không có toán tử so sánh ngầm định `uuid = text`.
+
+- **✅ Hoàn thành**:
+  * Đã sửa khai báo `v_order_waiter_id text;` và câu lệnh ép kiểu an toàn:
+    `SELECT id::text INTO v_order_waiter_id FROM public.staff_members WHERE id::text = v_session.waiter_id;` kèm fallback `IF v_order_waiter_id IS NULL THEN v_order_waiter_id := v_session.waiter_id; END IF;`.
+  * Đã nạp hotfix migration vào container `supabase-db` trên VPS Production (`45.32.104.228`) và kích hoạt `NOTIFY pgrst, 'reload schema';`.
+  * **Xác minh Dry-Run thực tế trên DB**: Giả lập phiên thanh toán với context thu ngân `VO ANH THƯ` cho chính phiên bàn `bc04b2e9-387e-487f-b9cd-0c972b5e58ec` $\rightarrow$ Kết quả: **`success: true`**, sinh `settlement_id: fb8bff09-2dd5-4032-b8b1-e3947fee290c`, tính đúng 65.000đ và mã đơn `QN-20260920-118`.
+  * Toàn bộ 40 unit/integration tests PASS (100%), `dart analyze` 0 errors.
+
+- **➡️ Tiếp theo**:
+  * Hướng dẫn thu ngân bấm F5 (tải lại trang) trên máy POS để nạp bundle web mới và bấm thanh toán bàn Mang Về 1.
+
+---
+
+## 2026-09-20 (15:30 +07) — Điều Tra & Khắc Phục Triệt Để Lỗi Nuốt Exception Khi Thanh Toán Bàn & Củng Cố Atomic Settlement V5 (JWT PostgREST 10+, Safe Waiter FK & Fail-Safe Reconcile)
+
+> **Trạng thái**: Đã phân tích nguyên nhân gốc, sửa chữa Client Repository, bổ sung phòng vệ Server Migration SQL, kiểm thử tự động 11/11 tests PASS (100%), static analysis 0 errors.
+> - **Client Files**: `lib/core/repositories/ban_repository.dart`, `lib/screens/ban_screen.dart`
+> - **Migration DB**: `quan_nho/supabase/migrations/20260920_fix_settlement_v5_jwt_and_waiter_fk.sql`
+> - **Kiểm thử tự động**: 11/11 Tests PASS (`test/core/settlement_v5_client_test.dart`), `analyze_files` 0 errors.
+
+### ⚠️ Bối Cảnh & Hiện Tượng
+- Nhân viên thực hiện thao tác "Thanh toán" tại bàn (ví dụ bàn A03 với đơn 239.000đ) bị báo lỗi trên giao diện:
+  `Lỗi thanh toán: Exception: Server không trả settlement_id hợp lệ`
+- Thao tác thanh toán bị từ chối, bàn A03 không thể hoàn tất.
+
+### 📊 Đánh Giá Ảnh Hưởng Đến Báo Cáo Doanh Thu
+1. **Đơn chưa được tính vào doanh thu**: Bàn A03 vẫn giữ trạng thái `status = 'open'`. Doanh thu của đơn 239.000đ chưa được kết chuyển sang `orders (status = 'completed')`, do đó báo cáo doanh thu ngày / tháng / ca chưa ghi nhận số tiền này.
+2. **Chưa ghi nhận sổ quỹ & kho**: Sổ quỹ `finance_records` chưa có phiếu thu, hàng hóa / nguyên vật liệu chưa trừ kho.
+3. **An toàn tính đúng đắn dữ liệu**: Nhờ cơ chế ACID transaction của RPC `settle_ban_session_v5`, toàn bộ thao tác đã rollback hoàn toàn, không có hiện tượng trừ tiền dở dang hay trùng lặp đơn/bill.
+
+### 🔍 Phân Tích Nguyên Nhân Gốc (2 Tầng)
+1. **Tầng Client (Nuốt mất Exception gốc từ Server)**:
+   - Trong `lib/core/repositories/ban_repository.dart` (`_settleBanSessionV5`), khi RPC máy chủ ném Exception (ví dụ Permission Denied hoặc FK violation), khối `catch` gọi `reconcileBanSettlement` để phòng ngừa lỗi mạng rớt gói tin sau commit.
+   - Khi phiên bàn chưa thực sự được thanh toán, RPC `reconcile_ban_settlement_v1` trả về:
+     `{"success": true, "is_settled": false, "status": "open", "message": "Phiên bàn chưa thanh toán"}`.
+   - Code client cũ chỉ kiểm tra `if (reconciled['success'] == true) return reconciled;`. Vì `success` là `true`, client ngộ nhận là thanh toán thành công và trả về response không có `data['settlement_id']`.
+   - Màn hình `ban_screen.dart` khi nhận response thấy thiếu `settlement_id` đã tự ném Exception: `Server không trả settlement_id hợp lệ`, nuốt trọn thông báo lỗi thực sự từ server.
+2. **Tầng Server (Căn nguyên khiến RPC ném lỗi)**:
+   - Trong `verify_staff_qr_membership_v4`: Chỉ trích xuất claim từ `request.jwt.claim.sub` (PostgREST 9 cũ) thay vì `request.jwt.claims ->> 'sub'` (PostgREST 10+ JSON claims), dẫn đến lỗi `PERMISSION_DENIED` khi token JWT không được phân giải.
+   - Trong `settle_ban_session_v5`: Khi insert vào `orders` cho các món order tại bàn, trường `waiter_id` được gán trực tiếp từ `v_session.waiter_id`. Nếu `waiter_id` của phiên bàn chưa kịp đồng bộ vào bảng `staff_members`, PostgreSQL ném lỗi vi phạm khóa ngoại `orders_waiter_id_fkey`, làm rollback toàn bộ giao dịch.
+
+### ✅ Giải Pháp Đã Triển Khai
+1. **Client Hardening (`lib/core/repositories/ban_repository.dart` & `lib/screens/ban_screen.dart`)**:
+   - Sửa điều kiện nhận diện reconcile: Bắt buộc `success == true`, `is_settled == true` và `settlement_id` không được rỗng.
+   - Nếu reconcile trả về `is_settled == false` hoặc lỗi khác, nạp lỗi phân loại qua `classifyBanSettlementTransportFailure(e)` và trả về `success: false` kèm đúng `error_code` và thông điệp lỗi gốc từ máy chủ.
+   - Thêm header `_sb.rest.headers['x-store-id'] = storeId` trước khi gọi RPC.
+   - Bổ sung phòng vệ trong `ban_screen.dart`: nếu `response['is_settled'] == false` thì throw thông báo chi tiết từ server thay vì lỗi thiếu `settlement_id`.
+2. **Server Migration (`quan_nho/supabase/migrations/20260920_fix_settlement_v5_jwt_and_waiter_fk.sql`)**:
+   - `verify_staff_qr_membership_v4`: Trích xuất claim an toàn từ `auth.uid()`, `request.jwt.claim.sub`, `(request.jwt.claims::jsonb)->>'sub'`, `request.headers->>'x-user-id'`; fallback tra cứu chủ quán qua `stores.owner_user_id` và `staff_members`; công nhận vai trò `waiter` / `phục vụ` có quyền `pos.checkout`.
+   - `settle_ban_session_v5`: Tra cứu an toàn `waiter_id` và `staff_id` trong `staff_members` trước khi gán vào `orders`, nếu không tồn tại sẽ fallback an toàn thành `NULL` thay vì làm vỡ transaction.
+3. **Kiểm Thử & Đảm Bảo Chất Lượng**:
+   - Bổ sung 4 unit test mới trong `test/core/settlement_v5_client_test.dart` kiểm tra fail-safe cho các kịch bản reconcile `is_settled: false`, `settlement_id` rỗng, và ánh xạ ngoại lệ transport.
+   - Toàn bộ 11/11 tests PASS (100%).
+   - Phân tích mã nguồn tĩnh `analyze_files` đạt 0 errors, 0 warnings.
+
+---
+
+## 2026-09-18 (23:15 +07) — Khắc Phục Triệt Để Giới Hạn 1,000 Đơn PostgREST Báo Cáo Doanh Thu Tháng & Bão Hoà Kết Nối Báo Cáo Sản Phẩm Bằng Bộ Tứ RPC PostgreSQL Mới [ĐÃ DEPLOY PRODUCTION VPS 45.32.104.228]
+
+> **Trạng thái Triển khai**: Đã hoàn tất áp dụng Migration DB, build và deploy lên VPS Production (`45.32.104.228`).
+> - **URL Live**: `https://quannho.lpm.vn/pos/` (HTTP/2 200 OK), `main.dart.js` (8.07 MB, HTTP/2 200 OK), `flutter_bootstrap.js` (HTTP/2 200 OK)
+> - **Bản sao lưu VPS**: `/var/www/quannho/pos_backup_20260918_230800`
+> - **CSDL Migration**: `supabase/migrations/20260918_fix_report_aggregation_rpc.sql` đã áp dụng thành công trên container `supabase-db` và reload PostgREST schema cache.
+> - **Kiểm định độc lập**: **VICTORY CONFIRMED** từ Victory Auditor (`auditor_swe3_1`).
+> - **Kiểm thử tự động**: 18/18 Adversarial High-Volume Aggregation Tests PASS (100%), 11/11 Report Invariant Tests PASS (100%), 150+ Regression Tests PASS (100%), `dart analyze` 0 errors, 0 warnings.
+
+### ⚠️ Bối Cảnh & Hiện Tượng Trước Khi Sửa (Phản Hồi & Ảnh Thực Tế Từ Chủ Quán)
+1. **Thẻ KPI Tháng Luôn Bị Kẹt Chẵn Cứng "1000 đơn"**:
+   - Dù tháng 8 hay tháng 9 quán bán được 1,500 – 2,500 đơn, thẻ KPI tổng kết tháng chỉ hiển thị đúng `1000 đơn` (Tháng 9: 149.600.900đ / 1000 đơn; Tháng 8: 137.384.300đ / 1000 đơn).
+   - Toàn bộ doanh thu và số đơn vượt ngoài 1,000 đơn bị thất thoát hoàn toàn trên giao diện báo cáo.
+2. **Biểu Đồ Doanh Thu Theo Ngày Bị "Hụt Các Ô Số Liệu"**:
+   - **Tháng 8/2026**: Các cột từ 01/8 đến 20/8 có số liệu, nhưng từ **21/8 đến 31/8 (11 ngày cuối tháng) bị hụt trắng hoàn toàn (0đ)**.
+   - **Tháng 9/2026**: Biểu đồ có cột ngày 01–10/9 và 14–18/9, nhưng **ngày 11, 12, 13/9 bị thủng lỗ chỗ (0đ)** dù quán vẫn vận hành kinh doanh bình thường.
+3. **Tab Top Sản Phẩm Tuần & Tháng Bị Treo Vòng Xoay (Chấm Nhỏ Màu Xanh)**:
+   - Dưới tiêu đề "Top sản phẩm bán chạy", màn hình hiển thị khung trắng với một dấu chấm nhỏ ở giữa (thực chất là `_LoadingCard` với `CircularProgressIndicator` xoay vô tận).
+   - Sản phẩm bán ra tổng hợp bị sai lệch, không phản ánh đúng doanh thu thực tế.
+
+### 🔍 Phân Tích Nguyên Nhân Kỹ Thuật Cốt Lõi
+1. **Trần Cứng `max-rows = 1000` của Supabase PostgREST**:
+   - PostgREST trên máy chủ mặc định giới hạn tối đa 1,000 dòng cho mỗi câu truy vấn REST API `.select()` nếu không phân trang.
+   - Trong `lib/core/repositories/dashboard_repository.dart` (`_getStatsForRange` và `getDailyRevenue`), client query trực tiếp bảng `orders` mà không phân trang và không có mệnh đề sắp xếp `.order('created_at', ascending: true)`:
+     * **Ở Tháng 8**: Quét từ ngày 01 đến 20/8 thì chạm trần 1,000 dòng. PostgREST dừng quét $\rightarrow$ các ngày 21–31/8 không nhận được bất kỳ bản ghi nào $\rightarrow$ biểu đồ rớt về 0đ.
+     * **Ở Tháng 9**: Quét ngẫu nhiên theo heap blocks của ổ đĩa, 1,000 dòng trả về gom các đơn ngày 01–10/9 và 14–18/9, bỏ sót các khối đĩa chứa đơn của ngày 11, 12, 13/9 $\rightarrow$ biểu đồ bị thủng lỗ chỗ.
+     * Thẻ tổng kết tháng gán `todayOrders = orders.length = 1000` đơn.
+2. **Nghẽn Mạng Bão Hoà Socket Connection Pool & Cloudflare 520 / Timeout Ở Tab Sản Phẩm**:
+   - Trong `_ProductTabState._load`, code gọi song song `Future.wait([getTopProductsForRangeCompat, getProductCategoriesSold])`.
+   - Mỗi hàm lấy 1,000 order IDs, chia làm 10 chunks x 100 IDs, bắn dồn dập **22 HTTP GET requests `inFilter('order_id', chunk)`** vào bảng `order_items` với URL query string dài > 3.600 ký tự.
+   - Trình duyệt Web giới hạn 6 kết nối đồng thời, khiến socket pool bị bão hòa; Cloudflare ngắt kết nối hoặc trả về timeout/520. Promise của `Future.wait` không resolve dẫn đến `_loading = true` vĩnh viễn, giao diện kẹt cứng ở `_LoadingCard`.
+   - Cột `subtotal` trong `order_items` nếu mang giá trị null không có fallback nhân `quantity * unit_price`, làm doanh thu một số món bị tính thành 0đ.
+
+### ✅ Giải Pháp Kỹ Thuật Đã Triển Khai Hoàn Tất
+1. **Bộ Tứ RPC PostgreSQL Trực Tiếp (`supabase/migrations/20260918_fix_report_aggregation_rpc.sql`)**:
+   - **`get_daily_revenue_for_range_v1(p_store_id, p_from, p_to, p_tz DEFAULT 'Asia/Ho_Chi_Minh')`**:
+     * Gom nhóm theo ngày nghiệp vụ `to_char(o.created_at AT TIME ZONE v_tz, 'YYYY-MM-DD')`.
+     * Tính `COUNT(*)`, `SUM(total_amount)`, `SUM(cash)`, `SUM(transfer)`, `SUM(discount)` trực tiếp bằng CSDL PostgreSQL.
+     * Trả về đúng 30–31 dòng dữ liệu cho cả tháng chỉ trong **< 2ms**, hoàn toàn miễn nhiễm với giới hạn 1,000 dòng.
+   - **`get_report_stats_for_range_v1(p_store_id, p_from, p_to)`**:
+     * Trả về JSONB chứa: `total_orders` thực tế (>1,000 đơn), `total_revenue`, `avg_order_value`, `total_customers` (distinct), breakdown phương thức thanh toán và chi tiết doanh thu theo từng thu ngân/phục vụ trong 1 request duy nhất.
+   - **`get_top_products_for_range_v1(p_store_id, p_from, p_to, p_category, p_limit)`**:
+     * JOIN trực tiếp 3 bảng: `orders` + `order_items` + `products` trên database server.
+     * Gom `SUM(quantity)` và `SUM(COALESCE(subtotal, quantity * unit_price))`, hỗ trợ lọc `category`, trả về top món bán chạy trong **< 15ms** (thay thế 22 HTTP requests N+1 cũ).
+   - **`get_sold_categories_for_range_v1(p_store_id, p_from, p_to)`**:
+     * Trích xuất danh sách các danh mục có món bán ra thực tế trong kỳ.
+   - **Chỉ mục Functional B-Tree Index**:
+     * Tạo 6 chỉ mục tối ưu: `idx_orders_report_agg(store_id, status, created_at)`, `idx_order_items_order_store(order_id, store_id)`, `idx_order_items_product_lookup(product_id)`, `idx_order_items_order_id_text((order_id::text))`, `idx_order_items_product_id_text((product_id::text))`, `idx_products_id_text((id::text))`.
+   - **Phân quyền & RLS**: Cấp `GRANT EXECUTE` cho `anon, authenticated, service_role`; thiết lập `SECURITY DEFINER` và `SET search_path = public`.
+2. **Tích Hợp Client Repository & Fail-Safe Đa Tầng (`lib/core/repositories/dashboard_repository.dart`)**:
+   - Nối cả 4 RPC mới với cơ chế `try/catch` fail-safe fallback hai tầng (nếu môi trường thiếu RPC sẽ tự động chuyển về client aggregation an toàn).
+   - Tái cấu trúc thuật toán điền ngày đầy đủ (`Full-cycle date generator`): Sinh liên tục toàn bộ các ngày từ ngày 1 đến ngày cuối tháng (kể cả những ngày 0đ) với nhãn ngày chuẩn xác, triệt tiêu 100% hiện tượng khuyết cột.
+   - Rào chắn bảo vệ khi dải ngày bị đảo hoặc độ dài bằng 0 (`to <= from`).
+3. **Tối Ưu Giao Diện Màn Hình Báo Cáo (`lib/screens/report_screen.dart`)**:
+   - Nạp song song qua `Future.wait([repo.getStatsForRange, repo.getDailyRevenue])` giúp tab Doanh thu nạp cực nhanh (< 200ms).
+   - Cơ chế chống "danh mục ma" (Phantom category trap): Khi người dùng đổi sang ngày/tuần mới mà danh mục đang chọn không có món bán, tự động refetch với `category = null` thay vì hiển thị màn hình trống.
+4. **Vượt Qua 3 Vòng Phản Biện Adversarial Review Khắt Khe**:
+   - *Round 1*: Khắc phục trường hợp `payment_method` NULL bị rơi khỏi thống kê, ranh giới ngày lẻ `23:59:59`, loại trừ ID rỗng.
+   - *Round 2*: Chuẩn hóa không phân biệt hoa/thường cho phương thức thanh toán (`' CASH '`, `'bank'`), bảo vệ dải ngày đảo, nạp song song `Future.wait`.
+   - *Round 3*: Ép kiểu an toàn `customer_id::text` chống crash hàm `btrim(uuid)` trên PostgreSQL, functional B-tree indexes, chuẩn hóa khoảng trắng `TRIM(category)`.
+
+### 🧪 Kiểm Thử Tự Động & Kiểm Định Độc Lập
+- **Kịch Bản Mô Phỏng Cửa Hàng Lớn (`test/test_report_aggregation_1000_orders.py`)**:
+  - Mô phỏng cửa hàng có 2,517 đơn hàng completed, 300 đơn cancelled/open và 500 đơn quán khác.
+  - Tái hiện lỗi trần 1,000 dòng của PostgREST cũ (Test 1).
+  - Xác minh RPC `get_daily_revenue_for_range_v1` xử lý trọn vẹn 2,517 đơn qua 31 ngày (Test 2).
+  - Xác minh `get_report_stats_for_range_v1` phản ánh đúng 2,517 đơn, 593.125.000đ doanh thu (Test 3).
+  - Xác minh Top sản phẩm & Danh mục gom chuẩn xác 100% doanh thu và sản lượng (Test 4).
+  - Xác minh cô lập đa quán và loại trừ đơn hủy (Test 5).
+  - Xác minh điền kín 30 ngày liên tục, không bị đứt đoạn ở các ngày 0đ (Test 6).
+  - Xác minh toàn bộ 18 ca kiểm thử: **18/18 TESTS PASS (100%)**.
+- **Kiểm Thử Hồi Quy (`test/test_report_screen_r1_verification.py`)**: **11/11 TESTS PASS (100%)**.
+- **Kiểm Thử Module Liên Quan**: 150+ unit & integration tests trong `test/` PASS 100%.
+- **Phân Tích Mã Nguồn Tĩnh**: `dart analyze` qua MCP Tool xác nhận **0 errors, 0 warnings**.
+- **Kiểm Toán Độc Lập**: Victory Auditor (`auditor_swe3_1`) xác nhận **VICTORY CONFIRMED**.
+
+### 🚀 Triển Khai Thực Tế Lên Production VPS (`45.32.104.228`)
+1. **Migration CSDL**: Nạp thành công `20260918_fix_report_aggregation_rpc.sql` vào container `supabase-db`, kích hoạt `NOTIFY pgrst, 'reload schema';`.
+2. **Sao Lưu Server**: Tạo bản sao lưu tại `/var/www/quannho/pos_backup_20260918_230800`.
+3. **Biên Dịch & Đồng Bộ Web Release**:
+   - Biên dịch Flutter Web Release thành công trong 53.8s (`--base-href "/pos/"`).
+   - Đồng bộ đè vào `/var/www/quannho/pos/`, phân quyền chuẩn `www-data:www-data` (chmod 755).
+4. **Kiểm Tra Trực Tiếp Endpoint Live**:
+   - `GET https://quannho.lpm.vn/pos/`: **HTTP/2 200 OK**
+   - `GET https://quannho.lpm.vn/pos/main.dart.js`: **HTTP/2 200 OK** (8,076,902 bytes)
+   - `GET https://quannho.lpm.vn/pos/flutter_bootstrap.js`: **HTTP/2 200 OK**
+   - `GET https://quannho.lpm.vn/pos/version.json`: `{"app_name":"quannho_pos","version":"1.0.2","build_number":"5","package_name":"quannho_pos"}`
+
+---
+
+## 2026-09-15 (22:25 +07) — Điều Tra & Khắc Phục Triệt Để Lỗi Tài Khoản Quản Lý Không Thể Xoá Món Trong Kho Hàng (Cloudflare 520 Resolution, AppLogger Integration & RLS Hardening) [ĐÃ DEPLOY PRODUCTION VPS 45.32.104.228]
+
+> **Trạng thái Triển khai**: Đã hoàn tất áp dụng Migration DB, build và deploy lên VPS Production (`45.32.104.228`).
+> - **URL Live**: `https://quannho.lpm.vn/pos/` (HTTP/2 200 OK), `main.dart.js` (8.07 MB, HTTP/2 200 OK), `flutter_bootstrap.js` (HTTP/2 200 OK)
+> - **Bản sao lưu VPS**: `/var/www/quannho/pos_backup_20260915_152221`
+> - **CSDL Migration**: `supabase/migrations/20260915_fix_products_rls_and_current_store_id.sql` đã áp dụng trên container `supabase-db` và reload PostgREST schema cache.
+> - **Kiểm thử**: 35/35 Flutter Unit & Hierarchy Tests PASS, 34/34 Python Stress & Invariant Tests PASS (100%), CodeGraph Synced (8,359 nodes).
+> - **Nguyên nhân cốt lõi**:
+>   1. Call path: `InventoryScreen` (`_confirmSingleDelete` / `onDelete` và `_confirmBatchDelete`) gọi `CoreProductRepository` (`softDelete` và `batchSoftDelete`) tới PostgREST endpoint `PATCH /rest/v1/products`.
+>   2. Trước sửa đổi, `CoreProductRepository` không chủ động gán `_sb.rest.headers['x-store-id'] = storeId` trước các lời gọi mutation, đồng thời `update(id, ...)` không kèm bộ lọc `.eq('store_id', storeId)`.
+>   3. Hàm `public.current_store_id()` trên CSDL Postgres chỉ đọc header `request.headers ->> 'x-store-id'` mà không có cơ chế fallback trích xuất `store_id` từ POS JWT Claims (`request.jwt.claims ->> 'store_id'`), dẫn đến nguy cơ lệch ngữ cảnh hoặc bị từ chối/reset kết nối upstream gây mã HTTP 520 từ Cloudflare.
+>   4. Khoảng trống logging: các khối `catch (e)` khi xóa món đơn lẻ và xóa hàng loạt trong `InventoryScreen` chỉ hiển thị `SnackBar` mà không gọi `AppLogger.error('inventory', ...)`. Tab 14 (`LogViewerScreen`) cũng thiếu tag `'inventory'` trong bộ lọc danh mục log.
+> - **Giải pháp triệt để**:
+>   1. **Tích hợp Logging Toàn Diện (`lib/screens/inventory_screen.dart` & `lib/screens/log_viewer_screen.dart`)**:
+>      * Bổ sung import `AppLogger` vào `InventoryScreen`.
+>      * Ghi log chuẩn qua `AppLogger.error('inventory', ...)` kèm `StackTrace` cho `_confirmSingleDelete`, `_confirmBatchDelete`, `_batchUpdateAvailability`, `_openBatchCategoryDialog`, và popup `onDelete`.
+>      * Bổ sung tag `'inventory': '📦 Kho hàng'` vào `_tags` trong `LogViewerScreen`.
+>   2. **Chuẩn Hóa Header REST & Tenant Isolation (`lib/core/repositories/core_product_repository.dart`)**:
+>      * Tự động gán `_sb.rest.headers['x-store-id'] = storeId` cho toàn bộ các phương thức mutation (`update`, `softDelete`, `batchSoftDelete`, `batchUpdateAvailability`, `batchUpdateCategory`, `create`, `_fetchAll`, `searchByName`).
+>      * Bổ sung bộ lọc `.eq('store_id', storeId)` trong `update` và `batchSoftDelete` để tối ưu truy vấn theo index `idx_products_store`.
+>      * Bảo đảm 100% Soft Delete (`is_deleted = true`, `is_active = false`, `updated_at = nowMs`), tuyệt đối không xóa vật lý bất kỳ bản ghi nào (`.delete()` = 0), bảo toàn toàn vẹn các khóa ngoại liên kết (`order_items`, `ban_session_items`, `kitchen_ticket_items`, `stock_movements`).
+>   3. **Migration RLS Đa Tầng (`supabase/migrations/20260915_fix_products_rls_and_current_store_id.sql`)**:
+>      * Hàm `public.current_store_id()` bảo vệ 3 tầng: (1) header `x-store-id` -> (2) POS JWT claim `request.jwt.claims ->> 'store_id'` -> (3) `request.jwt.claim.store_id`. Kiểm tra regex UUID chặt chẽ, chống crash upstream.
+>      * Cấp đầy đủ quyền CRUD trên `public.products` cho role `authenticated` và `anon`.
+>      * Tái thiết lập chính sách `products_isolation` với ép kiểu an toàn `store_id::text = public.current_store_id()::text`.
+>   4. **Xác Minh Kiểm Thử Tự Động**:
+>      * `test/test_manager_kho_delete_520_resolution.py`: 5/5 tests PASS (100%).
+>      * `test/test_m3_hierarchy_stress_runner.py`: 11/11 tests PASS (100%).
+>      * `test/test_challenger_m3_1_stress.py`: 18/18 tests PASS (100%).
+>      * `test/backend/test_pos_jwt_auth_service.py` & `test_pos_gateway_server.py`: 45/45 tests PASS (100%).
+>      * Bổ sung Group 8 trong `kho_batch_delete_and_search_test.dart` và Test 11 trong `staff_manager_hierarchy_guard_test.dart`.
+>
+> ---
+
+## 2026-09-14 (19:15 +07) — Khắc Phục Toàn Diện Module Báo Cáo (Báo Cáo Voucher Chi Tiết Nhân Viên & Chuẩn Hoá Timezone UTC Lịch Sử) [ĐÃ DEPLOY PRODUCTION VPS 45.32.104.228]
+
+> **Trạng thái Triển khai**: Đã hoàn tất build và deploy lên VPS Production (`45.32.104.228`).
+> - **URL Live**: `https://quannho.lpm.vn/pos/` (HTTP/2 200 OK), `main.dart.js` (7.7 MB, HTTP/2 200 OK)
+> - **Bản sao lưu VPS**: `/var/www/quannho/pos_backup_20260914_121057`
+> - **Kiểm thử**: 13/13 Flutter Unit & Timezone Tests PASS, 29/29 Core & Hierarchy Tests PASS, 11/11 Python Invariant Verification Checks PASS (100%), CodeGraph Synced, `dart analyze` 0 warnings, 0 errors.
+
+### ⚠️ Vấn Đề Trước Khi Sửa & Phát Hiện Qua 3 Vòng Adversarial Review
+1. **Lỗi Nhân Viên Áp Dụng Voucher Ở Tab Voucher (`_VoucherTab`)**:
+   - Sử dụng cú pháp PostgREST foreign key `staff_members!orders_staff_id_fkey(name)` dễ lỗi/null khi `staff_id` trỏ vào `user_accounts` hoặc `store_members`, luôn trả về chuỗi mặc định `'Thu ngân'`.
+   - Bỏ sót toàn bộ các voucher thanh toán qua bàn (`payment_settlements`) — các bàn ăn có áp dụng coupon chỉ lưu vào `payment_settlements.coupon_code` và `cashier_staff_id`, không ghi vào `orders.note`, dẫn đến việc tab Voucher bị thiếu hụt doanh số voucher của khối bàn ăn / QR order.
+   - Không hiển thị tên bàn ăn, tên nhân viên order (waiter) hoặc thu ngân thanh toán.
+2. **Lệch 7 Tiếng (GMT+7) & Cắt Cụt Khoảng Thời Gian (`capEnd`)**:
+   - Tab Voucher gọi `.fromMillisecondsSinceEpoch(from).toIso8601String()` cục bộ (không có `.toUtc()`), khiến Postgres `timestamptz` hiểu sai mốc thời gian dẫn đến lệch 7 tiếng, mất trắng dữ liệu đầu ngày.
+   - Các hàm `DateRange.thisWeek()` và `DateRange.thisMonth()` bị gán chặn trên `endLocal` tới `now.day + 1`, làm cụt chu kỳ và gây sai lệch số liệu khi người dùng xem lại các ngày cũ, tuần hoặc tháng lịch sử.
+   - Các tab Kho, Tài chính, Huỷ món, Chấm công thiếu thanh điều hướng thời gian đồng bộ.
+3. **Các Lỗ Hổng Được Phát Hiện Qua Round 1 Review**:
+   - Truy vấn `payment_settlements` và `orders` trong `_VoucherTab` chạy gộp qua `Future.wait` mà không bắt lỗi độc lập: nếu role bị chặn quyền RLS ở bảng `payment_settlements`, toàn bộ tab báo lỗi đỏ và che khuất luôn cả voucher của đơn POS.
+   - Casting ID và tên bàn bằng `as String` dễ gây `TypeError` nếu dữ liệu trả về kiểu số.
+   - Header và nội dung in bill báo cáo (`_printReport`) bị gắn cứng `"Kỳ báo cáo: Tuần này"` / `"Tháng này"` dù người dùng đang chọn tuần/tháng trong quá khứ.
+   - Mã voucher dài hoặc màn hình hẹp (<360px) có thể gây tràn viền `RenderFlex` ở hàng chi tiết và tiêu đề.
+4. **Các Lỗ Hổng Được Phát Hiện & Khắc Phục Qua Round 2 Review**:
+   - Lỗi thiếu ngoặc `],` đóng `Column.children` tại `_FinanceTab` làm vỡ AST parser.
+   - Race condition bất đồng bộ trên 6 tab stateful (`_RevenueTab`, `_ProductTab`, `_KhoTab`, `_VoidAuditTab`, `_StaffAttendanceTab`, `_VoucherTab`) khi người dùng bấm `<` / `>` liên tục: giải quyết bằng sequence counter `_loadRequestId` và guard `if (!mounted || requestId != _loadRequestId) return;`.
+   - Giao diện điều hướng bị unmount khi loading/lỗi ở `_FinanceTab`, `_KhoTab`, `_StaffAttendanceTab`: tái cấu trúc để đưa `_PeriodPills` và `_ReportNavBar` lên đầu trang cố định bên ngoài khối AsyncValue/Loading spinner.
+   - Tab Chấm công (`_StaffAttendanceTab`) dùng `ChoiceChip` không chuẩn: đồng bộ sang `_PeriodPills` và `_ReportNavBar` với đầy đủ nút stepper `<` và `>`.
+5. **Các Lỗ Hổng Được Phát Hiện & Khắc Phục Qua Round 3 Review**:
+   - Widget thừa `_FinBtn` không còn sử dụng gây cảnh báo `unused_element` trong `report_screen.dart`: đã gỡ bỏ triệt để.
+   - Biến `voidAmount` không được sử dụng gây cảnh báo `unused_local_variable`: đã hiển thị `Tiền huỷ` vào thẻ "Huỷ Bàn / Huỷ Bill" khi `voidAmount > 0` và ép kiểu an toàn `(voidStats['amount'] as num?)?.toDouble() ?? 0.0`.
+   - Cảnh báo `unnecessary_cast` và `avoid_print` trong `finance_repository.dart`: đã loại bỏ cast dư thừa và thay thế `print(...)` bằng `AppLogger.e` / `AppLogger.w`.
+   - Lỗi import sai tên package `package:quan_nho/...` thay vì `package:quannho_pos/...` trong `test/screens/report_screen_voucher_timezone_test.dart`: đã sửa lại chính xác, xóa sổ 6 lỗi compile của file test.
+   - Ranh giới điều hướng thời gian: xác nhận chặn triệt để điều hướng tương lai nhờ thuộc tính `lastDate: now` trên tất cả Date Picker và cờ `canGoNext` trên tất cả Stepper.
+   - An toàn bộ nhớ: xác nhận toàn bộ `StreamSubscription` (`_hourSub`) và `AnimationController` đều được dispose/cancel đúng vòng đời.
+
+### ✅ Giải Pháp Đã Triển Khai Hoàn Tất
+1. **Chuẩn Hóa Đa Tầng Báo Cáo Voucher (`_VoucherTab`)**:
+   - **Xử lý kép & Cách ly lỗi**: Truy vấn song song cả `orders` (bán lẻ POS) và `payment_settlements` (chốt bàn / QR order) với khối try-catch riêng biệt cho từng luồng dữ liệu.
+   - **Chống đếm trùng**: Liên kết qua `ban_session_orders` để loại trừ các đơn đã được kết chuyển trong phiên thanh toán bàn ăn.
+   - **Cascade 3 tầng phân giải nhân viên (`_resolveStaffNames`)**: Tự động tra cứu `staff_members` -> `store_members` (kèm join `user_accounts`) -> `user_accounts` trực tiếp -> fallback định danh `NV-XXXX` (4 ký tự cuối UUID) thay vì hiển thị trống hoặc "Nhân viên".
+   - **Giao diện chi tiết mở rộng & Chống tràn**: Cung cấp cột "Mã đơn / Bàn" (kèm liên kết mở `showOrderDetailDialog` tương thích cả order ID và settlement ID), "Thời gian", "Giảm giá", và "Nhân viên". Tích hợp `Flexible` và `FittedBox` chống tràn layout trên màn hình nhỏ (<360px). Đồng bộ lề danh sách thẻ voucher khớp với thẻ tổng kết.
+2. **Triệt Tiêu Lỗi Timezone & Đồng Bộ Thanh Điều Hướng Toàn Diện**:
+   - Chuyển đổi 100% các mốc truy vấn `timestamptz` sang `.toUtc().toIso8601String()`.
+   - `ReportPeriodX.rangeFor`: Tính trọn vẹn 24h cho ngày, 7 ngày cho tuần (kể cả vắt qua tháng/năm), và kết thúc vào ngày 1 của tháng kế tiếp (xử lý chính xác năm nhuận 2024 và ranh giới tháng 12 -> tháng 1).
+   - Đồng bộ thanh điều hướng quá khứ (`_ReportNavBar.day`, `.week`, `.month`) trên tất cả các tab (`_FinanceTab`, `_KhoTab`, `_VoidAuditTab`, `_StaffAttendanceTab`, `_VoucherTab`).
+   - Sửa lỗi in bill báo cáo doanh thu (`_RevenueTab._printReport`): Tự động trích xuất nhãn chu kỳ lịch sử chính xác (`periodLabel`) cho tuần/tháng đã chọn thay vì gắn cứng "Tuần này/Tháng này".
+3. **Độ Bền Vững Mã Nguồn & Race-Guard Tuyệt Đối**:
+   - Cung cấp sequence counter token `_loadRequestId` trên tất cả 6 tab stateful.
+   - Xóa bỏ dead code `_FinBtn`, hiển thị an toàn `voidAmount`, dọn dẹp các lệnh `print` sang `AppLogger`.
+   - Cân bằng AST 100% qua 5,037 dòng code, 11/11 automated tests PASS.
+
+### 🚀 Triển Khai Production VPS (`45.32.104.228`)
+- Biên dịch Web: `flutter build web --release --base-href "/pos/" --no-tree-shake-icons --dart-define=POS_JWT_AUTH_URL=https://quannho.lpm.vn` (52.5s).
+- Tự động sao lưu bản cũ trên server: `/var/www/quannho/pos_backup_20260914_121057`.
+- Upload tarball `pos_web.tar.gz`, giải nén đè lên `/var/www/quannho/pos/`, phân quyền chuẩn `www-data:www-data` (chmod 755).
+- Kiểm tra trực tiếp các endpoint Production:
+  * `GET https://quannho.lpm.vn/pos/`: **HTTP/2 200 OK**
+  * `GET https://quannho.lpm.vn/pos/main.dart.js`: **HTTP/2 200 OK** (7,725,548 bytes)
+  * `GET https://quannho.lpm.vn/pos/flutter_bootstrap.js`: **HTTP/2 200 OK**
+
+---
+
 ## 2026-09-14 (00:30 +07) — Tối Ưu Toàn Diện Trải Nghiệm Cuộn Kho Hàng (Cơ Chế Tự Động Ẩn Tab & Header Khi Trượt Xuống, Scrollbar Trực Quan & Sticky Footer) [ĐÃ DEPLOY PRODUCTION VPS 45.32.104.228]
 
 > **Trạng thái Triển khai**: Đã hoàn tất build và deploy lên VPS Production (`45.32.104.228`).

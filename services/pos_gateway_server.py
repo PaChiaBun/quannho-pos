@@ -57,12 +57,15 @@ def _check_health_and_readiness(query_string=""):
     if not (supabase_url and supabase_anon_key and supabase_jwt_secret and supabase_service_role_key):
         return 503, {"status": "unhealthy", "error": "CONFIG_INCOMPLETE"}
 
-    probe_url = f"{supabase_url}/rest/v1/"
+    local_probe_url = "http://127.0.0.1:8000/rest/v1/"
+    probe_url = local_probe_url if os.path.exists("/var/www/supabase-setup") else f"{supabase_url}/rest/v1/"
+    probe_key = supabase_service_role_key or supabase_anon_key
     req = urllib.request.Request(
         probe_url,
         headers={
-            "apikey": supabase_anon_key,
-            "User-Agent": "pos-jwt-gateway-health-probe/1.0",
+            "apikey": probe_key,
+            "Authorization": f"Bearer {probe_key}",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         },
         method="GET",
     )
@@ -85,7 +88,10 @@ def _cors_headers(origin):
     """Return CORS headers only for explicitly allowed browser origins."""
     allowed = {
         value.strip()
-        for value in os.environ.get("POS_ALLOWED_ORIGINS", "").split(",")
+        for value in (
+            os.environ.get("POS_ALLOWED_ORIGINS", "")
+            or os.environ.get("ALLOWED_ORIGINS", "")
+        ).split(",")
         if value.strip()
     }
     headers = [
@@ -122,7 +128,8 @@ def wsgi_app(environ, start_response):
     method = environ.get("REQUEST_METHOD", "GET").upper()
 
     origin = environ.get("HTTP_ORIGIN", "")
-    headers = _cors_headers(origin)
+    headers = list(_cors_headers(origin))
+    headers.append(("Content-Type", "application/json; charset=utf-8"))
 
     if origin and not any(
         name == "Access-Control-Allow-Origin" for name, _ in headers

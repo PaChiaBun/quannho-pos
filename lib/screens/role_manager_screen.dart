@@ -1,18 +1,119 @@
 // lib/screens/role_manager_screen.dart
 // Quản lý vai trò linh hoạt — Custom Roles
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/staff_service.dart';
 import '../core/providers/session_provider.dart';
 import '../core/services/staff_sync_service.dart';
 
+extension _FirstWhereOrNullExt<T> on Iterable<T> {
+  T? firstWhereOrNull(bool Function(T element) test) {
+    for (final element in this) {
+      if (test(element)) return element;
+    }
+    return null;
+  }
+}
+
 // ── Constants ──────────────────────────────────────────────────────────────────
 const _kNavy = Color(0xFF1C2151);
-const _kOrange = Color(0xFFFF6B35);
 const _kCream = Color(0xFFFFF8F0);
 const _kBorder = Color(0xFFE0D8CC);
 const _kMuted = Color(0xFF9E9085);
+
+// ── Thông tin nhận diện vai trò chuẩn hệ thống ─────────────────────────────────
+class _CanonicalRoleInfo {
+  final String code;
+  final String viName;
+  final String enName;
+  final String description;
+  final IconData icon;
+  final Color color;
+  final bool isSpecial;
+  final bool isOwner;
+
+  const _CanonicalRoleInfo({
+    required this.code,
+    required this.viName,
+    required this.enName,
+    required this.description,
+    required this.icon,
+    required this.color,
+    this.isSpecial = true,
+    this.isOwner = false,
+  });
+}
+
+_CanonicalRoleInfo _getCanonicalInfo(String roleName) {
+  final canon = StaffService.canonicalRole(roleName);
+  switch (canon) {
+    case 'owner':
+      return const _CanonicalRoleInfo(
+        code: 'owner',
+        viName: 'Chủ quán',
+        enName: 'Owner',
+        description: 'Tài khoản chủ quán tối cao, sở hữu toàn quyền quản trị quán.',
+        icon: Icons.workspace_premium_rounded,
+        color: Color(0xFFDC2626),
+        isOwner: true,
+      );
+    case 'manager':
+      return const _CanonicalRoleInfo(
+        code: 'manager',
+        viName: 'Quản lý',
+        enName: 'Manager',
+        description: 'Giám sát vận hành, quản lý & phân quyền nhân sự cấp dưới.',
+        icon: Icons.manage_accounts_rounded,
+        color: Color(0xFF7C3AED),
+      );
+    case 'cashier':
+      return const _CanonicalRoleInfo(
+        code: 'cashier',
+        viName: 'Thu ngân',
+        enName: 'Cashier',
+        description: 'Liên kết trực tiếp màn hình POS bán hàng, mở bàn & thanh toán.',
+        icon: Icons.point_of_sale_rounded,
+        color: Color(0xFF1D4ED8),
+      );
+    case 'waiter':
+      return const _CanonicalRoleInfo(
+        code: 'waiter',
+        viName: 'Phục vụ',
+        enName: 'Waiter',
+        description: 'Liên kết quản lý bàn, order món tại bàn & gửi lệnh bếp.',
+        icon: Icons.room_service_rounded,
+        color: Color(0xFF059669),
+      );
+    case 'kitchen':
+      return const _CanonicalRoleInfo(
+        code: 'kitchen',
+        viName: 'Bếp / Bar',
+        enName: 'Kitchen',
+        description: 'Liên kết hệ thống điều phối bếp/bar (KDS), nhận & hoàn tất món.',
+        icon: Icons.local_fire_department_rounded,
+        color: Color(0xFFEA580C),
+      );
+    case 'stock':
+      return const _CanonicalRoleInfo(
+        code: 'stock',
+        viName: 'Kho hàng',
+        enName: 'Stock',
+        description: 'Quản lý nguyên vật liệu, nhập xuất và kiểm kê tồn kho.',
+        icon: Icons.inventory_2_rounded,
+        color: Color(0xFFB45309),
+      );
+    default:
+      return _CanonicalRoleInfo(
+        code: canon,
+        viName: roleName.trim().isEmpty ? 'Tùy chỉnh' : roleName.trim(),
+        enName: 'Custom',
+        description: 'Vai trò tùy chỉnh tự do, phân quyền theo các module được tích chọn.',
+        icon: Icons.extension_rounded,
+        color: const Color(0xFF64748B),
+        isSpecial: false,
+      );
+  }
+}
 
 // ── Danh sách icon để chọn ────────────────────────────────────────────────────
 const _kIcons = <String, IconData>{
@@ -73,23 +174,201 @@ const _kIcons = <String, IconData>{
   'sports': Icons.sports_rounded,
 };
 
+// ── F&B Role Suggestions Catalog ──────────────────────────────────────────────
+class _FnbRoleSuggestion {
+  final String name;
+  final String category;
+  final String icon;
+  final Color colorValue;
+  final List<String> modules;
+  final String description;
+
+  const _FnbRoleSuggestion({
+    required this.name,
+    required this.category,
+    required this.icon,
+    required this.colorValue,
+    required this.modules,
+    required this.description,
+  });
+}
+
+const _kFnbRoleSuggestions = <_FnbRoleSuggestion>[
+  // 🍽️ Vận hành Quầy & Bàn
+  _FnbRoleSuggestion(
+    name: 'Thu ngân',
+    category: 'Vận hành Quầy & Bàn',
+    icon: 'point_of_sale',
+    colorValue: Color(0xFF1D4ED8),
+    modules: ['pos', 'ban', 'finance', 'bill_printer', 'chamcong'],
+    description:
+        'Thu ngân phụ trách tính tiền, in hóa đơn, mở/đóng ca tiền mặt, đối soát hóa đơn và quản lý bàn ăn.',
+  ),
+  _FnbRoleSuggestion(
+    name: 'Phục vụ',
+    category: 'Vận hành Quầy & Bàn',
+    icon: 'room_service',
+    colorValue: Color(0xFF059669),
+    modules: ['pos', 'ban', 'kitchen', 'chamcong'],
+    description:
+        'Nhân viên bàn phụ trách đón tiếp khách, mở bàn, ghi order món chuyển lệnh vào bếp và phục vụ đồ ăn/uống.',
+  ),
+  _FnbRoleSuggestion(
+    name: 'Tiếp thực (Runner)',
+    category: 'Vận hành Quầy & Bàn',
+    icon: 'delivery',
+    colorValue: Color(0xFF0284C7),
+    modules: ['ban', 'kitchen', 'chamcong'],
+    description:
+        'Chạy món nhanh từ quầy ra món đến đúng bàn khách, hỗ trợ dọn dẹp bàn ghế và tiếp tế gia vị.',
+  ),
+  _FnbRoleSuggestion(
+    name: 'Lễ tân',
+    category: 'Vận hành Quầy & Bàn',
+    icon: 'support_agent',
+    colorValue: Color(0xFF7C3AED),
+    modules: ['ban', 'chamcong'],
+    description:
+        'Chào đón khách hàng, sắp xếp và theo dõi bàn đặt trước (booking), hướng dẫn khách vào chỗ ngồi.',
+  ),
+
+  // 🍳 Bếp & Pha Chế
+  _FnbRoleSuggestion(
+    name: 'Bếp chính',
+    category: 'Bếp & Pha Chế',
+    icon: 'kitchen',
+    colorValue: Color(0xFFEA580C),
+    modules: ['kitchen', 'kho', 'chamcong'],
+    description:
+        'Tiếp nhận order màn hình bếp KDS, chế biến món ăn chuẩn định lượng, báo hết món và kiểm soát chất lượng ra đồ.',
+  ),
+  _FnbRoleSuggestion(
+    name: 'Phụ bếp',
+    category: 'Bếp & Pha Chế',
+    icon: 'restaurant',
+    colorValue: Color(0xFFD97706),
+    modules: ['kitchen', 'chamcong'],
+    description:
+        'Sơ chế nguyên liệu tươi sống, hỗ trợ bếp chính nấu nướng và kiểm soát vệ sinh an toàn thực phẩm khu bếp.',
+  ),
+  _FnbRoleSuggestion(
+    name: 'Pha chế (Barista)',
+    category: 'Bếp & Pha Chế',
+    icon: 'local_cafe',
+    colorValue: Color(0xFF854D0E),
+    modules: ['kitchen', 'pos', 'chamcong'],
+    description:
+        'Pha chế đồ uống, cà phê, cocktail theo công thức chuẩn; quản lý máy pha và nguyên liệu quầy bar.',
+  ),
+
+  // 📦 Quản Trị & Kho Vận
+  _FnbRoleSuggestion(
+    name: 'Quản lý nhà hàng',
+    category: 'Quản Trị & Kho Vận',
+    icon: 'manage_accounts',
+    colorValue: Color(0xFF4F46E5),
+    modules: [
+      'pos',
+      'kho',
+      'kho_pro',
+      'ban',
+      'kitchen',
+      'finance',
+      'report',
+      'staff',
+      'chamcong',
+      'tinhluong',
+      'kay_ops',
+      'log_viewer',
+    ],
+    description:
+        'Giám sát vận hành toàn bộ ca trực, phân ca nhân viên, xử lý sự cố khách hàng và theo dõi báo cáo doanh thu.',
+  ),
+  _FnbRoleSuggestion(
+    name: 'Thủ kho',
+    category: 'Quản Trị & Kho Vận',
+    icon: 'inventory',
+    colorValue: Color(0xFF0D9488),
+    modules: ['kho', 'kho_pro', 'chamcong'],
+    description:
+        'Kiểm đếm nhập xuất hàng hóa nguyên vật liệu, lập phiếu kiểm kê tồn kho định kỳ và cảnh báo hết hàng.',
+  ),
+
+  // 💼 Văn Phòng & Phụ Trợ
+  _FnbRoleSuggestion(
+    name: 'Kế toán / Thu chi',
+    category: 'Văn Phòng & Phụ Trợ',
+    icon: 'payments',
+    colorValue: Color(0xFF16A34A),
+    modules: ['finance', 'report', 'tinhluong', 'chamcong'],
+    description:
+        'Kiểm tra doanh thu, chi phí, theo dõi sổ quỹ thu chi thực tế và đối soát các kênh thanh toán điện tử.',
+  ),
+  _FnbRoleSuggestion(
+    name: 'Bảo vệ',
+    category: 'Văn Phòng & Phụ Trợ',
+    icon: 'security',
+    colorValue: Color(0xFF374151),
+    modules: ['chamcong'],
+    description:
+        'Trông giữ phương tiện xe cộ của khách, đảm bảo an ninh trật tự nhà hàng và hỗ trợ dắt xe cho khách.',
+  ),
+  _FnbRoleSuggestion(
+    name: 'Tạp vụ',
+    category: 'Văn Phòng & Phụ Trợ',
+    icon: 'cleaning_services',
+    colorValue: Color(0xFF64748B),
+    modules: ['chamcong'],
+    description:
+        'Vệ sinh bàn ghế sau khi khách dùng bữa, dọn dẹp bát đĩa dơ và giữ sạch sẽ khu vực vệ sinh nhà hàng.',
+  ),
+];
+
+_FnbRoleSuggestion? _getMatchedSuggestion(String name) {
+  final clean = name.trim().toLowerCase();
+  if (clean.isEmpty) return null;
+  // 1. Exact name match
+  for (final s in _kFnbRoleSuggestions) {
+    if (s.name.toLowerCase() == clean) return s;
+  }
+  // 2. Substring match
+  for (final s in _kFnbRoleSuggestions) {
+    final sClean = s.name.toLowerCase();
+    if (clean.contains(sClean) || sClean.contains(clean)) return s;
+  }
+  // 3. Canonical match
+  final canon = StaffService.canonicalRole(name);
+  if (canon != 'custom' && canon != 'owner') {
+    for (final s in _kFnbRoleSuggestions) {
+      if (StaffService.canonicalRole(s.name) == canon) return s;
+    }
+  }
+  return null;
+}
+
 // ── Template gợi ý ────────────────────────────────────────────────────────────
 const _kTemplates = [
-  _RoleTemplate('Thu ngân', 'point_of_sale', '#1D4ED8', ['pos', 'ban']),
-  _RoleTemplate('Phục vụ', 'room_service', '#065F46', ['ban', 'kitchen']),
-  _RoleTemplate('Bếp', 'kitchen', '#DC2626', ['kitchen']),
-  _RoleTemplate('Kho hàng', 'inventory', '#92400E', ['kho']),
-  _RoleTemplate('Quản lý', 'manage_accounts', '#7C3AED', [
+  _RoleTemplate('Thu ngân', 'point_of_sale', '#1D4ED8', ['pos', 'ban', 'finance', 'bill_printer', 'chamcong']),
+  _RoleTemplate('Phục vụ', 'room_service', '#059669', ['pos', 'ban', 'kitchen', 'chamcong']),
+  _RoleTemplate('Bếp', 'kitchen', '#EA580C', ['kitchen', 'kho', 'chamcong']),
+  _RoleTemplate('Kho hàng', 'inventory', '#0D9488', ['kho', 'kho_pro', 'chamcong']),
+  _RoleTemplate('Quản lý', 'manage_accounts', '#4F46E5', [
     'pos',
     'kho',
+    'kho_pro',
     'ban',
     'kitchen',
     'finance',
     'report',
+    'staff',
+    'chamcong',
+    'tinhluong',
+    'kay_ops',
+    'log_viewer',
   ]),
-  _RoleTemplate('Barista', 'local_cafe', '#B45309', ['pos', 'ban']),
-  _RoleTemplate('Bảo vệ', 'security', '#374151', []),
-  _RoleTemplate('Giao hàng', 'delivery', '#0369A1', ['pos']),
+  _RoleTemplate('Barista', 'local_cafe', '#854D0E', ['kitchen', 'pos', 'chamcong']),
+  _RoleTemplate('Bảo vệ', 'security', '#374151', ['chamcong']),
+  _RoleTemplate('Giao hàng', 'delivery', '#0284C7', ['pos', 'chamcong']),
 ];
 
 class _RoleTemplate {
@@ -146,8 +425,12 @@ class RoleManagerScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'role_manager_fab',
-        onPressed: () =>
-            _showRoleSheet(context, ref, storeId: session?.storeId ?? ''),
+        onPressed: () => _showRoleSheet(
+          context,
+          ref,
+          storeId: session?.storeId ?? '',
+          existingRoles: rolesAsync.value ?? [],
+        ),
         backgroundColor: _kNavy,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: const Text(
@@ -193,6 +476,7 @@ class RoleManagerScreen extends ConsumerWidget {
     WidgetRef ref, {
     required String storeId,
     StoreRole? editing,
+    List<StoreRole> existingRoles = const [],
   }) {
     showModalBottomSheet(
       context: ctx,
@@ -201,6 +485,9 @@ class RoleManagerScreen extends ConsumerWidget {
       builder: (_) => _RoleEditSheet(
         storeId: storeId,
         editing: editing,
+        existingRoles: existingRoles.isNotEmpty
+            ? existingRoles
+            : (ref.read(storeRolesProvider).value ?? []),
         onSaved: () => ref.invalidate(storeRolesProvider),
       ),
     );
@@ -308,6 +595,23 @@ class _TemplateChipState extends State<_TemplateChip> {
                       color: _color,
                     ),
                   ),
+                  const SizedBox(width: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: _color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      StaffService.canonicalRole(widget.template.name),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'monospace',
+                        color: _color,
+                      ),
+                    ),
+                  ),
                 ],
               ),
       ),
@@ -379,6 +683,7 @@ class _RoleCardState extends ConsumerState<_RoleCard> {
     final role = widget.role;
     final color = role.colorValue;
     final icon = _kIcons[role.icon] ?? Icons.badge_rounded;
+    final info = _getCanonicalInfo(role.name);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -407,21 +712,56 @@ class _RoleCardState extends ConsumerState<_RoleCard> {
             ),
             child: Icon(icon, color: color, size: 20),
           ),
-          title: Text(
-            role.name,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
+          title: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  role.name,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: info.color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: info.color.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(info.icon, size: 11, color: info.color),
+                    const SizedBox(width: 4),
+                    Text(
+                      info.isSpecial
+                          ? '${info.viName} [${info.code}]'
+                          : 'tùy chỉnh [${info.code}]',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: info.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           subtitle: Text(
-            '${_perms.length}/${_kModuleNames.length} modules',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: color.withValues(alpha: 0.7),
+            '${_perms.length}/${_kModuleNames.length} modules • ${info.description}',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: _kMuted,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
@@ -483,10 +823,11 @@ class _RoleCardState extends ConsumerState<_RoleCard> {
                       final enabled = _perms.contains(e.key);
                       return GestureDetector(
                         onTap: () => setState(() {
-                          if (enabled)
+                          if (enabled) {
                             _perms.remove(e.key);
-                          else
+                          } else {
                             _perms.add(e.key);
+                          }
                         }),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
@@ -616,6 +957,7 @@ class _RoleCardState extends ConsumerState<_RoleCard> {
   }
 
   void _openEdit(BuildContext ctx) {
+    final existingRoles = ref.read(storeRolesProvider).value ?? [];
     showModalBottomSheet(
       context: ctx,
       isScrollControlled: true,
@@ -623,6 +965,7 @@ class _RoleCardState extends ConsumerState<_RoleCard> {
       builder: (_) => _RoleEditSheet(
         storeId: widget.storeId,
         editing: widget.role,
+        existingRoles: existingRoles,
         onSaved: widget.onChanged,
       ),
     );
@@ -678,10 +1021,12 @@ class _RoleCardState extends ConsumerState<_RoleCard> {
 class _RoleEditSheet extends StatefulWidget {
   final String storeId;
   final StoreRole? editing;
+  final List<StoreRole> existingRoles;
   final VoidCallback onSaved;
   const _RoleEditSheet({
     required this.storeId,
     this.editing,
+    this.existingRoles = const [],
     required this.onSaved,
   });
 
@@ -696,6 +1041,7 @@ class _RoleEditSheetState extends State<_RoleEditSheet> {
   late List<String> _modules;
   bool _saving = false;
   String? _error;
+  _FnbRoleSuggestion? _selectedSuggestion;
 
   // HSL sliders
   late double _hue, _sat, _lit;
@@ -705,6 +1051,7 @@ class _RoleEditSheetState extends State<_RoleEditSheet> {
     super.initState();
     final e = widget.editing;
     _nameCtrl = TextEditingController(text: e?.name ?? '');
+    _nameCtrl.addListener(_onNameChanged);
     _icon = e?.icon ?? 'badge';
     _color = e?.colorValue ?? const Color(0xFF1C2151);
     _modules = List.from(e?.modules ?? []);
@@ -712,12 +1059,41 @@ class _RoleEditSheetState extends State<_RoleEditSheet> {
     _hue = hsl.hue;
     _sat = hsl.saturation;
     _lit = hsl.lightness;
+    if (_nameCtrl.text.trim().isNotEmpty) {
+      _selectedSuggestion = _getMatchedSuggestion(_nameCtrl.text);
+    }
   }
 
   @override
   void dispose() {
+    _nameCtrl.removeListener(_onNameChanged);
     _nameCtrl.dispose();
     super.dispose();
+  }
+
+  void _onNameChanged() {
+    setState(() {
+      if (_error != null) _error = null;
+      final matched = _getMatchedSuggestion(_nameCtrl.text);
+      if (matched != null) {
+        _selectedSuggestion = matched;
+      }
+    });
+  }
+
+  void _applySuggestion(_FnbRoleSuggestion s) {
+    setState(() {
+      _nameCtrl.text = s.name;
+      _icon = s.icon;
+      _color = s.colorValue;
+      final hsl = HSLColor.fromColor(_color);
+      _hue = hsl.hue;
+      _sat = hsl.saturation;
+      _lit = hsl.lightness;
+      _modules = List.from(s.modules);
+      _selectedSuggestion = s;
+      _error = null;
+    });
   }
 
   void _updateColor() {
@@ -774,12 +1150,18 @@ class _RoleEditSheetState extends State<_RoleEditSheet> {
             TextField(
               controller: _nameCtrl,
               decoration: InputDecoration(
-                hintText: 'VD: Barista, Lễ tân, Kế toán...',
+                hintText: 'VD: Barista, Lễ tân, Kế toán, Thu ngân...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
+            const SizedBox(height: 14),
+            _buildFnbSuggestionChips(),
+            if (_nameCtrl.text.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildCanonicalRecognitionBox(),
+            ],
             if (_error != null) ...[
               const SizedBox(height: 6),
               Text(
@@ -918,45 +1300,70 @@ class _RoleEditSheetState extends State<_RoleEditSheet> {
                 ),
                 title: Text(e.value.$1, style: const TextStyle(fontSize: 13)),
                 onChanged: (v) => setState(() {
-                  if (v == true)
+                  if (v == true) {
                     _modules.add(e.key);
-                  else
+                  } else {
                     _modules.remove(e.key);
+                  }
                 }),
               );
             }),
             const SizedBox(height: 20),
 
             // ── Nút lưu ──
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _saving ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _color,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: _saving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        widget.editing == null ? 'Tạo vai trò' : 'Lưu thay đổi',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
+            Builder(
+              builder: (ctx) {
+                final name = _nameCtrl.text.trim();
+                final info = _getCanonicalInfo(name);
+                final otherRoles = widget.existingRoles
+                    .where((r) => r.id != widget.editing?.id)
+                    .toList();
+                final exactDup = otherRoles.firstWhereOrNull(
+                  (r) => r.name.trim().toLowerCase() == name.toLowerCase(),
+                );
+                final canSubmit = !_saving &&
+                    name.isNotEmpty &&
+                    !info.isOwner &&
+                    exactDup == null;
+
+                return SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: canSubmit ? _save : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _color,
+                      disabledBackgroundColor: Colors.grey.shade300,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
-              ),
+                    ),
+                    child: _saving
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            widget.editing == null
+                                ? (info.isSpecial && name.isNotEmpty
+                                    ? 'Tạo vai trò [${info.code}]'
+                                    : 'Tạo vai trò')
+                                : (info.isSpecial && name.isNotEmpty
+                                    ? 'Lưu thay đổi [${info.code}]'
+                                    : 'Lưu thay đổi'),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -964,10 +1371,558 @@ class _RoleEditSheetState extends State<_RoleEditSheet> {
     );
   }
 
+  Widget _buildFnbSuggestionChips() {
+    final categories = <String, List<_FnbRoleSuggestion>>{};
+    for (final s in _kFnbRoleSuggestions) {
+      categories.putIfAbsent(s.category, () => []).add(s);
+    }
+
+    const categoryIcons = <String, IconData>{
+      'Vận hành Quầy & Bàn': Icons.table_restaurant_rounded,
+      'Bếp & Pha Chế': Icons.soup_kitchen_rounded,
+      'Quản Trị & Kho Vận': Icons.admin_panel_settings_rounded,
+      'Văn Phòng & Phụ Trợ': Icons.business_center_rounded,
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded, size: 15, color: Color(0xFF4F46E5)),
+              const SizedBox(width: 6),
+              const Text(
+                'Đề xuất vai trò F&B thực tế',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: _kNavy,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '1-chạm thiết lập',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...categories.entries.map((cat) {
+            final catIcon = categoryIcons[cat.key] ?? Icons.category_rounded;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(catIcon, size: 12, color: Colors.grey.shade600),
+                      const SizedBox(width: 4),
+                      Text(
+                        cat.key,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.grey.shade700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: cat.value.map((s) {
+                      final exactMatch = widget.existingRoles.firstWhereOrNull(
+                        (r) => r.name.trim().toLowerCase() == s.name.trim().toLowerCase(),
+                      );
+                      final isCreated = exactMatch != null;
+                      final isSelected =
+                          _nameCtrl.text.trim().toLowerCase() == s.name.trim().toLowerCase();
+                      final chipColor = s.colorValue;
+                      final icon = _kIcons[s.icon] ?? Icons.badge_rounded;
+
+                      return InkWell(
+                        onTap: () => _applySuggestion(s),
+                        borderRadius: BorderRadius.circular(10),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? chipColor.withValues(alpha: 0.15)
+                                : (isCreated
+                                    ? Colors.grey.shade100
+                                    : chipColor.withValues(alpha: 0.06)),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isSelected
+                                  ? chipColor
+                                  : (isCreated
+                                      ? Colors.grey.shade300
+                                      : chipColor.withValues(alpha: 0.3)),
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                icon,
+                                size: 14,
+                                color: isSelected
+                                    ? chipColor
+                                    : (isCreated ? Colors.grey.shade600 : chipColor),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                s.name,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                  color: isSelected
+                                      ? chipColor
+                                      : (isCreated ? Colors.grey.shade800 : chipColor),
+                                ),
+                              ),
+                              if (isCreated) ...[
+                                const SizedBox(width: 5),
+                                Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade200,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    '✓ Đã có',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCanonicalRecognitionBox() {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) return const SizedBox.shrink();
+
+    final canon = StaffService.canonicalRole(name);
+    final info = _getCanonicalInfo(name);
+    final matchedSuggestion = _selectedSuggestion ?? _getMatchedSuggestion(name);
+
+    final otherRoles = widget.existingRoles
+        .where((r) => r.id != widget.editing?.id)
+        .toList();
+    final exactDup = otherRoles.firstWhereOrNull(
+      (r) => r.name.trim().toLowerCase() == name.toLowerCase(),
+    );
+    final standardCanonDup = (info.isSpecial && !info.isOwner)
+        ? otherRoles.firstWhereOrNull((r) => r.canonicalRole == canon)
+        : null;
+
+    if (info.isOwner) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red.shade300),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.block_rounded, color: Colors.red.shade700, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '⛔ Không thể tạo vai trò "Chủ quán" (owner)',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.red.shade900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Vai trò "Chủ quán" là quyền tối cao của chủ sở hữu tài khoản, được hệ thống quản lý bất biến và không thể tạo hoặc chỉnh sửa qua danh mục này.',
+                    style: TextStyle(fontSize: 12, color: Colors.red.shade800),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (exactDup != null) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red.shade300),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.error_outline_rounded, color: Colors.red.shade700, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '⚠️ Trùng lặp: Tên vai trò "${exactDup.name}" đã tồn tại',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.red.shade900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Quán đã có vai trò mang tên "${exactDup.name}". Vui lòng đặt tên khác để phân biệt.',
+                    style: TextStyle(fontSize: 12, color: Colors.red.shade800),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final displayColor = matchedSuggestion?.colorValue ?? (info.isSpecial ? info.color : _kNavy);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: displayColor.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: displayColor.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: displayColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  info.icon,
+                  size: 16,
+                  color: displayColor,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        Text(
+                          info.isSpecial ? '⚡ Nhận diện chuẩn: ' : '✨ Nhận diện: ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        Text(
+                          info.isSpecial ? info.viName : 'Vai trò mở rộng riêng',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: displayColor,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: displayColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'mã: ${info.code}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'monospace',
+                              color: displayColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      info.description,
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Job Guidance Card (Mô tả công việc & trách nhiệm)
+          if (matchedSuggestion != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: displayColor.withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.lightbulb_rounded, size: 14, color: Color(0xFFD97706)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Mô tả công việc & Trách nhiệm (${matchedSuggestion.name}):',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: _kNavy,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    matchedSuggestion.description,
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF334155), height: 1.4),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      const Text(
+                        'Module gợi ý:',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kMuted),
+                      ),
+                      ...matchedSuggestion.modules.map((m) {
+                        final modInfo = _kModuleNames[m];
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: displayColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (modInfo != null) ...[
+                                Icon(modInfo.$2, size: 11, color: displayColor),
+                                const SizedBox(width: 3),
+                                Text(
+                                  modInfo.$1,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: displayColor,
+                                  ),
+                                ),
+                              ] else
+                                Text(m, style: TextStyle(fontSize: 10, color: displayColor)),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          if (standardCanonDup != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.shade300),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 16, color: Colors.amber.shade900),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Lưu ý: Quán đã có vai trò "${standardCanonDup.name}" cùng mã [${info.code}]. Hai vai trò này sẽ cùng chia sẻ quyền hạn nghiệp vụ chuẩn.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.amber.shade900,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          if (matchedSuggestion != null &&
+              (_modules.length != matchedSuggestion.modules.length ||
+                  !_modules.every(matchedSuggestion.modules.contains) ||
+                  _color != matchedSuggestion.colorValue ||
+                  _icon != matchedSuggestion.icon)) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: InkWell(
+                onTap: () => _applySuggestion(matchedSuggestion),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: displayColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: displayColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_awesome_rounded, size: 13, color: displayColor),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Áp dụng toàn bộ cấu hình gợi ý cho ${matchedSuggestion.name}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: displayColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ] else if (info.isSpecial && widget.editing == null && matchedSuggestion == null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: InkWell(
+                onTap: () {
+                  final defaultMods = kDefaultPerms[info.code] ?? [];
+                  setState(() {
+                    _modules = List.from(defaultMods);
+                    _color = info.color;
+                    final hsl = HSLColor.fromColor(_color);
+                    _hue = hsl.hue;
+                    _sat = hsl.saturation;
+                    _lit = hsl.lightness;
+                    if (info.code == 'cashier') _icon = 'point_of_sale';
+                    if (info.code == 'waiter') _icon = 'room_service';
+                    if (info.code == 'kitchen') _icon = 'kitchen';
+                    if (info.code == 'stock') _icon = 'inventory';
+                    if (info.code == 'manager') _icon = 'manage_accounts';
+                  });
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: info.color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: info.color.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_awesome_rounded, size: 13, color: info.color),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Áp dụng module & màu gợi ý cho ${info.viName}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: info.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Nhập tên vai trò');
+      setState(() => _error = 'Vui lòng nhập tên vai trò');
+      return;
+    }
+    final info = _getCanonicalInfo(name);
+    if (info.isOwner) {
+      setState(() => _error = 'Không thể tạo hoặc gán vai trò Chủ quán (owner)');
+      return;
+    }
+    final otherRoles = widget.existingRoles
+        .where((r) => r.id != widget.editing?.id)
+        .toList();
+    final exactDup = otherRoles.firstWhereOrNull(
+      (r) => r.name.trim().toLowerCase() == name.toLowerCase(),
+    );
+    if (exactDup != null) {
+      setState(() => _error = 'Tên vai trò "${exactDup.name}" đã tồn tại trong quán');
       return;
     }
     setState(() {
@@ -1011,11 +1966,12 @@ class _RoleEditSheetState extends State<_RoleEditSheet> {
         widget.onSaved();
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _saving = false;
           _error = '$e';
         });
+      }
     }
   }
 }

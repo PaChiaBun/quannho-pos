@@ -15,7 +15,6 @@ import '../core/services/staff_service.dart'
         StaffService,
         ShiftRecord,
         StoreRole,
-        AddStaffResult,
         PermLog,
         StoreRoleService,
         kAllActions,
@@ -57,6 +56,28 @@ const _moduleNames = {
   'chamcong': ('Chấm công', Icons.fingerprint_rounded),
 };
 
+// ── Helper: tìm StoreRole khớp với role key/canonical ───────────────────────────
+StoreRole? _findMatchingStoreRole(String roleKey, List<StoreRole> storeRoles) {
+  if (roleKey.isEmpty) return null;
+  final keyClean = roleKey.toLowerCase().trim();
+  final canon = StaffService.canonicalRole(roleKey).toLowerCase().trim();
+
+  // 1. Khớp chính xác case-insensitive theo name
+  for (final r in storeRoles) {
+    if (r.name.toLowerCase().trim() == keyClean) return r;
+  }
+
+  // 2. Khớp qua canonicalRole
+  for (final r in storeRoles) {
+    final rCanon = StaffService.canonicalRole(r.name).toLowerCase().trim();
+    if (rCanon == canon || rCanon == keyClean || r.name.toLowerCase().trim() == canon) {
+      return r;
+    }
+  }
+
+  return null;
+}
+
 // ── Helper: tra cứu thông tin hiển thị role ───────────────────────────────────
 // Ưu tiên store_roles (custom), fallback về _roles cũ để tương thích ngược
 ({String name, Color color, IconData icon}) _resolveRole(
@@ -64,66 +85,68 @@ const _moduleNames = {
   List<StoreRole> storeRoles,
 ) {
   final canon = StaffService.canonicalRole(roleKey);
-  // 1. Tìm trong store_roles (khớp tên trực tiếp hoặc qua canonicalRole)
-  for (final r in storeRoles) {
-    if (r.name == roleKey || StaffService.canonicalRole(r.name) == canon) {
-      final icon =
-          <String, IconData>{
-            'badge': Icons.badge_rounded,
-            'manage_accounts': Icons.manage_accounts_rounded,
-            'support_agent': Icons.support_agent_rounded,
-            'security': Icons.security_rounded,
-            'supervisor': Icons.supervisor_account_rounded,
-            'person': Icons.person_rounded,
-            'people': Icons.people_rounded,
-            'groups': Icons.groups_rounded,
-            'kitchen': Icons.local_fire_department_rounded,
-            'local_cafe': Icons.local_cafe_rounded,
-            'restaurant': Icons.restaurant_rounded,
-            'room_service': Icons.room_service_rounded,
-            'lunch_dining': Icons.lunch_dining_rounded,
-            'bakery': Icons.bakery_dining_rounded,
-            'ramen': Icons.ramen_dining_rounded,
-            'wine_bar': Icons.wine_bar_rounded,
-            'local_bar': Icons.local_bar_rounded,
-            'icecream': Icons.icecream_rounded,
-            'cake': Icons.cake_rounded,
-            'point_of_sale': Icons.point_of_sale_rounded,
-            'storefront': Icons.storefront_rounded,
-            'shopping_cart': Icons.shopping_cart_rounded,
-            'receipt': Icons.receipt_long_rounded,
-            'payments': Icons.payments_rounded,
-            'local_atm': Icons.local_atm_rounded,
-            'inventory': Icons.inventory_2_rounded,
-            'warehouse': Icons.warehouse_rounded,
-            'delivery': Icons.delivery_dining_rounded,
-            'local_shipping': Icons.local_shipping_rounded,
-            'forklift': Icons.warehouse_rounded,
-            'table_bar': Icons.table_bar_rounded,
-            'chair': Icons.chair_rounded,
-            'cleaning': Icons.cleaning_services_rounded,
-            'build': Icons.build_rounded,
-            'handyman': Icons.handyman_rounded,
-            'plumbing': Icons.plumbing_rounded,
-            'electrical': Icons.electrical_services_rounded,
-            'computer': Icons.computer_rounded,
-            'design_services': Icons.design_services_rounded,
-            'star': Icons.star_rounded,
-            'diamond': Icons.diamond_rounded,
-            'emoji_events': Icons.emoji_events_rounded,
-            'school': Icons.school_rounded,
-            'medical': Icons.medical_services_rounded,
-            'sports': Icons.sports_rounded,
-          }[r.icon] ??
-          Icons.badge_rounded;
-      return (name: r.name, color: r.colorValue, icon: icon);
-    }
+  // 1. Tìm trong store_roles qua helper chuẩn hóa
+  final matched = _findMatchingStoreRole(roleKey, storeRoles);
+  if (matched != null) {
+    final icon =
+        <String, IconData>{
+          'badge': Icons.badge_rounded,
+          'manage_accounts': Icons.manage_accounts_rounded,
+          'support_agent': Icons.support_agent_rounded,
+          'security': Icons.security_rounded,
+          'supervisor': Icons.supervisor_account_rounded,
+          'person': Icons.person_rounded,
+          'people': Icons.people_rounded,
+          'groups': Icons.groups_rounded,
+          'kitchen': Icons.local_fire_department_rounded,
+          'local_cafe': Icons.local_cafe_rounded,
+          'restaurant': Icons.restaurant_rounded,
+          'room_service': Icons.room_service_rounded,
+          'lunch_dining': Icons.lunch_dining_rounded,
+          'bakery': Icons.bakery_dining_rounded,
+          'ramen': Icons.ramen_dining_rounded,
+          'wine_bar': Icons.wine_bar_rounded,
+          'local_bar': Icons.local_bar_rounded,
+          'icecream': Icons.icecream_rounded,
+          'cake': Icons.cake_rounded,
+          'point_of_sale': Icons.point_of_sale_rounded,
+          'storefront': Icons.storefront_rounded,
+          'shopping_cart': Icons.shopping_cart_rounded,
+          'receipt': Icons.receipt_long_rounded,
+          'payments': Icons.payments_rounded,
+          'local_atm': Icons.local_atm_rounded,
+          'inventory': Icons.inventory_2_rounded,
+          'warehouse': Icons.warehouse_rounded,
+          'delivery': Icons.delivery_dining_rounded,
+          'local_shipping': Icons.local_shipping_rounded,
+          'forklift': Icons.warehouse_rounded,
+          'table_bar': Icons.table_bar_rounded,
+          'chair': Icons.chair_rounded,
+          'cleaning': Icons.cleaning_services_rounded,
+          'build': Icons.build_rounded,
+          'handyman': Icons.handyman_rounded,
+          'plumbing': Icons.plumbing_rounded,
+          'electrical': Icons.electrical_services_rounded,
+          'computer': Icons.computer_rounded,
+          'design_services': Icons.design_services_rounded,
+          'star': Icons.star_rounded,
+          'diamond': Icons.diamond_rounded,
+          'emoji_events': Icons.emoji_events_rounded,
+          'school': Icons.school_rounded,
+          'medical': Icons.medical_services_rounded,
+          'sports': Icons.sports_rounded,
+        }[matched.icon] ??
+        Icons.badge_rounded;
+    return (name: matched.name, color: matched.colorValue, icon: icon);
   }
   // 2. Fallback _roles cũ (cashier, kitchen, waiter...)
-  final old = _roles[canon] ?? _roles[roleKey];
+  final old = _roles[canon] ?? _roles[roleKey.toLowerCase().trim()];
   if (old != null) return (name: old.$1, color: old.$3, icon: old.$2);
   // 3. Default
-  return (name: roleKey, color: _kNavy, icon: Icons.badge_rounded);
+  final displayRole = roleKey.isNotEmpty
+      ? roleKey[0].toUpperCase() + roleKey.substring(1)
+      : roleKey;
+  return (name: displayRole, color: _kNavy, icon: Icons.badge_rounded);
 }
 
 // ── Providers ─────────────────────────────────────────────────────────────────
@@ -215,8 +238,8 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
   @override
   void initState() {
     super.initState();
-    final isManager = _isManager();
-    _tab = TabController(length: isManager ? 2 : 1, vsync: this);
+    final isOwner = _isOwner();
+    _tab = TabController(length: isOwner ? 2 : 1, vsync: this);
     _tab.addListener(() {
       if (mounted) setState(() => _tabIndex = _tab.index);
     });
@@ -226,11 +249,15 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
   Future<void> _startSync() async {
     final session = ref.read(sessionProvider);
     if (session?.storeId == null) return;
+    final r = session?.role.toLowerCase().trim() ?? '';
     final isManager =
         session!.isOwner ||
-        session.role == 'owner' ||
-        session.role == 'manager' ||
-        session.role.toLowerCase() == 'quản lý';
+        r == 'owner' ||
+        r == 'chủ quán' ||
+        r == 'chu quan' ||
+        r == 'manager' ||
+        r == 'quản lý' ||
+        r == 'quan ly';
     if (isManager) return; // manager broadcast, không cần lắng nghe
     _syncService = StaffSyncService(
       storeId: session.storeId!,
@@ -320,16 +347,20 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
     });
   }
 
-  bool _isManager() {
+  bool _isOwner() {
     final s = ref.read(sessionProvider);
-    return s?.isOwner == true ||
-        s?.role == 'owner' ||
-        s?.role == 'manager' ||
-        s?.role.toLowerCase() == 'quản lý';
+    final r = s?.role.toLowerCase().trim() ?? '';
+    return s?.isOwner == true || r == 'owner' || r == 'chủ quán' || r == 'chu quan';
   }
 
-  void _syncTabController(bool isManager) {
-    final desiredLength = isManager ? 2 : 1;
+  bool _isManager() {
+    final s = ref.read(sessionProvider);
+    final r = s?.role.toLowerCase().trim() ?? '';
+    return _isOwner() || r == 'manager' || r == 'quản lý' || r == 'quan ly';
+  }
+
+  void _syncTabController(bool isOwner) {
+    final desiredLength = isOwner ? 2 : 1;
     if (_tab.length == desiredLength) return;
 
     final previous = _tab;
@@ -356,20 +387,20 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
-    final isManager =
-        session?.isOwner == true ||
-        session?.role == 'owner' ||
-        session?.role == 'manager' ||
-        session?.role.toLowerCase() == 'quản lý';
-    _syncTabController(isManager);
+    final r = session?.role.toLowerCase().trim() ?? '';
+    final isOwner = session?.isOwner == true || r == 'owner' || r == 'chủ quán' || r == 'chu quan';
+    final isManager = isOwner || r == 'manager' || r == 'quản lý' || r == 'quan ly';
+    _syncTabController(isOwner);
 
     final mainContent = NestedScrollView(
-      headerSliverBuilder: (_, __) => [_buildAppBar(isManager)],
+      headerSliverBuilder: (_, __) => [
+        _buildAppBar(isOwner: isOwner, isManager: isManager),
+      ],
       body: TabBarView(
         controller: _tab,
         children: [
           _StaffListTab(isManager: isManager),
-          if (isManager) _PermissionsTab(),
+          if (isOwner) const _PermissionsTab(),
         ],
       ),
     );
@@ -394,27 +425,23 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
           return mainContent;
         },
       ),
-      floatingActionButton: isManager
+      floatingActionButton: (_tabIndex == 1 && isOwner)
           ? FloatingActionButton.extended(
               heroTag: 'nhan_vien_fab',
-              onPressed: () => _tabIndex == 0
-                  ? _showAddStaffSheet(context)
-                  : Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const RoleManagerScreen(),
-                      ),
-                    ).then((_) => ref.invalidate(storeRolesProvider)),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RoleManagerScreen(),
+                ),
+              ).then((_) => ref.invalidate(storeRolesProvider)),
               backgroundColor: _kNavy,
-              icon: Icon(
-                _tabIndex == 0
-                    ? Icons.person_add_rounded
-                    : Icons.manage_accounts_rounded,
+              icon: const Icon(
+                Icons.manage_accounts_rounded,
                 color: Colors.white,
               ),
-              label: Text(
-                _tabIndex == 0 ? 'Thêm nhân viên' : 'Quản lý vai trò',
-                style: const TextStyle(
+              label: const Text(
+                'Quản lý vai trò',
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                 ),
@@ -424,7 +451,7 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
     );
   }
 
-  SliverAppBar _buildAppBar(bool isManager) {
+  SliverAppBar _buildAppBar({required bool isOwner, required bool isManager}) {
     return SliverAppBar(
       pinned: true,
       expandedHeight: 120,
@@ -483,21 +510,8 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
         labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
         tabs: [
           const Tab(text: 'Nhân viên'),
-          if (isManager) const Tab(text: 'Phân quyền'),
+          if (isOwner) const Tab(text: 'Phân quyền'),
         ],
-      ),
-    );
-  }
-
-  void _showAddStaffSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _AddStaffSheet(
-        onAdded: () {
-          ref.invalidate(_staffListProvider);
-        },
       ),
     );
   }
@@ -509,8 +523,6 @@ bool _isUnassignedStaff(StaffMember m, List<StoreRole> storeRoles) {
   if (r.isEmpty ||
       r == 'none' ||
       r == 'unassigned' ||
-      r ==
-          'waiter' || // Role mặc định hệ thống khi nhân viên mới xin vào quán qua mã
       r.contains('chưa phân') ||
       r.contains('chưa gán') ||
       r.contains('chưa có') ||
@@ -622,7 +634,7 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
           final matchRole =
               _roleFilter == 'all' ||
               (_roleFilter == 'unassigned' && isUnassigned) ||
-              m.role == _roleFilter ||
+              m.role.toLowerCase().trim() == _roleFilter.toLowerCase().trim() ||
               StaffService.canonicalRole(m.role) ==
                   StaffService.canonicalRole(_roleFilter);
           final matchSearch =
@@ -751,7 +763,7 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
                           if (all.isEmpty && widget.isManager) ...[
                             const SizedBox(height: 6),
                             const Text(
-                              'Nhấn + Thêm nhân viên để bắt đầu',
+                              'Nhân viên quét mã QR hoặc nhập mã quán để tham gia',
                               style: TextStyle(fontSize: 13, color: _kMuted),
                             ),
                           ],
@@ -842,7 +854,7 @@ class _EmptyStaff extends StatelessWidget {
         if (isManager) const SizedBox(height: 8),
         if (isManager)
           const Text(
-            'Nhấn + Thêm nhân viên để bắt đầu',
+            'Nhân viên quét mã QR hoặc nhập mã quán để tham gia',
             style: TextStyle(fontSize: 13, color: _kMuted),
           ),
       ],
@@ -1123,278 +1135,6 @@ class _StaffCard extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SHEET: THÊM NHÂN VIÊN
-// ─────────────────────────────────────────────────────────────────────────────
-class _AddStaffSheet extends ConsumerStatefulWidget {
-  final VoidCallback onAdded;
-  const _AddStaffSheet({required this.onAdded});
-  @override
-  ConsumerState<_AddStaffSheet> createState() => _AddStaffSheetState();
-}
-
-class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
-  final _nameCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
-  String _role = 'cashier';
-  bool _loading = false;
-  String? _error;
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    _phoneCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Thêm nhân viên',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: _kNavy,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Nhập tên và số điện thoại để gán nhân viên vào quán',
-            style: TextStyle(fontSize: 12, color: _kMuted),
-          ),
-          const SizedBox(height: 20),
-          // Name field
-          TextField(
-            controller: _nameCtrl,
-            decoration: InputDecoration(
-              labelText: 'Họ và tên nhân viên',
-              prefixIcon: const Icon(Icons.person_rounded),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          // Phone field
-          TextField(
-            controller: _phoneCtrl,
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              labelText: 'Số điện thoại nhân viên',
-              prefixIcon: const Icon(Icons.phone_rounded),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          // Role picker — load từ store_roles động
-          ref
-              .watch(storeRolesProvider)
-              .when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (roles) {
-                  // Đảm bảo giá trị đang chọn còn hợp lệ
-                  if (roles.isNotEmpty && !roles.any((r) => r.name == _role)) {
-                    SchedulerBinding.instance.addPostFrameCallback(
-                      (_) => setState(() => _role = roles.first.name),
-                    );
-                  }
-                  if (roles.isEmpty) {
-                    return Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.orange.shade200),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(
-                            Icons.warning_amber_rounded,
-                            size: 16,
-                            color: Colors.orange,
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Chưa có vai trò nào. Tạo vai trò trong tab Phân quyền trước.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.orange,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return DropdownButtonFormField<String>(
-                    value: roles.any((r) => r.name == _role)
-                        ? _role
-                        : roles.first.name,
-                    decoration: InputDecoration(
-                      labelText: 'Vai trò',
-                      prefixIcon: const Icon(Icons.badge_rounded),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    items: roles
-                        .where((r) => r.name.toLowerCase() != 'owner')
-                        .map(
-                          (r) => DropdownMenuItem(
-                            value: r.name,
-                            child: Text(r.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) setState(() => _role = v);
-                    },
-                  );
-                },
-              ),
-          if (_error != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              _error!,
-              style: const TextStyle(color: Colors.red, fontSize: 13),
-            ),
-          ],
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _loading ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _kNavy,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: _loading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Thêm vào quán',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _submit() async {
-    final phone = _phoneCtrl.text.trim();
-    if (phone.isEmpty) {
-      setState(() => _error = 'Nhập số điện thoại');
-      return;
-    }
-
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    try {
-      final session = ref.read(sessionProvider);
-      if (session?.storeId == null) {
-        setState(() {
-          _loading = false;
-          _error = 'Không tìm thấy thông tin quán. Vui lòng đăng nhập lại.';
-        });
-        return;
-      }
-      final result = await StaffService.addStaffByPhone(
-        storeId: session!.storeId!,
-        phone: phone,
-        name: _nameCtrl.text.trim(),
-        role: _role,
-        addedByUserId: session.userId,
-      );
-      if (!mounted) return;
-      setState(() => _loading = false);
-      if (result.isSuccess) {
-        widget.onAdded();
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ Đã thêm ${result.userName}'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      } else {
-        // Hiện lỗi cả inline lẫn SnackBar để chắc user thấy
-        setState(() => _error = result.errorMessage);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.errorMessage ?? 'Có lỗi xảy ra'),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      final msg = 'Lỗi: $e';
-      setState(() {
-        _loading = false;
-        _error = msg;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // SHEET: CHI TIẾT NHÂN VIÊN
 // ─────────────────────────────────────────────────────────────────────────────
 class _StaffDetailSheet extends ConsumerStatefulWidget {
@@ -1449,6 +1189,31 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
   @override
   Widget build(BuildContext context) {
     final m = widget.member;
+    final session = ref.watch(sessionProvider);
+    final callerRole = session?.role.toLowerCase().trim() ?? '';
+    final isCallerOwner = session?.isOwner == true ||
+        callerRole == 'owner' ||
+        callerRole == 'chủ quán' ||
+        callerRole == 'chu quan';
+    final targetRole = m.role.toLowerCase().trim();
+    final isTargetOwner = m.isOwner ||
+        targetRole == 'owner' ||
+        targetRole == 'chủ quán' ||
+        targetRole == 'chu quan';
+    final isTargetManager =
+        targetRole == 'manager' ||
+        targetRole == 'quản lý' ||
+        targetRole == 'quan ly';
+    final isSelf = session?.userId != null && session!.userId == m.userId;
+
+    // Rào chắn tôn ti:
+    // 1. Không thể tự sửa vai trò hoặc tự xóa chính mình
+    // 2. Chủ quán có thể quản trị mọi nhân viên khác (trừ Chủ quán)
+    // 3. Quản lý chỉ được quản trị nhân viên cấp dưới (KHÔNG phải Chủ quán, KHÔNG phải Quản lý khác)
+    final canManageTarget = widget.isManager &&
+        !isSelf &&
+        (isCallerOwner ? !isTargetOwner : (!isTargetOwner && !isTargetManager));
+
     // ‼️ FIX: Dùng storeRolesProvider thay vì _roles hardcode
     // — _roles chỉ có hardcode role cũ (cashier/waiter/...), custom role sẽ hiện sai màu
     final storeRoles = ref.watch(storeRolesProvider).value ?? [];
@@ -1884,8 +1649,8 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
               ],
             ],
 
-            // ── Đổi vai trò + xoá (manager only) ──
-            if (widget.isManager && !m.isOwner) ...[
+            // ── Đổi vai trò + xoá (bảo vệ tôn ti trật tự) ──
+            if (canManageTarget) ...[
               const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 12),
@@ -1901,14 +1666,32 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                     ),
                     error: (_, __) => const SizedBox.shrink(),
                     data: (storeRoles) {
-                      // Đảm bảo _role hợp lệ
-                      final validRole = storeRoles.any((r) => r.name == _role)
-                          ? _role
-                          : (storeRoles.isNotEmpty
-                                ? storeRoles.first.name
-                                : _role);
+                      final availableRoles = storeRoles.where((r) {
+                        final rName = r.name.toLowerCase().trim();
+                        if (rName == 'owner' ||
+                            rName == 'chủ quán' ||
+                            rName == 'chu quan') {
+                          return false;
+                        }
+                        if (!isCallerOwner &&
+                            (rName == 'manager' ||
+                                rName == 'quản lý' ||
+                                rName == 'quan ly')) {
+                          return false;
+                        }
+                        return true;
+                      }).toList();
 
-                      if (storeRoles.isEmpty) {
+                      // Đảm bảo _role khớp đúng StoreRole trong availableRoles
+                      final matchedRole = _findMatchingStoreRole(_role, availableRoles);
+                      final validRole = matchedRole?.name ??
+                          (availableRoles.any((r) => r.name == _role)
+                              ? _role
+                              : (availableRoles.isNotEmpty
+                                  ? availableRoles.first.name
+                                  : null));
+
+                      if (storeRoles.isEmpty || availableRoles.isEmpty) {
                         return Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -1917,7 +1700,7 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                             border: Border.all(color: Colors.orange.shade200),
                           ),
                           child: const Text(
-                            '⚠️ Chưa có vai trò nào. Tạo vai trò trong tab Phân quyền trước.',
+                            '⚠️ Chưa có vai trò nào phù hợp trong quán.',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.orange,
@@ -1938,10 +1721,7 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                           ),
                           prefixIcon: const Icon(Icons.badge_rounded),
                         ),
-                        // ‼️ FIX Bug #31: loại bỏ role 'owner' khỏi dropdown đổi vai trò
-                        // Tránh việc manager tự câp quyền owner cho NV khác
-                        items: storeRoles
-                            .where((r) => r.name.toLowerCase() != 'owner')
+                        items: availableRoles
                             .map(
                               (r) => DropdownMenuItem(
                                 value: r.name,
@@ -1996,25 +1776,22 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // ‼️ FIX Bug #29: ẩn nút Xóa nếu member là chủ quán (isOwner=true)
-                  // Manager không được phép xóa chủ quán — lỗ hổng bảo mật
-                  if (!widget.member.isOwner)
-                    OutlinedButton.icon(
-                      onPressed: _confirmRemove,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 13,
-                          horizontal: 16,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                  OutlinedButton.icon(
+                    onPressed: _confirmRemove,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 13,
+                        horizontal: 16,
                       ),
-                      icon: const Icon(Icons.person_remove_rounded, size: 16),
-                      label: const Text('Xóa'),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
+                    icon: const Icon(Icons.person_remove_rounded, size: 16),
+                    label: const Text('Xóa'),
+                  ),
                 ],
               ),
             ],
@@ -2082,10 +1859,15 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
   }
 
   Future<void> _saveRole() async {
-    if (_role == widget.member.role) return;
-    // ‼️ FIX Bug #31: double guard — không bao giờ assign role 'owner'
-    // Tránh manager leo thang đặc quyền thông qua API trực tiếp
-    if (_role.toLowerCase() == 'owner') {
+    final currentCanon = StaffService.canonicalRole(widget.member.role).toLowerCase().trim();
+    final newCanon = StaffService.canonicalRole(_role).toLowerCase().trim();
+    if (_role.toLowerCase().trim() == widget.member.role.toLowerCase().trim() ||
+        (currentCanon.isNotEmpty && currentCanon == newCanon && currentCanon != 'custom')) {
+      Navigator.pop(context);
+      return;
+    }
+    final cleanRole = _role.toLowerCase().trim();
+    if (cleanRole == 'owner' || cleanRole == 'chủ quán' || cleanRole == 'chu quan') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Không thể gán vai trò Chủ quán'),
@@ -2095,30 +1877,87 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
       );
       return;
     }
-    setState(() => _saving = true);
+
     final session = ref.read(sessionProvider);
-    await StaffService.updateRole(
-      storeId: session!.storeId!,
-      userId: widget.member.userId,
-      newRole: _role,
-      changedByUserId: session.userId,
-      oldRole: widget.member.role,
-    );
-    if (!mounted) return;
-    setState(() => _saving = false);
-    Navigator.pop(context);
-    widget.onChanged();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✅ Đã cập nhật vai trò'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    final callerRole = session?.role.toLowerCase().trim() ?? '';
+    final isCallerOwner = session?.isOwner == true ||
+        callerRole == 'owner' ||
+        callerRole == 'chủ quán' ||
+        callerRole == 'chu quan';
+
+    if (!isCallerOwner &&
+        (cleanRole == 'manager' ||
+            cleanRole == 'quản lý' ||
+            cleanRole == 'quan ly')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Quản lý không được phép gán vai trò Quản lý'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      await StaffService.updateRole(
+        storeId: session!.storeId!,
+        userId: widget.member.userId,
+        newRole: _role,
+        changedByUserId: session.userId,
+        oldRole: widget.member.role,
+      );
+      if (!mounted) return;
+      setState(() => _saving = false);
+      Navigator.pop(context);
+      widget.onChanged();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Đã cập nhật vai trò'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '❌ Lỗi: ${e.toString().replaceAll('Exception: ', '').replaceAll('StateError: ', '')}',
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _confirmRemove() {
     // ‼️ FIX Bug #29: double guard — không bao giờ xóa chủ quán
     if (widget.member.isOwner) return;
+    final session = ref.read(sessionProvider);
+    final callerRole = session?.role.toLowerCase().trim() ?? '';
+    final isCallerOwner = session?.isOwner == true ||
+        callerRole == 'owner' ||
+        callerRole == 'chủ quán' ||
+        callerRole == 'chu quan';
+    final targetRole = widget.member.role.toLowerCase().trim();
+
+    if (!isCallerOwner &&
+        (targetRole == 'manager' ||
+            targetRole == 'quản lý' ||
+            targetRole == 'quan ly')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Quản lý không được phép xóa Quản lý khác'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final targetUserId = widget.member.userId;
     final targetName = widget.member.name;
 

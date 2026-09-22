@@ -981,6 +981,10 @@ class BanRepository {
     double surcharge = 0,
   }) async {
     try {
+      try {
+        _sb.rest.headers['x-store-id'] = storeId;
+      } catch (_) {}
+
       final res = await _sb.rpc(
         'settle_ban_session_v5',
         params: {
@@ -1016,7 +1020,12 @@ class BanRepository {
         storeId: storeId,
         idempotencyKey: idempotencyKey,
       );
-      if (reconciled['success'] == true) return reconciled;
+      if (reconciled['success'] == true &&
+          reconciled['is_settled'] == true &&
+          reconciled['data'] is Map &&
+          ((reconciled['data'] as Map)['settlement_id'] as String?)?.isNotEmpty == true) {
+        return reconciled;
+      }
 
       final classified = classifyBanSettlementTransportFailure(e);
       return {'success': false, ...classified};

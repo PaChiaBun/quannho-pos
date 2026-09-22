@@ -525,13 +525,16 @@ class StaffService {
     required String role,
     required String addedByUserId,
   }) async {
-    final db = _db;
-    if (db == null) return AddStaffResult.error('Không kết nối được server.');
-
-    if (role.toLowerCase() == 'owner') {
+    final rLower = role.toLowerCase().trim();
+    if (rLower == 'owner' || rLower == 'chủ quán' || rLower == 'chu quan') {
       return AddStaffResult.error(
         'Không thể gán vai trò Chủ quán cho nhân viên mới.',
       );
+    }
+
+    final db = _db;
+    if (db == null && rpcTransportOverride == null) {
+      return AddStaffResult.error('Không kết nối được server.');
     }
 
     final rawPhone = phone.trim().replaceAll(RegExp(r'\s|-|\(|\)'), '');
@@ -545,17 +548,27 @@ class StaffService {
 
     try {
       // 1. Thêm nhân viên qua Server-Side Security Definer RPC
-      final rpcRes = await db.rpc(
-        'admin_create_staff_member_v4',
-        params: {
-          'p_store_id': storeId,
-          'p_name': (name != null && name.trim().isNotEmpty)
-              ? name.trim()
-              : 'NV ${cleanDigits.isNotEmpty ? cleanDigits : phone}',
-          'p_phone': p,
-          'p_role': role,
-        },
-      );
+      final rpcParams = {
+        'p_store_id': storeId,
+        'p_name': (name != null && name.trim().isNotEmpty)
+            ? name.trim()
+            : 'NV ${cleanDigits.isNotEmpty ? cleanDigits : phone}',
+        'p_phone': p,
+        'p_role': role,
+      };
+
+      final dynamic rpcRes;
+      if (rpcTransportOverride != null) {
+        rpcRes = await rpcTransportOverride!(
+          'admin_create_staff_member_v4',
+          rpcParams,
+        );
+      } else {
+        rpcRes = await db!.rpc(
+          'admin_create_staff_member_v4',
+          params: rpcParams,
+        );
+      }
 
       String userId;
       String userName;
@@ -580,23 +593,25 @@ class StaffService {
       }
 
       // 2. Tạo profile mặc định (best effort)
-      try {
-        await db.from('staff_profiles').upsert({
-          'user_id': userId,
-          'store_id': storeId,
-          'job_desc': _defaultJobDesc(role),
-          'start_date': DateTime.now().toIso8601String().split('T').first,
-        }, onConflict: 'user_id,store_id');
-      } catch (_) {}
+      if (db != null) {
+        try {
+          await db.from('staff_profiles').upsert({
+            'user_id': userId,
+            'store_id': storeId,
+            'job_desc': _defaultJobDesc(role),
+            'start_date': DateTime.now().toIso8601String().split('T').first,
+          }, onConflict: 'user_id,store_id');
+        } catch (_) {}
 
-      // Ghi log
-      await _logPermChange(
-        storeId: storeId,
-        byUser: addedByUserId,
-        targetUser: userId,
-        action: 'add_staff',
-        detail: {'role': role, 'name': userName},
-      );
+        // Ghi log
+        await _logPermChange(
+          storeId: storeId,
+          byUser: addedByUserId,
+          targetUser: userId,
+          action: 'add_staff',
+          detail: {'role': role, 'name': userName},
+        );
+      }
 
       return AddStaffResult.success(userId: userId, userName: userName);
     } on PostgrestException catch (e) {
@@ -696,24 +711,36 @@ class StaffService {
     String oldRole = '',
     List<String>? directModules,
   }) async {
-    final db = _db;
-    if (db == null) {
-      throw StateError('Không thể kết nối cơ sở dữ liệu server.');
-    }
-    if (newRole.toLowerCase() == 'owner') {
+    final rLower = newRole.toLowerCase().trim();
+    if (rLower == 'owner' || rLower == 'chủ quán' || rLower == 'chu quan') {
       debugPrint('[StaffService] updateRole blocked: cannot assign owner role');
       return;
     }
 
+    final db = _db;
+    if (db == null && rpcTransportOverride == null) {
+      throw StateError('Không thể kết nối cơ sở dữ liệu server.');
+    }
+
     try {
-      final rpcRes = await db.rpc(
-        'admin_update_staff_role_v4',
-        params: {
-          'p_store_id': storeId,
-          'p_staff_id': userId,
-          'p_new_role': newRole,
-        },
-      );
+      final rpcParams = {
+        'p_store_id': storeId,
+        'p_staff_id': userId,
+        'p_new_role': newRole,
+      };
+
+      final dynamic rpcRes;
+      if (rpcTransportOverride != null) {
+        rpcRes = await rpcTransportOverride!(
+          'admin_update_staff_role_v4',
+          rpcParams,
+        );
+      } else {
+        rpcRes = await db!.rpc(
+          'admin_update_staff_role_v4',
+          params: rpcParams,
+        );
+      }
       if (rpcRes is Map) {
         final map = Map<String, dynamic>.from(rpcRes);
         if (map['success'] != true) {
@@ -732,21 +759,27 @@ class StaffService {
       rethrow;
     }
 
-    await _logPermChange(
-      storeId: storeId,
-      byUser: changedByUserId,
-      targetUser: userId,
-      action: 'role_change',
-      detail: {'old': oldRole, 'new': newRole},
-    );
-    // Real-time: notify nhân viên bị đổi role
-    unawaited(
-      StaffSyncService.broadcastRoleChanged(
+    if (db != null) {
+      await _logPermChange(
         storeId: storeId,
-        targetUserId: userId,
-        newRole: newRole,
-      ),
-    );
+        byUser: changedByUserId,
+        targetUser: userId,
+        action: 'role_change',
+        detail: {'old': oldRole, 'new': newRole},
+      );
+    }
+    // Real-time: notify nhân viên bị đổi role
+    if (broadcastHandlerOverride != null) {
+      await broadcastHandlerOverride!(storeId: storeId, targetUserId: userId);
+    } else {
+      unawaited(
+        StaffSyncService.broadcastRoleChanged(
+          storeId: storeId,
+          targetUserId: userId,
+          newRole: newRole,
+        ),
+      );
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -1289,21 +1322,55 @@ class StaffService {
   // PHÂN QUYỀN MODULE
   static String canonicalRole(String roleName) {
     final n = roleName.toLowerCase().trim();
-    if (n.contains('owner') || n.contains('chủ quán') || n.contains('chủ')) {
+    if (n.contains('owner') ||
+        n.contains('chủ quán') ||
+        n.contains('chu quan') ||
+        n == 'chủ' ||
+        n == 'chu') {
       return 'owner';
     }
-    if (n.contains('manager') || n.contains('quản lý')) return 'manager';
-    if (n.contains('cashier') || n.contains('thu ngân') || n.contains('quầy')) {
+    if (n.contains('manager') ||
+        n.contains('quản lý') ||
+        n.contains('quan ly') ||
+        n == 'ql' ||
+        n.contains('quản trị') ||
+        n.contains('quan tri') ||
+        n.contains('admin')) {
+      return 'manager';
+    }
+    if (n.contains('cashier') ||
+        n.contains('thu ngân') ||
+        n.contains('thu ngan') ||
+        n == 'tn' ||
+        n.contains('quầy') ||
+        n.contains('quay') ||
+        n.contains('bán hàng') ||
+        n.contains('ban hang')) {
       return 'cashier';
     }
     if (n.contains('waiter') ||
+        n.contains('waitress') ||
         n.contains('phục vụ') ||
-        n.contains('chạy bàn')) {
+        n.contains('phuc vu') ||
+        n == 'pv' ||
+        n.contains('chạy bàn') ||
+        n.contains('chay ban')) {
       return 'waiter';
     }
-    if (n.contains('kitchen') || n.contains('bếp')) return 'kitchen';
-    if (n.contains('stock') || n.contains('kho')) return 'stock';
-    return roleName;
+    if (n.contains('kitchen') ||
+        n.contains('bếp') ||
+        n.contains('bep') ||
+        n.contains('đầu bếp') ||
+        n.contains('dau bep') ||
+        n.contains('chef') ||
+        n.contains('cook')) {
+      return 'kitchen';
+    }
+    if (n.contains('stock') ||
+        n.contains('kho')) {
+      return 'stock';
+    }
+    return n;
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -2127,6 +2194,16 @@ class StoreRole {
       return const Color(0xFF1C2151);
     }
   }
+
+  /// Mã vai trò chuẩn hệ thống (manager, cashier, waiter, kitchen, stock, owner, hoặc tên tùy chỉnh)
+  String get canonicalRole => StaffService.canonicalRole(name);
+
+  /// Kiểm tra vai trò này có phải là vai trò chuẩn của hệ thống hay không
+  bool get isStandardRole =>
+      ['manager', 'cashier', 'waiter', 'kitchen', 'stock'].contains(canonicalRole);
+
+  /// Kiểm tra có phải là vai trò Chủ quán (owner) hay không
+  bool get isOwnerRole => canonicalRole == 'owner';
 
   StoreRole copyWith({
     String? name,

@@ -59,14 +59,17 @@ _rate_limiter = ThreadSafeRateLimiter()
 
 def get_supabase_config():
     """Load Supabase URL, Anon Key, and JWT Secret strictly from explicit environment variables."""
-    url = os.environ.get("SUPABASE_URL", "").strip()
+    url = (
+        os.environ.get("SUPABASE_INTERNAL_URL", "").strip()
+        or os.environ.get("SUPABASE_URL", "").strip()
+    )
     anon_key = os.environ.get("SUPABASE_ANON_KEY", "").strip()
     jwt_secret = os.environ.get("SUPABASE_JWT_SECRET", "").strip()
 
     if not url or not anon_key or not jwt_secret:
         raise PosJwtAuthError("Server configuration incomplete", status_code=500, error_code="SERVER_CONFIG_ERROR")
 
-    if not url.startswith("https://"):
+    if not url.startswith("https://") and not url.startswith("http://127.0.0.1") and not url.startswith("http://localhost"):
         raise PosJwtAuthError("HTTPS transport required", status_code=400, error_code="TLS_REQUIRED")
 
     return url, anon_key, jwt_secret
@@ -230,7 +233,7 @@ def consume_onboarding_exchange_rpc(
     return result
 
 
-def issue_hs256_pos_jwt(user_id, store_id, jwt_secret, staff_role="cashier", ttl_seconds=28800):
+def issue_hs256_pos_jwt(user_id, store_id, jwt_secret, staff_role="cashier", ttl_seconds=2592000):
     """Issue a Supabase PostgREST compliant HS256 JWT with complete standard claims."""
     if not jwt_secret:
         raise PosJwtAuthError("Server JWT signing key missing", status_code=500, error_code="SERVER_CONFIG_ERROR")
@@ -328,13 +331,19 @@ def verify_and_decode_hs256_jwt(token, jwt_secret, expected_token_use=None):
         raise PosJwtAuthError("Audience token không hợp lệ", status_code=401, error_code="INVALID_TOKEN_CLAIMS")
     if not isinstance(payload.get("iat"), int) or not isinstance(payload.get("exp"), int):
         raise PosJwtAuthError("Thời hạn token không hợp lệ", status_code=401, error_code="INVALID_TOKEN_CLAIMS")
+    if payload.get("exp", 0) <= payload.get("iat", 0):
+        raise PosJwtAuthError("Thời hạn token không hợp lệ", status_code=401, error_code="INVALID_TOKEN_CLAIMS")
     if payload.get("iat") > now + 30:
         raise PosJwtAuthError("Token có thời điểm phát hành không hợp lệ", status_code=401, error_code="INVALID_TOKEN_CLAIMS")
     if payload.get("exp", 0) <= now:
         raise PosJwtAuthError("Token đã hết hạn", status_code=401, error_code="TOKEN_EXPIRED")
 
-    if payload.get("nbf", 0) > now + 30:
-        raise PosJwtAuthError("Token chưa có hiệu lực", status_code=401, error_code="TOKEN_NOT_YET_VALID")
+    nbf = payload.get("nbf")
+    if nbf is not None:
+        if not isinstance(nbf, int):
+            raise PosJwtAuthError("Thời điểm hiệu lực token không hợp lệ", status_code=401, error_code="INVALID_TOKEN_CLAIMS")
+        if nbf > now + 30:
+            raise PosJwtAuthError("Token chưa có hiệu lực", status_code=401, error_code="TOKEN_NOT_YET_VALID")
 
     if expected_token_use and payload.get("token_use") != expected_token_use:
         raise PosJwtAuthError(f"Mục đích token không đúng (yêu cầu {expected_token_use})", status_code=403, error_code="INVALID_TOKEN_USE")
@@ -354,6 +363,8 @@ def handle_pos_jwt_auth_request(raw_body, client_ip="127.0.0.1"):
     try:
         body_text = raw_body.decode('utf-8') if isinstance(raw_body, bytes) else str(raw_body)
         payload = json.loads(body_text) if body_text else {}
+        if not isinstance(payload, dict):
+            return {"success": False, "status": 400, "error": "MALFORMED_JSON", "message": "Định dạng JSON không hợp lệ"}
     except Exception:
         return {"success": False, "status": 400, "error": "MALFORMED_JSON", "message": "Định dạng JSON không hợp lệ"}
 
@@ -413,6 +424,8 @@ def handle_onboarding_jwt_request(raw_body, client_ip="127.0.0.1"):
     try:
         body_text = raw_body.decode('utf-8') if isinstance(raw_body, bytes) else str(raw_body)
         payload = json.loads(body_text) if body_text else {}
+        if not isinstance(payload, dict):
+            return {"success": False, "status": 400, "error": "MALFORMED_JSON", "message": "Định dạng JSON không hợp lệ"}
     except Exception:
         return {"success": False, "status": 400, "error": "MALFORMED_JSON", "message": "Định dạng JSON không hợp lệ"}
 
@@ -473,6 +486,8 @@ def handle_exchange_store_jwt_request(raw_body, auth_header=None, client_ip="127
     try:
         body_text = raw_body.decode('utf-8') if isinstance(raw_body, bytes) else str(raw_body)
         payload = json.loads(body_text) if body_text else {}
+        if not isinstance(payload, dict):
+            return {"success": False, "status": 400, "error": "MALFORMED_JSON", "message": "Định dạng JSON không hợp lệ"}
     except Exception:
         return {"success": False, "status": 400, "error": "MALFORMED_JSON", "message": "Định dạng JSON không hợp lệ"}
 

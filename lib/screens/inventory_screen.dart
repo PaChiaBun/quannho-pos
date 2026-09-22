@@ -17,6 +17,7 @@ import '../core/providers/app_providers.dart';
 import '../core/providers/permission_provider.dart';
 import '../core/providers/session_provider.dart';
 import '../core/repositories/core_product_repository.dart';
+import '../core/utils/app_logger.dart';
 import 'ban_screen.dart';
 import '../modules/kho/providers/kho_providers.dart';
 import '../modules/kho/repository/kho_repository.dart';
@@ -125,6 +126,19 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     });
   }
 
+  String _sanitizeErrorMessage(dynamic error, String fallbackPrefix) {
+    final str = error.toString();
+    if (str.contains('<!DOCTYPE html>') ||
+        str.contains('520') ||
+        str.contains('Cloudflare') ||
+        str.contains('Bad Gateway') ||
+        str.contains('502') ||
+        str.contains('504')) {
+      return 'Không thể kết nối máy chủ (Máy chủ bận hoặc lỗi mạng). Vui lòng thử lại.';
+    }
+    return '$fallbackPrefix: $error';
+  }
+
   Future<void> _confirmBatchDelete() async {
     if (!_canDeleteItems) return;
     final count = _selectedIds.length;
@@ -183,11 +197,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             ),
           );
         }
-      } catch (e) {
+      } catch (e, st) {
+        AppLogger.error('inventory', 'Lỗi khi xóa hàng loạt $count món', e, st);
         if (mounted) {
+          final userMsg = _sanitizeErrorMessage(e, 'Lỗi khi xóa món');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Lỗi khi xóa món: $e'),
+              content: Text(userMsg),
               backgroundColor: _kRed,
               behavior: SnackBarBehavior.floating,
             ),
@@ -220,7 +236,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           ),
         );
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('inventory', 'Lỗi cập nhật trạng thái bán hàng loạt ($count món)', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -358,7 +375,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             ),
           );
         }
-      } catch (e) {
+      } catch (e, st) {
+        AppLogger.error('inventory', 'Lỗi đổi danh mục hàng loạt ($count món)', e, st);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -425,11 +443,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             ),
           );
         }
-      } catch (e) {
+      } catch (e, st) {
+        AppLogger.error('inventory', 'Lỗi khi xóa món: ${item.name} (${item.id})', e, st);
         if (mounted) {
+          final userMsg = _sanitizeErrorMessage(e, 'Lỗi khi xóa món');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Lỗi khi xóa món: $e'),
+              content: Text(userMsg),
               backgroundColor: _kRed,
               behavior: SnackBarBehavior.floating,
             ),
@@ -1106,22 +1126,32 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
         product: null,
         onSaved: (name, price, cost, cat, unit, minStock, {String? imageUrl, bool isTopping = false, String toppingUnit = 'phần', String stationCode = 'bep_nong'}) async {
           final productType = cat == 'Nguyên liệu' ? 'ingredient' : 'finished';
-          await ref.read(productRepositoryProvider).create(
-            name: name, sellPrice: price, costPrice: cost,
-            category: cat.isEmpty ? null : cat,
-            unit: unit.isEmpty ? 'phần' : unit,
-            productType: productType,
-            minStock: minStock, isAvailable: true,
-            imageUrl: imageUrl,
-            isTopping: isTopping,
-            toppingUnit: isTopping ? toppingUnit : null,
-            stationCode: stationCode,
-          );
-          if (ctx.mounted) {
-            Navigator.pop(ctx);
-            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-              content: Text('✅ Đã thêm "$name"${isTopping ? ' (Topping)' : ''}'),
-              behavior: SnackBarBehavior.floating));
+          try {
+            await ref.read(productRepositoryProvider).create(
+              name: name, sellPrice: price, costPrice: cost,
+              category: cat.isEmpty ? null : cat,
+              unit: unit.isEmpty ? 'phần' : unit,
+              productType: productType,
+              minStock: minStock, isAvailable: true,
+              imageUrl: imageUrl,
+              isTopping: isTopping,
+              toppingUnit: isTopping ? toppingUnit : null,
+              stationCode: stationCode,
+            );
+            if (ctx.mounted) {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text('✅ Đã thêm "$name"${isTopping ? ' (Topping)' : ''}'),
+                behavior: SnackBarBehavior.floating));
+            }
+          } catch (e, st) {
+            AppLogger.error('inventory', 'Lỗi khi tạo món: $name', e, st);
+            if (ctx.mounted) {
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text('Lỗi khi tạo món: $e'),
+                backgroundColor: _kRed,
+                behavior: SnackBarBehavior.floating));
+            }
           }
         },
       ),
@@ -1192,21 +1222,42 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             'station_code': stationCode,
             if (imageUrl != null) 'image_url': imageUrl,
           };
-          await ref.read(productRepositoryProvider).update(item.id, updateMap);
-          if (ctx.mounted) {
-            Navigator.pop(ctx);
-            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-              content: Text('✅ Cập nhật "$name" thành công'),
-              behavior: SnackBarBehavior.floating));
+          try {
+            await ref.read(productRepositoryProvider).update(item.id, updateMap);
+            if (ctx.mounted) {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text('✅ Cập nhật "$name" thành công'),
+                behavior: SnackBarBehavior.floating));
+            }
+          } catch (e, st) {
+            AppLogger.error('inventory', 'Lỗi khi cập nhật món: $name (${item.id})', e, st);
+            if (ctx.mounted) {
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text('Lỗi khi cập nhật món: $e'),
+                backgroundColor: _kRed,
+                behavior: SnackBarBehavior.floating));
+            }
           }
         },
         onDelete: _canDeleteItems ? () async {
-          await ref.read(productRepositoryProvider).softDelete(item.id);
-          if (ctx.mounted) {
-            Navigator.pop(ctx);
-            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-              content: Text('Ẩn "${item.name}" thành công'),
-              behavior: SnackBarBehavior.floating));
+          try {
+            await ref.read(productRepositoryProvider).softDelete(item.id);
+            if (ctx.mounted) {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text('Ẩn "${item.name}" thành công'),
+                behavior: SnackBarBehavior.floating));
+            }
+          } catch (e, st) {
+            AppLogger.error('inventory', 'Lỗi khi xóa món: ${item.name} (${item.id})', e, st);
+            if (ctx.mounted) {
+              final userMsg = _sanitizeErrorMessage(e, 'Lỗi khi xóa món');
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text(userMsg),
+                backgroundColor: _kRed,
+                behavior: SnackBarBehavior.floating));
+            }
           }
         } : null,
       ),

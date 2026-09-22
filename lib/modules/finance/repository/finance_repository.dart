@@ -13,7 +13,7 @@ class FinanceRepository {
 
   Future<String?> _storeId() async {
     final info = await StoreAuthService.getStoreInfo();
-    return info['store_id'] as String?;
+    return info['store_id'];
   }
 
   // ── Categories ────────────────────────────────────────────────────────────
@@ -109,7 +109,7 @@ class FinanceRepository {
     try {
       yield await fetch();
     } catch (e) {
-      print('[RobustStream] Initial fetch err on $table: $e');
+      AppLogger.error('finance', '[RobustStream] Initial fetch err on $table: $e');
     }
 
     // Realtime connection with fallback to polling on async errors (e.g. RealtimeSubscribeException)
@@ -123,7 +123,8 @@ class FinanceRepository {
           yield mapper(rows);
         }
       } catch (e) {
-        print(
+        AppLogger.warning(
+          'finance',
           '[RobustStream] Realtime err on $table: $e. Falling back to poll 10s.',
         );
 
@@ -316,7 +317,7 @@ class DateRange {
     final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final startLocal = DateTime(monday.year, monday.month, monday.day);
-    final endLocal = DateTime(now.year, now.month, now.day + 1);
+    final endLocal = DateTime(startLocal.year, startLocal.month, startLocal.day + 7);
     return DateRange(
       from: startLocal.toUtc(),
       to: endLocal.toUtc(),
@@ -326,7 +327,7 @@ class DateRange {
 
   static DateRange thisMonth() {
     final now = DateTime.now();
-    final endLocal = DateTime(now.year, now.month, now.day + 1);
+    final endLocal = DateTime(now.year, now.month + 1, 1);
     return DateRange(
       from: DateTime(now.year, now.month, 1).toUtc(),
       to: endLocal.toUtc(),

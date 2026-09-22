@@ -3404,6 +3404,15 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         throw Exception(message);
       }
 
+      if (response['is_settled'] == false) {
+        final serverMessage = response['message'] as String? ?? 'Phiên bàn chưa được thanh toán';
+        await _settlementOpManager.clearPersistent(
+          storeId: storeId,
+          sessionId: widget.session.id,
+        );
+        throw Exception(serverMessage);
+      }
+
       final rawData = response['data'];
       final data = rawData is Map
           ? Map<String, dynamic>.from(rawData)
@@ -4668,6 +4677,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   // A2: Mở checkout sheet — 2-step confirm
   // ‼️ FIX Bug #38: _isCheckingOut guard — ngăn double-tap tạo 2 order, 2 finance record
   bool _isCheckingOut = false;
+  // ‼️ Cờ khóa gửi bếp: Chặn 100% việc double-tap hoặc gửi trùng đơn bếp
+  bool _isSendingToKitchen = false;
 
   Future<void> _openCheckout(
     double total,
@@ -4745,6 +4756,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
   // ── Gửi bếp ──────────────────────────────────────────────────────────────
   Future<void> _sendToKitchen(List<BanSessionItemModel> items) async {
+    if (_isSendingToKitchen) return;
+    setState(() {
+      _isSendingToKitchen = true;
+    });
     try {
       final List<BanSessionItemModel> updatedItems = [];
       // Lưu toàn bộ ghi chú từ controller vào database trước để tránh race condition
@@ -4796,6 +4811,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSendingToKitchen = false;
+        });
+      }
     }
   }
 
@@ -4808,7 +4829,50 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     final storeId = storeInfo['store_id'];
     if (storeId == null) throw Exception('storeId null — chưa đăng nhập ?');
 
-    // ‼️ BƯỚC 1: Batch lookup station code TRƯỚC KHI tạo ticket trong DB
+    final unsentIds = unsent.map((i) => i.id).toList();
+    final session = ref.read(sessionProvider);
+
+    // ‼️ BƯỚC 1: Ưu tiên gọi RPC nguyên tử send_kitchen_ticket_v2 (Chống duplicate & độ trễ < 200ms)
+    try {
+      final rpcRes = await Supabase.instance.client.rpc(
+        'send_kitchen_ticket_v2',
+        params: {
+          'p_session_id': widget.session.id,
+          'p_store_id': storeId,
+          'p_table_label': widget.table.label,
+          'p_zone_label': widget.zone.name,
+          'p_note': session?.displayName,
+          'p_item_ids': unsentIds,
+        },
+      ).timeout(const Duration(seconds: 8));
+
+      if (rpcRes != null && rpcRes is Map) {
+        final success = rpcRes['success'] == true;
+        if (success) {
+          ref.invalidate(sessionItemsProvider(widget.session.id));
+          final itemsSummary = unsent
+              .map((i) => '${i.productName} (x${i.quantity.toInt()})')
+              .join(', ');
+          AppLogger.info(
+            'order',
+            'Gui bep thanh cong qua RPC tai ${widget.zone.name} - ${widget.table.label}: $itemsSummary (round: ${rpcRes['round']})',
+          );
+          return;
+        }
+      }
+    } catch (rpcErr) {
+      final errStr = rpcErr.toString();
+      final isFunctionMissing = errStr.contains('PGRST202') ||
+          errStr.contains('function') && errStr.contains('does not exist') ||
+          errStr.contains('not found');
+      if (!isFunctionMissing) {
+        rethrow;
+      }
+      debugPrint('[Kitchen] RPC send_kitchen_ticket_v2 chua deploy, fallback client steps: $rpcErr');
+    }
+
+    // Fallback: Client-side steps nếu RPC chưa tồn tại trên backend cũ
+    // ‼️ BƯỚC 2: Batch lookup station code TRƯỚC KHI tạo ticket trong DB
     final productIds = unsent.map((i) => i.productId).toList();
     try {
       Supabase.instance.client.rest.headers['x-store-id'] = storeId;
@@ -4830,7 +4894,6 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
     final ticketId = const Uuid().v4();
     final now = DateTime.now().toUtc().toIso8601String();
-    final session = ref.read(sessionProvider);
 
     // ‼️ BƯỚC 2: Tạo KitchenTicket + KitchenTicketItems trong cùng 1 khối bảo vệ nguyên tử
     bool ticketCreated = false;
@@ -8491,6 +8554,96 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
     );
   }
 
+  Future<void> _addItemWithCheck(ProductModel p, Offset? flyStartOffset) async {
+    final isOutOfStock = !p.isAvailable || (p.minStock > 0 && p.stockQty <= 0);
+    final currentQty = _selected[p.id] ?? 0;
+    if (isOutOfStock && currentQty == 0) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Món tạm hết',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: _kNavy,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Món "${p.name}" hiện đang tạm hết. Bạn có chắc chắn muốn thêm vào bàn?',
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              color: _kNavy.withValues(alpha: 0.8),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                'Hủy',
+                style: GoogleFonts.outfit(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kNavy,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(
+                'Vẫn thêm',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+
+    setState(() {
+      _selected[p.id] = currentQty + 1;
+    });
+
+    if (flyStartOffset != null) {
+      CartAnimationHelper.runFlyAnimation(
+        context: context,
+        startOffset: flyStartOffset,
+        endOffset: _getBottomBarOffset(),
+        color: _kNavy,
+        onComplete: () {
+          if (mounted) {
+            setState(() {
+              _bottomBarPopTrigger++;
+            });
+            HapticFeedback.lightImpact();
+          }
+        },
+      );
+    } else {
+      HapticFeedback.lightImpact();
+    }
+  }
+
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(posProductsProvider);
     final storeId = ref.read(sessionProvider)?.storeId ?? '';
@@ -8671,12 +8824,14 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                         _search.isEmpty && _selectedCategory == 'Tất cả'
                         ? prodList
                         : prodList.where((p) {
-                            final matchCat = _selectedCategory == 'Tất cả'
+                            final matchCat = _search.isNotEmpty
                                 ? true
-                                : (p.category ?? 'Khác') == _selectedCategory;
+                                : (_selectedCategory == 'Tất cả' ||
+                                    (p.category ?? 'Khác') == _selectedCategory);
                             final matchSearch = _search.isEmpty
                                 ? true
-                                : p.name.containsSearch(_search);
+                                : (p.name.containsSearch(_search) ||
+                                    (p.sku?.containsSearch(_search) ?? false));
                             return matchCat && matchSearch;
                           }).toList();
 
@@ -8706,7 +8861,8 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                       itemBuilder: (ctx, i) {
                         final p = filtered[i];
                         final qty = _selected[p.id] ?? 0;
-                        final isOutOfStock = p.stockQty <= 0 && p.minStock > 0;
+                        final isOutOfStock =
+                            !p.isAvailable || (p.minStock > 0 && p.stockQty <= 0);
 
                         final modifiersAsync = ref.watch(
                           productModifiersProvider(p.id),
@@ -8741,7 +8897,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                         }
 
                         return Opacity(
-                          opacity: isOutOfStock ? 0.55 : 1.0,
+                          opacity: isOutOfStock ? 0.75 : 1.0,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 220),
                             margin: const EdgeInsets.only(bottom: 12),
@@ -8852,6 +9008,8 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                   _expandedProductIds.add(p.id);
                                                 }
                                               });
+                                            } else {
+                                              _addItemWithCheck(p, null);
                                             }
                                           },
                                           child: Column(
@@ -8908,21 +9066,46 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                 ],
                                               ),
                                               const SizedBox(height: 3),
-                                              Text(
-                                                modPrice > 0
-                                                    ? '${fmtVnd(p.sellPrice ?? 0)} +${fmtVnd(modPrice)} = ${fmtVnd(finalPrice)}'
-                                                    : fmtVnd(p.sellPrice ?? 0),
-                                                style: GoogleFonts.outfit(
-                                                  fontSize: 13,
-                                                  color: modPrice > 0
-                                                      ? _kOrange
-                                                      : _kNavy.withValues(
-                                                          alpha: 0.55,
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    modPrice > 0
+                                                        ? '${fmtVnd(p.sellPrice ?? 0)} +${fmtVnd(modPrice)} = ${fmtVnd(finalPrice)}'
+                                                        : fmtVnd(p.sellPrice ?? 0),
+                                                    style: GoogleFonts.outfit(
+                                                      fontSize: 13,
+                                                      color: modPrice > 0
+                                                          ? _kOrange
+                                                          : _kNavy.withValues(
+                                                              alpha: 0.55,
+                                                            ),
+                                                      fontWeight: modPrice > 0
+                                                          ? FontWeight.w700
+                                                          : FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  if (p.sku != null && p.sku!.isNotEmpty) ...[
+                                                    const SizedBox(width: 8),
+                                                    Container(
+                                                      padding: const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 1.5,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: _kNavy.withValues(alpha: 0.05),
+                                                        borderRadius: BorderRadius.circular(6),
+                                                      ),
+                                                      child: Text(
+                                                        p.sku!,
+                                                        style: GoogleFonts.outfit(
+                                                          fontSize: 10,
+                                                          color: _kNavy.withValues(alpha: 0.5),
+                                                          fontWeight: FontWeight.w600,
                                                         ),
-                                                  fontWeight: modPrice > 0
-                                                      ? FontWeight.w700
-                                                      : FontWeight.w600,
-                                                ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
                                               ),
                                             ],
                                           ),
@@ -9066,32 +9249,12 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                     ),
                                                   ),
                                                   GestureDetector(
-                                                    onTapDown: isOutOfStock
-                                                        ? null
-                                                        : (details) {
-                                                            setState(
-                                                              () =>
-                                                                  _selected[p
-                                                                          .id] =
-                                                                      qty + 1,
-                                                            );
-
-                                                            // Kích hoạt hiệu ứng bay mượt mà WOW v3
-                                                            CartAnimationHelper.runFlyAnimation(
-                                                              context: context,
-                                                              startOffset: details
-                                                                  .globalPosition,
-                                                              endOffset:
-                                                                  _getBottomBarOffset(),
-                                                              color: _kNavy,
-                                                              onComplete: () {
-                                                                setState(() {
-                                                                  _bottomBarPopTrigger++;
-                                                                });
-                                                                HapticFeedback.lightImpact();
-                                                              },
-                                                            );
-                                                          },
+                                                    onTapDown: (details) {
+                                                      _addItemWithCheck(
+                                                        p,
+                                                        details.globalPosition,
+                                                      );
+                                                    },
                                                     child: Container(
                                                       width: 28,
                                                       height: 28,
@@ -9114,57 +9277,36 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                             ),
                                           ] else ...[
                                             GestureDetector(
-                                              onTapDown: isOutOfStock
-                                                  ? null
-                                                  : (details) {
-                                                      setState(
-                                                        () =>
-                                                            _selected[p.id] = 1,
-                                                      );
-
-                                                      // Kích hoạt hiệu ứng bay mượt mà WOW v3
-                                                      CartAnimationHelper.runFlyAnimation(
-                                                        context: context,
-                                                        startOffset: details
-                                                            .globalPosition,
-                                                        endOffset:
-                                                            _getBottomBarOffset(),
-                                                        color: _kNavy,
-                                                        onComplete: () {
-                                                          setState(() {
-                                                            _bottomBarPopTrigger++;
-                                                          });
-                                                          HapticFeedback.lightImpact();
-                                                        },
-                                                      );
-                                                    },
+                                              onTapDown: (details) {
+                                                _addItemWithCheck(
+                                                  p,
+                                                  details.globalPosition,
+                                                );
+                                              },
                                               child: Container(
                                                 width: 36,
                                                 height: 36,
                                                 decoration: BoxDecoration(
                                                   color: isOutOfStock
-                                                      ? _kNavy.withValues(
-                                                          alpha: 0.25,
-                                                        )
+                                                      ? Colors.orange.shade700
                                                       : _kNavy,
                                                   borderRadius:
                                                       BorderRadius.circular(12),
-                                                  boxShadow: isOutOfStock
-                                                      ? []
-                                                      : [
-                                                          BoxShadow(
-                                                            color: _kNavy
-                                                                .withValues(
-                                                                  alpha: 0.15,
-                                                                ),
-                                                            blurRadius: 8,
-                                                            offset:
-                                                                const Offset(
-                                                                  0,
-                                                                  3,
-                                                                ),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: (isOutOfStock
+                                                              ? Colors.orange
+                                                              : _kNavy)
+                                                          .withValues(
+                                                            alpha: 0.18,
                                                           ),
-                                                        ],
+                                                      blurRadius: 8,
+                                                      offset: const Offset(
+                                                        0,
+                                                        3,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                                 child: const Icon(
                                                   Icons.add_rounded,

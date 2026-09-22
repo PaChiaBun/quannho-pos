@@ -786,6 +786,8 @@ class StockItem {
   final bool isTopping;
   final String toppingUnit;
   final String stationCode;
+  final bool isAvailable;
+  final bool isActive;
 
   const StockItem({
     required this.id,
@@ -803,6 +805,8 @@ class StockItem {
     this.isTopping = false,
     this.toppingUnit = 'phần',
     this.stationCode = 'bep_nong',
+    this.isAvailable = true,
+    this.isActive = true,
   });
 
   factory StockItem.fromProduct(ProductModel p) => StockItem(
@@ -821,6 +825,8 @@ class StockItem {
         isTopping:        p.isTopping,
         toppingUnit:      p.toppingUnit,
         stationCode:      p.stationCode,
+        isAvailable:      p.isAvailable,
+        isActive:         p.isActive,
       );
 
   StockStatus get status {

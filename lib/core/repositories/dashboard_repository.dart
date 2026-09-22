@@ -43,10 +43,19 @@ class DashboardRepository {
     return controller.stream;
   }
 
-  Future<DashboardStats> getTodayStats() async {
-    final storeId = await _storeId();
-    if (storeId == null) return DashboardStats.empty;
+  static double _asDouble(dynamic v) {
+    if (v == null) return 0.0;
+    if (v is num) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0.0;
+  }
 
+  static int _asInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is num) return v.toInt();
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  Future<DashboardStats> getTodayStats() async {
     final now = DateTime.now();
     final startOfDay = DateTime(
       now.year,
@@ -59,19 +68,7 @@ class DashboardRepository {
       now.day + 1,
     ).toUtc().toIso8601String();
 
-    final orders = await _sb
-        .from('orders')
-        .select()
-        .eq('store_id', storeId)
-        .eq('status', 'completed')
-        .gte('created_at', startOfDay)
-        .lt('created_at', endOfDay);
-    final payments = await _loadCanonicalPayments(
-      storeId,
-      startOfDay,
-      endOfDay,
-    );
-    return _aggregateStats(orders, payments);
+    return _getStatsForRange(startOfDay, endOfDay);
   }
 
   /// Lấy tổng hợp huỷ món / huỷ bàn hôm nay
@@ -138,6 +135,38 @@ class DashboardRepository {
     final storeId = await _storeId();
     if (storeId == null) return [];
 
+    // Ưu tiên gọi RPC JOIN trực tiếp trên database (tránh N+1 và vượt ngưỡng 1000 đơn)
+    try {
+      final res = await _sb.rpc('get_top_products_for_range_v1', params: {
+        'p_store_id': storeId,
+        'p_from': from,
+        'p_to': to,
+        'p_category': (category != null && category.trim().isNotEmpty)
+            ? category.trim()
+            : null,
+        'p_limit': limit,
+      });
+
+      if (res is List) {
+        return res
+            .whereType<Map>()
+            .map((m) {
+              return TopProduct(
+                productId: (m['product_id'] ?? '').toString(),
+                productName: (m['product_name'] ?? '').toString(),
+                totalQty: _asDouble(m['total_qty']),
+                totalRevenue: _asDouble(m['total_revenue']),
+              );
+            })
+            .where((p) => p.productId.isNotEmpty)
+            .toList();
+      }
+    } catch (e) {
+      debugPrint(
+        '[DashboardRepository] get_top_products_for_range_v1 rpc error, falling back: $e',
+      );
+    }
+
     final orders = await _sb
         .from('orders')
         .select('id')
@@ -150,7 +179,10 @@ class DashboardRepository {
         ); // ‼️ FIX: lt (exclusive) — caller truyền midnight ngày kế
 
     if (orders.isEmpty) return [];
-    final orderIds = orders.map((o) => o['id'] as String).toList();
+    final orderIds = orders
+        .map((o) => (o['id'] ?? '').toString())
+        .where((id) => id.isNotEmpty)
+        .toList();
 
     // Batch orderIds in parallel chunks of 100 to prevent Postgrest URI limits and speed up fetch
     final List<Map<String, dynamic>> items = [];
@@ -175,7 +207,7 @@ class DashboardRepository {
 
     final map = <String, _ProductAgg>{};
     for (final item in items) {
-      final productId = item['product_id'] as String? ?? '';
+      final productId = (item['product_id'] ?? '').toString();
       if (productId.isEmpty) continue;
       final agg = map[productId] ??= _ProductAgg(
         item['product_name'] as String? ?? item['name'] as String? ?? '',
@@ -198,7 +230,7 @@ class DashboardRepository {
           .select('id, category')
           .inFilter('id', productIds);
       for (final p in prodRows) {
-        catMap[p['id'] as String] = (p['category'] as String?) ?? '';
+        catMap[(p['id'] ?? '').toString()] = (p['category'] as String?) ?? '';
       }
     }
 
@@ -228,6 +260,7 @@ class DashboardRepository {
 
   /// Report screen dùng int (millisecondsSinceEpoch) → chuyển sang ISO
   Future<DashboardStats> getStatsForRange(int from, int to) {
+    if (to <= from) return Future.value(DashboardStats.empty);
     final f = DateTime.fromMillisecondsSinceEpoch(
       from,
     ).toUtc().toIso8601String();
@@ -238,6 +271,75 @@ class DashboardRepository {
   Future<DashboardStats> _getStatsForRange(String from, String to) async {
     final storeId = await _storeId();
     if (storeId == null) return DashboardStats.empty;
+
+    // Ưu tiên gọi RPC tổng hợp trực tiếp trên PostgreSQL (vượt ngưỡng 1000 đơn)
+    try {
+      final res = await _sb.rpc('get_report_stats_for_range_v1', params: {
+        'p_store_id': storeId,
+        'p_from': from,
+        'p_to': to,
+      });
+
+      if (res is Map) {
+        final data = Map<String, dynamic>.from(res);
+        final totalOrders = _asInt(data['total_orders']);
+        final totalRevenue = _asDouble(data['total_revenue']);
+        final totalCustomers = _asInt(data['total_customers']);
+        final avgOrderValue = data['avg_order_value'] != null
+            ? _asDouble(data['avg_order_value'])
+            : (totalOrders > 0 ? totalRevenue / totalOrders : 0.0);
+        final cashRevenue = _asDouble(data['cash_revenue']);
+        final transferRevenue = _asDouble(data['transfer_revenue']);
+        final cardRevenue = _asDouble(data['card_revenue']);
+
+        final cashierRevenue = <String, double>{};
+        if (data['cashier_revenue'] is Map) {
+          (data['cashier_revenue'] as Map).forEach((k, v) {
+            cashierRevenue[k.toString()] = _asDouble(v);
+          });
+        }
+
+        final cashierDetails = <String, CashierDetail>{};
+        if (data['cashier_details'] is Map) {
+          (data['cashier_details'] as Map).forEach((k, v) {
+            if (v is Map) {
+              cashierDetails[k.toString()] = CashierDetail(
+                cash: _asDouble(v['cash']),
+                transfer: _asDouble(v['transfer']),
+                card: _asDouble(v['card']),
+                total: _asDouble(v['total']),
+              );
+            }
+          });
+        }
+
+        final waiterOrders = <String, int>{};
+        if (data['waiter_orders'] is Map) {
+          (data['waiter_orders'] as Map).forEach((k, v) {
+            waiterOrders[k.toString()] = _asInt(v);
+          });
+        }
+
+        return DashboardStats(
+          todayRevenue: totalRevenue,
+          todayOrders: totalOrders,
+          todayCustomers: totalCustomers,
+          avgOrderValue: avgOrderValue,
+          cashRevenue: cashRevenue,
+          transferRevenue: transferRevenue,
+          cardRevenue: cardRevenue,
+          cashierRevenue: cashierRevenue,
+          waiterOrders: waiterOrders,
+          cashierDetails: cashierDetails,
+        );
+      }
+    } catch (e) {
+      debugPrint(
+        '[DashboardRepository] get_report_stats_for_range_v1 rpc error, falling back: $e',
+      );
+    }
+
+    // Fallback tầng 2: Query và aggregate client-side khi RPC chưa có trên DB
     final orders = await _sb
         .from('orders')
         .select()
@@ -382,7 +484,9 @@ class DashboardRepository {
     final effectivePayments = List<Map<String, dynamic>>.from(payments);
     if (effectivePayments.isEmpty && orders.isNotEmpty) {
       for (final o in orders) {
-        final amount = (o['total_amount'] as num?)?.toDouble() ?? 0;
+        final amount = (o['total_amount'] as num?)?.toDouble() ??
+            (o['total'] as num?)?.toDouble() ??
+            0.0;
         final pm = o['payment_method'] as String? ?? 'cash';
         effectivePayments.add({
           'amount': amount,
@@ -400,8 +504,10 @@ class DashboardRepository {
     );
     final orderCnt = orders.length;
     final customerSet = orders
-        .where((o) => o['customer_id'] != null)
-        .map((o) => o['customer_id'] as String)
+        .where((o) =>
+            o['customer_id'] != null &&
+            (o['customer_id'] as String).trim().isNotEmpty)
+        .map((o) => (o['customer_id'] as String).trim())
         .toSet();
 
     double cashRevenue = 0;
@@ -556,46 +662,113 @@ class DashboardRepository {
   }
 
   Future<List<DailyRevenue>> getDailyRevenue(int from, int to) async {
+    if (to <= from) return [];
     final storeId = await _storeId();
     if (storeId == null) return [];
     final f = DateTime.fromMillisecondsSinceEpoch(
       from,
     ).toUtc().toIso8601String();
     final t = DateTime.fromMillisecondsSinceEpoch(to).toUtc().toIso8601String();
-    final orders = await _sb
-        .from('orders')
-        .select('created_at, total_amount, payment_method, discount')
-        .eq('store_id', storeId)
-        .eq('status', 'completed')
-        .gte('created_at', f)
-        .lt('created_at', t); // ‼️ FIX: lt (exclusive)
+
     final dayMap = <String, _DayAgg>{};
-    for (final o in orders) {
-      final dt = DateTime.tryParse(o['created_at'] as String? ?? '')?.toLocal();
-      if (dt == null) continue;
-      final key =
-          '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-      final agg = dayMap[key] ??= _DayAgg(dt);
+    bool rpcSuccess = false;
 
-      final amount = (o['total_amount'] as num?)?.toDouble() ?? 0;
-      final disc = (o['discount'] as num?)?.toDouble() ?? 0;
-      final method = o['payment_method'] as String? ?? 'cash';
+    // Ưu tiên gọi RPC gom nhóm trực tiếp từ database (tránh giới hạn 1000 dòng PostgREST)
+    try {
+      final res = await _sb.rpc('get_daily_revenue_for_range_v1', params: {
+        'p_store_id': storeId,
+        'p_from': f,
+        'p_to': t,
+        'p_tz': 'Asia/Ho_Chi_Minh',
+      });
 
-      agg.revenue += amount;
-      agg.orders++;
-      agg.discount += disc;
-      if (method == 'cash') {
-        agg.cashRevenue += amount;
-      } else if (method != 'wallet') {
-        agg.transferRevenue += amount;
+      if (res is List) {
+        for (final item in res) {
+          if (item is! Map) continue;
+          final dateStr =
+              (item['report_date'] ?? item['date'])?.toString() ?? '';
+          if (dateStr.isEmpty) continue;
+          final dt = DateTime.tryParse(dateStr);
+          if (dt == null) continue;
+          final key =
+              '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+          final agg = dayMap[key] ??= _DayAgg(dt);
+          agg.revenue = _asDouble(item['total_revenue'] ?? item['revenue']);
+          agg.orders = _asInt(item['total_orders'] ?? item['orders']);
+          agg.cashRevenue = _asDouble(item['cash_revenue']);
+          agg.transferRevenue = _asDouble(item['transfer_revenue']);
+          agg.discount = _asDouble(item['total_discount'] ?? item['discount']);
+        }
+        rpcSuccess = true;
+      }
+    } catch (e) {
+      debugPrint(
+        '[DashboardRepository] get_daily_revenue_for_range_v1 rpc error, falling back: $e',
+      );
+    }
+
+    if (!rpcSuccess) {
+      // Fallback tầng 2: Query và gom nhóm client-side
+      try {
+        final orders = await _sb
+            .from('orders')
+            .select('created_at, total_amount, total, payment_method, discount')
+            .eq('store_id', storeId)
+            .eq('status', 'completed')
+            .gte('created_at', f)
+            .lt('created_at', t); // ‼️ FIX: lt (exclusive)
+        for (final o in orders) {
+          final dt =
+              DateTime.tryParse(o['created_at'] as String? ?? '')?.toLocal();
+          if (dt == null) continue;
+          final key =
+              '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+          final agg = dayMap[key] ??= _DayAgg(dt);
+
+          final amount = _asDouble(o['total_amount'] ?? o['total']);
+          final disc = _asDouble(o['discount']);
+          final method = (o['payment_method'] as String? ?? 'cash').trim().toLowerCase();
+
+          agg.revenue += amount;
+          agg.orders++;
+          agg.discount += disc;
+          if (method == 'cash') {
+            agg.cashRevenue += amount;
+          } else if (method != 'wallet') {
+            agg.transferRevenue += amount;
+          }
+        }
+      } catch (e) {
+        debugPrint('[DashboardRepository] getDailyRevenue fallback error: $e');
       }
     }
-    // Fill tất cả ngày trong kỳ
+
+    // Fill tất cả ngày trong kỳ (kể cả những ngày 0đ)
     final startDate = DateTime.fromMillisecondsSinceEpoch(from);
     final endDate = DateTime.fromMillisecondsSinceEpoch(to);
-    final dayCount = endDate.difference(startDate).inDays;
-    return List.generate(dayCount, (i) {
-      final day = DateTime(startDate.year, startDate.month, startDate.day + i);
+    final startDay = DateTime(startDate.year, startDate.month, startDate.day);
+    // Nếu endDate có thành phần giờ/phút/giây (ví dụ 23:59:59), thì ngày đó là ngày kết thúc bao gồm (inclusive).
+    // Nếu endDate là đúng 00:00:00, nó đã là mốc chặn trên exclusive.
+    final bool isExactMidnight = endDate.hour == 0 &&
+        endDate.minute == 0 &&
+        endDate.second == 0 &&
+        endDate.millisecond == 0 &&
+        endDate.microsecond == 0;
+    final endDay = isExactMidnight
+        ? DateTime(endDate.year, endDate.month, endDate.day)
+        : DateTime(endDate.year, endDate.month, endDate.day + 1);
+
+    if (!endDay.isAfter(startDay)) {
+      return [];
+    }
+
+    final dayCount =
+        ((endDay.millisecondsSinceEpoch - startDay.millisecondsSinceEpoch) /
+                (24 * 3600 * 1000))
+            .round();
+
+    return List.generate(dayCount > 0 ? dayCount : 1, (i) {
+      final day = DateTime(startDay.year, startDay.month, startDay.day + i);
       final key =
           '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
       final agg = dayMap[key];
@@ -616,12 +789,36 @@ class DashboardRepository {
   }
 
   Future<List<String>> getProductCategoriesSold(int from, int to) async {
+    if (to <= from) return [];
     final storeId = await _storeId();
     if (storeId == null) return [];
     final f = DateTime.fromMillisecondsSinceEpoch(
       from,
     ).toUtc().toIso8601String();
     final t = DateTime.fromMillisecondsSinceEpoch(to).toUtc().toIso8601String();
+
+    // Ưu tiên gọi RPC lấy danh mục trực tiếp từ database (loại bỏ N+1 query lặp và 1000 limit)
+    try {
+      final res = await _sb.rpc('get_sold_categories_for_range_v1', params: {
+        'p_store_id': storeId,
+        'p_from': f,
+        'p_to': t,
+      });
+
+      if (res is List) {
+        return res
+            .map((row) => (row is Map ? row['category'] : row)?.toString() ?? '')
+            .where((c) => c.trim().isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+      }
+    } catch (e) {
+      debugPrint(
+        '[DashboardRepository] get_sold_categories_for_range_v1 rpc error, falling back: $e',
+      );
+    }
+
     final orders = await _sb
         .from('orders')
         .select('id')
@@ -630,7 +827,10 @@ class DashboardRepository {
         .gte('created_at', f)
         .lt('created_at', t); // ‼️ FIX: lt (exclusive)
     if (orders.isEmpty) return [];
-    final orderIds = orders.map((o) => o['id'] as String).toList();
+    final orderIds = orders
+        .map((o) => (o['id'] ?? '').toString())
+        .where((id) => id.isNotEmpty)
+        .toList();
 
     final List<Map<String, dynamic>> items = [];
     const chunkSize = 100;
@@ -653,7 +853,7 @@ class DashboardRepository {
     }
 
     final productIds = items
-        .map((i) => i['product_id'] as String? ?? '')
+        .map((i) => (i['product_id'] ?? '').toString())
         .where((id) => id.isNotEmpty)
         .toSet()
         .toList();
@@ -663,7 +863,7 @@ class DashboardRepository {
         .select('category')
         .inFilter('id', productIds);
     return products
-        .map((p) => p['category'] as String? ?? '')
+        .map((p) => (p['category'] ?? '').toString())
         .where((c) => c.isNotEmpty)
         .toSet()
         .toList()
@@ -677,6 +877,7 @@ class DashboardRepository {
     String? category,
     int limit = 10,
   }) async {
+    if (to <= from) return [];
     final f = DateTime.fromMillisecondsSinceEpoch(
       from,
     ).toUtc().toIso8601String();
@@ -688,63 +889,21 @@ class DashboardRepository {
   // ── Doanh thu 7 ngày gần nhất ────────────────────────────────────────────
 
   Future<List<DailyRevenue>> getLast7DaysRevenue() async {
-    final storeId = await _storeId();
-    if (storeId == null) return [];
-
     final now = DateTime.now();
-    final from = DateTime(
+    final fromDate = DateTime(
       now.year,
       now.month,
       now.day,
-    ).subtract(const Duration(days: 6)).toUtc().toIso8601String();
-    // ‼️ FIX Bug #36: thêm upper bound exclusive — trước đây không có .lt() →
-    // đơn future-dated hoặc clock skew bị tính vào doanh thu 7 ngày
-    final to = DateTime(
+    ).subtract(const Duration(days: 6));
+    final toDate = DateTime(
       now.year,
       now.month,
       now.day + 1,
-    ).toUtc().toIso8601String();
-
-    final orders = await _sb
-        .from('orders')
-        .select('created_at, total_amount')
-        .eq('store_id', storeId)
-        .eq('status', 'completed')
-        .gte('created_at', from)
-        .lt('created_at', to); // ‼️ FIX Bug #36: upper bound exclusive
-
-    // Group by date
-    final dayMap = <String, _DayAgg>{};
-    for (final o in orders) {
-      final dt = DateTime.tryParse(o['created_at'] as String? ?? '')?.toLocal();
-      if (dt == null) continue;
-      final key =
-          '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-      final agg = dayMap[key] ??= _DayAgg(dt);
-      agg.revenue += (o['total_amount'] as num?)?.toDouble() ?? 0;
-      agg.orders++;
-    }
-
-    // 7 ngày đủ
-    final result = <DailyRevenue>[];
-    for (int i = 6; i >= 0; i--) {
-      final day = DateTime(
-        now.year,
-        now.month,
-        now.day,
-      ).subtract(Duration(days: i));
-      final key =
-          '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
-      final agg = dayMap[key];
-      result.add(
-        DailyRevenue(
-          date: day,
-          revenue: agg?.revenue ?? 0,
-          orders: agg?.orders ?? 0,
-        ),
-      );
-    }
-    return result;
+    );
+    return getDailyRevenue(
+      fromDate.millisecondsSinceEpoch,
+      toDate.millisecondsSinceEpoch,
+    );
   }
 
   // ── Hourly revenue hôm nay ────────────────────────────────────────────────

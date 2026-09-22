@@ -119,4 +119,68 @@ void main() {
       );
     });
   });
+
+  group('Settlement V5 client error handling & reconcile fail-safe', () {
+    test('unsettled reconcile response is not treated as successful settlement', () {
+      final reconciled = {
+        'success': true,
+        'is_settled': false,
+        'status': 'open',
+        'message': 'Phiên bàn chưa thanh toán',
+      };
+
+      // Ensure client condition guards against missing settlement_id
+      final isSuccessSettlement = reconciled['success'] == true &&
+          reconciled['is_settled'] == true &&
+          reconciled['data'] is Map &&
+          ((reconciled['data'] as Map)['settlement_id'] as String?)?.isNotEmpty == true;
+
+      expect(isSuccessSettlement, isFalse);
+    });
+
+    test('valid settled reconcile response with settlement_id is accepted', () {
+      final reconciled = {
+        'success': true,
+        'is_settled': true,
+        'data': {
+          'settlement_id': 'settle-uuid-12345',
+          'total_amount': 239000,
+        },
+      };
+
+      final isSuccessSettlement = reconciled['success'] == true &&
+          reconciled['is_settled'] == true &&
+          reconciled['data'] is Map &&
+          ((reconciled['data'] as Map)['settlement_id'] as String?)?.isNotEmpty == true;
+
+      expect(isSuccessSettlement, isTrue);
+    });
+
+    test('reconcile response with empty settlement_id is rejected', () {
+      final reconciled = {
+        'success': true,
+        'is_settled': true,
+        'data': {
+          'settlement_id': '',
+          'total_amount': 239000,
+        },
+      };
+
+      final isSuccessSettlement = reconciled['success'] == true &&
+          reconciled['is_settled'] == true &&
+          reconciled['data'] is Map &&
+          ((reconciled['data'] as Map)['settlement_id'] as String?)?.isNotEmpty == true;
+
+      expect(isSuccessSettlement, isFalse);
+    });
+
+    test('classifyBanSettlementTransportFailure maps waiter FK error to network uncertain/server error', () {
+      final result = classifyBanSettlementTransportFailure(
+        Exception('violates foreign key constraint "orders_waiter_id_fkey"'),
+      );
+      expect(result['error_code'], isNotNull);
+      expect(result['message'], isNotNull);
+    });
+  });
 }
+

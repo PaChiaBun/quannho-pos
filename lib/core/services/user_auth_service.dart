@@ -794,9 +794,12 @@ class UserAuthService {
       );
     }
     if (onboardingJwt != null) {
-      posJwtService.setActiveOnboardingJwt(onboardingJwt);
+      await posJwtService.storeOnboardingJwt(onboardingJwt);
     }
-    final effectiveOnboardingJwt = posJwtService.activeOnboardingJwtFor(userId);
+    var effectiveOnboardingJwt = posJwtService.activeOnboardingJwtFor(userId);
+    if (effectiveOnboardingJwt == null) {
+      effectiveOnboardingJwt = await posJwtService.getStoredOnboardingJwtFor(userId);
+    }
     if (effectiveOnboardingJwt == null) {
       return CreateStoreResult.error(
         'Phiên đăng ký đã hết hạn. Vui lòng đăng nhập lại để tham gia quán.',
@@ -812,6 +815,18 @@ class UserAuthService {
       try {
         AppLogger.info('auth', 'Staff store join request initiated with code QN-XXXX');
       } catch (_) {}
+
+      // ‼️ BẮT BUỘC: Áp dụng Onboarding Token vào Supabase client trước khi gọi RPC!
+      final applied = await posJwtService.applyAuthToSupabase(
+        effectiveOnboardingJwt,
+        allowOnboardingToken: true,
+      );
+      if (!applied && rpcOverride == null) {
+        return CreateStoreResult.error(
+          'Không thể áp dụng phiên xác thực an toàn. Vui lòng thử lại.',
+          errorCode: 'AUTH_APPLICATION_FAILED',
+        );
+      }
 
       final rpcRes = rpcOverride != null
           ? await rpcOverride!(
@@ -842,8 +857,14 @@ class UserAuthService {
           errorCode: errCode,
         );
       }
-      final storeId = rpcRes['store_id'] as String;
-      final storeCodeResult = rpcRes['store_code'] as String? ?? code;
+      final storeId = (rpcRes['store_id'] as String?)?.trim() ?? '';
+      if (storeId.isEmpty) {
+        return CreateStoreResult.error(
+          'Máy chủ không trả về thông tin quán hợp lệ.',
+          errorCode: 'INVALID_STORE_ID',
+        );
+      }
+      final storeCodeResult = (rpcRes['store_code'] as String?)?.trim() ?? code;
       final membership = StoreMembership(
         storeId: storeId,
         storeName: rpcRes['store_name'] as String? ?? 'Quán Nhỏ',
@@ -904,7 +925,10 @@ class UserAuthService {
   }) async {
     final cleanName = storeName.trim();
     if (cleanName.isEmpty) {
-      return CreateStoreResult.error('Vui lòng nhập tên quán.');
+      return CreateStoreResult.error(
+        'Vui lòng nhập tên quán.',
+        errorCode: 'INVALID_STORE_NAME',
+      );
     }
 
     final posJwtService = jwtService ?? jwtServiceOverride ?? PosJwtAuthService();
@@ -915,9 +939,12 @@ class UserAuthService {
       );
     }
     if (onboardingJwt != null) {
-      posJwtService.setActiveOnboardingJwt(onboardingJwt);
+      await posJwtService.storeOnboardingJwt(onboardingJwt);
     }
-    final effectiveOnboardingJwt = posJwtService.activeOnboardingJwtFor(userId);
+    var effectiveOnboardingJwt = posJwtService.activeOnboardingJwtFor(userId);
+    if (effectiveOnboardingJwt == null) {
+      effectiveOnboardingJwt = await posJwtService.getStoredOnboardingJwtFor(userId);
+    }
     if (effectiveOnboardingJwt == null) {
       return CreateStoreResult.error(
         'Phiên đăng ký đã hết hạn. Vui lòng đăng nhập lại để tạo quán.',
@@ -926,26 +953,54 @@ class UserAuthService {
     }
 
     final db = _db;
-    if (db == null) {
-      return CreateStoreResult.error('Không kết nối được server.');
+    if (db == null && rpcOverride == null) {
+      return CreateStoreResult.error(
+        'Không kết nối được server.',
+        errorCode: 'NETWORK_ERROR',
+      );
     }
     try {
-      final rpcRes = await db.rpc(
-        'create_store_with_owner_v4',
-        params: {'p_store_name': cleanName},
+      final applied = await posJwtService.applyAuthToSupabase(
+        effectiveOnboardingJwt,
+        allowOnboardingToken: true,
       );
+      if (!applied && rpcOverride == null) {
+        return CreateStoreResult.error(
+          'Không thể áp dụng phiên xác thực an toàn. Vui lòng đăng nhập lại.',
+          errorCode: 'AUTH_APPLICATION_FAILED',
+        );
+      }
+
+      final rpcRes = rpcOverride != null
+          ? await rpcOverride!(
+              'create_store_with_owner_v4',
+              params: {'p_store_name': cleanName},
+            )
+          : await db!.rpc(
+              'create_store_with_owner_v4',
+              params: {'p_store_name': cleanName},
+            );
       if (rpcRes is! Map) {
         return CreateStoreResult.error(
           'Dịch vụ tạo quán an toàn chưa sẵn sàng.',
+          errorCode: 'GATEWAY_UNAVAILABLE',
         );
       }
       if (rpcRes['success'] != true) {
+        final errCode = (rpcRes['error_code'] as String?)?.trim() ?? 'CREATE_STORE_FAILED';
         return CreateStoreResult.error(
           rpcRes['message'] as String? ?? 'Không thể tạo quán.',
+          errorCode: errCode,
         );
       }
-      final storeId = rpcRes['store_id'] as String;
-      final storeCodeResult = rpcRes['store_code'] as String;
+      final storeId = (rpcRes['store_id'] as String?)?.trim() ?? '';
+      if (storeId.isEmpty) {
+        return CreateStoreResult.error(
+          'Máy chủ không trả về thông tin quán hợp lệ.',
+          errorCode: 'INVALID_STORE_ID',
+        );
+      }
+      final storeCodeResult = (rpcRes['store_code'] as String?)?.trim() ?? '';
       final membership = StoreMembership(
         storeId: storeId,
         storeName: rpcRes['store_name'] as String? ?? cleanName,
@@ -972,7 +1027,9 @@ class UserAuthService {
 
       final prefs = await SharedPreferences.getInstance();
       await _applyMembershipToPrefs(prefs, membership);
-      await StoreAuthService.seedDefaults(db, storeId);
+      if (db != null) {
+        await StoreAuthService.seedDefaults(db, storeId);
+      }
       return CreateStoreResult.success(
         storeId: storeId,
         storeCode: storeCodeResult,
@@ -982,7 +1039,10 @@ class UserAuthService {
       try {
         AppLogger.warning('auth', 'Create store RPC error');
       } catch (_) {}
-      return CreateStoreResult.error('Dịch vụ tạo quán an toàn chưa sẵn sàng.');
+      return CreateStoreResult.error(
+        'Dịch vụ tạo quán an toàn chưa sẵn sàng.',
+        errorCode: 'GATEWAY_UNAVAILABLE',
+      );
     }
   }
 
@@ -1269,7 +1329,26 @@ class UserAuthService {
       }
     }
 
-    if (session == null || session.storeId == null) {
+    if (session == null) {
+      await posJwtService.clearOnboardingJwt();
+      await posJwtService.applyAuthToSupabase(null);
+      return false;
+    }
+
+    if (session.storeId == null || session.storeId!.trim().isEmpty) {
+      // User chưa chọn quán: kiểm tra xem có Onboarding Token còn hạn không
+      final onbToken =
+          await posJwtService.getStoredOnboardingJwtFor(session.userId);
+      if (onbToken != null) {
+        final applied = await posJwtService.applyAuthToSupabase(
+          onbToken,
+          allowOnboardingToken: true,
+        );
+        if (applied) {
+          return true; // Khôi phục thành công phiên onboarding cho StorePicker
+        }
+      }
+      await posJwtService.clearOnboardingJwt();
       await posJwtService.applyAuthToSupabase(null);
       return false;
     }
@@ -1338,7 +1417,7 @@ class UserAuthService {
     // Clear POS PostgREST JWT and Supabase REST/Realtime auth
     try {
       final posJwtService = PosJwtAuthService();
-      posJwtService.clearActiveOnboardingJwt();
+      await posJwtService.clearOnboardingJwt();
       await posJwtService.clearPosJwt();
       await posJwtService.applyAuthToSupabase(null);
       await FeedbackService().clearSessionToken();

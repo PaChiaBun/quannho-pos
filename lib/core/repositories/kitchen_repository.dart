@@ -219,8 +219,8 @@ class KitchenRepository {
           debugPrint('[KitchenRepo] Realtime sub error: $e');
         }
 
-        // Fallback polling (5s)
-        fallbackTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+        // Fallback polling (10s thay vì 5s để giảm tải server và tránh nghẽn socket)
+        fallbackTimer = Timer.periodic(const Duration(seconds: 10), (_) {
           if (!isCancelled) refresh(storeId);
         });
       } catch (e) {
@@ -234,8 +234,8 @@ class KitchenRepository {
   }
 
   Future<List<TicketWithItems>> _fetchActiveTickets(String storeId) async {
-    // Chỉ lấy phiếu trong 12 giờ qua — tránh phiếu cũ hôm qua làm tràn tab Xong
-    final since = DateTime.now().subtract(const Duration(hours: 12)).toUtc().toIso8601String();
+    // Chỉ lấy phiếu trong 4 giờ gần nhất và giới hạn tối đa 50 phiếu để tránh bão payload 87KB
+    final since = DateTime.now().subtract(const Duration(hours: 4)).toUtc().toIso8601String();
 
     Set<String> openSessionIds = {};
     try {
@@ -256,7 +256,8 @@ class KitchenRepository {
         .eq('store_id', storeId)
         .neq('status', 'huy')
         .gte('sent_at', since)
-        .order('sent_at')
+        .order('sent_at', ascending: false)
+        .limit(50)
         .timeout(const Duration(seconds: 5));
 
     if (tickets.isEmpty) {

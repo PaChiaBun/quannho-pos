@@ -455,6 +455,172 @@ class TestCanonicalPosJwtAuthService(unittest.TestCase):
         self.assertEqual(res["status"], 401)
         self.assertEqual(res["error"], "INVALID_SIGNATURE")
 
+    def test_23_default_pos_jwt_ttl_is_30_days(self):
+        token = issue_hs256_pos_jwt("user-123", "store-1", "test_supabase_jwt_secret_32_bytes_len")
+        parts = token.split(".")
+        padded = parts[1] + "=" * ((4 - len(parts[1]) % 4) % 4)
+        payload = json.loads(base64.urlsafe_b64decode(padded).decode('utf-8'))
+        self.assertEqual(payload["exp"] - payload["iat"], 2592000)
+
+    def test_24_onboarding_token_with_store_id_claim_rejected(self):
+        # Create an onboarding token that illegitimately carries a store_id
+        secret = "test_supabase_jwt_secret_32_bytes_len"
+        now = int(time.time())
+        header = {"alg": "HS256", "typ": "JWT"}
+        payload = {
+            "sub": "user-123",
+            "role": "authenticated",
+            "aud": "authenticated",
+            "iss": "supabase",
+            "iat": now,
+            "nbf": now,
+            "exp": now + 300,
+            "jti": "onb_with_store",
+            "token_use": "onboarding",
+            "store_id": "store-leak",
+        }
+        h_b64 = base64.urlsafe_b64encode(json.dumps(header).encode('utf-8')).decode('utf-8').rstrip('=')
+        p_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode('utf-8')).decode('utf-8').rstrip('=')
+        sig = base64.urlsafe_b64encode(
+            __import__("hmac").new(secret.encode('utf-8'), f"{h_b64}.{p_b64}".encode('utf-8'), __import__("hashlib").sha256).digest()
+        ).decode('utf-8').rstrip('=')
+        token = f"{h_b64}.{p_b64}.{sig}"
+
+        res = handle_exchange_store_jwt_request(
+            json.dumps({"store_id": "store-1"}).encode("utf-8"),
+            auth_header=f"Bearer {token}",
+        )
+        self.assertFalse(res["success"])
+        self.assertEqual(res["status"], 403)
+        self.assertEqual(res["error"], "INVALID_TOKEN_SCOPE")
+
+    def test_25_exchange_rejects_missing_store_id(self):
+        token = issue_hs256_onboarding_jwt("user-123", "test_supabase_jwt_secret_32_bytes_len")
+        res = handle_exchange_store_jwt_request(
+            json.dumps({}).encode("utf-8"),
+            auth_header=f"Bearer {token}",
+        )
+        self.assertFalse(res["success"])
+        self.assertEqual(res["status"], 400)
+        self.assertEqual(res["error"], "MISSING_PARAMETERS")
+
+    def test_26_verify_and_decode_rejects_invalid_algorithm(self):
+        secret = "test_supabase_jwt_secret_32_bytes_len"
+        now = int(time.time())
+        header = {"alg": "none", "typ": "JWT"}
+        payload = {
+            "sub": "user-123",
+            "role": "authenticated",
+            "aud": "authenticated",
+            "iss": "supabase",
+            "iat": now,
+            "exp": now + 300,
+            "jti": "onb_alg_none",
+        }
+        h_b64 = base64.urlsafe_b64encode(json.dumps(header).encode('utf-8')).decode('utf-8').rstrip('=')
+        p_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode('utf-8')).decode('utf-8').rstrip('=')
+        token = f"{h_b64}.{p_b64}."
+        with self.assertRaises(Exception) as ctx:
+            verify_and_decode_hs256_jwt(token, secret)
+        self.assertEqual(ctx.exception.error_code, "INVALID_TOKEN_ALGORITHM")
+
+    def test_27_verify_and_decode_rejects_exp_less_than_or_equal_iat(self):
+        secret = "test_supabase_jwt_secret_32_bytes_len"
+        now = int(time.time())
+        header = {"alg": "HS256", "typ": "JWT"}
+        payload = {
+            "sub": "user-123",
+            "role": "authenticated",
+            "aud": "authenticated",
+            "iss": "supabase",
+            "iat": now,
+            "exp": now,  # exp == iat
+            "jti": "onb_exp_eq_iat",
+        }
+        h_b64 = base64.urlsafe_b64encode(json.dumps(header).encode('utf-8')).decode('utf-8').rstrip('=')
+        p_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode('utf-8')).decode('utf-8').rstrip('=')
+        sig = base64.urlsafe_b64encode(
+            __import__("hmac").new(secret.encode('utf-8'), f"{h_b64}.{p_b64}".encode('utf-8'), __import__("hashlib").sha256).digest()
+        ).decode('utf-8').rstrip('=')
+        token = f"{h_b64}.{p_b64}.{sig}"
+        with self.assertRaises(Exception) as ctx:
+            verify_and_decode_hs256_jwt(token, secret)
+        self.assertEqual(ctx.exception.error_code, "INVALID_TOKEN_CLAIMS")
+
+    def test_28_non_dict_json_payloads_rejected_with_400_across_all_endpoints(self):
+        for bad_body in [b"[1, 2, 3]", b'"just a string"', b"12345", b"true", b"null"]:
+            # pos-jwt endpoint
+            res1 = handle_pos_jwt_auth_request(bad_body)
+            self.assertFalse(res1["success"])
+            self.assertEqual(res1["status"], 400)
+            self.assertEqual(res1["error"], "MALFORMED_JSON")
+
+            # onboarding-jwt endpoint
+            res2 = handle_onboarding_jwt_request(bad_body)
+            self.assertFalse(res2["success"])
+            self.assertEqual(res2["status"], 400)
+            self.assertEqual(res2["error"], "MALFORMED_JSON")
+
+            # exchange-store-jwt endpoint
+            res3 = handle_exchange_store_jwt_request(bad_body)
+            self.assertFalse(res3["success"])
+            self.assertEqual(res3["status"], 400)
+            self.assertEqual(res3["error"], "MALFORMED_JSON")
+
+    def test_29_verify_and_decode_handles_nbf_none_and_future_skew(self):
+        secret = "test_supabase_jwt_secret_32_bytes_len"
+        now = int(time.time())
+        header = {"alg": "HS256", "typ": "JWT"}
+
+        # 1. nbf is None (explicit null) should not crash with TypeError
+        payload_none = {
+            "sub": "user-123", "role": "authenticated", "aud": "authenticated",
+            "iss": "supabase", "iat": now, "exp": now + 300, "jti": "onb_nbf_none",
+            "nbf": None
+        }
+        h_b64 = base64.urlsafe_b64encode(json.dumps(header).encode('utf-8')).decode('utf-8').rstrip('=')
+        p_b64 = base64.urlsafe_b64encode(json.dumps(payload_none).encode('utf-8')).decode('utf-8').rstrip('=')
+        sig = base64.urlsafe_b64encode(
+            __import__("hmac").new(secret.encode('utf-8'), f"{h_b64}.{p_b64}".encode('utf-8'), __import__("hashlib").sha256).digest()
+        ).decode('utf-8').rstrip('=')
+        token_none = f"{h_b64}.{p_b64}.{sig}"
+        decoded = verify_and_decode_hs256_jwt(token_none, secret)
+        self.assertEqual(decoded["sub"], "user-123")
+
+        # 2. nbf in far future (> now + 30) should reject TOKEN_NOT_YET_VALID
+        payload_future = {
+            "sub": "user-123", "role": "authenticated", "aud": "authenticated",
+            "iss": "supabase", "iat": now, "exp": now + 300, "jti": "onb_nbf_future",
+            "nbf": now + 100
+        }
+        p_b64_f = base64.urlsafe_b64encode(json.dumps(payload_future).encode('utf-8')).decode('utf-8').rstrip('=')
+        sig_f = base64.urlsafe_b64encode(
+            __import__("hmac").new(secret.encode('utf-8'), f"{h_b64}.{p_b64_f}".encode('utf-8'), __import__("hashlib").sha256).digest()
+        ).decode('utf-8').rstrip('=')
+        token_future = f"{h_b64}.{p_b64_f}.{sig_f}"
+        with self.assertRaises(Exception) as ctx:
+            verify_and_decode_hs256_jwt(token_future, secret)
+        self.assertEqual(ctx.exception.error_code, "TOKEN_NOT_YET_VALID")
+
+    def test_30_verify_and_decode_rejects_invalid_nbf_type(self):
+        secret = "test_supabase_jwt_secret_32_bytes_len"
+        now = int(time.time())
+        header = {"alg": "HS256", "typ": "JWT"}
+        payload_invalid_type = {
+            "sub": "user-123", "role": "authenticated", "aud": "authenticated",
+            "iss": "supabase", "iat": now, "exp": now + 300, "jti": "onb_nbf_str",
+            "nbf": "tomorrow"
+        }
+        h_b64 = base64.urlsafe_b64encode(json.dumps(header).encode('utf-8')).decode('utf-8').rstrip('=')
+        p_b64 = base64.urlsafe_b64encode(json.dumps(payload_invalid_type).encode('utf-8')).decode('utf-8').rstrip('=')
+        sig = base64.urlsafe_b64encode(
+            __import__("hmac").new(secret.encode('utf-8'), f"{h_b64}.{p_b64}".encode('utf-8'), __import__("hashlib").sha256).digest()
+        ).decode('utf-8').rstrip('=')
+        token_str = f"{h_b64}.{p_b64}.{sig}"
+        with self.assertRaises(Exception) as ctx:
+            verify_and_decode_hs256_jwt(token_str, secret)
+        self.assertEqual(ctx.exception.error_code, "INVALID_TOKEN_CLAIMS")
+
 
 if __name__ == "__main__":
     unittest.main()

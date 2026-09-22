@@ -35,7 +35,7 @@ void main() {
       'exp': now + ttl,
       'jti': 'test_jti_${DateTime.now().microsecondsSinceEpoch}',
       'token_use': tokenUse,
-      'store_id': ?storeId,
+      if (storeId != null) 'store_id': storeId,
     };
     final hB64 = base64Url
         .encode(utf8.encode(jsonEncode(header)))

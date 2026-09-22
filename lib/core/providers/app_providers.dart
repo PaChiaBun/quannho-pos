@@ -19,7 +19,7 @@ import '../../modules/loyalty/repository/loyalty_repository.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 final productRepositoryProvider = Provider<CoreProductRepository>((ref) {
-  return CoreProductRepository();
+  return CoreProductRepository.instance;
 });
 
 final customerRepositoryProvider = Provider<CoreCustomerRepository>((ref) {
@@ -72,7 +72,7 @@ final allProductsProvider = StreamProvider.autoDispose<List<ProductModel>>((ref)
   return ref.watch(productRepositoryProvider).watchAll();
 });
 
-/// Sản phẩm cho POS (chỉ active + available)
+/// Sản phẩm cho POS & Bàn (chỉ active, loại bỏ nguyên liệu thuần)
 final posProductsProvider = Provider.autoDispose<AsyncValue<List<ProductModel>>>((ref) {
   return ref
       .watch(allProductsProvider)
@@ -81,7 +81,6 @@ final posProductsProvider = Provider.autoDispose<AsyncValue<List<ProductModel>>>
             .where(
               (p) =>
                   p.isActive &&
-                  p.isAvailable &&
                   p.category != 'Nguyên liệu' &&
                   p.productType != 'ingredient',
             )

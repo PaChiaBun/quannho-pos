@@ -85,11 +85,39 @@ Quy tắc nghiệp vụ lõi:
      - Vai trò `owner` (hoặc `is_owner = true`): Có toàn quyền tất cả action permissions trong POS và toàn bộ 9 quyền AI Bum.
      - Vai trò `manager`: Có toàn quyền tất cả action permissions của POS (`kAllActions`: bán hàng, bàn, kho, thu chi, báo cáo, tính lương, máy in) để điều hành ca làm việc tại quán; nhưng **tuyệt đối KHÔNG tự động được cấp các quyền dữ liệu nhạy cảm qua AI Bum** (`ai_bum.sales`, `ai_bum.inventory`, `ai_bum.finance`, `ai_bum.operations`, `ai_bum.team_shift`, `ai_bum.all_payroll`). Mặc định qua AI Bum, Manager chỉ có 3 quyền an toàn cá nhân (`ai_bum.help`, `ai_bum.my_shift`, `ai_bum.my_payroll`), các quyền nhạy cảm khác phải suy trực tiếp từ Lego Modules (`store_roles.modules`) hoặc được Chủ Quán cấp chủ động; nếu chưa được cấp phải **fail-closed**.
      - Vai trò `cashier` hoặc tên vai trò có chứa `"thu ngân"`, `"quầy"`: Mặc nhiên có quyền thanh toán `pos.checkout`, xem lịch sử `pos.view_history`, giảm giá `pos.apply_discount`.
-  4. **Quy chuẩn Server RPC xác thực quyền (`verify_staff_qr_membership_v4`, `settle_ban_session_v5`)**:
+  4. **Chuẩn hóa Vai trò Nghiệp vụ F&B & Bộ Quy Tắc Nhận Diện Canonical (`StaffService.canonicalRole`)**:
+     - Danh mục mã chuẩn hệ thống (Canonical Codes):
+       * `owner`: Chủ quán (quyền tối cao, gắn liền tài khoản chủ sở hữu, **khóa cứng tuyệt đối không cho tạo/sửa hoặc gán qua danh mục vai trò tùy chỉnh `store_roles`**).
+       * `manager`: Quản lý nhà hàng (`kAllActions` POS, điều hành ca).
+       * `cashier`: Thu ngân (`pos`, `ban`, `finance`, `bill_printer`, `chamcong`).
+       * `waiter`: Phục vụ & Tiếp thực (`ban`, `pos`, `kitchen`, `chamcong`). **Tuyệt đối không coi vai trò `waiter` là chưa phân quyền (`unassigned`)**; nhân sự mang vai trò phục vụ/chạy bàn là nhân viên chính thức đã có quyền hạn đầy đủ.
+       * `kitchen`: Bếp chính, Phụ bếp & Pha chế/Barista (`kitchen`, `pos`, `kho`, `chamcong`).
+       * `stock`: Thủ kho (`kho`, `kho_pro`, `chamcong`).
+       * `custom`: Vai trò mở rộng linh hoạt (`bảo vệ`, `tạp vụ`, `lễ tân`...).
+     - **Từ điển chuẩn hóa tự động (`canonicalRole`)**: Nhận diện không phân biệt hoa thường, có dấu / không dấu / viết tắt / tiếng Anh (`thu ngân`, `thu ngan`, `tn`, `cashier`, `bán hàng`, `phục vụ`, `phuc vu`, `pv`, `waiter`, `waitress`, `chạy bàn`, `runner`, `tiếp thực`, `bếp`, `bep`, `cook`, `chef`, `pha chế`, `barista`, `kho`, `thủ kho`, `stock`, `quản lý`, `quan ly`, `ql`, `admin`...).
+     - **Chống trùng lặp & Rào chắn bảo vệ vai trò**:
+       * Chặn 100% việc tạo trùng tên vai trò đã có trong cơ sở.
+       * Hiển thị cảnh báo màu vàng khi tạo vai trò mới có tên mang cùng mã chuẩn hệ thống với vai trò đã tồn tại.
+       * Khóa hoàn toàn nút Lưu khi tên vai trò bị nhận diện là `owner` để bảo toàn quyền kiểm soát của Chủ Quán.
+  5. **4 Cụm Vận Hành F&B Thực Tế & Thẻ Hướng Dẫn Mô Tả Công Việc (Job Guidance Cards)**:
+     - **🍽️ Vận hành Quầy & Bàn (FOH)**: `Thu ngân`, `Phục vụ`, `Tiếp thực (Runner)`, `Lễ tân`.
+     - **🍳 Bếp & Pha Chế (BOH)**: `Bếp chính`, `Phụ bếp`, `Pha chế (Barista)`.
+     - **📦 Quản Trị & Kho Vận**: `Quản lý nhà hàng`, `Thủ kho`.
+     - **💼 Văn Phòng & Phụ Trợ**: `Kế toán / Thu chi`, `Bảo vệ`, `Tạp vụ`.
+     - Hỗ trợ chip 1-chạm thiết lập (Tên, Icon, Màu sắc HSL, Module) kèm mô tả chi tiết nhiệm vụ và trách nhiệm thực tế của từng vị trí trong nhà hàng.
+  6. **Quy Chuẩn Phân Cấp Quản Lý Nhân Sự & Onboarding Tự Động (Staff Hierarchy & Onboarding Flow)**:
+     - **Onboarding 100% tự phục vụ**: Nhân viên tự đăng ký và tham gia bằng cách quét mã QR hoặc nhập Mã Quán (`join_store_by_code_v4`). **Đã loại bỏ hoàn toàn nút bấm thủ công `+👤 Thêm nhân viên` và form nhập số điện thoại thủ công ở module Nhân viên**.
+     - **Rào chắn phân cấp quản lý (Hierarchy Guard)**:
+       * Chủ quán (`is_owner`): Toàn quyền duyệt, đổi vai trò, xóa/thu hồi quyền của bất kỳ nhân sự nào (ngoại trừ chính mình).
+       * Quản lý (`manager`): Chỉ có quyền điều phối nhân viên cấp dưới (Thu ngân, Phục vụ, Bếp, Kho, Custom); **tuyệt đối KHÔNG được gán vai trò `manager` hoặc `owner`**, và không được xóa/thu hồi tài khoản của Quản lý khác hay Chủ quán.
+       * Cả Client (`StaffService.updateRole`, `_confirmRemove`) và Server RPC `staff_management_v4` (`fix_staff_management_manager_role_v4.sql`) đều thực thi chốt chặn phân cấp 2 tầng này.
+       * RPC `staff_management_v4` hỗ trợ động toàn bộ các vai trò custom từ `store_roles` mà không phát sinh lỗi khóa ngoại/ràng buộc (`support_custom_store_roles_in_staff_management_v4.sql`).
+     - **Đồng bộ Dropdown & Trạng thái phân vai**: Dropdown vai trò và danh sách nhân viên đồng bộ trực tiếp với `store_roles`, không bị lệch vai trò mặc định (như lỗi "Barista" trước đây).
+  7. **Quy chuẩn Server RPC xác thực quyền (`verify_staff_qr_membership_v4`, `settle_ban_session_v5`)**:
      - Xác thực nhận diện user qua 4 tầng: `auth.uid()`, `request.jwt.claim.sub`, `request.headers -> x-user-id`, `request.header.x-user-id`.
      - Kiểm tra quyền ưu tiên: `is_owner OR role IN ('owner', 'manager', 'cashier', 'admin') OR store_roles.modules ? 'pos'/'ban' OR app_settings fallback`.
      - `GRANT EXECUTE` bắt buộc cho cả 3 vai trò: `anon, authenticated, service_role`.
-  5. **Quy chuẩn RLS & SELECT cho Thống kê / Báo cáo / Dashboard**:
+  8. **Quy chuẩn RLS & SELECT cho Thống kê / Báo cáo / Dashboard**:
      - Các bảng giao dịch: `payment_settlements`, `ban_session_orders`, `ban_session_order_items`, `finance_records`, `orders`, `order_items` bắt buộc phải được `GRANT SELECT` cho `anon, authenticated, service_role` và tạo chính sách RLS `CREATE POLICY ... FOR ALL TO public USING (true)` để các stream báo cáo, biểu đồ doanh thu theo giờ và doanh thu thu ngân không bị nghẽn (42501 Unauthorized) làm xoay vô tận màn hình.
 - `app_logs` dùng cho lỗi/hoạt động; `void_audit_logs` cho hủy món/bill; `coupons` cho khuyến mãi. Khi có sự cố, ưu tiên log/stack trace và dữ kiện thiết bị, không đoán mò.
 - Thu chi phải phân biệt tiền mặt/tiền gửi, hoàn đúng nguồn khi rollback và xuất báo cáo có tồn đầu kỳ/running balance khi nghiệp vụ yêu cầu.
@@ -114,7 +142,7 @@ Quy tắc nghiệp vụ lõi:
   - **Tầng 2 (SFT Huấn luyện chuyên sâu):** Sử dụng framework Unsloth (`FastLanguageModel`) nạp base model Qwen2.5 + LoRA adapter từ kho dữ liệu bài học đã được kiểm duyệt/phê duyệt, tuyệt đối tuân thủ Zero Verbatim Ingestion, Zero PII, Zero Business Secrets.
 - AI Bum phải read-only với nghiệp vụ, chỉ đóng vai trò trợ lý/tư vấn/nhắc nhở, không tự tạo hiệu lực kho hoặc tài chính, khử PII trước cloud fallback, có quota/circuit breaker và cô lập conversation/feedback/memory theo `store_id`.
 
-## 3. Phân vai hai graph
+## 3. Phân vai hai graph & Logic vận hành CodeGraph
 
 | Nhu cầu | Công cụ chính | Kết quả cần lấy |
 |---|---|---|
@@ -123,12 +151,26 @@ Quy tắc nghiệp vụ lõi:
 | Xác định file/test bị ảnh hưởng trước và sau khi sửa | CodeGraph | `impact`, `affected`, source và đường gọi |
 | Cập nhật bản đồ tổng quan sau thay đổi | Graphify | Graph/report/HTML mới |
 
-Nguyên tắc:
+Nguyên tắc & Logic vận hành CodeGraph:
 
-- **Graphify là bản đồ**, dùng để định hướng và nhìn hệ thống ở mức tổng quan.
-- **CodeGraph là kính hiển vi**, dùng để đi sâu vào code và truy nguyên lỗi.
-- Không dùng cạnh `INFERRED` hoặc `AMBIGUOUS` của Graphify làm bằng chứng kết luận lỗi.
-- Khi kết quả hai graph khác nhau, ưu tiên source hiện tại do CodeGraph trả về, sau đó kiểm tra schema/migration và test.
+- **Đường dẫn thực thi**: Binary CLI đặt tại `/Users/banhbao/.local/bin/codegraph` (luôn ưu tiên đảm bảo `PATH` hoặc gọi trực tiếp qua đường dẫn tuyệt đối khi chạy terminal).
+- **Lưu trữ CSDL & WAL**: Database lưu tại `.codegraph/codegraph.db` (backend `node:sqlite`, chế độ full WAL `codegraph.db-wal`), đảm bảo hiệu năng cao và an toàn giao dịch.
+- **Trích xuất AST & Đồ thị quan hệ**: CodeGraph phân tích cú pháp AST của Dart (233+ files) và Python (17+ files), lập chỉ mục các classes, methods, functions, constants, imports, và xây dựng đồ thị hai chiều (Callers $\leftrightarrow$ Callees, References, Instantiations).
+- **Explore Logic (Khám phá tức thì)**: `codegraph explore "<query>"` kết hợp tìm kiếm ngữ nghĩa symbol + hiển thị trực tiếp source code có số dòng + cây phân nhánh gọi (call path) chỉ trong 1 lệnh duy nhất, giúp tiết kiệm tối đa context window so với việc đọc file thủ công.
+- **Impact & Affected Logic (Rà soát ảnh hưởng & Test)**:
+  * `codegraph callers "<symbol>"`: Truy vết tất cả các hàm/phương thức cấp trên đang gọi symbol này.
+  * `codegraph callees "<symbol>"`: Liệt kê tất cả các phụ thuộc mà symbol này triệu gọi.
+  * `codegraph impact "<symbol>"`: Tính toán toàn bộ bán kính ảnh hưởng (blast radius) khi thay đổi một phương thức hoặc model (rất quan trọng với các thay đổi phân quyền trong `StaffService`, `StoreRole`).
+  * `codegraph affected <files...>`: Tự động phát hiện các file kiểm thử (`test/**`) bị ảnh hưởng bởi danh sách file source vừa thay đổi.
+- **Vòng đời đồng bộ (Sync Lifecycle)**:
+  * **Bắt buộc sau mỗi đợt sửa code**: Chạy `/Users/banhbao/.local/bin/codegraph sync .` để quét delta AST và cập nhật nodes/edges mới.
+  * Kiểm tra `codegraph status .` phải xác nhận `✓ Index is up to date`.
+  * Nếu phát hiện symbol mới chưa nhận hoặc sau tái cấu trúc lớn: Chạy `codegraph index .` để rebuild toàn diện.
+- **Cơ chế cầu nối đối chiếu SQL / Supabase (Cross-verification)**:
+  * CodeGraph lập chỉ mục client code. Đối với các RPC (`staff_management_v4`, `verify_staff_qr_membership_v4`, `settle_ban_session_v5`), dùng CodeGraph để định vị chính xác vị trí gọi `_sb.rpc(...)` và tham số truyền từ Dart, sau đó đối chiếu chéo 1:1 với định nghĩa hàm trong `supabase/migrations/` và unit test backend/dart.
+- **Graphify là bản đồ tổng quan, CodeGraph là kính hiển vi chi tiết**:
+  * Không dùng cạnh `INFERRED` hoặc `AMBIGUOUS` của Graphify làm bằng chứng kết luận lỗi.
+  * Khi kết quả hai graph khác nhau, ưu tiên source hiện tại do CodeGraph trả về, sau đó kiểm tra schema/migration và test thực tế.
 
 ## 4. Chế độ phân tích sâu
 
@@ -178,7 +220,7 @@ Mục tiêu của bước này là xác định module, tài liệu, schema và 
 
 ### Bước C — Dùng CodeGraph để truy nguyên nguyên nhân
 
-Từ root `quan_nho`, kiểm tra index và ưu tiên một truy vấn đủ cụ thể:
+Từ root `quan_nho`, kiểm tra index và ưu tiên một truy vấn đủ cụ thể (sử dụng `codegraph` hoặc binary `/Users/banhbao/.local/bin/codegraph`):
 
 ```bash
 codegraph status .

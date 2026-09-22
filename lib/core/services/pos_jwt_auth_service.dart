@@ -4,10 +4,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'supabase_service.dart';
 
 const String _kPosJwtStorageKey = 'pos_supabase_jwt';
+const String _kPosOnboardingJwtStorageKey = 'pos_supabase_onboarding_jwt';
 const String _kConfiguredPosJwtBackendUrl = String.fromEnvironment(
   'POS_JWT_AUTH_URL',
   defaultValue: '',
@@ -37,14 +40,39 @@ class PosJwtAuthService {
 
   /// Trả token onboarding chỉ khi token còn hợp lệ và thuộc đúng tài khoản.
   String? activeOnboardingJwtFor(String userId) {
+    final cleanUserId = userId.trim();
+    if (cleanUserId.isEmpty) return null;
     final token = _activeOnboardingJwt;
     if (token == null ||
-        _activeOnboardingSubject != userId.trim() ||
+        _activeOnboardingSubject != cleanUserId ||
         !isOnboardingTokenValid(token)) {
       clearActiveOnboardingJwt();
       return null;
     }
     return token;
+  }
+
+  /// Lấy Onboarding JWT từ RAM hoặc SharedPreferences fallback nếu hợp lệ.
+  Future<String?> getStoredOnboardingJwtFor(String userId) async {
+    final cleanUserId = userId.trim();
+    if (cleanUserId.isEmpty) return null;
+    final active = activeOnboardingJwtFor(cleanUserId);
+    if (active != null) return active;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_kPosOnboardingJwtStorageKey);
+      if (token != null) {
+        if (!isOnboardingTokenValid(token)) {
+          // Token đã hết hạn: dọn sạch khỏi storage
+          await prefs.remove(_kPosOnboardingJwtStorageKey);
+        } else if (_readTokenSubject(token) == cleanUserId) {
+          _activeOnboardingJwt = token;
+          _activeOnboardingSubject = cleanUserId;
+          return token;
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   void setActiveOnboardingJwt(String? token) {
@@ -56,9 +84,29 @@ class PosJwtAuthService {
     }
   }
 
+  Future<void> storeOnboardingJwt(String token) async {
+    if (isOnboardingTokenValid(token)) {
+      setActiveOnboardingJwt(token);
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_kPosOnboardingJwtStorageKey, token);
+      } catch (_) {}
+    } else {
+      await clearOnboardingJwt();
+    }
+  }
+
   void clearActiveOnboardingJwt() {
     _activeOnboardingJwt = null;
     _activeOnboardingSubject = null;
+  }
+
+  Future<void> clearOnboardingJwt() async {
+    clearActiveOnboardingJwt();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_kPosOnboardingJwtStorageKey);
+    } catch (_) {}
   }
 
   /// POS JWT chỉ được bật khi bản build khai báo một endpoint production.
@@ -74,33 +122,48 @@ class PosJwtAuthService {
         uri.path.isEmpty;
   }
 
-  /// Retrieve cached POS JWT from secure storage
+  /// Retrieve cached POS JWT from secure storage, falling back to SharedPreferences if needed (e.g. Flutter Web)
   Future<String?> getStoredPosJwt() async {
     try {
-      final token = await secureStorage.read(key: _kPosJwtStorageKey);
+      var token = await secureStorage.read(key: _kPosJwtStorageKey);
+      if (token == null || token.isEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        token = prefs.getString(_kPosJwtStorageKey);
+      }
       if (token != null && isTokenValid(token)) {
         return token;
       }
       return null;
     } catch (_) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString(_kPosJwtStorageKey);
+        if (token != null && isTokenValid(token)) {
+          return token;
+        }
+      } catch (_) {}
       return null;
     }
   }
 
-  /// Store POS JWT token in secure storage
+  /// Store POS JWT token in secure storage and SharedPreferences fallback
   Future<void> storePosJwt(String token) async {
     await secureStorage.write(key: _kPosJwtStorageKey, value: token);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kPosJwtStorageKey, token);
+    } catch (_) {}
   }
 
-  /// Clear stored POS JWT token from secure storage
+  /// Clear stored POS JWT token from secure storage and SharedPreferences fallback
   Future<void> clearPosJwt() async {
     try {
       await secureStorage.delete(key: _kPosJwtStorageKey);
-    } catch (_) {
-      // Một số bản Flutter Web không đăng ký flutter_secure_storage_web dù
-      // dependency vẫn có trong pubspec. Dọn token là best-effort và tuyệt đối
-      // không được làm treo splash/logout của POS.
-    }
+    } catch (_) {}
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_kPosJwtStorageKey);
+    } catch (_) {}
   }
 
   /// Decode JWT and verify 'exp' claim has at least 30 seconds remaining and store_id matches
@@ -138,6 +201,7 @@ class PosJwtAuthService {
           !hasAuthenticatedAudience ||
           issuedAt == null ||
           issuedAt > nowSec + 30 ||
+          exp <= issuedAt ||
           (notBefore != null && notBefore > nowSec + 30)) {
         return false;
       }
@@ -178,8 +242,8 @@ class PosJwtAuthService {
         client.rest.setAuth(token);
         await client.realtime.setAuth(token);
       } else {
-        client.rest.setAuth(null);
-        await client.realtime.setAuth(null);
+        client.rest.setAuth(SupabaseService.supabaseAnonKey);
+        await client.realtime.setAuth(SupabaseService.supabaseAnonKey);
       }
       return true;
     } catch (_) {
@@ -248,6 +312,17 @@ class PosJwtAuthService {
           data['pos_jwt'] != null) {
         final token = data['pos_jwt'] as String;
 
+        if (!isTokenValid(token, expectedStoreId: storeId)) {
+          await clearPosJwt();
+          await applyAuthToSupabase(null);
+          return {
+            'success': false,
+            'status': 502,
+            'error': 'INVALID_TOKEN_RESPONSE',
+            'message': 'Máy chủ trả về phiên cửa hàng không hợp lệ',
+          };
+        }
+
         // Transactional apply & storage with rollback compensation
         try {
           await storePosJwt(token);
@@ -255,7 +330,7 @@ class PosJwtAuthService {
             token,
             expectedStoreId: storeId,
           );
-          if (!applied && token.isNotEmpty) {
+          if (!applied) {
             // Apply failed -> Rollback token
             await clearPosJwt();
             await applyAuthToSupabase(null);
@@ -336,6 +411,7 @@ class PosJwtAuthService {
           hasAuthenticatedAudience &&
           issuedAt != null &&
           issuedAt <= nowSec + 30 &&
+          exp > issuedAt &&
           exp - issuedAt <= 600 &&
           (notBefore == null || notBefore <= nowSec + 30) &&
           payloadJson['store_id'] == null;
@@ -367,7 +443,7 @@ class PosJwtAuthService {
     String endpointPath = '/api/auth/onboarding-jwt',
     Duration timeoutDuration = const Duration(seconds: 10),
   }) async {
-    clearActiveOnboardingJwt();
+    await clearOnboardingJwt();
     if (!isConfigured) {
       return {
         'success': false,
@@ -400,6 +476,8 @@ class PosJwtAuthService {
 
       final contentType = response.headers['content-type'] ?? '';
       if (!contentType.contains('application/json')) {
+        await clearOnboardingJwt();
+        await applyAuthToSupabase(null);
         return {
           'success': false,
           'status': response.statusCode,
@@ -420,7 +498,7 @@ class PosJwtAuthService {
             allowOnboardingToken: true,
           );
           if (!applied) {
-            clearActiveOnboardingJwt();
+            await clearOnboardingJwt();
             await applyAuthToSupabase(null);
             return {
               'success': false,
@@ -429,10 +507,12 @@ class PosJwtAuthService {
               'message': 'Không thể áp dụng phiên xác thực onboarding',
             };
           }
-          setActiveOnboardingJwt(token);
+          await storeOnboardingJwt(token);
           return data;
         }
       }
+      await clearOnboardingJwt();
+      await applyAuthToSupabase(null);
       return {
         'success': false,
         'status': response.statusCode,
@@ -440,6 +520,8 @@ class PosJwtAuthService {
         'message': data['message'] ?? 'Xác thực onboarding thất bại',
       };
     } catch (_) {
+      await clearOnboardingJwt();
+      await applyAuthToSupabase(null);
       return {
         'success': false,
         'status': 500,
@@ -505,7 +587,7 @@ class PosJwtAuthService {
           data['pos_jwt'] != null) {
         final token = data['pos_jwt'] as String;
         if (!isTokenValid(token, expectedStoreId: storeId)) {
-          clearActiveOnboardingJwt();
+          await clearOnboardingJwt();
           await clearPosJwt();
           await applyAuthToSupabase(null);
           return {
@@ -520,7 +602,7 @@ class PosJwtAuthService {
           await storePosJwt(token);
           applied = await applyAuthToSupabase(token, expectedStoreId: storeId);
         } catch (_) {
-          clearActiveOnboardingJwt();
+          await clearOnboardingJwt();
           await clearPosJwt();
           await applyAuthToSupabase(null);
           return {
@@ -531,7 +613,7 @@ class PosJwtAuthService {
           };
         }
         if (!applied) {
-          clearActiveOnboardingJwt();
+          await clearOnboardingJwt();
           await clearPosJwt();
           await applyAuthToSupabase(null);
           return {
@@ -541,12 +623,12 @@ class PosJwtAuthService {
             'message': 'Không thể áp dụng phiên xác thực cửa hàng',
           };
         }
-        clearActiveOnboardingJwt();
+        await clearOnboardingJwt();
         return data;
       }
       final errorCode = data['error'] as String?;
       if (response.statusCode == 401 || response.statusCode == 403) {
-        clearActiveOnboardingJwt();
+        await clearOnboardingJwt();
       }
       await clearPosJwt();
       await applyAuthToSupabase(null);
