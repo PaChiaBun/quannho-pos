@@ -3,24 +3,41 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
-## 2026-09-25 (22:30 +07) — Phát Hành Bản Dựng v1.0.2+10 Lên Google Play Store & Tối Ưu Chính Sách Android [ĐÃ GỬI DUYỆT]
+## 2026-09-25 (23:10 +07) — Phát Hành Phiên Bản v1.0.2+10: Hoàn Thiện Kéo Thả Khu Vực Bàn, Gửi Duyệt Google Play Store & Triển Khai Web POS [HOÀN THÀNH TOÀN DIỆN]
 
-> **Trạng thái**: Đã tải lên và gửi xét duyệt thành công bản dựng **10 (1.0.2)** trên Google Play Console (Kênh chính thức / Production).
-> - **Nền tảng**: Android (Google Play Store), APK nội bộ, iOS App Store, Web.
+> **Trạng thái**: Đã nghiệm thu thực tế thành công tính năng kéo thả khu vực bàn trên giao diện thật, đã gửi duyệt bản dựng **10 (1.0.2)** lên Google Play Console và hoàn tất deploy live bản Web POS trên máy chủ VPS.
+> - **Nền tảng**: Android (Google Play Store & POS), Web (`quannho.lpm.vn/pos/`), iOS App Store Connect, Windows POS.
 > - **Phiên bản mới**: v1.0.2+10 (Build 10).
-> - **Artifacts**: AAB (`QuanNhoPOS-1.0.2.aab`, `build10.aab` - 85.5 MB), APK (`QuanNhoPOS-latest.apk` - 120.2 MB).
-> - **Chính sách**: Đã loại bỏ quyền `REQUEST_INSTALL_PACKAGES` trong `AndroidManifest.xml` để đạt chuẩn 100% chính sách phân phối Play Store.
+> - **Artifacts**: AAB (`QuanNhoPOS-1.0.2-build10.aab` - 85.5 MB), APK (`QuanNhoPOS-latest.apk` - 120.2 MB), Web Bundle (`QuanNhoPOS-1.0.2-web.tar.gz` - 22 MB).
+> - **Tài nguyên VPS**: Đã sao lưu an toàn `/var/www/quannho/backups/pos_backup_20260925_154317.tar.gz`.
 
 ### ⚠️ Bối Cảnh & Vấn Đề Đã Xử Lý
-1. **Trùng Version Code**: Google Play báo mã phiên bản cũ (8) đã tồn tại. Đã nâng cấp lên version code `10`.
-2. **Cảnh Báo Quyền Nhạy Cảm**: Google Play cảnh báo quyền `REQUEST_INSTALL_PACKAGES`. Đã gỡ bỏ triệt để do ứng dụng trên Play Store được cập nhật trực tiếp bởi cơ chế của Google Play.
+1. **Yêu cầu nghiệp vụ**: Chủ quán mong muốn có thể tự do sắp xếp, thay đổi thứ tự các chip khu vực kinh doanh (Khu C, Khu B, Khu A, Mang về...) trong màn hình Quản lý bàn bằng cách chạm lâu và kéo thả linh hoạt.
+2. **Xung đột cử chỉ**: Ở bản cũ, thao tác chạm giữ lâu (long-press) bị trùng với hành vi mở popup *"Sửa khu vực"*.
+3. **Chính sách Google Play**: Google Play Console từ chối bản dựng nếu trùng version code cũ (build 8) hoặc chứa quyền nhạy cảm `REQUEST_INSTALL_PACKAGES`.
+4. **Lỗi đảo ngược thứ tự (Root Cause từ Nginx/Supabase Log)**:
+   - Truy vết từ log hệ thống phát hiện Supabase Dart SDK `.order('sort_order')` mặc định là **giảm dần (`desc`)** nếu không có cờ `ascending: true`.
+   - Dẫn đến việc khi kéo thả lưu `sort_order: 0, 1, 2, 3`, máy chủ trả về danh sách đảo ngược `3, 2, 1, 0`, khiến chip bị nhảy giật và lộn xộn.
 
-### ✅ Kết Quả Triển Khai
-- Bản dựng `10 (1.0.2)` đã được tải lên thành công vào bản phát hành chính thức.
-- Đã hoàn tất bước **Gửi nội dung thay đổi để được xem xét** (Send changes for review) trên Google Play Console.
-- Web tải trực tiếp `quannho.lpm.vn` đã có sẵn file APK Build 10 mới nhất (`QuanNhoPOS-latest.apk`).
-- **Triển khai Web POS (`quannho.lpm.vn/pos/`)**: Đã sao lưu an toàn `pos_backup_20260925_154317.tar.gz`, đồng bộ bản dựng Web mới nhất lên VPS `45.32.104.228:/var/www/quannho/pos`, kiểm tra Nginx syntax OK và reload zero-downtime thành công.
-- **Khắc phục lỗi sắp xếp khu vực (Sort Order DESC $\rightarrow$ ASC)**: Truy vết qua Nginx log phát hiện truy vấn Supabase `ban_zones` mặc định sort `desc` làm đảo ngược thứ tự danh sách khi thả tay. Đã bổ sung `ascending: true` trong `ban_repository.dart` và cập nhật `displayZones` tức thì trên UI. Đã re-build và re-deploy bản Web mới nhất lên VPS.
+### ✅ Giải Pháp Đã Triển Khai Hoàn Tất
+1. **Kiến Trúc Kéo Thả & Tách Biệt Cử Chỉ**:
+   - Dùng `ReorderableListView` (ngang) với `ReorderableDelayedDragStartListener` cho danh sách khu vực.
+   - Chip `Tất cả` giữ cố định đầu danh sách (header); nút `+ Thêm khu` giữ cố định cuối danh sách (footer).
+   - Tách biệt hoàn toàn hành vi sửa khu vực: Chuyển sang **chạm đúp (double-tap)** hoặc bấm vào **icon cây bút ✏️** khi chip được chọn.
+2. **Khắc Phục Triệt Để Lỗi Sắp Xếp (DESC $\rightarrow$ ASC) & Optimistic UI**:
+   - Bổ sung tường minh `.order('sort_order', ascending: true)` trong cả `watchZones` và `getZones` (`lib/core/repositories/ban_repository.dart`).
+   - Cập nhật state UI render tức thời qua `displayZones` (`lib/screens/ban_screen.dart`), loại bỏ hoàn toàn độ trễ và hiện tượng giật ngược danh sách.
+3. **Tuân Thủ 100% Chính Sách Google Play Store**:
+   - Loại bỏ triệt để `<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>` trong `AndroidManifest.xml`.
+   - Nâng mã phiên bản lên `10 (1.0.2)`. Gửi thành công bản phát hành chính thức lên Google Play Console sang trạng thái *Đang xem xét (In review)*.
+4. **Triển Khai Web POS Zero-Downtime Lên VPS**:
+   - Biên dịch web release (`flutter build web --release --base-href /pos/`).
+   - Tạo backup tự động trên VPS, đồng bộ sản phẩm vào `/var/www/quannho/pos/`, cấu hình quyền chuẩn `www-data:www-data 755` và reload Nginx thành công.
+
+### 🧪 Nghiệm Thu
+- **Unit Tests**: Đạt 4/4 tests pass trong `test/repositories/ban_repository_test.dart`.
+- **Static Analysis**: 0 warnings, 0 errors trên toàn bộ các file sửa đổi.
+- **Nghiệm thu thực tế từ Chủ Quán**: Đã thử nghiệm kéo thả trực tiếp trên giao diện Web POS tại quán, hoạt động chuẩn xác, mượt mà và ổn định.
 
 ---
 
