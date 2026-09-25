@@ -370,7 +370,7 @@ class BanRepository {
               .eq('store_id', storeId)
               .eq('is_active', true)
               .neq('id', kSysPosZoneId)
-              .order('sort_order');
+              .order('sort_order', ascending: true);
           final zones = rows.map(BanZoneModel.fromMap).toList();
           yield zones;
         } catch (e) {
@@ -394,7 +394,7 @@ class BanRepository {
         .eq('store_id', storeId)
         .eq('is_active', true)
         .neq('id', kSysPosZoneId)
-        .order('sort_order');
+        .order('sort_order', ascending: true);
     return rows.map(BanZoneModel.fromMap).toList();
   }
 
@@ -408,9 +408,10 @@ class BanRepository {
       _sb.from('ban_zones').update({'is_active': false}).eq('id', id);
 
   Future<void> reorderZones(List<String> ids) async {
-    for (int i = 0; i < ids.length; i++) {
-      await _sb.from('ban_zones').update({'sort_order': i}).eq('id', ids[i]);
-    }
+    await Future.wait([
+      for (int i = 0; i < ids.length; i++)
+        _sb.from('ban_zones').update({'sort_order': i}).eq('id', ids[i]),
+    ]);
   }
 
   // ── Tables ─────────────────────────────────────────────────────────────────

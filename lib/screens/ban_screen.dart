@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:math';
+import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../core/utils/app_logger.dart';
@@ -370,6 +371,68 @@ class _BanScreenState extends ConsumerState<BanScreen> {
     }
   }
 
+  Future<void> _handleReorderZones(
+    List<BanZoneModel> currentZones,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    final perms = await ref.read(userActionPermsProvider.future);
+    final hasPerm = perms.contains('ban.manage_structure');
+    if (!hasPerm) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Bạn không có quyền "Sắp xếp khu vực".',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            ),
+            backgroundColor: _kRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (oldIndex < 0 || oldIndex >= currentZones.length) return;
+    if (newIndex < 0) newIndex = 0;
+    if (newIndex > currentZones.length) newIndex = currentZones.length;
+
+    // Flutter ReorderableListView index shift
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+    if (oldIndex == newIndex) return;
+
+    // Save selected zone ID to preserve selection after reordering
+    String? selectedZoneId;
+    if (_selectedZoneIndex > 0 && _selectedZoneIndex - 1 < currentZones.length) {
+      selectedZoneId = currentZones[_selectedZoneIndex - 1].id;
+    }
+
+    final reorderedList = List<BanZoneModel>.from(currentZones);
+    final movedItem = reorderedList.removeAt(oldIndex);
+    reorderedList.insert(newIndex, movedItem);
+
+    setState(() {
+      _cachedZones = reorderedList;
+      if (selectedZoneId != null) {
+        final newIdx = reorderedList.indexWhere((z) => z.id == selectedZoneId);
+        if (newIdx != -1) {
+          _selectedZoneIndex = newIdx + 1;
+        }
+      }
+    });
+
+    try {
+      final ids = reorderedList.map((z) => z.id).toList();
+      await _banRepo.reorderZones(ids);
+      ref.invalidate(banZonesProvider);
+    } catch (e) {
+      debugPrint('[BanScreen] reorderZones error: $e');
+    }
+  }
+
   Future<void> _addTable(String? defaultZoneId) async {
     final perms = await ref.read(userActionPermsProvider.future);
     final hasPerm = perms.contains('ban.manage_structure');
@@ -713,16 +776,16 @@ class _BanScreenState extends ConsumerState<BanScreen> {
             const Center(child: CircularProgressIndicator(color: _kNavy)),
         error: (e, _) => Center(child: Text('Lỗi: $e')),
         data: (zones) {
-          if (_cachedZones.length != zones.length) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) setState(() => _cachedZones = zones);
-            });
-          } else {
+          if (_cachedZones.length != zones.length || _cachedZones.isEmpty) {
             _cachedZones = zones;
           }
 
+          final displayZones = _cachedZones.isNotEmpty && _cachedZones.length == zones.length
+              ? _cachedZones
+              : zones;
+
           // ── Grid bàn (dùng chung cho cả phone lẫn tablet) ──────────────
-          Widget tableGrid = _buildTableGrid(zones);
+          Widget tableGrid = _buildTableGrid(displayZones);
 
           // ── Tablet: Two Column ──────────────────────────────────────────
           return LayoutBuilder(
@@ -907,7 +970,9 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           zones: zones,
           selectedIndex: _selectedZoneIndex,
           onSelect: (i) => setState(() => _selectedZoneIndex = i),
-          onLongPress: (zone) => _editZone(zone),
+          onReorder: (oldIdx, newIdx) =>
+              _handleReorderZones(zones, oldIdx, newIdx),
+          onEditZone: (zone) => _editZone(zone),
           onAddZone: _addZone,
         ),
         Container(
@@ -1660,14 +1725,16 @@ class _ZoneTabBar extends StatelessWidget {
   final List<BanZoneModel> zones;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
-  final ValueChanged<BanZoneModel> onLongPress;
+  final void Function(int oldIndex, int newIndex) onReorder;
+  final ValueChanged<BanZoneModel> onEditZone;
   final VoidCallback onAddZone;
 
   const _ZoneTabBar({
     required this.zones,
     required this.selectedIndex,
     required this.onSelect,
-    required this.onLongPress,
+    required this.onReorder,
+    required this.onEditZone,
     required this.onAddZone,
   });
 
@@ -1679,11 +1746,13 @@ class _ZoneTabBar extends StatelessWidget {
         children: [
           SizedBox(
             height: 52,
-            child: ListView(
+            child: ReorderableListView(
               scrollDirection: Axis.horizontal,
+              buildDefaultDragHandles: false,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              children: [
-                _ZoneChip(
+              header: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _ZoneChip(
                   label: 'Tất cả',
                   iconCode: 0xe1b1,
                   color: _kNavy,
@@ -1691,23 +1760,10 @@ class _ZoneTabBar extends StatelessWidget {
                   onTap: () => onSelect(0),
                   onLongPress: null,
                 ),
-                const SizedBox(width: 8),
-                ...zones.asMap().entries.map((e) {
-                  final i = e.key + 1;
-                  final zone = e.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _ZoneChip(
-                      label: zone.name,
-                      iconCode: zone.iconCode,
-                      color: Color(zone.colorValue),
-                      isSelected: selectedIndex == i,
-                      onTap: () => onSelect(i),
-                      onLongPress: () => onLongPress(zone),
-                    ),
-                  );
-                }),
-                _ZoneChip(
+              ),
+              footer: Padding(
+                padding: const EdgeInsets.only(left: 0),
+                child: _ZoneChip(
                   label: 'Thêm khu',
                   iconCode: 0xe145,
                   color: AppColors.inkFaded,
@@ -1716,6 +1772,48 @@ class _ZoneTabBar extends StatelessWidget {
                   onLongPress: null,
                   isDashed: true,
                 ),
+              ),
+              onReorder: onReorder,
+              proxyDecorator: (child, index, animation) {
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (context, child) {
+                    final double animValue =
+                        Curves.easeInOut.transform(animation.value);
+                    final double elevation =
+                        lerpDouble(0, 6, animValue) ?? 0;
+                    return Material(
+                      elevation: elevation,
+                      color: Colors.transparent,
+                      shadowColor: Colors.black26,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Transform.scale(
+                        scale: 1.05,
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: child,
+                );
+              },
+              children: [
+                for (int i = 0; i < zones.length; i++)
+                  ReorderableDelayedDragStartListener(
+                    key: ValueKey(zones[i].id),
+                    index: i,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _ZoneChip(
+                        label: zones[i].name,
+                        iconCode: zones[i].iconCode,
+                        color: Color(zones[i].colorValue),
+                        isSelected: selectedIndex == i + 1,
+                        onTap: () => onSelect(i + 1),
+                        onDoubleTap: () => onEditZone(zones[i]),
+                        onEdit: () => onEditZone(zones[i]),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1733,6 +1831,8 @@ class _ZoneChip extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onDoubleTap;
+  final VoidCallback? onEdit;
   final bool isDashed;
 
   const _ZoneChip({
@@ -1741,49 +1841,76 @@ class _ZoneChip extends StatelessWidget {
     required this.color,
     required this.isSelected,
     required this.onTap,
-    required this.onLongPress,
+    this.onLongPress,
+    this.onDoubleTap,
+    this.onEdit,
     this.isDashed = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDashed
-                ? color.withValues(alpha: 0.4)
-                : isSelected
-                ? color
-                : color.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              _zoneIconForCode(iconCode),
-              size: 16,
-              color: isSelected ? Colors.white : color,
+    return Tooltip(
+      message: onEdit != null
+          ? '$label\n• Chạm lâu để di chuyển\n• Chạm đúp để sửa'
+          : label,
+      waitDuration: const Duration(milliseconds: 600),
+      child: GestureDetector(
+        onTap: onTap,
+        onDoubleTap: onDoubleTap,
+        onLongPress: onLongPress,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? color : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDashed
+                  ? color.withValues(alpha: 0.4)
+                  : isSelected
+                  ? color
+                  : color.withValues(alpha: 0.3),
+              width: 1.5,
             ),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: GoogleFonts.outfit(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _zoneIconForCode(iconCode),
+                size: 16,
                 color: isSelected ? Colors.white : color,
               ),
-            ),
-          ],
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? Colors.white : color,
+                ),
+              ),
+              if (isSelected && onEdit != null) ...[
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: onEdit,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.edit_rounded,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

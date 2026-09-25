@@ -20,6 +20,7 @@
 - Đã hoàn tất bước **Gửi nội dung thay đổi để được xem xét** (Send changes for review) trên Google Play Console.
 - Web tải trực tiếp `quannho.lpm.vn` đã có sẵn file APK Build 10 mới nhất (`QuanNhoPOS-latest.apk`).
 - **Triển khai Web POS (`quannho.lpm.vn/pos/`)**: Đã sao lưu an toàn `pos_backup_20260925_154317.tar.gz`, đồng bộ bản dựng Web mới nhất lên VPS `45.32.104.228:/var/www/quannho/pos`, kiểm tra Nginx syntax OK và reload zero-downtime thành công.
+- **Khắc phục lỗi sắp xếp khu vực (Sort Order DESC $\rightarrow$ ASC)**: Truy vết qua Nginx log phát hiện truy vấn Supabase `ban_zones` mặc định sort `desc` làm đảo ngược thứ tự danh sách khi thả tay. Đã bổ sung `ascending: true` trong `ban_repository.dart` và cập nhật `displayZones` tức thì trên UI. Đã re-build và re-deploy bản Web mới nhất lên VPS.
 
 ---
 
