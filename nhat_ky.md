@@ -19,6 +19,7 @@
 - Bản dựng `10 (1.0.2)` đã được tải lên thành công vào bản phát hành chính thức.
 - Đã hoàn tất bước **Gửi nội dung thay đổi để được xem xét** (Send changes for review) trên Google Play Console.
 - Web tải trực tiếp `quannho.lpm.vn` đã có sẵn file APK Build 10 mới nhất (`QuanNhoPOS-latest.apk`).
+- **Triển khai Web POS (`quannho.lpm.vn/pos/`)**: Đã sao lưu an toàn `pos_backup_20260925_154317.tar.gz`, đồng bộ bản dựng Web mới nhất lên VPS `45.32.104.228:/var/www/quannho/pos`, kiểm tra Nginx syntax OK và reload zero-downtime thành công.
 
 ---
 
