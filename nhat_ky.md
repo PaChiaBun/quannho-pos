@@ -3,6 +3,32 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-09-30 (14:38 +07) — Điều Tra Log & Khắc Phục Lỗi Onboarding JWT Khi Đăng Nhập Tài Khoản Mới Chưa Có Quán, Đồng Bộ CodeGraph [HOÀN TẤT & LIVE]
+
+> **Trạng thái**: 🎉 **ĐÃ XỬ LÝ TRIỆT ĐỂ & ĐỒNG BỘ CODEGRAPH TOÀN DỰ ÁN**:
+> - **Hiện tượng**: Tài khoản mới tạo (`0905010101` - tên: `tèo`) khi đăng nhập vào hệ thống thì bị dừng lại ở màn hình đăng nhập kèm thông báo đỏ: *"Xác thực onboarding thất bại"*.
+> - **Truy vết Log & Nguyên nhân gốc**:
+>   1. **Dữ liệu tài khoản**: Kiểm tra database trên máy chủ VPS phát hiện `user_accounts` có tài khoản `tèo` (`+84905010101`), nhưng bảng `store_members` chưa có bản ghi nào (tài khoản 0 quán - zero store).
+>   2. **Cơ chế Onboarding**: Khi tài khoản 0 quán đăng nhập, hệ thống cần cấp token phiên làm việc tạm thời (`Onboarding JWT`) để dẫn người dùng vào trang **Tạo quán mới** hoặc **Kết nối quán bằng mã** (`/store_picker`).
+>   3. **Nguyên nhân lỗi client**:
+>      - Máy chủ `pos-jwt-gateway` đã cấp token thành công (`HTTP/2 200 OK`).
+>      - Tuy nhiên, hàm kiểm tra tính hợp lệ của token phía client (`isOnboardingTokenValid` trong `lib/core/services/pos_jwt_auth_service.dart`) áp mức dung sai lệch giờ đồng hồ (**Clock Skew**) quá chặt chẽ (`<= 30 giây`). Khi đồng hồ của thiết bị người dùng (điện thoại/máy tính) lệch so với đồng hồ chuẩn NTP máy chủ dù chỉ hơn 30s, app từ chối token và văng chuỗi lỗi kỹ thuật nội bộ: *"Xác thực onboarding thất bại"*.
+> - **Các biện pháp xử lý đã hoàn thành**:
+>   1. **Nới rộng dung sai lệch giờ chuẩn quốc tế (RFC 7519)**:
+>      - Cập nhật `pos_jwt_auth_service.dart`: Nâng dung sai lệch đồng hồ (`iat`, `nbf`, `exp`) từ **30s lên 300s (5 phút)** cho cả `isTokenValid` và `isOnboardingTokenValid`, hỗ trợ trôi dạt đồng hồ tự nhiên của thiết bị người dùng.
+>      - Nới lỏng kiểm tra TTL tối đa của token onboarding lên 1800s.
+>   2. **Chuẩn hóa thông báo lỗi**:
+>      - `user_auth_service.dart`: Ghi nhận log kỹ thuật thô vào `AppLogger.warning`, hiển thị thông điệp thân thiện theo chuẩn app nếu phiên đăng nhập tài khoản 0 quán gặp sự cố.
+>   3. **Biên dịch & Deploy Production**:
+>      - Biên dịch Web Release và triển khai lên máy chủ VPS `45.32.104.228:/var/www/quannho/pos/`, reload Nginx (`HTTP/2 200 OK`).
+>      - Đồng bộ file máy chủ gateway `pos_gateway_server.py` lên VPS và restart `pos-jwt-gateway.service`.
+>   4. **Kiểm thử & Đồng bộ CodeGraph**:
+>      - Chạy bộ unit test `test/core/onboarding_jwt_exchange_test.dart`: 10/10 tests PASS (100%).
+>      - `dart analyze`: Đạt 0 lỗi.
+>      - CodeGraph sync thành công: **318 files, 8,919 nodes, 24,699 edges** (`✓ Index is up to date`).
+
+---
+
 ## 2026-09-30 (14:05 +07) — Khắc Phục Triệt Để Lỗi Tạo Bàn/Khu (PostgrestException 23502) & Chuẩn Hóa Thông Báo Lỗi Thân Thiện Toàn Diện Ứng Dụng [HOÀN TẤT]
 
 > **Trạng thái**: 🎉 **ĐÃ KHẮC PHỤC TRIỆT ĐỂ NGUYÊN NHÂN GỐC & CHUẨN HÓA 100% HIỂN THỊ LỖI**:
