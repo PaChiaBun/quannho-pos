@@ -24,6 +24,8 @@ class ProductModel {
   final bool isDeleted;
   final bool isTopping; // true = đây là topping (bán riêng + gắn vào món)
   final String toppingUnit; // đơn vị khi chọn topping: "viên", "phần", "ml"...
+  final double conversionRate; // Hệ số quy đổi (VD: 1 lon = 385 ml -> 385)
+  final String conversionUnit; // Đơn vị quy đổi: 'ml', 'g'...
   final int? updatedAt;
 
   const ProductModel({
@@ -46,6 +48,8 @@ class ProductModel {
     required this.isDeleted,
     this.isTopping = false,
     this.toppingUnit = 'phần',
+    this.conversionRate = 0,
+    this.conversionUnit = '',
     this.updatedAt,
   });
 
@@ -69,6 +73,8 @@ class ProductModel {
         isDeleted: m['is_deleted'] as bool? ?? false,
         isTopping: m['is_topping'] as bool? ?? false,
         toppingUnit: m['topping_unit'] as String? ?? 'phần',
+        conversionRate: (m['conversion_rate'] as num?)?.toDouble() ?? 0,
+        conversionUnit: m['conversion_unit'] as String? ?? '',
         updatedAt: m['updated_at'] != null
             ? (m['updated_at'] is int
                 ? m['updated_at'] as int
@@ -96,8 +102,35 @@ class ProductModel {
         'is_deleted': isDeleted,
         'is_topping': isTopping,
         'topping_unit': toppingUnit,
+        'conversion_rate': conversionRate,
+        'conversion_unit': conversionUnit,
         if (updatedAt != null) 'updated_at': updatedAt,
       };
+
+  /// Hiển thị tồn kho thông minh (ví dụ: '9 lon + 355 ml')
+  String get formattedStockDisplay {
+    if (conversionRate > 0 && conversionUnit.isNotEmpty) {
+      if (stockQty == 0) return '0 $unit';
+      final isNegative = stockQty < 0;
+      final absQty = stockQty.abs();
+      final whole = absQty.floor();
+      final frac = absQty - whole;
+      final convertedFrac = (frac * conversionRate).round();
+
+      final parts = <String>[];
+      if (whole > 0 || convertedFrac == 0) {
+        parts.add('$whole $unit');
+      }
+      if (convertedFrac > 0) {
+        parts.add('$convertedFrac $conversionUnit');
+      }
+      final res = parts.join(' + ');
+      return isNegative ? '-$res' : res;
+    }
+    return stockQty % 1 == 0
+        ? '${stockQty.toInt()} $unit'
+        : '${stockQty.toStringAsFixed(1)} $unit';
+  }
 
   ProductModel copyWith({
     String? id,
@@ -119,6 +152,8 @@ class ProductModel {
     bool? isDeleted,
     bool? isTopping,
     String? toppingUnit,
+    double? conversionRate,
+    String? conversionUnit,
     int? updatedAt,
   }) {
     return ProductModel(
@@ -141,6 +176,8 @@ class ProductModel {
       isDeleted: isDeleted ?? this.isDeleted,
       isTopping: isTopping ?? this.isTopping,
       toppingUnit: toppingUnit ?? this.toppingUnit,
+      conversionRate: conversionRate ?? this.conversionRate,
+      conversionUnit: conversionUnit ?? this.conversionUnit,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }

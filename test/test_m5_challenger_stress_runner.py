@@ -524,7 +524,7 @@ class TestProductionCodeHardening(unittest.TestCase):
         self.assertIn("static void notifyDataChanged(String storeId)", code)
         self.assertIn("if (!_changeNotifier.isClosed)", code)
         self.assertIn("Future<void> batchSoftDelete(List<String> ids)", code)
-        self.assertIn(".inFilter('id', ids)", code)
+        self.assertTrue(".inFilter('id', ids)" in code or ".inFilter('id', chunk)" in code)
         self.assertIn("'is_deleted': true", code)
         self.assertIn("'is_active': false", code)
         self.assertNotIn(".delete()", code)

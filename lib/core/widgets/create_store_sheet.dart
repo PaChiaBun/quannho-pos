@@ -2,8 +2,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Create Store Sheet — Dùng chung tại Dashboard, Settings, Auth
 // ─────────────────────────────────────────────────────────────────────────────
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'join_store_sheet.dart';
 import '../providers/session_provider.dart';
 import '../services/user_auth_service.dart';
 
@@ -14,6 +16,11 @@ Future<void> showCreateStoreSheet(
   WidgetRef ref, {
   VoidCallback? onSuccess,
 }) {
+  if (defaultTargetPlatform == TargetPlatform.iOS) {
+    // Apple Guideline 3.1.1 invariant guard: Store creation strictly prohibited on iOS.
+    // Intercept and route to join store sheet.
+    return showJoinStoreSheet(context, ref, onSuccess: onSuccess);
+  }
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,

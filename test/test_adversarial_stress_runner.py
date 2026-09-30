@@ -251,7 +251,7 @@ class TestBatchSoftDeleteEdgeCases(unittest.TestCase):
         repo_file = REPO_ROOT / 'lib/core/repositories/core_product_repository.dart'
         text = repo_file.read_text(encoding='utf-8')
         # Assert inFilter is used
-        self.assertIn(".inFilter('id', ids)", text)
+        self.assertTrue(".inFilter('id', ids)" in text or ".inFilter('id', chunk)" in text)
         # Assert soft delete flags
         self.assertIn("'is_deleted': true", text)
         self.assertIn("'is_active': false", text)

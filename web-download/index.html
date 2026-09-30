@@ -298,11 +298,37 @@
       font-weight: 600;
     }
 
+    .download-card.recommended {
+      border: 2px solid var(--orange);
+      position: relative;
+      box-shadow: 0 12px 40px rgba(232, 93, 32, 0.18);
+    }
+
+    .recommended-pill {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 4px 12px;
+      background: var(--orange);
+      color: white;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
     /* ── Responsive ────────────────────────────────── */
     @media (max-width: 600px) {
       .hero h1 { font-size: 1.8rem; }
       .hero { padding: 40px 16px 60px; }
       .download-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 480px) {
+      .download-grid { grid-template-columns: 1fr; }
+      .download-card { padding: 22px 20px; }
+      .hero-cta { flex-direction: column; align-items: stretch; }
+      .hero-cta-btn { justify-content: center; }
     }
   </style>
 </head>
@@ -314,39 +340,54 @@
       <div class="logo">Q</div>
       <h1>Quán Nhỏ POS</h1>
       <p>Quản lý quán ăn đơn giản — POS, kho hàng, nhân viên, tài chính, tất cả trong một app</p>
-      <span class="version-badge" id="versionBadge">v1.0.0 • Build 1</span>
+      <span class="version-badge" id="versionBadge">v1.0.2 • Build 9</span>
+      <div class="hero-cta" style="margin-top: 24px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+        <a class="hero-cta-btn appstore" href="https://apps.apple.com/app/id6795376140" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.3); color: white; border-radius: 14px; text-decoration: none; font-weight: 700; font-size: 0.95rem; backdrop-filter: blur(10px);">
+          <span>🍎</span> App Store
+        </a>
+        <a class="hero-cta-btn googleplay" href="https://play.google.com/store/apps/details?id=vn.lpm.quannho_pos" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.3); color: white; border-radius: 14px; text-decoration: none; font-weight: 700; font-size: 0.95rem; backdrop-filter: blur(10px);">
+          <span>▶️</span> Google Play
+        </a>
+      </div>
     </div>
   </section>
 
   <!-- Downloads -->
   <section class="downloads">
     <div class="download-grid">
-      <a class="download-card android" id="androidCard" href="#" onclick="downloadAndroid()">
+      <a class="download-card android" id="androidCard" href="https://quannho.lpm.vn/download/QuanNhoPOS-latest.apk" download>
         <div class="icon-wrap">🤖</div>
-        <h3>Android</h3>
-        <p class="size">APK • 89.6 MB</p>
+        <h3>Android APK</h3>
+        <p class="size">APK • 114 MB</p>
         <span class="download-btn">⬇ Tải APK</span>
       </a>
 
-      <a class="download-card ios coming-soon" href="#">
+      <a class="download-card googleplay" id="googlePlayCard" href="https://play.google.com/store/apps/details?id=vn.lpm.quannho_pos" target="_blank" rel="noopener noreferrer">
+        <div class="icon-wrap" style="background: #E8F0FE;">▶️</div>
+        <h3>Google Play</h3>
+        <p class="size">Android Store</p>
+        <span class="download-btn">Tải trên Google Play</span>
+      </a>
+
+      <a class="download-card ios" id="iosCard" href="https://apps.apple.com/app/id6795376140" target="_blank" rel="noopener noreferrer">
         <div class="icon-wrap">🍎</div>
         <h3>iOS</h3>
-        <p class="size">Sắp ra mắt</p>
-        <span class="download-btn">Đang chờ duyệt</span>
+        <p class="size">iPhone / iPad</p>
+        <span class="download-btn">Tải trên App Store</span>
       </a>
 
-      <a class="download-card macos coming-soon" href="#">
+      <a class="download-card macos" id="macosCard" href="https://quannho.lpm.vn/download/QuanNhoPOS-latest-macOS.zip" download>
         <div class="icon-wrap">💻</div>
         <h3>macOS</h3>
-        <p class="size">Sắp ra mắt</p>
-        <span class="download-btn">Đang chờ duyệt</span>
+        <p class="size">ZIP • Bản máy Mac</p>
+        <span class="download-btn">⬇ Tải bản Mac</span>
       </a>
 
-      <a class="download-card windows coming-soon" href="#">
+      <a class="download-card windows" id="windowsCard" href="https://quannho.lpm.vn/download/QuanNhoPOS-latest.exe" download>
         <div class="icon-wrap">🪟</div>
         <h3>Windows</h3>
-        <p class="size">Sắp ra mắt</p>
-        <span class="download-btn">Đang phát triển</span>
+        <p class="size">EXE • 56 MB</p>
+        <span class="download-btn">⬇ Tải bản cài</span>
       </a>
     </div>
   </section>
@@ -393,6 +434,11 @@
     <h2>📋 Lịch sử cập nhật</h2>
     <div id="changelogList">
       <div class="changelog-item">
+        <span class="ver">v1.0.2</span>
+        <span class="date">24/09/2026</span>
+        <p class="desc">Hệ thống phân phối đa nền tảng và tự động cập nhật trực tiếp qua máy chủ VPS, tải nhanh Android APK, Windows POS và App Store iOS.</p>
+      </div>
+      <div class="changelog-item">
         <span class="ver">v1.0.0</span>
         <span class="date">20/05/2026</span>
         <p class="desc">Phiên bản đầu tiên 🚀 — POS, Kho, Thu Chi, Nhân viên, Báo cáo, Quản lý Bàn, Bếp, Chấm công, Tính lương</p>
@@ -407,27 +453,125 @@
   </footer>
 
   <script>
-    // ── Config — Thay đổi khi có bản mới ──
+    // ── Config — Đồng bộ với pubspec.yaml (v1.0.2 • Build 7) ──
     const CONFIG = {
-      version: '1.0.0',
-      build: 1,
+      version: '1.0.2',
+      build: 9,
       android: {
-        url: '', // Paste link Google Drive / direct APK URL ở đây
-        size: '89.6 MB',
+        url: 'https://quannho.lpm.vn/download/QuanNhoPOS-latest.apk',
+        playStoreUrl: 'https://play.google.com/store/apps/details?id=vn.lpm.quannho_pos',
+        size: '114 MB',
+      },
+      googleplay: {
+        url: 'https://play.google.com/store/apps/details?id=vn.lpm.quannho_pos',
+      },
+      windows: {
+        url: 'https://quannho.lpm.vn/download/QuanNhoPOS-latest.exe',
+        size: '56 MB',
+      },
+      ios: {
+        url: 'https://apps.apple.com/app/id6795376140',
+      },
+      macos: {
+        url: 'https://quannho.lpm.vn/download/QuanNhoPOS-latest-macOS.zip',
       },
     };
 
-    // Cập nhật badge
-    document.getElementById('versionBadge').textContent =
-      `v${CONFIG.version} • Build ${CONFIG.build}`;
+    // Cập nhật badge tĩnh ban đầu
+    const versionBadgeEl = document.getElementById('versionBadge');
+    if (versionBadgeEl) {
+      versionBadgeEl.textContent = `v${CONFIG.version} • Build ${CONFIG.build}`;
+    }
 
     function downloadAndroid() {
-      if (!CONFIG.android.url) {
+      if (CONFIG.android.url) {
+        window.location.href = CONFIG.android.url;
+      } else {
         alert('Link tải đang được cập nhật. Liên hệ admin để nhận APK trực tiếp.');
-        return;
       }
-      window.location.href = CONFIG.android.url;
     }
+
+    // ── Platform Auto-Detection & Query Params ──
+    function detectPlatform() {
+      const params = new URLSearchParams(window.location.search);
+      const qpPlatform = (params.get('platform') || '').toLowerCase();
+      if (qpPlatform) return qpPlatform;
+
+      const ua = (navigator.userAgent || '').toLowerCase();
+      if (/android/.test(ua)) return 'android';
+      if (/iphone|ipad|ipod/.test(ua)) return 'ios';
+      if (/win/.test(ua)) return 'windows';
+      if (/macintosh|mac os x/.test(ua)) return 'macos';
+      return null;
+    }
+
+    function applyPlatformHighlight() {
+      const plat = detectPlatform();
+      if (!plat) return;
+
+      const cardMap = {
+        'android': document.getElementById('androidCard'),
+        'googleplay': document.getElementById('googlePlayCard'),
+        'ios': document.getElementById('iosCard'),
+        'windows': document.getElementById('windowsCard'),
+        'macos': document.getElementById('macosCard'),
+      };
+
+      const targetCard = cardMap[plat];
+      if (targetCard && !targetCard.classList.contains('recommended')) {
+        targetCard.classList.add('recommended');
+        const pill = document.createElement('div');
+        pill.className = 'recommended-pill';
+        pill.textContent = 'Khuyên dùng cho thiết bị này';
+        targetCard.insertBefore(pill, targetCard.firstChild);
+      }
+
+      // Check ?download= parameter for instant download trigger
+      const params = new URLSearchParams(window.location.search);
+      const dl = (params.get('download') || '').toLowerCase();
+      if (dl === 'apk' && CONFIG.android && CONFIG.android.url) {
+        window.location.href = CONFIG.android.url;
+      } else if (dl === 'exe' && CONFIG.windows && CONFIG.windows.url) {
+        window.location.href = CONFIG.windows.url;
+      }
+    }
+
+    // Dynamic hydration từ VPS API /api/versions
+    async function hydrateLatestVersion() {
+      try {
+        const res = await fetch('/api/versions');
+        if (res.ok) {
+          const payload = await res.json();
+          const items = Array.isArray(payload.data)
+            ? payload.data
+            : (payload.data ? [payload.data] : (Array.isArray(payload) ? payload : [payload]));
+
+          for (const item of items) {
+            if (item && item.platform === 'android') {
+              if (item.version_name && item.build_number && versionBadgeEl) {
+                versionBadgeEl.textContent = `v${item.version_name} • Build ${item.build_number}`;
+              }
+              if (item.download_url && CONFIG.android) {
+                CONFIG.android.url = item.download_url;
+                const androidCard = document.getElementById('androidCard');
+                if (androidCard) androidCard.href = item.download_url;
+              }
+            } else if (item && item.platform === 'windows') {
+              if (item.download_url && CONFIG.windows) {
+                CONFIG.windows.url = item.download_url;
+                const winCard = document.getElementById('windowsCard');
+                if (winCard) winCard.href = item.download_url;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        // Fallback tự nhiên duy trì badge tĩnh từ CONFIG
+      }
+    }
+
+    applyPlatformHighlight();
+    hydrateLatestVersion();
   </script>
 </body>
 </html>

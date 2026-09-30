@@ -15,6 +15,7 @@ import '../core/repositories/dashboard_repository.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/user_auth_service.dart';
 import '../core/widgets/create_store_sheet.dart';
+import '../core/widgets/join_store_sheet.dart';
 import '../core/utils/responsive.dart';
 import '../modules/kho/providers/kho_providers.dart';
 import '../shared/widgets/module_tile.dart';
@@ -23,7 +24,7 @@ import '../modules/bill_printer/screens/bill_printer_hub.dart';
 import '../modules/ops/screens/ops_screen.dart';
 import '../modules/qr_order/screens/qr_order_screen.dart';
 import '../modules/bill_printer/providers/printer_settings_provider.dart';
-import '../core/services/auto_update_service.dart';
+import '../core/services/app_update_manager.dart';
 import '../core/utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -131,7 +132,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _silentRoleRefresh();
       _subscribeStoreRolesRealtime();
-      AutoUpdateService.checkForUpdates(context);
+      AppUpdateManager.checkAndPromptUpdate(context, silent: true);
       try {
         ref.read(printerSettingsProvider);
       } catch (_) {}
@@ -244,6 +245,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             'tinhluong': 'tinhluong', // ⭐ Tính Lương
             'kay_ops': 'kay_ops', // ⭐ Vận Hành
             'log_viewer': 'log_viewer', // ⭐ Nhật Ký Log
+            'bill_printer': 'bill_printer', // ⭐ In Hoá Đơn
+            'qr_order': 'qr_order', // ⭐ QR Gọi Món
           };
 
           // Quyền thực tế từ Supabase, fallback kDefaultPerms
@@ -268,14 +271,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           }
 
           // Lấy modules được phép:
-          // - Chủ quán: isActive=true (chủ tự chỉnh)
-          // - Nhân viên: theo quyền Supabase, BỎ QUA isActive
+          // - Phải là module đang bật ở quán (m.isActive == true)
+          // - Chủ quán: hiện mọi module đang active của quán
+          // - Nhân viên: chỉ hiện module active mà vai trò được cấp quyền
           final activeModules = modules.where((m) {
             // Chỉ hiện module có UI config — tránh data Supabase cũ gây lỗi
             if (!kModuleConfigs.containsKey(m.id)) return false;
-            if (allowedPerms == null)
-              return m.isActive; // chủ quán: theo isActive
-            // Nhân viên: bỏ qua isActive, chỉ xét permission
+            // Module phải đang bật ở quán
+            if (!m.isActive) return false;
+            if (allowedPerms == null) return true; // chủ quán: theo isActive
+            // Nhân viên: chỉ xét các module đang bật mà vai trò có quyền
             final permKey = permMap[m.id];
             if (permKey == null) return false;
             return allowedPerms!.contains(permKey);
@@ -1940,12 +1945,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   // ACTIONS
   // ─────────────────────────────────────────────────────────────────────────
 
-  void _toggleEditMode() {
+  void _toggleEditMode() async {
     HapticFeedback.lightImpact();
     final wasEditing = _isEditMode;
     setState(() => _isEditMode = !_isEditMode);
-    // Khi thoát edit mode → sync lại provider từ SharedPreferences
+    // Khi thoát edit mode → lưu thứ tự mới và sync lại provider với DB
     if (wasEditing) {
+      await ref
+          .read(moduleRepositoryProvider)
+          .updatePositions(List.from(_moduleOrder));
       _editRemovedIds.clear(); // Reset sau khi thoát edit
       ref.invalidate(allModulesProvider); // Sync lại provider với DB
     }
@@ -2579,11 +2587,11 @@ class _CreateStoreCtaState extends ConsumerState<_CreateStoreCta> {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Chưa có quán nào',
                           style: TextStyle(
                             color: Colors.white,
@@ -2591,10 +2599,12 @@ class _CreateStoreCtaState extends ConsumerState<_CreateStoreCta> {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        SizedBox(height: 3),
+                        const SizedBox(height: 3),
                         Text(
-                          'Tạo quán mới hoặc kiểm tra xem chủ đã thêm bạn chưa',
-                          style: TextStyle(color: Colors.white60, fontSize: 12),
+                          defaultTargetPlatform == TargetPlatform.iOS
+                              ? 'Kết nối quán bằng mã do quản lý cung cấp hoặc kiểm tra lại'
+                              : 'Tạo quán mới hoặc kiểm tra xem chủ đã thêm bạn chưa',
+                          style: const TextStyle(color: Colors.white60, fontSize: 12),
                         ),
                       ],
                     ),
@@ -2641,28 +2651,49 @@ class _CreateStoreCtaState extends ConsumerState<_CreateStoreCta> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  // Nút Tạo quán
+                  // Nút Tạo quán (trên iOS chuyển thành Kết nối quán)
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: widget.onTap,
-                      icon: const Icon(Icons.add_rounded, size: 16),
-                      label: const Text(
-                        'Tạo quán',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE85D20),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        elevation: 0,
-                      ),
-                    ),
+                    child: defaultTargetPlatform == TargetPlatform.iOS
+                        ? ElevatedButton.icon(
+                            onPressed: () => showJoinStoreSheet(context, ref),
+                            icon: const Icon(Icons.link_rounded, size: 16),
+                            label: const Text(
+                              'Kết nối quán',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE85D20),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              elevation: 0,
+                            ),
+                          )
+                        : ElevatedButton.icon(
+                            onPressed: widget.onTap,
+                            icon: const Icon(Icons.add_rounded, size: 16),
+                            label: const Text(
+                              'Tạo quán',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE85D20),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              elevation: 0,
+                            ),
+                          ),
                   ),
                 ],
               ),

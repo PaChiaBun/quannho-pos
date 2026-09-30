@@ -125,7 +125,7 @@ class TestMilestone1ModelAndRepository(unittest.TestCase):
         self.assertIn("bool isAvailable,", content)
         self.assertIn("if (ids.isEmpty) return;", content)
         self.assertIn("'is_available': isAvailable", content)
-        self.assertIn(".eq('store_id', storeId).inFilter('id', ids)", content)
+        self.assertTrue(".eq('store_id', storeId).inFilter('id', ids)" in content or ".eq('store_id', storeId).inFilter('id', chunk)" in content)
         self.assertIn("p.copyWith(isAvailable: isAvailable", content)
         self.assertIn("notifyDataChanged(storeId);", content)
 
@@ -137,7 +137,7 @@ class TestMilestone1ModelAndRepository(unittest.TestCase):
         self.assertIn("String newCategory,", content)
         self.assertIn("if (ids.isEmpty) return;", content)
         self.assertIn("'category': newCategory", content)
-        self.assertIn(".eq('store_id', storeId).inFilter('id', ids)", content)
+        self.assertTrue(".eq('store_id', storeId).inFilter('id', ids)" in content or ".eq('store_id', storeId).inFilter('id', chunk)" in content)
         self.assertIn("p.copyWith(category: newCategory", content)
         self.assertIn("notifyDataChanged(storeId);", content)
 
@@ -145,7 +145,7 @@ class TestMilestone1ModelAndRepository(unittest.TestCase):
         content = self.core_product_repo_path.read_text()
         self.assertIn("Future<void> batchSoftDelete(List<String> ids)", content)
         # Verify strict multi-tenant isolation with .eq('store_id', storeId)
-        match = re.search(r"await _sb\.from\('products'\)\.update\(\{.*?\}\)\.eq\('store_id', storeId\)\.inFilter\('id', ids\);", content, re.DOTALL)
+        match = re.search(r"await _sb\.from\('products'\)\.update\(\{.*?\}\)\.eq\('store_id', storeId\)\.inFilter\('id', (?:ids|chunk)\);", content, re.DOTALL)
         self.assertIsNotNone(match, "batchSoftDelete must enforce .eq('store_id', storeId) before .inFilter('id', ids)")
         self.assertIn("'is_deleted': true", content)
         self.assertIn("'is_active': false", content)

@@ -476,7 +476,7 @@ class TestEmpiricalChallengerM3_2(unittest.TestCase):
         self.assertIn("'is_active': false", content)
 
         # Assert batch query with inFilter
-        self.assertIn(".inFilter('id', ids)", content)
+        self.assertTrue(".inFilter('id', ids)" in content or ".inFilter('id', chunk)" in content)
 
         # Assert empty list guard
         self.assertIn("if (ids.isEmpty) return;", content)

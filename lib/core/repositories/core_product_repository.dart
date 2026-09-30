@@ -187,6 +187,8 @@ class CoreProductRepository {
     bool isAvailable = true,
     bool isTopping = false,
     String? toppingUnit,
+    double conversionRate = 0,
+    String conversionUnit = '',
   }) async {
     final storeId = await _storeId();
     if (storeId == null || storeId.isEmpty) throw Exception('Chưa chọn quán');
@@ -205,8 +207,8 @@ class CoreProductRepository {
       'category':     category,
       'unit':         unit,
       'product_type': productType,
-      'stock_qty':    stockQty.round(),
-      'min_stock':    minStock.round(),
+      'stock_qty':    stockQty,
+      'min_stock':    minStock,
       'sell_price':   sellPrice.round(),
       'cost_price':   costPrice.round(),
       'image_url':    imageUrl,
@@ -216,6 +218,8 @@ class CoreProductRepository {
       'is_deleted':   false,
       'is_topping':   isTopping,
       if (isTopping && toppingUnit != null) 'topping_unit': toppingUnit,
+      'conversion_rate': conversionRate,
+      'conversion_unit': conversionUnit,
       'created_at':   nowIso,
       'updated_at':   nowMs,
     });

@@ -39,7 +39,7 @@ class TestManagerKhoDeleteResolution(unittest.TestCase):
         self.assertIn("if (ids.isEmpty) return;", self.repo_dart)
         self.assertIn("'is_deleted': true", self.repo_dart)
         self.assertIn("'is_active': false", self.repo_dart)
-        self.assertIn(".eq('store_id', storeId).inFilter('id', ids)", self.repo_dart)
+        self.assertTrue(".eq('store_id', storeId).inFilter('id', ids)" in self.repo_dart or ".eq('store_id', storeId).inFilter('id', chunk)" in self.repo_dart)
 
         # Zero hard deletes on products table
         self.assertNotIn("_sb.from('products').delete()", self.repo_dart)

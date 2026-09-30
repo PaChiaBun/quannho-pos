@@ -204,6 +204,7 @@ class StoreAuthService {
         'loyalty_rate': '10000', // 10.000đ = 1 điểm
         'receipt_enabled': 'false',
         'tax_rate': '0',
+        'module_config_v2': '["pos","report","finance","kho"]',
       };
       for (final entry in defaults.entries) {
         await client.from('app_settings').upsert({

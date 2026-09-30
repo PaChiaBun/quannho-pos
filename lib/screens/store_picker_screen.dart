@@ -2,6 +2,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Store Picker — Chọn quán hoặc tạo/kết nối quán
 // ─────────────────────────────────────────────────────────────────────────────
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/user_auth_service.dart';
@@ -83,7 +84,9 @@ class StorePickerScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Nhập mã kết nối hoặc tạo quán mới ở bên dưới.',
+                              defaultTargetPlatform == TargetPlatform.iOS
+                                  ? 'Nhập mã kết nối do quản lý cửa hàng cung cấp ở bên dưới.'
+                                  : 'Nhập mã kết nối hoặc tạo quán mới ở bên dưới.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.35),
@@ -193,63 +196,92 @@ class StorePickerScreen extends ConsumerWidget {
 
               const SizedBox(height: 20),
 
-              // ── 2 LỰA CHỌN: KẾT NỐI QUÁN HOẶC TẠO QUÁN MỚI ──
-              Row(
-                children: [
-                  // Lựa chọn 1: Kết nối quán
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => showJoinStoreSheet(
-                        context,
-                        ref,
-                        onSuccess: () =>
-                            Navigator.of(context).pushReplacementNamed('/home'),
+              // ── KẾT NỐI QUÁN (VÀ TẠO QUÁN NẾU KHÔNG PHẢI IOS) ──
+              if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => showJoinStoreSheet(
+                      context,
+                      ref,
+                      onSuccess: () =>
+                          Navigator.of(context).pushReplacementNamed('/home'),
+                    ),
+                    icon: const Icon(Icons.link_rounded, size: 18),
+                    label: const Text('Kết nối quán'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
                       ),
-                      icon: const Icon(Icons.link_rounded, size: 18),
-                      label: const Text('Kết nối quán'),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: _orange),
-                        foregroundColor: _orange,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        textStyle: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    // Lựa chọn 1: Kết nối quán
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => showJoinStoreSheet(
+                          context,
+                          ref,
+                          onSuccess: () =>
+                              Navigator.of(context).pushReplacementNamed('/home'),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                        icon: const Icon(Icons.link_rounded, size: 18),
+                        label: const Text('Kết nối quán'),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: _orange),
+                          foregroundColor: _orange,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Lựa chọn 2: Tạo quán mới
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => showCreateStoreSheet(
-                        context,
-                        ref,
-                        onSuccess: () =>
-                            Navigator.of(context).pushReplacementNamed('/home'),
-                      ),
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text('Tạo quán mới'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _orange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        textStyle: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                    const SizedBox(width: 12),
+                    // Lựa chọn 2: Tạo quán mới
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => showCreateStoreSheet(
+                          context,
+                          ref,
+                          onSuccess: () =>
+                              Navigator.of(context).pushReplacementNamed('/home'),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Tạo quán mới'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 0,
                         ),
-                        elevation: 0,
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
 
               const SizedBox(height: 16),
 

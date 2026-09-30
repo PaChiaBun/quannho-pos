@@ -788,6 +788,8 @@ class StockItem {
   final String stationCode;
   final bool isAvailable;
   final bool isActive;
+  final double conversionRate;
+  final String conversionUnit;
 
   const StockItem({
     required this.id,
@@ -807,6 +809,8 @@ class StockItem {
     this.stationCode = 'bep_nong',
     this.isAvailable = true,
     this.isActive = true,
+    this.conversionRate = 0,
+    this.conversionUnit = '',
   });
 
   factory StockItem.fromProduct(ProductModel p) => StockItem(
@@ -827,6 +831,8 @@ class StockItem {
         stationCode:      p.stationCode,
         isAvailable:      p.isAvailable,
         isActive:         p.isActive,
+        conversionRate:   p.conversionRate,
+        conversionUnit:   p.conversionUnit,
       );
 
   StockStatus get status {
@@ -841,6 +847,30 @@ class StockItem {
     return stockQty * effectiveCost;
   }
 
+  /// Hiển thị tồn kho thông minh (ví dụ: '9 lon + 355 ml')
+  String get formattedStockDisplay {
+    if (conversionRate > 0 && conversionUnit.isNotEmpty) {
+      if (stockQty == 0) return '0 $unit';
+      final isNegative = stockQty < 0;
+      final absQty = stockQty.abs();
+      final whole = absQty.floor();
+      final frac = absQty - whole;
+      final convertedFrac = (frac * conversionRate).round();
+
+      final parts = <String>[];
+      if (whole > 0 || convertedFrac == 0) {
+        parts.add('$whole $unit');
+      }
+      if (convertedFrac > 0) {
+        parts.add('$convertedFrac $conversionUnit');
+      }
+      final res = parts.join(' + ');
+      return isNegative ? '-$res' : res;
+    }
+    return stockQty % 1 == 0
+        ? '${stockQty.toInt()} $unit'
+        : '${stockQty.toStringAsFixed(1)} $unit';
+  }
 }
 
 enum StockStatus { ok, low, outOfStock, untracked }

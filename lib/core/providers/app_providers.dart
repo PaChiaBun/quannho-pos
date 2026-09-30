@@ -72,7 +72,7 @@ final allProductsProvider = StreamProvider.autoDispose<List<ProductModel>>((ref)
   return ref.watch(productRepositoryProvider).watchAll();
 });
 
-/// Sản phẩm cho POS & Bàn (chỉ active, loại bỏ nguyên liệu thuần)
+/// Sản phẩm cho POS & Bàn (chỉ active, loại bỏ nguyên liệu thuần không bán lẻ)
 final posProductsProvider = Provider.autoDispose<AsyncValue<List<ProductModel>>>((ref) {
   return ref
       .watch(allProductsProvider)
@@ -81,8 +81,9 @@ final posProductsProvider = Provider.autoDispose<AsyncValue<List<ProductModel>>>
             .where(
               (p) =>
                   p.isActive &&
-                  p.category != 'Nguyên liệu' &&
-                  p.productType != 'ingredient',
+                  (p.sellPrice > 0 ||
+                      (p.category != 'Nguyên liệu' &&
+                          p.productType != 'ingredient')),
             )
             .toList(),
       );

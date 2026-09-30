@@ -11,7 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/event_bridge_service.dart';
 import 'core/services/supabase_service.dart';
-import 'core/services/update_checker_service.dart';
+import 'core/services/app_update_manager.dart';
 import 'core/providers/app_providers.dart';
 import 'core/services/staff_service.dart';
 import 'core/services/staff_shift_realtime_controller.dart';
@@ -280,7 +280,7 @@ class _MainShellState extends ConsumerState<MainShell>
       _validateMembershipOnResume();
       // Kiểm tra bản cập nhật sau 2 giây — cho UI render xong trước
       Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) UpdateCheckerService.checkForUpdate(context);
+        if (mounted) AppUpdateManager.checkAndPromptUpdate(context, silent: true);
       });
     });
   }

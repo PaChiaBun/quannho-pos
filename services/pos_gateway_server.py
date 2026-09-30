@@ -83,6 +83,145 @@ def _check_health_and_readiness(query_string=""):
         return 503, {"status": "degraded", "error": "UPSTREAM_UNAVAILABLE"}
 
 
+FALLBACK_APP_VERSIONS = {
+    "android": {
+        "platform": "android",
+        "version_name": "1.0.2",
+        "build_number": 7,
+        "download_url": "https://quannho.lpm.vn/download/QuanNhoPOS-latest.apk",
+        "changelog": "Cập nhật hệ thống tự động tải và cài đặt APK đè không gián đoạn.",
+        "is_force_update": False,
+    },
+    "windows": {
+        "platform": "windows",
+        "version_name": "1.0.2",
+        "build_number": 7,
+        "download_url": "https://quannho.lpm.vn/download/QuanNhoPOS-latest.exe",
+        "changelog": "Bản cài đặt Windows POS tự động cập nhật, bảo toàn dữ liệu bán hàng.",
+        "is_force_update": False,
+    },
+    "ios": {
+        "platform": "ios",
+        "version_name": "1.0.2",
+        "build_number": 7,
+        "download_url": "https://apps.apple.com/app/id6795376140",
+        "changelog": "Cải tiến hiệu năng và độ ổn định trên App Store.",
+        "is_force_update": False,
+    },
+    "macos": {
+        "platform": "macos",
+        "version_name": "1.0.2",
+        "build_number": 7,
+        "download_url": "https://quannho.lpm.vn/download/QuanNhoPOS-latest-macOS.zip",
+        "changelog": "Phiên bản dành cho máy Mac.",
+        "is_force_update": False,
+    },
+}
+
+
+def _handle_get_versions(query_string=""):
+    """
+    Query application release versions from Supabase app_versions, with static fallback.
+    Returns: (status_code, body_dict).
+    Guaranteed to return clean JSON with status 200 or 404, never 500.
+    """
+    params = urllib.parse.parse_qs(query_string or "")
+    platform = params.get("platform", [""])[0].strip().lower()
+
+    valid_platforms = {"android", "ios", "windows", "macos"}
+    if platform and platform not in valid_platforms:
+        return 404, {
+            "success": False,
+            "status": 404,
+            "error": "PLATFORM_NOT_FOUND",
+            "message": f"Nền tảng '{platform}' không hợp lệ hoặc không được hỗ trợ",
+        }
+
+    supabase_url = (
+        os.environ.get("SUPABASE_INTERNAL_URL", "").strip()
+        or os.environ.get("SUPABASE_URL", "").strip()
+    ).rstrip("/")
+    if os.path.exists("/var/www/supabase-setup") and not supabase_url:
+        supabase_url = "http://127.0.0.1:8000"
+
+    supabase_key = (
+        os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        or os.environ.get("SUPABASE_ANON_KEY", "").strip()
+    )
+
+    if supabase_url and supabase_key:
+        try:
+            if platform:
+                target_url = f"{supabase_url}/rest/v1/app_versions?platform=eq.{urllib.parse.quote(platform)}&order=build_number.desc&limit=1"
+            else:
+                target_url = f"{supabase_url}/rest/v1/app_versions?order=build_number.desc&limit=10"
+
+            req = urllib.request.Request(
+                target_url,
+                headers={
+                    "apikey": supabase_key,
+                    "Authorization": f"Bearer {supabase_key}",
+                    "Accept": "application/json",
+                    "User-Agent": "PosGatewayServer/1.0",
+                },
+                method="GET",
+            )
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                status_code = resp.status if hasattr(resp, "status") else resp.getcode()
+                if status_code == 200:
+                    raw_data = resp.read().decode("utf-8")
+                    data = json.loads(raw_data)
+                    if platform:
+                        if isinstance(data, list) and len(data) > 0:
+                            item = data[0]
+                            return 200, {
+                                "success": True,
+                                "data": item,
+                                "platform": item.get("platform"),
+                                "version_name": item.get("version_name"),
+                                "build_number": item.get("build_number"),
+                                "download_url": item.get("download_url"),
+                                "changelog": item.get("changelog"),
+                                "is_force_update": item.get("is_force_update", False),
+                            }
+                    else:
+                        if isinstance(data, list) and len(data) > 0:
+                            return 200, {"success": True, "data": data}
+        except Exception as e:
+            logger.warning("Supabase app_versions query failed: %s", e)
+
+    # Fallback to local static version definitions
+    if platform:
+        if platform in FALLBACK_APP_VERSIONS:
+            item = FALLBACK_APP_VERSIONS[platform]
+            return 200, {
+                "success": True,
+                "data": item,
+                "platform": item.get("platform"),
+                "version_name": item.get("version_name"),
+                "build_number": item.get("build_number"),
+                "download_url": item.get("download_url"),
+                "changelog": item.get("changelog"),
+                "is_force_update": item.get("is_force_update", False),
+                "fallback": True,
+            }
+        return 404, {
+            "success": False,
+            "status": 404,
+            "error": "VERSION_NOT_FOUND",
+            "message": f"Không tìm thấy thông tin phiên bản cho nền tảng '{platform}'",
+        }
+
+    return 200, {
+        "success": True,
+        "data": list(FALLBACK_APP_VERSIONS.values()),
+        "fallback": True,
+    }
+
+
+
+
+
 
 def _cors_headers(origin):
     """Return CORS headers only for explicitly allowed browser origins."""
@@ -145,10 +284,19 @@ def wsgi_app(environ, start_response):
         start_response("204 No Content", headers)
         return [b""]
 
-    # 2. Health Check Route
+    # 2. Health & Version Routes
     if path in ("/api/auth/health", "/health"):
         query_string = environ.get("QUERY_STRING", "")
         status_code, body = _check_health_and_readiness(query_string)
+        start_response(_status_line(status_code), headers)
+        return [json.dumps(body).encode("utf-8")]
+
+    if path in ("/api/versions", "/api/versions/"):
+        if method != "GET":
+            start_response("405 Method Not Allowed", headers)
+            return [json.dumps({"success": False, "status": 405, "error": "METHOD_NOT_ALLOWED", "message": "Chỉ hỗ trợ phương thức GET"}).encode("utf-8")]
+        query_string = environ.get("QUERY_STRING", "")
+        status_code, body = _handle_get_versions(query_string)
         start_response(_status_line(status_code), headers)
         return [json.dumps(body).encode("utf-8")]
 
@@ -235,6 +383,12 @@ class StandaloneGatewayHandler(BaseHTTPRequestHandler):
             self._send_cors_headers()
             self.end_headers()
             self.wfile.write(json.dumps(body).encode("utf-8"))
+        elif path_only in ("/api/versions", "/api/versions/"):
+            status_code, body = _handle_get_versions(query_string)
+            self.send_response(status_code)
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps(body).encode("utf-8"))
         else:
             self.send_response(404)
             self._send_cors_headers()
@@ -246,6 +400,14 @@ class StandaloneGatewayHandler(BaseHTTPRequestHandler):
             self.send_response(403)
             self._send_cors_headers()
             self.end_headers()
+            return
+
+        path_only = self.path.split("?", 1)[0]
+        if path_only in ("/api/versions", "/api/versions/"):
+            self.send_response(405)
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "status": 405, "error": "METHOD_NOT_ALLOWED", "message": "Chỉ hỗ trợ phương thức GET"}).encode("utf-8"))
             return
 
         try:

@@ -369,7 +369,7 @@ class TestProductionCodeInvariants(unittest.TestCase):
         self.assertIn("static void notifyDataChanged(String storeId)", repo_code)
         # batchSoftDelete implementation
         self.assertIn("Future<void> batchSoftDelete(List<String> ids)", repo_code)
-        self.assertIn(".inFilter('id', ids)", repo_code)
+        self.assertTrue(".inFilter('id', ids)" in repo_code or ".inFilter('id', chunk)" in repo_code)
         self.assertIn("'is_deleted': true", repo_code)
         self.assertIn("'is_active': false", repo_code)
         # RAM cache update

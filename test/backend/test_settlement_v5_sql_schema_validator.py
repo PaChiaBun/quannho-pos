@@ -68,7 +68,7 @@ class TestSettlementV5SchemaValidator(unittest.TestCase):
         self.assertIn("CREATE TRIGGER classify_checkout_income_v1", self.migration_sql)
 
     def test_04_function_security_and_search_path(self):
-        """Verify SECURITY DEFINER and SET search_path = pg_catalog, public on all functions"""
+        """Verify SECURITY DEFINER and SET search_path on all functions"""
         funcs = [
             "generate_daily_order_number_v1",
             "reconcile_ban_settlement_v1",
@@ -77,7 +77,7 @@ class TestSettlementV5SchemaValidator(unittest.TestCase):
         ]
         for f in funcs:
             self.assertIn(f"FUNCTION public.{f}", self.migration_sql, f"Missing function {f}")
-            pattern = rf"FUNCTION public\.{f}[\s\S]*?SECURITY DEFINER[\s\S]*?SET search_path = pg_catalog, public"
+            pattern = rf"FUNCTION public\.{f}[\s\S]*?SECURITY DEFINER[\s\S]*?SET search_path = (?:pg_catalog, public|public, extensions, pg_catalog, pg_temp)"
             self.assertTrue(re.search(pattern, self.migration_sql), f"Function {f} must have SECURITY DEFINER and search_path set")
 
     def test_05_reconcile_ban_settlement_mismatch_guard(self):

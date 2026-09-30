@@ -13,20 +13,20 @@ import '../services/store_auth_service.dart';
 // ─── Danh sách tất cả modules — ID phải khớp với kModuleConfigs ───────────
 const _kAllModules = [
   ModuleConfig(id: 'pos',           label: 'Bán hàng',          icon: '🛒', position: 0,  isActive: true),
-  ModuleConfig(id: 'table',         label: 'Quản lý Bàn',        icon: '🪑', position: 1,  isActive: false),
-  ModuleConfig(id: 'kitchen',       label: 'Bếp',                icon: '🔥', position: 2,  isActive: false),
-  ModuleConfig(id: 'bill_printer',  label: 'In Hoá Đơn',         icon: '🖨️', position: 3,  isActive: false),
-  ModuleConfig(id: 'kho',           label: 'Kho hàng',           icon: '📦', position: 4,  isActive: false),
-  ModuleConfig(id: 'kho_pro',       label: 'Kho Chuyên Nghiệp',  icon: '🍽️', position: 5,  isActive: false),
-  ModuleConfig(id: 'finance',       label: 'Thu Chi',            icon: '💰', position: 6,  isActive: false),
-  ModuleConfig(id: 'loyalty',       label: 'Khách hàng',         icon: '🏆', position: 7,  isActive: false),
-  ModuleConfig(id: 'staff',         label: 'Nhân viên',          icon: '👥', position: 8,  isActive: false),
-  ModuleConfig(id: 'report',        label: 'Báo cáo',            icon: '📊', position: 9,  isActive: false),
-  ModuleConfig(id: 'chamcong',      label: 'Chấm công',          icon: '🖐️', position: 10, isActive: true),
-  ModuleConfig(id: 'tinhluong',     label: 'Lương',              icon: '💵', position: 11, isActive: true),
+  ModuleConfig(id: 'report',        label: 'Báo cáo',            icon: '📊', position: 1,  isActive: true),
+  ModuleConfig(id: 'finance',       label: 'Thu Chi',            icon: '💰', position: 2,  isActive: true),
+  ModuleConfig(id: 'kho',           label: 'Kho hàng',           icon: '📦', position: 3,  isActive: true),
+  ModuleConfig(id: 'table',         label: 'Quản lý Bàn',        icon: '🪑', position: 4,  isActive: false),
+  ModuleConfig(id: 'kitchen',       label: 'Bếp',                icon: '🔥', position: 5,  isActive: false),
+  ModuleConfig(id: 'bill_printer',  label: 'In Hoá Đơn',         icon: '🖨️', position: 6,  isActive: false),
+  ModuleConfig(id: 'kho_pro',       label: 'Kho Chuyên Nghiệp',  icon: '🍽️', position: 7,  isActive: false),
+  ModuleConfig(id: 'loyalty',       label: 'Khách hàng',         icon: '🏆', position: 8,  isActive: false),
+  ModuleConfig(id: 'staff',         label: 'Nhân viên',          icon: '👥', position: 9,  isActive: false),
+  ModuleConfig(id: 'chamcong',      label: 'Chấm công',          icon: '🖐️', position: 10, isActive: false),
+  ModuleConfig(id: 'tinhluong',     label: 'Lương',              icon: '💵', position: 11, isActive: false),
   ModuleConfig(id: 'kay_ops',       label: 'Vận Hành',           icon: '📋', position: 12, isActive: false),
-  ModuleConfig(id: 'log_viewer',    label: 'Nhật Ký Log',        icon: '📝', position: 14, isActive: true),
-  ModuleConfig(id: 'qr_order',      label: 'QR Gọi Món',         icon: '📱', position: 15, isActive: true),
+  ModuleConfig(id: 'log_viewer',    label: 'Nhật Ký Log',        icon: '📝', position: 13, isActive: false),
+  ModuleConfig(id: 'qr_order',      label: 'QR Gọi Món',         icon: '📱', position: 14, isActive: false),
 ];
 
 // Key mới — tránh xung đột với legacy SharedPrefs key cũ
@@ -91,20 +91,6 @@ class ModuleRepository {
       await prefs.remove(_kLegacyPrefsKey);
     }
 
-    // ‼️ FIX: Merge module mới có isActive=true mà DB chưa biết
-    // (tránh module bị ẩn khi dev thêm module mới với default isActive=true)
-    final activeSet = activeIds.toSet();
-    bool needsUpdate = false;
-    for (final m in _kAllModules) {
-      if (m.isActive && !activeSet.contains(m.id)) {
-        activeIds.add(m.id);
-        needsUpdate = true;
-      }
-    }
-    if (needsUpdate) {
-      await _saveActiveIds(storeId, activeIds);
-    }
-
     // Build danh sách đầy đủ: active + thứ tự theo activeIds
     final activeSetFinal = activeIds.toSet();
     final byId = { for (final m in _kAllModules) m.id: m };
@@ -144,8 +130,8 @@ class ModuleRepository {
         }
       }
     } catch (_) {}
-    // Default: chỉ bật POS
-    return ['pos'];
+    // Default: chỉ bật các module mặc định ban đầu
+    return _kAllModules.where((m) => m.isActive).map((m) => m.id).toList();
   }
 
   Stream<List<ModuleConfig>> watchAll() async* {
@@ -167,21 +153,29 @@ class ModuleRepository {
   Future<void> activate(String moduleId) async {
     final storeId = await _storeId();
     if (storeId == null) return;
-    final all = await getAll();
-    final activeIds = all.where((m) => m.isActive).map((m) => m.id).toList();
-    if (!activeIds.contains(moduleId)) activeIds.add(moduleId);
-    await _saveActiveIds(storeId, activeIds);
+    var activeIds = await _fetchActiveIds(storeId);
+    if (activeIds == null) {
+      final all = await getAll();
+      activeIds = all.where((m) => m.isActive).map((m) => m.id).toList();
+    }
+    if (!activeIds.contains(moduleId)) {
+      activeIds.add(moduleId);
+      await _saveActiveIds(storeId, activeIds);
+    }
   }
 
   Future<void> deactivate(String moduleId) async {
     final storeId = await _storeId();
     if (storeId == null) return;
-    final all = await getAll();
-    final activeIds = all
-        .where((m) => m.isActive && m.id != moduleId)
-        .map((m) => m.id)
-        .toList();
-    await _saveActiveIds(storeId, activeIds);
+    var activeIds = await _fetchActiveIds(storeId);
+    if (activeIds == null) {
+      final all = await getAll();
+      activeIds = all.where((m) => m.isActive).map((m) => m.id).toList();
+    }
+    if (activeIds.contains(moduleId)) {
+      activeIds.remove(moduleId);
+      await _saveActiveIds(storeId, activeIds);
+    }
   }
 
   // ── Cập nhật thứ tự (drag & drop) ────────────────────────────────────────
@@ -199,10 +193,24 @@ class ModuleRepository {
 class AppSettingsRepository {
   static SupabaseClient get _sb => Supabase.instance.client;
   final _uuid = const Uuid();
+  final String? _storeIdOverride;
+
+  AppSettingsRepository([this._storeIdOverride]);
 
   Future<String?> _storeId() async {
+    if (_storeIdOverride != null && _storeIdOverride!.isNotEmpty) {
+      return _storeIdOverride;
+    }
     final info = await StoreAuthService.getStoreInfo();
-    return info['store_id'] as String?;
+    final sid = info['store_id'];
+    if (sid != null && sid.isNotEmpty) return sid;
+    try {
+      final headerStoreId = _sb.rest.headers['x-store-id'];
+      if (headerStoreId != null && headerStoreId.isNotEmpty) {
+        return headerStoreId;
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<String?> get(String key) async {
@@ -238,7 +246,8 @@ class AppSettingsRepository {
 
   Future<double>  getDouble(String key, {double defaultValue = 0}) async {
     final val = await get(key);
-    return double.tryParse(val ?? '') ?? defaultValue;
+    if (val == null) return defaultValue;
+    return double.tryParse(val.replaceAll(',', '.')) ?? defaultValue;
   }
 
   Future<String>  get shopName       => getOrDefault('shop_name', 'Quán Nhỏ');
@@ -252,26 +261,155 @@ class AppSettingsRepository {
   // Cấu hình định vị chấm công
   Future<double?> get attendanceLat async {
     final val = await get('attendance_latitude');
-    return val != null ? double.tryParse(val) : null;
+    if (val == null) return null;
+    final d = double.tryParse(val.replaceAll(',', '.'));
+    return (d != null && d.isFinite && d >= -90 && d <= 90) ? d : null;
   }
   Future<double?> get attendanceLng async {
     final val = await get('attendance_longitude');
-    return val != null ? double.tryParse(val) : null;
+    if (val == null) return null;
+    final d = double.tryParse(val.replaceAll(',', '.'));
+    return (d != null && d.isFinite && d >= -180 && d <= 180) ? d : null;
   }
   Future<String?> get attendanceAddress => get('attendance_address');
-  Future<double>  get attendanceRadius  => getDouble('attendance_radius', defaultValue: 200.0);
+  Future<double>  get attendanceRadius async {
+    final r = await getDouble('attendance_radius', defaultValue: 200.0);
+    return (r.isFinite && r > 0) ? r : 200.0;
+  }
 
+  /// Lấy toàn bộ cấu hình định vị của quán trong 1 query tối ưu
+  Future<AttendanceConfig> getAttendanceConfig() async {
+    final storeId = await _storeId();
+    if (storeId == null || storeId.isEmpty) return const AttendanceConfig();
+    try {
+      final rows = await _sb
+          .from('app_settings')
+          .select('key, value')
+          .eq('store_id', storeId)
+          .inFilter('key', [
+            'attendance_latitude',
+            'attendance_longitude',
+            'attendance_address',
+            'attendance_radius',
+          ]);
+      double? lat;
+      double? lng;
+      String? address;
+      double radius = 200.0;
+      for (final r in rows as List) {
+        final k = r['key'] as String?;
+        final v = r['value'] as String?;
+        if (v == null) continue;
+        if (k == 'attendance_latitude') {
+          final parsed = double.tryParse(v.replaceAll(',', '.'));
+          if (parsed != null && parsed.isFinite && parsed >= -90 && parsed <= 90) {
+            lat = parsed;
+          }
+        }
+        if (k == 'attendance_longitude') {
+          final parsed = double.tryParse(v.replaceAll(',', '.'));
+          if (parsed != null && parsed.isFinite && parsed >= -180 && parsed <= 180) {
+            lng = parsed;
+          }
+        }
+        if (k == 'attendance_address') address = v;
+        if (k == 'attendance_radius') {
+          final parsed = double.tryParse(v.replaceAll(',', '.'));
+          if (parsed != null && parsed.isFinite && parsed > 0) {
+            radius = parsed;
+          }
+        }
+      }
+      return AttendanceConfig(lat: lat, lng: lng, address: address, radius: radius);
+    } catch (e) {
+      debugPrint('[AppSettingsRepository] getAttendanceConfig error: $e');
+      try {
+        final lat = await attendanceLat;
+        final lng = await attendanceLng;
+        final address = await attendanceAddress;
+        final radius = await attendanceRadius;
+        return AttendanceConfig(lat: lat, lng: lng, address: address, radius: radius);
+      } catch (_) {
+        return const AttendanceConfig();
+      }
+    }
+  }
+
+  /// Lưu cấu hình định vị đồng bộ lên bảng `app_settings` theo `store_id`
   Future<void> saveAttendanceConfig({
     required double lat,
     required double lng,
     required String address,
     required double radius,
   }) async {
-    await set('attendance_latitude', lat.toString());
-    await set('attendance_longitude', lng.toString());
-    await set('attendance_address', address);
-    await set('attendance_radius', radius.toString());
+    final storeId = await _storeId();
+    if (storeId == null || storeId.isEmpty) {
+      throw Exception('Không xác định được mã cửa hàng (store_id) để lưu cấu hình.');
+    }
+    if (!lat.isFinite || lat < -90 || lat > 90) {
+      throw ArgumentError('Vĩ độ không hợp lệ (-90 đến 90): $lat');
+    }
+    if (!lng.isFinite || lng < -180 || lng > 180) {
+      throw ArgumentError('Kinh độ không hợp lệ (-180 đến 180): $lng');
+    }
+    if (!radius.isFinite || radius <= 0) {
+      throw ArgumentError('Bán kính cho phép phải là số lớn hơn 0 mét: $radius');
+    }
+    final items = [
+      {
+        'id': _uuid.v4(),
+        'store_id': storeId,
+        'key': 'attendance_latitude',
+        'value': lat.toString(),
+      },
+      {
+        'id': _uuid.v4(),
+        'store_id': storeId,
+        'key': 'attendance_longitude',
+        'value': lng.toString(),
+      },
+      {
+        'id': _uuid.v4(),
+        'store_id': storeId,
+        'key': 'attendance_address',
+        'value': address,
+      },
+      {
+        'id': _uuid.v4(),
+        'store_id': storeId,
+        'key': 'attendance_radius',
+        'value': radius.toString(),
+      },
+    ];
+    await _sb.from('app_settings').upsert(items, onConflict: 'store_id,key');
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA CLASS: ATTENDANCE CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+class AttendanceConfig {
+  final double? lat;
+  final double? lng;
+  final String? address;
+  final double radius;
+
+  const AttendanceConfig({
+    this.lat,
+    this.lng,
+    this.address,
+    this.radius = 200.0,
+  });
+
+  bool get hasLocation =>
+      lat != null && lat!.isFinite && lng != null && lng!.isFinite;
+
+  Map<String, dynamic> toMap() => {
+    'lat': lat,
+    'lng': lng,
+    'address': address,
+    'radius': radius,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

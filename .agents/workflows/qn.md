@@ -39,7 +39,7 @@ Chủ Quán có thể điều phối chương trình đào tạo của AI Bum qu
 
 ## 1. Context cố định
 
-- Quán Nhỏ POS là ứng dụng quản lý F&B viết bằng Flutter; Android/Web đã hoạt động, iOS đang phát hành.
+- Quán Nhỏ POS là ứng dụng quản lý F&B viết bằng Flutter; iOS (Apple App Store ID: 6795376140), Android (Google Play Store), Web POS (quannho.lpm.vn/pos) và Windows POS đã chính thức phát hành hoạt động 100%.
 - Supabase là nguồn dữ liệu chuẩn. Drift/SQLite còn trong code nhưng chưa tạo thành offline hoàn chỉnh.
 - Mọi dữ liệu và quyền phải cô lập theo `store_id`; kiến trúc phải hỗ trợ một Chủ quán quản lý nhiều cửa hàng.
 - Pilot chính thức tại quán KAY.
@@ -49,6 +49,7 @@ Chủ Quán có thể điều phối chương trình đào tạo của AI Bum qu
 Quy tắc nghiệp vụ lõi:
 
 - Đăng nhập bằng số điện thoại + mật khẩu; mã quán dùng khi tham gia quán. PIN chỉ dùng phê duyệt quản lý.
+- **RÀO CHẮN BẤT BIẾN CHO PHÁT HÀNH TRÊN iOS (Apple Guideline 3.1.1)**: **Tuyệt đối KHÔNG ĐƯỢC CÓ NÚT/TAB ĐĂNG KÝ trên iOS, CHỈ CHO PHÉP ĐĂNG NHẬP**. Mọi tính năng tạo tài khoản doanh nghiệp mới hoặc tạo quán mới (`+ Tạo quán mới`) phải bị ẩn hoàn toàn trên iOS (`defaultTargetPlatform == TargetPlatform.iOS`). Nhân viên chỉ vào quán bằng mã kết nối do chủ quán cấp. Web, Android và Windows giữ nguyên tính năng đăng ký tài khoản và tạo quán mới bình thường, tự động tích hợp cấu hình phiên bảo mật POS JWT.
 - Nhiều nhân viên được order cùng bàn; lưu người mở bàn và người thêm từng món.
 - Món đã gửi Bếp chỉ Chủ quán/Quản lý được hủy, bắt buộc lý do, phê duyệt và audit.
 - Chỉ trừ kho sau thanh toán. Thiếu tồn chỉ cảnh báo; `is_available=false` mới khóa bán.
@@ -126,9 +127,29 @@ Quy tắc nghiệp vụ lõi:
 ### In ấn, thiết bị và phát hành
 
 - Tách template/cấu hình Hóa đơn Thu ngân, Bếp nóng và Bếp bar; định tuyến theo bộ phận chế biến. Tem ly của Bar in theo từng số lượng món.
-- PDF nhiệt dùng đen thuần cho chữ/đường kẻ; tránh màu xám/opacity làm mờ. Logo bitmap/Base64 và QR động/tĩnh phải tương thích máy in thực tế.
-- Cấu hình máy in tách theo `device_id`, tự lưu có debounce/focus hợp lý, không ghi đè thiết bị khác. Realtime phải tránh nhận/in trùng.
-- Windows installer/auto-update, Web `/pos/`, Android/iOS là luồng phát hành riêng. Không build, deploy, upload store, push Git hoặc thay hạ tầng nếu người dùng chưa yêu cầu; trạng thái phát hành phải đọc từ tài liệu/console hiện hành.
+- Windows installer/auto-update, Web `/pos/`, Android/iOS là luồng phát hành riêng. Trạng thái phát hành chính thức hiện tại:
+  * **iOS (Apple App Store)**: `https://apps.apple.com/app/id6795376140` (App ID: `6795376140`, Bundle: `vn.lpm.quannhoPos`) — 🟢 **Ready for Sale** (Đã mở bán toàn cầu).
+  * **Android (Google Play)**: `https://play.google.com/store/apps/details?id=vn.lpm.quannho_pos` (Package: `vn.lpm.quannho_pos`).
+  * **Web POS**: `https://quannho.lpm.vn/pos`.
+  * **Web Landing**: `https://quannho.lpm.vn`.
+  * **Bản cài trực tiếp**: `/QuanNhoPOS-latest.apk` (Android) & `/QuanNhoPOS-latest.exe` (Windows).
+- **Quy chuẩn Apple App Store Review (Guideline 3.1.1 & 3.1.3 Anti-Steering) cho iOS**:
+  * **Cấm tuyệt đối trên iOS**: Không hiển thị tính năng tạo tài khoản doanh nghiệp mới (`Đăng ký`), không hiển thị nút khởi tạo cửa hàng mới (`+ Tạo quán mới`), và **tuyệt đối KHÔNG đặt link bấm được (clickable link) hay lời kêu gọi hành động (Call To Action)** dẫn ra website ngoài để đăng ký/mua gói/thanh toán (vi phạm nặng Anti-Steering).
+  * **Cách thức triển khai chuẩn B2B / Multiplatform Services**: Gated bằng `defaultTargetPlatform == TargetPlatform.iOS`:
+    - Trên iOS: Chỉ giữ màn hình **Đăng nhập** và tính năng **Kết nối quán bằng mã** (`join_store_by_code_v4`).
+    - Sử dụng câu văn chỉ dẫn trung tính (Neutral statement), không link: *"Ứng dụng POS dành cho nhân viên và quản lý có tài khoản Quán Nhỏ. Vui lòng đăng nhập bằng thông tin do chủ cửa hàng cấp."*
+    - Trên Android, Web và Windows: Giữ nguyên đầy đủ luồng Đăng ký và Tạo quán mới; tự động phân giải endpoint POS JWT (`https://quannho.lpm.vn` hoặc `Uri.base`) để việc đăng ký tài khoản và cấp Onboarding JWT luôn trơn tru, tuyệt đối không bị lỗi `POS_JWT_NOT_CONFIGURED` chặn lại.
+  * **Quyền riêng tư Info.plist**: Mọi quyền truy cập nhạy cảm (Camera, Location, Photos) phải khai báo đầy đủ chuỗi mục đích (`NSLocationAlwaysAndWhenInUseUsageDescription`, `NSLocationWhenInUseUsageDescription`, `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`) giải thích rõ ràng mục đích nghiệp vụ (check-in nhân viên, quét QR bàn/thanh toán).
+- **Quy Chuẩn Đồng Bộ & Tự Động Hóa Phát Hành Đa Nền Tảng (Windows, Android, iOS, Web)**:
+  * **Nguồn sự thật cập nhật duy nhất (Single Source of Truth)**: Không dùng GitHub API công khai cho client update (tránh rate-limit/lỗi thời). Bảng `public.app_versions` trên Supabase và máy chủ VPS `quannho.lpm.vn` là nguồn sự thật duy nhất về phiên bản và link tải.
+  * **Đồng bộ File Tải Web (`quannho.lpm.vn`)**: Sau mỗi đợt build phát hành, các file nhị phân mới (`QuanNhoPOS-latest.apk`, `QuanNhoPOS-latest.exe`, `QuanNhoPOS-latest-macOS.zip`) phải được tự động copy sang thư mục public web download (`/Users/banhbao/LPM.VN/lpm-web/public/` hoặc sync lên `/var/www/quannho/` trên VPS) và cập nhật số phiên bản/badge trên trang web download.
+  * **Giao thức khẩu lệnh phát hành của Chủ Quán**:
+    - Khi Chủ Quán ra lệnh: **`/qn phát hành bản mới [mô_tả]`** hoặc **`/qn build release`**, AI phải tự động:
+      1. Tăng `version + build_number` trong `pubspec.yaml` (ví dụ `1.0.2+7` $\rightarrow$ `1.0.2+8`).
+      2. Biên dịch song song các gói được yêu cầu (APK cho Sunmi/Android, IPA cho iOS, EXE cho Windows, tar.gz cho Web).
+      3. Tự động đồng bộ file sang web download `quannho.lpm.vn` và nạp bản ghi vào bảng `app_versions`.
+      4. Mở sẵn Archive trong Xcode Organizer (cho iOS) và đưa ra hướng dẫn 1-click cho Chủ Quán.
+      5. Ghi nhật ký đầy đủ vào `nhat_ky.md`.
 
 ### QR Order và AI Bum
 

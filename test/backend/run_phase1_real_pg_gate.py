@@ -353,7 +353,7 @@ $$;
 """
 
 # Exercise the real membership/checkout authorization, not a permissive mock.
-_v4_source = (Path(__file__).resolve().parents[2] / 'supabase/migrations/20260827_qr_order_v4.sql').read_text()
+_v4_source = (Path(__file__).resolve().parents[2] / 'supabase/migrations/20260901_settlement_v5_prerequisites.sql').read_text()
 _helper_start = _v4_source.index('CREATE OR REPLACE FUNCTION public.verify_staff_qr_membership_v4(')
 _helper_end = _v4_source.index('$$;', _helper_start) + 3
 BASE_CANONICAL_SCHEMA_SQL = BASE_CANONICAL_SCHEMA_SQL.split('CREATE OR REPLACE FUNCTION public.verify_staff_qr_membership_v4(')[0] + """

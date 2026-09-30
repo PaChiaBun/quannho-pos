@@ -418,7 +418,26 @@ class KhoProRepository {
     return _convertToProductUnit(qty, recipeUnit, productUnit);
   }
 
-  double _convertToProductUnit(double qty, String recipeUnit, String productUnit) {
+  double _convertToProductUnit(
+    double qty,
+    String recipeUnit,
+    String productUnit, {
+    double conversionRate = 0,
+    String conversionUnit = '',
+  }) {
+    // Nếu sản phẩm có quy cách đóng gói (VD: 1 lon = 385 ml)
+    if (conversionRate > 0 && conversionUnit.isNotEmpty) {
+      if (recipeUnit == conversionUnit && productUnit != conversionUnit) {
+        return qty / conversionRate;
+      }
+      if (recipeUnit == 'lít' && conversionUnit == 'ml') {
+        return (qty * 1000) / conversionRate;
+      }
+      if (recipeUnit == 'kg' && conversionUnit == 'g') {
+        return (qty * 1000) / conversionRate;
+      }
+      if (recipeUnit == productUnit) return qty;
+    }
     if (recipeUnit == productUnit) return qty;
     // Bước 1: về base unit (gram hoặc ml)
     final double base;
@@ -538,26 +557,24 @@ class KhoProRepository {
         .toList();
     final productRows = ingIds.isEmpty ? [] : (await _sb
         .from('products')
-        .select('id, unit, cost_price_latest, cost_price')
+        .select('id, unit, cost_price_latest, cost_price, conversion_rate, conversion_unit')
         .inFilter('id', ingIds)) as List;
     final unitMap      = <String, String>{};
     final costPriceMap = <String, double>{};
+    final convRateMap  = <String, double>{};
+    final convUnitMap  = <String, String>{};
     for (final row in productRows) {
       final r = row as Map<String, dynamic>;
       final id = r['id'] as String;
       final prodUnit = r['unit'] as String? ?? 'gram';
       unitMap[id] = prodUnit;
+      convRateMap[id] = (r['conversion_rate'] as num?)?.toDouble() ?? 0;
+      convUnitMap[id] = r['conversion_unit'] as String? ?? '';
       // Ưu tiên cost_price_latest nếu > 0, fallback về cost_price
       final latest = (r['cost_price_latest'] as num?)?.toDouble() ?? 0;
       final base   = (r['cost_price'] as num?)?.toDouble() ?? 0;
       final rawCost = latest > 0 ? latest : base;
-      // ‼️ FIX Bug #22: normalize cost về đơn vị nhỏ nhất để nhân đúng với stockDelta
-      // stockDelta đã được convert sang prodUnit → cần cost cùng đơn vị đó
-      // VD: prodUnit=gram → cost = rawCost/1000 (giá/gram) nếu raw là giá/kg
-      // VD: prodUnit=kg   → cost = rawCost (giá/kg)
-      // Nguyên tắc: raw cost LUÔN lưu dạng giá/đơn vị lớn (kg, lít, cái...)
-      // KHÔNG chuẩn hóa gì thêm — để stockDelta và cost khớp đơn vị
-      costPriceMap[id] = rawCost; // giá theo prodUnit (giá/kg nếu prodUnit=kg, giá/gram nếu prodUnit=gram, etc.)
+      costPriceMap[id] = rawCost; // giá theo prodUnit
     }
 
     double totalCogs = 0;
@@ -570,8 +587,14 @@ class KhoProRepository {
       // actualQuantity đã tính hao phí: quantity / yieldFactor
       final actualPerBatch = ing.actualQuantity * quantity;
 
-      // Quy đổi sang đơn vị sản phẩm (kg/lít...)
-      final stockDelta = _convertToProductUnit(actualPerBatch, ing.unit, prodUnit);
+      // Quy đổi sang đơn vị sản phẩm (kg/lít/lon/hộp...)
+      final stockDelta = _convertToProductUnit(
+        actualPerBatch,
+        ing.unit,
+        prodUnit,
+        conversionRate: convRateMap[ing.ingredientId] ?? 0,
+        conversionUnit: convUnitMap[ing.ingredientId] ?? '',
+      );
 
       // Ghi stock_movement — delta âm (xuất kho), giữ precision 3 chữ số
       final wasteNote = ing.yieldFactor < 1.0

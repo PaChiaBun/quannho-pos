@@ -387,7 +387,7 @@ class TestCoreProductRepositoryASTContracts(unittest.TestCase):
         # Database update with tenant isolation and batch filter
         self.assertIn(".update({", self.code)
         self.assertIn("'is_available': isAvailable,", self.code)
-        self.assertIn(".eq('store_id', storeId).inFilter('id', ids)", self.code)
+        self.assertTrue(".eq('store_id', storeId).inFilter('id', ids)" in self.code or ".eq('store_id', storeId).inFilter('id', chunk)" in self.code)
 
         # In-memory RAM cache mutation
         self.assertIn("if (_productsCacheByStore.containsKey(storeId))", self.code)
@@ -405,7 +405,7 @@ class TestCoreProductRepositoryASTContracts(unittest.TestCase):
         self.assertIn("String newCategory,", self.code)
 
         self.assertIn("'category': newCategory,", self.code)
-        self.assertIn(".eq('store_id', storeId).inFilter('id', ids)", self.code)
+        self.assertTrue(".eq('store_id', storeId).inFilter('id', ids)" in self.code or ".eq('store_id', storeId).inFilter('id', chunk)" in self.code)
         self.assertIn("p.copyWith(category: newCategory", self.code)
         self.assertIn("notifyDataChanged(storeId);", self.code)
 

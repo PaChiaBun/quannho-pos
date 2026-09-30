@@ -67,9 +67,13 @@
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
 		<key>NSCameraUsageDescription</key>
-		<string>Ứng dụng cần sử dụng máy ảnh để chụp ảnh chân dung selfie của nhân viên khi thực hiện chấm công vào ca và ra ca.</string>
+		<string>Ứng dụng cần sử dụng máy ảnh để chụp ảnh chấm công vào/ra ca của nhân viên và quét mã QR đơn hàng.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Ứng dụng cần truy cập vị trí của bạn để xác minh toạ độ GPS của nhân viên tại thời điểm chấm công.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>Ứng dụng cần truy cập vị trí để xác minh toạ độ GPS của nhân viên tại cửa hàng khi thực hiện chấm công.</string>
+		<key>NSLocationAlwaysUsageDescription</key>
+		<string>Ứng dụng cần truy cập vị trí để xác minh toạ độ GPS của nhân viên tại cửa hàng khi thực hiện chấm công.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Ứng dụng cần truy cập thư viện ảnh để bạn có thể tải lên ảnh sản phẩm và ảnh thực đơn của quán.</string>
 		<key>UIStatusBarHidden</key>

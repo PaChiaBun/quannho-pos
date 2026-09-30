@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'supabase_service.dart';
 
 const String _kPosJwtStorageKey = 'pos_supabase_jwt';
@@ -15,6 +16,7 @@ const String _kConfiguredPosJwtBackendUrl = String.fromEnvironment(
   'POS_JWT_AUTH_URL',
   defaultValue: '',
 );
+const String _kDefaultProductionPosJwtUrl = 'https://quannho.lpm.vn';
 
 typedef SupabaseAuthApplier = Future<void> Function(String? token);
 
@@ -24,13 +26,32 @@ class PosJwtAuthService {
   final FlutterSecureStorage secureStorage;
   final SupabaseAuthApplier? authApplier;
 
+  static String _resolveBackendUrl({String? explicitUrl}) {
+    if (explicitUrl != null && explicitUrl.trim().isNotEmpty) {
+      return explicitUrl.trim();
+    }
+    if (_kConfiguredPosJwtBackendUrl.isNotEmpty) {
+      return _kConfiguredPosJwtBackendUrl;
+    }
+    // Web POS fallback: nếu đang chạy trên Web browser HTTPS, lấy origin hoặc fallback về domain chính thức
+    if (kIsWeb) {
+      try {
+        final base = Uri.base;
+        if (base.scheme == 'https' && base.host.isNotEmpty) {
+          return '${base.scheme}://${base.host}${base.hasPort ? ':${base.port}' : ''}';
+        }
+      } catch (_) {}
+      return _kDefaultProductionPosJwtUrl;
+    }
+    return '';
+  }
+
   PosJwtAuthService({
     String? backendUrl,
     http.Client? httpClient,
     FlutterSecureStorage? secureStorage,
     this.authApplier,
-  }) : _backendUrl = (backendUrl ?? _kConfiguredPosJwtBackendUrl)
-           .trim()
+  }) : _backendUrl = _resolveBackendUrl(explicitUrl: backendUrl)
            .replaceFirst(RegExp(r'/+$'), ''),
        httpClient = httpClient ?? http.Client(),
        secureStorage = secureStorage ?? const FlutterSecureStorage();

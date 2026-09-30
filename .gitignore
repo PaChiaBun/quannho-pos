@@ -57,6 +57,10 @@ android/key.properties
 *.jks.backup
 .env.staging.local
 release-builds/
+web-download/*.apk
+web-download/*.exe
+web-download/*.zip
+web-download/download/
 
 # Staging Runtime Files (Keep .example files tracked)
 supabase/kong.staging.yml
