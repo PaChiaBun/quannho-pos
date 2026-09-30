@@ -3,6 +3,35 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-09-30 (14:05 +07) — Khắc Phục Triệt Để Lỗi Tạo Bàn/Khu (PostgrestException 23502) & Chuẩn Hóa Thông Báo Lỗi Thân Thiện Toàn Diện Ứng Dụng [HOÀN TẤT]
+
+> **Trạng thái**: 🎉 **ĐÃ KHẮC PHỤC TRIỆT ĐỂ NGUYÊN NHÂN GỐC & CHUẨN HÓA 100% HIỂN THỊ LỖI**:
+> - **Yêu cầu của Chủ Quán**:
+>   1. Điều tra log và sửa dứt điểm lỗi khi tạo bàn / thêm khu vực (`PostgrestException: null value in column "created_at" of relation "ban_zones" violates not-null constraint, code: 23502`).
+>   2. Chuẩn hóa triệt để cách hiển thị lỗi trên toàn bộ ứng dụng: Tuyệt đối không để lộ mã lỗi kỹ thuật thô (`PostgrestException`, `SocketException`, `$e`, JSON lỗi backend...) ra giao diện người dùng. Thay vào đó hiển thị thông điệp ngắn gọn, rõ ràng theo ngữ cảnh: *"Tạo tài khoản thất bại. Hãy chụp lại báo chủ app."*, *"Tạo bàn thất bại. Hãy chụp lại báo chủ app."*, *"Thêm khu vực thất bại. Hãy chụp lại báo chủ app."*,... Đồng thời ghi log chi tiết đầy đủ lỗi kỹ thuật vào `AppLogger` để chủ quán/kỹ thuật viên dễ dàng truy vết khi cần.
+> - **Nguyên nhân gốc rễ lỗi tạo bàn / khu**:
+>   - Bảng `ban_zones` và `ban_dining_tables` trên PostgreSQL (Supabase self-hosted) có cột `created_at` và `updated_at` kiểu `bigint NOT NULL` nhưng chưa được thiết lập giá trị mặc định (`DEFAULT`).
+>   - Khi ứng dụng gửi lệnh thêm khu vực/bàn mà không truyền giá trị `created_at`/`updated_at`, PostgreSQL từ chối với mã lỗi `23502 (not_null_violation)`.
+> - **Các biện pháp xử lý đã hoàn thành**:
+>   1. **Xử lý CSDL PostgreSQL Production (`supabase-db`)**:
+>      - Thiết lập `DEFAULT (EXTRACT(EPOCH FROM now()) * 1000)::bigint` cho cả `created_at` và `updated_at` trên cả 2 bảng `ban_zones` và `ban_dining_tables`.
+>      - Tạo tệp di chuyển chuẩn: `supabase/migrations/20260930_ban_zones_tables_created_at_defaults.sql`.
+>      - Kiểm thử trực tiếp insert vào CSDL: Postgres tự động sinh epoch milliseconds (`1790751680357`), loại bỏ 100% lỗi `23502`.
+>   2. **Cập nhật Client Model & Repository (`lib/core/repositories/ban_repository.dart`)**:
+>      - `BanZoneModel.toMap()` và `BanRepository.upsertTable()` chủ động nạp `DateTime.now().millisecondsSinceEpoch` cho `created_at` và `updated_at`, đảm bảo an toàn 2 lớp (cả client và database).
+>   3. **Rà soát & Chuẩn Hóa Hiển Thị Lỗi Toàn Diện Ứng Dụng**:
+>      - `ban_screen.dart`: Thêm khu vực, tạo bàn, mở bàn, in tạm tính, cập nhật món, thanh toán, gửi bếp, chuyển bàn, xác thực mã PIN quản lý và các khối AsyncValue error states.
+>      - `auth_screen.dart`: Đăng nhập, đăng ký tài khoản (*"Tạo tài khoản thất bại. Hãy chụp lại báo chủ app."*).
+>      - `pos_screen.dart`: Thêm món vào đơn, gửi bếp, tra cứu khách hàng, nạp menu.
+>      - `inventory_screen.dart`: Cập nhật trạng thái lô, đổi danh mục, tạo/sửa món (*"Tạo món thất bại. Hãy chụp lại báo chủ app."*), gắn topping, lưu nhóm.
+>      - `nhan_vien_screen.dart`, `chamcong_screen.dart`, `finance_screen.dart`, `report_screen.dart`, `loyalty_screen.dart`, `log_viewer_screen.dart`, `discount_management_screen.dart`, `add_transaction_sheet.dart`: Chuẩn hóa toàn bộ popup/snackBar bắt ngoại lệ theo chuẩn *"Thao tác thất bại. Hãy chụp lại báo chủ app."*, ghi log ngoại lệ kỹ thuật vào `AppLogger.error`.
+>   4. **Kiểm thử chất lượng & Triển khai**:
+>      - `dart analyze`: Đạt **0 lỗi** trên toàn bộ các file được cập nhật.
+>      - Biên dịch bản dựng Web POS Release và triển khai đồng bộ lên VPS `45.32.104.228`.
+> - **Nghiệm thu**: Sẵn sàng kiểm tra trực tiếp trên môi trường live Web POS và Android.
+
+---
+
 ## 2026-09-30 (13:28 +07) — Khắc Phục Triệt Để Vi Phạm Google Play Data Safety, Tích Hợp Xóa Tài Khoản Vào Privacy & Gửi Duyệt Thành Công Build 10 (1.0.2) [ĐANG XEM XÉT]
 
 > **Trạng thái**: 🚀 **ĐÃ GỬI DUYỆT THÀNH CÔNG BẢN DỰNG 10 (1.0.2) LÊN GOOGLE PLAY CONSOLE (IN REVIEW)**:

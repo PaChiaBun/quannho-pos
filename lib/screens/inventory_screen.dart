@@ -240,8 +240,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
       AppLogger.error('inventory', 'Lỗi cập nhật trạng thái bán hàng loạt ($count món)', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi cập nhật trạng thái: $e'),
+          const SnackBar(
+            content: Text('Cập nhật trạng thái thất bại. Hãy chụp lại báo chủ app.'),
             backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
           ),
@@ -379,8 +379,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
         AppLogger.error('inventory', 'Lỗi đổi danh mục hàng loạt ($count món)', e, st);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Lỗi đổi danh mục: $e'),
+            const SnackBar(
+              content: Text('Đổi danh mục thất bại. Hãy chụp lại báo chủ app.'),
               backgroundColor: _kRed,
               behavior: SnackBarBehavior.floating,
             ),
@@ -644,6 +644,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                 _StockList(
                   watchItems: (ref) => ref.watch(allStockProvider).whenData(
                     (list) => list.where((i) =>
+                        !_phieuNhapEnabled ||
                         i.productType == 'purchased' ||
                         i.productType == 'finished').toList()),
                   filterQuery: _searchCtrl.text,
@@ -1118,13 +1119,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   }
 
   void _openAddProduct() {
+    final allItems = ref.read(allStockProvider).value ?? [];
+    final storeCustomCats = allItems
+        .map((i) => (i.category ?? '').trim())
+        .where((c) => c.isNotEmpty && !const ['Đồ ăn', 'Đồ uống', 'Tráng miệng', 'Combo', 'Nguyên liệu', 'Topping', 'Khác'].contains(c))
+        .toSet()
+        .toList();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _EditProductSheet(
         product: null,
-        onSaved: (name, price, cost, cat, unit, minStock, {String? imageUrl, bool isTopping = false, String toppingUnit = 'phần', String stationCode = 'bep_nong'}) async {
+        initialCustomCategories: storeCustomCats,
+        onSaved: (name, price, cost, cat, unit, minStock, {String? imageUrl, bool isTopping = false, String toppingUnit = 'phần', String stationCode = 'bep_nong', double conversionRate = 0, String conversionUnit = ''}) async {
           final productType = cat == 'Nguyên liệu' ? 'ingredient' : 'finished';
           try {
             await ref.read(productRepositoryProvider).create(
@@ -1137,6 +1146,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
               isTopping: isTopping,
               toppingUnit: isTopping ? toppingUnit : null,
               stationCode: stationCode,
+              conversionRate: conversionRate,
+              conversionUnit: conversionUnit,
             );
             if (ctx.mounted) {
               Navigator.pop(ctx);
@@ -1147,8 +1158,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           } catch (e, st) {
             AppLogger.error('inventory', 'Lỗi khi tạo món: $name', e, st);
             if (ctx.mounted) {
-              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                content: Text('Lỗi khi tạo món: $e'),
+              ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                content: Text('Tạo món thất bại. Hãy chụp lại báo chủ app.'),
                 backgroundColor: _kRed,
                 behavior: SnackBarBehavior.floating));
             }
@@ -1198,13 +1209,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   }
 
   void _openEditProduct(StockItem item) {
+    final allItems = ref.read(allStockProvider).value ?? [];
+    final storeCustomCats = allItems
+        .map((i) => (i.category ?? '').trim())
+        .where((c) => c.isNotEmpty && !const ['Đồ ăn', 'Đồ uống', 'Tráng miệng', 'Combo', 'Nguyên liệu', 'Topping', 'Khác'].contains(c))
+        .toSet()
+        .toList();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _EditProductSheet(
         product: item,
-        onSaved: (name, price, cost, cat, unit, minStock, {String? imageUrl, bool isTopping = false, String toppingUnit = 'phần', String stationCode = 'bep_nong'}) async {
+        initialCustomCategories: storeCustomCats,
+        onSaved: (name, price, cost, cat, unit, minStock, {String? imageUrl, bool isTopping = false, String toppingUnit = 'phần', String stationCode = 'bep_nong', double conversionRate = 0, String conversionUnit = ''}) async {
           final productType = cat == 'Nguyên liệu' ? 'ingredient' : 'finished';
           final sellPriceInt = price.isNaN || price.isInfinite ? 0 : price.truncate();
           final costPriceInt  = cost.isNaN  || cost.isInfinite  ? 0 : cost.truncate();
@@ -1220,6 +1239,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             'is_topping': isTopping,
             'topping_unit': isTopping ? toppingUnit : null,
             'station_code': stationCode,
+            'conversion_rate': conversionRate,
+            'conversion_unit': conversionUnit,
             if (imageUrl != null) 'image_url': imageUrl,
           };
           try {
@@ -1233,8 +1254,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           } catch (e, st) {
             AppLogger.error('inventory', 'Lỗi khi cập nhật món: $name (${item.id})', e, st);
             if (ctx.mounted) {
-              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                content: Text('Lỗi khi cập nhật món: $e'),
+              ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                content: Text('Cập nhật món thất bại. Hãy chụp lại báo chủ app.'),
                 backgroundColor: _kRed,
                 behavior: SnackBarBehavior.floating));
             }
@@ -1375,7 +1396,10 @@ class _StockListState extends ConsumerState<_StockList> {
     return async.when(
       loading: () => const Center(
         child: CircularProgressIndicator(color: _kNavy)),
-      error: (e, _) => Center(child: Text('Lỗi: $e')),
+      error: (e, st) {
+        AppLogger.error('inventory', 'Tải danh mục/món thất bại: $e', e, st);
+        return const Center(child: Text('Tải dữ liệu thất bại. Hãy chụp lại báo chủ app.'));
+      },
       data: (items) {
         final selectedIds = widget.selectedIds;
         final canManageBulk = widget.canManageBulk;
@@ -2084,15 +2108,15 @@ class _InventoryTableRow extends StatelessWidget {
                 ),
               ),
 
-              // Column 5: [Tồn kho & Min stock] (110px)
+              // Column 5: [Tồn kho & Min stock] (135px)
               SizedBox(
-                width: 110,
+                width: 135,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${item.stockQty % 1 == 0 ? item.stockQty.toInt() : item.stockQty} ${item.unit}',
+                      item.formattedStockDisplay,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -2458,7 +2482,10 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
 
     return posAsync.when(
       loading: () => const Center(child: CircularProgressIndicator(color: _kNavy)),
-      error: (e, _) => Center(child: Text('Lỗi: $e')),
+      error: (e, st) {
+        AppLogger.error('inventory', 'Tải đơn nhập hàng thất bại: $e', e, st);
+        return const Center(child: Text('Tải đơn nhập hàng thất bại. Hãy chụp lại báo chủ app.'));
+      },
       data: (allOrders) {
         // Lấy danh sách NCC duy nhất
         final suppliers = allOrders
@@ -3048,7 +3075,7 @@ class _StockCard extends StatelessWidget {
                               fontSize: 12, color: _kMuted),
                           ),
                           Text(
-                            '${item.stockQty.toStringAsFixed(0)} ${item.unit}',
+                            item.formattedStockDisplay,
                             style: TextStyle(
                               fontSize: 15, fontWeight: FontWeight.w800,
                               color: statusInfo.stockColor,
@@ -3468,7 +3495,10 @@ class _HistorySheet extends ConsumerWidget {
             child: movementsAsync.when(
               loading: () => const Center(
                 child: CircularProgressIndicator(color: _kNavy)),
-              error: (e, _) => Center(child: Text('Lỗi: $e')),
+              error: (e, st) {
+                AppLogger.error('inventory', 'Tải biến động kho thất bại: $e', e, st);
+                return const Center(child: Text('Tải biến động thất bại. Hãy chụp lại báo chủ app.'));
+              },
               data: (movements) => movements.isEmpty
                   ? const Center(
                       child: Text('Chưa có biến động nào',
@@ -3612,7 +3642,10 @@ class _RecentMovementsSheet extends ConsumerWidget {
           Expanded(
             child: movAsync.when(
               loading: () => const Center(child: CircularProgressIndicator(color: _kNavy)),
-              error: (e, _) => Center(child: Text('Lỗi: $e')),
+              error: (e, st) {
+                AppLogger.error('inventory', 'Tải biến động món thất bại: $e', e, st);
+                return const Center(child: Text('Tải biến động thất bại. Hãy chụp lại báo chủ app.'));
+              },
               data: (movements) => movements.isEmpty
                   ? const Center(child: Text('Chưa có biến động nào',
                     style: TextStyle(color: _kMuted)))
@@ -3812,14 +3845,17 @@ class _HeaderStat extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _EditProductSheet extends StatefulWidget {
   final StockItem? product;
+  final List<String>? initialCustomCategories;
   final Future<void> Function(
     String name, double price, double cost,
     String cat, String unit, double minStock,
-    {String? imageUrl, bool isTopping, String toppingUnit, String stationCode}) onSaved;
+    {String? imageUrl, bool isTopping, String toppingUnit, String stationCode,
+     double conversionRate, String conversionUnit}) onSaved;
   final Future<void> Function()? onDelete;
 
   const _EditProductSheet({
     required this.product,
+    this.initialCustomCategories,
     required this.onSaved,
     this.onDelete,
   });
@@ -3837,6 +3873,9 @@ class _EditProductSheetState extends State<_EditProductSheet>
   late final TextEditingController _catCtrl;
   late final TextEditingController _minStockCtrl;
   late String _selectedUnit;
+  late bool _hasConversion;
+  late final TextEditingController _conversionRateCtrl;
+  late String _conversionUnit;
   List<String> _customCats = [];
   bool _saving = false;
 
@@ -3871,7 +3910,7 @@ class _EditProductSheetState extends State<_EditProductSheet>
   static const _kGreen  = Color(0xFF2E7D32);
 
   static const _cats  = ['Đồ ăn','Đồ uống','Tráng miệng','Combo','Nguyên liệu','Khác'];
-  static const _units = ['phần','ly','tô','cái','hộp','kg','g','lít'];
+  static const _units = ['phần','ly','tô','cái','hộp','lon','chai','gói','kg','g','ml','lít'];
   static const _toppingUnits = ['viên','phần','ml','g','muỗng','thìa'];
 
   bool get _isEdit => widget.product != null;
@@ -3895,11 +3934,26 @@ class _EditProductSheetState extends State<_EditProductSheet>
     _isTopping     = p?.isTopping ?? false;
     _toppingUnit   = p?.toppingUnit ?? 'viên';
     _selectedStationCode = p?.stationCode ?? 'bep_nong';
+
+    _hasConversion = (p != null && p.conversionRate > 0);
+    _conversionRateCtrl = TextEditingController(
+        text: p != null && p.conversionRate > 0
+            ? (p.conversionRate % 1 == 0 ? p.conversionRate.toInt().toString() : p.conversionRate.toString())
+            : '385');
+    _conversionUnit = (p != null && p.conversionUnit.isNotEmpty) ? p.conversionUnit : 'ml';
+
+    final initialCats = <String>{};
+    if (widget.initialCustomCategories != null) {
+      initialCats.addAll(widget.initialCustomCategories!);
+    }
     final existingCat = p?.category ?? '';
     if (existingCat.isNotEmpty &&
-        !const ['Đồ ăn','Đồ uống','Tráng miệng','Combo','Nguyên liệu','Topping'].contains(existingCat)) {
-      _customCats = [existingCat];
+        !const ['Đồ ăn','Đồ uống','Tráng miệng','Combo','Nguyên liệu','Topping','Khác'].contains(existingCat)) {
+      initialCats.add(existingCat);
     }
+    _customCats = initialCats.toList();
+    _loadPersistedCustomCategories();
+
     _existingImageUrl = p?.imageUrl;
     if (_isEdit && !(p?.isTopping ?? false)) {
       _tabCtrl = TabController(length: 2, vsync: this);
@@ -3908,6 +3962,32 @@ class _EditProductSheetState extends State<_EditProductSheet>
     // Nếu sản phẩm là topping → load danh sách món chính để gắn
     if (_isEdit && (p?.isTopping ?? false)) {
       _loadMainProductsForTopping();
+    }
+  }
+
+  Future<void> _loadPersistedCustomCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storeId = prefs.getString('auth_store_id') ?? 'default';
+      final saved = prefs.getStringList('custom_categories_$storeId') ?? [];
+      if (saved.isNotEmpty && mounted) {
+        setState(() {
+          final set = _customCats.toSet()..addAll(saved);
+          _customCats = set.toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('[EditProduct] _loadPersistedCustomCategories error: $e');
+    }
+  }
+
+  Future<void> _persistCustomCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storeId = prefs.getString('auth_store_id') ?? 'default';
+      await prefs.setStringList('custom_categories_$storeId', _customCats);
+    } catch (e) {
+      debugPrint('[EditProduct] _persistCustomCategories error: $e');
     }
   }
 
@@ -4002,12 +4082,12 @@ class _EditProductSheetState extends State<_EditProductSheet>
         if (mounted) setState(() => _linkedProductIds.add(productId));
       }
       HapticFeedback.lightImpact();
-    } catch (e) {
-      debugPrint('[EditProduct] _toggleProductLink error: $e');
+    } catch (e, st) {
+      AppLogger.error('inventory', 'Lỗi gắn topping: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Lỗi gắn topping: $e',
-            style: const TextStyle(color: Colors.white, fontSize: 12)),
+          content: const Text('Gắn topping thất bại. Hãy chụp lại báo chủ app.',
+            style: TextStyle(color: Colors.white, fontSize: 12)),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 5),
@@ -4047,6 +4127,7 @@ class _EditProductSheetState extends State<_EditProductSheet>
   void dispose() {
     _nameCtrl.dispose(); _priceCtrl.dispose(); _costCtrl.dispose();
     _catCtrl.dispose(); _minStockCtrl.dispose();
+    _conversionRateCtrl.dispose();
     _tabCtrl?.dispose();
     super.dispose();
   }
@@ -4364,10 +4445,13 @@ class _EditProductSheetState extends State<_EditProductSheet>
                                   color: sel ? Colors.white : _kMuted)),
                                 const SizedBox(width: 4),
                                 GestureDetector(
-                                  onTap: () => setState(() {
-                                    _customCats.remove(c);
-                                    if (_catCtrl.text == c) _catCtrl.text = '';
-                                  }),
+                                  onTap: () {
+                                    setState(() {
+                                      _customCats.remove(c);
+                                      if (_catCtrl.text == c) _catCtrl.text = '';
+                                    });
+                                    _persistCustomCategories();
+                                  },
                                   child: Icon(Icons.close_rounded,
                                       size: 14,
                                       color: sel
@@ -4435,7 +4519,100 @@ class _EditProductSheetState extends State<_EditProductSheet>
                             ),
                           );
                         }).toList()),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
+
+                      // ── Quy cách pha chế (Dung tích / Khối lượng) ──────────
+                      if (!_isTopping) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _hasConversion ? _kNavy.withValues(alpha: 0.04) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: _hasConversion ? _kNavy.withValues(alpha: 0.3) : _kBorder.withValues(alpha: 0.6)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.scale_rounded, size: 16, color: _hasConversion ? _kNavy : _kMuted),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Quy cách pha chế (Dung tích / Khối lượng)',
+                                          style: TextStyle(
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: _hasConversion ? _kNavy : Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Dùng khi nguyên liệu bán theo lon/hộp nhưng công thức trừ theo ml/g',
+                                          style: TextStyle(fontSize: 11, color: _kMuted),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: _hasConversion,
+                                    activeColor: _kOrange,
+                                    onChanged: (val) => setState(() => _hasConversion = val),
+                                  ),
+                                ],
+                              ),
+                              if (_hasConversion) ...[
+                                const Divider(height: 16),
+                                Row(
+                                  children: [
+                                    Text('1 $_selectedUnit =',
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
+                                    const SizedBox(width: 10),
+                                    SizedBox(
+                                      width: 90,
+                                      child: TextField(
+                                        controller: _conversionRateCtrl,
+                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                          hintText: '385',
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: _kBorder),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: DropdownButton<String>(
+                                        value: _conversionUnit,
+                                        underline: const SizedBox(),
+                                        isDense: true,
+                                        items: const [
+                                          DropdownMenuItem(value: 'ml', child: Text('ml (mililit)', style: TextStyle(fontSize: 12.5))),
+                                          DropdownMenuItem(value: 'g', child: Text('g (gram)', style: TextStyle(fontSize: 12.5))),
+                                        ],
+                                        onChanged: (v) {
+                                          if (v != null) setState(() => _conversionUnit = v);
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
 
                       // ── Gắn vào món (chỉ hiện khi là Topping) ──────────────
                       if (_isTopping && _isEdit) ...[ 
@@ -4695,6 +4872,7 @@ class _EditProductSheetState extends State<_EditProductSheet>
         if (!_customCats.contains(newCat)) _customCats.add(newCat);
         _catCtrl.text = newCat; // auto-select
       });
+      _persistCustomCategories();
     }
   }
 
@@ -4726,13 +4904,25 @@ class _EditProductSheetState extends State<_EditProductSheet>
       final price = double.tryParse(_priceCtrl.text.replaceAll(',','')) ?? 0;
       final cost  = double.tryParse(_costCtrl.text.replaceAll(',','')) ?? 0;
       final min   = double.tryParse(_minStockCtrl.text) ?? 0;
+      final selectedCat = _catCtrl.text.trim();
+      if (selectedCat.isNotEmpty &&
+          !const ['Đồ ăn','Đồ uống','Tráng miệng','Combo','Nguyên liệu','Topping','Khác'].contains(selectedCat)) {
+        if (!_customCats.contains(selectedCat)) {
+          _customCats.add(selectedCat);
+        }
+        await _persistCustomCategories();
+      }
+      final convRate = _hasConversion ? (double.tryParse(_conversionRateCtrl.text.trim()) ?? 0) : 0.0;
+      final convUnit = _hasConversion ? _conversionUnit : '';
       await widget.onSaved(
         _nameCtrl.text.trim(), price, cost,
-        _catCtrl.text.trim(), _selectedUnit, min,
+        selectedCat, _selectedUnit, min,
         imageUrl: imageUrl,
         isTopping: _isTopping,
         toppingUnit: _toppingUnit,
-        stationCode: _selectedStationCode);
+        stationCode: _selectedStationCode,
+        conversionRate: convRate,
+        conversionUnit: convUnit);
       if (mounted) setState(() => _saving = false);
     } catch (e) {
       setState(() { _saving = false; _imageError = 'Lỗi lưu: $e'; }); // FIX: message rõ ràng hơn
@@ -5111,11 +5301,11 @@ class _ToppingLinkSheetState extends State<_ToppingLinkSheet> {
         setState(() => _linkedIds.add(toppingId));
       }
       HapticFeedback.lightImpact();
-    } catch (e) {
-      debugPrint('[ToppingLinkSheet] _toggleLink error: $e');
+    } catch (e, st) {
+      AppLogger.error('inventory', 'Lỗi liên kết topping: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e'), behavior: SnackBarBehavior.floating));
+          const SnackBar(content: Text('Liên kết topping thất bại. Hãy chụp lại báo chủ app.'), behavior: SnackBarBehavior.floating));
       }
     }
   }
@@ -5444,7 +5634,10 @@ class _ToppingGroupTabState extends ConsumerState<_ToppingGroupTab> {
       ),
       body: groupsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Lỗi: $e')),
+        error: (e, st) {
+          AppLogger.error('inventory', 'Tải nhóm topping thất bại: $e', e, st);
+          return const Center(child: Text('Tải nhóm topping thất bại. Hãy chụp lại báo chủ app.'));
+        },
         data: (groups) {
           if (groups.isEmpty) {
             return Center(
@@ -5727,9 +5920,10 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
       await repo.syncGroupProducts(groupId, _linkedProductIds.toList());
       widget.onSaved();
       if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Lỗi: $e'), backgroundColor: _kRed));
+    } catch (e, st) {
+      AppLogger.error('inventory', 'Lỗi đồng bộ nhóm topping: $e', e, st);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Lưu nhóm thất bại. Hãy chụp lại báo chủ app.'), backgroundColor: _kRed));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

@@ -6,7 +6,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/utils/cart_animation_helper.dart';
 import 'package:uuid/uuid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../modules/loyalty/repository/loyalty_repository.dart';
+import '../core/utils/app_logger.dart';
 
 import '../core/providers/app_providers.dart';
 import '../core/providers/permission_provider.dart';
@@ -168,7 +170,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             child: productsAsync.when(
               loading: () =>
                   const Center(child: CircularProgressIndicator(color: _kNavy)),
-              error: (e, _) => Center(child: Text('Lỗi: $e')),
+              error: (e, st) {
+                AppLogger.error('pos_screen', 'Tải danh sách món thất bại: $e', e, st);
+                return const Center(
+                  child: Text('Tải danh sách món thất bại. Hãy chụp lại báo chủ app.'),
+                );
+              },
               data: (products) {
                 final prodList = (products as List).cast<ProductModel>();
                 final filtered = prodList.where((p) {
@@ -229,7 +236,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     return productsAsync.when(
       loading: () =>
           const Center(child: CircularProgressIndicator(color: _kNavy)),
-      error: (e, _) => Center(child: Text('Lỗi: $e')),
+      error: (e, st) {
+        AppLogger.error('pos_screen', 'Tải danh sách món thất bại: $e', e, st);
+        return const Center(
+          child: Text('Tải danh sách món thất bại. Hãy chụp lại báo chủ app.'),
+        );
+      },
       data: (products) {
         final prodList = (products as List).cast<ProductModel>();
         final filtered = prodList.where((p) {
@@ -1018,12 +1030,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   void _openQuickAddProduct([String prefillName = '']) {
+    final products = ref.read(posProductsProvider).value ?? [];
+    final storeCustomCats = products
+        .map((p) => (p.category ?? '').trim())
+        .where((c) => c.isNotEmpty && !const ['Đồ ăn', 'Đồ uống', 'Tráng miệng', 'Combo', 'Khác'].contains(c))
+        .toSet()
+        .toList();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _QuickAddProductSheet(
         prefillName: prefillName,
+        initialCustomCategories: storeCustomCats,
         onSaved: (name, price, costPrice, category, unit) async {
           try {
             await ref
@@ -1045,11 +1065,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 ),
               );
             }
-          } catch (e) {
+          } catch (e, st) {
+            AppLogger.error('pos_screen', 'Thêm món vào thực đơn thất bại: $e', e, st);
             if (ctx.mounted) {
               ScaffoldMessenger.of(ctx).showSnackBar(
-                SnackBar(
-                  content: Text('Lỗi: $e'),
+                const SnackBar(
+                  content: Text('Thêm món thất bại. Hãy chụp lại báo chủ app.'),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -1392,11 +1413,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         );
       }
     } catch (e, st) {
-      debugPrint('[POS→Bếp] ❌ LỖI: $e\n$st');
+      AppLogger.error('pos_screen', 'Gửi bếp thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi gửi bếp: $e'),
+            content: const Text('Gửi bếp thất bại. Hãy chụp lại báo chủ app.'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 8),
@@ -2929,11 +2950,12 @@ class _CustomerPickerRowState extends ConsumerState<_CustomerPickerRow> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('pos_screen', 'Tra cứu khách hàng thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi: $e'),
+          const SnackBar(
+            content: Text('Tra cứu khách hàng thất bại. Hãy chụp lại báo chủ app.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -3119,6 +3141,7 @@ class _CustomerPickerRowState extends ConsumerState<_CustomerPickerRow> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _QuickAddProductSheet extends StatefulWidget {
   final String prefillName;
+  final List<String>? initialCustomCategories;
   final Future<void> Function(
     String name,
     double price,
@@ -3130,6 +3153,7 @@ class _QuickAddProductSheet extends StatefulWidget {
 
   const _QuickAddProductSheet({
     required this.prefillName,
+    this.initialCustomCategories,
     required this.onSaved,
   });
 
@@ -3144,6 +3168,7 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
   final _costCtrl = TextEditingController();
   final _catCtrl = TextEditingController();
   final _unitCtrl = TextEditingController(text: 'phần');
+  List<String> _customCats = [];
   bool _saving = false;
   double _previewPrice = 0;
 
@@ -3156,7 +3181,7 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
 
   // Common categories để gợi ý
   static const _cats = ['Đồ ăn', 'Đồ uống', 'Tráng miệng', 'Combo', 'Khác'];
-  static const _units = ['phần', 'ly', 'tô', 'cái', 'hộp', 'kg', 'g'];
+  static const _units = ['phần', 'ly', 'tô', 'cái', 'hộp', 'lon', 'chai', 'gói', 'kg', 'g', 'ml', 'lít'];
 
   @override
   void initState() {
@@ -3166,6 +3191,39 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
       final val = double.tryParse(_priceCtrl.text.replaceAll(',', '')) ?? 0;
       setState(() => _previewPrice = val);
     });
+
+    final set = <String>{};
+    if (widget.initialCustomCategories != null) {
+      set.addAll(widget.initialCustomCategories!);
+    }
+    _customCats = set.toList();
+    _loadPersistedCustomCategories();
+  }
+
+  Future<void> _loadPersistedCustomCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storeId = prefs.getString('auth_store_id') ?? 'default';
+      final saved = prefs.getStringList('custom_categories_$storeId') ?? [];
+      if (saved.isNotEmpty && mounted) {
+        setState(() {
+          final set = _customCats.toSet()..addAll(saved);
+          _customCats = set.toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('[_QuickAddProductSheet] _loadPersistedCustomCategories error: $e');
+    }
+  }
+
+  Future<void> _persistCustomCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storeId = prefs.getString('auth_store_id') ?? 'default';
+      await prefs.setStringList('custom_categories_$storeId', _customCats);
+    } catch (e) {
+      debugPrint('[_QuickAddProductSheet] _persistCustomCategories error: $e');
+    }
   }
 
   @override
@@ -3337,37 +3395,70 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: _cats.map((c) {
-                          final sel = _catCtrl.text == c;
-                          return GestureDetector(
-                            onTap: () =>
-                                setState(() => _catCtrl.text = sel ? '' : c),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: sel
-                                    ? _kNavy
-                                    : _kNavy.withValues(alpha: 0.06),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: sel ? _kNavy : _kBorder,
+                        children: [
+                          ..._cats.map((c) {
+                            final sel = _catCtrl.text == c;
+                            return GestureDetector(
+                              onTap: () =>
+                                  setState(() => _catCtrl.text = sel ? '' : c),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: sel
+                                      ? _kNavy
+                                      : _kNavy.withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: sel ? _kNavy : _kBorder,
+                                  ),
+                                ),
+                                child: Text(
+                                  c,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: sel ? Colors.white : _kMuted,
+                                  ),
                                 ),
                               ),
-                              child: Text(
-                                c,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: sel ? Colors.white : _kMuted,
+                            );
+                          }),
+                          ..._customCats.map((c) {
+                            final sel = _catCtrl.text == c;
+                            return GestureDetector(
+                              onTap: () =>
+                                  setState(() => _catCtrl.text = sel ? '' : c),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: sel
+                                      ? const Color(0xFF7C3AED)
+                                      : const Color(0xFF7C3AED).withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: sel ? const Color(0xFF7C3AED) : _kBorder,
+                                  ),
+                                ),
+                                child: Text(
+                                  c,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: sel ? Colors.white : _kMuted,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        }).toList(),
+                            );
+                          }),
+                        ],
                       ),
                       const SizedBox(height: 12),
 
@@ -3466,11 +3557,18 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
     setState(() => _saving = true);
     final price = double.tryParse(_priceCtrl.text.replaceAll(',', '')) ?? 0;
     final costPrice = double.tryParse(_costCtrl.text.replaceAll(',', '')) ?? 0;
+    final selectedCat = _catCtrl.text.trim();
+    if (selectedCat.isNotEmpty && !const ['Đồ ăn', 'Đồ uống', 'Tráng miệng', 'Combo', 'Khác'].contains(selectedCat)) {
+      if (!_customCats.contains(selectedCat)) {
+        _customCats.add(selectedCat);
+      }
+      await _persistCustomCategories();
+    }
     await widget.onSaved(
       _nameCtrl.text.trim(),
       price,
       costPrice,
-      _catCtrl.text.trim(),
+      selectedCat,
       _unitCtrl.text.trim(),
     );
     if (mounted) setState(() => _saving = false);
@@ -3959,7 +4057,12 @@ class _TablePickerSheet extends ConsumerWidget {
             height: 320,
             child: tablesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Lỗi: $e')),
+              error: (e, st) {
+                AppLogger.error('pos_screen', 'Tải danh sách bàn thất bại: $e', e, st);
+                return const Center(
+                  child: Text('Tải danh sách bàn thất bại. Hãy chụp lại báo chủ app.'),
+                );
+              },
               data: (tables) {
                 final activeTables = tables.where((t) => t.isActive).toList();
                 if (activeTables.isEmpty) {
@@ -4518,7 +4621,12 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
             Expanded(
               child: productsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('$e')),
+                error: (e, st) {
+                  AppLogger.error('pos_screen', 'Tải danh sách món thất bại: $e', e, st);
+                  return const Center(
+                    child: Text('Tải danh sách món thất bại. Hãy chụp lại báo chủ app.'),
+                  );
+                },
                 data: (products) {
                   final prodList = (products as List).cast<ProductModel>();
                   final filtered = _search.isEmpty

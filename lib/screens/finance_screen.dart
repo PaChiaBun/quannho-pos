@@ -15,6 +15,7 @@ import '../modules/finance/providers/finance_providers.dart';
 import '../modules/finance/repository/finance_repository.dart';
 import '../modules/finance/screens/add_transaction_sheet.dart';
 import '../core/widgets/order_detail_dialog.dart';
+import '../core/utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE
@@ -713,10 +714,14 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           files: [XFile(file.path, mimeType: 'text/csv', name: filename)],
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('finance_screen', 'Lỗi xuất file báo cáo quỹ: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi xuất file: $e'), backgroundColor: _kRed),
+          const SnackBar(
+            content: Text('Xuất file thất bại. Hãy chụp lại báo chủ app.'),
+            backgroundColor: _kRed,
+          ),
         );
       }
     } finally {

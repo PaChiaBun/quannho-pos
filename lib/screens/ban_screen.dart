@@ -328,11 +328,15 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         ),
       );
       if (mounted) setState(() => _selectedZoneIndex = 0);
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Thêm khu thất bại: $e', e, st);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi thêm khu: $e', style: GoogleFonts.outfit()),
+          content: Text(
+            'Thêm khu vực thất bại. Hãy chụp lại báo chủ app.',
+            style: GoogleFonts.outfit(),
+          ),
           backgroundColor: _kRed,
           duration: const Duration(seconds: 6),
         ),
@@ -498,11 +502,15 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         );
       }
       HapticFeedback.lightImpact();
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Thêm bàn thất bại: $e', e, st);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi thêm bàn: $e', style: GoogleFonts.outfit()),
+          content: Text(
+            'Tạo bàn thất bại. Hãy chụp lại báo chủ app.',
+            style: GoogleFonts.outfit(),
+          ),
           backgroundColor: _kRed,
           duration: const Duration(seconds: 6),
         ),
@@ -774,7 +782,12 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       body: zonesAsync.when(
         loading: () =>
             const Center(child: CircularProgressIndicator(color: _kNavy)),
-        error: (e, _) => Center(child: Text('Lỗi: $e')),
+        error: (e, st) {
+          AppLogger.error('ban_screen', 'Tải danh sách khu vực thất bại: $e', e, st);
+          return const Center(
+            child: Text('Tải danh sách khu vực thất bại. Hãy chụp lại báo chủ app.'),
+          );
+        },
         data: (zones) {
           if (_cachedZones.length != zones.length || _cachedZones.isEmpty) {
             _cachedZones = zones;
@@ -1025,7 +1038,12 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         Expanded(
           child: activeSessionsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('$e')),
+            error: (e, st) {
+              AppLogger.error('ban_screen', 'Tải phiên bàn thất bại: $e', e, st);
+              return const Center(
+                child: Text('Tải phiên bàn thất bại. Hãy chụp lại báo chủ app.'),
+              );
+            },
             data: (activeSessions) {
               return allTablesAsync.when(
                 loading: () => const SizedBox(),
@@ -2396,13 +2414,14 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                                 if (mounted) {
                                   Navigator.pop(context, session);
                                 }
-                              } catch (e) {
+                              } catch (e, st) {
+                                AppLogger.error('ban_screen', 'Mở bàn thất bại: $e', e, st);
                                 if (mounted) {
                                   setState(() => _isLoading = false);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        'Lỗi mở bàn: $e',
+                                        'Mở bàn thất bại. Hãy chụp lại báo chủ app.',
                                         style: GoogleFonts.outfit(
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -2613,11 +2632,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'In tạm tính thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi in tạm tính: $e'),
+            content: const Text('In tạm tính thất bại. Hãy chụp lại báo chủ app.'),
+            backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -3395,13 +3416,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
         );
       }
-    } catch (e) {
-      debugPrint('[Ban] ❌ reduce_qty FAIL: $e');
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Giảm số lượng món thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '❌ Lỗi: $e',
+              'Cập nhật món thất bại. Hãy chụp lại báo chủ app.',
               style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
             ),
             backgroundColor: _kRed,
@@ -3781,7 +3802,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi thanh toán: $e'),
+            content: Text(
+              'Thanh toán thất bại. Hãy chụp lại báo chủ app.',
+              style: GoogleFonts.outfit(),
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 6),
           ),
@@ -4642,12 +4666,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         }
       }
     } catch (e, st) {
-      debugPrint('[Checkout] ❌ LỖI: $e\n$st');
+      AppLogger.error('ban_screen', 'Thanh toán thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Lỗi thanh toán: $e',
+              'Thanh toán thất bại. Hãy chụp lại báo chủ app.',
               style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
             ),
             backgroundColor: Colors.red,
@@ -4926,7 +4950,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '⚠️ Gửi bếp thất bại: $e',
+              '⚠️ Gửi bếp thất bại. Hãy chụp lại báo chủ app.',
               style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
             ),
             backgroundColor: _kRed,
@@ -5925,7 +5949,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     child: itemsAsync.when(
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Center(child: Text('$e')),
+                      error: (e, st) {
+                        AppLogger.error('ban_screen', 'Tải món trong bàn thất bại: $e', e, st);
+                        return const Center(
+                          child: Text('Tải món thất bại. Hãy chụp lại báo chủ app.'),
+                        );
+                      },
                       data: (items) {
                         if (items.isEmpty) {
                           return Center(
@@ -6981,11 +7010,13 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'In tạm tính thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi in tạm tính: $e'),
+            content: const Text('In tạm tính thất bại. Hãy chụp lại báo chủ app.'),
+            backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -8371,14 +8402,15 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
       ref.invalidate(sessionItemsProvider(widget.sessionId));
       HapticFeedback.lightImpact();
       if (mounted) Navigator.pop(context);
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Thêm món thất bại: $e', e, st);
       if (mounted) {
         setState(() => _isConfirming = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Lỗi thêm món: $e',
-              style: const TextStyle(color: Colors.white, fontSize: 12),
+            content: const Text(
+              'Thêm món thất bại. Hãy chụp lại báo chủ app.',
+              style: TextStyle(color: Colors.white, fontSize: 12),
             ),
             backgroundColor: Colors.red.shade700,
             duration: const Duration(seconds: 6),
@@ -8944,7 +8976,12 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                 child: productsAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('$e')),
+                  error: (e, st) {
+                    AppLogger.error('ban_screen', 'Tải thực đơn thất bại: $e', e, st);
+                    return const Center(
+                      child: Text('Tải thực đơn thất bại. Hãy chụp lại báo chủ app.'),
+                    );
+                  },
                   data: (products) {
                     final prodList = (products as List).cast<ProductModel>();
                     final filtered =
@@ -12726,10 +12763,14 @@ class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
     try {
       await widget.onConfirm(_selectedTableId!);
       if (mounted) Navigator.pop(context);
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Chuyển bàn thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e'), backgroundColor: _kRed),
+          const SnackBar(
+            content: Text('Chuyển bàn thất bại. Hãy chụp lại báo chủ app.'),
+            backgroundColor: _kRed,
+          ),
         );
       }
     } finally {
@@ -12858,9 +12899,10 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
           _loading = false;
         });
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Xác thực mã PIN quản lý thất bại: $e', e, st);
       setState(() {
-        _error = 'Lỗi kết nối: $e';
+        _error = 'Lỗi kết nối. Hãy chụp lại báo chủ app.';
         _loading = false;
       });
     }

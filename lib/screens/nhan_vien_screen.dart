@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/utils/app_logger.dart';
 import '../core/providers/session_provider.dart';
 import '../core/services/staff_service.dart'
     show
@@ -3759,10 +3760,14 @@ class _ActionPermsSectionState extends ConsumerState<_ActionPermsSection> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('nhan_vien_screen', 'Lỗi lưu thông tin nhân viên: $e', e, st);
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi lưu: $e'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Lưu thông tin thất bại. Hãy chụp lại báo chủ app.'),
+            backgroundColor: Colors.red,
+          ),
         );
     } finally {
       if (mounted) setState(() => _saving = false);

@@ -23,6 +23,7 @@ import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import '../modules/bill_printer/screens/bill_preview_screen.dart';
 import '../core/repositories/module_repository.dart';
 import '../core/widgets/order_detail_dialog.dart';
+import '../core/utils/app_logger.dart';
 
 // ─── Design Tokens (nhất quán với toàn app) ───────────────────────────────────
 const _kNavy   = Color(0xFF1C2151);  // Đồng bộ với toàn app
@@ -656,11 +657,11 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
           name: 'Bao_cao_doanh_thu_$safeName',
         );
       }
-    } catch (e) {
-      debugPrint('[PrintReport] Error generating PDF: $e');
+    } catch (e, st) {
+      AppLogger.error('report_screen', 'Lỗi in báo cáo PDF: $e', e, st);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi in báo cáo: $e')),
+          const SnackBar(content: Text('In báo cáo thất bại. Hãy chụp lại báo chủ app.')),
         );
       }
     }
@@ -3767,10 +3768,11 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
       final db = Supabase.instance.client;
       
       // 1. Lấy toạ độ quán chuẩn
-      final repo = AppSettingsRepository();
-      final double? storeLat = await repo.attendanceLat;
-      final double? storeLng = await repo.attendanceLng;
-      final double storeRadius = await repo.attendanceRadius;
+      final repo = AppSettingsRepository(storeId);
+      final storeConfig = await repo.getAttendanceConfig();
+      final double? storeLat = storeConfig.lat;
+      final double? storeLng = storeConfig.lng;
+      final double storeRadius = storeConfig.radius;
 
       // 2. Lấy danh sách nhân viên
       final membersRes = await db
@@ -3837,11 +3839,14 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
         bool isLocationMismatch = false;
         bool isNoGps = false;
 
-        if (lat == null || lng == null) {
+        if (lat == null || lng == null || !lat.isFinite || !lng.isFinite) {
           isNoGps = true;
-        } else if (storeLat != null && storeLng != null) {
+        } else if (storeLat != null &&
+            storeLng != null &&
+            storeLat.isFinite &&
+            storeLng.isFinite) {
           final distance = Geolocator.distanceBetween(lat, lng, storeLat, storeLng);
-          if (distance > storeRadius) {
+          if (distance.isFinite && distance > storeRadius) {
             isLocationMismatch = true;
             totalMismatch++;
           }

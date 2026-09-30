@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/finance_providers.dart';
+import '../../../core/utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADD TRANSACTION SHEET — Bottom sheet thêm thu/chi
@@ -311,10 +312,11 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         HapticFeedback.heavyImpact();
         Navigator.pop(context, true);
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('finance', 'Lỗi thêm giao dịch thu chi: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Lỗi: $e'),
+          content: const Text('Lưu giao dịch thất bại. Hãy chụp lại báo chủ app.'),
           backgroundColor: _kRed,
         ));
       }

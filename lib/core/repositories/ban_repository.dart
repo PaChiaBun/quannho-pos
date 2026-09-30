@@ -53,12 +53,20 @@ class BanZoneModel {
     isActive: m['is_active'] as bool? ?? true,
   );
 
-  Map<String, dynamic> toMap() => {
-    'id': id, 'store_id': storeId, 'name': name,
-    'color': _intToHex(colorValue), // ← tên cột đúng trong DB thực tế
-    'icon_code': iconCode,
-    'sort_order': sortOrder, 'is_active': isActive,
-  };
+  Map<String, dynamic> toMap() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return {
+      'id': id,
+      'store_id': storeId,
+      'name': name,
+      'color': _intToHex(colorValue), // ← tên cột đúng trong DB thực tế
+      'icon_code': iconCode,
+      'sort_order': sortOrder,
+      'is_active': isActive,
+      'created_at': now,
+      'updated_at': now,
+    };
+  }
 }
 
 class BanTableModel {
@@ -466,16 +474,22 @@ class BanRepository {
     }
   }
 
-  Future<void> upsertTable(BanTableModel table) async =>
-      _sb.from('ban_dining_tables').upsert({
-        'id': table.id, 'zone_id': table.zoneId, 'store_id': table.storeId,
-        'name': table.label, // DB có 'name', không phải 'label'
-        'capacity': table.seats, // DB có 'capacity', không phải 'seats'
-        'sort_order': table.sortOrder,
-        'is_active': table.isActive,
-        'pos_x': table.posX ?? 100.0, // NOT NULL trong DB — dùng default 100
-        'pos_y': table.posY ?? 100.0, // NOT NULL trong DB — dùng default 100
-      });
+  Future<void> upsertTable(BanTableModel table) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return _sb.from('ban_dining_tables').upsert({
+      'id': table.id,
+      'zone_id': table.zoneId,
+      'store_id': table.storeId,
+      'name': table.label, // DB có 'name', không phải 'label'
+      'capacity': table.seats, // DB có 'capacity', không phải 'seats'
+      'sort_order': table.sortOrder,
+      'is_active': table.isActive,
+      'pos_x': table.posX ?? 100.0, // NOT NULL trong DB — dùng default 100
+      'pos_y': table.posY ?? 100.0, // NOT NULL trong DB — dùng default 100
+      'created_at': now,
+      'updated_at': now,
+    });
+  }
 
   Future<void> deactivateTable(String id) async =>
       _sb.from('ban_dining_tables').update({'is_active': false}).eq('id', id);

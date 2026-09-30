@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/providers/app_providers.dart';
 import '../modules/loyalty/repository/loyalty_repository.dart';
 import '../modules/pos/screens/discount_management_screen.dart';
+import '../core/utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOYALTY PROVIDERS — local trong file này
@@ -522,10 +523,11 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
                 behavior: SnackBarBehavior.floating,
               ));
             }
-          } catch (e) {
+          } catch (e, st) {
+            AppLogger.error('loyalty_screen', 'Nạp ví thất bại: $e', e, st);
             if (ctx.mounted) {
-              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                content: Text('Lỗi: $e'),
+              ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                content: Text('Nạp tiền vào ví thất bại. Hãy chụp lại báo chủ app.'),
                 backgroundColor: Colors.red,
                 behavior: SnackBarBehavior.floating,
               ));
@@ -771,10 +773,11 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
               email: email.isEmpty ? null : email, note: note.isEmpty ? null : note,
             );
             if (ctx.mounted) Navigator.pop(ctx);
-          } catch (e) {
+          } catch (e, st) {
+            AppLogger.error('loyalty_screen', 'Thêm khách hàng thất bại: $e', e, st);
             if (ctx.mounted) {
               ScaffoldMessenger.of(ctx).showSnackBar(
-                SnackBar(content: Text('Lỗi: $e'),
+                const SnackBar(content: Text('Thêm khách hàng thất bại. Hãy chụp lại báo chủ app.'),
                   behavior: SnackBarBehavior.floating));
             }
           }

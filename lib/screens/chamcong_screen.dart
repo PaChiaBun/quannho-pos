@@ -14,12 +14,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/providers/session_provider.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/drive_service.dart';
+import '../core/services/store_auth_service.dart';
 import '../modules/tinhluong/repository/shift_template_repository.dart';
 import '../modules/tinhluong/repository/staff_salary_config_repository.dart';
 import '../modules/tinhluong/repository/tinhluong_repository.dart';
 import '../core/repositories/module_repository.dart';
 import '../core/providers/app_providers.dart';
 import '../core/utils/watermark_helper.dart';
+import '../core/utils/app_logger.dart';
 
 const _kNavy = Color(0xFF1C2151);
 const _kBg = Color(0xFFF5F7FF);
@@ -69,11 +71,15 @@ final _myShiftsProvider = FutureProvider.autoDispose<List<ShiftRecord>>((
 
 final _storeLocationProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
   (ref) async {
-    final repo = AppSettingsRepository();
-    final lat = await repo.attendanceLat;
-    final lng = await repo.attendanceLng;
-    final radius = await repo.attendanceRadius;
-    return {'lat': lat, 'lng': lng, 'radius': radius};
+    final session = ref.watch(sessionProvider);
+    final repo = AppSettingsRepository(session?.storeId);
+    final cfg = await repo.getAttendanceConfig();
+    return {
+      'lat': cfg.lat,
+      'lng': cfg.lng,
+      'radius': cfg.radius,
+      'address': cfg.address,
+    };
   },
 );
 
@@ -151,257 +157,543 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
   }
 
   Future<void> _showLocationSettingsDialog(BuildContext context) async {
-    final repo = AppSettingsRepository();
-    final initialLat = await repo.attendanceLat;
-    final initialLng = await repo.attendanceLng;
-    final initialAddr = await repo.attendanceAddress;
-    final initialRadius = await repo.attendanceRadius;
+    final session = ref.read(sessionProvider);
+    final storeId = session?.storeId ?? (await StoreAuthService.getStoreInfo())['store_id'];
+    if (storeId == null || storeId.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vui lòng chọn cửa hàng trước khi thiết lập định vị.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    AttendanceConfig cfg = const AttendanceConfig();
+    try {
+      final repo = AppSettingsRepository(storeId);
+      cfg = await repo.getAttendanceConfig();
+    } catch (e) {
+      debugPrint('[ChamCongScreen] Error getting attendance config: $e');
+    }
+    final initialLat = cfg.lat;
+    final initialLng = cfg.lng;
+    final initialAddr = cfg.address;
+    final initialRadius = cfg.radius;
 
     if (!mounted) return;
 
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        double? currentLat = initialLat;
-        double? currentLng = initialLng;
-        String? currentAddr = initialAddr;
-        final radiusCtrl = TextEditingController(
-          text: initialRadius.toInt().toString(),
-        );
-        bool isLocating = false;
+    final repo = AppSettingsRepository(storeId);
+    double? currentLat = initialLat;
+    double? currentLng = initialLng;
+    String? currentAddr = initialAddr;
+    final latCtrl = TextEditingController(
+      text: initialLat != null ? initialLat.toStringAsFixed(6) : '',
+    );
+    final lngCtrl = TextEditingController(
+      text: initialLng != null ? initialLng.toStringAsFixed(6) : '',
+    );
+    final radiusCtrl = TextEditingController(
+      text: (initialRadius.isFinite && initialRadius > 0)
+          ? (initialRadius % 1 == 0
+              ? initialRadius.toInt().toString()
+              : initialRadius.toString())
+          : '200',
+    );
+    final addrCtrl = TextEditingController(
+      text: initialAddr ?? '',
+    );
 
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              surfaceTintColor: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: const Row(
-                children: [
-                  Icon(Icons.location_on_rounded, color: _kNavy),
-                  SizedBox(width: 8),
-                  Text(
-                    'Định vị của quán',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                      color: _kNavy,
-                    ),
-                  ),
-                ],
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    try {
+      await showDialog(
+        context: context,
+        builder: (ctx) {
+          bool isLocating = false;
+          bool isSaving = false;
+
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              void safeSetDialogState(VoidCallback fn) {
+                if (ctx.mounted) {
+                  setDialogState(fn);
+                }
+              }
+
+              final parsedRadiusPreview =
+                  double.tryParse(radiusCtrl.text.trim().replaceAll(',', '.'));
+              final previewRadius = (parsedRadiusPreview != null &&
+                      parsedRadiusPreview.isFinite &&
+                      parsedRadiusPreview > 0)
+                  ? parsedRadiusPreview.round()
+                  : (initialRadius.isFinite && initialRadius > 0
+                      ? initialRadius.round()
+                      : 200);
+
+              return AlertDialog(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: const Row(
                   children: [
-                    const Text(
-                      'Thiết lập toạ độ chuẩn của quán để xác thực khoảng cách chấm công của nhân viên.',
-                      style: TextStyle(fontSize: 12, color: _kMuted),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _kNavy.withOpacity(0.04),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _kNavy.withOpacity(0.1)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'VỊ TRÍ ĐÃ LƯU:',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: _kNavy,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          if (currentLat != null && currentLng != null) ...[
-                            Text(
-                              'Tọa độ: ${currentLat!.toStringAsFixed(6)}, ${currentLng!.toStringAsFixed(6)}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Địa chỉ: ${currentAddr ?? "Chưa lấy địa chỉ"}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF374151),
-                              ),
-                            ),
-                          ] else ...[
-                            const Text(
-                              'Chưa thiết lập vị trí.',
-                              style: TextStyle(fontSize: 12, color: _kRed),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Nút cập nhật vị trí quán tại đây
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _kNavy,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: isLocating
-                            ? null
-                            : () async {
-                                setDialogState(() => isLocating = true);
-                                try {
-                                  final perm =
-                                      await Geolocator.checkPermission();
-                                  if (perm == LocationPermission.denied) {
-                                    await Geolocator.requestPermission();
-                                  }
-                                  final pos =
-                                      await Geolocator.getCurrentPosition(
-                                        locationSettings:
-                                            const LocationSettings(
-                                              accuracy: LocationAccuracy.high,
-                                            ),
-                                      );
-                                  final marks = await placemarkFromCoordinates(
-                                    pos.latitude,
-                                    pos.longitude,
-                                  );
-                                  String? addr;
-                                  if (marks.isNotEmpty) {
-                                    final m = marks.first;
-                                    addr =
-                                        [
-                                              m.street,
-                                              m.subAdministrativeArea,
-                                              m.administrativeArea,
-                                            ]
-                                            .where((s) => s?.isNotEmpty == true)
-                                            .join(', ');
-                                  }
-                                  setDialogState(() {
-                                    currentLat = pos.latitude;
-                                    currentLng = pos.longitude;
-                                    currentAddr = addr;
-                                    isLocating = false;
-                                  });
-                                } catch (e) {
-                                  setDialogState(() => isLocating = false);
-                                  if (ctx.mounted) {
-                                    ScaffoldMessenger.of(ctx).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Lỗi lấy vị trí: $e'),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                        icon: isLocating
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.my_location_rounded, size: 16),
-                        label: Text(
-                          isLocating
-                              ? 'Đang lấy vị trí...'
-                              : 'Lấy vị trí hiện tại của quán',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Bán kính cho phép (mét):',
+                    Icon(Icons.location_on_rounded, color: _kNavy),
+                    SizedBox(width: 8),
+                    Text(
+                      'Định vị của quán',
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: radiusCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: 'Mặc định: 200',
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                        color: _kNavy,
                       ),
                     ),
                   ],
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Hủy', style: TextStyle(color: _kMuted)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kGreen,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  onPressed: () async {
-                    if (currentLat == null || currentLng == null) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Vui lòng lấy vị trí quán trước khi lưu.',
+                content: SizedBox(
+                  width: 440,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Thiết lập toạ độ chuẩn của quán để xác thực khoảng cách chấm công của nhân viên.',
+                          style: TextStyle(fontSize: 12, color: _kMuted),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _kNavy.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _kNavy.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'VỊ TRÍ HIỆN HÀNH / ĐANG THIẾT LẬP:',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: _kNavy,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              if (currentLat != null && currentLng != null) ...[
+                                Text(
+                                  'Tọa độ: ${currentLat!.toStringAsFixed(6)}, ${currentLng!.toStringAsFixed(6)}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Địa chỉ: ${currentAddr?.isNotEmpty == true ? currentAddr : "Chưa lấy địa chỉ"}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF374151),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Bán kính: ${previewRadius}m',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF374151),
+                                  ),
+                                ),
+                              ] else ...[
+                                const Text(
+                                  'Chưa thiết lập vị trí cho quán này.',
+                                  style: TextStyle(fontSize: 12, color: _kRed),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                      );
-                      return;
-                    }
-                    final radius = double.tryParse(radiusCtrl.text) ?? 200.0;
-                    await repo.saveAttendanceConfig(
-                      lat: currentLat!,
-                      lng: currentLng!,
-                      address: currentAddr ?? 'Tọa độ chuẩn của quán',
-                      radius: radius,
-                    );
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Đã lưu cấu hình định vị của quán.'),
+                        const SizedBox(height: 16),
+                        // Nút cập nhật vị trí quán tại đây
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _kNavy,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: isLocating || isSaving
+                                ? null
+                                : () async {
+                                    safeSetDialogState(() => isLocating = true);
+                                    try {
+                                      if (!kIsWeb) {
+                                        final serviceEnabled =
+                                            await Geolocator.isLocationServiceEnabled();
+                                        if (!serviceEnabled) {
+                                          safeSetDialogState(() => isLocating = false);
+                                          if (ctx.mounted) {
+                                            ScaffoldMessenger.of(ctx).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Dịch vụ định vị (GPS) trên thiết bị đang tắt. Vui lòng bật GPS hoặc nhập toạ độ thủ công.',
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                          return;
+                                        }
+                                      }
+
+                                      LocationPermission perm =
+                                          await Geolocator.checkPermission();
+                                      if (perm == LocationPermission.denied) {
+                                        perm = await Geolocator.requestPermission();
+                                      }
+                                      if (perm == LocationPermission.denied ||
+                                          perm == LocationPermission.deniedForever) {
+                                        safeSetDialogState(() => isLocating = false);
+                                        if (ctx.mounted) {
+                                          ScaffoldMessenger.of(ctx).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Quyền truy cập vị trí bị từ chối. Vui lòng cấp quyền hoặc nhập toạ độ thủ công.',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        return;
+                                      }
+
+                                      final pos = await Geolocator.getCurrentPosition(
+                                        locationSettings: const LocationSettings(
+                                          accuracy: LocationAccuracy.high,
+                                        ),
+                                      ).timeout(const Duration(seconds: 12));
+
+                                      // Trích xuất toạ độ độc lập, bảo đảm không bị crash nếu geocoding lỗi
+                                      currentLat = pos.latitude;
+                                      currentLng = pos.longitude;
+                                      latCtrl.text = pos.latitude.toStringAsFixed(6);
+                                      lngCtrl.text = pos.longitude.toStringAsFixed(6);
+
+                                      String? addr;
+                                      // Geocoding chỉ khả dụng trên mobile (Android/iOS), bỏ qua trên Web để tránh MissingPluginException
+                                      if (!kIsWeb) {
+                                        try {
+                                          final marks = await placemarkFromCoordinates(
+                                            pos.latitude,
+                                            pos.longitude,
+                                          ).timeout(const Duration(seconds: 4));
+                                          if (marks.isNotEmpty) {
+                                            final m = marks.first;
+                                            addr = [
+                                              m.street,
+                                              m.subAdministrativeArea,
+                                              m.administrativeArea,
+                                            ].where((s) => s != null && s.isNotEmpty).join(', ');
+                                          }
+                                        } catch (geoErr) {
+                                          debugPrint('[ChamCong] Geocoding error (non-fatal): $geoErr');
+                                        }
+                                      }
+
+                                      if (addr != null && addr.isNotEmpty) {
+                                        currentAddr = addr;
+                                        addrCtrl.text = addr;
+                                      } else if (addrCtrl.text.isEmpty) {
+                                        currentAddr = 'Toạ độ: ${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
+                                        addrCtrl.text = currentAddr!;
+                                      }
+
+                                      safeSetDialogState(() {
+                                        isLocating = false;
+                                      });
+                                    } catch (e) {
+                                      safeSetDialogState(() => isLocating = false);
+                                      if (ctx.mounted) {
+                                        ScaffoldMessenger.of(ctx).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Lỗi lấy vị trí GPS: $e. Bạn có thể nhập toạ độ thủ công.',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                            icon: isLocating
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.my_location_rounded, size: 16),
+                            label: Text(
+                              isLocating
+                                  ? 'Đang lấy vị trí...'
+                                  : 'Lấy vị trí hiện tại của quán',
+                            ),
+                          ),
                         ),
-                      );
-                      ref.invalidate(_myShiftsProvider);
-                    }
-                    Navigator.pop(ctx);
-                  },
-                  child: const Text('Lưu cài đặt'),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'HIỆU CHỈNH HOẶC NHẬP TOẠ ĐỘ THỦ CÔNG:',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _kNavy,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: latCtrl,
+                                keyboardType: const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                  signed: true,
+                                ),
+                                decoration: InputDecoration(
+                                  labelText: 'Vĩ độ (Latitude)',
+                                  hintText: 'VD: 10.776889',
+                                  prefixIcon: const Icon(Icons.north_rounded, size: 16),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                onChanged: (v) {
+                                  final p = double.tryParse(v.trim().replaceAll(',', '.'));
+                                  safeSetDialogState(() {
+                                    currentLat = (p != null &&
+                                            p.isFinite &&
+                                            p >= -90 &&
+                                            p <= 90)
+                                        ? p
+                                        : null;
+                                  });
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: lngCtrl,
+                                keyboardType: const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                  signed: true,
+                                ),
+                                decoration: InputDecoration(
+                                  labelText: 'Kinh độ (Longitude)',
+                                  hintText: 'VD: 106.700806',
+                                  prefixIcon: const Icon(Icons.east_rounded, size: 16),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                onChanged: (v) {
+                                  final p = double.tryParse(v.trim().replaceAll(',', '.'));
+                                  safeSetDialogState(() {
+                                    currentLng = (p != null &&
+                                            p.isFinite &&
+                                            p >= -180 &&
+                                            p <= 180)
+                                        ? p
+                                        : null;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: addrCtrl,
+                          decoration: InputDecoration(
+                            labelText: 'Địa chỉ / Ghi chú vị trí quán',
+                            hintText: 'VD: 123 Lê Lợi, P. Bến Nghé, Quận 1',
+                            prefixIcon: const Icon(Icons.place_outlined, size: 16),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onChanged: (v) {
+                            safeSetDialogState(() {
+                              currentAddr = v.trim();
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: radiusCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Bán kính cho phép (mét)',
+                            hintText: 'Mặc định: 200',
+                            prefixIcon: const Icon(Icons.radar_rounded, size: 16),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onChanged: (_) => safeSetDialogState(() {}),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            );
-          },
-        );
-      },
-    );
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Hủy', style: TextStyle(color: _kMuted)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _kGreen,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: isSaving
+                        ? null
+                        : () async {
+                            final parsedLat =
+                                double.tryParse(latCtrl.text.trim().replaceAll(',', '.'));
+                            final parsedLng =
+                                double.tryParse(lngCtrl.text.trim().replaceAll(',', '.'));
+                            final parsedRadius =
+                                double.tryParse(radiusCtrl.text.trim().replaceAll(',', '.'));
+
+                            if (parsedLat == null || !parsedLat.isFinite ||
+                                parsedLng == null || !parsedLng.isFinite) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Vui lòng nhập hoặc lấy toạ độ vĩ độ/kinh độ hợp lệ.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+
+                            if (parsedLat < -90 || parsedLat > 90) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Vĩ độ không hợp lệ (-90 đến 90).'),
+                                ),
+                              );
+                              return;
+                            }
+
+                            if (parsedLng < -180 || parsedLng > 180) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Kinh độ không hợp lệ (-180 đến 180).'),
+                                ),
+                              );
+                              return;
+                            }
+
+                            if (parsedRadius == null || !parsedRadius.isFinite || parsedRadius <= 0) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Bán kính cho phép phải là số lớn hơn 0 mét.'),
+                                ),
+                              );
+                              return;
+                            }
+
+                            safeSetDialogState(() => isSaving = true);
+                            try {
+                              final addrText = addrCtrl.text.trim();
+                              final effectiveAddr = addrText.isNotEmpty
+                                  ? addrText
+                                  : (currentAddr?.isNotEmpty == true
+                                      ? currentAddr!
+                                      : 'Toạ độ (${parsedLat.toStringAsFixed(5)}, ${parsedLng.toStringAsFixed(5)})');
+
+                              await repo.saveAttendanceConfig(
+                                lat: parsedLat,
+                                lng: parsedLng,
+                                address: effectiveAddr,
+                                radius: parsedRadius,
+                              );
+
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Đã lưu cấu hình định vị của quán.'),
+                                  ),
+                                );
+                                ref.invalidate(_storeLocationProvider);
+                                ref.invalidate(_myShiftsProvider);
+                              }
+                              if (ctx.mounted) {
+                                Navigator.pop(ctx);
+                              }
+                            } catch (e, st) {
+                              AppLogger.error('chamcong_screen', 'Lỗi lưu cấu hình chấm công: $e', e, st);
+                              safeSetDialogState(() => isSaving = false);
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Lưu cấu hình thất bại. Hãy chụp lại báo chủ app.'),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    child: isSaving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text('Lưu cài đặt'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      latCtrl.dispose();
+      lngCtrl.dispose();
+      radiusCtrl.dispose();
+      addrCtrl.dispose();
+    }
   }
 
   @override
@@ -812,8 +1104,9 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       double? lat, lng;
       try {
         final perm = await Geolocator.checkPermission();
-        if (perm == LocationPermission.denied)
+        if (perm == LocationPermission.denied) {
           await Geolocator.requestPermission();
+        }
         final pos = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.medium,
@@ -821,35 +1114,60 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
         ).timeout(const Duration(seconds: 5));
         lat = pos.latitude;
         lng = pos.longitude;
-        final marks = await placemarkFromCoordinates(
-          lat,
-          lng,
-        ).timeout(const Duration(seconds: 3));
-        if (marks.isNotEmpty) {
-          final m = marks.first;
-          address = [
-            m.street,
-            m.subAdministrativeArea,
-            m.administrativeArea,
-          ].where((s) => s?.isNotEmpty == true).join(', ');
+        if (!kIsWeb) {
+          try {
+            final marks = await placemarkFromCoordinates(
+              lat,
+              lng,
+            ).timeout(const Duration(seconds: 3));
+            if (marks.isNotEmpty) {
+              final m = marks.first;
+              address = [
+                m.street,
+                m.subAdministrativeArea,
+                m.administrativeArea,
+              ].where((s) => s != null && s.isNotEmpty).join(', ');
+            }
+          } catch (_) {}
         }
       } catch (_) {} // GPS là optional
 
       // ── XÁC THỰC KHOẢNG CÁCH ──
-      final repo = AppSettingsRepository();
-      final storeLat = await repo.attendanceLat;
-      final storeLng = await repo.attendanceLng;
-      final storeRadius = await repo.attendanceRadius;
+      final session = ref.read(sessionProvider);
+      if (session == null) {
+        setState(() => _loading = false);
+        return;
+      }
+      AttendanceConfig storeConfig = const AttendanceConfig();
+      try {
+        final repo = AppSettingsRepository(session.storeId);
+        storeConfig = await repo.getAttendanceConfig();
+      } catch (e) {
+        debugPrint('[ChamCongScreen] Failed to load store attendance config: $e');
+      }
+      final storeLat = storeConfig.lat;
+      final storeLng = storeConfig.lng;
+      final storeRadius = storeConfig.radius;
 
-      if (storeLat != null && storeLng != null && lat != null && lng != null) {
+      if (storeLat != null &&
+          storeLng != null &&
+          lat != null &&
+          lng != null &&
+          storeLat.isFinite &&
+          storeLng.isFinite &&
+          lat.isFinite &&
+          lng.isFinite) {
         final distance = Geolocator.distanceBetween(
           lat,
           lng,
           storeLat,
           storeLng,
         );
-        if (distance > storeRadius) {
+        if (distance.isFinite && distance > storeRadius) {
           if (mounted) {
+            final distanceMeters = distance.round();
+            final storeRadiusMeters =
+                storeRadius.isFinite ? storeRadius.round() : 200;
             final confirmCC = await showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(
@@ -868,8 +1186,8 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
                   ],
                 ),
                 content: Text(
-                  'Hệ thống phát hiện bạn đang cách quán khoảng ${distance.toInt()}m '
-                  '(vượt quá giới hạn ${storeRadius.toInt()}m).\n\n'
+                  'Hệ thống phát hiện bạn đang cách quán khoảng ${distanceMeters}m '
+                  '(vượt quá giới hạn ${storeRadiusMeters}m).\n\n'
                   'Ca chấm công này của bạn sẽ bị gắn cờ "Lệch vị trí" gửi đến chủ quán. Bạn có muốn tiếp tục?',
                 ),
                 actions: [
@@ -907,7 +1225,6 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
         file = tempFile;
       }
 
-      final session = ref.read(sessionProvider)!;
       final ts = DateFormat('yyyy-MM-dd_HH-mm').format(DateTime.now());
       final safeName = SupabaseStorageFallback.sanitizeKey(
         session.displayName.replaceAll(' ', '_'),
@@ -1958,10 +2275,17 @@ class _ShiftRowCompact extends ConsumerWidget {
         final storeLng = config['lng'] as double?;
         final storeRadius = config['radius'] as double? ?? 200.0;
 
-        if (storeLat == null || storeLng == null)
+        if (storeLat == null ||
+            storeLng == null ||
+            !storeLat.isFinite ||
+            !storeLng.isFinite) {
           return const SizedBox.shrink();
+        }
 
-        if (shift.latitude == null || shift.longitude == null) {
+        if (shift.latitude == null ||
+            shift.longitude == null ||
+            !shift.latitude!.isFinite ||
+            !shift.longitude!.isFinite) {
           return Container(
             margin: const EdgeInsets.only(left: 4),
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
@@ -1987,17 +2311,24 @@ class _ShiftRowCompact extends ConsumerWidget {
           storeLng,
         );
 
+        if (!distance.isFinite) {
+          return const SizedBox.shrink();
+        }
+
         final isOut = distance > storeRadius;
+        final meters = distance.round();
         return Container(
           margin: const EdgeInsets.only(left: 4),
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
           decoration: BoxDecoration(
-            color: isOut ? _kRed.withOpacity(0.1) : _kGreen.withOpacity(0.1),
+            color: isOut
+                ? _kRed.withValues(alpha: 0.1)
+                : _kGreen.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(4),
             border: Border.all(color: isOut ? _kRed : _kGreen, width: 0.5),
           ),
           child: Text(
-            isOut ? '⚠️ Lệch ${distance.toInt()}m' : '✓ Ở quán',
+            isOut ? '⚠️ Lệch ${meters}m' : '✓ Ở quán',
             style: TextStyle(
               color: isOut ? _kRed : _kGreen,
               fontSize: 8,
@@ -2612,10 +2943,17 @@ class _ShiftRow extends ConsumerWidget {
         final storeLng = config['lng'] as double?;
         final storeRadius = config['radius'] as double? ?? 200.0;
 
-        if (storeLat == null || storeLng == null)
+        if (storeLat == null ||
+            storeLng == null ||
+            !storeLat.isFinite ||
+            !storeLng.isFinite) {
           return const SizedBox.shrink();
+        }
 
-        if (shift.latitude == null || shift.longitude == null) {
+        if (shift.latitude == null ||
+            shift.longitude == null ||
+            !shift.latitude!.isFinite ||
+            !shift.longitude!.isFinite) {
           return Container(
             margin: const EdgeInsets.only(left: 6),
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
@@ -2641,17 +2979,24 @@ class _ShiftRow extends ConsumerWidget {
           storeLng,
         );
 
+        if (!distance.isFinite) {
+          return const SizedBox.shrink();
+        }
+
         final isOut = distance > storeRadius;
+        final meters = distance.round();
         return Container(
           margin: const EdgeInsets.only(left: 6),
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
           decoration: BoxDecoration(
-            color: isOut ? _kRed.withOpacity(0.1) : _kGreen.withOpacity(0.1),
+            color: isOut
+                ? _kRed.withValues(alpha: 0.1)
+                : _kGreen.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(4),
             border: Border.all(color: isOut ? _kRed : _kGreen, width: 0.5),
           ),
           child: Text(
-            isOut ? '⚠️ Lệch ${distance.toInt()}m' : '✓ Ở quán',
+            isOut ? '⚠️ Lệch ${meters}m' : '✓ Ở quán',
             style: TextStyle(
               color: isOut ? _kRed : _kGreen,
               fontSize: 8,
@@ -3156,50 +3501,64 @@ void _showPhotoAuditDialog(
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0xFFE5E7EB)),
                 ),
-                child: FutureBuilder<Map<String, double?>>(
+                child: FutureBuilder<Map<String, dynamic>>(
                   future: () async {
-                    final repo = AppSettingsRepository();
-                    final lat = await repo.attendanceLat;
-                    final lng = await repo.attendanceLng;
-                    final radius = await repo.attendanceRadius;
-                    return {'lat': lat, 'lng': lng, 'radius': radius};
+                    final cached = ref.read(_storeLocationProvider).asData?.value;
+                    if (cached != null) return cached;
+                    final repo = AppSettingsRepository(ref.read(sessionProvider)?.storeId);
+                    final cfg = await repo.getAttendanceConfig();
+                    return <String, dynamic>{
+                      'lat': cfg.lat,
+                      'lng': cfg.lng,
+                      'radius': cfg.radius,
+                      'address': cfg.address,
+                    };
                   }(),
                   builder: (context, snapshot) {
-                    String locationText = 'Chấm công tại vị trí quán';
+                    String locationText = 'Chấm công không có toạ độ GPS';
                     String? distanceBadge;
                     Color? badgeColor;
 
                     if (shift.address != null && shift.address!.isNotEmpty) {
                       locationText = shift.address!;
                     } else if (shift.latitude != null &&
-                        shift.longitude != null) {
+                        shift.longitude != null &&
+                        shift.latitude!.isFinite &&
+                        shift.longitude!.isFinite) {
                       locationText =
                           '${shift.latitude!.toStringAsFixed(5)}, ${shift.longitude!.toStringAsFixed(5)}';
                     }
 
                     if (snapshot.hasData &&
                         shift.latitude != null &&
-                        shift.longitude != null) {
-                      final storeLat = snapshot.data!['lat'];
-                      final storeLng = snapshot.data!['lng'];
-                      final radius = snapshot.data!['radius'] ?? 100.0;
+                        shift.longitude != null &&
+                        shift.latitude!.isFinite &&
+                        shift.longitude!.isFinite) {
+                      final storeLat = (snapshot.data!['lat'] as num?)?.toDouble();
+                      final storeLng = (snapshot.data!['lng'] as num?)?.toDouble();
+                      final radius = (snapshot.data!['radius'] as num?)?.toDouble() ?? 200.0;
 
-                      if (storeLat != null && storeLng != null) {
+                      if (storeLat != null &&
+                          storeLng != null &&
+                          storeLat.isFinite &&
+                          storeLng.isFinite) {
                         final distance = Geolocator.distanceBetween(
                           shift.latitude!,
                           shift.longitude!,
                           storeLat,
                           storeLng,
                         );
-                        final meters = distance.round();
-                        if (distance <= radius) {
-                          distanceBadge =
-                              '✓ Chuẩn vị trí quán (cách ${meters}m)';
-                          badgeColor = _kGreen;
-                        } else {
-                          distanceBadge =
-                              '⚠️ Lệch vị trí (cách quán ${meters}m)';
-                          badgeColor = _kOrange;
+                        if (distance.isFinite) {
+                          final meters = distance.round();
+                          if (distance <= radius) {
+                            distanceBadge =
+                                '✓ Chuẩn vị trí quán (cách ${meters}m)';
+                            badgeColor = _kGreen;
+                          } else {
+                            distanceBadge =
+                                '⚠️ Lệch vị trí (cách quán ${meters}m)';
+                            badgeColor = _kOrange;
+                          }
                         }
                       }
                     }

@@ -2,13 +2,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth Screen — Đăng nhập / Đăng ký bằng Số điện thoại + Mật khẩu
 // ─────────────────────────────────────────────────────────────────────────────
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/user_auth_service.dart';
 import '../core/providers/session_provider.dart';
-import '../core/widgets/create_store_sheet.dart';
-import '../core/widgets/join_store_sheet.dart';
 import 'store_picker_screen.dart';
 
 String routeAfterSuccessfulLogin(AuthResult result) =>
@@ -102,10 +101,22 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         );
       }
     } else {
+      final errCode = result.errorCode;
       setState(() {
         _loading = false;
-        _error = result.errorMessage!;
+        if (errCode == 'USER_NOT_FOUND' || errCode == 'WRONG_PASSWORD') {
+          _error = 'Số điện thoại hoặc mật khẩu không chính xác.';
+        } else {
+          _error = 'Đăng nhập thất bại. Hãy chụp lại báo chủ app.';
+        }
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_error),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     }
   }
 
@@ -159,7 +170,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
 
       setState(() {
         _loading = false;
-        _error = result.errorMessage!;
+        if (errCode == 'PHONE_ALREADY_EXISTS') {
+          _error = 'Số điện thoại này đã có tài khoản. Vui lòng đăng nhập.';
+        } else if (errCode == 'ACCOUNT_CREATED_LOGIN_REQUIRED') {
+          _error = 'Tài khoản đã tạo. Vui lòng đăng nhập để tiếp tục.';
+        } else if (errCode == 'INVALID_PHONE' ||
+            errCode == 'PASSWORD_TOO_SHORT' ||
+            errCode == 'NAME_REQUIRED') {
+          _error = result.errorMessage ?? 'Thông tin không hợp lệ.';
+        } else {
+          _error = 'Tạo tài khoản thất bại. Hãy chụp lại báo chủ app.';
+        }
         if (shouldSwitchToLogin) {
           _loginPhoneCtrl.text = _regPhoneCtrl.text.trim();
           _tab = 0;
@@ -176,6 +197,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             ),
             backgroundColor: _orange,
             duration: const Duration(seconds: 4),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_error),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -309,39 +338,62 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               ),
               const SizedBox(height: 32),
 
-              // ── Tab selector ─────────────────────────────────────────────
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    _TabBtn(
-                      label: 'Đăng nhập',
-                      active: _tab == 0,
-                      onTap: () => setState(() {
-                        _tab = 0;
-                        _error = '';
-                      }),
+              // ── Tab selector (Trên iOS chỉ cho phép Đăng nhập theo Apple Guideline 3.1.1) ──
+              if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  ),
+                  child: const Text(
+                    'Đăng nhập tài khoản nhân viên / quản lý đã được cấp bởi cửa hàng của bạn.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      height: 1.4,
                     ),
-                    _TabBtn(
-                      label: 'Đăng ký',
-                      active: _tab == 1,
-                      onTap: () => setState(() {
-                        _tab = 1;
-                        _error = '';
-                      }),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ] else ...[
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      _TabBtn(
+                        label: 'Đăng nhập',
+                        active: _tab == 0,
+                        onTap: () => setState(() {
+                          _tab = 0;
+                          _error = '';
+                        }),
+                      ),
+                      _TabBtn(
+                        label: 'Đăng ký',
+                        active: _tab == 1,
+                        onTap: () => setState(() {
+                          _tab = 1;
+                          _error = '';
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 28),
 
               // ── Form ─────────────────────────────────────────────────────
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 220),
-                child: _tab == 0 ? _buildLoginForm() : _buildRegisterForm(),
+                child: (defaultTargetPlatform == TargetPlatform.iOS || _tab == 0)
+                    ? _buildLoginForm()
+                    : _buildRegisterForm(),
               ),
 
               // ── Error ────────────────────────────────────────────────────
