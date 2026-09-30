@@ -221,9 +221,9 @@ class PosJwtAuthService {
           issuer != 'supabase' ||
           !hasAuthenticatedAudience ||
           issuedAt == null ||
-          issuedAt > nowSec + 30 ||
+          issuedAt > nowSec + 300 ||
           exp <= issuedAt ||
-          (notBefore != null && notBefore > nowSec + 30)) {
+          (notBefore != null && notBefore > nowSec + 300)) {
         return false;
       }
 
@@ -431,10 +431,10 @@ class PosJwtAuthService {
           issuer == 'supabase' &&
           hasAuthenticatedAudience &&
           issuedAt != null &&
-          issuedAt <= nowSec + 30 &&
+          issuedAt <= nowSec + 300 &&
           exp > issuedAt &&
-          exp - issuedAt <= 600 &&
-          (notBefore == null || notBefore <= nowSec + 30) &&
+          exp - issuedAt <= 1800 &&
+          (notBefore == null || notBefore <= nowSec + 300) &&
           payloadJson['store_id'] == null;
     } catch (_) {
       return false;

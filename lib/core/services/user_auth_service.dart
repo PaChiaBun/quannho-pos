@@ -558,11 +558,10 @@ class UserAuthService {
         if (onbRes['success'] != true ||
             posJwtService.activeOnboardingJwtFor(userId) == null) {
           try {
-            AppLogger.warning('auth', 'Zero-store onboarding token request failed');
+            AppLogger.warning('auth', 'Zero-store onboarding token request failed: ${onbRes['message']}');
           } catch (_) {}
           return AuthResult.error(
-            onbRes['message'] as String? ??
-                'Không thể mở phiên an toàn. Vui lòng đăng nhập lại.',
+            'Đăng nhập thất bại. Hãy chụp lại báo chủ app.',
             errorCode: 'ONBOARDING_TOKEN_FAILED',
           );
         }
