@@ -338,8 +338,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               ),
               const SizedBox(height: 32),
 
-              // ── Tab selector (Trên iOS chỉ cho phép Đăng nhập theo Apple Guideline 3.1.1) ──
-              if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+              // ── Tab selector (Trên iOS native chỉ cho phép Đăng nhập theo Apple Guideline 3.1.1; Web và Android luôn mở đầy đủ) ──
+              if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -391,7 +391,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               // ── Form ─────────────────────────────────────────────────────
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 220),
-                child: (defaultTargetPlatform == TargetPlatform.iOS || _tab == 0)
+                child: ((!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) || _tab == 0)
                     ? _buildLoginForm()
                     : _buildRegisterForm(),
               ),

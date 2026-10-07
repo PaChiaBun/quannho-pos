@@ -9,6 +9,8 @@ import 'recipe_list_screen.dart';
 import 'ingredient_list_screen.dart';
 import 'production_order_screen.dart';
 import 'kho_chuyen_nghiep_report_screen.dart';
+import 'stock_count_screen.dart';
+import 'stock_waste_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // KHO HÀNG CHUYÊN NGHIỆP — Entry Screen
@@ -120,6 +122,21 @@ class _KhoProScreenState extends ConsumerState<KhoProScreen>
             fontWeight: FontWeight.w900,
             letterSpacing: -0.4)),
     titleSpacing: 6,
+    actions: [
+      IconButton(
+        tooltip: 'Kiểm kê kho',
+        icon: const Icon(Icons.fact_check_rounded, color: Colors.white),
+        onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const StockCountScreen())),
+      ),
+      IconButton(
+        tooltip: 'Ghi hao hụt',
+        icon: const Icon(Icons.delete_sweep_rounded, color: Colors.white),
+        onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const StockWasteScreen())),
+      ),
+      const SizedBox(width: 4),
+    ],
     // ── Background gradient + subtitle ───────────────────────────
     flexibleSpace: FlexibleSpaceBar(
       collapseMode: CollapseMode.pin, // không parallax, chỉ thu gọn

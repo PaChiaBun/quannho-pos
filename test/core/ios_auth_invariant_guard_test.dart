@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:quannho_pos/core/services/user_auth_service.dart';
 import 'package:quannho_pos/screens/auth_screen.dart';
 import 'package:quannho_pos/screens/store_picker_screen.dart';
+import 'package:quannho_pos/screens/store_setup_screen.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -238,6 +239,59 @@ void main() {
           expect(find.text('Quán Nhỏ Demo'), findsOneWidget);
           expect(find.text('Kết nối quán'), findsOneWidget);
           expect(find.text('Tạo quán mới'), findsNothing);
+        } finally {
+          debugDefaultTargetPlatformOverride = null;
+        }
+      },
+    );
+  });
+
+  group('Apple Guideline 3.1.1 Invariant Guardrail - StoreSetupScreen', () {
+    testWidgets(
+      'iOS StoreSetupScreen renders single join mode and strictly omits "Tạo quán mới"',
+      (tester) async {
+        addTearDown(() => debugDefaultTargetPlatformOverride = null);
+        debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+        try {
+          await tester.pumpWidget(
+            const ProviderScope(
+              child: MaterialApp(
+                home: StoreSetupScreen(),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(
+            find.text('Nhập mã kết nối do quản lý cửa hàng cung cấp để kết nối thiết bị.'),
+            findsOneWidget,
+          );
+          expect(find.text('Tạo quán mới'), findsNothing);
+          expect(find.text('Kết nối vào quán'), findsWidgets);
+          expect(find.text('Mã quán'), findsOneWidget);
+        } finally {
+          debugDefaultTargetPlatformOverride = null;
+        }
+      },
+    );
+
+    testWidgets(
+      'Android StoreSetupScreen renders both "Nhập mã quán" and "Tạo quán mới"',
+      (tester) async {
+        addTearDown(() => debugDefaultTargetPlatformOverride = null);
+        debugDefaultTargetPlatformOverride = TargetPlatform.android;
+        try {
+          await tester.pumpWidget(
+            const ProviderScope(
+              child: MaterialApp(
+                home: StoreSetupScreen(),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(find.text('Nhập mã quán'), findsOneWidget);
+          expect(find.text('Tạo quán mới'), findsOneWidget);
         } finally {
           debugDefaultTargetPlatformOverride = null;
         }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/utils/quantity_formatter.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/providers/app_providers.dart';
@@ -661,6 +662,47 @@ class _IngLineCardState extends State<_IngLineCard> {
                         ),
                       ],
                     ]),
+
+                    // Cảnh báo đơn vị không khớp đơn vị kho (tránh trừ kho sai)
+                    Builder(builder: (_) {
+                      final dynamic prod = widget.allStock
+                          .cast<dynamic>()
+                          .firstWhere((p) => (p.id as String?) == line.ingredientId,
+                              orElse: () => null);
+                      if (prod == null) return const SizedBox.shrink();
+                      final msg = recipeUnitWarning(
+                        recipeUnit: line.unit,
+                        productUnit: (prod.unit as String?) ?? '',
+                        conversionRate: (prod.conversionRate as double?) ?? 0,
+                        conversionUnit: (prod.conversionUnit as String?) ?? '',
+                      );
+                      if (msg == null) return const SizedBox.shrink();
+                      return Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: KhoTheme.amber.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: KhoTheme.amber.withOpacity(0.5)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.warning_amber_rounded,
+                                size: 16, color: KhoTheme.amber),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(msg,
+                                  style: GoogleFonts.outfit(
+                                      fontSize: 11.5,
+                                      height: 1.3,
+                                      fontWeight: FontWeight.w600,
+                                      color: KhoTheme.ink)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
 
                     // Row 3: % Hao phí
                     const SizedBox(height: 8),

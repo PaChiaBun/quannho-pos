@@ -55,6 +55,111 @@ class ThreadSafeRateLimiter:
 
 
 _rate_limiter = ThreadSafeRateLimiter()
+_refresh_rate_limiter = ThreadSafeRateLimiter()
+
+LEGACY_POS_JWT_TTL_SECONDS = 2592000  # 30 ngày — chỉ cho bản app cũ chưa hỗ trợ refresh
+
+
+def _env_int(name, default, minimum, maximum):
+    try:
+        value = int(str(os.environ.get(name, "")).strip() or default)
+    except ValueError:
+        value = default
+    return max(minimum, min(maximum, value))
+
+
+def get_token_policy():
+    """TTL policy. Access token ngắn hạn + refresh token dài hạn xoay vòng."""
+    return {
+        "access_ttl": _env_int("POS_ACCESS_TTL_SECONDS", 43200, 300, 86400),
+        "refresh_ttl": _env_int("POS_REFRESH_TTL_SECONDS", 2592000, 3600, 7776000),
+        "refresh_enabled": str(os.environ.get("POS_REFRESH_ENABLED", "1")).strip() not in ("0", "false", "no"),
+    }
+
+
+def generate_refresh_token():
+    """Return (plain_token, sha256_hex). Only the hash is ever stored server-side."""
+    plain = "qnr_" + secrets.token_urlsafe(32)
+    return plain, hash_refresh_token(plain)
+
+
+def hash_refresh_token(plain):
+    return hashlib.sha256(str(plain).encode("utf-8")).hexdigest()
+
+
+def _client_wants_refresh(payload):
+    value = payload.get("supports_refresh") if isinstance(payload, dict) else None
+    return value is True or str(value).strip().lower() in ("1", "true", "yes")
+
+
+def call_service_rpc(supabase_url, service_role_key, rpc_name, params, timeout=8):
+    """POST a service-role-only RPC. Raises PosJwtAuthError(503) on infra failure."""
+    if not service_role_key:
+        raise PosJwtAuthError("Refresh store is not configured", status_code=503, error_code="REFRESH_STORE_UNAVAILABLE")
+    req = urllib.request.Request(
+        f"{supabase_url.rstrip('/')}/rest/v1/rpc/{rpc_name}",
+        data=json.dumps(params).encode("utf-8"),
+        headers={
+            "apikey": service_role_key,
+            "Authorization": f"Bearer {service_role_key}",
+            "User-Agent": "PosJwtAuthService/2.1",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            if resp.status != 200:
+                raise PosJwtAuthError("Refresh store unavailable", status_code=503, error_code="REFRESH_STORE_UNAVAILABLE")
+            result = json.loads(resp.read().decode("utf-8"))
+    except PosJwtAuthError:
+        raise
+    except Exception as exc:
+        logger.error("Service RPC %s failed: %s", rpc_name, type(exc).__name__)
+        raise PosJwtAuthError("Refresh store unavailable", status_code=503, error_code="REFRESH_STORE_UNAVAILABLE") from exc
+    if not isinstance(result, dict):
+        raise PosJwtAuthError("Refresh store returned an invalid response", status_code=503, error_code="REFRESH_STORE_UNAVAILABLE")
+    return result
+
+
+def issue_token_pair(supabase_url, jwt_secret, user_id, store_id, role, client_ip, client_label=None):
+    """Issue short access JWT + rotating refresh token.
+
+    Returns None when the refresh store is unavailable so callers can fall back to
+    the legacy long-lived token instead of failing a login (zero-downtime deploy).
+    """
+    policy = get_token_policy()
+    if not policy["refresh_enabled"]:
+        return None
+    service_role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    plain, token_hash = generate_refresh_token()
+    try:
+        result = call_service_rpc(supabase_url, service_role_key, "qn_refresh_issue_v1", {
+            "p_user_id": str(user_id),
+            "p_store_id": str(store_id),
+            "p_token_hash": token_hash,
+            "p_ttl_seconds": policy["refresh_ttl"],
+            "p_client_label": (str(client_label)[:120] if client_label else None),
+            "p_client_ip": str(client_ip or "")[:64] or None,
+        })
+    except PosJwtAuthError as exc:
+        logger.warning("Refresh issue unavailable, falling back to legacy token: %s", exc.error_code)
+        return None
+    if result.get("success") is not True:
+        if result.get("error_code") == "STORE_MEMBERSHIP_FORBIDDEN":
+            raise PosJwtAuthError("Tài khoản không thuộc cửa hàng này", status_code=403, error_code="STORE_MEMBERSHIP_FORBIDDEN")
+        logger.warning("Refresh issue rejected: %s", result.get("error_code"))
+        return None
+    effective_role = str(result.get("role") or role or "cashier")
+    access = issue_hs256_pos_jwt(user_id, store_id, jwt_secret, staff_role=effective_role, ttl_seconds=policy["access_ttl"])
+    return {
+        "pos_jwt": access,
+        "refresh_token": plain,
+        "expires_in": policy["access_ttl"],
+        "refresh_expires_in": policy["refresh_ttl"],
+        "role": effective_role,
+    }
 
 
 def get_supabase_config():
@@ -382,17 +487,36 @@ def handle_pos_jwt_auth_request(raw_body, client_ip="127.0.0.1"):
     try:
         supabase_url, anon_key, jwt_secret = get_supabase_config()
         auth_info = verify_user_credentials_and_membership(supabase_url, anon_key, phone, password, store_id)
+        if _client_wants_refresh(payload):
+            pair = issue_token_pair(
+                supabase_url, jwt_secret, auth_info["user_id"], auth_info["store_id"],
+                auth_info["role"], client_ip, client_label=payload.get("client_label"),
+            )
+            if pair:
+                logger.info("Successfully issued POS JWT + refresh token")
+                return {
+                    "success": True,
+                    "status": 200,
+                    "pos_jwt": pair["pos_jwt"],
+                    "refresh_token": pair["refresh_token"],
+                    "expires_in": pair["expires_in"],
+                    "refresh_expires_in": pair["refresh_expires_in"],
+                    "store_id": auth_info["store_id"],
+                    "role": pair["role"],
+                }
         token = issue_hs256_pos_jwt(
             auth_info["user_id"],
             auth_info["store_id"],
             jwt_secret,
             staff_role=auth_info["role"],
+            ttl_seconds=LEGACY_POS_JWT_TTL_SECONDS,
         )
         logger.info("Successfully issued POS JWT")
         return {
             "success": True,
             "status": 200,
             "pos_jwt": token,
+            "expires_in": LEGACY_POS_JWT_TTL_SECONDS,
             "store_id": auth_info["store_id"],
             "role": auth_info["role"]
         }
@@ -529,8 +653,25 @@ def handle_exchange_store_jwt_request(raw_body, auth_header=None, client_ip="127
 
         role = str(exchange_authorization.get("role") or "waiter")
 
-        # Issue store-scoped POS JWT
-        pos_jwt = issue_hs256_pos_jwt(user_id, store_id, jwt_secret, staff_role=role or "cashier")
+        if _client_wants_refresh(payload):
+            pair = issue_token_pair(supabase_url, jwt_secret, user_id, store_id, role, client_ip,
+                                    client_label=payload.get("client_label"))
+            if pair:
+                logger.info("Exchanged onboarding token for POS JWT + refresh token")
+                return {
+                    "success": True,
+                    "status": 200,
+                    "pos_jwt": pair["pos_jwt"],
+                    "refresh_token": pair["refresh_token"],
+                    "expires_in": pair["expires_in"],
+                    "refresh_expires_in": pair["refresh_expires_in"],
+                    "store_id": store_id,
+                    "role": pair["role"],
+                }
+
+        # Issue store-scoped POS JWT (legacy long-lived)
+        pos_jwt = issue_hs256_pos_jwt(user_id, store_id, jwt_secret, staff_role=role or "cashier",
+                                      ttl_seconds=LEGACY_POS_JWT_TTL_SECONDS)
         logger.info("Successfully exchanged onboarding token for store POS JWT")
         return {
             "success": True,
@@ -555,3 +696,113 @@ def handle_exchange_store_jwt_request(raw_body, auth_header=None, client_ip="127
             "error": "SERVER_ERROR",
             "message": "Lỗi xác thực hệ thống"
         }
+
+
+def _parse_json_body(raw_body):
+    if len(raw_body or b"") > 4096:
+        return None, {"success": False, "status": 400, "error": "PAYLOAD_TOO_LARGE", "message": "Dữ liệu yêu cầu vượt quá 4KB"}
+    try:
+        body_text = raw_body.decode('utf-8') if isinstance(raw_body, bytes) else str(raw_body or "")
+        payload = json.loads(body_text) if body_text else {}
+    except Exception:
+        payload = None
+    if not isinstance(payload, dict):
+        return None, {"success": False, "status": 400, "error": "MALFORMED_JSON", "message": "Định dạng JSON không hợp lệ"}
+    return payload, None
+
+
+_REFRESH_ERROR_MAP = {
+    "REFRESH_RACE": (409, "Phiên đang được làm mới ở nơi khác, vui lòng thử lại"),
+    "REFRESH_EXPIRED": (401, "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại"),
+    "REFRESH_REVOKED": (401, "Phiên đăng nhập đã bị thu hồi, vui lòng đăng nhập lại"),
+    "REFRESH_REUSED": (401, "Phiên đăng nhập không còn hợp lệ, vui lòng đăng nhập lại"),
+    "REFRESH_INVALID": (401, "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại"),
+    "STORE_MEMBERSHIP_FORBIDDEN": (403, "Tài khoản không còn thuộc cửa hàng này"),
+    "INVALID_PARAMETERS": (400, "Yêu cầu không hợp lệ"),
+}
+
+
+def _valid_refresh_format(token):
+    return isinstance(token, str) and token.startswith("qnr_") and 20 <= len(token) <= 200
+
+
+def handle_refresh_request(raw_body, client_ip="127.0.0.1"):
+    """POST /api/auth/refresh {refresh_token} -> new access JWT + rotated refresh token."""
+    payload, err = _parse_json_body(raw_body)
+    if err:
+        return err
+    refresh_token = str(payload.get("refresh_token") or "").strip()
+    if not refresh_token:
+        return {"success": False, "status": 400, "error": "MISSING_PARAMETERS", "message": "Thiếu refresh token"}
+
+    if _refresh_rate_limiter.is_rate_limited(client_ip, "", max_attempts=20, window_sec=300):
+        return {"success": False, "status": 429, "error": "RATE_LIMIT_EXCEEDED", "message": "Quá nhiều yêu cầu. Vui lòng thử lại sau."}
+
+    if not _valid_refresh_format(refresh_token):
+        _refresh_rate_limiter.record_attempt(client_ip, "")
+        return {"success": False, "status": 401, "error": "REFRESH_INVALID", "message": _REFRESH_ERROR_MAP["REFRESH_INVALID"][1]}
+
+    try:
+        supabase_url, _anon_key, jwt_secret = get_supabase_config()
+        policy = get_token_policy()
+        service_role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        new_plain, new_hash = generate_refresh_token()
+        result = call_service_rpc(supabase_url, service_role_key, "qn_refresh_rotate_v1", {
+            "p_old_hash": hash_refresh_token(refresh_token),
+            "p_new_hash": new_hash,
+            "p_ttl_seconds": policy["refresh_ttl"],
+            "p_client_ip": str(client_ip or "")[:64] or None,
+        })
+        if result.get("success") is not True:
+            code = str(result.get("error_code") or "REFRESH_INVALID")
+            status, message = _REFRESH_ERROR_MAP.get(code, _REFRESH_ERROR_MAP["REFRESH_INVALID"])
+            if status == 401:
+                _refresh_rate_limiter.record_attempt(client_ip, "")
+            logger.warning("Refresh rejected: %s", code)
+            return {"success": False, "status": status, "error": code, "message": message}
+
+        user_id = str(result.get("user_id") or "")
+        store_id = str(result.get("store_id") or "")
+        role = str(result.get("role") or "cashier")
+        if not user_id or not store_id:
+            raise PosJwtAuthError("Invalid refresh response", status_code=503, error_code="REFRESH_STORE_UNAVAILABLE")
+        access = issue_hs256_pos_jwt(user_id, store_id, jwt_secret, staff_role=role, ttl_seconds=policy["access_ttl"])
+        return {
+            "success": True,
+            "status": 200,
+            "pos_jwt": access,
+            "refresh_token": new_plain,
+            "expires_in": policy["access_ttl"],
+            "refresh_expires_in": policy["refresh_ttl"],
+            "store_id": store_id,
+            "role": role,
+        }
+    except PosJwtAuthError as e:
+        logger.warning("Refresh PosJwtAuthError: code=%s, status=%d", e.error_code, e.status_code)
+        return {"success": False, "status": e.status_code, "error": e.error_code, "message": e.message}
+    except Exception as e:
+        logger.error("Unhandled refresh error: %s", type(e).__name__)
+        return {"success": False, "status": 500, "error": "SERVER_ERROR", "message": "Lỗi xác thực hệ thống"}
+
+
+def handle_logout_request(raw_body, client_ip="127.0.0.1"):
+    """POST /api/auth/logout {refresh_token} -> revoke the whole refresh family. Idempotent."""
+    payload, err = _parse_json_body(raw_body)
+    if err:
+        return err
+    refresh_token = str(payload.get("refresh_token") or "").strip()
+    if not _valid_refresh_format(refresh_token):
+        return {"success": True, "status": 200, "revoked": 0}
+    try:
+        supabase_url, _anon_key, _jwt_secret = get_supabase_config()
+        service_role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        result = call_service_rpc(supabase_url, service_role_key, "qn_refresh_revoke_v1", {
+            "p_token_hash": hash_refresh_token(refresh_token),
+            "p_reason": "logout",
+        })
+        return {"success": True, "status": 200, "revoked": int(result.get("revoked") or 0)}
+    except PosJwtAuthError as e:
+        return {"success": False, "status": e.status_code, "error": e.error_code, "message": e.message}
+    except Exception as e:
+        logger.error("Unhandled logout error: %s", type(e).__name__)
+        return {"success": False, "status": 500, "error": "SERVER_ERROR", "message": "Lỗi xác thực hệ thống"}

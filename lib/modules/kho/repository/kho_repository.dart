@@ -7,6 +7,7 @@ import '../../../core/services/store_auth_service.dart';
 import '../../../core/repositories/core_product_repository.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/quantity_formatter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // KHO REPOSITORY — 100% Supabase
@@ -483,6 +484,7 @@ class KhoRepository {
       'supplier_id':        supplierId,
       'supplier_name':      supplierName ?? '',
       'status':             'received',
+      'total_cost':         total,
       'total_amount':       total,
       'note':               note,
       'invoice_image_url':  invoiceImageUrl,    // ← fix: đã bị bỏ sót
@@ -607,11 +609,12 @@ class KhoRepository {
     // 3. Load PO
     final poRow = await _sb
         .from('purchase_orders')
-        .select('po_number, total_amount')
+        .select('po_number, total_amount, total_cost')
         .eq('id', poId)
         .single();
     final poNumber    = poRow['po_number'] as String? ?? poId;
-    final totalAmount = (poRow['total_amount'] as num?)?.toDouble() ?? 0;
+    final totalAmount = (poRow['total_amount'] as num?)?.toDouble() ??
+                        (poRow['total_cost'] as num?)?.toDouble() ?? 0;
 
     // 4. Hoàn kho
     for (final item in items) {
@@ -869,7 +872,7 @@ class StockItem {
     }
     return stockQty % 1 == 0
         ? '${stockQty.toInt()} $unit'
-        : '${stockQty.toStringAsFixed(1)} $unit';
+        : '${fmtQty(stockQty)} $unit';
   }
 }
 
@@ -995,7 +998,8 @@ class PurchaseOrderModel {
       supplierId:      m['supplier_id'] as String?,
       supplierName:    m['supplier_name'] as String?,
       status:          m['status'] as String? ?? 'received',
-      totalAmount:     (m['total_amount'] as num?)?.toDouble() ?? 0,
+      totalAmount:     (m['total_amount'] as num?)?.toDouble() ??
+                       (m['total_cost'] as num?)?.toDouble() ?? 0,
       note:            m['note'] as String?,
       createdAt:       m['created_at'] as String? ?? '',
       invoiceImageUrl: m['invoice_image_url'] as String?,

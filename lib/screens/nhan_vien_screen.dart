@@ -16,8 +16,6 @@ import '../core/services/staff_service.dart'
         StaffService,
         ShiftRecord,
         StoreRole,
-        PermLog,
-        StoreRoleService,
         kAllActions,
         kActionMeta;
 import '../core/services/staff_sync_service.dart';
@@ -44,18 +42,6 @@ const _roles = {
   'stock': ('Kho', Icons.inventory_2_rounded, Color(0xFF92400E)),
 };
 
-const _moduleNames = {
-  'pos': ('Bán hàng', Icons.point_of_sale_rounded),
-  'kho': ('Kho hàng', Icons.inventory_2_rounded),
-  'kho_pro': ('Kho CN', Icons.restaurant_menu_rounded), // ‼️ FIX: thiếu kho_pro
-  'ban': ('Quản lý bàn', Icons.table_bar_rounded),
-  'kitchen': ('Bếp', Icons.local_fire_department_rounded),
-  'finance': ('Thu chi', Icons.account_balance_wallet_rounded),
-  'report': ('Báo cáo', Icons.bar_chart_rounded),
-  'loyalty': ('Điểm thưởng', Icons.star_rounded),
-  'staff': ('Nhân viên', Icons.people_rounded),
-  'chamcong': ('Chấm công', Icons.fingerprint_rounded),
-};
 
 // ── Helper: tìm StoreRole khớp với role key/canonical ───────────────────────────
 StoreRole? _findMatchingStoreRole(String roleKey, List<StoreRole> storeRoles) {
@@ -85,6 +71,13 @@ StoreRole? _findMatchingStoreRole(String roleKey, List<StoreRole> storeRoles) {
   String roleKey,
   List<StoreRole> storeRoles,
 ) {
+  if (StaffService.isUnassignedRole(roleKey)) {
+    return (
+      name: 'Chưa phân vai trò',
+      color: const Color(0xFFFF6B35),
+      icon: Icons.warning_amber_rounded,
+    );
+  }
   final canon = StaffService.canonicalRole(roleKey);
   // 1. Tìm trong store_roles qua helper chuẩn hóa
   final matched = _findMatchingStoreRole(roleKey, storeRoles);
@@ -263,7 +256,7 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
     _syncService = StaffSyncService(
       storeId: session.storeId!,
       currentUserId: session.userId,
-      currentRole: session.role ?? 'cashier',
+      currentRole: session.role,
       onRoleChanged: (newRole) {
         if (!mounted) return;
         final roleEntry = _roles[newRole];
@@ -354,11 +347,6 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
     return s?.isOwner == true || r == 'owner' || r == 'chủ quán' || r == 'chu quan';
   }
 
-  bool _isManager() {
-    final s = ref.read(sessionProvider);
-    final r = s?.role.toLowerCase().trim() ?? '';
-    return _isOwner() || r == 'manager' || r == 'quản lý' || r == 'quan ly';
-  }
 
   void _syncTabController(bool isOwner) {
     final desiredLength = isOwner ? 2 : 1;
@@ -518,19 +506,41 @@ class _NhanVienScreenState extends ConsumerState<NhanVienScreen>
   }
 }
 
+String _stripVietnameseDiacritics(String text) {
+  const map = {
+    'à': 'a', 'á': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
+    'ă': 'a', 'ằ': 'a', 'ắ': 'a', 'ẳ': 'a', 'ẵ': 'a', 'ặ': 'a',
+    'â': 'a', 'ầ': 'a', 'ấ': 'a', 'ẩ': 'a', 'ẫ': 'a', 'ậ': 'a',
+    'è': 'e', 'é': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ẹ': 'e',
+    'ê': 'e', 'ề': 'e', 'ế': 'e', 'ể': 'e', 'ễ': 'e', 'ệ': 'e',
+    'ì': 'i', 'í': 'i', 'ỉ': 'i', 'ĩ': 'i', 'ị': 'i',
+    'ò': 'o', 'ó': 'o', 'ỏ': 'o', 'õ': 'o', 'ọ': 'o',
+    'ô': 'o', 'ồ': 'o', 'ố': 'o', 'ổ': 'o', 'ỗ': 'o', 'ộ': 'o',
+    'ơ': 'o', 'ờ': 'o', 'ớ': 'o', 'ở': 'o', 'ỡ': 'o', 'ợ': 'o',
+    'ù': 'u', 'ú': 'u', 'ủ': 'u', 'ũ': 'u', 'ụ': 'u',
+    'ư': 'u', 'ừ': 'u', 'ứ': 'u', 'ử': 'u', 'ữ': 'u', 'ự': 'u',
+    'ỳ': 'y', 'ý': 'y', 'ỷ': 'y', 'ỹ': 'y', 'ỵ': 'y',
+    'đ': 'd',
+    'À': 'a', 'Á': 'a', 'Ả': 'a', 'Ã': 'a', 'Ạ': 'a',
+    'Ă': 'a', 'Ằ': 'a', 'Ắ': 'a', 'Ẳ': 'a', 'Ẵ': 'a', 'Ặ': 'a',
+    'Â': 'a', 'Ầ': 'a', 'Ấ': 'a', 'Ẩ': 'a', 'Ẫ': 'a', 'Ậ': 'a',
+    'È': 'e', 'É': 'e', 'Ẻ': 'e', 'Ẽ': 'e', 'Ẹ': 'e',
+    'Ê': 'e', 'Ề': 'e', 'Ế': 'e', 'Ể': 'e', 'Ễ': 'e', 'Ệ': 'e',
+    'Ì': 'i', 'Í': 'i', 'Ỉ': 'i', 'Ĩ': 'i', 'Ị': 'i',
+    'Ò': 'o', 'Ó': 'o', 'Ỏ': 'o', 'Õ': 'o', 'Ọ': 'o',
+    'Ô': 'o', 'Ồ': 'o', 'Ố': 'o', 'Ổ': 'o', 'Ỗ': 'o', 'Ộ': 'o',
+    'Ơ': 'o', 'Ờ': 'o', 'Ớ': 'o', 'Ở': 'o', 'Ỡ': 'o', 'Ợ': 'o',
+    'Ù': 'u', 'Ú': 'u', 'Ủ': 'u', 'Ũ': 'u', 'Ụ': 'u',
+    'Ư': 'u', 'Ừ': 'u', 'Ứ': 'u', 'Ử': 'u', 'Ữ': 'u', 'Ự': 'u',
+    'Ỳ': 'y', 'Ý': 'y', 'Ỷ': 'y', 'Ỹ': 'y', 'Ỵ': 'y',
+    'Đ': 'd',
+  };
+  return text.split('').map((c) => map[c] ?? c.toLowerCase()).join();
+}
+
 bool _isUnassignedStaff(StaffMember m, List<StoreRole> storeRoles) {
   if (m.isOwner) return false;
-  final r = m.role.toLowerCase().trim();
-  if (r.isEmpty ||
-      r == 'none' ||
-      r == 'unassigned' ||
-      r.contains('chưa phân') ||
-      r.contains('chưa gán') ||
-      r.contains('chưa có') ||
-      r.contains('chưa cấp')) {
-    return true;
-  }
-  return false;
+  return StaffService.isUnassignedRole(m.role);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -548,6 +558,7 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
   String _query = '';
   String _roleFilter = 'all';
   RealtimeChannel? _shiftsChannel;
+  RealtimeChannel? _staffSyncChannel;
   Timer? _refreshTimer;
 
   @override
@@ -605,6 +616,29 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
             },
           )
           .subscribe();
+
+      // 4. Lắng nghe Broadcast đồng bộ nhân sự (đổi role, kick, nhân viên mới vào)
+      _staffSyncChannel = Supabase.instance.client
+          .channel('staff_sync_$storeId')
+          .onBroadcast(
+            event: 'role_changed',
+            callback: (_) {
+              if (mounted) ref.invalidate(_staffListProvider);
+            },
+          )
+          .onBroadcast(
+            event: 'staff_removed',
+            callback: (_) {
+              if (mounted) ref.invalidate(_staffListProvider);
+            },
+          )
+          .onBroadcast(
+            event: 'staff_joined',
+            callback: (_) {
+              if (mounted) ref.invalidate(_staffListProvider);
+            },
+          )
+          .subscribe();
     } catch (_) {}
   }
 
@@ -612,6 +646,7 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
   void dispose() {
     _refreshTimer?.cancel();
     _shiftsChannel?.unsubscribe();
+    _staffSyncChannel?.unsubscribe();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -630,18 +665,23 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
             .length;
 
         // ── Filter ──
+        final cleanQuery = _stripVietnameseDiacritics(_query.trim()).toLowerCase();
+        final cleanDigits = _query.replaceAll(RegExp(r'\D'), '');
+
         final list = all.where((m) {
           final isUnassigned = _isUnassignedStaff(m, storeRoles);
           final matchRole =
               _roleFilter == 'all' ||
               (_roleFilter == 'unassigned' && isUnassigned) ||
-              m.role.toLowerCase().trim() == _roleFilter.toLowerCase().trim() ||
-              StaffService.canonicalRole(m.role) ==
-                  StaffService.canonicalRole(_roleFilter);
+              (!isUnassigned &&
+                  (m.role.toLowerCase().trim() == _roleFilter.toLowerCase().trim() ||
+                      StaffService.canonicalRole(m.role) ==
+                          StaffService.canonicalRole(_roleFilter)));
           final matchSearch =
-              _query.isEmpty ||
-              m.name.toLowerCase().contains(_query.toLowerCase()) ||
-              m.phone.contains(_query);
+              _query.trim().isEmpty ||
+              _stripVietnameseDiacritics(m.name).toLowerCase().contains(cleanQuery) ||
+              (cleanDigits.isNotEmpty &&
+                  m.phone.replaceAll(RegExp(r'\D'), '').contains(cleanDigits));
           return matchRole && matchSearch;
         }).toList();
 
@@ -707,13 +747,26 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
             Consumer(
               builder: (_, ref, __) {
                 final roles = ref.watch(storeRolesProvider).value ?? [];
+                final existingRoles = all
+                    .where((m) => !m.isOwner && !_isUnassignedStaff(m, roles))
+                    .map((m) => m.role.trim())
+                    .where((r) => r.isNotEmpty)
+                    .toSet();
+
                 return SizedBox(
                   height: 44,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
                     children: [
-                      _FilterChip('all', 'Tất cả', Icons.people_rounded, null),
+                      _filterChip('all', 'Tất cả', Icons.people_rounded, null),
+                      if (unassignedCount > 0)
+                        _filterChip(
+                          'unassigned',
+                          'Chưa phân vai trò ($unassignedCount)',
+                          Icons.warning_amber_rounded,
+                          const Color(0xFFFF6B35),
+                        ),
                       // Custom roles từ Supabase
                       ...roles.map((r) {
                         final icon =
@@ -730,7 +783,19 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
                               'security': Icons.security_rounded,
                             }[r.icon] ??
                             Icons.badge_rounded;
-                        return _FilterChip(r.name, r.name, icon, r.colorValue);
+                        return _filterChip(r.name, r.name, icon, r.colorValue);
+                      }),
+                      // Bổ sung các vai trò thực tế của nhân viên nếu chưa có trong store_roles
+                      ...existingRoles
+                          .where((rName) => _findMatchingStoreRole(rName, roles) == null)
+                          .map((rName) {
+                        final resolved = _resolveRole(rName, roles);
+                        return _filterChip(
+                          rName,
+                          resolved.name,
+                          resolved.icon,
+                          resolved.color,
+                        );
                       }),
                     ],
                   ),
@@ -794,7 +859,7 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
     );
   }
 
-  Widget _FilterChip(String key, String label, IconData icon, Color? color) {
+  Widget _filterChip(String key, String label, IconData icon, Color? color) {
     final selected = _roleFilter == key;
     final c = color ?? _kNavy;
     return GestureDetector(
@@ -830,38 +895,6 @@ class _StaffListTabState extends ConsumerState<_StaffListTab> {
   }
 }
 
-class _EmptyStaff extends StatelessWidget {
-  final bool isManager;
-  const _EmptyStaff({required this.isManager});
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          Icons.people_outline_rounded,
-          size: 72,
-          color: _kMuted.withValues(alpha: 0.5),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Chưa có nhân viên nào',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: _kNavy,
-          ),
-        ),
-        if (isManager) const SizedBox(height: 8),
-        if (isManager)
-          const Text(
-            'Nhân viên quét mã QR hoặc nhập mã quán để tham gia',
-            style: TextStyle(fontSize: 13, color: _kMuted),
-          ),
-      ],
-    ),
-  );
-}
 
 class _StaffCard extends ConsumerWidget {
   final StaffMember member;
@@ -1017,10 +1050,15 @@ class _StaffCard extends ConsumerWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                member.phone,
-                                style: const TextStyle(
+                                member.phone.isNotEmpty
+                                    ? member.phone
+                                    : 'Chưa cập nhật SĐT',
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: _kMuted,
+                                  fontStyle: member.phone.isEmpty
+                                      ? FontStyle.italic
+                                      : FontStyle.normal,
                                 ),
                               ),
                               const SizedBox(height: 5),
@@ -1293,7 +1331,10 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                         style: const TextStyle(fontSize: 13, color: _kMuted),
                       ),
                       const SizedBox(height: 4),
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 4,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -1313,7 +1354,6 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
                           // Quán
                           Text(
                             '· ${ref.read(sessionProvider)?.storeName ?? ''}',
@@ -1560,11 +1600,13 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                         color: _kMuted,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        widget.isManager
-                            ? 'Nhấn "Sửa" để thêm mô tả'
-                            : 'Chưa có mô tả công việc',
-                        style: const TextStyle(fontSize: 13, color: _kMuted),
+                      Expanded(
+                        child: Text(
+                          widget.isManager
+                              ? 'Nhấn "Sửa" để thêm mô tả'
+                              : 'Chưa có mô tả công việc',
+                          style: const TextStyle(fontSize: 13, color: _kMuted),
+                        ),
                       ),
                     ],
                   ),
@@ -1688,9 +1730,7 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                       final validRole = matchedRole?.name ??
                           (availableRoles.any((r) => r.name == _role)
                               ? _role
-                              : (availableRoles.isNotEmpty
-                                  ? availableRoles.first.name
-                                  : null));
+                              : null);
 
                       if (storeRoles.isEmpty || availableRoles.isEmpty) {
                         return Container(
@@ -1711,7 +1751,12 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                       }
 
                       return DropdownButtonFormField<String>(
+                        isExpanded: true,
                         value: validRole,
+                        hint: const Text(
+                          'Chọn vai trò cho nhân viên...',
+                          style: TextStyle(fontSize: 13, color: _kMuted),
+                        ),
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1727,6 +1772,7 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                               (r) => DropdownMenuItem(
                                 value: r.name,
                                 child: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Container(
                                       width: 10,
@@ -1737,7 +1783,12 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                                         shape: BoxShape.circle,
                                       ),
                                     ),
-                                    Text(r.name),
+                                    Flexible(
+                                      child: Text(
+                                        r.name,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -1860,6 +1911,16 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
   }
 
   Future<void> _saveRole() async {
+    if (StaffService.isUnassignedRole(_role)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn vai trò cho nhân viên'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     final currentCanon = StaffService.canonicalRole(widget.member.role).toLowerCase().trim();
     final newCanon = StaffService.canonicalRole(_role).toLowerCase().trim();
     if (_role.toLowerCase().trim() == widget.member.role.toLowerCase().trim() ||
@@ -2052,7 +2113,6 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
     );
   }
 
-  String _fmtMoney(double v) => NumberFormat('#,###').format(v.toInt());
   String _fmtDate(String iso) {
     try {
       final d = DateTime.parse(iso);
@@ -2062,30 +2122,6 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
     }
   }
 }
-
-Widget _InfoChip(String label, String value) => Expanded(
-  child: Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFF3E0),
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: _kMuted)),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: _kNavy,
-          ),
-        ),
-      ],
-    ),
-  ),
-);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TAB 2: CHẤM CÔNG
@@ -3484,8 +3520,27 @@ class _PermissionsTab extends ConsumerWidget {
                                 ),
                               ),
                               onDelete: () async {
-                                await ShiftConfigService.deleteShift(s.id);
-                                r.invalidate(_shiftConfigsProvider);
+                                try {
+                                  await ShiftConfigService.deleteShift(s.id);
+                                  r.invalidate(_shiftConfigsProvider);
+                                } catch (err, st) {
+                                  AppLogger.error(
+                                    'nhan_vien_screen',
+                                    'Lỗi xoá ca làm việc: $err',
+                                    err,
+                                    st,
+                                  );
+                                  if (ctx.mounted) {
+                                    ScaffoldMessenger.of(ctx).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Xoá ca thất bại. Hãy chụp lại báo chủ app.',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
                               },
                             ),
                           )
@@ -4455,7 +4510,9 @@ class _StaffPickerSheet extends StatelessWidget {
                   ),
                 ),
                 subtitle: Text(
-                  m.role,
+                  StaffService.isUnassignedRole(m.role)
+                      ? 'Chưa phân vai trò'
+                      : m.role,
                   style: const TextStyle(fontSize: 12, color: _kMuted),
                 ),
                 trailing: Icon(Icons.add_circle_rounded, color: accentColor),
@@ -4600,12 +4657,14 @@ class _ShiftFormSheetState extends State<_ShiftFormSheet> {
       if (!mounted) return;
       Navigator.pop(context);
       widget.onSaved();
-    } catch (err) {
-      if (mounted)
+    } catch (err, st) {
+      AppLogger.error('nhan_vien_screen', 'Lỗi lưu ca làm việc: $err', err, st);
+      if (mounted) {
         setState(() {
           _saving = false;
-          _errorMsg = 'Lỗi: $err';
+          _errorMsg = 'Lưu ca thất bại. Hãy chụp lại báo chủ app.';
         });
+      }
     }
   }
 

@@ -289,61 +289,87 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     return Consumer(
       builder: (context, ref, _) {
         final cart = ref.watch(cartProvider);
-        return Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF1A1860), _kNavy],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x30000000),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 12, 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Title block
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Bán hàng',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                            height: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$timeStr  ·  $dateStr',
-                          style: const TextStyle(
-                            color: Color(0x80FFFFFF),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ],
-                    ),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 500;
+            return Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF1A1860), _kNavy],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x30000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
                   ),
+                ],
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    isCompact ? 12 : 16,
+                    6,
+                    isCompact ? 8 : 12,
+                    isCompact ? 8 : 12,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Title block
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Bán hàng',
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isCompact ? 18 : 22,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                                height: 1.1,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '$timeStr  ·  $dateStr',
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: const Color(0x80FFFFFF),
+                                fontSize: isCompact ? 11 : 13,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
                   // ── Active Counter QR Orders Badge & Comprehensive Pipeline Error Warning ──
                   IconButton(
+                    visualDensity: isCompact
+                        ? VisualDensity.compact
+                        : VisualDensity.standard,
+                    padding: EdgeInsets.all(isCompact ? 4 : 8),
+                    constraints: isCompact
+                        ? const BoxConstraints(minWidth: 36, minHeight: 36)
+                        : null,
                     tooltip: 'Đối soát thanh toán bị gián đoạn',
-                    icon: const Icon(Icons.restore, color: Colors.white),
+                    icon: Icon(
+                      Icons.restore,
+                      color: Colors.white,
+                      size: isCompact ? 20 : 24,
+                    ),
                     onPressed: cart.isProcessing
                         ? null
                         : () async {
@@ -391,6 +417,34 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           icon = Icons.dns_rounded;
                         }
 
+                        if (isCompact) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: Tooltip(
+                              message: '$label: $errMsg',
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: bg,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: bg.withValues(alpha: 0.4),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  icon,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: Tooltip(
@@ -435,7 +489,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           : Colors.blue;
 
                       return Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: EdgeInsets.only(right: isCompact ? 6 : 8),
                         child: GestureDetector(
                           onTap: () async {
                             final selectedReq =
@@ -461,9 +515,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isCompact ? 8 : 10,
+                              vertical: isCompact ? 4 : 6,
                             ),
                             decoration: BoxDecoration(
                               color: badgeColor,
@@ -479,18 +533,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.bolt_rounded,
-                                  size: 16,
+                                  size: isCompact ? 14 : 16,
                                   color: Colors.white,
                                 ),
-                                const SizedBox(width: 4),
+                                SizedBox(width: isCompact ? 2 : 4),
                                 Text(
-                                  'QR Quầy (${activeCounterReqs.length})',
+                                  isCompact
+                                      ? 'QR (${activeCounterReqs.length})'
+                                      : 'QR Quầy (${activeCounterReqs.length})',
                                   style: GoogleFonts.outfit(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 12,
+                                    fontSize: isCompact ? 11 : 12,
                                   ),
                                 ),
                               ],
@@ -505,23 +561,23 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   GestureDetector(
                     onTap: () => _openQuickAddProduct(),
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(isCompact ? 6 : 8),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(isCompact ? 10 : 12),
                         border: Border.all(
                           color: Colors.white.withValues(alpha: 0.20),
                           width: 1,
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.add_rounded,
                         color: Colors.white,
-                        size: 20,
+                        size: isCompact ? 18 : 20,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: isCompact ? 6 : 8),
 
                   // Cart badge
                   GestureDetector(
@@ -529,9 +585,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         onTap: cart.isEmpty ? null : _openCart,
                         child: AnimatedContainer(
                           duration: 200.ms,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isCompact ? 8 : 12,
+                            vertical: isCompact ? 6 : 8,
                           ),
                           decoration: BoxDecoration(
                             color: cart.isEmpty
@@ -542,18 +598,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.shopping_cart_rounded,
                                 color: Colors.white,
-                                size: 18,
+                                size: isCompact ? 16 : 18,
                               ),
                               if (cart.itemCount > 0) ...[
-                                const SizedBox(width: 6),
+                                SizedBox(width: isCompact ? 4 : 6),
                                 Text(
-                                  '${cart.itemCount} mon',
-                                  style: const TextStyle(
+                                  isCompact
+                                      ? '${cart.itemCount}'
+                                      : '${cart.itemCount} mon',
+                                  style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 13,
+                                    fontSize: isCompact ? 12 : 13,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -572,25 +630,25 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       .then()
                       .scaleXY(begin: 1.08, end: 1.0, duration: 100.ms),
 
-                  const SizedBox(width: 8),
-
-                  // Clear cart
-                  if (!cart.isEmpty)
+                  if (!cart.isEmpty) ...[
+                    SizedBox(width: isCompact ? 6 : 8),
+                    // Clear cart
                     GestureDetector(
                       onTap: _confirmClearCart,
                       child: Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: EdgeInsets.all(isCompact ? 6 : 8),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(isCompact ? 10 : 12),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.delete_sweep_rounded,
-                          color: Color(0x99FFFFFF),
-                          size: 20,
+                          color: const Color(0x99FFFFFF),
+                          size: isCompact ? 18 : 20,
                         ),
                       ),
                     ),
+                  ],
                 ],
               ),
             ),
@@ -598,6 +656,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         );
       },
     );
+  },
+);
   }
 
   // ─────────────────────────────────────────────────────────────────────────

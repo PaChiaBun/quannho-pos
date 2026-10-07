@@ -489,7 +489,7 @@ class _ShopInfoCard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-                if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(

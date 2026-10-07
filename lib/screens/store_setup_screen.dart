@@ -232,8 +232,8 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                 ),
                 const SizedBox(height: 32),
 
-                // ── Tab selector (Trên iOS chỉ cho phép Nhập mã quán theo Apple Guideline 3.1.1) ──
-                if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                // ── Tab selector (Trên iOS native chỉ cho phép Nhập mã quán theo Apple Guideline 3.1.1; Web và Android mở đầy đủ) ──
+                if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -281,7 +281,7 @@ class _StoreSetupScreenState extends State<StoreSetupScreen>
                 // ── Tab content ───────────────────────────────────────────
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
-                  child: (defaultTargetPlatform == TargetPlatform.iOS || _tab == 0)
+                  child: ((!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) || _tab == 0)
                       ? _buildJoinForm()
                       : _buildCreateForm(),
                 ),

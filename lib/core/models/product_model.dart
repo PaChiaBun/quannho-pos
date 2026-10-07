@@ -4,6 +4,8 @@
 // Quản lý thông tin sản phẩm và trạng thái kinh doanh trong Quán Nhỏ POS/Kho.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import '../utils/quantity_formatter.dart';
+
 class ProductModel {
   final String id;
   final String storeId;
@@ -129,7 +131,7 @@ class ProductModel {
     }
     return stockQty % 1 == 0
         ? '${stockQty.toInt()} $unit'
-        : '${stockQty.toStringAsFixed(1)} $unit';
+        : '${fmtQty(stockQty)} $unit';
   }
 
   ProductModel copyWith({

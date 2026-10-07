@@ -150,7 +150,12 @@ class InvariantGuard:
             )
 
         # Check 2: Login form must be strictly enforced on iOS
-        if "(defaultTargetPlatform == TargetPlatform.iOS || _tab == 0)" not in content:
+        has_ios_login_enforcement = (
+            "((!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) || _tab == 0)" in content
+            or "(defaultTargetPlatform == TargetPlatform.iOS || _tab == 0)" in content
+            or "(!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS || _tab == 0)" in content
+        )
+        if not has_ios_login_enforcement:
             raise InvariantViolationError(
                 "Apple Guideline 3.1.1 Invariant Failed: Registration form is not suppressed on iOS in auth_screen.dart"
             )
@@ -174,7 +179,7 @@ class InvariantGuard:
                 )
 
             ios_match = re.search(
-                r"if\s*\(\s*defaultTargetPlatform\s*==\s*TargetPlatform\.iOS\s*\)\s*\.\.\.\[(.*?)\]\s*else\s*\.\.\.\[",
+                r"if\s*\(\s*(?:!kIsWeb\s*&&\s*)?defaultTargetPlatform\s*==\s*TargetPlatform\.iOS\s*\)\s*\.\.\.\[(.*?)\]\s*else\s*\.\.\.\[",
                 sp_content,
                 re.DOTALL,
             )

@@ -81,7 +81,7 @@ class StaffSyncService {
             }
           },
         );
-      await _channel!.subscribe();
+      _channel!.subscribe();
 
       // ── 2. Postgres Realtime — watch store_roles table trực tiếp ─────────
       _rolesChannel = db
@@ -108,7 +108,7 @@ class StaffSyncService {
               }
             },
           );
-      await _rolesChannel!.subscribe();
+      _rolesChannel!.subscribe();
 
       // ── 3. Postgres Realtime — watch store_members DELETE trực tiếp ───────
       // Nguồn tin cậy DB Realtime: khi record store_members của user bị xoá
@@ -163,7 +163,7 @@ class StaffSyncService {
               }
             },
           );
-      await _membersChannel!.subscribe();
+      _membersChannel!.subscribe();
 
       debugPrint(
         '[StaffSync] Subscribed to $channelName + store_roles + store_members realtime',
@@ -181,13 +181,13 @@ class StaffSyncService {
   }) async {
     try {
       final db = Supabase.instance.client;
-      // ‼️ FIX: subscribe trước khi send — Supabase drop message từ channel chưa subscribe
-      final ch = db.channel('staff_sync_sender_${storeId}_role');
-      await ch.subscribe();
+      final ch = db.channel('staff_sync_$storeId');
+      ch.subscribe();
       await ch.sendBroadcastMessage(
         event: 'role_changed',
         payload: {'userId': targetUserId, 'newRole': newRole},
       );
+      await Future.delayed(const Duration(milliseconds: 100));
       await ch.unsubscribe();
       debugPrint(
         '[StaffSync] Broadcast role_changed → $targetUserId: $newRole',
@@ -204,12 +204,13 @@ class StaffSyncService {
   }) async {
     try {
       final db = Supabase.instance.client;
-      final ch = db.channel('staff_sync_sender_${storeId}_perms');
-      await ch.subscribe();
+      final ch = db.channel('staff_sync_$storeId');
+      ch.subscribe();
       await ch.sendBroadcastMessage(
         event: 'perms_changed',
         payload: {'role': role},
       );
+      await Future.delayed(const Duration(milliseconds: 100));
       await ch.unsubscribe();
       debugPrint('[StaffSync] Broadcast perms_changed → role: $role');
     } catch (e) {
@@ -224,15 +225,38 @@ class StaffSyncService {
   }) async {
     try {
       final db = Supabase.instance.client;
-      final ch = db.channel('staff_sync_sender_${storeId}_remove');
-      await ch.subscribe();
+      final ch = db.channel('staff_sync_$storeId');
+      ch.subscribe();
       await ch.sendBroadcastMessage(
         event: 'staff_removed',
         payload: {'userId': targetUserId},
       );
+      await Future.delayed(const Duration(milliseconds: 100));
       await ch.unsubscribe();
+      debugPrint('[StaffSync] Broadcast staff_removed → $targetUserId');
     } catch (e) {
       debugPrint('[StaffSync] broadcastStaffRemoved error: $e');
+    }
+  }
+
+  // ── Gửi broadcast staff_joined (nhân viên mới vào quán) ───────────────────
+  static Future<void> broadcastStaffJoined({
+    required String storeId,
+    required String userId,
+  }) async {
+    try {
+      final db = Supabase.instance.client;
+      final ch = db.channel('staff_sync_$storeId');
+      ch.subscribe();
+      await ch.sendBroadcastMessage(
+        event: 'staff_joined',
+        payload: {'userId': userId},
+      );
+      await Future.delayed(const Duration(milliseconds: 100));
+      await ch.unsubscribe();
+      debugPrint('[StaffSync] Broadcast staff_joined → $userId');
+    } catch (e) {
+      debugPrint('[StaffSync] broadcastStaffJoined error: $e');
     }
   }
 

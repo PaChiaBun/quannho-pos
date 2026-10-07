@@ -2,6 +2,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // POS JWT Auth Service — Managing Server-Signed PostgREST JWTs for POS RLS Guard
 // ─────────────────────────────────────────────────────────────────────────────
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,6 +13,22 @@ import 'supabase_service.dart';
 
 const String _kPosJwtStorageKey = 'pos_supabase_jwt';
 const String _kPosOnboardingJwtStorageKey = 'pos_supabase_onboarding_jwt';
+const String _kPosRefreshTokenStorageKey = 'pos_refresh_token';
+
+/// Kết quả làm mới phiên (Bước 1+2 kế hoạch token).
+enum PosRefreshOutcome {
+  /// Đã nhận access token mới và áp dụng cho Supabase.
+  refreshed,
+
+  /// Không có refresh token (bản cũ / chưa đăng nhập lại).
+  noRefreshToken,
+
+  /// Mất mạng / server lỗi tạm thời: GIỮ phiên, thử lại sau.
+  offline,
+
+  /// Server từ chối (hết hạn, bị thu hồi, bị xoá khỏi quán): phải đăng nhập lại.
+  rejected,
+}
 const String _kConfiguredPosJwtBackendUrl = String.fromEnvironment(
   'POS_JWT_AUTH_URL',
   defaultValue: '',
@@ -130,6 +147,218 @@ class PosJwtAuthService {
     } catch (_) {}
   }
 
+  // ── Refresh token (access 12h + refresh 30 ngày xoay vòng) ─────────────────
+  static Completer<PosRefreshOutcome>? _refreshInFlight;
+  static Timer? _refreshTimer;
+
+  /// Khi còn ít hơn ngưỡng này thì chủ động làm mới access token.
+  static const Duration refreshThreshold = Duration(hours: 2);
+
+  Future<String?> getStoredRefreshToken() async {
+    String? token;
+    try {
+      token = await secureStorage.read(key: _kPosRefreshTokenStorageKey);
+    } catch (_) {}
+    if (token == null || token.isEmpty) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        token = prefs.getString(_kPosRefreshTokenStorageKey);
+      } catch (_) {}
+    }
+    if (token == null || !token.startsWith('qnr_')) return null;
+    return token;
+  }
+
+  Future<void> storeRefreshToken(String token) async {
+    try {
+      await secureStorage.write(key: _kPosRefreshTokenStorageKey, value: token);
+    } catch (_) {}
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kPosRefreshTokenStorageKey, token);
+    } catch (_) {}
+  }
+
+  Future<void> clearRefreshToken() async {
+    try {
+      await secureStorage.delete(key: _kPosRefreshTokenStorageKey);
+    } catch (_) {}
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_kPosRefreshTokenStorageKey);
+    } catch (_) {}
+  }
+
+  /// Lưu refresh token trả về từ gateway (nếu có). Không có → xoá token cũ
+  /// để không dùng nhầm refresh token của quán/phiên trước.
+  Future<void> _persistRefreshFromResponse(Map<String, dynamic> data) async {
+    final refresh = data.remove('refresh_token');
+    if (refresh is String && refresh.startsWith('qnr_')) {
+      await storeRefreshToken(refresh);
+    } else {
+      await clearRefreshToken();
+    }
+  }
+
+  /// Số giây còn lại của access token (null nếu không đọc được).
+  int? secondsUntilExpiry(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      final payload =
+          jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))))
+              as Map<String, dynamic>;
+      final exp = payload['exp'] as int?;
+      if (exp == null) return null;
+      return exp - DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Đổi refresh token lấy access token mới. Chỉ một yêu cầu chạy cùng lúc.
+  Future<PosRefreshOutcome> refreshPosJwt({
+    String? expectedStoreId,
+    String endpointPath = '/api/auth/refresh',
+    Duration timeoutDuration = const Duration(seconds: 10),
+  }) {
+    final running = _refreshInFlight;
+    if (running != null) return running.future;
+    final completer = Completer<PosRefreshOutcome>();
+    _refreshInFlight = completer;
+    _doRefresh(expectedStoreId, endpointPath, timeoutDuration)
+        .then(completer.complete, onError: (_) {
+      completer.complete(PosRefreshOutcome.offline);
+    }).whenComplete(() => _refreshInFlight = null);
+    return completer.future;
+  }
+
+  Future<PosRefreshOutcome> _doRefresh(
+    String? expectedStoreId,
+    String endpointPath,
+    Duration timeoutDuration,
+  ) async {
+    if (!isConfigured) return PosRefreshOutcome.noRefreshToken;
+    final refresh = await getStoredRefreshToken();
+    if (refresh == null) return PosRefreshOutcome.noRefreshToken;
+
+    http.Response response;
+    try {
+      response = await httpClient
+          .post(
+            Uri.parse('$_backendUrl$endpointPath'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'refresh_token': refresh}),
+          )
+          .timeout(timeoutDuration);
+    } catch (_) {
+      return PosRefreshOutcome.offline;
+    }
+
+    Map<String, dynamic>? data;
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) data = decoded;
+    } catch (_) {}
+
+    if (response.statusCode == 409) {
+      // Tab/luồng khác vừa xoay vòng token: đọc lại token mới nhất đã lưu.
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+      final latest = await getStoredPosJwt();
+      if (latest != null &&
+          isTokenValid(latest, expectedStoreId: expectedStoreId) &&
+          (secondsUntilExpiry(latest) ?? 0) > refreshThreshold.inSeconds) {
+        final applied =
+            await applyAuthToSupabase(latest, expectedStoreId: expectedStoreId);
+        return applied ? PosRefreshOutcome.refreshed : PosRefreshOutcome.offline;
+      }
+      return PosRefreshOutcome.offline;
+    }
+
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      await clearRefreshToken();
+      return PosRefreshOutcome.rejected;
+    }
+
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300 ||
+        data == null ||
+        data['success'] != true ||
+        data['pos_jwt'] is! String) {
+      return PosRefreshOutcome.offline;
+    }
+
+    final token = data['pos_jwt'] as String;
+    if (!isTokenValid(token, expectedStoreId: expectedStoreId)) {
+      if (isTokenValid(token)) {
+        // Refresh token thuộc quán khác với phiên hiện tại → bỏ, cần đăng nhập lại quán này.
+        await clearRefreshToken();
+        return PosRefreshOutcome.noRefreshToken;
+      }
+      return PosRefreshOutcome.offline;
+    }
+    // Lưu refresh token MỚI trước: token cũ đã bị server đánh dấu đã dùng.
+    await _persistRefreshFromResponse(data);
+    await storePosJwt(token);
+    final applied =
+        await applyAuthToSupabase(token, expectedStoreId: expectedStoreId);
+    return applied ? PosRefreshOutcome.refreshed : PosRefreshOutcome.offline;
+  }
+
+  /// Gọi định kỳ / khi app quay lại foreground: làm mới nếu sắp hết hạn.
+  /// Trả về false khi phiên đã bị server thu hồi (cần đăng nhập lại).
+  Future<bool> ensureFreshPosJwt({String? expectedStoreId}) async {
+    if (!isConfigured) return true;
+    final current = await getStoredPosJwt();
+    final remaining = current == null ? null : secondsUntilExpiry(current);
+    if (remaining != null && remaining > refreshThreshold.inSeconds) return true;
+    final outcome = await refreshPosJwt(expectedStoreId: expectedStoreId);
+    if (outcome == PosRefreshOutcome.rejected) return false;
+    if (outcome == PosRefreshOutcome.noRefreshToken) {
+      // Bản cũ chưa có refresh token: còn hạn thì dùng tiếp, hết hạn thì phải đăng nhập lại.
+      return current != null;
+    }
+    return true;
+  }
+
+  /// Hẹn giờ kiểm tra mỗi 10 phút (bền với máy ngủ/tab nền hơn một mốc cố định).
+  void startAutoRefresh({
+    required String? Function() currentStoreId,
+    void Function()? onSessionRevoked,
+  }) {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(minutes: 10), (_) async {
+      final storeId = currentStoreId();
+      if (storeId == null || storeId.isEmpty) return;
+      final ok = await ensureFreshPosJwt(expectedStoreId: storeId);
+      if (!ok) onSessionRevoked?.call();
+    });
+  }
+
+  static void stopAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+  }
+
+  /// Đăng xuất phía server: thu hồi cả chuỗi refresh token. Không chặn UI.
+  Future<void> revokeRefreshToken({
+    String endpointPath = '/api/auth/logout',
+    Duration timeoutDuration = const Duration(seconds: 4),
+  }) async {
+    final refresh = await getStoredRefreshToken();
+    await clearRefreshToken();
+    if (refresh == null || !isConfigured) return;
+    try {
+      await httpClient
+          .post(
+            Uri.parse('$_backendUrl$endpointPath'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'refresh_token': refresh}),
+          )
+          .timeout(timeoutDuration);
+    } catch (_) {}
+  }
+
   /// POS JWT chỉ được bật khi bản build khai báo một endpoint production.
   /// Không để hoạt động cốt lõi của POS phụ thuộc ngầm vào BunServer/Tailscale.
   bool get isConfigured {
@@ -178,6 +407,7 @@ class PosJwtAuthService {
 
   /// Clear stored POS JWT token from secure storage and SharedPreferences fallback
   Future<void> clearPosJwt() async {
+    await clearRefreshToken();
     try {
       await secureStorage.delete(key: _kPosJwtStorageKey);
     } catch (_) {}
@@ -305,6 +535,7 @@ class PosJwtAuthService {
       'phone': phone.trim(),
       'password': password.trim(),
       'store_id': storeId.trim(),
+      'supports_refresh': true,
     };
 
     try {
@@ -347,6 +578,7 @@ class PosJwtAuthService {
         // Transactional apply & storage with rollback compensation
         try {
           await storePosJwt(token);
+          await _persistRefreshFromResponse(data);
           final applied = await applyAuthToSupabase(
             token,
             expectedStoreId: storeId,
@@ -585,7 +817,10 @@ class PosJwtAuthService {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer ${onboardingJwt.trim()}',
             },
-            body: jsonEncode({'store_id': storeId.trim()}),
+            body: jsonEncode({
+              'store_id': storeId.trim(),
+              'supports_refresh': true,
+            }),
           )
           .timeout(timeoutDuration);
 
@@ -621,6 +856,7 @@ class PosJwtAuthService {
         bool applied;
         try {
           await storePosJwt(token);
+          await _persistRefreshFromResponse(data);
           applied = await applyAuthToSupabase(token, expectedStoreId: storeId);
         } catch (_) {
           await clearOnboardingJwt();

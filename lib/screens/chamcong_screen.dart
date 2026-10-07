@@ -992,16 +992,17 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
           _showClockOutEarningsDialog(context, calcResult, updatedMonthly);
         }
 
-        // 📡 Broadcast — subscribe trước, send, rồi unsubscribe để tránh channel leak
+        // 📡 Broadcast — gửi trên channel shifts:storeId để nhan_vien_screen cập nhật ngay
         try {
           final ch = Supabase.instance.client.channel(
-            'shifts_sender_${session.storeId}',
+            'shifts:${session.storeId}',
           );
           await ch.subscribe();
           await ch.sendBroadcastMessage(
             event: 'shift_changed',
             payload: {'action': 'clock_out'},
           );
+          await Future.delayed(const Duration(milliseconds: 100));
           await ch.unsubscribe();
         } catch (_) {}
       } catch (e) {
@@ -1372,16 +1373,17 @@ class _ChamCongScreenState extends ConsumerState<ChamCongScreen>
       ref.invalidate(openShiftCCProvider);
       ref.invalidate(_myShiftsProvider);
 
-      // 📡 Broadcast — subscribe trước, send, rồi unsubscribe để tránh channel leak
+      // 📡 Broadcast — gửi trên channel shifts:storeId để nhan_vien_screen cập nhật ngay
       try {
         final ch = Supabase.instance.client.channel(
-          'shifts_sender_${session.storeId}',
+          'shifts:${session.storeId}',
         );
         await ch.subscribe();
         await ch.sendBroadcastMessage(
           event: 'shift_changed',
           payload: {'action': 'clock_in'},
         );
+        await Future.delayed(const Duration(milliseconds: 100));
         await ch.unsubscribe();
       } catch (_) {}
     } catch (e) {

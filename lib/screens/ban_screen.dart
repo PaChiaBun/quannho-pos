@@ -3603,8 +3603,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           centralRoutingEnabled: printerSettings.centralPrintRoutingEnabled,
           hasPrintServerOwner: hasOwner,
           allowPrintServerFallback:
-              printerSettings.deviceState.isPrintServer &&
-              printerSettings.deviceState.allowBackgroundPrinting,
+              printerSettings.isDesignatedPrintServerDevice,
         )) {
           final billData = BillData(
             shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
@@ -3998,8 +3997,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     printerSettingsCached.centralPrintRoutingEnabled,
                 hasPrintServerOwner: hasPrintServerOwner,
                 allowPrintServerFallback:
-                    printerSettingsCached.deviceState.isPrintServer &&
-                    printerSettingsCached.deviceState.allowBackgroundPrinting,
+                    printerSettingsCached.isDesignatedPrintServerDevice,
               )) {
             final List<BillItem> billItems = [];
             for (final item in items) {
@@ -4527,8 +4525,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   printerSettingsCached.centralPrintRoutingEnabled,
               hasPrintServerOwner: hasPrintServerOwner,
               allowPrintServerFallback:
-                  printerSettingsCached.deviceState.isPrintServer &&
-                  printerSettingsCached.deviceState.allowBackgroundPrinting,
+                  printerSettingsCached.isDesignatedPrintServerDevice,
             )) {
           final List<BillItem> billItems = [];
           for (final item in items) {
@@ -4897,11 +4894,44 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
   }
 
+  /// Ghi chú món mà nhân viên đã tự sửa trên máy này nhưng chưa lưu lên DB.
+  /// Chỉ các item trong tập này mới được ghi đè `ban_session_items.note`,
+  /// tránh việc controller cũ/rỗng trên máy khác xóa ghi chú đã lưu.
+  final Set<String> _dirtyNoteIds = {};
+
+  /// Món gộp (cùng sản phẩm/giá/ghi chú/trạng thái) hiển thị 1 dòng nhưng có
+  /// nhiều dòng DB: id đại diện → mọi id; và id dòng DB → id đại diện.
+  final Map<String, List<String>> _noteGroupIds = {};
+  final Map<String, String> _noteRepOf = {};
+
   Future<void> _updateItemNote(BanSessionItemModel item, String newNote) async {
-    await Supabase.instance.client
-        .from('ban_session_items')
-        .update({'note': newNote.trim().isEmpty ? null : newNote.trim()})
-        .eq('id', item.id);
+    final clean = newNote.trim().isEmpty ? null : newNote.trim();
+    final ids = _noteGroupIds[item.id] ?? [item.id];
+    try {
+      await Supabase.instance.client
+          .from('ban_session_items')
+          .update({'note': clean})
+          .inFilter('id', ids);
+      _dirtyNoteIds.remove(item.id);
+      // Món đã gửi bếp: đồng bộ ghi chú sang phiếu bếp để KDS/in lại thấy.
+      if (item.kitchenStatus != 'chua_gui') {
+        try {
+          await Supabase.instance.client
+              .from('kitchen_ticket_items')
+              .update({'free_note': clean})
+              .inFilter('session_item_id', ids);
+        } catch (e) {
+          AppLogger.error('order', 'Dong bo ghi chu sang phieu bep that bai: $e');
+        }
+      }
+    } catch (e, st) {
+      AppLogger.error(
+        'order',
+        'Luu ghi chu mon ${item.productName} that bai: $e',
+        e,
+        st,
+      );
+    }
     ref.invalidate(sessionItemsProvider(widget.session.id));
   }
 
@@ -4913,11 +4943,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     });
     try {
       final List<BanSessionItemModel> updatedItems = [];
-      // Lưu toàn bộ ghi chú từ controller vào database trước để tránh race condition
+      final savedReps = <String>{};
+      // Lưu ghi chú người dùng đã gõ vào database trước khi gửi (chống race condition).
+      // Chỉ ghi các ô đã sửa trên máy này; món gộp dùng ô của dòng đại diện.
       for (final item in items) {
         if (item.kitchenStatus == 'chua_gui') {
-          final ctrl = _noteControllers[item.id];
-          if (ctrl != null) {
+          final rep = _noteRepOf[item.id] ?? item.id;
+          final ctrl = _noteControllers[rep];
+          if (ctrl != null && _dirtyNoteIds.contains(rep)) {
             final newNote = ctrl.text.trim();
             final oldNote = item.note?.trim() ?? '';
             if (newNote != oldNote) {
@@ -4925,6 +4958,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   .from('ban_session_items')
                   .update({'note': newNote.isEmpty ? null : newNote})
                   .eq('id', item.id);
+              savedReps.add(rep);
               updatedItems.add(
                 item.copyWith(
                   note: newNote.isEmpty ? null : newNote,
@@ -4937,6 +4971,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         }
         updatedItems.add(item);
       }
+      _dirtyNoteIds.removeAll(savedReps);
       await _sendToKitchenImpl(updatedItems);
     } catch (e, st) {
       debugPrint('[Kitchen] ❌ _sendToKitchen crash: $e\n$st');
@@ -5133,14 +5168,16 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     // Tự động in bếp bằng StationPrinterDispatcher (hỗ trợ phân chia 4 trạm in mới)
     try {
       final settings = ref.read(printerSettingsProvider);
+      final hasKitchenPrinter =
+          (settings.bepNong.enabled && settings.bepNong.name.trim().isNotEmpty) ||
+          (settings.bepBar.enabled && settings.bepBar.name.trim().isNotEmpty);
       if (settings.autoPrintKitchen &&
           shouldAutoPrintLocally(
             isWeb: kIsWeb,
             centralRoutingEnabled: settings.centralPrintRoutingEnabled,
             hasPrintServerOwner: hasActivePrintServerOwner(settings.ownerState),
             allowPrintServerFallback:
-                settings.deviceState.isPrintServer &&
-                settings.deviceState.allowBackgroundPrinting,
+                settings.isDesignatedPrintServerDevice,
           )) {
         final List<BillItem> billItems = [];
         for (final item in unsent) {
@@ -6075,6 +6112,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                             groupedActiveMap[key] = item;
                           }
                         }
+                        _noteGroupIds.clear();
+                        _noteRepOf.clear();
+                        for (final item in rawActiveItems) {
+                          final rep = groupedActiveMap[
+                              '${item.productId}_${item.price.toStringAsFixed(2)}_${item.note?.trim() ?? ''}_${item.modifiersJson?.trim() ?? ''}_${item.kitchenStatus}']!;
+                          _noteRepOf[item.id] = rep.id;
+                          (_noteGroupIds[rep.id] ??= []).add(item.id);
+                        }
                         final activeItems = groupedActiveMap.values.toList()
                           ..sort((a, b) => a.addedAt.compareTo(b.addedAt));
                         print(
@@ -6444,25 +6489,20 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                   ),
                                                   child: _ItemNoteInput(
                                                     item: item,
+                                                    onEdited: () =>
+                                                        _dirtyNoteIds.add(
+                                                          item.id,
+                                                        ),
+                                                    onCommit: (text) =>
+                                                        _updateItemNote(
+                                                          item,
+                                                          text,
+                                                        ),
                                                     focusNode: _noteFocusNodes
-                                                        .putIfAbsent(item.id, () {
-                                                          final fn =
-                                                              FocusNode();
-                                                          fn.addListener(() {
-                                                            if (!fn.hasFocus) {
-                                                              final currentText =
-                                                                  _noteControllers[item
-                                                                          .id]
-                                                                      ?.text ??
-                                                                  '';
-                                                              _updateItemNote(
-                                                                item,
-                                                                currentText,
-                                                              );
-                                                            }
-                                                          });
-                                                          return fn;
-                                                        }),
+                                                        .putIfAbsent(
+                                                          item.id,
+                                                          () => FocusNode(),
+                                                        ),
                                                     controller: _noteControllers
                                                         .putIfAbsent(
                                                           item.id,
@@ -6544,25 +6584,11 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                                     ),
                                                                   );
 
-                                                              Supabase
-                                                                  .instance
-                                                                  .client
-                                                                  .from(
-                                                                    'ban_session_items',
-                                                                  )
-                                                                  .update({
-                                                                    'note':
-                                                                        newText
-                                                                            .trim()
-                                                                            .isEmpty
-                                                                        ? null
-                                                                        : newText
-                                                                              .trim(),
-                                                                  })
-                                                                  .eq(
-                                                                    'id',
-                                                                    item.id,
-                                                                  );
+_dirtyNoteIds.add(item.id);
+                                                              _updateItemNote(
+                                                                item,
+                                                                newText,
+                                                              );
                                                               setState(() {});
                                                             },
                                                             child: Container(
@@ -13074,11 +13100,15 @@ class _ItemNoteInput extends StatefulWidget {
   final BanSessionItemModel item;
   final TextEditingController controller;
   final FocusNode focusNode;
+  final VoidCallback onEdited;
+  final void Function(String text) onCommit;
 
   const _ItemNoteInput({
     required this.item,
     required this.controller,
     required this.focusNode,
+    required this.onEdited,
+    required this.onCommit,
   });
 
   @override
@@ -13086,11 +13116,54 @@ class _ItemNoteInput extends StatefulWidget {
 }
 
 class _ItemNoteInputState extends State<_ItemNoteInput> {
+  bool _edited = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ItemNoteInput old) {
+    super.didUpdateWidget(old);
+    if (old.focusNode != widget.focusNode) {
+      old.focusNode.removeListener(_onFocusChange);
+      widget.focusNode.addListener(_onFocusChange);
+    }
+    // Máy khác (hoặc server) đã đổi ghi chú → cập nhật ô nhập nếu mình không đang sửa.
+    final remote = widget.item.note ?? '';
+    if ((old.item.note ?? '') != remote &&
+        !_edited &&
+        !widget.focusNode.hasFocus &&
+        widget.controller.text != remote) {
+      widget.controller.text = remote;
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    // Chỉ lưu khi người dùng thực sự gõ — không ghi đè bằng text cũ/rỗng.
+    if (!widget.focusNode.hasFocus && _edited) {
+      _edited = false;
+      widget.onCommit(widget.controller.text);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return TextField(
       focusNode: widget.focusNode,
       controller: widget.controller,
+      onChanged: (_) {
+        _edited = true;
+        widget.onEdited();
+      },
       style: GoogleFonts.outfit(
         fontSize: 12,
         fontWeight: FontWeight.w600,

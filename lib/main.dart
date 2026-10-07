@@ -16,6 +16,7 @@ import 'core/providers/app_providers.dart';
 import 'core/services/staff_service.dart';
 import 'core/services/staff_shift_realtime_controller.dart';
 import 'core/services/user_auth_service.dart' show SessionData, UserAuthService;
+import 'core/services/pos_jwt_auth_service.dart';
 import 'dart:async';
 import 'package:printing/printing.dart';
 
@@ -278,6 +279,7 @@ class _MainShellState extends ConsumerState<MainShell>
       _startRoleWatcher();
       _startShiftWatcher();
       _validateMembershipOnResume();
+      _startTokenAutoRefresh();
       // Kiểm tra bản cập nhật sau 2 giây — cho UI render xong trước
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) AppUpdateManager.checkAndPromptUpdate(context, silent: true);
@@ -288,8 +290,36 @@ class _MainShellState extends ConsumerState<MainShell>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _ensureFreshToken();
       _validateMembershipOnResume();
     }
+  }
+
+  // ── Phiên đăng nhập: access token 12h, tự làm mới bằng refresh token ──
+  final PosJwtAuthService _posJwt = PosJwtAuthService();
+
+  void _startTokenAutoRefresh() {
+    _posJwt.startAutoRefresh(
+      currentStoreId: () => ref.read(sessionProvider)?.storeId,
+      onSessionRevoked: _handleSessionRevoked,
+    );
+    _ensureFreshToken();
+  }
+
+  Future<void> _ensureFreshToken() async {
+    final storeId = ref.read(sessionProvider)?.storeId;
+    if (storeId == null || storeId.isEmpty) return;
+    final ok = await _posJwt.ensureFreshPosJwt(expectedStoreId: storeId);
+    if (!ok) _handleSessionRevoked();
+  }
+
+  Future<void> _handleSessionRevoked() async {
+    if (!mounted || _isNavigatingAway) return;
+    _isNavigatingAway = true;
+    debugPrint('[MainShell] Phiên đăng nhập bị thu hồi/hết hạn -> về màn đăng nhập');
+    await ref.read(sessionProvider.notifier).clear();
+    if (!mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
   }
 
   bool _isNavigatingAway = false;
@@ -418,6 +448,7 @@ class _MainShellState extends ConsumerState<MainShell>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    PosJwtAuthService.stopAutoRefresh();
     _tabFadeCtrl.dispose();
     _roleChannel?.unsubscribe();
     _shiftController.dispose();

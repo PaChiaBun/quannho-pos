@@ -342,12 +342,19 @@ class StaffService {
         final parsed = parseActionPermissions(exactRoleSettings['value']);
         if (parsed.isNotEmpty) {
           final merged = Set<String>.from(parsed);
+          // Theo chuẩn Lego Modules (Single Source of Truth), luôn kế thừa quyền từ module:
+          merged.addAll(derivedPerms);
           // Đảm bảo nếu vai trò có module pos/ban thì không bị mất pos.checkout
           if (modules.contains('pos') ||
               modules.contains('ban') ||
               canonical == 'cashier' ||
               effectiveRole.toLowerCase().contains('thu ngân')) {
             merged.add('pos.checkout');
+          }
+          if (modules.contains('bill_printer') ||
+              canonical == 'cashier' ||
+              effectiveRole.toLowerCase().contains('thu ngân')) {
+            merged.add('printer.manage_server');
           }
           return merged.toList();
         }
@@ -366,11 +373,17 @@ class StaffService {
           final parsed = parseActionPermissions(canonicalRoleSettings['value']);
           if (parsed.isNotEmpty) {
             final merged = Set<String>.from(parsed);
+            merged.addAll(derivedPerms);
             if (modules.contains('pos') ||
                 modules.contains('ban') ||
                 canonical == 'cashier' ||
                 effectiveRole.toLowerCase().contains('thu ngân')) {
               merged.add('pos.checkout');
+            }
+            if (modules.contains('bill_printer') ||
+                canonical == 'cashier' ||
+                effectiveRole.toLowerCase().contains('thu ngân')) {
+              merged.add('printer.manage_server');
             }
             return merged.toList();
           }
@@ -422,21 +435,130 @@ class StaffService {
   // ══════════════════════════════════════════════════════════════════════════
   // DANH SÁCH NHÂN VIÊN
   // ══════════════════════════════════════════════════════════════════════════
+  static bool isUnassignedRole(String role) {
+    final r = role.toLowerCase().trim();
+    return r.isEmpty ||
+        r == 'none' ||
+        r == 'unassigned' ||
+        r.contains('chưa phân') ||
+        r.contains('chưa gán') ||
+        r.contains('chưa có') ||
+        r.contains('chưa cấp');
+  }
+
+  static List<StaffMember> _parseStaffDirectoryRows(dynamic raw) {
+    final list = <StaffMember>[];
+    final rows = raw is List
+        ? raw
+        : (raw is Map && raw['data'] is List)
+            ? (raw['data'] as List)
+            : const [];
+    for (final item in rows) {
+      if (item is! Map) continue;
+      final m = Map<String, dynamic>.from(item);
+      final userId = (m['user_id'] as String?)?.trim();
+      if (userId == null || userId.isEmpty) continue;
+      final role = (m['role'] as String?)?.trim() ?? 'unassigned';
+      final isOwnerFlag = (m['is_owner'] as bool?) ?? false;
+      final isOwnerRole = isOwnerFlag ||
+          role.toLowerCase() == 'owner' ||
+          role.toLowerCase() == 'chủ quán' ||
+          canonicalRole(role) == 'owner';
+      final rawName = (m['name'] as String?)?.trim();
+      final phone = (m['phone'] as String?)?.trim() ?? '';
+      final cleanDigits = phone.replaceAll(RegExp(r'\D'), '');
+      final name = (rawName != null &&
+              rawName.isNotEmpty &&
+              rawName != 'Nhân viên' &&
+              rawName != 'Nhân viên mới')
+          ? rawName
+          : (cleanDigits.isNotEmpty
+              ? 'NV $cleanDigits'
+              : (isUnassignedRole(role) ? 'Nhân viên mới' : 'Nhân viên'));
+      final hourlyRate = (m['hourly_rate'] as num?)?.toDouble() ?? 0;
+      final isClockedIn = (m['is_clocked_in'] as bool?) ?? false;
+      final shiftConfigId = m['shift_config_id']?.toString();
+
+      list.add(
+        StaffMember(
+          userId: userId,
+          name: name,
+          phone: phone,
+          role: role,
+          isOwner: isOwnerRole,
+          hourlyRate: hourlyRate,
+          baseSalary: 0,
+          jobDesc: '',
+          startDate: null,
+          isClockedIn: isClockedIn,
+          shiftConfigId: shiftConfigId,
+        ),
+      );
+    }
+    return list;
+  }
+
   static Future<List<StaffMember>> getStaffList(String storeId) async {
     final db = _db;
-    if (db == null) return [];
+    if (db == null && rpcTransportOverride == null) return [];
     try {
       try {
-        db.rest.headers['x-store-id'] = storeId;
+        db?.rest.headers['x-store-id'] = storeId;
       } catch (_) {}
 
+      // 0. Thử gọi RPC bảo mật get_store_staff_directory_v4 (Security Definer, chống chặn RLS)
+      if (rpcTransportOverride != null) {
+        try {
+          final rpcRes = await rpcTransportOverride!(
+            'get_store_staff_directory_v4',
+            {'p_store_id': storeId},
+          );
+          if (rpcRes is List) {
+            final parsed = _parseStaffDirectoryRows(rpcRes);
+            if (parsed.isNotEmpty) return parsed;
+          }
+        } catch (_) {}
+      } else if (db != null) {
+        try {
+          final rpcRes = await db.rpc(
+            'get_store_staff_directory_v4',
+            params: {'p_store_id': storeId},
+          );
+          if (rpcRes is List) {
+            final parsed = _parseStaffDirectoryRows(rpcRes);
+            if (parsed.isNotEmpty) return parsed;
+          }
+        } catch (_) {}
+      }
+
+      if (db == null) return [];
+
       // 1. NGUỒN SỰ THẬT DUY NHẤT (Single Source of Truth) cho danh sách thành viên & vai trò: store_members
-      final memberRows = await db
-          .from('store_members')
-          .select(
-            'id, role, is_owner, user_id, user_accounts(id, phone, display_name)',
-          )
-          .eq('store_id', storeId);
+      // Resilient: Thử truy vấn kèm user_accounts; nếu bị lỗi quan hệ/RLS thì fallback query store_members độc lập.
+      List<dynamic> memberRows = [];
+      bool joinedAccounts = false;
+      try {
+        memberRows = await db
+            .from('store_members')
+            .select(
+              'id, role, is_owner, user_id, shift_config_id, user_accounts(id, phone, display_name)',
+            )
+            .eq('store_id', storeId);
+        joinedAccounts = true;
+      } catch (e) {
+        debugPrint(
+          '[StaffService.getStaffList] Embedded user_accounts failed: $e, falling back to standalone query',
+        );
+        try {
+          memberRows = await db
+              .from('store_members')
+              .select('id, role, is_owner, user_id, shift_config_id')
+              .eq('store_id', storeId);
+        } catch (e2) {
+          debugPrint('[StaffService.getStaffList] store_members standalone failed: $e2');
+          return [];
+        }
+      }
 
       // 2. Lấy hồ sơ chi tiết (lương, mô tả...) từ staff_members (nếu có)
       final staffProfileMap = <String, Map<String, dynamic>>{};
@@ -452,7 +574,50 @@ class StaffService {
         }
       } catch (_) {}
 
-      // 3. Lấy ca làm việc đang mở (chấm công)
+      // 3. Fallback nạp danh tính trực tiếp từ user_accounts cho các thành viên chưa có profile
+      final directUserMap = <String, Map<String, dynamic>>{};
+      final missingUserIds = <String>{};
+      for (final m in memberRows) {
+        final userObj = m['user_accounts'];
+        final userMap = (userObj is Map<String, dynamic>)
+            ? userObj
+            : (userObj is List && userObj.isNotEmpty && userObj[0] is Map)
+                ? Map<String, dynamic>.from(userObj[0] as Map)
+                : null;
+        final uid = (m['user_id'] as String?) ?? (userMap?['id'] as String?);
+        if (uid == null) continue;
+        final hasProfile = staffProfileMap.containsKey(uid) ||
+            (m['id'] != null && staffProfileMap.containsKey(m['id']));
+        final hasJoinedUser = joinedAccounts &&
+            userMap != null &&
+            (userMap['display_name'] as String? ?? '').isNotEmpty;
+        if (!hasProfile && !hasJoinedUser) {
+          missingUserIds.add(uid);
+        }
+      }
+
+      if (missingUserIds.isNotEmpty) {
+        final idList = missingUserIds.toList();
+        const chunkSize = 80;
+        for (var i = 0; i < idList.length; i += chunkSize) {
+          final chunk = idList.sublist(
+            i,
+            (i + chunkSize > idList.length) ? idList.length : i + chunkSize,
+          );
+          try {
+            final userAccRows = await db
+                .from('user_accounts')
+                .select('id, phone, display_name')
+                .inFilter('id', chunk);
+            for (final u in userAccRows) {
+              final uid = u['id'] as String?;
+              if (uid != null) directUserMap[uid] = u;
+            }
+          } catch (_) {}
+        }
+      }
+
+      // 4. Lấy ca làm việc đang mở (chấm công)
       Set<String> activeIds = {};
       try {
         final activeShifts = await db
@@ -466,12 +631,18 @@ class StaffService {
       final resultList = <StaffMember>[];
 
       for (final m in memberRows) {
-        final user = m['user_accounts'] as Map<String, dynamic>?;
-        final userId = user?['id'] as String? ?? (m['user_id'] as String?);
+        final userObj = m['user_accounts'];
+        final user = (userObj is Map<String, dynamic>)
+            ? userObj
+            : (userObj is List && userObj.isNotEmpty && userObj[0] is Map)
+                ? Map<String, dynamic>.from(userObj[0] as Map)
+                : null;
+        final userId = (m['user_id'] as String?) ?? (user?['id'] as String?);
         if (userId == null) continue;
 
+        final directUser = directUserMap[userId];
         final isOwnerFlag = (m['is_owner'] as bool?) ?? false;
-        final role = (m['role'] as String?) ?? 'cashier';
+        final role = (m['role'] as String?) ?? 'unassigned';
         final isOwnerRole =
             isOwnerFlag ||
             role.toLowerCase() == 'owner' ||
@@ -483,19 +654,53 @@ class StaffService {
         final profile =
             staffProfileMap[userId] ??
             (memberId != null ? staffProfileMap[memberId] : null);
-        final name =
-            (profile?['name'] as String?) ??
-            (user?['display_name'] as String?) ??
-            'Nhân viên';
-        final phone =
-            (profile?['phone'] as String?) ?? (user?['phone'] as String?) ?? '';
+
+        // Ưu tiên tên thực tế: nếu profile name là placeholder ('Nhân viên', 'Nhân viên mới'),
+        // ưu tiên lấy display_name từ user_accounts (user hoặc directUser)
+        final pName = (profile?['name'] as String?)?.trim();
+        final uName = (user?['display_name'] as String?)?.trim();
+        final dName = (directUser?['display_name'] as String?)?.trim();
+
+        String? rawName;
+        if (pName != null && pName.isNotEmpty && pName != 'Nhân viên' && pName != 'Nhân viên mới') {
+          rawName = pName;
+        } else if (uName != null && uName.isNotEmpty && uName != 'Nhân viên' && uName != 'Nhân viên mới') {
+          rawName = uName;
+        } else if (dName != null && dName.isNotEmpty && dName != 'Nhân viên' && dName != 'Nhân viên mới') {
+          rawName = dName;
+        } else if (pName != null && pName.isNotEmpty) {
+          rawName = pName;
+        } else if (uName != null && uName.isNotEmpty) {
+          rawName = uName;
+        } else if (dName != null && dName.isNotEmpty) {
+          rawName = dName;
+        }
+
+        // Ưu tiên SĐT hợp lệ
+        final pPhone = (profile?['phone'] as String?)?.trim() ?? '';
+        final uPhone = (user?['phone'] as String?)?.trim() ?? '';
+        final dPhone = (directUser?['phone'] as String?)?.trim() ?? '';
+        final rawPhone = pPhone.isNotEmpty
+            ? pPhone
+            : (uPhone.isNotEmpty ? uPhone : dPhone);
+
+        final cleanDigits = rawPhone.replaceAll(RegExp(r'\D'), '');
+        final name = (rawName != null &&
+                rawName.trim().isNotEmpty &&
+                rawName != 'Nhân viên' &&
+                rawName != 'Nhân viên mới')
+            ? rawName.trim()
+            : (cleanDigits.isNotEmpty
+                ? 'NV $cleanDigits'
+                : (isUnassignedRole(role) ? 'Nhân viên mới' : 'Nhân viên'));
+
         final hourlyRate = (profile?['hourly_rate'] as num?)?.toDouble() ?? 0;
 
         resultList.add(
           StaffMember(
             userId: userId,
             name: name,
-            phone: phone,
+            phone: rawPhone,
             role: role, // ⭐ NGUỒN SỰ THẬT DUY NHẤT: role từ store_members
             isOwner: isOwnerRole,
             hourlyRate: hourlyRate,
@@ -503,7 +708,7 @@ class StaffService {
             jobDesc: '',
             startDate: null,
             isClockedIn: activeIds.contains(userId),
-            shiftConfigId: null,
+            shiftConfigId: m['shift_config_id'] as String?,
           ),
         );
       }
@@ -623,7 +828,7 @@ class StaffService {
     }
   }
 
-  static Future<Map<String, dynamic>?> Function(
+  static Future<dynamic> Function(
     String rpcName,
     Map<String, dynamic> params,
   )?
@@ -634,6 +839,18 @@ class StaffService {
     required String targetUserId,
   })?
   broadcastHandlerOverride;
+
+  static Future<void> assignShiftConfig({
+    required String storeId,
+    required String userId,
+    String? shiftConfigId,
+  }) async {
+    await ShiftConfigService.assignShiftToStaff(
+      storeId: storeId,
+      userId: userId,
+      shiftConfigId: shiftConfigId,
+    );
+  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // XOÁ NHÂN VIÊN (Atomic RPC Revocation — 0 Client Fallback)

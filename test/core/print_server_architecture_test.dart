@@ -166,7 +166,18 @@ void main() {
         ),
         isFalse,
         reason:
-            'Non-Print-Server devices must not bypass central routing when owner is stale or missing',
+            'Non-Print-Server devices (e.g. Owner laptop, staff phone) must NEVER print locally when central routing is enabled, preventing unwanted print dialogs/popups',
+      );
+      expect(
+        shouldAutoPrintLocally(
+          isWeb: false,
+          centralRoutingEnabled: true,
+          hasPrintServerOwner: true,
+          allowPrintServerFallback: false,
+        ),
+        isFalse,
+        reason:
+            'Non-Print-Server devices must not print when active print server owner exists',
       );
     });
 

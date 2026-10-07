@@ -2601,7 +2601,7 @@ class _CreateStoreCtaState extends ConsumerState<_CreateStoreCta> {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          defaultTargetPlatform == TargetPlatform.iOS
+                          (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
                               ? 'Kết nối quán bằng mã do quản lý cung cấp hoặc kiểm tra lại'
                               : 'Tạo quán mới hoặc kiểm tra xem chủ đã thêm bạn chưa',
                           style: const TextStyle(color: Colors.white60, fontSize: 12),
@@ -2651,9 +2651,9 @@ class _CreateStoreCtaState extends ConsumerState<_CreateStoreCta> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  // Nút Tạo quán (trên iOS chuyển thành Kết nối quán)
+                  // Nút Tạo quán (trên iOS native chuyển thành Kết nối quán)
                   Expanded(
-                    child: defaultTargetPlatform == TargetPlatform.iOS
+                    child: (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
                         ? ElevatedButton.icon(
                             onPressed: () => showJoinStoreSheet(context, ref),
                             icon: const Icon(Icons.link_rounded, size: 16),

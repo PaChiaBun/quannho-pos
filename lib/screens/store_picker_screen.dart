@@ -84,7 +84,7 @@ class StorePickerScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              defaultTargetPlatform == TargetPlatform.iOS
+                              (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
                                   ? 'Nhập mã kết nối do quản lý cửa hàng cung cấp ở bên dưới.'
                                   : 'Nhập mã kết nối hoặc tạo quán mới ở bên dưới.',
                               textAlign: TextAlign.center,
@@ -196,8 +196,8 @@ class StorePickerScreen extends ConsumerWidget {
 
               const SizedBox(height: 20),
 
-              // ── KẾT NỐI QUÁN (VÀ TẠO QUÁN NẾU KHÔNG PHẢI IOS) ──
-              if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+              // ── KẾT NỐI QUÁN (VÀ TẠO QUÁN NẾU KHÔNG PHẢI IOS NATIVE) ──
+              if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(

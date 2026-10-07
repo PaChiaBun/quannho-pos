@@ -1033,8 +1033,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                 centralRoutingEnabled: settings.centralPrintRoutingEnabled,
                 hasPrintServerOwner: hasPrintServerOwner,
                 allowPrintServerFallback:
-                    settings.deviceState.isPrintServer &&
-                    settings.deviceState.allowBackgroundPrinting,
+                    settings.isDesignatedPrintServerDevice,
               )) {
             if (settings.autoPrintCheckout) {
               await ref

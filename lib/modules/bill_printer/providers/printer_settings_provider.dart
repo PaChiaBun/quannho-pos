@@ -2359,7 +2359,13 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       return true;
     }
 
-    _handleOwnershipLost(storeId, deviceId, deviceName, latestOwner);
+    // Chỉ xử lý mất quyền khi có thiết bị KHÁC đang nắm giữ owner hợp lệ (active).
+    // Nếu rớt mạng (latestOwner == null) hoặc chưa đồng bộ xong, không tước quyền thiết bị.
+    if (latestOwner != null &&
+        latestOwner.deviceId != deviceId &&
+        hasActivePrintServerOwner(latestOwner)) {
+      _handleOwnershipLost(storeId, deviceId, deviceName, latestOwner);
+    }
     return false;
   }
 
@@ -2375,19 +2381,34 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     String deviceName,
     PrintServerOwnerState? existingOwner,
   ) {
+    final hasAnyEnabledPrinter =
+        state.cashier.enabled ||
+        state.bepNong.enabled ||
+        state.bepBar.enabled ||
+        state.barLabel.enabled;
+
+    final isHardLockedWindows = shouldHardLockWindowsPrintCoordinator(
+      isWeb: kIsWeb,
+      isWindows: defaultTargetPlatform == TargetPlatform.windows,
+      centralRoutingEnabled: state.centralPrintRoutingEnabled,
+      hasAnyEnabledPrinter: hasAnyEnabledPrinter,
+    );
+
     state = state.copyWith(
       ownerState: existingOwner,
       clearOwner: existingOwner == null,
       currentDeviceId: deviceId,
       deviceState: state.deviceState.copyWith(
         deviceName: deviceName,
-        isPrintServer: false,
-        allowBackgroundPrinting: false,
+        isPrintServer: isHardLockedWindows,
+        allowBackgroundPrinting: isHardLockedWindows,
         localClaimToken: '',
       ),
     );
     _saveDeviceConfigLocal(storeId);
-    _controller.stop();
+    if (!isHardLockedWindows) {
+      _controller.stop();
+    }
   }
 
   Future<bool> transferPrintServerOwner(
@@ -2475,6 +2496,29 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       return;
     }
 
+    final hasAnyEnabledPrinter =
+        state.cashier.enabled ||
+        state.bepNong.enabled ||
+        state.bepBar.enabled ||
+        state.barLabel.enabled;
+
+    final isHardLockedWindows = shouldHardLockWindowsPrintCoordinator(
+      isWeb: kIsWeb,
+      isWindows: defaultTargetPlatform == TargetPlatform.windows,
+      centralRoutingEnabled: state.centralPrintRoutingEnabled,
+      hasAnyEnabledPrinter: hasAnyEnabledPrinter,
+    );
+
+    // Nếu đây là máy POS Windows hoặc thiết bị được chỉ định làm Print Server cố định:
+    // KHÔNG giải phóng quyền máy chủ in (releaseOwner) và KHÔNG dừng coordinator (_controller.stop())
+    // để ca sau đăng nhập vẫn tiếp tục in trơn tru, không làm gián đoạn máy in.
+    if (isHardLockedWindows || state.isDesignatedPrintServerDevice) {
+      writePrintLog(
+        '[PrintServer] Retaining hardware print server ownership across shift logout for device ${state.currentDeviceId}.',
+      );
+      return;
+    }
+
     final deviceId = state.currentDeviceId;
     final currentOwner = state.ownerState;
     final currentToken = state.deviceState.localClaimToken;
@@ -2503,8 +2547,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       state = state.copyWith(
         clearOwner: true,
         deviceState: state.deviceState.copyWith(
-          isPrintServer: true,
-          allowBackgroundPrinting: true,
+          isPrintServer: false,
+          allowBackgroundPrinting: false,
           localClaimToken: '',
         ),
       );

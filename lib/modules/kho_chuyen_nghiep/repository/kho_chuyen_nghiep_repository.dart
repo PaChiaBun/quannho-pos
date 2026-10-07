@@ -993,61 +993,64 @@ class KhoProRepository {
     await _sb.from('stock_count_items').upsert(rows);
   }
 
-  /// Xác nhận kiểm kê → tự điều chỉnh stock_qty theo variance
-  Future<void> confirmStockCount(String countId) async {
-    final storeId = await _storeId();
-    if (storeId == null) throw Exception('Chưa chọn quán');
-    final now = DateTime.now().toUtc().toIso8601String();
-
-    // ‼️ FIX Bug #44: idempotency guard — tránh confirm 2 lần
-    // lần 2 sẽ apply toàn bộ stock adjustment lên kho đã điều chỉnh → lệch kho nghiêm trọng
-    final countStatus = await _sb.from('stock_counts')
-        .select('status')
-        .eq('id', countId)
-        .maybeSingle();
-    if (countStatus == null) throw Exception('Phiên kiểm kê không tồn tại');
-    if (countStatus['status'] == 'confirmed') {
-      debugPrint('[KhoCN] confirmStockCount: $countId đã confirmed, bỏ qua');
-      return;
+  /// Xác nhận kiểm kê: server áp CHÊNH LỆCH (đếm - sổ sách lúc đếm) lên tồn hiện tại,
+  /// nguyên tử và idempotent (RPC `confirm_stock_count_v1`, migration FIX 10).
+  /// Trả về số sản phẩm đã điều chỉnh.
+  Future<int> confirmStockCount(String countId) async {
+    try {
+      final res = await _sb.rpc('confirm_stock_count_v1', params: {'p_count_id': countId});
+      if (res is Map && res['success'] == true) {
+        return (res['changed'] as num?)?.toInt() ?? 0;
+      }
+      final msg = (res is Map ? res['message'] : null) ?? 'Không xác nhận được kiểm kê';
+      throw Exception(msg);
+    } on PostgrestException catch (e) {
+      if (e.code == 'PGRST202' || (e.message).contains('Could not find the function')) {
+        throw Exception('Máy chủ chưa được cập nhật tính năng kiểm kê (cần chạy migration FIX 10).');
+      }
+      rethrow;
     }
+  }
 
-    // 1. Load items có variance != 0
-    final items = await _sb
-        .from('stock_count_items')
-        .select()
-        .eq('count_id', countId);
-
-
-    for (final item in items) {
-      // FIX: bỏ `variance` dead var — chỉ cần systemQty và actualQty
-      final systemQty = (item['system_qty'] as num?)?.toDouble() ?? 0;
-      final actualQty = (item['actual_qty'] as num?)?.toDouble() ?? 0;
-      final diff = actualQty - systemQty;
-      if (diff == 0) continue;
-
-      final productId = item['product_id'] as String;
-      // Ghi stock_movement — delta là numeric(12,3)
-      await _sb.from('stock_movements').insert({
-        'id':         const Uuid().v4(),
-        'store_id':   storeId,
-        'product_id': productId,
-        'delta':      double.parse(diff.toStringAsFixed(3)),
-        'reason':     'stock_count',
-        'note':       diff > 0
-            ? 'Kiểm kê: thừa ${diff.abs().toStringAsFixed(0)}'
-            : 'Kiểm kê: thiếu ${diff.abs().toStringAsFixed(0)}',
-        'created_at': now,
+  /// Ghi hao hụt (đổ bỏ, hết hạn, hư hỏng...) — trừ kho nguyên tử qua RPC `record_stock_waste_v1`.
+  /// [qty] tính theo đơn vị kho của sản phẩm. Trả về tồn mới.
+  Future<double> recordStockWaste({
+    required String productId,
+    required double qty,
+    required String reason,
+    String? note,
+  }) async {
+    try {
+      final res = await _sb.rpc('record_stock_waste_v1', params: {
+        'p_product_id': productId,
+        'p_qty': qty,
+        'p_reason': reason,
+        'p_note': note,
       });
-      // FIX: dùng CoreProductRepository.update() để updated_at luôn được ghi
-      // Không dùng raw products.update({'stock_qty':...}) vì bỏ qua updated_at
-      await _productRepo.update(productId, {'stock_qty': actualQty});
+      if (res is Map && res['success'] == true) {
+        return (res['new_stock'] as num?)?.toDouble() ?? 0;
+      }
+      throw Exception((res is Map ? res['message'] : null) ?? 'Không ghi được hao hụt');
+    } on PostgrestException catch (e) {
+      if (e.code == 'PGRST202' || (e.message).contains('Could not find the function')) {
+        throw Exception('Máy chủ chưa được cập nhật tính năng hao hụt (cần chạy migration FIX 10).');
+      }
+      rethrow;
     }
+  }
 
-    // 2. Cập nhật trạng thái phiên
-    await _sb.from('stock_counts').update({
-      'status':       'confirmed',
-      'confirmed_at': now,
-    }).eq('id', countId);
+  /// Lịch sử hao hụt gần đây (để hiển thị dưới form ghi hao hụt).
+  Future<List<Map<String, dynamic>>> fetchRecentWaste({int limit = 20}) async {
+    final storeId = await _storeId();
+    if (storeId == null) return [];
+    final rows = await _sb
+        .from('stock_movements')
+        .select('id, product_id, delta, reason, note, created_at')
+        .eq('store_id', storeId)
+        .inFilter('reason', ['waste', 'expired', 'damaged', 'spill', 'loss'])
+        .order('created_at', ascending: false)
+        .limit(limit);
+    return List<Map<String, dynamic>>.from(rows);
   }
 
   /// Load danh sách phiên kiểm kê đã có

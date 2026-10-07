@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import '../core/utils/money_formatter.dart';
+import '../core/utils/quantity_formatter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -3540,7 +3541,7 @@ class _HistorySheet extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '${isIn ? '+' : '-'}${m.delta.abs().toStringAsFixed(0)} ${item.unit}',
+                                      fmtDelta(m.delta, item.unit),
                                       style: TextStyle(
                                         fontSize: 14, fontWeight: FontWeight.w800,
                                         color: isIn ? _kGreen : _kRed,
@@ -3591,10 +3592,14 @@ class _RecentMovementsSheet extends ConsumerWidget {
     final movAsync = ref.watch(recentMovementsProvider);
     final stockAsync = ref.watch(allStockProvider);
 
-    // Build lookup map: productId → name
+    // Build lookup maps: productId → name, productId → unit
     final nameMap = <String, String>{};
+    final unitMap = <String, String>{};
     stockAsync.whenData((list) {
-      for (final s in list) nameMap[s.id] = s.name;
+      for (final s in list) {
+        nameMap[s.id] = s.name;
+        unitMap[s.id] = s.unit;
+      }
     });
 
     return Container(
@@ -3708,7 +3713,7 @@ class _RecentMovementsSheet extends ConsumerWidget {
                                 ),
                               ),
                               Text(
-                                '${isIn ? '+' : ''}${m.delta.toStringAsFixed(0)}',
+                                fmtDelta(m.delta, unitMap[m.productId] ?? ''),
                                 style: TextStyle(
                                   fontSize: 15, fontWeight: FontWeight.w800,
                                   color: isIn ? _kGreen : _kRed)),
@@ -3724,17 +3729,7 @@ class _RecentMovementsSheet extends ConsumerWidget {
     );
   }
 
-  String _reasonLabel(String reason) {
-    switch (reason) {
-      case 'receive':     return 'Nhập kho';
-      case 'adjust':      return 'Hiệu chỉnh';
-      case 'sale':        return 'Bán hàng';
-      case 'production':  return 'Sản xuất';
-      case 'return':      return 'Hoàn trả';
-      case 'waste':       return 'Hư hỏng';
-      default:            return reason;
-    }
-  }
+  String _reasonLabel(String reason) => reasonLabel(reason);
 
   String _fmt(int v) => v.toString().replaceAllMapped(
     RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');

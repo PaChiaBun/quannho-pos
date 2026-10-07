@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'store_auth_service.dart' show StoreAuthService;
+import 'staff_sync_service.dart';
 import '../utils/app_logger.dart';
 import 'pos_jwt_auth_service.dart';
 import '../../features/ai_assistant/services/feedback_service.dart';
@@ -897,6 +898,14 @@ class UserAuthService {
       try {
         AppLogger.info('auth', 'Staff successfully joined store and exchanged POS JWT');
       } catch (_) {}
+      try {
+        unawaited(
+          StaffSyncService.broadcastStaffJoined(
+            storeId: storeId,
+            userId: userId,
+          ),
+        );
+      } catch (_) {}
       return CreateStoreResult.success(
         storeId: storeId,
         storeCode: storeCodeResult,
@@ -1267,6 +1276,8 @@ class UserAuthService {
     }
 
     if (restored) {
+      // Refresh token hiện có thuộc phiên vừa thất bại → bỏ, phiên cũ dùng tới khi hết hạn.
+      await posJwtService.clearRefreshToken();
       if (storeId != null) await prefs.setString(_kStoreId, storeId);
       if (storeName != null) await prefs.setString(_kStoreName, storeName);
       if (storeCode != null) await prefs.setString(_kStoreCode, storeCode);
@@ -1360,8 +1371,26 @@ class UserAuthService {
         expectedStoreId: session.storeId,
       );
       if (applied) {
+        // Sắp hết hạn → làm mới nền, không chặn màn khởi động.
+        final remaining = posJwtService.secondsUntilExpiry(token) ?? 0;
+        if (remaining < PosJwtAuthService.refreshThreshold.inSeconds) {
+          unawaited(posJwtService.refreshPosJwt(expectedStoreId: session.storeId));
+        }
         return true;
       }
+    }
+
+    // Access token hết hạn / thiếu: thử đổi refresh token lấy phiên mới.
+    final outcome = await posJwtService.refreshPosJwt(
+      expectedStoreId: session.storeId,
+    );
+    if (outcome == PosRefreshOutcome.refreshed) {
+      return true;
+    }
+    if (outcome == PosRefreshOutcome.offline &&
+        await posJwtService.getStoredRefreshToken() != null) {
+      // Mất mạng lúc mở app: giữ phiên, bộ hẹn giờ sẽ làm mới khi có mạng lại.
+      return true;
     }
 
     await posJwtService.clearPosJwt();
@@ -1416,6 +1445,8 @@ class UserAuthService {
     // Clear POS PostgREST JWT and Supabase REST/Realtime auth
     try {
       final posJwtService = PosJwtAuthService();
+      PosJwtAuthService.stopAutoRefresh();
+      await posJwtService.revokeRefreshToken();
       await posJwtService.clearOnboardingJwt();
       await posJwtService.clearPosJwt();
       await posJwtService.applyAuthToSupabase(null);

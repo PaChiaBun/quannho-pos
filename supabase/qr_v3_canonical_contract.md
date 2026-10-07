@@ -458,7 +458,7 @@ CREATE INDEX idx_pos_auth_attempts_rate ON public.pos_auth_attempts(store_id, at
 ### 9.1 Credential Hashing Specification (Production Alignment)
 Production codebase inspection (`lib/core/services/user_auth_service.dart:L46`) confirms the canonical password/PIN hash formula:
 ```text
-SHA256(phone + ':' + credential + ':qn_pos_2024_salt')
+SHA256(phone + ':' + credential + ':[ĐÃ XÓA — salt, xem mã nguồn]')
 ```
 In SQL, Phase 2 creates internal helper `public.hash_pos_credential_v3(p_phone text, p_credential text) RETURNS text`:
 ```sql
@@ -471,7 +471,7 @@ IMMUTABLE STRICT
 SET search_path = public, pg_temp
 AS $$
   SELECT encode(
-    digest(convert_to(p_phone || ':' || p_credential || ':qn_pos_2024_salt', 'UTF8'), 'sha256'),
+    digest(convert_to(p_phone || ':' || p_credential || ':[ĐÃ XÓA — salt, xem mã nguồn]', 'UTF8'), 'sha256'),
     'hex'
   );
 $$;

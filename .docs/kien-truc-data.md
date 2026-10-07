@@ -78,7 +78,7 @@ stores (
 user_accounts (
   id            uuid PK,
   phone         text UNIQUE,        -- +84xxxxxxxxx
-  password_hash text,               -- SHA-256(phone:password:qn_pos_2024_salt)
+  password_hash text,               -- SHA-256(phone:password:[ĐÃ XÓA — salt, xem mã nguồn])
   display_name  text,
   created_at    timestamptz
 )

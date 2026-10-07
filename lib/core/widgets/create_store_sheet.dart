@@ -16,8 +16,8 @@ Future<void> showCreateStoreSheet(
   WidgetRef ref, {
   VoidCallback? onSuccess,
 }) {
-  if (defaultTargetPlatform == TargetPlatform.iOS) {
-    // Apple Guideline 3.1.1 invariant guard: Store creation strictly prohibited on iOS.
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+    // Apple Guideline 3.1.1 invariant guard: Store creation strictly prohibited on iOS Native.
     // Intercept and route to join store sheet.
     return showJoinStoreSheet(context, ref, onSuccess: onSuccess);
   }
