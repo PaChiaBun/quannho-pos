@@ -270,10 +270,12 @@ class _TaxInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fs = b.cfg<int>('fontSize', 10).toDouble();
-    final pattern = b.cfg<String>('invoicePattern', '1/001');
-    final serial = b.cfg<String>('invoiceSerial', '1C26TAA');
-    final showPattern = b.cfg<bool>('showPattern', true);
-    final showSerial = b.cfg<bool>('showSerial', true);
+    final pattern = b.cfg<String>('invoicePattern', '').trim();
+    final serial = b.cfg<String>('invoiceSerial', '').trim();
+    // Mẫu số / ký hiệu là của riêng từng quán: chưa nhập thì không hiện.
+    final showPattern = b.cfg<bool>('showPattern', true) && pattern.isNotEmpty;
+    final showSerial = b.cfg<bool>('showSerial', true) && serial.isNotEmpty;
+    if (!showPattern && !showSerial) return const SizedBox.shrink();
 
     return Column(
       children: [

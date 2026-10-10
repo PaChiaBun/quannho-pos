@@ -5168,9 +5168,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     // Tự động in bếp bằng StationPrinterDispatcher (hỗ trợ phân chia 4 trạm in mới)
     try {
       final settings = ref.read(printerSettingsProvider);
+      final kitchenCfg = StationPrinterDispatcher.effectiveSettings(settings);
       final hasKitchenPrinter =
-          (settings.bepNong.enabled && settings.bepNong.name.trim().isNotEmpty) ||
-          (settings.bepBar.enabled && settings.bepBar.name.trim().isNotEmpty);
+          (kitchenCfg.bepNong.enabled && kitchenCfg.bepNong.name.trim().isNotEmpty) ||
+          (kitchenCfg.bepBar.enabled && kitchenCfg.bepBar.name.trim().isNotEmpty);
       if (settings.autoPrintKitchen &&
           shouldAutoPrintLocally(
             isWeb: kIsWeb,

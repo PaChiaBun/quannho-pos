@@ -167,6 +167,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   bool _success = false;
   String? _orderNumber;
   BillData? _billData; // lưu để in sau khi thanh toán
+  DateTime? _lastBillPrintAt; // lần in bill gần nhất (tự động hoặc in lại) của giao dịch này
   bool _redeemRateReady = false;
   PosSaleResult? _saleResult;
 
@@ -861,7 +862,31 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                onPressed: () {
+                onPressed: () async {
+                  // Chặn bấm lặp: bill vừa in xong (tự động hoặc in lại) thì hỏi trước khi in thêm.
+                  final last = _lastBillPrintAt;
+                  if (last != null &&
+                      DateTime.now().difference(last) < const Duration(seconds: 8)) {
+                    final again = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Bill vừa được in'),
+                        content: const Text('Hóa đơn này vừa in cách đây vài giây. In thêm một bản nữa?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Không'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('In thêm'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (again != true || !mounted) return;
+                  }
+                  _lastBillPrintAt = DateTime.now();
                   AppLogger.logUserAction(
                     tag: 'printer',
                     action: 'Manual POS receipt reprint',
@@ -1036,6 +1061,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                     settings.isDesignatedPrintServerDevice,
               )) {
             if (settings.autoPrintCheckout) {
+              _lastBillPrintAt = DateTime.now();
               await ref
                   .read(printerSettingsProvider.notifier)
                   .printCheckoutReceipt(

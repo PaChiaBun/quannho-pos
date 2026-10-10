@@ -646,7 +646,8 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
       );
  
       final settings = ref.read(printerSettingsProvider);
-      if (settings.cashier.enabled && settings.cashier.name.isNotEmpty) {
+      final reportCfg = StationPrinterDispatcher.reportPrinterConfig(settings);
+      if (reportCfg.enabled && reportCfg.name.isNotEmpty) {
         await StationPrinterDispatcher.printReport(await doc.save(), settings);
       } else {
         final safeName = periodLabel

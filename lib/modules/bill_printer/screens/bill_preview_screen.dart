@@ -17,6 +17,9 @@ import '../providers/kitchen_ticket_template_provider.dart';
 import '../providers/printer_settings_provider.dart';
 import '../../../core/services/thermal_printer_service.dart';
 import '../utils/station_normalizer.dart';
+import '../drivers/sunmi_builtin_driver.dart';
+import '../routing/print_router.dart';
+import '../routing/print_setup.dart';
 
 // ─── Model hoá đơn ───────────────────────────────────────────────────────────
 
@@ -274,7 +277,7 @@ class BillPdfGenerator {
               ? b.cfg<String>('phone', '')
               : (bill.shopPhone ?? '');
           if (phone.isEmpty) return null;
-          final label = b.cfg<String>('label', 'DT:');
+          final label = b.cfg<String>('label', 'ĐT:');
           final fs = b.cfg<int>('fontSize', 10).toDouble();
           return pw.Text(
             '$label $phone',
@@ -309,7 +312,7 @@ class BillPdfGenerator {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(
-                    'HOA DON',
+                    'HÓA ĐƠN',
                     style: pw.TextStyle(font: fontBold, fontSize: fs + 1),
                   ),
                   pw.Text(
@@ -323,7 +326,7 @@ class BillPdfGenerator {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Ngay:',
+                      'Ngày:',
                       style: pw.TextStyle(font: font, fontSize: fs),
                     ),
                     pw.Text(
@@ -337,7 +340,7 @@ class BillPdfGenerator {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Nhan vien:',
+                      'Nhân viên:',
                       style: pw.TextStyle(font: font, fontSize: fs),
                     ),
                     pw.Text(
@@ -353,7 +356,7 @@ class BillPdfGenerator {
         {
           final tableName = bill.tableName;
           if (!b.cfg<bool>('showTable', true) || tableName == null) return null;
-          final label = b.cfg<String>('label', 'Ban:');
+          final label = b.cfg<String>('label', 'Bàn:');
           final fs = b.cfg<int>('fontSize', 10).toDouble();
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
@@ -377,7 +380,7 @@ class BillPdfGenerator {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Nhan vien:',
+                      'Nhân viên:',
                       style: pw.TextStyle(font: font, fontSize: fs),
                     ),
                     pw.Text(
@@ -393,10 +396,12 @@ class BillPdfGenerator {
       case BillBlockType.taxInfo:
         {
           final fs = b.cfg<int>('fontSize', 10).toDouble();
-          final pattern = b.cfg<String>('invoicePattern', '1/001');
-          final serial = b.cfg<String>('invoiceSerial', '1C26TAA');
-          final showPattern = b.cfg<bool>('showPattern', true);
-          final showSerial = b.cfg<bool>('showSerial', true);
+          final pattern = b.cfg<String>('invoicePattern', '').trim();
+          final serial = b.cfg<String>('invoiceSerial', '').trim();
+          // Mẫu số / ký hiệu hóa đơn là của riêng từng quán: chưa nhập thì không in.
+          final showPattern = b.cfg<bool>('showPattern', true) && pattern.isNotEmpty;
+          final showSerial = b.cfg<bool>('showSerial', true) && serial.isNotEmpty;
+          if (!showPattern && !showSerial) return null;
           return pw.Column(
             children: [
               if (showPattern)
@@ -404,7 +409,7 @@ class BillPdfGenerator {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Mau so HD:',
+                      'Mẫu số HĐ:',
                       style: pw.TextStyle(font: font, fontSize: fs),
                     ),
                     pw.Text(
@@ -418,7 +423,7 @@ class BillPdfGenerator {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Ky hieu HD:',
+                      'Ký hiệu HĐ:',
                       style: pw.TextStyle(font: font, fontSize: fs),
                     ),
                     pw.Text(
@@ -451,7 +456,7 @@ class BillPdfGenerator {
                   pw.Expanded(
                     flex: 4,
                     child: pw.Text(
-                      'Mon',
+                      'Món',
                       style: pw.TextStyle(font: fontBold, fontSize: fs - 1),
                     ),
                   ),
@@ -461,7 +466,7 @@ class BillPdfGenerator {
                   ),
                   pw.SizedBox(width: 10),
                   pw.Text(
-                    'T.Tien',
+                    'T.Tiền',
                     style: pw.TextStyle(font: fontBold, fontSize: fs - 1),
                   ),
                 ],
@@ -517,7 +522,7 @@ class BillPdfGenerator {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Tam tinh:',
+                      'Tạm tính:',
                       style: pw.TextStyle(font: font, fontSize: fs),
                     ),
                     pw.Text(
@@ -531,7 +536,7 @@ class BillPdfGenerator {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Giam gia:',
+                      'Giảm giá:',
                       style: pw.TextStyle(font: font, fontSize: fs),
                     ),
                     pw.Text(
@@ -549,7 +554,7 @@ class BillPdfGenerator {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Phi dich vu/Ship:',
+                      'Phí dịch vụ/Ship:',
                       style: pw.TextStyle(font: font, fontSize: fs),
                     ),
                     pw.Text(
@@ -563,7 +568,7 @@ class BillPdfGenerator {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(
-                    'TONG CONG:',
+                    'TỔNG CỘNG:',
                     style: pw.TextStyle(
                       font: isBold ? fontBold : font,
                       fontSize: tfs - 2,
@@ -584,7 +589,7 @@ class BillPdfGenerator {
       case BillBlockType.paymentMethod:
         {
           if (bill.paymentMethod == null) return null;
-          final label = b.cfg<String>('label', 'Thanh toan:');
+          final label = b.cfg<String>('label', 'Thanh toán:');
           final fs = b.cfg<int>('fontSize', 10).toDouble();
           return pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -610,7 +615,7 @@ class BillPdfGenerator {
             children: [
               if (b.cfg<bool>('showEarned', true))
                 pw.Text(
-                  'Cong $pts diem thuong',
+                  'Cộng $pts điểm thưởng',
                   textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(font: fontBold, fontSize: fs),
                 ),
@@ -686,7 +691,7 @@ class BillPdfGenerator {
                 pw.SizedBox(height: 4),
                 if (b.cfg<bool>('showLabel', true))
                   pw.Text(
-                    b.cfg<String>('label', 'Quet de thanh toan'),
+                    b.cfg<String>('label', 'Quét để thanh toán'),
                     textAlign: pw.TextAlign.center,
                     style: pw.TextStyle(font: fontBold, fontSize: 9),
                   ),
@@ -743,7 +748,7 @@ class BillPdfGenerator {
         return pw.SizedBox(height: b.cfg<double>('height', 8.0));
       case BillBlockType.footer:
         {
-          final text = _cleanEmoji(b.cfg<String>('text', 'Cam on quy khach!'));
+          final text = _cleanEmoji(b.cfg<String>('text', 'Cảm ơn quý khách!'));
           final sub = _cleanEmoji(b.cfg<String>('subText', ''));
           final fs = b.cfg<int>('fontSize', 12).toDouble();
           final isBold = b.cfg<bool>('bold', true);
@@ -787,7 +792,7 @@ class BillPdfGenerator {
         children: [
           pw.Divider(thickness: 0.3, height: 6, color: PdfColors.black),
           pw.Text(
-            'Powered by Quan Nho POS',
+            'Powered by Quán Nhỏ POS',
             textAlign: pw.TextAlign.center,
             style: pw.TextStyle(
               font: font,
@@ -1235,10 +1240,107 @@ class StationPrinterDispatcher {
     );
     await transport.printPdf(
       bytes,
-      settings.cashier,
+      reportPrinterConfig(settings),
       'bao_cao_doanh_thu',
       format: format,
     );
+  }
+
+  /// Loại máy in thiết bị này in được. Sunmi tích hợp chỉ có trên Android.
+  static Set<PrinterKind> get kSupportedPrinterKinds => {
+    PrinterKind.system,
+    PrinterKind.lan,
+    if (SunmiBuiltinDriver.isSupportedPlatform) PrinterKind.sunmiBuiltin,
+  };
+
+  static const _offConfig = PrinterConfig(name: '', type: 'system', enabled: false);
+
+  static PrinterConfig _pickConfig(
+    PrintSetup setup,
+    PrintJobType job,
+    PrintContext ctx,
+  ) {
+    final resolved = PrintRouter.resolve(
+      setup,
+      job,
+      ctx,
+      supportedKinds: kSupportedPrinterKinds,
+    );
+    if (resolved.isEmpty) return _offConfig;
+    final printer = resolved.first.printer;
+    return PrinterConfig(
+      name: printer.kind == PrinterKind.sunmiBuiltin ? printer.name : printer.address,
+      type: switch (printer.kind) {
+        PrinterKind.lan => 'network',
+        PrinterKind.sunmiBuiltin => 'sunmi',
+        PrinterKind.system => 'system',
+      },
+      enabled: true,
+    );
+  }
+
+  static PrintContext _ctxOf(
+    StationPrintersState settings, {
+    PrintServiceType? serviceType,
+  }) => PrintContext(
+    serviceType: serviceType,
+    sourceDeviceId:
+        settings.currentDeviceId.isEmpty ? null : settings.currentDeviceId,
+  );
+
+  /// Suy ra hình thức phục vụ từ tên bàn trên bill (bill chưa có trường riêng).
+  /// Tên rỗng hoặc có "Mang về" -> mang đi; có "Giao" -> giao hàng; còn lại -> tại bàn.
+  /// (Đặt qua QR chưa nhận diện được từ bill nên rơi vào nhóm tại bàn/mang đi.)
+  static PrintServiceType serviceTypeOfBill(BillData bill) {
+    final n = (bill.tableName ?? '').toLowerCase().trim();
+    if (n.isEmpty || n.contains('mang về') || n.contains('mang ve')) {
+      return PrintServiceType.takeaway;
+    }
+    if (n.contains('giao')) return PrintServiceType.delivery;
+    return PrintServiceType.dineIn;
+  }
+
+  /// Khi quán đã có thiết lập in mới (máy in + luật in), thay cấu hình 4 trạm cũ
+  /// bằng máy in mà luật chọn. Chưa có thiết lập -> trả nguyên `settings` (hành vi cũ).
+  /// Mọi nơi cần biết "trạm này in ra đâu / có bật không" nên đọc qua hàm này.
+  static StationPrintersState effectiveSettings(
+    StationPrintersState settings, {
+    bool provisional = false,
+    PrintServiceType? serviceType,
+  }) {
+    final setup = settings.printSetup;
+    if (setup.isEmpty) return settings;
+    final ctx = _ctxOf(settings, serviceType: serviceType);
+    return settings.copyWith(
+      cashier: _pickConfig(
+        setup,
+        provisional ? PrintJobType.provisional : PrintJobType.receipt,
+        ctx,
+      ),
+      bepNong: _pickConfig(setup, PrintJobType.kitchenHot, ctx),
+      bepBar: _pickConfig(setup, PrintJobType.kitchenBar, ctx),
+      barLabel: _pickConfig(setup, PrintJobType.label, ctx),
+    );
+  }
+
+  static StationPrintersState applyPrintSetup(
+    StationPrintersState settings,
+    BillData bill,
+  ) => effectiveSettings(
+    settings,
+    provisional: bill.orderNumber.toUpperCase().contains('TẠM TÍNH'),
+    serviceType: serviceTypeOfBill(bill),
+  );
+
+  /// Máy in dùng cho báo cáo: luật "báo cáo" nếu có, không thì máy in hóa đơn.
+  static PrinterConfig reportPrinterConfig(StationPrintersState settings) {
+    final setup = settings.printSetup;
+    if (setup.isEmpty) return settings.cashier;
+    final ctx = _ctxOf(settings);
+    final byReport = _pickConfig(setup, PrintJobType.report, ctx);
+    return byReport.enabled
+        ? byReport
+        : _pickConfig(setup, PrintJobType.receipt, ctx);
   }
 
   static Future<PrintDispatchResult> printBill(
@@ -1249,6 +1351,7 @@ class StationPrinterDispatcher {
     PrintTransport transport = const SystemPrintTransport(),
     Set<String>? skipStationCodes,
   }) async {
+    settings = applyPrintSetup(settings, bill);
     final Map<String, StationPrintResult> results = {};
     final skips = skipStationCodes ?? {};
 
@@ -1603,7 +1706,7 @@ class StationPrinterDispatcher {
         round = int.tryParse(match.group(1) ?? '1') ?? 1;
       }
 
-      await ThermalPrinterService.printKitchenTicket(
+      final result = await ThermalPrinterService.printKitchenTicket(
         printerIp: printerIp,
         tableLabel: tableName ?? 'Mang về',
         zoneLabel: 'Khu Vực',
@@ -1612,7 +1715,13 @@ class StationPrinterDispatcher {
         sentAt: DateTime.now().millisecondsSinceEpoch,
         waiterName: waiterName,
       );
-      debugPrint('[DirectPrint] In thành công qua socket tới: $printerIp');
+      if (!result.ok) {
+        writePrintLog(
+          '[DirectPrint ERROR] Không in được phiếu bếp qua socket tới $printerIp: ${result.error}',
+        );
+        return false;
+      }
+      writePrintLog('[DirectPrint] In thành công qua socket tới: $printerIp');
       return true;
     } catch (e) {
       debugPrint('[DirectPrint] Lỗi in qua socket tới $printerIp: $e');
@@ -1638,6 +1747,11 @@ class StationPrinterDispatcher {
         format: finalFormat,
       );
       return ok;
+    }
+    if (config.type == 'sunmi') {
+      final r = await SunmiBuiltinDriver.printPdf(bytes);
+      writePrintLog('[_dispatchPrint] Sunmi: $r');
+      return r.ok;
     }
     if (config.type == 'system') {
       Printer? targetPrinter;

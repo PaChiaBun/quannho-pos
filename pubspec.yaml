@@ -2,7 +2,7 @@ name: quannho_pos
 description: "Quán Nhỏ POS - Quản lý cửa hàng đơn giản"
 publish_to: 'none'
 
-version: 1.0.2+10
+version: 1.0.3+12
 
 environment:
   sdk: ^3.11.5
@@ -44,6 +44,7 @@ dependencies:
   ed25519_edwards: ^0.3.1
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.4.0
+  sunmi_printer_plus: ^4.1.1
 
 
 

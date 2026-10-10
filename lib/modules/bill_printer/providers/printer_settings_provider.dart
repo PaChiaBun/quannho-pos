@@ -13,6 +13,7 @@ import '../../../core/services/user_auth_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../screens/bill_preview_screen.dart';
 import '../utils/station_normalizer.dart';
+import '../routing/print_setup.dart';
 
 /// WS Order Event Predicate
 bool shouldProcessOrderEvent(Map<String, dynamic> row) {
@@ -708,6 +709,7 @@ class PrintCoordinator {
     required List<BillItem> allOriginalItems,
     required StationPrintersState settings,
   }) async {
+    settings = StationPrinterDispatcher.effectiveSettings(settings);
     if (cache.isTicketPrinted(ticketId)) {
       return const PrintDispatchResult({
         'all': StationPrintResult(
@@ -875,6 +877,17 @@ Future<void> writePrintLog(String message) async {
       message.contains('[Polling Tickets]'))
     return;
   AppLogger.info('printer', message);
+}
+
+/// JSON cấu hình in lưu trên máy có gắn nhãn quán khác với quán hiện tại không.
+/// Bản cũ chưa có nhãn -> coi là hợp lệ (tương thích ngược).
+bool profileJsonBelongsToOtherStore(String json, String storeId) {
+  try {
+    final v = (jsonDecode(json) as Map)['storeId'];
+    return v is String && v.isNotEmpty && v != storeId;
+  } catch (_) {
+    return false;
+  }
 }
 
 class PrinterConfig {
@@ -1284,6 +1297,8 @@ class StationPrintersState {
   final PrintDeviceState deviceState;
   final PrintServerOwnerState? ownerState;
   final String currentDeviceId;
+  /// Thiết lập in mới (máy in / luật in). Rỗng = dùng 4 trạm cũ như trước.
+  final PrintSetup printSetup;
 
   const StationPrintersState({
     required this.cashier,
@@ -1299,10 +1314,26 @@ class StationPrintersState {
     this.deviceState = const PrintDeviceState(deviceName: 'Thiết bị POS'),
     this.ownerState,
     this.currentDeviceId = '',
+    this.printSetup = const PrintSetup(),
   }) : centralPrintRoutingEnabled =
            autoPrintServer ?? centralPrintRoutingEnabled;
 
   bool get autoPrintServer => centralPrintRoutingEnabled;
+
+  /// Có ít nhất một máy in đang dùng được (theo luật in mới nếu có, không thì 4 trạm cũ).
+  bool get hasAnyEnabledPrinter {
+    if (printSetup.isEmpty) {
+      return cashier.enabled || bepNong.enabled || bepBar.enabled || barLabel.enabled;
+    }
+    final kinds = StationPrinterDispatcher.kSupportedPrinterKinds;
+    final usable = printSetup.printers
+        .where((p) => p.enabled && kinds.contains(p.kind))
+        .map((p) => p.id)
+        .toSet();
+    return printSetup.rules.any(
+      (r) => r.enabled && r.targets.any((t) => usable.contains(t.printerId)),
+    );
+  }
 
   bool get isDesignatedPrintServerDevice =>
       currentDeviceId.isNotEmpty &&
@@ -1335,6 +1366,7 @@ class StationPrintersState {
     PrintServerOwnerState? ownerState,
     bool clearOwner = false,
     String? currentDeviceId,
+    PrintSetup? printSetup,
   }) {
     return StationPrintersState(
       cashier: cashier ?? this.cashier,
@@ -1353,6 +1385,7 @@ class StationPrintersState {
       deviceState: deviceState ?? this.deviceState,
       ownerState: clearOwner ? null : (ownerState ?? this.ownerState),
       currentDeviceId: currentDeviceId ?? this.currentDeviceId,
+      printSetup: printSetup ?? this.printSetup,
     );
   }
 }
@@ -1553,7 +1586,7 @@ class PrintServerLifecycleController {
     _startAdaptivePolling(
       storeId,
       pollActive,
-      intervalSeconds: _isWsConnected ? 15 : 5,
+      intervalSeconds: _kPrintPollSeconds,
     );
   }
 
@@ -1566,12 +1599,12 @@ class PrintServerLifecycleController {
     if (status == RealtimeSubscribeStatus.subscribed) {
       _isWsConnected = true;
       _wsReconnectAttempts = 0;
-      _startAdaptivePolling(storeId, pollActive, intervalSeconds: 15);
+      _startAdaptivePolling(storeId, pollActive, intervalSeconds: _kPrintPollSeconds);
     } else if (status == RealtimeSubscribeStatus.channelError ||
         status == RealtimeSubscribeStatus.closed ||
         status == RealtimeSubscribeStatus.timedOut) {
       _isWsConnected = false;
-      _startAdaptivePolling(storeId, pollActive, intervalSeconds: 5);
+      _startAdaptivePolling(storeId, pollActive, intervalSeconds: _kPrintPollSeconds);
     }
   }
 
@@ -1618,6 +1651,10 @@ class PrintServerLifecycleController {
     _isWsConnected = false;
   }
 }
+
+/// Chu kỳ quét dự phòng của máy in server (giây). Realtime có thể không báo kịp
+/// sau khi khóa RLS (FIX 05b), nên quét ngắn để in không trễ quá vài giây.
+const int _kPrintPollSeconds = 3;
 
 class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   StreamSubscription? _subscription;
@@ -1843,11 +1880,28 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         _applyLegacyJson(legacyJson);
         await _persistProfileV2(storeId);
       } else {
-        // Local fallback
+        // Local fallback: chỉ dùng bản trên máy nếu của đúng quán này (hoặc bản cũ chưa có nhãn).
+        // Bản gắn nhãn quán khác -> cấu hình mặc định, không lấy nhầm cấu hình quán trước.
         final localProfile =
             prefs.getString(kProfileV2Key) ?? prefs.getString(kLegacyKey);
         if (localProfile != null) {
-          _applyProfileJson(localProfile);
+          if (profileJsonBelongsToOtherStore(localProfile, storeId)) {
+            writePrintLog(
+              '[Settings] Bỏ cấu hình in lưu trên máy vì thuộc quán khác; dùng mặc định.',
+            );
+            state = state.copyWith(
+              cashier: const PrinterConfig(name: '', type: 'system', enabled: true),
+              bepNong: const PrinterConfig(name: '', type: 'system', enabled: false),
+              bepBar: const PrinterConfig(name: '', type: 'system', enabled: false),
+              barLabel: const PrinterConfig(name: '', type: 'system', enabled: false),
+              printSetup: const PrintSetup(),
+            );
+          } else {
+            _applyProfileJson(localProfile);
+          }
+        } else {
+          // Quán chưa có cấu hình nào: không giữ cấu hình đang nạp từ lần đăng nhập trước.
+          state = state.copyWith(printSetup: const PrintSetup());
         }
       }
 
@@ -1868,11 +1922,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       }
       final hasActiveOwner = hasActivePrintServerOwner(ownerState);
       final hasStaleOwner = ownerState != null && !hasActiveOwner;
-      final hasAnyEnabledPrinter =
-          state.cashier.enabled ||
-          state.bepNong.enabled ||
-          state.bepBar.enabled ||
-          state.barLabel.enabled;
+      final hasAnyEnabledPrinter = state.hasAnyEnabledPrinter;
 
       if (ownerState != null &&
           shouldSyncOwnerClaimTokenToDesignatedDevice(
@@ -2060,11 +2110,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     required PrintDeviceState deviceState,
     required SharedPreferences prefs,
   }) async {
-    final hasAnyEnabledPrinter =
-        state.cashier.enabled ||
-        state.bepNong.enabled ||
-        state.bepBar.enabled ||
-        state.barLabel.enabled;
+    final hasAnyEnabledPrinter = state.hasAnyEnabledPrinter;
     if (!shouldHardLockWindowsPrintCoordinator(
       isWeb: kIsWeb,
       isWindows: defaultTargetPlatform == TargetPlatform.windows,
@@ -2090,11 +2136,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   }
 
   bool _canThisDeviceRecoverPrintServerOwner() {
-    final hasAnyEnabledPrinter =
-        state.cashier.enabled ||
-        state.bepNong.enabled ||
-        state.bepBar.enabled ||
-        state.barLabel.enabled;
+    final hasAnyEnabledPrinter = state.hasAnyEnabledPrinter;
 
     return !kIsWeb &&
         defaultTargetPlatform == TargetPlatform.windows &&
@@ -2196,6 +2238,11 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
             map['autoPrintServer'] ??
             false,
         ownerMigrationCompleted: map['ownerMigrationCompleted'] == true,
+        printSetup: map['printSetup'] is Map
+            ? PrintSetup.fromJson(
+                Map<String, dynamic>.from(map['printSetup'] as Map),
+              )
+            : const PrintSetup(),
       );
     } catch (_) {}
   }
@@ -2239,6 +2286,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         'autoOpenDrawer': state.autoOpenDrawer,
         'centralPrintRoutingEnabled': state.centralPrintRoutingEnabled,
         'ownerMigrationCompleted': state.ownerMigrationCompleted,
+        if (!state.printSetup.isEmpty) 'printSetup': state.printSetup.toJson(),
+        if (storeId.isNotEmpty) 'storeId': storeId, // chống dùng nhầm cấu hình của quán khác
       };
       final jsonStr = jsonEncode(data);
 
@@ -2381,11 +2430,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     String deviceName,
     PrintServerOwnerState? existingOwner,
   ) {
-    final hasAnyEnabledPrinter =
-        state.cashier.enabled ||
-        state.bepNong.enabled ||
-        state.bepBar.enabled ||
-        state.barLabel.enabled;
+    final hasAnyEnabledPrinter = state.hasAnyEnabledPrinter;
 
     final isHardLockedWindows = shouldHardLockWindowsPrintCoordinator(
       isWeb: kIsWeb,
@@ -2496,11 +2541,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       return;
     }
 
-    final hasAnyEnabledPrinter =
-        state.cashier.enabled ||
-        state.bepNong.enabled ||
-        state.bepBar.enabled ||
-        state.barLabel.enabled;
+    final hasAnyEnabledPrinter = state.hasAnyEnabledPrinter;
 
     final isHardLockedWindows = shouldHardLockWindowsPrintCoordinator(
       isWeb: kIsWeb,
@@ -2555,6 +2596,22 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       await _saveDeviceConfigLocal(storeId);
       _controller.stop();
     }
+  }
+
+  /// Lưu thiết lập in mới (máy in + luật in). Chỉ người có quyền quản lý máy in.
+  Future<void> savePrintSetup(PrintSetup setup) async {
+    if (!await _verifyPrinterManagePermission()) return;
+    state = state.copyWith(printSetup: setup);
+    AppLogger.info(
+      'settings',
+      'Cap nhat thiet lap in: ${setup.printers.length} may in, ${setup.rules.length} luat',
+    );
+    final session = ref.read(sessionProvider);
+    final storeId =
+        session?.storeId ??
+        (await StoreAuthService.getStoreInfo())['store_id'] ??
+        '';
+    await _persistProfileV2(storeId);
   }
 
   Future<void> saveConfig(String station, PrinterConfig config) async {
@@ -2931,7 +2988,11 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     }
   }
 
+  bool _isPolling = false;
+
   Future<void> _pollActiveTicketsAndOrders(String storeId) async {
+    if (_isPolling) return;
+    _isPolling = true;
     try {
       await _refreshOwnerHeartbeatIfNeeded(storeId);
       final cutoff24h = DateTime.now()
@@ -2953,6 +3014,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       );
     } catch (e) {
       writePrintLog('[Polling ERROR] Lỗi quét db: $e');
+    } finally {
+      _isPolling = false;
     }
   }
 }

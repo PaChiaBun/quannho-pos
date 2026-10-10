@@ -219,7 +219,30 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
         title: Text('Cấu Hình Máy In & Tem Dán Ly',
             style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 18)),
       ),
-      body: isWide ? _buildWideLayout() : _buildMobileLayout(),
+      body: Column(
+        children: [
+          if (!ref.watch(printerSettingsProvider.select((s) => s.printSetup.isEmpty)))
+            Container(
+              width: double.infinity,
+              color: const Color(0xFFFFF4E0),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, color: Color(0xFFB45309), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Quán đang dùng "Máy In & Luật In". Máy in ở 4 trạm bên dưới KHÔNG còn tác dụng '
+                      'khi in thật. Chỉ các công tắc "Tuỳ chọn tự động" và Máy chủ in vẫn áp dụng.',
+                      style: GoogleFonts.outfit(fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(child: isWide ? _buildWideLayout() : _buildMobileLayout()),
+        ],
+      ),
     );
   }
 

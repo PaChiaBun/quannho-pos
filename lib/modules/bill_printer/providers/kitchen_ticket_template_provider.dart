@@ -1,3 +1,4 @@
+import '../utils/template_cache_policy.dart';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -76,7 +77,11 @@ class KitchenTicketTemplate {
     final p = await SharedPreferences.getInstance();
     final json = jsonEncode(toMap());
     final prefKey = '${_kPrefsKey}_$stationKey';
-    await p.setString(prefKey, json);
+    final localStoreId = (await StoreAuthService.getStoreInfo())['store_id'];
+    await p.setString(
+      prefKey,
+      localStoreId == null ? json : stampTemplateJson(json, localStoreId),
+    );
 
     try {
       final info = await StoreAuthService.getStoreInfo();
@@ -98,14 +103,18 @@ class KitchenTicketTemplate {
   static Future<KitchenTicketTemplate> load({String stationKey = 'bepNong'}) async {
     String? raw;
     final prefKey = '${_kPrefsKey}_$stationKey';
+    String? localJson;
     try {
       final p = await SharedPreferences.getInstance();
-      raw = p.getString(prefKey);
+      localJson = p.getString(prefKey);
     } catch (_) {}
 
+    String? storeId;
+    String? cloudJson;
+    var cloudReachable = false;
     try {
       final info = await StoreAuthService.getStoreInfo();
-      final storeId = info['store_id'];
+      storeId = info['store_id'];
       if (storeId != null) {
         // Đảm bảo x-store-id tồn tại trong Header REST cho RLS
         Supabase.instance.client.rest.headers['x-store-id'] = storeId;
@@ -116,16 +125,23 @@ class KitchenTicketTemplate {
             .eq('store_id', storeId)
             .eq('key', 'qn_kitchen_ticket_template_$stationKey')
             .maybeSingle();
+        cloudReachable = true;
         if (res != null && res['value'] != null) {
-          final cloudJson = res['value'] as String;
-          if (cloudJson != raw) {
-            raw = cloudJson;
-            final p = await SharedPreferences.getInstance();
-            await p.setString(prefKey, cloudJson);
-          }
+          cloudJson = res['value'] as String;
+          final p = await SharedPreferences.getInstance();
+          await p.setString(prefKey, stampTemplateJson(cloudJson, storeId));
         }
       }
     } catch (_) {}
+
+    raw = storeId == null
+        ? null
+        : resolveTemplateJson(
+            storeId: storeId,
+            cloudJson: cloudJson,
+            cloudReachable: cloudReachable,
+            localJson: localJson,
+          );
 
     if (raw != null) {
       try {
