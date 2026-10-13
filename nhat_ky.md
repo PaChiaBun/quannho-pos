@@ -106,6 +106,13 @@
 - KHÔI PHỤC (làm vào DB MỚI trước, không ghi đè DB đang chạy): `docker exec supabase-db psql -U supabase_admin -d postgres -c "CREATE DATABASE qr_restore"` rồi `docker exec -i supabase-db pg_restore -U supabase_admin -d qr_restore --no-owner < /var/backups/quannho-db/quannho_<ngày>.dump`; kiểm tra rồi mới quyết định thay thế.
 - VPS: đang nâng lên 2 vCPU / 4 GB RAM / 80 GB ($20/tháng) vì thiếu RAM (swap 2,7 GB). Snapshot Vultr đã chụp 14:24 UTC; sẽ bấm Upgrade sau 23:00 giờ VN khi snapshot xong.
 
+### 🖥️ NÂNG CẤP VPS `cook-ai-vn` (Vultr, 13/10 ~23:35–23:57 giờ VN) — HOÀN TẤT
+- Lý do: 1 vCPU / 1,9 GB RAM thiếu RAM, swap 2,7 GB → thrash, tải 6–9, `verify_user_login_v4` lỗi 500 (statement timeout) lúc 19:09–19:10.
+- Gói mới: Regular Cloud Compute **2 vCPU / 4096 MB RAM / 80 GB SSD** ($20/tháng + $4 Auto Backups ≈ $24). IP giữ nguyên `45.32.104.228`. Không thể hạ cấp lại (ổ đĩa tăng).
+- Bảo hiểm trước khi nâng: 2 snapshot Vultr (14:24 và 15:53 UTC, 55 GB mỗi cái, ~$2,75/tháng mỗi cái) + Auto Backups + `pg_dump` thủ công 23:08 giờ VN + CHECKPOINT/sync trước khi nâng (khởi động lại CỨNG).
+- Sau nâng (kiểm tra 23:56 giờ VN): 2 nhân, RAM 3905 MB (trống ~1,7 GB), swap 0, đĩa 75 GB (58%, còn 31 GB); 11/11 container healthy (storage/meta/kong/realtime mất ~1–2 phút khởi động); nginx, pos-jwt-gateway, docker active; DB nguyên vẹn (7.972 đơn hàng, 171 quán, 2 đơn QR, không ở chế độ phục hồi); cổng đăng nhập 400 (sống), web POS 200, trang QR khách 200, `get_qr_menu_v4` 200; 502 chỉ trong 16:54–16:55 UTC (lúc khởi động), từ 16:55:31 không còn 5xx; hẹn giờ quannho-* còn nguyên (00:00 dọn ảnh, 00:20 xóa audit, 00:30 sao lưu).
+- Việc nên làm sau vài ngày ổn định: xóa bớt 1 snapshot Vultr (giữ bản mới nhất) để tiết kiệm ~$2,75/tháng; theo dõi tải/RAM; xem báo cáo `REPORT=1 bash db-fix/anon_pha0_ap_dung.sh` sau 7 ngày.
+
 ### ⚠️ Chưa làm / rủi ro
 - **Chưa áp SQL lên bất kỳ DB nào**, chưa kiểm cú pháp bằng Postgres. Phải chạy preflight + `qr_simple_v4_test.sql` trên staging trước (phụ thuộc V5 prerequisites, settle V5, fix09, `send_kitchen_ticket_v2`).
 - Giả định schema chưa xác minh: cột tên bàn `name`/`label` (Dart đang đọc `ban_dining_tables.name`), `kitchen_tickets.session_id` cho NULL, kiểu `modifiers_json`, RLS `store_members`.
