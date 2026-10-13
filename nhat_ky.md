@@ -98,6 +98,14 @@
 - Quan sát anon (3h): `orders`/`order_items`/`stock_movements`/`staff_members` vẫn ghi bằng anon + header (22 đơn) → CHƯA được thu hồi quyền anon trên các bảng này; `app_settings` bị upsert ~3,5 lần/phút (643 lần/3h) → nghi ghi thừa.
 - Còn mở: 1 thiết bị gửi cặp 401 (`app_settings` + báo cáo) mỗi 10–15 phút không tự đăng xuất; chưa thử thu chuyển khoản và nhân viên không có quyền thu ở đơn mang đi; chưa thử tải ảnh qua giao diện app; lần dọn ảnh thật đầu tiên 00:00 giờ VN.
 
+### 💾 SAO LƯU CƠ SỞ DỮ LIỆU TỰ ĐỘNG HẰNG ĐÊM (13/10 tối) + KẾ HOẠCH NÂNG VPS
+- Trước đó cơ sở dữ liệu Quán Nhỏ KHÔNG có sao lưu tự động (chỉ có cron cho dự án khác `backup-vani.sh`, `ghost-backup-r2.sh`; các bản `/root/quannho-backups/*.dump` là thủ công).
+- Đã tạo: `/usr/local/bin/quannho-db-backup.sh` (bản lưu ở `scripts/quannho-db-backup.sh`) + `quannho-db-backup.timer` mỗi đêm **00:30 giờ Việt Nam** (`Persistent=true`, Nice 19). `pg_dump -Fc` DB `postgres` + `pg_dumpall --globals-only` vào `/var/backups/quannho-db/` (quyền 700/600). Giữ **5 ngày**, luôn giữ ≥ 3 bản mới nhất. Chỉ xóa bản cũ SAU KHI bản mới đã kiểm tra: ≥ 5 MB và `pg_restore --list` ≥ 100 mục; nếu sao lưu lỗi thì KHÔNG xóa gì. Đã thử: dump thật 22 MB/1.526 mục; thử luật xóa trên thư mục tạm (giữ 1–4 ngày, xóa 6–8 ngày; sao lưu lỗi → không xóa bản nào).
+- Xem log: `journalctl -u quannho-db-backup.service`. Đổi số ngày: biến `KEEP_DAYS` trong script (hoặc `Environment=` trong service).
+- HẠN CHẾ: bản sao nằm CÙNG máy chủ → chống được sai sót/hỏng dữ liệu nhưng KHÔNG chống được hỏng/mất cả máy; vì vậy VẪN GIỮ Auto Backups của Vultr. Không bao gồm tệp ảnh trong Storage (ảnh món hiện 0 tệp; ảnh chấm công `staff-photos` ở `/var/www/supabase-setup/docker/volumes/storage`).
+- KHÔI PHỤC (làm vào DB MỚI trước, không ghi đè DB đang chạy): `docker exec supabase-db psql -U supabase_admin -d postgres -c "CREATE DATABASE qr_restore"` rồi `docker exec -i supabase-db pg_restore -U supabase_admin -d qr_restore --no-owner < /var/backups/quannho-db/quannho_<ngày>.dump`; kiểm tra rồi mới quyết định thay thế.
+- VPS: đang nâng lên 2 vCPU / 4 GB RAM / 80 GB ($20/tháng) vì thiếu RAM (swap 2,7 GB). Snapshot Vultr đã chụp 14:24 UTC; sẽ bấm Upgrade sau 23:00 giờ VN khi snapshot xong.
+
 ### ⚠️ Chưa làm / rủi ro
 - **Chưa áp SQL lên bất kỳ DB nào**, chưa kiểm cú pháp bằng Postgres. Phải chạy preflight + `qr_simple_v4_test.sql` trên staging trước (phụ thuộc V5 prerequisites, settle V5, fix09, `send_kitchen_ticket_v2`).
 - Giả định schema chưa xác minh: cột tên bàn `name`/`label` (Dart đang đọc `ban_dining_tables.name`), `kitchen_tickets.session_id` cho NULL, kiểu `modifiers_json`, RLS `store_members`.
