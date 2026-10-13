@@ -71,7 +71,9 @@ def _env_int(name, default, minimum, maximum):
 def get_token_policy():
     """TTL policy. Access token ngắn hạn + refresh token dài hạn xoay vòng."""
     return {
-        "access_ttl": _env_int("POS_ACCESS_TTL_SECONDS", 43200, 300, 86400),
+        # Chủ Quán quyết định (13/10/2026): access token 30 ngày để nhân viên không bị đăng xuất giữa ca.
+        # Đánh đổi: token bị lộ vẫn dùng được tới khi hết hạn; thu hồi tức thì chỉ bằng cách đổi JWT secret (đăng xuất mọi người).
+        "access_ttl": _env_int("POS_ACCESS_TTL_SECONDS", 2592000, 300, 2592000),
         "refresh_ttl": _env_int("POS_REFRESH_TTL_SECONDS", 2592000, 3600, 7776000),
         "refresh_enabled": str(os.environ.get("POS_REFRESH_ENABLED", "1")).strip() not in ("0", "false", "no"),
     }

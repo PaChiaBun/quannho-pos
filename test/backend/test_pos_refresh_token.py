@@ -103,10 +103,10 @@ class RefreshTokenTests(unittest.TestCase):
         self.assertTrue(res["success"], res)
         self.assertTrue(res["refresh_token"].startswith("qnr_"))
         claims = verify_and_decode_hs256_jwt(res["pos_jwt"], SECRET)
-        self.assertEqual(claims["exp"] - claims["iat"], 43200)
+        self.assertEqual(claims["exp"] - claims["iat"], 2592000)
         self.assertEqual(claims["store_id"], SID)
         self.assertEqual(claims["staff_role"], "manager")  # role from DB wins
-        self.assertEqual(res["expires_in"], 43200)
+        self.assertEqual(res["expires_in"], 2592000)
         # only the hash is sent to DB
         self.assertIn(hash_refresh_token(res["refresh_token"]), store.rows)
         self.assertNotIn(res["refresh_token"], store.rows)
