@@ -1949,7 +1949,9 @@ class _ZoneChip extends StatelessWidget {
 void _openQrReview(BuildContext context, WidgetRef ref, QrRequestModel req) {
   void refresh() {
     ref.invalidate(banZonesProvider);
-    ref.invalidate(activeSessionsProvider); // thẻ bàn đổi sang "Có khách" ngay sau khi duyệt
+    ref.invalidate(
+      activeSessionsProvider,
+    ); // thẻ bàn đổi sang "Có khách" ngay sau khi duyệt
     ref.invalidate(qrActivePipelineStreamProvider);
   }
 
@@ -2116,7 +2118,8 @@ class _TableCard extends ConsumerWidget {
                     if (hasPendingQr)
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
-                        onTap: () => _openQrForTable(context, ref, activeForTable),
+                        onTap: () =>
+                            _openQrForTable(context, ref, activeForTable),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -2146,93 +2149,105 @@ class _TableCard extends ConsumerWidget {
                         ),
                       )
                     else
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: cardSize == 'nho'
-                              ? 6
-                              : cardSize == 'vua'
-                              ? 8
-                              : 10,
-                          vertical: cardSize == 'nho'
-                              ? 2
-                              : cardSize == 'vua'
-                              ? 3
-                              : 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isOccupied
-                              ? Colors.white.withValues(alpha: 0.2)
-                              : _kGreen.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(
-                            cardSize == 'nho' ? 6 : 8,
+                      Flexible(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: cardSize == 'nho'
+                                ? 6
+                                : cardSize == 'vua'
+                                ? 8
+                                : 10,
+                            vertical: cardSize == 'nho'
+                                ? 2
+                                : cardSize == 'vua'
+                                ? 3
+                                : 4,
                           ),
-                        ),
-                        child: Text(
-                          isOccupied ? '● Có khách' : '○ Trống',
-                          style: GoogleFonts.outfit(
-                            fontSize: statusFontSize,
-                            fontWeight: FontWeight.w600,
-                            color: isOccupied ? Colors.white : _kGreen,
+                          decoration: BoxDecoration(
+                            color: isOccupied
+                                ? Colors.white.withValues(alpha: 0.2)
+                                : _kGreen.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(
+                              cardSize == 'nho' ? 6 : 8,
+                            ),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              isOccupied ? '● Có khách' : '○ Trống',
+                              maxLines: 1,
+                              style: GoogleFonts.outfit(
+                                fontSize: statusFontSize,
+                                fontWeight: FontWeight.w600,
+                                color: isOccupied ? Colors.white : _kGreen,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                   ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      table.label,
-                      style: GoogleFonts.outfit(
-                        fontSize: labelFontSize,
-                        fontWeight: FontWeight.w900,
-                        color: isOccupied ? Colors.white : _kNavy,
-                      ),
-                    ),
-                    SizedBox(height: cardSize == 'nho' ? 0 : 2),
-                    if (isOccupied) ...[
-                      Text(
-                        '${session!.guestCount} khách • $totalQty món',
-                        style: GoogleFonts.outfit(
-                          fontSize: infoFontSize,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                      if (waiters.isNotEmpty && cardSize != 'nho') ...[
-                        const SizedBox(height: 1),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.bottomLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          'NV: $waiters',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          table.label,
                           style: GoogleFonts.outfit(
-                            fontSize: infoFontSize - 1.5,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white.withValues(alpha: 0.75),
+                            fontSize: labelFontSize,
+                            fontWeight: FontWeight.w900,
+                            color: isOccupied ? Colors.white : _kNavy,
                           ),
                         ),
+                        SizedBox(height: cardSize == 'nho' ? 0 : 2),
+                        if (isOccupied) ...[
+                          Text(
+                            '${session!.guestCount} khách • $totalQty món',
+                            style: GoogleFonts.outfit(
+                              fontSize: infoFontSize,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                          if (waiters.isNotEmpty && cardSize != 'nho') ...[
+                            const SizedBox(height: 1),
+                            Text(
+                              'NV: $waiters',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.outfit(
+                                fontSize: infoFontSize - 1.5,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white.withValues(alpha: 0.75),
+                              ),
+                            ),
+                          ],
+                        ] else
+                          Text(
+                            '${table.seats} chỗ',
+                            style: GoogleFonts.outfit(
+                              fontSize: infoFontSize,
+                              fontWeight: FontWeight.w500,
+                              color: _kNavy.withValues(alpha: 0.55),
+                            ),
+                          ),
+                        if (isOccupied && totalAmount > 0) ...[
+                          SizedBox(height: cardSize == 'nho' ? 2 : 6),
+                          Text(
+                            fmtVnd(totalAmount),
+                            style: GoogleFonts.outfit(
+                              fontSize: amountFontSize,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ],
-                    ] else
-                      Text(
-                        '${table.seats} chỗ',
-                        style: GoogleFonts.outfit(
-                          fontSize: infoFontSize,
-                          fontWeight: FontWeight.w500,
-                          color: _kNavy.withValues(alpha: 0.55),
-                        ),
-                      ),
-                    if (isOccupied && totalAmount > 0) ...[
-                      SizedBox(height: cardSize == 'nho' ? 2 : 6),
-                      Text(
-                        fmtVnd(totalAmount),
-                        style: GoogleFonts.outfit(
-                          fontSize: amountFontSize,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ],
+                    ),
+                  ),
                 ),
               ],
             ),
