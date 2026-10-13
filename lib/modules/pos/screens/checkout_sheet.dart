@@ -1075,7 +1075,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               )) {
             if (settings.autoPrintCheckout) {
               _lastBillPrintAt = DateTime.now();
-              await ref
+              final printRes = await ref
                   .read(printerSettingsProvider.notifier)
                   .printCheckoutReceipt(
                     storeId:
@@ -1084,6 +1084,22 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                     settlementId: orderId,
                     billData: _billData!,
                   );
+              final cashierSt = printRes.stationResults['cashier']?.status;
+              if (mounted &&
+                  (cashierSt == StationPrintStatus.notConfigured ||
+                      cashierSt == StationPrintStatus.failed)) {
+                ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      cashierSt == StationPrintStatus.notConfigured
+                          ? 'Máy này chưa được cài máy in hóa đơn nên chưa in. '
+                              'Vào In Hoá Đơn → Máy In & Luật In để chọn máy in.'
+                          : 'In hóa đơn thất bại. Kiểm tra máy in rồi bấm "In hoá đơn".',
+                    ),
+                    duration: const Duration(seconds: 6),
+                  ),
+                );
+              }
             }
             final unsentItems = cartSnapshot.lines
                 .where((line) => !cartSnapshot.isLineSent(line.lineId))
