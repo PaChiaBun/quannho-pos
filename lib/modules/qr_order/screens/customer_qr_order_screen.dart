@@ -9,6 +9,17 @@ import 'package:uuid/uuid.dart';
 import '../models/qr_order_model.dart';
 import '../repository/qr_order_repository.dart';
 
+// Bảng màu dùng chung với màn Bán hàng của POS.
+const _kNavy = Color(0xFF1E1C5E);
+const _kNavyLight = Color(0xFF2D2B8A);
+const _kOrange = Color(0xFFE85D20);
+const _kInk = Color(0xFF1A1207);
+const _kMuted = Color(0xFF9E9085);
+const _kCream = Color(0xFFFAF7F2);
+const _kBorder = Color(0xFFE0D8CC);
+const _kNavyTint = Color(0xFFF0EEF8);
+const _kNavyLine = Color(0xFFD9D6EE);
+
 /// Trang lỗi thân thiện cho khách khi link gọi món thiếu/sai mã.
 class CustomerQrInvalidLinkScreen extends StatelessWidget {
   const CustomerQrInvalidLinkScreen({super.key});
@@ -22,7 +33,7 @@ class CustomerQrInvalidLinkScreen extends StatelessWidget {
           'Quán Nhỏ',
           style: GoogleFonts.outfit(fontWeight: FontWeight.w900),
         ),
-        backgroundColor: const Color(0xFF6D28D9),
+        backgroundColor: _kNavy,
         foregroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -388,7 +399,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         style: GoogleFonts.outfit(
                           fontWeight: FontWeight.w900,
                           fontSize: 16,
-                          color: Colors.purple.shade900,
+                          color: _kNavy,
                         ),
                       ),
                       IconButton(
@@ -451,22 +462,42 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                   runSpacing: 8,
                                   children: [
                                     for (final t in e.value)
-                                      ChoiceChip(
-                                        label: Text(
-                                          t['name']!,
-                                          style: GoogleFonts.outfit(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
+                                      GestureDetector(
+                                        onTap: () => Navigator.pop(ctx, t),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 18,
+                                            vertical: 11,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            gradient: t['id'] == _selectedTableId
+                                                ? const LinearGradient(
+                                                    colors: [
+                                                      Color(0xFF1A1860),
+                                                      _kNavyLight,
+                                                    ],
+                                                  )
+                                                : null,
                                             color: t['id'] == _selectedTableId
-                                                ? Colors.white
-                                                : Colors.grey.shade900,
+                                                ? null
+                                                : _kNavyTint,
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            border: t['id'] == _selectedTableId
+                                                ? null
+                                                : Border.all(color: _kNavyLine),
+                                          ),
+                                          child: Text(
+                                            t['name']!,
+                                            style: GoogleFonts.outfit(
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 15,
+                                              color: t['id'] == _selectedTableId
+                                                  ? Colors.white
+                                                  : _kInk,
+                                            ),
                                           ),
                                         ),
-                                        selected: t['id'] == _selectedTableId,
-                                        selectedColor: const Color(0xFF6D28D9),
-                                        backgroundColor: Colors.grey.shade100,
-                                        onSelected: (_) =>
-                                            Navigator.pop(ctx, t),
                                       ),
                                   ],
                                 ),
@@ -554,7 +585,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                       currencyFmt.format(pBasePrice),
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.w900,
-                        color: Colors.purple.shade700,
+                        color: _kNavy,
                         fontSize: 16,
                       ),
                     ),
@@ -588,7 +619,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: count > 0
-                                  ? Colors.purple.shade300
+                                  ? _kOrange
                                   : Colors.grey.shade200,
                             ),
                           ),
@@ -609,7 +640,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                       '+${currencyFmt.format(tPrice)}',
                                       style: GoogleFonts.outfit(
                                         fontSize: 12,
-                                        color: Colors.purple.shade700,
+                                        color: _kNavy,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -647,7 +678,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                     icon: Icon(
                                       Icons.add_circle,
                                       size: 24,
-                                      color: Colors.purple.shade700,
+                                      color: _kNavy,
                                     ),
                                     onPressed: () {
                                       setSheetState(() {
@@ -714,7 +745,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple.shade700,
+                              backgroundColor: _kNavy,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -814,7 +845,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         style: GoogleFonts.outfit(
                           fontWeight: FontWeight.w900,
                           fontSize: 16,
-                          color: Colors.purple.shade900,
+                          color: _kNavy,
                         ),
                       ),
                       IconButton(
@@ -836,19 +867,19 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         decoration: BoxDecoration(
                           color: needTable
                               ? Colors.orange.shade50
-                              : Colors.purple.shade50,
+                              : _kNavyTint,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: needTable
                                 ? Colors.orange.shade300
-                                : Colors.purple.shade200,
+                                : _kNavyLine,
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               Icons.table_restaurant_rounded,
-                              color: Colors.purple.shade800,
+                              color: _kNavy,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -859,7 +890,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                 style: GoogleFonts.outfit(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 13,
-                                  color: Colors.purple.shade900,
+                                  color: _kNavy,
                                 ),
                               ),
                             ),
@@ -869,7 +900,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                 style: GoogleFonts.outfit(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
-                                  color: Colors.purple.shade700,
+                                  color: _kNavy,
                                 ),
                               ),
                           ],
@@ -929,7 +960,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                           '+ ${mods.map((m) => "${m['name']} (x${m['quantity']})").join(", ")}',
                                           style: GoogleFonts.outfit(
                                             fontSize: 11,
-                                            color: Colors.purple.shade700,
+                                            color: _kNavy,
                                           ),
                                         ),
                                       if (item['note'] != null)
@@ -945,7 +976,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                         currencyFmt.format(price),
                                         style: GoogleFonts.outfit(
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.purple.shade900,
+                                          color: _kNavy,
                                           fontSize: 13,
                                         ),
                                       ),
@@ -1013,7 +1044,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         style: GoogleFonts.outfit(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
-                          color: Colors.purple.shade900,
+                          color: _kNavy,
                         ),
                       ),
                     ],
@@ -1024,7 +1055,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     height: 48,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple.shade700,
+                        backgroundColor: _kNavy,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -1351,212 +1382,33 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
     }
 
     final body = Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _storeName,
-              style: GoogleFonts.outfit(
-                fontWeight: FontWeight.w900,
-                fontSize: 18,
-              ),
-            ),
-            Text(
-              _isCounter
-                  ? 'Gọi món mang đi tại quầy'
-                  : 'Gọi món dùng chung tại bàn',
-              style: GoogleFonts.outfit(fontSize: 11, color: Colors.white70),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xFF6D28D9),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage.isNotEmpty
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline_rounded,
-                      size: 48,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      _errorMessage,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _loadMenu,
-                      child: const Text('Thử lại'),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : Column(
-              children: [
-                if (!_isCounter) _buildTableBar(),
-                if (_submitUnknown && _cart.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-                    child: _buildUnknownBanner(),
-                  ),
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  child: Column(
+      backgroundColor: _kCream,
+      body: Column(
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: _loading
+                ? const Center(
+                    child: CircularProgressIndicator(color: _kOrange),
+                  )
+                : _errorMessage.isNotEmpty
+                ? _buildErrorState()
+                : Column(
                     children: [
-                      TextField(
-                        controller: _searchCtrl,
-                        decoration: InputDecoration(
-                          hintText: 'Tìm kiếm món ăn, thức uống...',
-                          hintStyle: GoogleFonts.outfit(fontSize: 13),
-                          prefixIcon: const Icon(
-                            Icons.search_rounded,
-                            size: 20,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey.shade100,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
+                      if (!_isCounter) _buildTableBar(),
+                      if (_submitUnknown && _cart.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+                          child: _buildUnknownBanner(),
                         ),
-                        onChanged: (val) {
-                          setState(
-                            () => _searchQuery = val.trim().toLowerCase(),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: _categories.map((cat) {
-                            final isSel = _selectedCategory == cat;
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: ChoiceChip(
-                                label: Text(
-                                  cat,
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 12,
-                                    fontWeight: isSel
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                    color: isSel
-                                        ? Colors.white
-                                        : Colors.grey.shade800,
-                                  ),
-                                ),
-                                selected: isSel,
-                                selectedColor: const Color(0xFF6D28D9),
-                                backgroundColor: Colors.grey.shade100,
-                                onSelected: (_) {
-                                  setState(() => _selectedCategory = cat);
-                                },
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
+                      _buildCategoryRow(),
+                      Expanded(child: _buildProductList()),
                     ],
                   ),
-                ),
-                Expanded(child: _buildProductList()),
-              ],
-            ),
-      bottomNavigationBar: _cart.isEmpty || _loading
-          ? null
-          : Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                child: SizedBox(
-                  height: 52,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6D28D9),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: _openCartBottomSheet,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: Colors.white24,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                '$_cartItemCount',
-                                style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              _isCounter || _selectedTableName == null
-                                  ? 'Xem giỏ hàng'
-                                  : 'Giỏ hàng • $_selectedTableName',
-                              style: GoogleFonts.outfit(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          currencyFmt.format(_cartTotal),
-                          style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: _cart.isEmpty || _loading ? null : _buildCartBar(),
     );
 
     // Lớp phủ chờ khi đang gửi (thay cho showDialog + Navigator.pop)
@@ -1569,53 +1421,155 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
           ),
         if (_isSubmitting)
           const Positioned.fill(
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CircularProgressIndicator(color: _kOrange)),
           ),
       ],
     );
   }
 
-  Widget _buildTableBar() {
-    final has = _selectedTableId != null;
-    return Material(
-      color: has ? Colors.purple.shade50 : Colors.orange.shade50,
-      child: InkWell(
-        onTap: _tables.isEmpty ? null : _pickTable,
+  Widget _buildErrorState() => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.wifi_off_rounded, size: 48, color: _kMuted),
+          const SizedBox(height: 12),
+          Text(
+            _errorMessage,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: _kInk,
+            ),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: _kOrange,
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: _loadMenu,
+            child: const Text('Thử lại'),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  // ── Đầu trang: nền navy chuyển sắc như màn Bán hàng, kèm ô tìm kiếm ─────────
+  Widget _buildHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF1A1860), _kNavy],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x30000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        bottom: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.table_restaurant_rounded,
-                size: 20,
-                color: has ? Colors.purple.shade800 : Colors.orange.shade900,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _storeName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _kOrange,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _isCounter
+                              ? Icons.takeout_dining_rounded
+                              : Icons.table_restaurant_rounded,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _isCounter ? 'Mang đi' : 'Tại bàn',
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  _tables.isEmpty
-                      ? 'Quán chưa có danh sách bàn. Vui lòng gọi nhân viên.'
-                      : has
-                      ? 'Bàn của bạn: $_selectedTableName'
-                      : 'Chọn bàn của bạn để bắt đầu gọi món',
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: has
-                        ? Colors.purple.shade900
-                        : Colors.orange.shade900,
+              const SizedBox(height: 2),
+              Text(
+                _isCounter
+                    ? 'Chọn món, quán sẽ chuẩn bị khi bạn thanh toán tại quầy'
+                    : 'Chọn món dùng chung cho cả bàn',
+                style: GoogleFonts.outfit(fontSize: 12, color: Colors.white70),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _searchCtrl,
+                style: GoogleFonts.outfit(fontSize: 15, color: _kInk),
+                decoration: InputDecoration(
+                  hintText: 'Tìm món, thức uống...',
+                  hintStyle: GoogleFonts.outfit(fontSize: 15, color: _kMuted),
+                  prefixIcon: const Icon(Icons.search_rounded, color: _kMuted),
+                  suffixIcon: _searchQuery.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 20),
+                          color: _kMuted,
+                          onPressed: () {
+                            _searchCtrl.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
                   ),
                 ),
+                onChanged: (val) =>
+                    setState(() => _searchQuery = val.trim().toLowerCase()),
               ),
-              if (_tables.isNotEmpty)
-                Text(
-                  has ? 'Đổi bàn' : 'Chọn bàn',
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: Colors.purple.shade700,
-                  ),
-                ),
             ],
           ),
         ),
@@ -1623,6 +1577,161 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
     );
   }
 
+  // ── Chọn bàn ────────────────────────────────────────────────────────────────
+  Widget _buildTableBar() {
+    final has = _selectedTableId != null;
+    final noList = _tables.isEmpty;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      decoration: BoxDecoration(
+        color: has ? Colors.white : const Color(0xFFFFF1E8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: has ? _kBorder : const Color(0xFFF5C9B0)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: noList ? null : _pickTable,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: has ? _kNavyTint : _kOrange,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.table_restaurant_rounded,
+                    size: 20,
+                    color: has ? _kNavy : Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        noList
+                            ? 'Quán chưa có danh sách bàn'
+                            : has
+                            ? _selectedTableName ?? ''
+                            : 'Bạn đang ngồi bàn nào?',
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: _kInk,
+                        ),
+                      ),
+                      Text(
+                        noList
+                            ? 'Vui lòng gọi nhân viên'
+                            : has
+                            ? 'Món sẽ được mang tới bàn này'
+                            : 'Chọn bàn để bắt đầu gọi món',
+                        style: GoogleFonts.outfit(fontSize: 12, color: _kMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!noList)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: has ? _kNavyTint : _kOrange,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      has ? 'Đổi bàn' : 'Chọn bàn',
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: has ? _kNavy : Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Danh mục: viên thuốc như màn Bán hàng ───────────────────────────────────
+  Widget _buildCategoryRow() {
+    if (_categories.length <= 1) return const SizedBox(height: 4);
+    return Container(
+      height: 58,
+      margin: const EdgeInsets.only(top: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        itemCount: _categories.length,
+        itemBuilder: (_, i) {
+          final cat = _categories[i];
+          final sel = cat == _selectedCategory;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedCategory = cat),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                gradient: sel
+                    ? const LinearGradient(
+                        colors: [Color(0xFF1A1860), _kNavyLight],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: sel ? null : _kNavyTint,
+                borderRadius: BorderRadius.circular(20),
+                border: sel
+                    ? null
+                    : Border.all(color: _kNavy.withValues(alpha: 0.12)),
+              ),
+              child: Center(
+                child: Text(
+                  cat,
+                  style: GoogleFonts.outfit(
+                    fontSize: 15,
+                    fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
+                    color: sel ? Colors.white : _kInk,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  int _qtyInCart(String productId) {
+    var n = 0;
+    for (final it in _cart.values) {
+      if (it['product_id'] == productId) n += it['quantity'] as int;
+    }
+    return n;
+  }
+
+  static const _accents = [
+    Color(0xFF1565C0),
+    Color(0xFFE65100),
+    Color(0xFF880E4F),
+    Color(0xFF00695C),
+    Color(0xFF3949AB),
+  ];
+
+  // ── Danh sách món: lưới 2 cột, tiêu đề nhóm có vạch cam ─────────────────────
   Widget _buildProductList() {
     final filtered = _products.where((p) {
       final matchesCat =
@@ -1638,119 +1747,360 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search_off_rounded,
-              size: 48,
-              color: Colors.grey.shade300,
-            ),
+            Icon(Icons.search_off_rounded, size: 48, color: _kBorder),
             const SizedBox(height: 12),
             Text(
               'Không tìm thấy món phù hợp',
-              style: GoogleFonts.outfit(color: Colors.grey.shade600),
+              style: GoogleFonts.outfit(color: _kMuted),
             ),
           ],
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(14),
-      itemCount: filtered.length,
-      itemBuilder: (context, idx) {
-        final prod = filtered[idx];
-        final price = (prod['sell_price'] as num).toDouble();
-        final imgUrl = prod['image_url'] as String?;
+    final grouped = <String, List<Map<String, dynamic>>>{};
+    final order = <String>[];
+    final showHeaders = _selectedCategory == 'Tất cả' && _searchQuery.isEmpty;
+    for (final p in filtered) {
+      final cat = showHeaders
+          ? ((p['category'] as String?)?.isNotEmpty == true
+                ? p['category'] as String
+                : 'Khác')
+          : '';
+      if (!grouped.containsKey(cat)) {
+        grouped[cat] = [];
+        order.add(cat);
+      }
+      grouped[cat]!.add(p);
+    }
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: () => _openProductCustomizerSheet(prod),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      width: 70,
-                      height: 70,
-                      color: Colors.purple.shade50,
-                      child: imgUrl != null && imgUrl.isNotEmpty
-                          ? Image.network(
-                              imgUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Icon(
-                                    Icons.restaurant_menu_rounded,
-                                    color: Colors.purple.shade300,
-                                  ),
-                            )
-                          : Icon(
-                              Icons.restaurant_menu_rounded,
-                              color: Colors.purple.shade300,
-                              size: 32,
-                            ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, c) {
+        final cols = c.maxWidth >= 900
+            ? 4
+            : c.maxWidth >= 600
+            ? 3
+            : 2;
+        final delegate = SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: cols,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: cols >= 3 ? 1.05 : 0.9,
+        );
+        return CustomScrollView(
+          slivers: [
+            for (final cat in order) ...[
+              if (showHeaders)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                    child: Row(
                       children: [
-                        Text(
-                          prod['name'] as String,
-                          style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
+                        Container(
+                          width: 5,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: _kOrange,
+                            borderRadius: BorderRadius.circular(3),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(width: 8),
                         Text(
-                          currencyFmt.format(price),
+                          cat,
                           style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.w900,
-                            color: Colors.purple.shade800,
-                            fontSize: 14,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: _kInk,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${grouped[cat]!.length} món',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: _kMuted,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple.shade50,
-                      foregroundColor: Colors.purple.shade700,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: Colors.purple.shade200),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
+                )
+              else
+                const SliverToBoxAdapter(child: SizedBox(height: 10)),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                sliver: SliverGrid(
+                  gridDelegate: delegate,
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) => _buildProductCard(
+                      grouped[cat]![i],
+                      _accents[(_categories.indexOf(
+                                    (grouped[cat]![i]['category'] as String?) ??
+                                        '',
+                                  ) +
+                                  _accents.length)
+                              .abs() %
+                          _accents.length],
                     ),
-                    onPressed: () => _openProductCustomizerSheet(prod),
-                    child: Text(
-                      '+ Chọn',
-                      style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
+                    childCount: grouped[cat]!.length,
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            ],
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildProductCard(Map<String, dynamic> prod, Color accent) {
+    final price = (prod['sell_price'] as num).toDouble();
+    final imgUrl = prod['image_url'] as String?;
+    final qty = _qtyInCart(prod['id'] as String);
+    final inCart = qty > 0;
+    final hasImg = imgUrl != null && imgUrl.isNotEmpty;
+    const radius = 20.0;
+
+    return GestureDetector(
+      onTap: () => _openProductCustomizerSheet(prod),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(radius),
+          border: Border.all(
+            color: inCart ? _kOrange : _kBorder,
+            width: inCart ? 1.8 : 0.8,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: inCart
+                  ? _kOrange.withValues(alpha: 0.18)
+                  : Colors.black.withValues(alpha: 0.06),
+              blurRadius: inCart ? 12 : 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(radius - 1),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (hasImg)
+                Image.network(
+                  imgUrl,
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.low,
+                  gaplessPlayback: true,
+                  errorBuilder: (_, __, ___) => _cardPlaceholder(accent, prod['category'] as String?),
+                )
+              else
+                _cardPlaceholder(accent, prod['category'] as String?),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.72),
+                    ],
+                    stops: const [0.4, 1.0],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 12,
+                right: 12,
+                bottom: 10,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      prod['name'] as String,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      currencyFmt.format(price),
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFFFFD54F),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: inCart
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _kOrange,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          'x$qty',
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                          ),
+                        ),
+                      )
+                    : Container(
+                        width: 34,
+                        height: 34,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add_rounded,
+                          color: _kOrange,
+                          size: 22,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _catIcon(String? cat) {
+    final c = (cat ?? '').toLowerCase();
+    if (c.contains('uống') || c.contains('trà') || c.contains('cà phê')) {
+      return Icons.local_cafe_rounded;
+    }
+    if (c.contains('ép') || c.contains('sinh tố') || c.contains('nước')) {
+      return Icons.local_drink_rounded;
+    }
+    if (c.contains('tráng') || c.contains('bánh')) return Icons.cake_rounded;
+    return Icons.restaurant_rounded;
+  }
+
+  Widget _cardPlaceholder(Color accent, String? cat) => DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [accent.withValues(alpha: 0.95), accent.withValues(alpha: 0.6)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+    child: Align(
+      alignment: const Alignment(0, -0.35),
+      child: Icon(
+        _catIcon(cat),
+        size: 46,
+        color: Colors.white.withValues(alpha: 0.4),
+      ),
+    ),
+  );
+
+  // ── Thanh giỏ hàng nổi: navy chuyển sắc + nút cam như màn Bán hàng ──────────
+  Widget _buildCartBar() {
+    return Container(
+      color: _kCream,
+      child: SafeArea(
+        top: false,
+        child: GestureDetector(
+          onTap: _openCartBottomSheet,
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [_kNavy, _kNavyLight],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(26),
+              boxShadow: [
+                BoxShadow(
+                  color: _kNavy.withValues(alpha: 0.45),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _kOrange,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$_cartItemCount món',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _isCounter || _selectedTableName == null
+                        ? 'Xem giỏ hàng'
+                        : 'Giỏ hàng • $_selectedTableName',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.outfit(
+                      color: const Color(0xD9FFFFFF),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 9,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _kOrange,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    currencyFmt.format(_cartTotal),
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -1872,7 +2222,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
           'Theo dõi đơn gọi món',
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF6D28D9),
+        backgroundColor: _kNavy,
         foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
       ),
@@ -1953,7 +2303,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.purple.shade100),
+                  border: Border.all(color: _kNavyLine),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.06),
@@ -1969,7 +2319,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
-                        color: Colors.purple.shade900,
+                        color: _kNavy,
                         letterSpacing: 1,
                       ),
                     ),
@@ -1979,7 +2329,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.w900,
                         fontSize: 56,
-                        color: Colors.purple.shade800,
+                        color: _kNavy,
                       ),
                     ),
                     if (showPayHint) ...[
@@ -2077,7 +2427,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
             style: GoogleFonts.outfit(
               fontWeight: bold ? FontWeight.w900 : FontWeight.w600,
               fontSize: big ? 16 : 14,
-              color: big ? Colors.purple.shade900 : null,
+              color: big ? _kNavy : null,
             ),
           ),
         ),
