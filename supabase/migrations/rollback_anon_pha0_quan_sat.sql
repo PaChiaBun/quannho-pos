@@ -1,6 +1,7 @@
 -- ROLLBACK cho 20261013_anon_pha0_quan_sat.sql
 -- Gỡ trigger quan sát + hàm + bảng ghi nhận; khôi phục quyền/chính sách cũ của stock_movements_sync.
 -- (Bảng anon_write_audit bị xóa cùng dữ liệu quan sát — nếu cần giữ bằng chứng, xuất ra trước.)
+-- Nếu đã bật timer xóa tự động: systemctl disable --now quannho-audit-purge.timer (chạy trước khi hoàn tác)
 BEGIN;
 
 DO $rb$
@@ -15,6 +16,7 @@ BEGIN
 END
 $rb$;
 
+DROP FUNCTION IF EXISTS public.qn_anon_write_audit_purge(integer);
 DROP FUNCTION IF EXISTS public.qn_anon_write_audit();
 DROP TABLE IF EXISTS public.anon_write_audit;
 
