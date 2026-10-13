@@ -64,14 +64,14 @@ class QrChannelCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
                     Text(
                       description,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
                       ),
@@ -129,7 +129,7 @@ class QrChannelCard extends StatelessWidget {
                         Text(
                           unavailableReason ?? 'Chưa có mã QR.',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
+                          style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.shade700,
                           ),

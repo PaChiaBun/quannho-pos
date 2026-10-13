@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -33,7 +32,7 @@ class CustomerQrInvalidLinkScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'Quán Nhỏ',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w900),
+          style: TextStyle(fontWeight: FontWeight.w900),
         ),
         backgroundColor: _kNavy,
         foregroundColor: Colors.white,
@@ -55,7 +54,7 @@ class CustomerQrInvalidLinkScreen extends StatelessWidget {
               Text(
                 'Liên kết gọi món không hợp lệ',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
                 ),
@@ -65,7 +64,7 @@ class CustomerQrInvalidLinkScreen extends StatelessWidget {
                 'Vui lòng quét lại mã QR trên bàn hoặc tại quầy, '
                 'hoặc hỏi nhân viên để được hỗ trợ.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
+                style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey.shade700,
                 ),
@@ -409,7 +408,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     children: [
                       Text(
                         'BẠN ĐANG NGỒI BÀN NÀO?',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 16,
                           color: _kNavy,
@@ -425,7 +424,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     controller: searchCtrl,
                     decoration: InputDecoration(
                       hintText: 'Tìm bàn...',
-                      hintStyle: GoogleFonts.outfit(fontSize: 13),
+                      hintStyle: TextStyle(fontSize: 13),
                       prefixIcon: const Icon(Icons.search_rounded, size: 20),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -447,7 +446,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         ? Center(
                             child: Text(
                               'Không tìm thấy bàn phù hợp',
-                              style: GoogleFonts.outfit(
+                              style: TextStyle(
                                 color: Colors.grey.shade600,
                               ),
                             ),
@@ -462,7 +461,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                   ),
                                   child: Text(
                                     e.key.toUpperCase(),
-                                    style: GoogleFonts.outfit(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                       color: Colors.grey.shade700,
@@ -504,7 +503,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                           ),
                                           child: Text(
                                             t['name']!,
-                                            style: GoogleFonts.outfit(
+                                            style: TextStyle(
                                               fontWeight: FontWeight.w800,
                                               fontSize: 15,
                                               color: t['id'] == _selectedTableId
@@ -652,7 +651,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         Expanded(
                           child: Text(
                             pName,
-                            style: GoogleFonts.outfit(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
@@ -666,7 +665,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     ),
                     Text(
                       currencyFmt.format(pBasePrice),
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         fontWeight: FontWeight.w900,
                         color: _kNavy,
                         fontSize: 16,
@@ -677,7 +676,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     if (availableToppings.isNotEmpty) ...[
                       Text(
                         'CHỌN TOPPING THÊM',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                           color: Colors.grey.shade700,
@@ -714,14 +713,14 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                   children: [
                                     Text(
                                       tName,
-                                      style: GoogleFonts.outfit(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 14,
                                       ),
                                     ),
                                     Text(
                                       '+${currencyFmt.format(tPrice)}',
-                                      style: GoogleFonts.outfit(
+                                      style: TextStyle(
                                         fontSize: 12,
                                         color: _kNavy,
                                         fontWeight: FontWeight.bold,
@@ -751,7 +750,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                     ),
                                     Text(
                                       '$count',
-                                      style: GoogleFonts.outfit(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
                                       ),
@@ -784,7 +783,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                       decoration: InputDecoration(
                         labelText:
                             'Ghi chú cho món này (VD: ít đá, không đường...)',
-                        labelStyle: GoogleFonts.outfit(fontSize: 13),
+                        labelStyle: TextStyle(fontSize: 13),
                         counterText: '',
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -811,7 +810,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                             ),
                             Text(
                               '$qty',
-                              style: GoogleFonts.outfit(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 16,
                               ),
@@ -885,7 +884,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                             },
                             child: Text(
                               'Thêm vào giỏ • ${currencyFmt.format(totalPrice)}',
-                              style: GoogleFonts.outfit(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
@@ -929,7 +928,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     children: [
                       Text(
                         'GIỎ HÀNG GỌI MÓN',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 16,
                           color: _kNavy,
@@ -969,7 +968,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                 needTable
                                     ? 'Chưa chọn bàn — bấm để chọn bàn của bạn'
                                     : 'Bàn: $_selectedTableName',
-                                style: GoogleFonts.outfit(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 13,
                                   color: _kNavy,
@@ -979,7 +978,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                             if (!needTable)
                               Text(
                                 'Đổi',
-                                style: GoogleFonts.outfit(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                   color: _kNavy,
@@ -997,7 +996,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                   ],
                   Text(
                     'Các món đã chọn ($_cartItemCount):',
-                    style: GoogleFonts.outfit(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -1032,7 +1031,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                     children: [
                                       Text(
                                         item['product_name'] as String,
-                                        style: GoogleFonts.outfit(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
                                         ),
@@ -1040,7 +1039,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                       if (mods.isNotEmpty)
                                         Text(
                                           '+ ${mods.map((m) => "${m['name']} (x${m['quantity']})").join(", ")}',
-                                          style: GoogleFonts.outfit(
+                                          style: TextStyle(
                                             fontSize: 11,
                                             color: _kNavy,
                                           ),
@@ -1048,7 +1047,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                       if (item['note'] != null)
                                         Text(
                                           'Ghi chú: ${item['note']}',
-                                          style: GoogleFonts.outfit(
+                                          style: TextStyle(
                                             fontSize: 11,
                                             color: Colors.grey.shade600,
                                             fontStyle: FontStyle.italic,
@@ -1056,7 +1055,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                         ),
                                       Text(
                                         currencyFmt.format(price),
-                                        style: GoogleFonts.outfit(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: _kNavy,
                                           fontSize: 13,
@@ -1086,7 +1085,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                     ),
                                     Text(
                                       '$qty',
-                                      style: GoogleFonts.outfit(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
                                       ),
@@ -1118,14 +1117,14 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     children: [
                       Text(
                         'Tổng cộng:',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
                       ),
                       Text(
                         currencyFmt.format(_cartTotal),
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
                           color: _kNavy,
@@ -1156,7 +1155,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                             : (_submitUnknown
                                   ? 'GỬI LẠI ĐƠN HÀNG'
                                   : 'XÁC NHẬN & GỬI ĐƠN HÀNG'),
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
@@ -1197,7 +1196,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
             child: Text(
               'Chưa rõ đơn đã được gửi hay chưa do mất kết nối. '
               'Bạn có thể bấm gửi lại — hệ thống sẽ không tạo đơn trùng.',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Colors.orange.shade900,
@@ -1434,12 +1433,12 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
         builder: (ctx) => AlertDialog(
           title: Text(
             'Đặt đơn mới?',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: Text(
             'Đơn hiện tại vẫn đang được quán xử lý. Nếu tiếp tục, bạn sẽ không '
             'theo dõi được đơn này nữa trên trang này.',
-            style: GoogleFonts.outfit(fontSize: 13),
+            style: TextStyle(fontSize: 13),
           ),
           actions: [
             TextButton(
@@ -1522,7 +1521,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
           Text(
             _errorMessage,
             textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
               color: _kInk,
@@ -1576,7 +1575,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                       _storeName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -1607,7 +1606,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         const SizedBox(width: 4),
                         Text(
                           _isCounter ? 'Mang đi' : 'Tại bàn',
-                          style: GoogleFonts.outfit(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
@@ -1623,15 +1622,15 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                 _isCounter
                     ? 'Chọn món, quán sẽ chuẩn bị khi bạn thanh toán tại quầy'
                     : 'Chọn món dùng chung cho cả bàn',
-                style: GoogleFonts.outfit(fontSize: 12, color: Colors.white70),
+                style: TextStyle(fontSize: 12, color: Colors.white70),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _searchCtrl,
-                style: GoogleFonts.outfit(fontSize: 15, color: _kInk),
+                style: TextStyle(fontSize: 15, color: _kInk),
                 decoration: InputDecoration(
                   hintText: 'Tìm món, thức uống...',
-                  hintStyle: GoogleFonts.outfit(fontSize: 15, color: _kMuted),
+                  hintStyle: TextStyle(fontSize: 15, color: _kMuted),
                   prefixIcon: const Icon(Icons.search_rounded, color: _kMuted),
                   suffixIcon: _searchQuery.isEmpty
                       ? null
@@ -1705,7 +1704,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                             : has
                             ? _selectedTableName ?? ''
                             : 'Bạn đang ngồi bàn nào?',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
                           color: _kInk,
@@ -1717,7 +1716,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                             : has
                             ? 'Món sẽ được mang tới bàn này'
                             : 'Chọn bàn để bắt đầu gọi món',
-                        style: GoogleFonts.outfit(fontSize: 12, color: _kMuted),
+                        style: TextStyle(fontSize: 12, color: _kMuted),
                       ),
                     ],
                   ),
@@ -1734,7 +1733,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     ),
                     child: Text(
                       has ? 'Đổi bàn' : 'Chọn bàn',
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 13,
                         color: has ? _kNavy : Colors.white,
@@ -1785,7 +1784,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
               child: Center(
                 child: Text(
                   cat,
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
                     color: sel ? Colors.white : _kInk,
@@ -1845,7 +1844,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
             const SizedBox(height: 12),
             Text(
               'Không tìm thấy món phù hợp',
-              style: GoogleFonts.outfit(color: _kMuted),
+              style: TextStyle(color: _kMuted),
             ),
           ],
         ),
@@ -1901,7 +1900,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         const SizedBox(width: 8),
                         Text(
                           cat,
-                          style: GoogleFonts.outfit(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: _kInk,
@@ -1911,7 +1910,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         const SizedBox(width: 8),
                         Text(
                           '${grouped[cat]!.length} món',
-                          style: GoogleFonts.outfit(
+                          style: TextStyle(
                             fontSize: 12,
                             color: _kMuted,
                             fontWeight: FontWeight.w500,
@@ -2055,7 +2054,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         prod['name'] as String,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
@@ -2065,7 +2064,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                       const SizedBox(height: 2),
                       Text(
                         currencyFmt.format(price),
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                           color: hasImg
@@ -2106,7 +2105,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                             ),
                             child: Text(
                               'x$qty',
-                              style: GoogleFonts.outfit(
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 13,
@@ -2192,7 +2191,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     ),
                     child: Text(
                       '$_cartItemCount món',
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
@@ -2207,7 +2206,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                           : 'Giỏ hàng • $_selectedTableName',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         color: const Color(0xD9FFFFFF),
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -2225,7 +2224,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     ),
                     child: Text(
                       currencyFmt.format(_cartTotal),
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
@@ -2357,7 +2356,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
       appBar: AppBar(
         title: Text(
           'Theo dõi đơn gọi món',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: _kNavy,
         foregroundColor: Colors.white,
@@ -2382,7 +2381,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     Expanded(
                       child: Text(
                         'Mất kết nối. Đang thử kết nối lại, trạng thái có thể chưa mới nhất.',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -2410,7 +2409,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                       children: [
                         Text(
                           _phaseTitle,
-                          style: GoogleFonts.outfit(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                             color: color.shade900,
@@ -2419,7 +2418,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         if (_phaseSubtitle.isNotEmpty)
                           Text(
                             _phaseSubtitle,
-                            style: GoogleFonts.outfit(
+                            style: TextStyle(
                               fontSize: 12,
                               color: color.shade900.withValues(alpha: 0.8),
                             ),
@@ -2456,7 +2455,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                   children: [
                     Text(
                       'MÃ LẤY MÓN CỦA BẠN',
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                         color: _kNavy,
@@ -2466,7 +2465,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                     const SizedBox(height: 8),
                     Text(
                       pickup,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 56,
                         color: _kNavy,
@@ -2476,7 +2475,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Vui lòng ra quầy thanh toán',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                           color: Colors.orange.shade900,
@@ -2490,7 +2489,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
             ] else if (showPayHint) ...[
               Text(
                 'Vui lòng ra quầy thanh toán',
-                style: GoogleFonts.outfit(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                   color: Colors.orange.shade900,
@@ -2539,7 +2538,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                 onPressed: _onNewOrderPressed,
                 child: Text(
                   'ĐẶT ĐƠN MỚI',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -2563,13 +2562,13 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade700),
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
         ),
         Flexible(
           child: Text(
             value,
             textAlign: TextAlign.right,
-            style: GoogleFonts.outfit(
+            style: TextStyle(
               fontWeight: bold ? FontWeight.w900 : FontWeight.w600,
               fontSize: big ? 16 : 14,
               color: big ? _kNavy : null,

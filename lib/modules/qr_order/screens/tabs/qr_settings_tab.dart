@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/services/vietqr_service.dart';
 import '../../models/qr_order_model.dart';
 
@@ -96,11 +95,11 @@ class _QrTransferSectionState extends State<QrTransferSection> {
         ),
         title: Text(
           'Chuyển khoản tại quầy',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 15),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
         subtitle: Text(
           'Tài khoản nhận tiền khi khách mang đi chuyển khoản (VietQR)',
-          style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
@@ -269,13 +268,13 @@ class _QrAdvancedSectionState extends State<QrAdvancedSection> {
         leading: const Icon(Icons.tune_rounded, color: Color(0xFF8B5CF6)),
         title: Text(
           'Nâng cao',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 15),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
         subtitle: Text(
           effective == null
               ? 'Tên miền đã lưu không hợp lệ - QR bị khóa'
               : 'Tên miền đang dùng: $effective',
-          style: GoogleFonts.outfit(
+          style: TextStyle(
             fontSize: 12,
             color: effective == null ? Colors.red : Colors.grey.shade600,
           ),

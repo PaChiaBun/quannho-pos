@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../providers/qr_order_providers.dart';
 
@@ -34,7 +33,7 @@ class QrCounterQueueSheet extends ConsumerWidget {
               Expanded(
                 child: Text(
                   'Đơn gọi món QR (${requests.length})',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
                   ),
@@ -57,7 +56,7 @@ class QrCounterQueueSheet extends ConsumerWidget {
               ),
               child: Text(
                 'Mất kết nối - danh sách có thể chưa mới nhất.',
-                style: GoogleFonts.outfit(
+                style: TextStyle(
                   fontSize: 12,
                   color: Colors.orange.shade900,
                   fontWeight: FontWeight.w700,
@@ -70,7 +69,7 @@ class QrCounterQueueSheet extends ConsumerWidget {
               child: Center(
                 child: Text(
                   'Chưa có đơn QR nào đang chờ',
-                  style: GoogleFonts.outfit(color: Colors.grey.shade600),
+                  style: TextStyle(color: Colors.grey.shade600),
                 ),
               ),
             )
@@ -102,7 +101,7 @@ class QrCounterQueueSheet extends ConsumerWidget {
                       ),
                       title: Text(
                         req.isTable ? 'Tại bàn • ${req.displayTitle}' : req.displayTitle,
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
@@ -110,7 +109,7 @@ class QrCounterQueueSheet extends ConsumerWidget {
                       subtitle: Text(
                         '$qty món • ${currencyFmt.format(req.totalAmount)}$wait'
                         '${req.isSubmitted ? "" : " • đang xử lý"}',
-                        style: GoogleFonts.outfit(fontSize: 12),
+                        style: TextStyle(fontSize: 12),
                       ),
                       trailing: const Icon(Icons.chevron_right_rounded),
                     ),

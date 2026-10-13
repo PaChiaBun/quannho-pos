@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:printing/printing.dart';
 import '../services/qr_pdf_service.dart';
 
@@ -38,7 +37,7 @@ class _QrPosterPrintScreenState extends State<QrPosterPrintScreen> {
       appBar: AppBar(
         title: Text(
           'In poster QR - $label',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF8B5CF6),
         foregroundColor: Colors.white,

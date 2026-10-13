@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../models/qr_order_model.dart';
@@ -286,7 +285,7 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen> {
       appBar: AppBar(
         title: Text(
           'Mã QR gọi món',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF8B5CF6),
         foregroundColor: Colors.white,

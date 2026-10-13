@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/permission_provider.dart';
@@ -518,7 +517,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               'Đơn vừa được cập nhật ở thiết bị khác. Lưu hoặc tải lại để đồng bộ.',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
                 color: Colors.orange.shade900,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -530,7 +529,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               'Khách ghi chú: ${_req.customerNote}',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
                 color: Colors.orange.shade800,
                 fontSize: 12,
               ),
@@ -542,7 +541,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
           children: [
             Text(
               'Danh sách món (${_items.length}):',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -590,7 +589,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
             children: [
               Text(
                 _req.isTable ? 'ĐƠN GỌI MÓN TẠI BÀN' : 'ĐƠN MANG ĐI',
-                style: GoogleFonts.outfit(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                   color: Colors.grey.shade700,
@@ -598,7 +597,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
               ),
               Text(
                 _req.displayTitle,
-                style: GoogleFonts.outfit(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                 ),
@@ -606,7 +605,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
               if (wait != null)
                 Text(
                   'Chờ $wait phút',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
                     fontSize: 11,
                     color: Colors.grey.shade600,
                   ),
@@ -636,7 +635,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
         children: [
           Text(
             'Bàn khách chọn: ${_req.tableName ?? "chưa có"}',
-            style: GoogleFonts.outfit(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
               color: Colors.purple.shade900,
@@ -692,7 +691,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
         children: [
           Text(
             code.isEmpty ? 'Đơn mang đi' : 'Mã lấy món: $code',
-            style: GoogleFonts.outfit(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),
@@ -700,7 +699,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
           const SizedBox(height: 4),
           Text(
             _req.isPaid ? 'ĐÃ THANH TOÁN' : 'CHƯA THANH TOÁN',
-            style: GoogleFonts.outfit(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: _req.isPaid
@@ -738,7 +737,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
             Text(
               'Chuyển thu ngân: tài khoản của bạn không có quyền thu tiền. '
               'Hãy nhờ thu ngân mở đơn này để thu tiền và gửi bếp.',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
                 fontSize: 12,
                 color: Colors.orange.shade900,
                 fontWeight: FontWeight.w600,
@@ -758,7 +757,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
     if (settings.transferAccountNo.trim().isEmpty) {
       return Text(
         'Chưa cấu hình tài khoản VietQR trong mục Thiết lập của module QR.',
-        style: GoogleFonts.outfit(
+        style: TextStyle(
           color: Colors.red.shade800,
           fontWeight: FontWeight.w700,
           fontSize: 12,
@@ -771,7 +770,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
           Expanded(
             child: Text(
               'Món đã thay đổi. Lưu thay đổi để tính lại tiền và hiện mã QR.',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
                 fontSize: 12,
                 color: Colors.orange.shade900,
                 fontWeight: FontWeight.w700,
@@ -821,17 +820,17 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
           const SizedBox(height: 8),
           Text(
             '$bankName • ${settings.transferAccountNo}',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w800),
+            style: TextStyle(fontWeight: FontWeight.w800),
           ),
           Text(
             currencyFmt.format(_req.totalAmount),
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w900),
+            style: TextStyle(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 4),
           Text(
             'VietQR chỉ hỗ trợ chuyển khoản. Hãy kiểm tra tiền đã vào trước khi xác nhận.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(
+            style: TextStyle(
               fontSize: 11,
               color: Colors.orange.shade900,
               fontWeight: FontWeight.w600,
@@ -847,7 +846,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
       return Center(
         child: Text(
           'Đơn đang trống. Bấm "Thêm món" ở trên.',
-          style: GoogleFonts.outfit(color: Colors.grey.shade600, fontSize: 13),
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
         ),
       );
     }
@@ -871,7 +870,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
                   children: [
                     Text(
                       item.productName,
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -879,7 +878,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
                     if (item.modifiersJson.isNotEmpty)
                       Text(
                         '+ ${item.modifiersJson.map((m) => "${m['name'] ?? 'Topping'} (x${m['quantity'] ?? 1})").join(", ")}',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontSize: 11,
                           color: const Color(0xFF6D28D9),
                           fontWeight: FontWeight.w600,
@@ -887,7 +886,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
                       ),
                     Text(
                       currencyFmt.format(item.unitPrice),
-                      style: GoogleFonts.outfit(
+                      style: TextStyle(
                         fontSize: 12,
                         color: _kViolet,
                         fontWeight: FontWeight.w700,
@@ -896,7 +895,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
                     if (item.note.isNotEmpty)
                       Text(
                         'Ghi chú: ${item.note}',
-                        style: GoogleFonts.outfit(
+                        style: TextStyle(
                           fontSize: 11,
                           color: Colors.orange.shade800,
                         ),
@@ -916,7 +915,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
               ),
               Text(
                 '${item.quantity}',
-                style: GoogleFonts.outfit(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                 ),
@@ -947,7 +946,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
           children: [
             Text(
               _dirty ? 'Tạm tính:' : 'Tổng tiền đơn:',
-              style: GoogleFonts.outfit(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
                 color: Colors.grey.shade700,
@@ -958,7 +957,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
                 onTap: _busy ? null : _onSavePressed,
                 child: Text(
                   'Chưa lưu thay đổi món - bấm để lưu',
-                  style: GoogleFonts.outfit(
+                  style: TextStyle(
                     fontSize: 11,
                     color: Colors.orange.shade900,
                     fontWeight: FontWeight.bold,
@@ -970,7 +969,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
         ),
         Text(
           currencyFmt.format(_dirty ? _localTotal : _req.totalAmount),
-          style: GoogleFonts.outfit(
+          style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 20,
             color: _kViolet,
@@ -1004,7 +1003,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
             onPressed: _busy || _closing ? null : _handleReject,
             child: Text(
               'Từ chối',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -1033,7 +1032,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
                   : const Icon(Icons.restaurant_rounded),
               label: Text(
                 label,
-                style: GoogleFonts.outfit(
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 13,
                 ),
@@ -1068,7 +1067,7 @@ class _RejectDialogState extends State<_RejectDialog> {
     return AlertDialog(
       title: Text(
         'Từ chối đơn gọi món',
-        style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        style: TextStyle(fontWeight: FontWeight.bold),
       ),
       content: TextField(
         controller: _ctrl,
@@ -1164,7 +1163,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
             children: [
               Text(
                 'Chọn Món Thêm Vào Đơn',
-                style: GoogleFonts.outfit(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1207,13 +1206,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                         ),
                         title: Text(
                           p['name'] as String? ?? '',
-                          style: GoogleFonts.outfit(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         subtitle: Text(
                           currencyFmt.format(price),
-                          style: GoogleFonts.outfit(
+                          style: TextStyle(
                             color: const Color(0xFF8B5CF6),
                           ),
                         ),
