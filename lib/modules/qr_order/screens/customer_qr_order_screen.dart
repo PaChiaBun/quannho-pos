@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import '../../../core/utils/cart_animation_helper.dart';
 import '../models/qr_order_model.dart';
 import '../repository/qr_order_repository.dart';
 
@@ -44,7 +46,11 @@ class CustomerQrInvalidLinkScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.qr_code_2_rounded, size: 56, color: Colors.grey.shade400),
+              Icon(
+                Icons.qr_code_2_rounded,
+                size: 56,
+                color: Colors.grey.shade400,
+              ),
               const SizedBox(height: 14),
               Text(
                 'Liên kết gọi món không hợp lệ',
@@ -88,11 +94,12 @@ class CustomerQrOrderScreen extends StatefulWidget {
   }) {
     final itemStrs = <String>[];
     for (final item in items) {
-      final mods = ((item['modifiers_json'] as List?) ?? [])
-          .whereType<Map>()
-          .map((m) => '${m['id']}:${m['quantity']}')
-          .toList()
-        ..sort();
+      final mods =
+          ((item['modifiers_json'] as List?) ?? [])
+              .whereType<Map>()
+              .map((m) => '${m['id']}:${m['quantity']}')
+              .toList()
+            ..sort();
       itemStrs.add(
         '[p:${item['product_id']};q:${item['quantity']};n:${item['note'] ?? ""};m:${mods.join(",")}]',
       );
@@ -159,6 +166,9 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
   bool _polling = false;
   int _pollFailures = 0;
   bool _connectionLost = false;
+
+  final GlobalKey _cartBarKey = GlobalKey();
+  bool _cartPop = false;
 
   bool get _isCounter => _channelType == _kCounter;
 
@@ -227,7 +237,10 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
         return 'Có món đã hết hoặc ngừng bán. Vui lòng kiểm tra lại giỏ hàng.';
     }
     final m = r.message?.trim();
-    if (m != null && m.isNotEmpty && m.length <= 160 && !m.contains('Exception')) {
+    if (m != null &&
+        m.isNotEmpty &&
+        m.length <= 160 &&
+        !m.contains('Exception')) {
       return m;
     }
     return fallback;
@@ -470,7 +483,8 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                             vertical: 11,
                                           ),
                                           decoration: BoxDecoration(
-                                            gradient: t['id'] == _selectedTableId
+                                            gradient:
+                                                t['id'] == _selectedTableId
                                                 ? const LinearGradient(
                                                     colors: [
                                                       Color(0xFF1A1860),
@@ -481,8 +495,9 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                             color: t['id'] == _selectedTableId
                                                 ? null
                                                 : _kNavyTint,
-                                            borderRadius:
-                                                BorderRadius.circular(16),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
                                             border: t['id'] == _selectedTableId
                                                 ? null
                                                 : Border.all(color: _kNavyLine),
@@ -520,6 +535,74 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
     });
     _prefSet(_kTableKey, picked['id']);
     return true;
+  }
+
+  // ── Hiệu ứng bay vào giỏ (dùng chung với màn Bán hàng POS) ───────────────────
+  Offset _cartTarget() {
+    final box = _cartBarKey.currentContext?.findRenderObject();
+    if (box is RenderBox && box.attached) {
+      final topLeft = box.localToGlobal(Offset.zero);
+      return topLeft + Offset(48, box.size.height / 2);
+    }
+    final size = MediaQuery.of(context).size;
+    return Offset(size.width * 0.2, size.height - 48);
+  }
+
+  void _flyToCart(Offset start) {
+    HapticFeedback.selectionClick();
+    CartAnimationHelper.runFlyAnimation(
+      context: context,
+      startOffset: start,
+      endOffset: _cartTarget(),
+      color: _kOrange,
+      onComplete: () {
+        if (!mounted) return;
+        HapticFeedback.lightImpact();
+        setState(() => _cartPop = true);
+        Future.delayed(const Duration(milliseconds: 180), () {
+          if (mounted) setState(() => _cartPop = false);
+        });
+      },
+    );
+  }
+
+  String _plainKey(String pId) => jsonEncode([pId, <dynamic>[], '']);
+
+  /// Món không có topping: bấm là vào giỏ ngay (1 chạm), kèm hiệu ứng bay.
+  void _quickAdd(Map<String, dynamic> prod, Offset start) {
+    final pId = prod['id'] as String;
+    final key = _plainKey(pId);
+    setState(() {
+      final existing = _cart[key];
+      if (existing != null) {
+        existing['quantity'] = (existing['quantity'] as int) + 1;
+      } else {
+        _cart[key] = {
+          'product_id': pId,
+          'product_name': prod['name'] as String,
+          'unit_price': (prod['sell_price'] as num).toDouble(),
+          'quantity': 1,
+          'note': null,
+          'modifiers_json': <Map<String, dynamic>>[],
+        };
+      }
+    });
+    _flyToCart(start);
+  }
+
+  void _quickRemove(String pId) {
+    final key = _plainKey(pId);
+    final existing = _cart[key];
+    if (existing == null) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      final q = (existing['quantity'] as int) - 1;
+      if (q <= 0) {
+        _cart.remove(key);
+      } else {
+        existing['quantity'] = q;
+      }
+    });
   }
 
   // ── Thêm món và chọn Topping ────────────────────────────────────────────────
@@ -795,6 +878,10 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                               });
 
                               Navigator.pop(ctx);
+                              final sz = MediaQuery.of(context).size;
+                              _flyToCart(
+                                Offset(sz.width * 0.65, sz.height - 70),
+                              );
                             },
                             child: Text(
                               'Thêm vào giỏ • ${currencyFmt.format(totalPrice)}',
@@ -865,9 +952,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: needTable
-                              ? Colors.orange.shade50
-                              : _kNavyTint,
+                          color: needTable ? Colors.orange.shade50 : _kNavyTint,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: needTable
@@ -877,10 +962,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.table_restaurant_rounded,
-                              color: _kNavy,
-                            ),
+                            Icon(Icons.table_restaurant_rounded, color: _kNavy),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -1015,7 +1097,9 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                                         size: 20,
                                       ),
                                       onPressed: () {
-                                        setState(() => item['quantity'] = qty + 1);
+                                        setState(
+                                          () => item['quantity'] = qty + 1,
+                                        );
                                         setCartState(() {});
                                       },
                                     ),
@@ -1723,13 +1807,23 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
     return n;
   }
 
-  static const _accents = [
-    Color(0xFF1565C0),
-    Color(0xFFE65100),
-    Color(0xFF880E4F),
-    Color(0xFF00695C),
-    Color(0xFF3949AB),
-  ];
+  // Màu & biểu tượng theo danh mục — giống thẻ món ở màn Bán hàng POS.
+  ({IconData icon, Color color}) _catStyle(String? cat) {
+    final c = (cat ?? '').toLowerCase();
+    if (c.contains('uống') || c.contains('trà') || c.contains('cà phê')) {
+      return (icon: Icons.local_cafe_rounded, color: const Color(0xFF1565C0));
+    }
+    if (c.contains('ăn')) {
+      return (icon: Icons.restaurant_rounded, color: const Color(0xFFE65100));
+    }
+    if (c.contains('tráng') || c.contains('bánh')) {
+      return (icon: Icons.cake_rounded, color: const Color(0xFF880E4F));
+    }
+    if (c.contains('ép') || c.contains('sinh tố') || c.contains('nước')) {
+      return (icon: Icons.local_drink_rounded, color: const Color(0xFF00695C));
+    }
+    return (icon: Icons.fastfood_rounded, color: _kNavy);
+  }
 
   // ── Danh sách món: lưới 2 cột, tiêu đề nhóm có vạch cam ─────────────────────
   Widget _buildProductList() {
@@ -1834,16 +1928,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
                 sliver: SliverGrid(
                   gridDelegate: delegate,
                   delegate: SliverChildBuilderDelegate(
-                    (_, i) => _buildProductCard(
-                      grouped[cat]![i],
-                      _accents[(_categories.indexOf(
-                                    (grouped[cat]![i]['category'] as String?) ??
-                                        '',
-                                  ) +
-                                  _accents.length)
-                              .abs() %
-                          _accents.length],
-                    ),
+                    (_, i) => _buildProductCard(grouped[cat]![i]),
                     childCount: grouped[cat]!.length,
                   ),
                 ),
@@ -1856,29 +1941,70 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
     );
   }
 
-  Widget _buildProductCard(Map<String, dynamic> prod, Color accent) {
+  Widget _buildProductCard(Map<String, dynamic> prod) {
+    final pId = prod['id'] as String;
     final price = (prod['sell_price'] as num).toDouble();
     final imgUrl = prod['image_url'] as String?;
-    final qty = _qtyInCart(prod['id'] as String);
+    final style = _catStyle(prod['category'] as String?);
+    final accent = style.color;
+    final qty = _qtyInCart(pId);
     final inCart = qty > 0;
     final hasImg = imgUrl != null && imgUrl.isNotEmpty;
-    const radius = 20.0;
+    final hasToppings = _getToppingsForProduct(pId).isNotEmpty;
+    const radius = 22.0;
+    Offset tapPos = Offset.zero;
+
+    void onAdd() {
+      if (hasToppings) {
+        _openProductCustomizerSheet(prod);
+      } else {
+        _quickAdd(prod, tapPos);
+      }
+    }
+
+    Widget circleBtn(IconData icon, VoidCallback onTap) => GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (d) => tapPos = d.globalPosition,
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: accent, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: 0.18),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: accent, size: 20),
+      ),
+    );
 
     return GestureDetector(
-      onTap: () => _openProductCustomizerSheet(prod),
+      onTapDown: (d) => tapPos = d.globalPosition,
+      onTap: onAdd,
+      onLongPress: () {
+        HapticFeedback.mediumImpact();
+        _openProductCustomizerSheet(prod);
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(radius),
           border: Border.all(
-            color: inCart ? _kOrange : _kBorder,
-            width: inCart ? 1.8 : 0.8,
+            color: inCart ? accent : _kBorder,
+            width: inCart ? 1.5 : 0.8,
           ),
           boxShadow: [
             BoxShadow(
               color: inCart
-                  ? _kOrange.withValues(alpha: 0.18)
+                  ? accent.withValues(alpha: 0.14)
                   : Colors.black.withValues(alpha: 0.06),
               blurRadius: inCart ? 12 : 6,
               offset: const Offset(0, 3),
@@ -1890,95 +2016,107 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (hasImg)
+              if (hasImg) ...[
                 Image.network(
                   imgUrl,
                   fit: BoxFit.cover,
                   filterQuality: FilterQuality.low,
                   gaplessPlayback: true,
-                  errorBuilder: (_, __, ___) => _cardPlaceholder(accent, prod['category'] as String?),
-                )
-              else
-                _cardPlaceholder(accent, prod['category'] as String?),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.72),
+                  errorBuilder: (_, __, ___) =>
+                      _cardGradient(accent, style.icon),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.55),
+                      ],
+                      stops: const [0.35, 1.0],
+                    ),
+                  ),
+                ),
+              ] else
+                _cardGradient(accent, style.icon),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+                  color: Colors.black.withValues(alpha: hasImg ? 0.42 : 0.18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        prod['name'] as String,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        currencyFmt.format(price),
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: hasImg
+                              ? const Color(0xFFFFD54F)
+                              : Colors.white.withValues(alpha: 0.92),
+                          letterSpacing: -0.3,
+                        ),
+                      ),
                     ],
-                    stops: const [0.4, 1.0],
                   ),
                 ),
               ),
               Positioned(
-                left: 12,
-                right: 12,
-                bottom: 10,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      prod['name'] as String,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.outfit(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      currencyFmt.format(price),
-                      style: GoogleFonts.outfit(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFFFFD54F),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
+                right: 6,
+                top: 6,
                 child: inCart
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _kOrange,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Text(
-                          'x$qty',
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (!hasToppings)
+                            circleBtn(
+                              Icons.remove_rounded,
+                              () => _quickRemove(pId),
+                            ),
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accent,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              'x$qty',
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
-                        ),
+                          circleBtn(Icons.add_rounded, onAdd),
+                        ],
                       )
-                    : Container(
-                        width: 34,
-                        height: 34,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.add_rounded,
-                          color: _kOrange,
-                          size: 22,
-                        ),
-                      ),
+                    : circleBtn(Icons.add_rounded, onAdd),
               ),
             ],
           ),
@@ -1987,34 +2125,27 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
     );
   }
 
-  IconData _catIcon(String? cat) {
-    final c = (cat ?? '').toLowerCase();
-    if (c.contains('uống') || c.contains('trà') || c.contains('cà phê')) {
-      return Icons.local_cafe_rounded;
-    }
-    if (c.contains('ép') || c.contains('sinh tố') || c.contains('nước')) {
-      return Icons.local_drink_rounded;
-    }
-    if (c.contains('tráng') || c.contains('bánh')) return Icons.cake_rounded;
-    return Icons.restaurant_rounded;
-  }
-
-  Widget _cardPlaceholder(Color accent, String? cat) => DecoratedBox(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [accent.withValues(alpha: 0.95), accent.withValues(alpha: 0.6)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+  Widget _cardGradient(Color accent, IconData icon) => Stack(
+    fit: StackFit.expand,
+    children: [
+      DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [accent.withValues(alpha: 0.85), accent],
+          ),
+        ),
       ),
-    ),
-    child: Align(
-      alignment: const Alignment(0, -0.35),
-      child: Icon(
-        _catIcon(cat),
-        size: 46,
-        color: Colors.white.withValues(alpha: 0.4),
+      Align(
+        alignment: const Alignment(0, -0.25),
+        child: Icon(
+          icon,
+          size: 44,
+          color: Colors.white.withValues(alpha: 0.28),
+        ),
       ),
-    ),
+    ],
   );
 
   // ── Thanh giỏ hàng nổi: navy chuyển sắc + nút cam như màn Bán hàng ──────────
@@ -2025,78 +2156,84 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
         top: false,
         child: GestureDetector(
           onTap: _openCartBottomSheet,
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(12, 6, 12, 10),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [_kNavy, _kNavyLight],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          child: AnimatedScale(
+            key: _cartBarKey,
+            scale: _cartPop ? 1.05 : 1.0,
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOut,
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [_kNavy, _kNavyLight],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(26),
+                boxShadow: [
+                  BoxShadow(
+                    color: _kNavy.withValues(alpha: 0.45),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              borderRadius: BorderRadius.circular(26),
-              boxShadow: [
-                BoxShadow(
-                  color: _kNavy.withValues(alpha: 0.45),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _kOrange,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '$_cartItemCount món',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _kOrange,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '$_cartItemCount món',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _isCounter || _selectedTableName == null
-                        ? 'Xem giỏ hàng'
-                        : 'Giỏ hàng • $_selectedTableName',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.outfit(
-                      color: const Color(0xD9FFFFFF),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _isCounter || _selectedTableName == null
+                          ? 'Xem giỏ hàng'
+                          : 'Giỏ hàng • $_selectedTableName',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.outfit(
+                        color: const Color(0xD9FFFFFF),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 9,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _kOrange,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    currencyFmt.format(_cartTotal),
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _kOrange,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(
+                      currencyFmt.format(_cartTotal),
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -2299,7 +2436,10 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
             if (isCounter && pickup != null) ...[
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20,
+                  horizontal: 16,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -2412,7 +2552,12 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
     );
   }
 
-  Widget _infoRow(String label, String value, {bool bold = false, bool big = false}) {
+  Widget _infoRow(
+    String label,
+    String value, {
+    bool bold = false,
+    bool big = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
