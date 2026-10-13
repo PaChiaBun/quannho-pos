@@ -1319,6 +1319,7 @@ class StationPrinterDispatcher {
     serviceType: serviceType,
     sourceDeviceId:
         settings.currentDeviceId.isEmpty ? null : settings.currentDeviceId,
+    hasBuiltinPrinter: SunmiBuiltinDriver.hasBuiltinPrinter,
   );
 
   /// Suy ra hình thức phục vụ từ tên bàn trên bill (bill chưa có trường riêng).

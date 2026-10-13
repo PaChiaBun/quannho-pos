@@ -5727,3 +5727,8 @@ Làm theo thứ tự:
 - Quyền được giao cho Codex không phải lý do để mở quyền duyệt cho mọi người truy cập dashboard; vẫn cần bảo vệ danh tính người/agent duyệt.
 - Ghi nhận này chưa thay đổi trạng thái bất kỳ bài học nào.
 - Đã tích hợp câu gọi `/qn vào kiểm tra ai bum đã làm bài chuẩn chưa` vào mục 0 của `.agents/workflows/qn.md`: tự kiểm tra nội dung và kiểm duyệt theo `../ai-bum-implementation/training/REVIEW_DESIGN.md`, đọc theo trang, lưu checkpoint hash/version, không xin lại quyền duyệt. Phải phân biệt quyết định local với trạng thái dashboard vì chưa có luồng đồng bộ mới.
+
+## 2026-10-14 — Sunmi không in: luật in gắn mã máy ngẫu nhiên
+- Nguyên nhân: luật "in bill ra" gắn `sourceDeviceIds` = mã ngẫu nhiên lưu trong app; cài lại/xóa dữ liệu (kể cả cài bản ký khác chữ ký) đổi mã → không luật nào khớp → app im lặng không in.
+- Đã sửa: `PrintRouter` — luật chỉ in ra máy in Sunmi tích hợp áp cho mọi máy có máy in tích hợp thật (`SunmiBuiltinDriver.detect()` lúc khởi động); PC thu ngân/Android thường không đổi hành vi (test mới trong print_router_test.dart). In lại bill báo rõ khi máy chưa cài máy in.
+- Dữ liệu: Bò Đen đã chọn "may in sumi" cho máy này trong app (thêm 2 luật theo mã mới). Chưa cài bản mới lên Sunmi: APK build được nhưng chữ ký khác bản đang cài (INSTALL_FAILED_UPDATE_INCOMPATIBLE) → cần gỡ cài lại (mất đăng nhập).

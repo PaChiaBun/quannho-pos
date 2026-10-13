@@ -9,7 +9,17 @@ class PrintContext {
   final String? zoneId;
   final String? sourceDeviceId;
 
-  const PrintContext({this.serviceType, this.zoneId, this.sourceDeviceId});
+  /// Thiết bị này có máy in Sunmi tích hợp thật (phát hiện được lúc chạy).
+  /// Mã thiết bị là số ngẫu nhiên, đổi khi cài lại app; còn máy in tích hợp luôn là
+  /// "máy in của chính máy này" nên luật chỉ trỏ tới nó vẫn đúng trên mọi máy Sunmi.
+  final bool hasBuiltinPrinter;
+
+  const PrintContext({
+    this.serviceType,
+    this.zoneId,
+    this.sourceDeviceId,
+    this.hasBuiltinPrinter = false,
+  });
 }
 
 /// Một đích in đã được giải quyết.
@@ -32,7 +42,19 @@ class ResolvedPrint {
 class PrintRouter {
   const PrintRouter._();
 
-  static bool _matches(PrintRule r, PrintJobType job, PrintContext ctx) {
+  /// Luật chỉ in ra máy in Sunmi tích hợp (và có ít nhất một đích bật).
+  static bool onlyBuiltin(PrintRule r, PrintSetup setup) {
+    var any = false;
+    for (final t in r.targets) {
+      final p = setup.printerById(t.printerId);
+      if (p == null || !p.enabled) continue;
+      if (p.kind != PrinterKind.sunmiBuiltin) return false;
+      any = true;
+    }
+    return any;
+  }
+
+  static bool _matches(PrintRule r, PrintJobType job, PrintContext ctx, PrintSetup setup) {
     if (!r.enabled || r.jobType != job) return false;
     if (r.serviceTypes.isNotEmpty &&
         (ctx.serviceType == null || !r.serviceTypes.contains(ctx.serviceType))) {
@@ -45,7 +67,8 @@ class PrintRouter {
     if (r.sourceDeviceIds.isNotEmpty &&
         (ctx.sourceDeviceId == null ||
             !r.sourceDeviceIds.contains(ctx.sourceDeviceId))) {
-      return false;
+      // Luật gắn mã máy cũ nhưng chỉ in ra máy in tích hợp: vẫn áp cho máy Sunmi này.
+      return ctx.hasBuiltinPrinter && onlyBuiltin(r, setup);
     }
     return true;
   }
@@ -72,7 +95,7 @@ class PrintRouter {
     final indexed = <MapEntry<int, PrintRule>>[];
     for (var i = 0; i < setup.rules.length; i++) {
       final r = setup.rules[i];
-      if (_matches(r, job, ctx)) indexed.add(MapEntry(i, r));
+      if (_matches(r, job, ctx, setup)) indexed.add(MapEntry(i, r));
     }
     if (indexed.isEmpty) return const [];
     indexed.sort((a, b) {

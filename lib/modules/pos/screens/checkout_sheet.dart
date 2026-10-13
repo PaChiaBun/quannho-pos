@@ -896,11 +896,23 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                     },
                   );
                   final settings = ref.read(printerSettingsProvider);
+                  final messenger = ScaffoldMessenger.maybeOf(context);
                   StationPrinterDispatcher.printBill(
                     _billData!,
                     settings,
                     onlyReceipt: true,
-                  );
+                  ).then((res) {
+                    final st = res.stationResults['cashier']?.status;
+                    if (st == StationPrintStatus.notConfigured) {
+                      messenger?.showSnackBar(const SnackBar(
+                        content: Text(
+                          'Máy này chưa được cài máy in hóa đơn nên chưa in. '
+                          'Vào In Hoá Đơn → Máy In & Luật In để chọn máy in.',
+                        ),
+                        duration: Duration(seconds: 6),
+                      ));
+                    }
+                  });
                 },
               ),
             ),

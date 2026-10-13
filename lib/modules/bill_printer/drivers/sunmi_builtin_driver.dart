@@ -98,6 +98,19 @@ class SunmiBuiltinDriver {
   static bool get isSupportedPlatform =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
+  /// Đã xác nhận máy này có máy in Sunmi tích hợp (gọi [detect] lúc khởi động).
+  static bool hasBuiltinPrinter = false;
+
+  /// Dò máy in tích hợp một lần; chỉ máy Sunmi thật mới trả trạng thái.
+  static Future<void> detect() async {
+    if (!isSupportedPlatform) return;
+    try {
+      hasBuiltinPrinter = (await SunmiPrinterPlus().getStatus()) != null;
+    } catch (_) {
+      hasBuiltinPrinter = false;
+    }
+  }
+
   static void _log(String m) => AppLogger.info('printer', '[Sunmi] $m');
 
   /// Kiểm tra dịch vụ in tích hợp có sẵn sàng không (gói tự kết nối khi khởi động;

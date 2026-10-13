@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'modules/bill_printer/drivers/sunmi_builtin_driver.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -118,6 +119,7 @@ void main() async {
   unawaited(PdfGoogleFonts.robotoBold().catchError((_) => null as dynamic));
 
   await initializeDateFormatting('vi', null);
+  unawaited(SunmiBuiltinDriver.detect()); // dò máy in Sunmi tích hợp (luật in tới nó áp cho mọi máy Sunmi)
   await SupabaseService.initialize(); // ⚠️ PHẢI await — Supabase cần sẵn sàng trước khi dùng
 
   SystemChrome.setSystemUIOverlayStyle(

@@ -39,6 +39,33 @@ void main() {
           const PrintContext()).single.printer.id, 'win');
     });
 
+    test('luật máy in tích hợp gắn mã máy cũ vẫn áp cho máy Sunmi (mã đổi sau khi cài lại)', () {
+      final s = PrintSetup(printers: [p('win'), p('v3', kind: PrinterKind.sunmiBuiltin)], rules: [
+        const PrintRule(id: 'all', name: 'all', jobType: PrintJobType.receipt,
+            targets: [PrintTarget(printerId: 'win')]),
+        const PrintRule(id: 'v3', name: 'v3', jobType: PrintJobType.receipt,
+            sourceDeviceIds: {'ma-cu'}, targets: [PrintTarget(printerId: 'v3')]),
+      ]);
+      // Sunmi mã mới, có máy in thật -> in tại máy
+      expect(PrintRouter.resolve(s, PrintJobType.receipt,
+          const PrintContext(sourceDeviceId: 'ma-moi', hasBuiltinPrinter: true)).single.printer.id, 'v3');
+      // PC thu ngân (không có máy in tích hợp) -> vẫn in ra máy chung, không bị ảnh hưởng
+      expect(PrintRouter.resolve(s, PrintJobType.receipt,
+          const PrintContext(sourceDeviceId: 'pc')).single.printer.id, 'win');
+      // Android thường không phải Sunmi -> không in nhầm vào máy in tích hợp
+      expect(PrintRouter.resolve(s, PrintJobType.receipt,
+          const PrintContext(sourceDeviceId: 'dt')).single.printer.id, 'win');
+    });
+
+    test('luật gắn mã máy cũ trỏ tới máy in LAN thì KHÔNG mở rộng cho máy khác', () {
+      final s = PrintSetup(printers: [p('lan1')], rules: [
+        const PrintRule(id: 'x', name: 'x', jobType: PrintJobType.receipt,
+            sourceDeviceIds: {'ma-cu'}, targets: [PrintTarget(printerId: 'lan1')]),
+      ]);
+      expect(PrintRouter.resolve(s, PrintJobType.receipt,
+          const PrintContext(sourceDeviceId: 'ma-moi', hasBuiltinPrinter: true)), isEmpty);
+    });
+
     test('điều kiện hình thức phục vụ', () {
       final s = PrintSetup(printers: [p('a'), p('b')], rules: [
         const PrintRule(id: 'take', name: 'take', jobType: PrintJobType.kitchenHot,

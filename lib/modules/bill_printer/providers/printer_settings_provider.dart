@@ -14,6 +14,8 @@ import '../../../core/utils/app_logger.dart';
 import '../screens/bill_preview_screen.dart';
 import '../utils/station_normalizer.dart';
 import '../routing/print_setup.dart';
+import '../routing/print_router.dart';
+import '../drivers/sunmi_builtin_driver.dart';
 
 /// WS Order Event Predicate
 bool shouldProcessOrderEvent(Map<String, dynamic> row) {
@@ -1436,7 +1438,11 @@ class StationPrintersState {
   bool get deviceOwnsBillPrinting =>
       currentDeviceId.isNotEmpty &&
       printSetup.rules.any(
-        (r) => _isDeviceBillRule(r) && r.sourceDeviceIds.contains(currentDeviceId),
+        (r) =>
+            _isDeviceBillRule(r) &&
+            (r.sourceDeviceIds.contains(currentDeviceId) ||
+                (SunmiBuiltinDriver.hasBuiltinPrinter &&
+                    PrintRouter.onlyBuiltin(r, printSetup))),
       );
 
   bool get isDesignatedPrintServerDevice =>
