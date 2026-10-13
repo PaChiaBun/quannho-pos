@@ -13,6 +13,9 @@ class QrFetchResult {
   final String? errorMessage;
   final List<QrRequestModel> requests;
 
+  /// Fetch lỗi: `requests` là danh sách cũ (có thể đã lỗi thời).
+  bool get isStale => !isSuccess;
+
   const QrFetchResult({
     required this.isSuccess,
     this.errorCode,
@@ -71,9 +74,11 @@ class QrOrderRepository {
     }
   }
 
-  Future<void> saveSettings(QrOrderSettingsModel settings) async {
+  /// Lưu cấu hình. Trả `true` khi ghi thành công, `false` khi lỗi thật
+  /// (không có quán hoặc server từ chối) để UI báo đúng.
+  Future<bool> saveSettings(QrOrderSettingsModel settings) async {
     final storeId = await _storeId();
-    if (storeId == null) return;
+    if (storeId == null) return false;
     try {
       await _sb.from('app_settings').upsert({
         'id': _uuid.v4(),
@@ -81,8 +86,56 @@ class QrOrderRepository {
         'key': 'qr_order_settings',
         'value': jsonEncode(settings.toMap()),
       }, onConflict: 'store_id,key');
+      return true;
     } catch (e) {
       debugPrint('[QrOrderRepo] saveSettings error: $e');
+      return false;
+    }
+  }
+
+  // ── Helper gọi RPC thống nhất ────────────────────────────────────────────────
+  static const String _networkMsg =
+      'Mất kết nối. Vui lòng kiểm tra mạng rồi thử lại.';
+  static const String _schemaOutdatedMsg =
+      'Máy chủ chưa được cập nhật tính năng QR gọi món. Vui lòng báo quản lý kỹ thuật.';
+
+  /// Hàm/bảng QR chưa có trên server (chưa áp migration) khác với mất mạng.
+  static bool _isServerSchemaMissing(Object e) {
+    if (e is PostgrestException) {
+      const codes = {'PGRST202', 'PGRST205', '42883', '42P01'};
+      return codes.contains(e.code);
+    }
+    return false;
+  }
+
+  Future<QrRpcResponse<T>> _rpc<T>(
+    String fn,
+    Map<String, dynamic> params,
+    T Function(Map<String, dynamic> data) parse, {
+    required String failMessage,
+    String failCode = QrErrorCode.rpcError,
+  }) async {
+    try {
+      final res = await _sb.rpc(fn, params: params);
+      if (res is Map) {
+        return QrRpcResponse.fromMap(
+          Map<String, dynamic>.from(res),
+          (data) => parse(
+            data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+          ),
+        );
+      }
+      return QrRpcResponse.error(failCode, failMessage);
+    } catch (e) {
+      // Chi tiết kỹ thuật chỉ ghi log, không đưa lên UI người dùng.
+      debugPrint('[QrOrderRepo] $fn error: $e');
+      if (_isServerSchemaMissing(e)) {
+        return QrRpcResponse.error(
+          QrErrorCode.serverSchemaOutdated,
+          _schemaOutdatedMsg,
+        );
+      }
+      return QrRpcResponse.error(QrErrorCode.networkError, _networkMsg);
     }
   }
 
@@ -92,59 +145,18 @@ class QrOrderRepository {
     required String type,
     required bool isActive,
     String paymentMode = 'CASHIER_CONFIRM',
-  }) async {
-    try {
-      final res = await _sb.rpc(
-        'manage_qr_channel_v4',
-        params: {
-          'p_store_id': storeId,
-          'p_type': type,
-          'p_is_active': isActive,
-          'p_payment_mode': paymentMode,
-        },
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => QrChannelModel.fromMap(data as Map<String, dynamic>),
-        );
-      }
-      return QrRpcResponse.error(
-        QrErrorCode.rpcError,
-        'Cấu hình kênh QR thất bại',
-      );
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối cấu hình kênh: $e',
-      );
-    }
-  }
-
-  Future<QrChannelModel?> ensureTableSharedChannel({
-    required String storeId,
-  }) async {
-    final res = await manageQrChannel(
-      storeId: storeId,
-      type: 'TABLE_SHARED',
-      isActive: true,
-      paymentMode: 'PAY_BEFORE_KITCHEN',
+  }) {
+    return _rpc(
+      'manage_qr_channel_v4',
+      {
+        'p_store_id': storeId,
+        'p_type': type,
+        'p_is_active': isActive,
+        'p_payment_mode': paymentMode,
+      },
+      QrChannelModel.fromMap,
+      failMessage: 'Cấu hình kênh QR thất bại',
     );
-    return res.data;
-  }
-
-  Future<QrChannelModel?> ensureCounterChannel({
-    required String storeId,
-    String paymentMode = 'CASHIER_CONFIRM',
-  }) async {
-    final res = await manageQrChannel(
-      storeId: storeId,
-      type: 'COUNTER_TAKEAWAY',
-      isActive: true,
-      paymentMode: paymentMode,
-    );
-    return res.data;
   }
 
   /// Reads channel state without mutating it. Opening the QR module must never
@@ -168,334 +180,154 @@ class QrOrderRepository {
     }
   }
 
-  // ── Public RPC 1: Channel Info ───────────────────────────────────────────────
-  Future<QrRpcResponse<QrChannelModel>> fetchChannelInfo(
-    String channelCode,
-  ) async {
-    try {
-      final res = await _sb.rpc(
-        'get_qr_channel_info_v4',
-        params: {'p_channel_code': channelCode},
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => QrChannelModel.fromMap(data as Map<String, dynamic>),
-        );
-      }
-      return QrRpcResponse.error(QrErrorCode.invalidQr, 'Mã QR không hợp lệ');
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối máy chủ: $e',
-      );
-    }
+  // ── Public RPC ───────────────────────────────────────────────────────────────
+  Future<QrRpcResponse<QrChannelModel>> fetchChannelInfo(String channelCode) {
+    return _rpc(
+      'get_qr_channel_info_v4',
+      {'p_channel_code': channelCode},
+      QrChannelModel.fromMap,
+      failMessage: 'Mã QR không hợp lệ',
+      failCode: QrErrorCode.invalidQr,
+    );
   }
 
-  // ── Public RPC 2: Fetch Menu ─────────────────────────────────────────────────
-  Future<QrRpcResponse<Map<String, dynamic>>> fetchQrMenu(
-    String channelCode,
-  ) async {
-    try {
-      final res = await _sb.rpc(
-        'get_qr_menu_v4',
-        params: {'p_channel_code': channelCode},
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => Map<String, dynamic>.from(data as Map),
-        );
-      }
-      return QrRpcResponse.error(QrErrorCode.rpcError, 'Lỗi tải menu');
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối tải menu: $e',
-      );
-    }
+  Future<QrRpcResponse<Map<String, dynamic>>> fetchQrMenu(String channelCode) {
+    return _rpc(
+      'get_qr_menu_v4',
+      {'p_channel_code': channelCode},
+      (d) => d,
+      failMessage: 'Lỗi tải menu',
+    );
   }
 
-  // ── Public RPC 3: Customer Submit Order ──────────────────────────────────────
+  /// Khách gửi đơn. TABLE bắt buộc [tableId]; COUNTER bỏ qua.
   Future<QrRpcResponse<Map<String, dynamic>>> submitQrOrder({
     required String channelCode,
     required List<Map<String, dynamic>> items,
-    String? tableHint,
+    String? tableId,
     String? idempotencyKey,
     String? payloadHash,
-  }) async {
-    try {
-      final res = await _sb.rpc(
-        'submit_qr_order_v4',
-        params: {
-          'p_channel_code': channelCode,
-          'p_items': items,
-          'p_table_hint': tableHint,
-          'p_idempotency_key': idempotencyKey,
-          'p_payload_hash': payloadHash,
-        },
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => Map<String, dynamic>.from(data as Map),
-        );
-      }
-      return QrRpcResponse.error(QrErrorCode.rpcError, 'Gửi đơn thất bại');
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi gửi đơn hàng: $e',
-      );
-    }
+  }) {
+    return _rpc(
+      'submit_qr_order_v4',
+      {
+        'p_channel_code': channelCode,
+        'p_items': items,
+        'p_table_id': tableId,
+        'p_idempotency_key': idempotencyKey,
+        'p_payload_hash': payloadHash,
+      },
+      (d) => d,
+      failMessage: 'Gửi đơn thất bại',
+    );
   }
 
-  // ── Public RPC 4: Customer Status Tracking ──────────────────────────────────
   Future<QrRpcResponse<QrRequestModel>> checkRequestStatus(
     String trackingToken,
-  ) async {
-    try {
-      final res = await _sb.rpc(
-        'get_qr_request_status_v4',
-        params: {'p_tracking_token': trackingToken},
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => QrRequestModel.fromMap(data as Map<String, dynamic>),
-        );
-      }
-      return QrRpcResponse.error(
-        QrErrorCode.invalidState,
-        'Không tìm thấy đơn hàng',
-      );
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kiểm tra trạng thái đơn: $e',
-      );
-    }
+  ) {
+    return _rpc(
+      'get_qr_request_status_v4',
+      {'p_tracking_token': trackingToken},
+      QrRequestModel.fromMap,
+      failMessage: 'Không tìm thấy đơn hàng',
+      failCode: QrErrorCode.invalidState,
+    );
   }
 
-  // ── Public RPC 5: Customer Regenerate Handoff Token ──────────────────────────
-  Future<QrRpcResponse<Map<String, dynamic>>> regenerateHandoffToken(
-    String trackingToken,
-  ) async {
-    try {
-      final res = await _sb.rpc(
-        'regenerate_handoff_token_v4',
-        params: {'p_tracking_token': trackingToken},
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => Map<String, dynamic>.from(data as Map),
-        );
-      }
-      return QrRpcResponse.error(QrErrorCode.rpcError, 'Lỗi tạo lại mã QR');
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối tạo lại mã QR: $e',
-      );
-    }
-  }
-
-  // ── Staff RPC 6: Atomic Claim Handoff Token ──────────────────────────────────
-  Future<QrRpcResponse<QrRequestModel>> claimHandoffToken({
-    required String rawHandoffToken,
+  // ── Staff RPC ────────────────────────────────────────────────────────────────
+  /// Nhận đơn từ hàng chờ (submitted → claimed). Gọi lại bởi chính người nhận
+  /// vẫn trả chi tiết đơn.
+  Future<QrRpcResponse<QrRequestModel>> claimRequest({
+    required String requestId,
     required String storeId,
-  }) async {
-    try {
-      final res = await _sb.rpc(
-        'claim_qr_handoff_v4',
-        params: {'p_token': rawHandoffToken, 'p_store_id': storeId},
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) =>
-              QrRequestModel.fromMap(Map<String, dynamic>.from(data as Map)),
-        );
-      }
-      return QrRpcResponse.error(
-        QrErrorCode.rpcError,
-        'Tiếp nhận đơn thất bại',
-      );
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối tiếp nhận đơn: $e',
-      );
-    }
+  }) {
+    return _rpc(
+      'claim_qr_request_v4',
+      {'p_request_id': requestId, 'p_store_id': storeId},
+      QrRequestModel.fromMap,
+      failMessage: 'Tiếp nhận đơn thất bại',
+    );
   }
 
-  // ── Staff RPC 7: Get Request Detail ──────────────────────────────────────────
   Future<QrRpcResponse<QrRequestModel>> getRequestDetail({
     required String requestId,
     required String storeId,
-  }) async {
-    try {
-      final res = await _sb.rpc(
-        'get_qr_request_detail_v4',
-        params: {'p_request_id': requestId, 'p_store_id': storeId},
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => QrRequestModel.fromMap(data as Map<String, dynamic>),
-        );
-      }
-      return QrRpcResponse.error(
-        QrErrorCode.rpcError,
-        'Không lấy được chi tiết đơn',
-      );
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối lấy chi tiết đơn: $e',
-      );
-    }
+  }) {
+    return _rpc(
+      'get_qr_request_detail_v4',
+      {'p_request_id': requestId, 'p_store_id': storeId},
+      QrRequestModel.fromMap,
+      failMessage: 'Không lấy được chi tiết đơn',
+    );
   }
 
-  // ── Staff RPC 8: Update Order Items (Optimistic Lock) ────────────────────────
   Future<QrRpcResponse<Map<String, dynamic>>> updateOrderItems({
     required String requestId,
     required String storeId,
     required int expectedVersion,
     required List<Map<String, dynamic>> items,
-  }) async {
-    try {
-      final res = await _sb.rpc(
-        'update_qr_order_items_v4',
-        params: {
-          'p_request_id': requestId,
-          'p_store_id': storeId,
-          'p_expected_version': expectedVersion,
-          'p_items': items,
-        },
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => Map<String, dynamic>.from(data as Map),
-        );
-      }
-      return QrRpcResponse.error(QrErrorCode.rpcError, 'Cập nhật món thất bại');
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối cập nhật món: $e',
-      );
-    }
+  }) {
+    return _rpc(
+      'update_qr_order_items_v4',
+      {
+        'p_request_id': requestId,
+        'p_store_id': storeId,
+        'p_expected_version': expectedVersion,
+        'p_items': items,
+      },
+      (d) => d,
+      failMessage: 'Cập nhật món thất bại',
+    );
   }
 
-  // ── Staff RPC 9: Assign Table ────────────────────────────────────────────────
-  Future<QrRpcResponse<Map<String, dynamic>>> assignTable({
+  /// Đổi bàn khi đơn đang `claimed`.
+  Future<QrRpcResponse<Map<String, dynamic>>> setOrderTable({
     required String requestId,
+    required String storeId,
     required String tableId,
-    required String storeId,
-  }) async {
-    try {
-      final res = await _sb.rpc(
-        'assign_qr_order_table_v4',
-        params: {
-          'p_request_id': requestId,
-          'p_table_id': tableId,
-          'p_store_id': storeId,
-        },
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => Map<String, dynamic>.from(data as Map),
-        );
-      }
-      return QrRpcResponse.error(QrErrorCode.rpcError, 'Gán bàn thất bại');
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối gán bàn: $e',
-      );
-    }
+  }) {
+    return _rpc(
+      'set_qr_order_table_v4',
+      {'p_request_id': requestId, 'p_store_id': storeId, 'p_table_id': tableId},
+      (d) => d,
+      failMessage: 'Đổi bàn thất bại',
+    );
   }
 
-  // ── Staff RPC 10: Mark Order Paid (Counter) ──────────────────────────────────
-  Future<QrRpcResponse<Map<String, dynamic>>> markOrderPaid({
+  /// TABLE: duyệt và gửi bếp trong một giao dịch.
+  Future<QrRpcResponse<Map<String, dynamic>>> approveAndSendTable({
     required String requestId,
     required String storeId,
-    String paymentMethod = 'cash',
-    String? idempotencyKey,
-  }) async {
-    try {
-      final res = await _sb.rpc(
-        'mark_qr_order_paid_v4',
-        params: {
-          'p_request_id': requestId,
-          'p_store_id': storeId,
-          'p_payment_method': paymentMethod,
-          'p_idempotency_key': idempotencyKey,
-        },
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => Map<String, dynamic>.from(data as Map),
-        );
-      }
-      return QrRpcResponse.error(QrErrorCode.rpcError, 'Thanh toán thất bại');
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối thanh toán: $e',
-      );
-    }
+    required int version,
+  }) {
+    return _rpc(
+      'approve_and_send_table_v4',
+      {'p_request_id': requestId, 'p_store_id': storeId, 'p_version': version},
+      (d) => d,
+      failMessage: 'Duyệt đơn thất bại',
+    );
   }
 
-  // ── Staff RPC 11: Send To Kitchen ────────────────────────────────────────────
-  Future<QrRpcResponse<Map<String, dynamic>>> sendToKitchen({
+  /// COUNTER: thu tiền và gửi bếp trong một giao dịch (cần quyền thu tiền).
+  Future<QrRpcResponse<Map<String, dynamic>>> payAndSendCounter({
     required String requestId,
     required String storeId,
-    required String idempotencyKey,
-    String? orderNote,
-  }) async {
-    try {
-      final res = await _sb.rpc(
-        'send_qr_order_to_kitchen_v4',
-        params: {
-          'p_request_id': requestId,
-          'p_store_id': storeId,
-          'p_idempotency_key': idempotencyKey,
-          'p_order_note': orderNote,
-        },
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => Map<String, dynamic>.from(data as Map),
-        );
-      }
-      return QrRpcResponse.error(QrErrorCode.rpcError, 'Gửi bếp thất bại');
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối gửi bếp: $e',
-      );
-    }
+    required int version,
+    required String paymentMethod,
+  }) {
+    return _rpc(
+      'pay_and_send_counter_v4',
+      {
+        'p_request_id': requestId,
+        'p_store_id': storeId,
+        'p_version': version,
+        'p_payment_method': paymentMethod,
+      },
+      (d) => d,
+      failMessage: 'Thu tiền và gửi bếp thất bại',
+    );
   }
 
-  // ── Staff RPC 12: Settle Ban Session ─────────────────────────────────────────
   Future<QrRpcResponse<Map<String, dynamic>>> settleBanSession({
     required String sessionId,
     required String storeId,
@@ -506,73 +338,64 @@ class QrOrderRepository {
     double discount = 0,
     String? couponCode,
     double surcharge = 0,
-  }) async {
-    try {
-      final res = await _sb.rpc(
-        'settle_ban_session_v5',
-        params: {
-          'p_session_id': sessionId,
-          'p_store_id': storeId,
-          'p_payment_method': paymentMethod,
-          'p_idempotency_key': idempotencyKey,
-          'p_customer_id': customerId,
-          'p_points_used': pointsUsed,
-          'p_discount': discount,
-          'p_coupon_code': couponCode,
-          'p_surcharge': surcharge,
-        },
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => Map<String, dynamic>.from(data as Map),
-        );
-      }
-      return QrRpcResponse.error(
-        QrErrorCode.rpcError,
-        'Quyết toán phiên bàn thất bại',
-      );
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối quyết toán bàn: $e',
-      );
-    }
+  }) {
+    return _rpc(
+      'settle_ban_session_v5',
+      {
+        'p_session_id': sessionId,
+        'p_store_id': storeId,
+        'p_payment_method': paymentMethod,
+        'p_idempotency_key': idempotencyKey,
+        'p_customer_id': customerId,
+        'p_points_used': pointsUsed,
+        'p_discount': discount,
+        'p_coupon_code': couponCode,
+        'p_surcharge': surcharge,
+      },
+      (d) => d,
+      failMessage: 'Quyết toán phiên bàn thất bại',
+    );
   }
 
-  // ── Staff RPC 12: Cancel Order ───────────────────────────────────────────────
   Future<QrRpcResponse<Map<String, dynamic>>> cancelOrder({
     required String requestId,
     required String storeId,
     String? reason,
-  }) async {
-    try {
-      final res = await _sb.rpc(
-        'cancel_qr_order_v4',
-        params: {
-          'p_request_id': requestId,
-          'p_store_id': storeId,
-          'p_reason': reason,
-        },
-      );
-
-      if (res is Map) {
-        return QrRpcResponse.fromMap(
-          Map<String, dynamic>.from(res),
-          (data) => Map<String, dynamic>.from(data as Map),
-        );
-      }
-      return QrRpcResponse.error(QrErrorCode.rpcError, 'Hủy đơn thất bại');
-    } catch (e) {
-      return QrRpcResponse.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối hủy đơn: $e',
-      );
-    }
+  }) {
+    return _rpc(
+      'cancel_qr_order_v4',
+      {'p_request_id': requestId, 'p_store_id': storeId, 'p_reason': reason},
+      (d) => d,
+      failMessage: 'Từ chối đơn thất bại',
+    );
   }
 
-  // ── Pipeline Stream (Isolated by Store ID) ───────────────────────────────────
+  // ── Hàng chờ chung (TABLE + COUNTER), cô lập theo store_id ───────────────────
+  Map<String, String> _tableNames = const {};
+  DateTime? _tableNamesAt;
+
+  Future<Map<String, String>> _loadTableNames(String storeId) async {
+    final at = _tableNamesAt;
+    if (at != null && DateTime.now().difference(at).inMinutes < 2) {
+      return _tableNames;
+    }
+    try {
+      final rows = await _sb
+          .from('ban_dining_tables')
+          .select('id,name')
+          .eq('store_id', storeId);
+      _tableNames = {
+        for (final r in rows as List)
+          if (r is Map && r['id'] != null)
+            r['id'].toString(): (r['name'] ?? '').toString(),
+      };
+      _tableNamesAt = DateTime.now();
+    } catch (e) {
+      debugPrint('[QrOrderRepo] loadTableNames error: $e');
+    }
+    return _tableNames;
+  }
+
   Future<QrFetchResult> fetchActiveRequestsPipeline({
     required String storeId,
     List<QrRequestModel>? previousRequests,
@@ -585,25 +408,21 @@ class QrOrderRepository {
       final rows = await _sb
           .from('qr_requests')
           .select(
-            '*, items:qr_request_items(*), table:ban_dining_tables(label), channel:qr_channels(payment_mode)',
+            'id,store_id,channel_id,type,status,payment_status,table_id,'
+            'pickup_code,total_amount,version,claimed_by,created_at,'
+            'expires_at,items:qr_request_items(id,request_id,product_id,'
+            'product_name,unit_price,quantity,subtotal,modifiers_json,note)',
           )
           .eq('store_id', storeId)
-          .inFilter('status', [
-            'customer_submitted',
-            'claimed',
-            'staff_review',
-            'awaiting_payment',
-            'ready_for_kitchen',
-          ])
-          .order('created_at', ascending: false);
+          .inFilter('status', [QrStatus.submitted, QrStatus.claimed])
+          .order('created_at', ascending: true);
 
+      final names = await _loadTableNames(storeId);
       final requests = (rows as List).map((r) {
         final map = Map<String, dynamic>.from(r as Map);
-        if (map['table'] != null && map['table']['label'] != null) {
-          map['assigned_table_name'] = map['table']['label'];
-        }
-        if (map['channel'] != null && map['channel']['payment_mode'] != null) {
-          map['payment_mode'] = map['channel']['payment_mode'];
+        final tid = map['table_id']?.toString();
+        if (tid != null && names[tid] != null) {
+          map['table_name'] = names[tid];
         }
         return QrRequestModel.fromMap(map);
       }).toList();
@@ -611,9 +430,10 @@ class QrOrderRepository {
       return QrFetchResult.success(requests);
     } catch (e) {
       debugPrint('[QrOrderRepo] fetchActiveRequestsPipeline error: $e');
+      final missing = _isServerSchemaMissing(e);
       return QrFetchResult.error(
-        QrErrorCode.networkError,
-        'Lỗi kết nối danh sách đơn: $e',
+        missing ? QrErrorCode.serverSchemaOutdated : QrErrorCode.networkError,
+        missing ? _schemaOutdatedMsg : _networkMsg,
         previous: previousRequests,
       );
     }

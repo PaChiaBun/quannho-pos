@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../models/qr_order_model.dart';
 import '../providers/qr_order_providers.dart';
-import 'tabs/counter_qr_design_tab.dart';
+import '../services/qr_pdf_service.dart';
+import 'qr_poster_print_screen.dart';
+import 'tabs/qr_channel_card.dart';
 import 'tabs/qr_settings_tab.dart';
-import 'tabs/table_shared_poster_tab.dart';
 
+const String _typeTable = 'TABLE_SHARED';
+const String _typeCounter = 'COUNTER_TAKEAWAY';
+
+/// Màn "Mã QR": một màn cuộn, hai thẻ (Tại bàn / Mang đi) + mục thu gọn.
 class QrOrderScreen extends ConsumerStatefulWidget {
   const QrOrderScreen({super.key});
 
@@ -16,328 +22,276 @@ class QrOrderScreen extends ConsumerStatefulWidget {
   ConsumerState<QrOrderScreen> createState() => _QrOrderScreenState();
 }
 
-class _QrOrderScreenState extends ConsumerState<QrOrderScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final TextEditingController _baseUrlCtrl = TextEditingController();
-
-  QrChannelModel? _tableSharedChannel;
-  QrChannelModel? _counterChannel;
+class _QrOrderScreenState extends ConsumerState<QrOrderScreen> {
   String _storeId = '';
   String _storeName = 'Quán Nhỏ';
-
-  // Counter Poster Config State Variables
-  String _ctrPreset = 'classic_orange';
-  String _ctrSizePreset = 'a5';
-  final TextEditingController _ctrWidthCtrl = TextEditingController(
-    text: '148',
-  );
-  final TextEditingController _ctrHeightCtrl = TextEditingController(
-    text: '210',
-  );
-  final TextEditingController _ctrTitleCtrl = TextEditingController(
-    text: 'QUÉT QR GỌI MÓN TẠI QUẦY',
-  );
-  final TextEditingController _ctrSubtitleCtrl = TextEditingController(
-    text: 'Tự chọn món & Nhận mã Pickup #Q01',
-  );
-  final TextEditingController _ctrInstructionsCtrl = TextEditingController(
-    text: '1. Quét mã QR • 2. Chọn món & Gửi đơn • 3. Đợi nhận mã Pickup #Q01',
-  );
-  bool _showCtrNotice = true;
-  final TextEditingController _ctrNoticeCtrl = TextEditingController(
-    text:
-        'Sau khi gửi đơn, vui lòng giữ điện thoại để nhận mã số lấy món tại quầy.',
-  );
-  final TextEditingController _wifiSsidCtrl = TextEditingController();
-  final TextEditingController _wifiPasswordCtrl = TextEditingController();
-  final TextEditingController _hotlineCtrl = TextEditingController();
-  final TextEditingController _openingHoursCtrl = TextEditingController();
-  final TextEditingController _promoFooterCtrl = TextEditingController();
+  QrOrderSettingsModel _settings = const QrOrderSettingsModel();
+  QrChannelModel? _tableChannel;
+  QrChannelModel? _counterChannel;
+  bool _loading = true;
+  String? _loadError;
+  final Set<String> _busyTypes = {};
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _loadData();
+    _load();
   }
 
-  Future<void> _loadData() async {
-    final info = await StoreAuthService.getStoreInfo();
-    _storeId = info['store_id'] ?? '';
-    _storeName = info['store_name'] ?? 'Quán Nhỏ';
-
-    final settings = await ref.read(qrOrderRepoProvider).getSettings();
-    _baseUrlCtrl.text = settings.customBaseUrl;
-
-    _ctrPreset = settings.counterPreset;
-    _ctrSizePreset = settings.counterSizePreset;
-    _ctrWidthCtrl.text = settings.counterWidthMm.toInt().toString();
-    _ctrHeightCtrl.text = settings.counterHeightMm.toInt().toString();
-    _ctrTitleCtrl.text = settings.counterTitle;
-    _ctrSubtitleCtrl.text = settings.counterSubtitle;
-    _ctrInstructionsCtrl.text = settings.counterInstructions;
-    _showCtrNotice = settings.showCounterNotice;
-    _ctrNoticeCtrl.text = settings.counterNoticeText;
-    _wifiSsidCtrl.text = settings.wifiSsid;
-    _wifiPasswordCtrl.text = settings.wifiPassword;
-    _hotlineCtrl.text = settings.hotline;
-    _openingHoursCtrl.text = settings.openingHours;
-    _promoFooterCtrl.text = settings.promoFooter;
-
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
     try {
-      final repo = ref.read(qrOrderRepoProvider);
-      var tblCh = await repo.getChannelByType(
-        storeId: _storeId,
-        type: 'TABLE_SHARED',
-      );
-      var ctrCh = await repo.getChannelByType(
-        storeId: _storeId,
-        type: 'COUNTER_TAKEAWAY',
-      );
-
-      // Only create a missing channel. Never mutate an existing channel merely
-      // because the settings screen was opened.
-      tblCh ??= (await repo.manageQrChannel(
-        storeId: _storeId,
-        type: 'TABLE_SHARED',
-        isActive: settings.isTableEnabled,
-        paymentMode: 'CASHIER_CONFIRM',
-      )).data;
-      ctrCh ??= (await repo.manageQrChannel(
-        storeId: _storeId,
-        type: 'COUNTER_TAKEAWAY',
-        isActive: settings.isCounterEnabled,
-        paymentMode: 'CASHIER_CONFIRM',
-      )).data;
-
-      if (mounted) {
+      final info = await StoreAuthService.getStoreInfo();
+      if (!mounted) return;
+      final storeId = (info['store_id'] ?? '').trim();
+      if (storeId.isEmpty) {
         setState(() {
-          _tableSharedChannel = tblCh;
-          _counterChannel = ctrCh;
+          _loading = false;
+          _loadError = 'Chưa xác định được cửa hàng. Vui lòng đăng nhập lại.';
         });
+        return;
       }
-    } catch (_) {
-      // Keep the screen usable; individual tabs show missing-channel state.
+      final repo = ref.read(qrOrderRepoProvider);
+      final settings = await repo.getSettings();
+      if (!mounted) return;
+      final table = await repo.getChannelByType(
+        storeId: storeId,
+        type: _typeTable,
+      );
+      if (!mounted) return;
+      final counter = await repo.getChannelByType(
+        storeId: storeId,
+        type: _typeCounter,
+      );
+      if (!mounted) return;
+      setState(() {
+        _storeId = storeId;
+        _storeName = info['store_name'] ?? 'Quán Nhỏ';
+        _settings = settings;
+        _tableChannel = table;
+        _counterChannel = counter;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = 'Không tải được cấu hình QR. Vui lòng thử lại.';
+      });
     }
   }
 
-  String _normalizeUrl(String url) => QrUrlBuilder.normalizeUrl(url);
+  void _toast(String msg, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: error ? Colors.red : null),
+    );
+  }
 
-  bool _isValidPublicUrl(String? url) => QrUrlBuilder.isValidPublicUrl(url);
+  /// Đọc settings mới nhất ngay trước khi ghi, áp [mutate], rồi ghi.
+  Future<bool> _updateSettings(
+    QrOrderSettingsModel Function(QrOrderSettingsModel latest) mutate,
+  ) async {
+    if (_loading || _loadError != null) return false;
+    final repo = ref.read(qrOrderRepoProvider);
+    try {
+      final latest = await repo.getSettings();
+      if (!mounted) return false;
+      final updated = mutate(latest);
+      final Future<dynamic> saving = repo.saveSettings(updated);
+      final result = await saving;
+      if (!mounted) return false;
+      if (result == false) return false;
+      ref.invalidate(qrOrderSettingsProvider);
+      setState(() => _settings = updated);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 
-  String? _getActiveBaseUrl() {
-    final custom = _baseUrlCtrl.text.trim();
-    if (custom.isNotEmpty) {
-      final normalized = _normalizeUrl(custom);
-      if (_isValidPublicUrl(normalized)) {
-        return normalized;
+  Future<void> _toggleChannel(String type, bool value) async {
+    if (_storeId.isEmpty) {
+      _toast('Chưa xác định được cửa hàng, không thể lưu.', error: true);
+      return;
+    }
+    if (_busyTypes.contains(type)) return;
+    final repo = ref.read(qrOrderRepoProvider);
+    final existing = type == _typeTable ? _tableChannel : _counterChannel;
+    setState(() => _busyTypes.add(type));
+    try {
+      final res = await repo.manageQrChannel(
+        storeId: _storeId,
+        type: type,
+        isActive: value,
+        paymentMode: existing?.paymentMode ?? 'CASHIER_CONFIRM',
+      );
+      if (!mounted) return;
+      if (!res.isSuccess) {
+        _toast(
+          QrErrorCode.toUserMessage(res.errorCode, res.message),
+          error: true,
+        );
       }
+      // Luôn đọc lại trạng thái thật từ server sau khi gạt.
+      final fresh = await repo.getChannelByType(storeId: _storeId, type: type);
+      if (!mounted) return;
+      setState(() {
+        if (type == _typeTable) {
+          _tableChannel = fresh ?? (res.isSuccess ? res.data : existing);
+        } else {
+          _counterChannel = fresh ?? (res.isSuccess ? res.data : existing);
+        }
+      });
+    } finally {
+      if (mounted) setState(() => _busyTypes.remove(type));
+    }
+  }
+
+  /// Link dựng từ giá trị ĐÃ LƯU; null nếu kênh thiếu/tắt hoặc tên miền sai.
+  String? _urlFor(QrChannelModel? ch) {
+    if (ch == null || !ch.isActive) return null;
+    return QrUrlBuilder.build(
+      customBaseUrl: _settings.customBaseUrl,
+      channelCode: ch.channelCode,
+    );
+  }
+
+  String? _reasonFor(QrChannelModel? ch) {
+    if (ch == null) return 'Kênh chưa được bật. Gạt công tắc để tạo mã QR.';
+    if (!ch.isActive) return 'Kênh đang tắt nên không có mã QR để in.';
+    if (ch.channelCode.isEmpty) return 'Kênh chưa có mã. Hãy tắt rồi bật lại.';
+    if (QrUrlBuilder.resolveBaseUrl(_settings.customBaseUrl) == null) {
+      return 'Tên miền đã lưu không hợp lệ. Sửa trong mục Nâng cao.';
     }
     return null;
   }
 
-  String _formatQrUrl(String baseUrl, String channelCode) =>
-      QrUrlBuilder.formatQrUrl(baseUrl, channelCode);
-
-  String? _buildTableSharedQrUrl() {
-    if (_tableSharedChannel == null ||
-        _tableSharedChannel!.channelCode.isEmpty) {
-      return null;
-    }
-    final baseUrl = _getActiveBaseUrl();
-    if (baseUrl == null) return null;
-    return _formatQrUrl(baseUrl, _tableSharedChannel!.channelCode);
+  Future<void> _copy(String url) async {
+    await Clipboard.setData(ClipboardData(text: url));
+    _toast('Đã sao chép link.');
   }
 
-  String? _buildCounterQrUrl() {
-    if (_counterChannel == null || _counterChannel!.channelCode.isEmpty) {
-      return null;
-    }
-    final baseUrl = _getActiveBaseUrl();
-    if (baseUrl == null) return null;
-    return _formatQrUrl(baseUrl, _counterChannel!.channelCode);
-  }
-
-  Future<void> _testOpenDomain(String url) async {
-    final normalized = _normalizeUrl(url);
-    if (!_isValidPublicUrl(normalized)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Tên miền không hợp lệ! Phải là URL HTTPS công khai (ví dụ: https://quannho.lpm.vn/pos)',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final uri = Uri.parse(normalized);
+  Future<void> _open(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _saveCounterSettings() async {
-    final repo = ref.read(qrOrderRepoProvider);
-    final current = await repo.getSettings();
-    final updated = current.copyWith(
-      counterPreset: _ctrPreset,
-      counterSizePreset: _ctrSizePreset,
-      counterWidthMm: double.tryParse(_ctrWidthCtrl.text.trim()) ?? 148.0,
-      counterHeightMm: double.tryParse(_ctrHeightCtrl.text.trim()) ?? 210.0,
-      counterTitle: _ctrTitleCtrl.text.trim(),
-      counterSubtitle: _ctrSubtitleCtrl.text.trim(),
-      counterInstructions: _ctrInstructionsCtrl.text.trim(),
-      showCounterNotice: _showCtrNotice,
-      counterNoticeText: _ctrNoticeCtrl.text.trim(),
-      wifiSsid: _wifiSsidCtrl.text.trim(),
-      wifiPassword: _wifiPasswordCtrl.text.trim(),
-      hotline: _hotlineCtrl.text.trim(),
-      openingHours: _openingHoursCtrl.text.trim(),
-      promoFooter: _promoFooterCtrl.text.trim(),
-    );
-
-    await repo.saveSettings(updated);
-    ref.invalidate(qrOrderSettingsProvider);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đã lưu cấu hình thiết kế Poster QR Quầy!'),
-        ),
-      );
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) _toast('Không mở được link.', error: true);
+    } catch (_) {
+      _toast('Không mở được link.', error: true);
     }
   }
 
-  void _resetCounterSettings() {
-    setState(() {
-      _ctrPreset = 'classic_orange';
-      _ctrSizePreset = 'a5';
-      _ctrWidthCtrl.text = '148';
-      _ctrHeightCtrl.text = '210';
-      _ctrTitleCtrl.text = 'QUÉT QR GỌI MÓN TẠI QUẦY';
-      _ctrSubtitleCtrl.text = 'Tự chọn món & Nhận mã Pickup #Q01';
-      _ctrInstructionsCtrl.text =
-          '1. Quét mã QR • 2. Chọn món & Gửi đơn • 3. Đợi nhận mã Pickup #Q01';
-      _showCtrNotice = true;
-      _ctrNoticeCtrl.text =
-          'Sau khi gửi đơn, vui lòng giữ điện thoại để nhận mã số lấy món tại quầy.';
-      _wifiSsidCtrl.clear();
-      _wifiPasswordCtrl.clear();
-      _hotlineCtrl.clear();
-      _openingHoursCtrl.clear();
-      _promoFooterCtrl.clear();
-    });
-    _saveCounterSettings();
+  void _print(QrPosterKind kind, String url) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => QrPosterPrintScreen(
+          kind: kind,
+          qrUrl: url,
+          storeName: _storeName,
+        ),
+      ),
+    );
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _baseUrlCtrl.dispose();
-    _ctrWidthCtrl.dispose();
-    _ctrHeightCtrl.dispose();
-    _ctrTitleCtrl.dispose();
-    _ctrSubtitleCtrl.dispose();
-    _ctrInstructionsCtrl.dispose();
-    _ctrNoticeCtrl.dispose();
-    _wifiSsidCtrl.dispose();
-    _wifiPasswordCtrl.dispose();
-    _hotlineCtrl.dispose();
-    _openingHoursCtrl.dispose();
-    _promoFooterCtrl.dispose();
-    super.dispose();
+  Widget _card({
+    required String title,
+    required String description,
+    required IconData icon,
+    required String type,
+    required QrChannelModel? channel,
+    required QrPosterKind kind,
+  }) {
+    final url = _urlFor(channel);
+    return QrChannelCard(
+      title: title,
+      description: description,
+      icon: icon,
+      channelExists: channel != null,
+      isActive: channel?.isActive ?? false,
+      busy: _busyTypes.contains(type),
+      url: url,
+      unavailableReason: _reasonFor(channel),
+      onToggle: (v) => _toggleChannel(type, v),
+      onCopy: () => _copy(url!),
+      onOpen: () => _open(url!),
+      onPrint: () => _print(kind, url!),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final settingsAsync = ref.watch(qrOrderSettingsProvider);
-    final settings =
-        settingsAsync.asData?.value ?? const QrOrderSettingsModel();
-    final activeBaseUrl = _getActiveBaseUrl();
+    Widget body;
+    if (_loading) {
+      body = const Center(child: CircularProgressIndicator());
+    } else if (_loadError != null) {
+      body = Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_loadError!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(onPressed: _load, child: const Text('Thử lại')),
+            ],
+          ),
+        ),
+      );
+    } else {
+      body = ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _card(
+            title: 'Tại bàn',
+            description: 'Một mã dùng chung cho mọi bàn, khách tự chọn số bàn.',
+            icon: Icons.table_restaurant_rounded,
+            type: _typeTable,
+            channel: _tableChannel,
+            kind: QrPosterKind.table,
+          ),
+          const SizedBox(height: 16),
+          _card(
+            title: 'Mang đi',
+            description: 'Khách gọi món tại quầy và nhận mã lấy món.',
+            icon: Icons.shopping_bag_rounded,
+            type: _typeCounter,
+            channel: _counterChannel,
+            kind: QrPosterKind.counter,
+          ),
+          const SizedBox(height: 16),
+          QrTransferSection(
+            settings: _settings,
+            enabled: true,
+            onSave: _updateSettings,
+          ),
+          const SizedBox(height: 12),
+          QrAdvancedSection(
+            settings: _settings,
+            enabled: true,
+            onSave: _updateSettings,
+            onTestOpen: _open,
+          ),
+        ],
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(
-          'QR Gọi Món V4 (Bàn & Quầy)',
+          'Mã QR gọi món',
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF8B5CF6),
         foregroundColor: Colors.white,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          labelStyle: GoogleFonts.outfit(
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
-          ),
-          tabs: const [
-            Tab(icon: Icon(Icons.settings_rounded), text: 'Thiết Lập'),
-            Tab(
-              icon: Icon(Icons.table_restaurant_rounded),
-              text: 'QR Dùng Chung Bàn',
-            ),
-            Tab(
-              icon: Icon(Icons.point_of_sale_rounded),
-              text: 'QR Quầy Mang Đi',
-            ),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          QrSettingsTab(
-            settings: settings,
-            baseUrlCtrl: _baseUrlCtrl,
-            isValidPublicUrl: _isValidPublicUrl,
-            normalizeUrl: _normalizeUrl,
-            testOpenDomain: _testOpenDomain,
-          ),
-          TableSharedPosterTab(
-            tableSharedChannel: _tableSharedChannel,
-            tableSharedUrl: _buildTableSharedQrUrl(),
-            activeBaseUrl: activeBaseUrl,
-            storeName: _storeName,
-            testOpenDomain: _testOpenDomain,
-          ),
-          CounterQrDesignTab(
-            counterChannel: _counterChannel,
-            counterUrl: _buildCounterQrUrl(),
-            activeBaseUrl: activeBaseUrl,
-            storeName: _storeName,
-            testOpenDomain: _testOpenDomain,
-            ctrPreset: _ctrPreset,
-            onPresetChanged: (val) => setState(() => _ctrPreset = val),
-            ctrSizePreset: _ctrSizePreset,
-            onSizePresetChanged: (val) => setState(() => _ctrSizePreset = val),
-            ctrWidthCtrl: _ctrWidthCtrl,
-            ctrHeightCtrl: _ctrHeightCtrl,
-            ctrTitleCtrl: _ctrTitleCtrl,
-            ctrSubtitleCtrl: _ctrSubtitleCtrl,
-            ctrInstructionsCtrl: _ctrInstructionsCtrl,
-            showCtrNotice: _showCtrNotice,
-            onNoticeToggleChanged: (val) =>
-                setState(() => _showCtrNotice = val),
-            ctrNoticeCtrl: _ctrNoticeCtrl,
-            wifiSsidCtrl: _wifiSsidCtrl,
-            wifiPasswordCtrl: _wifiPasswordCtrl,
-            hotlineCtrl: _hotlineCtrl,
-            openingHoursCtrl: _openingHoursCtrl,
-            promoFooterCtrl: _promoFooterCtrl,
-            onSaveSettings: _saveCounterSettings,
-            onResetSettings: _resetCounterSettings,
-          ),
-        ],
-      ),
+      body: body,
     );
   }
 }

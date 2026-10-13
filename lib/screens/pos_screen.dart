@@ -390,101 +390,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   ),
                   Consumer(
                     builder: (context, ref, _) {
-                      final activeCounterReqs = ref.watch(
-                        activeCounterQrRequestsProvider,
-                      );
-                      final pipelineError = ref.watch(qrPipelineErrorProvider);
-
-                      if (pipelineError != null) {
-                        final errCode = pipelineError.errorCode;
-                        final errMsg =
-                            pipelineError.errorMessage ?? 'Lỗi không xác định';
-                        String label = 'Lỗi QR';
-                        Color bg = Colors.red.shade800;
-                        IconData icon = Icons.warning_amber_rounded;
-
-                        if (errCode == 'NO_POS_TOKEN') {
-                          label = 'Chưa đăng nhập POS Token';
-                          bg = Colors.red.shade900;
-                          icon = Icons.key_off_rounded;
-                        } else if (errCode == 'NETWORK_ERROR') {
-                          label = 'Lỗi Kết Nối Mạng QR';
-                          bg = Colors.orange.shade900;
-                          icon = Icons.wifi_off_rounded;
-                        } else if (errCode == 'RPC_ERROR') {
-                          label = 'Lỗi Backend RPC QR';
-                          bg = Colors.purple.shade900;
-                          icon = Icons.dns_rounded;
-                        }
-
-                        if (isCompact) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: Tooltip(
-                              message: '$label: $errMsg',
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: bg,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: bg.withValues(alpha: 0.4),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 1),
-                                    ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  icon,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          );
-                        }
-
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Tooltip(
-                            message: '$label: $errMsg',
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: bg,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(icon, size: 14, color: Colors.white),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    label,
-                                    style: GoogleFonts.outfit(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-
-                      if (activeCounterReqs.isEmpty)
+                      final qrRequests = ref.watch(activeQrRequestsProvider);
+                      final stale = ref.watch(qrPipelineErrorProvider) != null;
+                      if (qrRequests.isEmpty && !stale) {
                         return const SizedBox.shrink();
-
-                      final hasPending = activeCounterReqs.any(
-                        (r) => r.status == 'pending_staff',
-                      );
-                      final badgeColor = hasPending
+                      }
+                      final hasPending = qrRequests.any((r) => r.isSubmitted);
+                      final badgeColor = stale
+                          ? Colors.grey.shade700
+                          : hasPending
                           ? Colors.orange
                           : Colors.blue;
 
@@ -499,22 +413,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                   backgroundColor: Colors.transparent,
                                   builder: (_) => const QrCounterQueueSheet(),
                                 );
-
                             if (selectedReq != null && context.mounted) {
                               showModalBottomSheet(
                                 context: context,
                                 isScrollControlled: true,
                                 backgroundColor: Colors.transparent,
-                                builder: (_) => QrOrderReviewSheet(
-                                  request: selectedReq,
-                                  onApproved: () {},
-                                  onRejected: () {},
-                                ),
+                                builder: (_) =>
+                                    QrOrderReviewSheet(request: selectedReq),
                               );
                             }
                           },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
+                          child: Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: isCompact ? 8 : 10,
                               vertical: isCompact ? 4 : 6,
@@ -522,27 +431,22 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                             decoration: BoxDecoration(
                               color: badgeColor,
                               borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: badgeColor.withValues(alpha: 0.5),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.bolt_rounded,
+                                  stale
+                                      ? Icons.wifi_off_rounded
+                                      : Icons.bolt_rounded,
                                   size: isCompact ? 14 : 16,
                                   color: Colors.white,
                                 ),
                                 SizedBox(width: isCompact ? 2 : 4),
                                 Text(
                                   isCompact
-                                      ? 'QR (${activeCounterReqs.length})'
-                                      : 'QR Quầy (${activeCounterReqs.length})',
+                                      ? 'QR (${qrRequests.length})'
+                                      : 'Đơn QR (${qrRequests.length})',
                                   style: GoogleFonts.outfit(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,
@@ -556,6 +460,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       );
                     },
                   ),
+
 
                   // ── Quick add product (always shown, no Kho module needed) ──
                   GestureDetector(

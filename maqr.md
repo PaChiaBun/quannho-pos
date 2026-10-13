@@ -5,6 +5,8 @@
 **Nguồn mục tiêu mới:** `.docs/qr-order-kien-truc-muc-tieu.md`.
 **Kế hoạch triển khai:** `.docs/ke-hoach-trien-khai-qr-order.md`.
 
+> **Cập nhật 13/10/2026:** QR bàn giao động và camera quét ĐÃ BỊ BỎ; khách tự chọn bàn, nhân viên duyệt từ hàng chờ chung bằng một nút. Hợp đồng hiện hành: `.docs/qr-rpc-contract-don-gian.md`; kế hoạch: `ke-hoach-don-gian-hoa-qr.md`. Toàn bộ tài liệu dưới đây là V3 legacy, chỉ để đối chiếu.
+
 > Cảnh báo: các phần bên dưới còn mô tả QR riêng từng bàn, POS device pairing và luồng gửi Bếp V3. Không dùng các mô tả đó để triển khai mới. Kiến trúc đã chốt dùng một QR TABLE_SHARED cho cả quán, một QR COUNTER mang đi, QR bàn giao động theo request, nhân viên chọn bàn sau khi claim, và tái sử dụng account/membership hiện hành.
 
 ---

@@ -27,6 +27,7 @@ import '../modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dar
 import '../modules/kho_chuyen_nghiep/providers/kho_chuyen_nghiep_providers.dart'
     show khoProRepositoryProvider;
 import '../core/services/store_auth_service.dart';
+import '../modules/quick_notes/quick_notes.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/user_auth_service.dart';
 import '../core/theme/app_colors.dart';
@@ -43,10 +44,10 @@ import '../modules/bill_printer/providers/bill_template_provider.dart';
 import '../core/services/vietqr_service.dart';
 import '../modules/qr_order/providers/qr_order_providers.dart';
 import '../modules/qr_order/widgets/qr_order_review_sheet.dart';
-import '../modules/qr_order/widgets/qr_scanner_dialog.dart';
+import '../modules/qr_order/widgets/qr_counter_queue_sheet.dart';
 import '../modules/qr_order/services/settlement_operation_manager.dart';
 import '../modules/qr_order/models/qr_order_model.dart'
-    show QrErrorCode, AuthoritativeQuote;
+    show QrErrorCode, AuthoritativeQuote, QrRequestModel;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BRAND COLORS
@@ -410,7 +411,8 @@ class _BanScreenState extends ConsumerState<BanScreen> {
 
     // Save selected zone ID to preserve selection after reordering
     String? selectedZoneId;
-    if (_selectedZoneIndex > 0 && _selectedZoneIndex - 1 < currentZones.length) {
+    if (_selectedZoneIndex > 0 &&
+        _selectedZoneIndex - 1 < currentZones.length) {
       selectedZoneId = currentZones[_selectedZoneIndex - 1].id;
     }
 
@@ -740,31 +742,24 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.qr_code_scanner_rounded, color: _kNavy),
-            tooltip: 'Quét QR bàn giao của khách',
-            onPressed: () async {
-              final claimed = await QrScannerDialog.show(context);
-              if (claimed != null && context.mounted) {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => QrOrderReviewSheet(
-                    request: claimed,
-                    onApproved: () {
-                      ref.invalidate(banZonesProvider);
-                      ref.invalidate(qrActivePipelineStreamProvider);
-                      ref.invalidate(pendingTableQrRequestsProvider);
-                    },
-                    onRejected: () {
-                      ref.invalidate(banZonesProvider);
-                      ref.invalidate(qrActivePipelineStreamProvider);
-                      ref.invalidate(pendingTableQrRequestsProvider);
-                    },
-                  ),
-                );
+          Consumer(
+            builder: (context, ref, _) {
+              if (!ref.watch(qrModuleEnabledProvider)) {
+                return const SizedBox.shrink();
               }
+              final count = ref.watch(activeQrRequestsProvider).length;
+              final stale = ref.watch(qrPipelineErrorProvider) != null;
+              return IconButton(
+                tooltip: stale
+                    ? 'Đơn QR (mất kết nối, danh sách có thể cũ)'
+                    : 'Đơn gọi món QR',
+                onPressed: () => _openQrQueue(context, ref),
+                icon: Badge(
+                  isLabelVisible: count > 0 || stale,
+                  label: Text(stale ? '!' : '$count'),
+                  child: const Icon(Icons.qr_code_2_rounded, color: _kNavy),
+                ),
+              );
             },
           ),
           IconButton(
@@ -783,9 +778,16 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         loading: () =>
             const Center(child: CircularProgressIndicator(color: _kNavy)),
         error: (e, st) {
-          AppLogger.error('ban_screen', 'Tải danh sách khu vực thất bại: $e', e, st);
+          AppLogger.error(
+            'ban_screen',
+            'Tải danh sách khu vực thất bại: $e',
+            e,
+            st,
+          );
           return const Center(
-            child: Text('Tải danh sách khu vực thất bại. Hãy chụp lại báo chủ app.'),
+            child: Text(
+              'Tải danh sách khu vực thất bại. Hãy chụp lại báo chủ app.',
+            ),
           );
         },
         data: (zones) {
@@ -793,7 +795,8 @@ class _BanScreenState extends ConsumerState<BanScreen> {
             _cachedZones = zones;
           }
 
-          final displayZones = _cachedZones.isNotEmpty && _cachedZones.length == zones.length
+          final displayZones =
+              _cachedZones.isNotEmpty && _cachedZones.length == zones.length
               ? _cachedZones
               : zones;
 
@@ -1039,9 +1042,16 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           child: activeSessionsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, st) {
-              AppLogger.error('ban_screen', 'Tải phiên bàn thất bại: $e', e, st);
+              AppLogger.error(
+                'ban_screen',
+                'Tải phiên bàn thất bại: $e',
+                e,
+                st,
+              );
               return const Center(
-                child: Text('Tải phiên bàn thất bại. Hãy chụp lại báo chủ app.'),
+                child: Text(
+                  'Tải phiên bàn thất bại. Hãy chụp lại báo chủ app.',
+                ),
               );
             },
             data: (activeSessions) {
@@ -1796,19 +1806,16 @@ class _ZoneTabBar extends StatelessWidget {
                 return AnimatedBuilder(
                   animation: animation,
                   builder: (context, child) {
-                    final double animValue =
-                        Curves.easeInOut.transform(animation.value);
-                    final double elevation =
-                        lerpDouble(0, 6, animValue) ?? 0;
+                    final double animValue = Curves.easeInOut.transform(
+                      animation.value,
+                    );
+                    final double elevation = lerpDouble(0, 6, animValue) ?? 0;
                     return Material(
                       elevation: elevation,
                       color: Colors.transparent,
                       shadowColor: Colors.black26,
                       borderRadius: BorderRadius.circular(20),
-                      child: Transform.scale(
-                        scale: 1.05,
-                        child: child,
-                      ),
+                      child: Transform.scale(scale: 1.05, child: child),
                     );
                   },
                   child: child,
@@ -1938,6 +1945,50 @@ class _ZoneChip extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // TABLE CARD (Grid mode)
 // ─────────────────────────────────────────────────────────────────────────────
+/// Mở sheet duyệt đơn QR; sau duyệt/từ chối thì làm mới danh sách bàn.
+void _openQrReview(BuildContext context, WidgetRef ref, QrRequestModel req) {
+  void refresh() {
+    ref.invalidate(banZonesProvider);
+    ref.invalidate(activeSessionsProvider); // thẻ bàn đổi sang "Có khách" ngay sau khi duyệt
+    ref.invalidate(qrActivePipelineStreamProvider);
+  }
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => QrOrderReviewSheet(
+      request: req,
+      onApproved: refresh,
+      onRejected: refresh,
+    ),
+  ).then((_) => refresh());
+}
+
+/// Mở hàng chờ QR chung rồi duyệt đơn được chọn.
+Future<void> _openQrQueue(BuildContext context, WidgetRef ref) async {
+  final picked = await showModalBottomSheet<QrRequestModel>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const QrCounterQueueSheet(),
+  );
+  if (picked != null && context.mounted) _openQrReview(context, ref, picked);
+}
+
+/// Huy hiệu QR của bàn: 1 đơn thì mở thẳng, nhiều đơn thì mở hàng chờ.
+void _openQrForTable(
+  BuildContext context,
+  WidgetRef ref,
+  List<QrRequestModel> orders,
+) {
+  if (orders.length == 1) {
+    _openQrReview(context, ref, orders.first);
+  } else {
+    _openQrQueue(context, ref);
+  }
+}
+
 class _TableCard extends ConsumerWidget {
   final BanTableModel table;
   final BanSessionModel? session;
@@ -1984,7 +2035,6 @@ class _TableCard extends ConsumerWidget {
       activeQrRequestsForTableProvider(table.id),
     );
     final hasPendingQr = activeForTable.isNotEmpty;
-    final hasActiveQr = activeForTable.isNotEmpty;
 
     // Kích thước động theo cardSize
     final double paddingVal = cardSize == 'nho'
@@ -2024,22 +2074,7 @@ class _TableCard extends ConsumerWidget {
       isPulsing: hasPendingQr,
       borderRadius: borderRadiusVal,
       child: GestureDetector(
-        onTap: () {
-          if (hasActiveQr) {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (_) => QrOrderReviewSheet(
-                request: activeForTable.first,
-                onApproved: () {},
-                onRejected: () {},
-              ),
-            );
-          } else {
-            onTap();
-          }
-        },
+        onTap: onTap, // đơn QR không chặn việc mở bàn
 
         onLongPress: onLongPress,
         child: AnimatedContainer(
@@ -2079,31 +2114,35 @@ class _TableCard extends ConsumerWidget {
                           : Color(zone.colorValue),
                     ),
                     if (hasPendingQr)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.amber,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.bolt_rounded,
-                              size: 12,
-                              color: Colors.black,
-                            ),
-                            Text(
-                              'QR (${activeForTable.first.items.length})',
-                              style: GoogleFonts.outfit(
-                                fontSize: statusFontSize,
-                                fontWeight: FontWeight.w900,
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _openQrForTable(context, ref, activeForTable),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.bolt_rounded,
+                                size: 12,
                                 color: Colors.black,
                               ),
-                            ),
-                          ],
+                              Text(
+                                'QR (${activeForTable.length})',
+                                style: GoogleFonts.outfit(
+                                  fontSize: statusFontSize,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       )
                     else
@@ -2415,7 +2454,12 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                                   Navigator.pop(context, session);
                                 }
                               } catch (e, st) {
-                                AppLogger.error('ban_screen', 'Mở bàn thất bại: $e', e, st);
+                                AppLogger.error(
+                                  'ban_screen',
+                                  'Mở bàn thất bại: $e',
+                                  e,
+                                  st,
+                                );
                                 if (mounted) {
                                   setState(() => _isLoading = false);
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -2637,7 +2681,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('In tạm tính thất bại. Hãy chụp lại báo chủ app.'),
+            content: const Text(
+              'In tạm tính thất bại. Hãy chụp lại báo chủ app.',
+            ),
             backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
           ),
@@ -3553,7 +3599,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       }
 
       if (response['is_settled'] == false) {
-        final serverMessage = response['message'] as String? ?? 'Phiên bàn chưa được thanh toán';
+        final serverMessage =
+            response['message'] as String? ?? 'Phiên bàn chưa được thanh toán';
         await _settlementOpManager.clearPersistent(
           storeId: storeId,
           sessionId: widget.session.id,
@@ -3598,12 +3645,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       // settlementId:cashier để chống callback/print-server trùng nhau.
       if (!isReplay && printerSettings.autoPrintCheckout) {
         final hasOwner = hasActivePrintServerOwner(printerSettings.ownerState);
-        if (shouldAutoPrintLocally(
+        if (shouldAutoPrintReceiptLocally(
           isWeb: kIsWeb,
           centralRoutingEnabled: printerSettings.centralPrintRoutingEnabled,
           hasPrintServerOwner: hasOwner,
           allowPrintServerFallback:
               printerSettings.isDesignatedPrintServerDevice,
+          deviceOwnsBill: printerSettings.deviceOwnsBillPrinting,
         )) {
           final billData = BillData(
             shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
@@ -3669,7 +3717,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
           backgroundColor: Colors.white,
           elevation: 16,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 400),
             padding: const EdgeInsets.all(28),
@@ -3707,7 +3758,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
                 // Badge Bàn
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(10),
@@ -3726,7 +3780,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 // Thẻ số tiền thanh toán to rõ
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFECFDF5),
                     borderRadius: BorderRadius.circular(16),
@@ -3812,874 +3869,6 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       }
     }
   }
-
-  /* Legacy non-atomic checkout removed from the executable path.
-     Kept only inside this block comment until the migration review is signed
-     off, so it cannot be called, analyzed, or accidentally re-enabled.
-  @Deprecated('Legacy non-atomic checkout; retained temporarily for diff audit')
-  Future<void> _checkoutLegacyUnused(
-    double amountBeforeSurcharge,
-    String payMethod,
-    List<BanSessionItemModel> items, {
-    String? customerId,
-    int ptsUsed = 0,
-    double discount = 0,
-    String? couponCode,
-    double surcharge = 0,
-    bool allowQuoteReconfirmation = true,
-  }) async {
-    final banRepoCached = ref.read(banRepositoryProvider);
-    final khoProRepoCached = ref.read(khoProRepositoryProvider);
-    final productRepoCached = ref.read(productRepositoryProvider);
-    final printerSettingsCached = ref.read(printerSettingsProvider);
-
-    try {
-      final orderId = const Uuid().v4();
-      final now = DateTime.now().toUtc().toIso8601String();
-      final sb = Supabase.instance.client;
-
-      // 0. Lấy store_id
-      final storeInfo = await StoreAuthService.getStoreInfo();
-      final storeId = storeInfo['store_id'] as String?;
-      if (storeId == null)
-        throw Exception('Không lấy được store_id — vui lòng đăng nhập lại');
-
-      // 0a. Kiểm tra nếu phiên bàn có QR Orders (bảng ban_session_orders) - 100% FAIL-CLOSED
-      bool hasQrOrders = false;
-      try {
-        final bsoRes = await sb
-            .from('ban_session_orders')
-            .select('id')
-            .eq('session_id', widget.session.id)
-            .limit(1);
-        hasQrOrders = (bsoRes as List).isNotEmpty;
-      } catch (e) {
-        // FAIL-CLOSED: Lookup lỗi (network, RLS, schema...) -> Chặn ngay, báo lỗi người dùng, KHÔNG fallback legacy!
-        throw Exception(
-          'Không thể kiểm tra trạng thái đơn QR của bàn: $e. Vui lòng thử lại.',
-        );
-      }
-
-      if (hasQrOrders) {
-        // Sinh / giữ idempotency key cố định cho session checkout theo financial intent
-        final checkoutIdempKey = await _settlementOpManager
-            .getOrCreatePersistentKey(
-              storeId: storeId,
-              sessionId: widget.session.id,
-              paymentMethod: payMethod,
-              customerId: customerId,
-              pointsUsed: ptsUsed,
-              couponCode: couponCode,
-              surcharge: surcharge,
-              discount: discount,
-            );
-        final settleRes = await banRepoCached.settleBanSession(
-          sessionId: widget.session.id,
-          storeId: storeId,
-          paymentMethod: payMethod,
-          idempotencyKey: checkoutIdempKey,
-          customerId: customerId,
-          pointsUsed: ptsUsed,
-          discount: discount,
-          couponCode: couponCode,
-          surcharge: surcharge,
-        );
-
-        if (settleRes['success'] != true) {
-          final errCode = settleRes['error_code'] as String?;
-          final errMsg = settleRes['message'] as String?;
-
-          if (errCode == QrErrorCode.financialQuoteChanged) {
-            if (!allowQuoteReconfirmation) {
-              await _settlementOpManager.clearPersistent(
-                storeId: storeId,
-                sessionId: widget.session.id,
-              );
-              throw Exception(
-                'Báo giá hệ thống vừa tiếp tục thay đổi. Vui lòng mở lại trang thanh toán để kiểm tra lại.',
-              );
-            }
-
-            final dataMap =
-                settleRes['data'] as Map<String, dynamic>? ??
-                <String, dynamic>{};
-            final quote = AuthoritativeQuote.fromMap(dataMap);
-            final oldExpectedTotal =
-                SettlementQuoteHelper.computeOldPayableTotal(
-                  amountBeforeSurcharge: amountBeforeSurcharge,
-                  surcharge: surcharge,
-                );
-
-            if (!mounted) return;
-            final confirmed = await _showAuthoritativeQuoteDialog(
-              oldTotal: oldExpectedTotal,
-              quote: quote,
-            );
-
-            if (confirmed == true && mounted) {
-              final newAmountBeforeSurcharge =
-                  SettlementQuoteHelper.computeConfirmedAmountBeforeSurcharge(
-                    quoteTotal: quote.total,
-                    quoteSurcharge: quote.surcharge,
-                  );
-              // Người dùng xác nhận quote authoritative mới -> Retry đúng 1 lần duy nhất với quote mới (sinh key mới)
-              return _checkout(
-                newAmountBeforeSurcharge,
-                payMethod,
-                items,
-                customerId: customerId,
-                ptsUsed: ptsUsed,
-                discount: quote.discount,
-                couponCode: couponCode,
-                surcharge: quote.surcharge,
-                allowQuoteReconfirmation: false,
-              );
-            } else {
-              // Người dùng hủy -> Giữ nguyên phiên chưa thanh toán, không side-effect
-              await _settlementOpManager.clearPersistent(
-                storeId: storeId,
-                sessionId: widget.session.id,
-              );
-              return;
-            }
-          }
-
-          final userMsg = QrErrorCode.toUserMessage(errCode, errMsg);
-          throw Exception(userMsg);
-        }
-
-        // Giải phóng pending key khi thanh toán thành công
-        await _settlementOpManager.clearPersistent(
-          storeId: storeId,
-          sessionId: widget.session.id,
-        );
-
-        final settleData =
-            settleRes['data'] as Map<String, dynamic>? ?? <String, dynamic>{};
-        final settlementId =
-            (settleData['settlement_id'] as String?) ?? widget.session.id;
-        final serverFinalTotal =
-            ((settleData['total_amount'] as num?) ??
-                    (amountBeforeSurcharge + surcharge))
-                .toDouble();
-        final serverSubtotal =
-            ((settleData['subtotal'] as num?) ??
-                    (amountBeforeSurcharge + discount))
-                .toDouble();
-        final serverDiscount = ((settleData['discount'] as num?) ?? discount)
-            .toDouble();
-        final serverSurcharge = ((settleData['surcharge'] as num?) ?? surcharge)
-            .toDouble();
-
-        // RPC đã xử lý toàn bộ: canonical orders hoàn tất, manual items nếu có, 1 settlement, 1 finance record, trừ kho/recipe & đóng session.
-        AppLogger.info(
-          'checkout',
-          'Thanh toan hoa don QR thanh cong tai ${widget.zone.name} - ${widget.table.label}. Tong: ${serverFinalTotal.toInt()}d, Hinh thuc: ${payMethod.toUpperCase()}',
-        );
-
-        // In hóa đơn thu ngân thật bằng StationPrinterDispatcher
-        try {
-          final hasPrintServerOwner = hasActivePrintServerOwner(
-            printerSettingsCached.ownerState,
-          );
-          if (printerSettingsCached.centralPrintRoutingEnabled &&
-              !hasPrintServerOwner) {
-            AppLogger.info(
-              'printer',
-              '[Checkout Print] Local fallback: central routing enabled but Print Server Owner is missing or stale.',
-            );
-          }
-
-          if (printerSettingsCached.autoPrintCheckout &&
-              shouldAutoPrintLocally(
-                isWeb: kIsWeb,
-                centralRoutingEnabled:
-                    printerSettingsCached.centralPrintRoutingEnabled,
-                hasPrintServerOwner: hasPrintServerOwner,
-                allowPrintServerFallback:
-                    printerSettingsCached.isDesignatedPrintServerDevice,
-              )) {
-            final List<BillItem> billItems = [];
-            for (final item in items) {
-              billItems.add(
-                BillItem(
-                  name: item.productName,
-                  qty: item.quantity.toInt(),
-                  price: item.price,
-                  note: item.note,
-                ),
-              );
-            }
-            if (serverSurcharge > 0) {
-              billItems.add(
-                BillItem(
-                  name: 'Phí dịch vụ / Ship',
-                  qty: 1,
-                  price: serverSurcharge,
-                ),
-              );
-            }
-
-            final session = ref.read(sessionProvider);
-            final billData = BillData(
-              shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
-              shopAddress: storeInfo['address'] ?? '',
-              shopPhone: storeInfo['phone'] ?? '',
-              orderNumber: 'QRT-${settlementId.substring(0, 6).toUpperCase()}',
-              createdAt: DateTime.now(),
-              tableName: widget.table.label,
-              items: billItems,
-              subtotal: serverSubtotal + serverSurcharge,
-              discount: serverDiscount,
-              total: serverFinalTotal,
-              type: BillType.receipt,
-              note: couponCode != null ? '[Voucher: $couponCode]' : '',
-              waiterName: _resolveWaiterName(items, session?.displayName),
-            );
-
-            final dispatchResult = await StationPrinterDispatcher.printBill(
-              billData,
-              printerSettingsCached,
-              onlyReceipt: true,
-            );
-            if (!dispatchResult.isStationSuccess('cashier')) {
-              AppLogger.info(
-                'printer',
-                '[Checkout Print] In hoa don thanh toan QR that bai: ${dispatchResult.stationResults['cashier']?.errorMessage ?? 'UNKNOWN_PRINT_ERROR'}',
-              );
-            }
-          }
-        } catch (e) {
-          debugPrint('[Checkout Print] ❌ Lỗi in hóa đơn thanh toán bàn QR: $e');
-        }
-
-        if (mounted) {
-          ref.invalidate(activeSessionsProvider);
-          ref.invalidate(todayStatsProvider);
-          ref.invalidate(financeRecordsProvider);
-          ref.invalidate(financeStatsProvider);
-          ref.invalidate(todayFinanceStatsProvider);
-          try {
-            final ch = Supabase.instance.client.channel('store_broadcast');
-            ch.subscribe();
-            ch
-                .sendBroadcastMessage(event: 'checkout_completed', payload: {})
-                .then((_) => ch.unsubscribe());
-          } catch (_) {}
-
-          try {
-            final player = AudioPlayer();
-            player.play(AssetSource('sounds/payment_success.mp3'));
-          } catch (_) {}
-
-          Navigator.of(context).pop();
-        }
-        return;
-      }
-
-      // 0b. Tạo orderNumber sequential (giống POS screen — dùng count từ DB)
-      final today = DateTime.now();
-      final datePrefix =
-          'QN-${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}';
-      final startOfDay = DateTime(
-        today.year,
-        today.month,
-        today.day,
-      ).toUtc().toIso8601String();
-      // ‼️ FIX Bug #19: thêm upper bound lt(endOfDay) — trước đây đếm cả đơn ngày hôm qua
-      final endOfDay = DateTime(
-        today.year,
-        today.month,
-        today.day + 1,
-      ).toUtc().toIso8601String();
-      final productIds = items.map((i) => i.productId).toSet().toList();
-
-      // [TỐI ƯU HOÁ TỐC ĐỘ]: Gom 3 truy vấn độc lập chạy song song (Tiết kiệm ~1-2 giây)
-      final fetchFutures = await Future.wait(<Future<dynamic>>[
-        sb
-            .from('orders')
-            .select('id')
-            .eq('store_id', storeId)
-            .gte('created_at', startOfDay)
-            .lt('created_at', endOfDay)
-            .count(CountOption.exact),
-        if (customerId != null)
-          sb
-              .from('app_settings')
-              .select('value')
-              .eq('store_id', storeId)
-              .eq('key', 'loyalty_rate')
-              .maybeSingle()
-        else
-          Future.value(null),
-        sb
-            .from('products')
-            .select('id, cost_price_latest')
-            .inFilter('id', productIds),
-      ]);
-
-      final countRes = fetchFutures[0] as PostgrestResponse;
-      final rateRes = fetchFutures[1] as Map<String, dynamic>?;
-      final prodRows = fetchFutures[2] as List<dynamic>;
-
-      final orderNumber =
-          '$datePrefix-${((countRes.count) + 1).toString().padLeft(3, '0')}';
-
-      // 1. Core: Tạo order
-      // Lấy loyalty_rate trước để tính ptsEarned
-      double ptsEarned = 0;
-      final finalPaidTotal = amountBeforeSurcharge + surcharge;
-      if (customerId != null) {
-        try {
-          final rate =
-              double.tryParse((rateRes?['value'] as String?) ?? '10000') ??
-              10000;
-          ptsEarned = (finalPaidTotal / rate).floorToDouble();
-        } catch (_) {}
-      }
-      String? cashierRecordId;
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final currentUserId = prefs.getString('auth_user_id');
-        if (currentUserId != null) {
-          final memberRow = await sb
-              .from('store_members')
-              .select('id, role, user_accounts(display_name, phone)')
-              .eq('store_id', storeId)
-              .eq('user_id', currentUserId)
-              .maybeSingle();
-          if (memberRow != null) {
-            cashierRecordId = memberRow['id'] as String?;
-            final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
-            final displayName =
-                userAcc?['display_name'] as String? ?? 'Cashier';
-            final phone = userAcc?['phone'] as String?;
-            final role = memberRow['role'] as String? ?? 'cashier';
-
-            if (cashierRecordId != null) {
-              await sb.from('staff_members').upsert({
-                'id': cashierRecordId,
-                'store_id': storeId,
-                'name': displayName,
-                'role': role,
-                'phone': phone,
-                'is_active': true,
-                'updated_at': DateTime.now().millisecondsSinceEpoch,
-              });
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('[Checkout] Sync cashier failed: $e');
-      }
-
-      final noteParts = <String>[
-        if (couponCode != null) '[Voucher: $couponCode]',
-        if (surcharge > 0) '[Phí dịch vụ/ship: ${fmtVnd(surcharge)}]',
-      ];
-      final noteStr = noteParts.isEmpty ? null : noteParts.join(' ');
-
-      await sb.from('orders').insert({
-        'id': orderId,
-        'store_id': storeId,
-        'order_number': orderNumber,
-        'customer_id': customerId,
-        'subtotal': amountBeforeSurcharge + discount,
-        'discount': discount,
-        'tax': 0,
-        'total': finalPaidTotal,
-        'total_amount': finalPaidTotal,
-        'payment_method': payMethod,
-        'status': 'completed',
-        'source_type': 'ban',
-        'source_id': widget.session.tableId,
-        'loyalty_pts_earned': ptsEarned,
-        'loyalty_pts_used': ptsUsed.toDouble(),
-        'created_at': now,
-        'note': noteStr,
-        if (cashierRecordId != null) 'staff_id': cashierRecordId,
-        if (widget.session.waiterId != null)
-          'waiter_id': widget.session.waiterId,
-      });
-
-      // 2. Core: Tạo order_items
-      // ‼️ FIX Bug #18: fetch cost_price thực từ products — trước đây hardcode 0
-      Map<String, double> costPriceMap = {};
-      try {
-        for (final p in prodRows) {
-          costPriceMap[p['id'] as String] =
-              (p['cost_price_latest'] as num?)?.toDouble() ?? 0;
-        }
-      } catch (e) {
-        debugPrint('[Checkout] cost_price fetch err: $e');
-      }
-
-      final List<Map<String, dynamic>> orderItemRows = [];
-      final Map<String, BanSessionItemModel> groupedItems = {};
-      for (final item in items) {
-        final cleanNote = item.note?.trim() ?? '';
-        final cleanMods = item.modifiersJson?.trim() ?? '';
-        final key =
-            '${item.productId}_${item.price.toStringAsFixed(2)}_${cleanNote}_$cleanMods';
-        if (groupedItems.containsKey(key)) {
-          final prev = groupedItems[key]!;
-          groupedItems[key] = BanSessionItemModel(
-            id: prev.id,
-            sessionId: prev.sessionId,
-            productId: prev.productId,
-            productName: prev.productName,
-            price: prev.price,
-            quantity: prev.quantity + item.quantity,
-            note: prev.note,
-            modifiersJson: prev.modifiersJson,
-            addedAt: prev.addedAt,
-            kitchenStatus: prev.kitchenStatus,
-          );
-        } else {
-          groupedItems[key] = item;
-        }
-      }
-
-      for (final item in groupedItems.values) {
-        orderItemRows.add({
-          'id': const Uuid().v4(),
-          'order_id': orderId,
-          'product_id': item.productId,
-          'store_id': storeId,
-          'name': item.productName,
-          'product_name': item.productName,
-          'qty': item.quantity.toInt(),
-          'unit_price': item.price,
-          'cost_price':
-              costPriceMap[item.productId] ?? 0, // ✅ FIX: lấy cost thực
-          'modifiers_json':
-              item.modifiersJson, // ✅ R3-02: lưu topping vào order history
-          'quantity': item.quantity,
-          'subtotal': item.subtotal,
-        });
-      }
-      if (surcharge > 0) {
-        orderItemRows.add({
-          'id': const Uuid().v4(),
-          'order_id': orderId,
-          'product_id': null,
-          'store_id': storeId,
-          'name': 'Phí dịch vụ / Ship',
-          'product_name': 'Phí dịch vụ / Ship',
-          'qty': 1,
-          'unit_price': surcharge,
-          'cost_price': 0,
-          'modifiers_json': null,
-          'quantity': 1.0,
-          'subtotal': surcharge,
-        });
-      }
-      if (orderItemRows.isNotEmpty) {
-        await sb.from('order_items').insert(orderItemRows);
-      }
-
-      // 3 + 3b + 4 + 5. Cross-module (Trừ kho, Tài chính, Tích điểm) chạy chế độ nền không block UI
-      Future<void> runBackgroundSideEffects() async {
-        // 3 + 3b. Cross-module: Trừ kho — phân biệt sản phẩm CÓ/KHÔNG có công thức
-        final khoProRepo = khoProRepoCached;
-        final productRepo = productRepoCached;
-        Map<String, RecipeModel> recipeByPosId = {};
-        try {
-          final allRecipes = await khoProRepo.fetchRecipes();
-          recipeByPosId = {
-            for (final r in allRecipes)
-              if (r.posProductId != null) r.posProductId!: r,
-          };
-        } catch (e) {
-          debugPrint('[Checkout] fetchRecipes err: $e');
-        }
-
-        for (final item in items) {
-          final recipe = recipeByPosId[item.productId];
-          if (recipe != null && recipe.ingredients.isNotEmpty) {
-            // Sản phẩm CÓ công thức → deductIngredients trừ NL + ghi COGS
-            try {
-              await khoProRepo.deductIngredients(
-                recipe: recipe,
-                quantity: item.quantity,
-                reason: 'sale',
-                note:
-                    'Bàn "${widget.table.label}" bán "${item.productName}" × ${item.quantity.toStringAsFixed(0)} (Đơn $orderNumber)',
-                referenceId: orderId,
-              );
-            } catch (e) {
-              debugPrint('[Checkout] ❌ deductIngredients err: $e');
-            }
-          } else {
-            // Sản phẩm KHÔNG có công thức → trừ stock thô
-            try {
-              await productRepo.updateStockQty(item.productId, -item.quantity);
-              await sb.from('stock_movements').insert({
-                'id': const Uuid().v4(),
-                'store_id': storeId,
-                'product_id': item.productId,
-                'delta': double.parse((-item.quantity).toStringAsFixed(3)),
-                'reason': 'sale',
-                'note': 'Bán bàn $orderNumber',
-                'created_at': now,
-              });
-            } catch (e) {
-              debugPrint('[Checkout] ❌ stock err: $e');
-            }
-          }
-
-          // ── Topping deduction (Option A: qua Kho CN recipe) ──────────────
-          if (item.modifiersJson != null) {
-            try {
-              final extras = jsonDecode(item.modifiersJson!) as List<dynamic>;
-              for (final extra in extras) {
-                final m = extra as Map<String, dynamic>;
-                if (m['type'] != 'topping') continue;
-                final toppingId = m['id'] as String?;
-                final toppingQty =
-                    ((m['qty'] as num?) ?? 1).toDouble() * item.quantity;
-                final toppingName = m['name'] as String? ?? 'Topping';
-                if (toppingId == null || toppingQty <= 0) continue;
-
-                final toppingRecipe = recipeByPosId[toppingId];
-                if (toppingRecipe != null &&
-                    toppingRecipe.ingredients.isNotEmpty) {
-                  debugPrint(
-                    '[Checkout] 🧋 Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} → deduct recipe',
-                  );
-                  try {
-                    await khoProRepo.deductIngredients(
-                      recipe: toppingRecipe,
-                      quantity: toppingQty,
-                      reason: 'sale',
-                      note:
-                          'Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} (Đơn $orderNumber)',
-                      referenceId: orderId,
-                    );
-                  } catch (e) {
-                    debugPrint('[Checkout] ❌ topping recipe deduct err: $e');
-                  }
-                } else {
-                  debugPrint(
-                    '[Checkout] 🧋 Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} → deduct stock thô',
-                  );
-                  try {
-                    await productRepo.updateStockQty(toppingId, -toppingQty);
-                    await sb.from('stock_movements').insert({
-                      'id': const Uuid().v4(),
-                      'store_id': storeId,
-                      'product_id': toppingId,
-                      'delta': double.parse((-toppingQty).toStringAsFixed(3)),
-                      'reason': 'sale',
-                      'note': 'Topping "$toppingName" (Đơn $orderNumber)',
-                      'created_at': now,
-                    });
-                  } catch (e) {
-                    debugPrint('[Checkout] ❌ topping stock err: $e');
-                  }
-                }
-              }
-            } catch (e) {
-              debugPrint('[Checkout] ❌ parse modifiers_json err: $e');
-            }
-          }
-        }
-
-        // 4. Cross-module: Finance
-        if (storeId != null) {
-          try {
-            final existIncome = await sb
-                .from('finance_records')
-                .select('id')
-                .eq('store_id', storeId)
-                .eq('reference_id', orderId)
-                .eq('type', 'income')
-                .eq('is_auto', true)
-                .maybeSingle();
-            if (existIncome == null) {
-              final fundType = (payMethod == 'transfer' || payMethod == 'card')
-                  ? 'bank'
-                  : 'cash';
-              await sb.from('finance_records').insert({
-                'id': const Uuid().v4(),
-                'store_id': storeId,
-                'type': 'income',
-                'amount': finalPaidTotal,
-                'description': 'Doanh thu bàn $orderNumber',
-                'reference_id': orderId,
-                'is_auto': true,
-                'recorded_at': now,
-                'fund_type': fundType,
-              });
-            }
-          } catch (e) {
-            debugPrint('[Checkout] finance silent err: $e');
-          }
-        }
-
-        // 5. Cross-module: Loyalty
-        if (storeId != null && customerId != null) {
-          try {
-            final customer = await sb
-                .from('customers')
-                .select('loyalty_pts, total_spent, visit_count, stamp_count')
-                .eq('id', customerId)
-                .maybeSingle();
-            if (customer != null) {
-              final currentPts =
-                  (customer['loyalty_pts'] as num?)?.toDouble() ?? 0;
-              final currentSpent =
-                  (customer['total_spent'] as num?)?.toDouble() ?? 0;
-              final currentVisit =
-                  (customer['visit_count'] as num?)?.toInt() ?? 0;
-              final currentStamps =
-                  (customer['stamp_count'] as num?)?.toInt() ?? 0;
-
-              final newPts = (currentPts + ptsEarned - ptsUsed).clamp(
-                0,
-                double.infinity,
-              );
-
-              int threshold = 10;
-              try {
-                final tRes = await sb
-                    .from('app_settings')
-                    .select('value')
-                    .eq('store_id', storeId)
-                    .eq('key', 'stamp_threshold')
-                    .maybeSingle();
-                threshold =
-                    int.tryParse(tRes?['value'] as String? ?? '10') ?? 10;
-              } catch (_) {}
-
-              final nextStamps = currentStamps + 1;
-              final rewardTriggered = nextStamps >= threshold;
-              final newStampCount = rewardTriggered ? 0 : nextStamps;
-              final newStampTotal =
-                  (customer['stamp_total'] as num?)?.toInt() ?? 0;
-
-              await sb
-                  .from('customers')
-                  .update({
-                    'loyalty_pts': newPts,
-                    'total_spent':
-                        currentSpent + (amountBeforeSurcharge + discount),
-                    'visit_count': currentVisit + 1,
-                    'stamp_count': newStampCount,
-                    'stamp_total': newStampTotal + 1,
-                    'updated_at': now,
-                  })
-                  .eq('id', customerId);
-
-              if (ptsEarned > 0 || ptsUsed > 0) {
-                await sb.from('loyalty_transactions').insert({
-                  'id': const Uuid().v4(),
-                  'store_id': storeId,
-                  'customer_id': customerId,
-                  'order_id': orderId,
-                  'pts_earned': ptsEarned,
-                  'pts_used': ptsUsed.toDouble(),
-                  'note': ptsUsed > 0
-                      ? 'Ban $orderNumber (dùng $ptsUsed điểm giảm giá)'
-                      : 'Ban $orderNumber',
-                  'created_at': now,
-                });
-              }
-            }
-          } catch (e) {
-            debugPrint('[Checkout] loyalty silent err: $e');
-          }
-        }
-      }
-
-      // Kích hoạt tác vụ nền không đợi
-      runBackgroundSideEffects().catchError((e) {
-        debugPrint('[Checkout] ❌ Lỗi nền: $e');
-      });
-
-      // 6. Đóng session
-      await banRepoCached.closeSession(widget.session.id, finalPaidTotal);
-
-      // LOG HOẠT ĐỘNG
-      AppLogger.info(
-        'checkout',
-        'Thanh toan hoa don thanh cong tai ${widget.zone.name} - ${widget.table.label}. Tong: ${finalPaidTotal.toInt()}d, Hinh thuc: ${payMethod.toUpperCase()}',
-      );
-
-      // Tự động in hóa đơn thu ngân khi thanh toán tại bàn (nếu bật cấu hình)
-      try {
-        final hasPrintServerOwner = hasActivePrintServerOwner(
-          printerSettingsCached.ownerState,
-        );
-        if (printerSettingsCached.centralPrintRoutingEnabled &&
-            !hasPrintServerOwner) {
-          AppLogger.info(
-            'printer',
-            '[Checkout Print] Local fallback: central routing enabled but Print Server Owner is missing or stale.',
-          );
-        }
-        if (printerSettingsCached.autoPrintCheckout &&
-            shouldAutoPrintLocally(
-              isWeb: kIsWeb,
-              centralRoutingEnabled:
-                  printerSettingsCached.centralPrintRoutingEnabled,
-              hasPrintServerOwner: hasPrintServerOwner,
-              allowPrintServerFallback:
-                  printerSettingsCached.isDesignatedPrintServerDevice,
-            )) {
-          final List<BillItem> billItems = [];
-          for (final item in items) {
-            billItems.add(
-              BillItem(
-                name: item.productName,
-                qty: item.quantity.toInt(),
-                price: item.price,
-                note: item.note,
-              ),
-            );
-          }
-          if (surcharge > 0) {
-            billItems.add(
-              BillItem(name: 'Phí dịch vụ / Ship', qty: 1, price: surcharge),
-            );
-          }
-
-          final session = ref.read(sessionProvider);
-          final billData = BillData(
-            shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
-            shopAddress: storeInfo['address'] ?? '',
-            shopPhone: storeInfo['phone'] ?? '',
-            orderNumber: orderNumber,
-            createdAt: DateTime.now(),
-            tableName: widget.table.label,
-            items: billItems,
-            subtotal: amountBeforeSurcharge + discount + surcharge,
-            total: finalPaidTotal,
-            type: BillType.receipt,
-            note: '',
-            waiterName: _resolveWaiterName(items, session?.displayName),
-          );
-
-          final dispatchResult = await StationPrinterDispatcher.printBill(
-            billData,
-            printerSettingsCached,
-            onlyReceipt: true,
-          );
-          if (!dispatchResult.isStationSuccess('cashier')) {
-            AppLogger.info(
-              'printer',
-              '[Checkout Print] In hoa don thanh toan that bai: ${dispatchResult.stationResults['cashier']?.errorMessage ?? 'UNKNOWN_PRINT_ERROR'}',
-            );
-          }
-        }
-      } catch (e) {
-        debugPrint('[Checkout Print] ❌ Lỗi in hóa đơn thanh toán bàn: $e');
-      }
-
-      // Option C: KHÔNG tự đóng kitchen_tickets → bếp tự bấm Xong khi hoàn tất
-      // (Trước đây set status='xong' ngay khi thanh toán → bếp mất phiếu đột ngột)
-
-      if (mounted) {
-        ref.invalidate(activeSessionsProvider);
-        ref.invalidate(todayStatsProvider);
-        // Invalidate finance — StreamProvider + FutureProviders cùng refresh
-        ref.invalidate(financeRecordsProvider); // list giao dịch
-        ref.invalidate(financeStatsProvider); // stats header kỳ đang chọn
-        ref.invalidate(todayFinanceStatsProvider);
-        try {
-          final ch = Supabase.instance.client.channel('store_broadcast');
-          ch.subscribe();
-          ch
-              .sendBroadcastMessage(event: 'checkout_completed', payload: {})
-              .then((_) => ch.unsubscribe());
-        } catch (_) {}
-      }
-
-      if (mounted) {
-        // Phát âm thanh tiền
-        try {
-          final player = AudioPlayer();
-          player.play(
-            AssetSource('sounds/payment_success.mp3'),
-          ); // KHÔNG await để UI phản hồi ngay lập tức
-        } catch (_) {}
-        if (!mounted) return;
-        // Hiện dialog thành công trước khi đóng tab
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            backgroundColor: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: _kGreen.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.check_circle_rounded,
-                      color: _kGreen,
-                      size: 44,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Thanh toán thành công!',
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: _kNavy,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    fmtVnd(finalPaidTotal),
-                    style: GoogleFonts.outfit(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: _kGreen,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-        // Tự đóng sau 1.5s
-        await Future.delayed(const Duration(milliseconds: 1500));
-        if (mounted) {
-          Navigator.of(context)
-            ..pop() // đóng dialog
-            ..pop(); // đóng ban screen
-        }
-      }
-    } catch (e, st) {
-      AppLogger.error('ban_screen', 'Thanh toán thất bại: $e', e, st);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Thanh toán thất bại. Hãy chụp lại báo chủ app.',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 6),
-          ),
-        );
-      }
-    }
-  }
-
-  */
 
   /// Hiển thị dialog thông báo thay đổi báo giá tài chính từ server và yêu cầu xác nhận
   Future<bool?> _showAuthoritativeQuoteDialog({
@@ -4838,7 +4027,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     try {
       final perms = await ref.read(userActionPermsProvider.future);
       final session = ref.read(sessionProvider);
-      final isPrivileged = session?.isOwner == true ||
+      final isPrivileged =
+          session?.isOwner == true ||
           StaffService.canonicalRole(session?.role ?? '') == 'owner' ||
           StaffService.canonicalRole(session?.role ?? '') == 'manager' ||
           StaffService.canonicalRole(session?.role ?? '') == 'cashier';
@@ -4921,7 +4111,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               .update({'free_note': clean})
               .inFilter('session_item_id', ids);
         } catch (e) {
-          AppLogger.error('order', 'Dong bo ghi chu sang phieu bep that bai: $e');
+          AppLogger.error(
+            'order',
+            'Dong bo ghi chu sang phieu bep that bai: $e',
+          );
         }
       }
     } catch (e, st) {
@@ -5020,17 +4213,19 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
     // ‼️ BƯỚC 1: Ưu tiên gọi RPC nguyên tử send_kitchen_ticket_v2 (Chống duplicate & độ trễ < 200ms)
     try {
-      final rpcRes = await Supabase.instance.client.rpc(
-        'send_kitchen_ticket_v2',
-        params: {
-          'p_session_id': widget.session.id,
-          'p_store_id': storeId,
-          'p_table_label': widget.table.label,
-          'p_zone_label': widget.zone.name,
-          'p_note': session?.displayName,
-          'p_item_ids': unsentIds,
-        },
-      ).timeout(const Duration(seconds: 8));
+      final rpcRes = await Supabase.instance.client
+          .rpc(
+            'send_kitchen_ticket_v2',
+            params: {
+              'p_session_id': widget.session.id,
+              'p_store_id': storeId,
+              'p_table_label': widget.table.label,
+              'p_zone_label': widget.zone.name,
+              'p_note': session?.displayName,
+              'p_item_ids': unsentIds,
+            },
+          )
+          .timeout(const Duration(seconds: 8));
 
       if (rpcRes != null && rpcRes is Map) {
         final success = rpcRes['success'] == true;
@@ -5048,13 +4243,16 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       }
     } catch (rpcErr) {
       final errStr = rpcErr.toString();
-      final isFunctionMissing = errStr.contains('PGRST202') ||
+      final isFunctionMissing =
+          errStr.contains('PGRST202') ||
           errStr.contains('function') && errStr.contains('does not exist') ||
           errStr.contains('not found');
       if (!isFunctionMissing) {
         rethrow;
       }
-      debugPrint('[Kitchen] RPC send_kitchen_ticket_v2 chua deploy, fallback client steps: $rpcErr');
+      debugPrint(
+        '[Kitchen] RPC send_kitchen_ticket_v2 chua deploy, fallback client steps: $rpcErr',
+      );
     }
 
     // Fallback: Client-side steps nếu RPC chưa tồn tại trên backend cũ
@@ -5152,7 +4350,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               .delete()
               .eq('id', ticketId);
         } catch (delErr) {
-          debugPrint('[Kitchen] ❌ Không thể rollback ticket $ticketId: $delErr');
+          debugPrint(
+            '[Kitchen] ❌ Không thể rollback ticket $ticketId: $delErr',
+          );
         }
       }
       final unsentIds = unsent.map((i) => i.id).toList();
@@ -5170,15 +4370,16 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       final settings = ref.read(printerSettingsProvider);
       final kitchenCfg = StationPrinterDispatcher.effectiveSettings(settings);
       final hasKitchenPrinter =
-          (kitchenCfg.bepNong.enabled && kitchenCfg.bepNong.name.trim().isNotEmpty) ||
-          (kitchenCfg.bepBar.enabled && kitchenCfg.bepBar.name.trim().isNotEmpty);
+          (kitchenCfg.bepNong.enabled &&
+              kitchenCfg.bepNong.name.trim().isNotEmpty) ||
+          (kitchenCfg.bepBar.enabled &&
+              kitchenCfg.bepBar.name.trim().isNotEmpty);
       if (settings.autoPrintKitchen &&
           shouldAutoPrintLocally(
             isWeb: kIsWeb,
             centralRoutingEnabled: settings.centralPrintRoutingEnabled,
             hasPrintServerOwner: hasActivePrintServerOwner(settings.ownerState),
-            allowPrintServerFallback:
-                settings.isDesignatedPrintServerDevice,
+            allowPrintServerFallback: settings.isDesignatedPrintServerDevice,
           )) {
         final List<BillItem> billItems = [];
         for (final item in unsent) {
@@ -5988,9 +5189,16 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
                       error: (e, st) {
-                        AppLogger.error('ban_screen', 'Tải món trong bàn thất bại: $e', e, st);
+                        AppLogger.error(
+                          'ban_screen',
+                          'Tải món trong bàn thất bại: $e',
+                          e,
+                          st,
+                        );
                         return const Center(
-                          child: Text('Tải món thất bại. Hãy chụp lại báo chủ app.'),
+                          child: Text(
+                            'Tải món thất bại. Hãy chụp lại báo chủ app.',
+                          ),
                         );
                       },
                       data: (items) {
@@ -6116,8 +5324,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         _noteGroupIds.clear();
                         _noteRepOf.clear();
                         for (final item in rawActiveItems) {
-                          final rep = groupedActiveMap[
-                              '${item.productId}_${item.price.toStringAsFixed(2)}_${item.note?.trim() ?? ''}_${item.modifiersJson?.trim() ?? ''}_${item.kitchenStatus}']!;
+                          final rep =
+                              groupedActiveMap['${item.productId}_${item.price.toStringAsFixed(2)}_${item.note?.trim() ?? ''}_${item.modifiersJson?.trim() ?? ''}_${item.kitchenStatus}']!;
                           _noteRepOf[item.id] = rep.id;
                           (_noteGroupIds[rep.id] ??= []).add(item.id);
                         }
@@ -6526,122 +5734,148 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                     child: ListView(
                                                       scrollDirection:
                                                           Axis.horizontal,
-                                                      children: _AddItemsSheetState._kPresets.map((
-                                                        preset,
-                                                      ) {
-                                                        final ctrl = _noteControllers
-                                                            .putIfAbsent(
-                                                              item.id,
-                                                              () => TextEditingController(
-                                                                text:
-                                                                    item.note ??
-                                                                    '',
-                                                              ),
-                                                            );
-                                                        final currentText =
-                                                            ctrl.text;
-                                                        final isOn = currentText
-                                                            .contains(preset);
-                                                        return Padding(
-                                                          padding:
-                                                              const EdgeInsets.only(
-                                                                right: 6,
-                                                              ),
-                                                          child: InkWell(
-                                                            onTap: () {
-                                                              HapticFeedback.selectionClick();
-                                                              String newText;
-                                                              if (isOn) {
-                                                                newText = currentText
-                                                                    .replaceAll(
-                                                                      ', $preset',
-                                                                      '',
-                                                                    )
-                                                                    .replaceAll(
+                                                      children:
+                                                          notePresetsFor(
+                                                            ref
+                                                                .read(
+                                                                  posProductsProvider,
+                                                                )
+                                                                .value
+                                                                ?.where(
+                                                                  (x) =>
+                                                                      x.id ==
+                                                                      item.productId,
+                                                                )
+                                                                .firstOrNull,
+                                                            ref
+                                                                .watch(
+                                                                  productModifiersProvider(
+                                                                    item.productId,
+                                                                  ),
+                                                                )
+                                                                .value,
+                                                          ).map((preset) {
+                                                            final ctrl = _noteControllers
+                                                                .putIfAbsent(
+                                                                  item.id,
+                                                                  () => TextEditingController(
+                                                                    text:
+                                                                        item.note ??
+                                                                        '',
+                                                                  ),
+                                                                );
+                                                            final currentText =
+                                                                ctrl.text;
+                                                            final isOn =
+                                                                currentText
+                                                                    .contains(
                                                                       preset,
-                                                                      '',
-                                                                    )
-                                                                    .trim()
-                                                                    .replaceAll(
-                                                                      RegExp(
-                                                                        r'^,\s*|,\s*$',
-                                                                      ),
-                                                                      '',
                                                                     );
-                                                              } else {
-                                                                newText =
-                                                                    currentText
-                                                                        .isEmpty
-                                                                    ? preset
-                                                                    : '$currentText, $preset';
-                                                              }
-                                                              ctrl.text =
+                                                            return Padding(
+                                                              padding:
+                                                                  const EdgeInsets.only(
+                                                                    right: 6,
+                                                                  ),
+                                                              child: InkWell(
+                                                                onTap: () {
+                                                                  HapticFeedback.selectionClick();
+                                                                  String
                                                                   newText;
-                                                              ctrl.selection =
-                                                                  TextSelection.fromPosition(
+                                                                  if (isOn) {
+                                                                    newText = currentText
+                                                                        .replaceAll(
+                                                                          ', $preset',
+                                                                          '',
+                                                                        )
+                                                                        .replaceAll(
+                                                                          preset,
+                                                                          '',
+                                                                        )
+                                                                        .trim()
+                                                                        .replaceAll(
+                                                                          RegExp(
+                                                                            r'^,\s*|,\s*$',
+                                                                          ),
+                                                                          '',
+                                                                        );
+                                                                  } else {
+                                                                    newText =
+                                                                        currentText
+                                                                            .isEmpty
+                                                                        ? preset
+                                                                        : '$currentText, $preset';
+                                                                  }
+                                                                  ctrl.text =
+                                                                      newText;
+                                                                  ctrl.selection = TextSelection.fromPosition(
                                                                     TextPosition(
                                                                       offset: newText
                                                                           .length,
                                                                     ),
                                                                   );
 
-_dirtyNoteIds.add(item.id);
-                                                              _updateItemNote(
-                                                                item,
-                                                                newText,
-                                                              );
-                                                              setState(() {});
-                                                            },
-                                                            child: Container(
-                                                              padding:
-                                                                  const EdgeInsets.symmetric(
-                                                                    horizontal:
-                                                                        10,
-                                                                  ),
-                                                              alignment:
-                                                                  Alignment
-                                                                      .center,
-                                                              decoration: BoxDecoration(
-                                                                color: isOn
-                                                                    ? _kNavy
-                                                                    : _kNavy.withValues(
-                                                                        alpha:
-                                                                            0.05,
+                                                                  _dirtyNoteIds
+                                                                      .add(
+                                                                        item.id,
+                                                                      );
+                                                                  _updateItemNote(
+                                                                    item,
+                                                                    newText,
+                                                                  );
+                                                                  setState(
+                                                                    () {},
+                                                                  );
+                                                                },
+                                                                child: Container(
+                                                                  padding:
+                                                                      const EdgeInsets.symmetric(
+                                                                        horizontal:
+                                                                            10,
                                                                       ),
-                                                                borderRadius:
-                                                                    BorderRadius.circular(
-                                                                      15,
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .center,
+                                                                  decoration: BoxDecoration(
+                                                                    color: isOn
+                                                                        ? _kNavy
+                                                                        : _kNavy.withValues(
+                                                                            alpha:
+                                                                                0.05,
+                                                                          ),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          15,
+                                                                        ),
+                                                                    border: Border.all(
+                                                                      color:
+                                                                          isOn
+                                                                          ? _kNavy
+                                                                          : _kNavy.withValues(
+                                                                              alpha: 0.1,
+                                                                            ),
+                                                                      width: 1,
                                                                     ),
-                                                                border: Border.all(
-                                                                  color: isOn
-                                                                      ? _kNavy
-                                                                      : _kNavy.withValues(
-                                                                          alpha:
-                                                                              0.1,
-                                                                        ),
-                                                                  width: 1,
+                                                                  ),
+                                                                  child: Text(
+                                                                    preset,
+                                                                    style: GoogleFonts.outfit(
+                                                                      fontSize:
+                                                                          11,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      color:
+                                                                          isOn
+                                                                          ? Colors.white
+                                                                          : _kNavy.withValues(
+                                                                              alpha: 0.6,
+                                                                            ),
+                                                                    ),
+                                                                  ),
                                                                 ),
                                                               ),
-                                                              child: Text(
-                                                                preset,
-                                                                style: GoogleFonts.outfit(
-                                                                  fontSize: 11,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color: isOn
-                                                                      ? Colors
-                                                                            .white
-                                                                      : _kNavy.withValues(
-                                                                          alpha:
-                                                                              0.6,
-                                                                        ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }).toList(),
+                                                            );
+                                                          }).toList(),
                                                     ),
                                                   ),
                                                 ),
@@ -7042,7 +6276,9 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('In tạm tính thất bại. Hãy chụp lại báo chủ app.'),
+            content: const Text(
+              'In tạm tính thất bại. Hãy chụp lại báo chủ app.',
+            ),
             backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
           ),
@@ -8327,20 +7563,6 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
     );
   }
 
-  static const _kPresets = [
-    'Ít cay',
-    'Không cay',
-    'Ít đường',
-    'Không đá',
-    'Nhiều hành',
-    'Không hành',
-    'Ít hành',
-    'Không tiêu',
-    'Không mực',
-    'Ít mắm',
-    'Thêm rau',
-  ];
-
   Future<void> _confirm(List<ProductModel> products) async {
     if (_selected.isEmpty) {
       Navigator.pop(context);
@@ -9004,9 +8226,16 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (e, st) {
-                    AppLogger.error('ban_screen', 'Tải thực đơn thất bại: $e', e, st);
+                    AppLogger.error(
+                      'ban_screen',
+                      'Tải thực đơn thất bại: $e',
+                      e,
+                      st,
+                    );
                     return const Center(
-                      child: Text('Tải thực đơn thất bại. Hãy chụp lại báo chủ app.'),
+                      child: Text(
+                        'Tải thực đơn thất bại. Hãy chụp lại báo chủ app.',
+                      ),
                     );
                   },
                   data: (products) {
@@ -9018,11 +8247,13 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                             final matchCat = _search.isNotEmpty
                                 ? true
                                 : (_selectedCategory == 'Tất cả' ||
-                                    (p.category ?? 'Khác') == _selectedCategory);
+                                      (p.category ?? 'Khác') ==
+                                          _selectedCategory);
                             final matchSearch = _search.isEmpty
                                 ? true
                                 : (p.name.containsSearch(_search) ||
-                                    (p.sku?.containsSearch(_search) ?? false));
+                                      (p.sku?.containsSearch(_search) ??
+                                          false));
                             return matchCat && matchSearch;
                           }).toList();
 
@@ -9053,7 +8284,8 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                         final p = filtered[i];
                         final qty = _selected[p.id] ?? 0;
                         final isOutOfStock =
-                            !p.isAvailable || (p.minStock > 0 && p.stockQty <= 0);
+                            !p.isAvailable ||
+                            (p.minStock > 0 && p.stockQty <= 0);
 
                         final modifiersAsync = ref.watch(
                           productModifiersProvider(p.id),
@@ -9079,6 +8311,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                         final modGroups =
                             <String, List<Map<String, dynamic>>>{};
                         for (final m in modifiers) {
+                          if (m['group_name'] == kQuickNoteGroup) continue;
                           modGroups
                               .putIfAbsent(
                                 m['group_name'] as String? ?? 'Mặc định',
@@ -9086,6 +8319,174 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                               )
                               .add(m);
                         }
+
+                        final stackControls =
+                            qty > 0 && MediaQuery.sizeOf(context).width < 520;
+                        final Widget controlsW = Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (qty > 0) ...[
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setState(() {
+                                    if (_expandedProductIds.contains(p.id)) {
+                                      _expandedProductIds.remove(p.id);
+                                    } else {
+                                      _expandedProductIds.add(p.id);
+                                    }
+                                  });
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.only(right: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _expandedProductIds.contains(p.id)
+                                        ? _kNavy.withValues(alpha: 0.12)
+                                        : _kNavy.withValues(alpha: 0.06),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _expandedProductIds.contains(p.id)
+                                            ? Icons.expand_less_rounded
+                                            : Icons.tune_rounded,
+                                        size: 14,
+                                        color: _kNavy,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _expandedProductIds.contains(p.id)
+                                            ? 'Thu gọn'
+                                            : 'Tùy chọn',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: _kNavy,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: _kNavy.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 4,
+                                ),
+                                child: Row(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        HapticFeedback.selectionClick();
+                                        setState(() {
+                                          if (qty <= 1) {
+                                            _selected.remove(p.id);
+                                            _selectedModifiers.remove(p.id);
+                                            _expandedProductIds.remove(p.id);
+                                          } else {
+                                            _selected[p.id] = qty - 1;
+                                          }
+                                        });
+                                      },
+                                      child: Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.remove_rounded,
+                                          size: 14,
+                                          color: _kNavy,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 32,
+                                      child: Text(
+                                        '$qty',
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.w800,
+                                          color: _kNavy,
+                                          fontSize: 13.5,
+                                        ),
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTapDown: (details) {
+                                        _addItemWithCheck(
+                                          p,
+                                          details.globalPosition,
+                                        );
+                                      },
+                                      child: Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: _kNavy,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.add_rounded,
+                                          size: 14,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ] else ...[
+                              GestureDetector(
+                                onTapDown: (details) {
+                                  _addItemWithCheck(p, details.globalPosition);
+                                },
+                                child: Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: isOutOfStock
+                                        ? Colors.orange.shade700
+                                        : _kNavy,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color:
+                                            (isOutOfStock
+                                                    ? Colors.orange
+                                                    : _kNavy)
+                                                .withValues(alpha: 0.18),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.add_rounded,
+                                    size: 20,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
 
                         return Opacity(
                           opacity: isOutOfStock ? 0.75 : 1.0,
@@ -9118,397 +8519,239 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.all(14),
-                                  child: Row(
+                                  child: Column(
                                     children: [
-                                      // ── Ảnh sản phẩm cao cấp ──
-                                      Container(
-                                        width: 58,
-                                        height: 58,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(
-                                                alpha: 0.04,
-                                              ),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                          child:
-                                              p.imageUrl != null &&
-                                                  p.imageUrl!.isNotEmpty
-                                              ? Image.network(
-                                                  p.imageUrl!,
-                                                  width: 58,
-                                                  height: 58,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (_, __, ___) =>
-                                                      Container(
-                                                        color: _kNavy
-                                                            .withValues(
-                                                              alpha: 0.05,
-                                                            ),
-                                                        child: Icon(
-                                                          Icons
-                                                              .restaurant_rounded,
-                                                          color: _kNavy
-                                                              .withValues(
-                                                                alpha: 0.35,
-                                                              ),
-                                                          size: 26,
-                                                        ),
-                                                      ),
-                                                )
-                                              : Container(
-                                                  color: _kNavy.withValues(
-                                                    alpha: 0.05,
-                                                  ),
-                                                  child: Icon(
-                                                    Icons.restaurant_rounded,
-                                                    color: _kNavy.withValues(
-                                                      alpha: 0.35,
-                                                    ),
-                                                    size: 26,
-                                                  ),
-                                                ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      // ── Chi tiết sản phẩm ──
-                                      Expanded(
-                                        child: GestureDetector(
-                                          behavior: HitTestBehavior.opaque,
-                                          onTap: () {
-                                            if (qty > 0) {
-                                              HapticFeedback.selectionClick();
-                                              setState(() {
-                                                if (_expandedProductIds
-                                                    .contains(p.id)) {
-                                                  _expandedProductIds.remove(
-                                                    p.id,
-                                                  );
-                                                } else {
-                                                  _expandedProductIds.add(p.id);
-                                                }
-                                              });
-                                            } else {
-                                              _addItemWithCheck(p, null);
-                                            }
-                                          },
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      p.name,
-                                                      style: GoogleFonts.outfit(
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        color: _kNavy,
-                                                        fontSize: 14.5,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  if (isOutOfStock)
-                                                    Container(
-                                                      margin:
-                                                          const EdgeInsets.only(
-                                                            left: 6,
-                                                          ),
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 8,
-                                                            vertical: 3,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color: const Color(
-                                                          0xFFFFEBEE,
-                                                        ),
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
-                                                            ),
-                                                      ),
-                                                      child: Text(
-                                                        'TẠM HẾT',
-                                                        style:
-                                                            GoogleFonts.outfit(
-                                                              fontSize: 9,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w800,
-                                                              color: _kRed,
-                                                              letterSpacing:
-                                                                  0.5,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 3),
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                    modPrice > 0
-                                                        ? '${fmtVnd(p.sellPrice ?? 0)} +${fmtVnd(modPrice)} = ${fmtVnd(finalPrice)}'
-                                                        : fmtVnd(p.sellPrice ?? 0),
-                                                    style: GoogleFonts.outfit(
-                                                      fontSize: 13,
-                                                      color: modPrice > 0
-                                                          ? _kOrange
-                                                          : _kNavy.withValues(
-                                                              alpha: 0.55,
-                                                            ),
-                                                      fontWeight: modPrice > 0
-                                                          ? FontWeight.w700
-                                                          : FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                  if (p.sku != null && p.sku!.isNotEmpty) ...[
-                                                    const SizedBox(width: 8),
-                                                    Container(
-                                                      padding: const EdgeInsets.symmetric(
-                                                        horizontal: 6,
-                                                        vertical: 1.5,
-                                                      ),
-                                                      decoration: BoxDecoration(
-                                                        color: _kNavy.withValues(alpha: 0.05),
-                                                        borderRadius: BorderRadius.circular(6),
-                                                      ),
-                                                      child: Text(
-                                                        p.sku!,
-                                                        style: GoogleFonts.outfit(
-                                                          fontSize: 10,
-                                                          color: _kNavy.withValues(alpha: 0.5),
-                                                          fontWeight: FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      // ── Điều khiển số lượng cao cấp ──
                                       Row(
                                         children: [
-                                          if (qty > 0) ...[
-                                            GestureDetector(
-                                              onTap: () {
-                                                HapticFeedback.selectionClick();
-                                                setState(() {
-                                                  if (_expandedProductIds
-                                                      .contains(p.id)) {
-                                                    _expandedProductIds.remove(
-                                                      p.id,
-                                                    );
-                                                  } else {
-                                                    _expandedProductIds.add(
-                                                      p.id,
-                                                    );
-                                                  }
-                                                });
-                                              },
-                                              child: Container(
-                                                margin: const EdgeInsets.only(
-                                                  right: 8,
+                                          // ── Ảnh sản phẩm cao cấp ──
+                                          Container(
+                                            width: 58,
+                                            height: 58,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.04),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
                                                 ),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 10,
-                                                      vertical: 6,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      _expandedProductIds
-                                                          .contains(p.id)
-                                                      ? _kNavy.withValues(
-                                                          alpha: 0.12,
-                                                        )
-                                                      : _kNavy.withValues(
-                                                          alpha: 0.06,
-                                                        ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      _expandedProductIds
-                                                              .contains(p.id)
-                                                          ? Icons
-                                                                .expand_less_rounded
-                                                          : Icons.tune_rounded,
-                                                      size: 14,
-                                                      color: _kNavy,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      _expandedProductIds
-                                                              .contains(p.id)
-                                                          ? 'Thu gọn'
-                                                          : 'Tùy chọn',
-                                                      style: GoogleFonts.outfit(
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        color: _kNavy,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
+                                              ],
                                             ),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: _kNavy.withValues(
-                                                  alpha: 0.05,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 4,
-                                                    vertical: 4,
-                                                  ),
-                                              child: Row(
-                                                children: [
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      HapticFeedback.selectionClick();
-                                                      setState(() {
-                                                        if (qty <= 1) {
-                                                          _selected.remove(
-                                                            p.id,
-                                                          );
-                                                          _selectedModifiers
-                                                              .remove(p.id);
-                                                          _expandedProductIds
-                                                              .remove(p.id);
-                                                        } else {
-                                                          _selected[p.id] =
-                                                              qty - 1;
-                                                        }
-                                                      });
-                                                    },
-                                                    child: Container(
-                                                      width: 28,
-                                                      height: 28,
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                              child:
+                                                  p.imageUrl != null &&
+                                                      p.imageUrl!.isNotEmpty
+                                                  ? Image.network(
+                                                      p.imageUrl!,
+                                                      width: 58,
+                                                      height: 58,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder:
+                                                          (
+                                                            _,
+                                                            __,
+                                                            ___,
+                                                          ) => Container(
+                                                            color: _kNavy
+                                                                .withValues(
+                                                                  alpha: 0.05,
+                                                                ),
+                                                            child: Icon(
+                                                              Icons
+                                                                  .restaurant_rounded,
+                                                              color: _kNavy
+                                                                  .withValues(
+                                                                    alpha: 0.35,
+                                                                  ),
+                                                              size: 26,
                                                             ),
+                                                          ),
+                                                    )
+                                                  : Container(
+                                                      color: _kNavy.withValues(
+                                                        alpha: 0.05,
                                                       ),
-                                                      child: const Icon(
-                                                        Icons.remove_rounded,
-                                                        size: 14,
-                                                        color: _kNavy,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                    width: 32,
-                                                    child: Text(
-                                                      '$qty',
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: GoogleFonts.outfit(
-                                                        fontWeight:
-                                                            FontWeight.w800,
-                                                        color: _kNavy,
-                                                        fontSize: 13.5,
+                                                      child: Icon(
+                                                        Icons
+                                                            .restaurant_rounded,
+                                                        color: _kNavy
+                                                            .withValues(
+                                                              alpha: 0.35,
+                                                            ),
+                                                        size: 26,
                                                       ),
                                                     ),
-                                                  ),
-                                                  GestureDetector(
-                                                    onTapDown: (details) {
-                                                      _addItemWithCheck(
-                                                        p,
-                                                        details.globalPosition,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          // ── Chi tiết sản phẩm ──
+                                          Expanded(
+                                            child: GestureDetector(
+                                              behavior: HitTestBehavior.opaque,
+                                              onTap: () {
+                                                if (qty > 0) {
+                                                  HapticFeedback.selectionClick();
+                                                  setState(() {
+                                                    if (_expandedProductIds
+                                                        .contains(p.id)) {
+                                                      _expandedProductIds
+                                                          .remove(p.id);
+                                                    } else {
+                                                      _expandedProductIds.add(
+                                                        p.id,
                                                       );
-                                                    },
-                                                    child: Container(
-                                                      width: 28,
-                                                      height: 28,
-                                                      decoration: BoxDecoration(
-                                                        color: _kNavy,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
+                                                    }
+                                                  });
+                                                } else {
+                                                  _addItemWithCheck(p, null);
+                                                }
+                                              },
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          p.name,
+                                                          style:
+                                                              GoogleFonts.outfit(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                color: _kNavy,
+                                                                fontSize: 14.5,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      if (isOutOfStock)
+                                                        Container(
+                                                          margin:
+                                                              const EdgeInsets.only(
+                                                                left: 6,
+                                                              ),
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 8,
+                                                                vertical: 3,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: const Color(
+                                                              0xFFFFEBEE,
                                                             ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  8,
+                                                                ),
+                                                          ),
+                                                          child: Text(
+                                                            'TẠM HẾT',
+                                                            style:
+                                                                GoogleFonts.outfit(
+                                                                  fontSize: 9,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w800,
+                                                                  color: _kRed,
+                                                                  letterSpacing:
+                                                                      0.5,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 3),
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        modPrice > 0
+                                                            ? '${fmtVnd(p.sellPrice ?? 0)} +${fmtVnd(modPrice)} = ${fmtVnd(finalPrice)}'
+                                                            : fmtVnd(
+                                                                p.sellPrice ??
+                                                                    0,
+                                                              ),
+                                                        style: GoogleFonts.outfit(
+                                                          fontSize: 13,
+                                                          color: modPrice > 0
+                                                              ? _kOrange
+                                                              : _kNavy
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.55,
+                                                                    ),
+                                                          fontWeight:
+                                                              modPrice > 0
+                                                              ? FontWeight.w700
+                                                              : FontWeight.w600,
+                                                        ),
                                                       ),
-                                                      child: const Icon(
-                                                        Icons.add_rounded,
-                                                        size: 14,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
+                                                      if (p.sku != null &&
+                                                          p
+                                                              .sku!
+                                                              .isNotEmpty) ...[
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
+                                                        Container(
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 6,
+                                                                vertical: 1.5,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: _kNavy
+                                                                .withValues(
+                                                                  alpha: 0.05,
+                                                                ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
+                                                          ),
+                                                          child: Text(
+                                                            p.sku!,
+                                                            style:
+                                                                GoogleFonts.outfit(
+                                                                  fontSize: 10,
+                                                                  color: _kNavy
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.5,
+                                                                      ),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ],
                                                   ),
                                                 ],
                                               ),
                                             ),
-                                          ] else ...[
-                                            GestureDetector(
-                                              onTapDown: (details) {
-                                                _addItemWithCheck(
-                                                  p,
-                                                  details.globalPosition,
-                                                );
-                                              },
-                                              child: Container(
-                                                width: 36,
-                                                height: 36,
-                                                decoration: BoxDecoration(
-                                                  color: isOutOfStock
-                                                      ? Colors.orange.shade700
-                                                      : _kNavy,
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: (isOutOfStock
-                                                              ? Colors.orange
-                                                              : _kNavy)
-                                                          .withValues(
-                                                            alpha: 0.18,
-                                                          ),
-                                                      blurRadius: 8,
-                                                      offset: const Offset(
-                                                        0,
-                                                        3,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                child: const Icon(
-                                                  Icons.add_rounded,
-                                                  size: 20,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
+                                          ),
+                                          if (!stackControls) ...[
+                                            const SizedBox(width: 12),
+                                            controlsW,
                                           ],
                                         ],
                                       ),
+                                      if (stackControls)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 10,
+                                          ),
+                                          child: Align(
+                                            alignment: Alignment.centerRight,
+                                            child: controlsW,
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ),
@@ -9751,7 +8994,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                 // ── HƯƠNG VỊ / MODIFIER CHIPS CAO CẤP ───────────
                                 if (qty > 0 &&
                                     _expandedProductIds.contains(p.id) &&
-                                    modifiers.isNotEmpty)
+                                    modGroups.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(
                                       14,
@@ -9940,7 +9183,10 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                           child: ListView(
                                             scrollDirection: Axis.horizontal,
                                             children: [
-                                              ..._kPresets.map((preset) {
+                                              ...notePresetsFor(
+                                                p,
+                                                modifiers,
+                                              ).map((preset) {
                                                 final note = _notes[p.id] ?? '';
                                                 final isOn = note.contains(
                                                   preset,
@@ -10801,6 +10047,7 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
     await Supabase.instance.client.from('product_modifiers').insert({
       'id': const Uuid().v4(),
       'product_id': widget.product.id,
+      'store_id': widget.product.storeId,
       'group_name': _group.trim().isEmpty ? 'Mặc định' : _group.trim(),
       'name': name,
       'price_adjust': price,
@@ -12927,7 +12174,12 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
         });
       }
     } catch (e, st) {
-      AppLogger.error('ban_screen', 'Xác thực mã PIN quản lý thất bại: $e', e, st);
+      AppLogger.error(
+        'ban_screen',
+        'Xác thực mã PIN quản lý thất bại: $e',
+        e,
+        st,
+      );
       setState(() {
         _error = 'Lỗi kết nối. Hãy chụp lại báo chủ app.';
         _loading = false;

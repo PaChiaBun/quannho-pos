@@ -130,11 +130,42 @@ void main() async {
   runApp(const ProviderScope(child: QuanNhoPOSApp()));
 }
 
+/// Trang dành cho khách nếu URL mở app là link gọi món (/goi-mon[/]?code=...), ngược lại null.
+/// Thiếu hoặc sai mã thì trả trang báo link không hợp lệ (không bao giờ rơi vào màn nhân viên).
+Widget? _customerLaunchPage(String route) {
+  var uri = Uri.tryParse(route);
+  if (uri == null) return null;
+  var path = uri.path;
+  // Link QR in ra có dạng https://<tên miền>/pos/goi-mon/?code=... (KHÔNG có dấu #). Flutter web mặc
+  // định chỉ đọc phần sau dấu #, nên với link này route khởi đầu là '/' và khách rơi vào màn đăng nhập.
+  // Vì vậy trên web xét thêm đường dẫn thật của trang.
+  if (!(path.endsWith('/goi-mon') || path.endsWith('/goi-mon/')) && kIsWeb) {
+    final real = Uri.base;
+    if (real.path.endsWith('/goi-mon') || real.path.endsWith('/goi-mon/')) {
+      uri = real;
+      path = real.path;
+    }
+  }
+  if (!(path.endsWith('/goi-mon') || path.endsWith('/goi-mon/'))) return null;
+  final code = uri.queryParameters['code']?.trim();
+  final valid =
+      code != null &&
+      code.isNotEmpty &&
+      code.length <= 64 &&
+      RegExp(r'^[A-Za-z0-9_\-]+$').hasMatch(code);
+  return valid
+      ? CustomerQrOrderScreen(channelCode: code)
+      : const CustomerQrInvalidLinkScreen();
+}
+
 class QuanNhoPOSApp extends StatelessWidget {
   const QuanNhoPOSApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final customerPage = _customerLaunchPage(
+      WidgetsBinding.instance.platformDispatcher.defaultRouteName,
+    );
     return MaterialApp(
       title: 'Quán Nhỏ POS',
       debugShowCheckedModeBanner: false,
@@ -149,6 +180,11 @@ class QuanNhoPOSApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('vi', 'VN'), Locale('en', 'US')],
       initialRoute: '/',
+      // Link khách (/goi-mon/?code=...) mở thẳng trang gọi món. Nếu để Flutter dựng '/' (Splash) rồi
+      // mới tới /goi-mon thì Splash xong sẽ pushReplacementNamed('/auth') và THAY MẤT trang của khách.
+      onGenerateInitialRoutes: customerPage == null
+          ? null
+          : (_) => [MaterialPageRoute(builder: (_) => customerPage)],
       routes: {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
@@ -158,15 +194,26 @@ class QuanNhoPOSApp extends StatelessWidget {
         '/qr_order': (context) => const QrOrderScreen(),
       },
       onGenerateRoute: (settings) {
-        final uri = Uri.parse(settings.name ?? '');
+        final uri = Uri.tryParse(settings.name ?? '');
+        if (uri == null) return null;
         final path = uri.path;
-        if (path == '/qr_order' ||
-            path.endsWith('/qr_order') ||
-            path == '/goi-mon' ||
-            path.endsWith('/goi-mon') ||
-            path.endsWith('/goi-mon/')) {
-          final code = uri.queryParameters['code'];
-          if (code != null && code.isNotEmpty) {
+        final code = uri.queryParameters['code']?.trim();
+        final validCode =
+            code != null &&
+            code.isNotEmpty &&
+            code.length <= 64 &&
+            RegExp(r'^[A-Za-z0-9_\-]+$').hasMatch(code);
+
+        // Link khách gọi món: thiếu/sai mã thì báo lỗi cho khách, không vào màn nhân viên
+        if (path.endsWith('/goi-mon') || path.endsWith('/goi-mon/')) {
+          return MaterialPageRoute(
+            builder: (_) => validCode
+                ? CustomerQrOrderScreen(channelCode: code)
+                : const CustomerQrInvalidLinkScreen(),
+          );
+        }
+        if (path == '/qr_order' || path.endsWith('/qr_order')) {
+          if (validCode) {
             return MaterialPageRoute(
               builder: (_) => CustomerQrOrderScreen(channelCode: code),
             );

@@ -3,30 +3,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
+import '../../../core/providers/permission_provider.dart';
 import '../../../core/repositories/ban_repository.dart';
-import '../../../core/services/vietqr_service.dart';
 import '../../../core/services/store_auth_service.dart';
+import '../../../core/services/vietqr_service.dart';
 import '../models/qr_order_model.dart';
 import '../providers/qr_order_providers.dart';
 import '../services/qr_sound_service.dart';
 
-/// Sheet duyệt và chỉnh sửa món QR Order V4
-/// Cho phép:
-/// 1. Chỉnh sửa món thật (Tăng/giảm SL, xóa món, thêm món mới từ menu).
-/// 2. Gán bàn thật từ danh sách bàn (Có gợi ý table_hint cho TABLE_SHARED).
-/// 3. Cổng thanh toán COUNTER_TAKEAWAY (Yêu cầu thanh toán trước khi gửi bếp).
-/// 4. Gửi bếp idempotent và cập nhật trạng thái.
+const _kViolet = Color(0xFF8B5CF6);
+
+/// Sheet duyệt đơn QR (dùng chung TABLE và COUNTER).
+///
+/// - Mở từ hàng chờ: tự nhận đơn (`claim_qr_request_v4`).
+/// - TABLE: hiện bàn khách chọn, đổi bàn bằng dropdown, một nút
+///   "Duyệt & gửi bếp".
+/// - COUNTER: một nút "Đã thu tiền & gửi bếp" (cần quyền `pos.checkout`).
+/// - Theo dõi đơn theo id từ hàng chờ, không dùng ảnh chụp tĩnh.
 class QrOrderReviewSheet extends ConsumerStatefulWidget {
   final QrRequestModel request;
-  final VoidCallback onApproved;
-  final VoidCallback onRejected;
+  final VoidCallback? onApproved;
+  final VoidCallback? onRejected;
 
   const QrOrderReviewSheet({
     super.key,
     required this.request,
-    required this.onApproved,
-    required this.onRejected,
+    this.onApproved,
+    this.onRejected,
   });
 
   @override
@@ -41,64 +44,143 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
     decimalDigits: 0,
   );
 
+  late QrRequestModel _req;
   late List<QrRequestItemModel> _items;
-  late String _paymentStatus;
-  late int _version;
-  String? _assignedTableId;
-  String? _assignedTableName;
-  late bool _isTableAssignmentPersisted;
-  String _paymentMethod = 'cash';
-
-  List<BanTableModel> _tables = [];
-  bool _loadingTables = true;
-  bool _isSubmitting = false;
-  bool _isDirty = false; // Có thay đổi món cần lưu trước khi gửi bếp
   String _storeId = '';
-  late final String _paymentIdempotencyKey = const Uuid().v4();
-  late final String _sendKitchenIdempotencyKey = const Uuid().v4();
+  String _paymentMethod = 'cash';
+  List<BanTableModel> _tables = [];
+
+  bool _initializing = true;
+  String? _initError;
+  bool _busy = false; // đang gọi server
+  bool _closing = false; // đã thành công, chờ pop: khóa vĩnh viễn
+  bool _dirty = false; // có sửa món chưa lưu
+  bool _needsSync = false; // lỗi mạng sau khi gọi: cần refetch trước khi thử lại
+  bool _remoteChanged = false;
+  bool _goneHandled = false;
 
   @override
   void initState() {
     super.initState();
-    _items = List.from(widget.request.items);
-    _paymentStatus = widget.request.paymentStatus;
-    _version = widget.request.version;
-    _assignedTableId = widget.request.assignedTableId;
-    _assignedTableName = widget.request.assignedTableName;
-    _isTableAssignmentPersisted = widget.request.assignedTableId != null;
-    _loadTables();
+    _req = widget.request;
+    _items = List.of(widget.request.items);
+    _init();
   }
 
-  Future<void> _loadTables() async {
-    final info = await StoreAuthService.getStoreInfo();
-    _storeId = info['store_id'] ?? widget.request.storeId;
-
-    if (widget.request.isTable) {
-      try {
-        final tables = await _banRepo.getAllTables();
-        if (mounted) {
-          setState(() {
-            _tables = tables;
-            _loadingTables = false;
-          });
-        }
-      } catch (e) {
-        if (mounted) setState(() => _loadingTables = false);
+  Future<void> _init() async {
+    setState(() {
+      _initializing = true;
+      _initError = null;
+    });
+    try {
+      final info = await StoreAuthService.getStoreInfo();
+      _storeId = info['store_id'] ?? widget.request.storeId;
+      if (_storeId.isEmpty) {
+        throw StateError('no store');
       }
-    } else {
-      if (mounted) setState(() => _loadingTables = false);
+      if (_req.isTable) {
+        try {
+          _tables = await _banRepo.getAllTables();
+        } catch (_) {
+          // Không tải được danh sách bàn: vẫn duyệt được với bàn khách chọn.
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _initializing = false;
+          _initError = 'Không xác định được quán. Vui lòng thử lại.';
+        });
+      }
+      return;
     }
+
+    // Mở đơn từ hàng chờ = nhận đơn (idempotent với chính mình).
+    if (_req.isSubmitted || _req.isClaimed) {
+      final res = await ref
+          .read(qrOrderRepoProvider)
+          .claimRequest(requestId: _req.id, storeId: _storeId);
+      if (!mounted) return;
+      if (res.isSuccess && res.data != null) {
+        setState(() {
+          _req = res.data!;
+          _items = List.of(_req.items);
+          _initializing = false;
+        });
+        ref.invalidate(qrActivePipelineStreamProvider);
+        return;
+      }
+      if (res.errorCode == QrErrorCode.alreadyClaimed ||
+          res.errorCode == QrErrorCode.notClaimer) {
+        _toast(QrErrorCode.toUserMessage(res.errorCode), error: true);
+        ref.invalidate(qrActivePipelineStreamProvider);
+        _closeSheet();
+        return;
+      }
+      setState(() {
+        _initializing = false;
+        _initError = res.errorCode == QrErrorCode.networkError
+            ? res.message
+            : QrErrorCode.toUserMessage(res.errorCode, res.message);
+      });
+      return;
+    }
+    setState(() => _initializing = false);
   }
 
-  double get _currentTotal {
-    return _items.fold<double>(
-      0.0,
-      (sum, it) => sum + (it.unitPrice * it.quantity),
+  bool get _editable => _req.isClaimed && !_closing;
+
+  double get _localTotal =>
+      _items.fold<double>(0, (s, it) => s + it.unitPrice * it.quantity);
+
+  void _toast(String msg, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: error ? Colors.red : Colors.green,
+      ),
     );
   }
 
-  // Chỉnh sửa số lượng món
+  void _closeSheet() {
+    if (!mounted) return;
+    _closing = true;
+    Navigator.of(context).pop();
+  }
+
+  /// Đồng bộ lại version/status/món từ server. Trả false nếu lỗi.
+  Future<bool> _refresh({bool keepLocalItems = false}) async {
+    final res = await ref
+        .read(qrOrderRepoProvider)
+        .getRequestDetail(requestId: _req.id, storeId: _storeId);
+    if (!mounted) return false;
+    if (res.isSuccess && res.data != null) {
+      setState(() {
+        _req = res.data!;
+        if (!keepLocalItems) {
+          _items = List.of(_req.items);
+          _dirty = false;
+        }
+        _needsSync = false;
+        _remoteChanged = false;
+      });
+      return true;
+    }
+    return false;
+  }
+
+  void _applyRemote(QrRequestModel next) {
+    setState(() {
+      _req = next;
+      _items = List.of(next.items);
+      _remoteChanged = false;
+    });
+  }
+
+  // ── Sửa món ─────────────────────────────────────────────────────────────────
   void _updateItemQuantity(int index, int delta) {
+    if (!_editable || _busy) return;
     setState(() {
       final item = _items[index];
       final newQty = item.quantity + delta;
@@ -110,349 +192,283 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
           subtotal: item.unitPrice * newQty,
         );
       }
-      _isDirty = true;
+      _dirty = true;
     });
   }
 
-  // Thêm món mới từ Menu
   Future<void> _openAddProductPicker() async {
+    if (!_editable || _busy) return;
     final selected = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _ProductPickerSheet(storeId: _storeId),
     );
-
-    if (selected != null && mounted) {
-      setState(() {
-        final pId = selected['id'] as String;
-        final pName = selected['name'] as String;
-        final pPrice = (selected['sell_price'] as num).toDouble();
-
-        // Kiểm tra xem món đã có trong danh sách chưa
-        final existingIdx = _items.indexWhere((it) => it.productId == pId);
-        if (existingIdx != -1) {
-          final ext = _items[existingIdx];
-          _items[existingIdx] = ext.copyWith(
-            quantity: ext.quantity + 1,
-            subtotal: ext.unitPrice * (ext.quantity + 1),
-          );
-        } else {
-          _items.add(
-            QrRequestItemModel(
-              id: '',
-              requestId: widget.request.id,
-              productId: pId,
-              productName: pName,
-              unitPrice: pPrice,
-              quantity: 1,
-              subtotal: pPrice,
-            ),
-          );
-        }
-        _isDirty = true;
-      });
-    }
-  }
-
-  // Lưu chỉnh sửa món (RPC `update_qr_order_items_v4`)
-  Future<bool> _saveEditedItems() async {
-    if (!_isDirty) return true;
-
-    final repo = ref.read(qrOrderRepoProvider);
-    final itemsPayload = _items
-        .map(
-          (it) => {
-            'product_id': it.productId,
-            'quantity': it.quantity,
-            'modifiers_json': it.modifiersJson,
-            'note': it.note,
-          },
-        )
-        .toList();
-
-    final res = await repo.updateOrderItems(
-      requestId: widget.request.id,
-      storeId: _storeId,
-      expectedVersion: _version,
-      items: itemsPayload,
-    );
-
-    if (res.isSuccess && res.data != null) {
-      setState(() {
-        _version = (res.data!['version'] as int?) ?? (_version + 1);
-        _isDirty = false;
-      });
-      return true;
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(res.message ?? 'Cập nhật danh sách món thất bại!'),
-            backgroundColor: Colors.red,
+    if (selected == null || !mounted) return;
+    final pId = selected['id']?.toString();
+    final pName = selected['name']?.toString() ?? '';
+    final pPrice = (selected['sell_price'] as num?)?.toDouble() ?? 0.0;
+    if (pId == null) return;
+    setState(() {
+      final idx = _items.indexWhere(
+        (it) => it.productId == pId && it.modifiersJson.isEmpty,
+      );
+      if (idx != -1) {
+        final ext = _items[idx];
+        _items[idx] = ext.copyWith(
+          quantity: ext.quantity + 1,
+          subtotal: ext.unitPrice * (ext.quantity + 1),
+        );
+      } else {
+        _items.add(
+          QrRequestItemModel(
+            id: '',
+            requestId: _req.id,
+            productId: pId,
+            productName: pName,
+            unitPrice: pPrice,
+            quantity: 1,
+            subtotal: pPrice,
           ),
         );
       }
-      return false;
-    }
+      _dirty = true;
+    });
   }
 
-  // Gán bàn (RPC `assign_qr_order_table_v4`)
-  Future<bool> _handleAssignTable(String tableId) async {
-    final repo = ref.read(qrOrderRepoProvider);
-    final res = await repo.assignTable(
-      requestId: widget.request.id,
-      storeId: _storeId,
-      tableId: tableId,
-    );
-
-    if (res.isSuccess && res.data != null) {
-      setState(() {
-        _assignedTableId = tableId;
-        _assignedTableName = res.data!['assigned_table_name'] as String?;
-        _isTableAssignmentPersisted = true;
-      });
-      ref.invalidate(qrActivePipelineStreamProvider);
-      ref.invalidate(pendingTableQrRequestsProvider);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Đã gán đơn vào ${_assignedTableName ?? "bàn"}. Đơn đã hiển thị trên module Bàn.',
-            ),
-            backgroundColor: Colors.green,
-          ),
+  /// Lưu món (update_qr_order_items_v4) rồi lấy lại tổng/version từ server.
+  Future<bool> _saveItems() async {
+    if (!_dirty) return true;
+    final res = await ref
+        .read(qrOrderRepoProvider)
+        .updateOrderItems(
+          requestId: _req.id,
+          storeId: _storeId,
+          expectedVersion: _req.version,
+          items: _items
+              .map(
+                (it) => {
+                  'product_id': it.productId,
+                  'quantity': it.quantity,
+                  'modifiers_json': it.modifiersJson,
+                  'note': it.note,
+                },
+              )
+              .toList(),
         );
-      }
-      return true;
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(res.message ?? 'Gán bàn thất bại!'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      return false;
-    }
-  }
-
-  // Xác nhận thanh toán cho COUNTER (RPC `mark_qr_order_paid_v4`)
-  Future<void> _handleMarkPaid() async {
-    if (_isSubmitting) return;
-    setState(() => _isSubmitting = true);
-
-    // Lưu món trước nếu có sửa
-    if (_isDirty) {
-      final saved = await _saveEditedItems();
-      if (!mounted) return;
-      if (!saved) {
-        setState(() => _isSubmitting = false);
-        return;
-      }
-    }
-
-    final repo = ref.read(qrOrderRepoProvider);
-    final res = await repo.markOrderPaid(
-      requestId: widget.request.id,
-      storeId: _storeId,
-      paymentMethod: _paymentMethod,
-      idempotencyKey: _paymentIdempotencyKey,
-    );
-
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-
+    if (!mounted) return false;
     if (res.isSuccess) {
+      if (await _refresh()) return true;
+      // Đã lưu nhưng chưa tải lại được: lấy version từ phản hồi.
+      final v = res.data?['version'];
       setState(() {
-        _paymentStatus = 'paid';
+        if (v is num) _req = _req.copyWith(version: v.toInt());
+        _dirty = false;
+        _needsSync = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đã xác nhận thanh toán thành công!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(res.message ?? 'Xác nhận thanh toán thất bại'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      return true;
     }
+    await _handleFailure(res.errorCode, res.message);
+    return false;
   }
 
-  // Gửi Bếp (RPC `send_qr_order_to_kitchen_v4`)
-  Future<void> _handleSendToKitchen() async {
-    if (_isSubmitting) return;
+  Future<void> _onSavePressed() async {
+    if (_busy || _closing || !_dirty) return;
+    setState(() => _busy = true);
+    await _saveItems();
+    if (mounted) setState(() => _busy = false);
+  }
 
+  // ── Đổi bàn ─────────────────────────────────────────────────────────────────
+  Future<void> _changeTable(String tableId) async {
+    if (_busy || !_editable || tableId == _req.tableId) return;
+    setState(() => _busy = true);
+    final res = await ref
+        .read(qrOrderRepoProvider)
+        .setOrderTable(requestId: _req.id, storeId: _storeId, tableId: tableId);
+    if (!mounted) return;
+    if (res.isSuccess) {
+      await _refresh(keepLocalItems: _dirty);
+      ref.invalidate(qrActivePipelineStreamProvider);
+    } else {
+      await _handleFailure(res.errorCode, res.message);
+    }
+    if (mounted) setState(() => _busy = false);
+  }
+
+  // ── Hành động chính ─────────────────────────────────────────────────────────
+  Future<void> _submit() async {
+    if (_busy || _closing) return;
     if (_items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đơn hàng không có món nào để gửi bếp!'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      _toast('Đơn không có món nào để gửi bếp.', error: true);
+      return;
+    }
+    if (_req.isTable && (_req.tableId == null || _req.tableId!.isEmpty)) {
+      _toast('Vui lòng chọn bàn trước khi gửi bếp.', error: true);
+      return;
+    }
+    setState(() => _busy = true);
+
+    // Lỗi mạng lần trước: đồng bộ version/status trước khi thử lại.
+    if (_needsSync && !await _refresh(keepLocalItems: _dirty)) {
+      if (mounted) {
+        setState(() => _busy = false);
+        _toast('Chưa kết nối được máy chủ. Vui lòng thử lại.', error: true);
+      }
+      return;
+    }
+    if (!mounted) return;
+    if (_req.isSentKitchen) {
+      _finishSuccess();
       return;
     }
 
-    // Kiểm tra gán bàn cho TABLE
-    if (widget.request.isTable) {
-      if (_assignedTableId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vui lòng chọn bàn trước khi gửi bếp!'),
-            backgroundColor: Colors.orange,
-          ),
+    if (!await _saveItems()) {
+      if (mounted) setState(() => _busy = false);
+      return;
+    }
+    if (!mounted) return;
+
+    final repo = ref.read(qrOrderRepoProvider);
+    final res = _req.isTable
+        ? await repo.approveAndSendTable(
+            requestId: _req.id,
+            storeId: _storeId,
+            version: _req.version,
+          )
+        : await repo.payAndSendCounter(
+            requestId: _req.id,
+            storeId: _storeId,
+            version: _req.version,
+            paymentMethod: _paymentMethod,
+          );
+    if (!mounted) return;
+
+    if (res.isSuccess) {
+      _finishSuccess();
+      return;
+    }
+    await _handleFailure(res.errorCode, res.message, sending: true);
+    if (mounted && !_closing) setState(() => _busy = false);
+  }
+
+  void _finishSuccess() {
+    // _busy/_closing giữ true cho tới khi sheet pop xong: chống bấm đúp.
+    _busy = true;
+    _closing = true;
+    QrSoundService.playNotificationSound();
+    ref.invalidate(qrActivePipelineStreamProvider);
+    widget.onApproved?.call();
+    _toast(
+      _req.isTable
+          ? 'Đã gửi bếp đơn ${_req.tableName ?? "bàn"}.'
+          : 'Đã thu tiền và gửi bếp đơn mang đi ${_req.displayPickupCode}.',
+    );
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _handleFailure(
+    String? code,
+    String? message, {
+    bool sending = false,
+  }) async {
+    switch (code) {
+      case QrErrorCode.versionConflict:
+        await _refresh();
+        _toast(QrErrorCode.toUserMessage(code), error: true);
+        return;
+      case QrErrorCode.alreadyClaimed:
+      case QrErrorCode.notClaimer:
+        ref.invalidate(qrActivePipelineStreamProvider);
+        _toast(QrErrorCode.toUserMessage(code), error: true);
+        _closeSheet();
+        return;
+      case QrErrorCode.networkError:
+        // Có thể đã commit mà mất phản hồi: đọc lại trạng thái thật.
+        final ok = await _refresh(keepLocalItems: _dirty);
+        if (!mounted) return;
+        if (ok && _req.isSentKitchen) {
+          _finishSuccess();
+          return;
+        }
+        if (!ok) _needsSync = true;
+        _toast(
+          ok
+              ? 'Mạng không ổn định. Đã tải lại đơn, vui lòng kiểm tra rồi bấm lại.'
+              : 'Mất kết nối. Vui lòng kiểm tra mạng rồi thử lại.',
+          error: true,
         );
         return;
-      }
-    }
-
-    setState(() => _isSubmitting = true);
-
-    // 1. Lưu các chỉnh sửa món nếu có
-    if (_isDirty) {
-      final saved = await _saveEditedItems();
-      if (!mounted) return;
-      if (!saved) {
-        setState(() => _isSubmitting = false);
+      case QrErrorCode.alreadySent:
+      case QrErrorCode.invalidState:
+      case QrErrorCode.requestExpired:
+        await _refresh();
+        if (!mounted) return;
+        if (_req.isSentKitchen && sending) {
+          _finishSuccess();
+          return;
+        }
+        _toast(QrErrorCode.toUserMessage(code, message), error: true);
+        if (!_req.isOpen) _closeSheet();
         return;
-      }
+      default:
+        _toast(QrErrorCode.toUserMessage(code, message), error: true);
     }
+  }
 
-    // 2. TABLE phải được gán và hiển thị trên module Bàn trước khi gửi Bếp.
-    if (widget.request.isTable && !_isTableAssignmentPersisted) {
-      setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Hãy xác nhận gán bàn trước khi gửi Bếp.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+  // ── Từ chối ─────────────────────────────────────────────────────────────────
+  Future<void> _handleReject() async {
+    if (_busy || _closing) return;
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (_) => const _RejectDialog(),
+    );
+    if (!mounted || reason == null) return;
+
+    setState(() => _busy = true);
+    final res = await ref
+        .read(qrOrderRepoProvider)
+        .cancelOrder(requestId: _req.id, storeId: _storeId, reason: reason);
+    if (!mounted) return;
+    if (res.isSuccess) {
+      _busy = true;
+      ref.invalidate(qrActivePipelineStreamProvider);
+      widget.onRejected?.call();
+      _toast('Đã từ chối đơn.');
+      _closeSheet();
       return;
     }
-
-    // 3. Gửi bếp
-    final repo = ref.read(qrOrderRepoProvider);
-    final res = await repo.sendToKitchen(
-      requestId: widget.request.id,
-      storeId: _storeId,
-      idempotencyKey: _sendKitchenIdempotencyKey,
-    );
-
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-
-    if (res.isSuccess) {
-      await QrSoundService.playNotificationSound();
-      ref.invalidate(qrActivePipelineStreamProvider);
-      ref.invalidate(activeCounterQrRequestsProvider);
-      ref.invalidate(pendingTableQrRequestsProvider);
-      widget.onApproved();
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.request.isTable
-                ? 'Đã chuyển đơn vào ${_assignedTableName ?? "bàn"} và gửi bếp thành công!'
-                : 'Đã gửi bếp đơn mang đi (${widget.request.displayPickupCode})!',
-          ),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(res.message ?? 'Gửi bếp thất bại'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+    await _handleFailure(res.errorCode, res.message);
+    if (mounted && !_closing) setState(() => _busy = false);
   }
 
-  // Từ chối / Hủy đơn (RPC `cancel_qr_order_v4`)
-  Future<void> _handleReject() async {
-    if (_isSubmitting) return;
-
-    final reasonCtrl = TextEditingController(text: 'Khách đổi ý / Hết món');
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          'Từ chối đơn gọi món',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Vui lòng nhập lý do từ chối đơn QR này:'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: reasonCtrl,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Lý do từ chối...',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy bỏ'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Từ chối đơn'),
-          ),
-        ],
-      ),
-    );
-
-    if (!mounted || confirmed != true) return;
-
-    setState(() => _isSubmitting = true);
-    final repo = ref.read(qrOrderRepoProvider);
-    final res = await repo.cancelOrder(
-      requestId: widget.request.id,
-      storeId: _storeId,
-      reason: reasonCtrl.text.trim(),
-    );
-
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-
-    if (res.isSuccess) {
-      ref.invalidate(qrActivePipelineStreamProvider);
-      ref.invalidate(activeCounterQrRequestsProvider);
-      ref.invalidate(pendingTableQrRequestsProvider);
-      widget.onRejected();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Đã từ chối đơn hàng!')));
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(res.message ?? 'Từ chối đơn thất bại'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
+  // ── Build ───────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    // Theo dõi đơn theo id từ hàng chờ.
+    ref.listen<QrRequestModel?>(qrRequestByIdProvider(widget.request.id), (
+      prev,
+      next,
+    ) {
+      if (_busy || _closing || _initializing || _initError != null) return;
+      if (next == null) {
+        final p = ref.read(qrActivePipelineStreamProvider).asData?.value;
+        if (p != null && p.isSuccess && !_goneHandled) {
+          _goneHandled = true;
+          _toast('Đơn này đã được xử lý ở thiết bị khác.', error: true);
+          _closeSheet();
+        }
+        return;
+      }
+      if (next.version > _req.version) {
+        if (_dirty) {
+          setState(() => _remoteChanged = true);
+        } else {
+          _applyRemote(next);
+        }
+      }
+    });
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
       padding: const EdgeInsets.all(20),
@@ -460,43 +476,97 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(),
-          const Divider(height: 20),
-          if (widget.request.isTable) _buildTableSelector(),
-          if (widget.request.isCounter) _buildCounterBadge(),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Danh Sách Món (${_items.length} món):',
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
+      child: _initializing
+          ? const Center(child: CircularProgressIndicator())
+          : _initError != null
+          ? _buildInitError()
+          : _buildBody(),
+    );
+  }
+
+  Widget _buildInitError() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.cloud_off_rounded, size: 40, color: Colors.grey),
+        const SizedBox(height: 12),
+        Text(_initError!, textAlign: TextAlign.center),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Đóng'),
+            ),
+            ElevatedButton(onPressed: _init, child: const Text('Thử lại')),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildHeader(),
+        const Divider(height: 20),
+        if (_req.isTable) _buildTableSelector() else _buildCounterInfo(),
+        if (_remoteChanged)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Đơn vừa được cập nhật ở thiết bị khác. Lưu hoặc tải lại để đồng bộ.',
+              style: GoogleFonts.outfit(
+                color: Colors.orange.shade900,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
-              TextButton.icon(
-                onPressed: _openAddProductPicker,
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Thêm món'),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 6),
-          Expanded(child: _buildItemsList()),
-          const Divider(height: 20),
-          _buildTotalSection(),
-          const SizedBox(height: 14),
-          _buildActionButtons(),
-        ],
-      ),
+        if (_req.customerNote.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Khách ghi chú: ${_req.customerNote}',
+              style: GoogleFonts.outfit(
+                color: Colors.orange.shade800,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Danh sách món (${_items.length}):',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _editable && !_busy ? _openAddProductPicker : null,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('Thêm món'),
+            ),
+          ],
+        ),
+        Expanded(child: _buildItemsList()),
+        const Divider(height: 20),
+        _buildTotalSection(),
+        const SizedBox(height: 12),
+        _buildActions(),
+      ],
     );
   }
 
   Widget _buildHeader() {
+    final wait = _req.createdAt == null
+        ? null
+        : DateTime.now().difference(_req.createdAt!).inMinutes;
     return Row(
       children: [
         Container(
@@ -505,9 +575,11 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
             color: Colors.purple.shade50,
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.receipt_long_rounded,
-            color: Color(0xFF8B5CF6),
+          child: Icon(
+            _req.isTable
+                ? Icons.table_restaurant_rounded
+                : Icons.shopping_bag_rounded,
+            color: _kViolet,
             size: 24,
           ),
         ),
@@ -517,9 +589,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.request.isTable
-                    ? 'DUYỆT ĐƠN GỌI MÓN TẠI BÀN'
-                    : 'DUYỆT ĐƠN MANG ĐI TẠI QUẦY',
+                _req.isTable ? 'ĐƠN GỌI MÓN TẠI BÀN' : 'ĐƠN MANG ĐI',
                 style: GoogleFonts.outfit(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -527,29 +597,33 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
                 ),
               ),
               Text(
-                widget.request.displayTitle,
+                _req.displayTitle,
                 style: GoogleFonts.outfit(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
-                  color: Colors.black87,
                 ),
               ),
+              if (wait != null)
+                Text(
+                  'Chờ $wait phút',
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
             ],
           ),
         ),
         IconButton(
           icon: const Icon(Icons.close_rounded),
-          onPressed: () => Navigator.pop(context),
+          onPressed: _closing ? null : () => Navigator.of(context).pop(),
         ),
       ],
     );
   }
 
   Widget _buildTableSelector() {
-    if (_loadingTables) {
-      return const LinearProgressIndicator();
-    }
-
+    final hasValue = _tables.any((t) => t.id == _req.tableId);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -560,184 +634,82 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.table_restaurant_rounded,
-                color: Color(0xFF8B5CF6),
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Gán Vào Bàn Chính Thức:',
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: Colors.purple.shade900,
+          Text(
+            'Bàn khách chọn: ${_req.tableName ?? "chưa có"}',
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: Colors.purple.shade900,
+            ),
+          ),
+          if (_tables.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              key: ValueKey('tbl-${_req.tableId}'),
+              initialValue: hasValue ? _req.tableId : null,
+              isExpanded: true,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                isDense: true,
+                labelText: 'Đổi sang bàn khác (nếu khách chọn sai)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              if (_isTableAssignmentPersisted) ...[
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.shade200,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'ĐÃ GÁN BÀN',
-                    style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.purple.shade900,
+              items: _tables
+                  .map(
+                    (t) => DropdownMenuItem<String>(
+                      value: t.id,
+                      child: Text(t.label),
                     ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: _assignedTableId,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 10,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.purple.shade200),
-              ),
-              hintText: 'Chọn bàn để chuyển món...',
-            ),
-            items: _tables.map((t) {
-              return DropdownMenuItem<String>(
-                value: t.id,
-                child: Text(
-                  t.label,
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              );
-            }).toList(),
-            onChanged: (val) {
-              if (val != null) {
-                final selected = _tables.firstWhere((t) => t.id == val);
-                setState(() {
-                  _assignedTableId = val;
-                  _assignedTableName = selected.label;
-                  _isTableAssignmentPersisted =
-                      val == widget.request.assignedTableId;
-                });
-              }
-            },
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _isTableAssignmentPersisted
-                    ? Colors.green.shade700
-                    : const Color(0xFF8B5CF6),
-                foregroundColor: Colors.white,
-              ),
-              onPressed: _assignedTableId == null || _isTableAssignmentPersisted
+                  )
+                  .toList(),
+              onChanged: _busy || !_editable
                   ? null
-                  : () => _handleAssignTable(_assignedTableId!),
-              icon: Icon(
-                _isTableAssignmentPersisted
-                    ? Icons.check_circle_rounded
-                    : Icons.table_restaurant_rounded,
-              ),
-              label: Text(
-                _isTableAssignmentPersisted
-                    ? 'ĐÃ XÁC NHẬN BÀN'
-                    : 'XÁC NHẬN GÁN BÀN',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w800),
-              ),
+                  : (v) {
+                      if (v != null) _changeTable(v);
+                    },
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildCounterBadge() {
-    final isPaid = _paymentStatus == 'paid';
-    final settings = ref.watch(qrOrderSettingsProvider).asData?.value;
-
+  Widget _buildCounterInfo() {
+    final canPay = ref.canDo('pos.checkout');
+    final code = _req.displayPickupCode;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isPaid ? Colors.green.shade50 : Colors.orange.shade50,
+        color: Colors.orange.shade50,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isPaid ? Colors.green.shade200 : Colors.orange.shade200,
-        ),
+        border: Border.all(color: Colors.orange.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    isPaid
-                        ? Icons.check_circle_rounded
-                        : Icons.pending_actions_rounded,
-                    color: isPaid
-                        ? Colors.green.shade800
-                        : Colors.orange.shade800,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Đơn Mang Đi: ${widget.request.displayPickupCode}',
-                        style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        isPaid ? 'ĐÃ THANH TOÁN TOÀN BỘ' : 'CHƯA THANH TOÁN',
-                        style: GoogleFonts.outfit(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isPaid
-                              ? Colors.green.shade900
-                              : Colors.orange.shade900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              if (isPaid)
-                Text(
-                  _paymentMethod == 'transfer' ? 'CHUYỂN KHOẢN' : 'TIỀN MẶT',
-                  style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.green.shade900,
-                  ),
-                ),
-            ],
+          Text(
+            code.isEmpty ? 'Đơn mang đi' : 'Mã lấy món: $code',
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
           ),
-          if (!isPaid) ...[
-            const SizedBox(height: 12),
+          const SizedBox(height: 4),
+          Text(
+            _req.isPaid ? 'ĐÃ THANH TOÁN' : 'CHƯA THANH TOÁN',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: _req.isPaid
+                  ? Colors.green.shade900
+                  : Colors.orange.shade900,
+            ),
+          ),
+          if (canPay && !_req.isPaid) ...[
+            const SizedBox(height: 10),
             SegmentedButton<String>(
               segments: const [
                 ButtonSegment(
@@ -752,36 +724,25 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
                 ),
               ],
               selected: {_paymentMethod},
-              onSelectionChanged: (selected) {
-                setState(() => _paymentMethod = selected.first);
-              },
+              onSelectionChanged: _busy
+                  ? null
+                  : (s) => setState(() => _paymentMethod = s.first),
             ),
             if (_paymentMethod == 'transfer') ...[
-              const SizedBox(height: 12),
-              _buildTransferQr(settings),
+              const SizedBox(height: 10),
+              _buildTransferQr(),
             ],
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade700,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+          ],
+          if (!canPay) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Chuyển thu ngân: tài khoản của bạn không có quyền thu tiền. '
+              'Hãy nhờ thu ngân mở đơn này để thu tiền và gửi bếp.',
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                color: Colors.orange.shade900,
+                fontWeight: FontWeight.w600,
               ),
-              icon: const Icon(Icons.verified_rounded, size: 18),
-              label: Text(
-                _paymentMethod == 'transfer'
-                    ? 'XÁC NHẬN TIỀN ĐÃ VÀO'
-                    : 'XÁC NHẬN ĐÃ THU TIỀN MẶT',
-              ),
-              onPressed:
-                  _paymentMethod == 'transfer' &&
-                      (settings == null ||
-                          settings.transferAccountNo.trim().isEmpty)
-                  ? null
-                  : _handleMarkPaid,
             ),
           ],
         ],
@@ -789,13 +750,14 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
     );
   }
 
-  Widget _buildTransferQr(QrOrderSettingsModel? settings) {
+  Widget _buildTransferQr() {
+    final settings = ref.watch(qrOrderSettingsProvider).asData?.value;
     if (settings == null) {
       return const Center(child: CircularProgressIndicator());
     }
     if (settings.transferAccountNo.trim().isEmpty) {
       return Text(
-        'Chưa cấu hình tài khoản VietQR trong tab Thiết Lập của module QR.',
+        'Chưa cấu hình tài khoản VietQR trong mục Thiết lập của module QR.',
         style: GoogleFonts.outfit(
           color: Colors.red.shade800,
           fontWeight: FontWeight.w700,
@@ -803,13 +765,34 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
         ),
       );
     }
+    if (_dirty) {
+      return Row(
+        children: [
+          Expanded(
+            child: Text(
+              'Món đã thay đổi. Lưu thay đổi để tính lại tiền và hiện mã QR.',
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                color: Colors.orange.shade900,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _busy ? null : _onSavePressed,
+            child: const Text('Lưu món'),
+          ),
+        ],
+      );
+    }
 
+    final code = _req.displayPickupCode;
     final qrUrl = VietQrService.generateUrl(
       bankBin: settings.transferBankBin,
       accountNo: settings.transferAccountNo.trim(),
       accountName: settings.transferAccountName.trim(),
-      amount: _currentTotal,
-      addInfo: 'QR ${widget.request.displayPickupCode}',
+      amount: _req.totalAmount, // tổng do server tính
+      addInfo: code.isEmpty ? 'QR' : 'QR $code',
     );
     final bankName =
         VietQrService.findByBin(settings.transferBankBin)?.shortName ??
@@ -840,14 +823,13 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
             '$bankName • ${settings.transferAccountNo}',
             style: GoogleFonts.outfit(fontWeight: FontWeight.w800),
           ),
-          if (settings.transferAccountName.isNotEmpty)
-            Text(
-              settings.transferAccountName,
-              style: GoogleFonts.outfit(fontSize: 12),
-            ),
-          const SizedBox(height: 6),
           Text(
-            'VietQR chỉ hỗ trợ chuyển khoản. Thu ngân phải kiểm tra tiền đã vào trước khi xác nhận.',
+            currencyFmt.format(_req.totalAmount),
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'VietQR chỉ hỗ trợ chuyển khoản. Hãy kiểm tra tiền đã vào trước khi xác nhận.',
             textAlign: TextAlign.center,
             style: GoogleFonts.outfit(
               fontSize: 11,
@@ -863,33 +845,16 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
   Widget _buildItemsList() {
     if (_items.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.remove_shopping_cart_rounded,
-              size: 40,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Đơn hàng đang trống. Hãy bấm "Thêm món" ở trên.',
-              style: GoogleFonts.outfit(
-                color: Colors.grey.shade600,
-                fontSize: 13,
-              ),
-            ),
-          ],
+        child: Text(
+          'Đơn đang trống. Bấm "Thêm món" ở trên.',
+          style: GoogleFonts.outfit(color: Colors.grey.shade600, fontSize: 13),
         ),
       );
     }
-
     return ListView.builder(
       itemCount: _items.length,
       itemBuilder: (context, index) {
         final item = _items[index];
-        final hasNote = item.note.isNotEmpty;
-
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(10),
@@ -924,11 +889,11 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
                       currencyFmt.format(item.unitPrice),
                       style: GoogleFonts.outfit(
                         fontSize: 12,
-                        color: const Color(0xFF8B5CF6),
+                        color: _kViolet,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    if (hasNote)
+                    if (item.note.isNotEmpty)
                       Text(
                         'Ghi chú: ${item.note}',
                         style: GoogleFonts.outfit(
@@ -939,32 +904,32 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
                   ],
                 ),
               ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.remove_circle_outline_rounded,
-                      size: 22,
-                      color: Colors.red,
-                    ),
-                    onPressed: () => _updateItemQuantity(index, -1),
-                  ),
-                  Text(
-                    '${item.quantity}',
-                    style: GoogleFonts.outfit(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.add_circle_outline_rounded,
-                      size: 22,
-                      color: Colors.green,
-                    ),
-                    onPressed: () => _updateItemQuantity(index, 1),
-                  ),
-                ],
+              IconButton(
+                icon: const Icon(
+                  Icons.remove_circle_outline_rounded,
+                  size: 22,
+                  color: Colors.red,
+                ),
+                onPressed: _editable && !_busy
+                    ? () => _updateItemQuantity(index, -1)
+                    : null,
+              ),
+              Text(
+                '${item.quantity}',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.add_circle_outline_rounded,
+                  size: 22,
+                  color: Colors.green,
+                ),
+                onPressed: _editable && !_busy
+                    ? () => _updateItemQuantity(index, 1)
+                    : null,
               ),
             ],
           ),
@@ -981,55 +946,52 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Tổng tiền đơn:',
+              _dirty ? 'Tạm tính:' : 'Tổng tiền đơn:',
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
                 color: Colors.grey.shade700,
               ),
             ),
-            if (_isDirty)
-              Text(
-                '* Đã chỉnh sửa món',
-                style: GoogleFonts.outfit(
-                  fontSize: 11,
-                  color: Colors.orange.shade900,
-                  fontWeight: FontWeight.bold,
+            if (_dirty)
+              GestureDetector(
+                onTap: _busy ? null : _onSavePressed,
+                child: Text(
+                  'Chưa lưu thay đổi món - bấm để lưu',
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    color: Colors.orange.shade900,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
           ],
         ),
         Text(
-          currencyFmt.format(_currentTotal),
+          currencyFmt.format(_dirty ? _localTotal : _req.totalAmount),
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.w900,
             fontSize: 20,
-            color: const Color(0xFF8B5CF6),
+            color: _kViolet,
           ),
         ),
       ],
     );
   }
 
-  bool get _canSendKitchen {
-    if (widget.request.isTable) {
-      return _assignedTableId != null && _isTableAssignmentPersisted;
-    }
-    // Mọi đơn mang đi đều phải được Thu ngân xác nhận thanh toán trước Bếp.
-    return _paymentStatus == 'paid';
-  }
-
-  Widget _buildActionButtons() {
-    if (_isSubmitting) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    final canSendKitchen = _canSendKitchen;
+  Widget _buildActions() {
+    final canPay = _req.isTable || ref.canDo('pos.checkout');
+    final ready = _editable && !_busy && canPay;
+    final label = _needsSync
+        ? 'THỬ LẠI'
+        : _req.isTable
+        ? 'DUYỆT & GỬI BẾP'
+        : 'ĐÃ THU TIỀN & GỬI BẾP';
 
     return Row(
       children: [
         Expanded(
-          flex: 1,
           child: OutlinedButton(
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
@@ -1039,7 +1001,7 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            onPressed: _handleReject,
+            onPressed: _busy || _closing ? null : _handleReject,
             child: Text(
               'Từ chối',
               style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
@@ -1047,31 +1009,86 @@ class _QrOrderReviewSheetState extends ConsumerState<QrOrderReviewSheet> {
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(
-          flex: 2,
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: canSendKitchen ? Colors.green : Colors.grey,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        if (canPay)
+          Expanded(
+            flex: 2,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
-            icon: const Icon(Icons.restaurant_rounded),
-            label: Text(
-              widget.request.isTable
-                  ? (_isTableAssignmentPersisted
-                        ? 'GỬI BẾP'
-                        : 'CẦN XÁC NHẬN BÀN')
-                  : (canSendKitchen ? 'GỬI BẾP' : 'CẦN THANH TOÁN TRƯỚC'),
-              style: GoogleFonts.outfit(
-                fontWeight: FontWeight.w900,
-                fontSize: 13,
+              icon: _busy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.restaurant_rounded),
+              label: Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                ),
               ),
+              onPressed: ready ? _submit : null,
             ),
-            onPressed: canSendKitchen ? _handleSendToKitchen : null,
           ),
+      ],
+    );
+  }
+}
+
+/// Hộp thoại nhập lý do từ chối (tự quản lý và dispose controller).
+class _RejectDialog extends StatefulWidget {
+  const _RejectDialog();
+
+  @override
+  State<_RejectDialog> createState() => _RejectDialogState();
+}
+
+class _RejectDialogState extends State<_RejectDialog> {
+  final _ctrl = TextEditingController(text: 'Hết món');
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Từ chối đơn gọi món',
+        style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+      ),
+      content: TextField(
+        controller: _ctrl,
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: 'Lý do (khách sẽ thấy)',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Hủy bỏ'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () => Navigator.pop(context, _ctrl.text.trim()),
+          child: const Text('Từ chối đơn'),
         ),
       ],
     );

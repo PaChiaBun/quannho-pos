@@ -4,15 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../providers/qr_order_providers.dart';
 
-/// Sheet hiển thị Hàng Chờ Đơn QR Quầy (Counter QR Orders Queue)
-/// Cho phép nhân viên xem danh sách toàn bộ các đơn quầy đang chờ hoặc đang xử lý,
-/// lọc theo trạng thái và chọn từng đơn cụ thể để duyệt
+/// Hàng chờ CHUNG đơn QR (TABLE + COUNTER). Bấm một đơn để đóng sheet và
+/// trả đơn đó cho nơi gọi (nơi gọi mở sheet duyệt).
 class QrCounterQueueSheet extends ConsumerWidget {
   const QrCounterQueueSheet({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activeCounterReqs = ref.watch(activeCounterQrRequestsProvider);
+    final requests = ref.watch(activeQrRequestsProvider);
+    final stale = ref.watch(qrPipelineErrorProvider) != null;
     final currencyFmt = NumberFormat.currency(
       locale: 'vi_VN',
       symbol: 'đ',
@@ -31,39 +31,13 @@ class QrCounterQueueSheet extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.storefront_rounded,
-                  color: Colors.orange,
-                ),
-              ),
-              const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'HÀNG CHỜ GỌI MÓN TẠI QUẦY',
-                      style: GoogleFonts.outfit(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                    Text(
-                      'Danh Sách Đơn Quầy (${activeCounterReqs.length} đơn)',
-                      style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Đơn gọi món QR (${requests.length})',
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               IconButton(
@@ -72,42 +46,45 @@ class QrCounterQueueSheet extends ConsumerWidget {
               ),
             ],
           ),
-          const Divider(height: 20),
-          if (activeCounterReqs.isEmpty)
+          if (stale)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Mất kết nối - danh sách có thể chưa mới nhất.',
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  color: Colors.orange.shade900,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          const Divider(height: 12),
+          if (requests.isEmpty)
             Expanded(
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.inbox_rounded,
-                      size: 48,
-                      color: Colors.grey.shade300,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Không có đơn QR quầy nào đang chờ',
-                      style: GoogleFonts.outfit(
-                        color: Colors.grey.shade600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Chưa có đơn QR nào đang chờ',
+                  style: GoogleFonts.outfit(color: Colors.grey.shade600),
                 ),
               ),
             )
           else
             Expanded(
               child: ListView.builder(
-                itemCount: activeCounterReqs.length,
+                itemCount: requests.length,
                 itemBuilder: (context, index) {
-                  final req = activeCounterReqs[index];
-                  final pickupCode = req.displayPickupCode;
-                  final itemCount = req.items.fold<int>(
-                    0,
-                    (sum, i) => sum + i.quantity,
-                  );
-
+                  final req = requests[index];
+                  final qty = req.items.fold<int>(0, (s, i) => s + i.quantity);
+                  final color = req.isSubmitted ? Colors.orange : Colors.blue;
+                  final wait = req.createdAt == null
+                      ? ''
+                      : ' • chờ ${DateTime.now().difference(req.createdAt!).inMinutes} phút';
                   return Card(
                     elevation: 0,
                     margin: const EdgeInsets.only(bottom: 10),
@@ -116,89 +93,26 @@ class QrCounterQueueSheet extends ConsumerWidget {
                       side: BorderSide(color: Colors.grey.shade200),
                     ),
                     child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
+                      onTap: () => Navigator.pop(context, req),
+                      leading: Icon(
+                        req.isTable
+                            ? Icons.table_restaurant_rounded
+                            : Icons.shopping_bag_rounded,
+                        color: color,
                       ),
-                      leading: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: _statusColor(
-                            req.status,
-                          ).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
+                      title: Text(
+                        req.isTable ? 'Tại bàn • ${req.displayTitle}' : req.displayTitle,
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
                         ),
-                        child: Text(
-                          pickupCode,
-                          style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.w900,
-                            color: _statusColor(req.status),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      title: Row(
-                        children: [
-                          Text(
-                            'Đơn $pickupCode',
-                            style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _statusColor(
-                                req.status,
-                              ).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              _statusLabel(req.status),
-                              style: GoogleFonts.outfit(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: _statusColor(req.status),
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                       subtitle: Text(
-                        '$itemCount món • ${currencyFmt.format(req.totalAmount)}',
-                        style: GoogleFonts.outfit(
-                          fontSize: 12,
-                          color: Colors.grey.shade700,
-                        ),
+                        '$qty món • ${currencyFmt.format(req.totalAmount)}$wait'
+                        '${req.isSubmitted ? "" : " • đang xử lý"}',
+                        style: GoogleFonts.outfit(fontSize: 12),
                       ),
-                      trailing: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _statusColor(req.status),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context, req);
-                        },
-                        child: Text(
-                          'Duyệt đơn',
-                          style: GoogleFonts.outfit(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
                     ),
                   );
                 },
@@ -207,54 +121,5 @@ class QrCounterQueueSheet extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'customer_submitted':
-      case 'pending_staff':
-        return Colors.orange;
-      case 'claimed':
-      case 'processing':
-        return Colors.blue;
-      case 'staff_review':
-      case 'confirmed':
-        return Colors.teal;
-      case 'awaiting_payment':
-        return Colors.amber.shade900;
-      case 'ready_for_kitchen':
-      case 'sent_kitchen':
-        return Colors.green;
-      case 'cancelled':
-      case 'rejected':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _statusLabel(String status) {
-    switch (status) {
-      case 'customer_submitted':
-      case 'pending_staff':
-        return 'Chờ nhận';
-      case 'claimed':
-      case 'processing':
-        return 'Đang kiểm';
-      case 'staff_review':
-      case 'confirmed':
-        return 'Đã duyệt';
-      case 'awaiting_payment':
-        return 'Chờ thu tiền';
-      case 'ready_for_kitchen':
-        return 'Đã thu tiền';
-      case 'sent_kitchen':
-        return 'Đã gửi bếp';
-      case 'cancelled':
-      case 'rejected':
-        return 'Đã hủy';
-      default:
-        return status;
-    }
   }
 }

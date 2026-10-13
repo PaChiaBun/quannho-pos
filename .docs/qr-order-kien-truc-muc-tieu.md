@@ -4,6 +4,8 @@
 > Trạng thái: source/migration V4 đã triển khai local và đang chờ nghiệm thu trên PostgreSQL staging; chưa apply production.  
 > Nguồn sự thật hiện hành cho hướng phát triển QR; `maqr.md` mô tả V3 legacy để đối chiếu khi chuyển đổi.
 
+> **CẬP NHẬT 2026-10-13:** đã đơn giản hóa — khách TỰ CHỌN BÀN khi đặt, BỎ QR bàn giao động và camera quét, dùng hàng chờ chung + một nút duyệt. Mục 3, 5 bên dưới là thiết kế cũ. Hợp đồng hiện hành: `.docs/qr-rpc-contract-don-gian.md`; kế hoạch: `ke-hoach-don-gian-hoa-qr.md`.
+
 ## 1. Quyết định sản phẩm
 
 - Mỗi cửa hàng chỉ cần hai QR tĩnh:

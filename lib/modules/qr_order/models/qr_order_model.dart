@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show InternetAddress;
 
 /// Mã lỗi chuẩn của hệ thống QR Order V4
 class QrErrorCode {
@@ -40,6 +41,10 @@ class QrErrorCode {
   static const String serverSchemaOutdated = 'SERVER_SCHEMA_OUTDATED';
   static const String networkUncertain = 'NETWORK_UNCERTAIN';
   static const String checkoutInProgress = 'CHECKOUT_IN_PROGRESS';
+  static const String tableRequired = 'TABLE_REQUIRED';
+  static const String notClaimer = 'NOT_CLAIMER';
+  static const String paymentPermissionDenied = 'PAYMENT_PERMISSION_DENIED';
+  static const String rateLimited = 'RATE_LIMITED';
 
   static String toUserMessage(String? code, [String? fallback]) {
     switch (code) {
@@ -53,6 +58,14 @@ class QrErrorCode {
         return 'Mã QR này đã được sử dụng trước đó.';
       case alreadyClaimed:
         return 'Đơn hàng này đã được nhân viên khác tiếp nhận.';
+      case notClaimer:
+        return 'Đơn này đang do nhân viên khác xử lý.';
+      case tableRequired:
+        return 'Vui lòng chọn bàn trước khi gửi đơn.';
+      case paymentPermissionDenied:
+        return 'Bạn không có quyền thu tiền. Hãy chuyển đơn cho thu ngân.';
+      case rateLimited:
+        return 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.';
       case wrongStore:
         return 'Mã QR này thuộc về một cửa hàng khác.';
       case permissionDenied:
@@ -111,7 +124,7 @@ class QrErrorCode {
       case invalidSessionItems:
         return 'Phiên bàn không có món ăn để thanh toán.';
       case serverSchemaOutdated:
-        return 'Máy chủ thanh toán chưa được cập nhật đồng bộ với ứng dụng. Chưa ghi nhận thanh toán; vui lòng báo quản lý kỹ thuật.';
+        return 'Máy chủ chưa được cập nhật tính năng này. Chưa ghi nhận thao tác nào; vui lòng báo quản lý kỹ thuật.';
       case networkUncertain:
         return 'Chưa xác định được trạng thái thanh toán. Không đổi nội dung thanh toán; hãy thử lại để hệ thống đối soát.';
       case checkoutInProgress:
@@ -332,17 +345,16 @@ class QrOrderSettingsModel {
 class QrChannelModel {
   final String id;
   final String storeId;
-  final String
-  type; // 'TABLE_SHARED' | 'COUNTER_TAKEAWAY' | 'table' | 'counter'
+  final String type; // QrChannelType.table | QrChannelType.counter
   final String channelCode;
   final String name;
   final bool isActive;
   final String paymentMode; // 'PAY_BEFORE_KITCHEN' | 'CASHIER_CONFIRM'
   final DateTime createdAt;
 
-  bool get isTableShared => type == 'TABLE_SHARED' || type == 'table';
+  bool get isTableShared => type == QrChannelType.table;
 
-  bool get isCounterTakeaway => type == 'COUNTER_TAKEAWAY' || type == 'counter';
+  bool get isCounterTakeaway => type == QrChannelType.counter;
 
   const QrChannelModel({
     required this.id,
@@ -359,17 +371,14 @@ class QrChannelModel {
     return QrChannelModel(
       id: m['id'] as String? ?? '',
       storeId: m['store_id'] as String? ?? '',
-      type:
-          m['type'] as String? ??
-          m['channel_type'] as String? ??
-          'TABLE_SHARED',
+      type: QrChannelType.normalize(
+        m['type'] as String? ?? m['channel_type'] as String?,
+      ),
       channelCode: m['channel_code'] as String? ?? '',
       name: m['name'] as String? ?? '',
       isActive: m['is_active'] as bool? ?? true,
       paymentMode: m['payment_mode'] as String? ?? 'PAY_BEFORE_KITCHEN',
-      createdAt: m['created_at'] != null
-          ? DateTime.parse(m['created_at'] as String)
-          : DateTime.now(),
+      createdAt: _asDate(m['created_at']) ?? DateTime.now(),
     );
   }
 
@@ -432,35 +441,41 @@ class QrRequestItemModel {
   });
 
   factory QrRequestItemModel.fromMap(Map<String, dynamic> m) {
-    final price = (m['unit_price'] as num?)?.toDouble() ?? 0.0;
-    final qty = m['quantity'] as int? ?? 1;
-    final sub = (m['subtotal'] as num?)?.toDouble() ?? (price * qty);
+    final price = _asDouble(m['unit_price']);
+    final qty = _asInt(m['quantity'], 1);
+    final sub = m['subtotal'] != null
+        ? _asDouble(m['subtotal'])
+        : price * qty;
 
     List<Map<String, dynamic>> mods = [];
     final rawMods = m['modifiers_json'];
     if (rawMods is List) {
-      mods = rawMods.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      mods = rawMods
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     } else if (rawMods is String && rawMods.isNotEmpty) {
       try {
         final decoded = jsonDecode(rawMods);
         if (decoded is List) {
           mods = decoded
-              .map((e) => Map<String, dynamic>.from(e as Map))
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
               .toList();
         }
       } catch (_) {}
     }
 
     return QrRequestItemModel(
-      id: m['id'] as String? ?? '',
-      requestId: m['request_id'] as String? ?? '',
-      productId: m['product_id'] as String? ?? '',
-      productName: m['product_name'] as String? ?? '',
+      id: _asStr(m['id']) ?? '',
+      requestId: _asStr(m['request_id']) ?? '',
+      productId: _asStr(m['product_id']) ?? '',
+      productName: _asStr(m['product_name']) ?? '',
       unitPrice: price,
       quantity: qty,
       subtotal: sub,
       modifiersJson: mods,
-      note: m['note'] as String? ?? '',
+      note: _asStr(m['note']) ?? '',
     );
   }
 
@@ -501,119 +516,195 @@ class QrRequestItemModel {
   }
 }
 
-/// Model Đơn Đặt Món QR (V4)
+/// Trạng thái đơn QR (chữ thường, đúng hợp đồng RPC đơn giản hóa).
+class QrStatus {
+  static const String submitted = 'submitted';
+  static const String claimed = 'claimed';
+  static const String sentKitchen = 'sent_kitchen';
+  static const String rejected = 'rejected';
+  static const String expired = 'expired';
+  static const String cancelled = 'cancelled';
+
+  /// Chuẩn hóa giá trị cũ (V4 trước đơn giản hóa) về 6 giá trị chuẩn.
+  static String normalize(String? raw) {
+    switch ((raw ?? '').trim().toLowerCase()) {
+      case 'submitted':
+      case 'customer_submitted':
+      case 'pending_staff':
+        return submitted;
+      case 'claimed':
+      case 'processing':
+      case 'staff_review':
+      case 'confirmed':
+      case 'awaiting_payment':
+      case 'ready_for_kitchen':
+        return claimed;
+      case 'sent_kitchen':
+        return sentKitchen;
+      case 'rejected':
+        return rejected;
+      case 'expired':
+        return expired;
+      case 'cancelled':
+        return cancelled;
+      default:
+        return submitted;
+    }
+  }
+}
+
+/// Loại kênh chuẩn hóa.
+class QrChannelType {
+  static const String table = 'TABLE_SHARED';
+  static const String counter = 'COUNTER_TAKEAWAY';
+
+  static String normalize(String? raw) {
+    final v = (raw ?? '').trim().toUpperCase();
+    if (v == 'COUNTER_TAKEAWAY' || v == 'COUNTER') return counter;
+    return table;
+  }
+}
+
+int _asInt(dynamic v, [int fallback = 0]) {
+  if (v is num) return v.toInt();
+  if (v is String) return int.tryParse(v.trim()) ?? fallback;
+  return fallback;
+}
+
+double _asDouble(dynamic v, [double fallback = 0.0]) {
+  if (v is num) return v.toDouble();
+  if (v is String) return double.tryParse(v.trim()) ?? fallback;
+  return fallback;
+}
+
+String? _asStr(dynamic v) {
+  if (v == null) return null;
+  final s = v.toString();
+  return s.isEmpty ? null : s;
+}
+
+DateTime? _asDate(dynamic v) {
+  if (v is! String || v.isEmpty) return null;
+  return DateTime.tryParse(v);
+}
+
+/// Model Đơn Đặt Món QR (dùng chung cho khách và nhân viên)
 class QrRequestModel {
   final String id;
   final String storeId;
   final String channelId;
-  final String
-  type; // 'TABLE_SHARED' | 'COUNTER_TAKEAWAY' | 'table' | 'counter'
-  final String? tableHint; // Gợi ý số bàn khách nhập (chỉ TABLE_SHARED)
-  final String? assignedTableId; // ID bàn chính thức được nhân viên gán
-  final String? assignedTableName;
-  final String? assignedSessionId;
-  final String? pickupCode; // Mã lấy món (chỉ COUNTER_TAKEAWAY)
+  final String type; // QrChannelType.table | QrChannelType.counter
+  final String? tableId; // Bàn khách chọn (TABLE)
+  final String? tableName;
+  final String? pickupCode; // Mã lấy món (COUNTER), null nếu server chưa cấp
   final String trackingToken;
-  final String status;
-  // 'customer_submitted' | 'claimed' | 'staff_review' | 'awaiting_payment' |
-  // 'ready_for_kitchen' | 'sent_kitchen' | 'cancelled' | 'expired'
+  final String status; // QrStatus.*
   final String paymentStatus; // 'unpaid' | 'paid'
-  final String paymentMode; // 'PAY_BEFORE_KITCHEN' | 'CASHIER_CONFIRM'
+  final String? claimedBy;
   final String customerNote;
   final String? rejectReason;
   final double totalAmount;
   final int version;
-  final DateTime createdAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   final DateTime? expiresAt;
   final List<QrRequestItemModel> items;
 
-  bool get isTable => type == 'TABLE_SHARED' || type == 'table';
-  bool get isCounter => type == 'COUNTER_TAKEAWAY' || type == 'counter';
+  bool get isTable => type == QrChannelType.table;
+  bool get isCounter => type == QrChannelType.counter;
 
-  bool get isSubmitted =>
-      status == 'customer_submitted' || status == 'pending_staff';
-  bool get isClaimed => status == 'claimed' || status == 'processing';
-  bool get isReviewing => status == 'staff_review' || status == 'confirmed';
-  bool get isAwaitingPayment => status == 'awaiting_payment';
-  bool get isReadyForKitchen => status == 'ready_for_kitchen';
-  bool get isSentKitchen => status == 'sent_kitchen';
-  bool get isCancelled => status == 'cancelled' || status == 'rejected';
-  bool get isExpired => status == 'expired';
+  bool get isSubmitted => status == QrStatus.submitted;
+  bool get isClaimed => status == QrStatus.claimed;
+  bool get isSentKitchen => status == QrStatus.sentKitchen;
+  bool get isRejected => status == QrStatus.rejected;
+  bool get isExpired => status == QrStatus.expired;
+  bool get isCancelled => status == QrStatus.cancelled;
+  bool get isPaid => paymentStatus == 'paid';
 
+  /// Đơn còn nằm trong hàng chờ nhân viên (chưa gửi bếp, chưa đóng).
+  bool get isOpen => isSubmitted || isClaimed;
+
+  /// Tương thích tên cũ (khách/nhân viên dùng chung).
+  String? get assignedTableId => tableId;
+  String? get assignedTableName => tableName;
+
+  /// Mã lấy món để hiển thị; rỗng nếu chưa có (không bịa mã giả).
   String get displayPickupCode {
-    if (pickupCode == null || pickupCode!.trim().isEmpty) return '#Q01';
-    final clean = pickupCode!.replaceAll('#', '').trim();
-    return '#$clean';
+    final raw = pickupCode?.replaceAll('#', '').trim() ?? '';
+    return raw.isEmpty ? '' : '#$raw';
   }
 
+  /// Tên ngắn dùng cho hàng chờ / tiêu đề sheet.
   String get displayTitle {
     if (isTable) {
-      if (assignedTableName != null && assignedTableName!.isNotEmpty) {
-        return assignedTableName!;
-      }
-      if (tableHint != null && tableHint!.isNotEmpty) {
-        return 'Gợi ý bàn: $tableHint';
-      }
-      return 'Bàn Gọi Món';
+      final n = tableName?.trim() ?? '';
+      return n.isNotEmpty ? n : 'Chưa chọn bàn';
     }
-    return 'QUẦY THU NGÂN — $displayPickupCode';
+    final code = displayPickupCode;
+    return code.isEmpty ? 'Mang đi' : 'Mang đi $code';
   }
 
   const QrRequestModel({
     required this.id,
-    required this.storeId,
-    required this.channelId,
+    this.storeId = '',
+    this.channelId = '',
     required this.type,
-    this.tableHint,
-    this.assignedTableId,
-    this.assignedTableName,
-    this.assignedSessionId,
+    this.tableId,
+    this.tableName,
     this.pickupCode,
-    required this.trackingToken,
+    this.trackingToken = '',
     required this.status,
     this.paymentStatus = 'unpaid',
-    this.paymentMode = 'PAY_BEFORE_KITCHEN',
+    this.claimedBy,
     this.customerNote = '',
     this.rejectReason,
-    required this.totalAmount,
+    this.totalAmount = 0.0,
     this.version = 1,
-    required this.createdAt,
+    this.createdAt,
+    this.updatedAt,
     this.expiresAt,
     this.items = const [],
   });
 
   factory QrRequestModel.fromMap(Map<String, dynamic> m) {
-    final rawItems = m['items'] as List<dynamic>? ?? [];
-    final items = rawItems
-        .map((it) => QrRequestItemModel.fromMap(it as Map<String, dynamic>))
-        .toList();
+    final rawItems = m['items'];
+    final items = <QrRequestItemModel>[];
+    if (rawItems is List) {
+      for (final it in rawItems) {
+        if (it is Map) {
+          items.add(QrRequestItemModel.fromMap(Map<String, dynamic>.from(it)));
+        }
+      }
+    }
+
+    // Tên bàn có thể lồng trong join `table:ban_dining_tables(...)`.
+    String? tableName = _asStr(m['table_name']);
+    final joined = m['table'];
+    if (tableName == null && joined is Map) {
+      tableName = _asStr(joined['name']) ?? _asStr(joined['label']);
+    }
 
     return QrRequestModel(
-      id: m['id'] as String? ?? m['request_id'] as String? ?? '',
-      storeId: m['store_id'] as String? ?? '',
-      channelId: m['channel_id'] as String? ?? '',
-      type: m['type'] as String? ?? 'TABLE_SHARED',
-      tableHint: m['table_hint'] as String?,
-      assignedTableId:
-          m['assigned_table_id'] as String? ?? m['table_id'] as String?,
-      assignedTableName:
-          m['assigned_table_name'] as String? ?? m['table_name'] as String?,
-      assignedSessionId: m['assigned_session_id'] as String?,
-      pickupCode: m['pickup_code'] as String?,
-      trackingToken: m['tracking_token'] as String? ?? '',
-      status: m['status'] as String? ?? 'customer_submitted',
-      paymentStatus: m['payment_status'] as String? ?? 'unpaid',
-      paymentMode: m['payment_mode'] as String? ?? 'PAY_BEFORE_KITCHEN',
-      customerNote: m['customer_note'] as String? ?? m['note'] as String? ?? '',
-      rejectReason: m['reject_reason'] as String?,
-      totalAmount: (m['total_amount'] as num?)?.toDouble() ?? 0.0,
-      version: m['version'] as int? ?? 1,
-      createdAt: m['created_at'] != null
-          ? DateTime.parse(m['created_at'] as String)
-          : DateTime.now(),
-      expiresAt: m['expires_at'] != null
-          ? DateTime.parse(m['expires_at'] as String)
-          : null,
+      id: _asStr(m['id']) ?? _asStr(m['request_id']) ?? '',
+      storeId: _asStr(m['store_id']) ?? '',
+      channelId: _asStr(m['channel_id']) ?? '',
+      type: QrChannelType.normalize(
+        _asStr(m['type']) ?? _asStr(m['channel_type']),
+      ),
+      tableId: _asStr(m['table_id']),
+      tableName: tableName,
+      pickupCode: _asStr(m['pickup_code']),
+      trackingToken: _asStr(m['tracking_token']) ?? '',
+      status: QrStatus.normalize(_asStr(m['status'])),
+      paymentStatus: _asStr(m['payment_status']) ?? 'unpaid',
+      claimedBy: _asStr(m['claimed_by']),
+      customerNote: _asStr(m['customer_note']) ?? _asStr(m['note']) ?? '',
+      rejectReason: _asStr(m['reject_reason']),
+      totalAmount: _asDouble(m['total_amount']),
+      version: _asInt(m['version'], 1),
+      createdAt: _asDate(m['created_at']),
+      updatedAt: _asDate(m['updated_at']),
+      expiresAt: _asDate(m['expires_at']),
       items: items,
     );
   }
@@ -623,73 +714,72 @@ class QrRequestModel {
     'store_id': storeId,
     'channel_id': channelId,
     'type': type,
-    'table_hint': tableHint,
-    'assigned_table_id': assignedTableId,
-    'assigned_table_name': assignedTableName,
-    'assigned_session_id': assignedSessionId,
+    'table_id': tableId,
+    'table_name': tableName,
     'pickup_code': pickupCode,
     'tracking_token': trackingToken,
     'status': status,
     'payment_status': paymentStatus,
-    'payment_mode': paymentMode,
+    'claimed_by': claimedBy,
     'customer_note': customerNote,
     'reject_reason': rejectReason,
     'total_amount': totalAmount,
     'version': version,
-    'created_at': createdAt.toIso8601String(),
+    'created_at': createdAt?.toIso8601String(),
+    'updated_at': updatedAt?.toIso8601String(),
     'expires_at': expiresAt?.toIso8601String(),
     'items': items.map((it) => it.toMap()).toList(),
   };
 
   QrRequestModel copyWith({
-    String? id,
-    String? storeId,
-    String? channelId,
-    String? type,
-    String? tableHint,
-    String? assignedTableId,
-    String? assignedTableName,
-    String? assignedSessionId,
-    String? pickupCode,
-    String? trackingToken,
     String? status,
     String? paymentStatus,
-    String? paymentMode,
-    String? customerNote,
+    String? tableId,
+    String? tableName,
+    String? claimedBy,
     String? rejectReason,
     double? totalAmount,
     int? version,
-    DateTime? createdAt,
-    DateTime? expiresAt,
     List<QrRequestItemModel>? items,
   }) {
     return QrRequestModel(
-      id: id ?? this.id,
-      storeId: storeId ?? this.storeId,
-      channelId: channelId ?? this.channelId,
-      type: type ?? this.type,
-      tableHint: tableHint ?? this.tableHint,
-      assignedTableId: assignedTableId ?? this.assignedTableId,
-      assignedTableName: assignedTableName ?? this.assignedTableName,
-      assignedSessionId: assignedSessionId ?? this.assignedSessionId,
-      pickupCode: pickupCode ?? this.pickupCode,
-      trackingToken: trackingToken ?? this.trackingToken,
+      id: id,
+      storeId: storeId,
+      channelId: channelId,
+      type: type,
+      tableId: tableId ?? this.tableId,
+      tableName: tableName ?? this.tableName,
+      pickupCode: pickupCode,
+      trackingToken: trackingToken,
       status: status ?? this.status,
       paymentStatus: paymentStatus ?? this.paymentStatus,
-      paymentMode: paymentMode ?? this.paymentMode,
-      customerNote: customerNote ?? this.customerNote,
+      claimedBy: claimedBy ?? this.claimedBy,
+      customerNote: customerNote,
       rejectReason: rejectReason ?? this.rejectReason,
       totalAmount: totalAmount ?? this.totalAmount,
       version: version ?? this.version,
-      createdAt: createdAt ?? this.createdAt,
-      expiresAt: expiresAt ?? this.expiresAt,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      expiresAt: expiresAt,
       items: items ?? this.items,
     );
   }
 }
 
-/// Tiện ích xử lý và định dạng URL công khai cho QR Order V4
+/// Nguồn DUY NHẤT dựng link QR Order công khai.
+/// Mặc định `https://quannho.lpm.vn/pos`, có thể thay bằng tên miền đã lưu.
 class QrUrlBuilder {
+  static const String defaultBaseUrl = 'https://quannho.lpm.vn/pos';
+
+  static const List<String> _blockedHostSuffixes = [
+    '.local',
+    '.lan',
+    '.internal',
+    '.localhost',
+    '.home',
+    '.corp',
+  ];
+
   static String normalizeUrl(String url) {
     var trimmed = url.trim();
     while (trimmed.endsWith('/')) {
@@ -698,6 +788,51 @@ class QrUrlBuilder {
     return trimmed;
   }
 
+  /// Trả về byte của địa chỉ IP nếu [host] là IP literal, ngược lại null.
+  static List<int>? _parseIpBytes(String host) {
+    try {
+      final addr = InternetAddress.tryParse(host);
+      if (addr != null) return addr.rawAddress.toList();
+      return null;
+    } catch (_) {
+      // Nền tảng không hỗ trợ dart:io (web): chỉ nhận dạng IPv4 dạng a.b.c.d.
+      final m = RegExp(r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$')
+          .firstMatch(host);
+      if (m == null) return null;
+      final bytes = [for (var i = 1; i <= 4; i++) int.parse(m.group(i)!)];
+      return bytes.any((b) => b > 255) ? null : bytes;
+    }
+  }
+
+  static bool _isBlockedIpv4(List<int> b) {
+    if (b[0] == 0) return true; // 0.0.0.0/8
+    if (b[0] == 10) return true; // 10/8
+    if (b[0] == 127) return true; // loopback
+    if (b[0] == 169 && b[1] == 254) return true; // link-local
+    if (b[0] == 172 && b[1] >= 16 && b[1] <= 31) return true; // 172.16/12
+    if (b[0] == 192 && b[1] == 168) return true; // 192.168/16
+    if (b[0] == 100 && b[1] >= 64 && b[1] <= 127) return true; // CGNAT
+    return false;
+  }
+
+  static bool _isBlockedIp(List<int> b) {
+    if (b.length == 4) return _isBlockedIpv4(b);
+    if (b.length == 16) {
+      final allZeroPrefix = b.sublist(0, 10).every((x) => x == 0);
+      if (allZeroPrefix && b[10] == 0xff && b[11] == 0xff) {
+        return _isBlockedIpv4(b.sublist(12)); // ::ffff:a.b.c.d
+      }
+      if (b.sublist(0, 15).every((x) => x == 0) && b[15] <= 1) {
+        return true; // :: và ::1
+      }
+      if ((b[0] & 0xfe) == 0xfc) return true; // fc00::/7
+      if (b[0] == 0xfe && (b[1] & 0xc0) == 0x80) return true; // fe80::/10
+      return false;
+    }
+    return true;
+  }
+
+  /// Kiểm tra tên miền gốc: https, host công khai, không userinfo/query/fragment.
   static bool isValidPublicUrl(String? url) {
     if (url == null) return false;
     final normalized = normalizeUrl(url);
@@ -705,41 +840,56 @@ class QrUrlBuilder {
     final uri = Uri.tryParse(normalized);
     if (uri == null) return false;
     if (uri.scheme != 'https') return false;
+    if (!uri.hasAuthority) return false;
+    if (uri.userInfo.isNotEmpty) return false;
+    if (uri.hasQuery || uri.hasFragment) return false;
 
     final host = uri.host.toLowerCase();
-    if (host.isEmpty ||
-        host == 'localhost' ||
-        host == '127.0.0.1' ||
-        host.startsWith('192.168.') ||
-        host.startsWith('10.')) {
-      return false;
+    if (host.isEmpty || !host.contains('.')) return false;
+    if (host == 'localhost' || host.endsWith('.')) return false;
+    for (final suffix in _blockedHostSuffixes) {
+      if (host.endsWith(suffix)) return false;
     }
+
+    final ip = _parseIpBytes(host);
+    if (ip != null) return !_isBlockedIp(ip);
+
+    // Tên miền: nhãn cuối (TLD) phải có chữ cái, chặn dạng số/hex lạ (0x7f.1).
+    final labels = host.split('.');
+    if (labels.any((l) => l.isEmpty)) return false;
+    if (!RegExp(r'[a-z]').hasMatch(labels.last)) return false;
+    if (labels.last.startsWith('0x')) return false;
     return true;
   }
 
-  static String formatQrUrl(String baseUrl, String channelCode) {
-    var trimmed = baseUrl.trim();
-    if (trimmed.contains('{code}')) {
-      return trimmed.replaceAll('{code}', channelCode);
+  /// Tên miền gốc hiệu lực: rỗng -> mặc định; không hợp lệ -> null.
+  static String? resolveBaseUrl(String? customBaseUrl) {
+    final custom = (customBaseUrl ?? '').trim();
+    if (custom.isEmpty) return defaultBaseUrl;
+    final normalized = normalizeUrl(custom);
+    return isValidPublicUrl(normalized) ? normalized : null;
+  }
+
+  /// Dựng link QR từ tên miền ĐÃ LƯU + mã kênh. Trả null khi không hợp lệ.
+  static String? build({String? customBaseUrl, String? channelCode}) {
+    final code = (channelCode ?? '').trim();
+    if (code.isEmpty) return null;
+    final base = resolveBaseUrl(customBaseUrl);
+    if (base == null) return null;
+    final uri = Uri.parse(base);
+    final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+    if (segments.isNotEmpty && segments.last == 'goi-mon') {
+      segments.removeLast();
     }
-    while (trimmed.endsWith('/')) {
-      trimmed = trimmed.substring(0, trimmed.length - 1);
-    }
-    if (trimmed.contains('/#')) {
-      trimmed = trimmed.substring(0, trimmed.indexOf('/#'));
-    }
-    // Giữ nguyên /pos nếu là base path deploy; chỉ loại bỏ subpath trùng
-    final subpathsToStrip = ['/goi-mon', '/menu', '/qr_order'];
-    for (final sub in subpathsToStrip) {
-      if (trimmed.endsWith(sub)) {
-        trimmed = trimmed.substring(0, trimmed.length - sub.length);
-        break;
-      }
-    }
-    while (trimmed.endsWith('/')) {
-      trimmed = trimmed.substring(0, trimmed.length - 1);
-    }
-    return '$trimmed/goi-mon/?code=$channelCode';
+    segments.add('goi-mon');
+    segments.add(''); // dấu / cuối: .../goi-mon/?code=...
+    return Uri(
+      scheme: 'https',
+      host: uri.host,
+      port: uri.hasPort ? uri.port : null,
+      pathSegments: segments,
+      queryParameters: {'code': code},
+    ).toString();
   }
 }
 
