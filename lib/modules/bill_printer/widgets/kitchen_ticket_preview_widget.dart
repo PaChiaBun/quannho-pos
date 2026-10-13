@@ -1,3 +1,4 @@
+import '../utils/paper_sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/kitchen_ticket_template_provider.dart';
@@ -14,7 +15,7 @@ class KitchenTicketPreviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final widthFactor = tpl.paperSize == '58mm' ? 0.7 : 0.88;
+    final widthFactor = paperSpecOf(tpl.paperSize).kitchenPreview;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),

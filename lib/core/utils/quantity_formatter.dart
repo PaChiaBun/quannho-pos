@@ -44,22 +44,39 @@ String fmtDelta(num delta, String unit, {int maxDecimals = 3}) {
 String reasonLabel(String reason) {
   switch (reason) {
     case 'receive':
-    case 'purchase':       return 'Nhập kho';
+    case 'purchase':
+      return 'Nhập kho';
     case 'adjust':
-    case 'adjustment':     return 'Hiệu chỉnh';
-    case 'sale':           return 'Bán hàng';
-    case 'recipe_usage':   return 'Xuất công thức';
-    case 'production':     return 'Sản xuất';
-    case 'return':         return 'Hoàn trả';
-    case 'waste':          return 'Hao hụt';
-    case 'expired':        return 'Hết hạn';
-    case 'spill':          return 'Đổ vỡ';
-    case 'loss':           return 'Mất / thất thoát';
-    case 'stock_count':    return 'Kiểm kê';
-    case 'damaged':        return 'Hư hỏng';
-    case 'transfer':       return 'Chuyển kho';
-    case 'reconciliation': return 'Bù hoàn kho';
-    default:               return reason;
+    case 'adjustment':
+      return 'Hiệu chỉnh';
+    case 'sale':
+      return 'Bán hàng';
+    case 'recipe_usage':
+      return 'Xuất công thức';
+    case 'production':
+      return 'Sản xuất';
+    case 'production_output':
+      return 'Nhập thành phẩm';
+    case 'return':
+      return 'Hoàn trả';
+    case 'waste':
+      return 'Hao hụt';
+    case 'expired':
+      return 'Hết hạn';
+    case 'spill':
+      return 'Đổ vỡ';
+    case 'loss':
+      return 'Mất / thất thoát';
+    case 'stock_count':
+      return 'Kiểm kê';
+    case 'damaged':
+      return 'Hư hỏng';
+    case 'transfer':
+      return 'Chuyển kho';
+    case 'reconciliation':
+      return 'Bù hoàn kho';
+    default:
+      return reason;
   }
 }
 
@@ -85,9 +102,19 @@ double convertRecipeIngredientQty(
     // Khối lượng cơ sở (gram)
     if (const {'g', 'gr', 'gram', 'gam', 'grm'}.contains(s)) return 'g';
     // Khối lượng lớn (kilogram)
-    if (const {'kg', 'ký', 'ky', 'kí', 'ki', 'kilogram', 'kilo'}.contains(s)) return 'kg';
+    if (const {'kg', 'ký', 'ky', 'kí', 'ki', 'kilogram', 'kilo'}.contains(s))
+      return 'kg';
     // Thể tích cơ sở (milliliter)
-    if (const {'ml', 'mililit', 'mililít', 'mili lit', 'mili lít', 'milliliter', 'cc'}.contains(s)) return 'ml';
+    if (const {
+      'ml',
+      'mililit',
+      'mililít',
+      'mili lit',
+      'mili lít',
+      'milliliter',
+      'cc',
+    }.contains(s))
+      return 'ml';
     // Thể tích lớn (liter)
     if (const {'l', 'lit', 'lít', 'liter', 'litre'}.contains(s)) return 'lít';
     return s;
@@ -153,23 +180,55 @@ double convertFnbUnit(
   String productUnit, {
   num conversionRate = 0,
   String conversionUnit = '',
-}) =>
-    convertRecipeIngredientQty(
-      qty,
-      recipeUnit,
-      productUnit,
-      conversionRate: conversionRate,
-      conversionUnit: conversionUnit,
-    );
+}) => convertRecipeIngredientQty(
+  qty,
+  recipeUnit,
+  productUnit,
+  conversionRate: conversionRate,
+  conversionUnit: conversionUnit,
+);
 
+/// Giá vốn chọn để tính công thức: ưu tiên giá nhập gần nhất (>0), không có thì giá vốn nhập tay.
+/// Cả hai đều tính theo ĐƠN VỊ KHO của sản phẩm.
+double effectiveUnitCost(num costLatest, num costPrice) =>
+    costLatest > 0 ? costLatest.toDouble() : costPrice.toDouble();
 
+/// Giá vốn của 1 ĐƠN VỊ CÔNG THỨC, từ giá vốn theo đơn vị kho.
+/// Dùng đúng hàm quy đổi như trừ kho nên số lượng và giá vốn luôn khớp nhau.
+/// VD: kho "gói" giá 50.000, 1 gói = 1000 g → công thức "gram" = 50 đ/g.
+double recipeUnitCost({
+  required num costPerStockUnit,
+  required String recipeUnit,
+  required String productUnit,
+  num conversionRate = 0,
+  String conversionUnit = '',
+}) {
+  final stockPerRecipeUnit = convertRecipeIngredientQty(
+    1,
+    recipeUnit,
+    productUnit,
+    conversionRate: conversionRate,
+    conversionUnit: conversionUnit,
+  );
+  return costPerStockUnit.toDouble() * stockPerRecipeUnit;
+}
 
 /// Chuẩn hóa đơn vị (alias g/gram, kg/ký, ml/cc, lít/l...) — dùng chung cho cảnh báo đơn vị.
 String _normUnit(String u) {
   final s = u.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   if (const {'g', 'gr', 'gram', 'gam', 'grm'}.contains(s)) return 'g';
-  if (const {'kg', 'ký', 'ky', 'kí', 'ki', 'kilogram', 'kilo'}.contains(s)) return 'kg';
-  if (const {'ml', 'mililit', 'mililít', 'mili lit', 'mili lít', 'milliliter', 'cc'}.contains(s)) return 'ml';
+  if (const {'kg', 'ký', 'ky', 'kí', 'ki', 'kilogram', 'kilo'}.contains(s))
+    return 'kg';
+  if (const {
+    'ml',
+    'mililit',
+    'mililít',
+    'mili lit',
+    'mili lít',
+    'milliliter',
+    'cc',
+  }.contains(s))
+    return 'ml';
   if (const {'l', 'lit', 'lít', 'liter', 'litre'}.contains(s)) return 'lít';
   return s;
 }

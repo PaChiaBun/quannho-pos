@@ -3,6 +3,152 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-13 — Đơn giản hóa module QR Gọi Món (code xong, SQL CHƯA áp dụng, app CHƯA chạy thử thật)
+
+### ✅ Đã làm
+- Rà soát toàn bộ `lib/modules/qr_order/` + SQL QR V4; kế hoạch ở `ke-hoach-don-gian-hoa-qr.md`, hợp đồng RPC ở `.docs/qr-rpc-contract-don-gian.md`.
+- **Quyết định mới:** khách tự chọn số bàn (TABLE); bỏ QR bàn giao động và màn quét camera; hàng chờ chung; một nút duyệt ("Duyệt & gửi bếp" / "Đã thu tiền & gửi bếp", quầy cần `pos.checkout`); trạng thái chỉ 6 giá trị (`submitted, claimed, sent_kitchen, rejected, expired, cancelled`).
+- **Web khách:** chọn bàn (nhóm khu vực, tìm kiếm), lưu đơn theo kênh để reload không mất, khóa chống trùng bám giỏ+bàn, polling có cờ chống chồng/đếm lỗi, hết hạn theo `expires_at` server, trang lỗi cho link sai.
+- **App nhân viên:** repository/model/provider/sheet duyệt/hàng chờ viết lại; bàn có đơn QR vẫn mở bàn bình thường; xóa ~870 dòng `_checkoutLegacyUnused` và nhánh `NO_POS_TOKEN`.
+- **Màn "Mã QR":** một màn hai thẻ (Tại bàn/Mang đi), công tắc gắn `channel.isActive`; `QrUrlBuilder` là nguồn dựng link duy nhất (mặc định `https://quannho.lpm.vn/pos`, chặn dải riêng tư); một mẫu poster A5/A4; xóa 6 file tab/in thừa.
+- **SQL (chỉ là file):** `supabase/migrations/20261013_qr_order_simple_v4.sql`, `rollback_qr_order_simple_v4.sql`, `supabase/tests/qr_simple_v4_test.sql`. Có khối preflight fail-closed.
+- Kiểm tra: `dart analyze` module QR chỉ còn 1 lỗi (file scanner chờ xóa); `flutter test` 2 file QR: 26/26 đạt.
+
+### 📱 Thử trên Sunmi V3 (13/10, quán Bò Đen Trà Quán, bản debug cài đè)
+- Build/cài/chạy được; Trang chủ, Bàn, Bán hàng không lỗi runtime. Đã bật module "QR Gọi Món" cho quán Bò Đen để thử (Chủ Quán cho phép) — có thể tắt lại trong Trang chủ → Sửa.
+- Sửa: nút/huy hiệu QR ở màn Bàn và việc poll hàng chờ chỉ chạy khi quán bật module (`qrModuleEnabledProvider`), trước đó quán không dùng QR vẫn thấy dấu "!" đỏ.
+- Sửa: server chưa có hàm QR (PGRST202/42883/42P01) giờ báo "Máy chủ chưa được cập nhật tính năng này" thay vì "Lỗi kết nối mạng".
+- Màn "Mã QR" hiển thị đúng (2 thẻ, không QR giả, nút In khóa khi kênh chưa bật). Gạt công tắc báo đúng lỗi vì production chưa có `manage_qr_channel_v4`.
+- Chưa thử được: đặt đơn → duyệt → gửi bếp → in phiếu bếp Sunmi (cần staging có SQL mới). Còn dải debug "RIGHT OVERFLOWED BY 8.9 PIXELS" ở nhãn "Có khách" thẻ bàn (code cũ, chưa sửa).
+
+### 🧪 Kiểm thử SQL QR trên bản sao cục bộ + bản sao VPS (13/10 chiều)
+- Kiểm tra chỉ-đọc production (Chủ Quán chạy `db-audit/qr_preflight_readonly.sql`): PG 17.6, `pgcrypto` ở `extensions`, id bàn text, `ban_sessions.table_id` uuid, `kitchen_tickets.session_id` cho NULL; hàm V5/send_kitchen_v2/convert_recipe có sẵn; chưa có bảng/hàm QR.
+- Phát hiện: **production không có bảng `product_topping_links`** dù màn Kho/Bàn đang đọc/ghi (lỗi bị nuốt). Migration QR giờ tự tạo (cột khớp app, không có `store_id`, anon không đụng được).
+- Phát hiện lỗi có sẵn: `verify_staff_qr_membership_v4` tham chiếu cột không tồn tại `stores.owner_id` → người không thuộc quán gọi RPC V5/QR bị lỗi 42703 thay vì PERMISSION_DENIED. Migration QR có kèm bản sửa (chỉ bỏ `OR owner_id = v_uid`, giữ nguyên quyền EXECUTE).
+- Test bắt được lỗi trong migration QR của chính tôi: `lpad('100',2,'0')` cắt còn `'10'` → mã mang đi trùng từ đơn thứ 100/ngày. Đã sửa.
+- Dữ liệu thật: có bàn trong `ban_dining_tables` có id không đúng dạng uuid (preflight cảnh báo) → các bàn đó không duyệt/gửi bếp được qua QR (trả TABLE_NOT_FOUND). CHƯA biết quán/số bàn nào — cần đếm trước khi bật QR cho khách.
+- Bản sao cục bộ (PG 17 + schema production 07/10 + fix09): migration áp được; `qr_simple_v4_test.sql` T0–T11 TẤT CẢ PASS. Đua thật 2–3 phiên song song: mỗi đơn chỉ 1 người nhận được; duyệt lặp 4 lần/đơn vẫn đúng 1 order + 1 vé bếp, nhiều đơn dùng chung 1 phiên bàn mở.
+- Trên bản sao VPS (`db-fix/qr_stage_dryrun.sh`): migration áp thành công; test cần chạy lại sau các sửa mới. CHƯA áp lên production.
+
+### ✅ Chạy thử trên BẢN SAO DỮ LIỆU THẬT (VPS, 13/10 ~14:30; production không bị thay đổi)
+- `db-fix/qr_stage_dryrun.sh` (pg_dump chỉ đọc → database tạm `qr_stage` → áp migration → test → xóa): migration áp thành công; `qr_simple_v4_test.sql` T0–T12 TẤT CẢ PASS trên bản sao dữ liệu thật; cục bộ (PG17 + schema production) cũng PASS. `qr_stage` đã xóa; xác nhận production vẫn chưa có bảng/hàm QR.
+- Bàn id sai dạng uuid: chỉ 1/507 bàn — `sys-table-takeaway` ("Mang đi", khu `sys-zone-pos`) của quán Kay, là bàn hệ thống POS. Migration lọc bàn không có id uuid khỏi danh sách bàn cho khách chọn và hàm tra cứu bàn; test T12 kiểm tra.
+- Lỗi test (không phải migration) đã sửa: đọc tồn kho dưới vai `authenticated` bị RLS `products` của production chặn → dùng hàm SECURITY DEFINER `_qrt_stock`.
+- CHƯA áp production. Còn: script áp có backup + hoàn tác, Chủ Quán xác nhận.
+
+### 🚀 ĐÃ ÁP MIGRATION QR LÊN PRODUCTION + THỬ LUỒNG THẬT (13/10 ~14:35–14:45)
+- `APPLY=1 SKIP_BACKUP=1 bash db-fix/qr_ap_dung.sh` (Chủ Quán quyết định không backup): áp thành công, kiểm tra sau áp ĐẠT (12 RPC, anon đúng 4, RLS bật). Production: 12 hàm QR, bảng `qr_channels/qr_requests/qr_request_items/qr_pickup_counters/product_topping_links`; `verify_staff_qr_membership_v4` đã hết lỗi `owner_id`. Hoàn tác: `ROLLBACK=1 bash db-fix/qr_ap_dung.sh`. KHÔNG có backup trước khi áp.
+- Thử thật quán Bò Đen: Sunmi V3 gạt công tắc "Tại bàn" → tạo kênh `TBL_A102030CD510`, hiện QR + link; web khách (chạy cục bộ trỏ backend thật) → chọn Bàn 1 → gọi Bạc Tẩy Xỉu Phé 35.000đ → server có đúng 1 `qr_requests`; Sunmi hiện đơn ở hàng chờ + Bàn 1 viền vàng "⚡ QR"; mở đơn → "DUYỆT & GỬI BẾP" → đơn `sent_kitchen`, có phiên bàn mở Bàn 1, 1 order, 1 phiếu bếp ("Bàn 1 / Ngoài Trời", status cho), món `da_gui`; trang khách tự đổi sang "Quán đang chuẩn bị món cho bạn".
+- DỮ LIỆU THỬ CÒN LẠI ở Bò Đen: 1 phiên bàn mở ở Bàn 1 (1 món Bạc Xỉu 35.000đ), 1 phiếu bếp, 1 order. Cần thanh toán/đóng bàn Bàn 1 hoặc dọn.
+- Lỗi tìm ra khi thử & đã sửa trong code: (1) web: link khách `/goi-mon/?code=` bị Splash `pushReplacementNamed('/auth')` thay mất trang → `onGenerateInitialRoutes` mở thẳng trang gọi món (`lib/main.dart`); (2) Bàn: thẻ bàn không đổi "Có khách" ngay sau khi duyệt → thêm `ref.invalidate(activeSessionsProvider)`.
+- CHƯA làm: build + deploy bản web mới lên `quannho.lpm.vn/pos` (bản đang chạy là bản CŨ, link khách trên production chưa dùng được bản mới); thử COUNTER (thu tiền + gửi bếp); thử in phiếu bếp trên Sunmi; thử khách tải lại trang khi đơn đang chờ; dải debug "RIGHT OVERFLOWED" ở nhãn "⚡ QR" thẻ bàn (chỉ debug, màn hẹp).
+
+### 🛍️ THỬ LUỒNG MANG ĐI (13/10 ~14:47–14:56, quán Bò Đen, production)
+- Sunmi gạt "Mang đi" → kênh `CTR_0356AAAB52BC`; web khách (cục bộ, backend thật) mở "Gọi món mang đi tại quầy" (không có bước chọn bàn) → gọi Sâm Dứa Sữa Đá Bào 25.000đ → khách thấy mã **#Q01** + "Vui lòng ra quầy thanh toán"; server có đúng 1 request `submitted/unpaid`, CHƯA có order/phiếu bếp (đúng quy tắc: thu tiền trước bếp).
+- Sunmi (màn Bán hàng): huy hiệu "⚡ QR (1)" → hàng chờ → mở đơn "Mang đi #Q01 – CHƯA THANH TOÁN" (Tiền mặt/Chuyển khoản) → "ĐÃ THU TIỀN & GỬI BẾP": request `sent_kitchen/paid/cash`; order `completed` 25.000đ (1 dòng); `finance_records` income 25.000 cash; phiếu bếp "Mang đi #Q01 / Mang đi" (cho); trừ kho theo công thức: 4 nguyên liệu `recipe_usage` (Sâm Dứa Châu Thành −0,111 chai; Sữa Đặc Ngôi Sao −0,033 hộp; Sữa Tươi Không Đường −0,089 hộp; Đá/chai/bao/ly… −1 gói). Trang khách: "Đơn đã vào bếp", #Q01.
+- `app_logs`: app gửi lệnh in phiếu bếp thành công (`_dispatchPrint` Result: true) — 14:43 đơn bàn (IN BAR + IN BẾP), 14:55 đơn mang đi (IN BẾP). Chưa xác nhận giấy in ra thực tế (Chủ Quán kiểm tra).
+- Sửa chữ lặp "Mang đi • Mang đi #Q01" ở hàng chờ.
+- Dữ liệu thử còn lại ở Bò Đen: phiên Bàn 1 mở (1 Bạc Xỉu 35.000đ) + order/phiếu bếp; đơn mang đi #Q01 đã thu 25.000đ tiền mặt (ghi thu thật) + kho nguyên liệu đã trừ.
+
+### 🔐 THU HỒI QUYỀN `anon` DẦN DẦN — PHA 0 + 1a ĐÃ ÁP (13/10 ~15:15, có backup `/root/quannho-backups/quannho_before_anon0_20261013_151524.dump`)
+- Audit: anon được GRANT ghi (INSERT/UPDATE/DELETE) trên ~52 bảng, nhưng RLS bật ở cả 68 bảng và 5 bảng thanh toán (`payment_settlements`, `ban_session_orders`, `ban_session_order_items`, `qr_audit_logs`, `qr_coupon_redemptions`) ĐÃ cô lập theo `current_store_id()` (không phải USING(true) như lo ngại). Điểm yếu thật: danh tính lấy từ header `x-store-id` / `x-user-id` do máy khách tự gửi (có thể giả) khi không có JWT → ai biết UUID quán + UUID thành viên có thể ghi dữ liệu quán đó bằng khóa công khai. Thu hồi ngay sẽ làm hỏng bản app cũ (xem sự cố FIX 11, 10/10).
+- PHA 0 (không đổi hành vi): bảng `anon_write_audit` + trigger mức câu lệnh `qn_anon_write_audit` trên 49 bảng; chỉ ghi nhận câu lệnh GHI của vai `anon` (bảng, thao tác, jwt_role, có header user/store không, x-client-info), không lưu nội dung; trigger lỗi không làm hỏng ghi thật. Xem kết quả: `REPORT=1 bash db-fix/anon_pha0_ap_dung.sh`. Hoàn tác: `ROLLBACK=1 bash db-fix/anon_pha0_ap_dung.sh`.
+- PHA 1a: `stock_movements_sync` (0 dòng, không có trong code) bị mở ALL cho public USING(true) → bỏ 2 chính sách mở + thu hồi quyền anon/authenticated.
+- KẾ HOẠCH CÁC PHA SAU (chỉ làm khi bản ghi nhận cho thấy không còn máy nào dùng): Pha 1b `store_roles` SELECT public USING(true) (460 dòng, đọc được vai trò mọi quán) → cô lập theo quán; Pha 2 thu hồi quyền ghi anon từng bảng có 0 lần ghi trong quan sát; Pha 3 bỏ `x-user-id` khỏi `qn_caller_id()` (chỉ tin JWT) khi không còn anon có header; cuối cùng thu hồi quyền anon trên `orders`, `store_members`. Quan sát tối thiểu 7 ngày gồm cuối tuần và cả máy thu ngân Windows của quán Kay.
+
+### 🔑 SỰ CỐ ĐĂNG XUẤT HÀNG LOẠT 17:02 (13/10) + ĐỔI THỜI HẠN ACCESS TOKEN 12h → 30 NGÀY
+- Triệu chứng: nhân viên (chủ yếu iPhone dùng web POS tại quán Kay) bị đăng xuất cùng lúc ~17:02 VN; 36–46 lần đăng nhập lại trong vài phút; 1 lần `verify_user_login_v4` lỗi 500 (statement timeout) do máy chủ tải cao.
+- Bằng chứng (CHƯA xác nhận trực tiếp hạn token): 401 (JWT hết hạn/không hợp lệ, không phải 403 của RLS) rải rác cả ngày rồi dồn thành đợt lớn 17:02; `gateway.env` sửa lần cuối 13/09 18:00 VN (đúng 30 ngày trước); token kiểu cũ không refresh sống 30 ngày; không có thay đổi cấu hình/khởi động lại/thu hồi phiên trong 6h; 55/56 phiên refresh còn hiệu lực. Không có dấu vết liên quan Pha 0 / QR.
+- Quyết định Chủ Quán: access token 30 ngày. `services/pos_jwt_auth_service.py` `get_token_policy()`: `access_ttl` mặc định 2592000, trần 2592000 (trước: 43200, trần 86400; đổi bằng env không được vì trần 24h). Test `test/backend/test_pos_refresh_token.py` cập nhật. Đã triển khai: backup `/root/quannho-backups/pos_jwt_auth_service.py.bak_<giờ>`, thay file, `kill -HUP` gunicorn (nạp lại êm). Chỉ token CẤP MỚI (đăng nhập lại) mới sống 30 ngày; token đang dùng giữ hạn cũ.
+- Đánh đổi: token bị lộ dùng được tới khi hết hạn; thu hồi tức thì chỉ bằng đổi JWT secret (đăng xuất tất cả). Refresh token 30 ngày vẫn giữ.
+- Hoàn tác: chép lại file backup lên `/var/www/quannho/services/pos_jwt_auth_service.py` rồi `kill -HUP $(systemctl show pos-jwt-gateway -p MainPID --value)`.
+- Còn lại: tải máy chủ cao (quán Kay ~315 yêu cầu/phút + một bản app cũ spam `qr_requests` 400 ~12/phút); `Control server error: Permission denied: /var/www/.gunicorn` trong log gunicorn (không ảnh hưởng worker, cần xem riêng).
+
+### 🌐 TRIỂN KHAI WEB POS MỚI LÊN `quannho.lpm.vn/pos` (13/10 ~18:13 giờ VN)
+- Phạm vi (Chủ Quán chọn): TOÀN BỘ thư mục hiện tại, gồm cả các phần chưa commit ngoài QR (máy in/luật in, Kho chuyên nghiệp, sửa đăng nhập: bản release dùng máy chủ chính thức, ghi log chế độ auth, tự thử lại khi máy chủ quá tải) + QR mới.
+- Build: `flutter build web --release --base-href "/pos/" --no-tree-shake-icons --dart-define=POS_JWT_AUTH_URL=https://quannho.lpm.vn`. `dart analyze lib` 0 lỗi; `flutter test` 602 đạt / 8 bỏ qua / 3 thất bại KHÔNG liên quan QR (2 test chấm công lệch câu thông báo; 1 test golden trợ lý AI Bum) — có sẵn từ trước.
+- Triển khai: backup `/var/www/quannho/pos_backup_20261013_181323`, thay `/var/www/quannho/pos`. HOÀN TÁC: `cd /var/www/quannho && mv pos pos_bad && cp -a pos_backup_20261013_181323 pos && chown -R www-data:www-data pos`.
+- Lỗi tìm ra trước khi lên web: link QR `https://quannho.lpm.vn/pos/goi-mon/?code=…` (KHÔNG có `#`) — Flutter web mặc định chỉ đọc phần sau `#` nên khách sẽ rơi vào màn đăng nhập. Sửa `lib/main.dart` `_customerLaunchPage`: trên web xét thêm `Uri.base.path`. Đã thử cục bộ (link không `#` mở đúng trang khách) và trên production.
+- Kiểm tra sau triển khai: `https://quannho.lpm.vn/pos/goi-mon/?code=TBL_A102030CD510` giữ nguyên địa chỉ, gọi `get_qr_menu_v4` → 200 (menu thật); `https://quannho.lpm.vn/pos/` → `#/auth` (đăng nhập nhân viên bình thường).
+- Lưu ý: ổ đĩa VPS 91% (còn 4,8 GB); thư mục `/var/www/quannho` có ~19 bản `pos_backup_*` (~52 MB/bản) có thể dọn bớt. Người dùng đang mở web cũ cần tải lại trang (Cloudflare/service worker có thể giữ bản cũ vài phút).
+- CHƯA làm: build/phát hành bản Android/Windows/iOS mới (nhân viên dùng app cài sẵn vẫn là bản cũ).
+
+### 🖼️ SỬA LỖI KHÔNG TẢI ĐƯỢC ẢNH MÓN + TỰ NÉN + DỌN ẢNH RÁC (13/10 chiều)
+- Nguyên nhân gốc (2 lỗi chồng nhau): (1) kho `product-images` KHÔNG tồn tại trên máy chủ tự dựng (chỉ có `staff-photos`; `supabase/create_product_images_bucket.sql` chưa từng chạy) → mọi lần tải lỗi 400 (29/09–06/10); (2) nginx vhost `lpm.vn` không có `client_max_body_size` → mặc định 1 MB → ảnh điện thoại 2–5 MB lỗi 413. Chính sách cũ chỉ cho vai `authenticated` tải lên trong khi đa số máy chạy `anon`.
+- Quyết định Chủ Quán: cho tải bất kỳ kích thước, SAU ĐÓ tự nén nhỏ + dọn ảnh rác.
+- Đã làm trên máy chủ: (a) `20261013_product_images_bucket.sql`: kho `product-images` (public đọc, trần 50 MB, jpeg/png/webp); INSERT cho anon+authenticated nhưng tên tệp phải đúng `<uuid>.(jpg|jpeg|png|webp)`; DELETE chỉ authenticated; không UPDATE. Rollback: `rollback_product_images_bucket.sql`. (b) nginx `/etc/nginx/sites-enabled/lpm.vn` khối `/supabase/` thêm `client_max_body_size 50m;` (backup `/root/quannho-backups/lpm.vn.nginx.bak_*`). (c) Bộ nén `services/image_optimizer.py` cài ở `/opt/quannho-image-optimizer` (venv + Pillow riêng), systemd: `quannho-img-compress.timer` mỗi 5 phút (ảnh > 200 KB → cạnh dài ≤ 1024 px, JPEG q78, GHI ĐÈ cùng tên nên link không đổi; PNG trong suốt giữ PNG; EXIF xoay đúng), `quannho-img-gc.timer` hằng ngày 03:30 (BÁO CÁO ảnh không được `products.image_url/image_path`/`recipes.image_url` tham chiếu và > 48 giờ; chốt chặn: không xóa nếu không đọc được danh sách tham chiếu, mỗi lần tối đa 30% kho).
+- BẬT XÓA RÁC THẬT (hiện mới BÁO CÁO): sửa `/etc/systemd/system/quannho-img-gc.service` dòng ExecStart thành `... image_optimizer.py gc --delete` rồi `systemctl daemon-reload`. Xem báo cáo: `journalctl -u quannho-img-gc.service`.
+- Kiểm tra đầu cuối trên máy chủ thật: anon tải ảnh 12,6 MB qua `https://quannho.lpm.vn` → 200; tên sai định dạng → bị chặn; anon xóa → bị chặn; bộ nén 12.936 KB → 208 KB, link công khai giữ nguyên, trả JPEG 1024×731; ảnh mới không bị GC coi là rác (48h). Đã xóa ảnh thử.
+- App: `ProductImageService.prepareForUpload` nén (≤1024 px, JPEG q80, PNG trong suốt dán nền trắng) TRƯỚC khi tải; test `test/core/product_image_compress_test.dart` 3/3. Cần phát hành bản app/web mới để có lớp này (máy chủ đã nén thay cho bản cũ). Đã gỡ khóa Gemini ghi cứng (không dùng) khỏi mã nguồn — khóa đã lộ trong các bản trước, NÊN THU HỒI trên Google.
+- Test mới `test/backend/test_image_optimizer.py` 8/8 (cần Pillow).
+- Phát hiện: 6 món có `image_url` trỏ `cibaxqrvfotglpobxxlw.supabase.co` (Supabase Cloud ĐÃ XÓA) → ảnh hỏng; cần tải lại ảnh.
+
+### 🧹 BẬT DỌN ẢNH RÁC 00:00 + XÓA 6 MÓN HỎNG ẢNH + GỠ KHÓA GEMINI + WEB MỚI (13/10 tối)
+- Dọn ảnh rác: BẬT XÓA THẬT, chạy hằng ngày **00:00 giờ Việt Nam** (`quannho-img-gc.timer`, `OnCalendar=*-*-* 00:00:00 Asia/Ho_Chi_Minh`, `ExecStart=... image_optimizer.py gc --delete`). LUẬT XÓA (mã trong `services/image_optimizer.py`, có test): chỉ kho `product-images`; chỉ tên `<uuid>.(jpg|jpeg|png|webp)` (tệp lạ không xóa); không món nào (kể cả món xóa mềm) / công thức nào tham chiếu `image_url`/`image_path`/`recipes.image_url`; tồn tại > 48 giờ; phải đọc được danh sách tham chiếu và `products` không rỗng; tối đa 30% kho mỗi lần (tối thiểu 20); mỗi tệp đã xóa ghi `/var/lib/quannho-image-optimizer/deleted.log`. Xem: `journalctl -u quannho-img-gc.service`. Tắt xóa: bỏ `--delete` trong `/etc/systemd/system/quannho-img-gc.service` rồi `systemctl daemon-reload`.
+- Xóa mềm 6 món quán Kay có link ảnh trỏ Supabase Cloud đã xóa (`is_deleted=true, is_active=false`; giữ lịch sử bán): bánh Canh, banh ngot, bún Bò, com tam, hu tiu Tom hum, tra sua. Hoàn tác: `UPDATE products SET is_deleted=false, is_active=true WHERE id IN (...)` (ids: 498365cb…, 9e485425…, 8c2a7943…, c2dce5c4…, d6f0dd22…, 88e2a4bc…).
+- Khóa Gemini ghi cứng: đã gỡ khỏi mã nguồn và bản build (0 chỗ còn 'AIza'). Khóa vẫn còn trong LỊCH SỬ git và các bản đã phát hành → NÊN THU HỒI trên Google.
+- Triển khai web mới 20:08 (giờ VN): backup `/var/www/quannho/pos_backup_20261013_200856`; gồm nén ảnh phía app, link QR không `#`, menu QR ẩn nguyên liệu. Kiểm tra: link QR giữ địa chỉ, `get_qr_menu_v4` 200. Test: 605 đạt / 8 bỏ qua / 3 lỗi cũ không liên quan (2 chấm công, 1 golden AI Bum).
+
+### ⚠️ Chưa làm / rủi ro
+- **Chưa áp SQL lên bất kỳ DB nào**, chưa kiểm cú pháp bằng Postgres. Phải chạy preflight + `qr_simple_v4_test.sql` trên staging trước (phụ thuộc V5 prerequisites, settle V5, fix09, `send_kitchen_ticket_v2`).
+- Giả định schema chưa xác minh: cột tên bàn `name`/`label` (Dart đang đọc `ban_dining_tables.name`), `kitchen_tickets.session_id` cho NULL, kiểu `modifiers_json`, RLS `store_members`.
+- Chưa xóa: `lib/modules/qr_order/widgets/qr_scanner_dialog.dart` (đang là lỗi biên dịch duy nhất), `lib/core/services/pos_device_token_service.dart`; chưa gỡ `mobile_scanner` khỏi `pubspec.yaml`.
+- Test SQL trong `test/core/qr_order_v4_test.dart` (~880-910) còn đọc file SQL V4 cũ.
+- Lỗ hổng sẵn có ngoài phạm vi: V5 prerequisites cấp SELECT cho anon trên `qr_audit_logs`/`payment_settlements`/`ban_session_orders`; fallback `action_perms_cashier` trong `verify_staff_qr_membership_v4` áp cho mọi vai trò.
+- Sao lưu trước khi sửa: `../_backup_qr_20261013`.
+
+### ➡️ Tiếp theo
+- Xóa 2 file chờ xóa, chạy preflight/test SQL trên staging, thử 2 điện thoại nhân viên + 1 khách, rồi pilot KAY. Production chỉ sau backup/rollback và xác nhận của Chủ Quán.
+
+---
+
+## 2026-10-10 (17:45 +07) — Máy in linh hoạt (Máy In & Luật In), Sunmi V3, sửa bill/lẫn mẫu giữa các quán, sự cố FIX 11 [CODE CHƯA COMMIT/PHÁT HÀNH — XEM MỤC "CHƯA LÀM"]
+
+### 🔧 Sự cố vận hành 08/10 (đã xử lý)
+- ✅ Máy thu ngân KAY báo `Failed host lookup cibaxqrv…supabase.co`: máy chạy bản Windows rất cũ trỏ Supabase Cloud đã xóa. Log cho thấy bill thanh toán và in luôn 1–1 đến 13:04 rồi dừng khi máy đăng xuất; không phải lỗi máy in. Đã cài bản mới (GitHub run #81, commit `0734ce1`) và đưa lên web `QuanNhoPOS-latest.exe` + `latest.apk` (backup file cũ trong `/root/quannho-backups/web-download/`).
+- ✅ Gửi duyệt: Android 1.0.2 (11) lên Play (bản 10 đã được duyệt); iOS **1.0.3 (12)** lên App Store (Waiting for Review 08/10 14:42; 1.0.2 đã đóng nên phải đổi 1.0.3). Build iOS phải ép chứng chỉ Distribution đúng (có 2 chứng chỉ trùng tên).
+- ⚠️ Máy chủ in chạy Windows chậm hơn sau FIX 05b: trung vị bill từ 1,4–3,2 giây (07/10) lên 11–34 giây (08/10) vì Realtime không tới, chỉ còn quét 15 giây. Đã sửa quét 3 giây trong code (`_kPrintPollSeconds`), CHƯA phát hành.
+- ✅ Sửa báo thành công giả khi in phiếu bếp qua IP (`_printRawKitchenDirect` bỏ qua kết quả lỗi).
+
+### 🖨️ Thiết kế "Máy In & Luật In" (tách máy in – luật in – mẫu in)
+- Tài liệu: `ke-hoach-thiet-ke-may-in-linh-hoat.md` (kèm khảo sát Toast/Square/Lightspeed/Loyverse/Sapo; chưa tìm được tài liệu chính thức KiotViet/iPOS).
+- Code mới `lib/modules/bill_printer/routing/`: `PrintSetup/PrinterEntry/PrintRule`, `PrintRouter` (luật khớp đầu tiên; ưu tiên rồi độ cụ thể), `legacyToPrintSetup`. Lưu trong `app_settings` (khóa `qn_printer_profile_v2`, trường `printSetup`), chưa cần migration. Chưa có thiết lập mới => chạy y như 4 trạm cũ.
+- Nối vào `StationPrinterDispatcher.effectiveSettings/applyPrintSetup`, `PrintCoordinator`, in bếp ở `ban_screen`, in báo cáo, `hasAnyEnabledPrinter`.
+- Luật trỏ máy in loại thiết bị không in được (Sunmi trên Windows) => bỏ qua, rơi sang luật kế tiếp; máy in bị tắt thì luật vẫn thắng. Máy in gắn thiết bị khác (`ownerDeviceId`) không dùng được.
+- Hình thức phục vụ suy từ tên bàn (`serviceTypeOfBill`: Mang về/Giao/tại bàn); chưa nhận diện QR.
+- UI `print_rules_screen.dart` (ô mới "Máy In & Luật In" trong In Hoá Đơn): tab Máy in, Luật in, Thiết bị, Xem trước đường đi. Tab Thiết bị chọn "Máy này in bill ra", tự dựng từ 4 trạm cũ khi chọn lần đầu (có hộp xác nhận), không nhân đôi công tắc máy chủ in.
+- Đã test giao diện trên web (quán Bò Đen) và trên V3; mọi lần thử đều không bấm Lưu trừ cấu hình thử trên V3 (quán Bò Đen có 1 máy in "may in sumi" + 2 luật).
+- Chống in trùng V3 ↔ máy chủ in Windows: CHƯA làm. Dữ liệu thật: `orders.device_id` trống, `receipt_printed` chưa ai dùng. Thiết kế: khóa nguyên tử bằng `UPDATE … WHERE receipt_printed=false`, chỉ bật khi quán có luật gắn thiết bị.
+
+### 📱 Sunmi V3 (kết nối USB/adb, bản APK thử cài thẳng)
+- Máy: SUNMI V3, Android 13 (SUNMI OS), dịch vụ in tích hợp `woyou.aidlservice.jiuiv5`, đầu in 384 điểm (~48 mm), giấy 50 mm, `READY`.
+- Gói in `printing` KHÔNG liệt kê máy in trên Android (`MissingPluginException listPrinters`) nên bill không bao giờ ra nếu không có driver Sunmi.
+- Driver `drivers/sunmi_builtin_driver.dart` (gói `sunmi_printer_plus ^4.1.1`, thêm `image ^4.8.0`): in bằng ảnh, tự co về 384 điểm, đen trắng thuần ở luồng nền (hết nhoè do máy tự đổi xám); `bindingPrinter/initPrinter` của gói là hàm rỗng nên kiểm tra bằng `getStatus`.
+- Tùy chọn mỗi máy in: khổ giấy, **tỉ lệ cỡ chữ** (bố cục dàn rộng `48/tỉ lệ` mm rồi co về giấy), **độ đậm 1–5** (ngưỡng 100/135/165/190/215), công tắc chữ bán đậm. Có 3 nút in thử trên tab Thiết bị: in thử, so sánh độ đậm, so sánh độ dày chữ.
+- **Cấu hình chốt (đã thử bằng ảnh giấy thật):** Mật độ in của hệ thống Sunmi 80% (mặc định 100% làm nét đậm loe), độ đậm 3, chữ Bold (bán đậm mặc định TẮT), tỉ lệ chữ ~75%.
+- Sửa trình bày bill: dòng TỔNG CỘNG/HÓA ĐƠN tự co và canh giữa, cách tên món – số lượng, dòng "Powered by Quán Nhỏ POS" có khoảng đệm 14pt trên/dưới, đẩy giấy 6 dòng. Chờ ảnh xác nhận lần cuối.
+- Sửa bấm lặp: nút "In hoá đơn" bị chạm nhầm ngay sau in tự động (log `Manual POS receipt reprint` cách 0,7 giây); thêm hộp xác nhận nếu bấm trong 8 giây.
+- Danh sách khổ giấy dùng chung `utils/paper_sizes.dart`: 50mm, 58mm, 80mm, A5, A4 (bill); 50/58/80 (phiếu bếp).
+- Gõ tiếng Việt: V3 chỉ có bàn phím Latin gốc, cần cài Gboard/Laban Key từ CH Play.
+
+### 🔒 Lẫn dữ liệu giữa các quán và kiểm tra DB
+- **Lỗi gốc bill Bò Đen in thông tin KAY:** mẫu bill, mẫu phiếu bếp, lịch sử mẫu lưu trên máy bằng khóa chung; quán mới chưa có mẫu trên server lấy nhầm bản của quán trước. Đã sửa: gắn nhãn quán (`utils/template_cache_policy.dart`), cấu hình in gắn `storeId`, lịch sử mẫu theo quán. Mất mạng vẫn dùng bản lưu cũ.
+- Mẫu số/ký hiệu hóa đơn mặc định rỗng (trước là `1/001`, `1C26TAA`), ẩn khi trống; nhãn bill có dấu đầy đủ.
+- DB thật: RLS bật và cô lập theo `store_id` ở các bảng bill; 0 dòng lẻ loi; mẫu "Quán bữa trưa" có `1C26TAA` lạc (không phải thông tin KAY).
+- **FIX 11** (`supabase/migrations/20261010_fix11_*`, `db-fix/fix11_ap_dung.sh`): thu hồi quyền `anon` trên 8 bảng bill + dọn mẫu lạc. Chủ Quán áp lúc 15:31, **gây sự cố**: máy chủ in KAY (Windows POS) báo `permission denied` mỗi 15 giây vì chạy `anon` + header `x-user-id` (không có JWT). Hoàn tác lúc 15:38 (quyền `anon` trả lại; mẫu "Quán bữa trưa" cũng về bản gốc). Test của FIX 11 thiếu ca "anon có header", phải bổ sung trước khi áp lại.
+- Gốc rễ: bản chạy trên máy chỉ xin JWT khi build có `--dart-define=POS_JWT_AUTH_URL`; thiếu thì âm thầm dùng anon, không có Realtime (gửi bếp chậm: đo 5,8 giây và 9,7 giây; bill 3,1 giây). Đã sửa: bản release luôn dùng máy chủ chính thức (`pos_jwt_auth_service.dart`) + log chế độ xác thực `[Auth] REST/Realtime dung POS JWT|anon key`.
+
+### 🧪 Kiểm thử
+- `flutter test test/modules`: 147 test đạt (routing, áp luật, JSON, khổ giấy, cô lập quán, làm nét ảnh, độ đậm). `test/core` còn 2 test cũ lỗi từ trước ở `attendance_location_config_test.dart` (thông báo bán kính), không liên quan.
+- `dart analyze lib`: không lỗi.
+
+### 🔲 Chưa làm / đang chờ
+1. **Commit + push và build Windows cho KAY** (Chủ Quán chưa đồng ý commit). Không đưa vào commit: 3 file iOS do Xcode tự sửa, file tạm, `.claude/launch.json` ở thư mục cha, build output. `pubspec.yaml` đang `1.0.3+12` (iOS build kế tiếp phải ≥ 13).
+2. Cài bản Windows mới, đăng xuất rồi đăng nhập lại, kiểm tra log `[Auth] … POS JWT` và độ trễ gửi bếp; sau đó mới áp lại FIX 11 (kèm test anon + header).
+3. Chống in trùng V3 ↔ Windows (khóa `receipt_printed`), phiếu bếp/bar qua Sunmi, driver LAN ESC/POS đúng cơ chế (bill qua IP hiện chỉ mở cổng rồi hiện hộp thoại in).
+4. Migration FIX 06 (đồng bộ ghi chú phiếu bếp) vẫn chưa áp; FIX 05c, snapshot bill lúc bán, `claim_token` chủ in còn đọc được bởi mọi thành viên quán.
+5. Phát hành lại Android/iOS với các sửa mới.
+
 ## 2026-10-07 (21:50 +07) — Khóa Chặt Database Theo Từng Quán (FIX 01–05a) & Sửa Lỗi Mất/Lệch Ghi Chú Món Giữa Các Máy [FIX 01–05a ĐÃ ÁP — 05b CHƯA LÀM]
 
 ### 🔒 Đợt khóa database buổi sáng (script trong `../db-fix/`, migration trong `supabase/migrations/20261007_*`)
@@ -66,6 +212,19 @@
 - **Màn Kiểm kê kho** (`stock_count_screen.dart`) và **Ghi hao hụt** (`stock_waste_screen.dart`): mở từ 2 nút trên thanh tiêu đề Kho Chuyên Nghiệp. Hao hụt hỗ trợ nhập theo đơn vị quy cách (vd ml cho lon sữa), lý do: Đổ bỏ / Hết hạn / Hư hỏng / Đổ vỡ / Mất.
 - **Server (migration `20261008_fix10_kiem_ke_hao_hut.sql` + `_ROLLBACK.sql`)**: bảng `stock_counts`, `stock_count_items` (trước đó KHÔNG tồn tại trên DB thật), RPC `confirm_stock_count_v1` (áp chênh lệch lên tồn hiện tại → bán hàng xen giữa lúc đếm không bị ghi đè; idempotent) và `record_stock_waste_v1` (nguyên tử). Đã chạy thử trong transaction rồi ROLLBACK: kiểm kê đúng (đếm 3,5, bán 0,5 xen giữa → tồn 3,0), xác nhận lần 2 không đổi, hao hụt đúng, số lượng sai/quán khác bị từ chối. **ĐÃ áp lên DB thật (08/10, Chủ Quán tự chạy; backup `quannho_before_fix10.dump`) và ĐÃ deploy web (backup `pos_backup_20261008_004143.tar.gz`). Test thật trên quán demo ĐẠT:** ghi hao hụt 100 ml (=0,1 gói, lý do Hết hạn) → tồn -0,015 → -0,115; kiểm kê đếm 5 gói → bút toán `stock_count` +5,115, tồn = 5, phiên `confirmed` 2 mục.
 - Lưu ý: tab Nguyên liệu của Kho CN chỉ hiện loại 'ingredient'/'semi_finished', ẩn hàng 'purchased' — món vừa là nguyên liệu vừa bán lẻ (lon sữa) nên đặt loại phù hợp hoặc mở rộng bộ lọc.
+
+### 💰 Kho Chuyên Nghiệp: sửa giá vốn công thức sai đơn vị (10/10, chỉ sửa client, chưa đụng DB)
+- **Lỗi:** `fetchRecipes` chỉ chia 1000 khi kho tính kg/lít, bỏ qua `conversion_rate` → nguyên liệu kho "gói/lon/hộp" có quy cách bị tính cả giá gói cho mỗi gram (sai ~1000 lần) ở danh sách/chi tiết/dashboard/lệnh sản xuất; form dùng công thức khác và chỉ lấy `cost_price` (lệch `cost_price_latest`). Mở Sửa rồi Lưu mang số sai đi tiếp.
+- **Sửa:** `recipeUnitCost` + `effectiveUnitCost` trong `quantity_formatter.dart` (dùng đúng hàm quy đổi như trừ kho); `RecipeIngredientModel` giữ giá theo đơn vị kho + quy cách, `lineCost` tính qua hàm chung; form, `production_logs`, `getMaxServings`, `checkStock`, hoàn kho khi hủy đơn (`pos_repository.dart`) đều dùng cùng bộ quy đổi. Test mới `test/core/recipe_unit_cost_test.dart`.
+- **Còn lại:** RPC `complete_pos_sale_v1` vẫn ghi `order_items.cost_price` = giá của chính món (cần migration riêng, báo trước khi áp); đường `deductIngredients` cũ ở `pos_repository.dart`/`ban_screen.dart` cần xác minh còn chạy hay không (nguy cơ trừ kho 2 lần). 2 test cũ `attendance_location_config_test` lệch câu chữ, không liên quan.
+
+### 🏭 Kho Chuyên Nghiệp: lệnh sản xuất CỘNG thành phẩm vào kho (10/10, FIX 11 — ĐÃ ÁP lên DB thật 10/10 ~18:27, backup `quannho_before_fix11_20261010_112551.dump` trên VPS)
+- **Lỗi:** `completeProductionOrder` chỉ trừ nguyên liệu, không cộng thành phẩm (cốt trà đen pha từ trà luôn tồn 0/âm); chạy ở client đọc-rồi-ghi, lỗi trừ kho bị nuốt nhưng lệnh vẫn thành `done`; công thức đã xóa vẫn bấm done được.
+- **Sửa:** migration `20261010_fix11_lenh_san_xuat_cong_thanh_pham.sql` (+ `_ROLLBACK.sql`): RPC `complete_production_order_v1` (khóa lệnh, idempotent, trừ NL có quy đổi + hao phí, ghi `production_logs`, cộng thành phẩm = serving_size × số mẻ vào sản phẩm gắn công thức nếu là `semi_finished`/`ingredient`, ghi `production_output`, cập nhật `cost_price_latest` bình quân gia quyền). App gọi RPC; chưa có migration thì quay về cách cũ và báo rõ. Form công thức: thêm đơn vị g/ml, hiển thị "mỗi mẻ nhập bao nhiêu vào kho" + cảnh báo lệch đơn vị.
+- **Đã thử (Postgres tạm trên máy, schema giả lập, ROLLBACK):** 2 mẻ cốt trà (mỗi mẻ 1000 g trà = 2 gói, ra 16 lít) → trà −4 gói, cốt +32.000 ml, giá vốn cốt 9,4375 đ/ml; chạy lại không trừ/cộng thêm; quán khác bị từ chối. **Chưa chạy trên DB thật.**
+- **Áp thật + test thật trên Sunmi V3 (quán Bò Đen Trà Quán, mã thử "Cot Tra Den"):** chạy thử trong transaction rồi ROLLBACK sạch, sau đó COMMIT; hàm `complete_production_order_v1` có trên DB. Lệnh thử #1 hoàn thành TRƯỚC khi áp (cách cũ): chỉ trừ 2 gói trà. Lệnh thử #2 SAU khi áp: app báo "Đã nhập 16000 ml Cot Tra Den vào kho"; DB: `production` −2 gói trà, `production_output` +16000 ml, tồn Cot Tra Den = 16000 ml, `cost_price_latest` = 8,5 đ/ml, `production_logs` 1000 g / 136.000đ. Hệ quả dữ liệu thử: Trà Đen Hoa Trân bị trừ tổng 4 gói (tồn −29,994, vốn đã âm từ trước), cần kiểm kê/bù.
+- **Dữ liệu quán Bò Đen (10/10, theo yêu cầu Chủ Quán):** đổi nguyên liệu "Trà Đen Hoa Trân" → "Cot Tra Den" (giữ nguyên số ml và hao phí) ở 3 công thức: Trà Tắc 550 ml, Trà Sữa Hong Kong 200 ml, Trà Sữa Bơ Đậu Phộng 100 ml. Giá trị cũ lưu ở `supabase/migrations/20261010_data_tra_den_sang_cot_ROLLBACK_data.csv` (muốn hoàn tác: đặt lại `ingredient_id` theo cột `ingredient_id` của 3 dòng `id` trong file).
+- **Cách thiết lập trà đen:** Trà Đen Hoa Trân (gói, 1 gói = 500 g) + "Cốt trà đen" (bán thành phẩm, ml) gắn công thức "Cốt trà đen" (1 mẻ = 16 lít ← 1000 g trà); món Trà Tắc dùng 550 ml cốt.
 
 ### ➡️ Tiếp theo
 1. Lưu log lần áp FIX 04 (nếu còn).

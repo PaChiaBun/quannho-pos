@@ -892,13 +892,26 @@ bool profileJsonBelongsToOtherStore(String json, String storeId) {
 
 class PrinterConfig {
   final String name; // printer name or IP
-  final String type; // 'system' | 'network'
+  final String type; // 'system' | 'network' | 'sunmi'
   final bool enabled;
+
+  /// Bề rộng trang in (mm) do luật in/máy in quy định; null = theo khổ giấy của mẫu thiết kế.
+  /// Không lưu xuống DB (chỉ dùng khi in).
+  final double? paperMm;
+
+  /// Độ đậm nét chữ (1–5) cho máy in in bằng ảnh; không lưu xuống DB.
+  final int darkness;
+
+  /// Dùng chữ đậm nét "bán đậm" khi in bằng ảnh (chống bết nét trên máy in nhiệt nhỏ); không lưu DB.
+  final bool softBold;
 
   const PrinterConfig({
     required this.name,
     required this.type,
     this.enabled = false,
+    this.paperMm,
+    this.darkness = 3,
+    this.softBold = false,
   });
 
   Map<String, dynamic> toMap() => {
@@ -913,11 +926,21 @@ class PrinterConfig {
     enabled: map['enabled'] as bool? ?? false,
   );
 
-  PrinterConfig copyWith({String? name, String? type, bool? enabled}) =>
+  PrinterConfig copyWith({
+    String? name,
+    String? type,
+    bool? enabled,
+    double? paperMm,
+    int? darkness,
+    bool? softBold,
+  }) =>
       PrinterConfig(
         name: name ?? this.name,
         type: type ?? this.type,
         enabled: enabled ?? this.enabled,
+        paperMm: paperMm ?? this.paperMm,
+        darkness: darkness ?? this.darkness,
+        softBold: softBold ?? this.softBold,
       );
 }
 
@@ -930,6 +953,70 @@ bool shouldAutoPrintLocally({
     !isWeb &&
     (!centralRoutingEnabled ||
         (!hasPrintServerOwner && allowPrintServerFallback));
+
+/// Tiền tố id luật "máy này in bill ra".
+const String kDeviceBillRulePrefix = 'device_bill_';
+
+/// Bill thanh toán: in tại máy này nếu in cục bộ như thường lệ, HOẶC máy này có
+/// luật in bill riêng (khi đó máy chủ in sẽ nhường, xem [claimReceiptPrint]).
+bool shouldAutoPrintReceiptLocally({
+  required bool isWeb,
+  required bool centralRoutingEnabled,
+  required bool hasPrintServerOwner,
+  required bool allowPrintServerFallback,
+  required bool deviceOwnsBill,
+}) =>
+    !isWeb &&
+    (deviceOwnsBill ||
+        shouldAutoPrintLocally(
+          isWeb: isWeb,
+          centralRoutingEnabled: centralRoutingEnabled,
+          hasPrintServerOwner: hasPrintServerOwner,
+          allowPrintServerFallback: allowPrintServerFallback,
+        ));
+
+/// Giành quyền in bill của một đơn: cập nhật nguyên tử `receipt_printed` false -> true.
+/// Chỉ MỘT máy nhận được true; máy còn lại phải bỏ qua -> không bao giờ in trùng.
+///
+/// Thất bại mở (fail-open): nếu không cập nhật được vì lỗi mạng/quyền (không phải do
+/// máy khác đã giành), trả về true để bill vẫn được in, thà trùng còn hơn mất bill.
+Future<bool> claimReceiptPrint(String orderId) async {
+  try {
+    final client = Supabase.instance.client;
+    final rows = await client
+        .from('orders')
+        .update({'receipt_printed': true})
+        .eq('id', orderId)
+        .eq('receipt_printed', false)
+        .select('id');
+    if (rows.isNotEmpty) return true;
+    // 0 dòng: hoặc máy khác đã giành, hoặc quyền ghi bị chặn. Phân biệt bằng cách đọc lại.
+    final row = await client
+        .from('orders')
+        .select('receipt_printed')
+        .eq('id', orderId)
+        .maybeSingle();
+    if (row != null && row['receipt_printed'] == true) return false;
+    writePrintLog('[Claim] Không giành được và đơn chưa đánh dấu in ($orderId) -> vẫn in.');
+    return true;
+  } catch (e) {
+    writePrintLog('[Claim] Lỗi giành quyền in $orderId: $e -> vẫn in.');
+    return true;
+  }
+}
+
+/// Trả lại quyền in khi in thất bại để máy khác (máy chủ in) in thay.
+Future<void> releaseReceiptPrintClaim(String orderId) async {
+  try {
+    await Supabase.instance.client
+        .from('orders')
+        .update({'receipt_printed': false})
+        .eq('id', orderId)
+        .eq('receipt_printed', true);
+  } catch (e) {
+    writePrintLog('[Claim] Lỗi trả quyền in $orderId: $e');
+  }
+}
 
 const Duration kPrintServerOwnerHeartbeatTtl = Duration(seconds: 45);
 
@@ -1335,6 +1422,23 @@ class StationPrintersState {
     );
   }
 
+  /// Luật riêng "máy này in bill ra" (do màn Máy In & Luật In tạo, id `device_bill_...`).
+  bool _isDeviceBillRule(PrintRule r) =>
+      r.enabled &&
+      r.id.startsWith(kDeviceBillRulePrefix) &&
+      r.jobType == PrintJobType.receipt &&
+      r.targets.isNotEmpty;
+
+  /// Quán có ít nhất một thiết bị tự in bill của mình (ví dụ V3 cầm tay).
+  bool get anyDeviceBillRule => printSetup.rules.any(_isDeviceBillRule);
+
+  /// Thiết bị NÀY có luật in bill riêng -> tự in bill dù quán dùng máy chủ in.
+  bool get deviceOwnsBillPrinting =>
+      currentDeviceId.isNotEmpty &&
+      printSetup.rules.any(
+        (r) => _isDeviceBillRule(r) && r.sourceDeviceIds.contains(currentDeviceId),
+      );
+
   bool get isDesignatedPrintServerDevice =>
       currentDeviceId.isNotEmpty &&
       deviceState.isPrintServer &&
@@ -1699,11 +1803,26 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         ),
       });
     }
-    return _coordinator.processOrderData(
+    // Quán dùng máy chủ in + máy này tự in bill: giành quyền trước để máy chủ nhường.
+    final needClaim = state.centralPrintRoutingEnabled && state.deviceOwnsBillPrinting;
+    if (needClaim && !await claimReceiptPrint(settlementId)) {
+      writePrintLog('[Claim] Bill $settlementId đã được máy khác in -> bỏ qua.');
+      return const PrintDispatchResult({
+        'cashier': StationPrintResult(
+          stationCode: 'cashier',
+          status: StationPrintStatus.skippedNoItems,
+        ),
+      });
+    }
+    final result = await _coordinator.processOrderData(
       orderId: settlementId,
       billData: billData,
       settings: state,
     );
+    if (needClaim && !result.isStationSuccess('cashier')) {
+      await releaseReceiptPrintClaim(settlementId);
+    }
+    return result;
   }
 
   @override
@@ -2977,6 +3096,17 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       );
 
       if (!state.canRunBackgroundPrintServer) return;
+
+      // Có thiết bị tự in bill (V3...): chờ một chút cho máy đó giành trước, rồi giành
+      // quyền; ai giành được thì in. Máy kia tắt/lỗi -> máy chủ in thay sau độ trễ này.
+      if (state.anyDeviceBillRule) {
+        await Future.delayed(const Duration(milliseconds: 2500));
+        if (!await claimReceiptPrint(orderId)) {
+          await _printCache.markOrderPrinted(orderId);
+          writePrintLog('[Claim] Bill $orderId do thiết bị khác in -> máy chủ bỏ qua.');
+          return;
+        }
+      }
 
       await _coordinator.processOrderData(
         orderId: orderId,

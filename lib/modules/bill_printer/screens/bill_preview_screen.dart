@@ -18,6 +18,7 @@ import '../providers/printer_settings_provider.dart';
 import '../../../core/services/thermal_printer_service.dart';
 import '../utils/station_normalizer.dart';
 import '../drivers/sunmi_builtin_driver.dart';
+import '../utils/paper_sizes.dart';
 import '../routing/print_router.dart';
 import '../routing/print_setup.dart';
 
@@ -103,6 +104,15 @@ class GooglePdfFontLoader implements PdfFontLoader {
 class BillPdfGenerator {
   static PdfFontLoader fontLoader = GooglePdfFontLoader();
 
+  /// Font chữ đậm "bán đậm" (SemiBold) cho máy in nhiệt nhỏ; lỗi tải font -> null (dùng Bold thường).
+  static Future<pw.Font?> softBoldFont() async {
+    try {
+      return await PdfGoogleFonts.notoSansSemiBold();
+    } catch (_) {
+      return null;
+    }
+  }
+
   static final _fmt = NumberFormat('#,###', 'vi_VN');
   static String _money(double v) => '${_fmt.format(v.round())}đ';
   static String _fmtDate(DateTime d) {
@@ -133,6 +143,7 @@ class BillPdfGenerator {
     String stationKey = 'cashier',
     pw.Font? customFont,
     pw.Font? customFontBold,
+    double? paperMmOverride,
   }) async {
     final pdf = pw.Document();
     final tpl = await BillBlockTemplate.load(
@@ -141,11 +152,7 @@ class BillPdfGenerator {
     final font = customFont ?? await fontLoader.loadRegular();
     final fontBold = customFontBold ?? await fontLoader.loadBold();
 
-    final paperMm = tpl.paperSize == '58mm'
-        ? 48.0
-        : tpl.paperSize == 'a4'
-        ? 210.0
-        : 70.0;
+    final paperMm = paperMmOverride ?? paperWidthMm(tpl.paperSize);
     final pageFormat = PdfPageFormat(
       paperMm * PdfPageFormat.mm,
       double.infinity,
@@ -178,6 +185,38 @@ class BillPdfGenerator {
       ),
     );
     return pdf.save();
+  }
+
+  /// Một dòng "nhãn ... giá trị" tự co chữ khi quá bề rộng để KHÔNG bị cụt mép giấy.
+  static pw.Widget _fitRow(
+    String label,
+    String value,
+    pw.TextStyle labelStyle,
+    pw.TextStyle valueStyle,
+  ) {
+    return pw.Row(
+      // Canh giữa theo chiều dọc để nhãn và giá trị cùng nằm trên một dòng, không lệch khi cỡ chữ khác nhau.
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      children: [
+        pw.Expanded(
+          flex: 5,
+          child: pw.FittedBox(
+            fit: pw.BoxFit.scaleDown,
+            alignment: pw.Alignment.centerLeft,
+            child: pw.Text(label, style: labelStyle),
+          ),
+        ),
+        pw.SizedBox(width: 4),
+        pw.Expanded(
+          flex: 6,
+          child: pw.FittedBox(
+            fit: pw.BoxFit.scaleDown,
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(value, style: valueStyle),
+          ),
+        ),
+      ],
+    );
   }
 
   // ── Render từng BillBlock → pw.Widget ─────────────────────────────────────
@@ -308,18 +347,11 @@ class BillPdfGenerator {
           final fs = b.cfg<int>('fontSize', 10).toDouble();
           return pw.Column(
             children: [
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    'HÓA ĐƠN',
-                    style: pw.TextStyle(font: fontBold, fontSize: fs + 1),
-                  ),
-                  pw.Text(
-                    '#${bill.orderNumber}',
-                    style: pw.TextStyle(font: fontBold, fontSize: fs + 1),
-                  ),
-                ],
+              _fitRow(
+                'HÓA ĐƠN',
+                '#${bill.orderNumber}',
+                pw.TextStyle(font: fontBold, fontSize: fs + 1),
+                pw.TextStyle(font: fontBold, fontSize: fs + 1),
               ),
               if (b.cfg<bool>('showDate', true))
                 pw.Row(
@@ -484,6 +516,7 @@ class BillPdfGenerator {
                           style: pw.TextStyle(font: font, fontSize: fs - 1),
                         ),
                       ),
+                      pw.SizedBox(width: 6),
                       pw.Text(
                         'x${item.qty}',
                         style: pw.TextStyle(font: font, fontSize: fs - 1),
@@ -564,24 +597,12 @@ class BillPdfGenerator {
                   ],
                 ),
               pw.SizedBox(height: 4),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    'TỔNG CỘNG:',
-                    style: pw.TextStyle(
-                      font: isBold ? fontBold : font,
-                      fontSize: tfs - 2,
-                    ),
-                  ),
-                  pw.Text(
-                    _money(bill.total),
-                    style: pw.TextStyle(
-                      font: isBold ? fontBold : font,
-                      fontSize: tfs,
-                    ),
-                  ),
-                ],
+              _fitRow(
+                'TỔNG CỘNG:',
+                _money(bill.total),
+                // Nhãn và số tiền cùng cỡ chữ => thẳng hàng; quá bề rộng thì tự co.
+                pw.TextStyle(font: isBold ? fontBold : font, fontSize: tfs - 1),
+                pw.TextStyle(font: isBold ? fontBold : font, fontSize: tfs - 1),
               ),
             ],
           );
@@ -787,10 +808,12 @@ class BillPdfGenerator {
   /// Branding line bắt buộc — không thể xoá
   static pw.Widget _brandingPdf(pw.Font font) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(top: 6, bottom: 2),
+      // Chừa khoảng trống phía trên (tách khỏi lời cảm ơn) và phía dưới (để dòng cuối
+      // không nằm sát thanh xé giấy của máy in cầm tay).
+      padding: const pw.EdgeInsets.only(top: 14, bottom: 14),
       child: pw.Column(
         children: [
-          pw.Divider(thickness: 0.3, height: 6, color: PdfColors.black),
+          pw.Divider(thickness: 0.7, height: 10, color: PdfColors.black),
           pw.Text(
             'Powered by Quán Nhỏ POS',
             textAlign: pw.TextAlign.center,
@@ -811,6 +834,7 @@ class BillPdfGenerator {
     String stationKey = 'bepNong',
     pw.Font? customFont,
     pw.Font? customFontBold,
+    double? paperMmOverride,
   }) async {
     final pdf = pw.Document();
     final font = customFont ?? await fontLoader.loadRegular();
@@ -819,7 +843,7 @@ class BillPdfGenerator {
     // Load template chủ quán đã thiết kế
     final tpl = await KitchenTicketTemplate.load(stationKey: stationKey);
 
-    final paperMm = tpl.paperSize == '58mm' ? 48.0 : 70.0;
+    final paperMm = paperMmOverride ?? paperWidthMm(tpl.paperSize);
     final pageFormat = PdfPageFormat(
       paperMm * PdfPageFormat.mm,
       double.infinity,
@@ -1269,6 +1293,15 @@ class StationPrinterDispatcher {
     if (resolved.isEmpty) return _offConfig;
     final printer = resolved.first.printer;
     return PrinterConfig(
+      darkness: printer.darkness,
+      softBold: printer.softBold && printer.kind == PrinterKind.sunmiBuiltin,
+      // Bố cục dàn rộng hơn bề rộng giấy khi "tỉ lệ chữ" < 100% (rồi co về đúng giấy khi in),
+      // nên mọi cỡ chữ trong mẫu nhỏ đi theo cùng tỉ lệ mà không phải chỉnh từng khối.
+      paperMm: (switch (printer.paper) {
+            PaperWidth.mm50 || PaperWidth.mm58 => 48.0, // đầu in 58 mm: 384 điểm ~ 48 mm
+            PaperWidth.mm80 => 70.0,
+          }) /
+          printer.fontScale.clamp(0.5, 1.5),
       name: printer.kind == PrinterKind.sunmiBuiltin ? printer.name : printer.address,
       type: switch (printer.kind) {
         PrinterKind.lan => 'network',
@@ -1372,13 +1405,13 @@ class StationPrinterDispatcher {
           final bytes = await BillPdfGenerator.generateReceipt(
             bill,
             stationKey: 'cashier',
+            paperMmOverride: settings.cashier.paperMm,
+            customFontBold: settings.cashier.softBold
+                ? await BillPdfGenerator.softBoldFont()
+                : null,
           );
           final tpl = await BillBlockTemplate.load(stationKey: 'cashier');
-          final paperMm = tpl.paperSize == '58mm'
-              ? 48.0
-              : tpl.paperSize == 'a4'
-              ? 210.0
-              : 70.0;
+          final paperMm = settings.cashier.paperMm ?? paperWidthMm(tpl.paperSize);
           final format = PdfPageFormat(
             paperMm * PdfPageFormat.mm,
             double.infinity,
@@ -1467,9 +1500,13 @@ class StationPrinterDispatcher {
             final bytes = await BillPdfGenerator.generateKitchenTicket(
               hotBill,
               stationKey: 'bepNong',
+              paperMmOverride: settings.bepNong.paperMm,
+              customFontBold: settings.bepNong.softBold
+                  ? await BillPdfGenerator.softBoldFont()
+                  : null,
             );
             final tpl = await KitchenTicketTemplate.load(stationKey: 'bepNong');
-            final paperMm = tpl.paperSize == '58mm' ? 48.0 : 70.0;
+            final paperMm = settings.bepNong.paperMm ?? paperWidthMm(tpl.paperSize);
             final format = PdfPageFormat(
               paperMm * PdfPageFormat.mm,
               double.infinity,
@@ -1549,9 +1586,13 @@ class StationPrinterDispatcher {
             final bytes = await BillPdfGenerator.generateKitchenTicket(
               barBill,
               stationKey: 'bepBar',
+              paperMmOverride: settings.bepBar.paperMm,
+              customFontBold: settings.bepBar.softBold
+                  ? await BillPdfGenerator.softBoldFont()
+                  : null,
             );
             final tpl = await KitchenTicketTemplate.load(stationKey: 'bepBar');
-            final paperMm = tpl.paperSize == '58mm' ? 48.0 : 70.0;
+            final paperMm = settings.bepBar.paperMm ?? paperWidthMm(tpl.paperSize);
             final format = PdfPageFormat(
               paperMm * PdfPageFormat.mm,
               double.infinity,
@@ -1749,7 +1790,10 @@ class StationPrinterDispatcher {
       return ok;
     }
     if (config.type == 'sunmi') {
-      final r = await SunmiBuiltinDriver.printPdf(bytes);
+      final r = await SunmiBuiltinDriver.printPdf(
+        bytes,
+        threshold: SunmiBuiltinDriver.thresholdForDarkness(config.darkness),
+      );
       writePrintLog('[_dispatchPrint] Sunmi: $r');
       return r.ok;
     }

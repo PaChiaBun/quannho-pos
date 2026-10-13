@@ -76,6 +76,86 @@ void main() {
     });
 
     test(
+      '4b. requestOnboardingJwt tự thử lại khi server trả 503 thoáng qua',
+      () async {
+        final mockToken = createTestJwt(
+          sub: 'user-new-456',
+          tokenUse: 'onboarding',
+        );
+        var calls = 0;
+        final client = MockClient((request) async {
+          calls++;
+          if (calls == 1) {
+            return http.Response(
+              jsonEncode({
+                'success': false,
+                'status': 503,
+                'error': 'AUTH_RPC_UNAVAILABLE',
+              }),
+              503,
+              headers: {'content-type': 'application/json'},
+            );
+          }
+          return http.Response(
+            jsonEncode({
+              'success': true,
+              'status': 200,
+              'onboarding_jwt': mockToken,
+              'user_id': 'user-new-456',
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        });
+        final service = PosJwtAuthService(
+          backendUrl: 'https://quannho.lpm.vn',
+          httpClient: client,
+          authApplier: (token) async {},
+        );
+
+        final result = await service.requestOnboardingJwt(
+          phone: '0912345678',
+          password: 'SecurePassword123',
+        );
+
+        expect(result['success'], isTrue);
+        expect(calls, 2);
+      },
+    );
+
+    test(
+      '4c. requestOnboardingJwt KHÔNG thử lại khi sai mật khẩu (401)',
+      () async {
+        var calls = 0;
+        final client = MockClient((request) async {
+          calls++;
+          return http.Response(
+            jsonEncode({
+              'success': false,
+              'status': 401,
+              'error': 'INVALID_CREDENTIALS',
+            }),
+            401,
+            headers: {'content-type': 'application/json'},
+          );
+        });
+        final service = PosJwtAuthService(
+          backendUrl: 'https://quannho.lpm.vn',
+          httpClient: client,
+          authApplier: (token) async {},
+        );
+
+        final result = await service.requestOnboardingJwt(
+          phone: '0912345678',
+          password: 'SecurePassword123',
+        );
+
+        expect(result['success'], isFalse);
+        expect(calls, 1);
+      },
+    );
+
+    test(
       '4. requestOnboardingJwt handles successful server response',
       () async {
         final mockToken = createTestJwt(

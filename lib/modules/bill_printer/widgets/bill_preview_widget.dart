@@ -1,3 +1,4 @@
+import '../utils/paper_sizes.dart';
 import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -19,8 +20,7 @@ class BillPreviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final widthFactor = tpl.paperSize == '58mm' ? 0.60
-        : tpl.paperSize == 'a4' ? 1.0 : 0.80;
+    final widthFactor = paperSpecOf(tpl.paperSize).billPreview;
     final baseSubtotal = _kSampleItems.fold(0.0, (s, e) => s + e.$2 * e.$3);
     const discount = 15000.0;
     const surcharge = 10000.0;

@@ -583,7 +583,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                           ),
                                           const SizedBox(width: 5),
                                           Text(
-                                            shopName,
+                                            'Quán Nhỏ POS',
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 11,
@@ -597,12 +597,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   },
                                 ),
                                 const SizedBox(width: 6),
-                                Text(
-                                  dateStr,
-                                  style: const TextStyle(
-                                    color: _kWhite60,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w400,
+                                Flexible(
+                                  child: Text(
+                                    dateStr,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: _kWhite60,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                    ),
                                   ),
                                 ),
                               ],

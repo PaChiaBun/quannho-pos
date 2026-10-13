@@ -2,6 +2,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // POS JWT Auth Service — Managing Server-Signed PostgREST JWTs for POS RLS Guard
 // ─────────────────────────────────────────────────────────────────────────────
+import '../utils/app_logger.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -60,6 +61,11 @@ class PosJwtAuthService {
       } catch (_) {}
       return _kDefaultProductionPosJwtUrl;
     }
+    // Bản release trên máy (Windows/Android/iOS) luôn dùng máy chủ chính thức, không phụ thuộc việc
+    // build có truyền --dart-define hay không. Thiếu tham số trước đây khiến máy âm thầm chạy bằng
+    // vai trò anon + header người dùng: không có Realtime (in bếp chậm) và vướng khi khóa quyền anon.
+    // Bản debug/test vẫn trả rỗng để không gọi nhầm máy chủ thật khi phát triển.
+    if (kReleaseMode) return _kDefaultProductionPosJwtUrl;
     return '';
   }
 
@@ -467,6 +473,21 @@ class PosJwtAuthService {
     }
   }
 
+  static bool? _lastLoggedJwtMode;
+
+  /// Ghi log khi chế độ xác thực của thiết bị đổi (jwt <-> anon) để chẩn đoán từ xa:
+  /// máy nào còn chạy anon thì không có Realtime và sẽ mất quyền nếu thu hồi quyền anon.
+  static void _logAuthMode(bool jwt) {
+    if (_lastLoggedJwtMode == jwt) return;
+    _lastLoggedJwtMode = jwt;
+    AppLogger.info(
+      'auth',
+      jwt
+          ? '[Auth] REST/Realtime dung POS JWT (authenticated)'
+          : '[Auth] REST/Realtime dung anon key (chua co POS JWT)',
+    );
+  }
+
   /// Apply token to Supabase REST and Realtime clients atomically (Fail-Closed)
   Future<bool> applyAuthToSupabase(
     String? token, {
@@ -496,6 +517,7 @@ class PosJwtAuthService {
         client.rest.setAuth(SupabaseService.supabaseAnonKey);
         await client.realtime.setAuth(SupabaseService.supabaseAnonKey);
       }
+      _logAuthMode(token != null);
       return true;
     } catch (_) {
       // FAIL-CLOSED: Any exception applying auth returns false
@@ -695,6 +717,46 @@ class PosJwtAuthService {
     required String password,
     String endpointPath = '/api/auth/onboarding-jwt',
     Duration timeoutDuration = const Duration(seconds: 10),
+  }) async {
+    const maxRetries = 2;
+    const retryDelay = Duration(milliseconds: 1500);
+    // Server có thể quá tải thoáng qua (503 / mạng chập chờn): tự thử lại.
+    var res = await _requestOnboardingJwtOnce(
+      phone: phone,
+      password: password,
+      endpointPath: endpointPath,
+      timeoutDuration: timeoutDuration,
+    );
+    for (var i = 0; i < maxRetries && _isTransientAuthFailure(res); i++) {
+      await Future.delayed(retryDelay);
+      res = await _requestOnboardingJwtOnce(
+        phone: phone,
+        password: password,
+        endpointPath: endpointPath,
+        timeoutDuration: timeoutDuration,
+      );
+    }
+    return res;
+  }
+
+  /// Lỗi tạm thời đáng thử lại (không phải sai mật khẩu / chưa cấu hình).
+  static bool isTransientAuthFailure(Map<String, dynamic> res) =>
+      _isTransientAuthFailure(res);
+
+  static bool _isTransientAuthFailure(Map<String, dynamic> res) {
+    if (res['success'] == true) return false;
+    final status = res['status'];
+    final error = res['error'];
+    return error == 'NETWORK_ERROR' ||
+        error == 'AUTH_RPC_UNAVAILABLE' ||
+        (status is int && status >= 500 && error != 'POS_JWT_NOT_CONFIGURED');
+  }
+
+  Future<Map<String, dynamic>> _requestOnboardingJwtOnce({
+    required String phone,
+    required String password,
+    required String endpointPath,
+    required Duration timeoutDuration,
   }) async {
     await clearOnboardingJwt();
     if (!isConfigured) {

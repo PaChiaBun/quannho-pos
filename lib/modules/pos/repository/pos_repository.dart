@@ -705,8 +705,12 @@ class PosRepository {
               ? []
               : await _sb
                     .from('products')
-                    .select('id, unit')
+                    .select('id, unit, conversion_rate, conversion_unit')
                     .inFilter('id', ingIds);
+          final convMap = <String, Map<String, dynamic>>{
+            for (final r in (unitRows as List))
+              (r as Map<String, dynamic>)['id'] as String: r,
+          };
           final unitMap = <String, String>{
             for (final r in (unitRows as List))
               (r as Map<String, dynamic>)['id'] as String:
@@ -721,6 +725,12 @@ class PosRepository {
               actualUsed,
               ing.unit,
               prodUnit,
+              conversionRate:
+                  (convMap[ing.ingredientId]?['conversion_rate'] as num?)
+                          ?.toDouble() ??
+                      0,
+              conversionUnit:
+                  convMap[ing.ingredientId]?['conversion_unit'] as String? ?? '',
             );
 
             // Cộng lại tồn kho

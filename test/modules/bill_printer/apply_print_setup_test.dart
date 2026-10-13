@@ -175,4 +175,75 @@ void main() {
     expect(onOther.cashier.type, 'system');
     expect(onOther.cashier.name, 'IN BILL Ne');
   });
+
+  test('khổ giấy máy in quy định bề rộng trang in (50/58 mm -> 48 mm, 80 mm -> 70 mm)', () {
+    const setup = PrintSetup(printers: [
+      PrinterEntry(id: 'a', name: 'A', kind: PrinterKind.system, address: 'PRN-A', paper: PaperWidth.mm50),
+      PrinterEntry(id: 'b', name: 'B', kind: PrinterKind.system, address: 'PRN-B', paper: PaperWidth.mm80),
+    ], rules: [
+      PrintRule(id: 'r1', name: 'bill', jobType: PrintJobType.receipt,
+          targets: [PrintTarget(printerId: 'a')]),
+      PrintRule(id: 'r2', name: 'bếp', jobType: PrintJobType.kitchenHot,
+          targets: [PrintTarget(printerId: 'b')]),
+    ]);
+    final eff = StationPrinterDispatcher.applyPrintSetup(legacy(setup: setup), bill('A1'));
+    expect(eff.cashier.paperMm, 48.0);
+    expect(eff.bepNong.paperMm, 70.0);
+    // cách cũ (chưa có thiết lập mới) không áp bề rộng: giữ theo mẫu thiết kế
+    expect(StationPrinterDispatcher.applyPrintSetup(legacy(), bill('A1')).cashier.paperMm, isNull);
+  });
+
+  test('tỉ lệ cỡ chữ của máy in: bố cục dàn rộng hơn khi < 100% (chữ nhỏ lại khi co về giấy)', () {
+    PrintSetup withScale(double sc) => PrintSetup(printers: [
+          PrinterEntry(id: 'a', name: 'A', kind: PrinterKind.system, address: 'P', paper: PaperWidth.mm50, fontScale: sc),
+        ], rules: const [
+          PrintRule(id: 'r', name: 'bill', jobType: PrintJobType.receipt,
+              targets: [PrintTarget(printerId: 'a')]),
+        ]);
+    expect(StationPrinterDispatcher.applyPrintSetup(legacy(setup: withScale(1.0)), bill('A1')).cashier.paperMm, 48.0);
+    expect(StationPrinterDispatcher.applyPrintSetup(legacy(setup: withScale(0.8)), bill('A1')).cashier.paperMm, closeTo(60.0, 0.001));
+    // ngoài khoảng cho phép bị chặn 0,5–1,5
+    expect(StationPrinterDispatcher.applyPrintSetup(legacy(setup: withScale(0.1)), bill('A1')).cashier.paperMm, closeTo(96.0, 0.001));
+  });
+
+  test('fontScale lưu/đọc JSON; mặc định 1.0 không ghi ra', () {
+    final p = const PrinterEntry(id: 'a', name: 'A', kind: PrinterKind.lan, fontScale: 0.75);
+    expect(PrinterEntry.fromJson(p.toJson()).fontScale, 0.75);
+    expect(const PrinterEntry(id: 'b', name: 'B', kind: PrinterKind.lan).toJson().containsKey('fontScale'), isFalse);
+    expect(PrinterEntry.fromJson({'id': 'c', 'fontScale': 9}).fontScale, 1.5);
+    // độ đậm: lưu/đọc, mặc định 3 không ghi ra, chặn ngoài 1–5
+    expect(PrinterEntry.fromJson(const PrinterEntry(id: 'd', name: 'D', kind: PrinterKind.lan, darkness: 5).toJson()).darkness, 5);
+    expect(const PrinterEntry(id: 'e', name: 'E', kind: PrinterKind.lan).toJson().containsKey('darkness'), isFalse);
+    expect(PrinterEntry.fromJson({'id': 'f', 'darkness': 99}).darkness, 5);
+    expect(PrinterEntry.fromJson({'id': 'g', 'darkness': -4}).darkness, 1);
+    // chữ bán đậm: mặc định TẮT (Bold + độ đậm 3 là tốt nhất trên Sunmi V3), bật thì lưu ra
+    expect(const PrinterEntry(id: 'h', name: 'H', kind: PrinterKind.lan).softBold, isFalse);
+    expect(const PrinterEntry(id: 'h', name: 'H', kind: PrinterKind.lan).toJson().containsKey('softBold'), isFalse);
+    expect(PrinterEntry.fromJson(const PrinterEntry(id: 'i', name: 'I', kind: PrinterKind.lan, softBold: true).toJson()).softBold, isTrue);
+    expect(PrinterEntry.fromJson({'id': 'j'}).softBold, isFalse);
+  });
+
+  test('chữ bán đậm chỉ áp cho máy in tích hợp Sunmi', () {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    const setup = PrintSetup(printers: [
+      PrinterEntry(id: 'v3', name: 'V3', kind: PrinterKind.sunmiBuiltin),
+      PrinterEntry(id: 'lan', name: 'LAN', kind: PrinterKind.lan, address: '1.2.3.4'),
+    ], rules: [
+      PrintRule(id: 'a', name: 'a', jobType: PrintJobType.receipt, targets: [PrintTarget(printerId: 'v3')]),
+      PrintRule(id: 'b', name: 'b', jobType: PrintJobType.kitchenHot, targets: [PrintTarget(printerId: 'lan')]),
+    ]);
+    final eff = StationPrinterDispatcher.applyPrintSetup(legacy(setup: setup), bill('A1'));
+    expect(eff.cashier.softBold, isFalse); // mặc định dùng Bold
+    expect(eff.bepNong.softBold, isFalse);
+    const withSoft = PrintSetup(printers: [
+      PrinterEntry(id: 'v3', name: 'V3', kind: PrinterKind.sunmiBuiltin, softBold: true),
+      PrinterEntry(id: 'lan', name: 'LAN', kind: PrinterKind.lan, address: '1.2.3.4', softBold: true),
+    ], rules: [
+      PrintRule(id: 'a', name: 'a', jobType: PrintJobType.receipt, targets: [PrintTarget(printerId: 'v3')]),
+      PrintRule(id: 'b', name: 'b', jobType: PrintJobType.kitchenHot, targets: [PrintTarget(printerId: 'lan')]),
+    ]);
+    final eff2 = StationPrinterDispatcher.applyPrintSetup(legacy(setup: withSoft), bill('A1'));
+    expect(eff2.cashier.softBold, isTrue); // bật thì chỉ áp cho Sunmi
+    expect(eff2.bepNong.softBold, isFalse);
+  });
 }

@@ -1053,12 +1053,13 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
           }
           if (!saleResult.isReplay &&
               _billData != null &&
-              shouldAutoPrintLocally(
+              shouldAutoPrintReceiptLocally(
                 isWeb: kIsWeb,
                 centralRoutingEnabled: settings.centralPrintRoutingEnabled,
                 hasPrintServerOwner: hasPrintServerOwner,
                 allowPrintServerFallback:
                     settings.isDesignatedPrintServerDevice,
+                deviceOwnsBill: settings.deviceOwnsBillPrinting,
               )) {
             if (settings.autoPrintCheckout) {
               _lastBillPrintAt = DateTime.now();
@@ -1075,7 +1076,16 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             final unsentItems = cartSnapshot.lines
                 .where((line) => !cartSnapshot.isLineSent(line.lineId))
                 .toList();
-            if (settings.autoPrintKitchen && unsentItems.isNotEmpty) {
+            // Máy chỉ tự in bill riêng (V3) thì phiếu bếp vẫn do máy chủ in lo.
+            final printKitchenHere = shouldAutoPrintLocally(
+              isWeb: kIsWeb,
+              centralRoutingEnabled: settings.centralPrintRoutingEnabled,
+              hasPrintServerOwner: hasPrintServerOwner,
+              allowPrintServerFallback: settings.isDesignatedPrintServerDevice,
+            );
+            if (printKitchenHere &&
+                settings.autoPrintKitchen &&
+                unsentItems.isNotEmpty) {
               await StationPrinterDispatcher.printBill(
                 BillData(
                   shopName: shopName,

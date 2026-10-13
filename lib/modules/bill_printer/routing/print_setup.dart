@@ -38,6 +38,16 @@ class PrinterEntry {
   final String? ownerDeviceId; // máy in gắn vào thiết bị nào (vd Sunmi tích hợp)
   final bool enabled;
 
+  /// Tỉ lệ cỡ chữ khi in ra máy này (0,5–1,5; 1,0 = đúng cỡ chữ trong mẫu). Nhỏ hơn 1 => chữ nhỏ lại.
+  final double fontScale;
+
+  /// Độ đậm nét chữ khi in ảnh (1 = mảnh ... 5 = rất đậm; 3 = vừa). Chỉ có tác dụng với máy in in bằng ảnh.
+  final int darkness;
+
+  /// Chữ đậm dùng nét "bán đậm" (SemiBold) thay vì Bold. Mặc định TẮT: thử trên Sunmi V3 thật
+  /// (Mật độ in 80%) cho thấy Bold + độ đậm 3 là đẹp nhất. Bật nếu máy in khác bị loe nét đậm.
+  final bool softBold;
+
   const PrinterEntry({
     required this.id,
     required this.name,
@@ -49,6 +59,9 @@ class PrinterEntry {
     this.hasCashDrawer = false,
     this.ownerDeviceId,
     this.enabled = true,
+    this.fontScale = 1.0,
+    this.darkness = 3,
+    this.softBold = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -62,6 +75,9 @@ class PrinterEntry {
         'hasCashDrawer': hasCashDrawer,
         if (ownerDeviceId != null) 'ownerDeviceId': ownerDeviceId,
         'enabled': enabled,
+        if (fontScale != 1.0) 'fontScale': fontScale,
+        if (darkness != 3) 'darkness': darkness,
+        if (softBold) 'softBold': true,
       };
 
   factory PrinterEntry.fromJson(Map<String, dynamic> m) => PrinterEntry(
@@ -75,6 +91,9 @@ class PrinterEntry {
         hasCashDrawer: m['hasCashDrawer'] as bool? ?? false,
         ownerDeviceId: m['ownerDeviceId'] as String?,
         enabled: m['enabled'] as bool? ?? true,
+        fontScale: ((m['fontScale'] as num?)?.toDouble() ?? 1.0).clamp(0.5, 1.5),
+        darkness: ((m['darkness'] as num?)?.toInt() ?? 3).clamp(1, 5),
+        softBold: m['softBold'] as bool? ?? false,
       );
 }
 

@@ -10,10 +10,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 import '../providers/printer_settings_provider.dart';
 import '../routing/legacy_print_setup.dart';
-import '../routing/print_router.dart';
 import '../routing/print_setup.dart';
 import '../drivers/sunmi_builtin_driver.dart';
-import 'bill_preview_screen.dart' show StationPrinterDispatcher;
 
 const _kIndigo = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
@@ -55,7 +53,7 @@ class PrintRulesScreen extends ConsumerStatefulWidget {
 
 class _PrintRulesScreenState extends ConsumerState<PrintRulesScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabs = TabController(length: 4, vsync: this);
+  late final TabController _tabs = TabController(length: 2, vsync: this);
   PrintSetup? _draft; // bản đang sửa; null = chưa sửa gì
   bool _saving = false;
 
@@ -137,8 +135,6 @@ class _PrintRulesScreenState extends ConsumerState<PrintRulesScreen>
           tabs: [
             Tab(text: 'Máy in (${setup.printers.length})'),
             Tab(text: 'Luật in (${setup.rules.length})'),
-            const Tab(text: 'Thiết bị'),
-            const Tab(text: 'Xem trước đường đi'),
           ],
         ),
       ),
@@ -152,15 +148,13 @@ class _PrintRulesScreenState extends ConsumerState<PrintRulesScreen>
         ),
         Expanded(
           child: TabBarView(controller: _tabs, children: [
-            _PrintersTab(setup: setup, onChanged: _update),
-            _RulesTab(setup: setup, deviceId: st.currentDeviceId, onChanged: _update),
-            _DeviceTab(
+            _PrintersTab(
               setup: setup,
               state: st,
               onChanged: _update,
               seedFromLegacy: _canSeed(st) ? _legacySeed : null,
             ),
-            _PreviewTab(setup: setup, deviceId: st.currentDeviceId),
+            _RulesTab(setup: setup, deviceId: st.currentDeviceId, onChanged: _update),
           ]),
         ),
       ]),
@@ -233,8 +227,15 @@ class _StatusBanner extends StatelessWidget {
 // ── Tab Máy in ─────────────────────────────────────────────────────────────────
 class _PrintersTab extends StatelessWidget {
   final PrintSetup setup;
+  final StationPrintersState state;
   final ValueChanged<PrintSetup> onChanged;
-  const _PrintersTab({required this.setup, required this.onChanged});
+  final PrintSetup Function()? seedFromLegacy;
+  const _PrintersTab({
+    required this.setup,
+    required this.state,
+    required this.onChanged,
+    required this.seedFromLegacy,
+  });
 
   void _replace(PrinterEntry p) {
     final list = [...setup.printers];
@@ -268,6 +269,13 @@ class _PrintersTab extends StatelessWidget {
       ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
         children: [
+          _ThisDeviceSection(
+            setup: setup,
+            state: state,
+            onChanged: onChanged,
+            seedFromLegacy: seedFromLegacy,
+          ),
+          const SizedBox(height: 16),
           if (setup.printers.isEmpty)
             const _EmptyHint(
               icon: Icons.print_disabled_rounded,
@@ -290,6 +298,8 @@ class _PrintersTab extends StatelessWidget {
                   '${printerKindLabel(p.kind)}'
                   '${p.address.isNotEmpty ? ' • ${p.address}${p.kind == PrinterKind.lan ? ':${p.port}' : ''}' : ''}'
                   ' • ${paperLabel(p.paper)}'
+                  '${p.fontScale != 1.0 ? ' • chữ ${(p.fontScale * 100).round()}%' : ''}'
+                  '${p.kind == PrinterKind.sunmiBuiltin && p.darkness != 3 ? ' • độ đậm ${p.darkness}/5' : ''}'
                   '${p.autoCut ? ' • tự cắt' : ''}${p.hasCashDrawer ? ' • có két' : ''}'
                   '${p.kind == PrinterKind.sunmiBuiltin && !SunmiBuiltinDriver.isSupportedPlatform ? '\nChỉ in được trên thiết bị Sunmi (Android)' : ''}',
                   style: GoogleFonts.outfit(fontSize: 12.5),
@@ -335,6 +345,7 @@ class _PrintersTab extends StatelessWidget {
         id: p.id, name: p.name, kind: p.kind, address: p.address, port: p.port,
         paper: p.paper, autoCut: p.autoCut, hasCashDrawer: p.hasCashDrawer,
         ownerDeviceId: p.ownerDeviceId, enabled: enabled ?? p.enabled,
+        fontScale: p.fontScale, darkness: p.darkness, softBold: p.softBold,
       );
 }
 
@@ -357,6 +368,9 @@ class _PrinterDialogState extends State<_PrinterDialog> {
   late PaperWidth _paper = widget.initial?.paper ?? PaperWidth.mm80;
   late bool _cut = widget.initial?.autoCut ?? true;
   late bool _drawer = widget.initial?.hasCashDrawer ?? false;
+  late double _scale = widget.initial?.fontScale ?? 1.0;
+  late int _darkness = widget.initial?.darkness ?? 3;
+  late bool _softBold = widget.initial?.softBold ?? false;
   String? _err;
 
   @override
@@ -389,6 +403,9 @@ class _PrinterDialogState extends State<_PrinterDialog> {
         hasCashDrawer: _drawer,
         ownerDeviceId: widget.initial?.ownerDeviceId,
         enabled: widget.initial?.enabled ?? true,
+        fontScale: _scale,
+        darkness: _darkness,
+        softBold: _softBold,
       ),
     );
   }
@@ -453,6 +470,52 @@ class _PrinterDialogState extends State<_PrinterDialog> {
               ],
               onChanged: (v) => setState(() => _paper = v ?? _paper),
             ),
+            const SizedBox(height: 8),
+            Text('Tỉ lệ cỡ chữ khi in: ${(_scale * 100).round()}%',
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Slider(
+              value: _scale,
+              min: 0.5,
+              max: 1.2,
+              divisions: 14,
+              label: '${(_scale * 100).round()}%',
+              onChanged: (v) => setState(() => _scale = double.parse(v.toStringAsFixed(2))),
+            ),
+            const Text(
+              'Nhỏ hơn 100% = chữ nhỏ lại, mỗi dòng chứa được nhiều chữ hơn. '
+              'Dùng khi bill bị cụt mép hoặc chữ quá to trên giấy hẹp.',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            if (_kind == PrinterKind.sunmiBuiltin) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Độ đậm nét chữ: ${const ['Rất mảnh', 'Mảnh', 'Vừa', 'Đậm', 'Rất đậm'][_darkness - 1]}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              Slider(
+                value: _darkness.toDouble(),
+                min: 1,
+                max: 5,
+                divisions: 4,
+                label: '$_darkness',
+                onChanged: (v) => setState(() => _darkness = v.round()),
+              ),
+              const Text(
+                'Khuyến nghị cho Sunmi V3: Độ đậm Vừa (3) và hạ "Mật độ in" trong Cài đặt máy in '
+                'của máy xuống 80% (nhiệt cao làm chữ đậm bị loe). Chữ mờ: kéo sang Đậm; chữ bết: kéo về Mảnh.',
+                style: TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Chữ đậm dạng bán đậm'),
+                subtitle: const Text(
+                  'Mặc định tắt (Bold). Bật nếu chữ đậm bị loe, bết nét trên máy in này.',
+                  style: TextStyle(fontSize: 12),
+                ),
+                value: _softBold,
+                onChanged: (v) => setState(() => _softBold = v),
+              ),
+            ],
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Tự cắt giấy'),
@@ -759,27 +822,15 @@ class _RuleDialogState extends State<_RuleDialog> {
   }
 }
 
-// ── Tab Thiết bị ───────────────────────────────────────────────────────────────
-String _platformLabel() {
-  if (kIsWeb) return 'Trình duyệt web';
-  return switch (defaultTargetPlatform) {
-    TargetPlatform.windows => 'Windows',
-    TargetPlatform.android => 'Android',
-    TargetPlatform.iOS => 'iOS',
-    TargetPlatform.macOS => 'macOS',
-    TargetPlatform.linux => 'Linux',
-    _ => 'Khác',
-  };
-}
+// ── Máy này in bill ra + máy in tích hợp (nằm đầu tab Máy in) ───────────────────────
+const _kDeviceRulePrefix = kDeviceBillRulePrefix;
 
-const _kDeviceRulePrefix = 'device_bill_';
-
-class _DeviceTab extends StatelessWidget {
+class _ThisDeviceSection extends StatelessWidget {
   final PrintSetup setup;
   final StationPrintersState state;
   final ValueChanged<PrintSetup> onChanged;
   final PrintSetup Function()? seedFromLegacy;
-  const _DeviceTab({
+  const _ThisDeviceSection({
     required this.setup,
     required this.state,
     required this.onChanged,
@@ -870,6 +921,7 @@ class _DeviceTab extends StatelessWidget {
           kind: PrinterKind.sunmiBuiltin,
           paper: PaperWidth.mm50,
           ownerDeviceId: _deviceId,
+          fontScale: 0.8, // giấy hẹp: mặc định chữ 80% cho vừa
         ),
       ],
       rules: setup.rules,
@@ -897,33 +949,7 @@ class _DeviceTab extends StatelessWidget {
     ];
     final validValue = (current == null || current == '' || selected != null) ? current : null;
 
-    return ListView(padding: const EdgeInsets.all(16), children: [
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Thiết bị này', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16)),
-            const SizedBox(height: 8),
-            _kv('Tên', state.deviceState.deviceName),
-            _kv('Nền tảng', _platformLabel()),
-            _kv('Mã thiết bị', _deviceId.isEmpty ? 'Chưa nhận diện được' : _shortId),
-            _kv(
-              'Máy chủ in',
-              state.canRunBackgroundPrintServer
-                  ? 'Máy này đang là máy chủ in'
-                  : (state.centralPrintRoutingEnabled
-                      ? 'Quán dùng máy chủ in tập trung, máy này không phải máy chủ'
-                      : 'Quán chưa bật máy chủ in tập trung'),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Muốn đổi máy chủ in, vào "Cấu Hình Trạm In" (không đổi ở đây để tránh hai nơi lệch nhau).',
-              style: GoogleFonts.outfit(fontSize: 12, color: Colors.black54),
-            ),
-          ]),
-        ),
-      ),
-      const SizedBox(height: 12),
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -1006,112 +1032,6 @@ class _DeviceTab extends StatelessWidget {
     ]);
   }
 
-  Widget _kv(String k, String v) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(width: 110, child: Text(k, style: GoogleFonts.outfit(color: Colors.black54, fontSize: 13))),
-          Expanded(child: Text(v, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600))),
-        ]),
-      );
-}
-
-// ── Tab Xem trước đường đi ──────────────────────────────────────────────────────
-class _PreviewTab extends StatefulWidget {
-  final PrintSetup setup;
-  final String deviceId;
-  const _PreviewTab({required this.setup, required this.deviceId});
-
-  @override
-  State<_PreviewTab> createState() => _PreviewTabState();
-}
-
-class _PreviewTabState extends State<_PreviewTab> {
-  PrintJobType _job = PrintJobType.receipt;
-  PrintServiceType? _service;
-  bool _thisDevice = true;
-
-  @override
-  Widget build(BuildContext context) {
-    final ctx = PrintContext(
-      serviceType: _service,
-      sourceDeviceId: _thisDevice && widget.deviceId.isNotEmpty ? widget.deviceId : 'thiet-bi-khac',
-    );
-    final res = widget.setup.isEmpty
-        ? const <ResolvedPrint>[]
-        : PrintRouter.resolve(widget.setup, _job, ctx,
-            supportedKinds: StationPrinterDispatcher.kSupportedPrinterKinds);
-    final ideal = widget.setup.isEmpty
-        ? const <ResolvedPrint>[]
-        : PrintRouter.resolve(widget.setup, _job, ctx);
-    final skippedUnsupported = ideal.isNotEmpty &&
-        (res.isEmpty || res.first.ruleId != ideal.first.ruleId) &&
-        ideal.first.printer.kind == PrinterKind.sunmiBuiltin;
-    return ListView(padding: const EdgeInsets.all(16), children: [
-      Text('Chọn một tình huống để xem phiếu sẽ in ra đâu',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 15)),
-      const SizedBox(height: 12),
-      DropdownButtonFormField<PrintJobType>(
-        initialValue: _job,
-        decoration: const InputDecoration(labelText: 'Loại phiếu', filled: true, fillColor: Colors.white),
-        items: [for (final j in PrintJobType.values) DropdownMenuItem(value: j, child: Text(jobTypeLabel(j)))],
-        onChanged: (v) => setState(() => _job = v ?? _job),
-      ),
-      const SizedBox(height: 12),
-      DropdownButtonFormField<PrintServiceType?>(
-        initialValue: _service,
-        decoration: const InputDecoration(labelText: 'Hình thức phục vụ', filled: true, fillColor: Colors.white),
-        items: [
-          const DropdownMenuItem<PrintServiceType?>(value: null, child: Text('Không xác định')),
-          for (final s in PrintServiceType.values)
-            DropdownMenuItem<PrintServiceType?>(value: s, child: Text(serviceTypeLabel(s))),
-        ],
-        onChanged: (v) => setState(() => _service = v),
-      ),
-      SwitchListTile(
-        title: const Text('Thao tác trên thiết bị này'),
-        subtitle: const Text('Tắt = giả lập một thiết bị khác'),
-        value: _thisDevice,
-        onChanged: (v) => setState(() => _thisDevice = v),
-      ),
-      const SizedBox(height: 12),
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: widget.setup.isEmpty
-              ? const Text('Chưa có thiết lập mới nên quán đang in theo 4 trạm cũ.')
-              : res.isEmpty
-                  ? Row(children: const [
-                      Icon(Icons.print_disabled_rounded, color: Colors.redAccent),
-                      SizedBox(width: 10),
-                      Expanded(child: Text('Không in: không có luật nào khớp, hoặc máy in đã tắt / chưa hỗ trợ.')),
-                    ])
-                  : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      if (skippedUnsupported)
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            'Có luật trỏ tới máy in tích hợp (Sunmi) nhưng thiết bị này không in được, '
-                            'nên dùng luật kế tiếp bên dưới.',
-                            style: TextStyle(color: Color(0xFFB45309), fontSize: 12.5),
-                          ),
-                        ),
-                      for (final r in res)
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.print_rounded, color: _kIndigo),
-                          title: Text('${r.printer.name}${r.copies > 1 ? '  ×${r.copies}' : ''}',
-                              style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
-                          subtitle: Text(
-                            '${printerKindLabel(r.printer.kind)} • ${paperLabel(r.printer.paper)}'
-                            '${r.usedFallback ? '\nDùng máy dự phòng' : ''}'
-                            '${r.printer.kind == PrinterKind.sunmiBuiltin && !SunmiBuiltinDriver.isSupportedPlatform ? '\nChỉ in được trên thiết bị Sunmi' : ''}',
-                          ),
-                        ),
-                    ]),
-        ),
-      ),
-    ]);
-  }
 }
 
 class _EmptyHint extends StatelessWidget {

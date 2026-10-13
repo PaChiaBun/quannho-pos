@@ -20,6 +20,7 @@ import '../core/providers/session_provider.dart';
 import '../core/repositories/core_product_repository.dart';
 import '../core/utils/app_logger.dart';
 import 'ban_screen.dart';
+import '../modules/quick_notes/quick_notes.dart';
 import '../modules/kho/providers/kho_providers.dart';
 import '../modules/kho/repository/kho_repository.dart';
 import '../modules/kho/screens/receive_stock_sheet.dart';
@@ -880,6 +881,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                         color: Colors.white, size: 22),
                     onPressed: _openRecentMovements,
                     tooltip: 'Biến động kho gần đây',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.sticky_note_2_outlined,
+                        color: Colors.white, size: 22),
+                    onPressed: () => showQuickNoteManager(context),
+                    tooltip: 'Ghi chú nhanh',
                   ),
                   IconButton(
                     icon: Icon(

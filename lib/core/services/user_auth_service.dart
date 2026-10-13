@@ -561,6 +561,18 @@ class UserAuthService {
           try {
             AppLogger.warning('auth', 'Zero-store onboarding token request failed: ${onbRes['message']}');
           } catch (_) {}
+          if (PosJwtAuthService.isTransientAuthFailure(onbRes)) {
+            return AuthResult.error(
+              'Máy chủ đang bận, vui lòng thử đăng nhập lại sau vài giây.',
+              errorCode: 'SERVER_BUSY',
+            );
+          }
+          if (onbRes['error'] == 'RATE_LIMIT_EXCEEDED' && onbRes['message'] is String) {
+            return AuthResult.error(
+              onbRes['message'] as String,
+              errorCode: 'RATE_LIMIT_EXCEEDED',
+            );
+          }
           return AuthResult.error(
             'Đăng nhập thất bại. Hãy chụp lại báo chủ app.',
             errorCode: 'ONBOARDING_TOKEN_FAILED',

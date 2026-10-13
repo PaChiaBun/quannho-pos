@@ -1,6 +1,7 @@
 // lib/modules/bill_printer/screens/template_gallery_screen.dart
 // Gallery chọn mẫu hoá đơn & phiếu bếp (10-20 mẫu dựng sẵn)
 // ignore_for_file: use_build_context_synchronously
+import '../utils/paper_sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -272,7 +273,9 @@ class _KitchenGalleryTab extends StatelessWidget {
 // ─── Paper size hint ─────────────────────────────────────────────────────────
 String _paperHint(String paperSize) {
   switch (paperSize.toLowerCase()) {
+    case '50mm': return 'Máy POS cầm tay, giấy rất nhỏ';
     case '58mm': return 'Máy in cầm tay, nhỏ gọn';
+    case 'a5':   return 'Máy in văn phòng, khổ vừa';
     case 'a4':   return 'Máy in văn phòng, khổ lớn';
     default:     return 'Máy in quầy, phổ biến nhất';
   }
@@ -430,7 +433,7 @@ class _KitchenPreviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wf = tpl.paperSize == '58mm' ? 0.72 : 0.9;
+    final wf = paperWidthMm(tpl.paperSize) <= 48 ? 0.72 : 0.9;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Center(
