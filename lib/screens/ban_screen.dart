@@ -5052,147 +5052,164 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   const SizedBox(height: 14),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: zoneColor,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            widget.table.label,
-                            style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${widget.session.guestCount} khách',
-                          style: GoogleFonts.outfit(
-                            color: _kNavy.withValues(alpha: 0.5),
-                            fontSize: 13,
-                          ),
-                        ),
-                        const Spacer(),
-                        // Nút Chuyển bàn
-                        GestureDetector(
-                          onTap: _transferTable,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _kAmber.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: _kAmber.withValues(alpha: 0.2),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: zoneColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                widget.table.label,
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
-                            child: Row(
+                            const SizedBox(width: 8),
+                            Text(
+                              '${widget.session.guestCount} khách',
+                              style: GoogleFonts.outfit(
+                                color: _kNavy.withValues(alpha: 0.5),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        // Các nút thao tác bàn: xuống dòng khi màn hẹp (tránh tràn chữ)
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.swap_horiz_rounded,
-                                  size: 14,
-                                  color: _kAmber,
+                                // Nút Chuyển bàn
+                                GestureDetector(
+                                  onTap: _transferTable,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _kAmber.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: _kAmber.withValues(alpha: 0.2),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.swap_horiz_rounded,
+                                          size: 14,
+                                          color: _kAmber,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Chuyển',
+                                          style: GoogleFonts.outfit(
+                                            color: _kAmber,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Chuyển',
-                                  style: GoogleFonts.outfit(
-                                    color: _kAmber,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
+                                const SizedBox(width: 8),
+                                // Nút Gộp bàn
+                                GestureDetector(
+                                  onTap: _mergeTable,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF2563EB,
+                                      ).withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: const Color(
+                                          0xFF2563EB,
+                                        ).withValues(alpha: 0.2),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.merge_type_rounded,
+                                          size: 14,
+                                          color: Color(0xFF2563EB),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Gộp bàn',
+                                          style: GoogleFonts.outfit(
+                                            color: const Color(0xFF2563EB),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: _cancelSession,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _kRed.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: _kRed.withValues(alpha: 0.2),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.cancel_rounded,
+                                          size: 14,
+                                          color: _kRed,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Huỷ bàn',
+                                          style: GoogleFonts.outfit(
+                                            color: _kRed,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Nút Gộp bàn
-                        GestureDetector(
-                          onTap: _mergeTable,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF2563EB,
-                              ).withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(
-                                  0xFF2563EB,
-                                ).withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.merge_type_rounded,
-                                  size: 14,
-                                  color: Color(0xFF2563EB),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Gộp bàn',
-                                  style: GoogleFonts.outfit(
-                                    color: const Color(0xFF2563EB),
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: _cancelSession,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _kRed.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: _kRed.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.cancel_rounded,
-                                  size: 14,
-                                  color: _kRed,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Huỷ bàn',
-                                  style: GoogleFonts.outfit(
-                                    color: _kRed,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
@@ -5402,10 +5419,6 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                       children: [
                                         Row(
                                           children: [
-                                            _KitchenStatusDot(
-                                              status: item.kitchenStatus,
-                                            ),
-                                            const SizedBox(width: 8),
                                             Expanded(
                                               child: Column(
                                                 crossAxisAlignment:
@@ -5436,6 +5449,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                       fontWeight:
                                                           FontWeight.w600,
                                                     ),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  _KitchenStatusDot(
+                                                    status: item.kitchenStatus,
                                                   ),
                                                 ],
                                               ),
@@ -7248,15 +7265,33 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                       size: 22,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'Thu tiền — ${widget.tableName}',
-                      style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: _kNavy,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Thu tiền',
+                            maxLines: 1,
+                            style: GoogleFonts.outfit(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: _kNavy,
+                            ),
+                          ),
+                          Text(
+                            widget.tableName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: _kNavy.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     OutlinedButton.icon(
                       onPressed: _isSubmitting ? null : _printInterimBill,
                       style: OutlinedButton.styleFrom(
