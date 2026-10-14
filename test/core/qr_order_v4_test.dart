@@ -640,7 +640,10 @@ void main() {
         'supabase/migrations/20261013_qr_order_simple_v4.sql',
       );
       expect(migrationFile.existsSync(), isTrue);
-      final sql = migrationFile.readAsStringSync();
+      // Bản chống phá (20261014) thay 3 hàm và thêm rotate_qr_channel_v4: gộp cả hai để kiểm hợp đồng.
+      final antiAbuse = File('supabase/migrations/20261014_qr_chong_pha_v4.sql');
+      expect(antiAbuse.existsSync(), isTrue);
+      final sql = migrationFile.readAsStringSync() + antiAbuse.readAsStringSync();
       final repo = File(
         'lib/modules/qr_order/repository/qr_order_repository.dart',
       ).readAsStringSync();

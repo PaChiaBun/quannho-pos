@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/utils/cart_animation_helper.dart';
 import '../models/qr_order_model.dart';
 import '../repository/qr_order_repository.dart';
+import '../services/qr_ticket_service.dart';
 
 // Bảng màu dùng chung với màn Bán hàng của POS.
 const _kNavy = Color(0xFF1E1C5E);
@@ -127,6 +128,8 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
 
   bool _loading = true;
   String _errorMessage = '';
+  bool _requireTicket = false;
+  String _siteKey = '';
 
   String _storeName = 'Quán Nhỏ';
   String _channelType = _kTable;
@@ -232,6 +235,10 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
         return 'Bàn đã chọn không còn hợp lệ. Vui lòng chọn lại bàn.';
       case QrErrorCode.channelDisabled:
         return 'Quán tạm ngưng nhận đơn qua QR. Vui lòng gọi nhân viên.';
+      case QrErrorCode.channelLocked:
+        return 'Quán tạm ngừng nhận đơn qua mã QR này do có lượt quét bất thường. Vui lòng gọi nhân viên để được hỗ trợ.';
+      case QrErrorCode.ticketInvalid:
+        return 'Cần xác minh bạn là người thật. Vui lòng tải lại trang rồi thử gửi lại.';
       case QrErrorCode.productNotAvailable:
         return 'Có món đã hết hoặc ngừng bán. Vui lòng kiểm tra lại giỏ hàng.';
     }
@@ -263,7 +270,24 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
     final res = await _repo.fetchQrMenu(widget.channelCode);
     if (!mounted) return;
 
+    // Kênh bị khoá do quét phá: menu trả "tạm đóng"; hỏi thêm để hiện đúng lý do.
+    QrRpcResponse<dynamic> shownError = res;
+    if (!res.isSuccess && res.errorCode == QrErrorCode.channelDisabled) {
+      final info = await _repo.fetchChannelInfo(widget.channelCode);
+      if (!mounted) return;
+      if (!info.isSuccess && info.errorCode == QrErrorCode.channelLocked) {
+        shownError = info;
+      }
+    }
+
     if (res.isSuccess && res.data != null) {
+      // Lớp 3: quán có bật xác minh người thật không (lỗi mạng ở bước này không chặn tải menu)
+      final info = await _repo.fetchChannelInfo(widget.channelCode);
+      if (!mounted) return;
+      if (info.isSuccess && info.data != null) {
+        _requireTicket = info.data!.requireTicket;
+        _siteKey = info.data!.turnstileSiteKey;
+      }
       final data = res.data!;
 
       // Món lỗi (thiếu id/tên/giá) bị bỏ qua
@@ -351,7 +375,7 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
     } else {
       setState(() {
         _errorMessage = _errText(
-          res,
+          shownError,
           'Không thể tải thực đơn. Vui lòng kiểm tra kết nối và thử lại.',
         );
         _loading = false;
@@ -1270,12 +1294,28 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
 
     QrRpcResponse<Map<String, dynamic>> res;
     try {
+      String? ticket;
+      if (_requireTicket) {
+        final t = await QrTicketService.fetch(
+          channelCode: widget.channelCode,
+          idempotencyKey: _attemptKey!,
+          siteKey: _siteKey,
+        );
+        if (!mounted) return;
+        if (!t.isOk) {
+          setState(() => _isSubmitting = false);
+          _snack(t.message ?? 'Không xác minh được. Vui lòng thử lại.');
+          return;
+        }
+        ticket = t.ticket;
+      }
       res = await _repo.submitQrOrder(
         channelCode: widget.channelCode,
         items: items,
         tableId: tableId,
         idempotencyKey: _attemptKey,
         payloadHash: payloadHash,
+        ticket: ticket,
       );
     } catch (_) {
       res = QrRpcResponse.error(QrErrorCode.networkError, '');
@@ -1325,6 +1365,12 @@ class _CustomerQrOrderScreenState extends State<CustomerQrOrderScreen> {
     } else {
       setState(() => _submitUnknown = false);
       _snack(_errText(res, 'Không thể gửi đơn hàng. Vui lòng thử lại!'));
+      if (res.errorCode == QrErrorCode.channelLocked) {
+        setState(() {
+          _errorMessage = _errText(res, '');
+          _loading = false;
+        });
+      }
       if (res.errorCode == 'TABLE_REQUIRED' ||
           res.errorCode == 'TABLE_NOT_FOUND') {
         setState(() {

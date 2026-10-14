@@ -25,6 +25,7 @@ import '../core/utils/string_utils.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../modules/qr_order/models/qr_order_model.dart';
 import '../modules/qr_order/providers/qr_order_providers.dart';
+import '../modules/qr_order/widgets/qr_locked_banner.dart';
 import '../modules/qr_order/widgets/qr_order_review_sheet.dart';
 import '../modules/qr_order/widgets/qr_counter_queue_sheet.dart';
 
@@ -138,6 +139,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               child: Column(
                 children: [
                   _buildTopBar(),
+                  const QrLockedBanner(),
                   _buildSearchBar(),
                   Expanded(child: _buildProductArea(productsAsync)),
                 ],
@@ -165,6 +167,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       body: Column(
         children: [
           _buildTopBar(),
+          const QrLockedBanner(),
           _buildSearchBar(),
           Expanded(
             child: productsAsync.when(

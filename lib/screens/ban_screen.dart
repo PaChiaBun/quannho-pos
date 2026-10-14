@@ -43,6 +43,7 @@ import '../modules/pos/models/coupon_model.dart';
 import '../modules/bill_printer/providers/bill_template_provider.dart';
 import '../core/services/vietqr_service.dart';
 import '../modules/qr_order/providers/qr_order_providers.dart';
+import '../modules/qr_order/widgets/qr_locked_banner.dart';
 import '../modules/qr_order/widgets/qr_order_review_sheet.dart';
 import '../modules/qr_order/widgets/qr_counter_queue_sheet.dart';
 import '../modules/qr_order/services/settlement_operation_manager.dart';
@@ -774,54 +775,66 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           child: Container(height: 1, color: const Color(0xFFEEEBE6)),
         ),
       ),
-      body: zonesAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(color: _kNavy)),
-        error: (e, st) {
-          AppLogger.error(
-            'ban_screen',
-            'Tải danh sách khu vực thất bại: $e',
-            e,
-            st,
-          );
-          return const Center(
-            child: Text(
-              'Tải danh sách khu vực thất bại. Hãy chụp lại báo chủ app.',
-            ),
-          );
-        },
-        data: (zones) {
-          if (_cachedZones.length != zones.length || _cachedZones.isEmpty) {
-            _cachedZones = zones;
-          }
-
-          final displayZones =
-              _cachedZones.isNotEmpty && _cachedZones.length == zones.length
-              ? _cachedZones
-              : zones;
-
-          // ── Grid bàn (dùng chung cho cả phone lẫn tablet) ──────────────
-          Widget tableGrid = _buildTableGrid(displayZones);
-
-          // ── Tablet: Two Column ──────────────────────────────────────────
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth > 700) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Cột trái: ZoneTabBar + Grid bàn
-                    Expanded(flex: 3, child: tableGrid),
-                    // Cột phải: Panel tổng quan (fixed 280px)
-                    SizedBox(width: 280, child: _BanRightPanel(zones: zones)),
-                  ],
+      body: Column(
+        children: [
+          const QrLockedBanner(),
+          Expanded(
+            child: zonesAsync.when(
+              loading: () =>
+                  const Center(child: CircularProgressIndicator(color: _kNavy)),
+              error: (e, st) {
+                AppLogger.error(
+                  'ban_screen',
+                  'Tải danh sách khu vực thất bại: $e',
+                  e,
+                  st,
                 );
-              }
-              // Phone: layout cũ, không thay đổi gì
-              return tableGrid;
-            },
-          );
-        },
+                return const Center(
+                  child: Text(
+                    'Tải danh sách khu vực thất bại. Hãy chụp lại báo chủ app.',
+                  ),
+                );
+              },
+              data: (zones) {
+                if (_cachedZones.length != zones.length ||
+                    _cachedZones.isEmpty) {
+                  _cachedZones = zones;
+                }
+
+                final displayZones =
+                    _cachedZones.isNotEmpty &&
+                        _cachedZones.length == zones.length
+                    ? _cachedZones
+                    : zones;
+
+                // ── Grid bàn (dùng chung cho cả phone lẫn tablet) ──────────────
+                Widget tableGrid = _buildTableGrid(displayZones);
+
+                // ── Tablet: Two Column ──────────────────────────────────────────
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth > 700) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Cột trái: ZoneTabBar + Grid bàn
+                          Expanded(flex: 3, child: tableGrid),
+                          // Cột phải: Panel tổng quan (fixed 280px)
+                          SizedBox(
+                            width: 280,
+                            child: _BanRightPanel(zones: zones),
+                          ),
+                        ],
+                      );
+                    }
+                    // Phone: layout cũ, không thay đổi gì
+                    return tableGrid;
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'ban_screen_fab',

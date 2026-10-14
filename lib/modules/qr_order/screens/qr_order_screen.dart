@@ -150,6 +150,48 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen> {
     }
   }
 
+  Future<void> _rotateChannel(String type) async {
+    if (_storeId.isEmpty || _busyTypes.contains(type)) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tạo mã QR mới?'),
+        content: const Text(
+          'Mã QR cũ (đang dán ở quán và có thể đang nằm trong tay người phá) sẽ KHÔNG còn dùng được. '
+          'Các đơn khách đang chờ từ mã cũ sẽ hết hạn.\n\nSau khi tạo, hãy in mã mới và dán thay mã cũ.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Tạo mã mới')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final repo = ref.read(qrOrderRepoProvider);
+    setState(() => _busyTypes.add(type));
+    try {
+      final res = await repo.rotateQrChannel(storeId: _storeId, type: type);
+      if (!mounted) return;
+      if (!res.isSuccess) {
+        _toast(QrErrorCode.toUserMessage(res.errorCode, res.message), error: true);
+      } else {
+        _toast('Đã tạo mã QR mới. Hãy in lại và dán thay mã cũ.');
+      }
+      final fresh = await repo.getChannelByType(storeId: _storeId, type: type);
+      if (!mounted) return;
+      setState(() {
+        if (type == _typeTable) {
+          _tableChannel = fresh ?? (res.isSuccess ? res.data : _tableChannel);
+        } else {
+          _counterChannel = fresh ?? (res.isSuccess ? res.data : _counterChannel);
+        }
+      });
+      ref.invalidate(qrLockedChannelsProvider);
+    } finally {
+      if (mounted) setState(() => _busyTypes.remove(type));
+    }
+  }
+
   /// Link dựng từ giá trị ĐÃ LƯU; null nếu kênh thiếu/tắt hoặc tên miền sai.
   String? _urlFor(QrChannelModel? ch) {
     if (ch == null || !ch.isActive) return null;
@@ -161,6 +203,7 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen> {
 
   String? _reasonFor(QrChannelModel? ch) {
     if (ch == null) return 'Kênh chưa được bật. Gạt công tắc để tạo mã QR.';
+    if (ch.isLocked) return 'Kênh đang bị khoá. Hãy bấm "Tạo mã QR mới".';
     if (!ch.isActive) return 'Kênh đang tắt nên không có mã QR để in.';
     if (ch.channelCode.isEmpty) return 'Kênh chưa có mã. Hãy tắt rồi bật lại.';
     if (QrUrlBuilder.resolveBaseUrl(_settings.customBaseUrl) == null) {
@@ -214,6 +257,8 @@ class _QrOrderScreenState extends ConsumerState<QrOrderScreen> {
       channelExists: channel != null,
       isActive: channel?.isActive ?? false,
       busy: _busyTypes.contains(type),
+      locked: channel?.isLocked ?? false,
+      onRotate: () => _rotateChannel(type),
       url: url,
       unavailableReason: _reasonFor(channel),
       onToggle: (v) => _toggleChannel(type, v),

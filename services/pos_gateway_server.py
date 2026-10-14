@@ -20,6 +20,7 @@ from services.pos_jwt_auth_service import (
     handle_exchange_store_jwt_request,
     handle_refresh_request,
     handle_logout_request,
+    handle_qr_ticket_request,
 )
 from services.pos_jwt_route_adapter import _resolve_client_ip
 
@@ -356,6 +357,14 @@ def wsgi_app(environ, start_response):
         start_response(_status_line(res.get("status", 200)), headers)
         return [json.dumps(res).encode("utf-8")]
 
+    if path == "/api/auth/qr-ticket":
+        if method != "POST":
+            start_response("405 Method Not Allowed", headers)
+            return [json.dumps({"success": False, "status": 405, "error": "METHOD_NOT_ALLOWED", "message": "Phương thức không được hỗ trợ"}).encode("utf-8")]
+        res = handle_qr_ticket_request(raw_body, client_ip=client_ip)
+        start_response(_status_line(res.get("status", 200)), headers)
+        return [json.dumps(res).encode("utf-8")]
+
     # 5. Fallback 404
     start_response("404 Not Found", headers)
     return [json.dumps({"success": False, "status": 404, "error": "NOT_FOUND", "message": "Đường dẫn không tồn tại"}).encode("utf-8")]
@@ -453,6 +462,8 @@ class StandaloneGatewayHandler(BaseHTTPRequestHandler):
             res = handle_refresh_request(raw_body, client_ip=client_ip)
         elif self.path == "/api/auth/logout":
             res = handle_logout_request(raw_body, client_ip=client_ip)
+        elif self.path == "/api/auth/qr-ticket":
+            res = handle_qr_ticket_request(raw_body, client_ip=client_ip)
         else:
             res = {"success": False, "status": 404, "error": "NOT_FOUND"}
 

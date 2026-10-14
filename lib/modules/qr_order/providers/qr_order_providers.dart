@@ -160,3 +160,31 @@ final qrRequestByIdProvider = Provider.autoDispose
       }
       return null;
     });
+
+
+/// Kênh QR đang bị khoá do quét phá — poll 10 giây (chỉ khi module bật và app ở nền trước).
+final qrLockedChannelsProvider =
+    StreamProvider.autoDispose<List<QrChannelModel>>((ref) async* {
+      final repo = ref.watch(qrOrderRepoProvider);
+      if (!ref.watch(qrModuleEnabledProvider)) {
+        yield const [];
+        return;
+      }
+      final storeInfo = await StoreAuthService.getStoreInfo();
+      final storeId = storeInfo['store_id'] ?? '';
+      bool isDisposed = false;
+      ref.onDispose(() => isDisposed = true);
+      var lastKey = '';
+      while (!isDisposed && storeId.isNotEmpty) {
+        if (_appInForeground()) {
+          final list = await repo.getLockedChannels(storeId);
+          if (isDisposed) return;
+          final key = list.map((c) => '${c.id}:${c.lockedAt?.toIso8601String()}').join('|');
+          if (key != lastKey) {
+            lastKey = key;
+            yield list;
+          }
+        }
+        await Future.delayed(const Duration(seconds: 10));
+      }
+    });

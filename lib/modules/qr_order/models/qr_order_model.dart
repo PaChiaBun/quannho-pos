@@ -45,6 +45,9 @@ class QrErrorCode {
   static const String notClaimer = 'NOT_CLAIMER';
   static const String paymentPermissionDenied = 'PAYMENT_PERMISSION_DENIED';
   static const String rateLimited = 'RATE_LIMITED';
+  static const String channelLocked = 'CHANNEL_LOCKED';
+  static const String ticketInvalid = 'TICKET_INVALID';
+  static const String lockedNeedsNewCode = 'LOCKED_NEEDS_NEW_CODE';
 
   static String toUserMessage(String? code, [String? fallback]) {
     switch (code) {
@@ -52,6 +55,12 @@ class QrErrorCode {
         return 'Mã QR không hợp lệ hoặc đã bị vô hiệu hóa.';
       case channelDisabled:
         return 'Kênh gọi món QR này hiện đang tạm đóng.';
+      case channelLocked:
+        return 'Kênh QR đang bị khoá do có lượt quét bất thường. Hãy tạo mã QR mới.';
+      case lockedNeedsNewCode:
+        return 'Kênh QR đang bị khoá do có người quét phá. Hãy bấm "Tạo mã QR mới" rồi in lại mã.';
+      case ticketInvalid:
+        return 'Cần xác minh người thật. Vui lòng tải lại trang rồi thử lại.';
       case requestExpired:
         return 'Mã QR đã hết hạn. Vui lòng yêu cầu khách tạo lại.';
       case tokenAlreadyUsed:
@@ -351,6 +360,12 @@ class QrChannelModel {
   final bool isActive;
   final String paymentMode; // 'PAY_BEFORE_KITCHEN' | 'CASHIER_CONFIRM'
   final DateTime createdAt;
+  final DateTime? lockedAt;
+  final String? lockedReason;
+  final bool requireTicket;
+  final String turnstileSiteKey;
+
+  bool get isLocked => lockedAt != null;
 
   bool get isTableShared => type == QrChannelType.table;
 
@@ -365,6 +380,10 @@ class QrChannelModel {
     required this.isActive,
     this.paymentMode = 'PAY_BEFORE_KITCHEN',
     required this.createdAt,
+    this.lockedAt,
+    this.lockedReason,
+    this.requireTicket = false,
+    this.turnstileSiteKey = '',
   });
 
   factory QrChannelModel.fromMap(Map<String, dynamic> m) {
@@ -379,6 +398,10 @@ class QrChannelModel {
       isActive: m['is_active'] as bool? ?? true,
       paymentMode: m['payment_mode'] as String? ?? 'PAY_BEFORE_KITCHEN',
       createdAt: _asDate(m['created_at']) ?? DateTime.now(),
+      lockedAt: _asDate(m['locked_at']),
+      lockedReason: m['locked_reason'] as String?,
+      requireTicket: m['require_ticket'] as bool? ?? false,
+      turnstileSiteKey: m['turnstile_site_key'] as String? ?? '',
     );
   }
 
@@ -391,6 +414,8 @@ class QrChannelModel {
     'is_active': isActive,
     'payment_mode': paymentMode,
     'created_at': createdAt.toIso8601String(),
+    'locked_at': lockedAt?.toIso8601String(),
+    'locked_reason': lockedReason,
   };
 
   QrChannelModel copyWith({
@@ -412,6 +437,10 @@ class QrChannelModel {
       isActive: isActive ?? this.isActive,
       paymentMode: paymentMode ?? this.paymentMode,
       createdAt: createdAt ?? this.createdAt,
+      lockedAt: lockedAt,
+      lockedReason: lockedReason,
+      requireTicket: requireTicket,
+      turnstileSiteKey: turnstileSiteKey,
     );
   }
 }

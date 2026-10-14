@@ -11,6 +11,7 @@ import logging
 import os
 import secrets
 import time
+import urllib.parse
 import urllib.request
 from threading import Lock
 
@@ -808,3 +809,84 @@ def handle_logout_request(raw_body, client_ip="127.0.0.1"):
     except Exception as e:
         logger.error("Unhandled logout error: %s", type(e).__name__)
         return {"success": False, "status": 500, "error": "SERVER_ERROR", "message": "Lỗi xác thực hệ thống"}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# QR gọi món — vé xác minh người thật (Cloudflare Turnstile → vé HMAC)
+# POST /api/auth/qr-ticket {channel_code, idempotency_key, turnstile_token}
+# Vé = "<hết hạn epoch>.<HMAC-SHA256(secret, channel_code|exp|idempotency_key)>", sống 5 phút,
+# chỉ dùng được cho ĐÚNG khoá chống trùng của một đơn (db: qr_verify_ticket_v4).
+# ─────────────────────────────────────────────────────────────────────────────
+QR_TICKET_TTL_SECONDS = 300
+_QR_CFG_CACHE = {"at": 0.0, "value": None}
+_QR_CFG_LOCK = Lock()
+_TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+
+
+def _qr_gateway_config(supabase_url, service_role_key, now=None):
+    now = time.time() if now is None else now
+    with _QR_CFG_LOCK:
+        if _QR_CFG_CACHE["value"] is not None and now - _QR_CFG_CACHE["at"] < 30:
+            return _QR_CFG_CACHE["value"]
+    cfg = call_service_rpc(supabase_url, service_role_key, "qr_gateway_config_v1", {})
+    with _QR_CFG_LOCK:
+        _QR_CFG_CACHE["value"] = cfg
+        _QR_CFG_CACHE["at"] = now
+    return cfg
+
+
+def _verify_turnstile(secret, token, client_ip, timeout=6):
+    """True nếu Cloudflare xác nhận token. Lỗi mạng => PosJwtAuthError(503)."""
+    form = {"secret": secret, "response": token}
+    if client_ip:
+        form["remoteip"] = client_ip
+    req = urllib.request.Request(
+        _TURNSTILE_VERIFY_URL,
+        data=urllib.parse.urlencode(form).encode("utf-8"),
+        headers={"Content-Type": "application/x-www-form-urlencoded", "User-Agent": "PosJwtAuthService/2.1"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception as exc:
+        logger.error("Turnstile verify failed: %s", type(exc).__name__)
+        raise PosJwtAuthError("Không kiểm tra được xác minh, thử lại sau", status_code=503, error_code="TURNSTILE_UNAVAILABLE") from exc
+    return bool(isinstance(data, dict) and data.get("success") is True)
+
+
+def make_qr_ticket(secret, channel_code, idempotency_key, now=None, ttl=QR_TICKET_TTL_SECONDS):
+    exp = int((time.time() if now is None else now)) + int(ttl)
+    msg = f"{channel_code}|{exp}|{idempotency_key}".encode("utf-8")
+    sig = hmac.new(secret.encode("utf-8"), msg, hashlib.sha256).hexdigest()
+    return f"{exp}.{sig}"
+
+
+def handle_qr_ticket_request(raw_body, client_ip="127.0.0.1"):
+    payload, err = _parse_json_body(raw_body)
+    if err:
+        return err
+    channel_code = str(payload.get("channel_code") or "").strip()
+    key = str(payload.get("idempotency_key") or "").strip()
+    token = str(payload.get("turnstile_token") or "").strip()
+    if not channel_code or len(channel_code) > 64 or not (8 <= len(key) <= 128) or not token or len(token) > 2048:
+        return {"success": False, "status": 400, "error": "INVALID_PARAMETERS", "message": "Yêu cầu không hợp lệ"}
+    try:
+        supabase_url, _anon_key, _jwt_secret = get_supabase_config()
+        service_role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        cfg = _qr_gateway_config(supabase_url, service_role_key)
+        ticket_secret = str(cfg.get("ticket_secret") or "")
+        turnstile_secret = str(cfg.get("turnstile_secret") or "")
+        if not ticket_secret or not turnstile_secret:
+            return {"success": False, "status": 503, "error": "TURNSTILE_NOT_CONFIGURED",
+                    "message": "Chưa cấu hình xác minh người thật"}
+        if not _verify_turnstile(turnstile_secret, token, client_ip):
+            return {"success": False, "status": 403, "error": "TURNSTILE_FAILED",
+                    "message": "Xác minh không thành công, vui lòng thử lại"}
+        return {"success": True, "status": 200, "ticket": make_qr_ticket(ticket_secret, channel_code, key),
+                "expires_in": QR_TICKET_TTL_SECONDS}
+    except PosJwtAuthError as e:
+        return {"success": False, "status": e.status_code, "error": e.error_code, "message": e.message}
+    except Exception as e:
+        logger.error("Unhandled qr-ticket error: %s", type(e).__name__)
+        return {"success": False, "status": 500, "error": "SERVER_ERROR", "message": "Lỗi hệ thống"}

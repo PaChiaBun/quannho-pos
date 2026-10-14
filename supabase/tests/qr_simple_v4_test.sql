@@ -114,7 +114,7 @@ BEGIN
   -- ── T0: QUYỀN HÀM / BẢNG ────────────────────────────────────────────────
   ASSERT has_function_privilege('anon', 'public.get_qr_channel_info_v4(text)', 'EXECUTE'), 'anon phải gọi được channel_info';
   ASSERT has_function_privilege('anon', 'public.get_qr_menu_v4(text)', 'EXECUTE'), 'anon phải gọi được menu';
-  ASSERT has_function_privilege('anon', 'public.submit_qr_order_v4(text,jsonb,text,text,text)', 'EXECUTE'), 'anon phải gọi được submit';
+  ASSERT has_function_privilege('anon', 'public.submit_qr_order_v4(text,jsonb,text,text,text,text)', 'EXECUTE'), 'anon phải gọi được submit';
   ASSERT has_function_privilege('anon', 'public.get_qr_request_status_v4(text)', 'EXECUTE'), 'anon phải gọi được status';
   ASSERT NOT has_function_privilege('anon', 'public.claim_qr_request_v4(uuid,uuid)', 'EXECUTE'), 'anon KHÔNG được claim';
   ASSERT NOT has_function_privilege('anon', 'public.get_qr_request_detail_v4(uuid,uuid)', 'EXECUTE'), 'anon KHÔNG được detail';

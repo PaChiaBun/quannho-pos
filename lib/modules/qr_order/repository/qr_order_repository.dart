@@ -159,6 +159,36 @@ class QrOrderRepository {
     );
   }
 
+  /// Nhân viên có quyền quản lý: tạo mã QR mới (mã cũ vô hiệu, mở khoá kênh).
+  Future<QrRpcResponse<QrChannelModel>> rotateQrChannel({
+    required String storeId,
+    required String type,
+  }) {
+    return _rpc(
+      'rotate_qr_channel_v4',
+      {'p_store_id': storeId, 'p_type': type},
+      QrChannelModel.fromMap,
+      failMessage: 'Tạo mã QR mới thất bại',
+    );
+  }
+
+  /// Kênh đang bị khoá do quét phá (để cảnh báo nhân viên). Lỗi mạng => danh sách rỗng.
+  Future<List<QrChannelModel>> getLockedChannels(String storeId) async {
+    try {
+      final rows = await _sb
+          .from('qr_channels')
+          .select()
+          .eq('store_id', storeId)
+          .not('locked_at', 'is', null);
+      return (rows as List)
+          .map((r) => QrChannelModel.fromMap(Map<String, dynamic>.from(r as Map)))
+          .toList();
+    } catch (e) {
+      debugPrint('[QrOrderRepo] getLockedChannels error: $e');
+      return const [];
+    }
+  }
+
   /// Reads channel state without mutating it. Opening the QR module must never
   /// re-enable a channel that the owner intentionally disabled.
   Future<QrChannelModel?> getChannelByType({
@@ -207,6 +237,7 @@ class QrOrderRepository {
     String? tableId,
     String? idempotencyKey,
     String? payloadHash,
+    String? ticket,
   }) {
     return _rpc(
       'submit_qr_order_v4',
@@ -216,6 +247,7 @@ class QrOrderRepository {
         'p_table_id': tableId,
         'p_idempotency_key': idempotencyKey,
         'p_payload_hash': payloadHash,
+        'p_ticket': ticket,
       },
       (d) => d,
       failMessage: 'Gửi đơn thất bại',

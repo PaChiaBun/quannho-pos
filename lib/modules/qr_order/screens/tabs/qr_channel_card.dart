@@ -14,6 +14,10 @@ class QrChannelCard extends StatelessWidget {
   final bool isActive;
   final bool busy;
 
+  /// Kênh bị khoá do có người quét phá liên tục: phải tạo mã QR mới.
+  final bool locked;
+  final VoidCallback? onRotate;
+
   /// Link dựng từ giá trị đã lưu; null nếu không hợp lệ.
   final String? url;
 
@@ -32,6 +36,8 @@ class QrChannelCard extends StatelessWidget {
     required this.channelExists,
     required this.isActive,
     required this.busy,
+    this.locked = false,
+    this.onRotate,
     required this.url,
     required this.unavailableReason,
     required this.onToggle,
@@ -88,11 +94,57 @@ class QrChannelCard extends StatelessWidget {
               else
                 Switch(
                   value: channelExists && isActive,
-                  onChanged: onToggle,
+                  onChanged: locked ? null : onToggle,
                   activeThumbColor: const Color(0xFF8B5CF6),
                 ),
             ],
           ),
+          if (locked) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEBEE),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFEF9A9A)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.gpp_maybe_rounded, color: Color(0xFFB71C1C)),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Mã QR này đang bị khoá',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFFB71C1C),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Có người đang cố tình quét mã QR gọi món để phá quán nên hệ thống đã tạm '
+                    'khoá. Hãy tạo mã QR mới, in lại và dán thay mã cũ. Mã cũ sẽ không còn dùng được.',
+                    style: TextStyle(fontSize: 12.5, height: 1.35),
+                  ),
+                  const SizedBox(height: 10),
+                  FilledButton.icon(
+                    onPressed: busy ? null : onRotate,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFB71C1C),
+                    ),
+                    icon: const Icon(Icons.autorenew_rounded, size: 18),
+                    label: const Text('Tạo mã QR mới'),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Center(
             child: _canShowQr
