@@ -13,6 +13,29 @@ import 'store_picker_screen.dart';
 String routeAfterSuccessfulLogin(AuthResult result) =>
     result.selectedStore != null ? '/home' : '/store_picker';
 
+/// Thông báo đăng nhập thất bại cho người dùng.
+/// Sai SĐT/mật khẩu phải nói rõ (trước đây mã INVALID_CREDENTIALS rơi vào câu chung
+/// "Hãy chụp lại báo chủ app" nên nhân viên tưởng app lỗi, đi báo chủ quán).
+String loginErrorMessage(String? code, String? serverMessage) {
+  const wrongCredentials = {'USER_NOT_FOUND', 'WRONG_PASSWORD', 'INVALID_CREDENTIALS'};
+  if (wrongCredentials.contains(code)) {
+    return 'Sai số điện thoại hoặc mật khẩu. Nếu bạn quên mật khẩu, hãy nhờ chủ quán đặt lại.';
+  }
+  // Các lỗi mà server/app đã có câu giải thích rõ cho người dùng
+  const friendly = {
+    'RATE_LIMIT_EXCEEDED',
+    'SERVER_BUSY',
+    'NETWORK_ERROR',
+    'POS_JWT_NOT_CONFIGURED',
+    'GATEWAY_UNAVAILABLE',
+    'MISSING_PARAMETERS',
+    'STORE_MEMBERSHIP_FORBIDDEN',
+  };
+  final m = serverMessage?.trim();
+  if (friendly.contains(code) && m != null && m.isNotEmpty) return m;
+  return 'Đăng nhập thất bại. Hãy chụp lại báo chủ app.';
+}
+
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
@@ -104,11 +127,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       final errCode = result.errorCode;
       setState(() {
         _loading = false;
-        if (errCode == 'USER_NOT_FOUND' || errCode == 'WRONG_PASSWORD') {
-          _error = 'Số điện thoại hoặc mật khẩu không chính xác.';
-        } else {
-          _error = 'Đăng nhập thất bại. Hãy chụp lại báo chủ app.';
-        }
+        _error = loginErrorMessage(errCode, result.errorMessage);
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
