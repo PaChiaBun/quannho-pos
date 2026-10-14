@@ -1007,6 +1007,32 @@ Future<bool> claimReceiptPrint(String orderId) async {
   }
 }
 
+/// Mã thanh toán (payment_settlements.id) KHÁC mã đơn (orders.id) mà máy chủ in dùng.
+/// Tra mã đơn: settlement -> session -> ban_session_orders.order_id. null nếu không tra được.
+Future<String?> resolveOrderIdForSettlement(String settlementId) async {
+  try {
+    final client = Supabase.instance.client;
+    final ps = await client
+        .from('payment_settlements')
+        .select('session_id')
+        .eq('id', settlementId)
+        .maybeSingle();
+    final sessionId = ps?['session_id'] as String?;
+    if (sessionId == null || sessionId.isEmpty) return null;
+    final link = await client
+        .from('ban_session_orders')
+        .select('order_id')
+        .eq('session_id', sessionId)
+        .order('created_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    return link?['order_id'] as String?;
+  } catch (e) {
+    writePrintLog('[Claim] Không tra được mã đơn từ thanh toán $settlementId: $e');
+    return null;
+  }
+}
+
 /// Trả lại quyền in khi in thất bại để máy khác (máy chủ in) in thay.
 Future<void> releaseReceiptPrintClaim(String orderId) async {
   try {
@@ -1811,8 +1837,12 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
     }
     // Quán dùng máy chủ in + máy này tự in bill: giành quyền trước để máy chủ nhường.
     final needClaim = state.centralPrintRoutingEnabled && state.deviceOwnsBillPrinting;
-    if (needClaim && !await claimReceiptPrint(settlementId)) {
-      writePrintLog('[Claim] Bill $settlementId đã được máy khác in -> bỏ qua.');
+    // Máy chủ in giành theo mã đơn (orders.id) nên phải giành đúng mã đó.
+    final claimId = needClaim
+        ? (await resolveOrderIdForSettlement(settlementId) ?? settlementId)
+        : settlementId;
+    if (needClaim && !await claimReceiptPrint(claimId)) {
+      writePrintLog('[Claim] Bill $claimId đã được máy khác in -> bỏ qua.');
       return const PrintDispatchResult({
         'cashier': StationPrintResult(
           stationCode: 'cashier',
@@ -1826,7 +1856,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       settings: state,
     );
     if (needClaim && !result.isStationSuccess('cashier')) {
-      await releaseReceiptPrintClaim(settlementId);
+      await releaseReceiptPrintClaim(claimId);
     }
     return result;
   }
