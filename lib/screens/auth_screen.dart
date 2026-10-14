@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/services/user_auth_service.dart';
 import '../core/providers/session_provider.dart';
 import 'store_picker_screen.dart';
+import '../core/widgets/app_version_label.dart';
 
 String routeAfterSuccessfulLogin(AuthResult result) =>
     result.selectedStore != null ? '/home' : '/store_picker';
@@ -355,7 +356,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 4),
+              const Center(child: AppVersionLabel()),
+              const SizedBox(height: 28),
 
               // ── Tab selector (Trên iOS native chỉ cho phép Đăng nhập theo Apple Guideline 3.1.1; Web và Android luôn mở đầy đủ) ──
               if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[

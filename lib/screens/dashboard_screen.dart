@@ -25,6 +25,7 @@ import '../modules/ops/screens/ops_screen.dart';
 import '../modules/qr_order/screens/qr_order_screen.dart';
 import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import '../core/services/app_update_manager.dart';
+import '../core/widgets/app_version_label.dart';
 import '../core/utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -353,7 +354,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 ),
                         ),
 
-                        const SizedBox(height: 80),
+                        const SizedBox(height: 20),
+                        const Center(
+                          child: AppVersionLabel(color: Colors.black38),
+                        ),
+                        const SizedBox(height: 60),
                       ] else ...[
                         const SizedBox(height: 80),
                       ],
