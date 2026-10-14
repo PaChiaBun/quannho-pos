@@ -19,7 +19,6 @@ import '../modules/bill_printer/screens/printer_settings_screen.dart';
 import '../core/services/auto_update_service.dart';
 import '../modules/pos/screens/discount_management_screen.dart';
 import 'role_manager_screen.dart';
-import '../modules/qr_order/screens/qr_order_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS SCREEN — Cài đặt Quán Nhỏ POS
@@ -96,35 +95,10 @@ class SettingsScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                const _DisplayNameTile(),
                 _QuickPinTile(),
                 const _ChangePasswordTile(),
                 const _PasswordRecoveryTile(),
-              ]),
-            ),
-          ),
-
-          // ── 2b. QR Gọi Món (Bàn & Quầy) ─────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              icon: Icons.qr_code_scanner_rounded,
-              title: 'Cấu hình QR Gọi Món',
-              color: const Color(0xFF8B5CF6),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _SettingsTile(
-                  icon: Icons.qr_code_2_rounded,
-                  label: 'Thiết lập & In ấn Mã QR',
-                  subtitle: 'Tên miền, mẫu tem decal bàn, poster quầy thu ngân',
-                  color: const Color(0xFF8B5CF6),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const QrOrderScreen()),
-                  ),
-                ),
               ]),
             ),
           ),
@@ -2293,6 +2267,83 @@ class _QuickPinTile extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // CHANGE PASSWORD TILE & SHEET
 // ─────────────────────────────────────────────────────────────────────────────
+class _DisplayNameTile extends ConsumerWidget {
+  const _DisplayNameTile();
+
+  Future<void> _edit(BuildContext context, WidgetRef ref, String current) async {
+    final ctrl = TextEditingController(text: current);
+    final messenger = ScaffoldMessenger.of(context);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tên hiển thị'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLength: 50,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            hintText: 'Ví dụ: Chị Lan',
+            helperText: 'Tên này hiện trên bill, ca làm và các màn hình của quán.',
+            helperMaxLines: 2,
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
+    if (newName == null || newName.isEmpty || newName == current) return;
+    final res = await UserAuthService.updateDisplayName(newName);
+    if (res['success'] == true) {
+      ref.read(sessionProvider.notifier).updateDisplayName(res['display_name'] as String);
+    }
+    messenger.showSnackBar(SnackBar(content: Text(res['message'] as String? ?? '')));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    const navy = Color(0xFF1E1C5E);
+    const muted = Color(0xFF9E9085);
+    const border = Color(0xFFE0D8CC);
+    final name = ref.watch(sessionProvider)?.displayName ?? '';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: border),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: navy.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(Icons.badge_rounded, color: navy, size: 20),
+        ),
+        title: const Text(
+          'Tên hiển thị',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: navy),
+        ),
+        subtitle: Text(
+          name.isEmpty ? 'Chưa đặt tên' : name,
+          style: const TextStyle(fontSize: 12, color: muted),
+        ),
+        trailing: const Icon(Icons.edit_rounded, color: muted, size: 18),
+        onTap: () => _edit(context, ref, name),
+      ),
+    );
+  }
+}
+
 class _ChangePasswordTile extends StatelessWidget {
   const _ChangePasswordTile();
 

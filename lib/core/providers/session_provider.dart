@@ -95,6 +95,23 @@ class _SessionNotifier extends Notifier<SessionData?> {
     }
   }
 
+  /// Cập nhật tên hiển thị trong phiên hiện tại (sau khi đã lưu lên server).
+  void updateDisplayName(String name) {
+    final s = state;
+    if (s == null) return;
+    state = SessionData(
+      userId: s.userId,
+      phone: s.phone,
+      displayName: name,
+      storeId: s.storeId,
+      storeName: s.storeName,
+      storeCode: s.storeCode,
+      role: s.role,
+      isOwner: s.isOwner,
+    );
+    AppLogger.updateSession(storeId: s.storeId, staffName: name);
+  }
+
   void updateStore(StoreMembership membership) async {
     if (state == null) return;
     state = SessionData(

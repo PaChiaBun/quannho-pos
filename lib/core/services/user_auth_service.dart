@@ -1596,6 +1596,38 @@ class UserAuthService {
     }
   }
 
+  /// Đổi tên hiển thị của chính người dùng (RPC `update_my_display_name_v4`).
+  /// Thành công thì cập nhật luôn tên lưu trên máy.
+  static Future<Map<String, dynamic>> updateDisplayName(String name) async {
+    final db = _db;
+    if (db == null) {
+      return {'success': false, 'message': 'Lỗi kết nối cơ sở dữ liệu'};
+    }
+    try {
+      final rpcRes = await db.rpc(
+        'update_my_display_name_v4',
+        params: {'p_display_name': name},
+      );
+      if (rpcRes is! Map) {
+        return {'success': false, 'message': 'Chức năng đổi tên chưa sẵn sàng trên máy chủ'};
+      }
+      final map = Map<String, dynamic>.from(rpcRes);
+      if (map['success'] == true) {
+        final saved = (map['display_name'] as String?) ?? name.trim();
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_kUserName, saved);
+        return {'success': true, 'display_name': saved, 'message': 'Đã đổi tên hiển thị'};
+      }
+      return {
+        'success': false,
+        'message': map['message'] as String? ?? 'Đổi tên thất bại',
+      };
+    } catch (e) {
+      debugPrint('[UserAuthService] updateDisplayName error: $e');
+      return {'success': false, 'message': 'Chức năng đổi tên chưa sẵn sàng trên máy chủ'};
+    }
+  }
+
   /// Kiểm tra tài khoản hiện tại đã thiết lập mã PIN duyệt nhanh chưa
   static Future<bool> hasQuickPin() async {
     final db = _db;
