@@ -655,3 +655,16 @@ quan_nho/
 
 > 📌 **File này nằm tại**: `.docs/deploy_ios_android.md`
 > Cập nhật lần cuối: 2026-05-20 23:00
+
+---
+
+## Lỗi ký iOS: "Provisioning profile … doesn't include signing certificate" (17/10/2026)
+- **Triệu chứng:** `flutter build ipa` báo profile `QuanNhoPOS_AppStore` không chứa chứng chỉ "Apple Distribution: LPM DIGITAL COMPANY LIMITED (V4HN95W2C7)", dù chứng chỉ đó có trong keychain.
+- **Nguyên nhân:** keychain có **hai chứng chỉ trùng tên**; project ký thủ công theo TÊN (`iPhone Distribution`) nên Xcode chọn nhầm cái không nằm trong profile.
+- **Chẩn đoán (chỉ đọc):** `security find-identity -v -p codesigning` (mã băm từng chứng chỉ) so với SHA-1 chứng chỉ trong profile (`security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/QuanNhoPOS_AppStore.mobileprovision`, giải `DeveloperCertificates`).
+- **Cách xử lý không sửa project:** `flutter build ios` để sinh cấu hình (số phiên bản trong `ios/Flutter/Generated.xcconfig`), rồi
+  `xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -destination 'generic/platform=iOS' -archivePath build/ios/archive/Runner-<ver>-<build>.xcarchive archive CODE_SIGN_IDENTITY=<SHA-1 cert có trong profile>`
+  rồi `xcodebuild -exportArchive -archivePath … -exportOptionsPlist <plist có signingCertificate = SHA-1> -exportPath build/ios/ipa-<ver>-<build>`.
+- **Triệt để:** xóa một trong hai chứng chỉ trùng tên khỏi keychain (giữ cái có trong profile).
+- **Android:** APK/AAB đối chiếu chữ ký bằng `apksigner verify --print-certs` trước khi đưa lên web; cùng versionCode thì máy đã cài không nâng cấp được, luôn tăng build.
+
