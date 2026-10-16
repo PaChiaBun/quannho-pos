@@ -959,6 +959,9 @@ bool shouldAutoPrintLocally({
 /// Tiền tố id luật "máy này in bill ra".
 const String kDeviceBillRulePrefix = 'device_bill_';
 
+/// Dấu trong id luật chế độ song song (bill ra cả máy này lẫn máy in quầy).
+const String kDeviceBillDualMarker = '_dual_';
+
 /// Bill thanh toán: in tại máy này nếu in cục bộ như thường lệ, HOẶC máy này có
 /// luật in bill riêng (khi đó máy chủ in sẽ nhường, xem [claimReceiptPrint]).
 bool shouldAutoPrintReceiptLocally({
@@ -1457,19 +1460,24 @@ class StationPrintersState {
       r.jobType == PrintJobType.receipt &&
       r.targets.isNotEmpty;
 
-  /// Quán có ít nhất một thiết bị tự in bill của mình (ví dụ V3 cầm tay).
-  bool get anyDeviceBillRule => printSetup.rules.any(_isDeviceBillRule);
+  /// Luật "song song": máy này in thêm một bản, máy chủ in VẪN in bản của nó (không nhường).
+  bool _isDualRule(PrintRule r) => r.id.contains(kDeviceBillDualMarker);
 
-  /// Thiết bị NÀY có luật in bill riêng -> tự in bill dù quán dùng máy chủ in.
-  bool get deviceOwnsBillPrinting =>
+  /// Quán có thiết bị tự in bill và để máy chủ in NHƯỜNG (chế độ độc quyền, ví dụ V3 cầm tay).
+  bool get anyDeviceBillRule =>
+      printSetup.rules.any((r) => _isDeviceBillRule(r) && !_isDualRule(r));
+
+  bool _deviceRuleMatches(PrintRule r) =>
       currentDeviceId.isNotEmpty &&
-      printSetup.rules.any(
-        (r) =>
-            _isDeviceBillRule(r) &&
-            (r.sourceDeviceIds.contains(currentDeviceId) ||
-                (SunmiBuiltinDriver.hasBuiltinPrinter &&
-                    PrintRouter.onlyBuiltin(r, printSetup))),
-      );
+      _isDeviceBillRule(r) &&
+      r.sourceDeviceIds.contains(currentDeviceId);
+
+  /// Thiết bị NÀY tự in bill riêng và máy chủ in nhường -> phải giành quyền in trước.
+  bool get deviceOwnsBillPrinting =>
+      printSetup.rules.any((r) => _deviceRuleMatches(r) && !_isDualRule(r));
+
+  /// Thiết bị NÀY có luật in bill riêng (độc quyền hoặc song song) -> tự in tại máy.
+  bool get deviceHasBillRule => printSetup.rules.any(_deviceRuleMatches);
 
   bool get isDesignatedPrintServerDevice =>
       currentDeviceId.isNotEmpty &&

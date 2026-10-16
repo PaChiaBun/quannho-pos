@@ -655,6 +655,14 @@ CREATE POLICY "store_isolation" ON products
 
 ---
 
+### Hóa đơn điện tử (nền tảng v1 — migration `20261016_einvoice_foundation_v1.sql`, CHƯA áp lên production)
+
+- `einvoice_store_config(store_id PK, enabled default false, updated_by, updated_at)`: công tắc theo quán. Chỉ ghi qua RPC `set_einvoice_enabled_v1` (Chủ quán, có advisory lock, ghi audit cùng giao dịch).
+- `einvoice_audit_logs`: nhật ký đổi công tắc (cũ → mới, người đổi).
+- `einvoice_documents`: hóa đơn theo bill, `UNIQUE(store_id, provider, ref_id)` làm khóa chống trùng; `status` ∈ queued/issued/pending_code/rejected/failed/cancelled; lưu `inv_no`, `tax_authority_code`, `provider_transaction_id`, lỗi, số lần thử. Worker meInvoice (chưa có) ghi bằng `service_role`.
+- RLS: authenticated chỉ SELECT theo `current_store_id()`; anon không có quyền. RPC báo cáo `einvoice_report_v1(from, to)` SECURITY INVOKER.
+- Bất biến: tắt/bật công tắc không đổi việc ghi bill/doanh thu; chưa đụng settlement v5. Chi tiết và lộ trình ở `tich-hop-misa.md`.
+
 ## 8. CHECKLIST KHI THÊM MODULE MỚI
 
 | # | Việc cần làm | Nơi thực hiện |
@@ -726,6 +734,23 @@ ALTER TABLE staff_shifts REPLICA IDENTITY FULL;
 static const _supabaseUrl     = 'https://cibaxqrvfotglpobxxlw.supabase.co';
 static const _supabaseAnonKey = 'eyJhbGci...'; // key ở trên
 ```
+
+---
+
+## Chuỗi cửa hàng (migration `20261017_chuoi_cua_hang_v1.sql`, CHƯA áp production)
+
+| Bảng | Vai trò |
+|---|---|
+| `store_chains` | Chuỗi do Chủ quán tạo (`owner_user_id`) |
+| `store_chain_stores` | Cửa hàng ↔ chuỗi, có `joined_at/left_at`; unique một phần: mỗi cửa hàng tối đa 1 chuỗi đang hoạt động |
+| `store_chain_audit_logs` | Audit tạo chuỗi/thêm/gỡ cửa hàng |
+
+- RPC (chỉ `authenticated`, anon bị chặn): `create_store_chain_v1`, `add_store_to_chain_v1`, `remove_store_from_chain_v1`, `list_my_chains_v1`, `get_chain_report_v1`. Hàm hỗ trợ `qn_is_store_owner(store)` (Chủ, không tính Quản lý).
+- Chỉ Chủ quán lập chuỗi và thêm cửa hàng mình sở hữu. Báo cáo chuỗi chỉ đọc `orders` (completed) của cửa hàng còn trong chuỗi mà người gọi VẪN là chủ; cửa hàng mất quyền nằm ở `excluded_stores`.
+- Chuỗi chỉ là lớp đọc tổng hợp: menu/kho/nhân viên/bàn/doanh thu vẫn tách theo `store_id`. Chưa chung Ví/điểm/khách (xem nợ kỹ thuật ở `trien-khai-sap-toi.md`).
+- Client: `ChainRepository` (`lib/core/repositories/chain_repository.dart`), `ChainReportScreen`, module Lego `chain` (ô trong lưới Modules, chỉ Chủ quán; id nằm trong `_kAllModules`/`kModuleConfigs`, KHÔNG nằm trong `kAllModules` của `staff_service.dart` nên không cấp qua vai trò), `ChainModuleOffer` tự bật module một lần.
+- **Báo cáo v1.1 (migration `20261018_chuoi_bao_cao_them_truong_v1.sql`, CHƯA áp production):** `get_chain_report_v1` thêm vào mỗi cửa hàng và tổng: `gross_revenue` (= doanh thu + giảm giá; vì `orders.total_amount = subtotal − discount`, KHÔNG dùng `discount_amount` luôn rỗng), `void_count/void_amount` (từ `void_audit_logs` theo `created_at`; chỉ tổng hợp, không có người hủy/lý do), `first_order_at`, `wallet_revenue`; thêm chỉ mục `idx_void_audit_store_created`. Chỉ THÊM khóa JSON: client cũ chạy bình thường, client mới coi trường vắng là "không rõ".
+- Test: `supabase/tests/chuoi_cua_hang_v1_test.sql` (38 kiểm tra), `chuoi_bao_cao_truong_moi_test.sql` (19 kiểm tra), dry-run `db-fix/chuoi_stage_dryrun.sh`; Flutter `test/screens/chain_report_screen_test.dart`.
 
 ---
 

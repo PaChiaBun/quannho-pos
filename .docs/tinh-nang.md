@@ -198,6 +198,27 @@ ALTER PUBLICATION supabase_realtime ADD TABLE store_roles;
 
 ---
 
+## Hóa đơn điện tử (nền tảng, chưa phát hành tự động)
+
+- Cài đặt → công tắc "Hóa đơn điện tử": chỉ Chủ quán thấy, cần PIN duyệt nhanh, có audit. Mặc định tắt. Tắt/bật không ảnh hưởng doanh thu.
+- Báo cáo → tab "Hóa đơn": số tiền đã xuất hóa đơn, đối chiếu với doanh thu bill cùng kỳ, chờ xử lý, lỗi/từ chối, danh sách hóa đơn cần xử lý. Số liệu là 0 cho đến khi có worker phát hành meInvoice.
+- Cần áp migration `20261016_einvoice_foundation_v1.sql` trước khi dùng; trước đó tab báo cáo hiện thông báo lỗi tải.
+
+## Báo cáo chuỗi cửa hàng (Chủ quán)
+- **Module `chain`** — ô **"Báo Cáo Nhiều Cửa Hàng / Chuỗi"** (màu xanh chanh) trong lưới Modules ở Trang chủ. CHỈ Chủ quán thấy (lọc cứng ở `dashboard_screen.dart`, không cấp qua vai trò/`store_roles.modules`); Quản lý và nhân viên không thấy, server cũng kiểm lại.
+- Tự bật MỘT LẦN cho mỗi cửa hàng khi Chủ quán sở hữu từ 2 cửa hàng trở lên hoặc đã có chuỗi (`ChainModuleOffer`, cờ `chain_module_offered_<storeId>`); sau đó Chủ quán gỡ/thêm lại như mọi module trong chế độ Sửa, không tự quay lại. Chủ chỉ có 1 cửa hàng thì chưa tự bật nhưng vẫn thêm tay được từ bộ chọn module.
+- Màn **Báo cáo chuỗi** = báo cáo **SO SÁNH các cửa hàng**, thiết kế theo đúng ngôn ngữ của module Báo cáo (header navy + 2 thẻ hero kem, chọn kỳ Hôm nay/Tuần này/Tháng này + thanh ‹ kỳ › để xem kỳ cũ):
+  - **Nhận xét nhanh** (quy tắc cố định, KHÔNG phải AI; mọi ngưỡng ở `InsightConfig`, `lib/core/utils/chain_insights.dart`). Nguyên tắc: chỉ nói điều dữ liệu đủ chứng minh.
+    - Tăng/giảm chỉ được nêu khi vượt **mức dao động bình thường** (đo thật: so 1 ngày với cùng thứ tuần trước lệch P80 = 26% số đơn / 34% doanh thu; kỳ nhiều ngày thu hẹp theo 1/√số ngày, sàn 5%/6%), mỗi bên ≥ 15 đơn; so theo **ngày có bán** (tuần nghỉ 3 ngày không bị báo "nhu cầu giảm"); kèm nguyên nhân (số đơn hay giá trị mỗi đơn) và dòng giải thích ngưỡng.
+    - Cảnh báo riêng: quán im lặng (kỳ này 0 đơn, cùng kỳ trước ≥ 5 đơn), ngày không có đơn khi kỳ trước bán đều, hủy món/bàn ≥ 5% doanh thu và ≥ 1,8× các quán khác, giảm giá ≥ 4% giá trị bán và ≥ 2× các quán khác (cần ≥ 30 đơn), TB/đơn thấp ≤ 80% trung bình chuỗi. Nêu: quán dẫn đầu/tập trung ≥ 70%, TB/đơn cao ≥ 115%, quán mới, quán chưa từng có đơn. Tối đa 6 nhận xét, cảnh báo xếp trước.
+    - Không kết luận khi: mẫu ít (chip "Ít dữ liệu"), quán mới ("Quán mới"), kỳ trước không có gốc ("Mới"), không tải được kỳ so sánh, máy chủ chưa gửi trường (coi là "không rõ", không phải 0).
+    - Ngày được so với **cùng thứ tuần trước** (cuối tuần bán nhiều hơn ngày thường ~40%); tuần/tháng so kỳ liền trước; kỳ đang diễn ra so với phần đã trôi của kỳ trước.
+  - **Xếp hạng doanh thu:** thứ hạng, màu riêng mỗi quán, thanh so sánh, số đơn/TB/tỷ trọng và chip so với cùng kỳ trước — chỉ tô xanh/đỏ khi vượt dao động bình thường; chạm chip xem lý do.
+  - **So sánh theo chỉ số:** Doanh thu / Số đơn / TB/đơn / Giảm giá, vạch trung bình chuỗi, nhãn Cao nhất/Thấp nhất.
+  - **Cơ cấu thanh toán:** cột chồng 100% tiền mặt/chuyển khoản/thẻ từng quán. **Xu hướng theo ngày:** mỗi quán một đường (không vẽ ngày chưa tới).
+  - So kỳ ĐANG diễn ra với phần đã trôi của kỳ trước (không so nửa ngày/nửa tuần với cả kỳ trước). Màu quán cố ý tránh lục/xanh dương/vàng (dành cho phương thức thanh toán). Biểu tượng cửa hàng trên màn đó mở bảng quản lý chuỗi (tạo chuỗi, thêm/gỡ cửa hàng). Biểu tượng cửa hàng ở header màn Báo cáo vẫn là lối phụ.
+- Không có KPI cá nhân nhân viên xuyên chuỗi; muốn xem chi tiết hãy chuyển sang cửa hàng đó. Cần migration `20261017_chuoi_cua_hang_v1.sql` (đã áp production 17/10/2026).
+
 ## Lưu Ý Quan Trọng
 - Màn hình lớn nhất: `ban_screen.dart` (187KB) — phức tạp nhất, chứa logic sơ đồ bàn
 - Màn hình bếp dùng giao diện Kanban (kéo thả trạng thái đơn)

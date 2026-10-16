@@ -1071,7 +1071,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                 hasPrintServerOwner: hasPrintServerOwner,
                 allowPrintServerFallback:
                     settings.isDesignatedPrintServerDevice,
-                deviceOwnsBill: settings.deviceOwnsBillPrinting,
+                deviceOwnsBill: settings.deviceHasBillRule,
               )) {
             if (settings.autoPrintCheckout) {
               _lastBillPrintAt = DateTime.now();

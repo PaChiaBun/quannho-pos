@@ -20,6 +20,8 @@ import '../core/utils/responsive.dart';
 import '../modules/kho/providers/kho_providers.dart';
 import '../shared/widgets/module_tile.dart';
 import 'module_picker_screen.dart';
+import 'chain_module_offer.dart';
+import 'chain_report_screen.dart';
 import '../modules/bill_printer/screens/bill_printer_hub.dart';
 import '../modules/ops/screens/ops_screen.dart';
 import '../modules/qr_order/screens/qr_order_screen.dart';
@@ -280,6 +282,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             if (!kModuleConfigs.containsKey(m.id)) return false;
             // Module phải đang bật ở quán
             if (!m.isActive) return false;
+            // Báo cáo chuỗi: CHỈ Chủ quán (server cũng kiểm lại), không cấp qua vai trò
+            if (m.id == 'chain' && session?.isOwner != true) return false;
             if (allowedPerms == null) return true; // chủ quán: theo isActive
             // Nhân viên: chỉ xét các module đang bật mà vai trò có quyền
             final permKey = permMap[m.id];
@@ -324,6 +328,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ── Chủ quán nhiều cửa hàng: tự bật module Báo cáo chuỗi một lần ──
+                      if (session != null && session.isOwner && session.hasStore)
+                        ChainModuleOffer(
+                          storeId: session.storeId!,
+                          onEnabled: () => ref.invalidate(allModulesProvider),
+                        ),
+
                       // ── Section title ──────────────────────────────
                       _buildSectionHeader(activeModules),
                       const SizedBox(height: 14),
@@ -2237,6 +2248,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     // qr_order → push trực tiếp QrOrderScreen
     if (route == '/qr_order') {
       Navigator.push(context, _smoothRoute(const QrOrderScreen()));
+      return;
+    }
+    // chain → push trực tiếp Báo cáo chuỗi (chỉ Chủ quán thấy ô này)
+    if (route == '/chain') {
+      Navigator.push(context, _smoothRoute(const ChainReportScreen()));
       return;
     }
     final tabMap = {

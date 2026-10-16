@@ -24,6 +24,9 @@ import '../modules/bill_printer/screens/bill_preview_screen.dart';
 import '../core/repositories/module_repository.dart';
 import '../core/widgets/order_detail_dialog.dart';
 import '../core/utils/app_logger.dart';
+import 'einvoice_report_tab.dart';
+import 'chain_report_screen.dart';
+import '../core/providers/session_provider.dart';
 
 // ─── Design Tokens (nhất quán với toàn app) ───────────────────────────────────
 const _kNavy   = Color(0xFF1C2151);  // Đồng bộ với toàn app
@@ -91,7 +94,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
   late TabController _tab;
 
   @override
-  void initState() { super.initState(); _tab = TabController(length: 7, vsync: this); }
+  void initState() { super.initState(); _tab = TabController(length: 8, vsync: this); }
   @override
   void dispose() { _tab.dispose(); super.dispose(); }
 
@@ -130,6 +133,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
                   Tab(text: 'Huỷ/Duyệt'),
                   Tab(text: 'Nhân viên'),
                   Tab(text: 'Voucher'),
+                  Tab(text: 'Hóa đơn'),
                 ],
               ),
             ),
@@ -145,6 +149,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
             _VoidAuditTab(),
             _StaffAttendanceTab(),
             _VoucherTab(),
+            EinvoiceReportTab(),
           ],
         ),
       );
@@ -208,6 +213,15 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
               style: TextStyle(color: Colors.white.withValues(alpha: 0.45),
                 fontSize: 12, fontWeight: FontWeight.w500)),
             const Spacer(),
+            // Chỉ Chủ quán: báo cáo gộp nhiều cửa hàng/chi nhánh (server kiểm quyền lại)
+            if (ref.watch(sessionProvider)?.isOwner == true)
+              IconButton(
+                tooltip: 'Báo cáo chuỗi cửa hàng',
+                icon: const Icon(Icons.storefront_outlined, color: Colors.white54, size: 20),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ChainReportScreen()),
+                ),
+              ),
             IconButton(
               icon: Icon(
                 isLoading ? Icons.hourglass_empty_rounded : Icons.refresh_rounded,

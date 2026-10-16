@@ -3679,7 +3679,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           hasPrintServerOwner: hasOwner,
           allowPrintServerFallback:
               printerSettings.isDesignatedPrintServerDevice,
-          deviceOwnsBill: printerSettings.deviceOwnsBillPrinting,
+          deviceOwnsBill: printerSettings.deviceHasBillRule,
         )) {
           final billData = BillData(
             shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',

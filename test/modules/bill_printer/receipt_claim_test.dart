@@ -2,14 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:quannho_pos/modules/bill_printer/providers/printer_settings_provider.dart';
 import 'package:quannho_pos/modules/bill_printer/routing/print_setup.dart';
 
-PrintSetup setupWithDeviceRule(String deviceId, {bool enabled = true, bool noTarget = false}) =>
+PrintSetup setupWithDeviceRule(String deviceId, {bool enabled = true, bool noTarget = false, bool dual = false}) =>
     PrintSetup(
       printers: const [
         PrinterEntry(id: 'v3', name: 'V3', kind: PrinterKind.sunmiBuiltin),
       ],
       rules: [
         PrintRule(
-          id: '${kDeviceBillRulePrefix}abcd1234_receipt',
+          id: '${kDeviceBillRulePrefix}abcd1234${dual ? kDeviceBillDualMarker : '_'}receipt',
           name: 'V3',
           jobType: PrintJobType.receipt,
           sourceDeviceIds: {deviceId},
@@ -46,6 +46,25 @@ void main() {
       final s = state('win', const PrintSetup());
       expect(s.deviceOwnsBillPrinting, isFalse);
       expect(s.anyDeviceBillRule, isFalse);
+    });
+  });
+
+  group('chế độ song song (bill ra cả hai máy)', () {
+    test('máy có luật song song tự in nhưng KHÔNG giành quyền và máy chủ KHÔNG nhường', () {
+      final s = state('d1', setupWithDeviceRule('d1', dual: true));
+      expect(s.deviceHasBillRule, isTrue);
+      expect(s.deviceOwnsBillPrinting, isFalse);
+      expect(s.anyDeviceBillRule, isFalse);
+    });
+    test('chế độ độc quyền: tự in + giành quyền + máy chủ nhường', () {
+      final s = state('d1', setupWithDeviceRule('d1'));
+      expect(s.deviceHasBillRule, isTrue);
+      expect(s.deviceOwnsBillPrinting, isTrue);
+      expect(s.anyDeviceBillRule, isTrue);
+    });
+    test('máy khác không bị ảnh hưởng', () {
+      final s = state('win', setupWithDeviceRule('d1', dual: true));
+      expect(s.deviceHasBillRule, isFalse);
     });
   });
 

@@ -858,9 +858,80 @@ class _ThisDeviceSection extends StatelessWidget {
   List<PrintRule> _withoutDeviceRules() =>
       setup.rules.where((r) => !_isDeviceRule(r)).toList();
 
-  Future<void> _choose(BuildContext context, String? choice) async {
+  /// Máy in tích hợp của máy này: ưu tiên máy đã khai báo (gắn đúng máy này hoặc chưa gắn máy nào).
+  PrinterEntry? _findBuiltin(PrintSetup from) {
+    for (final p in from.printers) {
+      if (p.kind != PrinterKind.sunmiBuiltin) continue;
+      final owner = p.ownerDeviceId;
+      if (owner == null || owner.isEmpty || owner == _deviceId) return p;
+    }
+    return null;
+  }
+
+  Future<bool?> _confirmSeed(BuildContext context) => showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Chuyển sang dùng Luật in?'),
+      content: const Text(
+        'Quán đang in theo 4 trạm cũ. Để đặt riêng cho máy này, app sẽ dựng sẵn máy in '
+        'và luật từ cấu hình hiện tại (bếp, bar, bill vẫn in như cũ), rồi thêm một '
+        'luật riêng cho máy này. Bạn vẫn phải bấm Lưu để áp dụng.',
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+        FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Tiếp tục')),
+      ],
+    ),
+  );
+
+  /// Thiết lập nhanh. [mode]: 'win' = máy quầy in; 'pos' = máy này in, máy quầy nhường;
+  /// 'dual' = bill ra cả máy này lẫn máy quầy.
+  Future<void> _quick(BuildContext context, String mode) async {
     if (_deviceId.isEmpty) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (mode == 'win') {
+      onChanged(PrintSetup(printers: setup.printers, rules: _withoutDeviceRules()));
+      messenger.showSnackBar(const SnackBar(
+        content: Text('Bill của máy này sẽ in ra máy in quầy (máy Windows). Bấm Lưu để áp dụng.'),
+      ));
+      return;
+    }
     var base = setup;
+    if (base.isEmpty) {
+      final seeded = seedFromLegacy?.call();
+      if (seeded != null && !seeded.isEmpty) {
+        if (await _confirmSeed(context) != true) return;
+        base = seeded;
+      }
+    }
+    var builtin = _findBuiltin(base);
+    if (builtin == null) {
+      builtin = PrinterEntry(
+        id: 'builtin_$_shortId',
+        name: 'Máy in tích hợp – ${state.deviceState.deviceName}',
+        kind: PrinterKind.sunmiBuiltin,
+        paper: PaperWidth.mm50,
+        ownerDeviceId: _deviceId,
+        fontScale: 0.8,
+      );
+      base = PrintSetup(printers: [...base.printers, builtin], rules: base.rules);
+    }
+    await _choose(context, builtin.id, dual: mode == 'dual', baseOverride: base);
+    messenger.showSnackBar(SnackBar(
+      content: Text(mode == 'dual'
+          ? 'Bill sẽ ra cả máy này và máy in quầy. Bấm Lưu để áp dụng.'
+          : 'Bill thanh toán trên máy này sẽ in ra máy in tích hợp; máy quầy nhường. Bấm Lưu để áp dụng.'),
+    ));
+  }
+
+  Future<void> _choose(
+    BuildContext context,
+    String? choice, {
+    bool dual = false,
+    PrintSetup? baseOverride,
+  }) async {
+    if (_deviceId.isEmpty) return;
+    var base = baseOverride ?? setup;
 
     // Chọn "theo luật chung": chỉ gỡ luật riêng của máy này.
     if (choice == null) {
@@ -870,7 +941,7 @@ class _ThisDeviceSection extends StatelessWidget {
 
     // Quán chưa dùng thiết lập mới: dựng từ 4 trạm cũ trước để bếp/bar/bill
     // của các máy khác KHÔNG bị mất khi bật chế độ luật in.
-    if (base.isEmpty) {
+    if (baseOverride == null && base.isEmpty) {
       final seeded = seedFromLegacy?.call();
       if (seeded != null && !seeded.isEmpty) {
         final ok = await showDialog<bool>(
@@ -897,7 +968,7 @@ class _ThisDeviceSection extends StatelessWidget {
       ...base.rules.where((r) => !_isDeviceRule(r)),
       for (final job in const [PrintJobType.receipt, PrintJobType.provisional])
         PrintRule(
-          id: '$_kDeviceRulePrefix${_shortId}_${job.name}',
+          id: '$_kDeviceRulePrefix$_shortId${dual ? kDeviceBillDualMarker : '_'}${job.name}',
           name: '${jobTypeLabel(job)} – ${state.deviceState.deviceName}',
           jobType: job,
           sourceDeviceIds: {_deviceId},
@@ -949,7 +1020,89 @@ class _ThisDeviceSection extends StatelessWidget {
     ];
     final validValue = (current == null || current == '' || selected != null) ? current : null;
 
+    final deviceRules = setup.rules.where(_isDeviceRule).toList();
+    final isDual = deviceRules.any((r) => r.id.contains(kDeviceBillDualMarker));
+    final activeMode = deviceRules.isEmpty ? 'win' : (isDual ? 'dual' : 'pos');
+
+    Widget quickOption({
+      required String mode,
+      required IconData icon,
+      required String title,
+      required String desc,
+      bool needAndroid = false,
+    }) {
+      final disabled = _deviceId.isEmpty || (needAndroid && !isAndroid);
+      final active = activeMode == mode && !disabled;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.all(14),
+            side: BorderSide(
+              color: active ? const Color(0xFF1E1C5E) : Colors.black26,
+              width: active ? 2 : 1,
+            ),
+            backgroundColor: active ? const Color(0xFFEDEBFA) : null,
+          ),
+          onPressed: disabled ? null : () => _quick(context, mode),
+          child: Row(children: [
+            Icon(icon, size: 26),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(
+                  active ? '$title  ✓ đang dùng' : title,
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 14.5),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  needAndroid && !isAndroid ? '$desc (chỉ có trên máy Sunmi/Android)' : desc,
+                  style: GoogleFonts.outfit(fontSize: 12.5, color: Colors.black54),
+                ),
+              ]),
+            ),
+          ]),
+        ),
+      );
+    }
+
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Thiết lập nhanh', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16)),
+            const SizedBox(height: 4),
+            Text(
+              'Chọn cách in bill khi thanh toán TRÊN MÁY NÀY. Bếp và bar không đổi. Chọn xong bấm Lưu.',
+              style: GoogleFonts.outfit(fontSize: 12.5, color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            quickOption(
+              mode: 'win',
+              icon: Icons.desktop_windows_rounded,
+              title: 'Dùng máy Win làm máy in',
+              desc: 'Bill ra máy in quầy (máy Windows). Máy này không tự in.',
+            ),
+            quickOption(
+              mode: 'pos',
+              icon: Icons.phone_android_rounded,
+              title: 'Dùng máy POS cầm tay làm máy in',
+              desc: 'Bill ra máy in gắn trong máy này. Máy Windows tự nhường, không in trùng.',
+              needAndroid: true,
+            ),
+            quickOption(
+              mode: 'dual',
+              icon: Icons.copy_all_rounded,
+              title: 'Dùng song song 2 máy',
+              desc: 'Mỗi bill ra 2 bản: một ở máy này, một ở máy in quầy.',
+              needAndroid: true,
+            ),
+          ]),
+        ),
+      ),
+      const SizedBox(height: 12),
       Card(
         child: Padding(
           padding: const EdgeInsets.all(16),

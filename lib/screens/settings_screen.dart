@@ -13,6 +13,7 @@ import '../core/widgets/create_store_sheet.dart';
 import '../core/widgets/join_store_sheet.dart';
 import '../features/backup/backup_screen.dart';
 import 'bug_report_screen.dart';
+import 'einvoice_setting_tile.dart';
 import 'log_viewer_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../modules/bill_printer/screens/printer_settings_screen.dart';
@@ -80,6 +81,12 @@ class SettingsScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: _ShopInfoCard(shopName: shopNameAsync.value ?? 'Quán Nhỏ'),
+            ),
+          ),
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: EinvoiceSettingTile(),
             ),
           ),
 
