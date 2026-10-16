@@ -205,6 +205,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE store_roles;
 - Cần áp migration `20261016_einvoice_foundation_v1.sql` trước khi dùng; trước đó tab báo cáo hiện thông báo lỗi tải.
 
 ## Báo cáo chuỗi cửa hàng (Chủ quán)
+- 📄 Tài liệu đầy đủ (cấu trúc, DB, quy tắc nhận xét, kiểm thử): `.docs/Ai_Bum/cac-module/chuoi-cua-hang.md`
 - **Module `chain`** — ô **"Báo Cáo Nhiều Cửa Hàng / Chuỗi"** (màu xanh chanh) trong lưới Modules ở Trang chủ. CHỈ Chủ quán thấy (lọc cứng ở `dashboard_screen.dart`, không cấp qua vai trò/`store_roles.modules`); Quản lý và nhân viên không thấy, server cũng kiểm lại.
 - Tự bật MỘT LẦN cho mỗi cửa hàng khi Chủ quán sở hữu từ 2 cửa hàng trở lên hoặc đã có chuỗi (`ChainModuleOffer`, cờ `chain_module_offered_<storeId>`); sau đó Chủ quán gỡ/thêm lại như mọi module trong chế độ Sửa, không tự quay lại. Chủ chỉ có 1 cửa hàng thì chưa tự bật nhưng vẫn thêm tay được từ bộ chọn module.
 - Màn **Báo cáo chuỗi** = báo cáo **SO SÁNH các cửa hàng**, thiết kế theo đúng ngôn ngữ của module Báo cáo (header navy + 2 thẻ hero kem, chọn kỳ Hôm nay/Tuần này/Tháng này + thanh ‹ kỳ › để xem kỳ cũ):
@@ -212,6 +213,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE store_roles;
     - Tăng/giảm chỉ được nêu khi vượt **mức dao động bình thường** (đo thật: so 1 ngày với cùng thứ tuần trước lệch P80 = 26% số đơn / 34% doanh thu; kỳ nhiều ngày thu hẹp theo 1/√số ngày, sàn 5%/6%), mỗi bên ≥ 15 đơn; so theo **ngày có bán** (tuần nghỉ 3 ngày không bị báo "nhu cầu giảm"); kèm nguyên nhân (số đơn hay giá trị mỗi đơn) và dòng giải thích ngưỡng.
     - Cảnh báo riêng: quán im lặng (kỳ này 0 đơn, cùng kỳ trước ≥ 5 đơn), ngày không có đơn khi kỳ trước bán đều, hủy món/bàn ≥ 5% doanh thu và ≥ 1,8× các quán khác, giảm giá ≥ 4% giá trị bán và ≥ 2× các quán khác (cần ≥ 30 đơn), TB/đơn thấp ≤ 80% trung bình chuỗi. Nêu: quán dẫn đầu/tập trung ≥ 70%, TB/đơn cao ≥ 115%, quán mới, quán chưa từng có đơn. Tối đa 6 nhận xét, cảnh báo xếp trước.
     - Không kết luận khi: mẫu ít (chip "Ít dữ liệu"), quán mới ("Quán mới"), kỳ trước không có gốc ("Mới"), không tải được kỳ so sánh, máy chủ chưa gửi trường (coi là "không rõ", không phải 0).
+    - Chip **tổng chuỗi** (thẻ trên cùng) tính kiểu "**cùng cửa hàng**": chỉ gộp các quán so sánh được (loại quán mới), mỗi quán quy đổi theo ngày bán của chính nó — mở thêm quán không làm cả chuỗi "tăng giả", một quán nghỉ vài ngày không kéo cả chuỗi "giảm giả". Quán mới được **gộp thành một dòng**.
+    - Chip chỉ tô xanh/đỏ khi bình quân ngày bán vượt ngưỡng **và** tổng thô cùng chiều, đạt ≥ nửa ngưỡng (tránh "xanh +1,3%"); không thì xám + giải thích khi chạm.
     - Ngày được so với **cùng thứ tuần trước** (cuối tuần bán nhiều hơn ngày thường ~40%); tuần/tháng so kỳ liền trước; kỳ đang diễn ra so với phần đã trôi của kỳ trước.
   - **Xếp hạng doanh thu:** thứ hạng, màu riêng mỗi quán, thanh so sánh, số đơn/TB/tỷ trọng và chip so với cùng kỳ trước — chỉ tô xanh/đỏ khi vượt dao động bình thường; chạm chip xem lý do.
   - **So sánh theo chỉ số:** Doanh thu / Số đơn / TB/đơn / Giảm giá, vạch trung bình chuỗi, nhãn Cao nhất/Thấp nhất.

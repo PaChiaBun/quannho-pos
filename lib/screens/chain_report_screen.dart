@@ -181,7 +181,8 @@ class _ChainReportScreenState extends State<ChainReportScreen> {
     final p = _prev;
     final t = r?.totals;
     final w = _window;
-    final tot = (r != null && p != null && w != null) ? analyzeChainTotals(r, p, w) : null;
+    // Không hiện chip khi cả chuỗi chưa có đơn nào ("Mới" trên số 0 gây hiểu nhầm).
+    final tot = (r != null && p != null && w != null && r.totals.orders > 0) ? analyzeChainTotals(analyzeStores(buildRows(r, p), r, p, w), p) : null;
     final show = r != null;
     return Container(
       decoration: const BoxDecoration(
@@ -225,6 +226,7 @@ class _ChainReportScreenState extends State<ChainReportScreen> {
                 value: show ? fmtVnd(t!.revenue) : '—',
                 sub: show ? '${r.storeCount} cửa hàng' : 'Đang tải…',
                 change: tot?.revenue,
+                note: _excludedNote(tot?.excludedNames),
                 compareLabel: w?.compareLabel,
                 accent: _kOrange,
               ),
@@ -234,6 +236,7 @@ class _ChainReportScreenState extends State<ChainReportScreen> {
                 value: show ? '${t!.orders}' : '—',
                 sub: show ? 'đơn hoàn tất' : '',
                 change: tot?.orders,
+                note: _excludedNote(tot?.excludedNames),
                 compareLabel: w?.compareLabel,
                 accent: const Color(0xFF69F0AE),
               ),
@@ -255,6 +258,9 @@ class _ChainReportScreenState extends State<ChainReportScreen> {
       ),
     );
   }
+
+  static String? _excludedNote(List<String>? names) =>
+      (names == null || names.isEmpty) ? null : 'Chưa tính quán mới (chưa đủ lịch sử để so sánh): ${names.join(', ')}.';
 
   Widget _chainName() {
     final name = _chain!.name;
@@ -369,8 +375,9 @@ class _HeroCard extends StatelessWidget {
   final String label, value, sub;
   final MetricChange? change; // null = chưa có kỳ so sánh → ẩn chip
   final String? compareLabel;
+  final String? note; // ghi chú thêm vào lời giải thích (vd: quán mới không được tính)
   final Color accent;
-  const _HeroCard({required this.label, required this.value, required this.sub, required this.change, required this.compareLabel, required this.accent});
+  const _HeroCard({required this.label, required this.value, required this.sub, required this.change, required this.compareLabel, required this.accent, this.note});
 
   @override
   Widget build(BuildContext context) => Expanded(
@@ -397,7 +404,7 @@ class _HeroCard extends StatelessWidget {
         const SizedBox(height: 5),
         Row(children: [
           Flexible(child: Text(sub, overflow: TextOverflow.ellipsis, style: TextStyle(color: _kNavy.withValues(alpha: 0.4), fontSize: 10, fontWeight: FontWeight.w600))),
-          if (change != null) ...[const SizedBox(width: 6), _GrowthChip(change: change, compareLabel: compareLabel, compact: true)],
+          if (change != null) ...[const SizedBox(width: 6), _GrowthChip(change: change, compareLabel: compareLabel, note: note, noBaseLabel: 'Chưa so sánh', compact: true)],
         ]),
       ]),
     ),
@@ -428,8 +435,10 @@ class _GrowthChip extends StatelessWidget {
   final String? compareLabel;
   final int? activeDays;
   final int? compareActiveDays;
+  final String? note;
+  final String noBaseLabel; // "Mới" cho từng quán; "Chưa so sánh" cho thẻ tổng chuỗi
   final bool compact;
-  const _GrowthChip({required this.change, this.compareLabel, this.activeDays, this.compareActiveDays, this.compact = false});
+  const _GrowthChip({required this.change, this.compareLabel, this.activeDays, this.compareActiveDays, this.note, this.noBaseLabel = 'Mới', this.compact = false});
 
   static String explain(MetricChange c, String? label, int? ac, int? ap) {
     final vs = label ?? 'kỳ trước';
@@ -468,7 +477,7 @@ class _GrowthChip extends StatelessWidget {
       case Verdict.newStore:
         text = 'Quán mới';
       case Verdict.noBase:
-        text = 'Mới';
+        text = noBaseLabel;
       case Verdict.noise:
       case Verdict.up:
       case Verdict.down:
@@ -487,7 +496,7 @@ class _GrowthChip extends StatelessWidget {
       ]),
     );
     return Tooltip(
-      message: explain(c, compareLabel, activeDays, compareActiveDays),
+      message: '${explain(c, compareLabel, activeDays, compareActiveDays)}${note == null ? '' : ' $note'}',
       triggerMode: TooltipTriggerMode.tap,
       showDuration: const Duration(seconds: 6),
       child: chip,

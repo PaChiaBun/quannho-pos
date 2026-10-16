@@ -87,6 +87,16 @@ class MetricChange {
   bool get significant => verdict == Verdict.up || verdict == Verdict.down;
 }
 
+/// Chỉ tô màu khi CHÍNH con số hiển thị (tổng thô) cũng đáng kể: cùng chiều với phép so theo ngày bán và đạt tối thiểu
+/// nửa ngưỡng dao động. Ví dụ "+1,3%" xanh khi ngưỡng là 12% sẽ làm chủ quán hiểu sai, nên bị hạ xuống màu xám.
+Verdict _confirmWithRaw(Verdict v, double? raw, double band) {
+  if (v != Verdict.up && v != Verdict.down) return v;
+  if (raw == null) return Verdict.noise;
+  if (v == Verdict.up && raw < band / 2) return Verdict.noise;
+  if (v == Verdict.down && raw > -band / 2) return Verdict.noise;
+  return v;
+}
+
 /// Lõi đánh giá, dùng chung cho từng quán và cho cả chuỗi.
 MetricChange assessChange({
   required bool hasCompare,
@@ -117,7 +127,10 @@ MetricChange assessChange({
   final perDay = ((curValue / activeCur) / (prevValue / activeCmp) - 1) * 100;
   // N1 = dao động của phép so MỘT ngày với MỘT ngày; tổng nhiều ngày giảm theo √(trung bình nghịch đảo số ngày).
   final band = math.max(floor, dayNoise * math.sqrt((1 / activeCur + 1 / activeCmp) / 2)) * 100;
-  final v = perDay >= band ? Verdict.up : (perDay <= -band ? Verdict.down : Verdict.noise);
+  final v0 = perDay >= band ? Verdict.up : (perDay <= -band ? Verdict.down : Verdict.noise);
+  // Hai cách tính (tổng thô và bình quân ngày bán) ngược chiều, hoặc tổng thô quá nhỏ, thì không kết luận:
+  // vẫn hiện số, màu xám; lời giải thích nói rõ cả hai.
+  final v = _confirmWithRaw(v0, raw, band);
   return MetricChange(verdict: v, rawPct: raw, perDayPct: perDay, band: band);
 }
 
@@ -227,25 +240,76 @@ List<StoreAnalysis> analyzeStores(List<StoreRow> rows, ChainReport cur, ChainRep
   ];
 }
 
-/// Đánh giá cho CẢ chuỗi (thẻ hero): doanh thu và số đơn.
-({MetricChange revenue, MetricChange orders}) analyzeChainTotals(ChainReport cur, ChainReport? prev, PeriodWindow w) {
-  final ac = activeDates(cur).length;
-  final ap = activeDates(prev).length;
-  final p = prev?.totals;
-  MetricChange one(double c, double pv, double dayNoise, double floor) => assessChange(
-    hasCompare: p != null,
-    curValue: c,
-    prevValue: pv,
-    curOrders: cur.totals.orders,
-    prevOrders: p?.orders ?? 0,
-    activeCur: ac,
-    activeCmp: ap,
-    dayNoise: dayNoise,
-    floor: floor,
-  );
+/// Đánh giá cho CẢ chuỗi (thẻ hero): doanh thu và số đơn — theo kiểu "cùng cửa hàng" (like-for-like).
+/// Quán mới / quán chưa có gốc so sánh KHÔNG được tính (nếu không, mở thêm một quán sẽ làm cả chuỗi "tăng" giả).
+/// Mỗi quán được quy đổi theo ngày có bán của chính nó rồi cộng lại, nên một quán nghỉ vài ngày không kéo cả chuỗi "giảm".
+/// [excludedNames]: các quán đã loại khỏi phép so để UI nói rõ.
+({MetricChange revenue, MetricChange orders, List<String> excludedNames}) analyzeChainTotals(
+  List<StoreAnalysis> an,
+  ChainReport? prev,
+) {
+  final excluded = [for (final a in an) if (a.isNew && !a.notOpenYet) a.row.name];
+  // Quán so sánh được: có số kỳ trước, không mới, không "chưa mở". Quán kỳ trước chưa bán ngày nào (ap = 0) mà kỳ này có bán
+  // cũng không có gốc → loại.
+  final comparable = [
+    for (final a in an)
+      if (a.row.prev != null && !a.isNew && !a.notOpenYet && !(a.compareActiveDays == 0 && a.row.cur.orders > 0)) a,
+  ];
+  const none = MetricChange(verdict: Verdict.noBase);
+  if (prev == null || comparable.isEmpty) return (revenue: none, orders: none, excludedNames: excluded);
+
+  double rawCurRev = 0, rawPrevRev = 0, rawCurOrd = 0, rawPrevOrd = 0;
+  double dayCurRev = 0, dayPrevRev = 0, dayCurOrd = 0, dayPrevOrd = 0;
+  double wAc = 0, wAp = 0, wAcSum = 0, wApSum = 0;
+  for (final a in comparable) {
+    final c = a.row.cur, p = a.row.prev!;
+    rawCurRev += c.revenue;
+    rawPrevRev += p.revenue;
+    rawCurOrd += c.orders;
+    rawPrevOrd += p.orders;
+    if (a.activeDays > 0) {
+      dayCurRev += c.revenue / a.activeDays;
+      dayCurOrd += c.orders / a.activeDays;
+    }
+    if (a.compareActiveDays > 0) {
+      dayPrevRev += p.revenue / a.compareActiveDays;
+      dayPrevOrd += p.orders / a.compareActiveDays;
+    }
+    if (a.activeDays > 0) {
+      wAc += a.activeDays * c.revenue;
+      wAcSum += c.revenue;
+    }
+    if (a.compareActiveDays > 0) {
+      wAp += a.compareActiveDays * p.revenue;
+      wApSum += p.revenue;
+    }
+  }
+  // Số ngày hiệu dụng cho ngưỡng dao động: trung bình số ngày bán, có trọng số theo doanh thu.
+  final acEff = wAcSum > 0 ? math.max(1, (wAc / wAcSum).round()) : 0;
+  final apEff = wApSum > 0 ? math.max(1, (wAp / wApSum).round()) : 0;
+
+  MetricChange one(double dayCur, double dayPrev, double rawCur, double rawPrev, double dayNoise, double floor) {
+    final r = assessChange(
+      hasCompare: true,
+      curValue: dayCur * acEff,
+      prevValue: dayPrev * apEff,
+      curOrders: rawCurOrd.round(),
+      prevOrders: rawPrevOrd.round(),
+      activeCur: acEff,
+      activeCmp: apEff,
+      dayNoise: dayNoise,
+      floor: floor,
+    );
+    // Số hiển thị là thay đổi của TỔNG các quán so sánh được; màu theo phép so quy đổi theo ngày,
+    // và chỉ tô màu khi hai cách tính cùng chiều.
+    final raw = growthPct(rawCur, rawPrev);
+    return MetricChange(verdict: _confirmWithRaw(r.verdict, raw, r.band), rawPct: raw, perDayPct: r.perDayPct, band: r.band);
+  }
+
   return (
-    revenue: one(cur.totals.revenue, p?.revenue ?? 0, InsightConfig.dayNoiseRevenue, InsightConfig.floorRevenue),
-    orders: one(cur.totals.orders.toDouble(), (p?.orders ?? 0).toDouble(), InsightConfig.dayNoiseOrders, InsightConfig.floorOrders),
+    revenue: one(dayCurRev, dayPrevRev, rawCurRev, rawPrevRev, InsightConfig.dayNoiseRevenue, InsightConfig.floorRevenue),
+    orders: one(dayCurOrd, dayPrevOrd, rawCurOrd, rawPrevOrd, InsightConfig.dayNoiseOrders, InsightConfig.floorOrders),
+    excludedNames: excluded,
   );
 }
 
@@ -443,16 +507,28 @@ List<ChainInsight> buildInsights(
     }
   }
 
-  // 7) Quán mới / chưa từng bán.
+  // 7) Quán mới (gộp thành MỘT dòng) / chưa từng bán.
+  final newOnes = [
+    for (final r in live)
+      if (byId[r.id]!.isNew && r.cur.firstOrderAt != null) r,
+  ];
+  if (newOnes.length == 1) {
+    final r = newOnes.single;
+    info.add(ChainInsight(
+      InsightKind.info,
+      '${r.name} mới có đơn đầu tiên từ ${_dm(r.cur.firstOrderAt!)} — chưa đủ lịch sử để so sánh với $label.',
+    ));
+  } else if (newOnes.length > 1) {
+    final dates = newOnes.map((r) => r.cur.firstOrderAt!).toList()..sort();
+    final from = _dm(dates.first), to = _dm(dates.last);
+    info.add(ChainInsight(
+      InsightKind.info,
+      '${newOnes.map((r) => r.name).join(', ')} mới bắt đầu bán (từ ${from == to ? from : '$from đến $to'}) — chưa đủ lịch sử để so sánh với $label.',
+      detail: 'Các quán này không được tính vào mức tăng/giảm chung của chuỗi.',
+    ));
+  }
   for (final r in live) {
-    final a = byId[r.id]!;
-    final fo = r.cur.firstOrderAt;
-    if (a.isNew && fo != null) {
-      info.add(ChainInsight(
-        InsightKind.info,
-        '${r.name} mới có đơn đầu tiên từ ${_dm(fo)} — chưa đủ lịch sử để so sánh với $label.',
-      ));
-    } else if (r.cur.firstOrderKnown && fo == null && r.cur.orders == 0) {
+    if (r.cur.firstOrderKnown && r.cur.firstOrderAt == null && r.cur.orders == 0) {
       info.add(ChainInsight(
         InsightKind.info,
         '${r.name} chưa từng có đơn nào.',

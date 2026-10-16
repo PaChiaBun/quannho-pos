@@ -133,6 +133,29 @@ void main() {
       final r = a(cur: 400, prev: 700, co: 300, po: 500, ac: 4, ap: 7);
       expect(r.band, greaterThan(34 / 2.6458)); // rộng hơn 7v7
     });
+    test('tổng thô giảm nhưng bình quân ngày bán TĂNG mạnh (ngược chiều) → KHÔNG tô màu', () {
+      // kỳ này 3 ngày bán 600/ngày = 1800; kỳ trước 7 ngày 300/ngày = 2100 → tổng -14,3%, mỗi ngày +100%
+      final r = a(cur: 1800, prev: 2100, co: 300, po: 700, ac: 3, ap: 7);
+      expect(r.rawPct, closeTo(-14.3, 0.1));
+      expect(r.perDayPct, closeTo(100, 0.5));
+      expect(r.verdict, Verdict.noise);
+    });
+    test('tổng thô tăng nhưng bình quân ngày bán GIẢM mạnh (ngược chiều) → KHÔNG tô màu', () {
+      final r = a(cur: 2100, prev: 1800, co: 700, po: 300, ac: 7, ap: 3);
+      expect(r.perDayPct, closeTo(-50, 0.5));
+      expect(r.verdict, Verdict.noise);
+    });
+    test('bình quân ngày bán tăng vượt ngưỡng nhưng tổng thô chỉ +1% (< nửa ngưỡng) → KHÔNG tô màu', () {
+      // 5 ngày bán 120/ngày = 600; kỳ trước 7 ngày bán 85/ngày ≈ 595 → tổng +0,8%, mỗi ngày +40%
+      final r = a(cur: 600, prev: 595, co: 300, po: 300, ac: 5, ap: 7);
+      expect(r.rawPct, closeTo(0.8, 0.1));
+      expect(r.perDayPct, greaterThan(r.band));
+      expect(r.verdict, Verdict.noise);
+    });
+    test('tổng thô đạt ≥ nửa ngưỡng và cùng chiều → vẫn tô màu', () {
+      // 7 ngày vs 7 ngày: perDay = raw = +30% > ngưỡng 12,9%
+      expect(a(cur: 910, prev: 700, co: 300, po: 300, ac: 7, ap: 7).verdict, Verdict.up);
+    });
     test('mẫu ít (<15 đơn một bên) → insufficient, kể cả khi lệch lớn', () {
       expect(a(cur: 10, prev: 100, co: 8, po: 100).verdict, Verdict.insufficient);
       expect(a(cur: 100, prev: 10, co: 100, po: 14).verdict, Verdict.insufficient);
@@ -450,18 +473,96 @@ void main() {
     });
   });
 
-  group('analyzeChainTotals', () {
-    test('tổng chuỗi: đánh giá theo ngày có bán của cả chuỗi', () {
+  group('analyzeChainTotals — so sánh "cùng cửa hàng"', () {
+    ({MetricChange revenue, MetricChange orders, List<String> excludedNames}) tot(ChainReport cur, ChainReport? prev) =>
+        analyzeChainTotals(analyzeStores(buildRows(cur, prev), cur, prev, _w), prev);
+
+    test('tổng chuỗi: đánh giá theo ngày có bán', () {
       final cur = _rep([_m('a', 'A', orders: 490, revenue: 49000000)], [..._run('a', _curStart, 7, 70, 7000000)]);
       final prev = _rep([_m('a', 'A', orders: 700, revenue: 70000000)], [..._run('a', _prevStart, 7, 100, 10000000)]);
-      final r = analyzeChainTotals(cur, prev, _w);
+      final r = tot(cur, prev);
       expect(r.revenue.verdict, Verdict.down);
       expect(r.orders.verdict, Verdict.down);
       expect(r.revenue.rawPct, closeTo(-30, 0.001));
     });
+
     test('không có kỳ trước → noBase', () {
       final cur = _rep([_m('a', 'A', orders: 490, revenue: 49000000)], [..._run('a', _curStart, 7, 70, 7000000)]);
-      expect(analyzeChainTotals(cur, null, _w).revenue.verdict, Verdict.noBase);
+      expect(tot(cur, null).revenue.verdict, Verdict.noBase);
+    });
+
+    test('mở thêm một quán mới KHÔNG làm cả chuỗi "tăng giả"', () {
+      final cur = _rep([
+        _m('a', 'Alpha', orders: 700, revenue: 70000000, first: DateTime(2026, 6, 1)),
+        _m('n', 'Moi', orders: 700, revenue: 70000000, first: DateTime(2026, 10, 13)), // bán đủ lớn nhưng mới mở
+      ], [..._run('a', _curStart, 7, 100, 10000000), ..._run('n', DateTime(2026, 10, 13), 6, 117, 11700000)]);
+      final prev = _rep([_m('a', 'Alpha', orders: 700, revenue: 70000000), _m('n', 'Moi')], [..._run('a', _prevStart, 7, 100, 10000000)]);
+      final r = tot(cur, prev);
+      // Nếu tính cả quán mới, tổng sẽ là +100%. Chỉ tính Alpha: 0%.
+      expect(r.revenue.verdict, Verdict.noise);
+      expect(r.revenue.rawPct, closeTo(0, 0.001));
+      expect(r.excludedNames, ['Moi']);
+    });
+
+    test('một quán nghỉ 3 ngày KHÔNG kéo cả chuỗi "giảm giả" (số hiển thị là tổng, màu theo ngày bán)', () {
+      final cur = _rep([_m('a', 'A', orders: 700, revenue: 70000000), _m('b', 'B', orders: 400, revenue: 40000000)], [
+        ..._run('a', _curStart, 7, 100, 10000000),
+        ..._run('b', _curStart, 7, 100, 10000000, skip: {3, 4, 6}),
+      ]);
+      final prev = _rep([_m('a', 'A', orders: 700, revenue: 70000000), _m('b', 'B', orders: 700, revenue: 70000000)], [
+        ..._run('a', _prevStart, 7, 100, 10000000),
+        ..._run('b', _prevStart, 7, 100, 10000000),
+      ]);
+      final r = tot(cur, prev);
+      expect(r.revenue.rawPct, closeTo(-21.4, 0.1)); // tổng thực tế giảm
+      expect(r.revenue.verdict, Verdict.noise); // nhưng mỗi ngày bán thì không đổi
+    });
+
+    test('quán A tăng mạnh theo ngày bán nhưng quán B nghỉ nhiều ngày khiến tổng phẳng → chip xám, không tô xanh sai', () {
+      final cur = _rep([_m('a', 'A', orders: 910, revenue: 91000000), _m('b', 'B', orders: 300, revenue: 30000000)], [
+        ..._run('a', _curStart, 7, 130, 13000000),
+        ..._run('b', _curStart, 7, 100, 10000000, skip: {1, 2, 4, 5}),
+      ]);
+      final prev = _rep([_m('a', 'A', orders: 700, revenue: 70000000), _m('b', 'B', orders: 700, revenue: 70000000)], [
+        ..._run('a', _prevStart, 7, 100, 10000000),
+        ..._run('b', _prevStart, 7, 100, 10000000),
+      ]);
+      final r = tot(cur, prev);
+      expect(r.revenue.rawPct, closeTo(-13.6, 0.1)); // tổng thực tế giảm vì B nghỉ
+      expect(r.revenue.verdict, isNot(Verdict.up)); // không được tô xanh
+    });
+    test('cả hai quán cùng giảm thật → chuỗi giảm', () {
+      final cur = _rep([_m('a', 'A', orders: 490, revenue: 49000000), _m('b', 'B', orders: 490, revenue: 49000000)],
+          [..._run('a', _curStart, 7, 70, 7000000), ..._run('b', _curStart, 7, 70, 7000000)]);
+      final prev = _rep([_m('a', 'A', orders: 700, revenue: 70000000), _m('b', 'B', orders: 700, revenue: 70000000)],
+          [..._run('a', _prevStart, 7, 100, 10000000), ..._run('b', _prevStart, 7, 100, 10000000)]);
+      expect(tot(cur, prev).revenue.verdict, Verdict.down);
+    });
+
+    test('mọi quán đều mới → noBase (không có gì để so)', () {
+      final cur = _rep([
+        _m('a', 'A', orders: 300, revenue: 30000000, first: DateTime(2026, 10, 13)),
+        _m('b', 'B', orders: 300, revenue: 30000000, first: DateTime(2026, 10, 14)),
+      ], [..._run('a', DateTime(2026, 10, 13), 6, 50, 5000000), ..._run('b', DateTime(2026, 10, 14), 5, 60, 6000000)]);
+      final prev = _rep([_m('a', 'A'), _m('b', 'B')]);
+      final r = tot(cur, prev);
+      expect(r.revenue.verdict, Verdict.noBase);
+      expect(r.excludedNames, ['A', 'B']);
+    });
+  });
+
+  group('Nhận xét — gộp nhiều quán mới thành một dòng', () {
+    test('2 quán mới → MỘT nhận xét nêu cả hai tên và khoảng ngày', () {
+      final cur = _rep([
+        _m('a', 'Alpha', orders: 700, revenue: 70000000, first: DateTime(2026, 6, 1)),
+        _m('n', 'Moi1', orders: 100, revenue: 9000000, first: DateTime(2026, 10, 13, 9)),
+        _m('m', 'Moi2', orders: 80, revenue: 7000000, first: DateTime(2026, 10, 15, 9)),
+      ], [..._run('a', _curStart, 7, 100, 10000000)]);
+      final prev = _rep([_m('a', 'Alpha', orders: 700, revenue: 70000000), _m('n', 'Moi1'), _m('m', 'Moi2')], [..._run('a', _prevStart, 7, 100, 10000000)]);
+      final ins = _ins(cur, prev).where((e) => e.text.contains('mới bắt đầu bán')).toList();
+      expect(ins.length, 1);
+      expect(ins.single.text, contains('Moi1, Moi2 mới bắt đầu bán (từ 13/10 đến 15/10)'));
+      expect(ins.single.detail, contains('không được tính vào mức tăng/giảm chung'));
     });
   });
 }
