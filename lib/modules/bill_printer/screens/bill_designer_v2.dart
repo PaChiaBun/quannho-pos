@@ -1,5 +1,6 @@
 // lib/modules/bill_printer/screens/bill_designer_v2.dart
 // ignore_for_file: use_build_context_synchronously
+import '../utils/paper_sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -198,12 +199,7 @@ class _BlocksPanel extends ConsumerWidget {
 }
 
 // ─── Paper Size Bar ───────────────────────────────────────────────────────────
-// Thông tin mô tả khổ giấy — giúp chủ quán hiểu để chọn đúng
-const _kPaperInfo = {
-  '58mm': '58mm — Khổ nhỏ | Máy in cầm tay, bill nhỏ gọn. Phù hợp quán take-away hoặc khu vực bếp.',
-  '80mm': '80mm — Khổ phổ biến nhất | Máy in quầy thu ngân thông thường. Đa số quán ăn, cà phê, nhà hàng dùng khổ này.',
-  'a4':   'A4 — Khổ lớn | In trên máy in văn phòng. Phù hợp nhà hàng cao cấp, in hóa đơn VAT.',
-};
+// Mô tả khổ giấy lấy từ bảng chung `kPaperSpecs` (utils/paper_sizes.dart)
 
 class _PaperSizeBar extends ConsumerWidget {
   final String current;
@@ -221,16 +217,16 @@ class _PaperSizeBar extends ConsumerWidget {
               style: GoogleFonts.outfit(
                   fontSize: 13, fontWeight: FontWeight.w700, color: _kIndigo)),
           const SizedBox(height: 8),
-          Row(children: [
-            _PaperChip(label: '58mm', value: '58mm', selected: current.toLowerCase() == '58mm',
-                onTap: () => ref.read(billTemplateProvider.notifier).setPaperSize('58mm')),
-            const SizedBox(width: 8),
-            _PaperChip(label: '80mm', value: '80mm', selected: current.toLowerCase() == '80mm',
-                onTap: () => ref.read(billTemplateProvider.notifier).setPaperSize('80mm')),
-            const SizedBox(width: 8),
-            _PaperChip(label: 'A4', value: 'a4', selected: current.toLowerCase() == 'a4',
-                onTap: () => ref.read(billTemplateProvider.notifier).setPaperSize('a4')),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final spec in kPaperSpecs)
+              _PaperChip(
+                label: spec.label,
+                value: spec.key,
+                selected: current.toLowerCase() == spec.key,
+                onTap: () => ref.read(billTemplateProvider.notifier).setPaperSize(spec.key),
+              ),
           ]),
+          const SizedBox(height: 10),
           // Mô tả khổ giấy đang chọn
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -246,8 +242,7 @@ class _PaperSizeBar extends ConsumerWidget {
                     size: 16, color: _kIndigo.withValues(alpha: 0.7)),
                 const SizedBox(width: 8),
                 Expanded(child: Text(
-                  _kPaperInfo[current.toLowerCase()] ??
-                      _kPaperInfo['80mm']!,
+                  paperSpecOf(current).description,
                   style: GoogleFonts.outfit(
                       fontSize: 12,
                       color: _kIndigo,

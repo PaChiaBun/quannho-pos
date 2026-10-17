@@ -339,14 +339,19 @@ PayrollCalcResult calculatePayroll(PayrollInput input) {
       break;
     case 'M2': // Lương cố định tháng
       regularPay = input.baseSalary;
+      final daysInM2 = input.expectedDays > 0 ? input.expectedDays : 26;
       overtimePay =
           input.overtimeHours *
-          (input.baseSalary / 26 / 8) *
+          (input.baseSalary / daysInM2 / 8) *
           input.otMultiplier;
       break;
     case 'M3': // Cố định + theo giờ OT
       regularPay = input.baseSalary;
-      overtimePay = input.overtimeHours * input.hourlyRate * input.otMultiplier;
+      final daysInM3 = input.expectedDays > 0 ? input.expectedDays : 26;
+      final effectiveOtRate = input.hourlyRate > 0
+          ? input.hourlyRate
+          : (input.baseSalary / daysInM3 / 8);
+      overtimePay = input.overtimeHours * effectiveOtRate * input.otMultiplier;
       break;
     case 'M4': // Theo ngày
       final effectiveDailyRate = input.dailyRate > 0
@@ -361,11 +366,12 @@ PayrollCalcResult calculatePayroll(PayrollInput input) {
           input.baseSalary +
           (input.totalHours - input.overtimeHours) * input.hourlyRate +
           input.workDays * input.dailyRate;
+      final daysInM5 = input.expectedDays > 0 ? input.expectedDays : 26;
       final customOtRate = input.hourlyRate > 0
           ? input.hourlyRate
           : (input.dailyRate > 0
                 ? input.dailyRate / 8
-                : input.baseSalary / input.expectedDays / 8);
+                : input.baseSalary / daysInM5 / 8);
       overtimePay = input.overtimeHours * customOtRate * input.otMultiplier;
       break;
     default:
@@ -374,7 +380,11 @@ PayrollCalcResult calculatePayroll(PayrollInput input) {
   if (regularPay < 0) regularPay = 0;
 
   final deductionLate = input.lateCount * input.deductionPerLate;
-  final deductionAbsent = input.absentDays * input.deductionPerAbsent;
+  // ‼️ FIX M4: Lương ngày công chỉ tính theo số ngày làm thực tế (workDays * dailyRate).
+  // Không trừ kép absentDays * dailyRate.
+  final deductionAbsent = input.salaryMode == 'M4'
+      ? 0.0
+      : input.absentDays * input.deductionPerAbsent;
 
   final extraBonus = input.extraItems
       .where((i) => i.itemType == 'bonus' || i.itemType == 'allowance')

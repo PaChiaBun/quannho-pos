@@ -13,6 +13,7 @@ import 'bill_designer_v2.dart';
 import 'kitchen_ticket_designer.dart';
 import 'template_gallery_screen.dart';
 import 'printer_settings_screen.dart';
+import 'print_rules_screen.dart';
 
 const _kIndigo = Color(0xFF1C2151);
 
@@ -77,6 +78,14 @@ class BillPrinterHub extends ConsumerWidget {
                   subtitle: 'Cấu hình font, cỡ chữ phiếu đồ uống',
                   onTap: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const KitchenTicketDesigner(stationKey: 'bepBar'))),
+                ),
+                _HubSquareCard(
+                  icon: Icons.alt_route_rounded,
+                  color: const Color(0xFFE11D48),
+                  title: 'Máy In & Luật In',
+                  subtitle: 'Tự đặt máy in, luật in theo loại phiếu, số bản, máy dự phòng',
+                  onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const PrintRulesScreen())),
                 ),
                 _HubSquareCard(
                   icon: Icons.collections_bookmark_rounded,

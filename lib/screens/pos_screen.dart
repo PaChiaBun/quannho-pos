@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../core/utils/money_formatter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/utils/cart_animation_helper.dart';
 import 'package:uuid/uuid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../modules/loyalty/repository/loyalty_repository.dart';
+import '../core/utils/app_logger.dart';
 
 import '../core/providers/app_providers.dart';
 import '../core/providers/permission_provider.dart';
@@ -22,6 +25,7 @@ import '../core/utils/string_utils.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../modules/qr_order/models/qr_order_model.dart';
 import '../modules/qr_order/providers/qr_order_providers.dart';
+import '../modules/qr_order/widgets/qr_locked_banner.dart';
 import '../modules/qr_order/widgets/qr_order_review_sheet.dart';
 import '../modules/qr_order/widgets/qr_counter_queue_sheet.dart';
 
@@ -35,6 +39,10 @@ const _kMuted = Color(0xFF9E9085);
 const _kBg = Color(0xFFFAF7F2);
 const _kRed = Color(0xFFC62828);
 const _kBorder = Color(0xFFE0D8CC);
+
+bool _reducePosMotion(BuildContext context) =>
+    MediaQuery.disableAnimationsOf(context) ||
+    (kIsWeb && defaultTargetPlatform == TargetPlatform.android);
 
 /// Provider kiểm tra module Bàn có đang bật không
 /// Dùng allModulesProvider — tự refresh khi module config thay đổi
@@ -89,8 +97,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'Tất cả';
   final _searchCtrl = TextEditingController();
-  // Hướng 1: lưu tất cả sessionIds của đơn hiện tại — close hết sau checkout
-  final List<String> _kitchenSessionIds = [];
 
   final GlobalKey _cartKey = GlobalKey();
   int _cartPopTrigger = 0;
@@ -119,7 +125,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(posProductsProvider);
-    final cart = ref.watch(cartProvider);
+    final cartIsEmpty = ref.watch(cartProvider.select((cart) => cart.isEmpty));
 
     // ── Desktop/Tablet: layout 2 cột ──────────────────────────────
     if (Responsive.isLargeScreen(context)) {
@@ -133,6 +139,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               child: Column(
                 children: [
                   _buildTopBar(),
+                  const QrLockedBanner(),
                   _buildSearchBar(),
                   Expanded(child: _buildProductArea(productsAsync)),
                 ],
@@ -160,12 +167,18 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       body: Column(
         children: [
           _buildTopBar(),
+          const QrLockedBanner(),
           _buildSearchBar(),
           Expanded(
             child: productsAsync.when(
               loading: () =>
                   const Center(child: CircularProgressIndicator(color: _kNavy)),
-              error: (e, _) => Center(child: Text('Lỗi: $e')),
+              error: (e, st) {
+                AppLogger.error('pos_screen', 'Tải danh sách món thất bại: $e', e, st);
+                return const Center(
+                  child: Text('Tải danh sách món thất bại. Hãy chụp lại báo chủ app.'),
+                );
+              },
               data: (products) {
                 final prodList = (products as List).cast<ProductModel>();
                 final filtered = prodList.where((p) {
@@ -197,15 +210,19 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               ? _buildEmptyProducts()
                               : _buildProductGrid(filtered),
                         ),
-                        if (!cart.isEmpty) const SizedBox(height: 90),
+                        if (!cartIsEmpty) const SizedBox(height: 90),
                       ],
                     ),
-                    if (!cart.isEmpty)
+                    if (!cartIsEmpty)
                       Positioned(
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        child: _buildCartBar(cart),
+                        child: Consumer(
+                          builder: (context, ref, _) {
+                            return _buildCartBar(ref.watch(cartProvider));
+                          },
+                        ),
                       ),
                   ],
                 );
@@ -222,7 +239,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     return productsAsync.when(
       loading: () =>
           const Center(child: CircularProgressIndicator(color: _kNavy)),
-      error: (e, _) => Center(child: Text('Lỗi: $e')),
+      error: (e, st) {
+        AppLogger.error('pos_screen', 'Tải danh sách món thất bại: $e', e, st);
+        return const Center(
+          child: Text('Tải danh sách món thất bại. Hãy chụp lại báo chủ app.'),
+        );
+      },
       data: (products) {
         final prodList = (products as List).cast<ProductModel>();
         final filtered = prodList.where((p) {
@@ -262,301 +284,293 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   // TOP BAR
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildTopBar() {
-    final cart = ref.watch(cartProvider);
     final now = DateTime.now();
     final timeStr =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     final dateStr = '${now.day}/${now.month}/${now.year}';
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1A1860), _kNavy],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x30000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 6, 12, 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Title block
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Bán hàng',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$timeStr  ·  $dateStr',
-                      style: const TextStyle(
-                        color: Color(0x80FFFFFF),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ],
+    return Consumer(
+      builder: (context, ref, _) {
+        final cart = ref.watch(cartProvider);
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 500;
+            return Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF1A1860), _kNavy],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x30000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    isCompact ? 12 : 16,
+                    6,
+                    isCompact ? 8 : 12,
+                    isCompact ? 8 : 12,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Title block
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Bán hàng',
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isCompact ? 18 : 22,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                                height: 1.1,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '$timeStr  ·  $dateStr',
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: const Color(0x80FFFFFF),
+                                fontSize: isCompact ? 11 : 13,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
-              // ── Active Counter QR Orders Badge & Comprehensive Pipeline Error Warning ──
-              Consumer(
-                builder: (context, ref, _) {
-                  final activeCounterReqs = ref.watch(
-                    activeCounterQrRequestsProvider,
-                  );
-                  final pipelineError = ref.watch(qrPipelineErrorProvider);
+                  // ── Active Counter QR Orders Badge & Comprehensive Pipeline Error Warning ──
+                  IconButton(
+                    visualDensity: isCompact
+                        ? VisualDensity.compact
+                        : VisualDensity.standard,
+                    padding: EdgeInsets.all(isCompact ? 4 : 8),
+                    constraints: isCompact
+                        ? const BoxConstraints(minWidth: 36, minHeight: 36)
+                        : null,
+                    tooltip: 'Đối soát thanh toán bị gián đoạn',
+                    icon: Icon(
+                      Icons.restore,
+                      color: Colors.white,
+                      size: isCompact ? 20 : 24,
+                    ),
+                    onPressed: cart.isProcessing
+                        ? null
+                        : () async {
+                            final hadPending = await recoverPendingPosSale(
+                              context,
+                              ref,
+                            );
+                            if (!hadPending && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Không có thanh toán đang chờ đối soát',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                  ),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final qrRequests = ref.watch(activeQrRequestsProvider);
+                      final stale = ref.watch(qrPipelineErrorProvider) != null;
+                      if (qrRequests.isEmpty && !stale) {
+                        return const SizedBox.shrink();
+                      }
+                      final hasPending = qrRequests.any((r) => r.isSubmitted);
+                      final badgeColor = stale
+                          ? Colors.grey.shade700
+                          : hasPending
+                          ? Colors.orange
+                          : Colors.blue;
 
-                  if (pipelineError != null) {
-                    final errCode = pipelineError.errorCode;
-                    final errMsg =
-                        pipelineError.errorMessage ?? 'Lỗi không xác định';
-                    String label = 'Lỗi QR';
-                    Color bg = Colors.red.shade800;
-                    IconData icon = Icons.warning_amber_rounded;
+                      return Padding(
+                        padding: EdgeInsets.only(right: isCompact ? 6 : 8),
+                        child: GestureDetector(
+                          onTap: () async {
+                            final selectedReq =
+                                await showModalBottomSheet<QrRequestModel>(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (_) => const QrCounterQueueSheet(),
+                                );
+                            if (selectedReq != null && context.mounted) {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) =>
+                                    QrOrderReviewSheet(request: selectedReq),
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isCompact ? 8 : 10,
+                              vertical: isCompact ? 4 : 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: badgeColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  stale
+                                      ? Icons.wifi_off_rounded
+                                      : Icons.bolt_rounded,
+                                  size: isCompact ? 14 : 16,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: isCompact ? 2 : 4),
+                                Text(
+                                  isCompact
+                                      ? 'QR (${qrRequests.length})'
+                                      : 'Đơn QR (${qrRequests.length})',
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: isCompact ? 11 : 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
 
-                    if (errCode == 'NO_POS_TOKEN') {
-                      label = 'Chưa đăng nhập POS Token';
-                      bg = Colors.red.shade900;
-                      icon = Icons.key_off_rounded;
-                    } else if (errCode == 'NETWORK_ERROR') {
-                      label = 'Lỗi Kết Nối Mạng QR';
-                      bg = Colors.orange.shade900;
-                      icon = Icons.wifi_off_rounded;
-                    } else if (errCode == 'RPC_ERROR') {
-                      label = 'Lỗi Backend RPC QR';
-                      bg = Colors.purple.shade900;
-                      icon = Icons.dns_rounded;
-                    }
 
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Tooltip(
-                        message: '$label: $errMsg',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                  // ── Quick add product (always shown, no Kho module needed) ──
+                  GestureDetector(
+                    onTap: () => _openQuickAddProduct(),
+                    child: Container(
+                      padding: EdgeInsets.all(isCompact ? 6 : 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(isCompact ? 10 : 12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.20),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.add_rounded,
+                        color: Colors.white,
+                        size: isCompact ? 18 : 20,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: isCompact ? 6 : 8),
+
+                  // Cart badge
+                  GestureDetector(
+                        key: _cartKey,
+                        onTap: cart.isEmpty ? null : _openCart,
+                        child: AnimatedContainer(
+                          duration: 200.ms,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isCompact ? 8 : 12,
+                            vertical: isCompact ? 6 : 8,
                           ),
                           decoration: BoxDecoration(
-                            color: bg,
-                            borderRadius: BorderRadius.circular(10),
+                            color: cart.isEmpty
+                                ? Colors.white.withValues(alpha: 0.10)
+                                : _kOrange,
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(icon, size: 14, color: Colors.white),
-                              const SizedBox(width: 4),
-                              Text(
-                                label,
-                                style: GoogleFonts.outfit(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              Icon(
+                                Icons.shopping_cart_rounded,
+                                color: Colors.white,
+                                size: isCompact ? 16 : 18,
                               ),
+                              if (cart.itemCount > 0) ...[
+                                SizedBox(width: isCompact ? 4 : 6),
+                                Text(
+                                  isCompact
+                                      ? '${cart.itemCount}'
+                                      : '${cart.itemCount} mon',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: isCompact ? 12 : 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
-                      ),
-                    );
-                  }
+                      )
+                      .animate(target: _cartPopTrigger.toDouble())
+                      .scaleXY(
+                        begin: 1.0,
+                        end: 1.08,
+                        duration: 150.ms,
+                        curve: Curves.easeOut,
+                      )
+                      .then()
+                      .scaleXY(begin: 1.08, end: 1.0, duration: 100.ms),
 
-                  if (activeCounterReqs.isEmpty) return const SizedBox.shrink();
-
-                  final hasPending = activeCounterReqs.any(
-                    (r) => r.status == 'pending_staff',
-                  );
-                  final badgeColor = hasPending ? Colors.orange : Colors.blue;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () async {
-                        final selectedReq =
-                            await showModalBottomSheet<QrRequestModel>(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (_) => const QrCounterQueueSheet(),
-                            );
-
-                        if (selectedReq != null && context.mounted) {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) => QrOrderReviewSheet(
-                              request: selectedReq,
-                              onApproved: () {},
-                              onRejected: () {},
-                            ),
-                          );
-                        }
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
+                  if (!cart.isEmpty) ...[
+                    SizedBox(width: isCompact ? 6 : 8),
+                    // Clear cart
+                    GestureDetector(
+                      onTap: _confirmClearCart,
+                      child: Container(
+                        padding: EdgeInsets.all(isCompact ? 6 : 8),
                         decoration: BoxDecoration(
-                          color: badgeColor,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: badgeColor.withValues(alpha: 0.5),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          color: Colors.white.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(isCompact ? 10 : 12),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.bolt_rounded,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'QR Quầy (${activeCounterReqs.length})',
-                              style: GoogleFonts.outfit(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
+                        child: Icon(
+                          Icons.delete_sweep_rounded,
+                          color: const Color(0x99FFFFFF),
+                          size: isCompact ? 18 : 20,
                         ),
                       ),
                     ),
-                  );
-                },
+                  ],
+                ],
               ),
-
-              // ── Quick add product (always shown, no Kho module needed) ──
-              GestureDetector(
-                onTap: () => _openQuickAddProduct(),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.20),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.add_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-
-              // Cart badge
-              GestureDetector(
-                    key: _cartKey,
-                    onTap: cart.isEmpty ? null : _openCart,
-                    child: AnimatedContainer(
-                      duration: 200.ms,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: cart.isEmpty
-                            ? Colors.white.withValues(alpha: 0.10)
-                            : _kOrange,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.shopping_cart_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          if (cart.itemCount > 0) ...[
-                            const SizedBox(width: 6),
-                            Text(
-                              '${cart.itemCount} mon',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  )
-                  .animate(target: _cartPopTrigger.toDouble())
-                  .scaleXY(
-                    begin: 1.0,
-                    end: 1.08,
-                    duration: 150.ms,
-                    curve: Curves.easeOut,
-                  )
-                  .then()
-                  .scaleXY(begin: 1.08, end: 1.0, duration: 100.ms),
-
-              const SizedBox(width: 8),
-
-              // Clear cart
-              if (!cart.isEmpty)
-                GestureDetector(
-                  onTap: _confirmClearCart,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.delete_sweep_rounded,
-                      color: Color(0x99FFFFFF),
-                      size: 20,
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
+  },
+);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
   // SEARCH BAR
   Widget _buildSearchBar() {
-    final cart = ref.watch(cartProvider);
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -788,6 +802,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   // PRODUCT GRID
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildProductGrid(List<ProductModel> products) {
+    final reduceMotion = _reducePosMotion(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         // Dùng width thực của khu vực (không phải width màn hình tổng)
@@ -815,10 +830,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
             gridDelegate: delegate,
             itemCount: products.length,
-            itemBuilder: (_, i) => _ProductCard(
-              product: products[i],
-              onTapWithDetails: (details) => _addToCart(products[i], details),
-            ).animate(delay: (i * 40).ms).fadeIn(duration: 250.ms),
+            itemBuilder: (_, i) {
+              final card = _ProductCard(
+                product: products[i],
+                onTapWithDetails: (details) => _addToCart(products[i], details),
+              );
+              return reduceMotion
+                  ? card
+                  : card.animate(delay: (i * 40).ms).fadeIn(duration: 250.ms);
+            },
           );
         }
 
@@ -882,11 +902,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   delegate: SliverChildBuilderDelegate((_, i) {
                     final idx = globalIdx;
                     globalIdx++;
-                    return _ProductCard(
+                    final card = _ProductCard(
                       product: grouped[cat]![i],
                       onTapWithDetails: (details) =>
                           _addToCart(grouped[cat]![i], details),
-                    ).animate(delay: (idx * 30).ms).fadeIn(duration: 220.ms);
+                    );
+                    return reduceMotion
+                        ? card
+                        : card
+                              .animate(delay: (idx * 30).ms)
+                              .fadeIn(duration: 220.ms);
                   }, childCount: grouped[cat]!.length),
                   gridDelegate: delegate,
                 ),
@@ -973,12 +998,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   void _openQuickAddProduct([String prefillName = '']) {
+    final products = ref.read(posProductsProvider).value ?? [];
+    final storeCustomCats = products
+        .map((p) => (p.category ?? '').trim())
+        .where((c) => c.isNotEmpty && !const ['Đồ ăn', 'Đồ uống', 'Tráng miệng', 'Combo', 'Khác'].contains(c))
+        .toSet()
+        .toList();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _QuickAddProductSheet(
         prefillName: prefillName,
+        initialCustomCategories: storeCustomCats,
         onSaved: (name, price, costPrice, category, unit) async {
           try {
             await ref
@@ -1000,11 +1033,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 ),
               );
             }
-          } catch (e) {
+          } catch (e, st) {
+            AppLogger.error('pos_screen', 'Thêm món vào thực đơn thất bại: $e', e, st);
             if (ctx.mounted) {
               ScaffoldMessenger.of(ctx).showSnackBar(
-                SnackBar(
-                  content: Text('Lỗi: $e'),
+                const SnackBar(
+                  content: Text('Thêm món thất bại. Hãy chụp lại báo chủ app.'),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -1132,34 +1166,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
-  void _openCheckout() {
-    final sessionsToClose = List<String>.from(_kitchenSessionIds);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      isDismissible: false,
-      enableDrag: false,
-      builder: (_) => const CheckoutSheet(),
-    ).then((_) async {
-      // Đóng tất cả ban_sessions Mang đi của đơn này
-      for (final sid in sessionsToClose) {
-        try {
-          await Supabase.instance.client
-              .from('ban_sessions')
-              .update({
-                'status': 'closed',
-                'closed_at': DateTime.now().toUtc().toIso8601String(),
-              })
-              .eq('id', sid)
-              .eq('status', 'open');
-        } catch (e) {
-          debugPrint('[POS] closeSession err: $e');
-        }
-      }
-      if (mounted) _kitchenSessionIds.clear();
-    });
-  }
+  void _openCheckout() => openPosCheckout(context, ref);
 
   void _openKitchenConfirm(CartState cart) {
     // Chỉ gửi các line CHƯА sent
@@ -1345,11 +1352,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       ref
           .read(cartProvider.notifier)
           .markLinesSent(unsentLines.map((l) => l.lineId).toList());
-      _kitchenSessionIds.add(sessionId);
+      ref.read(cartProvider.notifier).addKitchenSession(sessionId);
 
       if (mounted) {
         final sentCount = unsentLines.fold(0, (s, l) => s + l.quantity.toInt());
-        final batchNum = _kitchenSessionIds.length;
+        final batchNum = ref.read(cartProvider).kitchenSessionIds.length;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1374,11 +1381,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         );
       }
     } catch (e, st) {
-      debugPrint('[POS→Bếp] ❌ LỖI: $e\n$st');
+      AppLogger.error('pos_screen', 'Gửi bếp thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi gửi bếp: $e'),
+            content: const Text('Gửi bếp thất bại. Hãy chụp lại báo chủ app.'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 8),
@@ -1487,13 +1494,12 @@ class _ProductCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cart = ref.watch(cartProvider);
-    final inCartLines = cart.lines
-        .where((l) => l.productId == product.id)
-        .toList();
-    final inCartQty = inCartLines.fold<int>(
-      0,
-      (s, l) => s + l.quantity.toInt(),
+    final inCartQty = ref.watch(
+      cartProvider.select(
+        (cart) => cart.lines
+            .where((line) => line.productId == product.id)
+            .fold<int>(0, (sum, line) => sum + line.quantity.toInt()),
+      ),
     );
     final isOutOfStock = product.stockQty <= 0 && product.minStock > 0;
     final isLowStock =
@@ -1556,6 +1562,10 @@ class _ProductCard extends ConsumerWidget {
                 ? 13.0
                 : 17.0;
             final radius = isCompact ? 16.0 : 22.0;
+            final imageCacheWidth = (w * MediaQuery.devicePixelRatioOf(ctx2))
+                .round()
+                .clamp(128, 1024)
+                .toInt();
             // Format giá ngắn gọn cho card: 20K, 150K, 1.5Tr
             String fmtCard(int v) {
               if (v >= 1000000)
@@ -1596,6 +1606,9 @@ class _ProductCard extends ConsumerWidget {
                         child: Image.network(
                           product.imageUrl!,
                           fit: BoxFit.cover,
+                          cacheWidth: imageCacheWidth,
+                          filterQuality: FilterQuality.low,
+                          gaplessPlayback: true,
                           errorBuilder: (_, __, ___) => const SizedBox(),
                         ),
                       ),
@@ -2056,19 +2069,9 @@ class _CartPanel extends ConsumerWidget {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Chỉ pop sheet khi đang nhúc sheet (mobile)
-                      // Panel: mở checkout trực tiếp không cần pop
-                      if (!isPanel) Navigator.pop(context);
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        isDismissible: false,
-                        enableDrag: false,
-                        builder: (_) => const CheckoutSheet(),
-                      );
-                    },
+                    onPressed: cart.isProcessing
+                        ? null
+                        : () => openPosCheckout(context, ref),
                     icon: const Icon(Icons.payment_rounded),
                     label: const Text(
                       'Thanh toán',
@@ -2915,11 +2918,12 @@ class _CustomerPickerRowState extends ConsumerState<_CustomerPickerRow> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('pos_screen', 'Tra cứu khách hàng thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi: $e'),
+          const SnackBar(
+            content: Text('Tra cứu khách hàng thất bại. Hãy chụp lại báo chủ app.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -3105,6 +3109,7 @@ class _CustomerPickerRowState extends ConsumerState<_CustomerPickerRow> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _QuickAddProductSheet extends StatefulWidget {
   final String prefillName;
+  final List<String>? initialCustomCategories;
   final Future<void> Function(
     String name,
     double price,
@@ -3116,6 +3121,7 @@ class _QuickAddProductSheet extends StatefulWidget {
 
   const _QuickAddProductSheet({
     required this.prefillName,
+    this.initialCustomCategories,
     required this.onSaved,
   });
 
@@ -3130,6 +3136,7 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
   final _costCtrl = TextEditingController();
   final _catCtrl = TextEditingController();
   final _unitCtrl = TextEditingController(text: 'phần');
+  List<String> _customCats = [];
   bool _saving = false;
   double _previewPrice = 0;
 
@@ -3142,7 +3149,7 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
 
   // Common categories để gợi ý
   static const _cats = ['Đồ ăn', 'Đồ uống', 'Tráng miệng', 'Combo', 'Khác'];
-  static const _units = ['phần', 'ly', 'tô', 'cái', 'hộp', 'kg', 'g'];
+  static const _units = ['phần', 'ly', 'tô', 'cái', 'hộp', 'lon', 'chai', 'gói', 'kg', 'g', 'ml', 'lít'];
 
   @override
   void initState() {
@@ -3152,6 +3159,39 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
       final val = double.tryParse(_priceCtrl.text.replaceAll(',', '')) ?? 0;
       setState(() => _previewPrice = val);
     });
+
+    final set = <String>{};
+    if (widget.initialCustomCategories != null) {
+      set.addAll(widget.initialCustomCategories!);
+    }
+    _customCats = set.toList();
+    _loadPersistedCustomCategories();
+  }
+
+  Future<void> _loadPersistedCustomCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storeId = prefs.getString('auth_store_id') ?? 'default';
+      final saved = prefs.getStringList('custom_categories_$storeId') ?? [];
+      if (saved.isNotEmpty && mounted) {
+        setState(() {
+          final set = _customCats.toSet()..addAll(saved);
+          _customCats = set.toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('[_QuickAddProductSheet] _loadPersistedCustomCategories error: $e');
+    }
+  }
+
+  Future<void> _persistCustomCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storeId = prefs.getString('auth_store_id') ?? 'default';
+      await prefs.setStringList('custom_categories_$storeId', _customCats);
+    } catch (e) {
+      debugPrint('[_QuickAddProductSheet] _persistCustomCategories error: $e');
+    }
   }
 
   @override
@@ -3323,37 +3363,70 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: _cats.map((c) {
-                          final sel = _catCtrl.text == c;
-                          return GestureDetector(
-                            onTap: () =>
-                                setState(() => _catCtrl.text = sel ? '' : c),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: sel
-                                    ? _kNavy
-                                    : _kNavy.withValues(alpha: 0.06),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: sel ? _kNavy : _kBorder,
+                        children: [
+                          ..._cats.map((c) {
+                            final sel = _catCtrl.text == c;
+                            return GestureDetector(
+                              onTap: () =>
+                                  setState(() => _catCtrl.text = sel ? '' : c),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: sel
+                                      ? _kNavy
+                                      : _kNavy.withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: sel ? _kNavy : _kBorder,
+                                  ),
+                                ),
+                                child: Text(
+                                  c,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: sel ? Colors.white : _kMuted,
+                                  ),
                                 ),
                               ),
-                              child: Text(
-                                c,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: sel ? Colors.white : _kMuted,
+                            );
+                          }),
+                          ..._customCats.map((c) {
+                            final sel = _catCtrl.text == c;
+                            return GestureDetector(
+                              onTap: () =>
+                                  setState(() => _catCtrl.text = sel ? '' : c),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: sel
+                                      ? const Color(0xFF7C3AED)
+                                      : const Color(0xFF7C3AED).withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: sel ? const Color(0xFF7C3AED) : _kBorder,
+                                  ),
+                                ),
+                                child: Text(
+                                  c,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: sel ? Colors.white : _kMuted,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        }).toList(),
+                            );
+                          }),
+                        ],
                       ),
                       const SizedBox(height: 12),
 
@@ -3452,11 +3525,18 @@ class _QuickAddProductSheetState extends State<_QuickAddProductSheet> {
     setState(() => _saving = true);
     final price = double.tryParse(_priceCtrl.text.replaceAll(',', '')) ?? 0;
     final costPrice = double.tryParse(_costCtrl.text.replaceAll(',', '')) ?? 0;
+    final selectedCat = _catCtrl.text.trim();
+    if (selectedCat.isNotEmpty && !const ['Đồ ăn', 'Đồ uống', 'Tráng miệng', 'Combo', 'Khác'].contains(selectedCat)) {
+      if (!_customCats.contains(selectedCat)) {
+        _customCats.add(selectedCat);
+      }
+      await _persistCustomCategories();
+    }
     await widget.onSaved(
       _nameCtrl.text.trim(),
       price,
       costPrice,
-      _catCtrl.text.trim(),
+      selectedCat,
       _unitCtrl.text.trim(),
     );
     if (mounted) setState(() => _saving = false);
@@ -3945,7 +4025,12 @@ class _TablePickerSheet extends ConsumerWidget {
             height: 320,
             child: tablesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Lỗi: $e')),
+              error: (e, st) {
+                AppLogger.error('pos_screen', 'Tải danh sách bàn thất bại: $e', e, st);
+                return const Center(
+                  child: Text('Tải danh sách bàn thất bại. Hãy chụp lại báo chủ app.'),
+                );
+              },
               data: (tables) {
                 final activeTables = tables.where((t) => t.isActive).toList();
                 if (activeTables.isEmpty) {
@@ -4504,7 +4589,12 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
             Expanded(
               child: productsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('$e')),
+                error: (e, st) {
+                  AppLogger.error('pos_screen', 'Tải danh sách món thất bại: $e', e, st);
+                  return const Center(
+                    child: Text('Tải danh sách món thất bại. Hãy chụp lại báo chủ app.'),
+                  );
+                },
                 data: (products) {
                   final prodList = (products as List).cast<ProductModel>();
                   final filtered = _search.isEmpty

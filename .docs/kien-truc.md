@@ -1,5 +1,21 @@
 # Quán Nhỏ POS — Kiến Trúc
 
+## Checkout V5 — bản sửa local, chưa phát hành
+
+Luồng POS: CheckoutSheet → CartNotifier → PosRepository → persistent PosSaleOperationManager → `complete_pos_sale_v1`. RPC là ranh giới commit duy nhất cho đơn/thu chi/kho/loyalty/ví/đóng phiên bếp. Flutter không được gọi `spendWallet()` hay đóng phiên sau commit. UI khóa thao tác khi đang xử lý, không dùng timeout ngoài Future làm mất kết quả; receipt dùng snapshot server; replay không tự in. Pending lưu cả intent trước RPC, giữ đến khi thu ngân xác nhận kết quả. Nút Đối soát trên POS hoạt động kể cả giỏ trống sau restart; chỉ gửi lại nguyên request đã lưu khi người dùng đồng ý. Lỗi từ chối trước commit mới được giải phóng key. Khóa cũ thiếu payload chỉ reconcile, không được xóa nếu server chưa có kết quả.
+
+Đây là mã nguồn đang kiểm thử, không phải xác nhận migration đã apply. Runtime PostgreSQL và kiểm thử Windows/máy in thực tế vẫn là release gate.
+
+## QR Order — ranh giới kiến trúc mục tiêu
+
+- QR Order dùng hai public channel theo cửa hàng: `TABLE_SHARED` và `COUNTER`; không tạo channel/QR riêng từng bàn.
+- Public web chỉ xem menu, submit idempotent và theo dõi request qua opaque token. Mỗi submit tạo một request và một order chuẩn duy nhất.
+- App nhân viên tái sử dụng account session, `store_members`, `store_id` và action permissions hiện hành. QR không có bước POS device pairing riêng.
+- QR bàn giao động là capability một lần để tìm/claim request; nó không thay thế staff auth và không tự gán bàn, thanh toán hoặc gửi Bếp.
+- TABLE chỉ gán `ban_dining_tables`/`ban_sessions` sau khi nhân viên claim và chọn bàn; sau đó module Bàn là nơi vận hành order. TABLE thanh toán toàn bộ session sau.
+- COUNTER là mang đi độc lập, không vào module Bàn và có payment gate bắt buộc trước kitchen dispatch.
+- Chi tiết và trạng thái triển khai xem `.docs/qr-order-kien-truc-muc-tieu.md` và `.docs/ke-hoach-trien-khai-qr-order.md`.
+
 ## Cấu Trúc `lib/`
 ```
 lib/
@@ -62,6 +78,13 @@ lib/
 - `navTabProvider` — tab đang hiển thị
 - `navSlotsProvider` — 4 ô thanh điều hướng tuỳ chỉnh
 - `eventBridgeProvider` — cầu nối sự kiện giữa các module
+
+### Vòng đời module và truy vấn
+
+- `MainShell` dùng `ActiveModuleHost`: chỉ module đang hiển thị được mount. Không dùng `IndexedStack` để giữ sống toàn bộ module.
+- Stream/Future gắn với UI module phải dùng `autoDispose`; rời module phải dừng polling, realtime và timer không thiết yếu.
+- Repository có thể giữ cache RAM theo `store_id` để quay lại module hiển thị ngay, nhưng chỉ phát state khi snapshot thực sự thay đổi.
+- Tác vụ nền bắt buộc như điều phối in phải là service riêng, giới hạn theo vai trò/thiết bị; không giữ sống cả screen để chạy nền.
 
 ## Hệ Thống Sự Kiện (Event Bus)
 - `core/event_bus/` — giao tiếp giữa các module mà không phụ thuộc nhau

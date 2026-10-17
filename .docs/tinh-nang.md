@@ -1,5 +1,25 @@
 # Quán Nhỏ POS — Features & Modules
 
+## Bản sửa checkout V5 đang kiểm thử (chưa production)
+
+- Đã chạy PostgreSQL thật cô lập: hai nhánh có/không coupons, race 50 callers, POS/Bàn cùng phiên, ví đồng thời và rollback khi ghi thu chi lỗi. Chưa kiểm thử máy Windows/máy in thực tế.
+- POS có nút phục hồi giao dịch bị gián đoạn kể cả sau restart/giỏ trống; kết quả được giữ đến khi người dùng xác nhận. Không tự in lại khi reconcile.
+- Món hủy không tính tiền/trừ kho; canonical orders và tổng điểm được phân bổ khớp một settlement. Thu nhập nạp ví không bị cộng vào dashboard bán hàng.
+- Giảm giá thủ công POS kiểm tra quyền server và audit; đóng phiên POS gửi bếp cùng transaction thu tiền.
+
+- Chống click thanh toán lặp, giữ khóa retry POS sau timeout/restart và chặn đổi phương thức khi giao dịch trước chưa rõ kết quả.
+- Thanh toán ví POS có trừ số dư/lịch sử ví cùng transaction; bonus hết hạn không được dùng, thiếu ví từ chối trước ghi đơn.
+- Điểm thưởng quy đổi theo cấu hình quán; bill dùng tổng server; báo cáo voucher mở đúng order UUID.
+- Chưa tuyên bố hoàn tất trước PostgreSQL runtime gate, Windows/print E2E và đối soát dữ liệu trùng lịch sử được chủ quán phê duyệt.
+
+## QR Gọi Món — mục tiêu đang chờ triển khai
+
+- Một QR gọi món tại bàn dùng chung và một QR mang đi tại quầy cho mỗi cửa hàng.
+- Sau khi khách xác nhận, web hiển thị QR động của đơn; nhân viên quét, chọn bàn cho TABLE, đọc lại và chỉnh món trước khi gửi Bếp.
+- TABLE xuất hiện trong module Bàn sau bước gán bàn và thanh toán toàn bộ bàn sau; COUNTER thanh toán trước Bếp và không vào module Bàn.
+- Nhân viên dùng tài khoản/mã quán/phân quyền hiện hành, không ghép POS device riêng.
+- Đây là phạm vi mục tiêu, chưa phải tính năng production. Xem `.docs/qr-order-kien-truc-muc-tieu.md`.
+
 ## Màn Hình Chính
 
 ### 🏠 Dashboard (index 0)
@@ -128,7 +148,7 @@ Chủ quán/Quản lý gán trực tiếp module X cho nhân viên (trong NhanVi
 | # | Việc cần làm | File | Ví dụ chamcong |
 |---|---|---|---|
 | **0** | **Bọc màn hình bằng `ResponsiveLayout`** | màn hình mới | xem mẫu bên dưới |
-| 1 | Thêm screen vào IndexedStack | `main.dart` | index 10 |
+| 1 | Đăng ký screen trong `ActiveModuleHost` | `main.dart` | index 10; chỉ mount khi active |
 | 2 | Khai báo `_kTabMeta` | `main.dart` | `chamcong` |
 | 3 | Khai báo `kModuleConfigs` | `shared/widgets/module_tile.dart` | route `/chamcong` |
 | 4 | Seed vào SQLite local | `core/database/app_database.dart` | migration v12 + beforeOpen |
@@ -177,6 +197,30 @@ ALTER PUBLICATION supabase_realtime ADD TABLE store_roles;
 ```
 
 ---
+
+## Hóa đơn điện tử (nền tảng, chưa phát hành tự động)
+
+- Cài đặt → công tắc "Hóa đơn điện tử": chỉ Chủ quán thấy, cần PIN duyệt nhanh, có audit. Mặc định tắt. Tắt/bật không ảnh hưởng doanh thu.
+- Báo cáo → tab "Hóa đơn": số tiền đã xuất hóa đơn, đối chiếu với doanh thu bill cùng kỳ, chờ xử lý, lỗi/từ chối, danh sách hóa đơn cần xử lý. Số liệu là 0 cho đến khi có worker phát hành meInvoice.
+- Cần áp migration `20261016_einvoice_foundation_v1.sql` trước khi dùng; trước đó tab báo cáo hiện thông báo lỗi tải.
+
+## Báo cáo chuỗi cửa hàng (Chủ quán)
+- 📄 Tài liệu đầy đủ (cấu trúc, DB, quy tắc nhận xét, kiểm thử): `.docs/Ai_Bum/cac-module/chuoi-cua-hang.md`
+- **Module `chain`** — ô **"Báo Cáo Nhiều Cửa Hàng / Chuỗi"** (màu xanh chanh) trong lưới Modules ở Trang chủ. CHỈ Chủ quán thấy (lọc cứng ở `dashboard_screen.dart`, không cấp qua vai trò/`store_roles.modules`); Quản lý và nhân viên không thấy, server cũng kiểm lại.
+- Tự bật MỘT LẦN cho mỗi cửa hàng khi Chủ quán sở hữu từ 2 cửa hàng trở lên hoặc đã có chuỗi (`ChainModuleOffer`, cờ `chain_module_offered_<storeId>`); sau đó Chủ quán gỡ/thêm lại như mọi module trong chế độ Sửa, không tự quay lại. Chủ chỉ có 1 cửa hàng thì chưa tự bật nhưng vẫn thêm tay được từ bộ chọn module.
+- Màn **Báo cáo chuỗi** = báo cáo **SO SÁNH các cửa hàng**, thiết kế theo đúng ngôn ngữ của module Báo cáo (header navy + 2 thẻ hero kem, chọn kỳ Hôm nay/Tuần này/Tháng này + thanh ‹ kỳ › để xem kỳ cũ):
+  - **Nhận xét nhanh** (quy tắc cố định, KHÔNG phải AI; mọi ngưỡng ở `InsightConfig`, `lib/core/utils/chain_insights.dart`). Nguyên tắc: chỉ nói điều dữ liệu đủ chứng minh.
+    - Tăng/giảm chỉ được nêu khi vượt **mức dao động bình thường** (đo thật: so 1 ngày với cùng thứ tuần trước lệch P80 = 26% số đơn / 34% doanh thu; kỳ nhiều ngày thu hẹp theo 1/√số ngày, sàn 5%/6%), mỗi bên ≥ 15 đơn; so theo **ngày có bán** (tuần nghỉ 3 ngày không bị báo "nhu cầu giảm"); kèm nguyên nhân (số đơn hay giá trị mỗi đơn) và dòng giải thích ngưỡng.
+    - Cảnh báo riêng: quán im lặng (kỳ này 0 đơn, cùng kỳ trước ≥ 5 đơn), ngày không có đơn khi kỳ trước bán đều, hủy món/bàn ≥ 5% doanh thu và ≥ 1,8× các quán khác, giảm giá ≥ 4% giá trị bán và ≥ 2× các quán khác (cần ≥ 30 đơn), TB/đơn thấp ≤ 80% trung bình chuỗi. Nêu: quán dẫn đầu/tập trung ≥ 70%, TB/đơn cao ≥ 115%, quán mới, quán chưa từng có đơn. Tối đa 6 nhận xét, cảnh báo xếp trước.
+    - Không kết luận khi: mẫu ít (chip "Ít dữ liệu"), quán mới ("Quán mới"), kỳ trước không có gốc ("Mới"), không tải được kỳ so sánh, máy chủ chưa gửi trường (coi là "không rõ", không phải 0).
+    - Chip **tổng chuỗi** (thẻ trên cùng) tính kiểu "**cùng cửa hàng**": chỉ gộp các quán so sánh được (loại quán mới), mỗi quán quy đổi theo ngày bán của chính nó — mở thêm quán không làm cả chuỗi "tăng giả", một quán nghỉ vài ngày không kéo cả chuỗi "giảm giả". Quán mới được **gộp thành một dòng**.
+    - Chip chỉ tô xanh/đỏ khi bình quân ngày bán vượt ngưỡng **và** tổng thô cùng chiều, đạt ≥ nửa ngưỡng (tránh "xanh +1,3%"); không thì xám + giải thích khi chạm.
+    - Ngày được so với **cùng thứ tuần trước** (cuối tuần bán nhiều hơn ngày thường ~40%); tuần/tháng so kỳ liền trước; kỳ đang diễn ra so với phần đã trôi của kỳ trước.
+  - **Xếp hạng doanh thu:** thứ hạng, màu riêng mỗi quán, thanh so sánh, số đơn/TB/tỷ trọng và chip so với cùng kỳ trước — chỉ tô xanh/đỏ khi vượt dao động bình thường; chạm chip xem lý do.
+  - **So sánh theo chỉ số:** Doanh thu / Số đơn / TB/đơn / Giảm giá, vạch trung bình chuỗi, nhãn Cao nhất/Thấp nhất.
+  - **Cơ cấu thanh toán:** cột chồng 100% tiền mặt/chuyển khoản/thẻ từng quán. **Xu hướng theo ngày:** mỗi quán một đường (không vẽ ngày chưa tới).
+  - So kỳ ĐANG diễn ra với phần đã trôi của kỳ trước (không so nửa ngày/nửa tuần với cả kỳ trước). Màu quán cố ý tránh lục/xanh dương/vàng (dành cho phương thức thanh toán). Biểu tượng cửa hàng trên màn đó mở bảng quản lý chuỗi (tạo chuỗi, thêm/gỡ cửa hàng). Biểu tượng cửa hàng ở header màn Báo cáo vẫn là lối phụ.
+- Không có KPI cá nhân nhân viên xuyên chuỗi; muốn xem chi tiết hãy chuyển sang cửa hàng đó. Cần migration `20261017_chuoi_cua_hang_v1.sql` (đã áp production 17/10/2026).
 
 ## Lưu Ý Quan Trọng
 - Màn hình lớn nhất: `ban_screen.dart` (187KB) — phức tạp nhất, chứa logic sơ đồ bàn

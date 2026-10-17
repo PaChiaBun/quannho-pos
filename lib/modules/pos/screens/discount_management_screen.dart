@@ -7,6 +7,7 @@ import '../models/coupon_model.dart';
 import '../repository/pos_repository.dart';
 import '../../../core/providers/session_provider.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../core/utils/app_logger.dart';
 
 const _kNavy = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
@@ -315,9 +316,10 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
     try {
       await ref.read(posRepositoryProvider).upsertCoupon(updated);
       _loadCoupons();
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('pos', 'Lỗi bật/tắt mã giảm giá: $e', e, st);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.redAccent),
+        const SnackBar(content: Text('Cập nhật mã giảm giá thất bại. Hãy chụp lại báo chủ app.'), backgroundColor: Colors.redAccent),
       );
     }
   }
@@ -342,10 +344,11 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
       try {
         await ref.read(posRepositoryProvider).deleteCoupon(item.id);
         _loadCoupons();
-      } catch (e) {
+      } catch (e, st) {
+        AppLogger.error('pos', 'Lỗi xóa mã giảm giá: $e', e, st);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.redAccent),
+            const SnackBar(content: Text('Xóa mã giảm giá thất bại. Hãy chụp lại báo chủ app.'), backgroundColor: Colors.redAccent),
           );
         }
       }
@@ -542,9 +545,10 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                         await ref.read(posRepositoryProvider).upsertCoupon(coupon);
                         Navigator.pop(ctx);
                         _loadCoupons();
-                      } catch (e) {
+                      } catch (e, st) {
+                        AppLogger.error('pos', 'Lỗi lưu mã giảm giá: $e', e, st);
                         ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.redAccent),
+                          const SnackBar(content: Text('Lưu mã giảm giá thất bại. Hãy chụp lại báo chủ app.'), backgroundColor: Colors.redAccent),
                         );
                       }
                     },

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../core/utils/app_logger.dart';
 import '../providers/kho_providers.dart';
 import '../repository/kho_repository.dart';
 import 'supplier_list_screen.dart';
@@ -611,10 +612,19 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ));
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('kho', 'Tạo phiếu nhập hàng thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Lỗi: $e'), backgroundColor: _kRed));
+          content: Text(
+            'Tạo phiếu nhập thất bại. Hãy chụp lại báo chủ app.',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w500),
+          ),
+          backgroundColor: _kRed,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ));
       }
     } finally {
       if (mounted) setState(() => _loading = false);

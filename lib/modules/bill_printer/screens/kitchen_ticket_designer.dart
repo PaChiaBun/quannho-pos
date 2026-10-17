@@ -1,5 +1,6 @@
 // lib/modules/bill_printer/screens/kitchen_ticket_designer.dart
 // ignore_for_file: use_build_context_synchronously
+import '../utils/paper_sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -135,12 +136,13 @@ class _ConfigPanel extends ConsumerWidget {
         icon: Icons.straighten_rounded,
         title: 'Khổ Giấy',
         children: [
-          Row(children: [
-            _Chip(label: '58mm', selected: tpl.paperSize == '58mm',
-                onTap: () => update(tpl.copyWith(paperSize: '58mm'))),
-            const SizedBox(width: 8),
-            _Chip(label: '80mm', selected: tpl.paperSize == '80mm',
-                onTap: () => update(tpl.copyWith(paperSize: '80mm'))),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final spec in kKitchenPaperSpecs)
+              _Chip(
+                label: spec.label,
+                selected: tpl.paperSize == spec.key,
+                onTap: () => update(tpl.copyWith(paperSize: spec.key)),
+              ),
           ]),
           const SizedBox(height: 8),
           Container(
@@ -151,9 +153,7 @@ class _ConfigPanel extends ConsumerWidget {
               Icon(Icons.info_outline_rounded, size: 14, color: _kIndigo.withValues(alpha: 0.5)),
               const SizedBox(width: 6),
               Expanded(child: Text(
-                tpl.paperSize == '58mm'
-                    ? '58mm — Máy in cầm tay nhỏ. Chữ cần to hơn để bếp đọc rõ.'
-                    : '80mm — Khổ phổ biến nhất, đọc thoải mái từ xa.',
+                paperSpecOf(tpl.paperSize).description,
                 style: GoogleFonts.outfit(fontSize: 11, color: _kIndigo.withValues(alpha: 0.65), height: 1.5),
               )),
             ]),
@@ -381,7 +381,7 @@ class _PreviewPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final widthFactor = tpl.paperSize == '58mm' ? 0.7 : 0.88;
+    final widthFactor = paperSpecOf(tpl.paperSize).kitchenPreview;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),

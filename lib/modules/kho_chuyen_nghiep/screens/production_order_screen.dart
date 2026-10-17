@@ -1,3 +1,4 @@
+import '../../../core/utils/quantity_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -196,6 +197,14 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
 
   Future<void> _updateStatus(
       ProductionOrderModel order, RecipeModel? recipe, String newStatus) async {
+    if (newStatus == 'done' && recipe == null) {
+      // Công thức đã bị xóa: không thể trừ nguyên liệu / nhập thành phẩm → không đánh dấu done giả
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Công thức của lệnh này không còn tồn tại, không thể hoàn thành.')));
+      }
+      return;
+    }
     if (newStatus == 'done' && recipe != null) {
       // Check stock trước
       final warnings = await ref.read(khoProRepositoryProvider)
@@ -204,8 +213,16 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
         final ok = await _showWarningDialog(warnings);
         if (!ok) return;
       }
-      await ref.read(khoProRepositoryProvider)
+      final msg = await ref.read(khoProRepositoryProvider)
           .completeProductionOrder(order, recipe);
+      if (msg != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(msg),
+          backgroundColor: KhoTheme.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ));
+      }
     } else {
       await ref.read(khoProRepositoryProvider)
           .updateProductionStatus(order.id, newStatus);
@@ -407,7 +424,7 @@ class _ProductionCard extends StatelessWidget {
                             fontSize: 15, fontWeight: FontWeight.w800,
                             color: isCancelled ? KhoTheme.muted : KhoTheme.ink,
                             decoration: isCancelled ? TextDecoration.lineThrough : null)),
-                    Text('${order.quantity.toStringAsFixed(0)} ${recipe?.servingUnit ?? 'phần'}  ·  Giá vốn: ${recipe != null ? fmtMoney(recipe!.costPerServing * order.quantity) : "—"}',
+                    Text('${fmtQty(order.quantity)} ${_batchUnit(recipe)}  ·  Giá vốn: ${recipe != null ? fmtMoney(recipe!.costPerServing * order.quantity) : "—"}',
                         style: GoogleFonts.outfit(
                             fontSize: 12, color: KhoTheme.muted)),
                   ])),
@@ -576,7 +593,7 @@ class _CreateProductionSheetState
                 },
                 decoration: KhoTheme.inputDecoration(
                     hint: 'Số phần',
-                    suffix: Text(_selected?.servingUnit ?? 'phần',
+                    suffix: Text(_batchUnit(_selected),
                         style: GoogleFonts.outfit(color: KhoTheme.muted))),
               ),
               const SizedBox(height: 10),
@@ -698,4 +715,13 @@ class _CreateProductionSheetState
       if (mounted) setState(() => _loading = false);
     }
   }
+}
+
+
+/// Đơn vị hiển thị cho "số lượng" của lệnh sản xuất: 1 phần/ly → giữ nguyên;
+/// công thức ra nhiều đơn vị mỗi mẻ (vd 16 lít) → "mẻ (16 lít)" để không hiểu nhầm là 1 lít.
+String _batchUnit(RecipeModel? r) {
+  if (r == null) return 'phần';
+  if (r.servingSize == 1) return r.servingUnit;
+  return 'mẻ (${fmtQty(r.servingSize)} ${r.servingUnit})';
 }

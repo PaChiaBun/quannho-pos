@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/services/store_auth_service.dart';
 import 'bill_block_template.dart';
 import 'bill_block.dart';
 
@@ -57,10 +58,24 @@ class BillTemplateSnapshot {
 
 // ─── History Service ──────────────────────────────────────────────────────────
 class BillTemplateHistoryService {
+  /// Khoá lưu theo từng quán: lịch sử mẫu của quán này không hiện ở quán khác trên cùng máy.
+  /// Chưa xác định được quán thì trả null (không đọc/ghi) để tránh lẫn dữ liệu.
+  static Future<String?> _scopedKey() async {
+    try {
+      final storeId = (await StoreAuthService.getStoreInfo())['store_id'];
+      if (storeId == null || storeId.isEmpty) return null;
+      return '${_kHistoryKey}__$storeId';
+    } catch (_) {
+      return null;
+    }
+  }
+
   static Future<List<BillTemplateSnapshot>> load() async {
     try {
+      final key = await _scopedKey();
+      if (key == null) return [];
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_kHistoryKey);
+      final raw = prefs.getString(key);
       if (raw == null) return [];
       final list = (jsonDecode(raw) as List)
           .cast<Map<String, dynamic>>()
@@ -101,9 +116,11 @@ class BillTemplateHistoryService {
       final updated = [snapshot, ...existing];
       if (updated.length > _kMaxHistory) updated.removeLast();
 
+      final key = await _scopedKey();
+      if (key == null) return;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
-          _kHistoryKey, jsonEncode(updated.map((s) => s.toJson()).toList()));
+          key, jsonEncode(updated.map((s) => s.toJson()).toList()));
       debugPrint('[BillHistory] saved snapshot "$label"');
     } catch (e) {
       debugPrint('[BillHistory] push error: $e');
@@ -114,9 +131,11 @@ class BillTemplateHistoryService {
     try {
       final list = await load();
       list.removeWhere((s) => s.id == id);
+      final key = await _scopedKey();
+      if (key == null) return;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
-          _kHistoryKey, jsonEncode(list.map((s) => s.toJson()).toList()));
+          key, jsonEncode(list.map((s) => s.toJson()).toList()));
     } catch (e) {
       debugPrint('[BillHistory] delete error: $e');
     }

@@ -7,6 +7,7 @@ import '../../../core/services/store_auth_service.dart';
 import '../../../core/repositories/core_product_repository.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/quantity_formatter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // KHO REPOSITORY — 100% Supabase
@@ -483,6 +484,7 @@ class KhoRepository {
       'supplier_id':        supplierId,
       'supplier_name':      supplierName ?? '',
       'status':             'received',
+      'total_cost':         total,
       'total_amount':       total,
       'note':               note,
       'invoice_image_url':  invoiceImageUrl,    // ← fix: đã bị bỏ sót
@@ -607,11 +609,12 @@ class KhoRepository {
     // 3. Load PO
     final poRow = await _sb
         .from('purchase_orders')
-        .select('po_number, total_amount')
+        .select('po_number, total_amount, total_cost')
         .eq('id', poId)
         .single();
     final poNumber    = poRow['po_number'] as String? ?? poId;
-    final totalAmount = (poRow['total_amount'] as num?)?.toDouble() ?? 0;
+    final totalAmount = (poRow['total_amount'] as num?)?.toDouble() ??
+                        (poRow['total_cost'] as num?)?.toDouble() ?? 0;
 
     // 4. Hoàn kho
     for (final item in items) {
@@ -786,6 +789,10 @@ class StockItem {
   final bool isTopping;
   final String toppingUnit;
   final String stationCode;
+  final bool isAvailable;
+  final bool isActive;
+  final double conversionRate;
+  final String conversionUnit;
 
   const StockItem({
     required this.id,
@@ -803,6 +810,10 @@ class StockItem {
     this.isTopping = false,
     this.toppingUnit = 'phần',
     this.stationCode = 'bep_nong',
+    this.isAvailable = true,
+    this.isActive = true,
+    this.conversionRate = 0,
+    this.conversionUnit = '',
   });
 
   factory StockItem.fromProduct(ProductModel p) => StockItem(
@@ -821,6 +832,10 @@ class StockItem {
         isTopping:        p.isTopping,
         toppingUnit:      p.toppingUnit,
         stationCode:      p.stationCode,
+        isAvailable:      p.isAvailable,
+        isActive:         p.isActive,
+        conversionRate:   p.conversionRate,
+        conversionUnit:   p.conversionUnit,
       );
 
   StockStatus get status {
@@ -835,6 +850,30 @@ class StockItem {
     return stockQty * effectiveCost;
   }
 
+  /// Hiển thị tồn kho thông minh (ví dụ: '9 lon + 355 ml')
+  String get formattedStockDisplay {
+    if (conversionRate > 0 && conversionUnit.isNotEmpty) {
+      if (stockQty == 0) return '0 $unit';
+      final isNegative = stockQty < 0;
+      final absQty = stockQty.abs();
+      final whole = absQty.floor();
+      final frac = absQty - whole;
+      final convertedFrac = (frac * conversionRate).round();
+
+      final parts = <String>[];
+      if (whole > 0 || convertedFrac == 0) {
+        parts.add('$whole $unit');
+      }
+      if (convertedFrac > 0) {
+        parts.add('$convertedFrac $conversionUnit');
+      }
+      final res = parts.join(' + ');
+      return isNegative ? '-$res' : res;
+    }
+    return stockQty % 1 == 0
+        ? '${stockQty.toInt()} $unit'
+        : '${fmtQty(stockQty)} $unit';
+  }
 }
 
 enum StockStatus { ok, low, outOfStock, untracked }
@@ -959,7 +998,8 @@ class PurchaseOrderModel {
       supplierId:      m['supplier_id'] as String?,
       supplierName:    m['supplier_name'] as String?,
       status:          m['status'] as String? ?? 'received',
-      totalAmount:     (m['total_amount'] as num?)?.toDouble() ?? 0,
+      totalAmount:     (m['total_amount'] as num?)?.toDouble() ??
+                       (m['total_cost'] as num?)?.toDouble() ?? 0,
       note:            m['note'] as String?,
       createdAt:       m['created_at'] as String? ?? '',
       invoiceImageUrl: m['invoice_image_url'] as String?,

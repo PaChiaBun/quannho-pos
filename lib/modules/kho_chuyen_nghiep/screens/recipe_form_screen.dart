@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/utils/quantity_formatter.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/providers/app_providers.dart';
@@ -37,7 +38,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
     'Món chính', 'Khai vị', 'Tráng miệng',
     'Đồ uống', 'Súp & Cháo', 'Khác',
   ];
-  static const _servingUnits = ['phần', 'tô', 'đĩa', 'ly', 'kg', 'lít'];
+  static const _servingUnits = ['phần', 'tô', 'đĩa', 'ly', 'g', 'kg', 'ml', 'lít'];
 
   @override
   void initState() {
@@ -48,7 +49,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       _descCtrl.text       = e.description ?? '';
       _category            = e.category;
       _servingUnit         = e.servingUnit;
-      _servingSizeCtrl.text = e.servingSize.toStringAsFixed(0);
+      _servingSizeCtrl.text = fmtQty(e.servingSize);
       _linkedPosId         = e.posProductId;
       for (final i in e.ingredients) {
         _lines.add(_IngLine(
@@ -58,6 +59,9 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
           unit:           i.unit,
           note:           i.note,
           costLatest:     i.ingredientCostLatest ?? 0,
+          productUnit:    i.productUnit,
+          convRate:       i.conversionRate,
+          convUnit:       i.conversionUnit,
           wastePct:       i.wastePct,  // load tỷ lệ hao phí từ DB
         ));
       }
@@ -222,6 +226,41 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                                   fontWeight: FontWeight.w600));
                         }),
                       ]),
+                      // Bán thành phẩm / nguyên liệu: Lệnh sản xuất sẽ CỘNG thành phẩm vào kho
+                      Builder(builder: (_) {
+                        final dynamic p = products
+                            .cast<dynamic>()
+                            .firstWhere((x) => (x.id as String?) == _linkedPosId,
+                                orElse: () => null);
+                        final type = (p?.productType as String?) ?? '';
+                        if (p == null || (type != 'semi_finished' && type != 'ingredient')) {
+                          return const SizedBox.shrink();
+                        }
+                        final unit = (p.unit as String?) ?? '';
+                        final size = double.tryParse(_servingSizeCtrl.text) ?? 1;
+                        final warn = recipeUnitWarning(
+                          recipeUnit: _servingUnit,
+                          productUnit: unit,
+                          conversionRate: (p.conversionRate as double?) ?? 0,
+                          conversionUnit: (p.conversionUnit as String?) ?? '',
+                        );
+                        final out = convertRecipeIngredientQty(
+                          size, _servingUnit, unit,
+                          conversionRate: (p.conversionRate as double?) ?? 0,
+                          conversionUnit: (p.conversionUnit as String?) ?? '',
+                        );
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            warn != null
+                                ? 'Mỗi mẻ ra ${fmtQty(size)} $_servingUnit nhưng kho "${p.name}" tính bằng "$unit" — $warn'
+                                : 'Hoàn thành lệnh sản xuất 1 mẻ → nhập ${fmtQty(out)} $unit "${p.name}" vào kho.',
+                            style: GoogleFonts.outfit(
+                                fontSize: 11.5, height: 1.3,
+                                color: warn != null ? KhoTheme.amber : KhoTheme.green,
+                                fontWeight: FontWeight.w600)),
+                        );
+                      }),
                     ],
                   ],
                 ),
@@ -365,6 +404,9 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
         yieldFactor:      l.yieldFactor,
         ingredientName:   l.ingredientName,
         ingredientCostLatest: l.costLatest,
+        productUnit:      l.productUnit,
+        conversionRate:   l.convRate,
+        conversionUnit:   l.convUnit,
       )).toList();
 
       if (widget.existing != null) {
@@ -423,7 +465,10 @@ class _IngLine {
   double  quantity;
   String  unit;
   String? note;
-  double  costLatest;
+  double  costLatest;      // giá vốn theo ĐƠN VỊ KHO
+  String  productUnit;     // đơn vị kho
+  double  convRate;        // quy cách: 1 [productUnit] = convRate [convUnit]
+  String  convUnit;
   double  wastePct;   // 0–99: % hao phí (VD: 20 = 20% hao phí, yield 80%)
   final TextEditingController qtyCtrl;
   final TextEditingController noteCtrl;
@@ -436,6 +481,9 @@ class _IngLine {
     this.unit           = 'gram',
     this.note,
     this.costLatest     = 0,
+    this.productUnit    = '',
+    this.convRate       = 0,
+    this.convUnit       = '',
     this.wastePct       = 0,
   })  : qtyCtrl  = TextEditingController(
             text: quantity == quantity.truncateToDouble()
@@ -451,10 +499,14 @@ class _IngLine {
   /// Chi phí đã tính hao phí để hiển thị realtime
   double get lineCostDisplay {
     final actualQty = yieldFactor > 0 ? quantity / yieldFactor : quantity;
-    double normalizedQty = actualQty;
-    if (unit == 'kg')  normalizedQty = actualQty * 1000;
-    if (unit == 'lít') normalizedQty = actualQty * 1000;
-    return costLatest * normalizedQty;
+    return recipeUnitCost(
+          costPerStockUnit: costLatest,
+          recipeUnit: unit,
+          productUnit: productUnit.isEmpty ? unit : productUnit,
+          conversionRate: convRate,
+          conversionUnit: convUnit,
+        ) *
+        actualQty;
   }
 
   void dispose() {
@@ -486,7 +538,9 @@ class _IngLineCard extends StatefulWidget {
 }
 
 class _IngLineCardState extends State<_IngLineCard> {
-  static const _units = ['gram', 'kg', 'ml', 'lít', 'chiếc', 'cái', 'muỗng', 'chén'];
+  static const _units = [
+    'gram', 'kg', 'ml', 'lít', 'hộp', 'lon', 'chai', 'gói', 'chiếc', 'cái', 'muỗng', 'chén', 'phần', 'ly'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -532,17 +586,27 @@ class _IngLineCardState extends State<_IngLineCard> {
                           ),
                           isExpanded: true,
                           items: widget.allStock
-                              .where((p) {
-                                final type = (p.productType as String?);
+                              .map((p) {
+                                final name = (p.name as String?) ?? '';
+                                final unit = (p.unit as String?) ?? '';
+                                final cat = (p.category as String?) ?? '';
+                                final type = (p.productType as String?) ?? '';
                                 final isIng = type == 'ingredient' || type == 'semi_finished';
-                                final isSelected = (p.id as String?) == line.ingredientId;
-                                return isIng || isSelected;
-                              })
-                              .map((p) => DropdownMenuItem(
-                                value: p.id as String,
-                                child: Text(p.name as String,
-                                    style: GoogleFonts.outfit(fontSize: 13)),
-                              )).toList(),
+                                final badge = isIng ? ' [NL]' : (cat.isNotEmpty ? ' [$cat]' : '');
+                                final unitLabel = unit.isNotEmpty ? ' ($unit)' : '';
+                                return DropdownMenuItem(
+                                  value: p.id as String,
+                                  child: Text(
+                                    '$name$unitLabel$badge',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 13,
+                                      fontWeight: isIng ? FontWeight.w600 : FontWeight.w400,
+                                      color: KhoTheme.ink,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }).toList(),
                           onChanged: (v) {
                             setState(() {
                               final dynamic prod = widget.allStock
@@ -551,12 +615,23 @@ class _IngLineCardState extends State<_IngLineCard> {
                                       orElse: () => null);
                               line.ingredientId   = v;
                               line.ingredientName = (prod?.name as String?) ?? '';
-                              line.unit           = (prod?.unit as String?) ?? 'gram';
-                              double rawCost = (prod?.costPrice as double?) ?? 0;
-                              final prodUnit = (prod?.unit as String?) ?? '';
-                              if (prodUnit == 'kg')  rawCost /= 1000;
-                              if (prodUnit == 'lít') rawCost /= 1000;
-                              line.costLatest = rawCost;
+                              final prodUnit      = (prod?.unit as String?) ?? 'gram';
+                              final convRate      = (prod?.conversionRate as double?) ?? 0;
+                              final convUnit      = (prod?.conversionUnit as String?) ?? '';
+
+                              if (convRate > 0 && convUnit.isNotEmpty) {
+                                line.unit = convUnit;
+                              } else {
+                                line.unit = _units.contains(prodUnit) ? prodUnit : 'gram';
+                              }
+
+                              line.productUnit = prodUnit;
+                              line.convRate    = convRate;
+                              line.convUnit    = convUnit;
+                              line.costLatest  = effectiveUnitCost(
+                                (prod?.costPriceLatest as double?) ?? 0,
+                                (prod?.costPrice as double?) ?? 0,
+                              );
                             });
                             widget.onChanged();
                           },
@@ -636,6 +711,47 @@ class _IngLineCardState extends State<_IngLineCard> {
                         ),
                       ],
                     ]),
+
+                    // Cảnh báo đơn vị không khớp đơn vị kho (tránh trừ kho sai)
+                    Builder(builder: (_) {
+                      final dynamic prod = widget.allStock
+                          .cast<dynamic>()
+                          .firstWhere((p) => (p.id as String?) == line.ingredientId,
+                              orElse: () => null);
+                      if (prod == null) return const SizedBox.shrink();
+                      final msg = recipeUnitWarning(
+                        recipeUnit: line.unit,
+                        productUnit: (prod.unit as String?) ?? '',
+                        conversionRate: (prod.conversionRate as double?) ?? 0,
+                        conversionUnit: (prod.conversionUnit as String?) ?? '',
+                      );
+                      if (msg == null) return const SizedBox.shrink();
+                      return Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: KhoTheme.amber.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: KhoTheme.amber.withOpacity(0.5)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.warning_amber_rounded,
+                                size: 16, color: KhoTheme.amber),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(msg,
+                                  style: GoogleFonts.outfit(
+                                      fontSize: 11.5,
+                                      height: 1.3,
+                                      fontWeight: FontWeight.w600,
+                                      color: KhoTheme.ink)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
 
                     // Row 3: % Hao phí
                     const SizedBox(height: 8),
