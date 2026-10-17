@@ -629,21 +629,69 @@ class BanRepository {
   }
 
   // ── Session Items ──────────────────────────────────────────────────────────
+  /// Mỗi lần hỏi máy chủ phải có hạn chót: một request treo (mạng chập chờn) từng
+  /// làm danh sách món của bàn đứng yên vô thời hạn.
+  static const Duration _sessionItemsTimeout = Duration(seconds: 10);
+
+  Future<List<BanSessionItemModel>> _querySessionItems(String sessionId) async {
+    final rows = await _sb
+        .from('ban_session_items')
+        .select()
+        .eq('session_id', sessionId)
+        .timeout(_sessionItemsTimeout);
+    return rows.map(BanSessionItemModel.fromMap).toList()
+      ..sort((a, b) => a.addedAt.compareTo(b.addedAt));
+  }
+
+  /// Tải mới danh sách món còn hiệu lực (bỏ món đã hủy) trực tiếp từ máy chủ.
+  /// Trả null khi không tải được để nơi gọi tự quyết (không bao giờ trả danh sách rỗng giả).
+  Future<List<BanSessionItemModel>?> fetchActiveSessionItems(
+    String sessionId,
+  ) async {
+    try {
+      final items = await _querySessionItems(sessionId);
+      return items.where((i) => i.kitchenStatus != 'huy').toList();
+    } catch (e) {
+      AppLogger.warning(
+        'ban_items',
+        'Không tải mới được món của phiên $sessionId: $e',
+      );
+      return null;
+    }
+  }
+
   Stream<List<BanSessionItemModel>> watchSessionItems(String sessionId) async* {
+    List<BanSessionItemModel>? lastGood;
+    var failures = 0;
     while (true) {
       try {
-        final rows = await _sb
-            .from('ban_session_items')
-            .select()
-            .eq('session_id', sessionId);
-        final items = rows.map(BanSessionItemModel.fromMap).toList()
-          ..sort((a, b) => a.addedAt.compareTo(b.addedAt));
+        final items = await _querySessionItems(sessionId);
+        if (failures > 0) {
+          AppLogger.info(
+            'ban_items',
+            'Danh sách món phiên $sessionId hoạt động lại sau $failures lần lỗi',
+          );
+        }
+        failures = 0;
+        lastGood = items;
         yield items;
       } catch (e) {
-        debugPrint('[BanRepository] watchSessionItems error: $e');
-        yield [];
+        failures++;
+        // Ghi lên cloud ở lần lỗi đầu và mỗi 12 lần sau đó (tránh spam log).
+        if (failures == 1 || failures % 12 == 0) {
+          AppLogger.warning(
+            'ban_items',
+            'Danh sách món phiên $sessionId lỗi lần $failures: $e',
+          );
+        }
+        // Giữ danh sách tốt gần nhất thay vì xóa trắng màn hình.
+        if (lastGood != null) {
+          yield lastGood;
+        } else if (failures == 1) {
+          yield [];
+        }
       }
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(Duration(seconds: failures > 0 ? 2 : 5));
     }
   }
 
@@ -1038,7 +1086,9 @@ class BanRepository {
       if (reconciled['success'] == true &&
           reconciled['is_settled'] == true &&
           reconciled['data'] is Map &&
-          ((reconciled['data'] as Map)['settlement_id'] as String?)?.isNotEmpty == true) {
+          ((reconciled['data'] as Map)['settlement_id'] as String?)
+                  ?.isNotEmpty ==
+              true) {
         return reconciled;
       }
 

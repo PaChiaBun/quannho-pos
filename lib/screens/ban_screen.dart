@@ -3648,6 +3648,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       final finalTotal = ((data['total_amount'] as num?) ?? 0).toDouble();
       final serverSubtotal = ((data['subtotal'] as num?) ?? 0).toDouble();
       final serverDiscount = ((data['discount'] as num?) ?? 0).toDouble();
+      final clientItemsTotal = items.fold<double>(0, (s, i) => s + i.subtotal);
+      if ((serverSubtotal - clientItemsTotal).abs() > 0.5) {
+        AppLogger.warning(
+          'checkout',
+          'LỆCH tiền thanh toán phiên ${widget.session.id}: máy chủ tính '
+              '${serverSubtotal.toInt()}đ, màn hình có ${items.length} dòng ${clientItemsTotal.toInt()}đ',
+        );
+      }
       final orderNumbers =
           (data['order_numbers'] as List?)
               ?.map((value) => value.toString())
@@ -4077,6 +4085,27 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         return;
       }
       if (!mounted) return;
+      // Đối chiếu với máy chủ: tránh thu ngân thấy/in số tiền khác số thật.
+      final syncedItems = await reconcileSessionItems(
+        repo: ref.read(banRepositoryProvider),
+        where: 'mở thanh toán',
+        sessionId: widget.session.id,
+        shown: items,
+      );
+      if (!mounted) return;
+      if (!identical(syncedItems, items)) {
+        items = syncedItems;
+        total = items.fold<double>(0, (s, i) => s + i.subtotal);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Danh sách món vừa được cập nhật theo máy chủ. Kiểm tra lại tổng tiền.',
+            ),
+            backgroundColor: _kOrange,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       final result = await showModalBottomSheet<Map<String, dynamic?>>(
         context: context,
         backgroundColor: Colors.transparent,
@@ -6267,12 +6296,30 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       if (storeId == null) return;
 
       final settings = ref.read(printerSettingsProvider);
+      // Luôn lấy món mới nhất từ máy chủ, không tin danh sách đang hiện trên màn hình.
+      final sessionId = widget.items.isEmpty
+          ? ''
+          : widget.items.first.sessionId;
+      final items = sessionId.isEmpty
+          ? widget.items
+          : await reconcileSessionItems(
+              repo: ref.read(banRepositoryProvider),
+              where: 'in tạm tính',
+              sessionId: sessionId,
+              shown: widget.items,
+            );
+      final itemsTotal = items.fold<double>(0, (s, i) => s + i.subtotal);
       final finalTotal =
-          (widget.total -
+          (itemsTotal -
                   _couponDiscount -
                   (_usePts * _redeemRate) +
                   _shippingFee)
               .clamp(0.0, double.infinity);
+      AppLogger.info(
+        'printer',
+        '[In tạm tính] ${widget.tableName}: ${items.length} dòng, '
+            'tổng món ${itemsTotal.toInt()}đ, phải trả ${finalTotal.toInt()}đ',
+      );
 
       final session = ref.read(sessionProvider);
       final billData = BillData(
@@ -6283,7 +6330,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         createdAt: DateTime.now(),
         tableName: widget.tableName,
         items: [
-          ...widget.items.map(
+          ...items.map(
             (i) => BillItem(
               name: i.productName,
               qty: i.quantity.toInt(),
@@ -6294,12 +6341,12 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
           if (_shippingFee > 0)
             BillItem(name: 'Phí dịch vụ / Ship', qty: 1, price: _shippingFee),
         ],
-        subtotal: widget.total + _shippingFee,
+        subtotal: itemsTotal + _shippingFee,
         discount: _couponDiscount + (_usePts * _redeemRate),
         total: finalTotal,
-        paymentMethod: 'cash',
+        note: 'TẠM TÍNH - CHƯA THANH TOÁN',
         type: BillType.receipt,
-        waiterName: _resolveWaiterName(widget.items, session?.displayName),
+        waiterName: _resolveWaiterName(items, session?.displayName),
       );
 
       await StationPrinterDispatcher.printBill(
@@ -6310,8 +6357,8 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã gửi lệnh in tạm tính'),
+          SnackBar(
+            content: Text('Đã gửi lệnh in tạm tính (${finalTotal.toInt()}đ)'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -12509,6 +12556,35 @@ class _ItemNoteInputState extends State<_ItemNoteInput> {
       ),
     );
   }
+}
+
+/// Đối chiếu danh sách món đang hiện trên màn hình với máy chủ trước khi in tạm tính
+/// hoặc mở thanh toán. Màn hình từng đứng yên ở 4 món trong khi bàn đã có 7 món
+/// (tạm tính 113k, thanh toán 219k). Lệch -> dùng bản máy chủ và ghi cảnh báo lên log.
+/// Không tải được -> dùng bản đang hiện (có ghi log), không chặn nghiệp vụ.
+Future<List<BanSessionItemModel>> reconcileSessionItems({
+  required BanRepository repo,
+  required String where,
+  required String sessionId,
+  required List<BanSessionItemModel> shown,
+}) async {
+  final fresh = await repo.fetchActiveSessionItems(sessionId);
+  if (fresh == null) return shown;
+  double money(List<BanSessionItemModel> l) =>
+      l.fold<double>(0, (s, i) => s + i.subtotal);
+  double qty(List<BanSessionItemModel> l) =>
+      l.fold<double>(0, (s, i) => s + i.quantity);
+  final stale =
+      (money(fresh) - money(shown)).abs() > 0.5 ||
+      (qty(fresh) - qty(shown)).abs() > 0.001;
+  if (!stale) return shown;
+  AppLogger.warning(
+    'ban_items',
+    'LỆCH danh sách món ($where) phiên $sessionId: màn hình ${qty(shown).toInt()} phần '
+        '${money(shown).toInt()}đ, máy chủ ${qty(fresh).toInt()} phần ${money(fresh).toInt()}đ '
+        '-> dùng bản máy chủ',
+  );
+  return fresh;
 }
 
 String _resolveWaiterName(List<BanSessionItemModel> items, String? fallback) {
