@@ -169,6 +169,28 @@ class _SetupPageState extends State<SetupPage> {
     }
   }
 
+  /// In lại tờ nhận biết ở mọi máy cùng lúc (khi chủ quán quên máy nào là máy nào).
+  Future<void> _printAllSlips() async {
+    setState(() => _running = true);
+    try {
+      final results = await Future.wait([
+        for (final a in _assigned)
+          PrinterService.identify(a.role, a.role.queueName(_store), storeName: _store),
+      ]);
+      final failed = [
+        for (var i = 0; i < _assigned.length; i++)
+          if (!results[i]) _assigned[i].role.shortLabel
+      ];
+      AppLog.info('In lại tờ nhận biết tất cả máy: ${failed.isEmpty ? 'đủ' : 'lỗi: ${failed.join(', ')}'}');
+      _msg(failed.isEmpty
+          ? 'Đã gửi tờ nhận biết tới tất cả các máy.'
+          : 'Chưa in được ở máy: ${failed.join(', ')}. Kiểm tra giấy/nguồn.',
+          error: failed.isNotEmpty);
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
+  }
+
   Future<void> _reapply() async {
     setState(() => _running = true);
     try {
@@ -278,6 +300,16 @@ class _SetupPageState extends State<SetupPage> {
               Text('Chỉ cần chỉnh nếu tờ giấy in ra ở máy nào ghi sai vai trò.',
                   style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
               const SizedBox(height: 8),
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _running ? null : _printAllSlips,
+                  icon: const Icon(Icons.print_rounded),
+                  label: const Text('In tờ nhận biết máy ở TẤT CẢ các máy',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ),
+              const SizedBox(height: 10),
               for (final a in _assigned) _assignedCard(a),
             ],
             const SizedBox(height: 24),
@@ -359,7 +391,7 @@ class _SetupPageState extends State<SetupPage> {
                     final ok = await PrinterService.identify(a.role, qn, storeName: _store);
                     _msg(ok ? 'Đã gửi tờ in thử.' : 'Không in được. Kiểm tra giấy/nguồn máy in.', error: !ok);
                   },
-            child: const Text('In thử'),
+            child: const Text('In tờ nhận biết máy'),
           ),
           if (a.role == PrinterRole.thuNgan)
             OutlinedButton(
