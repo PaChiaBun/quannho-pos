@@ -3,6 +3,14 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-18 — Cài máy in MỘT LẦN BẤM + POS tự dùng máy QN-… (POS Windows 1.0.5+19, app cài máy in bản mới) — ĐÃ LÊN WEB, chờ thử tại KAY
+
+- **Quy trình Chủ Quán chốt:** cài POS trước → cắm máy in → chạy công cụ, bấm 1 nút → POS tự dùng các máy in (không chọn lại).
+- **App cài máy in** (`tools/printer_setup`, commit `488686f`, run 39131489976): 1 nút "CÀI MÁY IN": dò USB + LAN → tự gán vai trò (máy đã có QN-… trên cùng cổng giữ vai trò; còn lại USB trước rồi LAN theo IP: Thu ngân → Bếp → Bar → Tem) → cài hết → **tất cả máy in tờ nhận biết ĐỒNG LOẠT** (tên quán + chữ to "MAY IN THU NGAN/BEP NONG/BEP BAR/TEM DAN LY", cắt giấy). Tên quán tự lấy từ POS (`%APPDATA%\vn.lpm\quannho_pos\shared_preferences.json`, khoá `flutter.auth_store_name`), không có thì nhập tay một lần. Tên máy in `QN-<TênQuán>-<VaiTrò>`; khổ giấy 58/80 ghi vào ghi chú máy in (`QN;paper=…`). Nút: "Đổi vai trò" (hoán đổi nếu trùng), "Khổ giấy", "In tờ nhận biết máy" (từng máy / tất cả), "Mở két thử", log ra file. Heuristic bỏ cổng USB "ma" (cổng cũ đã rút) khi số cổng > số máy đang cắm.
+- **POS** (`QnQueueResolver`, commit `7776660`, run 39130725092 = bản +19): trong `printBill` trên Windows, trạm đang dùng máy in hệ thống/đang tắt được thay bằng máy QN-…-VaiTrò (đọc khổ giấy từ ghi chú); trạm trỏ LAN/Sunmi giữ nguyên.
+- **Lên web:** `QuanNhoPOS-latest.exe` (SHA-256 `4e765c41…c32f`, ở `public/` + `public/download/`), `QuanNhoCaiMayIn-latest.zip` (12.243.586 B, `75a4d80b…99a9`), trang `cai-may-in.html` viết lại theo 3 việc; đã sao lưu bản trước vào `/root/quannho-backups/web-download/` (`*_truoc_105b19_*`, `cmi_truoc_*`). SHA-256 server khớp local; HTTP công khai khớp (exe, zip). KHÔNG đụng `app_versions`.
+- **Chưa kiểm (rủi ro chính):** chưa chạy thật trên Windows/máy in KAY: dò USB, đoán đúng vai trò khi cắm 3 máy (có thể đảo → dùng "Đổi vai trò"), cổng USB cũ còn sót, ảnh bill in qua ESC/POS (độ đậm, tốc độ), máy in tem có thể dùng TSPL, `Printer.comment` có trả về từ `Printing.listPrinters` hay không (nếu không, khổ giấy mặc định 80mm), `shared_preferences.json` đúng đường dẫn khi chạy quyền admin khác user.
+
 ## 2026-10-18 — Trang hướng dẫn + tải "Công cụ Cài máy in" trên quannho.lpm.vn (Chủ Quán yêu cầu)
 
 - App cài máy in bản có **log ra file** (`%LOCALAPPDATA%\QuanNho\CaiMayIn\logs\cai-may-in-YYYYMMDD.log`, giữ 14 ngày; nút "Mở thư mục log" / "Sao chép log"): commit `aaec40a`, run 39129540197 thành công; zip 11.916.631 B, SHA-256 `55189199…e28f`.
