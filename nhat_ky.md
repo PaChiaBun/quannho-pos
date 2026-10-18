@@ -3,6 +3,11 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-18 — Trang `/cai-may-in.html`: thêm mục "Các phương án khác" khi công cụ không cài được (Chủ Quán góp ý)
+
+- Bảng "máy in nào cài được" trước đó chỉ ghi "cần driver hãng" mà không hướng dẫn. Thêm mục `#phuong-an-khac` với 4 phương án: **A** tự thêm máy in trong Windows (Settings → Printers & scanners → thêm thủ công, dùng cổng USB001/IP:9100 + driver Generic / Text Only, đặt tên `QN-…-VaiTrò` để POS tự nhận); **B** cài driver hãng rồi chọn máy in hệ thống trong POS (Cấu Hình Trạm In; in qua driver, không dùng tên QN-); **C** chuyển sang nối mạng LAN/Wi-Fi rồi chạy lại công cụ; **D** nhờ hỗ trợ (hãng/model, log). Ô trong bảng nay trỏ tới mục này; thêm 1 câu FAQ (cả HTML và JSON-LD, 11 câu). Đã lên live, bản cũ sao lưu `cmi_html_truoc_*`.
+- Chưa kiểm: các bước menu Windows viết theo giao diện Windows 11 (Windows 10 tên nhãn hơi khác); chưa thử phương án A trên máy thật; không dẫn link trang hãng cụ thể để tránh link sai.
+
 ## 2026-10-18 — Website: thêm mục "Cài máy in" vào menu trên cùng + sitemap (đã build/deploy)
 
 - Chủ Quán chọn chỗ đặt link: **menu trên cùng** (cạnh Tính năng, Loại quán). Sửa `src/app/(qn)/quannho/page.jsx` (thêm `<a href="/cai-may-in.html">Cài máy in</a>`) và `src/app/sitemap.js` (thêm URL trang). Đối chiếu trước: file trên VPS khác bản local đúng đúng hai chỗ này.
