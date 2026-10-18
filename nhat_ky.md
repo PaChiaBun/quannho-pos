@@ -3,6 +3,12 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-18 — Đã commit/build/lên web: POS Windows 1.0.5+18 + app cài máy in (chờ thử tại KAY)
+
+- Commit `757d345` (POS + app + in thô), `dc86d23`/`df8c14c` (workflow; cần quyền `workflow` của token `gh`, Chủ Quán đã cấp; `workflow_dispatch` không chạy được vì file chỉ có trên nhánh → thêm trigger `push`), `f6bfe4a` (sửa lỗi build: bỏ `trustInfo` trong manifest, dùng `/MANIFESTUAC requireAdministrator` vì mt.exe báo LNK1327). Web `/pos/` đã up (backup `pos_backup_20261018_192219.tar.gz`).
+- `QuanNhoPOS-latest.exe` (1.0.5+18, SHA-256 `dbd4987b…faee`) đã thay ở `public/` và `public/download/`; bản cũ sao lưu `exe_*_truoc_105b18_*.exe`. KHÔNG đụng `app_versions`.
+- App cài máy in: artifact `PrinterSetup-Windows` run 39128952009 → `release-builds/printer-setup/QuanNhoCaiMayIn-win-x64.zip` trên máy Mac; CHƯA up web, CHƯA thử trên Windows/máy in.
+
 ## 2026-10-18 — App "Quán Nhỏ — Cài máy in" riêng cho Windows + đường in thô cho máy in QN-* (CHƯA commit, CHƯA build, CHƯA thử trên máy thật)
 
 - **Lý do:** cài driver + đặt tên máy in cho từng máy quá phức tạp với chủ quán (so với CukCuk). Chủ Quán chọn tách thành app riêng để quyền Administrator chỉ nằm ở công cụ, POS vẫn chạy quyền thường.
