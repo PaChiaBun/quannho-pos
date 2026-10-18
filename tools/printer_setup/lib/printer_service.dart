@@ -20,6 +20,14 @@ enum PrinterRole {
   final String label;
   const PrinterRole(this.code, this.label);
 
+  /// Tiêu đề in to trên tờ nhận diện (không dấu để máy in nào cũng in được).
+  String get slipTitle => switch (this) {
+        PrinterRole.thuNgan => 'MAY IN THU NGAN',
+        PrinterRole.bep => 'MAY IN BEP NONG',
+        PrinterRole.bar => 'MAY IN BEP BAR',
+        PrinterRole.tem => 'MAY IN TEM DAN LY',
+      };
+
   /// Tên ngắn để hiện trong tiến trình.
   String get shortLabel => switch (this) {
         PrinterRole.thuNgan => 'thu ngân',
@@ -304,16 +312,32 @@ if ([QnRawPrn]::Send($env:QN_PRN, $bytes)) { Write-Output 'QN_OK' } else { Write
     }
   }
 
-  /// Tờ nhận diện: in tên vai trò (không dấu cho mọi máy in) rồi cắt giấy.
-  static Uint8List identifySlip(PrinterRole role, String queueName) {
-    final text = '\n*** QUAN NHO POS ***\n\nMay in nay la:\n\n'
-        '${_ascii(role.label.split('(').first.trim().toUpperCase())}\n'
-        '($queueName)\n\nNeu dung may nay thi OK,\nneu sai hay chon lai vai tro.\n\n\n\n';
-    return Uint8List.fromList([
-      0x1B, 0x40, // khởi tạo
-      ...text.codeUnits.map((c) => c > 127 ? 0x3F : c),
-      0x1D, 0x56, 0x42, 0x00, // cắt giấy (nạp thêm giấy rồi cắt)
-    ]);
+  /// Tờ nhận diện: tên vai trò in CHỮ TO ở giữa tờ (không dấu cho mọi máy in) rồi cắt giấy,
+  /// để chủ quán dán/ghi nhớ máy nào là máy nào.
+  static Uint8List identifySlip(PrinterRole role, String queueName, {String storeName = ''}) {
+    final out = <int>[];
+    void cmd(List<int> c) => out.addAll(c);
+    void text(String t) => out.addAll(removeDiacritics(t).codeUnits.map((c) => c > 127 ? 0x3F : c));
+    cmd([0x1B, 0x40]); // khởi tạo
+    cmd([0x1B, 0x61, 0x01]); // căn giữa
+    text('\n');
+    if (storeName.trim().isNotEmpty) {
+      cmd([0x1B, 0x45, 0x01]); // đậm
+      text('${storeName.trim().toUpperCase()}\n');
+      cmd([0x1B, 0x45, 0x00]);
+    }
+    text('\n');
+    cmd([0x1D, 0x21, 0x11]); // chữ cao + rộng gấp đôi
+    cmd([0x1B, 0x45, 0x01]);
+    text('${role.slipTitle}\n');
+    cmd([0x1B, 0x45, 0x00]);
+    cmd([0x1D, 0x21, 0x00]);
+    text('\n($queueName)\n\n');
+    text('To nay in ra tu may nao\nthi may do la: ${role.slipTitle.replaceFirst('MAY IN ', '').toLowerCase()}\n\n');
+    text('Hay ghi/dan nhan len may in\nde khong bi nham.\n');
+    text('Neu sai, chon lai vai tro\ntrong cong cu cai may in.\n\n\n');
+    cmd([0x1D, 0x56, 0x42, 0x00]); // cắt giấy (nạp thêm giấy rồi cắt)
+    return Uint8List.fromList(out);
   }
 
   static Uint8List get drawerKick => Uint8List.fromList(
@@ -331,8 +355,8 @@ if ([QnRawPrn]::Send($env:QN_PRN, $bytes)) { Write-Output 'QN_OK' } else { Write
     return s.split('').map((c) => map[c] ?? c).join();
   }
 
-  static Future<bool> identify(PrinterRole role, String queueName) =>
-      sendRaw(queueName, identifySlip(role, queueName));
+  static Future<bool> identify(PrinterRole role, String queueName, {String storeName = ''}) =>
+      sendRaw(queueName, identifySlip(role, queueName, storeName: storeName));
 
   static Future<bool> kickDrawer(String queueName) => sendRaw(queueName, drawerKick);
 

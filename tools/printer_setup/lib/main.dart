@@ -130,7 +130,7 @@ class _SetupPageState extends State<SetupPage> {
         await PrinterService.remove(q.name);
       }
     }
-    var okCount = 0;
+    final installed = <Assignment>[];
     for (final a in list) {
       final qn = a.role.queueName(_store);
       _step('Đang cài máy in ${a.role.shortLabel}…');
@@ -140,12 +140,24 @@ class _SetupPageState extends State<SetupPage> {
         _step('✗ Chưa cài được máy in ${a.role.shortLabel}. Bấm "Sao chép log" gửi hỗ trợ.');
         continue;
       }
-      final printed = await PrinterService.identify(a.role, qn);
-      AppLog.info('Cài $qn xong; in tờ nhận diện: ${printed ? 'được' : 'KHÔNG được'}');
-      okCount++;
-      _step(printed
-          ? '✓ ${a.role.shortLabel}: đã cài và in tờ nhận diện'
-          : '✓ ${a.role.shortLabel}: đã cài (chưa in được tờ nhận diện — kiểm tra giấy/nguồn)');
+      installed.add(a);
+      _step('✓ Đã cài máy in ${a.role.shortLabel}');
+    }
+    final okCount = installed.length;
+    if (okCount > 0) {
+      // Cài xong tất cả mới in: mọi máy in tờ nhận diện CÙNG LÚC để chủ quán đứng nhìn và dán nhãn.
+      _step('Đang in tờ nhận diện ở tất cả các máy…');
+      final results = await Future.wait([
+        for (final a in installed)
+          PrinterService.identify(a.role, a.role.queueName(_store), storeName: _store),
+      ]);
+      for (var i = 0; i < installed.length; i++) {
+        final qn = installed[i].role.queueName(_store);
+        AppLog.info('Tờ nhận diện $qn: ${results[i] ? 'đã gửi' : 'KHÔNG gửi được'}');
+        if (!results[i]) {
+          _step('✗ Máy ${installed[i].role.shortLabel} chưa in được tờ nhận diện — kiểm tra giấy/nguồn máy in.');
+        }
+      }
     }
     if (!mounted) return;
     setState(() {
@@ -153,7 +165,7 @@ class _SetupPageState extends State<SetupPage> {
       _done = okCount > 0;
     });
     if (okCount > 0) {
-      _step('Xong! Xem tờ giấy vừa in ra ở mỗi máy: nếu đúng vai trò thì không cần làm gì thêm.');
+      _step('Xong! Mỗi máy vừa in một tờ ghi to tên máy (THU NGAN, BEP, BAR…). Hãy ghi hoặc dán nhãn lên máy; nếu tờ nào ghi sai thì đổi vai trò bên dưới.');
     }
   }
 
@@ -344,7 +356,7 @@ class _SetupPageState extends State<SetupPage> {
             onPressed: _running
                 ? null
                 : () async {
-                    final ok = await PrinterService.identify(a.role, qn);
+                    final ok = await PrinterService.identify(a.role, qn, storeName: _store);
                     _msg(ok ? 'Đã gửi tờ in thử.' : 'Không in được. Kiểm tra giấy/nguồn máy in.', error: !ok);
                   },
             child: const Text('In thử'),

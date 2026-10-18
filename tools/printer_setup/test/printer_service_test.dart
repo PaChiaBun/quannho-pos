@@ -44,10 +44,16 @@ void main() {
   });
 
   test('tờ nhận diện: chỉ ASCII, bắt đầu khởi tạo, kết thúc cắt giấy', () {
-    final b = PrinterService.identifySlip(PrinterRole.thuNgan, 'QN-KAY-ThuNgan');
+    final b = PrinterService.identifySlip(PrinterRole.thuNgan, 'QN-KAY-ThuNgan', storeName: 'Kay - Rạch Giá');
     expect(b.take(2), [0x1B, 0x40]);
     expect(b.skip(b.length - 4), [0x1D, 0x56, 0x42, 0x00]);
-    expect(b.skip(2).take(b.length - 6).every((c) => c < 128), isTrue);
+    expect(b.every((c) => c < 128), isTrue);
+    final txt = String.fromCharCodes(b);
+    expect(txt, contains('MAY IN THU NGAN'));
+    expect(txt, contains('KAY - RACH GIA'));
+    expect(txt, contains('QN-KAY-ThuNgan'));
+    // chữ to: GS ! 0x11 xuất hiện trước tiêu đề
+    expect(String.fromCharCodes(b.take(b.indexOf(0x4D, 20))), contains('\x1D\x21\x11'));
   });
 
   test('bỏ dấu tiếng Việt cho tờ in', () {
