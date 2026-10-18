@@ -3,6 +3,12 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-18 — Đưa các phương án xử lý thẳng vào app cài máy in (mục "Cần trợ giúp?") — bản mới đã lên web
+
+- Chủ Quán hỏi sao không để trong app. App (commit `33f8590`, run 39146097370) có mục **"Cần trợ giúp?"** tự mở khi không tìm thấy máy in hoặc cài lỗi: (1) **Cài theo IP** (kiểm tra IPv4, cổng 9100); (2) **Cài vào cổng USB00x** (liệt kê mọi cổng USB, kể cả cổng cũ); chung ô chọn vai trò + khổ giấy; (3) nút mở `ms-settings:printers` và `devmgmt.msc` + hướng dẫn driver hãng → chọn máy in trong POS; (4) nút Zalo hỗ trợ; "Sao chép log" ở thanh trên.
+- `QuanNhoCaiMayIn-latest.zip` bản mới (12.282.263 B, SHA-256 `8aaff15c…0aa43`) thay ở `public/` + `public/download/`, khớp qua HTTP; bản cũ sao lưu `cmi_truoc_*`. Trang `cai-may-in.html` cập nhật mã SHA-256/dung lượng và nhắc mục trợ giúp có sẵn trong app.
+- Chưa kiểm: chưa chạy thật trên Windows (nút `start ms-settings:`, `devmgmt.msc`, cài theo IP/cổng USB).
+
 ## 2026-10-18 — Trang `/cai-may-in.html`: thêm mục "Các phương án khác" khi công cụ không cài được (Chủ Quán góp ý)
 
 - Bảng "máy in nào cài được" trước đó chỉ ghi "cần driver hãng" mà không hướng dẫn. Thêm mục `#phuong-an-khac` với 4 phương án: **A** tự thêm máy in trong Windows (Settings → Printers & scanners → thêm thủ công, dùng cổng USB001/IP:9100 + driver Generic / Text Only, đặt tên `QN-…-VaiTrò` để POS tự nhận); **B** cài driver hãng rồi chọn máy in hệ thống trong POS (Cấu Hình Trạm In; in qua driver, không dùng tên QN-); **C** chuyển sang nối mạng LAN/Wi-Fi rồi chạy lại công cụ; **D** nhờ hỗ trợ (hãng/model, log). Ô trong bảng nay trỏ tới mục này; thêm 1 câu FAQ (cả HTML và JSON-LD, 11 câu). Đã lên live, bản cũ sao lưu `cmi_html_truoc_*`.
