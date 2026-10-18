@@ -46,6 +46,11 @@ class _SetupPageState extends State<SetupPage> {
   List<Assignment> _assigned = [];
   final _storeCtl = TextEditingController();
   bool _storeFromPos = false;
+  final _ipCtl = TextEditingController();
+  PrinterRole _helpRole = PrinterRole.thuNgan;
+  int _helpPaper = 80;
+  bool _helpOpen = false; // tự mở mục trợ giúp khi không tìm thấy máy hoặc cài lỗi
+  List<DetectedPrinter> _usbPorts = [];
 
   String get _store => _storeCtl.text.trim();
 
@@ -58,6 +63,7 @@ class _SetupPageState extends State<SetupPage> {
   @override
   void dispose() {
     _storeCtl.dispose();
+    _ipCtl.dispose();
     super.dispose();
   }
 
@@ -106,7 +112,8 @@ class _SetupPageState extends State<SetupPage> {
       final lan = await PrinterService.scanLan();
       final devices = [...usb, ...lan];
       if (devices.isEmpty) {
-        _step('Không thấy máy in nào. Hãy bật máy in, kiểm tra dây USB/mạng rồi bấm lại.');
+        _step('Không thấy máy in nào. Hãy bật máy in, kiểm tra dây USB/mạng rồi bấm lại, hoặc xem mục "Cần trợ giúp?" bên dưới.');
+        if (mounted) setState(() => _helpOpen = true);
         return;
       }
       _step('Tìm thấy ${devices.length} máy in.');
@@ -137,7 +144,8 @@ class _SetupPageState extends State<SetupPage> {
       final err = await PrinterService.install(a.device, a.role, _store, paperMm: a.paperMm);
       if (err != null) {
         AppLog.error('Cài $qn thất bại: $err');
-        _step('✗ Chưa cài được máy in ${a.role.shortLabel}. Bấm "Sao chép log" gửi hỗ trợ.');
+        _step('✗ Chưa cài được máy in ${a.role.shortLabel}. Xem mục "Cần trợ giúp?" bên dưới.');
+        if (mounted) setState(() => _helpOpen = true);
         continue;
       }
       installed.add(a);
@@ -189,6 +197,46 @@ class _SetupPageState extends State<SetupPage> {
     } finally {
       if (mounted) setState(() => _running = false);
     }
+  }
+
+  /// Cài thủ công một máy in theo cổng USB hoặc IP đã chọn, với vai trò/khổ giấy ở mục trợ giúp.
+  Future<void> _installManual(DetectedPrinter dev) async {
+    if (_store.isEmpty) {
+      _msg('Hãy gõ tên quán ở ô phía trên trước.', error: true);
+      return;
+    }
+    await StoreSettings.saveStoreName(_store);
+    setState(() => _running = true);
+    try {
+      final role = _helpRole;
+      final qn = role.queueName(_store);
+      AppLog.info('Cài thủ công $qn: ${dev.detail}');
+      final err = await PrinterService.install(dev, role, _store, paperMm: _helpPaper);
+      if (err != null) {
+        AppLog.error('Cài thủ công $qn thất bại: $err');
+        _msg('Chưa cài được: $err. Bấm "Sao chép log" gửi hỗ trợ.', error: true);
+        return;
+      }
+      final ok = await PrinterService.identify(role, qn, storeName: _store);
+      final a = Assignment(dev, role, paperMm: _helpPaper);
+      setState(() {
+        _assigned.removeWhere((x) => x.role == role);
+        _assigned.add(a);
+        _assigned.sort((x, y) => x.role.index.compareTo(y.role.index));
+        _done = true;
+      });
+      _msg(ok
+          ? 'Đã cài "$qn" và in tờ nhận biết. Xem tờ giấy ra ở máy nào là máy đó.'
+          : 'Đã cài "$qn" nhưng chưa in được tờ nhận biết. Kiểm tra giấy/nguồn máy in.');
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
+  }
+
+  Future<void> _loadUsbPorts() async {
+    final ports = await PrinterService.listUsbPorts();
+    AppLog.info('Cổng USB hiện có: ${ports.map((e) => e.usbPort).join(', ')}');
+    if (mounted) setState(() => _usbPorts = ports);
   }
 
   Future<void> _reapply() async {
@@ -312,6 +360,8 @@ class _SetupPageState extends State<SetupPage> {
               const SizedBox(height: 10),
               for (final a in _assigned) _assignedCard(a),
             ],
+            const SizedBox(height: 16),
+            _helpCard(),
             const SizedBox(height: 24),
             Text(
               'Sau khi cài xong, mở Quán Nhỏ POS và bấm in như bình thường — POS tự dùng các máy in QN-… này, '
@@ -320,6 +370,148 @@ class _SetupPageState extends State<SetupPage> {
             ),
           ]),
         ),
+      ),
+    );
+  }
+
+  Widget _helpCard() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6)],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        key: ValueKey(_helpOpen),
+        initiallyExpanded: _helpOpen,
+        onExpansionChanged: (v) {
+          if (v && _usbPorts.isEmpty) _loadUsbPorts();
+        },
+        leading: const Icon(Icons.support_agent_rounded, color: _kOrange),
+        title: const Text('Cần trợ giúp? (máy in không được tìm thấy hoặc cài chưa được)',
+            style: TextStyle(fontWeight: FontWeight.w800, color: _kIndigo)),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Chọn vai trò và khổ giấy cho máy in sẽ thêm thủ công:',
+              style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 10, runSpacing: 8, children: [
+            SizedBox(
+              width: 240,
+              child: DropdownButtonFormField<PrinterRole>(
+                isExpanded: true,
+                initialValue: _helpRole,
+                decoration: const InputDecoration(
+                    labelText: 'Vai trò', isDense: true, border: OutlineInputBorder()),
+                items: [
+                  for (final r in PrinterRole.values)
+                    DropdownMenuItem(value: r, child: Text(r.label, overflow: TextOverflow.ellipsis)),
+                ],
+                onChanged: (v) => setState(() => _helpRole = v ?? _helpRole),
+              ),
+            ),
+            SizedBox(
+              width: 160,
+              child: DropdownButtonFormField<int>(
+                isExpanded: true,
+                initialValue: _helpPaper,
+                decoration: const InputDecoration(
+                    labelText: 'Khổ giấy', isDense: true, border: OutlineInputBorder()),
+                items: const [
+                  DropdownMenuItem(value: 80, child: Text('80 mm')),
+                  DropdownMenuItem(value: 58, child: Text('58 mm')),
+                ],
+                onChanged: (v) => setState(() => _helpPaper = v ?? _helpPaper),
+              ),
+            ),
+          ]),
+          const Divider(height: 28),
+          const Text('1. Máy in mạng (LAN/Wi-Fi): nhập địa chỉ IP',
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          Text('Máy in bill thường cho in tờ thông tin có địa chỉ IP bằng cách giữ nút Feed khi bật nguồn.',
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          const SizedBox(height: 8),
+          Row(children: [
+            SizedBox(
+              width: 220,
+              child: TextField(
+                controller: _ipCtl,
+                onChanged: (_) => setState(() {}),
+                decoration: const InputDecoration(
+                    labelText: 'Địa chỉ IP', hintText: '192.168.1.240',
+                    isDense: true, border: OutlineInputBorder()),
+              ),
+            ),
+            const SizedBox(width: 10),
+            FilledButton(
+              onPressed: (_running || !isValidIpv4(_ipCtl.text))
+                  ? null
+                  : () => _installManual(DetectedPrinter(
+                        kind: DetectedKind.lan,
+                        title: 'Máy in mạng',
+                        detail: 'IP ${_ipCtl.text.trim()} (cổng 9100)',
+                        ip: _ipCtl.text.trim(),
+                      )),
+              child: const Text('Cài theo IP'),
+            ),
+          ]),
+          const Divider(height: 28),
+          const Text('2. Máy in USB: chọn cổng Windows đã tạo',
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          Text('Mỗi máy in USB chiếm một cổng USB001, USB002… Nếu không chắc máy nào ở cổng nào, thử từng cổng: tờ in ra ở máy nào là máy đó.',
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          const SizedBox(height: 8),
+          if (_usbPorts.isEmpty)
+            Row(children: [
+              Text('Chưa thấy cổng USB nào.', style: TextStyle(color: Colors.grey.shade700)),
+              TextButton(onPressed: _loadUsbPorts, child: const Text('Tải lại danh sách')),
+            ])
+          else
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final d in _usbPorts)
+                OutlinedButton(
+                  onPressed: _running ? null : () => _installManual(d),
+                  child: Text('Cài vào ${d.usbPort}'),
+                ),
+              TextButton(onPressed: _loadUsbPorts, child: const Text('Tải lại')),
+            ]),
+          const Divider(height: 28),
+          const Text('3. Máy in cần driver của hãng (Windows không nhận ra máy in USB, máy in tem)',
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          Text('Xem hãng và model ở nhãn dưới đáy máy, tải driver trên trang chính thức của hãng rồi cài. '
+              'Sau đó trong Quán Nhỏ POS: In hoá đơn → Cấu Hình Trạm In → chọn máy in vừa cài.',
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            OutlinedButton.icon(
+              onPressed: () => openWindowsTarget('ms-settings:printers'),
+              icon: const Icon(Icons.settings_rounded, size: 18),
+              label: const Text('Mở cài đặt máy in của Windows'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => openWindowsTarget('devmgmt.msc'),
+              icon: const Icon(Icons.memory_rounded, size: 18),
+              label: const Text('Mở Quản lý thiết bị'),
+            ),
+          ]),
+          const Divider(height: 28),
+          const Text('4. Nhờ hỗ trợ', style: TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          Text('Bấm "Sao chép log" ở góc trên, rồi gửi kèm hãng và model máy in qua Zalo.',
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => openWindowsTarget('https://zalo.me/0927558888'),
+            icon: const Icon(Icons.chat_rounded, size: 18),
+            label: const Text('Nhắn Zalo hỗ trợ (0927 55 8888)'),
+          ),
+        ],
       ),
     );
   }

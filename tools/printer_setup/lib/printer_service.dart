@@ -130,6 +130,22 @@ class PrinterService {
     ];
   }
 
+  /// Mọi cổng USBxxx Windows đang có (kể cả cổng cũ của máy in đã rút) — dùng cho cài thủ công.
+  static Future<List<DetectedPrinter>> listUsbPorts() async {
+    final ports = await PsRunner.runJsonList(
+        r"Get-PrinterPort | Where-Object { $_.Name -match '^USB\d+' } | Select-Object Name,Description | ConvertTo-Json -Compress",
+        label: 'liệt kê mọi cổng USB');
+    return [
+      for (final p in ports)
+        DetectedPrinter(
+          kind: DetectedKind.usb,
+          title: 'Cổng ${p['Name']}',
+          detail: '${p['Description'] ?? 'Cổng máy in USB'}',
+          usbPort: '${p['Name']}',
+        )
+    ];
+  }
+
   /// Máy in cắm USB: cổng USBxxx do Windows tạo khi thấy thiết bị loại máy in,
   /// kèm tên thiết bị lấy từ danh sách thiết bị đang cắm.
   static Future<List<DetectedPrinter>> scanUsb() async {

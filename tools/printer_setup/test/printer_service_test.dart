@@ -108,4 +108,13 @@ void main() {
       expect(r.firstWhere((a) => a.device.usbPort == 'USB001').role, PrinterRole.bep);
     });
   });
+
+  test('isValidIpv4', () {
+    expect(isValidIpv4('192.168.1.240'), isTrue);
+    expect(isValidIpv4(' 10.0.0.1 '), isTrue);
+    expect(isValidIpv4('256.1.1.1'), isFalse);
+    expect(isValidIpv4('192.168.1'), isFalse);
+    expect(isValidIpv4('a.b.c.d'), isFalse);
+    expect(isValidIpv4(''), isFalse);
+  });
 }

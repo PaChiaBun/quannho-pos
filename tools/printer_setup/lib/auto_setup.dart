@@ -101,3 +101,24 @@ Future<String> storeNameFromPos() async {
   }
   return '';
 }
+
+/// Địa chỉ IPv4 hợp lệ (bốn số 0–255) để cài máy in mạng thủ công.
+bool isValidIpv4(String s) {
+  final p = s.trim().split('.');
+  if (p.length != 4) return false;
+  for (final x in p) {
+    if (x.isEmpty || x.length > 3 || int.tryParse(x) == null) return false;
+    final n = int.parse(x);
+    if (n < 0 || n > 255) return false;
+  }
+  return true;
+}
+
+/// Mở một lệnh/URI của Windows (ms-settings:..., devmgmt.msc, https://...) bằng `start`.
+Future<void> openWindowsTarget(String target) async {
+  try {
+    await Process.run('cmd', ['/c', 'start', '', target]);
+  } catch (e) {
+    AppLog.error('Không mở được $target: $e');
+  }
+}
