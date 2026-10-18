@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:qn_printer_setup/app_log.dart';
 import 'package:qn_printer_setup/printer_service.dart';
 import 'package:qn_printer_setup/ps_runner.dart';
 
@@ -40,5 +41,13 @@ void main() {
 
   test('bỏ dấu tiếng Việt cho tờ in', () {
     expect(PrinterService.asciiForTest('THU NGÂN ĐỒ'), 'THU NGAN DO');
+  });
+
+  test('AppLog.format: có mức, giờ, và cắt bớt dòng quá dài', () {
+    final a = AppLog.format('INFO', 'xin chào');
+    expect(a, matches(RegExp(r'^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\] \[INFO\] xin chào$')));
+    final long = AppLog.format('LỖI', 'x' * 9000);
+    expect(long.length, lessThan(4200));
+    expect(long, contains('cắt'));
   });
 }

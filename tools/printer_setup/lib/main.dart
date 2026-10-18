@@ -1,9 +1,16 @@
 // Quán Nhỏ — Công cụ cài máy in (Windows). Một nút: tìm máy in, chọn vai trò, cài và in thử.
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'app_log.dart';
 import 'printer_service.dart';
 
-void main() => runApp(const SetupApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (Platform.isWindows) await AppLog.init();
+  FlutterError.onError = (d) => AppLog.error('Flutter: ${d.exceptionAsString()}');
+  runApp(const SetupApp());
+}
 
 const _kIndigo = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
@@ -81,6 +88,7 @@ class _SetupPageState extends State<SetupPage> {
     setState(() => _busy.add(i));
     final err = await PrinterService.install(dev, role);
     if (err != null) {
+      AppLog.error('Cài ${role.queueName} thất bại: $err');
       if (mounted) {
         setState(() => _busy.remove(i));
         _msg('Chưa cài được: $err', error: true);
@@ -88,6 +96,7 @@ class _SetupPageState extends State<SetupPage> {
       return;
     }
     final printed = await PrinterService.identify(role);
+    AppLog.info('Cài ${role.queueName} xong; in tờ nhận diện: ${printed ? 'được' : 'KHÔNG được'}');
     await _refreshQueues();
     if (!mounted) return;
     setState(() => _busy.remove(i));
@@ -122,6 +131,25 @@ class _SetupPageState extends State<SetupPage> {
         backgroundColor: _kIndigo,
         foregroundColor: Colors.white,
         title: const Text('Quán Nhỏ — Cài máy in', style: TextStyle(fontWeight: FontWeight.w700)),
+        actions: [
+          TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            onPressed: AppLog.openFolder,
+            icon: const Icon(Icons.folder_open_rounded, size: 18),
+            label: const Text('Mở thư mục log'),
+          ),
+          TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            onPressed: () async {
+              final t = await AppLog.readToday();
+              await Clipboard.setData(ClipboardData(text: t.isEmpty ? '(chưa có log)' : t));
+              _msg('Đã sao chép log hôm nay — dán gửi cho bộ phận hỗ trợ.');
+            },
+            icon: const Icon(Icons.copy_rounded, size: 18),
+            label: const Text('Sao chép log'),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Center(
         child: ConstrainedBox(

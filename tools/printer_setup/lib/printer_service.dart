@@ -4,6 +4,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'app_log.dart';
 import 'ps_runner.dart';
 
 const kGenericDriver = 'Generic / Text Only';
@@ -89,7 +90,8 @@ class PrinterService {
   // ── Phát hiện ───────────────────────────────────────────────────────────────
   static Future<List<InstalledQueue>> listQueues() async {
     final rows = await PsRunner.runJsonList(
-        r'Get-Printer | Select-Object Name,DriverName,PortName | ConvertTo-Json -Compress');
+        r'Get-Printer | Select-Object Name,DriverName,PortName | ConvertTo-Json -Compress',
+        label: 'liệt kê máy in Windows');
     return [
       for (final r in rows)
         InstalledQueue('${r['Name']}', '${r['DriverName']}', '${r['PortName']}')
@@ -100,9 +102,9 @@ class PrinterService {
   /// kèm tên thiết bị lấy từ danh sách thiết bị đang cắm.
   static Future<List<DetectedPrinter>> scanUsb() async {
     final ports = await PsRunner.runJsonList(
-        r"Get-PrinterPort | Where-Object { $_.Name -match '^USB\d+' } | Select-Object Name,Description | ConvertTo-Json -Compress");
+        r"Get-PrinterPort | Where-Object { $_.Name -match '^USB\d+' } | Select-Object Name,Description | ConvertTo-Json -Compress", label: 'dò cổng USB');
     final devices = await PsRunner.runJsonList(
-        r"Get-PnpDevice -PresentOnly | Where-Object { $_.InstanceId -like 'USB\VID_*' -and ($_.Class -in 'Printer','USB' -or $_.FriendlyName -match 'print|pos|receipt|usb') } | Select-Object FriendlyName,InstanceId,Class | ConvertTo-Json -Compress");
+        r"Get-PnpDevice -PresentOnly | Where-Object { $_.InstanceId -like 'USB\VID_*' -and ($_.Class -in 'Printer','USB' -or $_.FriendlyName -match 'print|pos|receipt|usb') } | Select-Object FriendlyName,InstanceId,Class | ConvertTo-Json -Compress", label: 'dò thiết bị USB');
     final names = <String>[];
     for (final d in devices) {
       final cls = '${d['Class']}';
@@ -112,6 +114,7 @@ class PrinterService {
         names.add(v.isEmpty ? fn : '$fn ($v)');
       }
     }
+    AppLog.info('USB: ${ports.length} cổng, thiết bị máy in: ${names.isEmpty ? '(không)' : names.join('; ')}');
     final result = <DetectedPrinter>[];
     for (var i = 0; i < ports.length; i++) {
       final port = '${ports[i]['Name']}';
@@ -133,6 +136,7 @@ class PrinterService {
     final ifaces = await NetworkInterface.list(type: InternetAddressType.IPv4);
     final prefixes = subnetPrefixes(
         [for (final i in ifaces) for (final a in i.addresses) a.address]);
+    AppLog.info('LAN: quét dải ${prefixes.isEmpty ? '(không có mạng IPv4)' : prefixes.join(', ')}');
     final targets = [
       for (final p in prefixes) for (var h = 1; h <= 254; h++) '$p.$h'
     ];
@@ -154,6 +158,7 @@ class PrinterService {
       await Future.wait(targets.skip(i).take(batch).map(probe));
     }
     found.sort();
+    AppLog.info('LAN: tìm thấy ${found.length} máy mở cổng 9100: ${found.join(', ')}');
     return [
       for (final ip in found)
         DetectedPrinter(
@@ -192,13 +197,15 @@ if (Get-Printer -Name '$name' -ErrorAction SilentlyContinue) { Remove-Printer -N
 Add-Printer -Name '$name' -DriverName '$kGenericDriver' -PortName '$port'
 Write-Output 'OK'
 ''';
-    final r = await PsRunner.run(script);
+    AppLog.info('Cài ${role.queueName}: loại ${dev.kind.name}, cổng $port${dev.ip != null ? ', IP ${dev.ip}' : ''}');
+    final r = await PsRunner.run(script, label: 'cài ${role.queueName}');
     if (r.ok && r.out.contains('OK')) return null;
     return r.err.isNotEmpty ? r.err : r.out;
   }
 
   static Future<String?> remove(String name) async {
-    final r = await PsRunner.run("Remove-Printer -Name '$name'; Write-Output 'OK'");
+    final r = await PsRunner.run("Remove-Printer -Name '$name'; Write-Output 'OK'",
+        label: 'gỡ $name');
     return r.ok ? null : (r.err.isNotEmpty ? r.err : r.out);
   }
 
@@ -256,7 +263,8 @@ if ([QnRawPrn]::Send($env:QN_PRN, $bytes)) { Write-Output 'QN_OK' } else { Write
     final f = File('${Directory.systemTemp.path}\\qn_raw_${DateTime.now().microsecondsSinceEpoch}.bin');
     try {
       await f.writeAsBytes(bytes);
-      final r = await PsRunner.run(_rawScript, env: {'QN_PRN': queue, 'QN_FILE': f.path});
+      final r = await PsRunner.run(_rawScript,
+          env: {'QN_PRN': queue, 'QN_FILE': f.path}, label: 'gửi lệnh thô tới $queue (${bytes.length} byte)');
       return r.ok && r.out.contains('QN_OK');
     } finally {
       try { await f.delete(); } catch (_) {}
