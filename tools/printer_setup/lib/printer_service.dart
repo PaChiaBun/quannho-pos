@@ -6,18 +6,22 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'app_log.dart';
 import 'ps_runner.dart';
+import 'store_settings.dart';
 
 const kGenericDriver = 'Generic / Text Only';
 
 enum PrinterRole {
-  thuNgan('QN-ThuNgan', 'Thu ngân (in hoá đơn, mở két)'),
-  bep('QN-Bep', 'Bếp nóng'),
-  bar('QN-Bar', 'Bếp bar (đồ uống)'),
-  tem('QN-Tem', 'Tem dán ly');
+  thuNgan('ThuNgan', 'Thu ngân (in hoá đơn, mở két)'),
+  bep('Bep', 'Bếp nóng'),
+  bar('Bar', 'Bếp bar (đồ uống)'),
+  tem('Tem', 'Tem dán ly');
 
-  final String queueName;
+  final String code; // hậu tố tên máy in
   final String label;
-  const PrinterRole(this.queueName, this.label);
+  const PrinterRole(this.code, this.label);
+
+  /// Tên hàng đợi máy in kèm tên quán, ví dụ QN-KAY-Rach-Gia-ThuNgan.
+  String queueName(String storeName) => queueNameFor(storeName, code);
 }
 
 enum DetectedKind { usb, lan }
@@ -43,6 +47,14 @@ class InstalledQueue {
   final String port;
   const InstalledQueue(this.name, this.driver, this.port);
   bool get isQn => name.startsWith('QN-');
+
+  /// Vai trò suy ra từ hậu tố tên (…-ThuNgan, …-Bep…), null nếu không khớp.
+  PrinterRole? get role {
+    for (final r in PrinterRole.values) {
+      if (name == 'QN-${r.code}' || name.endsWith('-${r.code}')) return r;
+    }
+    return null;
+  }
 }
 
 /// Hãng thường gặp theo mã nhà sản xuất USB (VID). Chỉ để hiển thị tên cho dễ nhận.
@@ -173,8 +185,9 @@ class PrinterService {
   // ── Dựng máy in ─────────────────────────────────────────────────────────────
   /// Tạo (hoặc dựng lại) máy in [role] cho thiết bị đã phát hiện. Trả null nếu thành công,
   /// ngược lại là thông báo lỗi.
-  static Future<String?> install(DetectedPrinter dev, PrinterRole role) async {
-    final name = role.queueName;
+  static Future<String?> install(
+      DetectedPrinter dev, PrinterRole role, String storeName) async {
+    final name = role.queueName(storeName);
     final String portScript;
     final String port;
     if (dev.kind == DetectedKind.lan) {
@@ -197,8 +210,8 @@ if (Get-Printer -Name '$name' -ErrorAction SilentlyContinue) { Remove-Printer -N
 Add-Printer -Name '$name' -DriverName '$kGenericDriver' -PortName '$port'
 Write-Output 'OK'
 ''';
-    AppLog.info('Cài ${role.queueName}: loại ${dev.kind.name}, cổng $port${dev.ip != null ? ', IP ${dev.ip}' : ''}');
-    final r = await PsRunner.run(script, label: 'cài ${role.queueName}');
+    AppLog.info('Cài $name: loại ${dev.kind.name}, cổng $port${dev.ip != null ? ', IP ${dev.ip}' : ''}');
+    final r = await PsRunner.run(script, label: 'cài $name');
     if (r.ok && r.out.contains('OK')) return null;
     return r.err.isNotEmpty ? r.err : r.out;
   }
@@ -272,10 +285,10 @@ if ([QnRawPrn]::Send($env:QN_PRN, $bytes)) { Write-Output 'QN_OK' } else { Write
   }
 
   /// Tờ nhận diện: in tên vai trò (không dấu cho mọi máy in) rồi cắt giấy.
-  static Uint8List identifySlip(PrinterRole role) {
+  static Uint8List identifySlip(PrinterRole role, String queueName) {
     final text = '\n*** QUAN NHO POS ***\n\nMay in nay la:\n\n'
         '${_ascii(role.label.split('(').first.trim().toUpperCase())}\n'
-        '(${role.queueName})\n\nNeu dung may nay thi OK,\nneu sai hay chon lai vai tro.\n\n\n\n';
+        '($queueName)\n\nNeu dung may nay thi OK,\nneu sai hay chon lai vai tro.\n\n\n\n';
     return Uint8List.fromList([
       0x1B, 0x40, // khởi tạo
       ...text.codeUnits.map((c) => c > 127 ? 0x3F : c),
@@ -298,11 +311,10 @@ if ([QnRawPrn]::Send($env:QN_PRN, $bytes)) { Write-Output 'QN_OK' } else { Write
     return s.split('').map((c) => map[c] ?? c).join();
   }
 
-  static Future<bool> identify(PrinterRole role) =>
-      sendRaw(role.queueName, identifySlip(role));
+  static Future<bool> identify(PrinterRole role, String queueName) =>
+      sendRaw(queueName, identifySlip(role, queueName));
 
-  static Future<bool> kickDrawer(PrinterRole role) =>
-      sendRaw(role.queueName, drawerKick);
+  static Future<bool> kickDrawer(String queueName) => sendRaw(queueName, drawerKick);
 
   static String asciiForTest(String s) => _ascii(s);
 }

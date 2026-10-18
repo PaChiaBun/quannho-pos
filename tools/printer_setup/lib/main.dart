@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_log.dart';
 import 'printer_service.dart';
+import 'store_settings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,11 +44,23 @@ class _SetupPageState extends State<SetupPage> {
   List<InstalledQueue> _queues = [];
   final Map<int, PrinterRole> _roles = {};
   final Set<int> _busy = {};
+  final _storeCtl = TextEditingController();
+
+  String get _store => _storeCtl.text.trim();
 
   @override
   void initState() {
     super.initState();
+    StoreSettings.loadStoreName().then((n) {
+      if (mounted) setState(() => _storeCtl.text = n);
+    });
     _refreshQueues();
+  }
+
+  @override
+  void dispose() {
+    _storeCtl.dispose();
+    super.dispose();
   }
 
   Future<void> _refreshQueues() async {
@@ -85,24 +98,30 @@ class _SetupPageState extends State<SetupPage> {
     final dev = _found[i];
     final role = _roles[i];
     if (role == null) return;
+    if (_store.isEmpty) {
+      _msg('Hãy nhập tên quán ở Bước 1 trước khi cài máy in.', error: true);
+      return;
+    }
+    await StoreSettings.saveStoreName(_store);
+    final qn = role.queueName(_store);
     setState(() => _busy.add(i));
-    final err = await PrinterService.install(dev, role);
+    final err = await PrinterService.install(dev, role, _store);
     if (err != null) {
-      AppLog.error('Cài ${role.queueName} thất bại: $err');
+      AppLog.error('Cài $qn thất bại: $err');
       if (mounted) {
         setState(() => _busy.remove(i));
         _msg('Chưa cài được: $err', error: true);
       }
       return;
     }
-    final printed = await PrinterService.identify(role);
-    AppLog.info('Cài ${role.queueName} xong; in tờ nhận diện: ${printed ? 'được' : 'KHÔNG được'}');
+    final printed = await PrinterService.identify(role, qn);
+    AppLog.info('Cài $qn xong; in tờ nhận diện: ${printed ? 'được' : 'KHÔNG được'}');
     await _refreshQueues();
     if (!mounted) return;
     setState(() => _busy.remove(i));
     _msg(printed
-        ? 'Đã cài "${role.queueName}". Máy in vừa in một tờ nhận diện — đúng máy chưa?'
-        : 'Đã cài "${role.queueName}" nhưng chưa in được tờ thử. Kiểm tra giấy/nguồn máy in.');
+        ? 'Đã cài "$qn". Máy in vừa in một tờ nhận diện — đúng máy chưa?'
+        : 'Đã cài "$qn" nhưng chưa in được tờ thử. Kiểm tra giấy/nguồn máy in.');
   }
 
   void _msg(String m, {bool error = false}) {
@@ -112,13 +131,6 @@ class _SetupPageState extends State<SetupPage> {
       behavior: SnackBarBehavior.floating,
       duration: const Duration(seconds: 6),
     ));
-  }
-
-  PrinterRole? _roleOfQueue(InstalledQueue q) {
-    for (final r in PrinterRole.values) {
-      if (r.queueName == q.name) return r;
-    }
-    return null;
   }
 
   @override
@@ -157,9 +169,23 @@ class _SetupPageState extends State<SetupPage> {
           child: ListView(padding: const EdgeInsets.all(20), children: [
             _Card(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Bước 1 — Tìm máy in',
+                const Text('Bước 1 — Nhập tên quán và tìm máy in',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kIndigo)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _storeCtl,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'Tên quán (kèm vào tên máy in cho dễ nhận biết)',
+                    hintText: 'Ví dụ: KAY - Rạch Giá',
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                    helperText: _store.isEmpty
+                        ? null
+                        : 'Máy in sẽ có tên dạng: ${PrinterRole.thuNgan.queueName(_store)}',
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Text(_status, style: TextStyle(color: Colors.grey.shade700, height: 1.4)),
                 const SizedBox(height: 14),
                 SizedBox(
@@ -194,8 +220,8 @@ class _SetupPageState extends State<SetupPage> {
             ],
             const SizedBox(height: 24),
             Text(
-              'Máy in được đặt tên chuẩn (QN-ThuNgan, QN-Bep, QN-Bar, QN-Tem). Trong Quán Nhỏ POS, ở mục máy in hệ thống '
-              'chỉ cần chọn đúng tên QN-... trong danh sách, không phải gõ tên hay cài driver.',
+              'Máy in được đặt tên theo mẫu QN-<Tên quán>-<Vai trò> (ví dụ QN-KAY-Rach-Gia-ThuNgan). Trong Quán Nhỏ POS, '
+              'ở mục máy in hệ thống chỉ cần chọn đúng máy in có tên QN-... này, không phải gõ tên hay cài driver.',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.5),
             ),
           ]),
@@ -247,7 +273,7 @@ class _SetupPageState extends State<SetupPage> {
   }
 
   Widget _queueCard(InstalledQueue q) {
-    final role = _roleOfQueue(q);
+    final role = q.role;
     return _Card(
       child: Row(children: [
         const Icon(Icons.print_rounded, color: Colors.green, size: 28),
@@ -261,7 +287,7 @@ class _SetupPageState extends State<SetupPage> {
         if (role != null) ...[
           OutlinedButton(
             onPressed: () async {
-              final ok = await PrinterService.identify(role);
+              final ok = await PrinterService.identify(role, q.name);
               _msg(ok ? 'Đã gửi tờ in thử.' : 'Không in được. Kiểm tra máy in.', error: !ok);
             },
             child: const Text('In thử'),
@@ -270,7 +296,7 @@ class _SetupPageState extends State<SetupPage> {
             const SizedBox(width: 8),
             OutlinedButton(
               onPressed: () async {
-                final ok = await PrinterService.kickDrawer(role);
+                final ok = await PrinterService.kickDrawer(q.name);
                 _msg(ok ? 'Đã gửi lệnh mở két. Két có mở không?' : 'Không gửi được lệnh mở két.',
                     error: !ok);
               },

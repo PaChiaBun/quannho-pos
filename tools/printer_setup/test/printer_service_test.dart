@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qn_printer_setup/app_log.dart';
 import 'package:qn_printer_setup/printer_service.dart';
+import 'package:qn_printer_setup/store_settings.dart';
 import 'package:qn_printer_setup/ps_runner.dart';
 
 void main() {
@@ -27,13 +28,22 @@ void main() {
     expect(vendorFromInstanceId(r'USB\VID_FFFF&PID_0001\x'), '');
   });
 
-  test('tên máy in chuẩn', () {
-    expect(PrinterRole.values.map((r) => r.queueName),
-        ['QN-ThuNgan', 'QN-Bep', 'QN-Bar', 'QN-Tem']);
+  test('tên máy in kèm tên quán', () {
+    expect(PrinterRole.values.map((r) => r.queueName('KAY - Rạch Giá')),
+        ['QN-KAY-Rach-Gia-ThuNgan', 'QN-KAY-Rach-Gia-Bep', 'QN-KAY-Rach-Gia-Bar', 'QN-KAY-Rach-Gia-Tem']);
+    expect(PrinterRole.thuNgan.queueName(''), 'QN-ThuNgan');
+    expect(storeSlug('Quán Nhỏ  Bà Tư!!'), 'Quan-Nho-Ba-Tu');
+    expect(storeSlug('x' * 60).length, 24);
+  });
+
+  test('InstalledQueue.role nhận vai trò từ hậu tố', () {
+    expect(const InstalledQueue('QN-KAY-Rach-Gia-Bar', 'd', 'p').role, PrinterRole.bar);
+    expect(const InstalledQueue('QN-ThuNgan', 'd', 'p').role, PrinterRole.thuNgan);
+    expect(const InstalledQueue('QN-KAY-Khac', 'd', 'p').role, isNull);
   });
 
   test('tờ nhận diện: chỉ ASCII, bắt đầu khởi tạo, kết thúc cắt giấy', () {
-    final b = PrinterService.identifySlip(PrinterRole.thuNgan);
+    final b = PrinterService.identifySlip(PrinterRole.thuNgan, 'QN-KAY-ThuNgan');
     expect(b.take(2), [0x1B, 0x40]);
     expect(b.skip(b.length - 4), [0x1D, 0x56, 0x42, 0x00]);
     expect(b.skip(2).take(b.length - 6).every((c) => c < 128), isTrue);
