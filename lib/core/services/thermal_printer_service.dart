@@ -234,8 +234,7 @@ class ThermalPrinterService {
   // Két nối cổng RJ11 của máy in bill: máy in nhận lệnh này sẽ phát xung mở két.
   // Không cần thư viện native: gọi winspool.drv bằng PowerShell (chạy nền, không chặn in).
   // ──────────────────────────────────────────────────────────────────────────
-  static const String _kRawPrintScript = r'''
-$ErrorActionPreference = 'Stop'
+  static const String _kRawPrnType = r'''
 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -280,6 +279,9 @@ public class QnRawPrn {
   }
 }
 "@
+''';
+
+  static const String _kRawPrintScript = _kRawPrnType + r'''
 $name = $env:QN_PRN
 if ([string]::IsNullOrWhiteSpace($name)) {
   $name = (Get-CimInstance Win32_Printer | Where-Object { $_.Default } | Select-Object -First 1).Name
@@ -287,6 +289,40 @@ if ([string]::IsNullOrWhiteSpace($name)) {
 $bytes = [byte[]](0x1B,0x70,0x00,0x19,0xFA,0x1B,0x70,0x01,0x19,0xFA)
 if ([QnRawPrn]::Send($name, $bytes)) { Write-Output "QN_OK $name" } else { Write-Output "QN_FAIL $name" }
 ''';
+
+  static const String _kRawFileTail = r'''
+$bytes = [System.IO.File]::ReadAllBytes($env:QN_FILE)
+if ([QnRawPrn]::Send($env:QN_PRN, $bytes)) { Write-Output "QN_OK" } else { Write-Output "QN_FAIL" }
+''';
+
+  /// Gửi dãy byte thô (ESC/POS) vào hàng đợi máy in Windows [printerName] (rỗng = máy in mặc định).
+  static Future<bool> sendRawWindows(String printerName, Uint8List bytes) async {
+    if (kIsWeb || !Platform.isWindows) return false;
+    final f = File('${Directory.systemTemp.path}\\qn_raw_${DateTime.now().microsecondsSinceEpoch}.bin');
+    try {
+      await f.writeAsBytes(bytes);
+      var name = printerName;
+      final script = StringBuffer("\$ErrorActionPreference = 'Stop'\n")
+        ..write(_kRawPrnType)
+        ..write(name.isEmpty
+            ? "\$env:QN_PRN = (Get-CimInstance Win32_Printer | Where-Object { \$_.Default } | Select-Object -First 1).Name\n"
+            : '')
+        ..write(_kRawFileTail);
+      final r = await Process.run(
+        'powershell.exe',
+        ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encodePowerShell(script.toString())],
+        environment: {'QN_PRN': name, 'QN_FILE': f.path},
+      ).timeout(const Duration(seconds: 30));
+      final out = '${r.stdout}'.trim();
+      print('[sendRawWindows] $printerName $out ${out.contains('QN_OK') ? '' : r.stderr}');
+      return out.contains('QN_OK');
+    } catch (e) {
+      print('[sendRawWindows Error] $e');
+      return false;
+    } finally {
+      try { await f.delete(); } catch (_) {}
+    }
+  }
 
   /// PowerShell -EncodedCommand cần base64 của chuỗi UTF-16LE.
   static String encodePowerShell(String script) {

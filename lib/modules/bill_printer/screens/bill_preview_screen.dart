@@ -19,6 +19,7 @@ import '../providers/printer_settings_provider.dart';
 import '../../../core/services/thermal_printer_service.dart';
 import '../utils/station_normalizer.dart';
 import '../drivers/sunmi_builtin_driver.dart';
+import '../utils/escpos_raster.dart';
 import '../utils/paper_sizes.dart';
 import '../routing/print_router.dart';
 import '../routing/print_setup.dart';
@@ -1798,6 +1799,35 @@ class StationPrinterDispatcher {
     }
   }
 
+  /// Hàng đợi do công cụ "Cài máy in" tạo (QN-ThuNgan, QN-Bep, QN-Bar, QN-Tem).
+  static bool isQnRawQueue(String name) => name.startsWith('QN-');
+
+  static Future<bool> _printRawRaster(
+    Uint8List pdf,
+    PrinterConfig config,
+    String jobName,
+    PdfPageFormat format,
+  ) async {
+    try {
+      final narrow = (config.paperMm ?? 70) < 60;
+      final dots = narrow ? 384 : 576; // 58mm / 80mm ở 203 dpi
+      final widthInch = format.width / PdfPageFormat.inch;
+      final dpi = dots / widthInch;
+      final out = BytesBuilder()..add(escposInit);
+      await for (final page in Printing.raster(pdf, dpi: dpi)) {
+        out.add(escposRaster(page.pixels, page.width, page.height, dotsWide: dots));
+      }
+      out.add(escposFeedAndCut());
+      final ok = await ThermalPrinterService.sendRawWindows(
+          config.name, out.toBytes());
+      writePrintLog('[_printRawRaster] $jobName -> ${config.name}: $ok');
+      return ok;
+    } catch (e) {
+      writePrintLog('[_printRawRaster ERROR] $e');
+      return false;
+    }
+  }
+
   static Future<bool> _dispatchPrint(
     Uint8List bytes,
     PrinterConfig config,
@@ -1824,6 +1854,14 @@ class StationPrinterDispatcher {
       );
       writePrintLog('[_dispatchPrint] Sunmi: $r');
       return r.ok;
+    }
+    // Máy in dựng bởi công cụ "Cài máy in" (QN-...): driver chung chỉ nhận chữ, nên bill được
+    // vẽ thành ảnh rồi gửi lệnh ESC/POS thô thẳng vào hàng đợi — không cần driver hãng.
+    if (config.type == 'system' &&
+        !kIsWeb &&
+        Platform.isWindows &&
+        isQnRawQueue(config.name)) {
+      return _printRawRaster(bytes, config, jobName, finalFormat);
     }
     if (config.type == 'system') {
       Printer? targetPrinter;

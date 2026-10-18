@@ -3,6 +3,20 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-18 — App "Quán Nhỏ — Cài máy in" riêng cho Windows + đường in thô cho máy in QN-* (CHƯA commit, CHƯA build, CHƯA thử trên máy thật)
+
+- **Lý do:** cài driver + đặt tên máy in cho từng máy quá phức tạp với chủ quán (so với CukCuk). Chủ Quán chọn tách thành app riêng để quyền Administrator chỉ nằm ở công cụ, POS vẫn chạy quyền thường.
+- **App mới** `tools/printer_setup` (Flutter Windows, `requireAdministrator`): một nút "Tìm máy in" → dò USB (cổng USBxxx + tên thiết bị/hãng theo VID), mạng LAN (quét /24 cổng 9100), liệt kê → chọn vai trò (Thu ngân/Bếp/Bar/Tem) → "Cài và in thử". Tạo máy in tên chuẩn `QN-ThuNgan`, `QN-Bep`, `QN-Bar`, `QN-Tem` bằng driver có sẵn của Windows "Generic / Text Only" (tạo cổng TCP/IP cho máy LAN); in tờ nhận diện (ASCII, cắt giấy), nút "Mở két thử", gỡ máy in. Workflow `.github/workflows/printer-setup-windows.yml` (chạy tay, ra `QuanNhoCaiMayIn-win-x64.zip`).
+- **Sửa quan trọng ở POS:** driver "Generic / Text Only" chỉ in chữ, KHÔNG in được bill PDF/đồ hoạ như đường cũ. Nên hàng đợi tên `QN-*` đi đường mới: PDF → `Printing.raster` → ESC/POS ảnh (`GS v 0`, 384/576 chấm) + cắt giấy → gửi thô qua `winspool` (`ThermalPrinterService.sendRawWindows`). Máy in hệ thống khác (có driver hãng) giữ đường cũ. Mở két với máy `QN-ThuNgan` dùng đường thô đã có.
+- Kiểm: test `escpos_raster_test` (4) + app mới (7) + `cash_drawer_windows_test` + toàn bộ `test/core` đạt; analyze không lỗi mới. **Chưa kiểm:** chạy thật trên Windows/máy in (không có máy ở đây): dò USB (`Get-PnpDevice`/`Get-PrinterPort`), `Add-Printer`, chất lượng/độ đậm ảnh in, tốc độ in bill dài, tem ly (máy tem có thể dùng TSPL thay vì ESC/POS).
+- Chưa làm: POS tự chọn máy `QN-*` (hiện vẫn chọn tên trong danh sách máy in hệ thống một lần); gói driver hãng cho máy USB mà Windows không nhận; bản cài (.exe) có ký số — hiện chỉ là thư mục zip.
+
+## 2026-10-18 — Windows 1.0.5+17 đã lên web (mở két + gom Thiết Kế Mẫu In + tem ly) — chờ Chủ Quán/KAY thử két
+
+- Commit `73efe78` (nhánh `feature/ai-bum-ui`, đã push; chỉ file mở két + thiết kế mẫu in + `pubspec.yaml` 1.0.5+17 + `nhat_ky.md`, KHÔNG kèm `ios/`, `.docs`). Workflow `Windows Release Builder` run 39109231675 thành công, artifact đúng commit.
+- Cài đặt `QuanNhoPOS-Setup.exe` (60.962.569 byte, SHA-256 `554c60b8…6669`) thay `QuanNhoPOS-latest.exe` ở `/var/www/lpm-web/public/` và `public/download/` (thay nguyên tử). Sao lưu bản cũ: `/root/quannho-backups/web-download/exe_{root,download}_truoc_105b17_*.exe`. Đối chiếu SHA-256 trên server và qua HTTP công khai khớp (Cloudflare cache bản cũ vài phút).
+- KHÔNG đụng `app_versions` (máy Windows chưa được báo cập nhật tự động), không `.msix`/`.appinstaller`. Thử két: tải bản mới trên máy Windows KAY, vào Cấu Hình Trạm In → "Mở két tiền", rồi thanh toán thử một bill.
+
 ## 2026-10-18 — Mở két tiền KAY: máy in hệ thống Windows chưa từng gửi lệnh mở két → thêm đường mở két thô (CHƯA commit, CHƯA build Windows, chưa thử trên máy thật)
 
 - **Chẩn đoán (chỉ SELECT `app_settings` của KAY):** máy chính "Windows POS" (giữ vai trò máy chủ in): thu ngân = máy in hệ thống `IN BILL Ne`, `autoOpenDrawer=true`, `hasCashDrawer=false`; bếp nóng/bar cũng máy in hệ thống; có máy Sunmi in tích hợp 50mm. Két nối RJ11 của máy in bill thu ngân (Chủ Quán xác nhận). Code cũ chỉ gửi lệnh mở két khi máy in thu ngân là loại LAN có IP → Windows/Sunmi không bao giờ mở; cờ "Có két" ở Máy In & Luật In chỉ lưu, không được đọc.
