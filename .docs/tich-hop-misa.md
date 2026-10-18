@@ -39,6 +39,16 @@ Quy tắc đáng chú ý:
 - Lỗi cần xử lý: `InvoiceDuplicated`, `InvoiceNumberNotCotinuous` (retry sau vài giây), `TemplateNotExist`, `LicenseInfo_NotBuy` (quán chưa mua tài nguyên hóa đơn), `SystemError` (retry backoff).
 - Hóa đơn thay thế/điều chỉnh dùng `ReferenceType` 1/2 cùng nhóm trường `Org*`.
 
+### Bổ sung sau khi đọc đủ tài liệu trên cổng developer (17/10/2026)
+
+- **Hai luồng:** (A) phát hành thẳng lên đám mây: `/invoice/token` rồi `/invoice/publishing`, MISA ký số (SignType 2 = HSM có hiển thị chữ ký, 5 = hóa đơn máy tính tiền không hiển thị chữ ký). (B) đẩy hóa đơn **nháp** lên web meInvoice: `/invoiceweb/token`, `/invoiceweb/templates`, `/invoiceweb/insert`; người dùng vào web xem (có trang riêng cho hóa đơn máy tính tiền) rồi tự phát hành. B không tự động hoàn toàn, nhưng an toàn hơn khi còn chưa chắc.
+- **Cả hai luồng lấy token đều cần mã số thuế, tên đăng nhập và mật khẩu meInvoice của quán** (cộng `ClientID` và `ClientSecret` của ứng dụng). Tài liệu không nêu cách lấy token khác.
+- **Đọc ký hiệu hóa đơn:** ký tự 1: 1 hóa đơn GTGT, 2 hóa đơn bán hàng, 5 vé, 6 phiếu xuất kho. Ký tự 2: C có mã, K không mã. Ký tự 5: T thường, **M máy tính tiền**. Ví dụ `1C26MYY`. Lọc mẫu hóa đơn máy tính tiền bằng ký tự thứ 5 = M. Ký hiệu đổi theo năm, MISA tự xử lý theo `InvDate`.
+- **Trạng thái gửi cơ quan thuế (hóa đơn có mã):** 0 chờ cấp mã, 1 gửi lỗi, 2 đã cấp mã, 3 từ chối cấp mã. Tra trạng thái: POST `/invoice/status` (`invoiceCalcu=true` cho máy tính tiền), nên hỏi lại sau 3–5 giây, tối đa 3 lần.
+- **Bắt buộc xử lý tuần tự theo từng ký hiệu:** gửi, nhận kết quả, lưu lại rồi mới gửi tiếp. Gặp `InvoiceDuplicated` hoặc `InvoiceNumberNotCotinuous` thì thử lại.
+- Thuế trên hóa đơn: `VATRate` -1 không chịu thuế, -3 không kê khai nộp thuế, 0/5/8/10. Các trường thuế chỉ bắt buộc với hóa đơn GTGT (suy ra: hóa đơn bán hàng của hộ kinh doanh có thể không cần tách thuế, **chưa xác nhận**).
+- Giới hạn: 30 hóa đơn mỗi lần (luồng đám mây), khuyến nghị 30 mỗi lô (luồng nháp), 400 dòng mỗi hóa đơn. Không thấy tài liệu nói về giới hạn số lần gọi, thời gian chờ, môi trường thử.
+
 ## 4. AMIS Kế toán DN (đã đọc, để sau)
 
 - Base `https://developer.misa.vn/apis`, header `ClientID`. Token: POST `/amiskt/v1/token` với `access_code` (kế toán khách tự tạo trong AMIS) và `org_company_code` (mình đặt), sống 12 giờ, gửi qua `X-MISA-AccessToken`.

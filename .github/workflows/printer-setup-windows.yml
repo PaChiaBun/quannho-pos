@@ -2,6 +2,11 @@ name: Printer Setup Windows Builder
 
 on:
   workflow_dispatch:
+  push:
+    branches: [feature/ai-bum-ui]
+    paths:
+      - 'tools/printer_setup/**'
+      - '.github/workflows/printer-setup-windows.yml'
 
 jobs:
   build-printer-setup:
