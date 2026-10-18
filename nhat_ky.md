@@ -3,7 +3,27 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
-## 2026-10-18 — KAY: hủy bàn "dở dang" làm mất bill (đã sửa code client, CHƯA build/commit, CHƯA đụng dữ liệu/migration)
+## 2026-10-18 — Mở két tiền KAY: máy in hệ thống Windows chưa từng gửi lệnh mở két → thêm đường mở két thô (CHƯA commit, CHƯA build Windows, chưa thử trên máy thật)
+
+- **Chẩn đoán (chỉ SELECT `app_settings` của KAY):** máy chính "Windows POS" (giữ vai trò máy chủ in): thu ngân = máy in hệ thống `IN BILL Ne`, `autoOpenDrawer=true`, `hasCashDrawer=false`; bếp nóng/bar cũng máy in hệ thống; có máy Sunmi in tích hợp 50mm. Két nối RJ11 của máy in bill thu ngân (Chủ Quán xác nhận). Code cũ chỉ gửi lệnh mở két khi máy in thu ngân là loại LAN có IP → Windows/Sunmi không bao giờ mở; cờ "Có két" ở Máy In & Luật In chỉ lưu, không được đọc.
+- **Đã sửa:** `ThermalPrinterService.openCashDrawerWindows(printerName)` gửi `ESC p 0/1 25 250` dạng RAW vào hàng đợi máy in hệ thống qua PowerShell + `winspool.drv` (không thêm thư viện; tên rỗng = máy in mặc định; chạy nền, lỗi thì chỉ ghi log). `printBill` gọi khi `autoOpenDrawer` bật và thu ngân là máy in hệ thống (Windows); LAN giữ như cũ; Sunmi in tích hợp không mở két (theo Chủ Quán: máy Sunmi không cần). Nút "Mở két tiền" ở Cấu Hình Trạm In trên Windows nay gửi lệnh thật và báo kết quả.
+- Kiểm: `test/core/cash_drawer_windows_test.dart` (mã hoá UTF-16LE, ngoài Windows trả false) + `comprehensive_fix_test` đạt; `flutter analyze` không lỗi mới. **Chưa kiểm:** chạy thật trên Windows (không có PowerShell trên máy Mac này) — cần build Windows và thử nút "Mở két tiền" + một lần thanh toán tại KAY.
+- Lưu ý: két mở theo máy thật sự in bill; nếu máy Sunmi chuyển bill sang máy chủ in Windows thì két mở ở máy Windows. Chưa làm cờ "Có két" có tác dụng (vẫn chỉ dùng công tắc "Tự động mở két").
+
+## 2026-10-18 — Gom "Thiết Kế Mẫu In" một chỗ + thêm thiết kế tem dán ly (Chủ Quán yêu cầu; CHƯA commit, CHƯA build/lên web, không đụng migration/dữ liệu)
+
+- **Một màn duy nhất** `PrintDesignScreen` (menu In Hoá Đơn → thẻ "Thiết Kế Mẫu In") có 4 tab: Hoá Đơn · Bếp Nóng · Bếp Bar · Tem Dán Ly. Thẻ "Thiết Kế Hoá Đơn / Bếp Nóng / Bếp Bar / Chọn Mẫu Dựng Sẵn" ở menu cũ đã bỏ.
+- **Mẫu dựng sẵn nằm trong từng tab** (chế độ "Mẫu dựng sẵn" cạnh "Cấu hình" và "Xem trước"): Hoá Đơn dùng mẫu hoá đơn; Bếp Nóng/Bếp Bar dùng mẫu phiếu bếp áp đúng trạm — không mất mẫu phiếu bếp khi bỏ màn Chọn Mẫu cũ. Áp mẫu xong tự về Cấu hình. Màn rộng: cấu hình trái, xem trước phải.
+- **Tem dán ly có thiết kế riêng** (`BarLabelTemplate`, `LabelDesigner`): khổ 40×30 / 50×30 / 60×40mm; bật-tắt số đơn, tên bàn, thứ tự ly (1/2), ghi chú, giờ, đường kẻ, in đậm tên; cỡ chữ tên/dòng phụ/ghi chú; xem trước đúng tỉ lệ mm. Lưu máy + `app_settings` khoá `qn_bar_label_template` (cùng cơ chế gắn nhãn quán như mẫu phiếu bếp). Mặc định = tem cũ (50×30, chữ 10/8/7) nên quán chưa chỉnh in y như trước.
+- `generateBarLabels(bill, template:)` và lệnh in tem (`StationPrinterDispatcher`) nay đọc mẫu tem + khổ giấy theo mẫu.
+- Dọn: `BillDesignerV2` / `KitchenTicketDesigner` thành phần thân nhúng (không còn Scaffold riêng); khung dùng chung `designer_shell.dart`, điều khiển dùng chung `designer_controls.dart`; `TemplateGalleryScreen` thành `BillPresetPicker` / `KitchenPresetPicker`.
+- Kiểm: `flutter analyze lib/modules/bill_printer` không lỗi mới; `test/core/comprehensive_fix_test.dart` 47/47 đạt (có ca `generateBarLabels` mặc định); thử widget tạm (đã xoá) mở đủ 4 tab + chế độ Mẫu dựng sẵn ở rộng 400 và 1000 không lỗi. CodeGraph sync xong (index mới); Graphify AST đã cập nhật.
+- **Đã up web `/pos/` để xem thử (13:50 giờ VN, Chủ Quán yêu cầu):** build release, backup `/var/www/quannho/backups/pos_backup_20261018_135046.tar.gz`, giải nén đè `/var/www/quannho/pos`; `/pos/` trả 200. Hoàn tác: giải nén lại file backup vào `/var/www/quannho`. Người đang mở web cần tải lại trang.
+- **Chỉnh theo góp ý khi xem web (cùng ngày):** chip "Cấu hình" đổi thành "Thiết kế"; "Xem Trước Nhanh" ở menu In Hoá Đơn giới hạn ngang 440px, cao 460/600 để nhìn vừa bill; màn **Máy In & Luật In** thêm khối **Tem dán ly** (chọn máy in tem hoặc "Không in tem" → tạo/xoá luật `label_general`; hiện khổ tem; nút "Thiết kế tem"). Đã up web lần 2 (backup mới nhất trong `/var/www/quannho/backups/`).
+- **Làm menu In Hoá Đơn bớt đơn điệu (Chủ Quán góp ý):** thẻ menu dùng nền chuyển sắc + chấm bi + vòng tròn mờ + biểu tượng lớn chìm; tiêu đề "Xem Trước Nhanh" có huy hiệu màu, khung xem trước viền cam. Đã up web lần 3.
+- Chưa kiểm: chưa in tem thật trên máy in tem; chưa xem bằng mắt trên app chạy thật; chưa có test riêng cho lưu/đọc `BarLabelTemplate`.
+
+## 2026-10-18 — KAY: hủy bàn "dở dang" làm mất bill + ghi log đầy đủ gom lô (đã commit `7de2a57`, build Windows 1.0.5+16 xong; CHƯA lên web, CHƯA đụng dữ liệu/migration)
 
 ### 🔍 Chẩn đoán (đọc production, chỉ SELECT)
 - Sáng 18/10: 98–100 đơn đều có lệnh in bill thành công (Start/Calling/Result true), tiền settlement = tiền đơn (20.426.600đ). Bill B1 11:57 (56k) in bình thường. App không có dấu hiệu mất bill khi in; `Result: true` chỉ nghĩa là đã giao lệnh cho máy in/spooler.
@@ -15,7 +35,7 @@
 - `runCancelSteps`/`CancelStep`: audit → món `huy` → hủy phiếu bếp → void log (phụ) → **đóng phiên cuối cùng**. Bước bắt buộc lỗi thì KHÔNG đóng phiên (bàn vẫn mở để thử lại), `AppLogger.error` lên `app_logs`, hiện thông báo đỏ nêu tên bước, không đóng bảng bàn. `logVoidEvent` trả false cũng coi là lỗi.
 - Test `test/screens/cancel_session_steps_test.dart` (4 ca: thứ tự, lỗi chặn đóng phiên, bước phụ, lỗi đóng phiên) + 3 ca reconcile: toàn bộ `flutter test test/screens` 55/55 đạt; `dart analyze` không lỗi.
 
-### 🧾 Ghi log đầy đủ + gom lô (đã code, CHƯA build/commit, migration CHƯA áp)
+### 🧾 Ghi log đầy đủ + gom lô (đã code + commit, migration CHƯA áp)
 - Lý do: log màn Bàn chỉ ghi lỗi; không tra được ai hủy B1, tạm tính in bàn/món nào. Chủ Quán chọn gom log theo phiên hành động rồi gửi một lần.
 - `AppLogger` (lib/core/utils/app_logger.dart): xếp hàng + ghi tạm ra đĩa (`app_logs_pending.jsonl`), gửi **một request nhiều dòng** khi đủ **60 dòng** hoặc **180 giây** kể từ dòng đầu, hoặc `flushNow()` (đăng xuất, app xuống nền/thoát), hoặc sự kiện quan trọng/lỗi (gửi ngay). Mỗi dòng mang sẵn giờ thật, quán, nhân viên, thiết bị. Lỗi mạng giữ hàng chờ, thử lại; dòng >24 giờ bị bỏ; tối đa 2.000 dòng. Gửi vào chính bảng `app_logs` (không cần migration để chạy).
 - `AppLogger.action(...)`: chuẩn trường (act, table, session, order, lines, total, approver, reason, result, staff, device), tag `action`, không ghi PIN/mật khẩu. Đã gắn: mở bàn, thêm món, xóa món chưa gửi bếp, in tạm tính (kèm tên món), mở thanh toán, duyệt quản lý (tự duyệt/PIN: tên người duyệt, kết quả), hủy bàn (người duyệt + lý do + món), thanh toán xong, audit hủy.
@@ -24,12 +44,29 @@
 - File SQL (chưa áp, chưa chạy thử): `supabase/migrations/20261018_app_logs_retention_v1.sql` (+ rollback): chỉ mục `(store_id, tag, created_at)` và hàm `qn_app_logs_purge(30, 365)` (log kỹ thuật 30 ngày; action/checkout/order/auth/ban_items 365 ngày). Cần gắn timer 00:40 trên VPS.
 - Chưa làm/chưa kiểm: chưa thử trên máy thật; chưa gắn log cho in lại bill, chuyển bàn (log repository cũ chưa có tên bàn), gửi bếp (đã có log sẵn), chấm công/ra ca (vẫn ghi trực tiếp); app đóng đột ngột chỉ mất log chưa kịp ghi đĩa.
 
-### ⚠️ Còn lại
-- Chưa build/commit/phát hành; máy KAY chưa có bản sửa.
-- Chưa dọn dữ liệu: 35 phiếu bếp mồ côi, 12 phiên hủy dở (cần chủ quán duyệt). Khuyến nghị về sau: RPC `cancel_ban_session_v5` làm trọn trong một giao dịch (cần migration, chưa làm).
-- Chưa xác nhận bill "~10h" mà chủ quán nói có đúng phiên B1 bị hủy 10:14 không.
+### 🔎 Kết quả điều tra thêm (chỉ SELECT trên production)
+- **Ai hủy B1 lúc 10:14:46: KHÔNG xác định được.** Không có `void_audit_logs`/`ban_session_void_logs`, không dòng `app_logs` nào cho sự kiện hủy, `anon_write_audit` trống (phiên đăng nhập hợp lệ không bị ghi). Người mở phiên là Lam Phương (waiter, máy `e949`) — không phải người hủy. Hủy cần quản lý: `_verifyManagerApproval` trả luôn tài khoản nếu người đăng nhập là quản lý, nếu không thì hỏi PIN quản lý; tên người duyệt chỉ nằm trong audit (không chạy được do lỗi trên). Trong số 7 tài khoản đang đăng nhập quanh giờ đó chỉ Bùi Thanh Lâm có vai trò manager — chỉ là gợi ý, chưa có bằng chứng.
+- **Đã gửi bếp lúc hủy: CÓ.** Gửi lúc 09:52:08, in phiếu bếp 09:52:10 (`Result: true`); lúc hủy món vẫn `da_gui`, phiếu bếp vẫn `cho` (không ai nhận/hủy).
+- **Thu Chi (`finance_records`)**: không có khoản 59.000đ hay 66.000đ hôm nay, không đơn nào tổng 59k/66k → hai phiên hủy dở (B1 59k lúc 10:14, 66k lúc 08:08) không được tính tiền ở đâu. Giữa 10:02:57 và 10:16:02 không có khoản thanh toán nào.
+- **Phiếu tạm tính 10:14:02 (thu ngân Phan Thị Quỳnh Như trên máy `24496215`) không biết của bàn nào**: log không ghi bàn/món; nginx quanh giờ đó chỉ thấy tải mẫu bill + tên bàn, mọi máy chung một IP công cộng. Lúc đó có 24 bàn mở.
+- **Quyền**: Như là `cashier` (nhóm "Thu ngân" có `pos`, `bill_printer`, `pos.checkout`) → app cho phép thanh toán + in tạm tính (nút in tạm tính không kiểm quyền). Tên trong log = tài khoản đang đăng nhập trên máy, KHÔNG chắc là người bấm; máy Windows dùng chung nên mọi thao tác trên máy hiện tên Như.
+- **In bill sáng 18/10**: không thấy lỗi phía app; `Result: true` chỉ là đã giao lệnh cho máy in/spooler, không bảo đảm giấy ra. Nếu giấy không ra thì nghi máy in `IN BILL Ne`/driver. Bill B1 11:57 (56k) log bình thường (dòng Start/Result bị đảo thứ tự giây do log lên server không đúng thứ tự — đừng ghép cặp bằng thứ tự).
+- **Dữ liệu log**: `app_logs` 75 MB/205k dòng, ~0,3–0,7 MB/ngày toàn hệ thống, KHÔNG có lịch xóa; ghi đủ hành động chỉ thêm ~0,2 MB/ngày/quán. Vấn đề chính là số request (mỗi dòng 1 POST) nên gom lô.
+- Truy vấn nặng của tôi (đối chiếu giờ thanh toán với giờ in) chạy chậm trên production; đã được Chủ Quán cho phép hủy (pid 573029) và tự dừng. Bài học: dùng `statement_timeout` và CTE `materialized` khi truy vấn `app_logs`.
 
-## 2026-10-17 — KAY bàn B2: tạm tính 113k nhưng thanh toán 219k (đã sửa code, CHƯA build/phát hành)
+### 📦 Build Windows 1.0.5+16 (18/10)
+- Commit `7de2a57` (nhánh `feature/ai-bum-ui`, đã push) gồm: hủy bàn an toàn + log hành động gom lô + bỏ log trùng + 2 file SQL retention (chưa áp) + test + nhật ký. Không đưa vào `ios/Runner.xcodeproj` và `.docs/*` đang sửa dở.
+- Workflow `Windows Release Builder` run 39103138353: thành công. Tải về `Quan Nho/win_build_105_16/` (artifact ~97 MB, tải chậm ~80 KB/giây). Đã tải xong 13:39: `QuanNhoPOS-Setup.exe` 60.894.465 byte, SHA-256 `faafefba…8e516` (đầy đủ: `faafefbae2acbc47ce981cfae472b114ee3de7ada7f313914d8280513d58e516`); MSIX ghi Version 1.0.5.0. Không đối chiếu được mã băm riêng file exe với GitHub (chỉ có mã băm gói nén); bộ cài nén nên không dò được chuỗi mã mới bên trong. **CHƯA đưa lên web, CHƯA chèn `app_versions`, CHƯA cài lên máy KAY.**
+- Web hiện vẫn là Windows build 15 (sửa tạm tính lệch món, đưa lên 17/10 ~19:08); build 16 mới thêm sửa hủy bàn + log.
+
+### ⚠️ Còn lại
+- Máy KAY chưa có bản sửa hủy bàn/log (cần đưa build 16 lên web rồi cài; vẫn chưa thử trên Windows thật).
+- Chưa dọn dữ liệu: 35 phiếu bếp mồ côi, 12 phiên hủy dở (cần chủ quán duyệt). Khuyến nghị về sau: RPC `cancel_ban_session_v5` làm trọn trong một giao dịch (cần migration, chưa làm).
+- Chưa xác nhận bill "~10h" mà chủ quán nói có đúng phiên B1 bị hủy 10:14 không; cần hỏi nhân viên (ai hủy, khách có trả tiền không) hoặc xem tờ tạm tính in lúc 10:14.
+- Quyết định chờ Chủ Quán: có hạn chế quyền thu ngân (thanh toán/in tạm tính) không; đưa build 16 lên web; áp migration retention + gắn timer 00:40 trên VPS; dọn 35 phiếu bếp mồ côi/12 phiên hủy dở.
+- Chưa gắn log cho in lại bill, chuyển bàn (tên bàn), chấm công/ra ca đi qua hàng chờ gom lô.
+
+## 2026-10-17 — KAY bàn B2: tạm tính 113k nhưng thanh toán 219k (đã sửa code; build Windows 1.0.5+15 đã lên web 17/10)
 
 ### 🔍 Chẩn đoán bằng log (chỉ đọc production)
 - Phiên B2 (`623c3c50…`) có 7 món (219k), nhưng bill tạm tính 17:48 chỉ có 4 món đầu (113k = 24+39+26+24). Thanh toán 17:49 do máy chủ tính từ DB nên ra 219k. Nhân viên xác nhận. Máy chủ in Windows nhường đúng (`receipt_printed=true`, 1 đơn, 1 settlement).

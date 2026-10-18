@@ -802,8 +802,21 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
                       duration: Duration(seconds: 1),
                     ));
                   }
+                } else if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+                  // Máy in hệ thống Windows: gửi lệnh mở két thô qua hàng đợi in
+                  final ok = await ThermalPrinterService.openCashDrawerWindows(
+                      printerName: config.name);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(ok
+                          ? 'Đã gửi lệnh mở két tiền.'
+                          : 'Không gửi được lệnh mở két. Kiểm tra tên máy in và dây két (cổng RJ11 của máy in bill).'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 3),
+                    ));
+                  }
                 } else {
-                  // Đối với máy in hệ thống (local USB)
+                  // Máy in hệ thống trên nền tảng khác
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THERMAL PRINTER SERVICE — Kết nối TCP/IP đến máy in nhiệt Wi-Fi
@@ -228,6 +229,101 @@ class ThermalPrinterService {
   // ──────────────────────────────────────────────────────────────────────────
   // OPEN CASH DRAWER — Mở két tiền kết nối với máy in bill
   // ──────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────────────
+  // MỞ KÉT QUA MÁY IN HỆ THỐNG WINDOWS — gửi lệnh ESC/POS thô (RAW) vào hàng đợi in
+  // Két nối cổng RJ11 của máy in bill: máy in nhận lệnh này sẽ phát xung mở két.
+  // Không cần thư viện native: gọi winspool.drv bằng PowerShell (chạy nền, không chặn in).
+  // ──────────────────────────────────────────────────────────────────────────
+  static const String _kRawPrintScript = r'''
+$ErrorActionPreference = 'Stop'
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public class QnRawPrn {
+  [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+  public class DOCINFOW {
+    [MarshalAs(UnmanagedType.LPWStr)] public string pDocName;
+    [MarshalAs(UnmanagedType.LPWStr)] public string pOutputFile;
+    [MarshalAs(UnmanagedType.LPWStr)] public string pDataType;
+  }
+  [DllImport("winspool.drv", EntryPoint = "OpenPrinterW", SetLastError = true, CharSet = CharSet.Unicode)]
+  public static extern bool OpenPrinter(string n, out IntPtr h, IntPtr d);
+  [DllImport("winspool.drv", SetLastError = true)]
+  public static extern bool ClosePrinter(IntPtr h);
+  [DllImport("winspool.drv", EntryPoint = "StartDocPrinterW", SetLastError = true, CharSet = CharSet.Unicode)]
+  public static extern bool StartDocPrinter(IntPtr h, int level, [In] DOCINFOW di);
+  [DllImport("winspool.drv", SetLastError = true)]
+  public static extern bool EndDocPrinter(IntPtr h);
+  [DllImport("winspool.drv", SetLastError = true)]
+  public static extern bool StartPagePrinter(IntPtr h);
+  [DllImport("winspool.drv", SetLastError = true)]
+  public static extern bool EndPagePrinter(IntPtr h);
+  [DllImport("winspool.drv", SetLastError = true)]
+  public static extern bool WritePrinter(IntPtr h, byte[] b, int c, out int w);
+  public static bool Send(string name, byte[] bytes) {
+    IntPtr h;
+    if (!OpenPrinter(name, out h, IntPtr.Zero)) return false;
+    var di = new DOCINFOW();
+    di.pDocName = "QuanNho drawer";
+    di.pDataType = "RAW";
+    bool ok = false;
+    if (StartDocPrinter(h, 1, di)) {
+      if (StartPagePrinter(h)) {
+        int w;
+        ok = WritePrinter(h, bytes, bytes.Length, out w);
+        EndPagePrinter(h);
+      }
+      EndDocPrinter(h);
+    }
+    ClosePrinter(h);
+    return ok;
+  }
+}
+"@
+$name = $env:QN_PRN
+if ([string]::IsNullOrWhiteSpace($name)) {
+  $name = (Get-CimInstance Win32_Printer | Where-Object { $_.Default } | Select-Object -First 1).Name
+}
+$bytes = [byte[]](0x1B,0x70,0x00,0x19,0xFA,0x1B,0x70,0x01,0x19,0xFA)
+if ([QnRawPrn]::Send($name, $bytes)) { Write-Output "QN_OK $name" } else { Write-Output "QN_FAIL $name" }
+''';
+
+  /// PowerShell -EncodedCommand cần base64 của chuỗi UTF-16LE.
+  static String encodePowerShell(String script) {
+    final bytes = <int>[];
+    for (final u in script.codeUnits) {
+      bytes..add(u & 0xFF)..add(u >> 8);
+    }
+    return base64.encode(bytes);
+  }
+
+  /// Gửi lệnh mở két qua máy in hệ thống Windows. [printerName] rỗng = máy in mặc định.
+  /// Trả true nếu spooler nhận lệnh. Không ném lỗi; chỉ chạy trên Windows.
+  static Future<bool> openCashDrawerWindows({String printerName = ''}) async {
+    if (kIsWeb || !Platform.isWindows) return false;
+    try {
+      final r = await Process.run(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-NonInteractive',
+          '-ExecutionPolicy',
+          'Bypass',
+          '-EncodedCommand',
+          encodePowerShell(_kRawPrintScript),
+        ],
+        environment: {'QN_PRN': printerName},
+      ).timeout(const Duration(seconds: 20));
+      final out = '${r.stdout}'.trim();
+      final ok = out.contains('QN_OK');
+      print('[openCashDrawerWindows] $out ${ok ? '' : r.stderr}');
+      return ok;
+    } catch (e) {
+      print('[openCashDrawerWindows Error] $e');
+      return false;
+    }
+  }
+
   static Future<void> openCashDrawer({
     required String printerIp,
     int port = _defaultPort,

@@ -9,7 +9,9 @@ import '../models/bill_template_history.dart';
 import '../providers/bill_template_provider.dart';
 import '../widgets/bill_preview_widget.dart';
 import 'bill_history_sheet.dart';
+import '../widgets/designer_shell.dart';
 import 'block_config_sheet.dart';
+import 'template_gallery_screen.dart';
 
 const _kIndigo = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
@@ -60,28 +62,17 @@ String _blockLabel(BillBlockType type) {
   }
 }
 
+/// Thiết kế hoá đơn thu ngân: khối hoá đơn, mẫu dựng sẵn, xem trước.
+/// Chỉ là phần thân — được nhúng trong màn "Thiết Kế Mẫu In".
 class BillDesignerV2 extends ConsumerStatefulWidget {
   const BillDesignerV2({super.key});
   @override
   ConsumerState<BillDesignerV2> createState() => _BillDesignerV2State();
 }
 
-class _BillDesignerV2State extends ConsumerState<BillDesignerV2>
-    with SingleTickerProviderStateMixin {
-  late TabController _tab;
+class _BillDesignerV2State extends ConsumerState<BillDesignerV2> {
+  final _shellKey = GlobalKey<DesignerShellState>();
   bool _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _tab = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tab.dispose();
-    super.dispose();
-  }
 
   Future<void> _save() async {
     setState(() => _saving = true);
@@ -91,77 +82,57 @@ class _BillDesignerV2State extends ConsumerState<BillDesignerV2>
       await BillTemplateHistoryService.push(current);
     }
     await ref.read(billTemplateProvider.notifier).save();
+    if (!mounted) return;
     setState(() => _saving = false);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('✅ Đã lưu thiết kế hoá đơn',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-        backgroundColor: _kIndigo,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ));
-    }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('✅ Đã lưu thiết kế hoá đơn',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+      backgroundColor: _kIndigo,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     final asyncTpl = ref.watch(billTemplateProvider);
-    final isWide = MediaQuery.of(context).size.width > 700;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F8),
-      appBar: AppBar(
-        backgroundColor: _kIndigo,
-        foregroundColor: Colors.white,
-        title: const Text('Thiết Kế Hoá Đơn', style: TextStyle(fontWeight: FontWeight.w700)),
+    return asyncTpl.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Lỗi: $e')),
+      data: (tpl) => DesignerShell(
+        key: _shellKey,
+        accent: _kIndigo,
+        config: _BlocksPanel(tpl: tpl),
+        presets: BillPresetPicker(
+          // Áp dụng xong → về Cấu hình để thấy ngay các khối của mẫu mới.
+          onApplied: () => _shellKey.currentState?.showConfig(),
+        ),
+        preview: BillPreviewWidget(tpl: tpl),
         actions: [
-          // Nút lịch sử
           IconButton(
-            icon: const Icon(Icons.history_rounded, color: Colors.white, size: 22),
+            icon: const Icon(Icons.history_rounded, color: _kIndigo, size: 22),
             tooltip: 'Lịch sử thiết kế',
             onPressed: () => showBillHistorySheet(context, ref),
           ),
           if (_saving)
             const Padding(
-              padding: EdgeInsets.all(14),
-              child: SizedBox(width: 18, height: 18,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+              padding: EdgeInsets.all(12),
+              child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(color: _kIndigo, strokeWidth: 2)),
             )
           else
             TextButton.icon(
-              icon: const Icon(Icons.save_rounded, color: Colors.white, size: 18),
+              icon: const Icon(Icons.save_rounded, color: _kIndigo, size: 18),
               label: Text('Lưu',
                   style: GoogleFonts.outfit(
-                      color: Colors.white, fontWeight: FontWeight.w700)),
+                      color: _kIndigo, fontWeight: FontWeight.w700)),
               onPressed: _save,
             ),
         ],
-        bottom: isWide ? null : TabBar(
-          controller: _tab,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white54,
-          indicatorColor: _kOrange,
-          labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 13),
-          tabs: const [
-            Tab(icon: Icon(Icons.tune_rounded, size: 18), text: 'Cấu hình'),
-            Tab(icon: Icon(Icons.preview_rounded, size: 18), text: 'Xem trước'),
-          ],
-        ),
-      ),
-      body: asyncTpl.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Lỗi: $e')),
-        data: (tpl) => isWide
-            ? Row(children: [
-                SizedBox(width: 420, child: _BlocksPanel(tpl: tpl)),
-                const VerticalDivider(width: 1),
-                Expanded(child: BillPreviewWidget(tpl: tpl)),
-              ])
-            : TabBarView(controller: _tab, children: [
-                _BlocksPanel(tpl: tpl),
-                BillPreviewWidget(tpl: tpl),
-              ]),
       ),
     );
   }

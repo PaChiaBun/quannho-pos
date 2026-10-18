@@ -13,6 +13,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/bill_block.dart';
 import '../models/bill_block_template.dart';
+import '../providers/bar_label_template_provider.dart';
 import '../providers/kitchen_ticket_template_provider.dart';
 import '../providers/printer_settings_provider.dart';
 import '../../../core/services/thermal_printer_service.dart';
@@ -1052,10 +1053,12 @@ class BillPdfGenerator {
     BillData bill, {
     pw.Font? customFont,
     pw.Font? customFontBold,
+    BarLabelTemplate template = const BarLabelTemplate(),
   }) async {
     final List<Uint8List> results = [];
     final font = customFont ?? await fontLoader.loadRegular();
     final fontBold = customFontBold ?? await fontLoader.loadBold();
+    final t = template;
 
     // Filter drinks (stationCode == 'bep_bar' || stationCode == 'bar')
     final barItems = bill.items
@@ -1063,48 +1066,61 @@ class BillPdfGenerator {
         .toList();
     if (barItems.isEmpty) return [];
 
+    final headerParts = <String>[
+      if (t.showOrderNumber) '#${bill.orderNumber}',
+      if (t.showTableName && bill.tableName != null) bill.tableName!,
+    ];
+    final headerText = headerParts.join(' - ');
+
     for (final item in barItems) {
       // In từng nhãn dán cho mỗi số lượng ly
       for (int q = 1; q <= item.qty; q++) {
         final pdf = pw.Document();
         pdf.addPage(
           pw.Page(
-            pageFormat: const PdfPageFormat(
-              50 * PdfPageFormat.mm,
-              30 * PdfPageFormat.mm,
+            pageFormat: PdfPageFormat(
+              t.widthMm * PdfPageFormat.mm,
+              t.heightMm * PdfPageFormat.mm,
               marginAll: 2 * PdfPageFormat.mm,
             ),
             build: (ctx) => pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.stretch,
               children: [
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text(
-                      '#${bill.orderNumber}${bill.tableName != null ? ' - ${bill.tableName}' : ''}',
-                      style: pw.TextStyle(font: fontBold, fontSize: 8),
-                    ),
-                    pw.Text(
-                      '$q/${item.qty}',
-                      style: pw.TextStyle(font: fontBold, fontSize: 8),
-                    ),
-                  ],
-                ),
-                pw.Divider(thickness: 0.5, height: 4),
+                if (headerText.isNotEmpty || t.showQtyIndex)
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        headerText,
+                        style: pw.TextStyle(
+                            font: fontBold, fontSize: t.infoFontSize.toDouble()),
+                      ),
+                      if (t.showQtyIndex)
+                        pw.Text(
+                          '$q/${item.qty}',
+                          style: pw.TextStyle(
+                              font: fontBold,
+                              fontSize: t.infoFontSize.toDouble()),
+                        ),
+                    ],
+                  ),
+                if (t.showDivider) pw.Divider(thickness: 0.5, height: 4),
                 pw.SizedBox(height: 1),
                 pw.Text(
                   item.name,
-                  style: pw.TextStyle(font: fontBold, fontSize: 10),
+                  style: pw.TextStyle(
+                      font: t.boldName ? fontBold : font,
+                      fontSize: t.nameFontSize.toDouble()),
                   maxLines: 1,
                   overflow: pw.TextOverflow.clip,
                 ),
-                if (item.note != null && item.note!.isNotEmpty) ...[
+                if (t.showNote && item.note != null && item.note!.isNotEmpty) ...[
                   pw.SizedBox(height: 1),
                   pw.Text(
                     item.note!,
                     style: pw.TextStyle(
                       font: font,
-                      fontSize: 7,
+                      fontSize: t.noteFontSize.toDouble(),
                       fontStyle: pw.FontStyle.italic,
                       color: PdfColors.black,
                     ),
@@ -1113,17 +1129,18 @@ class BillPdfGenerator {
                   ),
                 ],
                 pw.Spacer(),
-                pw.Align(
-                  alignment: pw.Alignment.bottomRight,
-                  child: pw.Text(
-                    _fmtDate(bill.createdAt).split(' ').last, // chỉ giờ:phút
-                    style: pw.TextStyle(
-                      font: font,
-                      fontSize: 6,
-                      color: PdfColors.black,
+                if (t.showTime)
+                  pw.Align(
+                    alignment: pw.Alignment.bottomRight,
+                    child: pw.Text(
+                      _fmtDate(bill.createdAt).split(' ').last, // chỉ giờ:phút
+                      style: pw.TextStyle(
+                        font: font,
+                        fontSize: 6,
+                        color: PdfColors.black,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -1422,12 +1439,19 @@ class StationPrinterDispatcher {
             marginBottom: 5 * PdfPageFormat.mm,
           );
 
-          if (settings.autoOpenDrawer &&
-              settings.cashier.type == 'network' &&
-              settings.cashier.name.isNotEmpty) {
-            ThermalPrinterService.openCashDrawer(
-              printerIp: settings.cashier.name,
-            ).catchError((_) => null);
+          // Mở két theo máy in thật đang in bill. Máy in tích hợp Sunmi không có két nên bỏ qua.
+          if (settings.autoOpenDrawer) {
+            if (settings.cashier.type == 'network' &&
+                settings.cashier.name.isNotEmpty) {
+              ThermalPrinterService.openCashDrawer(
+                printerIp: settings.cashier.name,
+              ).catchError((_) => null);
+            } else if (settings.cashier.type == 'system' && !kIsWeb) {
+              // Windows: gửi lệnh thô vào máy in hệ thống (két nối cổng RJ11 của máy in bill).
+              ThermalPrinterService.openCashDrawerWindows(
+                printerName: settings.cashier.name,
+              ).catchError((_) => false);
+            }
           }
           final printOk = await transport.printPdf(
             bytes,
@@ -1635,7 +1659,10 @@ class StationPrinterDispatcher {
         );
       } else {
         try {
-          final labelBytesList = await BillPdfGenerator.generateBarLabels(bill);
+          final labelTpl = await BarLabelTemplate.load();
+          final labelBytesList = await BillPdfGenerator.generateBarLabels(
+              bill,
+              template: labelTpl);
           if (labelBytesList.isEmpty) {
             final barItems = bill.items
                 .where((i) => normalizeStationCode(i.stationCode) == 'bar')
@@ -1656,9 +1683,9 @@ class StationPrinterDispatcher {
                 labelBytesList[i],
                 settings.barLabel,
                 'tem_bar_${bill.orderNumber}_$i',
-                format: const PdfPageFormat(
-                  50 * PdfPageFormat.mm,
-                  30 * PdfPageFormat.mm,
+                format: PdfPageFormat(
+                  labelTpl.widthMm * PdfPageFormat.mm,
+                  labelTpl.heightMm * PdfPageFormat.mm,
                   marginLeft: 2 * PdfPageFormat.mm,
                   marginRight: 2 * PdfPageFormat.mm,
                   marginTop: 2 * PdfPageFormat.mm,

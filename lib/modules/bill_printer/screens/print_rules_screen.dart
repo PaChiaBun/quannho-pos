@@ -8,10 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
+import '../providers/bar_label_template_provider.dart';
 import '../providers/printer_settings_provider.dart';
 import '../routing/legacy_print_setup.dart';
 import '../routing/print_setup.dart';
 import '../drivers/sunmi_builtin_driver.dart';
+import 'print_design_screen.dart';
 
 const _kIndigo = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
@@ -275,6 +277,8 @@ class _PrintersTab extends StatelessWidget {
             onChanged: onChanged,
             seedFromLegacy: seedFromLegacy,
           ),
+          const SizedBox(height: 16),
+          _LabelSection(setup: setup, onChanged: onChanged),
           const SizedBox(height: 16),
           if (setup.printers.isEmpty)
             const _EmptyHint(
@@ -1201,4 +1205,107 @@ class _EmptyHint extends StatelessWidget {
           Text(text, textAlign: TextAlign.center, style: GoogleFonts.outfit(color: Colors.black54)),
         ]),
       );
+}
+
+
+// ── Tem dán ly: chọn máy in tem ────────────────────────────────────────────────
+const _kLabelRuleId = 'label_general';
+
+class _LabelSection extends ConsumerWidget {
+  final PrintSetup setup;
+  final ValueChanged<PrintSetup> onChanged;
+  const _LabelSection({required this.setup, required this.onChanged});
+
+  /// Luật tem chung (không điều kiện) đang bật.
+  PrintRule? get _generalRule {
+    for (final r in setup.rules) {
+      if (r.jobType == PrintJobType.label &&
+          r.enabled &&
+          r.serviceTypes.isEmpty &&
+          r.zoneIds.isEmpty &&
+          r.sourceDeviceIds.isEmpty) {
+        return r;
+      }
+    }
+    return null;
+  }
+
+  void _choose(String? printerId) {
+    final rules = setup.rules
+        .where((r) => !(r.jobType == PrintJobType.label &&
+            r.serviceTypes.isEmpty &&
+            r.zoneIds.isEmpty &&
+            r.sourceDeviceIds.isEmpty))
+        .toList();
+    if (printerId != null && printerId.isNotEmpty) {
+      rules.add(PrintRule(
+        id: _kLabelRuleId,
+        name: 'Tem dán ly',
+        jobType: PrintJobType.label,
+        targets: [PrintTarget(printerId: printerId)],
+      ));
+    }
+    onChanged(PrintSetup(printers: setup.printers, rules: rules));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tpl = ref.watch(barLabelTemplateProvider);
+    final rule = _generalRule;
+    final current = rule == null || rule.targets.isEmpty
+        ? ''
+        : rule.targets.first.printerId;
+    final enabledPrinters = setup.printers.where((p) => p.enabled).toList();
+    final value = enabledPrinters.any((p) => p.id == current) ? current : '';
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.sell_rounded, color: _kIndigo, size: 20),
+            const SizedBox(width: 8),
+            Text('Tem dán ly',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16)),
+          ]),
+          const SizedBox(height: 4),
+          Text(
+            'Mỗi ly in một tem riêng. Khổ tem hiện tại: ${tpl.widthMm.round()}×${tpl.heightMm.round()}mm '
+            '(đổi ở Thiết Kế Mẫu In → Tem Dán Ly). Khi thêm máy in tem, nhớ chọn đúng khổ giấy decal.',
+            style: GoogleFonts.outfit(fontSize: 12.5, color: Colors.grey.shade700),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: value,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: 'Máy in tem dán ly'),
+            items: [
+              const DropdownMenuItem<String>(value: '', child: Text('Không in tem')),
+              for (final p in enabledPrinters)
+                DropdownMenuItem<String>(value: p.id, child: Text(p.name)),
+            ],
+            onChanged: setup.printers.isEmpty ? null : _choose,
+          ),
+          if (setup.printers.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text('Hãy thêm máy in trước (nút "Thêm máy in"), rồi chọn máy in tem ở đây.',
+                  style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFFB45309))),
+            ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              icon: const Icon(Icons.design_services_rounded, size: 18),
+              label: const Text('Thiết kế tem'),
+              onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const PrintDesignScreen(initialTab: 3))),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
 }
