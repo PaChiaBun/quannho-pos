@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qn_printer_setup/app_log.dart';
+import 'package:qn_printer_setup/auto_setup.dart';
 import 'package:qn_printer_setup/printer_service.dart';
 import 'package:qn_printer_setup/store_settings.dart';
 import 'package:qn_printer_setup/ps_runner.dart';
@@ -59,5 +60,46 @@ void main() {
     final long = AppLog.format('LỖI', 'x' * 9000);
     expect(long.length, lessThan(4200));
     expect(long, contains('cắt'));
+  });
+
+  group('assignRoles (cài một lần bấm)', () {
+    DetectedPrinter usb(String port) => DetectedPrinter(
+        kind: DetectedKind.usb, title: 't', detail: 'd', usbPort: port);
+    DetectedPrinter lan(String ip) =>
+        DetectedPrinter(kind: DetectedKind.lan, title: 't', detail: 'd', ip: ip);
+
+    test('một máy duy nhất = Thu ngân', () {
+      final r = assignRoles([lan('192.168.1.240')], const []);
+      expect(r.single.role, PrinterRole.thuNgan);
+    });
+
+    test('USB trước rồi LAN theo IP: Thu ngân, Bếp, Bar', () {
+      final r = assignRoles(
+          [lan('192.168.1.242'), usb('USB001'), lan('192.168.1.9')], const []);
+      expect(r.map((a) => a.role), [PrinterRole.thuNgan, PrinterRole.bep, PrinterRole.bar]);
+      expect(r[0].device.usbPort, 'USB001');
+      expect(r[1].device.ip, '192.168.1.9'); // IP nhỏ hơn (so số, không so chuỗi)
+    });
+
+    test('chạy lại giữ nguyên vai trò đã có trên cùng cổng', () {
+      final existing = [const InstalledQueue('QN-KAY-Bar', 'd', 'IP_192.168.1.9', 'QN;paper=58')];
+      final r = assignRoles([usb('USB001'), lan('192.168.1.9')], existing);
+      final lanA = r.firstWhere((a) => a.device.ip == '192.168.1.9');
+      expect(lanA.role, PrinterRole.bar);
+      expect(lanA.paperMm, 58);
+      expect(r.firstWhere((a) => a.device.usbPort == 'USB001').role, PrinterRole.thuNgan);
+    });
+
+    test('nhiều máy hơn vai trò: bỏ máy dư', () {
+      final r = assignRoles([for (var i = 1; i <= 6; i++) lan('10.0.0.$i')], const []);
+      expect(r.length, 4);
+    });
+
+    test('đổi vai trò sang vai trò đang có máy khác = hoán đổi', () {
+      final r = assignRoles([usb('USB001'), lan('192.168.1.5')], const []);
+      changeRole(r, r[1], PrinterRole.thuNgan);
+      expect(r.firstWhere((a) => a.device.ip == '192.168.1.5').role, PrinterRole.thuNgan);
+      expect(r.firstWhere((a) => a.device.usbPort == 'USB001').role, PrinterRole.bep);
+    });
   });
 }

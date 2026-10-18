@@ -20,6 +20,14 @@ enum PrinterRole {
   final String label;
   const PrinterRole(this.code, this.label);
 
+  /// Tên ngắn để hiện trong tiến trình.
+  String get shortLabel => switch (this) {
+        PrinterRole.thuNgan => 'thu ngân',
+        PrinterRole.bep => 'bếp nóng',
+        PrinterRole.bar => 'bếp bar',
+        PrinterRole.tem => 'tem dán ly',
+      };
+
   /// Tên hàng đợi máy in kèm tên quán, ví dụ QN-KAY-Rach-Gia-ThuNgan.
   String queueName(String storeName) => queueNameFor(storeName, code);
 }
@@ -45,7 +53,11 @@ class InstalledQueue {
   final String name;
   final String driver;
   final String port;
-  const InstalledQueue(this.name, this.driver, this.port);
+  final String comment; // "QN;paper=80" do công cụ ghi để POS biết khổ giấy
+  const InstalledQueue(this.name, this.driver, this.port, [this.comment = '']);
+
+  /// Khổ giấy ghi trong ghi chú của máy in (mặc định 80mm).
+  int get paperMm => RegExp(r'paper=(\d+)').firstMatch(comment)?.group(1) == '58' ? 58 : 80;
   bool get isQn => name.startsWith('QN-');
 
   /// Vai trò suy ra từ hậu tố tên (…-ThuNgan, …-Bep…), null nếu không khớp.
@@ -102,11 +114,11 @@ class PrinterService {
   // ── Phát hiện ───────────────────────────────────────────────────────────────
   static Future<List<InstalledQueue>> listQueues() async {
     final rows = await PsRunner.runJsonList(
-        r'Get-Printer | Select-Object Name,DriverName,PortName | ConvertTo-Json -Compress',
+        r'Get-Printer | Select-Object Name,DriverName,PortName,Comment | ConvertTo-Json -Compress',
         label: 'liệt kê máy in Windows');
     return [
       for (final r in rows)
-        InstalledQueue('${r['Name']}', '${r['DriverName']}', '${r['PortName']}')
+        InstalledQueue('${r['Name']}', '${r['DriverName']}', '${r['PortName']}', '${r['Comment'] ?? ''}')
     ];
   }
 
@@ -127,6 +139,13 @@ class PrinterService {
       }
     }
     AppLog.info('USB: ${ports.length} cổng, thiết bị máy in: ${names.isEmpty ? '(không)' : names.join('; ')}');
+    // Windows giữ lại cổng USB của máy in từng cắm (kể cả đã rút). Nếu số cổng nhiều hơn số máy in
+    // đang cắm thật thì lấy các cổng số lớn nhất (cổng mới nhất) để khỏi tạo máy in "ma".
+    ports.sort((a, b) => '${a['Name']}'.compareTo('${b['Name']}'));
+    if (names.isNotEmpty && ports.length > names.length) {
+      AppLog.info('USB: ${ports.length} cổng nhưng chỉ ${names.length} máy in đang cắm — chỉ dùng ${names.length} cổng mới nhất.');
+      ports.removeRange(0, ports.length - names.length);
+    }
     final result = <DetectedPrinter>[];
     for (var i = 0; i < ports.length; i++) {
       final port = '${ports[i]['Name']}';
@@ -186,7 +205,8 @@ class PrinterService {
   /// Tạo (hoặc dựng lại) máy in [role] cho thiết bị đã phát hiện. Trả null nếu thành công,
   /// ngược lại là thông báo lỗi.
   static Future<String?> install(
-      DetectedPrinter dev, PrinterRole role, String storeName) async {
+      DetectedPrinter dev, PrinterRole role, String storeName,
+      {int paperMm = 80}) async {
     final name = role.queueName(storeName);
     final String portScript;
     final String port;
@@ -207,7 +227,7 @@ if (-not (Get-PrinterDriver -Name '$kGenericDriver' -ErrorAction SilentlyContinu
 }
 $portScript
 if (Get-Printer -Name '$name' -ErrorAction SilentlyContinue) { Remove-Printer -Name '$name' }
-Add-Printer -Name '$name' -DriverName '$kGenericDriver' -PortName '$port'
+Add-Printer -Name '$name' -DriverName '$kGenericDriver' -PortName '$port' -Comment 'QN;paper=$paperMm'
 Write-Output 'OK'
 ''';
     AppLog.info('Cài $name: loại ${dev.kind.name}, cổng $port${dev.ip != null ? ', IP ${dev.ip}' : ''}');

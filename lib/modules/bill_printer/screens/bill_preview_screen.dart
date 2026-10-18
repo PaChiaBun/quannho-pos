@@ -20,6 +20,7 @@ import '../../../core/services/thermal_printer_service.dart';
 import '../utils/station_normalizer.dart';
 import '../drivers/sunmi_builtin_driver.dart';
 import '../utils/escpos_raster.dart';
+import '../utils/qn_queue_resolver.dart';
 import '../utils/paper_sizes.dart';
 import '../routing/print_router.dart';
 import '../routing/print_setup.dart';
@@ -1404,6 +1405,8 @@ class StationPrinterDispatcher {
     Set<String>? skipStationCodes,
   }) async {
     settings = applyPrintSetup(settings, bill);
+    // Windows: tự dùng máy in QN-… do công cụ "Cài máy in" tạo (không phải chọn lại trong POS).
+    settings = await QnQueueResolver.apply(settings);
     final Map<String, StationPrintResult> results = {};
     final skips = skipStationCodes ?? {};
 

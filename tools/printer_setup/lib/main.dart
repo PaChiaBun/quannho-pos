@@ -1,8 +1,9 @@
-// Quán Nhỏ — Công cụ cài máy in (Windows). Một nút: tìm máy in, chọn vai trò, cài và in thử.
+// Quán Nhỏ — Công cụ cài máy in (Windows). MỘT NÚT: tìm máy in, tự gán vai trò, cài, in tờ nhận diện.
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_log.dart';
+import 'auto_setup.dart';
 import 'printer_service.dart';
 import 'store_settings.dart';
 
@@ -15,6 +16,7 @@ Future<void> main() async {
 
 const _kIndigo = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
+const _kGreen = Color(0xFF16A34A);
 
 class SetupApp extends StatelessWidget {
   const SetupApp({super.key});
@@ -38,23 +40,19 @@ class SetupPage extends StatefulWidget {
 }
 
 class _SetupPageState extends State<SetupPage> {
-  bool _scanning = false;
-  String _status = 'Cắm máy in vào máy tính (hoặc bật máy in mạng) rồi bấm "Tìm máy in".';
-  List<DetectedPrinter> _found = [];
-  List<InstalledQueue> _queues = [];
-  final Map<int, PrinterRole> _roles = {};
-  final Set<int> _busy = {};
+  bool _running = false;
+  bool _done = false;
+  final List<String> _steps = []; // dòng tiến trình dễ hiểu cho chủ quán
+  List<Assignment> _assigned = [];
   final _storeCtl = TextEditingController();
+  bool _storeFromPos = false;
 
   String get _store => _storeCtl.text.trim();
 
   @override
   void initState() {
     super.initState();
-    StoreSettings.loadStoreName().then((n) {
-      if (mounted) setState(() => _storeCtl.text = n);
-    });
-    _refreshQueues();
+    _loadStoreName();
   }
 
   @override
@@ -63,65 +61,21 @@ class _SetupPageState extends State<SetupPage> {
     super.dispose();
   }
 
-  Future<void> _refreshQueues() async {
-    final q = await PrinterService.listQueues();
-    if (mounted) setState(() => _queues = q.where((e) => e.isQn).toList());
+  /// Ưu tiên tên quán từ POS đã đăng nhập; không có thì dùng tên đã nhập lần trước.
+  Future<void> _loadStoreName() async {
+    final fromPos = await storeNameFromPos();
+    final saved = fromPos.isNotEmpty ? fromPos : await StoreSettings.loadStoreName();
+    if (!mounted) return;
+    setState(() {
+      _storeCtl.text = saved;
+      _storeFromPos = fromPos.isNotEmpty;
+    });
+    AppLog.info('Tên quán: "${_storeCtl.text}" (${fromPos.isNotEmpty ? 'lấy từ POS' : 'đã lưu/nhập tay'})');
   }
 
-  Future<void> _scan() async {
-    setState(() {
-      _scanning = true;
-      _status = 'Đang tìm máy in USB...';
-      _found = [];
-    });
-    final usb = await PrinterService.scanUsb();
-    if (!mounted) return;
-    setState(() => _status = 'Đang tìm máy in mạng (mất khoảng 10–20 giây)...');
-    final lan = await PrinterService.scanLan(onProgress: (d, t) {
-      if (mounted && d % 64 == 0) {
-        setState(() => _status = 'Đang tìm máy in mạng... ${(d * 100 ~/ t)}%');
-      }
-    });
-    if (!mounted) return;
-    final all = [...usb, ...lan];
-    setState(() {
-      _scanning = false;
-      _found = all;
-      _roles.clear();
-      _status = all.isEmpty
-          ? 'Chưa thấy máy in nào. Kiểm tra dây USB/mạng, bật nguồn máy in rồi bấm tìm lại.'
-          : 'Tìm thấy ${all.length} máy in. Chọn máy này dùng để làm gì rồi bấm "Cài và in thử".';
-    });
-  }
-
-  Future<void> _install(int i) async {
-    final dev = _found[i];
-    final role = _roles[i];
-    if (role == null) return;
-    if (_store.isEmpty) {
-      _msg('Hãy nhập tên quán ở Bước 1 trước khi cài máy in.', error: true);
-      return;
-    }
-    await StoreSettings.saveStoreName(_store);
-    final qn = role.queueName(_store);
-    setState(() => _busy.add(i));
-    final err = await PrinterService.install(dev, role, _store);
-    if (err != null) {
-      AppLog.error('Cài $qn thất bại: $err');
-      if (mounted) {
-        setState(() => _busy.remove(i));
-        _msg('Chưa cài được: $err', error: true);
-      }
-      return;
-    }
-    final printed = await PrinterService.identify(role, qn);
-    AppLog.info('Cài $qn xong; in tờ nhận diện: ${printed ? 'được' : 'KHÔNG được'}');
-    await _refreshQueues();
-    if (!mounted) return;
-    setState(() => _busy.remove(i));
-    _msg(printed
-        ? 'Đã cài "$qn". Máy in vừa in một tờ nhận diện — đúng máy chưa?'
-        : 'Đã cài "$qn" nhưng chưa in được tờ thử. Kiểm tra giấy/nguồn máy in.');
+  void _step(String s) {
+    AppLog.info('Bước: $s');
+    if (mounted) setState(() => _steps.add(s));
   }
 
   void _msg(String m, {bool error = false}) {
@@ -131,6 +85,87 @@ class _SetupPageState extends State<SetupPage> {
       behavior: SnackBarBehavior.floating,
       duration: const Duration(seconds: 6),
     ));
+  }
+
+  /// MỘT NÚT: dò → gán vai trò → cài → in tờ nhận diện.
+  Future<void> _runAll() async {
+    if (_store.isEmpty) {
+      _msg('Hãy gõ tên quán vào ô phía trên rồi bấm lại.', error: true);
+      return;
+    }
+    await StoreSettings.saveStoreName(_store);
+    setState(() {
+      _running = true;
+      _done = false;
+      _steps.clear();
+      _assigned = [];
+    });
+    try {
+      _step('Đang tìm máy in (USB và mạng)… mất khoảng 20 giây');
+      final usb = await PrinterService.scanUsb();
+      final lan = await PrinterService.scanLan();
+      final devices = [...usb, ...lan];
+      if (devices.isEmpty) {
+        _step('Không thấy máy in nào. Hãy bật máy in, kiểm tra dây USB/mạng rồi bấm lại.');
+        return;
+      }
+      _step('Tìm thấy ${devices.length} máy in.');
+      final existing = await PrinterService.listQueues();
+      final list = assignRoles(devices, existing);
+      await _installAll(list, existing);
+    } catch (e, st) {
+      AppLog.error('runAll: $e\n$st');
+      _step('Có lỗi: $e');
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
+  }
+
+  Future<void> _installAll(List<Assignment> list, List<InstalledQueue> existing) async {
+    // Dọn máy in QN-… cũ nằm trên cùng cổng hoặc trùng tên để không bị nhân đôi.
+    final keys = {for (final a in list) deviceKey(a.device)};
+    final names = {for (final a in list) a.role.queueName(_store)};
+    for (final q in existing) {
+      if (q.isQn && (keys.contains(q.port) || names.contains(q.name))) {
+        await PrinterService.remove(q.name);
+      }
+    }
+    var okCount = 0;
+    for (final a in list) {
+      final qn = a.role.queueName(_store);
+      _step('Đang cài máy in ${a.role.shortLabel}…');
+      final err = await PrinterService.install(a.device, a.role, _store, paperMm: a.paperMm);
+      if (err != null) {
+        AppLog.error('Cài $qn thất bại: $err');
+        _step('✗ Chưa cài được máy in ${a.role.shortLabel}. Bấm "Sao chép log" gửi hỗ trợ.');
+        continue;
+      }
+      final printed = await PrinterService.identify(a.role, qn);
+      AppLog.info('Cài $qn xong; in tờ nhận diện: ${printed ? 'được' : 'KHÔNG được'}');
+      okCount++;
+      _step(printed
+          ? '✓ ${a.role.shortLabel}: đã cài và in tờ nhận diện'
+          : '✓ ${a.role.shortLabel}: đã cài (chưa in được tờ nhận diện — kiểm tra giấy/nguồn)');
+    }
+    if (!mounted) return;
+    setState(() {
+      _assigned = list;
+      _done = okCount > 0;
+    });
+    if (okCount > 0) {
+      _step('Xong! Xem tờ giấy vừa in ra ở mỗi máy: nếu đúng vai trò thì không cần làm gì thêm.');
+    }
+  }
+
+  Future<void> _reapply() async {
+    setState(() => _running = true);
+    try {
+      final existing = await PrinterService.listQueues();
+      _steps.clear();
+      await _installAll(_assigned, existing);
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
   }
 
   @override
@@ -169,59 +204,74 @@ class _SetupPageState extends State<SetupPage> {
           child: ListView(padding: const EdgeInsets.all(20), children: [
             _Card(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Bước 1 — Nhập tên quán và tìm máy in',
+                const Text('Cắm máy in, bật nguồn rồi bấm nút bên dưới.',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _kIndigo)),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 TextField(
                   controller: _storeCtl,
+                  enabled: !_running,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    labelText: 'Tên quán (kèm vào tên máy in cho dễ nhận biết)',
+                    labelText: 'Tên quán',
                     hintText: 'Ví dụ: KAY - Rạch Giá',
                     border: const OutlineInputBorder(),
                     isDense: true,
                     helperText: _store.isEmpty
-                        ? null
-                        : 'Máy in sẽ có tên dạng: ${PrinterRole.thuNgan.queueName(_store)}',
+                        ? 'Gõ tên quán một lần, tên này được gắn vào tên máy in cho dễ nhận biết.'
+                        : '${_storeFromPos ? 'Lấy từ phần mềm Quán Nhỏ POS. ' : ''}'
+                            'Máy in sẽ có tên: ${PrinterRole.thuNgan.queueName(_store)}…',
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(_status, style: TextStyle(color: Colors.grey.shade700, height: 1.4)),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 SizedBox(
-                  height: 52,
+                  height: 64,
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(backgroundColor: _kOrange),
-                    onPressed: _scanning ? null : _scan,
-                    icon: _scanning
+                    onPressed: _running ? null : _runAll,
+                    icon: _running
                         ? const SizedBox(
-                            width: 18, height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.search_rounded),
-                    label: Text(_scanning ? 'Đang tìm...' : 'Tìm máy in',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                            width: 22, height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+                        : const Icon(Icons.print_rounded, size: 28),
+                    label: Text(
+                      _running ? 'Đang cài, vui lòng chờ…' : (_done ? 'Cài lại từ đầu' : 'CÀI MÁY IN'),
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                    ),
                   ),
                 ),
               ]),
             ),
-            if (_found.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              const Text('Bước 2 — Chọn vai trò và cài',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _kIndigo)),
-              const SizedBox(height: 8),
-              for (var i = 0; i < _found.length; i++) _deviceCard(i),
+            if (_steps.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _Card(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  for (final s in _steps)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Text(s,
+                          style: TextStyle(
+                              fontSize: 15,
+                              height: 1.4,
+                              color: s.startsWith('✗') ? Colors.red.shade700 : null,
+                              fontWeight: s.startsWith('Xong') ? FontWeight.w800 : null)),
+                    ),
+                ]),
+              ),
             ],
-            if (_queues.isNotEmpty) ...[
+            if (_assigned.isNotEmpty) ...[
               const SizedBox(height: 16),
-              const Text('Máy in đã cài cho Quán Nhỏ',
+              const Text('Máy in đã cài',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _kIndigo)),
+              const SizedBox(height: 4),
+              Text('Chỉ cần chỉnh nếu tờ giấy in ra ở máy nào ghi sai vai trò.',
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
               const SizedBox(height: 8),
-              for (final q in _queues) _queueCard(q),
+              for (final a in _assigned) _assignedCard(a),
             ],
             const SizedBox(height: 24),
             Text(
-              'Máy in được đặt tên theo mẫu QN-<Tên quán>-<Vai trò> (ví dụ QN-KAY-Rach-Gia-ThuNgan). Trong Quán Nhỏ POS, '
-              'ở mục máy in hệ thống chỉ cần chọn đúng máy in có tên QN-... này, không phải gõ tên hay cài driver.',
+              'Sau khi cài xong, mở Quán Nhỏ POS và bấm in như bình thường — POS tự dùng các máy in QN-… này, '
+              'bạn không phải chọn hay cài driver.',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.5),
             ),
           ]),
@@ -230,90 +280,87 @@ class _SetupPageState extends State<SetupPage> {
     );
   }
 
-  Widget _deviceCard(int i) {
-    final d = _found[i];
-    final busy = _busy.contains(i);
+  Widget _assignedCard(Assignment a) {
+    final qn = a.role.queueName(_store);
+    final d = a.device;
     return _Card(
-      child: Row(children: [
-        Icon(d.kind == DetectedKind.usb ? Icons.usb_rounded : Icons.wifi_rounded,
-            size: 30, color: _kIndigo),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(d.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-            Text(d.detail, style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
-          ]),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 230,
-          child: DropdownButtonFormField<PrinterRole>(
-            isExpanded: true,
-            initialValue: _roles[i],
-            decoration: const InputDecoration(
-                labelText: 'Máy này dùng để', isDense: true, border: OutlineInputBorder()),
-            items: [
-              for (final r in PrinterRole.values)
-                DropdownMenuItem(value: r, child: Text(r.label, overflow: TextOverflow.ellipsis)),
-            ],
-            onChanged: (v) => setState(() => v == null ? _roles.remove(i) : _roles[i] = v),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(d.kind == DetectedKind.usb ? Icons.usb_rounded : Icons.wifi_rounded,
+              size: 28, color: _kGreen),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(a.role.label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              Text('${d.title} · ${d.detail}',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
+              Text(qn, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+            ]),
           ),
-        ),
-        const SizedBox(width: 8),
-        FilledButton(
-          onPressed: (_roles[i] == null || busy) ? null : () => _install(i),
-          child: busy
-              ? const SizedBox(
-                  width: 16, height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Cài và in thử'),
-        ),
-      ]),
-    );
-  }
-
-  Widget _queueCard(InstalledQueue q) {
-    final role = q.role;
-    return _Card(
-      child: Row(children: [
-        const Icon(Icons.print_rounded, color: Colors.green, size: 28),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(q.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-            Text('Cổng ${q.port}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
-          ]),
-        ),
-        if (role != null) ...[
+        ]),
+        const SizedBox(height: 10),
+        Wrap(spacing: 10, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+          SizedBox(
+            width: 230,
+            child: DropdownButtonFormField<PrinterRole>(
+              isExpanded: true,
+              initialValue: a.role,
+              decoration: const InputDecoration(
+                  labelText: 'Đổi vai trò (nếu sai)', isDense: true, border: OutlineInputBorder()),
+              items: [
+                for (final r in PrinterRole.values)
+                  DropdownMenuItem(value: r, child: Text(r.label, overflow: TextOverflow.ellipsis)),
+              ],
+              onChanged: _running
+                  ? null
+                  : (v) {
+                      if (v == null || v == a.role) return;
+                      setState(() => changeRole(_assigned, a, v));
+                      _reapply();
+                    },
+            ),
+          ),
+          SizedBox(
+            width: 150,
+            child: DropdownButtonFormField<int>(
+              isExpanded: true,
+              initialValue: a.paperMm,
+              decoration: const InputDecoration(
+                  labelText: 'Khổ giấy', isDense: true, border: OutlineInputBorder()),
+              items: const [
+                DropdownMenuItem(value: 80, child: Text('80 mm (phổ biến)')),
+                DropdownMenuItem(value: 58, child: Text('58 mm (nhỏ)')),
+              ],
+              onChanged: _running
+                  ? null
+                  : (v) {
+                      if (v == null || v == a.paperMm) return;
+                      setState(() => a.paperMm = v);
+                      _reapply();
+                    },
+            ),
+          ),
           OutlinedButton(
-            onPressed: () async {
-              final ok = await PrinterService.identify(role, q.name);
-              _msg(ok ? 'Đã gửi tờ in thử.' : 'Không in được. Kiểm tra máy in.', error: !ok);
-            },
+            onPressed: _running
+                ? null
+                : () async {
+                    final ok = await PrinterService.identify(a.role, qn);
+                    _msg(ok ? 'Đã gửi tờ in thử.' : 'Không in được. Kiểm tra giấy/nguồn máy in.', error: !ok);
+                  },
             child: const Text('In thử'),
           ),
-          if (role == PrinterRole.thuNgan) ...[
-            const SizedBox(width: 8),
+          if (a.role == PrinterRole.thuNgan)
             OutlinedButton(
-              onPressed: () async {
-                final ok = await PrinterService.kickDrawer(q.name);
-                _msg(ok ? 'Đã gửi lệnh mở két. Két có mở không?' : 'Không gửi được lệnh mở két.',
-                    error: !ok);
-              },
+              onPressed: _running
+                  ? null
+                  : () async {
+                      final ok = await PrinterService.kickDrawer(qn);
+                      _msg(ok ? 'Đã gửi lệnh mở két. Két có mở không?' : 'Không gửi được lệnh mở két.',
+                          error: !ok);
+                    },
               child: const Text('Mở két thử'),
             ),
-          ],
-        ],
-        const SizedBox(width: 8),
-        IconButton(
-          tooltip: 'Gỡ máy in này',
-          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-          onPressed: () async {
-            final err = await PrinterService.remove(q.name);
-            await _refreshQueues();
-            if (err != null) _msg('Chưa gỡ được: $err', error: true);
-          },
-        ),
+        ]),
       ]),
     );
   }
