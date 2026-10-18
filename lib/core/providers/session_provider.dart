@@ -196,6 +196,10 @@ class _SessionNotifier extends Notifier<SessionData?> {
       await notifier.prepareForStoreLogout(storeIdBeforeClear);
     } catch (_) {}
 
+    // Gửi nốt log đang gom TRƯỚC khi mất phiên đăng nhập (RLS cần JWT còn hiệu lực).
+    try {
+      await AppLogger.flushNow().timeout(const Duration(seconds: 5));
+    } catch (_) {}
     await UserAuthService.logout();
     state = null;
     AppLogger.updateSession(storeId: null, staffName: null);

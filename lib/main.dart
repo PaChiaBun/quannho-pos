@@ -1,3 +1,4 @@
+import 'core/utils/app_logger.dart';
 import 'dart:io';
 import 'modules/bill_printer/drivers/sunmi_builtin_driver.dart';
 import 'package:flutter/foundation.dart';
@@ -119,8 +120,14 @@ void main() async {
   unawaited(PdfGoogleFonts.robotoBold().catchError((_) => null as dynamic));
 
   await initializeDateFormatting('vi', null);
-  unawaited(SunmiBuiltinDriver.detect()); // dò máy in Sunmi tích hợp (luật in tới nó áp cho mọi máy Sunmi)
+  unawaited(
+    SunmiBuiltinDriver.detect(),
+  ); // dò máy in Sunmi tích hợp (luật in tới nó áp cho mọi máy Sunmi)
   await SupabaseService.initialize(); // ⚠️ PHẢI await — Supabase cần sẵn sàng trước khi dùng
+  AppLogger.attachLifecycle(); // gửi log gom lô khi app xuống nền/thoát
+  unawaited(
+    AppLogger.restorePending(),
+  ); // gửi bù log lần chạy trước chưa kịp gửi
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -331,7 +338,8 @@ class _MainShellState extends ConsumerState<MainShell>
       _startTokenAutoRefresh();
       // Kiểm tra bản cập nhật sau 2 giây — cho UI render xong trước
       Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) AppUpdateManager.checkAndPromptUpdate(context, silent: true);
+        if (mounted)
+          AppUpdateManager.checkAndPromptUpdate(context, silent: true);
       });
     });
   }
@@ -365,7 +373,9 @@ class _MainShellState extends ConsumerState<MainShell>
   Future<void> _handleSessionRevoked() async {
     if (!mounted || _isNavigatingAway) return;
     _isNavigatingAway = true;
-    debugPrint('[MainShell] Phiên đăng nhập bị thu hồi/hết hạn -> về màn đăng nhập');
+    debugPrint(
+      '[MainShell] Phiên đăng nhập bị thu hồi/hết hạn -> về màn đăng nhập',
+    );
     await ref.read(sessionProvider.notifier).clear();
     if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
@@ -572,7 +582,12 @@ class _MainShellState extends ConsumerState<MainShell>
     final storeRolesAsync = ref.watch(storeRolesProvider);
     final storeRoles = storeRolesAsync.value ?? [];
     final actionPerms = ref.watch(userActionPermsProvider).value ?? {};
-    final navBarTabs = _navBarTabsForRole(role, storeRoles, isOwner, actionPerms);
+    final navBarTabs = _navBarTabsForRole(
+      role,
+      storeRoles,
+      isOwner,
+      actionPerms,
+    );
 
     // ⭐ Vận Hành (tab 13) luôn accessible cho mọi nhân viên — phải add TRƯỚC khi filter slots
     navBarTabs.add(13);
@@ -585,18 +600,25 @@ class _MainShellState extends ConsumerState<MainShell>
     final List<int> displaySlots;
 
     final validSlots = rawSlots.where((t) => navBarTabs.contains(t)).toList();
-    if (isStaff && validSlots.length < 4 && listEquals(rawSlots, const [0, 1, 2, 6])) {
+    if (isStaff &&
+        validSlots.length < 4 &&
+        listEquals(rawSlots, const [0, 1, 2, 6])) {
       final staffAllowed =
           navBarTabs.where((t) => t != 0 && t != 6 && t != 13).toList()..sort();
       final mid = staffAllowed.isNotEmpty ? staffAllowed.first : 1;
-      displaySlots = _padSlots([0, mid, 13, 6].where((t) => navBarTabs.contains(t)).toList(), navBarTabs);
+      displaySlots = _padSlots(
+        [0, mid, 13, 6].where((t) => navBarTabs.contains(t)).toList(),
+        navBarTabs,
+      );
     } else {
       displaySlots = _padSlots(validSlots, navBarTabs);
     }
 
     // Tự động chuyển về tab đầu tiên nếu tab hiện tại không nằm trong danh sách được phép
     // Chỉ kích hoạt redirect khi roles đã nạp xong (tránh đá văng tab khi provider đang async loading)
-    if (!storeRolesAsync.isLoading && !navBarTabs.contains(idx) && displaySlots.isNotEmpty) {
+    if (!storeRolesAsync.isLoading &&
+        !navBarTabs.contains(idx) &&
+        displaySlots.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(navTabProvider.notifier).goTo(displaySlots[0]);
       });

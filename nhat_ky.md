@@ -3,6 +3,32 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-18 — KAY: hủy bàn "dở dang" làm mất bill (đã sửa code client, CHƯA build/commit, CHƯA đụng dữ liệu/migration)
+
+### 🔍 Chẩn đoán (đọc production, chỉ SELECT)
+- Sáng 18/10: 98–100 đơn đều có lệnh in bill thành công (Start/Calling/Result true), tiền settlement = tiền đơn (20.426.600đ). Bill B1 11:57 (56k) in bình thường. App không có dấu hiệu mất bill khi in; `Result: true` chỉ nghĩa là đã giao lệnh cho máy in/spooler.
+- "B1 ~10h": phiên B1 `6558dcee…` (09:51–10:14, Mỳ cay bò Mỹ 59k đã gửi bếp) bị đóng `cancelled`, tổng 0đ, KHÔNG đơn/bill/audit; món vẫn `da_gui`, phiếu bếp vẫn `cho`. Cùng kiểu: phiên 07:54–08:08 (66k).
+- Nguyên nhân (suy từ code + dữ liệu, lỗi không được log nên chưa thấy trực tiếp): `_cancelSession` đóng phiên thành `cancelled` TRƯỚC; trigger `guard_ban_item_financial_change_v5` chặn sửa món khi phiên không còn `open` (`SESSION_NOT_OPEN`) → bước đổi món sang `huy` lỗi, exception bị `debugPrint` nuốt, các bước sau (hủy phiếu bếp, void log, `void_audit_logs`) không chạy, hộp thoại vẫn đóng như đã xong.
+- Quy mô 30 ngày: 12 phiên hủy dở (≈1,3 triệu đồng món đã gửi bếp, không bill, không audit); 35 phiếu bếp của 34 phiên đã hủy vẫn `cho`/`dang_lam` (từ 03/09).
+
+### ✅ Đã sửa (lib/screens/ban_screen.dart)
+- `runCancelSteps`/`CancelStep`: audit → món `huy` → hủy phiếu bếp → void log (phụ) → **đóng phiên cuối cùng**. Bước bắt buộc lỗi thì KHÔNG đóng phiên (bàn vẫn mở để thử lại), `AppLogger.error` lên `app_logs`, hiện thông báo đỏ nêu tên bước, không đóng bảng bàn. `logVoidEvent` trả false cũng coi là lỗi.
+- Test `test/screens/cancel_session_steps_test.dart` (4 ca: thứ tự, lỗi chặn đóng phiên, bước phụ, lỗi đóng phiên) + 3 ca reconcile: toàn bộ `flutter test test/screens` 55/55 đạt; `dart analyze` không lỗi.
+
+### 🧾 Ghi log đầy đủ + gom lô (đã code, CHƯA build/commit, migration CHƯA áp)
+- Lý do: log màn Bàn chỉ ghi lỗi; không tra được ai hủy B1, tạm tính in bàn/món nào. Chủ Quán chọn gom log theo phiên hành động rồi gửi một lần.
+- `AppLogger` (lib/core/utils/app_logger.dart): xếp hàng + ghi tạm ra đĩa (`app_logs_pending.jsonl`), gửi **một request nhiều dòng** khi đủ **60 dòng** hoặc **180 giây** kể từ dòng đầu, hoặc `flushNow()` (đăng xuất, app xuống nền/thoát), hoặc sự kiện quan trọng/lỗi (gửi ngay). Mỗi dòng mang sẵn giờ thật, quán, nhân viên, thiết bị. Lỗi mạng giữ hàng chờ, thử lại; dòng >24 giờ bị bỏ; tối đa 2.000 dòng. Gửi vào chính bảng `app_logs` (không cần migration để chạy).
+- `AppLogger.action(...)`: chuẩn trường (act, table, session, order, lines, total, approver, reason, result, staff, device), tag `action`, không ghi PIN/mật khẩu. Đã gắn: mở bàn, thêm món, xóa món chưa gửi bếp, in tạm tính (kèm tên món), mở thanh toán, duyệt quản lý (tự duyệt/PIN: tên người duyệt, kết quả), hủy bàn (người duyệt + lý do + món), thanh toán xong, audit hủy.
+- Bỏ log trùng: `logUserAction` từng ghi đôi (Mở module, Chuyển bàn); `[Claim] … bỏ qua` từng ghi 3 dòng/bill nay 1 dòng.
+- Test `test/core/app_logger_batch_test.dart` (9 ca) + các test màn hình/repository: đạt; `dart analyze lib` không lỗi.
+- File SQL (chưa áp, chưa chạy thử): `supabase/migrations/20261018_app_logs_retention_v1.sql` (+ rollback): chỉ mục `(store_id, tag, created_at)` và hàm `qn_app_logs_purge(30, 365)` (log kỹ thuật 30 ngày; action/checkout/order/auth/ban_items 365 ngày). Cần gắn timer 00:40 trên VPS.
+- Chưa làm/chưa kiểm: chưa thử trên máy thật; chưa gắn log cho in lại bill, chuyển bàn (log repository cũ chưa có tên bàn), gửi bếp (đã có log sẵn), chấm công/ra ca (vẫn ghi trực tiếp); app đóng đột ngột chỉ mất log chưa kịp ghi đĩa.
+
+### ⚠️ Còn lại
+- Chưa build/commit/phát hành; máy KAY chưa có bản sửa.
+- Chưa dọn dữ liệu: 35 phiếu bếp mồ côi, 12 phiên hủy dở (cần chủ quán duyệt). Khuyến nghị về sau: RPC `cancel_ban_session_v5` làm trọn trong một giao dịch (cần migration, chưa làm).
+- Chưa xác nhận bill "~10h" mà chủ quán nói có đúng phiên B1 bị hủy 10:14 không.
+
 ## 2026-10-17 — KAY bàn B2: tạm tính 113k nhưng thanh toán 219k (đã sửa code, CHƯA build/phát hành)
 
 ### 🔍 Chẩn đoán bằng log (chỉ đọc production)
@@ -17,8 +43,11 @@
 - Bill tạm tính: ghi log số dòng/tổng tiền; có dòng "TẠM TÍNH - CHƯA THANH TOÁN"; bỏ "Tiền mặt" cứng.
 - Test mới `test/screens/reconcile_session_items_test.dart` (3 ca) + `ban_repository_test.dart`: 7/7 đạt; `dart analyze` không lỗi.
 
+### 📦 Build Windows 1.0.5+15 (17/10)
+- Commit `9b17555` (nhánh `feature/ai-bum-ui`) đã push; workflow `Windows Release Builder` run 39028728335 thành công (8 phút). Đã tải về `Quan Nho/win_build_105_15/` (`QuanNhoPOS-Setup.exe` 60.881.530 byte, SHA-256 `ce8c5d7c…f0228`). **Đã đưa lên `quannho.lpm.vn` (17/10, ~19:08): `QuanNhoPOS-latest.exe` ở cả `/` và `/download/` + bản `QuanNhoPOS-1.0.5-build15-Setup.exe`, SHA-256 khớp trên server và qua HTTP công khai. Bản cũ sao lưu: `/root/quannho-backups/web-download/exe_{root,download}_truoc_105b15_20261017_120803.exe`. CHƯA chèn `app_versions`, CHƯA cài lên máy quán.** Lần dispatch đầu chạy nhầm trên commit cũ (push thất bại do thiếu mật khẩu) đã hủy.
+
 ### ⚠️ Còn lại
-- Cần build bản Windows mới (máy thu ngân) mới có hiệu lực. Chưa xác nhận bill tạm tính trên giấy hiển thị dòng "TẠM TÍNH" (chưa in thử).
+- Cần cài bản Windows mới (máy thu ngân) mới có hiệu lực. Chưa xác nhận bill tạm tính trên giấy hiển thị dòng "TẠM TÍNH" (chưa in thử).
 - Sau khi triển khai, theo dõi `app_logs` tag `ban_items` / cảnh báo `LỆCH …` để biết nguyên nhân treo thật.
 - Đường `_printInterimBill(total, items)` trong `ban_screen.dart` (~dòng 2656) không còn ai gọi, chưa xóa.
 

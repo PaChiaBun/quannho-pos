@@ -979,9 +979,31 @@ class BanRepository {
         'amount': amount,
         'details_json': details,
       });
+      AppLogger.action(
+        'void_audit',
+        'Ghi audit hủy ($voidType)',
+        sessionId: voidType == 'cancel_table' ? referenceId : null,
+        table: label,
+        total: amount,
+        approver: approvedByName,
+        reason: reason,
+        result: 'ok',
+        critical: true,
+        extra: {'void_type': voidType, 'requested_by': requestedByName},
+      );
       return true;
     } catch (e) {
       print('[BanRepository] logVoidEvent error: $e');
+      AppLogger.action(
+        'void_audit',
+        'Ghi audit hủy ($voidType)',
+        table: label,
+        approver: approvedByName,
+        reason: reason,
+        result: 'LỖI $e',
+        critical: true,
+        level: 'ERROR',
+      );
       return false;
     }
   }

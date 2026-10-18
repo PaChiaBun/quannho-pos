@@ -537,6 +537,13 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         ),
       );
       if (session == null) return;
+      AppLogger.action(
+        'open_table',
+        'Mở bàn',
+        table: table.label,
+        sessionId: session.id,
+        extra: {'guests': session.guestCount},
+      );
       ref.invalidate(activeSessionsProvider);
       HapticFeedback.mediumImpact();
       if (!mounted) return;
@@ -2737,6 +2744,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     // Món chưa gửi bếp → xoá bình thường
     if (status == 'chua_gui') {
       await _banRepo.removeSessionItem(item.id);
+      AppLogger.action(
+        'remove_item',
+        'Xóa món chưa gửi bếp',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        total: item.subtotal,
+        extra: {'item': item.productName, 'qty': item.quantity},
+      );
       ref.invalidate(sessionItemsProvider(widget.session.id));
       HapticFeedback.lightImpact();
       return;
@@ -3676,6 +3691,22 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         'checkout',
         'Atomic V5 settlement $settlementId completed; replay=$isReplay; total=${finalTotal.toInt()}',
       );
+      AppLogger.action(
+        'checkout_done',
+        'Thanh toán',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        lines: items.length,
+        total: finalTotal,
+        result: isReplay ? 'replay' : 'ok',
+        critical: true,
+        extra: {
+          'method': payMethod,
+          'settlement': settlementId,
+          'orders': orderNumbers,
+          'discount': serverDiscount.round(),
+        },
+      );
 
       // Replay không bao giờ tự in lại. Lần commit đầu dùng cache bền vững
       // settlementId:cashier để chống callback/print-server trùng nhau.
@@ -4086,6 +4117,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       }
       if (!mounted) return;
       // Đối chiếu với máy chủ: tránh thu ngân thấy/in số tiền khác số thật.
+      AppLogger.action(
+        'open_checkout',
+        'Mở thanh toán',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        lines: items.length,
+        total: total,
+      );
       final syncedItems = await reconcileSessionItems(
         repo: ref.read(banRepositoryProvider),
         where: 'mở thanh toán',
@@ -4582,17 +4621,38 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         canonical == 'manager';
 
     if (isManager) {
-      return {'id': session!.userId, 'name': session.displayName};
+      AppLogger.action(
+        'manager_approval',
+        'Quản lý tự duyệt',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        approver: session!.displayName,
+        result: 'ok',
+        critical: true,
+      );
+      return {'id': session.userId, 'name': session.displayName};
     }
 
     final storeId = session?.storeId;
     if (storeId == null) return null;
 
-    return showDialog<Map<String, String>?>(
+    final approved = await showDialog<Map<String, String>?>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _ManagerPinInputDialog(storeId: storeId),
     );
+    // Không bao giờ ghi PIN; chỉ ghi kết quả và tên người duyệt.
+    AppLogger.action(
+      'manager_approval',
+      'Duyệt bằng PIN quản lý',
+      table: widget.table.label,
+      sessionId: widget.session.id,
+      approver: approved?['name'],
+      result: approved == null ? 'không duyệt/hủy' : 'ok',
+      critical: true,
+      level: approved == null ? 'WARNING' : 'INFO',
+    );
+    return approved;
   }
 
   Future<String?> _askCancelTableReason() async {
@@ -4864,6 +4924,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
 
     setState(() => _isCancelling = true);
+    var cancelled = false;
     try {
       final session = ref.read(sessionProvider);
       final activeItemsForLog = items
@@ -4879,90 +4940,136 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             },
           )
           .toList();
+      final client = Supabase.instance.client;
+      final storeInfo = await StoreAuthService.getStoreInfo();
+      final storeId = storeInfo['store_id'] as String?;
 
-      // Đóng session
-      await Supabase.instance.client
-          .from('ban_sessions')
-          .update({
-            'status': 'cancelled',
-            'closed_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', widget.session.id);
-
-      // Cập nhật trạng thái tất cả các món ăn của bàn thành 'huy'
-      await Supabase.instance.client
-          .from('ban_session_items')
-          .update({'kitchen_status': 'huy'})
-          .eq('session_id', widget.session.id)
-          .neq('kitchen_status', 'huy');
-
-      ref.invalidate(activeSessionsProvider);
-
-      // Huỷ tất cả kitchen_tickets của session này
-      await Supabase.instance.client
-          .from('kitchen_tickets')
-          .update({'status': 'huy'})
-          .eq('session_id', widget.session.id)
-          .inFilter('status', ['cho', 'dang_lam']);
-
-      // Ghi void log từng món đang nấu/gửi bếp để bếp thấy banner thông báo huỷ bàn đỏ nổi bật
-      try {
-        final storeInfo = await StoreAuthService.getStoreInfo();
-        final storeId = storeInfo['store_id'] as String?;
-        if (storeId != null) {
-          final List<Map<String, dynamic>> voidLogs = [];
-          for (final item in activeItemsForLog) {
-            final sentStatuses = ['da_gui', 'dang_lam', 'xong'];
-            if (sentStatuses.contains(item.kitchenStatus)) {
-              voidLogs.add({
-                'store_id': storeId,
-                'session_id': widget.session.id,
-                'table_label': widget.table.label,
-                'product_name': item.productName,
-                'action': 'cancel',
-                'old_qty': item.quantity,
-                'new_qty': 0,
-                'reason': 'Huỷ bàn: $reason',
-                'staff_name': approval['name'] ?? 'Quản lý',
-              });
-            }
-          }
-          if (voidLogs.isNotEmpty) {
-            await Supabase.instance.client
-                .from('ban_session_void_logs')
-                .insert(voidLogs);
-            debugPrint(
-              '[Ban] ✅ ban_session_void_logs for cancelled table items inserted',
+      // Trigger guard_ban_item_financial_change_v5 CHẶN sửa món khi phiên không còn
+      // 'open' -> mọi bước phụ phải xong TRƯỚC, đóng phiên là bước CUỐI CÙNG.
+      // (Thứ tự cũ đóng phiên trước nên bước món bị chặn, lỗi bị nuốt, phiên mất mà
+      // không có audit/bill và phiếu bếp mồ côi.)
+      await runCancelSteps(
+        sessionId: widget.session.id,
+        tableLabel: widget.table.label,
+        steps: [
+          // Audit trước để còn đủ thông tin món/tiền (nếu các bước sau lỗi rồi thử lại).
+          CancelStep('ghi audit hủy bàn', () async {
+            final auditOk = await _banRepo.logVoidEvent(
+              voidType: 'cancel_table',
+              referenceId: widget.session.id,
+              label: widget.table.label,
+              requestedByUserId: session?.userId ?? '',
+              requestedByName: session?.displayName ?? 'Nhân viên',
+              approvedByUserId: approval!['id'] ?? '',
+              approvedByName: approval['name'] ?? 'Quản lý',
+              reason: reason!,
+              amount: total,
+              details: details,
             );
-          }
-        }
-      } catch (e) {
-        debugPrint('[Ban] void logs for table cancellation err: $e');
-      }
-
-      // Ghi nhận lịch sử kiểm toán huỷ bàn vào void_audit_logs
-      await _banRepo.logVoidEvent(
-        voidType: 'cancel_table',
-        referenceId: widget.session.id,
-        label: widget.table.label,
-        requestedByUserId: session?.userId ?? '',
-        requestedByName: session?.displayName ?? 'Nhân viên',
-        approvedByUserId: approval['id'] ?? '',
-        approvedByName: approval['name'] ?? 'Quản lý',
+            if (!auditOk) throw Exception('không ghi được void_audit_logs');
+          }),
+          CancelStep('đánh dấu món đã hủy', () async {
+            await client
+                .from('ban_session_items')
+                .update({'kitchen_status': 'huy'})
+                .eq('session_id', widget.session.id)
+                .neq('kitchen_status', 'huy');
+          }),
+          CancelStep('hủy phiếu bếp', () async {
+            await client
+                .from('kitchen_tickets')
+                .update({'status': 'huy'})
+                .eq('session_id', widget.session.id)
+                .inFilter('status', ['cho', 'dang_lam']);
+          }),
+          // Log để bếp thấy banner hủy bàn: phụ, lỗi thì ghi log chứ không chặn hủy.
+          CancelStep('ghi void log cho bếp', () async {
+            if (storeId == null) return;
+            final voidLogs = <Map<String, dynamic>>[
+              for (final item in activeItemsForLog)
+                if (const [
+                  'da_gui',
+                  'dang_lam',
+                  'xong',
+                ].contains(item.kitchenStatus))
+                  {
+                    'store_id': storeId,
+                    'session_id': widget.session.id,
+                    'table_label': widget.table.label,
+                    'product_name': item.productName,
+                    'action': 'cancel',
+                    'old_qty': item.quantity,
+                    'new_qty': 0,
+                    'reason': 'Huỷ bàn: $reason',
+                    'staff_name': approval!['name'] ?? 'Quản lý',
+                  },
+            ];
+            if (voidLogs.isNotEmpty) {
+              await client.from('ban_session_void_logs').insert(voidLogs);
+            }
+          }, optional: true),
+        ],
+        closeSession: () async {
+          await client
+              .from('ban_sessions')
+              .update({
+                'status': 'cancelled',
+                'closed_at': DateTime.now().toUtc().toIso8601String(),
+              })
+              .eq('id', widget.session.id);
+        },
+      );
+      cancelled = true;
+      AppLogger.action(
+        'cancel_table',
+        'Hủy bàn',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        lines: activeItemsForLog.length,
+        total: total,
+        approver: approval!['name'],
         reason: reason,
-        amount: total,
-        details: details,
+        result: 'ok',
+        critical: true,
+        extra: {'requested_by': session?.displayName, 'items': details},
       );
-
-      debugPrint(
-        '[Ban] ✅ void audit log CANCEL_TABLE inserted with 2-step verification if cooking/done',
+      ref.invalidate(activeSessionsProvider);
+    } catch (e, st) {
+      AppLogger.action(
+        'cancel_table',
+        'Hủy bàn',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        approver: approval?['name'],
+        reason: reason,
+        result: 'LỖI ${e is CancelStepFailure ? e.step : e}',
+        critical: true,
+        level: 'ERROR',
       );
-    } catch (e) {
-      debugPrint('[Ban] cancel kitchen tickets err: $e');
+      AppLogger.error(
+        'ban_screen',
+        'HỦY BÀN THẤT BẠI ${widget.table.label} (phiên ${widget.session.id}): $e',
+        e,
+        st,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Hủy bàn CHƯA hoàn tất (${e is CancelStepFailure ? e.step : 'lỗi hệ thống'}). '
+              'Bàn vẫn mở — kiểm tra mạng rồi hủy lại, hoặc báo chủ quán.',
+            ),
+            backgroundColor: _kRed,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 8),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isCancelling = false);
-        Navigator.pop(context);
+        // Chỉ đóng bảng bàn khi hủy thành công; lỗi thì giữ để nhân viên thấy và thử lại.
+        if (cancelled) Navigator.pop(context);
       }
     }
   }
@@ -6315,10 +6422,19 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   (_usePts * _redeemRate) +
                   _shippingFee)
               .clamp(0.0, double.infinity);
-      AppLogger.info(
-        'printer',
-        '[In tạm tính] ${widget.tableName}: ${items.length} dòng, '
-            'tổng món ${itemsTotal.toInt()}đ, phải trả ${finalTotal.toInt()}đ',
+      AppLogger.action(
+        'print_interim',
+        'In tạm tính',
+        table: widget.tableName,
+        sessionId: sessionId.isEmpty ? null : sessionId,
+        lines: items.length,
+        total: finalTotal,
+        extra: {
+          'items_total': itemsTotal.round(),
+          'item_names': items
+              .map((i) => '${i.productName} x${i.quantity.toInt()}')
+              .toList(),
+        },
       );
 
       final session = ref.read(sessionProvider);
@@ -7743,6 +7859,22 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
       await _banRepo.addSessionItems(
         sessionId: widget.sessionId,
         items: itemsList,
+      );
+      AppLogger.action(
+        'add_items',
+        'Thêm món',
+        sessionId: widget.sessionId,
+        lines: itemsList.length,
+        total: itemsList.fold<double>(
+          0,
+          (sum, e) =>
+              sum + (e['price'] as double) * (e['quantity'] as num).toDouble(),
+        ),
+        extra: {
+          'item_names': itemsList
+              .map((e) => '${e['productName']} x${e['quantity']}')
+              .toList(),
+        },
       );
 
       try {
@@ -12556,6 +12688,53 @@ class _ItemNoteInputState extends State<_ItemNoteInput> {
       ),
     );
   }
+}
+
+/// Một bước phụ khi hủy bàn. `optional` = lỗi chỉ ghi log, không chặn việc hủy.
+class CancelStep {
+  CancelStep(this.name, this.run, {this.optional = false});
+  final String name;
+  final Future<void> Function() run;
+  final bool optional;
+}
+
+class CancelStepFailure implements Exception {
+  CancelStepFailure(this.step, this.cause);
+  final String step;
+  final Object cause;
+  @override
+  String toString() => 'Bước "$step" lỗi: $cause';
+}
+
+/// Hủy bàn an toàn: chạy các bước phụ theo thứ tự rồi mới đóng phiên (bước cuối).
+/// Bước bắt buộc lỗi -> ném [CancelStepFailure] và KHÔNG đóng phiên (bàn vẫn mở để thử lại).
+/// Bước `optional` lỗi -> chỉ ghi cảnh báo.
+Future<void> runCancelSteps({
+  required String sessionId,
+  required String tableLabel,
+  required List<CancelStep> steps,
+  required Future<void> Function() closeSession,
+}) async {
+  for (final step in steps) {
+    try {
+      await step.run();
+    } catch (e) {
+      if (step.optional) {
+        AppLogger.warning(
+          'ban_screen',
+          'Hủy bàn $tableLabel (phiên $sessionId): bước phụ "${step.name}" lỗi, bỏ qua: $e',
+        );
+        continue;
+      }
+      throw CancelStepFailure(step.name, e);
+    }
+  }
+  try {
+    await closeSession();
+  } catch (e) {
+    throw CancelStepFailure('đóng phiên', e);
+  }
+  AppLogger.info('ban_screen', 'Đã hủy bàn $tableLabel (phiên $sessionId)');
 }
 
 /// Đối chiếu danh sách món đang hiện trên màn hình với máy chủ trước khi in tạm tính

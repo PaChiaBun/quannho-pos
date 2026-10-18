@@ -935,15 +935,14 @@ class PrinterConfig {
     double? paperMm,
     int? darkness,
     bool? softBold,
-  }) =>
-      PrinterConfig(
-        name: name ?? this.name,
-        type: type ?? this.type,
-        enabled: enabled ?? this.enabled,
-        paperMm: paperMm ?? this.paperMm,
-        darkness: darkness ?? this.darkness,
-        softBold: softBold ?? this.softBold,
-      );
+  }) => PrinterConfig(
+    name: name ?? this.name,
+    type: type ?? this.type,
+    enabled: enabled ?? this.enabled,
+    paperMm: paperMm ?? this.paperMm,
+    darkness: darkness ?? this.darkness,
+    softBold: softBold ?? this.softBold,
+  );
 }
 
 bool shouldAutoPrintLocally({
@@ -985,6 +984,9 @@ bool shouldAutoPrintReceiptLocally({
 ///
 /// Thất bại mở (fail-open): nếu không cập nhật được vì lỗi mạng/quyền (không phải do
 /// máy khác đã giành), trả về true để bill vẫn được in, thà trùng còn hơn mất bill.
+/// Mỗi bill chỉ ghi log "máy chủ bỏ qua" một lần (realtime + quét 3 giây từng ghi 3 dòng).
+final Set<String> _claimSkipLogged = <String>{};
+
 Future<bool> claimReceiptPrint(String orderId) async {
   try {
     final client = Supabase.instance.client;
@@ -1002,7 +1004,9 @@ Future<bool> claimReceiptPrint(String orderId) async {
         .eq('id', orderId)
         .maybeSingle();
     if (row != null && row['receipt_printed'] == true) return false;
-    writePrintLog('[Claim] Không giành được và đơn chưa đánh dấu in ($orderId) -> vẫn in.');
+    writePrintLog(
+      '[Claim] Không giành được và đơn chưa đánh dấu in ($orderId) -> vẫn in.',
+    );
     return true;
   } catch (e) {
     writePrintLog('[Claim] Lỗi giành quyền in $orderId: $e -> vẫn in.');
@@ -1031,7 +1035,9 @@ Future<String?> resolveOrderIdForSettlement(String settlementId) async {
         .maybeSingle();
     return link?['order_id'] as String?;
   } catch (e) {
-    writePrintLog('[Claim] Không tra được mã đơn từ thanh toán $settlementId: $e');
+    writePrintLog(
+      '[Claim] Không tra được mã đơn từ thanh toán $settlementId: $e',
+    );
     return null;
   }
 }
@@ -1415,6 +1421,7 @@ class StationPrintersState {
   final PrintDeviceState deviceState;
   final PrintServerOwnerState? ownerState;
   final String currentDeviceId;
+
   /// Thiết lập in mới (máy in / luật in). Rỗng = dùng 4 trạm cũ như trước.
   final PrintSetup printSetup;
 
@@ -1441,7 +1448,10 @@ class StationPrintersState {
   /// Có ít nhất một máy in đang dùng được (theo luật in mới nếu có, không thì 4 trạm cũ).
   bool get hasAnyEnabledPrinter {
     if (printSetup.isEmpty) {
-      return cashier.enabled || bepNong.enabled || bepBar.enabled || barLabel.enabled;
+      return cashier.enabled ||
+          bepNong.enabled ||
+          bepBar.enabled ||
+          barLabel.enabled;
     }
     final kinds = StationPrinterDispatcher.kSupportedPrinterKinds;
     final usable = printSetup.printers
@@ -1743,12 +1753,20 @@ class PrintServerLifecycleController {
     if (status == RealtimeSubscribeStatus.subscribed) {
       _isWsConnected = true;
       _wsReconnectAttempts = 0;
-      _startAdaptivePolling(storeId, pollActive, intervalSeconds: _kPrintPollSeconds);
+      _startAdaptivePolling(
+        storeId,
+        pollActive,
+        intervalSeconds: _kPrintPollSeconds,
+      );
     } else if (status == RealtimeSubscribeStatus.channelError ||
         status == RealtimeSubscribeStatus.closed ||
         status == RealtimeSubscribeStatus.timedOut) {
       _isWsConnected = false;
-      _startAdaptivePolling(storeId, pollActive, intervalSeconds: _kPrintPollSeconds);
+      _startAdaptivePolling(
+        storeId,
+        pollActive,
+        intervalSeconds: _kPrintPollSeconds,
+      );
     }
   }
 
@@ -1844,7 +1862,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
       });
     }
     // Quán dùng máy chủ in + máy này tự in bill: giành quyền trước để máy chủ nhường.
-    final needClaim = state.centralPrintRoutingEnabled && state.deviceOwnsBillPrinting;
+    final needClaim =
+        state.centralPrintRoutingEnabled && state.deviceOwnsBillPrinting;
     // Máy chủ in giành theo mã đơn (orders.id) nên phải giành đúng mã đó.
     final claimId = needClaim
         ? (await resolveOrderIdForSettlement(settlementId) ?? settlementId)
@@ -2053,10 +2072,26 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
               '[Settings] Bỏ cấu hình in lưu trên máy vì thuộc quán khác; dùng mặc định.',
             );
             state = state.copyWith(
-              cashier: const PrinterConfig(name: '', type: 'system', enabled: true),
-              bepNong: const PrinterConfig(name: '', type: 'system', enabled: false),
-              bepBar: const PrinterConfig(name: '', type: 'system', enabled: false),
-              barLabel: const PrinterConfig(name: '', type: 'system', enabled: false),
+              cashier: const PrinterConfig(
+                name: '',
+                type: 'system',
+                enabled: true,
+              ),
+              bepNong: const PrinterConfig(
+                name: '',
+                type: 'system',
+                enabled: false,
+              ),
+              bepBar: const PrinterConfig(
+                name: '',
+                type: 'system',
+                enabled: false,
+              ),
+              barLabel: const PrinterConfig(
+                name: '',
+                type: 'system',
+                enabled: false,
+              ),
               printSetup: const PrintSetup(),
             );
           } else {
@@ -2450,7 +2485,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         'centralPrintRoutingEnabled': state.centralPrintRoutingEnabled,
         'ownerMigrationCompleted': state.ownerMigrationCompleted,
         if (!state.printSetup.isEmpty) 'printSetup': state.printSetup.toJson(),
-        if (storeId.isNotEmpty) 'storeId': storeId, // chống dùng nhầm cấu hình của quán khác
+        if (storeId.isNotEmpty)
+          'storeId': storeId, // chống dùng nhầm cấu hình của quán khác
       };
       final jsonStr = jsonEncode(data);
 
@@ -3147,7 +3183,11 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
         await Future.delayed(const Duration(milliseconds: 2500));
         if (!await claimReceiptPrint(orderId)) {
           await _printCache.markOrderPrinted(orderId);
-          writePrintLog('[Claim] Bill $orderId do thiết bị khác in -> máy chủ bỏ qua.');
+          if (_claimSkipLogged.add(orderId)) {
+            writePrintLog(
+              '[Claim] Bill $orderId do thiết bị khác in -> máy chủ bỏ qua.',
+            );
+          }
           return;
         }
       }
