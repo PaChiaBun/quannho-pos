@@ -3,6 +3,13 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-18 — SEO trang công cụ cài máy in (`/cai-may-in.html`) để người ngoài Quán Nhỏ cũng dùng (Chủ Quán yêu cầu)
+
+- Viết lại trang theo hướng công cụ độc lập: title "Tự động cài máy in bill, tem ly cho Windows | Miễn phí" (54 ký tự), description 153 ký tự, H1 + 5 H2 chứa từ khoá tự nhiên (cài máy in bill 58mm/80mm, máy in bếp/bar, tem dán ly/in ly trà sữa, mở két, không cần tìm driver), canonical/hreflang, Open Graph + Twitter Card (`og-image.jpg`), breadcrumb, **JSON-LD** SoftwareApplication (miễn phí, Windows 10/11), HowTo (3 bước), FAQPage (10 câu khớp nội dung hiển thị), BreadcrumbList; bảng "máy in nào cài được" nói rõ giới hạn (USB không nhận, tem TSPL/ZPL, máy in văn phòng).
+- Nội dung trung thực về phạm vi: máy in tạo ra nhận lệnh in thô ESC/POS; phần mềm bán hàng khác chỉ dùng được nếu in ESC/POS; "tải miễn phí" là mô tả hiện trạng (chưa có quyết định về giá).
+- `public/quannho/llms.txt` thêm mục công cụ (AI search biết khi người dùng hỏi cài máy in bill/tem). Đã sao lưu bản cũ ở `/root/quannho-backups/web-download/` (`llms_truoc_*`, `cmi_html_truoc_*`) và lên live; `curl /llms.txt` có mục mới.
+- **Chưa làm được:** `src/app/sitemap.js` (repo lpm-web, cục bộ) đã thêm URL trang nhưng sitemap là Next build nên CHƯA live — cần build + `pm2 restart lpm-web`; chưa thêm link từ trang chủ; chưa gửi Google Search Console. Lưu ý lỗi có sẵn: `https://quannho.lpm.vn/faq` trả 307 tự chuyển về chính nó (vòng lặp) dù có trong sitemap — nên kiểm tra riêng. Thay đổi ở repo `/Users/banhbao/LPM.VN/lpm-web` (sitemap.js, llms.txt, cai-may-in.html) chưa commit.
+
 ## 2026-10-18 — Cài máy in MỘT LẦN BẤM + POS tự dùng máy QN-… (POS Windows 1.0.5+19, app cài máy in bản mới) — ĐÃ LÊN WEB, chờ thử tại KAY
 
 - **Quy trình Chủ Quán chốt:** cài POS trước → cắm máy in → chạy công cụ, bấm 1 nút → POS tự dùng các máy in (không chọn lại).
@@ -96,6 +103,17 @@
 - `AppLogger`: không tạo Timer khi `flutter test` (Timer treo làm hỏng widget test nhân viên).
 - Test: `test/modules/bill_printer/bill_print_fix_test.dart` (11 ca) đạt; toàn bộ test Dart: 765 đạt, 3 lỗi không liên quan (2 ca bán kính chấm công — đã lỗi sẵn trên HEAD; 1 golden BumChat, chưa kiểm HEAD). `dart analyze lib` không lỗi.
 - Lưu ý: chưa sửa lỗi "ref unmounted" ở màn thêm món; chưa xử lý nguyên nhân máy chủ in mất quyền. Reprint dùng `printBill` trực tiếp (không giành quyền) nên có thể ra 2 bản nếu máy chủ in cũng in bù. Chỉ áp cho màn Bàn, chưa cho bán hàng POS (`checkout_sheet.dart`). Chưa thử trên máy in thật.
+
+### 📦 Build Windows 1.0.5+19 (commit `bf38b92`) đã lên web (18/10 ~22:00)
+- Gồm sửa in bill (font đi kèm, bỏ máy in mặc định, chặn bấm tạm tính lặp, cảnh báo 30s + In lại bill) **và** các commit "Cài máy in" của phiên làm việc khác trên cùng nhánh (`488686f` trở xuống). `pubspec.yaml` đã là `1.0.5+19` (do commit `7776660` nâng) nên lần này KHÔNG tăng thêm.
+- GitHub run 39136337013 thành công; `QuanNhoPOS-Setup.exe` 62.489.508 byte, SHA-256 `bd98e8769081bf7e72e519a7588837747b9cd3c4db9729dd7a098feece6a3491`; MSIX Version 1.0.5.0. Đã đưa lên `quannho.lpm.vn`: `QuanNhoPOS-latest.exe` ở `/` và `/download/` + `QuanNhoPOS-1.0.5-build19-Setup.exe`; SHA-256 khớp trên máy chủ và qua HTTP công khai (tải tiếp tục đoạn dở vì mạng máy này hay cụt).
+- Bản cũ sao lưu: `/root/quannho-backups/web-download/exe_{root,download}_truoc_105b19_20261018_145858.exe` (bản +19 do phiên khác đưa lên lúc ~21:31, 60.975.813 byte). Còn có bản sao lưu `..._143147` (60.965.642 byte). Hoàn tác: chép lại hai file `_145858` đè lên hai `QuanNhoPOS-latest.exe`.
+- CHƯA chèn `app_versions`, CHƯA cài lên máy KAY, CHƯA thử trên Windows thật. Cài thử một máy trước máy thu ngân đang bán.
+
+### ✅ Theo dõi sau khi KAY cài build 19 (22:06–22:36, 18/10)
+- Chủ quán xác nhận bill ra bình thường (đủ chữ Việt). Log 30 phút từ 22:06: **0** lần `Auto-recovered owner`/`Could not restore` (trước đó 4–6 lần/giờ buổi tối), 0 lần tên máy in trống, 0 cảnh báo `bill_overdue`, không có lỗi in; chỉ còn cảnh báo cũ `finance_records` realtime (tự chuyển sang quét 10s) và 1 lần danh sách món timeout rồi tự hoạt động lại.
+- 3 lần thanh toán (22:07:12, 22:11:49, 22:24:53): bill in 16–18 giây sau khi thanh toán, đều `IN BILL Ne`, `receipt_printed=true`. Chậm hơn mức 5–7 giây ngày thường; chưa rõ vì sao (chưa kết luận).
+- Mẫu nhỏ (30 phút, giờ vắng): chưa đủ để nói hết lỗi mất quyền máy chủ in; cần xem lại lúc đông khách. Log hành động gom lô nên có thể đến máy chủ chậm tới ~3 phút (sự kiện quan trọng gửi ngay).
 
 ### 📦 Build Windows 1.0.5+16 (18/10)
 - Commit `7de2a57` (nhánh `feature/ai-bum-ui`, đã push) gồm: hủy bàn an toàn + log hành động gom lô + bỏ log trùng + 2 file SQL retention (chưa áp) + test + nhật ký. Không đưa vào `ios/Runner.xcodeproj` và `.docs/*` đang sửa dở.
