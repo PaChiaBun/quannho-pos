@@ -9,6 +9,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:sunmi_printer_plus/sunmi_printer_plus.dart';
 import '../../../core/utils/app_logger.dart';
+import '../fonts/bill_fonts.dart';
 
 
 /// Dữ liệu điểm ảnh RGBA thô của một trang (để chuyển sang luồng nền).
@@ -190,8 +191,8 @@ class SunmiBuiltinDriver {
     Future<pw.Font> Function()? loadRegular,
     Future<pw.Font> Function()? loadBold,
   }) async {
-    final regular = await (loadRegular ?? PdfGoogleFonts.notoSansRegular)();
-    final bold = await (loadBold ?? PdfGoogleFonts.notoSansBold)();
+    final regular = await (loadRegular ?? BillFonts.regular)();
+    final bold = await (loadBold ?? BillFonts.bold)();
     final doc = pw.Document();
     final wMm = kHeadDots / kDpi * 25.4; // ~48 mm
     doc.addPage(
@@ -246,12 +247,12 @@ class SunmiBuiltinDriver {
     Future<pw.Font> Function()? loadRegular,
     Future<pw.Font> Function()? loadBold,
   }) async {
-    final regular = await (loadRegular ?? PdfGoogleFonts.notoSansRegular)();
+    final regular = await (loadRegular ?? BillFonts.regular)();
     // So sánh: Bold thường (cột trái) và bán đậm (cột phải) ở từng mức độ đậm.
-    final bold = await (loadBold ?? PdfGoogleFonts.notoSansBold)();
+    final bold = await (loadBold ?? BillFonts.bold)();
     pw.Font semi;
     try {
-      semi = await PdfGoogleFonts.notoSansSemiBold();
+      semi = await BillFonts.semiBold() ?? bold;
     } catch (_) {
       semi = bold;
     }

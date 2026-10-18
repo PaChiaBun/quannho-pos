@@ -94,6 +94,7 @@ flutter:
     - assets/lottie/
     - assets/i18n/
     - assets/branding/
+    - assets/fonts/
 
 msix_config:
   display_name: "Quán Nhỏ POS"

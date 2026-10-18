@@ -191,13 +191,18 @@ class AppLogger {
   static bool _persist = true;
   static _LifecycleFlusher? _lifecycle;
 
+  /// Không tạo Timer khi chạy `flutter test` (Timer còn treo làm hỏng widget test). Test
+  /// riêng của gom lô bật lại bằng [resetForTest].
+  static bool _timersEnabled = kIsWeb || !Platform.environment.containsKey('FLUTTER_TEST');
+
   /// Chỉ dùng cho test: thay hàm gửi thật và tắt ghi đĩa.
   @visibleForTesting
   static Future<void> Function(String storeId, List<Map<String, dynamic>> rows)?
   senderOverride;
 
   @visibleForTesting
-  static void resetForTest({bool persist = false}) {
+  static void resetForTest({bool persist = false, bool timers = true}) {
+    _timersEnabled = timers;
     _queue.clear();
     _timer?.cancel();
     _timer = null;
@@ -249,10 +254,12 @@ class AppLogger {
     if (immediate || _queue.length >= flushMaxLines) {
       unawaited(_flush());
     } else {
-      _timer ??= Timer(flushInterval, () {
-        _timer = null;
-        unawaited(_flush());
-      });
+      if (_timersEnabled) {
+        _timer ??= Timer(flushInterval, () {
+          _timer = null;
+          unawaited(_flush());
+        });
+      }
     }
   }
 
@@ -308,10 +315,12 @@ class AppLogger {
       } while (_flushAgain && _queue.isNotEmpty);
     } catch (_) {
       // Mạng/máy chủ lỗi: giữ nguyên hàng chờ, thử lại sau một chu kỳ.
-      _timer ??= Timer(flushInterval, () {
-        _timer = null;
-        unawaited(_flush());
-      });
+      if (_timersEnabled) {
+        _timer ??= Timer(flushInterval, () {
+          _timer = null;
+          unawaited(_flush());
+        });
+      }
     } finally {
       _flushing = false;
     }
@@ -365,10 +374,12 @@ class AppLogger {
       _queue.insertAll(0, restored);
       if (_queue.length > maxQueue)
         _queue.removeRange(0, _queue.length - maxQueue);
-      _timer ??= Timer(const Duration(seconds: 20), () {
-        _timer = null;
-        unawaited(_flush());
-      });
+      if (_timersEnabled) {
+        _timer ??= Timer(const Duration(seconds: 20), () {
+          _timer = null;
+          unawaited(_flush());
+        });
+      }
     } catch (_) {}
   }
 

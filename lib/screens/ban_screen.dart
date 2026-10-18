@@ -33,8 +33,14 @@ import '../core/services/user_auth_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
+import '../modules/bill_printer/bill_print_guards.dart';
 import '../modules/bill_printer/screens/bill_preview_screen.dart'
-    show BillData, BillItem, BillType, StationPrinterDispatcher;
+    show
+        BillData,
+        BillItem,
+        BillType,
+        StationPrintStatus,
+        StationPrinterDispatcher;
 import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import 'kitchen_screen.dart' show kitchenReadyStreamProvider;
 import '../core/utils/responsive.dart';
@@ -3710,6 +3716,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
       // Replay không bao giờ tự in lại. Lần commit đầu dùng cache bền vững
       // settlementId:cashier để chống callback/print-server trùng nhau.
+      BillPrintWatchdog? billWatch;
+      BillData? billForReprint;
       if (!isReplay && printerSettings.autoPrintCheckout) {
         final hasOwner = hasActivePrintServerOwner(printerSettings.ownerState);
         if (shouldAutoPrintReceiptLocally(
@@ -3748,20 +3756,51 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               ref.read(sessionProvider)?.displayName,
             ),
           );
-          final printResult = await ref
-              .read(printerSettingsProvider.notifier)
-              .printCheckoutReceipt(
-                storeId: storeId,
-                settlementId: settlementId,
-                billData: billData,
+          billForReprint = billData;
+          final watch = billWatch = BillPrintWatchdog(
+            onOverdue: () => AppLogger.action(
+              'bill_overdue',
+              'Bill chưa in sau 30 giây',
+              table: widget.table.label,
+              sessionId: widget.session.id,
+              total: finalTotal,
+              result: 'chưa xác nhận in',
+              extra: {'settlement': settlementId},
+              critical: true,
+              level: 'WARNING',
+            ),
+          )..start();
+          // Không chờ in xong mới hiện màn thành công: in chậm/treo không được chặn thu ngân.
+          unawaited(() async {
+            try {
+              final printResult = await ref
+                  .read(printerSettingsProvider.notifier)
+                  .printCheckoutReceipt(
+                    storeId: storeId,
+                    settlementId: settlementId,
+                    billData: billData,
+                  );
+              final st = printResult.stationResults['cashier']?.status;
+              // Thành công, hoặc máy khác đã giành & in (skipped) = bill đã/ sẽ ra.
+              if (printResult.isStationSuccess('cashier') ||
+                  st == StationPrintStatus.skippedNoItems) {
+                watch.markPrinted();
+              } else {
+                AppLogger.warning(
+                  'printer',
+                  '[Checkout Print] Failed settlement=$settlementId: '
+                      '${printResult.stationResults['cashier']?.errorMessage}',
+                );
+              }
+            } catch (e, st) {
+              AppLogger.error(
+                'printer',
+                'In bill thanh toán lỗi settlement=$settlementId: $e',
+                e,
+                st,
               );
-          if (!printResult.isStationSuccess('cashier')) {
-            AppLogger.info(
-              'printer',
-              '[Checkout Print] Failed settlement=$settlementId: '
-                  '${printResult.stationResults['cashier']?.errorMessage}',
-            );
-          }
+            }
+          }());
         }
       }
 
@@ -3775,6 +3814,62 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         final player = AudioPlayer();
         player.play(AssetSource('sounds/payment_success.mp3'));
       } catch (_) {}
+      // Chụp sẵn mọi thứ cần cho "In lại bill": sau khi đóng bảng bàn, `ref`/`context` của
+      // màn này không còn dùng được (từng gây lỗi "Using ref when widget unmounted").
+      final messenger = ScaffoldMessenger.of(context);
+      final watchForDialog = billWatch;
+      final billForDialog = billForReprint;
+      final tableLabelForLog = widget.table.label;
+      final sessionIdForLog = widget.session.id;
+      Future<void> reprintBill() async {
+        final watch = watchForDialog;
+        final bill = billForDialog;
+        if (watch == null || bill == null) return;
+        AppLogger.action(
+          'reprint_bill',
+          'In lại bill',
+          table: tableLabelForLog,
+          sessionId: sessionIdForLog,
+          total: bill.total,
+          critical: true,
+        );
+        watch.restart();
+        try {
+          final r = await StationPrinterDispatcher.printBill(
+            bill,
+            printerSettings,
+            onlyReceipt: true,
+          );
+          if (r.isStationSuccess('cashier')) {
+            watch.markPrinted();
+          } else {
+            watch.markOverdue();
+          }
+        } catch (e, st) {
+          AppLogger.error('printer', 'In lại bill lỗi: $e', e, st);
+          watch.markOverdue();
+        }
+      }
+
+      void showReprintSnack() {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Bill $tableLabelForLog CHƯA in sau 30 giây. Kiểm tra máy in bill.',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+            ),
+            backgroundColor: _kRed,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 30),
+            action: SnackBarAction(
+              label: 'IN LẠI BILL',
+              textColor: Colors.white,
+              onPressed: () => unawaited(reprintBill()),
+            ),
+          ),
+        );
+      }
+
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
@@ -3882,7 +3977,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 22),
+                if (watchForDialog != null) ...[
+                  _BillPrintStatusBar(
+                    watch: watchForDialog,
+                    onReprint: () => unawaited(reprintBill()),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                const SizedBox(height: 8),
 
                 // Nút Đóng to, đậm, dễ bấm
                 SizedBox(
@@ -3913,6 +4015,24 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
         ),
       );
+      // Đóng màn thành công mà bill chưa in xong: vẫn canh tiếp, quá hạn thì báo + nút In lại.
+      final w = watchForDialog;
+      if (w != null) {
+        if (w.status.value == BillPrintStatus.overdue) {
+          showReprintSnack();
+        } else if (w.status.value == BillPrintStatus.pending) {
+          void onChange() {
+            if (w.status.value == BillPrintStatus.overdue) {
+              showReprintSnack();
+            }
+            if (w.status.value != BillPrintStatus.pending) {
+              w.status.removeListener(onChange);
+            }
+          }
+
+          w.status.addListener(onChange);
+        }
+      }
       if (mounted) Navigator.of(context).pop();
     } catch (e, st) {
       AppLogger.error(
@@ -6396,7 +6516,22 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
   }
 
   // Tạm tính
+  final PrintClickGuard _interimGuard = PrintClickGuard();
+
   void _printInterimBill() async {
+    // Chặn bấm liên tục: đang in hoặc vừa in xong chưa đủ vài giây thì bỏ qua.
+    if (!_interimGuard.tryStart()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Đang in tạm tính, vui lòng chờ vài giây rồi mới bấm lại.',
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     try {
       final info = await StoreAuthService.getStoreInfo();
       final storeId = info['store_id'];
@@ -6492,6 +6627,8 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
           ),
         );
       }
+    } finally {
+      _interimGuard.finish();
     }
   }
 
@@ -12854,6 +12991,101 @@ class _PulsingTableBorderState extends State<_PulsingTableBorder>
         );
       },
       child: widget.child,
+    );
+  }
+}
+
+/// Dòng trạng thái bill trong hộp thoại thanh toán thành công: đang in / đã gửi / chưa in sau
+/// 30 giây (kèm nút In lại bill).
+class _BillPrintStatusBar extends StatelessWidget {
+  const _BillPrintStatusBar({required this.watch, required this.onReprint});
+
+  final BillPrintWatchdog watch;
+  final VoidCallback onReprint;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<BillPrintStatus>(
+      valueListenable: watch.status,
+      builder: (context, status, _) {
+        switch (status) {
+          case BillPrintStatus.printed:
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  size: 18,
+                  color: _kGreen,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Bill đã gửi máy in',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _kGreen,
+                  ),
+                ),
+              ],
+            );
+          case BillPrintStatus.overdue:
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _kRed.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _kRed.withValues(alpha: 0.4)),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'Bill CHƯA in sau 30 giây. Kiểm tra máy in bill.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _kRed,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: onReprint,
+                      icon: const Icon(Icons.print_rounded, size: 18),
+                      label: Text(
+                        'IN LẠI BILL',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          case BillPrintStatus.pending:
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Đang in bill…',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _kNavy.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            );
+        }
+      },
     );
   }
 }

@@ -1,5 +1,7 @@
 // lib/modules/bill_printer/screens/bill_preview_screen.dart
 // ignore_for_file: use_build_context_synchronously
+import '../../../core/utils/app_logger.dart';
+import '../fonts/bill_fonts.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:collection/collection.dart';
@@ -94,6 +96,17 @@ abstract class PdfFontLoader {
   Future<pw.Font> loadBold();
 }
 
+/// Mặc định: font Noto Sans đi kèm app (có chữ Việt, không cần mạng); Google chỉ là dự phòng.
+class BundledPdfFontLoader implements PdfFontLoader {
+  const BundledPdfFontLoader();
+
+  @override
+  Future<pw.Font> loadRegular() => BillFonts.regular();
+
+  @override
+  Future<pw.Font> loadBold() => BillFonts.bold();
+}
+
 class GooglePdfFontLoader implements PdfFontLoader {
   @override
   Future<pw.Font> loadRegular() => PdfGoogleFonts.notoSansRegular();
@@ -105,15 +118,11 @@ class GooglePdfFontLoader implements PdfFontLoader {
 // ─── PDF Generator ────────────────────────────────────────────────────────────
 
 class BillPdfGenerator {
-  static PdfFontLoader fontLoader = GooglePdfFontLoader();
+  static PdfFontLoader fontLoader = const BundledPdfFontLoader();
 
   /// Font chữ đậm "bán đậm" (SemiBold) cho máy in nhiệt nhỏ; lỗi tải font -> null (dùng Bold thường).
   static Future<pw.Font?> softBoldFont() async {
-    try {
-      return await PdfGoogleFonts.notoSansSemiBold();
-    } catch (_) {
-      return null;
-    }
+    return BillFonts.semiBold();
   }
 
   static final _fmt = NumberFormat('#,###', 'vi_VN');
@@ -1871,24 +1880,17 @@ class StationPrinterDispatcher {
       if (config.name.isNotEmpty) {
         targetPrinter = Printer(url: config.name, name: config.name);
       } else {
+        // KHÔNG tự lấy máy in mặc định của Windows: từng làm bill thanh toán ra nhầm
+        // máy Canon thay vì máy in bill (21:09 ngày 18/10). Báo lỗi để hệ thống trả quyền in
+        // cho máy khác và thu ngân thấy cảnh báo + nút In lại.
         writePrintLog(
-          '[_dispatchPrint] Printer name is empty. Seeking system default printer...',
+          '[_dispatchPrint ERROR] Tên máy in trống cho "$jobName" -> KHÔNG in (không dùng máy in mặc định).',
         );
-        try {
-          final printers = await Printing.listPrinters();
-          targetPrinter =
-              printers.firstWhereOrNull((p) => p.isDefault) ??
-              printers.firstOrNull;
-          if (targetPrinter != null) {
-            writePrintLog(
-              '[_dispatchPrint] Found default system printer: ${targetPrinter.name}',
-            );
-          }
-        } catch (e) {
-          writePrintLog(
-            '[_dispatchPrint ERROR] Default printer search failed: $e',
-          );
-        }
+        AppLogger.error(
+          'printer',
+          'Tên máy in trống cho "$jobName": không in, không dùng máy in mặc định của Windows',
+        );
+        return false;
       }
 
       if (targetPrinter != null) {
