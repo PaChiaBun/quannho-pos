@@ -3,6 +3,12 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-18 — Website: thêm mục "Cài máy in" vào menu trên cùng + sitemap (đã build/deploy)
+
+- Chủ Quán chọn chỗ đặt link: **menu trên cùng** (cạnh Tính năng, Loại quán). Sửa `src/app/(qn)/quannho/page.jsx` (thêm `<a href="/cai-may-in.html">Cài máy in</a>`) và `src/app/sitemap.js` (thêm URL trang). Đối chiếu trước: file trên VPS khác bản local đúng đúng hai chỗ này.
+- Triển khai: sao lưu `page.jsx`, `sitemap.js` và `.next` vào `/root/quannho-backups/lpm-web-20261018_160507/`; chép 2 file; `npm run build` trên VPS thành công; `pm2 restart lpm-web`. Kiểm tra: `/`, `/cai-may-in.html`, `/sitemap.xml` 200; menu có "Cài máy in"; sitemap có `cai-may-in.html`; `lpm.vn` 200. Hoàn tác: chép lại hai file backup, giải nén `next_dir.tar.gz` vào `/var/www/lpm-web`, `pm2 restart lpm-web`.
+- Thay đổi ở repo `/Users/banhbao/LPM.VN/lpm-web` (page.jsx, sitemap.js, llms.txt, cai-may-in.html) chưa commit. Lỗi có sẵn chưa sửa: `/faq` 307 tự chuyển về chính nó.
+
 ## 2026-10-18 — SEO trang công cụ cài máy in (`/cai-may-in.html`) để người ngoài Quán Nhỏ cũng dùng (Chủ Quán yêu cầu)
 
 - Viết lại trang theo hướng công cụ độc lập: title "Tự động cài máy in bill, tem ly cho Windows | Quán Nhỏ POS", description 153 ký tự, H1 + 5 H2 chứa từ khoá tự nhiên (cài máy in bill 58mm/80mm, máy in bếp/bar, tem dán ly/in ly trà sữa, mở két, không cần tìm driver), canonical/hreflang, Open Graph + Twitter Card (`og-image.jpg`), breadcrumb, **JSON-LD** SoftwareApplication (miễn phí, Windows 10/11), HowTo (3 bước), FAQPage (10 câu khớp nội dung hiển thị), BreadcrumbList; bảng "máy in nào cài được" nói rõ giới hạn (USB không nhận, tem TSPL/ZPL, máy in văn phòng).
