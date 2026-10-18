@@ -3,6 +3,13 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-18 — Trang hướng dẫn + tải "Công cụ Cài máy in" trên quannho.lpm.vn (Chủ Quán yêu cầu)
+
+- App cài máy in bản có **log ra file** (`%LOCALAPPDATA%\QuanNho\CaiMayIn\logs\cai-may-in-YYYYMMDD.log`, giữ 14 ngày; nút "Mở thư mục log" / "Sao chép log"): commit `aaec40a`, run 39129540197 thành công; zip 11.916.631 B, SHA-256 `55189199…e28f`.
+- **Đã lên web:** trang tĩnh `https://quannho.lpm.vn/cai-may-in.html` (hướng dẫn 7 bước, bảng máy in dùng được, xử lý sự cố, nút tải, SHA-256) và tệp `QuanNhoCaiMayIn-latest.zip` ở `/var/www/lpm-web/public/` + `public/download/` (SHA-256 công khai khớp bản local). Bản sao trang lưu ở `/Users/banhbao/LPM.VN/lpm-web/public/cai-may-in.html` (nguồn, chưa commit repo đó).
+- File mới trong `public/` của Next chỉ được phục vụ sau khi **`pm2 restart lpm-web`** (đã chạy; portal online lại sau vài giây, trang chủ 200). Chưa thêm link vào trang chủ (cần build lại Next); trang chủ còn trỏ Windows tới `QuanNhoPOS-latest.exe`.
+- Chưa kiểm: chạy thật công cụ trên Windows/máy in KAY; nội dung hướng dẫn viết theo thiết kế, chưa đối chiếu ảnh chụp màn hình thật của công cụ.
+
 ## 2026-10-18 — Đã commit/build/lên web: POS Windows 1.0.5+18 + app cài máy in (chờ thử tại KAY)
 
 - Commit `757d345` (POS + app + in thô), `dc86d23`/`df8c14c` (workflow; cần quyền `workflow` của token `gh`, Chủ Quán đã cấp; `workflow_dispatch` không chạy được vì file chỉ có trên nhánh → thêm trigger `push`), `f6bfe4a` (sửa lỗi build: bỏ `trustInfo` trong manifest, dùng `/MANIFESTUAC requireAdministrator` vì mt.exe báo LNK1327). Web `/pos/` đã up (backup `pos_backup_20261018_192219.tar.gz`).
