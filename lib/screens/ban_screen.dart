@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:math';
+import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../core/utils/app_logger.dart';
@@ -11,7 +13,6 @@ import '../core/utils/money_formatter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 // topping_group_repository.dart - đã deprecated, được thay bằng product_topping_links
 import 'package:uuid/uuid.dart';
@@ -25,19 +26,22 @@ import '../core/repositories/core_product_repository.dart';
 import '../modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart';
 import '../modules/kho_chuyen_nghiep/providers/kho_chuyen_nghiep_providers.dart'
     show khoProRepositoryProvider;
-import '../core/repositories/kitchen_repository.dart';
 import '../core/services/store_auth_service.dart';
+import '../modules/quick_notes/quick_notes.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/user_auth_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
+import '../core/utils/kitchen_unsent.dart';
+import '../core/utils/stale_lock.dart';
+import '../modules/bill_printer/bill_print_guards.dart';
 import '../modules/bill_printer/screens/bill_preview_screen.dart'
     show
         BillData,
         BillItem,
-        showBillPreview,
         BillType,
+        StationPrintStatus,
         StationPrinterDispatcher;
 import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import 'kitchen_screen.dart' show kitchenReadyStreamProvider;
@@ -47,7 +51,12 @@ import '../modules/pos/models/coupon_model.dart';
 import '../modules/bill_printer/providers/bill_template_provider.dart';
 import '../core/services/vietqr_service.dart';
 import '../modules/qr_order/providers/qr_order_providers.dart';
+import '../modules/qr_order/widgets/qr_locked_banner.dart';
 import '../modules/qr_order/widgets/qr_order_review_sheet.dart';
+import '../modules/qr_order/widgets/qr_counter_queue_sheet.dart';
+import '../modules/qr_order/services/settlement_operation_manager.dart';
+import '../modules/qr_order/models/qr_order_model.dart'
+    show QrErrorCode, AuthoritativeQuote, QrRequestModel;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BRAND COLORS
@@ -108,6 +117,38 @@ const _kZoneIconCodes = <int>[
   0xe206, // local_fire_department
 ];
 
+/// Dùng các IconData hằng để Flutter web có thể tree-shake font icon.
+IconData _zoneIconForCode(int code) {
+  switch (code) {
+    case 0xe318:
+      return Icons.home_outlined;
+    case 0xe1a7:
+      return Icons.deck_outlined;
+    case 0xe7f4:
+      return Icons.star_border_rounded;
+    case 0xe838:
+      return Icons.emoji_events_outlined;
+    case 0xe56c:
+      return Icons.restaurant_menu_rounded;
+    case 0xe555:
+      return Icons.local_cafe_outlined;
+    case 0xe51c:
+      return Icons.nightlight_round;
+    case 0xe0da:
+      return Icons.flag_outlined;
+    case 0xe01a:
+      return Icons.weekend_outlined;
+    case 0xe206:
+      return Icons.local_fire_department_outlined;
+    case 0xe145:
+      return Icons.add_rounded;
+    case 0xe1b1:
+      return Icons.grid_view_rounded;
+    default:
+      return Icons.table_restaurant_outlined;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PROVIDERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -141,11 +182,8 @@ final sessionItemsProvider = StreamProvider.autoDispose
     });
 
 /// Stream modifiers của 1 sản phẩm (query Supabase thật)
-final productModifiersProvider =
-    StreamProvider.family<List<Map<String, dynamic>>, String>((
-      ref,
-      productId,
-    ) async* {
+final productModifiersProvider = StreamProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, productId) async* {
       // Poll mỗi 30s (Supabase realtime không hỗ trợ arbitrary tables dễ)
       while (true) {
         try {
@@ -165,11 +203,8 @@ final productModifiersProvider =
     });
 
 // ── Topping catalog — lấy từ bảng products có is_topping=true ─────────────
-final toppingCatalogProvider =
-    StreamProvider.family<List<Map<String, dynamic>>, String>((
-      ref,
-      storeId,
-    ) async* {
+final toppingCatalogProvider = StreamProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, storeId) async* {
       while (true) {
         try {
           final rows = await Supabase.instance.client
@@ -303,11 +338,15 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         ),
       );
       if (mounted) setState(() => _selectedZoneIndex = 0);
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Thêm khu thất bại: $e', e, st);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi thêm khu: $e', style: GoogleFonts.outfit()),
+          content: Text(
+            'Thêm khu vực thất bại. Hãy chụp lại báo chủ app.',
+            style: GoogleFonts.outfit(),
+          ),
           backgroundColor: _kRed,
           duration: const Duration(seconds: 6),
         ),
@@ -343,6 +382,69 @@ class _BanScreenState extends ConsumerState<BanScreen> {
       if (mounted) setState(() => _selectedZoneIndex = 0);
     } else {
       await _banRepo.updateZoneName(zone.id, result['name'] as String);
+    }
+  }
+
+  Future<void> _handleReorderZones(
+    List<BanZoneModel> currentZones,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    final perms = await ref.read(userActionPermsProvider.future);
+    final hasPerm = perms.contains('ban.manage_structure');
+    if (!hasPerm) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Bạn không có quyền "Sắp xếp khu vực".',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            ),
+            backgroundColor: _kRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (oldIndex < 0 || oldIndex >= currentZones.length) return;
+    if (newIndex < 0) newIndex = 0;
+    if (newIndex > currentZones.length) newIndex = currentZones.length;
+
+    // Flutter ReorderableListView index shift
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+    if (oldIndex == newIndex) return;
+
+    // Save selected zone ID to preserve selection after reordering
+    String? selectedZoneId;
+    if (_selectedZoneIndex > 0 &&
+        _selectedZoneIndex - 1 < currentZones.length) {
+      selectedZoneId = currentZones[_selectedZoneIndex - 1].id;
+    }
+
+    final reorderedList = List<BanZoneModel>.from(currentZones);
+    final movedItem = reorderedList.removeAt(oldIndex);
+    reorderedList.insert(newIndex, movedItem);
+
+    setState(() {
+      _cachedZones = reorderedList;
+      if (selectedZoneId != null) {
+        final newIdx = reorderedList.indexWhere((z) => z.id == selectedZoneId);
+        if (newIdx != -1) {
+          _selectedZoneIndex = newIdx + 1;
+        }
+      }
+    });
+
+    try {
+      final ids = reorderedList.map((z) => z.id).toList();
+      await _banRepo.reorderZones(ids);
+      ref.invalidate(banZonesProvider);
+    } catch (e) {
+      debugPrint('[BanScreen] reorderZones error: $e');
     }
   }
 
@@ -411,11 +513,15 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         );
       }
       HapticFeedback.lightImpact();
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Thêm bàn thất bại: $e', e, st);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi thêm bàn: $e', style: GoogleFonts.outfit()),
+          content: Text(
+            'Tạo bàn thất bại. Hãy chụp lại báo chủ app.',
+            style: GoogleFonts.outfit(),
+          ),
           backgroundColor: _kRed,
           duration: const Duration(seconds: 6),
         ),
@@ -439,6 +545,13 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         ),
       );
       if (session == null) return;
+      AppLogger.action(
+        'open_table',
+        'Mở bàn',
+        table: table.label,
+        sessionId: session.id,
+        extra: {'guests': session.guestCount},
+      );
       ref.invalidate(activeSessionsProvider);
       HapticFeedback.mediumImpact();
       if (!mounted) return;
@@ -645,6 +758,26 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           ),
         ),
         actions: [
+          Consumer(
+            builder: (context, ref, _) {
+              if (!ref.watch(qrModuleEnabledProvider)) {
+                return const SizedBox.shrink();
+              }
+              final count = ref.watch(activeQrRequestsProvider).length;
+              final stale = ref.watch(qrPipelineErrorProvider) != null;
+              return IconButton(
+                tooltip: stale
+                    ? 'Đơn QR (mất kết nối, danh sách có thể cũ)'
+                    : 'Đơn gọi món QR',
+                onPressed: () => _openQrQueue(context, ref),
+                icon: Badge(
+                  isLabelVisible: count > 0 || stale,
+                  label: Text(stale ? '!' : '$count'),
+                  child: const Icon(Icons.qr_code_2_rounded, color: _kNavy),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.add_location_alt_rounded, color: _kNavy),
             tooltip: 'Thêm khu vực',
@@ -657,41 +790,66 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           child: Container(height: 1, color: const Color(0xFFEEEBE6)),
         ),
       ),
-      body: zonesAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(color: _kNavy)),
-        error: (e, _) => Center(child: Text('Lỗi: $e')),
-        data: (zones) {
-          if (_cachedZones.length != zones.length) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) setState(() => _cachedZones = zones);
-            });
-          } else {
-            _cachedZones = zones;
-          }
-
-          // ── Grid bàn (dùng chung cho cả phone lẫn tablet) ──────────────
-          Widget tableGrid = _buildTableGrid(zones);
-
-          // ── Tablet: Two Column ──────────────────────────────────────────
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth > 700) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Cột trái: ZoneTabBar + Grid bàn
-                    Expanded(flex: 3, child: tableGrid),
-                    // Cột phải: Panel tổng quan (fixed 280px)
-                    SizedBox(width: 280, child: _BanRightPanel(zones: zones)),
-                  ],
+      body: Column(
+        children: [
+          const QrLockedBanner(),
+          Expanded(
+            child: zonesAsync.when(
+              loading: () =>
+                  const Center(child: CircularProgressIndicator(color: _kNavy)),
+              error: (e, st) {
+                AppLogger.error(
+                  'ban_screen',
+                  'Tải danh sách khu vực thất bại: $e',
+                  e,
+                  st,
                 );
-              }
-              // Phone: layout cũ, không thay đổi gì
-              return tableGrid;
-            },
-          );
-        },
+                return const Center(
+                  child: Text(
+                    'Tải danh sách khu vực thất bại. Hãy chụp lại báo chủ app.',
+                  ),
+                );
+              },
+              data: (zones) {
+                if (_cachedZones.length != zones.length ||
+                    _cachedZones.isEmpty) {
+                  _cachedZones = zones;
+                }
+
+                final displayZones =
+                    _cachedZones.isNotEmpty &&
+                        _cachedZones.length == zones.length
+                    ? _cachedZones
+                    : zones;
+
+                // ── Grid bàn (dùng chung cho cả phone lẫn tablet) ──────────────
+                Widget tableGrid = _buildTableGrid(displayZones);
+
+                // ── Tablet: Two Column ──────────────────────────────────────────
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth > 700) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Cột trái: ZoneTabBar + Grid bàn
+                          Expanded(flex: 3, child: tableGrid),
+                          // Cột phải: Panel tổng quan (fixed 280px)
+                          SizedBox(
+                            width: 280,
+                            child: _BanRightPanel(zones: zones),
+                          ),
+                        ],
+                      );
+                    }
+                    // Phone: layout cũ, không thay đổi gì
+                    return tableGrid;
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'ban_screen_fab',
@@ -856,7 +1014,9 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           zones: zones,
           selectedIndex: _selectedZoneIndex,
           onSelect: (i) => setState(() => _selectedZoneIndex = i),
-          onLongPress: (zone) => _editZone(zone),
+          onReorder: (oldIdx, newIdx) =>
+              _handleReorderZones(zones, oldIdx, newIdx),
+          onEditZone: (zone) => _editZone(zone),
           onAddZone: _addZone,
         ),
         Container(
@@ -909,7 +1069,19 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         Expanded(
           child: activeSessionsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('$e')),
+            error: (e, st) {
+              AppLogger.error(
+                'ban_screen',
+                'Tải phiên bàn thất bại: $e',
+                e,
+                st,
+              );
+              return const Center(
+                child: Text(
+                  'Tải phiên bàn thất bại. Hãy chụp lại báo chủ app.',
+                ),
+              );
+            },
             data: (activeSessions) {
               return allTablesAsync.when(
                 loading: () => const SizedBox(),
@@ -1027,10 +1199,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Icon(
-                                                IconData(
-                                                  zone.iconCode,
-                                                  fontFamily: 'MaterialIcons',
-                                                ),
+                                                _zoneIconForCode(zone.iconCode),
                                                 color: Colors.white,
                                                 size: 14,
                                               ),
@@ -1612,14 +1781,16 @@ class _ZoneTabBar extends StatelessWidget {
   final List<BanZoneModel> zones;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
-  final ValueChanged<BanZoneModel> onLongPress;
+  final void Function(int oldIndex, int newIndex) onReorder;
+  final ValueChanged<BanZoneModel> onEditZone;
   final VoidCallback onAddZone;
 
   const _ZoneTabBar({
     required this.zones,
     required this.selectedIndex,
     required this.onSelect,
-    required this.onLongPress,
+    required this.onReorder,
+    required this.onEditZone,
     required this.onAddZone,
   });
 
@@ -1631,11 +1802,13 @@ class _ZoneTabBar extends StatelessWidget {
         children: [
           SizedBox(
             height: 52,
-            child: ListView(
+            child: ReorderableListView(
               scrollDirection: Axis.horizontal,
+              buildDefaultDragHandles: false,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              children: [
-                _ZoneChip(
+              header: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _ZoneChip(
                   label: 'Tất cả',
                   iconCode: 0xe1b1,
                   color: _kNavy,
@@ -1643,23 +1816,10 @@ class _ZoneTabBar extends StatelessWidget {
                   onTap: () => onSelect(0),
                   onLongPress: null,
                 ),
-                const SizedBox(width: 8),
-                ...zones.asMap().entries.map((e) {
-                  final i = e.key + 1;
-                  final zone = e.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _ZoneChip(
-                      label: zone.name,
-                      iconCode: zone.iconCode,
-                      color: Color(zone.colorValue),
-                      isSelected: selectedIndex == i,
-                      onTap: () => onSelect(i),
-                      onLongPress: () => onLongPress(zone),
-                    ),
-                  );
-                }),
-                _ZoneChip(
+              ),
+              footer: Padding(
+                padding: const EdgeInsets.only(left: 0),
+                child: _ZoneChip(
                   label: 'Thêm khu',
                   iconCode: 0xe145,
                   color: AppColors.inkFaded,
@@ -1668,6 +1828,45 @@ class _ZoneTabBar extends StatelessWidget {
                   onLongPress: null,
                   isDashed: true,
                 ),
+              ),
+              onReorder: onReorder,
+              proxyDecorator: (child, index, animation) {
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (context, child) {
+                    final double animValue = Curves.easeInOut.transform(
+                      animation.value,
+                    );
+                    final double elevation = lerpDouble(0, 6, animValue) ?? 0;
+                    return Material(
+                      elevation: elevation,
+                      color: Colors.transparent,
+                      shadowColor: Colors.black26,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Transform.scale(scale: 1.05, child: child),
+                    );
+                  },
+                  child: child,
+                );
+              },
+              children: [
+                for (int i = 0; i < zones.length; i++)
+                  ReorderableDelayedDragStartListener(
+                    key: ValueKey(zones[i].id),
+                    index: i,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _ZoneChip(
+                        label: zones[i].name,
+                        iconCode: zones[i].iconCode,
+                        color: Color(zones[i].colorValue),
+                        isSelected: selectedIndex == i + 1,
+                        onTap: () => onSelect(i + 1),
+                        onDoubleTap: () => onEditZone(zones[i]),
+                        onEdit: () => onEditZone(zones[i]),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1685,6 +1884,8 @@ class _ZoneChip extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onDoubleTap;
+  final VoidCallback? onEdit;
   final bool isDashed;
 
   const _ZoneChip({
@@ -1693,49 +1894,76 @@ class _ZoneChip extends StatelessWidget {
     required this.color,
     required this.isSelected,
     required this.onTap,
-    required this.onLongPress,
+    this.onLongPress,
+    this.onDoubleTap,
+    this.onEdit,
     this.isDashed = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDashed
-                ? color.withValues(alpha: 0.4)
-                : isSelected
-                ? color
-                : color.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              IconData(iconCode, fontFamily: 'MaterialIcons'),
-              size: 16,
-              color: isSelected ? Colors.white : color,
+    return Tooltip(
+      message: onEdit != null
+          ? '$label\n• Chạm lâu để di chuyển\n• Chạm đúp để sửa'
+          : label,
+      waitDuration: const Duration(milliseconds: 600),
+      child: GestureDetector(
+        onTap: onTap,
+        onDoubleTap: onDoubleTap,
+        onLongPress: onLongPress,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? color : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDashed
+                  ? color.withValues(alpha: 0.4)
+                  : isSelected
+                  ? color
+                  : color.withValues(alpha: 0.3),
+              width: 1.5,
             ),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: GoogleFonts.outfit(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _zoneIconForCode(iconCode),
+                size: 16,
                 color: isSelected ? Colors.white : color,
               ),
-            ),
-          ],
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? Colors.white : color,
+                ),
+              ),
+              if (isSelected && onEdit != null) ...[
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: onEdit,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.edit_rounded,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -1745,6 +1973,52 @@ class _ZoneChip extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // TABLE CARD (Grid mode)
 // ─────────────────────────────────────────────────────────────────────────────
+/// Mở sheet duyệt đơn QR; sau duyệt/từ chối thì làm mới danh sách bàn.
+void _openQrReview(BuildContext context, WidgetRef ref, QrRequestModel req) {
+  void refresh() {
+    ref.invalidate(banZonesProvider);
+    ref.invalidate(
+      activeSessionsProvider,
+    ); // thẻ bàn đổi sang "Có khách" ngay sau khi duyệt
+    ref.invalidate(qrActivePipelineStreamProvider);
+  }
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => QrOrderReviewSheet(
+      request: req,
+      onApproved: refresh,
+      onRejected: refresh,
+    ),
+  ).then((_) => refresh());
+}
+
+/// Mở hàng chờ QR chung rồi duyệt đơn được chọn.
+Future<void> _openQrQueue(BuildContext context, WidgetRef ref) async {
+  final picked = await showModalBottomSheet<QrRequestModel>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const QrCounterQueueSheet(),
+  );
+  if (picked != null && context.mounted) _openQrReview(context, ref, picked);
+}
+
+/// Huy hiệu QR của bàn: 1 đơn thì mở thẳng, nhiều đơn thì mở hàng chờ.
+void _openQrForTable(
+  BuildContext context,
+  WidgetRef ref,
+  List<QrRequestModel> orders,
+) {
+  if (orders.length == 1) {
+    _openQrReview(context, ref, orders.first);
+  } else {
+    _openQrQueue(context, ref);
+  }
+}
+
 class _TableCard extends ConsumerWidget {
   final BanTableModel table;
   final BanSessionModel? session;
@@ -1785,18 +2059,19 @@ class _TableCard extends ConsumerWidget {
         .where((name) => name != null && name.isNotEmpty)
         .toSet()
         .join(', ');
+    // Món chưa gửi bếp quá 3 phút -> huy hiệu đỏ trên thẻ bàn + ghi log (một lần mỗi đợt).
+    final overdueUnsent = isOccupied
+        ? overdueUnsentItems(activeItems, DateTime.now())
+        : const <BanSessionItemModel>[];
+    if (overdueUnsent.isNotEmpty) {
+      _logUnsentOverdueOnce(table.label, session!.id, overdueUnsent);
+    }
 
-    // QR Calling check for this table
-    final pendingQrReqs = ref.watch(pendingTableQrRequestsProvider);
-    final pendingForTable = pendingQrReqs
-        .where((r) => r.tableId == table.id)
-        .toList();
-    final hasPendingQr = pendingForTable.isNotEmpty;
-
+    // QR Calling check for this table (chỉ hiển thị khi đơn đã được gán assignedTableId)
     final activeForTable = ref.watch(
       activeQrRequestsForTableProvider(table.id),
     );
-    final hasActiveQr = activeForTable.isNotEmpty;
+    final hasPendingQr = activeForTable.isNotEmpty;
 
     // Kích thước động theo cardSize
     final double paddingVal = cardSize == 'nho'
@@ -1836,22 +2111,7 @@ class _TableCard extends ConsumerWidget {
       isPulsing: hasPendingQr,
       borderRadius: borderRadiusVal,
       child: GestureDetector(
-        onTap: () {
-          if (hasActiveQr) {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (_) => QrOrderReviewSheet(
-                request: activeForTable.first,
-                onApproved: () {},
-                onRejected: () {},
-              ),
-            );
-          } else {
-            onTap();
-          }
-        },
+        onTap: onTap, // đơn QR không chặn việc mở bàn
 
         onLongPress: onLongPress,
         child: AnimatedContainer(
@@ -1884,128 +2144,166 @@ class _TableCard extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Icon(
-                      IconData(zone.iconCode, fontFamily: 'MaterialIcons'),
+                      _zoneIconForCode(zone.iconCode),
                       size: iconSizeVal,
                       color: isOccupied
                           ? Colors.white.withValues(alpha: 0.8)
                           : Color(zone.colorValue),
                     ),
                     if (hasPendingQr)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.amber,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.bolt_rounded,
-                              size: 12,
-                              color: Colors.black,
-                            ),
-                            Text(
-                              'QR (${pendingForTable.first.items.length})',
-                              style: GoogleFonts.outfit(
-                                fontSize: statusFontSize,
-                                fontWeight: FontWeight.w900,
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () =>
+                            _openQrForTable(context, ref, activeForTable),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.bolt_rounded,
+                                size: 12,
                                 color: Colors.black,
                               ),
-                            ),
-                          ],
+                              Text(
+                                'QR (${activeForTable.length})',
+                                style: GoogleFonts.outfit(
+                                  fontSize: statusFontSize,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       )
                     else
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: cardSize == 'nho'
-                              ? 6
-                              : cardSize == 'vua'
-                              ? 8
-                              : 10,
-                          vertical: cardSize == 'nho'
-                              ? 2
-                              : cardSize == 'vua'
-                              ? 3
-                              : 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isOccupied
-                              ? Colors.white.withValues(alpha: 0.2)
-                              : _kGreen.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(
-                            cardSize == 'nho' ? 6 : 8,
+                      Flexible(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: cardSize == 'nho'
+                                ? 6
+                                : cardSize == 'vua'
+                                ? 8
+                                : 10,
+                            vertical: cardSize == 'nho'
+                                ? 2
+                                : cardSize == 'vua'
+                                ? 3
+                                : 4,
                           ),
-                        ),
-                        child: Text(
-                          isOccupied ? '● Có khách' : '○ Trống',
-                          style: GoogleFonts.outfit(
-                            fontSize: statusFontSize,
-                            fontWeight: FontWeight.w600,
-                            color: isOccupied ? Colors.white : _kGreen,
+                          decoration: BoxDecoration(
+                            color: isOccupied
+                                ? Colors.white.withValues(alpha: 0.2)
+                                : _kGreen.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(
+                              cardSize == 'nho' ? 6 : 8,
+                            ),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              isOccupied ? '● Có khách' : '○ Trống',
+                              maxLines: 1,
+                              style: GoogleFonts.outfit(
+                                fontSize: statusFontSize,
+                                fontWeight: FontWeight.w600,
+                                color: isOccupied ? Colors.white : _kGreen,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                   ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      table.label,
-                      style: GoogleFonts.outfit(
-                        fontSize: labelFontSize,
-                        fontWeight: FontWeight.w900,
-                        color: isOccupied ? Colors.white : _kNavy,
-                      ),
-                    ),
-                    SizedBox(height: cardSize == 'nho' ? 0 : 2),
-                    if (isOccupied) ...[
-                      Text(
-                        '${session!.guestCount} khách • $totalQty món',
-                        style: GoogleFonts.outfit(
-                          fontSize: infoFontSize,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                      if (waiters.isNotEmpty && cardSize != 'nho') ...[
-                        const SizedBox(height: 1),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.bottomLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          'NV: $waiters',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          table.label,
                           style: GoogleFonts.outfit(
-                            fontSize: infoFontSize - 1.5,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white.withValues(alpha: 0.75),
+                            fontSize: labelFontSize,
+                            fontWeight: FontWeight.w900,
+                            color: isOccupied ? Colors.white : _kNavy,
                           ),
                         ),
+                        SizedBox(height: cardSize == 'nho' ? 0 : 2),
+                        if (isOccupied) ...[
+                          Text(
+                            '${session!.guestCount} khách • $totalQty món',
+                            style: GoogleFonts.outfit(
+                              fontSize: infoFontSize,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                          if (waiters.isNotEmpty && cardSize != 'nho') ...[
+                            const SizedBox(height: 1),
+                            Text(
+                              'NV: $waiters',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.outfit(
+                                fontSize: infoFontSize - 1.5,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white.withValues(alpha: 0.75),
+                              ),
+                            ),
+                          ],
+                        ] else
+                          Text(
+                            '${table.seats} chỗ',
+                            style: GoogleFonts.outfit(
+                              fontSize: infoFontSize,
+                              fontWeight: FontWeight.w500,
+                              color: _kNavy.withValues(alpha: 0.55),
+                            ),
+                          ),
+                        if (isOccupied && totalAmount > 0) ...[
+                          SizedBox(height: cardSize == 'nho' ? 2 : 6),
+                          Text(
+                            fmtVnd(totalAmount),
+                            style: GoogleFonts.outfit(
+                              fontSize: amountFontSize,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                        if (overdueUnsent.isNotEmpty) ...[
+                          SizedBox(height: cardSize == 'nho' ? 2 : 5),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '⚠ ${overdueUnsent.length} món chưa gửi bếp',
+                              style: GoogleFonts.outfit(
+                                fontSize: infoFontSize - 1,
+                                fontWeight: FontWeight.w800,
+                                color: _kRed,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ] else
-                      Text(
-                        '${table.seats} chỗ',
-                        style: GoogleFonts.outfit(
-                          fontSize: infoFontSize,
-                          fontWeight: FontWeight.w500,
-                          color: _kNavy.withValues(alpha: 0.55),
-                        ),
-                      ),
-                    if (isOccupied && totalAmount > 0) ...[
-                      SizedBox(height: cardSize == 'nho' ? 2 : 6),
-                      Text(
-                        fmtVnd(totalAmount),
-                        style: GoogleFonts.outfit(
-                          fontSize: amountFontSize,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -2144,10 +2442,7 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        IconData(
-                          widget.zone.iconCode,
-                          fontFamily: 'MaterialIcons',
-                        ),
+                        _zoneIconForCode(widget.zone.iconCode),
                         size: 20,
                         color: zoneColor,
                       ),
@@ -2229,13 +2524,19 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                                 if (mounted) {
                                   Navigator.pop(context, session);
                                 }
-                              } catch (e) {
+                              } catch (e, st) {
+                                AppLogger.error(
+                                  'ban_screen',
+                                  'Mở bàn thất bại: $e',
+                                  e,
+                                  st,
+                                );
                                 if (mounted) {
                                   setState(() => _isLoading = false);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        'Lỗi mở bàn: $e',
+                                        'Mở bàn thất bại. Hãy chụp lại báo chủ app.',
                                         style: GoogleFonts.outfit(
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -2366,6 +2667,7 @@ class _TableSessionSheet extends ConsumerStatefulWidget {
 
 class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   bool _isCancelling = false;
+  final _settlementOpManager = SettlementOperationManager();
   // Map lưu TextEditingController theo item.id — tránh tạo mới mỗi build
   final Map<String, TextEditingController> _noteControllers = {};
   final Map<String, FocusNode> _noteFocusNodes = {};
@@ -2445,11 +2747,15 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'In tạm tính thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi in tạm tính: $e'),
+            content: const Text(
+              'In tạm tính thất bại. Hãy chụp lại báo chủ app.',
+            ),
+            backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -2474,6 +2780,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     // Món chưa gửi bếp → xoá bình thường
     if (status == 'chua_gui') {
       await _banRepo.removeSessionItem(item.id);
+      AppLogger.action(
+        'remove_item',
+        'Xóa món chưa gửi bếp',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        total: item.subtotal,
+        extra: {'item': item.productName, 'qty': item.quantity},
+      );
       ref.invalidate(sessionItemsProvider(widget.session.id));
       HapticFeedback.lightImpact();
       return;
@@ -3227,13 +3541,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
         );
       }
-    } catch (e) {
-      debugPrint('[Ban] ❌ reduce_qty FAIL: $e');
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Giảm số lượng món thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '❌ Lỗi: $e',
+              'Cập nhật món thất bại. Hãy chụp lại báo chủ app.',
               style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
             ),
             backgroundColor: _kRed,
@@ -3249,7 +3563,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   } // end _updateItemQty
 
   Future<void> _checkout(
-    double total,
+    double amountBeforeSurcharge,
     String payMethod,
     List<BanSessionItemModel> items, {
     String? customerId,
@@ -3257,474 +3571,193 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     double discount = 0,
     String? couponCode,
     double surcharge = 0,
+    bool allowQuoteReconfirmation = true,
   }) async {
-    final banRepoCached = ref.read(banRepositoryProvider);
-    final khoProRepoCached = ref.read(khoProRepositoryProvider);
-    final productRepoCached = ref.read(productRepositoryProvider);
-    final printerSettingsCached = ref.read(printerSettingsProvider);
-
+    final banRepo = ref.read(banRepositoryProvider);
+    final printerSettings = ref.read(printerSettingsProvider);
     try {
-      final orderId = const Uuid().v4();
-      final now = DateTime.now().toUtc().toIso8601String();
-      final sb = Supabase.instance.client;
-
-      // 0. Lấy store_id
       final storeInfo = await StoreAuthService.getStoreInfo();
       final storeId = storeInfo['store_id'] as String?;
-      if (storeId == null)
+      if (storeId == null || storeId.isEmpty) {
         throw Exception('Không lấy được store_id — vui lòng đăng nhập lại');
-
-      // 0b. Tạo orderNumber sequential (giống POS screen — dùng count từ DB)
-      final today = DateTime.now();
-      final datePrefix =
-          'QN-${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}';
-      final startOfDay = DateTime(
-        today.year,
-        today.month,
-        today.day,
-      ).toUtc().toIso8601String();
-      // ‼️ FIX Bug #19: thêm upper bound lt(endOfDay) — trước đây đếm cả đơn ngày hôm qua
-      final endOfDay = DateTime(
-        today.year,
-        today.month,
-        today.day + 1,
-      ).toUtc().toIso8601String();
-      final productIds = items.map((i) => i.productId).toSet().toList();
-
-      // [TỐI ƯU HOÁ TỐC ĐỘ]: Gom 3 truy vấn độc lập chạy song song (Tiết kiệm ~1-2 giây)
-      final fetchFutures = await Future.wait(<Future<dynamic>>[
-        sb
-            .from('orders')
-            .select('id')
-            .eq('store_id', storeId)
-            .gte('created_at', startOfDay)
-            .lt('created_at', endOfDay)
-            .count(CountOption.exact),
-        if (customerId != null)
-          sb
-              .from('app_settings')
-              .select('value')
-              .eq('store_id', storeId)
-              .eq('key', 'loyalty_rate')
-              .maybeSingle()
-        else
-          Future.value(null),
-        sb
-            .from('products')
-            .select('id, cost_price_latest')
-            .inFilter('id', productIds),
-      ]);
-
-      final countRes = fetchFutures[0] as PostgrestResponse;
-      final rateRes = fetchFutures[1] as Map<String, dynamic>?;
-      final prodRows = fetchFutures[2] as List<dynamic>;
-
-      final orderNumber =
-          '$datePrefix-${((countRes.count) + 1).toString().padLeft(3, '0')}';
-
-      // 1. Core: Tạo order
-      // Lấy loyalty_rate trước để tính ptsEarned
-      double ptsEarned = 0;
-      final finalPaidTotal = total + surcharge;
-      if (customerId != null) {
-        try {
-          final rate =
-              double.tryParse((rateRes?['value'] as String?) ?? '10000') ??
-              10000;
-          ptsEarned = (finalPaidTotal / rate).floorToDouble();
-        } catch (_) {}
-      }
-      String? cashierRecordId;
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final currentUserId = prefs.getString('auth_user_id');
-        if (currentUserId != null) {
-          final memberRow = await sb
-              .from('store_members')
-              .select('id, role, user_accounts(display_name, phone)')
-              .eq('store_id', storeId)
-              .eq('user_id', currentUserId)
-              .maybeSingle();
-          if (memberRow != null) {
-            cashierRecordId = memberRow['id'] as String?;
-            final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
-            final displayName =
-                userAcc?['display_name'] as String? ?? 'Cashier';
-            final phone = userAcc?['phone'] as String?;
-            final role = memberRow['role'] as String? ?? 'cashier';
-
-            if (cashierRecordId != null) {
-              await sb.from('staff_members').upsert({
-                'id': cashierRecordId,
-                'store_id': storeId,
-                'name': displayName,
-                'role': role,
-                'phone': phone,
-                'is_active': true,
-                'updated_at': DateTime.now().millisecondsSinceEpoch,
-              });
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('[Checkout] Sync cashier failed: $e');
       }
 
-      final noteParts = <String>[
-        if (couponCode != null) '[Voucher: $couponCode]',
-        if (surcharge > 0) '[Phí dịch vụ/ship: ${fmtVnd(surcharge)}]',
-      ];
-      final noteStr = noteParts.isEmpty ? null : noteParts.join(' ');
-
-      await sb.from('orders').insert({
-        'id': orderId,
-        'store_id': storeId,
-        'order_number': orderNumber,
-        'customer_id': customerId,
-        'subtotal':
-            total + discount + surcharge, // subtotal trước giảm + phí dịch vụ
-        'discount': discount,
-        'tax': 0,
-        'total': finalPaidTotal,
-        'total_amount': finalPaidTotal,
-        'payment_method': payMethod,
-        'status': 'completed',
-        'source_type': 'ban',
-        'source_id': widget.session.tableId,
-        'loyalty_pts_earned': ptsEarned,
-        'loyalty_pts_used': ptsUsed.toDouble(),
-        'created_at': now,
-        'note': noteStr,
-        if (cashierRecordId != null) 'staff_id': cashierRecordId,
-        if (widget.session.waiterId != null)
-          'waiter_id': widget.session.waiterId,
-      });
-
-      // 2. Core: Tạo order_items
-      // ‼️ FIX Bug #18: fetch cost_price thực từ products — trước đây hardcode 0
-      Map<String, double> costPriceMap = {};
-      try {
-        for (final p in prodRows) {
-          costPriceMap[p['id'] as String] =
-              (p['cost_price_latest'] as num?)?.toDouble() ?? 0;
-        }
-      } catch (e) {
-        debugPrint('[Checkout] cost_price fetch err: $e');
-      }
-
-      final List<Map<String, dynamic>> orderItemRows = [];
-      final Map<String, BanSessionItemModel> groupedItems = {};
-      for (final item in items) {
-        final cleanNote = item.note?.trim() ?? '';
-        final cleanMods = item.modifiersJson?.trim() ?? '';
-        final key =
-            '${item.productId}_${item.price.toStringAsFixed(2)}_${cleanNote}_$cleanMods';
-        if (groupedItems.containsKey(key)) {
-          final prev = groupedItems[key]!;
-          groupedItems[key] = BanSessionItemModel(
-            id: prev.id,
-            sessionId: prev.sessionId,
-            productId: prev.productId,
-            productName: prev.productName,
-            price: prev.price,
-            quantity: prev.quantity + item.quantity,
-            note: prev.note,
-            modifiersJson: prev.modifiersJson,
-            addedAt: prev.addedAt,
-            kitchenStatus: prev.kitchenStatus,
+      final idempotencyKey = await _settlementOpManager
+          .getOrCreatePersistentKey(
+            storeId: storeId,
+            sessionId: widget.session.id,
+            paymentMethod: payMethod,
+            customerId: customerId,
+            pointsUsed: ptsUsed,
+            couponCode: couponCode,
+            surcharge: surcharge,
+            discount: discount,
           );
-        } else {
-          groupedItems[key] = item;
-        }
-      }
-
-      for (final item in groupedItems.values) {
-        orderItemRows.add({
-          'id': const Uuid().v4(),
-          'order_id': orderId,
-          'product_id': item.productId,
-          'store_id': storeId,
-          'name': item.productName,
-          'product_name': item.productName,
-          'qty': item.quantity.toInt(),
-          'unit_price': item.price,
-          'cost_price':
-              costPriceMap[item.productId] ?? 0, // ✅ FIX: lấy cost thực
-          'modifiers_json':
-              item.modifiersJson, // ✅ R3-02: lưu topping vào order history
-          'quantity': item.quantity,
-          'subtotal': item.subtotal,
-        });
-      }
-      if (surcharge > 0) {
-        orderItemRows.add({
-          'id': const Uuid().v4(),
-          'order_id': orderId,
-          'product_id': null,
-          'store_id': storeId,
-          'name': 'Phí dịch vụ / Ship',
-          'product_name': 'Phí dịch vụ / Ship',
-          'qty': 1,
-          'unit_price': surcharge,
-          'cost_price': 0,
-          'modifiers_json': null,
-          'quantity': 1.0,
-          'subtotal': surcharge,
-        });
-      }
-      if (orderItemRows.isNotEmpty) {
-        await sb.from('order_items').insert(orderItemRows);
-      }
-
-      // 3 + 3b + 4 + 5. Cross-module (Trừ kho, Tài chính, Tích điểm) chạy chế độ nền không block UI
-      Future<void> runBackgroundSideEffects() async {
-        // 3 + 3b. Cross-module: Trừ kho — phân biệt sản phẩm CÓ/KHÔNG có công thức
-        final khoProRepo = khoProRepoCached;
-        final productRepo = productRepoCached;
-        Map<String, RecipeModel> recipeByPosId = {};
-        try {
-          final allRecipes = await khoProRepo.fetchRecipes();
-          recipeByPosId = {
-            for (final r in allRecipes)
-              if (r.posProductId != null) r.posProductId!: r,
-          };
-        } catch (e) {
-          debugPrint('[Checkout] fetchRecipes err: $e');
-        }
-
-        for (final item in items) {
-          final recipe = recipeByPosId[item.productId];
-          if (recipe != null && recipe.ingredients.isNotEmpty) {
-            // Sản phẩm CÓ công thức → deductIngredients trừ NL + ghi COGS
-            try {
-              await khoProRepo.deductIngredients(
-                recipe: recipe,
-                quantity: item.quantity,
-                reason: 'sale',
-                note:
-                    'Bàn "${widget.table.label}" bán "${item.productName}" × ${item.quantity.toStringAsFixed(0)} (Đơn $orderNumber)',
-                referenceId: orderId,
-              );
-            } catch (e) {
-              debugPrint('[Checkout] ❌ deductIngredients err: $e');
-            }
-          } else {
-            // Sản phẩm KHÔNG có công thức → trừ stock thô
-            try {
-              await productRepo.updateStockQty(item.productId, -item.quantity);
-              await sb.from('stock_movements').insert({
-                'id': const Uuid().v4(),
-                'store_id': storeId,
-                'product_id': item.productId,
-                'delta': double.parse((-item.quantity).toStringAsFixed(3)),
-                'reason': 'sale',
-                'note': 'Bán bàn $orderNumber',
-                'created_at': now,
-              });
-            } catch (e) {
-              debugPrint('[Checkout] ❌ stock err: $e');
-            }
-          }
-
-          // ── Topping deduction (Option A: qua Kho CN recipe) ──────────────
-          if (item.modifiersJson != null) {
-            try {
-              final extras = jsonDecode(item.modifiersJson!) as List<dynamic>;
-              for (final extra in extras) {
-                final m = extra as Map<String, dynamic>;
-                if (m['type'] != 'topping') continue;
-                final toppingId = m['id'] as String?;
-                final toppingQty =
-                    ((m['qty'] as num?) ?? 1).toDouble() * item.quantity;
-                final toppingName = m['name'] as String? ?? 'Topping';
-                if (toppingId == null || toppingQty <= 0) continue;
-
-                final toppingRecipe = recipeByPosId[toppingId];
-                if (toppingRecipe != null &&
-                    toppingRecipe.ingredients.isNotEmpty) {
-                  debugPrint(
-                    '[Checkout] 🧋 Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} → deduct recipe',
-                  );
-                  try {
-                    await khoProRepo.deductIngredients(
-                      recipe: toppingRecipe,
-                      quantity: toppingQty,
-                      reason: 'sale',
-                      note:
-                          'Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} (Đơn $orderNumber)',
-                      referenceId: orderId,
-                    );
-                  } catch (e) {
-                    debugPrint('[Checkout] ❌ topping recipe deduct err: $e');
-                  }
-                } else {
-                  debugPrint(
-                    '[Checkout] 🧋 Topping "$toppingName" × ${toppingQty.toStringAsFixed(1)} → deduct stock thô',
-                  );
-                  try {
-                    await productRepo.updateStockQty(toppingId, -toppingQty);
-                    await sb.from('stock_movements').insert({
-                      'id': const Uuid().v4(),
-                      'store_id': storeId,
-                      'product_id': toppingId,
-                      'delta': double.parse((-toppingQty).toStringAsFixed(3)),
-                      'reason': 'sale',
-                      'note': 'Topping "$toppingName" (Đơn $orderNumber)',
-                      'created_at': now,
-                    });
-                  } catch (e) {
-                    debugPrint('[Checkout] ❌ topping stock err: $e');
-                  }
-                }
-              }
-            } catch (e) {
-              debugPrint('[Checkout] ❌ parse modifiers_json err: $e');
-            }
-          }
-        }
-
-        // 4. Cross-module: Finance
-        if (storeId != null) {
-          try {
-            final existIncome = await sb
-                .from('finance_records')
-                .select('id')
-                .eq('store_id', storeId)
-                .eq('reference_id', orderId)
-                .eq('type', 'income')
-                .eq('is_auto', true)
-                .maybeSingle();
-            if (existIncome == null) {
-              final fundType = (payMethod == 'transfer' || payMethod == 'card')
-                  ? 'bank'
-                  : 'cash';
-              await sb.from('finance_records').insert({
-                'id': const Uuid().v4(),
-                'store_id': storeId,
-                'type': 'income',
-                'amount': total,
-                'description': 'Doanh thu bàn $orderNumber',
-                'reference_id': orderId,
-                'is_auto': true,
-                'recorded_at': now,
-                'fund_type': fundType,
-              });
-            }
-          } catch (e) {
-            debugPrint('[Checkout] finance silent err: $e');
-          }
-        }
-
-        // 5. Cross-module: Loyalty
-        if (storeId != null && customerId != null) {
-          try {
-            final customer = await sb
-                .from('customers')
-                .select('loyalty_pts, total_spent, visit_count, stamp_count')
-                .eq('id', customerId)
-                .maybeSingle();
-            if (customer != null) {
-              final currentPts =
-                  (customer['loyalty_pts'] as num?)?.toDouble() ?? 0;
-              final currentSpent =
-                  (customer['total_spent'] as num?)?.toDouble() ?? 0;
-              final currentVisit =
-                  (customer['visit_count'] as num?)?.toInt() ?? 0;
-              final currentStamps =
-                  (customer['stamp_count'] as num?)?.toInt() ?? 0;
-
-              final newPts = (currentPts + ptsEarned - ptsUsed).clamp(
-                0,
-                double.infinity,
-              );
-
-              int threshold = 10;
-              try {
-                final tRes = await sb
-                    .from('app_settings')
-                    .select('value')
-                    .eq('store_id', storeId)
-                    .eq('key', 'stamp_threshold')
-                    .maybeSingle();
-                threshold =
-                    int.tryParse(tRes?['value'] as String? ?? '10') ?? 10;
-              } catch (_) {}
-
-              final nextStamps = currentStamps + 1;
-              final rewardTriggered = nextStamps >= threshold;
-              final newStampCount = rewardTriggered ? 0 : nextStamps;
-              final newStampTotal =
-                  (customer['stamp_total'] as num?)?.toInt() ?? 0;
-
-              await sb
-                  .from('customers')
-                  .update({
-                    'loyalty_pts': newPts,
-                    'total_spent': currentSpent + (total + discount),
-                    'visit_count': currentVisit + 1,
-                    'stamp_count': newStampCount,
-                    'stamp_total': newStampTotal + 1,
-                    'updated_at': now,
-                  })
-                  .eq('id', customerId);
-
-              if (ptsEarned > 0 || ptsUsed > 0) {
-                await sb.from('loyalty_transactions').insert({
-                  'id': const Uuid().v4(),
-                  'store_id': storeId,
-                  'customer_id': customerId,
-                  'order_id': orderId,
-                  'pts_earned': ptsEarned,
-                  'pts_used': ptsUsed.toDouble(),
-                  'note': ptsUsed > 0
-                      ? 'Ban $orderNumber (dùng $ptsUsed điểm giảm giá)'
-                      : 'Ban $orderNumber',
-                  'created_at': now,
-                });
-              }
-            }
-          } catch (e) {
-            debugPrint('[Checkout] loyalty silent err: $e');
-          }
-        }
-      }
-
-      // Kích hoạt tác vụ nền không đợi
-      runBackgroundSideEffects().catchError((e) {
-        debugPrint('[Checkout] ❌ Lỗi nền: $e');
-      });
-
-      // 6. Đóng session
-      await banRepoCached.closeSession(widget.session.id, total);
-
-      // LOG HOẠT ĐỘNG
-      AppLogger.info(
-        'checkout',
-        'Thanh toan hoa don thanh cong tai ${widget.zone.name} - ${widget.table.label}. Tong: ${total.toInt()}d, Hinh thuc: ${payMethod.toUpperCase()}',
+      final response = await banRepo.settleBanSession(
+        sessionId: widget.session.id,
+        storeId: storeId,
+        paymentMethod: payMethod,
+        idempotencyKey: idempotencyKey,
+        customerId: customerId,
+        pointsUsed: ptsUsed,
+        discount: discount,
+        couponCode: couponCode,
+        surcharge: surcharge,
       );
 
-      // Tự động in hóa đơn thu ngân khi thanh toán tại bàn (nếu bật cấu hình)
-      try {
-        if (printerSettingsCached.autoPrintCheckout &&
-            !printerSettingsCached.autoPrintServer) {
-          final List<BillItem> billItems = [];
-          for (final item in items) {
-            billItems.add(
-              BillItem(
-                name: item.productName,
-                qty: item.quantity.toInt(),
-                price: item.price,
-                note: item.note,
+      if (response['success'] != true) {
+        final errorCode = response['error_code'] as String?;
+        final serverMessage = response['message'] as String?;
+        AppLogger.warning(
+          'checkout',
+          'Thanh toán bàn ${widget.table.label} bị từ chối; '
+              'session=${widget.session.id}; method=$payMethod; '
+              'code=${errorCode ?? 'UNKNOWN'}; '
+              'message=${serverMessage ?? 'Không có thông báo từ máy chủ'}',
+        );
+        if (errorCode == QrErrorCode.financialQuoteChanged) {
+          if (!allowQuoteReconfirmation) {
+            await _settlementOpManager.clearPersistent(
+              storeId: storeId,
+              sessionId: widget.session.id,
+            );
+            throw Exception(
+              'Báo giá tiếp tục thay đổi. Vui lòng mở lại màn hình thanh toán.',
+            );
+          }
+          final rawData = response['data'];
+          final quote = AuthoritativeQuote.fromMap(
+            rawData is Map
+                ? Map<String, dynamic>.from(rawData)
+                : <String, dynamic>{},
+          );
+          if (!mounted) return;
+          final confirmed = await _showAuthoritativeQuoteDialog(
+            oldTotal: SettlementQuoteHelper.computeOldPayableTotal(
+              amountBeforeSurcharge: amountBeforeSurcharge,
+              surcharge: surcharge,
+            ),
+            quote: quote,
+          );
+          if (confirmed == true && mounted) {
+            return _checkout(
+              SettlementQuoteHelper.computeConfirmedAmountBeforeSurcharge(
+                quoteTotal: quote.total,
+                quoteSurcharge: quote.surcharge,
               ),
+              payMethod,
+              items,
+              customerId: customerId,
+              ptsUsed: ptsUsed,
+              discount: quote.discount,
+              couponCode: couponCode,
+              surcharge: quote.surcharge,
+              allowQuoteReconfirmation: false,
             );
           }
-          if (surcharge > 0) {
-            billItems.add(
-              BillItem(name: 'Phí dịch vụ / Ship', qty: 1, price: surcharge),
-            );
-          }
+          await _settlementOpManager.clearPersistent(
+            storeId: storeId,
+            sessionId: widget.session.id,
+          );
+          return;
+        }
 
-          final session = ref.read(sessionProvider);
+        final message = QrErrorCode.toUserMessage(errorCode, serverMessage);
+
+        // NETWORK_UNCERTAIN có thể đã commit nhưng response bị mất: phải giữ
+        // key để lần thử lại chỉ reconcile/replay. Các lỗi còn lại đã xác định
+        // không commit nên có thể kết thúc operation hiện tại an toàn.
+        if (errorCode != QrErrorCode.networkUncertain &&
+            errorCode != QrErrorCode.checkoutInProgress) {
+          await _settlementOpManager.clearPersistent(
+            storeId: storeId,
+            sessionId: widget.session.id,
+          );
+        }
+        throw Exception(message);
+      }
+
+      if (response['is_settled'] == false) {
+        final serverMessage =
+            response['message'] as String? ?? 'Phiên bàn chưa được thanh toán';
+        await _settlementOpManager.clearPersistent(
+          storeId: storeId,
+          sessionId: widget.session.id,
+        );
+        throw Exception(serverMessage);
+      }
+
+      final rawData = response['data'];
+      final data = rawData is Map
+          ? Map<String, dynamic>.from(rawData)
+          : <String, dynamic>{};
+      final settlementId = data['settlement_id'] as String?;
+      if (settlementId == null || settlementId.isEmpty) {
+        throw Exception('Server không trả settlement_id hợp lệ');
+      }
+      final isReplay = data['is_replay'] == true;
+      final finalTotal = ((data['total_amount'] as num?) ?? 0).toDouble();
+      final serverSubtotal = ((data['subtotal'] as num?) ?? 0).toDouble();
+      final serverDiscount = ((data['discount'] as num?) ?? 0).toDouble();
+      final clientItemsTotal = items.fold<double>(0, (s, i) => s + i.subtotal);
+      if ((serverSubtotal - clientItemsTotal).abs() > 0.5) {
+        AppLogger.warning(
+          'checkout',
+          'LỆCH tiền thanh toán phiên ${widget.session.id}: máy chủ tính '
+              '${serverSubtotal.toInt()}đ, màn hình có ${items.length} dòng ${clientItemsTotal.toInt()}đ',
+        );
+      }
+      final orderNumbers =
+          (data['order_numbers'] as List?)
+              ?.map((value) => value.toString())
+              .where((value) => value.isNotEmpty)
+              .toList() ??
+          const <String>[];
+      final orderNumber = orderNumbers.isEmpty
+          ? settlementId.substring(0, 8).toUpperCase()
+          : orderNumbers.join(' + ');
+
+      // Server đã xác nhận commit hoặc replay: lúc này mới được xóa pending key.
+      await _settlementOpManager.clearPersistent(
+        storeId: storeId,
+        sessionId: widget.session.id,
+      );
+
+      AppLogger.info(
+        'checkout',
+        'Atomic V5 settlement $settlementId completed; replay=$isReplay; total=${finalTotal.toInt()}',
+      );
+      AppLogger.action(
+        'checkout_done',
+        'Thanh toán',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        lines: items.length,
+        total: finalTotal,
+        result: isReplay ? 'replay' : 'ok',
+        critical: true,
+        extra: {
+          'method': payMethod,
+          'settlement': settlementId,
+          'orders': orderNumbers,
+          'discount': serverDiscount.round(),
+        },
+      );
+
+      // Replay không bao giờ tự in lại. Lần commit đầu dùng cache bền vững
+      // settlementId:cashier để chống callback/print-server trùng nhau.
+      BillPrintWatchdog? billWatch;
+      BillData? billForReprint;
+      if (!isReplay && printerSettings.autoPrintCheckout) {
+        final hasOwner = hasActivePrintServerOwner(printerSettings.ownerState);
+        if (shouldAutoPrintReceiptLocally(
+          isWeb: kIsWeb,
+          centralRoutingEnabled: printerSettings.centralPrintRoutingEnabled,
+          hasPrintServerOwner: hasOwner,
+          allowPrintServerFallback:
+              printerSettings.isDesignatedPrintServerDevice,
+          deviceOwnsBill: printerSettings.deviceHasBillRule,
+        )) {
           final billData = BillData(
             shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
             shopAddress: storeInfo['address'] ?? '',
@@ -3732,118 +3765,319 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             orderNumber: orderNumber,
             createdAt: DateTime.now(),
             tableName: widget.table.label,
-            items: billItems,
-            subtotal: total + discount + surcharge,
-            total: total + surcharge,
+            items: [
+              for (final item in items)
+                BillItem(
+                  name: item.productName,
+                  qty: item.quantity.toInt(),
+                  price: item.price,
+                  note: item.note,
+                ),
+              if (surcharge > 0)
+                BillItem(name: 'Phí dịch vụ / Ship', qty: 1, price: surcharge),
+            ],
+            subtotal: serverSubtotal,
+            discount: serverDiscount,
+            total: finalTotal,
+            paymentMethod: payMethod,
             type: BillType.receipt,
-            note: '',
-            waiterName: _resolveWaiterName(items, session?.displayName),
+            waiterName: _resolveWaiterName(
+              items,
+              ref.read(sessionProvider)?.displayName,
+            ),
           );
+          billForReprint = billData;
+          final watch = billWatch = BillPrintWatchdog(
+            onOverdue: () => AppLogger.action(
+              'bill_overdue',
+              'Bill chưa in sau 30 giây',
+              table: widget.table.label,
+              sessionId: widget.session.id,
+              total: finalTotal,
+              result: 'chưa xác nhận in',
+              extra: {'settlement': settlementId},
+              critical: true,
+              level: 'WARNING',
+            ),
+          )..start();
+          // Không chờ in xong mới hiện màn thành công: in chậm/treo không được chặn thu ngân.
+          unawaited(() async {
+            try {
+              final printResult = await ref
+                  .read(printerSettingsProvider.notifier)
+                  .printCheckoutReceipt(
+                    storeId: storeId,
+                    settlementId: settlementId,
+                    billData: billData,
+                  );
+              final st = printResult.stationResults['cashier']?.status;
+              // Thành công, hoặc máy khác đã giành & in (skipped) = bill đã/ sẽ ra.
+              if (printResult.isStationSuccess('cashier') ||
+                  st == StationPrintStatus.skippedNoItems) {
+                watch.markPrinted();
+              } else {
+                AppLogger.warning(
+                  'printer',
+                  '[Checkout Print] Failed settlement=$settlementId: '
+                      '${printResult.stationResults['cashier']?.errorMessage}',
+                );
+              }
+            } catch (e, st) {
+              AppLogger.error(
+                'printer',
+                'In bill thanh toán lỗi settlement=$settlementId: $e',
+                e,
+                st,
+              );
+            }
+          }());
+        }
+      }
 
-          await StationPrinterDispatcher.printBill(
-            billData,
-            printerSettingsCached,
+      if (!mounted) return;
+      ref.invalidate(activeSessionsProvider);
+      ref.invalidate(todayStatsProvider);
+      ref.invalidate(financeRecordsProvider);
+      ref.invalidate(financeStatsProvider);
+      ref.invalidate(todayFinanceStatsProvider);
+      try {
+        final player = AudioPlayer();
+        player.play(AssetSource('sounds/payment_success.mp3'));
+      } catch (_) {}
+      // Chụp sẵn mọi thứ cần cho "In lại bill": sau khi đóng bảng bàn, `ref`/`context` của
+      // màn này không còn dùng được (từng gây lỗi "Using ref when widget unmounted").
+      final messenger = ScaffoldMessenger.of(context);
+      final watchForDialog = billWatch;
+      final billForDialog = billForReprint;
+      final tableLabelForLog = widget.table.label;
+      final sessionIdForLog = widget.session.id;
+      Future<void> reprintBill() async {
+        final watch = watchForDialog;
+        final bill = billForDialog;
+        if (watch == null || bill == null) return;
+        AppLogger.action(
+          'reprint_bill',
+          'In lại bill',
+          table: tableLabelForLog,
+          sessionId: sessionIdForLog,
+          total: bill.total,
+          critical: true,
+        );
+        watch.restart();
+        try {
+          final r = await StationPrinterDispatcher.printBill(
+            bill,
+            printerSettings,
             onlyReceipt: true,
           );
+          if (r.isStationSuccess('cashier')) {
+            watch.markPrinted();
+          } else {
+            watch.markOverdue();
+          }
+        } catch (e, st) {
+          AppLogger.error('printer', 'In lại bill lỗi: $e', e, st);
+          watch.markOverdue();
         }
-      } catch (e) {
-        debugPrint('[Checkout Print] ❌ Lỗi in hóa đơn thanh toán bàn: $e');
       }
 
-      // Option C: KHÔNG tự đóng kitchen_tickets → bếp tự bấm Xong khi hoàn tất
-      // (Trước đây set status='xong' ngay khi thanh toán → bếp mất phiếu đột ngột)
-
-      if (mounted) {
-        ref.invalidate(activeSessionsProvider);
-        ref.invalidate(todayStatsProvider);
-        // Invalidate finance — StreamProvider + FutureProviders cùng refresh
-        ref.invalidate(financeRecordsProvider); // list giao dịch
-        ref.invalidate(financeStatsProvider); // stats header kỳ đang chọn
-        ref.invalidate(todayFinanceStatsProvider);
-        try {
-          final ch = Supabase.instance.client.channel('store_broadcast');
-          ch.subscribe();
-          ch
-              .sendBroadcastMessage(event: 'checkout_completed', payload: {})
-              .then((_) => ch.unsubscribe());
-        } catch (_) {}
-      }
-
-      if (mounted) {
-        // Phát âm thanh tiền
-        try {
-          final player = AudioPlayer();
-          player.play(
-            AssetSource('sounds/payment_success.mp3'),
-          ); // KHÔNG await để UI phản hồi ngay lập tức
-        } catch (_) {}
-        if (!mounted) return;
-        // Hiện dialog thành công trước khi đóng tab
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
+      void showReprintSnack() {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Bill $tableLabelForLog CHƯA in sau 30 giây. Kiểm tra máy in bill.',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
             ),
-            backgroundColor: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: _kGreen.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.check_circle_rounded,
-                      color: _kGreen,
-                      size: 44,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Thanh toán thành công!',
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: _kNavy,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    fmtVnd(total),
-                    style: GoogleFonts.outfit(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: _kGreen,
-                    ),
-                  ),
-                ],
-              ),
+            backgroundColor: _kRed,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 30),
+            action: SnackBarAction(
+              label: 'IN LẠI BILL',
+              textColor: Colors.white,
+              onPressed: () => unawaited(reprintBill()),
             ),
           ),
         );
-        // Tự đóng sau 1.5s
-        await Future.delayed(const Duration(milliseconds: 1500));
-        if (mounted) {
-          Navigator.of(context)
-            ..pop() // đóng dialog
-            ..pop(); // đóng ban screen
+      }
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogCtx) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: Colors.white,
+          elevation: 16,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Icon thành công lớn
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF10B981),
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Tiêu đề to rõ
+                Text(
+                  'Thanh toán thành công!',
+                  style: GoogleFonts.outfit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1E293B),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+
+                // Badge Bàn
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Bàn: ${widget.table.label.isNotEmpty ? widget.table.label : 'Bàn'}',
+                    style: GoogleFonts.outfit(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF475569),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Thẻ số tiền thanh toán to rõ
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Tổng thanh toán',
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF059669),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        fmtVnd(finalTotal),
+                        style: GoogleFonts.outfit(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF047857),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (watchForDialog != null) ...[
+                  _BillPrintStatusBar(
+                    watch: watchForDialog,
+                    onReprint: () => unawaited(reprintBill()),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                const SizedBox(height: 8),
+
+                // Nút Đóng to, đậm, dễ bấm
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(dialogCtx).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6B35),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      'ĐÓNG',
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      // Đóng màn thành công mà bill chưa in xong: vẫn canh tiếp, quá hạn thì báo + nút In lại.
+      final w = watchForDialog;
+      if (w != null) {
+        if (w.status.value == BillPrintStatus.overdue) {
+          showReprintSnack();
+        } else if (w.status.value == BillPrintStatus.pending) {
+          void onChange() {
+            if (w.status.value == BillPrintStatus.overdue) {
+              showReprintSnack();
+            }
+            if (w.status.value != BillPrintStatus.pending) {
+              w.status.removeListener(onChange);
+            }
+          }
+
+          w.status.addListener(onChange);
         }
       }
+      if (mounted) Navigator.of(context).pop();
     } catch (e, st) {
-      debugPrint('[Checkout] ❌ LỖI: $e\n$st');
+      AppLogger.error(
+        'checkout',
+        'Thanh toán bàn ${widget.table.label} thất bại; '
+            'session=${widget.session.id}; method=$payMethod',
+        e,
+        st,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Lỗi thanh toán: $e',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+              'Thanh toán thất bại. Hãy chụp lại báo chủ app.',
+              style: GoogleFonts.outfit(),
             ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 6),
@@ -3853,55 +4087,238 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
   }
 
+  /// Hiển thị dialog thông báo thay đổi báo giá tài chính từ server và yêu cầu xác nhận
+  Future<bool?> _showAuthoritativeQuoteDialog({
+    required double oldTotal,
+    required AuthoritativeQuote quote,
+  }) async {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline, color: Colors.orange),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Báo giá hóa đơn thay đổi',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Số tiền giảm giá hoặc chiết khấu trên hệ thống đã được cập nhật lại theo dữ liệu mới nhất từ máy chủ:',
+              style: GoogleFonts.outfit(fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Tổng tiền dự kiến cũ:',
+                        style: GoogleFonts.outfit(),
+                      ),
+                      Text(
+                        fmtVnd(oldTotal),
+                        style: GoogleFonts.outfit(
+                          decoration: TextDecoration.lineThrough,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Tạm tính mới:', style: GoogleFonts.outfit()),
+                      Text(fmtVnd(quote.subtotal), style: GoogleFonts.outfit()),
+                    ],
+                  ),
+                  if (quote.discount > 0)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Giảm giá mới:', style: GoogleFonts.outfit()),
+                        Text(
+                          '-${fmtVnd(quote.discount)}',
+                          style: GoogleFonts.outfit(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (quote.surcharge > 0)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Phụ phí mới:', style: GoogleFonts.outfit()),
+                        Text(
+                          '+${fmtVnd(quote.surcharge)}',
+                          style: GoogleFonts.outfit(),
+                        ),
+                      ],
+                    ),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Tổng thanh toán mới:',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        fmtVnd(quote.total),
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Bạn có muốn xác nhận và tiếp tục thanh toán theo số tiền mới không?',
+              style: GoogleFonts.outfit(fontSize: 13, color: Colors.black87),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: Text('Hủy bỏ', style: GoogleFonts.outfit()),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6600),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: Text(
+              'Xác nhận & Thanh toán',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // A2: Mở checkout sheet — 2-step confirm
   // ‼️ FIX Bug #38: _isCheckingOut guard — ngăn double-tap tạo 2 order, 2 finance record
   bool _isCheckingOut = false;
+  // ‼️ Cờ khóa gửi bếp: Chặn 100% việc double-tap hoặc gửi trùng đơn bếp
+  bool _isSendingToKitchen = false;
+  // Khóa tự mở sau 45 giây: một lệnh gửi bếp treo không được làm nút chết vĩnh viễn.
+  final StaleLock _sendKitchenLock = StaleLock(maxHold: const Duration(seconds: 45));
 
   Future<void> _openCheckout(
     double total,
     List<BanSessionItemModel> items,
   ) async {
-    if (_isCheckingOut) return; // guard double-tap
-    final perms = await ref.read(userActionPermsProvider.future);
-    final hasPerm = perms.contains('pos.checkout');
-    if (!hasPerm) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Bạn không có quyền "Thanh toán".',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: _kRed,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-    final result = await showModalBottomSheet<Map<String, dynamic?>>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => _CheckoutSheet(
-        total: total,
-        items: items,
-        tableName: widget.table.label,
-        zone: widget.zone,
-      ),
-    );
-    if (result == null) return; // user cancel
-    if (_isCheckingOut) return; // second guard sau khi sheet đóng
+    if (_isCheckingOut) return;
+    // Khóa trước await đầu tiên: double-click Windows không thể mở hai sheet.
     _isCheckingOut = true;
     try {
+      final perms = await ref.read(userActionPermsProvider.future);
+      final session = ref.read(sessionProvider);
+      final isPrivileged =
+          session?.isOwner == true ||
+          StaffService.canonicalRole(session?.role ?? '') == 'owner' ||
+          StaffService.canonicalRole(session?.role ?? '') == 'manager' ||
+          StaffService.canonicalRole(session?.role ?? '') == 'cashier';
+      final hasPerm = perms.contains('pos.checkout') || isPrivileged;
+      if (!hasPerm) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Bạn không có quyền "Thanh toán".',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+              ),
+              backgroundColor: _kRed,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+      if (!mounted) return;
+      // Đối chiếu với máy chủ: tránh thu ngân thấy/in số tiền khác số thật.
+      AppLogger.action(
+        'open_checkout',
+        'Mở thanh toán',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        lines: items.length,
+        total: total,
+      );
+      final syncedItems = await reconcileSessionItems(
+        repo: ref.read(banRepositoryProvider),
+        where: 'mở thanh toán',
+        sessionId: widget.session.id,
+        shown: items,
+      );
+      if (!mounted) return;
+      if (!identical(syncedItems, items)) {
+        items = syncedItems;
+        total = items.fold<double>(0, (s, i) => s + i.subtotal);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Danh sách món vừa được cập nhật theo máy chủ. Kiểm tra lại tổng tiền.',
+            ),
+            backgroundColor: _kOrange,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      final result = await showModalBottomSheet<Map<String, dynamic?>>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (_) => _CheckoutSheet(
+          total: total,
+          items: items,
+          tableName: widget.table.label,
+          zone: widget.zone,
+        ),
+      );
+      if (result == null) return;
       final payMethod = result['pay'] as String? ?? 'cash';
       final customerId = result['customerId'] as String?;
       final ptsUsed = (result['ptsUsed'] as int?) ?? 0;
       final discount = ((result['discount'] as num?) ?? 0).toDouble();
-      final finalTotal =
+      final amountBeforeSurcharge =
           (total - discount).clamp(0.0, double.infinity) as double;
       final couponCode = result['couponCode'] as String?;
       final surcharge = ((result['surcharge'] as num?) ?? 0).toDouble();
       await _checkout(
-        finalTotal,
+        amountBeforeSurcharge,
         payMethod,
         items,
         customerId: customerId,
@@ -3915,23 +4332,96 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
   }
 
+  /// Ghi chú món mà nhân viên đã tự sửa trên máy này nhưng chưa lưu lên DB.
+  /// Chỉ các item trong tập này mới được ghi đè `ban_session_items.note`,
+  /// tránh việc controller cũ/rỗng trên máy khác xóa ghi chú đã lưu.
+  final Set<String> _dirtyNoteIds = {};
+
+  /// Món gộp (cùng sản phẩm/giá/ghi chú/trạng thái) hiển thị 1 dòng nhưng có
+  /// nhiều dòng DB: id đại diện → mọi id; và id dòng DB → id đại diện.
+  final Map<String, List<String>> _noteGroupIds = {};
+  final Map<String, String> _noteRepOf = {};
+
   Future<void> _updateItemNote(BanSessionItemModel item, String newNote) async {
-    await Supabase.instance.client
-        .from('ban_session_items')
-        .update({'note': newNote.trim().isEmpty ? null : newNote.trim()})
-        .eq('id', item.id);
+    final clean = newNote.trim().isEmpty ? null : newNote.trim();
+    final ids = _noteGroupIds[item.id] ?? [item.id];
+    try {
+      await Supabase.instance.client
+          .from('ban_session_items')
+          .update({'note': clean})
+          .inFilter('id', ids);
+      _dirtyNoteIds.remove(item.id);
+      // Món đã gửi bếp: đồng bộ ghi chú sang phiếu bếp để KDS/in lại thấy.
+      if (item.kitchenStatus != 'chua_gui') {
+        try {
+          await Supabase.instance.client
+              .from('kitchen_ticket_items')
+              .update({'free_note': clean})
+              .inFilter('session_item_id', ids);
+        } catch (e) {
+          AppLogger.error(
+            'order',
+            'Dong bo ghi chu sang phieu bep that bai: $e',
+          );
+        }
+      }
+    } catch (e, st) {
+      AppLogger.error(
+        'order',
+        'Luu ghi chu mon ${item.productName} that bai: $e',
+        e,
+        st,
+      );
+    }
     ref.invalidate(sessionItemsProvider(widget.session.id));
   }
 
   // ── Gửi bếp ──────────────────────────────────────────────────────────────
   Future<void> _sendToKitchen(List<BanSessionItemModel> items) async {
+    final unsentNow = items.where((i) => i.kitchenStatus == 'chua_gui').toList();
+    AppLogger.action(
+      'send_kitchen_click',
+      'Bấm Gửi bếp',
+      table: widget.table.label,
+      sessionId: widget.session.id,
+      lines: unsentNow.length,
+      extra: {'qty': unsentNow.fold<double>(0, (s, i) => s + i.quantity).toInt()},
+    );
+    if (!_sendKitchenLock.tryAcquire(
+      DateTime.now(),
+      onStale: (heldFor) => AppLogger.action(
+        'send_kitchen_unlock',
+        'Tự mở khóa gửi bếp bị kẹt',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        result: 'kẹt ${heldFor.inSeconds}s',
+        level: 'WARNING',
+        critical: true,
+      ),
+    )) {
+      AppLogger.action(
+        'send_kitchen_blocked',
+        'Gửi bếp bị bỏ qua: đang gửi lần trước',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        level: 'WARNING',
+      );
+      return;
+    }
+    final stopwatch = Stopwatch()..start();
+    setState(() {
+      _isSendingToKitchen = true;
+    });
     try {
       final List<BanSessionItemModel> updatedItems = [];
-      // Lưu toàn bộ ghi chú từ controller vào database trước để tránh race condition
+      final savedReps = <String>{};
+      // Lưu ghi chú người dùng đã gõ vào database trước khi gửi (chống race condition).
+      // Chỉ ghi các ô đã sửa trên máy này; món gộp dùng ô của dòng đại diện.
       for (final item in items) {
         if (item.kitchenStatus == 'chua_gui') {
-          final ctrl = _noteControllers[item.id];
-          if (ctrl != null) {
+          final rep = _noteRepOf[item.id] ?? item.id;
+          final ctrl = _noteControllers[rep];
+          if (ctrl != null && _dirtyNoteIds.contains(rep)) {
             final newNote = ctrl.text.trim();
             final oldNote = item.note?.trim() ?? '';
             if (newNote != oldNote) {
@@ -3939,6 +4429,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   .from('ban_session_items')
                   .update({'note': newNote.isEmpty ? null : newNote})
                   .eq('id', item.id);
+              savedReps.add(rep);
               updatedItems.add(
                 item.copyWith(
                   note: newNote.isEmpty ? null : newNote,
@@ -3951,14 +4442,46 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         }
         updatedItems.add(item);
       }
-      await _sendToKitchenImpl(updatedItems);
+      _dirtyNoteIds.removeAll(savedReps);
+      await _sendToKitchenImpl(updatedItems).timeout(
+        const Duration(seconds: 40),
+        onTimeout: () => throw KitchenStepTimeout(
+          'toàn bộ việc gửi bếp',
+          const Duration(seconds: 40),
+        ),
+      );
+      AppLogger.action(
+        'send_kitchen',
+        'Gửi bếp',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        lines: unsentNow.length,
+        result: 'ok ${stopwatch.elapsedMilliseconds}ms',
+        critical: true,
+      );
     } catch (e, st) {
+      AppLogger.action(
+        'send_kitchen',
+        'Gửi bếp',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        lines: unsentNow.length,
+        result: 'LỖI $e',
+        level: 'ERROR',
+        critical: true,
+      );
       debugPrint('[Kitchen] ❌ _sendToKitchen crash: $e\n$st');
+      AppLogger.error(
+        'order',
+        'Gui bep that bai tai ${widget.zone.name} - ${widget.table.label}: $e',
+        e,
+        st,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '⚠️ Gửi bếp thất bại: $e',
+              '⚠️ Gửi bếp thất bại. Hãy chụp lại báo chủ app.',
               style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
             ),
             backgroundColor: _kRed,
@@ -3970,6 +4493,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
         );
       }
+    } finally {
+      _sendKitchenLock.release();
+      if (mounted) {
+        setState(() {
+          _isSendingToKitchen = false;
+        });
+      }
     }
   }
 
@@ -3977,54 +4507,112 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     final unsent = items.where((i) => i.kitchenStatus == 'chua_gui').toList();
     if (unsent.isEmpty) return;
 
-    final ticketId = const Uuid().v4();
-    final now = DateTime.now().toUtc().toIso8601String();
-
-    // Đếm đợt hiện tại
-    final ticketsResp = await Supabase.instance.client
-        .from('kitchen_tickets')
-        .select('id')
-        .eq('session_id', widget.session.id);
-    final round = (ticketsResp as List).length + 1;
-
     // Lấy store_id — cần cho NOT NULL constraint
-    final storeInfo = await StoreAuthService.getStoreInfo();
+    final storeInfo = await kitchenStep(
+      'lấy thông tin quán',
+      StoreAuthService.getStoreInfo(),
+      timeout: const Duration(seconds: 8),
+    );
     final storeId = storeInfo['store_id'];
     if (storeId == null) throw Exception('storeId null — chưa đăng nhập ?');
 
+    final unsentIds = unsent.map((i) => i.id).toList();
     final session = ref.read(sessionProvider);
-    // 1. Tạo KitchenTicket
-    await Supabase.instance.client.from('kitchen_tickets').insert({
-      'id': ticketId,
-      'store_id': storeId,
-      'session_id': widget.session.id,
-      'table_label': widget.table.label,
-      'zone_label': widget.zone.name,
-      'round': round,
-      'status': 'cho',
-      'sent_at': now,
-      'note': session?.displayName,
-    });
 
-    // ‼️ FIX #2: Batch lookup station code — 1 query thay vì N queries
+    // ‼️ BƯỚC 1: Ưu tiên gọi RPC nguyên tử send_kitchen_ticket_v2 (Chống duplicate & độ trễ < 200ms)
+    try {
+      final rpcRes = await Supabase.instance.client
+          .rpc(
+            'send_kitchen_ticket_v2',
+            params: {
+              'p_session_id': widget.session.id,
+              'p_store_id': storeId,
+              'p_table_label': widget.table.label,
+              'p_zone_label': widget.zone.name,
+              'p_note': session?.displayName,
+              'p_item_ids': unsentIds,
+            },
+          )
+          .timeout(const Duration(seconds: 8));
+
+      if (rpcRes != null && rpcRes is Map) {
+        final success = rpcRes['success'] == true;
+        if (success) {
+          ref.invalidate(sessionItemsProvider(widget.session.id));
+          final itemsSummary = unsent
+              .map((i) => '${i.productName} (x${i.quantity.toInt()})')
+              .join(', ');
+          AppLogger.info(
+            'order',
+            'Gui bep thanh cong qua RPC tai ${widget.zone.name} - ${widget.table.label}: $itemsSummary (round: ${rpcRes['round']})',
+          );
+          return;
+        }
+      }
+    } catch (rpcErr) {
+      final errStr = rpcErr.toString();
+      final isFunctionMissing =
+          errStr.contains('PGRST202') ||
+          errStr.contains('function') && errStr.contains('does not exist') ||
+          errStr.contains('not found');
+      if (!isFunctionMissing) {
+        rethrow;
+      }
+      debugPrint(
+        '[Kitchen] RPC send_kitchen_ticket_v2 chua deploy, fallback client steps: $rpcErr',
+      );
+    }
+
+    // Fallback: Client-side steps nếu RPC chưa tồn tại trên backend cũ
+    // ‼️ BƯỚC 2: Batch lookup station code TRƯỚC KHI tạo ticket trong DB
     final productIds = unsent.map((i) => i.productId).toList();
     try {
       Supabase.instance.client.rest.headers['x-store-id'] = storeId;
     } catch (_) {}
-    final productRows = await Supabase.instance.client
-        .from('products')
-        .select('id, category, station_code')
-        .inFilter('id', productIds);
+    final productRows = await kitchenStep(
+      'đọc nhóm bếp của món',
+      Supabase.instance.client
+          .from('products')
+          .select('id, category, station_code')
+          .inFilter('id', productIds),
+    );
     final productInfoMap = <String, Map<String, dynamic>>{
       for (final r in productRows) r['id'] as String: r,
     };
 
-    // 2. Tạo KitchenTicketItems + cập nhật kitchenStatus (BATCHED)
+    // Đếm đợt hiện tại
+    final ticketsResp = await kitchenStep(
+      'đếm đợt gửi bếp',
+      Supabase.instance.client
+          .from('kitchen_tickets')
+          .select('id')
+          .eq('session_id', widget.session.id),
+    );
+    final round = (ticketsResp as List).length + 1;
+
+    final ticketId = const Uuid().v4();
+    final now = DateTime.now().toUtc().toIso8601String();
+
+    // ‼️ BƯỚC 2: Tạo KitchenTicket + KitchenTicketItems trong cùng 1 khối bảo vệ nguyên tử
+    bool ticketCreated = false;
     try {
+      await kitchenStep('tạo phiếu bếp', Supabase.instance.client.from('kitchen_tickets').insert({
+        'id': ticketId,
+        'store_id': storeId,
+        'session_id': widget.session.id,
+        'table_label': widget.table.label,
+        'zone_label': widget.zone.name,
+        'round': round,
+        'status': 'cho',
+        'sent_at': now,
+        'note': session?.displayName,
+      }));
+      ticketCreated = true;
+
       final List<Map<String, dynamic>> itemRows = [];
       for (final item in unsent) {
         final pInfo = productInfoMap[item.productId];
-        final stationCode = pInfo?['station_code'] as String? ?? 'bep_nong';
+        final stationCode = pInfo?['station_code'] as String? ?? 'nong';
         itemRows.add({
           'id': const Uuid().v4(),
           'store_id': storeId,
@@ -4046,16 +4634,20 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       }
 
       if (itemRows.isNotEmpty) {
-        await Supabase.instance.client
-            .from('kitchen_ticket_items')
-            .insert(itemRows);
+        await kitchenStep(
+          'ghi món vào phiếu bếp',
+          Supabase.instance.client.from('kitchen_ticket_items').insert(itemRows),
+        );
       }
 
       final unsentIds = unsent.map((i) => i.id).toList();
-      await Supabase.instance.client
-          .from('ban_session_items')
-          .update({'kitchen_status': 'da_gui'})
-          .inFilter('id', unsentIds);
+      await kitchenStep(
+        'đánh dấu món đã gửi',
+        Supabase.instance.client
+            .from('ban_session_items')
+            .update({'kitchen_status': 'da_gui'})
+            .inFilter('id', unsentIds),
+      );
 
       // Invalidate stream provider immediately so UI updates to 'da_gui' without waiting for realtime/poll
       ref.invalidate(sessionItemsProvider(widget.session.id));
@@ -4068,28 +4660,49 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         'Gui bep thanh cong tai ${widget.zone.name} - ${widget.table.label}: $itemsSummary',
       );
     } catch (e) {
-      debugPrint('[Kitchen] ❌ Lỗi insert items: $e');
-      // Rollback: xóa ticket để tránh phiếu rỗng
-      await Supabase.instance.client
-          .from('kitchen_tickets')
-          .delete()
-          .eq('id', ticketId);
+      debugPrint('[Kitchen] ❌ Lỗi gửi bếp: $e');
+      if (ticketCreated) {
+        try {
+          await Supabase.instance.client
+              .from('kitchen_tickets')
+              .delete()
+              .eq('id', ticketId);
+        } catch (delErr) {
+          debugPrint(
+            '[Kitchen] ❌ Không thể rollback ticket $ticketId: $delErr',
+          );
+        }
+      }
       final unsentIds = unsent.map((i) => i.id).toList();
-      await Supabase.instance.client
-          .from('ban_session_items')
-          .update({'kitchen_status': 'chua_gui'})
-          .inFilter('id', unsentIds);
-      rethrow; // đẩy lỗi lên wrapper để hiện SnackBar
+      try {
+        await Supabase.instance.client
+            .from('ban_session_items')
+            .update({'kitchen_status': 'chua_gui'})
+            .inFilter('id', unsentIds);
+      } catch (_) {}
+      rethrow; // đẩy lỗi lên wrapper để hiện SnackBar và ghi AppLogger
     }
 
     // Tự động in bếp bằng StationPrinterDispatcher (hỗ trợ phân chia 4 trạm in mới)
     try {
       final settings = ref.read(printerSettingsProvider);
-      if (settings.autoPrintKitchen && !settings.autoPrintServer) {
+      final kitchenCfg = StationPrinterDispatcher.effectiveSettings(settings);
+      final hasKitchenPrinter =
+          (kitchenCfg.bepNong.enabled &&
+              kitchenCfg.bepNong.name.trim().isNotEmpty) ||
+          (kitchenCfg.bepBar.enabled &&
+              kitchenCfg.bepBar.name.trim().isNotEmpty);
+      if (settings.autoPrintKitchen &&
+          shouldAutoPrintLocally(
+            isWeb: kIsWeb,
+            centralRoutingEnabled: settings.centralPrintRoutingEnabled,
+            hasPrintServerOwner: hasActivePrintServerOwner(settings.ownerState),
+            allowPrintServerFallback: settings.isDesignatedPrintServerDevice,
+          )) {
         final List<BillItem> billItems = [];
         for (final item in unsent) {
           final pInfo = productInfoMap[item.productId];
-          final stationCode = pInfo?['station_code'] as String? ?? 'bep_nong';
+          final stationCode = pInfo?['station_code'] as String? ?? 'nong';
           billItems.add(
             BillItem(
               name: item.productName,
@@ -4230,17 +4843,38 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         canonical == 'manager';
 
     if (isManager) {
-      return {'id': session!.userId, 'name': session.displayName};
+      AppLogger.action(
+        'manager_approval',
+        'Quản lý tự duyệt',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        approver: session!.displayName,
+        result: 'ok',
+        critical: true,
+      );
+      return {'id': session.userId, 'name': session.displayName};
     }
 
     final storeId = session?.storeId;
     if (storeId == null) return null;
 
-    return showDialog<Map<String, String>?>(
+    final approved = await showDialog<Map<String, String>?>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _ManagerPinInputDialog(storeId: storeId),
     );
+    // Không bao giờ ghi PIN; chỉ ghi kết quả và tên người duyệt.
+    AppLogger.action(
+      'manager_approval',
+      'Duyệt bằng PIN quản lý',
+      table: widget.table.label,
+      sessionId: widget.session.id,
+      approver: approved?['name'],
+      result: approved == null ? 'không duyệt/hủy' : 'ok',
+      critical: true,
+      level: approved == null ? 'WARNING' : 'INFO',
+    );
+    return approved;
   }
 
   Future<String?> _askCancelTableReason() async {
@@ -4512,6 +5146,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
 
     setState(() => _isCancelling = true);
+    var cancelled = false;
     try {
       final session = ref.read(sessionProvider);
       final activeItemsForLog = items
@@ -4527,90 +5162,136 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             },
           )
           .toList();
+      final client = Supabase.instance.client;
+      final storeInfo = await StoreAuthService.getStoreInfo();
+      final storeId = storeInfo['store_id'] as String?;
 
-      // Đóng session
-      await Supabase.instance.client
-          .from('ban_sessions')
-          .update({
-            'status': 'cancelled',
-            'closed_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', widget.session.id);
-
-      // Cập nhật trạng thái tất cả các món ăn của bàn thành 'huy'
-      await Supabase.instance.client
-          .from('ban_session_items')
-          .update({'kitchen_status': 'huy'})
-          .eq('session_id', widget.session.id)
-          .neq('kitchen_status', 'huy');
-
-      ref.invalidate(activeSessionsProvider);
-
-      // Huỷ tất cả kitchen_tickets của session này
-      await Supabase.instance.client
-          .from('kitchen_tickets')
-          .update({'status': 'huy'})
-          .eq('session_id', widget.session.id)
-          .inFilter('status', ['cho', 'dang_lam']);
-
-      // Ghi void log từng món đang nấu/gửi bếp để bếp thấy banner thông báo huỷ bàn đỏ nổi bật
-      try {
-        final storeInfo = await StoreAuthService.getStoreInfo();
-        final storeId = storeInfo['store_id'] as String?;
-        if (storeId != null) {
-          final List<Map<String, dynamic>> voidLogs = [];
-          for (final item in activeItemsForLog) {
-            final sentStatuses = ['da_gui', 'dang_lam', 'xong'];
-            if (sentStatuses.contains(item.kitchenStatus)) {
-              voidLogs.add({
-                'store_id': storeId,
-                'session_id': widget.session.id,
-                'table_label': widget.table.label,
-                'product_name': item.productName,
-                'action': 'cancel',
-                'old_qty': item.quantity,
-                'new_qty': 0,
-                'reason': 'Huỷ bàn: $reason',
-                'staff_name': approval['name'] ?? 'Quản lý',
-              });
-            }
-          }
-          if (voidLogs.isNotEmpty) {
-            await Supabase.instance.client
-                .from('ban_session_void_logs')
-                .insert(voidLogs);
-            debugPrint(
-              '[Ban] ✅ ban_session_void_logs for cancelled table items inserted',
+      // Trigger guard_ban_item_financial_change_v5 CHẶN sửa món khi phiên không còn
+      // 'open' -> mọi bước phụ phải xong TRƯỚC, đóng phiên là bước CUỐI CÙNG.
+      // (Thứ tự cũ đóng phiên trước nên bước món bị chặn, lỗi bị nuốt, phiên mất mà
+      // không có audit/bill và phiếu bếp mồ côi.)
+      await runCancelSteps(
+        sessionId: widget.session.id,
+        tableLabel: widget.table.label,
+        steps: [
+          // Audit trước để còn đủ thông tin món/tiền (nếu các bước sau lỗi rồi thử lại).
+          CancelStep('ghi audit hủy bàn', () async {
+            final auditOk = await _banRepo.logVoidEvent(
+              voidType: 'cancel_table',
+              referenceId: widget.session.id,
+              label: widget.table.label,
+              requestedByUserId: session?.userId ?? '',
+              requestedByName: session?.displayName ?? 'Nhân viên',
+              approvedByUserId: approval!['id'] ?? '',
+              approvedByName: approval['name'] ?? 'Quản lý',
+              reason: reason!,
+              amount: total,
+              details: details,
             );
-          }
-        }
-      } catch (e) {
-        debugPrint('[Ban] void logs for table cancellation err: $e');
-      }
-
-      // Ghi nhận lịch sử kiểm toán huỷ bàn vào void_audit_logs
-      await _banRepo.logVoidEvent(
-        voidType: 'cancel_table',
-        referenceId: widget.session.id,
-        label: widget.table.label,
-        requestedByUserId: session?.userId ?? '',
-        requestedByName: session?.displayName ?? 'Nhân viên',
-        approvedByUserId: approval['id'] ?? '',
-        approvedByName: approval['name'] ?? 'Quản lý',
+            if (!auditOk) throw Exception('không ghi được void_audit_logs');
+          }),
+          CancelStep('đánh dấu món đã hủy', () async {
+            await client
+                .from('ban_session_items')
+                .update({'kitchen_status': 'huy'})
+                .eq('session_id', widget.session.id)
+                .neq('kitchen_status', 'huy');
+          }),
+          CancelStep('hủy phiếu bếp', () async {
+            await client
+                .from('kitchen_tickets')
+                .update({'status': 'huy'})
+                .eq('session_id', widget.session.id)
+                .inFilter('status', ['cho', 'dang_lam']);
+          }),
+          // Log để bếp thấy banner hủy bàn: phụ, lỗi thì ghi log chứ không chặn hủy.
+          CancelStep('ghi void log cho bếp', () async {
+            if (storeId == null) return;
+            final voidLogs = <Map<String, dynamic>>[
+              for (final item in activeItemsForLog)
+                if (const [
+                  'da_gui',
+                  'dang_lam',
+                  'xong',
+                ].contains(item.kitchenStatus))
+                  {
+                    'store_id': storeId,
+                    'session_id': widget.session.id,
+                    'table_label': widget.table.label,
+                    'product_name': item.productName,
+                    'action': 'cancel',
+                    'old_qty': item.quantity,
+                    'new_qty': 0,
+                    'reason': 'Huỷ bàn: $reason',
+                    'staff_name': approval!['name'] ?? 'Quản lý',
+                  },
+            ];
+            if (voidLogs.isNotEmpty) {
+              await client.from('ban_session_void_logs').insert(voidLogs);
+            }
+          }, optional: true),
+        ],
+        closeSession: () async {
+          await client
+              .from('ban_sessions')
+              .update({
+                'status': 'cancelled',
+                'closed_at': DateTime.now().toUtc().toIso8601String(),
+              })
+              .eq('id', widget.session.id);
+        },
+      );
+      cancelled = true;
+      AppLogger.action(
+        'cancel_table',
+        'Hủy bàn',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        lines: activeItemsForLog.length,
+        total: total,
+        approver: approval!['name'],
         reason: reason,
-        amount: total,
-        details: details,
+        result: 'ok',
+        critical: true,
+        extra: {'requested_by': session?.displayName, 'items': details},
       );
-
-      debugPrint(
-        '[Ban] ✅ void audit log CANCEL_TABLE inserted with 2-step verification if cooking/done',
+      ref.invalidate(activeSessionsProvider);
+    } catch (e, st) {
+      AppLogger.action(
+        'cancel_table',
+        'Hủy bàn',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        approver: approval?['name'],
+        reason: reason,
+        result: 'LỖI ${e is CancelStepFailure ? e.step : e}',
+        critical: true,
+        level: 'ERROR',
       );
-    } catch (e) {
-      debugPrint('[Ban] cancel kitchen tickets err: $e');
+      AppLogger.error(
+        'ban_screen',
+        'HỦY BÀN THẤT BẠI ${widget.table.label} (phiên ${widget.session.id}): $e',
+        e,
+        st,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Hủy bàn CHƯA hoàn tất (${e is CancelStepFailure ? e.step : 'lỗi hệ thống'}). '
+              'Bàn vẫn mở — kiểm tra mạng rồi hủy lại, hoặc báo chủ quán.',
+            ),
+            backgroundColor: _kRed,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 8),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isCancelling = false);
-        Navigator.pop(context);
+        // Chỉ đóng bảng bàn khi hủy thành công; lỗi thì giữ để nhân viên thấy và thử lại.
+        if (cancelled) Navigator.pop(context);
       }
     }
   }
@@ -4742,147 +5423,164 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   const SizedBox(height: 14),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: zoneColor,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            widget.table.label,
-                            style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${widget.session.guestCount} khách',
-                          style: GoogleFonts.outfit(
-                            color: _kNavy.withValues(alpha: 0.5),
-                            fontSize: 13,
-                          ),
-                        ),
-                        const Spacer(),
-                        // Nút Chuyển bàn
-                        GestureDetector(
-                          onTap: _transferTable,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _kAmber.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: _kAmber.withValues(alpha: 0.2),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: zoneColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                widget.table.label,
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
-                            child: Row(
+                            const SizedBox(width: 8),
+                            Text(
+                              '${widget.session.guestCount} khách',
+                              style: GoogleFonts.outfit(
+                                color: _kNavy.withValues(alpha: 0.5),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        // Các nút thao tác bàn: xuống dòng khi màn hẹp (tránh tràn chữ)
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.swap_horiz_rounded,
-                                  size: 14,
-                                  color: _kAmber,
+                                // Nút Chuyển bàn
+                                GestureDetector(
+                                  onTap: _transferTable,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _kAmber.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: _kAmber.withValues(alpha: 0.2),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.swap_horiz_rounded,
+                                          size: 14,
+                                          color: _kAmber,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Chuyển',
+                                          style: GoogleFonts.outfit(
+                                            color: _kAmber,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Chuyển',
-                                  style: GoogleFonts.outfit(
-                                    color: _kAmber,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
+                                const SizedBox(width: 8),
+                                // Nút Gộp bàn
+                                GestureDetector(
+                                  onTap: _mergeTable,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF2563EB,
+                                      ).withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: const Color(
+                                          0xFF2563EB,
+                                        ).withValues(alpha: 0.2),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.merge_type_rounded,
+                                          size: 14,
+                                          color: Color(0xFF2563EB),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Gộp bàn',
+                                          style: GoogleFonts.outfit(
+                                            color: const Color(0xFF2563EB),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: _cancelSession,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _kRed.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: _kRed.withValues(alpha: 0.2),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.cancel_rounded,
+                                          size: 14,
+                                          color: _kRed,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Huỷ bàn',
+                                          style: GoogleFonts.outfit(
+                                            color: _kRed,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Nút Gộp bàn
-                        GestureDetector(
-                          onTap: _mergeTable,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF2563EB,
-                              ).withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(
-                                  0xFF2563EB,
-                                ).withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.merge_type_rounded,
-                                  size: 14,
-                                  color: Color(0xFF2563EB),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Gộp bàn',
-                                  style: GoogleFonts.outfit(
-                                    color: const Color(0xFF2563EB),
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: _cancelSession,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _kRed.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: _kRed.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.cancel_rounded,
-                                  size: 14,
-                                  color: _kRed,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Huỷ bàn',
-                                  style: GoogleFonts.outfit(
-                                    color: _kRed,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
@@ -4893,7 +5591,19 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     child: itemsAsync.when(
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Center(child: Text('$e')),
+                      error: (e, st) {
+                        AppLogger.error(
+                          'ban_screen',
+                          'Tải món trong bàn thất bại: $e',
+                          e,
+                          st,
+                        );
+                        return const Center(
+                          child: Text(
+                            'Tải món thất bại. Hãy chụp lại báo chủ app.',
+                          ),
+                        );
+                      },
                       data: (items) {
                         if (items.isEmpty) {
                           return Center(
@@ -5014,6 +5724,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                             groupedActiveMap[key] = item;
                           }
                         }
+                        _noteGroupIds.clear();
+                        _noteRepOf.clear();
+                        for (final item in rawActiveItems) {
+                          final rep =
+                              groupedActiveMap['${item.productId}_${item.price.toStringAsFixed(2)}_${item.note?.trim() ?? ''}_${item.modifiersJson?.trim() ?? ''}_${item.kitchenStatus}']!;
+                          _noteRepOf[item.id] = rep.id;
+                          (_noteGroupIds[rep.id] ??= []).add(item.id);
+                        }
                         final activeItems = groupedActiveMap.values.toList()
                           ..sort((a, b) => a.addedAt.compareTo(b.addedAt));
                         print(
@@ -5072,10 +5790,6 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                       children: [
                                         Row(
                                           children: [
-                                            _KitchenStatusDot(
-                                              status: item.kitchenStatus,
-                                            ),
-                                            const SizedBox(width: 8),
                                             Expanded(
                                               child: Column(
                                                 crossAxisAlignment:
@@ -5106,6 +5820,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                       fontWeight:
                                                           FontWeight.w600,
                                                     ),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  _KitchenStatusDot(
+                                                    status: item.kitchenStatus,
                                                   ),
                                                 ],
                                               ),
@@ -5383,25 +6101,20 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                   ),
                                                   child: _ItemNoteInput(
                                                     item: item,
+                                                    onEdited: () =>
+                                                        _dirtyNoteIds.add(
+                                                          item.id,
+                                                        ),
+                                                    onCommit: (text) =>
+                                                        _updateItemNote(
+                                                          item,
+                                                          text,
+                                                        ),
                                                     focusNode: _noteFocusNodes
-                                                        .putIfAbsent(item.id, () {
-                                                          final fn =
-                                                              FocusNode();
-                                                          fn.addListener(() {
-                                                            if (!fn.hasFocus) {
-                                                              final currentText =
-                                                                  _noteControllers[item
-                                                                          .id]
-                                                                      ?.text ??
-                                                                  '';
-                                                              _updateItemNote(
-                                                                item,
-                                                                currentText,
-                                                              );
-                                                            }
-                                                          });
-                                                          return fn;
-                                                        }),
+                                                        .putIfAbsent(
+                                                          item.id,
+                                                          () => FocusNode(),
+                                                        ),
                                                     controller: _noteControllers
                                                         .putIfAbsent(
                                                           item.id,
@@ -5424,136 +6137,148 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                     child: ListView(
                                                       scrollDirection:
                                                           Axis.horizontal,
-                                                      children: _AddItemsSheetState._kPresets.map((
-                                                        preset,
-                                                      ) {
-                                                        final ctrl = _noteControllers
-                                                            .putIfAbsent(
-                                                              item.id,
-                                                              () => TextEditingController(
-                                                                text:
-                                                                    item.note ??
-                                                                    '',
-                                                              ),
-                                                            );
-                                                        final currentText =
-                                                            ctrl.text;
-                                                        final isOn = currentText
-                                                            .contains(preset);
-                                                        return Padding(
-                                                          padding:
-                                                              const EdgeInsets.only(
-                                                                right: 6,
-                                                              ),
-                                                          child: InkWell(
-                                                            onTap: () {
-                                                              HapticFeedback.selectionClick();
-                                                              String newText;
-                                                              if (isOn) {
-                                                                newText = currentText
-                                                                    .replaceAll(
-                                                                      ', $preset',
-                                                                      '',
-                                                                    )
-                                                                    .replaceAll(
+                                                      children:
+                                                          notePresetsFor(
+                                                            ref
+                                                                .read(
+                                                                  posProductsProvider,
+                                                                )
+                                                                .value
+                                                                ?.where(
+                                                                  (x) =>
+                                                                      x.id ==
+                                                                      item.productId,
+                                                                )
+                                                                .firstOrNull,
+                                                            ref
+                                                                .watch(
+                                                                  productModifiersProvider(
+                                                                    item.productId,
+                                                                  ),
+                                                                )
+                                                                .value,
+                                                          ).map((preset) {
+                                                            final ctrl = _noteControllers
+                                                                .putIfAbsent(
+                                                                  item.id,
+                                                                  () => TextEditingController(
+                                                                    text:
+                                                                        item.note ??
+                                                                        '',
+                                                                  ),
+                                                                );
+                                                            final currentText =
+                                                                ctrl.text;
+                                                            final isOn =
+                                                                currentText
+                                                                    .contains(
                                                                       preset,
-                                                                      '',
-                                                                    )
-                                                                    .trim()
-                                                                    .replaceAll(
-                                                                      RegExp(
-                                                                        r'^,\s*|,\s*$',
-                                                                      ),
-                                                                      '',
                                                                     );
-                                                              } else {
-                                                                newText =
-                                                                    currentText
-                                                                        .isEmpty
-                                                                    ? preset
-                                                                    : '$currentText, $preset';
-                                                              }
-                                                              ctrl.text =
+                                                            return Padding(
+                                                              padding:
+                                                                  const EdgeInsets.only(
+                                                                    right: 6,
+                                                                  ),
+                                                              child: InkWell(
+                                                                onTap: () {
+                                                                  HapticFeedback.selectionClick();
+                                                                  String
                                                                   newText;
-                                                              ctrl.selection =
-                                                                  TextSelection.fromPosition(
+                                                                  if (isOn) {
+                                                                    newText = currentText
+                                                                        .replaceAll(
+                                                                          ', $preset',
+                                                                          '',
+                                                                        )
+                                                                        .replaceAll(
+                                                                          preset,
+                                                                          '',
+                                                                        )
+                                                                        .trim()
+                                                                        .replaceAll(
+                                                                          RegExp(
+                                                                            r'^,\s*|,\s*$',
+                                                                          ),
+                                                                          '',
+                                                                        );
+                                                                  } else {
+                                                                    newText =
+                                                                        currentText
+                                                                            .isEmpty
+                                                                        ? preset
+                                                                        : '$currentText, $preset';
+                                                                  }
+                                                                  ctrl.text =
+                                                                      newText;
+                                                                  ctrl.selection = TextSelection.fromPosition(
                                                                     TextPosition(
                                                                       offset: newText
                                                                           .length,
                                                                     ),
                                                                   );
 
-                                                              Supabase
-                                                                  .instance
-                                                                  .client
-                                                                  .from(
-                                                                    'ban_session_items',
-                                                                  )
-                                                                  .update({
-                                                                    'note':
-                                                                        newText
-                                                                            .trim()
-                                                                            .isEmpty
-                                                                        ? null
-                                                                        : newText
-                                                                              .trim(),
-                                                                  })
-                                                                  .eq(
-                                                                    'id',
-                                                                    item.id,
+                                                                  _dirtyNoteIds
+                                                                      .add(
+                                                                        item.id,
+                                                                      );
+                                                                  _updateItemNote(
+                                                                    item,
+                                                                    newText,
                                                                   );
-                                                              setState(() {});
-                                                            },
-                                                            child: Container(
-                                                              padding:
-                                                                  const EdgeInsets.symmetric(
-                                                                    horizontal:
-                                                                        10,
-                                                                  ),
-                                                              alignment:
-                                                                  Alignment
-                                                                      .center,
-                                                              decoration: BoxDecoration(
-                                                                color: isOn
-                                                                    ? _kNavy
-                                                                    : _kNavy.withValues(
-                                                                        alpha:
-                                                                            0.05,
+                                                                  setState(
+                                                                    () {},
+                                                                  );
+                                                                },
+                                                                child: Container(
+                                                                  padding:
+                                                                      const EdgeInsets.symmetric(
+                                                                        horizontal:
+                                                                            10,
                                                                       ),
-                                                                borderRadius:
-                                                                    BorderRadius.circular(
-                                                                      15,
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .center,
+                                                                  decoration: BoxDecoration(
+                                                                    color: isOn
+                                                                        ? _kNavy
+                                                                        : _kNavy.withValues(
+                                                                            alpha:
+                                                                                0.05,
+                                                                          ),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          15,
+                                                                        ),
+                                                                    border: Border.all(
+                                                                      color:
+                                                                          isOn
+                                                                          ? _kNavy
+                                                                          : _kNavy.withValues(
+                                                                              alpha: 0.1,
+                                                                            ),
+                                                                      width: 1,
                                                                     ),
-                                                                border: Border.all(
-                                                                  color: isOn
-                                                                      ? _kNavy
-                                                                      : _kNavy.withValues(
-                                                                          alpha:
-                                                                              0.1,
-                                                                        ),
-                                                                  width: 1,
+                                                                  ),
+                                                                  child: Text(
+                                                                    preset,
+                                                                    style: GoogleFonts.outfit(
+                                                                      fontSize:
+                                                                          11,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      color:
+                                                                          isOn
+                                                                          ? Colors.white
+                                                                          : _kNavy.withValues(
+                                                                              alpha: 0.6,
+                                                                            ),
+                                                                    ),
+                                                                  ),
                                                                 ),
                                                               ),
-                                                              child: Text(
-                                                                preset,
-                                                                style: GoogleFonts.outfit(
-                                                                  fontSize: 11,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color: isOn
-                                                                      ? Colors
-                                                                            .white
-                                                                      : _kNavy.withValues(
-                                                                          alpha:
-                                                                              0.6,
-                                                                        ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }).toList(),
+                                                            );
+                                                          }).toList(),
                                                     ),
                                                   ),
                                                 ),
@@ -5602,6 +6327,51 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                       ],
                                     ),
                                     const SizedBox(height: 16),
+                                    // Cảnh báo: món chưa gửi bếp quá 3 phút
+                                    Builder(
+                                      builder: (_) {
+                                        final overdue = overdueUnsentItems(
+                                          activeItems,
+                                          DateTime.now(),
+                                        );
+                                        if (overdue.isEmpty) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        _logUnsentOverdueOnce(
+                                          widget.table.label,
+                                          widget.session.id,
+                                          overdue,
+                                        );
+                                        return Container(
+                                          width: double.infinity,
+                                          margin: const EdgeInsets.only(
+                                            bottom: 10,
+                                          ),
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: _kRed.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            border: Border.all(
+                                              color: _kRed.withValues(
+                                                alpha: 0.4,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '⚠ ${overdue.length} món CHƯA gửi bếp '
+                                            'quá 3 phút — bấm "Gửi bếp" để bếp làm.',
+                                            textAlign: TextAlign.center,
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                              color: _kRed,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                     // Action buttons — Thêm món + Gửi bếp
                                     Row(
                                       children: [
@@ -5790,6 +6560,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
   final _surchargeCtrl = TextEditingController();
   double _shippingFee = 0;
   bool _searchingCustomer = false;
+  bool _isSubmitting = false;
 
   CouponModel? _appliedCoupon;
   double _couponDiscount = 0;
@@ -5892,19 +6663,61 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
   }
 
   // Tạm tính
+  final PrintClickGuard _interimGuard = PrintClickGuard();
+
   void _printInterimBill() async {
+    // Chặn bấm liên tục: đang in hoặc vừa in xong chưa đủ vài giây thì bỏ qua.
+    if (!_interimGuard.tryStart()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Đang in tạm tính, vui lòng chờ vài giây rồi mới bấm lại.',
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     try {
       final info = await StoreAuthService.getStoreInfo();
       final storeId = info['store_id'];
       if (storeId == null) return;
 
       final settings = ref.read(printerSettingsProvider);
+      // Luôn lấy món mới nhất từ máy chủ, không tin danh sách đang hiện trên màn hình.
+      final sessionId = widget.items.isEmpty
+          ? ''
+          : widget.items.first.sessionId;
+      final items = sessionId.isEmpty
+          ? widget.items
+          : await reconcileSessionItems(
+              repo: ref.read(banRepositoryProvider),
+              where: 'in tạm tính',
+              sessionId: sessionId,
+              shown: widget.items,
+            );
+      final itemsTotal = items.fold<double>(0, (s, i) => s + i.subtotal);
       final finalTotal =
-          (widget.total -
+          (itemsTotal -
                   _couponDiscount -
                   (_usePts * _redeemRate) +
                   _shippingFee)
               .clamp(0.0, double.infinity);
+      AppLogger.action(
+        'print_interim',
+        'In tạm tính',
+        table: widget.tableName,
+        sessionId: sessionId.isEmpty ? null : sessionId,
+        lines: items.length,
+        total: finalTotal,
+        extra: {
+          'items_total': itemsTotal.round(),
+          'item_names': items
+              .map((i) => '${i.productName} x${i.quantity.toInt()}')
+              .toList(),
+        },
+      );
 
       final session = ref.read(sessionProvider);
       final billData = BillData(
@@ -5915,7 +6728,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         createdAt: DateTime.now(),
         tableName: widget.tableName,
         items: [
-          ...widget.items.map(
+          ...items.map(
             (i) => BillItem(
               name: i.productName,
               qty: i.quantity.toInt(),
@@ -5926,12 +6739,12 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
           if (_shippingFee > 0)
             BillItem(name: 'Phí dịch vụ / Ship', qty: 1, price: _shippingFee),
         ],
-        subtotal: widget.total + _shippingFee,
+        subtotal: itemsTotal + _shippingFee,
         discount: _couponDiscount + (_usePts * _redeemRate),
         total: finalTotal,
-        paymentMethod: 'cash',
+        note: 'TẠM TÍNH - CHƯA THANH TOÁN',
         type: BillType.receipt,
-        waiterName: _resolveWaiterName(widget.items, session?.displayName),
+        waiterName: _resolveWaiterName(items, session?.displayName),
       );
 
       await StationPrinterDispatcher.printBill(
@@ -5942,21 +6755,27 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã gửi lệnh in tạm tính'),
+          SnackBar(
+            content: Text('Đã gửi lệnh in tạm tính (${finalTotal.toInt()}đ)'),
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'In tạm tính thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi in tạm tính: $e'),
+            content: const Text(
+              'In tạm tính thất bại. Hãy chụp lại báo chủ app.',
+            ),
+            backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
+    } finally {
+      _interimGuard.finish();
     }
   }
 
@@ -6804,7 +7623,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: _isSubmitting ? null : () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -6825,14 +7644,19 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         const SizedBox(width: 14),
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () => Navigator.pop(context, {
-              'pay': _payMethod,
-              'customerId': _customerId,
-              'ptsUsed': _usePts,
-              'discount': (_usePts * _redeemRate) + _couponDiscount,
-              'couponCode': _appliedCoupon?.code,
-              'surcharge': _shippingFee,
-            }),
+            onPressed: _isSubmitting
+                ? null
+                : () {
+                    setState(() => _isSubmitting = true);
+                    Navigator.pop(context, {
+                      'pay': _payMethod,
+                      'customerId': _customerId,
+                      'ptsUsed': _usePts,
+                      'discount': (_usePts * _redeemRate) + _couponDiscount,
+                      'couponCode': _appliedCoupon?.code,
+                      'surcharge': _shippingFee,
+                    });
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: _kNavy,
               foregroundColor: Colors.white,
@@ -6843,11 +7667,17 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
-            icon: const Icon(
-              Icons.check_circle_rounded,
-              size: 18,
-              color: _kOrange,
-            ),
+            icon: _isSubmitting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(
+                    Icons.check_circle_rounded,
+                    size: 18,
+                    color: _kOrange,
+                  ),
             label: Text(
               'Xác nhận',
               style: GoogleFonts.outfit(
@@ -6872,115 +7702,142 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
             .clamp(0.0, double.infinity);
     final isWide = MediaQuery.of(context).size.width > 750;
 
-    return Dialog(
-      backgroundColor: _kCream,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: Container(
-        constraints: BoxConstraints(maxWidth: isWide ? 850 : 500),
-        padding: const EdgeInsets.all(20),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Icon(Icons.receipt_long_rounded, color: zoneColor, size: 22),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Thu tiền — ${widget.tableName}',
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: _kNavy,
-                    ),
-                  ),
-                  const Spacer(),
-                  OutlinedButton.icon(
-                    onPressed: _printInterimBill,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _kOrange,
-                      side: const BorderSide(color: _kOrange, width: 1.5),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    icon: const Icon(Icons.print_rounded, size: 14),
-                    label: Text(
-                      'In tạm tính',
-                      style: GoogleFonts.outfit(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: Colors.grey,
-                      size: 20,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-              const Divider(height: 20),
-
-              if (isWide) ...[
+    return PopScope(
+      canPop: !_isSubmitting,
+      child: Dialog(
+        backgroundColor: _kCream,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Container(
+          constraints: BoxConstraints(maxWidth: isWide ? 850 : 500),
+          padding: const EdgeInsets.all(20),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Icon(
+                      Icons.receipt_long_rounded,
+                      color: zoneColor,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildTotalDue(finalTotal),
-                          const SizedBox(height: 16),
-                          _buildSurchargeField(),
-                          const SizedBox(height: 16),
-                          _buildLoyaltyField(),
-                          const SizedBox(height: 16),
-                          _buildVoucherField(),
+                          Text(
+                            'Thu tiền',
+                            maxLines: 1,
+                            style: GoogleFonts.outfit(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: _kNavy,
+                            ),
+                          ),
+                          Text(
+                            widget.tableName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: _kNavy.withValues(alpha: 0.6),
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildPayMethodPicker(),
-                          _buildPaymentDetailsPanel(finalTotal),
-                        ],
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: _isSubmitting ? null : _printInterimBill,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _kOrange,
+                        side: const BorderSide(color: _kOrange, width: 1.5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
+                      icon: const Icon(Icons.print_rounded, size: 14),
+                      label: Text(
+                        'In tạm tính',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.pop(context),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
-              ] else ...[
-                _buildTotalDue(finalTotal),
-                const SizedBox(height: 16),
-                _buildSurchargeField(),
-                const SizedBox(height: 16),
-                _buildLoyaltyField(),
-                const SizedBox(height: 16),
-                _buildVoucherField(),
-                const SizedBox(height: 16),
-                _buildPayMethodPicker(),
-                _buildPaymentDetailsPanel(finalTotal),
-              ],
+                const Divider(height: 20),
 
-              const SizedBox(height: 24),
-              _buildActionButtons(zoneColor),
-            ],
+                if (isWide) ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildTotalDue(finalTotal),
+                            const SizedBox(height: 16),
+                            _buildSurchargeField(),
+                            const SizedBox(height: 16),
+                            _buildLoyaltyField(),
+                            const SizedBox(height: 16),
+                            _buildVoucherField(),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildPayMethodPicker(),
+                            _buildPaymentDetailsPanel(finalTotal),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  _buildTotalDue(finalTotal),
+                  const SizedBox(height: 16),
+                  _buildSurchargeField(),
+                  const SizedBox(height: 16),
+                  _buildLoyaltyField(),
+                  const SizedBox(height: 16),
+                  _buildVoucherField(),
+                  const SizedBox(height: 16),
+                  _buildPayMethodPicker(),
+                  _buildPaymentDetailsPanel(finalTotal),
+                ],
+
+                const SizedBox(height: 24),
+                _buildActionButtons(zoneColor),
+              ],
+            ),
           ),
         ),
       ),
@@ -7216,20 +8073,6 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
     );
   }
 
-  static const _kPresets = [
-    'Ít cay',
-    'Không cay',
-    'Ít đường',
-    'Không đá',
-    'Nhiều hành',
-    'Không hành',
-    'Ít hành',
-    'Không tiêu',
-    'Không mực',
-    'Ít mắm',
-    'Thêm rau',
-  ];
-
   Future<void> _confirm(List<ProductModel> products) async {
     if (_selected.isEmpty) {
       Navigator.pop(context);
@@ -7301,6 +8144,22 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
         sessionId: widget.sessionId,
         items: itemsList,
       );
+      AppLogger.action(
+        'add_items',
+        'Thêm món',
+        sessionId: widget.sessionId,
+        lines: itemsList.length,
+        total: itemsList.fold<double>(
+          0,
+          (sum, e) =>
+              sum + (e['price'] as double) * (e['quantity'] as num).toDouble(),
+        ),
+        extra: {
+          'item_names': itemsList
+              .map((e) => '${e['productName']} x${e['quantity']}')
+              .toList(),
+        },
+      );
 
       try {
         final session = ref.read(sessionProvider);
@@ -7318,14 +8177,15 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
       ref.invalidate(sessionItemsProvider(widget.sessionId));
       HapticFeedback.lightImpact();
       if (mounted) Navigator.pop(context);
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Thêm món thất bại: $e', e, st);
       if (mounted) {
         setState(() => _isConfirming = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Lỗi thêm món: $e',
-              style: const TextStyle(color: Colors.white, fontSize: 12),
+            content: const Text(
+              'Thêm món thất bại. Hãy chụp lại báo chủ app.',
+              style: TextStyle(color: Colors.white, fontSize: 12),
             ),
             backgroundColor: Colors.red.shade700,
             duration: const Duration(seconds: 6),
@@ -7628,6 +8488,96 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
     );
   }
 
+  Future<void> _addItemWithCheck(ProductModel p, Offset? flyStartOffset) async {
+    final isOutOfStock = !p.isAvailable || (p.minStock > 0 && p.stockQty <= 0);
+    final currentQty = _selected[p.id] ?? 0;
+    if (isOutOfStock && currentQty == 0) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Món tạm hết',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: _kNavy,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Món "${p.name}" hiện đang tạm hết. Bạn có chắc chắn muốn thêm vào bàn?',
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              color: _kNavy.withValues(alpha: 0.8),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                'Hủy',
+                style: GoogleFonts.outfit(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kNavy,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(
+                'Vẫn thêm',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+
+    setState(() {
+      _selected[p.id] = currentQty + 1;
+    });
+
+    if (flyStartOffset != null) {
+      CartAnimationHelper.runFlyAnimation(
+        context: context,
+        startOffset: flyStartOffset,
+        endOffset: _getBottomBarOffset(),
+        color: _kNavy,
+        onComplete: () {
+          if (mounted) {
+            setState(() {
+              _bottomBarPopTrigger++;
+            });
+            HapticFeedback.lightImpact();
+          }
+        },
+      );
+    } else {
+      HapticFeedback.lightImpact();
+    }
+  }
+
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(posProductsProvider);
     final storeId = ref.read(sessionProvider)?.storeId ?? '';
@@ -7801,19 +8751,35 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                 child: productsAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('$e')),
+                  error: (e, st) {
+                    AppLogger.error(
+                      'ban_screen',
+                      'Tải thực đơn thất bại: $e',
+                      e,
+                      st,
+                    );
+                    return const Center(
+                      child: Text(
+                        'Tải thực đơn thất bại. Hãy chụp lại báo chủ app.',
+                      ),
+                    );
+                  },
                   data: (products) {
                     final prodList = (products as List).cast<ProductModel>();
                     final filtered =
                         _search.isEmpty && _selectedCategory == 'Tất cả'
                         ? prodList
                         : prodList.where((p) {
-                            final matchCat = _selectedCategory == 'Tất cả'
+                            final matchCat = _search.isNotEmpty
                                 ? true
-                                : (p.category ?? 'Khác') == _selectedCategory;
+                                : (_selectedCategory == 'Tất cả' ||
+                                      (p.category ?? 'Khác') ==
+                                          _selectedCategory);
                             final matchSearch = _search.isEmpty
                                 ? true
-                                : p.name.containsSearch(_search);
+                                : (p.name.containsSearch(_search) ||
+                                      (p.sku?.containsSearch(_search) ??
+                                          false));
                             return matchCat && matchSearch;
                           }).toList();
 
@@ -7843,7 +8809,9 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                       itemBuilder: (ctx, i) {
                         final p = filtered[i];
                         final qty = _selected[p.id] ?? 0;
-                        final isOutOfStock = p.stockQty <= 0 && p.minStock > 0;
+                        final isOutOfStock =
+                            !p.isAvailable ||
+                            (p.minStock > 0 && p.stockQty <= 0);
 
                         final modifiersAsync = ref.watch(
                           productModifiersProvider(p.id),
@@ -7869,6 +8837,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                         final modGroups =
                             <String, List<Map<String, dynamic>>>{};
                         for (final m in modifiers) {
+                          if (m['group_name'] == kQuickNoteGroup) continue;
                           modGroups
                               .putIfAbsent(
                                 m['group_name'] as String? ?? 'Mặc định',
@@ -7877,8 +8846,176 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                               .add(m);
                         }
 
+                        final stackControls =
+                            qty > 0 && MediaQuery.sizeOf(context).width < 520;
+                        final Widget controlsW = Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (qty > 0) ...[
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setState(() {
+                                    if (_expandedProductIds.contains(p.id)) {
+                                      _expandedProductIds.remove(p.id);
+                                    } else {
+                                      _expandedProductIds.add(p.id);
+                                    }
+                                  });
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.only(right: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _expandedProductIds.contains(p.id)
+                                        ? _kNavy.withValues(alpha: 0.12)
+                                        : _kNavy.withValues(alpha: 0.06),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _expandedProductIds.contains(p.id)
+                                            ? Icons.expand_less_rounded
+                                            : Icons.tune_rounded,
+                                        size: 14,
+                                        color: _kNavy,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _expandedProductIds.contains(p.id)
+                                            ? 'Thu gọn'
+                                            : 'Tùy chọn',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: _kNavy,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: _kNavy.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 4,
+                                ),
+                                child: Row(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        HapticFeedback.selectionClick();
+                                        setState(() {
+                                          if (qty <= 1) {
+                                            _selected.remove(p.id);
+                                            _selectedModifiers.remove(p.id);
+                                            _expandedProductIds.remove(p.id);
+                                          } else {
+                                            _selected[p.id] = qty - 1;
+                                          }
+                                        });
+                                      },
+                                      child: Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.remove_rounded,
+                                          size: 14,
+                                          color: _kNavy,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 32,
+                                      child: Text(
+                                        '$qty',
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.w800,
+                                          color: _kNavy,
+                                          fontSize: 13.5,
+                                        ),
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTapDown: (details) {
+                                        _addItemWithCheck(
+                                          p,
+                                          details.globalPosition,
+                                        );
+                                      },
+                                      child: Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: _kNavy,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.add_rounded,
+                                          size: 14,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ] else ...[
+                              GestureDetector(
+                                onTapDown: (details) {
+                                  _addItemWithCheck(p, details.globalPosition);
+                                },
+                                child: Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: isOutOfStock
+                                        ? Colors.orange.shade700
+                                        : _kNavy,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color:
+                                            (isOutOfStock
+                                                    ? Colors.orange
+                                                    : _kNavy)
+                                                .withValues(alpha: 0.18),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.add_rounded,
+                                    size: 20,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+
                         return Opacity(
-                          opacity: isOutOfStock ? 0.55 : 1.0,
+                          opacity: isOutOfStock ? 0.75 : 1.0,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 220),
                             margin: const EdgeInsets.only(bottom: 12),
@@ -7908,411 +9045,239 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.all(14),
-                                  child: Row(
+                                  child: Column(
                                     children: [
-                                      // ── Ảnh sản phẩm cao cấp ──
-                                      Container(
-                                        width: 58,
-                                        height: 58,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(
-                                                alpha: 0.04,
-                                              ),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                          child:
-                                              p.imageUrl != null &&
-                                                  p.imageUrl!.isNotEmpty
-                                              ? Image.network(
-                                                  p.imageUrl!,
-                                                  width: 58,
-                                                  height: 58,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (_, __, ___) =>
-                                                      Container(
-                                                        color: _kNavy
-                                                            .withValues(
-                                                              alpha: 0.05,
-                                                            ),
-                                                        child: Icon(
-                                                          Icons
-                                                              .restaurant_rounded,
-                                                          color: _kNavy
-                                                              .withValues(
-                                                                alpha: 0.35,
-                                                              ),
-                                                          size: 26,
-                                                        ),
-                                                      ),
-                                                )
-                                              : Container(
-                                                  color: _kNavy.withValues(
-                                                    alpha: 0.05,
-                                                  ),
-                                                  child: Icon(
-                                                    Icons.restaurant_rounded,
-                                                    color: _kNavy.withValues(
-                                                      alpha: 0.35,
-                                                    ),
-                                                    size: 26,
-                                                  ),
-                                                ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      // ── Chi tiết sản phẩm ──
-                                      Expanded(
-                                        child: GestureDetector(
-                                          behavior: HitTestBehavior.opaque,
-                                          onTap: () {
-                                            if (qty > 0) {
-                                              HapticFeedback.selectionClick();
-                                              setState(() {
-                                                if (_expandedProductIds
-                                                    .contains(p.id)) {
-                                                  _expandedProductIds.remove(
-                                                    p.id,
-                                                  );
-                                                } else {
-                                                  _expandedProductIds.add(p.id);
-                                                }
-                                              });
-                                            }
-                                          },
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      p.name,
-                                                      style: GoogleFonts.outfit(
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        color: _kNavy,
-                                                        fontSize: 14.5,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  if (isOutOfStock)
-                                                    Container(
-                                                      margin:
-                                                          const EdgeInsets.only(
-                                                            left: 6,
-                                                          ),
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 8,
-                                                            vertical: 3,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color: const Color(
-                                                          0xFFFFEBEE,
-                                                        ),
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
-                                                            ),
-                                                      ),
-                                                      child: Text(
-                                                        'TẠM HẾT',
-                                                        style:
-                                                            GoogleFonts.outfit(
-                                                              fontSize: 9,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w800,
-                                                              color: _kRed,
-                                                              letterSpacing:
-                                                                  0.5,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 3),
-                                              Text(
-                                                modPrice > 0
-                                                    ? '${fmtVnd(p.sellPrice ?? 0)} +${fmtVnd(modPrice)} = ${fmtVnd(finalPrice)}'
-                                                    : fmtVnd(p.sellPrice ?? 0),
-                                                style: GoogleFonts.outfit(
-                                                  fontSize: 13,
-                                                  color: modPrice > 0
-                                                      ? _kOrange
-                                                      : _kNavy.withValues(
-                                                          alpha: 0.55,
-                                                        ),
-                                                  fontWeight: modPrice > 0
-                                                      ? FontWeight.w700
-                                                      : FontWeight.w600,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      // ── Điều khiển số lượng cao cấp ──
                                       Row(
                                         children: [
-                                          if (qty > 0) ...[
-                                            GestureDetector(
-                                              onTap: () {
-                                                HapticFeedback.selectionClick();
-                                                setState(() {
-                                                  if (_expandedProductIds
-                                                      .contains(p.id)) {
-                                                    _expandedProductIds.remove(
-                                                      p.id,
-                                                    );
-                                                  } else {
-                                                    _expandedProductIds.add(
-                                                      p.id,
-                                                    );
-                                                  }
-                                                });
-                                              },
-                                              child: Container(
-                                                margin: const EdgeInsets.only(
-                                                  right: 8,
+                                          // ── Ảnh sản phẩm cao cấp ──
+                                          Container(
+                                            width: 58,
+                                            height: 58,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.04),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
                                                 ),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 10,
-                                                      vertical: 6,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      _expandedProductIds
-                                                          .contains(p.id)
-                                                      ? _kNavy.withValues(
-                                                          alpha: 0.12,
-                                                        )
-                                                      : _kNavy.withValues(
-                                                          alpha: 0.06,
-                                                        ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      _expandedProductIds
-                                                              .contains(p.id)
-                                                          ? Icons
-                                                                .expand_less_rounded
-                                                          : Icons.tune_rounded,
-                                                      size: 14,
-                                                      color: _kNavy,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      _expandedProductIds
-                                                              .contains(p.id)
-                                                          ? 'Thu gọn'
-                                                          : 'Tùy chọn',
-                                                      style: GoogleFonts.outfit(
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        color: _kNavy,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
+                                              ],
                                             ),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: _kNavy.withValues(
-                                                  alpha: 0.05,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 4,
-                                                    vertical: 4,
-                                                  ),
-                                              child: Row(
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                              child:
+                                                  p.imageUrl != null &&
+                                                      p.imageUrl!.isNotEmpty
+                                                  ? Image.network(
+                                                      p.imageUrl!,
+                                                      width: 58,
+                                                      height: 58,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder:
+                                                          (
+                                                            _,
+                                                            __,
+                                                            ___,
+                                                          ) => Container(
+                                                            color: _kNavy
+                                                                .withValues(
+                                                                  alpha: 0.05,
+                                                                ),
+                                                            child: Icon(
+                                                              Icons
+                                                                  .restaurant_rounded,
+                                                              color: _kNavy
+                                                                  .withValues(
+                                                                    alpha: 0.35,
+                                                                  ),
+                                                              size: 26,
+                                                            ),
+                                                          ),
+                                                    )
+                                                  : Container(
+                                                      color: _kNavy.withValues(
+                                                        alpha: 0.05,
+                                                      ),
+                                                      child: Icon(
+                                                        Icons
+                                                            .restaurant_rounded,
+                                                        color: _kNavy
+                                                            .withValues(
+                                                              alpha: 0.35,
+                                                            ),
+                                                        size: 26,
+                                                      ),
+                                                    ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          // ── Chi tiết sản phẩm ──
+                                          Expanded(
+                                            child: GestureDetector(
+                                              behavior: HitTestBehavior.opaque,
+                                              onTap: () {
+                                                if (qty > 0) {
+                                                  HapticFeedback.selectionClick();
+                                                  setState(() {
+                                                    if (_expandedProductIds
+                                                        .contains(p.id)) {
+                                                      _expandedProductIds
+                                                          .remove(p.id);
+                                                    } else {
+                                                      _expandedProductIds.add(
+                                                        p.id,
+                                                      );
+                                                    }
+                                                  });
+                                                } else {
+                                                  _addItemWithCheck(p, null);
+                                                }
+                                              },
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      HapticFeedback.selectionClick();
-                                                      setState(() {
-                                                        if (qty <= 1) {
-                                                          _selected.remove(
-                                                            p.id,
-                                                          );
-                                                          _selectedModifiers
-                                                              .remove(p.id);
-                                                          _expandedProductIds
-                                                              .remove(p.id);
-                                                        } else {
-                                                          _selected[p.id] =
-                                                              qty - 1;
-                                                        }
-                                                      });
-                                                    },
-                                                    child: Container(
-                                                      width: 28,
-                                                      height: 28,
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          p.name,
+                                                          style:
+                                                              GoogleFonts.outfit(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                color: _kNavy,
+                                                                fontSize: 14.5,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      if (isOutOfStock)
+                                                        Container(
+                                                          margin:
+                                                              const EdgeInsets.only(
+                                                                left: 6,
+                                                              ),
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 8,
+                                                                vertical: 3,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: const Color(
+                                                              0xFFFFEBEE,
                                                             ),
-                                                      ),
-                                                      child: const Icon(
-                                                        Icons.remove_rounded,
-                                                        size: 14,
-                                                        color: _kNavy,
-                                                      ),
-                                                    ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  8,
+                                                                ),
+                                                          ),
+                                                          child: Text(
+                                                            'TẠM HẾT',
+                                                            style:
+                                                                GoogleFonts.outfit(
+                                                                  fontSize: 9,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w800,
+                                                                  color: _kRed,
+                                                                  letterSpacing:
+                                                                      0.5,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                    ],
                                                   ),
-                                                  SizedBox(
-                                                    width: 32,
-                                                    child: Text(
-                                                      '$qty',
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: GoogleFonts.outfit(
-                                                        fontWeight:
-                                                            FontWeight.w800,
-                                                        color: _kNavy,
-                                                        fontSize: 13.5,
+                                                  const SizedBox(height: 3),
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        modPrice > 0
+                                                            ? '${fmtVnd(p.sellPrice ?? 0)} +${fmtVnd(modPrice)} = ${fmtVnd(finalPrice)}'
+                                                            : fmtVnd(
+                                                                p.sellPrice ??
+                                                                    0,
+                                                              ),
+                                                        style: GoogleFonts.outfit(
+                                                          fontSize: 13,
+                                                          color: modPrice > 0
+                                                              ? _kOrange
+                                                              : _kNavy
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.55,
+                                                                    ),
+                                                          fontWeight:
+                                                              modPrice > 0
+                                                              ? FontWeight.w700
+                                                              : FontWeight.w600,
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ),
-                                                  GestureDetector(
-                                                    onTapDown: isOutOfStock
-                                                        ? null
-                                                        : (details) {
-                                                            setState(
-                                                              () =>
-                                                                  _selected[p
-                                                                          .id] =
-                                                                      qty + 1,
-                                                            );
-
-                                                            // Kích hoạt hiệu ứng bay mượt mà WOW v3
-                                                            CartAnimationHelper.runFlyAnimation(
-                                                              context: context,
-                                                              startOffset: details
-                                                                  .globalPosition,
-                                                              endOffset:
-                                                                  _getBottomBarOffset(),
-                                                              color: _kNavy,
-                                                              onComplete: () {
-                                                                setState(() {
-                                                                  _bottomBarPopTrigger++;
-                                                                });
-                                                                HapticFeedback.lightImpact();
-                                                              },
-                                                            );
-                                                          },
-                                                    child: Container(
-                                                      width: 28,
-                                                      height: 28,
-                                                      decoration: BoxDecoration(
-                                                        color: _kNavy,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
-                                                            ),
-                                                      ),
-                                                      child: const Icon(
-                                                        Icons.add_rounded,
-                                                        size: 14,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
+                                                      if (p.sku != null &&
+                                                          p
+                                                              .sku!
+                                                              .isNotEmpty) ...[
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
+                                                        Container(
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 6,
+                                                                vertical: 1.5,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: _kNavy
+                                                                .withValues(
+                                                                  alpha: 0.05,
+                                                                ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
+                                                          ),
+                                                          child: Text(
+                                                            p.sku!,
+                                                            style:
+                                                                GoogleFonts.outfit(
+                                                                  fontSize: 10,
+                                                                  color: _kNavy
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.5,
+                                                                      ),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ],
                                                   ),
                                                 ],
                                               ),
                                             ),
-                                          ] else ...[
-                                            GestureDetector(
-                                              onTapDown: isOutOfStock
-                                                  ? null
-                                                  : (details) {
-                                                      setState(
-                                                        () =>
-                                                            _selected[p.id] = 1,
-                                                      );
-
-                                                      // Kích hoạt hiệu ứng bay mượt mà WOW v3
-                                                      CartAnimationHelper.runFlyAnimation(
-                                                        context: context,
-                                                        startOffset: details
-                                                            .globalPosition,
-                                                        endOffset:
-                                                            _getBottomBarOffset(),
-                                                        color: _kNavy,
-                                                        onComplete: () {
-                                                          setState(() {
-                                                            _bottomBarPopTrigger++;
-                                                          });
-                                                          HapticFeedback.lightImpact();
-                                                        },
-                                                      );
-                                                    },
-                                              child: Container(
-                                                width: 36,
-                                                height: 36,
-                                                decoration: BoxDecoration(
-                                                  color: isOutOfStock
-                                                      ? _kNavy.withValues(
-                                                          alpha: 0.25,
-                                                        )
-                                                      : _kNavy,
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                  boxShadow: isOutOfStock
-                                                      ? []
-                                                      : [
-                                                          BoxShadow(
-                                                            color: _kNavy
-                                                                .withValues(
-                                                                  alpha: 0.15,
-                                                                ),
-                                                            blurRadius: 8,
-                                                            offset:
-                                                                const Offset(
-                                                                  0,
-                                                                  3,
-                                                                ),
-                                                          ),
-                                                        ],
-                                                ),
-                                                child: const Icon(
-                                                  Icons.add_rounded,
-                                                  size: 20,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
+                                          ),
+                                          if (!stackControls) ...[
+                                            const SizedBox(width: 12),
+                                            controlsW,
                                           ],
                                         ],
                                       ),
+                                      if (stackControls)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 10,
+                                          ),
+                                          child: Align(
+                                            alignment: Alignment.centerRight,
+                                            child: controlsW,
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ),
@@ -8555,7 +9520,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                 // ── HƯƠNG VỊ / MODIFIER CHIPS CAO CẤP ───────────
                                 if (qty > 0 &&
                                     _expandedProductIds.contains(p.id) &&
-                                    modifiers.isNotEmpty)
+                                    modGroups.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(
                                       14,
@@ -8744,7 +9709,10 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                           child: ListView(
                                             scrollDirection: Axis.horizontal,
                                             children: [
-                                              ..._kPresets.map((preset) {
+                                              ...notePresetsFor(
+                                                p,
+                                                modifiers,
+                                              ).map((preset) {
                                                 final note = _notes[p.id] ?? '';
                                                 final isOn = note.contains(
                                                   preset,
@@ -9605,6 +10573,7 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
     await Supabase.instance.client.from('product_modifiers').insert({
       'id': const Uuid().v4(),
       'product_id': widget.product.id,
+      'store_id': widget.product.storeId,
       'group_name': _group.trim().isEmpty ? 'Mặc định' : _group.trim(),
       'name': name,
       'price_adjust': price,
@@ -10181,7 +11150,7 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                           ),
                           child: Center(
                             child: Icon(
-                              IconData(iconCp, fontFamily: 'MaterialIcons'),
+                              _zoneIconForCode(iconCp),
                               size: 22,
                               color: isSel ? _selectedColor : _kNavy,
                             ),
@@ -10459,10 +11428,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                IconData(
-                                  zone.iconCode,
-                                  fontFamily: 'MaterialIcons',
-                                ),
+                                _zoneIconForCode(zone.iconCode),
                                 size: 14,
                                 color: isSel ? Colors.white : zoneColor,
                               ),
@@ -10819,7 +11785,8 @@ class _SendKitchenButtonState extends ConsumerState<_SendKitchenButton> {
     if (_isSending) return;
     setState(() => _isSending = true);
     try {
-      await widget.onPressed(); // await đúng cách, bắt lỗi rõ ràng
+      // Giới hạn thời gian: nếu callback treo thì nút tự mở lại, không kẹt "Đang gửi...".
+      await widget.onPressed().timeout(const Duration(seconds: 50));
     } catch (e) {
       debugPrint('[SendKitchenButton] unhandled: $e');
     } finally {
@@ -10891,13 +11858,31 @@ class _SendKitchenButtonState extends ConsumerState<_SendKitchenButton> {
       ),
     );
 
-    // Khi module Bếp chưa bật: hiện tooltip hướng dẫn, không cho tap
+    // Khi module Bếp chưa bật: nút KHÔNG gửi được. Phải báo rõ (trước đây chỉ mờ đi + tooltip
+    // dễ bỏ sót nên nhân viên tưởng "không order được") và ghi log để chủ quán biết.
     if (!isKitchenActive) {
-      return Tooltip(
-        message: 'Cần bật Module Bếp trong Modules trước',
-        preferBelow: false,
-        triggerMode: TooltipTriggerMode.tap,
-        showDuration: const Duration(seconds: 4),
+      return GestureDetector(
+        onTap: () {
+          AppLogger.action(
+            'send_kitchen_blocked',
+            'Gửi bếp bị chặn: module Bếp đang tắt',
+            result: 'module kitchen không bật',
+            level: 'WARNING',
+            critical: true,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'KHÔNG gửi bếp được: module Bếp đang tắt trên quán này. '
+                'Báo chủ quán bật lại (Trang chủ → Sửa → + → Bếp).',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+              ),
+              backgroundColor: _kRed,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 8),
+            ),
+          );
+        },
         child: buttonChild,
       );
     }
@@ -11597,10 +12582,14 @@ class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
     try {
       await widget.onConfirm(_selectedTableId!);
       if (mounted) Navigator.pop(context);
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Chuyển bàn thất bại: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e'), backgroundColor: _kRed),
+          const SnackBar(
+            content: Text('Chuyển bàn thất bại. Hãy chụp lại báo chủ app.'),
+            backgroundColor: _kRed,
+          ),
         );
       }
     } finally {
@@ -11729,9 +12718,15 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
           _loading = false;
         });
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error(
+        'ban_screen',
+        'Xác thực mã PIN quản lý thất bại: $e',
+        e,
+        st,
+      );
       setState(() {
-        _error = 'Lỗi kết nối: $e';
+        _error = 'Lỗi kết nối. Hãy chụp lại báo chủ app.';
         _loading = false;
       });
     }
@@ -11903,11 +12898,15 @@ class _ItemNoteInput extends StatefulWidget {
   final BanSessionItemModel item;
   final TextEditingController controller;
   final FocusNode focusNode;
+  final VoidCallback onEdited;
+  final void Function(String text) onCommit;
 
   const _ItemNoteInput({
     required this.item,
     required this.controller,
     required this.focusNode,
+    required this.onEdited,
+    required this.onCommit,
   });
 
   @override
@@ -11915,11 +12914,54 @@ class _ItemNoteInput extends StatefulWidget {
 }
 
 class _ItemNoteInputState extends State<_ItemNoteInput> {
+  bool _edited = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ItemNoteInput old) {
+    super.didUpdateWidget(old);
+    if (old.focusNode != widget.focusNode) {
+      old.focusNode.removeListener(_onFocusChange);
+      widget.focusNode.addListener(_onFocusChange);
+    }
+    // Máy khác (hoặc server) đã đổi ghi chú → cập nhật ô nhập nếu mình không đang sửa.
+    final remote = widget.item.note ?? '';
+    if ((old.item.note ?? '') != remote &&
+        !_edited &&
+        !widget.focusNode.hasFocus &&
+        widget.controller.text != remote) {
+      widget.controller.text = remote;
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    // Chỉ lưu khi người dùng thực sự gõ — không ghi đè bằng text cũ/rỗng.
+    if (!widget.focusNode.hasFocus && _edited) {
+      _edited = false;
+      widget.onCommit(widget.controller.text);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return TextField(
       focusNode: widget.focusNode,
       controller: widget.controller,
+      onChanged: (_) {
+        _edited = true;
+        widget.onEdited();
+      },
       style: GoogleFonts.outfit(
         fontSize: 12,
         fontWeight: FontWeight.w600,
@@ -11949,6 +12991,103 @@ class _ItemNoteInputState extends State<_ItemNoteInput> {
       ),
     );
   }
+}
+
+/// Một bước phụ khi hủy bàn. `optional` = lỗi chỉ ghi log, không chặn việc hủy.
+class CancelStep {
+  CancelStep(this.name, this.run, {this.optional = false});
+  final String name;
+  final Future<void> Function() run;
+  final bool optional;
+}
+
+class CancelStepFailure implements Exception {
+  CancelStepFailure(this.step, this.cause);
+  final String step;
+  final Object cause;
+  @override
+  String toString() => 'Bước "$step" lỗi: $cause';
+}
+
+/// Hủy bàn an toàn: chạy các bước phụ theo thứ tự rồi mới đóng phiên (bước cuối).
+/// Bước bắt buộc lỗi -> ném [CancelStepFailure] và KHÔNG đóng phiên (bàn vẫn mở để thử lại).
+/// Bước `optional` lỗi -> chỉ ghi cảnh báo.
+Future<void> runCancelSteps({
+  required String sessionId,
+  required String tableLabel,
+  required List<CancelStep> steps,
+  required Future<void> Function() closeSession,
+}) async {
+  for (final step in steps) {
+    try {
+      await step.run();
+    } catch (e) {
+      if (step.optional) {
+        AppLogger.warning(
+          'ban_screen',
+          'Hủy bàn $tableLabel (phiên $sessionId): bước phụ "${step.name}" lỗi, bỏ qua: $e',
+        );
+        continue;
+      }
+      throw CancelStepFailure(step.name, e);
+    }
+  }
+  try {
+    await closeSession();
+  } catch (e) {
+    throw CancelStepFailure('đóng phiên', e);
+  }
+  AppLogger.info('ban_screen', 'Đã hủy bàn $tableLabel (phiên $sessionId)');
+}
+
+final Set<String> _unsentOverdueLogged = <String>{};
+
+/// Ghi log một lần cho mỗi đợt món chưa gửi bếp quá 3 phút (khóa = phiên + số món quá hạn).
+void _logUnsentOverdueOnce(
+  String tableLabel,
+  String sessionId,
+  List<BanSessionItemModel> overdue,
+) {
+  if (!_unsentOverdueLogged.add('$sessionId:${overdue.length}')) return;
+  AppLogger.action(
+    'unsent_overdue',
+    'Món chưa gửi bếp quá 3 phút',
+    table: tableLabel,
+    sessionId: sessionId,
+    lines: overdue.length,
+    result: 'chưa gửi bếp',
+    level: 'WARNING',
+    extra: {'item_names': overdue.map((i) => i.productName).toList()},
+  );
+}
+
+/// Đối chiếu danh sách món đang hiện trên màn hình với máy chủ trước khi in tạm tính
+/// hoặc mở thanh toán. Màn hình từng đứng yên ở 4 món trong khi bàn đã có 7 món
+/// (tạm tính 113k, thanh toán 219k). Lệch -> dùng bản máy chủ và ghi cảnh báo lên log.
+/// Không tải được -> dùng bản đang hiện (có ghi log), không chặn nghiệp vụ.
+Future<List<BanSessionItemModel>> reconcileSessionItems({
+  required BanRepository repo,
+  required String where,
+  required String sessionId,
+  required List<BanSessionItemModel> shown,
+}) async {
+  final fresh = await repo.fetchActiveSessionItems(sessionId);
+  if (fresh == null) return shown;
+  double money(List<BanSessionItemModel> l) =>
+      l.fold<double>(0, (s, i) => s + i.subtotal);
+  double qty(List<BanSessionItemModel> l) =>
+      l.fold<double>(0, (s, i) => s + i.quantity);
+  final stale =
+      (money(fresh) - money(shown)).abs() > 0.5 ||
+      (qty(fresh) - qty(shown)).abs() > 0.001;
+  if (!stale) return shown;
+  AppLogger.warning(
+    'ban_items',
+    'LỆCH danh sách món ($where) phiên $sessionId: màn hình ${qty(shown).toInt()} phần '
+        '${money(shown).toInt()}đ, máy chủ ${qty(fresh).toInt()} phần ${money(fresh).toInt()}đ '
+        '-> dùng bản máy chủ',
+  );
+  return fresh;
 }
 
 String _resolveWaiterName(List<BanSessionItemModel> items, String? fallback) {
@@ -12039,6 +13178,101 @@ class _PulsingTableBorderState extends State<_PulsingTableBorder>
         );
       },
       child: widget.child,
+    );
+  }
+}
+
+/// Dòng trạng thái bill trong hộp thoại thanh toán thành công: đang in / đã gửi / chưa in sau
+/// 30 giây (kèm nút In lại bill).
+class _BillPrintStatusBar extends StatelessWidget {
+  const _BillPrintStatusBar({required this.watch, required this.onReprint});
+
+  final BillPrintWatchdog watch;
+  final VoidCallback onReprint;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<BillPrintStatus>(
+      valueListenable: watch.status,
+      builder: (context, status, _) {
+        switch (status) {
+          case BillPrintStatus.printed:
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  size: 18,
+                  color: _kGreen,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Bill đã gửi máy in',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _kGreen,
+                  ),
+                ),
+              ],
+            );
+          case BillPrintStatus.overdue:
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _kRed.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _kRed.withValues(alpha: 0.4)),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'Bill CHƯA in sau 30 giây. Kiểm tra máy in bill.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _kRed,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: onReprint,
+                      icon: const Icon(Icons.print_rounded, size: 18),
+                      label: Text(
+                        'IN LẠI BILL',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          case BillPrintStatus.pending:
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Đang in bill…',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _kNavy.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            );
+        }
+      },
     );
   }
 }

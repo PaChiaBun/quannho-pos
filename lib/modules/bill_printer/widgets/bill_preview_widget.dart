@@ -1,3 +1,4 @@
+import '../utils/paper_sizes.dart';
 import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -19,8 +20,7 @@ class BillPreviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final widthFactor = tpl.paperSize == '58mm' ? 0.60
-        : tpl.paperSize == 'a4' ? 1.0 : 0.80;
+    final widthFactor = paperSpecOf(tpl.paperSize).billPreview;
     final baseSubtotal = _kSampleItems.fold(0.0, (s, e) => s + e.$2 * e.$3);
     const discount = 15000.0;
     const surcharge = 10000.0;
@@ -270,10 +270,12 @@ class _TaxInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fs = b.cfg<int>('fontSize', 10).toDouble();
-    final pattern = b.cfg<String>('invoicePattern', '1/001');
-    final serial = b.cfg<String>('invoiceSerial', '1C26TAA');
-    final showPattern = b.cfg<bool>('showPattern', true);
-    final showSerial = b.cfg<bool>('showSerial', true);
+    final pattern = b.cfg<String>('invoicePattern', '').trim();
+    final serial = b.cfg<String>('invoiceSerial', '').trim();
+    // Mẫu số / ký hiệu là của riêng từng quán: chưa nhập thì không hiện.
+    final showPattern = b.cfg<bool>('showPattern', true) && pattern.isNotEmpty;
+    final showSerial = b.cfg<bool>('showSerial', true) && serial.isNotEmpty;
+    if (!showPattern && !showSerial) return const SizedBox.shrink();
 
     return Column(
       children: [

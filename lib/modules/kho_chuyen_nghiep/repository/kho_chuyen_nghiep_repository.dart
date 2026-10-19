@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../../../core/repositories/core_product_repository.dart';
+import '../../../core/utils/quantity_formatter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODELS & REPOSITORY — Kho Hàng Chuyên Nghiệp
@@ -25,7 +26,13 @@ class RecipeIngredientModel {
 
   // Snapshot fields (populated at read time)
   final String? ingredientName;
+
+  /// Giá vốn theo ĐƠN VỊ KHO của nguyên liệu (VD: 50.000đ/gói, 55.000đ/kg).
+  /// Giá cho 1 đơn vị công thức được suy ra qua [costPerRecipeUnit].
   final double? ingredientCostLatest;
+  final String productUnit;        // đơn vị kho
+  final double conversionRate;     // quy cách: 1 [productUnit] = N [conversionUnit]
+  final String conversionUnit;
 
   const RecipeIngredientModel({
     required this.id,
@@ -39,6 +46,9 @@ class RecipeIngredientModel {
     this.yieldFactor = 1.0,
     this.ingredientName,
     this.ingredientCostLatest,
+    this.productUnit = '',
+    this.conversionRate = 0,
+    this.conversionUnit = '',
   });
 
   /// % hao phí để hiển thị trên UI (VD: 0.8 → 20.0)
@@ -47,16 +57,17 @@ class RecipeIngredientModel {
   /// Số lượng thực tế cần lấy từ kho (đã tính hao phí)
   double get actualQuantity => yieldFactor > 0 ? quantity / yieldFactor : quantity;
 
-  /// Chi phí 1 dòng nguyên liệu — có quy đổi đơn vị + hao phí
-  /// ingredientCostLatest đã được chuẩn hóa sang giá/gram hoặc giá/ml
-  double get lineCost {
-    final cost = ingredientCostLatest ?? 0;
-    // Quy đổi actualQuantity về đơn vị nhỏ nhất (gram/ml)
-    double normalizedQty = actualQuantity;
-    if (unit == 'kg')  normalizedQty = actualQuantity * 1000;
-    if (unit == 'lít') normalizedQty = actualQuantity * 1000;
-    return cost * normalizedQty;
-  }
+  /// Giá vốn của 1 đơn vị công thức (đã quy đổi theo đơn vị kho + quy cách).
+  double get costPerRecipeUnit => recipeUnitCost(
+        costPerStockUnit: ingredientCostLatest ?? 0,
+        recipeUnit: unit,
+        productUnit: productUnit.isEmpty ? unit : productUnit,
+        conversionRate: conversionRate,
+        conversionUnit: conversionUnit,
+      );
+
+  /// Chi phí 1 dòng nguyên liệu — quy đổi đơn vị như trừ kho + tính hao phí
+  double get lineCost => costPerRecipeUnit * actualQuantity;
 
   factory RecipeIngredientModel.fromMap(Map<String, dynamic> m) =>
       RecipeIngredientModel(
@@ -248,7 +259,7 @@ class KhoProRepository {
     if (ingredientIds.isNotEmpty) {
       final prodRows = await _sb
           .from('products')
-          .select('id, name, cost_price_latest, cost_price, unit')
+          .select('id, name, cost_price_latest, cost_price, unit, conversion_rate, conversion_unit')
           .inFilter('id', ingredientIds);
       for (final row in (prodRows as List)) {
         final r = row as Map<String, dynamic>;
@@ -276,18 +287,14 @@ class KhoProRepository {
           sortOrder:             (r['sort_order'] as int?) ?? 0,
           yieldFactor:           (r['yield_factor'] as num?)?.toDouble() ?? 1.0,  // ← FIX: đọc từ DB
           ingredientName:        prodData?['name'] as String?,
-          // Dùng cost_price_latest nếu có, fallback về cost_price (giá vốn ban đầu)
-          // Chuẩn hóa: lưu dạng giá/gram hoặc giá/ml để tính đúng khi qty tính bằng gram/ml
-          ingredientCostLatest: () {
-            // cost_price_latest = 0 khi chưa có đơn nhập → KHÔNG dùng ?? mà phải check >0
-            final cl = (prodData?['cost_price_latest'] as num?)?.toDouble() ?? 0;
-            final cp = (prodData?['cost_price'] as num?)?.toDouble() ?? 0;
-            final rawCost = cl > 0 ? cl : cp; // Ưu tiên latest nếu có, fallback cost_price
-            final prodUnit = (prodData?['unit'] as String?) ?? '';
-            if (prodUnit == 'kg')  return rawCost / 1000; // 55000/kg → 55/gram
-            if (prodUnit == 'lít') return rawCost / 1000; // per ml
-            return rawCost;
-          }(),
+          // Giá vốn theo đơn vị kho; quy đổi sang đơn vị công thức nằm ở RecipeIngredientModel
+          ingredientCostLatest: effectiveUnitCost(
+            (prodData?['cost_price_latest'] as num?) ?? 0,
+            (prodData?['cost_price'] as num?) ?? 0,
+          ),
+          productUnit:    (prodData?['unit'] as String?) ?? '',
+          conversionRate: (prodData?['conversion_rate'] as num?)?.toDouble() ?? 0,
+          conversionUnit: (prodData?['conversion_unit'] as String?) ?? '',
         ),
       );
 
@@ -414,26 +421,32 @@ class KhoProRepository {
 
   /// Chuyển đổi số lượng từ đơn vị công thức sang đơn vị sản phẩm.
   /// Public — dùng bởi POS cancelOrder để reverse deductIngredients
-  double convertToProductUnit(double qty, String recipeUnit, String productUnit) {
-    return _convertToProductUnit(qty, recipeUnit, productUnit);
+  double convertToProductUnit(
+    double qty,
+    String recipeUnit,
+    String productUnit, {
+    double conversionRate = 0,
+    String conversionUnit = '',
+  }) {
+    return _convertToProductUnit(qty, recipeUnit, productUnit,
+        conversionRate: conversionRate, conversionUnit: conversionUnit);
   }
 
-  double _convertToProductUnit(double qty, String recipeUnit, String productUnit) {
-    if (recipeUnit == productUnit) return qty;
-    // Bước 1: về base unit (gram hoặc ml)
-    final double base;
-    switch (recipeUnit) {
-      case 'kg':   base = qty * 1000; break; // kg → gram
-      case 'lít':  base = qty * 1000; break; // lít → ml
-      default:     base = qty;               // gram, ml, cái, chiếc, phần...
-    }
-    // Bước 2: từ base → product unit
-    switch (productUnit) {
-      case 'kg':   return base / 1000; // gram → kg
-      case 'lít':  return base / 1000; // ml → lít
-      default:     return base;
-    }
-  }
+  /// Dùng chung một bộ quy đổi với trừ kho khi bán (khớp hàm SQL convert_recipe_ingredient_qty_v1).
+  double _convertToProductUnit(
+    double qty,
+    String recipeUnit,
+    String productUnit, {
+    double conversionRate = 0,
+    String conversionUnit = '',
+  }) =>
+      convertRecipeIngredientQty(
+        qty,
+        recipeUnit,
+        productUnit,
+        conversionRate: conversionRate,
+        conversionUnit: conversionUnit,
+      );
 
   /// Kiểm tra tồn kho đủ nấu bao nhiêu phần
   Future<double> getMaxServings(RecipeModel recipe) async {
@@ -449,7 +462,7 @@ class KhoProRepository {
     // Fetch stock_qty + unit của sản phẩm
     final stockRows = await _sb
         .from('products')
-        .select('id, stock_qty, unit')
+        .select('id, stock_qty, unit, conversion_rate, conversion_unit')
         .eq('store_id', storeId)
         .inFilter('id', ingIds);
 
@@ -466,7 +479,11 @@ class KhoProRepository {
       final prodUnit  = data?['unit'] as String? ?? ing.unit;
       if (ing.quantity <= 0) continue;
       // Đổi actualQuantity/serving sang đơn vị sản phẩm (có tính hao phí)
-      final qtyPerServing = _convertToProductUnit(ing.actualQuantity, ing.unit, prodUnit);
+      final qtyPerServing = _convertToProductUnit(
+        ing.actualQuantity, ing.unit, prodUnit,
+        conversionRate: (data?['conversion_rate'] as num?)?.toDouble() ?? 0,
+        conversionUnit: data?['conversion_unit'] as String? ?? '',
+      );
       final servings = qtyPerServing > 0 ? available / qtyPerServing : double.infinity;
       if (servings < maxServings) maxServings = servings;
     }
@@ -486,7 +503,7 @@ class KhoProRepository {
 
     final stockRows = await _sb
         .from('products')
-        .select('id, name, stock_qty, unit')
+        .select('id, name, stock_qty, unit, conversion_rate, conversion_unit')
         .eq('store_id', storeId)
         .inFilter('id', ingIds);
 
@@ -503,7 +520,11 @@ class KhoProRepository {
       final available = (stockData?['stock_qty'] as num?)?.toDouble() ?? 0;
 
       // Tính số lượng cần: actualQuantity đã tính hao phí (÷ yieldFactor)
-      final neededInProdUnit = _convertToProductUnit(ing.actualQuantity * qty, ing.unit, prodUnit);
+      final neededInProdUnit = _convertToProductUnit(
+        ing.actualQuantity * qty, ing.unit, prodUnit,
+        conversionRate: (stockData?['conversion_rate'] as num?)?.toDouble() ?? 0,
+        conversionUnit: stockData?['conversion_unit'] as String? ?? '',
+      );
 
       if (available < neededInProdUnit) {
         warnings.add(StockWarning(
@@ -538,26 +559,24 @@ class KhoProRepository {
         .toList();
     final productRows = ingIds.isEmpty ? [] : (await _sb
         .from('products')
-        .select('id, unit, cost_price_latest, cost_price')
+        .select('id, unit, cost_price_latest, cost_price, conversion_rate, conversion_unit')
         .inFilter('id', ingIds)) as List;
     final unitMap      = <String, String>{};
     final costPriceMap = <String, double>{};
+    final convRateMap  = <String, double>{};
+    final convUnitMap  = <String, String>{};
     for (final row in productRows) {
       final r = row as Map<String, dynamic>;
       final id = r['id'] as String;
       final prodUnit = r['unit'] as String? ?? 'gram';
       unitMap[id] = prodUnit;
+      convRateMap[id] = (r['conversion_rate'] as num?)?.toDouble() ?? 0;
+      convUnitMap[id] = r['conversion_unit'] as String? ?? '';
       // Ưu tiên cost_price_latest nếu > 0, fallback về cost_price
-      final latest = (r['cost_price_latest'] as num?)?.toDouble() ?? 0;
-      final base   = (r['cost_price'] as num?)?.toDouble() ?? 0;
-      final rawCost = latest > 0 ? latest : base;
-      // ‼️ FIX Bug #22: normalize cost về đơn vị nhỏ nhất để nhân đúng với stockDelta
-      // stockDelta đã được convert sang prodUnit → cần cost cùng đơn vị đó
-      // VD: prodUnit=gram → cost = rawCost/1000 (giá/gram) nếu raw là giá/kg
-      // VD: prodUnit=kg   → cost = rawCost (giá/kg)
-      // Nguyên tắc: raw cost LUÔN lưu dạng giá/đơn vị lớn (kg, lít, cái...)
-      // KHÔNG chuẩn hóa gì thêm — để stockDelta và cost khớp đơn vị
-      costPriceMap[id] = rawCost; // giá theo prodUnit (giá/kg nếu prodUnit=kg, giá/gram nếu prodUnit=gram, etc.)
+      costPriceMap[id] = effectiveUnitCost(
+        (r['cost_price_latest'] as num?) ?? 0,
+        (r['cost_price'] as num?) ?? 0,
+      ); // giá theo đơn vị kho
     }
 
     double totalCogs = 0;
@@ -570,8 +589,14 @@ class KhoProRepository {
       // actualQuantity đã tính hao phí: quantity / yieldFactor
       final actualPerBatch = ing.actualQuantity * quantity;
 
-      // Quy đổi sang đơn vị sản phẩm (kg/lít...)
-      final stockDelta = _convertToProductUnit(actualPerBatch, ing.unit, prodUnit);
+      // Quy đổi sang đơn vị sản phẩm (kg/lít/lon/hộp...)
+      final stockDelta = _convertToProductUnit(
+        actualPerBatch,
+        ing.unit,
+        prodUnit,
+        conversionRate: convRateMap[ing.ingredientId] ?? 0,
+        conversionUnit: convUnitMap[ing.ingredientId] ?? '',
+      );
 
       // Ghi stock_movement — delta âm (xuất kho), giữ precision 3 chữ số
       final wasteNote = ing.yieldFactor < 1.0
@@ -703,7 +728,35 @@ class KhoProRepository {
     }).eq('id', id);
   }
 
-  Future<void> completeProductionOrder(
+  /// Hoàn thành lệnh sản xuất: server trừ nguyên liệu + CỘNG thành phẩm vào kho nguyên tử
+  /// (RPC `complete_production_order_v1`, migration FIX 11). Trả về mô tả kết quả để hiển thị,
+  /// hoặc null nếu lệnh đã hoàn thành trước đó.
+  Future<String?> completeProductionOrder(
+      ProductionOrderModel order, RecipeModel recipe) async {
+    try {
+      final res = await _sb.rpc('complete_production_order_v1',
+          params: {'p_order_id': order.id});
+      if (res is Map && res['success'] == true) {
+        if (res['already_completed'] == true) return null;
+        final outQty = (res['output_qty'] as num?)?.toDouble() ?? 0;
+        if (outQty > 0) {
+          return 'Đã nhập ${fmtQty(outQty)} ${res['output_unit'] ?? ''} ${res['output_name'] ?? ''} vào kho';
+        }
+        return 'Đã trừ nguyên liệu theo công thức';
+      }
+      throw Exception(
+          (res is Map ? res['message'] : null) ?? 'Không hoàn thành được lệnh sản xuất');
+    } on PostgrestException catch (e) {
+      if (e.code == 'PGRST202' || e.message.contains('Could not find the function')) {
+        // Server chưa có FIX 11 → cách cũ (chỉ trừ nguyên liệu, KHÔNG cộng thành phẩm)
+        await _completeProductionOrderLegacy(order, recipe);
+        return 'Máy chủ chưa cập nhật (FIX 11): chỉ trừ nguyên liệu, chưa cộng thành phẩm vào kho';
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _completeProductionOrderLegacy(
       ProductionOrderModel order, RecipeModel recipe) async {
     // ‼️ FIX: Guard idempotency — tránh double-deduct nếu double-click hoặc retry
     if (order.status == 'done') {
@@ -729,11 +782,9 @@ class KhoProRepository {
           if (ing.ingredientId == null) continue;
           // actualQuantity = quantity / yieldFactor — lượng thực tế lấy từ kho (có hao phí)
           final actualUsed = ing.actualQuantity * order.quantity;
-          // Chi phí thực (cost_at_time đơn vị giá/gram hay giá/ml đã chuẩn hóa)
-          double normalizedUsed = actualUsed;
-          if (ing.unit == 'kg')  normalizedUsed = actualUsed * 1000;
-          if (ing.unit == 'lít') normalizedUsed = actualUsed * 1000;
-          final totalCost = (ing.ingredientCostLatest ?? 0) * normalizedUsed;
+          // Chi phí thực: giá 1 đơn vị công thức (đã quy đổi kho + quy cách) × lượng thực dùng
+          final unitCost  = ing.costPerRecipeUnit;
+          final totalCost = unitCost * actualUsed;
           await _sb.from('production_logs').insert({
             'id':                   const Uuid().v4(),
             'production_order_id':  order.id,
@@ -742,7 +793,7 @@ class KhoProRepository {
             'ingredient_name':      ing.ingredientName ?? '',
             'qty_used':             actualUsed,
             'unit':                 ing.unit,
-            'cost_at_time':         ing.ingredientCostLatest ?? 0,
+            'cost_at_time':         unitCost,
             'total_cost':           totalCost,
             'created_at':           now,
           });
@@ -970,61 +1021,64 @@ class KhoProRepository {
     await _sb.from('stock_count_items').upsert(rows);
   }
 
-  /// Xác nhận kiểm kê → tự điều chỉnh stock_qty theo variance
-  Future<void> confirmStockCount(String countId) async {
-    final storeId = await _storeId();
-    if (storeId == null) throw Exception('Chưa chọn quán');
-    final now = DateTime.now().toUtc().toIso8601String();
-
-    // ‼️ FIX Bug #44: idempotency guard — tránh confirm 2 lần
-    // lần 2 sẽ apply toàn bộ stock adjustment lên kho đã điều chỉnh → lệch kho nghiêm trọng
-    final countStatus = await _sb.from('stock_counts')
-        .select('status')
-        .eq('id', countId)
-        .maybeSingle();
-    if (countStatus == null) throw Exception('Phiên kiểm kê không tồn tại');
-    if (countStatus['status'] == 'confirmed') {
-      debugPrint('[KhoCN] confirmStockCount: $countId đã confirmed, bỏ qua');
-      return;
+  /// Xác nhận kiểm kê: server áp CHÊNH LỆCH (đếm - sổ sách lúc đếm) lên tồn hiện tại,
+  /// nguyên tử và idempotent (RPC `confirm_stock_count_v1`, migration FIX 10).
+  /// Trả về số sản phẩm đã điều chỉnh.
+  Future<int> confirmStockCount(String countId) async {
+    try {
+      final res = await _sb.rpc('confirm_stock_count_v1', params: {'p_count_id': countId});
+      if (res is Map && res['success'] == true) {
+        return (res['changed'] as num?)?.toInt() ?? 0;
+      }
+      final msg = (res is Map ? res['message'] : null) ?? 'Không xác nhận được kiểm kê';
+      throw Exception(msg);
+    } on PostgrestException catch (e) {
+      if (e.code == 'PGRST202' || (e.message).contains('Could not find the function')) {
+        throw Exception('Máy chủ chưa được cập nhật tính năng kiểm kê (cần chạy migration FIX 10).');
+      }
+      rethrow;
     }
+  }
 
-    // 1. Load items có variance != 0
-    final items = await _sb
-        .from('stock_count_items')
-        .select()
-        .eq('count_id', countId);
-
-
-    for (final item in items) {
-      // FIX: bỏ `variance` dead var — chỉ cần systemQty và actualQty
-      final systemQty = (item['system_qty'] as num?)?.toDouble() ?? 0;
-      final actualQty = (item['actual_qty'] as num?)?.toDouble() ?? 0;
-      final diff = actualQty - systemQty;
-      if (diff == 0) continue;
-
-      final productId = item['product_id'] as String;
-      // Ghi stock_movement — delta là numeric(12,3)
-      await _sb.from('stock_movements').insert({
-        'id':         const Uuid().v4(),
-        'store_id':   storeId,
-        'product_id': productId,
-        'delta':      double.parse(diff.toStringAsFixed(3)),
-        'reason':     'stock_count',
-        'note':       diff > 0
-            ? 'Kiểm kê: thừa ${diff.abs().toStringAsFixed(0)}'
-            : 'Kiểm kê: thiếu ${diff.abs().toStringAsFixed(0)}',
-        'created_at': now,
+  /// Ghi hao hụt (đổ bỏ, hết hạn, hư hỏng...) — trừ kho nguyên tử qua RPC `record_stock_waste_v1`.
+  /// [qty] tính theo đơn vị kho của sản phẩm. Trả về tồn mới.
+  Future<double> recordStockWaste({
+    required String productId,
+    required double qty,
+    required String reason,
+    String? note,
+  }) async {
+    try {
+      final res = await _sb.rpc('record_stock_waste_v1', params: {
+        'p_product_id': productId,
+        'p_qty': qty,
+        'p_reason': reason,
+        'p_note': note,
       });
-      // FIX: dùng CoreProductRepository.update() để updated_at luôn được ghi
-      // Không dùng raw products.update({'stock_qty':...}) vì bỏ qua updated_at
-      await _productRepo.update(productId, {'stock_qty': actualQty});
+      if (res is Map && res['success'] == true) {
+        return (res['new_stock'] as num?)?.toDouble() ?? 0;
+      }
+      throw Exception((res is Map ? res['message'] : null) ?? 'Không ghi được hao hụt');
+    } on PostgrestException catch (e) {
+      if (e.code == 'PGRST202' || (e.message).contains('Could not find the function')) {
+        throw Exception('Máy chủ chưa được cập nhật tính năng hao hụt (cần chạy migration FIX 10).');
+      }
+      rethrow;
     }
+  }
 
-    // 2. Cập nhật trạng thái phiên
-    await _sb.from('stock_counts').update({
-      'status':       'confirmed',
-      'confirmed_at': now,
-    }).eq('id', countId);
+  /// Lịch sử hao hụt gần đây (để hiển thị dưới form ghi hao hụt).
+  Future<List<Map<String, dynamic>>> fetchRecentWaste({int limit = 20}) async {
+    final storeId = await _storeId();
+    if (storeId == null) return [];
+    final rows = await _sb
+        .from('stock_movements')
+        .select('id, product_id, delta, reason, note, created_at')
+        .eq('store_id', storeId)
+        .inFilter('reason', ['waste', 'expired', 'damaged', 'spill', 'loss'])
+        .order('created_at', ascending: false)
+        .limit(limit);
+    return List<Map<String, dynamic>>.from(rows);
   }
 
   /// Load danh sách phiên kiểm kê đã có

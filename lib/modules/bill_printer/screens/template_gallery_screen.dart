@@ -1,6 +1,7 @@
 // lib/modules/bill_printer/screens/template_gallery_screen.dart
-// Gallery chọn mẫu hoá đơn & phiếu bếp (10-20 mẫu dựng sẵn)
+// Bộ chọn mẫu hoá đơn & phiếu bếp dựng sẵn — nhúng trong các màn Thiết Kế (không còn màn riêng)
 // ignore_for_file: use_build_context_synchronously
+import '../utils/paper_sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,141 +12,92 @@ import '../providers/kitchen_ticket_template_provider.dart';
 import '../widgets/bill_preview_widget.dart';
 
 const _kIndigo  = Color(0xFF1C2151);
-const _kOrange  = Color(0xFFFF6B35);
 const _kPurple  = Color(0xFF7C3AED);
 
-class TemplateGalleryScreen extends ConsumerStatefulWidget {
-  const TemplateGalleryScreen({super.key});
+/// Bộ chọn mẫu hoá đơn dựng sẵn — nhúng trong màn Thiết Kế Hoá Đơn.
+class BillPresetPicker extends ConsumerStatefulWidget {
+  /// Gọi sau khi đã áp dụng mẫu (để màn cha chuyển về tab xem trước/cấu hình).
+  final VoidCallback? onApplied;
+  const BillPresetPicker({super.key, this.onApplied});
   @override
-  ConsumerState<TemplateGalleryScreen> createState() => _TemplateGalleryScreenState();
+  ConsumerState<BillPresetPicker> createState() => _BillPresetPickerState();
 }
 
-class _TemplateGalleryScreenState extends ConsumerState<TemplateGalleryScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tab;
-  // Hoá đơn
-  String? _selectedBillId;
-  BillBlockTemplate? _previewBillTpl;
-  // Bếp Nóng
-  String? _selectedKitchenNongId;
-  KitchenTicketTemplate? _previewKitchenNongTpl;
-  // Bếp Bar
-  String? _selectedKitchenBarId;
-  KitchenTicketTemplate? _previewKitchenBarTpl;
+class _BillPresetPickerState extends ConsumerState<BillPresetPicker> {
+  String? _selectedId = billPresets.isNotEmpty ? billPresets.first.id : null;
+  BillBlockTemplate? _previewTpl =
+      billPresets.isNotEmpty ? billPresets.first.template : null;
 
-  @override
-  void initState() {
-    super.initState();
-    _tab = TabController(length: 3, vsync: this);
-    // Tự động chọn mẫu đầu tiên
-    if (billPresets.isNotEmpty) {
-      _selectedBillId = billPresets.first.id;
-      _previewBillTpl = billPresets.first.template;
-    }
-    if (kitchenPresets.isNotEmpty) {
-      _selectedKitchenNongId = kitchenPresets.first.id;
-      _previewKitchenNongTpl = kitchenPresets.first.template;
-      _selectedKitchenBarId = kitchenPresets.first.id;
-      _previewKitchenBarTpl = kitchenPresets.first.template;
-    }
-  }
-
-  @override
-  void dispose() { _tab.dispose(); super.dispose(); }
-
-  // Áp dụng mẫu hoá đơn
-  Future<void> _applyBill(BillPreset p) async {
+  Future<void> _apply(BillPreset p) async {
     await ref.read(billTemplateProvider.notifier).applyPreset(p.template);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('✅ Đã áp dụng mẫu "${p.name}"',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-        backgroundColor: _kIndigo,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ));
-      Navigator.pop(context);
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('✅ Đã áp dụng mẫu "${p.name}"',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+      backgroundColor: _kIndigo,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      duration: const Duration(seconds: 2),
+    ));
+    widget.onApplied?.call();
   }
 
-  // Áp dụng mẫu phiếu bếp cho trạm chỉ định
-  Future<void> _applyKitchen(KitchenPreset p, String stationKey) async {
-    final provider = stationKey == 'bepBar'
+  @override
+  Widget build(BuildContext context) => _BillGalleryTab(
+        selectedId: _selectedId,
+        previewTpl: _previewTpl,
+        onSelect: (p) => setState(() {
+          _selectedId = p.id;
+          _previewTpl = p.template;
+        }),
+        onApply: _apply,
+      );
+}
+
+/// Bộ chọn mẫu phiếu bếp dựng sẵn cho một trạm ('bepNong' | 'bepBar').
+class KitchenPresetPicker extends ConsumerStatefulWidget {
+  final String stationKey;
+  final VoidCallback? onApplied;
+  const KitchenPresetPicker({super.key, required this.stationKey, this.onApplied});
+  @override
+  ConsumerState<KitchenPresetPicker> createState() => _KitchenPresetPickerState();
+}
+
+class _KitchenPresetPickerState extends ConsumerState<KitchenPresetPicker> {
+  String? _selectedId = kitchenPresets.isNotEmpty ? kitchenPresets.first.id : null;
+  KitchenTicketTemplate? _previewTpl =
+      kitchenPresets.isNotEmpty ? kitchenPresets.first.template : null;
+
+  Future<void> _apply(KitchenPreset p) async {
+    final isBar = widget.stationKey == 'bepBar';
+    final provider = isBar
         ? kitchenTicketTemplateBepBarProvider
         : kitchenTicketTemplateBepNongProvider;
     ref.read(provider.notifier).update(p.template);
     await ref.read(provider.notifier).save();
-    
-    if (mounted) {
-      String stationName = stationKey == 'bepBar' ? 'Bếp Bar (Nước)' : 'Bếp Nóng';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('✅ Đã áp dụng mẫu "${p.name}" cho $stationName',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-        backgroundColor: _kPurple,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ));
-      Navigator.pop(context);
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+          '✅ Đã áp dụng mẫu "${p.name}" cho ${isBar ? 'Bếp Bar (Nước)' : 'Bếp Nóng'}',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+      backgroundColor: _kPurple,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      duration: const Duration(seconds: 2),
+    ));
+    widget.onApplied?.call();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F8),
-      appBar: AppBar(
-        backgroundColor: _kIndigo,
-        foregroundColor: Colors.white,
-        title: Text('Chọn Mẫu In', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 18)),
-        bottom: TabBar(
-          controller: _tab,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white54,
-          indicatorColor: _kOrange,
-          labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 13),
-          tabs: const [
-            Tab(icon: Icon(Icons.receipt_long_rounded, size: 18), text: 'Hoá Đơn'),
-            Tab(icon: Icon(Icons.local_fire_department_rounded, size: 18), text: 'Bếp Nóng'),
-            Tab(icon: Icon(Icons.local_bar_rounded, size: 18), text: 'Bếp Nước (Bar)'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tab,
-        children: [
-          _BillGalleryTab(
-            selectedId: _selectedBillId,
-            previewTpl: _previewBillTpl,
-            onSelect: (p) => setState(() {
-              _selectedBillId = p.id;
-              _previewBillTpl = p.template;
-            }),
-            onApply: _applyBill,
-          ),
-          _KitchenGalleryTab(
-            selectedId: _selectedKitchenNongId,
-            previewTpl: _previewKitchenNongTpl,
-            onSelect: (p) => setState(() {
-              _selectedKitchenNongId = p.id;
-              _previewKitchenNongTpl = p.template;
-            }),
-            onApply: (p) => _applyKitchen(p, 'bepNong'),
-          ),
-          _KitchenGalleryTab(
-            selectedId: _selectedKitchenBarId,
-            previewTpl: _previewKitchenBarTpl,
-            onSelect: (p) => setState(() {
-              _selectedKitchenBarId = p.id;
-              _previewKitchenBarTpl = p.template;
-            }),
-            onApply: (p) => _applyKitchen(p, 'bepBar'),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => _KitchenGalleryTab(
+        selectedId: _selectedId,
+        previewTpl: _previewTpl,
+        onSelect: (p) => setState(() {
+          _selectedId = p.id;
+          _previewTpl = p.template;
+        }),
+        onApply: _apply,
+      );
 }
 
 // ─── Bill Gallery Tab ─────────────────────────────────────────────────────────
@@ -272,7 +224,9 @@ class _KitchenGalleryTab extends StatelessWidget {
 // ─── Paper size hint ─────────────────────────────────────────────────────────
 String _paperHint(String paperSize) {
   switch (paperSize.toLowerCase()) {
+    case '50mm': return 'Máy POS cầm tay, giấy rất nhỏ';
     case '58mm': return 'Máy in cầm tay, nhỏ gọn';
+    case 'a5':   return 'Máy in văn phòng, khổ vừa';
     case 'a4':   return 'Máy in văn phòng, khổ lớn';
     default:     return 'Máy in quầy, phổ biến nhất';
   }
@@ -430,7 +384,7 @@ class _KitchenPreviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wf = tpl.paperSize == '58mm' ? 0.72 : 0.9;
+    final wf = paperWidthMm(tpl.paperSize) <= 48 ? 0.72 : 0.9;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Center(

@@ -53,6 +53,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     'checkout': '💳 Thanh toán',
     'settings': '⚙️ Cài đặt',
     'printer': '🖨️ Máy in',
+    'inventory': '📦 Kho hàng',
     'system': '💻 Hệ thống',
   };
 
@@ -165,7 +166,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi tải nhật ký: $e'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Tải nhật ký thất bại. Hãy chụp lại báo chủ app.'), backgroundColor: Colors.red),
       );
     } finally {
       setState(() {
@@ -227,7 +228,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi xóa nhật ký: $e'), backgroundColor: Colors.red),
+            const SnackBar(content: Text('Xóa nhật ký thất bại. Hãy chụp lại báo chủ app.'), backgroundColor: Colors.red),
           );
         }
       } finally {

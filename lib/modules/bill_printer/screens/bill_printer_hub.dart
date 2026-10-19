@@ -9,10 +9,9 @@ import 'package:printing/printing.dart';
 import '../providers/bill_template_provider.dart';
 import '../providers/printer_settings_provider.dart';
 import '../widgets/bill_preview_widget.dart';
-import 'bill_designer_v2.dart';
-import 'kitchen_ticket_designer.dart';
-import 'template_gallery_screen.dart';
+import 'print_design_screen.dart';
 import 'printer_settings_screen.dart';
+import 'print_rules_screen.dart';
 
 const _kIndigo = Color(0xFF1C2151);
 
@@ -55,36 +54,20 @@ class BillPrinterHub extends ConsumerWidget {
                     MaterialPageRoute(builder: (_) => const PrinterSettingsScreen())),
                 ),
                 _HubSquareCard(
-                  icon: Icons.tune_rounded,
+                  icon: Icons.design_services_rounded,
                   color: _kIndigo,
-                  title: 'Thiết Kế Hoá Đơn',
-                  subtitle: 'Sắp xếp, tuỳ biến khối hoá đơn thanh toán',
+                  title: 'Thiết Kế Mẫu In',
+                  subtitle: 'Hoá đơn, phiếu Bếp nóng, Bếp bar, tem dán ly và mẫu dựng sẵn',
                   onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const BillDesignerV2())),
+                    MaterialPageRoute(builder: (_) => const PrintDesignScreen())),
                 ),
                 _HubSquareCard(
-                  icon: Icons.local_fire_department_rounded,
-                  color: const Color(0xFF7C3AED),
-                  title: 'Thiết Kế Bếp Nóng',
-                  subtitle: 'Cấu hình font, cỡ chữ phiếu món nóng',
+                  icon: Icons.alt_route_rounded,
+                  color: const Color(0xFFE11D48),
+                  title: 'Máy In & Luật In',
+                  subtitle: 'Tự đặt máy in, luật in theo loại phiếu, số bản, máy dự phòng',
                   onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const KitchenTicketDesigner(stationKey: 'bepNong'))),
-                ),
-                _HubSquareCard(
-                  icon: Icons.local_bar_rounded,
-                  color: const Color(0xFF9333EA),
-                  title: 'Thiết Kế Bếp Bar',
-                  subtitle: 'Cấu hình font, cỡ chữ phiếu đồ uống',
-                  onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const KitchenTicketDesigner(stationKey: 'bepBar'))),
-                ),
-                _HubSquareCard(
-                  icon: Icons.collections_bookmark_rounded,
-                  color: const Color(0xFF0F766E),
-                  title: 'Chọn Mẫu Dựng Sẵn',
-                  subtitle: 'Mẫu hoá đơn & phiếu bếp thiết kế sẵn',
-                  onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const TemplateGalleryScreen())),
+                    MaterialPageRoute(builder: (_) => const PrintRulesScreen())),
                 ),
               ],
             ),
@@ -92,20 +75,51 @@ class BillPrinterHub extends ConsumerWidget {
             const SizedBox(height: 20),
 
             // ── Xem trước nhanh theo mẫu hiện tại ──────────────────────────
-            Text('Xem Trước Nhanh',
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.w700, fontSize: 15, color: _kIndigo)),
-            const SizedBox(height: 12),
-            Container(
-              height: 380,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06), blurRadius: 12)],
+            Row(children: [
+              Container(
+                width: 30, height: 30,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                      colors: [Color(0xFFFF6B35), Color(0xFFD97706)]),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(Icons.receipt_long_rounded,
+                    color: Colors.white, size: 17),
               ),
-              clipBehavior: Clip.hardEdge,
-              child: BillPreviewWidget(tpl: tpl),
+              const SizedBox(width: 10),
+              Text('Xem Trước Nhanh',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w800, fontSize: 16, color: _kIndigo)),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _kIndigo.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('hoá đơn thu ngân',
+                    style: GoogleFonts.outfit(fontSize: 11, color: _kIndigo)),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Container(
+                  height: MediaQuery.of(context).size.width > 700 ? 600 : 460,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: const Color(0xFFFF6B35).withValues(alpha: 0.35), width: 1.5),
+                    boxShadow: [BoxShadow(
+                        color: _kIndigo.withValues(alpha: 0.12), blurRadius: 16,
+                        offset: const Offset(0, 6))],
+                  ),
+                  clipBehavior: Clip.hardEdge,
+                  child: BillPreviewWidget(tpl: tpl),
+                ),
+              ),
             ),
 
             const SizedBox(height: 16),
@@ -552,18 +566,41 @@ class _HubSquareCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(isMobile ? 12 : 16),
         decoration: BoxDecoration(
-          color: color,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color.lerp(color, Colors.white, 0.18)!,
+              color,
+              Color.lerp(color, Colors.black, 0.28)!,
+            ],
+          ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: color.withValues(alpha: 0.30),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
             )
           ],
         ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(children: [
+          // Hoạ tiết nền: chấm bi + vòng tròn mờ + biểu tượng lớn chìm
+          Positioned.fill(child: CustomPaint(painter: _HubPatternPainter())),
+          Positioned(
+            right: -12,
+            bottom: -14,
+            child: Transform.rotate(
+              angle: -0.2,
+              child: Icon(icon,
+                  size: isMobile ? 78 : 104,
+                  color: Colors.white.withValues(alpha: 0.13)),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(isMobile ? 12 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -612,7 +649,34 @@ class _HubSquareCard extends StatelessWidget {
             ),
           ],
         ),
+          ),
+        ]),
       ),
     );
   }
 }
+
+/// Hoạ tiết chấm bi và vòng tròn mờ cho thẻ menu.
+class _HubPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final dot = Paint()..color = Colors.white.withValues(alpha: 0.10);
+    for (double x = 10; x < size.width; x += 16) {
+      for (double y = 10; y < size.height * 0.55; y += 16) {
+        canvas.drawCircle(Offset(x, y), 1.2, dot);
+      }
+    }
+    final ring = Paint()
+      ..color = Colors.white.withValues(alpha: 0.10)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawCircle(Offset(size.width * 0.86, size.height * 0.2), 34, ring);
+    canvas.drawCircle(Offset(size.width * 0.86, size.height * 0.2), 52, ring);
+    canvas.drawCircle(Offset(size.width * 0.08, size.height * 1.02), 40,
+        Paint()..color = Colors.white.withValues(alpha: 0.07));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+

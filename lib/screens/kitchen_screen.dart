@@ -9,7 +9,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/providers/app_providers.dart';
+import '../core/providers/session_provider.dart';
 import '../core/repositories/kitchen_repository.dart';
+import '../core/services/staff_service.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
 import '../core/utils/responsive.dart';
@@ -30,10 +32,15 @@ const _kCardBorder = Color(0xFF2D3748);
 // Alias cho backward compat với code cũ còn dùng _TicketWithItems
 typedef _TicketWithItems = TicketWithItems;
 
+@visibleForTesting
+bool shouldPlayKitchenSoundsForRole(String? role) {
+  return StaffService.canonicalRole(role ?? '') == 'kitchen';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PROVIDERS
 // ─────────────────────────────────────────────────────────────────────────────
-final kitchenTicketsProvider = StreamProvider<List<TicketWithItems>>((ref) {
+final kitchenTicketsProvider = StreamProvider.autoDispose<List<TicketWithItems>>((ref) {
   return ref.watch(kitchenRepositoryProvider).watchActiveTickets();
 });
 
@@ -48,7 +55,7 @@ final stationFilterProvider =
     NotifierProvider<_StationNotifier, String>(_StationNotifier.new);
 
 /// Stats cuối ngày — tính từ tickets hôm nay, tự refresh khi ticket thay đổi
-final kitchenStatsProvider = FutureProvider<_KitchenStats>((ref) async {
+final kitchenStatsProvider = FutureProvider.autoDispose<_KitchenStats>((ref) async {
   // Watch → tự động chạy lại khi có phiếu mới hoặc cập nhật
   ref.watch(kitchenTicketsProvider);
   final repo = ref.watch(kitchenRepositoryProvider);
@@ -76,22 +83,21 @@ final kitchenStatsProvider = FutureProvider<_KitchenStats>((ref) async {
   );
 });
 
-/// Stream thông báo khi phiếu bếp mới chuyển thành 'xong'
-// ‼️ FIX #R2: Dùng kitchenTicketsProvider.stream thay Stream.value (single-emit)
-// Stream.value chỉ emit 1 lần rồi close → provider không nhận realtime update
-final kitchenReadyStreamProvider = StreamProvider<String>((ref) async* {
+/// Stream thông báo khi phiếu bếp mới chuyển thành 'xong'.
+/// Theo dõi repository trực tiếp để subscription sống đúng vòng đời provider.
+final kitchenReadyStreamProvider = StreamProvider.autoDispose<String>((ref) async* {
   final Set<String> knownDoneIds = {};
-  // Theo dõi trực tiếp từ provider stream — tự rebuild khi kitchenTicketsProvider thay đổi
-  await for (final ticketsAsync in Stream.periodic(const Duration(seconds: 3))
-      .asyncMap((_) async => ref.read(kitchenTicketsProvider).value ?? [])
-      .distinct()) {
-    for (final tw in ticketsAsync) {
+  final startedAtMs = DateTime.now().millisecondsSinceEpoch;
+  final ticketsStream = ref
+      .watch(kitchenRepositoryProvider)
+      .watchActiveTickets();
+  await for (final tickets in ticketsStream) {
+    for (final tw in tickets) {
       final t = tw.ticket;
       if (t.status == 'xong' && !knownDoneIds.contains(t.id)) {
         knownDoneIds.add(t.id);
-        if (t.doneAt != null) {
-          final secAgo = (DateTime.now().millisecondsSinceEpoch - t.doneAt!) / 1000;
-          if (secAgo < 90) yield t.tableLabel ?? 'Phíiếu bếp';
+        if (t.doneAt != null && t.doneAt! >= startedAtMs) {
+          yield t.tableLabel ?? 'Phiếu bếp';
         }
       }
       // ‼️ FIX #L3b: Remove 'xong' tickets khỏi knownDoneIds khi các ticket biến mất
@@ -101,7 +107,7 @@ final kitchenReadyStreamProvider = StreamProvider<String>((ref) async* {
 });
 
 /// Stream thông báo hủy/sửa món từ Ban screen — KDS hiện Cancel Notice Card
-final voidNoticesProvider = StreamProvider<List<VoidNoticeModel>>((ref) async* {
+final voidNoticesProvider = StreamProvider.autoDispose<List<VoidNoticeModel>>((ref) async* {
   // Dùng SharedPreferences vì app dùng custom phone auth (không phải Supabase Auth)
   final prefs = await SharedPreferences.getInstance();
   final storeId = prefs.getString('auth_store_id');
@@ -211,6 +217,7 @@ class KitchenScreen extends ConsumerStatefulWidget {
 
 class _KitchenScreenState extends ConsumerState<KitchenScreen>
     with TickerProviderStateMixin {
+  late final int _mountedAtMs;
   final Set<String> _knownTicketIds = {};
   bool _isMuted = false;
   bool _newTicketBlink = false;
@@ -220,6 +227,11 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   final Set<String> _overdueAlertedIds = {};
   final Set<String> _overdueCardIds    = {};
   Timer? _overdueCheckTimer;
+
+  /// Âm thanh Phiếu Bếp thuộc riêng phiên đăng nhập của nhân viên Bếp.
+  bool get _canPlayKitchenSounds {
+    return shouldPlayKitchenSoundsForRole(ref.read(sessionProvider)?.role);
+  }
 
   // Optimistic UI state
   final Set<String> _optimisticStartedTickets = {};
@@ -231,6 +243,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   @override
   void initState() {
     super.initState();
+    _mountedAtMs = DateTime.now().millisecondsSinceEpoch;
     _tabCtrl = TabController(length: 3, vsync: this);
     _overdueCheckTimer = Timer.periodic(
       const Duration(minutes: 1),
@@ -255,7 +268,11 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
     final newIds = waitingIds.difference(_knownTicketIds);
     if (newIds.isNotEmpty) {
       _knownTicketIds.addAll(newIds);
-      _onNewTicket();
+      final hasActuallyNewTicket = tickets.any(
+        (t) =>
+            newIds.contains(t.ticket.id) && t.ticket.sentAt >= _mountedAtMs,
+      );
+      if (hasActuallyNewTicket) _onNewTicket();
     }
     // ‼️ FIX #L2: Prune _knownTicketIds — chỉ giữ IDs còn hiện trên màn hình
     // Ngăn memory accumulation khi chạy lâu ngày
@@ -302,14 +319,18 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
         if (waitMin >= 30) {
           currentOverdueIds.add(tw.ticket.id);
           if (!_overdueAlertedIds.contains(tw.ticket.id)) {
-            hasNewOverdue = true;
             _overdueAlertedIds.add(tw.ticket.id);
+            final becameOverdueAt =
+                tw.ticket.sentAt + const Duration(minutes: 30).inMilliseconds;
+            if (becameOverdueAt >= _mountedAtMs) hasNewOverdue = true;
           }
         }
       }
     }
 
-    if (hasNewOverdue) _KitchenSoundService.playAlarm();
+    if (hasNewOverdue && _canPlayKitchenSounds) {
+      _KitchenSoundService.playAlarm();
+    }
     if (mounted) {
       setState(() {
         _overdueCardIds
@@ -320,7 +341,9 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   }
 
   void _onNewTicket() {
-    _KitchenSoundService.playBell();
+    if (_canPlayKitchenSounds) {
+      _KitchenSoundService.playBell();
+    }
     setState(() => _newTicketBlink = true);
     _blinkTimer?.cancel();
     _blinkTimer = Timer(const Duration(seconds: 5), () {
@@ -748,7 +771,9 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           if (!item.done) repo.toggleItemDone(item.id, ticket.id, true);
         }
       }
-      _KitchenSoundService.playDone();
+      if (_canPlayKitchenSounds) {
+        _KitchenSoundService.playDone();
+      }
     } else if (action == 'reopen') {
       setState(() {
         if (stationFilter == 'all') {

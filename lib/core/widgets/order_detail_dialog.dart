@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/store_auth_service.dart';
 
 const _kNavy = Color(0xFF1C2151);
 const _kInk = Color(0xFF1A1207);
@@ -29,6 +30,33 @@ String _formatPayMethod(String? method) {
   }
 }
 
+Future<String?> _resolveEmployeeName(SupabaseClient sb, String? id) async {
+  if (id == null || id.trim().isEmpty) return null;
+  try {
+    final staff = await sb
+        .from('staff_members')
+        .select('name')
+        .eq('id', id)
+        .maybeSingle();
+    final name = staff?['name'] as String?;
+    if (name != null && name.trim().isNotEmpty) return name.trim();
+  } catch (_) {}
+  try {
+    final member = await sb
+        .from('store_members')
+        .select('display_name, user_accounts(display_name)')
+        .or('id.eq.$id,user_id.eq.$id')
+        .limit(1)
+        .maybeSingle();
+    final account = member?['user_accounts'] as Map<String, dynamic>?;
+    final name =
+        account?['display_name'] as String? ??
+        member?['display_name'] as String?;
+    if (name != null && name.trim().isNotEmpty) return name.trim();
+  } catch (_) {}
+  return null;
+}
+
 /// Helper trích xuất mã đơn hàng QN-... từ mô tả giao dịch
 String? extractOrderNumber(String? text) {
   if (text == null || text.isEmpty) return null;
@@ -43,43 +71,121 @@ String? extractOrderNumber(String? text) {
   return null;
 }
 
-/// Hiển thị popup Chi Tiết Đơn Hàng từ Order Number
-Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) async {
+/// [orderId] là khóa canonical ưu tiên. [orderNumber] chỉ còn là fallback cho
+/// các màn báo cáo lịch sử chưa có reference_id.
+Future<void> showOrderDetailDialog(
+  BuildContext context,
+  String orderNumber, {
+  String? orderId,
+}) async {
   try {
     final sb = Supabase.instance.client;
-    final orderRows = await sb
-        .from('orders')
-        .select('*')
-        .eq('order_number', orderNumber)
-        .limit(1);
+    final storeInfo = await StoreAuthService.getStoreInfo();
+    final storeId = storeInfo['store_id'] as String?;
+    if (storeId == null) throw Exception('Chưa xác định cửa hàng');
+    var orderRows = orderId != null && orderId.isNotEmpty
+        ? await sb
+              .from('orders')
+              .select('*')
+              .eq('store_id', storeId)
+              .eq('id', orderId)
+              .limit(1)
+        : await sb
+              .from('orders')
+              .select('*')
+              .eq('store_id', storeId)
+              .eq('order_number', orderNumber)
+              .limit(1);
+
+    Map<String, dynamic>? settlement;
+    if (orderRows.isEmpty && orderId != null && orderId.isNotEmpty) {
+      settlement = await sb
+          .from('payment_settlements')
+          .select('*')
+          .eq('store_id', storeId)
+          .eq('id', orderId)
+          .maybeSingle();
+      if (settlement != null) {
+        final links = await sb
+            .from('ban_session_orders')
+            .select('order_id')
+            .eq('session_id', settlement['session_id']);
+        final ids = links
+            .map((row) => row['order_id'] as String?)
+            .whereType<String>()
+            .toList();
+        if (ids.isNotEmpty) {
+          orderRows = await sb
+              .from('orders')
+              .select('*')
+              .eq('store_id', storeId)
+              .inFilter('id', ids);
+        }
+      }
+    }
 
     if (orderRows.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Không tìm thấy đơn hàng "$orderNumber"', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+            content: Text(
+              'Không tìm thấy đơn hàng "$orderNumber"',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            ),
             backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
       return;
     }
 
-    final order = orderRows.first;
-    final orderId = order['id'] as String;
+    final order = Map<String, dynamic>.from(orderRows.first);
+    final canonicalOrderIds = orderRows
+        .map((row) => row['id'] as String)
+        .toList();
+    if (settlement != null) {
+      order['order_number'] = orderRows
+          .map((row) => row['order_number'] as String?)
+          .whereType<String>()
+          .join(' + ');
+      order['subtotal'] = settlement['subtotal'];
+      order['discount'] = settlement['discount'];
+      order['total'] = settlement['total_amount'];
+      order['total_amount'] = settlement['total_amount'];
+      order['payment_method'] = settlement['payment_method'];
+      order['customer_id'] = settlement['customer_id'];
+      order['staff_id'] = settlement['cashier_staff_id'] ?? order['staff_id'];
+      order['created_at'] = settlement['created_at'];
+    }
 
     // Fetch order items
     final items = await sb
         .from('order_items')
         .select('name, qty, quantity, unit_price, subtotal')
-        .eq('order_id', orderId);
+        .inFilter('order_id', canonicalOrderIds);
+
+    final cashierName = await _resolveEmployeeName(
+      sb,
+      order['staff_id'] as String?,
+    );
+    final waiterName = await _resolveEmployeeName(
+      sb,
+      order['waiter_id'] as String?,
+    );
 
     String? staffName;
 
     // 1. Direct name string fields from order record
-    for (final key in ['waiter_name', 'staff_name', 'created_by_name', 'cashier_name']) {
+    for (final key in [
+      'waiter_name',
+      'staff_name',
+      'created_by_name',
+      'cashier_name',
+    ]) {
       final val = order[key] as String?;
       if (val != null && val.trim().isNotEmpty) {
         staffName = val.trim();
@@ -90,9 +196,17 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
     // 2. Resolve via IDs explicitly recorded on this order
     if (staffName == null || staffName.isEmpty) {
       final candidateIds = <String>[];
-      for (final key in ['waiter_id', 'staff_id', 'created_by', 'cashier_id', 'user_id']) {
+      for (final key in [
+        'waiter_id',
+        'staff_id',
+        'created_by',
+        'cashier_id',
+        'user_id',
+      ]) {
         final val = order[key] as String?;
-        if (val != null && val.trim().isNotEmpty && !candidateIds.contains(val)) {
+        if (val != null &&
+            val.trim().isNotEmpty &&
+            !candidateIds.contains(val)) {
           candidateIds.add(val.trim());
         }
       }
@@ -109,7 +223,9 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
               .maybeSingle();
           if (memberRow != null) {
             final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
-            staffName = userAcc?['display_name'] as String? ?? memberRow['display_name'] as String?;
+            staffName =
+                userAcc?['display_name'] as String? ??
+                memberRow['display_name'] as String?;
           }
         } catch (_) {}
 
@@ -122,8 +238,11 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
                 .eq('user_id', id)
                 .maybeSingle();
             if (memberRow != null) {
-              final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
-              staffName = userAcc?['display_name'] as String? ?? memberRow['display_name'] as String?;
+              final userAcc =
+                  memberRow['user_accounts'] as Map<String, dynamic>?;
+              staffName =
+                  userAcc?['display_name'] as String? ??
+                  memberRow['display_name'] as String?;
             }
           } catch (_) {}
         }
@@ -181,8 +300,11 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
                     .eq('id', waiterId)
                     .maybeSingle();
                 if (memberRow != null) {
-                  final userAcc = memberRow['user_accounts'] as Map<String, dynamic>?;
-                  staffName = userAcc?['display_name'] as String? ?? memberRow['display_name'] as String?;
+                  final userAcc =
+                      memberRow['user_accounts'] as Map<String, dynamic>?;
+                  staffName =
+                      userAcc?['display_name'] as String? ??
+                      memberRow['display_name'] as String?;
                 }
               } catch (_) {}
 
@@ -233,7 +355,9 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
               .limit(5);
           for (final m in memberRows) {
             final userAcc = m['user_accounts'] as Map<String, dynamic>?;
-            final name = userAcc?['display_name'] as String? ?? m['display_name'] as String?;
+            final name =
+                userAcc?['display_name'] as String? ??
+                m['display_name'] as String?;
             if (name != null && name.isNotEmpty) {
               staffName = name;
               break;
@@ -266,7 +390,11 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
           children: [
             Text(
               'Chi tiết đơn hàng',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: isDesktop ? 18 : 16, color: _kNavy),
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w900,
+                fontSize: isDesktop ? 18 : 16,
+                color: _kNavy,
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.close_rounded, size: 20),
@@ -299,13 +427,24 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Số đơn:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                          Text(
+                            'Số đơn:',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: _kMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               order['order_number'] as String,
                               textAlign: TextAlign.end,
-                              style: GoogleFonts.outfit(fontSize: 13, color: _kNavy, fontWeight: FontWeight.w900),
+                              style: GoogleFonts.outfit(
+                                fontSize: 13,
+                                color: _kNavy,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
                         ],
@@ -315,13 +454,26 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Thời gian:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                          Text(
+                            'Thời gian:',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: _kMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(order['created_at'] as String)),
+                              DateFormat('dd/MM/yyyy HH:mm').format(
+                                DateTime.parse(order['created_at'] as String),
+                              ),
                               textAlign: TextAlign.end,
-                              style: GoogleFonts.outfit(fontSize: 12, color: _kInk, fontWeight: FontWeight.w500),
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: _kInk,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
@@ -331,32 +483,83 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Nhân viên bấm đơn:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                          Text(
+                            'Thu ngân thanh toán:',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: _kMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              staffName ?? 'Chưa ghi nhận',
+                              cashierName ?? staffName ?? 'Chưa ghi nhận',
                               textAlign: TextAlign.end,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.outfit(fontSize: 12, color: _kNavy, fontWeight: FontWeight.w700),
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: _kNavy,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      if (order['customer_name'] != null && (order['customer_name'] as String).isNotEmpty) ...[
+                      if (waiterName != null && waiterName.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Nhân viên phục vụ:',
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: _kMuted,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                waiterName,
+                                textAlign: TextAlign.end,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  color: _kNavy,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (order['customer_name'] != null &&
+                          (order['customer_name'] as String).isNotEmpty) ...[
                         const SizedBox(height: 6),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Khách hàng:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                            Text(
+                              'Khách hàng:',
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: _kMuted,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 order['customer_name'] as String,
                                 textAlign: TextAlign.end,
-                                style: GoogleFonts.outfit(fontSize: 12, color: _kInk, fontWeight: FontWeight.w500),
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  color: _kInk,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ],
@@ -367,13 +570,26 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Hình thức:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                          Text(
+                            'Hình thức:',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: _kMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              _formatPayMethod(order['payment_method'] as String?),
+                              _formatPayMethod(
+                                order['payment_method'] as String?,
+                              ),
                               textAlign: TextAlign.end,
-                              style: GoogleFonts.outfit(fontSize: 12, color: _kInk, fontWeight: FontWeight.w500),
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: _kInk,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
@@ -382,30 +598,70 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text('Danh sách món:', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: _kNavy)),
+                Text(
+                  'Danh sách món:',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: _kNavy,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxHeight: isDesktop ? screenHeight * 0.45 : screenHeight * 0.3,
+                    maxHeight: isDesktop
+                        ? screenHeight * 0.45
+                        : screenHeight * 0.3,
                   ),
                   child: SingleChildScrollView(
                     child: Column(
                       children: items.map((item) {
                         final name = item['name'] as String? ?? '';
-                        final qty = (item['quantity'] as num?)?.toDouble() ?? (item['qty'] as num?)?.toDouble() ?? 1;
+                        final qty =
+                            (item['quantity'] as num?)?.toDouble() ??
+                            (item['qty'] as num?)?.toDouble() ??
+                            1;
                         final sub = (item['subtotal'] as num?)?.toDouble() ?? 0;
                         return Container(
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           decoration: const BoxDecoration(
-                            border: Border(bottom: BorderSide(color: Color(0xFFF2ECE4), width: 0.5)),
+                            border: Border(
+                              bottom: BorderSide(
+                                color: Color(0xFFF2ECE4),
+                                width: 0.5,
+                              ),
+                            ),
                           ),
                           child: Row(
                             children: [
-                              Expanded(child: Text(name, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: _kInk))),
+                              Expanded(
+                                child: Text(
+                                  name,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: _kInk,
+                                  ),
+                                ),
+                              ),
                               const SizedBox(width: 8),
-                              Text('x${qty.toStringAsFixed(0)}', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w800, color: _kNavy)),
+                              Text(
+                                'x${qty.toStringAsFixed(0)}',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: _kNavy,
+                                ),
+                              ),
                               const SizedBox(width: 16),
-                              Text(_fmtVnd(sub), style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w800, color: _kNavy)),
+                              Text(
+                                _fmtVnd(sub),
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: _kNavy,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -417,17 +673,38 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Tạm tính:', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
-                    Text(_fmtVnd((order['subtotal'] as num?)?.toDouble() ?? 0), style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kInk)),
+                    Text(
+                      'Tạm tính:',
+                      style: GoogleFonts.outfit(fontSize: 12, color: _kMuted),
+                    ),
+                    Text(
+                      _fmtVnd((order['subtotal'] as num?)?.toDouble() ?? 0),
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: _kInk,
+                      ),
+                    ),
                   ],
                 ),
-                if (order['discount'] != null && (order['discount'] as num).toDouble() > 0) ...[
+                if (order['discount'] != null &&
+                    (order['discount'] as num).toDouble() > 0) ...[
                   const SizedBox(height: 6),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Giảm giá:', style: GoogleFonts.outfit(fontSize: 12, color: _kRed)),
-                      Text('-${_fmtVnd((order['discount'] as num).toDouble())}', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kRed)),
+                      Text(
+                        'Giảm giá:',
+                        style: GoogleFonts.outfit(fontSize: 12, color: _kRed),
+                      ),
+                      Text(
+                        '-${_fmtVnd((order['discount'] as num).toDouble())}',
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: _kRed,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -435,8 +712,22 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Tổng thanh toán:', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: _kNavy)),
-                    Text(_fmtVnd((order['total'] as num?)?.toDouble() ?? 0), style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kGreen)),
+                    Text(
+                      'Tổng thanh toán:',
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: _kNavy,
+                      ),
+                    ),
+                    Text(
+                      _fmtVnd((order['total'] as num?)?.toDouble() ?? 0),
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: _kGreen,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -449,10 +740,15 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
                   ),
                   width: double.infinity,
                   child: Text(
-                    (order['note'] != null && (order['note'] as String).trim().isNotEmpty)
+                    (order['note'] != null &&
+                            (order['note'] as String).trim().isNotEmpty)
                         ? 'Ghi chú: ${order['note']}'
                         : 'Ghi chú: Không có ghi chú',
-                    style: GoogleFonts.outfit(fontSize: 11, fontStyle: FontStyle.italic, color: _kMuted),
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: _kMuted,
+                    ),
                   ),
                 ),
               ],
@@ -465,7 +761,10 @@ Future<void> showOrderDetailDialog(BuildContext context, String orderNumber) asy
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi tải chi tiết đơn hàng: $e', style: GoogleFonts.outfit()),
+          content: Text(
+            'Lỗi tải chi tiết đơn hàng: $e',
+            style: GoogleFonts.outfit(),
+          ),
           backgroundColor: _kRed,
         ),
       );

@@ -10,6 +10,9 @@ class SupabaseService {
   static const _supabaseUrl    = 'https://quannho.lpm.vn/supabase';
   static const _supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzg0NzM5NDkwLCJleHAiOjE5NDI0MTk0OTB9.xh6_u5i7_ddq3LxAcx2ytGOnijPzRnfQ_Vkv8d0XBpw';
 
+  static const String supabaseAnonKey = _supabaseAnonKey;
+  static const String supabaseUrl = _supabaseUrl;
+
   static bool _initialized = false;
 
   /// Khởi tạo Supabase — gọi 1 lần trong main()

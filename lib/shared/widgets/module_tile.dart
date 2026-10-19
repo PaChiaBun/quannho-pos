@@ -14,6 +14,8 @@ class ModuleTileData {
   final Color baseColor;  // single base – tile derives gradient internally
   final String? badge;
   final String? route;
+  /// Số dòng tối đa của tiêu đề (mặc định 1, các ô cũ giữ nguyên).
+  final int titleLines;
 
   const ModuleTileData({
     required this.id,
@@ -23,6 +25,7 @@ class ModuleTileData {
     required this.baseColor,
     this.badge,
     this.route,
+    this.titleLines = 1,
   });
 }
 
@@ -150,6 +153,16 @@ const Map<String, ModuleTileData> kModuleConfigs = {
     icon: Icons.qr_code_scanner_rounded,
     baseColor: Color(0xFF8B5CF6), // vivid purple
     route: '/qr_order',
+  ),
+  'chain': ModuleTileData(
+    id: 'chain',
+    title: 'Báo Cáo Nhiều Cửa Hàng / Chuỗi',
+    subtitle: 'Gộp & so sánh chi nhánh',
+    icon: Icons.store_mall_directory_rounded,
+    baseColor: Color(0xFF65A30D), // lime-600 — khác Báo cáo (xanh dương), Bán hàng (cam), Thu Chi (lục)
+    badge: '🏬',
+    route: '/chain',
+    titleLines: 2,
   ),
 };
 
@@ -424,7 +437,7 @@ class _ModuleTileState extends State<ModuleTile>
                                   letterSpacing: -0.3,
                                   height: 1.1,
                                 ),
-                                maxLines: 1,
+                                maxLines: d.titleLines,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 4),

@@ -1,5 +1,35 @@
 # Quán Nhỏ POS — Kiến Trúc Data
 
+## Checkout V5 — source đang kiểm thử, chưa deploy
+
+Cập nhật rà soát 02/09: `finance_records.checkout_reference_id` được trigger suy ra chỉ khi reference là order/settlement cùng store; unique trên `(store_id, checkout_reference_id)` không chặn nạp ví lặp dùng customer ID. `guard_ban_item_financial_change_v5` serialize thay đổi món với khóa phiên, cấm sửa tiền/hủy sau thanh toán nhưng vẫn cho KDS cập nhật tiến độ. POS truyền `p_kitchen_session_ids`; RPC khóa các phiên, ghi liên kết order và đóng phiên cùng transaction. `reconcile_pos_sale_v1` đọc kết quả theo khóa cho pending phiên bản cũ. PostgreSQL 17.11 local đã qua gate hai database fixture; chưa đối chiếu đầy đủ schema/RLS production.
+
+- `20260902_atomic_settlement_v5.sql` bổ sung settlement/idempotency POS và khóa giao dịch theo cửa hàng.
+- `complete_pos_sale_v1` ghi order/items/finance/stock/loyalty và trừ ví trong cùng transaction. Customer được khóa `FOR UPDATE`; replay trả snapshot ví đã dùng, không trừ lại.
+- `pos_idempotency_operations.wallet_real_used/wallet_bonus_used` lưu giá trị canonical; `finance_records.fund_type='wallet'` tách khỏi cash/bank. Không coi tiền ví là tiền mặt mới thu.
+- `p_expected_total` đối chiếu số tiền nhân viên xác nhận trước ghi dữ liệu. Giá/điểm/voucher cuối cùng do server xác định.
+- SharedPreferences có thêm khóa checkout pending (metadata phục hồi, không phải database offline). POS chưa rõ kết quả phải giữ key và không cho đổi intent.
+- Cần chạy PostgreSQL runtime/concurrency gate và kiểm tra schema production trước phát hành. Xem `.docs/duplicate-bill-settlement-v5.md` và nhật ký ngày 2026-09-02.
+
+## QR Order — quan hệ dữ liệu mục tiêu
+
+```text
+stores
+  └─ qr_channels (TABLE_SHARED hoặc COUNTER, unique theo store/type)
+       └─ qr_requests
+            ├─ qr_request_items + edit audit
+            ├─ qr_handoff_tokens (hash, one-time, expiry)
+            └─ orders (đúng một order cho mỗi request)
+                 ├─ TABLE → ban_sessions → ban_session_items → kitchen_tickets
+                 └─ COUNTER → payment paid → kitchen_tickets
+```
+
+- TABLE request chưa biết bàn khi khách submit; `table_id`/`session_id` chỉ được ghi bởi RPC gán bàn sau atomic claim.
+- TABLE checkout thanh toán toàn bộ order hợp lệ chưa thanh toán của `ban_session` nhưng không hợp nhất/xóa audit từng request/order.
+- COUNTER không có `table_id`/`session_id` và phải `paid` trước kitchen dispatch.
+- `store_id`, unique source key và idempotency key phải được cưỡng chế trong migration/RPC; không tin dữ liệu client.
+- Bộ migration QR V3 hiện có chưa apply và còn schema per-table/device-pairing; không coi đó là schema mục tiêu.
+
 > 📌 Đọc file này trước khi tạo module mới để hiểu luồng data toàn hệ thống.
 > Cập nhật: 2026-05-02
 
@@ -48,7 +78,7 @@ stores (
 user_accounts (
   id            uuid PK,
   phone         text UNIQUE,        -- +84xxxxxxxxx
-  password_hash text,               -- SHA-256(phone:password:qn_pos_2024_salt)
+  password_hash text,               -- SHA-256(phone:password:[ĐÃ XÓA — salt, xem mã nguồn])
   display_name  text,
   created_at    timestamptz
 )
@@ -625,6 +655,14 @@ CREATE POLICY "store_isolation" ON products
 
 ---
 
+### Hóa đơn điện tử (nền tảng v1 — migration `20261016_einvoice_foundation_v1.sql`, CHƯA áp lên production)
+
+- `einvoice_store_config(store_id PK, enabled default false, updated_by, updated_at)`: công tắc theo quán. Chỉ ghi qua RPC `set_einvoice_enabled_v1` (Chủ quán, có advisory lock, ghi audit cùng giao dịch).
+- `einvoice_audit_logs`: nhật ký đổi công tắc (cũ → mới, người đổi).
+- `einvoice_documents`: hóa đơn theo bill, `UNIQUE(store_id, provider, ref_id)` làm khóa chống trùng; `status` ∈ queued/issued/pending_code/rejected/failed/cancelled; lưu `inv_no`, `tax_authority_code`, `provider_transaction_id`, lỗi, số lần thử. Worker meInvoice (chưa có) ghi bằng `service_role`.
+- RLS: authenticated chỉ SELECT theo `current_store_id()`; anon không có quyền. RPC báo cáo `einvoice_report_v1(from, to)` SECURITY INVOKER.
+- Bất biến: tắt/bật công tắc không đổi việc ghi bill/doanh thu; chưa đụng settlement v5. Chi tiết và lộ trình ở `tich-hop-misa.md`.
+
 ## 8. CHECKLIST KHI THÊM MODULE MỚI
 
 | # | Việc cần làm | Nơi thực hiện |
@@ -696,6 +734,23 @@ ALTER TABLE staff_shifts REPLICA IDENTITY FULL;
 static const _supabaseUrl     = 'https://cibaxqrvfotglpobxxlw.supabase.co';
 static const _supabaseAnonKey = 'eyJhbGci...'; // key ở trên
 ```
+
+---
+
+## Chuỗi cửa hàng (migration `20261017_chuoi_cua_hang_v1.sql`, CHƯA áp production)
+
+| Bảng | Vai trò |
+|---|---|
+| `store_chains` | Chuỗi do Chủ quán tạo (`owner_user_id`) |
+| `store_chain_stores` | Cửa hàng ↔ chuỗi, có `joined_at/left_at`; unique một phần: mỗi cửa hàng tối đa 1 chuỗi đang hoạt động |
+| `store_chain_audit_logs` | Audit tạo chuỗi/thêm/gỡ cửa hàng |
+
+- RPC (chỉ `authenticated`, anon bị chặn): `create_store_chain_v1`, `add_store_to_chain_v1`, `remove_store_from_chain_v1`, `list_my_chains_v1`, `get_chain_report_v1`. Hàm hỗ trợ `qn_is_store_owner(store)` (Chủ, không tính Quản lý).
+- Chỉ Chủ quán lập chuỗi và thêm cửa hàng mình sở hữu. Báo cáo chuỗi chỉ đọc `orders` (completed) của cửa hàng còn trong chuỗi mà người gọi VẪN là chủ; cửa hàng mất quyền nằm ở `excluded_stores`.
+- Chuỗi chỉ là lớp đọc tổng hợp: menu/kho/nhân viên/bàn/doanh thu vẫn tách theo `store_id`. Chưa chung Ví/điểm/khách (xem nợ kỹ thuật ở `trien-khai-sap-toi.md`).
+- Client: `ChainRepository` (`lib/core/repositories/chain_repository.dart`), `ChainReportScreen`, module Lego `chain` (ô trong lưới Modules, chỉ Chủ quán; id nằm trong `_kAllModules`/`kModuleConfigs`, KHÔNG nằm trong `kAllModules` của `staff_service.dart` nên không cấp qua vai trò), `ChainModuleOffer` tự bật module một lần.
+- **Báo cáo v1.1 (migration `20261018_chuoi_bao_cao_them_truong_v1.sql`, CHƯA áp production):** `get_chain_report_v1` thêm vào mỗi cửa hàng và tổng: `gross_revenue` (= doanh thu + giảm giá; vì `orders.total_amount = subtotal − discount`, KHÔNG dùng `discount_amount` luôn rỗng), `void_count/void_amount` (từ `void_audit_logs` theo `created_at`; chỉ tổng hợp, không có người hủy/lý do), `first_order_at`, `wallet_revenue`; thêm chỉ mục `idx_void_audit_store_created`. Chỉ THÊM khóa JSON: client cũ chạy bình thường, client mới coi trường vắng là "không rõ".
+- Test: `supabase/tests/chuoi_cua_hang_v1_test.sql` (38 kiểm tra), `chuoi_bao_cao_truong_moi_test.sql` (19 kiểm tra), dry-run `db-fix/chuoi_stage_dryrun.sh`; Flutter `test/screens/chain_report_screen_test.dart`.
 
 ---
 
