@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../services/store_auth_service.dart';
+import '../utils/app_logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULE REPOSITORY — Supabase app_settings là nguồn sự thật duy nhất
@@ -34,7 +35,74 @@ const _kAllModules = [
 const _kSupabaseKey  = 'module_config_v2';
 const _kLegacyPrefsKey = 'module_configs_v1'; // key cũ để migrate
 
+/// Kết quả nạp danh sách module từ máy chủ: phân biệt "chưa có dòng" với "lỗi/không đọc được".
+class ActiveIdsFetch {
+  const ActiveIdsFetch({this.ids, required this.ok});
+  final List<String>? ids; // null = không có dòng cấu hình
+  final bool ok; // false = lỗi mạng/quyền khi đọc
+}
+
+enum ModuleBootstrap { useRemote, useDefaultsNoSave, migrateAndSave }
+
+/// Gộp thứ tự do màn hình gửi lên với danh sách đang có trên máy chủ.
+///
+/// Màn "Sửa → Xong" chỉ để SẮP XẾP; việc bật/tắt module đi qua activate/deactivate riêng.
+/// Trước đây `updatePositions` ghi thẳng danh sách trên màn hình lên máy chủ mà không đọc lại,
+/// nên một màn hình đang giữ danh sách thiếu (vd. sau lúc mạng lỗi chỉ còn 4 module mặc định)
+/// sẽ làm mất Bếp/Bàn/In hóa đơn của cả quán. Nay: không bao giờ làm mất module đang bật trên
+/// máy chủ; id lạ (không còn trên máy chủ) bị bỏ.
+List<String> mergeModuleOrder(List<String> serverIds, List<String> uiOrder) {
+  final serverSet = serverIds.toSet();
+  final merged = <String>[];
+  for (final id in uiOrder) {
+    if (serverSet.contains(id) && !merged.contains(id)) merged.add(id);
+  }
+  for (final id in serverIds) {
+    if (!merged.contains(id)) merged.add(id);
+  }
+  return merged;
+}
+
+/// Quyết định khi nạp cấu hình module.
+///
+/// LỖI TỪNG GÂY MẤT MODULE (KAY, 18/10): sau khi đăng xuất/đổi ca máy chuyển sang khóa anon,
+/// RLS trả về "không có dòng" -> code coi là "lần đầu" và GHI ĐÈ cấu hình thật bằng danh sách
+/// mặc định/cũ trên máy (mất Bếp, Bàn, In hóa đơn...) -> nút Gửi bếp bị vô hiệu.
+/// Nay chỉ được ghi mặc định khi: đọc thành công, thật sự chưa có dòng, VÀ đang đăng nhập bằng JWT.
+ModuleBootstrap decideModuleBootstrap({
+  required bool fetchOk,
+  required bool rowFound,
+  required bool authenticated,
+}) {
+  if (rowFound) return ModuleBootstrap.useRemote;
+  if (fetchOk && authenticated) return ModuleBootstrap.migrateAndSave;
+  return ModuleBootstrap.useDefaultsNoSave;
+}
+
+/// Header `Authorization: Bearer <jwt>` có phải JWT role `authenticated` còn hạn không.
+bool jwtIsAuthenticated(String? authorizationHeader, {DateTime? now}) {
+  try {
+    if (authorizationHeader == null) return false;
+    final parts = authorizationHeader.replaceFirst('Bearer ', '').split('.');
+    if (parts.length != 3) return false;
+    final payload = jsonDecode(
+      utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+    ) as Map<String, dynamic>;
+    if (payload['role'] != 'authenticated') return false;
+    final exp = payload['exp'];
+    if (exp is num) {
+      final expiry = DateTime.fromMillisecondsSinceEpoch((exp * 1000).toInt(), isUtc: true);
+      if (!expiry.isAfter((now ?? DateTime.now()).toUtc())) return false;
+    }
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 class ModuleRepository {
+  /// Danh sách tốt gần nhất theo quán: dùng khi đọc lỗi/anon để không rơi về mặc định.
+  static final Map<String, List<String>> _lastGoodIds = {};
   static SupabaseClient get _sb => Supabase.instance.client;
   final _uuid = const Uuid();
 
@@ -44,7 +112,7 @@ class ModuleRepository {
   }
 
   // ── Đọc danh sách module ID đang active (có thứ tự) từ Supabase ──────────
-  Future<List<String>?> _fetchActiveIds(String storeId) async {
+  Future<ActiveIdsFetch> _fetchActiveIdsResult(String storeId) async {
     try {
       final row = await _sb
           .from('app_settings')
@@ -53,13 +121,19 @@ class ModuleRepository {
           .eq('key', _kSupabaseKey)
           .maybeSingle();
       final raw = row?['value'] as String?;
-      if (raw == null) return null;
-      return (jsonDecode(raw) as List).cast<String>();
+      if (raw == null) return const ActiveIdsFetch(ids: null, ok: true);
+      final ids = (jsonDecode(raw) as List).cast<String>();
+      _lastGoodIds[storeId] = List<String>.of(ids);
+      return ActiveIdsFetch(ids: ids, ok: true);
     } catch (e) {
       debugPrint('[ModuleRepo] _fetchActiveIds error: $e');
-      return null;
+      return const ActiveIdsFetch(ids: null, ok: false);
     }
   }
+
+  /// Giữ tên cũ cho các chỗ khác: null = không có dòng hoặc lỗi.
+  Future<List<String>?> _fetchActiveIds(String storeId) async =>
+      (await _fetchActiveIdsResult(storeId)).ids;
 
   // ── Ghi danh sách module ID vào Supabase ──────────────────────────────────
   Future<void> _saveActiveIds(String storeId, List<String> ids) async {
@@ -80,16 +154,31 @@ class ModuleRepository {
     final storeId = await _storeId();
     if (storeId == null) return List.from(_kAllModules);
 
-    var activeIds = await _fetchActiveIds(storeId);
+    final fetched = await _fetchActiveIdsResult(storeId);
+    var activeIds = fetched.ids;
 
     if (activeIds == null) {
-      // ── Lần đầu: kiểm tra SharedPreferences cũ để migrate ──────────────
-      activeIds = await _migrateFromSharedPrefs();
-      // Lưu lên Supabase ngay
-      await _saveActiveIds(storeId, activeIds);
-      // Xóa key cũ
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_kLegacyPrefsKey);
+      final decision = decideModuleBootstrap(
+        fetchOk: fetched.ok,
+        rowFound: false,
+        authenticated: jwtIsAuthenticated(_sb.rest.headers['Authorization']),
+      );
+      if (decision == ModuleBootstrap.migrateAndSave) {
+        // ── Lần đầu thật sự (đọc thành công, chưa có dòng, đã đăng nhập JWT) ──
+        activeIds = await _migrateFromSharedPrefs();
+        await _saveActiveIds(storeId, activeIds);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_kLegacyPrefsKey);
+      } else {
+        // Đọc lỗi hoặc đang dùng khóa anon: KHÔNG ghi đè cấu hình thật trên máy chủ.
+        activeIds = _lastGoodIds[storeId] ?? await _migrateFromSharedPrefs();
+        AppLogger.warning(
+          'modules',
+          'Không đọc được cấu hình module (ok=${fetched.ok}) -> dùng '
+          '${_lastGoodIds.containsKey(storeId) ? "bản gần nhất" : "mặc định"} '
+          'tạm thời, KHÔNG ghi lên máy chủ',
+        );
+      }
     }
 
     // Build danh sách đầy đủ: active + thứ tự theo activeIds
@@ -154,7 +243,13 @@ class ModuleRepository {
   Future<void> activate(String moduleId) async {
     final storeId = await _storeId();
     if (storeId == null) return;
-    var activeIds = await _fetchActiveIds(storeId);
+    final fetched = await _fetchActiveIdsResult(storeId);
+    if (!fetched.ok) {
+      // Không đọc được cấu hình hiện tại thì KHÔNG ghi: tránh ghi đè bằng danh sách tạm.
+      AppLogger.warning('modules', 'Bỏ qua đổi module $moduleId: không đọc được cấu hình hiện tại');
+      return;
+    }
+    var activeIds = fetched.ids;
     if (activeIds == null) {
       final all = await getAll();
       activeIds = all.where((m) => m.isActive).map((m) => m.id).toList();
@@ -168,7 +263,13 @@ class ModuleRepository {
   Future<void> deactivate(String moduleId) async {
     final storeId = await _storeId();
     if (storeId == null) return;
-    var activeIds = await _fetchActiveIds(storeId);
+    final fetched = await _fetchActiveIdsResult(storeId);
+    if (!fetched.ok) {
+      // Không đọc được cấu hình hiện tại thì KHÔNG ghi: tránh ghi đè bằng danh sách tạm.
+      AppLogger.warning('modules', 'Bỏ qua đổi module $moduleId: không đọc được cấu hình hiện tại');
+      return;
+    }
+    var activeIds = fetched.ids;
     if (activeIds == null) {
       final all = await getAll();
       activeIds = all.where((m) => m.isActive).map((m) => m.id).toList();
@@ -184,7 +285,25 @@ class ModuleRepository {
     final storeId = await _storeId();
     if (storeId == null) return;
     // orderedIds = danh sách ID active theo thứ tự mới
-    await _saveActiveIds(storeId, orderedIds);
+    final current = await _fetchActiveIdsResult(storeId);
+    if (!current.ok) {
+      AppLogger.warning('modules', 'Bỏ qua lưu thứ tự module: không đọc được cấu hình hiện tại');
+      return;
+    }
+    final serverIds = current.ids;
+    if (serverIds == null) {
+      await _saveActiveIds(storeId, orderedIds);
+      return;
+    }
+    final merged = mergeModuleOrder(serverIds, orderedIds);
+    if (merged.length != orderedIds.length) {
+      AppLogger.warning(
+        'modules',
+        'Lưu thứ tự module: màn hình có ${orderedIds.length} module nhưng máy chủ có '
+        '${serverIds.length} -> giữ đủ ${merged.length}, không làm mất module',
+      );
+    }
+    await _saveActiveIds(storeId, merged);
   }
 }
 

@@ -33,6 +33,8 @@ import '../core/services/user_auth_service.dart';
 import '../core/theme/app_colors.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
+import '../core/utils/kitchen_unsent.dart';
+import '../core/utils/stale_lock.dart';
 import '../modules/bill_printer/bill_print_guards.dart';
 import '../modules/bill_printer/screens/bill_preview_screen.dart'
     show
@@ -2057,6 +2059,13 @@ class _TableCard extends ConsumerWidget {
         .where((name) => name != null && name.isNotEmpty)
         .toSet()
         .join(', ');
+    // Món chưa gửi bếp quá 3 phút -> huy hiệu đỏ trên thẻ bàn + ghi log (một lần mỗi đợt).
+    final overdueUnsent = isOccupied
+        ? overdueUnsentItems(activeItems, DateTime.now())
+        : const <BanSessionItemModel>[];
+    if (overdueUnsent.isNotEmpty) {
+      _logUnsentOverdueOnce(table.label, session!.id, overdueUnsent);
+    }
 
     // QR Calling check for this table (chỉ hiển thị khi đơn đã được gán assignedTableId)
     final activeForTable = ref.watch(
@@ -2268,6 +2277,27 @@ class _TableCard extends ConsumerWidget {
                               fontSize: amountFontSize,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
+                            ),
+                          ),
+                        ],
+                        if (overdueUnsent.isNotEmpty) ...[
+                          SizedBox(height: cardSize == 'nho' ? 2 : 5),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '⚠ ${overdueUnsent.length} món chưa gửi bếp',
+                              style: GoogleFonts.outfit(
+                                fontSize: infoFontSize - 1,
+                                fontWeight: FontWeight.w800,
+                                color: _kRed,
+                              ),
                             ),
                           ),
                         ],
@@ -4203,6 +4233,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   bool _isCheckingOut = false;
   // ‼️ Cờ khóa gửi bếp: Chặn 100% việc double-tap hoặc gửi trùng đơn bếp
   bool _isSendingToKitchen = false;
+  // Khóa tự mở sau 45 giây: một lệnh gửi bếp treo không được làm nút chết vĩnh viễn.
+  final StaleLock _sendKitchenLock = StaleLock(maxHold: const Duration(seconds: 45));
 
   Future<void> _openCheckout(
     double total,
@@ -4346,7 +4378,37 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
   // ── Gửi bếp ──────────────────────────────────────────────────────────────
   Future<void> _sendToKitchen(List<BanSessionItemModel> items) async {
-    if (_isSendingToKitchen) return;
+    final unsentNow = items.where((i) => i.kitchenStatus == 'chua_gui').toList();
+    AppLogger.action(
+      'send_kitchen_click',
+      'Bấm Gửi bếp',
+      table: widget.table.label,
+      sessionId: widget.session.id,
+      lines: unsentNow.length,
+      extra: {'qty': unsentNow.fold<double>(0, (s, i) => s + i.quantity).toInt()},
+    );
+    if (!_sendKitchenLock.tryAcquire(
+      DateTime.now(),
+      onStale: (heldFor) => AppLogger.action(
+        'send_kitchen_unlock',
+        'Tự mở khóa gửi bếp bị kẹt',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        result: 'kẹt ${heldFor.inSeconds}s',
+        level: 'WARNING',
+        critical: true,
+      ),
+    )) {
+      AppLogger.action(
+        'send_kitchen_blocked',
+        'Gửi bếp bị bỏ qua: đang gửi lần trước',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        level: 'WARNING',
+      );
+      return;
+    }
+    final stopwatch = Stopwatch()..start();
     setState(() {
       _isSendingToKitchen = true;
     });
@@ -4381,8 +4443,33 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         updatedItems.add(item);
       }
       _dirtyNoteIds.removeAll(savedReps);
-      await _sendToKitchenImpl(updatedItems);
+      await _sendToKitchenImpl(updatedItems).timeout(
+        const Duration(seconds: 40),
+        onTimeout: () => throw KitchenStepTimeout(
+          'toàn bộ việc gửi bếp',
+          const Duration(seconds: 40),
+        ),
+      );
+      AppLogger.action(
+        'send_kitchen',
+        'Gửi bếp',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        lines: unsentNow.length,
+        result: 'ok ${stopwatch.elapsedMilliseconds}ms',
+        critical: true,
+      );
     } catch (e, st) {
+      AppLogger.action(
+        'send_kitchen',
+        'Gửi bếp',
+        table: widget.table.label,
+        sessionId: widget.session.id,
+        lines: unsentNow.length,
+        result: 'LỖI $e',
+        level: 'ERROR',
+        critical: true,
+      );
       debugPrint('[Kitchen] ❌ _sendToKitchen crash: $e\n$st');
       AppLogger.error(
         'order',
@@ -4407,6 +4494,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         );
       }
     } finally {
+      _sendKitchenLock.release();
       if (mounted) {
         setState(() {
           _isSendingToKitchen = false;
@@ -4420,7 +4508,11 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     if (unsent.isEmpty) return;
 
     // Lấy store_id — cần cho NOT NULL constraint
-    final storeInfo = await StoreAuthService.getStoreInfo();
+    final storeInfo = await kitchenStep(
+      'lấy thông tin quán',
+      StoreAuthService.getStoreInfo(),
+      timeout: const Duration(seconds: 8),
+    );
     final storeId = storeInfo['store_id'];
     if (storeId == null) throw Exception('storeId null — chưa đăng nhập ?');
 
@@ -4477,19 +4569,25 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     try {
       Supabase.instance.client.rest.headers['x-store-id'] = storeId;
     } catch (_) {}
-    final productRows = await Supabase.instance.client
-        .from('products')
-        .select('id, category, station_code')
-        .inFilter('id', productIds);
+    final productRows = await kitchenStep(
+      'đọc nhóm bếp của món',
+      Supabase.instance.client
+          .from('products')
+          .select('id, category, station_code')
+          .inFilter('id', productIds),
+    );
     final productInfoMap = <String, Map<String, dynamic>>{
       for (final r in productRows) r['id'] as String: r,
     };
 
     // Đếm đợt hiện tại
-    final ticketsResp = await Supabase.instance.client
-        .from('kitchen_tickets')
-        .select('id')
-        .eq('session_id', widget.session.id);
+    final ticketsResp = await kitchenStep(
+      'đếm đợt gửi bếp',
+      Supabase.instance.client
+          .from('kitchen_tickets')
+          .select('id')
+          .eq('session_id', widget.session.id),
+    );
     final round = (ticketsResp as List).length + 1;
 
     final ticketId = const Uuid().v4();
@@ -4498,7 +4596,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     // ‼️ BƯỚC 2: Tạo KitchenTicket + KitchenTicketItems trong cùng 1 khối bảo vệ nguyên tử
     bool ticketCreated = false;
     try {
-      await Supabase.instance.client.from('kitchen_tickets').insert({
+      await kitchenStep('tạo phiếu bếp', Supabase.instance.client.from('kitchen_tickets').insert({
         'id': ticketId,
         'store_id': storeId,
         'session_id': widget.session.id,
@@ -4508,7 +4606,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         'status': 'cho',
         'sent_at': now,
         'note': session?.displayName,
-      });
+      }));
       ticketCreated = true;
 
       final List<Map<String, dynamic>> itemRows = [];
@@ -4536,16 +4634,20 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       }
 
       if (itemRows.isNotEmpty) {
-        await Supabase.instance.client
-            .from('kitchen_ticket_items')
-            .insert(itemRows);
+        await kitchenStep(
+          'ghi món vào phiếu bếp',
+          Supabase.instance.client.from('kitchen_ticket_items').insert(itemRows),
+        );
       }
 
       final unsentIds = unsent.map((i) => i.id).toList();
-      await Supabase.instance.client
-          .from('ban_session_items')
-          .update({'kitchen_status': 'da_gui'})
-          .inFilter('id', unsentIds);
+      await kitchenStep(
+        'đánh dấu món đã gửi',
+        Supabase.instance.client
+            .from('ban_session_items')
+            .update({'kitchen_status': 'da_gui'})
+            .inFilter('id', unsentIds),
+      );
 
       // Invalidate stream provider immediately so UI updates to 'da_gui' without waiting for realtime/poll
       ref.invalidate(sessionItemsProvider(widget.session.id));
@@ -6225,6 +6327,51 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                       ],
                                     ),
                                     const SizedBox(height: 16),
+                                    // Cảnh báo: món chưa gửi bếp quá 3 phút
+                                    Builder(
+                                      builder: (_) {
+                                        final overdue = overdueUnsentItems(
+                                          activeItems,
+                                          DateTime.now(),
+                                        );
+                                        if (overdue.isEmpty) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        _logUnsentOverdueOnce(
+                                          widget.table.label,
+                                          widget.session.id,
+                                          overdue,
+                                        );
+                                        return Container(
+                                          width: double.infinity,
+                                          margin: const EdgeInsets.only(
+                                            bottom: 10,
+                                          ),
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: _kRed.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            border: Border.all(
+                                              color: _kRed.withValues(
+                                                alpha: 0.4,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '⚠ ${overdue.length} món CHƯA gửi bếp '
+                                            'quá 3 phút — bấm "Gửi bếp" để bếp làm.',
+                                            textAlign: TextAlign.center,
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                              color: _kRed,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                     // Action buttons — Thêm món + Gửi bếp
                                     Row(
                                       children: [
@@ -11638,7 +11785,8 @@ class _SendKitchenButtonState extends ConsumerState<_SendKitchenButton> {
     if (_isSending) return;
     setState(() => _isSending = true);
     try {
-      await widget.onPressed(); // await đúng cách, bắt lỗi rõ ràng
+      // Giới hạn thời gian: nếu callback treo thì nút tự mở lại, không kẹt "Đang gửi...".
+      await widget.onPressed().timeout(const Duration(seconds: 50));
     } catch (e) {
       debugPrint('[SendKitchenButton] unhandled: $e');
     } finally {
@@ -11710,13 +11858,31 @@ class _SendKitchenButtonState extends ConsumerState<_SendKitchenButton> {
       ),
     );
 
-    // Khi module Bếp chưa bật: hiện tooltip hướng dẫn, không cho tap
+    // Khi module Bếp chưa bật: nút KHÔNG gửi được. Phải báo rõ (trước đây chỉ mờ đi + tooltip
+    // dễ bỏ sót nên nhân viên tưởng "không order được") và ghi log để chủ quán biết.
     if (!isKitchenActive) {
-      return Tooltip(
-        message: 'Cần bật Module Bếp trong Modules trước',
-        preferBelow: false,
-        triggerMode: TooltipTriggerMode.tap,
-        showDuration: const Duration(seconds: 4),
+      return GestureDetector(
+        onTap: () {
+          AppLogger.action(
+            'send_kitchen_blocked',
+            'Gửi bếp bị chặn: module Bếp đang tắt',
+            result: 'module kitchen không bật',
+            level: 'WARNING',
+            critical: true,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'KHÔNG gửi bếp được: module Bếp đang tắt trên quán này. '
+                'Báo chủ quán bật lại (Trang chủ → Sửa → + → Bếp).',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+              ),
+              backgroundColor: _kRed,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 8),
+            ),
+          );
+        },
         child: buttonChild,
       );
     }
@@ -12872,6 +13038,27 @@ Future<void> runCancelSteps({
     throw CancelStepFailure('đóng phiên', e);
   }
   AppLogger.info('ban_screen', 'Đã hủy bàn $tableLabel (phiên $sessionId)');
+}
+
+final Set<String> _unsentOverdueLogged = <String>{};
+
+/// Ghi log một lần cho mỗi đợt món chưa gửi bếp quá 3 phút (khóa = phiên + số món quá hạn).
+void _logUnsentOverdueOnce(
+  String tableLabel,
+  String sessionId,
+  List<BanSessionItemModel> overdue,
+) {
+  if (!_unsentOverdueLogged.add('$sessionId:${overdue.length}')) return;
+  AppLogger.action(
+    'unsent_overdue',
+    'Món chưa gửi bếp quá 3 phút',
+    table: tableLabel,
+    sessionId: sessionId,
+    lines: overdue.length,
+    result: 'chưa gửi bếp',
+    level: 'WARNING',
+    extra: {'item_names': overdue.map((i) => i.productName).toList()},
+  );
 }
 
 /// Đối chiếu danh sách món đang hiện trên màn hình với máy chủ trước khi in tạm tính
