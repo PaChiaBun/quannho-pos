@@ -8,7 +8,9 @@
 - ✅ Commit `2abd0e0` (nhánh `feature/ai-bum-ui`, đã push; không kèm `scratch/`): trang quản trị đợt 1, thu phí đợt A, hỗ trợ chủ quán H1–H3, đổi tên an toàn, vá bảo mật; `pubspec.yaml` 1.0.5+21.
 - ✅ Workflow `Windows Release Builder` run 40241616683 thành công, đúng commit `2abd0e0`; msix 1.0.5.0, `app.so` có `store_staff_set_name_v1`, `staff_name_save`, `billing_info_v1`.
 - ✅ `QuanNhoPOS-latest.exe` (62.785.306 B, SHA-256 `5e18c6df…`) thay nguyên tử ở `/var/www/lpm-web/public/` + `public/download/`; HTTP công khai 200, mã băm khớp. Bản +20 cũ sao lưu `/root/quannho-backups/web-download/exe_{root,download}_truoc_105b21_20261026_061521.exe`.
-- KHÔNG đụng `app_versions` (máy Windows đang chạy không tự báo cập nhật). Chưa cài thử trên Windows thật.
+- ✅ 07:18 VN (Chủ Quán duyệt): chèn `app_versions` windows 1.0.5 build 21, KHÔNG bắt buộc, `download_url` = `https://quannho.lpm.vn/download/QuanNhoPOS-latest.exe` (đường mặc định trong app `/download/windows/…` đang 404). Đọc bằng khoá công khai trả đúng dòng. Máy Windows build ≤ 20 sẽ được hỏi cập nhật (có "Để sau"). Chưa cài thử trên Windows thật.
+- ⚠️ Đường dự phòng `https://quannho.lpm.vn/api/versions` trả trang HTML của web chính (không phải JSON) — chỉ dùng khi Supabase lỗi; chưa sửa.
+- Hoàn tác thông báo: `DELETE FROM app_versions WHERE platform='windows' AND build_number=21;`
 - Hoàn tác: chép 2 file sao lưu trên về đúng chỗ.
 
 ## 2026-10-26 — Đổi tên an toàn (ĐÃ ÁP production 26/10 05:33 VN — Chủ Quán duyệt)
