@@ -2030,9 +2030,11 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
                 indent: true,
               ),
               buildTableRow(
-                name: '  2. Tiền thuế GTGT',
-                value: formatVnd(0),
-                pct: '0%',
+                                      // App chưa tính thuế GTGT — không ghi 0đ để tránh hiểu là "đã tính, thuế bằng 0".
+                                      name:
+                                          '  2. Tiền thuế GTGT (app chưa tính)',
+                                      value: '—',
+                                      pct: '—',
                 indent: true,
               ),
               // II. Chi phí
@@ -2842,7 +2844,7 @@ class _RPCard extends StatelessWidget {
         child: Row(children: [
           Icon(icon, size: 16, color: _kNavy),
           const SizedBox(width: 6),
-          Text(title, style: GoogleFonts.outfit(
+          Text(title, style: GoogleFonts.plusJakartaSans(
             fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
         ]),
       ),
@@ -2863,8 +2865,8 @@ class _RPRow extends StatelessWidget {
     child: Row(children: [
       Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       const SizedBox(width: 8),
-      Expanded(child: Text(label, style: GoogleFonts.outfit(fontSize: 13, color: _kInk))),
-      Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+      Expanded(child: Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kInk))),
+      Text(value, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
     ]),
   );
 }
@@ -4110,9 +4112,9 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
             ],
           ),
           const SizedBox(height: 6),
-          Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w900, color: color)),
+          Text(value, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w900, color: color)),
           const SizedBox(height: 2),
-          Text(label, style: GoogleFonts.outfit(fontSize: 9, color: _kMuted, fontWeight: FontWeight.w500)),
+          Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 9, color: _kMuted, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -4123,7 +4125,7 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 40),
         child: Center(
-          child: Text('Không có dữ liệu chấm công trong kỳ.', style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
+          child: Text('Không có dữ liệu chấm công trong kỳ.', style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted)),
         ),
       );
     }
@@ -4156,7 +4158,7 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
                 child: Center(
                   child: Text(
                     row.name.isNotEmpty ? row.name.characters.first.toUpperCase() : 'N',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy),
                   ),
                 ),
               ),
@@ -4166,7 +4168,7 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(row.name, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800, color: _kInk)),
+                    Text(row.name, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: _kInk)),
                     const SizedBox(height: 3),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -4177,7 +4179,7 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
                       ),
                       child: Text(
                         _translateRole(row.role),
-                        style: GoogleFonts.outfit(fontSize: 9, color: _kMuted, fontWeight: FontWeight.w600),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 9, color: _kMuted, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -4187,9 +4189,9 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('${row.shifts} ca làm', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: _kInk)),
+                  Text('${row.shifts} ca làm', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: _kInk)),
                   const SizedBox(height: 2),
-                  Text('${row.hours.toStringAsFixed(1)} giờ', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w900, color: _kNavyL)),
+                  Text('${row.hours.toStringAsFixed(1)} giờ', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w900, color: _kNavyL)),
                 ],
               ),
               const SizedBox(width: 12),
@@ -4225,7 +4227,7 @@ class _StaffAttendanceTabState extends ConsumerState<_StaffAttendanceTab> {
       ),
       child: Text(
         text,
-        style: GoogleFonts.outfit(fontSize: 9, color: color, fontWeight: FontWeight.bold),
+        style: GoogleFonts.plusJakartaSans(fontSize: 9, color: color, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -4857,9 +4859,9 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Tổng đơn áp mã', style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
+                    Text('Tổng đơn áp mã', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 2),
-                    Text('$_totalOrders đơn', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kNavy)),
+                    Text('$_totalOrders đơn', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: _kNavy)),
                   ],
                 ),
               ],
@@ -4882,9 +4884,9 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Tổng tiền giảm', style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
+                    Text('Tổng tiền giảm', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 2),
-                    Text(_fmtVnd(_totalDiscount), style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kGreen)),
+                    Text(_fmtVnd(_totalDiscount), style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: _kGreen)),
                   ],
                 ),
               ],
@@ -4900,7 +4902,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 40),
         child: Center(
-          child: Text('Không có dữ liệu sử dụng voucher trong kỳ.', style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
+          child: Text('Không có dữ liệu sử dụng voucher trong kỳ.', style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted)),
         ),
       );
     }
@@ -4933,7 +4935,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                     ),
                     child: Text(
                       g.code,
-                      style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: _kOrange),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: _kOrange),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
@@ -4942,7 +4944,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                 const SizedBox(width: 8),
                 Text(
                   '${g.usageCount} lượt dùng',
-                  style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -4951,7 +4953,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
               alignment: Alignment.centerRight,
               child: Text(
                 _fmtVnd(g.totalDiscount),
-                style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: _kRed),
+                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: _kRed),
               ),
             ),
             childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -4964,17 +4966,17 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   children: [
-                    Expanded(flex: 4, child: Text('Mã đơn / Bàn', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, maxLines: 1)),
-                    Expanded(flex: 3, child: Text('Thời gian', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, maxLines: 1)),
+                    Expanded(flex: 4, child: Text('Mã đơn / Bàn', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, maxLines: 1)),
+                    Expanded(flex: 3, child: Text('Thời gian', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, maxLines: 1)),
                     Expanded(
                       flex: 2,
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerRight,
-                        child: Text('Giảm giá', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), textAlign: TextAlign.right),
+                        child: Text('Giảm giá', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), textAlign: TextAlign.right),
                       ),
                     ),
-                    Expanded(flex: 3, child: Text('Nhân viên', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), textAlign: TextAlign.right, overflow: TextOverflow.ellipsis, maxLines: 1)),
+                    Expanded(flex: 3, child: Text('Nhân viên', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kMuted, fontWeight: FontWeight.bold), textAlign: TextAlign.right, overflow: TextOverflow.ellipsis, maxLines: 1)),
                   ],
                 ),
               ),
@@ -4992,7 +4994,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                               padding: const EdgeInsets.symmetric(vertical: 2),
                               child: Text(
                                 row.orderNumber,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   color: const Color(0xFF1565C0),
@@ -5011,7 +5013,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                             alignment: Alignment.centerLeft,
                             child: Text(
                               DateFormat('dd/MM HH:mm').format(row.createdAt),
-                              style: GoogleFonts.outfit(fontSize: 11, color: _kMuted),
+                              style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted),
                             ),
                           ),
                         ),
@@ -5022,7 +5024,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                             alignment: Alignment.centerRight,
                             child: Text(
                               _fmtVnd(row.discount),
-                              style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: _kRed),
+                              style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: _kRed),
                               textAlign: TextAlign.right,
                             ),
                           ),
@@ -5031,7 +5033,7 @@ class _VoucherTabState extends ConsumerState<_VoucherTab> {
                           flex: 3,
                           child: Text(
                             row.cashierName,
-                            style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: _kNavyL),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: _kNavyL),
                             textAlign: TextAlign.right,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,

@@ -789,7 +789,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
               SizedBox(width: 4),
               Text('Nguyên liệu'),
             ])),
-          Tab(child: _TabLabel('Cảnh báo', lowCount + outCount,
+              // Danh sách Cảnh báo = sắp hết ∪ hết hàng, mà "sắp hết" (tồn ≤ tối thiểu) đã gồm cả
+              // hết hàng → đếm lowCount, không cộng outCount (trước đây đếm trùng).
+              Tab(
+                  child: _TabLabel('Cảnh báo', lowCount,
               color: outCount > 0
                   ? const Color(0xFFC62828)
                   : const Color(0xFFFF6F00))),
@@ -2397,7 +2400,7 @@ class _FeatureToggleCard extends StatelessWidget {
           Expanded(
             child: Text(
               'Quản lý kho nâng cao (Phiếu nhập hàng từ nhà cung cấp)',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: _kViolet,
@@ -2513,7 +2516,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                   // ── Header row ───────────────────────────────────────────
                   Row(children: [
                     Text('Lịch sử nhập hàng',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 16, fontWeight: FontWeight.w800,
                             color: const Color(0xFF1A1207))),
                     const Spacer(),
@@ -2536,7 +2539,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                                   ? Colors.white : const Color(0xFFDC2626)),
                           const SizedBox(width: 4),
                           Text('Đã huỷ',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11, fontWeight: FontWeight.w700,
                                   color: _filterPeriod == 'cancelled'
                                       ? Colors.white : const Color(0xFFDC2626))),
@@ -2548,7 +2551,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                       onPressed: widget.onCreateNew,
                       icon: const Icon(Icons.add_rounded, size: 16),
                       label: Text('Tạo phiếu',
-                          style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
                       style: FilledButton.styleFrom(
                         backgroundColor: _kViolet,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -2607,7 +2610,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                         ),
                         const SizedBox(width: 10),
                         Expanded(child: Text('Quản lý nhà cung cấp',
-                            style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600,
+                            style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600,
                                 color: const Color(0xFF1A1207)))),
                         const Icon(Icons.chevron_right_rounded, size: 16,
                             color: Color(0xFF9E9085)),
@@ -2635,13 +2638,13 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                           : allOrders.isEmpty
                               ? 'Chưa có phiếu nhập nào'
                               : 'Không có phiếu trong kỳ này',
-                      style: GoogleFonts.outfit(fontSize: 15,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 15,
                           color: const Color(0xFF9E9085),
                           fontWeight: FontWeight.w600)),
                     if (_filterPeriod != 'cancelled' && allOrders.isEmpty) ...[
                       const SizedBox(height: 8),
                       Text('Nhấn "Tạo phiếu" để bắt đầu',
-                          style: GoogleFonts.outfit(fontSize: 13,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 13,
                               color: const Color(0xFF9E9085))),
                     ],
                   ]),
@@ -2685,7 +2688,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
           ),
           child: Text(label,
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                   color: active ? _kViolet : const Color(0xFF8B80A8))),
@@ -2709,7 +2712,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
           border: Border.all(color: active ? color : const Color(0xFFE5E0F5)),
         ),
         child: Text(label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 fontSize: 12, fontWeight: FontWeight.w600,
                 color: active ? Colors.white : const Color(0xFF6B7280))),
       ),
@@ -2734,7 +2737,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
             Icon(Icons.store_rounded, size: 11,
                 color: const Color(0xFF8B80A8)),
             const SizedBox(width: 3),
-            Text('NCC', style: GoogleFonts.outfit(
+            Text('NCC', style: GoogleFonts.plusJakartaSans(
                 fontSize: 11.5, color: const Color(0xFF8B80A8),
                 fontWeight: FontWeight.w500)),
           ]),
@@ -2742,11 +2745,11 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
             DropdownMenuItem<String?>(
               value: null,
               child: Text('Tất cả NCC',
-                  style: GoogleFonts.outfit(fontSize: 12)),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12)),
             ),
             ...suppliers.map((s) => DropdownMenuItem<String?>(
               value: s,
-              child: Text(s, style: GoogleFonts.outfit(fontSize: 12)),
+              child: Text(s, style: GoogleFonts.plusJakartaSans(fontSize: 12)),
             )),
           ],
           onChanged: (v) => setState(() => _filterSupplier = v),
@@ -2754,13 +2757,13 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
             Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.store_rounded, size: 11, color: _kViolet),
               const SizedBox(width: 3),
-              Text('NCC', style: GoogleFonts.outfit(
+              Text('NCC', style: GoogleFonts.plusJakartaSans(
                   fontSize: 11.5, color: _kViolet,
                   fontWeight: FontWeight.w700)),
             ]),
             ...suppliers.map((s) => Text(s,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 11, color: _kViolet,
                     fontWeight: FontWeight.w700))),
           ],
@@ -2787,7 +2790,7 @@ class _PoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final date = DateTime.tryParse(order.createdAt)?.toLocal();
     final dateStr = date != null
-        ? '${date.day.toString().padLeft(2,'0')}/${date.month.toString().padLeft(2,'0')}/${date.year}  ${date.hour.toString().padLeft(2,'0')}:${date.minute.toString().padLeft(2,'0')}'
+        ? '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}  ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}'
         : '—';
 
     final hasSupplier = order.supplierName?.isNotEmpty == true;
@@ -2847,16 +2850,16 @@ class _PoCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(dateStr, style: GoogleFonts.outfit(
+                Text(dateStr, style: GoogleFonts.plusJakartaSans(
                     fontSize: 12, color: _kMuted, fontWeight: FontWeight.w500)),
                 Text('$itemCount sản phẩm nhập',
-                    style: GoogleFonts.outfit(fontSize: 13,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: isCancelled ? Colors.grey : _kNavy)),
               ])),
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Text(fmtMoney(order.totalAmount),
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 16, fontWeight: FontWeight.w900,
                         color: isCancelled ? Colors.grey : _kViolet,
                         decoration: isCancelled
@@ -2871,7 +2874,7 @@ class _PoCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(isCancelled ? 'Đã huỷ' : 'Đã nhập',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 10.5,
                           color: isCancelled ? Colors.grey.shade600 : _kGreen,
                           fontWeight: FontWeight.w700)),
@@ -2890,7 +2893,7 @@ class _PoCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   hasSupplier ? order.supplierName! : 'Không có nhà cung cấp',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5,
                     fontWeight: hasSupplier ? FontWeight.w700 : FontWeight.w500,
                     color: hasSupplier ? _kNavy : _kMuted,
@@ -2904,7 +2907,7 @@ class _PoCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(child: Text(
                     hasMore ? '$itemSummary  +${order.items.length - 3} thêm' : itemSummary,
-                    style: GoogleFonts.outfit(fontSize: 12, color: _kMuted,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted,
                         fontWeight: FontWeight.w500),
                     maxLines: 2, overflow: TextOverflow.ellipsis,
                   )),
@@ -2916,7 +2919,7 @@ class _PoCard extends StatelessWidget {
                   const Icon(Icons.notes_rounded, size: 13, color: _kMuted),
                   const SizedBox(width: 6),
                   Expanded(child: Text(order.note!,
-                      style: GoogleFonts.outfit(fontSize: 12, color: _kMuted,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted,
                           fontStyle: FontStyle.italic),
                       maxLines: 1, overflow: TextOverflow.ellipsis)),
                 ]),
@@ -2925,7 +2928,7 @@ class _PoCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                 Text('Xem chi tiết',
-                    style: GoogleFonts.outfit(fontSize: 11, color: _kViolet,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kViolet,
                         fontWeight: FontWeight.w600)),
                 const Icon(Icons.chevron_right_rounded, size: 14, color: _kViolet),
               ]),
@@ -3566,7 +3569,7 @@ class _HistorySheet extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}',
+                                            '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
                                     style: const TextStyle(
                                       fontSize: 11, color: _kMuted),
                                   ),
@@ -3712,7 +3715,7 @@ class _RecentMovementsSheet extends ConsumerWidget {
                                         const SizedBox(width: 6),
                                       ],
                                       Text(
-                                        '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}',
+                                              '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
                                         style: const TextStyle(
                                           fontSize: 11, color: _kMuted)),
                                     ]),
@@ -5647,10 +5650,10 @@ class _ToppingGroupTabState extends ConsumerState<_ToppingGroupTab> {
                 Icon(Icons.restaurant_menu_rounded, size: 56, color: _kNavy.withValues(alpha: 0.12)),
                 const SizedBox(height: 16),
                 Text('Chưa có nhóm topping nào',
-                  style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: _kNavy)),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700, color: _kNavy)),
                 const SizedBox(height: 8),
                 Text('Tạo nhóm để gắn vào nhiều món cùng lúc',
-                  style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted)),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: () => _openEditGroupSheet(context, null),
@@ -5660,7 +5663,7 @@ class _ToppingGroupTabState extends ConsumerState<_ToppingGroupTab> {
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
                   icon: const Icon(Icons.add_rounded),
                   label: Text('Tạo nhóm đầu tiên',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
                 ),
               ]),
             );
@@ -5730,10 +5733,10 @@ class _ToppingGroupCard extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(group.name, style: GoogleFonts.outfit(
+              Text(group.name, style: GoogleFonts.plusJakartaSans(
                 fontSize: 15, fontWeight: FontWeight.w800, color: _kNavy)),
               if (group.description?.isNotEmpty == true)
-                Text(group.description!, style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+                Text(group.description!, style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted)),
             ])),
             Icon(Icons.chevron_right_rounded, color: _kMuted),
           ]),
@@ -5769,9 +5772,9 @@ class _ToppingGroupCard extends StatelessWidget {
                   border: Border.all(color: _kOrange.withValues(alpha: 0.3))),
                 child: Text(
                   item.sellPrice > 0
-                      ? '${item.productName} +${(item.sellPrice/1000).toStringAsFixed(0)}k'
-                      : item.productName,
-                  style: GoogleFonts.outfit(fontSize: 11, color: _kOrange, fontWeight: FontWeight.w600)),
+                      ? '${item.productName} +${(item.sellPrice / 1000).toStringAsFixed(0)}k'
+                                    : item.productName,
+                                style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kOrange, fontWeight: FontWeight.w600)),
               )).toList()
               ..addAll(group.items.length > 5 ? [
                 Container(
@@ -5779,7 +5782,7 @@ class _ToppingGroupCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: _kBorder, borderRadius: BorderRadius.circular(20)),
                   child: Text('+${group.items.length - 5} nữa',
-                    style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted)),
                 )
               ] : []),
             ),
@@ -5799,7 +5802,7 @@ class _InfoChip extends StatelessWidget {
   Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
     Icon(icon, size: 12, color: color),
     const SizedBox(width: 4),
-    Text(label, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+    Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
   ]);
 }
 
@@ -5991,7 +5994,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                 const SizedBox(width: 12),
                 Expanded(child: Text(
                   _isEdit ? 'Sửa nhóm topping' : 'Tạo nhóm topping mới',
-                  style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white))),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white))),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded, color: Colors.white54)),
@@ -6047,7 +6050,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                     // Min/Max select
                     Row(children: [
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Chọn tối thiểu', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                        Text('Chọn tối thiểu', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         Row(children: [
                           GestureDetector(
@@ -6057,7 +6060,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                               child: const Icon(Icons.remove_rounded, size: 16, color: _kNavy))),
                           SizedBox(width: 40, child: Text('$_minSelect',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy))),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy))),
                           GestureDetector(
                             onTap: () => setState(() { if (_minSelect < _maxSelect) _minSelect++; }),
                             child: Container(width: 34, height: 34,
@@ -6067,7 +6070,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                       ])),
                       const SizedBox(width: 20),
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Chọn tối đa', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                        Text('Chọn tối đa', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         Row(children: [
                           GestureDetector(
@@ -6077,7 +6080,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                               child: const Icon(Icons.remove_rounded, size: 16, color: _kNavy))),
                           SizedBox(width: 40, child: Text(_maxSelect >= 10 ? '∞' : '$_maxSelect',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy))),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy))),
                           GestureDetector(
                             onTap: () => setState(() { if (_maxSelect < 20) _maxSelect++; }),
                             child: Container(width: 34, height: 34,
@@ -6090,10 +6093,10 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                     // Topping items trong nhóm
                     Row(children: [
                       Text('Topping trong nhóm',
-                        style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
                       const Spacer(),
                       Text('${_selectedItemIds.length} đã chọn',
-                        style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted)),
                     ]),
                     const SizedBox(height: 10),
                     if (_allToppingProducts.isEmpty)
@@ -6107,7 +6110,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                           const SizedBox(width: 10),
                           Expanded(child: Text(
                             'Chưa có topping nào trong kho.\nVào tab "Hàng hoá" → bật "Là Topping".',
-                            style: GoogleFonts.outfit(fontSize: 12, color: _kMuted))),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted))),
                         ]),
                       )
                     else
@@ -6144,12 +6147,14 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                               const SizedBox(width: 12),
                               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 Text(t['name'] as String? ?? '',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 13, fontWeight: FontWeight.w700,
                                     color: isSelected ? _kOrange : _kNavy)),
                                 if (price > 0)
-                                  Text('+${(price/1000).toStringAsFixed(0)}k/$unit',
-                                    style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                                  Text(
+                                                        '+${(price / 1000).toStringAsFixed(0)}k/$unit',
+                                                        style: GoogleFonts
+                                                            .plusJakartaSans(fontSize: 11, color: _kMuted)),
                               ])),
                             ]),
                           ),
@@ -6175,14 +6180,14 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                           const SizedBox(width: 8),
                           Expanded(child: Text(
                             'Tick các món sẽ hiện nhóm topping này khi gọi món',
-                            style: GoogleFonts.outfit(fontSize: 12, color: _kNavyL))),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kNavyL))),
                         ]),
                       ),
                     ),
                     Expanded(
                       child: _allMenuProducts.isEmpty
                         ? Center(child: Text('Chưa có sản phẩm nào',
-                            style: GoogleFonts.outfit(color: _kMuted)))
+                            style: GoogleFonts.plusJakartaSans(color: _kMuted)))
                         : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: _allMenuProducts.length,
@@ -6219,12 +6224,12 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                                   const SizedBox(width: 12),
                                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                     Text(p['name'] as String? ?? '',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 13, fontWeight: FontWeight.w700,
                                         color: isLinked ? _kNavy : _kNavy)),
                                     if ((p['category'] as String?)?.isNotEmpty == true)
                                       Text(p['category'] as String,
-                                        style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted)),
                                   ])),
                                   if (isLinked)
                                     Container(
@@ -6232,7 +6237,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                                       decoration: BoxDecoration(
                                         color: _kNavy, borderRadius: BorderRadius.circular(8)),
                                       child: Text('Đã gắn',
-                                        style: GoogleFonts.outfit(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700))),
+                                        style: GoogleFonts.plusJakartaSans(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700))),
                                 ]),
                               ),
                             );
@@ -6284,4 +6289,3 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
     );
   }
 }
-

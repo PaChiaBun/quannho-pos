@@ -76,7 +76,7 @@ class ThermalPrinterService {
       buffer.add(_boldOff);
       buffer.add(_utf8('Khu: $zoneLabel\n'));
       if (waiterName != null && waiterName.isNotEmpty) {
-        buffer.add(_utf8('NV Order: $waiterName\n'));
+        buffer.add(_utf8('NV goi mon: $waiterName\n'));
       }
       buffer.add(_utf8('$divider\n'));
 
@@ -157,7 +157,7 @@ class ThermalPrinterService {
     } on SocketException catch (e) {
       return PrintResult.connectionError(e.message);
     } on TimeoutException {
-      return PrintResult.connectionError('Timeout');
+      return PrintResult.connectionError('Hết thời gian kết nối');
     } catch (e) {
       return PrintResult.connectionError('$e');
     } finally {
@@ -178,6 +178,9 @@ class ThermalPrinterService {
   }
 
   /// Chuyển tiếng Việt có dấu → không dấu (cho máy in chỉ hỗ trợ ASCII)
+  /// Bỏ dấu tiếng Việt cho máy in nhiệt nhận chữ ESC/POS (không có font tiếng Việt).
+  static String latinize(String s) => _latinize(s);
+
   static String _latinize(String s) {
     const map = {
       'à': 'a', 'á': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',

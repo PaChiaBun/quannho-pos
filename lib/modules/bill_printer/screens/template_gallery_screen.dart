@@ -33,7 +33,7 @@ class _BillPresetPickerState extends ConsumerState<BillPresetPicker> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('✅ Đã áp dụng mẫu "${p.name}"',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
       backgroundColor: _kIndigo,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -79,7 +79,7 @@ class _KitchenPresetPickerState extends ConsumerState<KitchenPresetPicker> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(
           '✅ Đã áp dụng mẫu "${p.name}" cho ${isBar ? 'Bếp Bar (Nước)' : 'Bếp Nóng'}',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
       backgroundColor: _kPurple,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -121,7 +121,7 @@ class _BillGalleryTab extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         // Grid mẫu
         Text('${presets.length} mẫu hoá đơn có sẵn',
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade500)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey.shade500)),
         const SizedBox(height: 10),
         GridView.builder(
           shrinkWrap: true,
@@ -182,7 +182,7 @@ class _KitchenGalleryTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text('${presets.length} mẫu phiếu bếp có sẵn',
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade500)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey.shade500)),
         const SizedBox(height: 10),
         GridView.builder(
           shrinkWrap: true,
@@ -267,7 +267,7 @@ class _PresetCard extends StatelessWidget {
         children: [
           Row(children: [
             Expanded(child: Text(name,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 13, fontWeight: FontWeight.w700,
                     color: isSelected ? Colors.white : _kIndigo))),
             if (isSelected)
@@ -286,7 +286,7 @@ class _PresetCard extends StatelessWidget {
           Text(_paperHint(paperSize),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontSize: 10,
                   color: isSelected
                       ? Colors.white.withValues(alpha: 0.75)
@@ -305,7 +305,7 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
-    child: Text(text, style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w600, color: fg)),
+    child: Text(text, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w600, color: fg)),
   );
 }
 
@@ -334,13 +334,13 @@ class _PreviewSection extends StatelessWidget {
         ),
         child: Row(children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: accentColor)),
-            Text(description, style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade600)),
+            Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: accentColor)),
+            Text(description, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey.shade600)),
           ])),
           ElevatedButton.icon(
             icon: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
             label: Text('Dùng mẫu này',
-                style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: accentColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -399,19 +399,19 @@ class _KitchenPreviewWidget extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Text(tpl.headerText, textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: tpl.headerFontSize.toDouble(),
                       fontWeight: FontWeight.w900, letterSpacing: 1.2)),
               const SizedBox(height: 4),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 if (tpl.showTableName)
-                  Text('BÀN 5', style: GoogleFonts.outfit(
+                  Text('BÀN 5', style: GoogleFonts.plusJakartaSans(
                       fontSize: tpl.tableFontSize.toDouble(), fontWeight: FontWeight.w900)),
                 if (tpl.showOrderNumber)
-                  Text('#018', style: GoogleFonts.outfit(fontSize: 10, color: Colors.grey.shade500)),
+                  Text('#018', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: Colors.grey.shade500)),
               ]),
               if (tpl.showDateTime)
-                Text('14/05/2026  13:45', style: GoogleFonts.outfit(fontSize: 9, color: Colors.grey.shade500)),
+                Text('14/05/2026  13:45', style: GoogleFonts.plusJakartaSans(fontSize: 9, color: Colors.grey.shade500)),
               if (tpl.showDivider) const Divider(thickness: 1, height: 10),
               ..._sampleItems.map((item) {
                 final hasNote = tpl.showNote && item.$3 != null;
@@ -428,13 +428,13 @@ class _KitchenPreviewWidget extends StatelessWidget {
                       width: tpl.qtyFontSize + 6.0, height: tpl.qtyFontSize + 6.0,
                       decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
                       child: Center(child: Text('${item.$2}',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: tpl.qtyFontSize.toDouble(),
                               fontWeight: FontWeight.w900, color: Colors.white))),
                     ),
                     const SizedBox(width: 8),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(item.$1, style: GoogleFonts.outfit(
+                      Text(item.$1, style: GoogleFonts.plusJakartaSans(
                           fontSize: tpl.itemFontSize.toDouble(),
                           fontWeight: tpl.boldItemName ? FontWeight.w800 : FontWeight.w500)),
                       if (hasNote)
@@ -449,7 +449,7 @@ class _KitchenPreviewWidget extends StatelessWidget {
                               }
                               return Text(
                                 '↳ $displayLine',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                     fontSize: (tpl.itemFontSize - 2).toDouble(),
                                     fontStyle: FontStyle.italic,
                                     color: Colors.blueGrey),

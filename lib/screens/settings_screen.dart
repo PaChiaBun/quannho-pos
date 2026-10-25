@@ -20,6 +20,8 @@ import '../modules/bill_printer/screens/printer_settings_screen.dart';
 import '../core/services/auto_update_service.dart';
 import '../modules/pos/screens/discount_management_screen.dart';
 import 'role_manager_screen.dart';
+import 'billing_screen.dart';
+import '../core/utils/billing_platform.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS SCREEN — Cài đặt Quán Nhỏ POS
@@ -122,6 +124,22 @@ class SettingsScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                // Cổng thu phí: CHỈ Chủ quán, CHỈ web / bản máy tính (App Store / CH Play không hiện giá)
+                if (session?.isOwner == true &&
+                    session?.hasStore == true &&
+                    billingAllowedHere())
+                  _SettingsTile(
+                    icon: Icons.workspace_premium_rounded,
+                    label: 'Gói & thanh toán',
+                    subtitle: 'Xem gói của quán, gia hạn gói Pro',
+                    color: _kOrange,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BillingScreen(storeId: session!.storeId!),
+                      ),
+                    ),
+                  ),
                 _SettingsTile(
                   icon: Icons.bug_report_rounded,
                   label: 'Gửi phản hồi',
@@ -1735,6 +1753,39 @@ void _showStorePicker(BuildContext context, WidgetRef ref) async {
               },
             ),
           ),
+                // Chủ quán thêm cửa hàng mới; iOS không được tạo quán (Guideline 3.1.1).
+                if (stores.any((s) => s.isOwner) &&
+                    (kIsWeb ||
+                        defaultTargetPlatform != TargetPlatform.iOS)) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            showCreateStoreSheet(context, ref, onSuccess: () {
+                              ref.invalidate(userActionPermsProvider);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Đã tạo cửa hàng mới và chuyển sang quán đó.'),
+                                        backgroundColor: Color(0xFF2E7D32),
+                                        behavior: SnackBarBehavior.floating));
+                              }
+                            });
+                          },
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('Tạo cửa hàng mới'),
+                          style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFE85D20)),
+                              foregroundColor: const Color(0xFFE85D20),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              textStyle: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w800),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)))))
+                ],
           const SizedBox(height: 12),
         ],
       ),
@@ -2478,7 +2529,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                   const SizedBox(width: 10),
                   Text(
                     'Đổi mật khẩu tài khoản',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
                       color: _kNavy,
@@ -2629,7 +2680,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                       : const Icon(Icons.save_rounded),
                   label: Text(
                     _saving ? 'Đang cập nhật...' : 'Lưu mật khẩu mới',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                     ),
@@ -2798,7 +2849,7 @@ class _PasswordRecoverySheet extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   'Khôi phục & Quên mật khẩu',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                     color: _kNavy,
@@ -2808,14 +2859,15 @@ class _PasswordRecoverySheet extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Card 1: Nhờ Chủ quán / Quản lý
+            // Card 1: Nhờ Chủ quán (nút có thật từ H3 — chỉ Chủ quán)
             _buildOptionCard(
               icon: Icons.supervisor_account_rounded,
               color: const Color(0xFF1565C0),
               stepNumber: 'CÁCH 1 (NHANH NHẤT)',
-              title: 'Nhờ Chủ quán / Quản lý đặt lại tại chỗ',
+              title: 'Nhờ Chủ quán đặt lại tại chỗ',
               description:
-                  'Chủ quán hoặc Quản lý truy cập vào mục Nhân Viên → Tìm tên tài khoản của bạn → Bấm "Đặt lại mật khẩu" để tạo mật khẩu mới ngay tức thì.',
+                  'Chủ quán vào mục Nhân viên → chọn tên bạn → bấm "Đặt lại mật khẩu", gõ mật khẩu mới rồi báo cho bạn. '
+                  'Chỉ Chủ quán làm được. Nếu bạn còn làm ở quán của người khác, hoặc chính bạn là Chủ quán, dùng cách 2 hoặc 3.',
             ),
 
             const SizedBox(height: 12),
@@ -2825,9 +2877,10 @@ class _PasswordRecoverySheet extends StatelessWidget {
               icon: Icons.headset_mic_rounded,
               color: _kOrange,
               stepNumber: 'CÁCH 2',
-              title: 'Liên hệ Hotline Hỗ Trợ Kỹ Thuật 24/7',
+              title: 'Gọi Hotline hỗ trợ',
               description:
-                  'Gọi trực tiếp Hotline: 0838.518.618 (LPM Digital) đọc Số điện thoại đăng ký tài khoản để kỹ thuật viên xác minh và khôi phục cho bạn.',
+                  'Gọi Hotline 0838.518.618 (LPM Digital). Kỹ thuật viên sẽ GỌI LẠI đúng số điện thoại đăng ký và hỏi tên quán, mã quán để xác minh, '
+                  'rồi đọc cho bạn một mật khẩu tạm. Đăng nhập xong, vào Cài đặt → Đổi mật khẩu để đặt mật khẩu của riêng bạn.',
             ),
 
             const SizedBox(height: 12),
@@ -2837,9 +2890,10 @@ class _PasswordRecoverySheet extends StatelessWidget {
               icon: Icons.mark_email_unread_rounded,
               color: _kGreen,
               stepNumber: 'CÁCH 3',
-              title: 'Gửi yêu cầu khôi phục trực tiếp cho IT',
+              title: 'Gửi yêu cầu qua "Gửi phản hồi"',
               description:
-                  'Sử dụng tính năng "Gửi phản hồi" ngay bên dưới để gửi yêu cầu cấp lại mật khẩu. Hệ thống sẽ tự động gói kèm ID tài khoản để kỹ thuật xử lý.',
+                  'Trên máy đang đăng nhập, vào Cài đặt → "Gửi phản hồi", ghi rõ cần cấp lại mật khẩu cho số điện thoại nào. '
+                  'Quán Nhỏ sẽ gọi lại đúng số đăng ký để xác minh.',
             ),
 
             const SizedBox(height: 20),
@@ -2858,7 +2912,7 @@ class _PasswordRecoverySheet extends StatelessWidget {
                 icon: const Icon(Icons.check_rounded, color: _kNavy),
                 label: Text(
                   'Đã hiểu',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
                     color: _kNavy,
                   ),
@@ -2903,7 +2957,7 @@ class _PasswordRecoverySheet extends StatelessWidget {
               children: [
                 Text(
                   stepNumber,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                     color: color,
@@ -2913,7 +2967,7 @@ class _PasswordRecoverySheet extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   title,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
                     color: _kNavy,
@@ -2922,7 +2976,7 @@ class _PasswordRecoverySheet extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     color: _kNavy.withValues(alpha: 0.75),
                     height: 1.4,
@@ -3045,7 +3099,7 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                         const SizedBox(width: 6),
                         Text(
                           'MÃ PIN DUYỆT NHANH DÙNG LÀM GÌ?',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: _kOrange,
@@ -3056,7 +3110,7 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                     const SizedBox(height: 8),
                     Text(
                       'Đây là mã PIN 6 chữ số được sử dụng để Quản lý hoặc Chủ quán phê duyệt nhanh tại chỗ khi nhân viên thực hiện các thao tác nhạy cảm như Hủy bàn hoặc Hủy món đã gửi bếp.\n\nSử dụng mã PIN này giúp bảo vệ doanh thu quán của bạn khỏi thất thoát mà không cần tiết lộ mật khẩu đăng nhập chính.',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         color: _kNavy.withValues(alpha: 0.75),
                         height: 1.45,

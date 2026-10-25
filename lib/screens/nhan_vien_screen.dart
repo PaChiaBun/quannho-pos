@@ -10,6 +10,7 @@ import '../core/utils/app_logger.dart';
 import '../core/providers/session_provider.dart';
 import '../core/services/staff_service.dart'
     show
+        kActionLimitNotes,
         ShiftConfig,
         ShiftConfigService,
         StaffMember,
@@ -21,6 +22,8 @@ import '../core/services/staff_service.dart'
 import '../core/services/staff_sync_service.dart';
 import '../core/services/user_auth_service.dart' show SessionData;
 import 'role_manager_screen.dart';
+import 'staff_password_dialog.dart';
+import 'staff_name_dialog.dart';
 import 'dashboard_screen.dart' show permsVersionProvider;
 import '../core/providers/permission_provider.dart'
     show userActionPermsProvider;
@@ -1846,6 +1849,45 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
                   ),
                 ],
               ),
+              // ── Đổi tên + Đặt lại mật khẩu: CHỈ Chủ quán (hỗ trợ chủ quán H3, đổi tên an toàn) ──
+              if (isCallerOwner) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        key: const Key('staff_rename'),
+                        onPressed: _renameStaff,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _kNavy,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.badge_outlined, size: 16),
+                        label: const Text('Đổi tên'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        key: const Key('staff_reset_password'),
+                        onPressed: _resetPassword,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _kNavy,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.lock_reset_rounded, size: 16),
+                        label: const Text('Đặt lại mật khẩu'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
 
             const SizedBox(height: 20),
@@ -1993,6 +2035,49 @@ class _StaffDetailSheetState extends ConsumerState<_StaffDetailSheet>
         ),
       );
     }
+  }
+
+  // Chủ quán đổi tên nhân viên (máy chủ kiểm lại mọi điều kiện). Xong thì đóng bảng chi tiết + tải lại danh sách
+  // để mọi chỗ hiện tên mới.
+  Future<void> _renameStaff() async {
+    final storeId = ref.read(sessionProvider)?.storeId;
+    if (storeId == null || storeId.isEmpty) return;
+    final m = widget.member;
+    final newName = await showStaffNameDialog(
+      context,
+      storeId: storeId,
+      userId: m.userId,
+      currentName: m.name,
+    );
+    if (newName == null || !mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    Navigator.of(context).pop();
+    widget.onChanged();
+    messenger?.showSnackBar(
+      SnackBar(content: Text('Đã đổi tên thành "$newName".')),
+    );
+  }
+
+  // Chủ quán đặt mật khẩu mới cho nhân viên (máy chủ kiểm lại mọi điều kiện)
+  Future<void> _resetPassword() async {
+    final storeId = ref.read(sessionProvider)?.storeId;
+    if (storeId == null || storeId.isEmpty) return;
+    final m = widget.member;
+    final ok = await showStaffPasswordDialog(
+      context,
+      storeId: storeId,
+      userId: m.userId,
+      staffName: m.name.isEmpty ? 'nhân viên' : m.name,
+    );
+    if (!ok || !mounted) return;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(
+          'Đã đặt mật khẩu mới cho ${m.name.isEmpty ? 'nhân viên' : m.name}. '
+          'Báo mật khẩu mới trực tiếp cho nhân viên.',
+        ),
+      ),
+    );
   }
 
   void _confirmRemove() {
@@ -3777,6 +3862,8 @@ class _ActionPermsSectionState extends ConsumerState<_ActionPermsSection> {
       widget.storeId,
       roleName,
     );
+    // Đổi vai trò nhanh: bỏ kết quả của vai trò cũ, kẻo lưu nhầm sang vai trò mới.
+    if (roleName != _selectedRoleName) return;
     if (mounted)
       setState(() {
         _enabledActions = perms;
@@ -3789,11 +3876,18 @@ class _ActionPermsSectionState extends ConsumerState<_ActionPermsSection> {
     if (session?.userId == null || _selectedRoleName.isEmpty) return;
     setState(() => _saving = true);
     try {
+      // Quyền có nhờ module mà công tắc đang tắt → lưu vào danh sách tắt (thắng quyền module).
+      final modules = await StaffService.getModulePermissions(
+          widget.storeId, _selectedRoleName);
+      final derived = StaffService.deriveActionPermsFromModules(modules,
+          roleName: _selectedRoleName);
       await StaffService.setActionPermissions(
         storeId: widget.storeId,
         role: _selectedRoleName,
         actions: _enabledActions,
         changedByUserId: session!.userId,
+          denied: StaffService.computeDeniedActions(
+              derived: derived, enabled: _enabledActions)
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -3875,6 +3969,10 @@ class _ActionPermsSectionState extends ConsumerState<_ActionPermsSection> {
       final isModuleAllowed =
           allowedModules.contains(modulePrefix) ||
           (modulePrefix == 'kho' && allowedModules.contains('kho_pro')) ||
+          // Quyền printer.* đi kèm module 'bill_printer' (tiền tố khác tên module).
+          (modulePrefix == 'printer' && allowedModules.contains('bill_printer')) ||
+          // "Thanh toán hoá đơn" cũng có nhờ module Bàn → vai trò chỉ có Bàn vẫn phải tắt được.
+          (key == 'pos.checkout' && allowedModules.contains('ban')) ||
           allowedModules.contains(key) ||
           StaffService.canonicalRole(selectedRoleObj.name) == 'owner';
       if (!isModuleAllowed) continue;
@@ -4067,7 +4165,16 @@ class _ActionPermsSectionState extends ConsumerState<_ActionPermsSection> {
                       ),
                     ),
                   )
-                else
+                else if (const {
+                      'owner',
+                      'manager'
+                    }.contains(StaffService.canonicalRole(_selectedRoleName)))
+                      const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Text(
+                              'Chủ quán và Quản lý luôn có đủ mọi quyền — không tắt được ở đây.',
+                              style: TextStyle(color: _kMuted, fontSize: 13)))
+                    else
                   ...grouped.entries.map((entry) {
                     final groupName = entry.key;
                     final actions = entry.value;
@@ -4151,7 +4258,20 @@ class _ActionPermsSectionState extends ConsumerState<_ActionPermsSection> {
                                                   meta.$2,
                                                   style: const TextStyle(
                                                     fontSize: 11,
-                                                    color: _kMuted,
+                                                    color: _kMuted)),
+                                                      if (kActionLimitNotes[
+                                                              action] !=
+                                                          null)
+                                                        Text(
+                                                            kActionLimitNotes[
+                                                                action]!,
+                                                            style: const TextStyle(
+                                                                fontSize: 11,
+                                                                color: Color(
+                                                                    0xFFB45309),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600
                                                   ),
                                                 ),
                                               ],
@@ -5063,7 +5183,7 @@ class _SRightCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 title,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: _kNavy,
@@ -5102,12 +5222,12 @@ class _SStatRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.outfit(fontSize: 13, color: _kNavy),
+            style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kNavy),
           ),
         ),
         Text(
           value,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: color,

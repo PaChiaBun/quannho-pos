@@ -43,7 +43,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
                   child: Column(children: [
                     TextField(
                       onChanged: (v) => setState(() => _query = v),
-                      style: GoogleFonts.outfit(fontSize: 14, color: KhoTheme.ink),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, color: KhoTheme.ink),
                       decoration: KhoTheme.inputDecoration(
                         hint: 'Tìm nguyên liệu...',
                         prefix: const Icon(Icons.search_rounded,
@@ -65,7 +65,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
                         const SizedBox(width: 6),
                         Expanded(child: Text(
                             'Dùng chung với Kho Hàng. Nhập hàng qua tab Phiếu nhập.',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11.5, color: KhoTheme.violet,
                                 fontWeight: FontWeight.w500))),
                       ]),
@@ -139,7 +139,7 @@ class _IngredientCard extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(item.name as String, style: GoogleFonts.outfit(
+          Text(item.name as String, style: GoogleFonts.plusJakartaSans(
               fontSize: 14, fontWeight: FontWeight.w800, color: KhoTheme.ink)),
           const SizedBox(height: 2),
           Row(children: [
@@ -149,12 +149,12 @@ class _IngredientCard extends StatelessWidget {
                 color: ts.color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Text(ts.label, style: GoogleFonts.outfit(
+              child: Text(ts.label, style: GoogleFonts.plusJakartaSans(
                   fontSize: 10, fontWeight: FontWeight.w700, color: ts.color)),
             ),
             const SizedBox(width: 6),
             Text('Tồn: ${qty.toStringAsFixed(0)} ${item.unit}',
-                style: GoogleFonts.outfit(fontSize: 12, color: KhoTheme.muted)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted)),
           ]),
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -165,7 +165,7 @@ class _IngredientCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(isOut ? 'Hết' : isLow ? 'Sắp hết' : 'Còn',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 11, fontWeight: FontWeight.w700,
                     color: statusColor)),
           ),

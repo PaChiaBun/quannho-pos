@@ -1,6 +1,6 @@
 # Kế Hoạch Sửa Đổi & Chuẩn Hoá Modules Điểm Danh & Tính Lương (Quán Nhỏ POS)
 
-Tài liệu này tổng hợp kết quả điều tra sâu toàn bộ hệ thống Điểm danh (Chấm công) và Tính lương (Payroll) của Quán Nhỏ POS theo quy chuẩn `/qn` và các tài liệu nghiệp vụ `.docs/trien-khai-sap-toi.md`, `.docs/Ai_Bum/cac-module/cham-cong.md`, `.docs/Ai_Bum/cac-module/luong.md`.
+Tài liệu này tổng hợp kết quả điều tra sâu toàn bộ hệ thống Điểm danh (Chấm công) và Tính lương (Payroll) của Quán Nhỏ POS theo quy chuẩn `/qn` và các tài liệu nghiệp vụ `.docs/trien-khai-sap-toi.md`, `.docs/Ai_Boom/cac-module/cham-cong.md`, `.docs/Ai_Boom/cac-module/luong.md`.
 
 ---
 

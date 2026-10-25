@@ -124,7 +124,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
         backgroundColor: _kNavy,
         foregroundColor: Colors.white,
         title: Text('Gửi phản hồi',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 17)),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 17)),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -142,7 +142,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
           children: [
             // ── Loại phản hồi ──────────────────────────────────────
             Text('Loại phản hồi',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13, fontWeight: FontWeight.w700, color: _kInk)),
             const SizedBox(height: 8),
             Wrap(
@@ -177,7 +177,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                           color: isSelected ? cat.$4 : _kMuted),
                         const SizedBox(width: 6),
                         Text(cat.$3,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                             color: isSelected ? cat.$4 : _kMuted,
@@ -193,7 +193,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
 
             // ── Mô tả ──────────────────────────────────────────────
             Text('Mô tả chi tiết *',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13, fontWeight: FontWeight.w700, color: _kInk)),
             const SizedBox(height: 8),
             Container(
@@ -213,13 +213,13 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                 controller: _descCtrl,
                 maxLines: 5,
                 maxLength: 500,
-                style: GoogleFonts.outfit(fontSize: 14, color: _kInk),
+                style: GoogleFonts.plusJakartaSans(fontSize: 14, color: _kInk),
                 decoration: InputDecoration(
                   hintText: 'Ví dụ: Khi bấm nút "In bill" trên màn hình Bán hàng, app bị đứng...',
-                  hintStyle: GoogleFonts.outfit(fontSize: 13, color: _kMuted),
+                  hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.all(16),
-                  counterStyle: GoogleFonts.outfit(fontSize: 11, color: _kMuted),
+                  counterStyle: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted),
                 ),
               ),
             ),
@@ -228,11 +228,11 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
 
             // ── Ảnh chụp màn hình ───────────────────────────────────
             Text('Ảnh chụp màn hình (tuỳ chọn)',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13, fontWeight: FontWeight.w700, color: _kInk)),
             const SizedBox(height: 4),
             Text('Chụp lại màn hình lúc gặp lỗi giúp chúng tôi sửa nhanh hơn',
-              style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted)),
             const SizedBox(height: 10),
 
             if (_screenshot != null) ...[
@@ -315,7 +315,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                       Expanded(
                         child: Text(
                           'ĐÍNH KÈM LOG NHẬT KÝ & DẤU VẾT KỸ THUẬT',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFF1565C0),
@@ -335,7 +335,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                             const SizedBox(width: 4),
                             Text(
                               'Đã tự động liên kết',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF2E7D32),
@@ -349,7 +349,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Hệ thống tự động gói kèm thông tin tài khoản, ID cửa hàng, phiên bản ứng dụng và Log lịch sử thao tác gần nhất giúp đội ngũ Kỹ thuật truy vết chính xác dấu vết sự cố.',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       color: _kNavy.withValues(alpha: 0.75),
                       height: 1.45,
@@ -379,7 +379,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                   disabledBackgroundColor: _kNavy.withValues(alpha: 0.5),
                   disabledForegroundColor: Colors.white70,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: GoogleFonts.outfit(
+                  textStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 15, fontWeight: FontWeight.w700),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
@@ -394,7 +394,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
               child: Text(
                 'Dấu vết nhật ký kỹ thuật (Log Trace) được gửi kèm tự động\ngiúp bộ phận IT khắc phục sự cố nhanh chóng.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, height: 1.5),
+                style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted, height: 1.5),
               ),
             ),
             const SizedBox(height: 24),
@@ -438,7 +438,7 @@ class _ImagePickerButton extends StatelessWidget {
             Icon(icon, size: 24, color: const Color(0xFF1565C0)),
             const SizedBox(height: 4),
             Text(label,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12, fontWeight: FontWeight.w600,
                 color: const Color(0xFF5A5260),
               )),

@@ -42,7 +42,7 @@ class _KitchenTicketDesignerState extends ConsumerState<KitchenTicketDesigner> {
     setState(() => _saving = false);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('✅ Đã lưu thiết kế phiếu bếp',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
       backgroundColor: _kIndigo,
       duration: const Duration(seconds: 2),
       behavior: SnackBarBehavior.floating,
@@ -80,7 +80,7 @@ class _KitchenTicketDesignerState extends ConsumerState<KitchenTicketDesigner> {
           TextButton.icon(
             icon: const Icon(Icons.save_rounded, color: _kPurple, size: 18),
             label: Text('Lưu',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     color: _kPurple, fontWeight: FontWeight.w700)),
             onPressed: _save,
           ),
@@ -130,7 +130,7 @@ class _ConfigPanel extends ConsumerWidget {
               const SizedBox(width: 6),
               Expanded(child: Text(
                 paperSpecOf(tpl.paperSize).description,
-                style: GoogleFonts.outfit(fontSize: 11, color: _kIndigo.withValues(alpha: 0.65), height: 1.5),
+                style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kIndigo.withValues(alpha: 0.65), height: 1.5),
               )),
             ]),
           ),
@@ -144,10 +144,10 @@ class _ConfigPanel extends ConsumerWidget {
         children: [
           TextFormField(
             initialValue: tpl.headerText,
-            style: GoogleFonts.outfit(fontSize: 14),
+            style: GoogleFonts.plusJakartaSans(fontSize: 14),
             decoration: InputDecoration(
               hintText: 'VD: PHIẾU BẾP / BẾP NÓNG / BAR NƯỚC',
-              hintStyle: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade400),
+              hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey.shade400),
               filled: true, fillColor: Colors.white,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(color: Colors.grey.shade300)),
@@ -163,7 +163,7 @@ class _ConfigPanel extends ConsumerWidget {
             const SizedBox(width: 4),
             Expanded(child: Text(
               'Gợi ý: Phân chia theo trạm → "BếP NÓNG" / "BAR NƯỚC" / "GRILL"',
-              style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey.shade500,
+              style: GoogleFonts.plusJakartaSans(fontSize: 11, color: Colors.grey.shade500,
                   fontStyle: FontStyle.italic))),
           ]),
         ],
@@ -242,7 +242,7 @@ class _ConfigPanel extends ConsumerWidget {
       OutlinedButton.icon(
         icon: const Icon(Icons.refresh_rounded, size: 16),
         label: Text('Đặt lại mặc định phiếu bếp',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.red.shade400,
           side: BorderSide(color: Colors.red.shade300),
@@ -279,7 +279,7 @@ class _TipsPanel extends StatelessWidget {
             Icon(Icons.tips_and_updates_rounded, size: 18, color: _kAmber),
             const SizedBox(width: 8),
               Expanded(child: Text('Hướng dẫn thiết kế phiếu bếp',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 13, fontWeight: FontWeight.w800, color: _kAmber))),
               Icon(expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
                   color: _kAmber),
@@ -338,7 +338,7 @@ class _TipRow extends StatelessWidget {
       Icon(icon, size: 15, color: color),
       const SizedBox(width: 6),
       Expanded(child: Text(text,
-          style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF374151), height: 1.4))),
+          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF374151), height: 1.4))),
     ]),
   );
 }
@@ -378,7 +378,7 @@ class _PreviewPanel extends StatelessWidget {
               // ── Tiêu đề ──
               Text(tpl.headerText,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: tpl.headerFontSize.toDouble(),
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.2)),
@@ -388,17 +388,17 @@ class _PreviewPanel extends StatelessWidget {
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 if (tpl.showTableName)
                   Text('BÀN 5',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: tpl.tableFontSize.toDouble(),
                           fontWeight: FontWeight.w900)),
                 if (tpl.showOrderNumber)
                   Text('#QN-018',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 11, color: Colors.grey.shade500)),
               ]),
               if (tpl.showDateTime)
                 Text('14/05/2026  13:45',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 10, color: Colors.grey.shade500)),
 
               if (tpl.showDivider) ...[
@@ -434,7 +434,7 @@ class _PreviewPanel extends StatelessWidget {
                                 color: Colors.black, shape: BoxShape.circle),
                             child: Center(
                                child: Text('${item.$2}',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                       fontSize: tpl.qtyFontSize.toDouble(),
                                       fontWeight: FontWeight.w900,
                                       color: Colors.white)),
@@ -446,7 +446,7 @@ class _PreviewPanel extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(item.$1,
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                         fontSize: tpl.itemFontSize.toDouble(),
                                         fontWeight: tpl.boldItemName
                                             ? FontWeight.w800 : FontWeight.w500)),
@@ -462,7 +462,7 @@ class _PreviewPanel extends StatelessWidget {
                                         }
                                         return Text(
                                           '↳ $displayLine',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: (tpl.itemFontSize - 2).toDouble(),
                                               fontStyle: FontStyle.italic,
                                               color: Colors.blueGrey),

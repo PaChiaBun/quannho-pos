@@ -22,6 +22,7 @@ class _ReceiveStockSheetState extends ConsumerState<ReceiveStockSheet> {
   final _noteCtrl = TextEditingController();
   final _refCtrl  = TextEditingController();
   String? _selectedSupplierId;
+  String _fundType = 'cash';
   bool _loading = false;
 
   static const _kNavy  = Color(0xFF1E1C5E);
@@ -219,6 +220,14 @@ class _ReceiveStockSheetState extends ConsumerState<ReceiveStockSheet> {
                             ),
                     ),
 
+                            // Quỹ trả tiền nhập hàng
+                            buildPurchaseFundPicker(
+                                value: _fundType,
+                                enabled: !_loading,
+                                onChanged: (v) =>
+                                    setState(() => _fundType = v)),
+                            const SizedBox(height: 12),
+
 
                     // Ghi chú
                     _buildField(
@@ -342,6 +351,7 @@ class _ReceiveStockSheetState extends ConsumerState<ReceiveStockSheet> {
         supplierName: supplier?.name,
         reference: _refCtrl.text.isEmpty ? null : _refCtrl.text,
         note: _noteCtrl.text.isEmpty ? null : _noteCtrl.text,
+          fundType: _fundType
       );
 
       if (mounted) {
@@ -371,4 +381,22 @@ class _ReceiveStockSheetState extends ConsumerState<ReceiveStockSheet> {
 
   String _formatMoney(int v) => v.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+}
+
+/// Chọn quỹ trả tiền nhập hàng: Tiền mặt / Chuyển khoản (trước đây luôn ghi Tiền mặt).
+Widget buildPurchaseFundPicker(
+    {required String value,
+    required ValueChanged<String> onChanged,
+    bool enabled = true}) {
+  return Wrap(
+      spacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        const Text('Trả bằng:', style: TextStyle(fontWeight: FontWeight.w600)),
+        for (final f in const [('cash', 'Tiền mặt'), ('bank', 'Chuyển khoản')])
+          ChoiceChip(
+              label: Text(f.$2),
+              selected: value == f.$1,
+              onSelected: enabled ? (_) => onChanged(f.$1) : null)
+      ]);
 }

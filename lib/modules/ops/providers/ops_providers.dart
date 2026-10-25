@@ -94,3 +94,14 @@ final opsReportProvider = FutureProvider.autoDispose.family<OpsReportData, Strin
 final opsLiveTodayLogsProvider = StreamProvider.autoDispose<List<OpsDailyLogModel>>((ref) {
   return ref.watch(opsRepositoryProvider).watchTodayAllLogs();
 });
+
+/// Ghi chú bàn giao ca gần nhất (24 giờ). Lỗi đọc (vd. máy chủ chưa có bảng bàn giao) → null,
+/// để màn Vận hành vẫn chạy bình thường.
+final opsLatestHandoverProvider =
+    FutureProvider.autoDispose<OpsShiftHandoverModel?>((ref) async {
+  try {
+    return await ref.watch(opsRepositoryProvider).getLatestHandover();
+  } catch (_) {
+    return null;
+  }
+});

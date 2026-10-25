@@ -154,7 +154,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             // Bên phải: Giỏ hàng cố định (~38%)
             SizedBox(
               width: Responsive.isDesktop(context) ? 380 : 320,
-              child: _CartPanel(isPanel: true),
+              child: _CartPanel(isPanel: true, onSendKitchen: _openKitchenConfirm),
             ),
           ],
         ),
@@ -450,7 +450,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                   isCompact
                                       ? 'QR (${qrRequests.length})'
                                       : 'Đơn QR (${qrRequests.length})',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,
                                     fontSize: isCompact ? 11 : 12,
@@ -516,7 +516,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 Text(
                                   isCompact
                                       ? '${cart.itemCount}'
-                                      : '${cart.itemCount} mon',
+                                      : '${cart.itemCount} món',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: isCompact ? 12 : 13,
@@ -602,7 +602,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               onChanged: (v) => setState(() => _searchQuery = v),
               style: const TextStyle(color: _kInk, fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'Tim mon, ma SKU...',
+                hintText: 'Tìm món, mã SKU...',
                 hintStyle: TextStyle(color: _kMuted, fontSize: 14),
                 prefixIcon: Icon(
                   Icons.search_rounded,
@@ -883,8 +883,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        '${grouped[cat]!.length} mon',
+                      Text('${grouped[cat]!.length} món',
                         style: TextStyle(
                           fontSize: 12,
                           color: _kMuted,
@@ -1169,6 +1168,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   void _openCheckout() => openPosCheckout(context, ref);
 
   void _openKitchenConfirm(CartState cart) {
+    if (ref.read(posKitchenSendingProvider)) return; // lần gửi trước chưa xong
     // Chỉ gửi các line CHƯА sent
     final unsentLines = cart.lines
         .where((l) => !cart.isLineSent(l.lineId))
@@ -1201,12 +1201,23 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     String? kitchenNote,
     Map<String, String>? itemNotes,
   }) async {
-    if (unsentLines.isEmpty) return;
+    if (unsentLines.isEmpty || ref.read(posKitchenSendingProvider)) return;
+    final sending = ref.read(posKitchenSendingProvider.notifier)..set(true);
+    try {
+      await _sendCartToKitchenUnguarded(unsentLines,
+          kitchenNote: kitchenNote, itemNotes: itemNotes);
+    } finally {
+      sending.set(false);
+    }
+  }
+
+  Future<void> _sendCartToKitchenUnguarded(List<CartLine> unsentLines,
+      {String? kitchenNote, Map<String, String>? itemNotes}) async {
     final sb = Supabase.instance.client;
     const uuid = Uuid();
     final now = DateTime.now().toUtc().toIso8601String();
     final cart = ref.read(cartProvider);
-    final tableLabel = cart.tableName ?? 'Mang di';
+    final tableLabel = cart.tableName ?? 'Mang đi';
 
     // Lấy store_id từ session
     final storeId = ref.read(sessionProvider)?.storeId;
@@ -1338,6 +1349,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           'ticket_id': ticketId,
           'session_item_id': sessionItemIds[i],
           // ‼️ FIX #1: Dùng đúng field names khớp với KitchenTicketItemModel
+          'name': line
+              .productName, // cột NOT NULL — thiếu thì gửi bếp từ quầy lỗi (23/10)
           'product_name': line.productName, // ✅ model đọc 'product_name'
           'quantity': line.quantity, // ✅ model đọc 'quantity'
           'station_code': stationCode,
@@ -1396,6 +1409,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   void _addToCart(ProductModel product, TapDownDetails details) {
+    // Món "tạm ngưng bán" (Kho hàng → tắt bán) — khoá như quy chuẩn qn.md.
+    if (!product.isAvailable) {
+      HapticFeedback.heavyImpact();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${product.name} đang tạm ngưng bán'),
+          backgroundColor: _kRed,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2)));
+      return;
+    }
     // Block sản phẩm hết hàng — không cho thêm vào giỏ
     if (product.stockQty <= 0 && product.minStock > 0) {
       HapticFeedback.heavyImpact();
@@ -1502,6 +1525,9 @@ class _ProductCard extends ConsumerWidget {
       ),
     );
     final isOutOfStock = product.stockQty <= 0 && product.minStock > 0;
+    // Tạm ngưng bán (tắt bán ở Kho hàng) → khoá giống hết tồn.
+    final isPaused = !product.isAvailable;
+    final isLocked = isOutOfStock || isPaused;
     final isLowStock =
         !isOutOfStock &&
         product.minStock > 0 &&
@@ -1517,9 +1543,10 @@ class _ProductCard extends ConsumerWidget {
 
     return Opacity(
       // Mờ 50% khi hết hàng — vẫn hiện để biết món tồn tại nhưng disable
-      opacity: isOutOfStock ? 0.45 : 1.0,
+      opacity: isLocked ? 0.45 : 1.0,
       child: GestureDetector(
-        onTapDown: isOutOfStock
+        onTapDown:
+            isLocked
             ? null
             : onTapWithDetails, // disable click khi hết hàng
         onLongPress: () {
@@ -1676,7 +1703,10 @@ class _ProductCard extends ConsumerWidget {
                                       ),
                                     ),
                                   ),
-                                  if (isOutOfStock)
+                                  if (isPaused)
+                                        _StockBadge('Tạm ngưng', _kRed,
+                                            const Color(0xFFFFEBEE))
+                                      else if (isOutOfStock)
                                     _StockBadge(
                                       'Hết',
                                       _kRed,
@@ -1772,6 +1802,10 @@ class _ProductCard extends ConsumerWidget {
                                       ),
                                     ),
                                   ),
+                                      if (isPaused)
+                                        _StockBadge('Tạm ngưng', _kRed,
+                                            const Color(0xFFFFEBEE))
+                                      else
                                   if (isOutOfStock)
                                     _StockBadge(
                                       'Hết',
@@ -1916,7 +1950,10 @@ class _CartPanel extends ConsumerWidget {
   /// [isPanel] = true khi dùng làm side panel (desktop)
   /// [isPanel] = false khi dùng làm modal bottom sheet (mobile)
   final bool isPanel;
-  const _CartPanel({this.isPanel = false});
+
+  /// Bố cục rộng (máy tính bảng / PC / web): nút "Gửi bếp" nằm trong giỏ, giống thanh giỏ trên điện thoại.
+  final void Function(CartState cart)? onSendKitchen;
+  const _CartPanel({this.isPanel = false, this.onSendKitchen});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -2065,6 +2102,11 @@ class _CartPanel extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
+                    if (onSendKitchen != null && cart.lines.isNotEmpty) ...[
+                      _PanelKitchenSendBtn(
+                          onPressed: () => onSendKitchen!(cart)),
+                      const SizedBox(height: 10)
+                    ],
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -2539,7 +2581,24 @@ class _CartLineRow extends ConsumerWidget {
                   _QBtn(
                     icon: Icons.add_rounded,
                     color: _kNavy,
-                    onTap: () => notifier.increaseQty(line.lineId),
+                    onTap: () {
+                        // Món đã trong giỏ rồi mới bị tắt bán / hết tồn: không cho tăng thêm.
+                        final product = ref
+                            .read(posProductsProvider)
+                            .value
+                            ?.where((p) => p.id == line.productId)
+                            .firstOrNull;
+                        if (product != null && !posProductSellable(product)) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(product.isAvailable
+                                  ? '${product.name} đã hết hàng'
+                                  : '${product.name} đang tạm ngưng bán'),
+                              backgroundColor: _kRed,
+                              behavior: SnackBarBehavior.floating));
+                          return;
+                        }
+                        notifier.increaseQty(line.lineId);
+                      }
                   ),
               ],
             ),
@@ -3978,16 +4037,17 @@ class _TableChip extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // TABLE PICKER SHEET — Chọn bàn từ danh sách DB
 // ─────────────────────────────────────────────────────────────────────────────
+// Provider cố định (trước đây tạo StreamProvider mới trong build → mỗi lần dựng lại mở luồng mới, không giải phóng).
+final _posTablePickerProvider = StreamProvider.autoDispose(
+    (ref) => ref.watch(banRepositoryProvider).watchAllTables());
+
 class _TablePickerSheet extends ConsumerWidget {
   final void Function(String id, String name) onSelect;
   const _TablePickerSheet({required this.onSelect});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tablesAsync = ref.watch(
-      StreamProvider(
-        (ref) => ref.watch(banRepositoryProvider).watchAllTables(),
-      ),
+    final tablesAsync = ref.watch(_posTablePickerProvider
     );
     return Container(
       decoration: const BoxDecoration(
@@ -4102,6 +4162,53 @@ class _TablePickerSheet extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // POS KITCHEN SEND BUTTON — Dim + tooltip khi module Bep chua bat
 // ─────────────────────────────────────────────────────────────────────────────
+/// Nút "Gửi bếp" cho giỏ hàng cố định bên phải (bố cục rộng). Cùng logic với [_PosKitchenSendBtn].
+class _PanelKitchenSendBtn extends ConsumerWidget {
+  final VoidCallback onPressed;
+  const _PanelKitchenSendBtn({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isKitchenActive = ref.watch(posKitchenModuleActiveProvider);
+    final cart = ref.watch(cartProvider);
+    final unsentCount = cart.lines
+        .where((l) => !cart.isLineSent(l.lineId))
+        .fold(0, (s, l) => s + l.quantity.toInt());
+    final allSent = cart.lines.isNotEmpty && unsentCount == 0;
+    final sending = ref.watch(posKitchenSendingProvider);
+    final enabled =
+        isKitchenActive && !allSent && !cart.isProcessing && !sending;
+
+    final button = SizedBox(
+        width: double.infinity,
+        height: 46,
+        child: OutlinedButton.icon(
+            onPressed: enabled ? onPressed : null,
+            icon: const Icon(Icons.local_fire_department_rounded, size: 18),
+            label: Text(
+                sending
+                    ? 'Đang gửi bếp…'
+                    : allSent
+                        ? 'Đã gửi bếp hết'
+                        : 'Gửi bếp ($unsentCount món)',
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            style: OutlinedButton.styleFrom(
+                foregroundColor: _kOrange,
+                side: BorderSide(
+                    color: _kOrange.withValues(alpha: enabled ? 1 : 0.3)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)))));
+    if (!isKitchenActive) {
+      return Tooltip(
+          message: 'Cần bật module Bếp trong Modules trước',
+          triggerMode: TooltipTriggerMode.tap,
+          child: button);
+    }
+    return button;
+  }
+}
+
 class _PosKitchenSendBtn extends ConsumerWidget {
   final VoidCallback onPressed;
   const _PosKitchenSendBtn({required this.onPressed});
@@ -4159,7 +4266,7 @@ class _PosKitchenSendBtn extends ConsumerWidget {
 
     if (!isKitchenActive) {
       return Tooltip(
-        message: 'Can bat Module Bep trong Modules truoc',
+        message: 'Cần bật module Bếp trong Modules trước',
         preferBelow: false,
         triggerMode: TooltipTriggerMode.tap,
         showDuration: const Duration(seconds: 4),
@@ -4167,8 +4274,8 @@ class _PosKitchenSendBtn extends ConsumerWidget {
       );
     }
 
-    // Disable khi tất cả đã gửi hết
-    if (allSent) return btn;
+    // Disable khi tất cả đã gửi hết hoặc đang gửi dở
+    if (allSent || ref.watch(posKitchenSendingProvider)) return btn;
 
     return GestureDetector(onTap: onPressed, child: btn);
   }
@@ -4272,8 +4379,7 @@ class _LocationSelector extends ConsumerWidget {
                   size: 13,
                 ),
                 SizedBox(width: 5),
-                Text(
-                  'Mang di',
+                Text('Mang đi',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 12,
@@ -4434,8 +4540,7 @@ class _PosKitchenSendHint extends ConsumerWidget {
             size: 12,
           ),
           SizedBox(width: 4),
-          Text(
-            'Bep san sang',
+          Text('Bếp sẵn sàng',
             style: TextStyle(
               color: Color(0xFFE85D20),
               fontSize: 10,
@@ -4454,6 +4559,10 @@ class _PosKitchenSendHint extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // POS ADD ITEMS SHEET — Long press → thêm mon + ghi chu (giống Modules Bàn)
 // ─────────────────────────────────────────────────────────────────────────────
+/// Món bán được ở quầy: không tạm ngưng bán, và nếu có đặt tồn tối thiểu thì còn tồn.
+bool posProductSellable(ProductModel p) =>
+    p.isAvailable && !(p.stockQty <= 0 && p.minStock > 0);
+
 class _PosAddItemsSheet extends ConsumerStatefulWidget {
   final String? focusProductId; // scroll tới món này khi mở (từ long press)
   const _PosAddItemsSheet({this.focusProductId});
@@ -4488,6 +4597,7 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
     final notifier = ref.read(cartProvider.notifier);
     for (final entry in _selected.entries) {
       final product = products.firstWhere((p) => p.id == entry.key);
+      if (!posProductSellable(product)) continue; // vừa bị tắt bán / hết tồn khi đang chọn
       final qty = entry.value.toDouble();
       final note = _noteCtrls[entry.key]?.text.trim();
       if (note != null && note.isNotEmpty) {
@@ -4596,7 +4706,10 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
                   );
                 },
                 data: (products) {
-                  final prodList = (products as List).cast<ProductModel>();
+                        // Chỉ món bán được: bỏ món tạm ngưng bán / hết tồn (cùng quy tắc với lưới món).
+                  final prodList = (products as List).cast<ProductModel>()
+                            .where(posProductSellable)
+                            .toList();
                   final filtered = _search.isEmpty
                       ? prodList
                       : prodList
@@ -5191,6 +5304,9 @@ class _RecentOrdersSheet extends ConsumerStatefulWidget {
 
 class _RecentOrdersSheetState extends ConsumerState<_RecentOrdersSheet> {
   String? _expandedId;
+  // Tạo một lần: trước đây tạo lại mỗi lần build (bấm mở 1 đơn) → mở kênh realtime + tải lại mới.
+  late final Stream<List<OrderModel>> _ordersStream =
+      ref.read(posRepositoryProvider).watchTodayOrders();
 
   @override
   Widget build(BuildContext context) {
@@ -5200,8 +5316,7 @@ class _RecentOrdersSheetState extends ConsumerState<_RecentOrdersSheet> {
         session?.role == 'owner' ||
         session?.role == 'manager' ||
         session?.role.toLowerCase() == 'quản lý';
-    final posRepo = ref.watch(posRepositoryProvider);
-    final ordersStream = posRepo.watchTodayOrders();
+    final ordersStream = _ordersStream;
 
     return Container(
       decoration: const BoxDecoration(

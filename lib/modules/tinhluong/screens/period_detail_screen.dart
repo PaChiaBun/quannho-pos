@@ -6,6 +6,7 @@ import '../repository/tinhluong_repository.dart';
 import 'payroll_report_screen.dart';
 import '../../../core/providers/permission_provider.dart';
 import '../../../core/providers/session_provider.dart';
+import '../../../core/services/staff_service.dart';
 
 final _fmt = NumberFormat('#,###', 'vi_VN');
 String _fmtM(double v) => '${_fmt.format(v.round())}đ';
@@ -31,6 +32,15 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
     final permsAsync = ref.watch(userActionPermsProvider);
     final perms = permsAsync.value ?? {};
     final canApprove = perms.contains('tinhluong.approve_payroll');
+    // Máy chủ (guard_payroll_*_v1): duyệt kỳ chỉ Chủ quán; trả lương Chủ quán/Quản lý.
+    final session = ref.watch(sessionProvider);
+    final canonical = StaffService.canonicalRole(session?.role ?? '');
+    final isOwner = session?.isOwner == true || canonical == 'owner';
+    final canApprovePeriod = canApprove && isOwner;
+    // Khớp máy chủ (payroll_actor_v1): Quản lý = mã vai trò đúng 'manager'/'admin'.
+    final roleCode = (session?.role ?? '').trim().toLowerCase();
+    final canPay =
+        canApprove && (isOwner || roleCode == 'manager' || roleCode == 'admin');
     final canReport = perms.contains('tinhluong.view_all');
 
     final recordsAsync = ref.watch(payrollRecordsProvider(widget.period.id));
@@ -112,7 +122,7 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
                 ),
               );
             }
-            if (widget.period.status == 'pending_review' && canApprove) {
+            if (widget.period.status == 'pending_review' && canApprovePeriod) {
               actions.add(
                 TextButton.icon(
                   icon: const Icon(
@@ -162,7 +172,7 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
                 ),
               );
             }
-            if (widget.period.status == 'pending_review' && canApprove) {
+            if (widget.period.status == 'pending_review' && canApprovePeriod) {
               menuItems.add(
                 const PopupMenuItem(
                   value: 'approve',
@@ -333,7 +343,7 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
                           ),
                         ),
                       ),
-                      data: (records) => _buildSliverBody(records, canApprove),
+                      data: (records) => _buildSliverBody(records, canPay),
                     ),
                   ],
                 ),
@@ -345,7 +355,50 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
     );
   }
 
-  Widget _buildSliverBody(List<PayrollRecordModel> records, bool canApprove) {
+  /// Chủ quán chốt kỳ "Đã trả" khi kỳ đã duyệt và mọi phiếu có lương đều đã được NV xác nhận.
+  /// (Trước đây không chỗ nào đặt kỳ sang 'paid' nên kỳ mãi ở "Đã duyệt".)
+  bool _canClosePeriodPaid(List<PayrollRecordModel> records) {
+    final session = ref.read(sessionProvider);
+    final isOwner = session?.isOwner == true ||
+        StaffService.canonicalRole(session?.role ?? '') == 'owner';
+    final withPay = records.where((r) => r.netPay > 0).toList();
+    return isOwner &&
+        widget.period.isApproved &&
+        withPay.isNotEmpty &&
+        withPay.every((r) => r.paymentStatus == 'paid');
+  }
+
+  Future<void> _closePeriodPaid(BuildContext context) async {
+    final ok = await showDialog<bool>(
+        context: context,
+        builder: (c) => AlertDialog(
+                title: const Text('Chốt kỳ đã trả?'),
+                content: const Text(
+                    'Mọi nhân viên đã xác nhận nhận đủ lương. Kỳ chuyển sang "Đã trả" và không sửa được nữa.'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(c, false),
+                      child: const Text('Huỷ')),
+                  FilledButton(
+                      onPressed: () => Navigator.pop(c, true),
+                      child: const Text('Chốt kỳ'))
+                ]));
+    if (ok != true) return;
+    try {
+      await TinhLuongRepository.updatePeriodStatus(widget.period.id, 'paid');
+      ref.invalidate(payrollPeriodsProvider);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Đã chốt kỳ lương: Đã trả')));
+      Navigator.of(context).maybePop();
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ ${TinhLuongRepository.friendlyError(e)}')));
+    }
+  }
+
+  Widget _buildSliverBody(List<PayrollRecordModel> records, bool canPay) {
     if (records.isEmpty) {
       return SliverFillRemaining(
         child: Center(
@@ -401,7 +454,11 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
           (r.role ?? 'Nhân viên') != _selectedRole) {
         return false;
       }
-      if (_payFilter == 'Chưa trả' && r.paymentStatus == 'paid') return false;
+      // 3 trạng thái trả lương: pending (chưa trả) → pending_staff_confirm (đã trả, chờ NV xác nhận) → paid.
+      if (_payFilter == 'Chưa trả' && r.paymentStatus != 'pending')
+        return false;
+      if (_payFilter == 'Chờ xác nhận' &&
+          r.paymentStatus != 'pending_staff_confirm') return false;
       if (_payFilter == 'Đã trả' && r.paymentStatus != 'paid') return false;
       return true;
     }).toList();
@@ -466,12 +523,17 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
                     ),
                   ),
                 ),
+                if (_canClosePeriodPaid(records)) ...[
+                  const SizedBox(height: 10),
+                  _ClosePeriodPaidBanner(
+                      onClose: () => _closePeriodPaid(context))
+                ],
                 const SizedBox(height: 10),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      ...['Tất cả', 'Chưa trả', 'Đã trả'].map(
+                      ...['Tất cả', 'Chưa trả', 'Chờ xác nhận', 'Đã trả'].map(
                         (pf) => Padding(
                           padding: const EdgeInsets.only(right: 6),
                           child: FilterChip(
@@ -553,8 +615,9 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
                 final rec = filtered[idx];
                 return _StaffSalaryCard(
                   record: rec,
-                  onTap: () => _showPayslipSheet(context, rec, canApprove),
-                  onPay: (widget.period.isApproved && canApprove)
+                  onTap: () => _showPayslipSheet(context, rec, canPay),
+                      onPay: (widget.period.isApproved &&
+                              canPay && rec.paymentStatus == 'pending')
                       ? () => _markPaid(context, rec)
                       : null,
                 );
@@ -718,7 +781,8 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
       if (context.mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Lỗi khi duyệt kỳ lương: $e')),
+          SnackBar(content: Text(
+                '❌ Lỗi khi duyệt kỳ lương: ${TinhLuongRepository.friendlyError(e)}')),
         );
       }
     }
@@ -734,10 +798,17 @@ class _PeriodDetailScreenState extends ConsumerState<PeriodDetailScreen> {
       builder: (_) => _PaymentMethodSheet(staffName: record.staffName),
     );
     if (method == null) return;
+    try {
     await TinhLuongRepository.markRecordPaid(
       id: record.id,
       paymentMethod: method,
     );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ ${TinhLuongRepository.friendlyError(e)}')));
+      return;
+    }
 
     ref.invalidate(payrollRecordsProvider(widget.period.id));
     ref.invalidate(payrollPeriodsProvider);
@@ -1103,6 +1174,7 @@ class _StaffSalaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPaid = record.paymentStatus == 'paid';
+    final isAwaitingConfirm = record.paymentStatus == 'pending_staff_confirm';
     final rColor = _roleColor(record.role);
     final daysCong = record.totalHours / 8.0;
 
@@ -1221,6 +1293,19 @@ class _StaffSalaryCard extends StatelessWidget {
                             '✅ Đã trả',
                             style: TextStyle(
                               color: Color(0xFF16A34A),
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800)))
+                              else if (isAwaitingConfirm)
+                                Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                        color: Colors.amber
+                                            .withValues(alpha: 0.18),
+                                        borderRadius: BorderRadius.circular(6)),
+                                    child: const Text('⏳ Chờ NV xác nhận',
+                                        style: TextStyle(
+                                            color: Color(0xFFB45309),
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
                             ),
@@ -1503,7 +1588,7 @@ class _StaffPayslipSheetState extends State<_StaffPayslipSheet> {
               ),
             const SizedBox(height: 24),
 
-            if (r.paymentStatus != 'paid' &&
+            if (r.paymentStatus == 'pending' &&
                 widget.period.isApproved &&
                 widget.canApprove)
               SizedBox(
@@ -1538,10 +1623,20 @@ class _StaffPayslipSheetState extends State<_StaffPayslipSheet> {
                           );
                           if (method != null) {
                             setState(() => _loading = true);
+                                      try {
                             await TinhLuongRepository.markRecordPaid(
                               id: r.id,
                               paymentMethod: method,
                             );
+                                      } catch (e) {
+                                        if (!context.mounted) return;
+                                        setState(() => _loading = false);
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(SnackBar(
+                                                content: Text(
+                                                    '❌ ${TinhLuongRepository.friendlyError(e)}')));
+                                        return;
+                                      }
                             widget.onRefresh();
                             if (!context.mounted) return;
                             Navigator.pop(context);
@@ -1828,5 +1923,30 @@ class _PayOption extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Gợi ý Chủ quán chốt kỳ "Đã trả" khi mọi nhân viên đã xác nhận nhận lương.
+class _ClosePeriodPaidBanner extends StatelessWidget {
+  final VoidCallback onClose;
+  const _ClosePeriodPaidBanner({required this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            color: const Color(0xFFE8F5E9),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: const Color(0xFF16A34A).withValues(alpha: 0.4))),
+        child: Row(children: [
+          const Icon(Icons.task_alt_rounded, color: Color(0xFF16A34A)),
+          const SizedBox(width: 10),
+          const Expanded(
+              child: Text('Mọi nhân viên đã xác nhận nhận lương.',
+                  style: TextStyle(fontWeight: FontWeight.w700))),
+          FilledButton(onPressed: onClose, child: const Text('Chốt kỳ đã trả'))
+        ]));
   }
 }

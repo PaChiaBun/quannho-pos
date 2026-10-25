@@ -10,7 +10,7 @@ import 'store_auth_service.dart' show StoreAuthService;
 import 'staff_sync_service.dart';
 import '../utils/app_logger.dart';
 import 'pos_jwt_auth_service.dart';
-import '../../features/ai_assistant/services/feedback_service.dart';
+import '../../features/ai_assistant/services/legacy_feedback_cleanup.dart';
 
 // ── Session keys ──────────────────────────────────────────────────────────────
 const _kUserId = 'auth_user_id';
@@ -736,6 +736,10 @@ class UserAuthService {
     if (userId.isEmpty || storeId.isEmpty) {
       return (isActive: false, isOffline: false);
     }
+    // Chưa có POS JWT (mở app lúc mất mạng): đọc bằng anon luôn rỗng → không được coi là bị thu hồi.
+    if (PosJwtAuthService.waitingForRefresh) {
+      return (isActive: true, isOffline: true);
+    }
     try {
       if (await _hasActiveMembershipOnServer(
         userId: userId,
@@ -965,14 +969,17 @@ class UserAuthService {
     if (effectiveOnboardingJwt == null) {
       effectiveOnboardingJwt = await posJwtService.getStoredOnboardingJwtFor(userId);
     }
-    if (effectiveOnboardingJwt == null) {
+    // Chủ đã có quán không xin được Onboarding JWT (máy chủ trả 409): tạo quán
+    // thêm bằng phiên cửa hàng hiện tại, rồi xin phiên mới bằng mật khẩu.
+    final hasOnboarding = effectiveOnboardingJwt != null;
+
+    final db = _db;
+    if (!hasOnboarding && db == null && rpcOverride == null) {
       return CreateStoreResult.error(
         'Phiên đăng ký đã hết hạn. Vui lòng đăng nhập lại để tạo quán.',
         errorCode: 'ONBOARDING_TOKEN_REQUIRED',
       );
     }
-
-    final db = _db;
     if (db == null && rpcOverride == null) {
       return CreateStoreResult.error(
         'Không kết nối được server.',
@@ -980,7 +987,7 @@ class UserAuthService {
       );
     }
     try {
-      final applied = await posJwtService.applyAuthToSupabase(
+      final applied = !hasOnboarding || await posJwtService.applyAuthToSupabase(
         effectiveOnboardingJwt,
         allowOnboardingToken: true,
       );
@@ -1008,6 +1015,11 @@ class UserAuthService {
       }
       if (rpcRes['success'] != true) {
         final errCode = (rpcRes['error_code'] as String?)?.trim() ?? 'CREATE_STORE_FAILED';
+        if (!hasOnboarding && errCode == 'UNAUTHORIZED') {
+          return CreateStoreResult.error(
+              'Phiên đăng ký đã hết hạn. Vui lòng đăng nhập lại để tạo quán.',
+              errorCode: 'ONBOARDING_TOKEN_REQUIRED');
+        }
         return CreateStoreResult.error(
           rpcRes['message'] as String? ?? 'Không thể tạo quán.',
           errorCode: errCode,
@@ -1029,8 +1041,18 @@ class UserAuthService {
         isOwner: true,
       );
 
+      if (!hasOnboarding) {
+        // Quán đã tạo; cần mật khẩu để cấp phiên làm việc cho quán mới.
+        return CreateStoreResult.error(
+            'Đã tạo quán. Nhập mật khẩu để chuyển sang quán mới.',
+            errorCode: 'STORE_PASSWORD_REQUIRED',
+            storeId: storeId,
+            storeCode: storeCodeResult,
+            membership: membership);
+      }
+
       final exchangeRes = await posJwtService.exchangeStoreJwt(
-        onboardingJwt: effectiveOnboardingJwt,
+          onboardingJwt: effectiveOnboardingJwt!,
         storeId: storeId,
       );
 
@@ -1064,6 +1086,12 @@ class UserAuthService {
         errorCode: 'GATEWAY_UNAVAILABLE',
       );
     }
+  }
+
+  /// Cài mặc định (danh mục, module) cho quán vừa tạo khi phải đổi phiên bằng mật khẩu.
+  static Future<void> seedNewStoreDefaults(String storeId) async {
+    final db = _db;
+    if (db != null) await StoreAuthService.seedDefaults(db, storeId);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1401,7 +1429,9 @@ class UserAuthService {
     }
     if (outcome == PosRefreshOutcome.offline &&
         await posJwtService.getStoredRefreshToken() != null) {
-      // Mất mạng lúc mở app: giữ phiên, bộ hẹn giờ sẽ làm mới khi có mạng lại.
+      // Mất mạng lúc mở app: giữ phiên, thử làm mới mỗi 20 giây tới khi có mạng lại.
+      // Trong lúc chờ, REST chạy anon (không còn x-user-id) → không kiểm thành viên bằng server.
+      posJwtService.startOfflineRetry(expectedStoreId: session.storeId!);
       return true;
     }
 
@@ -1457,12 +1487,13 @@ class UserAuthService {
     // Clear POS PostgREST JWT and Supabase REST/Realtime auth
     try {
       final posJwtService = PosJwtAuthService();
+      PosJwtAuthService.waitingForRefresh = false; // nhả các yêu cầu đang chờ JWT
       PosJwtAuthService.stopAutoRefresh();
       await posJwtService.revokeRefreshToken();
       await posJwtService.clearOnboardingJwt();
       await posJwtService.clearPosJwt();
       await posJwtService.applyAuthToSupabase(null);
-      await FeedbackService().clearSessionToken();
+      await clearLegacyBoomFeedbackKeys();
     } catch (e) {
       debugPrint('[UserAuthService] Logout auth cleanup notice: $e');
     }
@@ -1624,7 +1655,7 @@ class UserAuthService {
       };
     } catch (e) {
       debugPrint('[UserAuthService] updateDisplayName error: $e');
-      return {'success': false, 'message': 'Chức năng đổi tên chưa sẵn sàng trên máy chủ'};
+      return {'success': false, 'message': 'Không kết nối được máy chủ. Vui lòng thử lại.'};
     }
   }
 

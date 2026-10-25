@@ -67,12 +67,12 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
               const SizedBox(height: 16),
               Text(
                 'Quyền truy cập bị từ chối',
-                style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: _kNavy),
+                style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.bold, color: _kNavy),
               ),
               const SizedBox(height: 8),
               Text(
                 'Chỉ Chủ quán hoặc Quản lý mới có quyền thiết lập voucher.',
-                style: GoogleFonts.outfit(color: _kMuted),
+                style: GoogleFonts.plusJakartaSans(color: _kMuted),
               ),
             ],
           ),
@@ -80,7 +80,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
       }
       return Scaffold(
         appBar: AppBar(
-          title: Text('Khuyến mãi & Voucher', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+          title: Text('Khuyến mãi & Voucher', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
           backgroundColor: _kNavy,
           foregroundColor: Colors.white,
         ),
@@ -92,12 +92,12 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
               const SizedBox(height: 16),
               Text(
                 'Quyền truy cập bị từ chối',
-                style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: _kNavy),
+                style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.bold, color: _kNavy),
               ),
               const SizedBox(height: 8),
               Text(
                 'Chỉ Chủ quán hoặc Quản lý mới có quyền thiết lập voucher.',
-                style: GoogleFonts.outfit(color: _kMuted),
+                style: GoogleFonts.plusJakartaSans(color: _kMuted),
               ),
             ],
           ),
@@ -110,7 +110,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
       appBar: widget.isTab
           ? null
           : AppBar(
-              title: Text('Khuyến mãi & Voucher', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+              title: Text('Khuyến mãi & Voucher', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
               backgroundColor: _kNavy,
               foregroundColor: Colors.white,
               elevation: 0,
@@ -130,7 +130,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
         onPressed: () => _showCouponForm(),
         backgroundColor: _kOrange,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: Text('Thêm mã mới', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: Colors.white)),
+        label: Text('Thêm mã mới', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: Colors.white)),
       ),
     );
   }
@@ -151,7 +151,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
           const SizedBox(height: 24),
           Text(
             'Chưa có mã giảm giá nào',
-            style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: _kNavy),
+            style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.bold, color: _kNavy),
           ),
           const SizedBox(height: 8),
           Padding(
@@ -159,7 +159,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
             child: Text(
               'Tạo các chương trình khuyến mãi theo % hoặc số tiền cố định để thu hút khách hàng.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(color: _kMuted, fontSize: 13),
+              style: GoogleFonts.plusJakartaSans(color: _kMuted, fontSize: 13),
             ),
           ),
         ],
@@ -219,7 +219,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                                 ),
                                 child: Text(
                                   item.code,
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontWeight: FontWeight.w800,
                                     fontSize: 14,
                                     color: item.isActive && !isExpired ? _kOrange : _kNavy,
@@ -238,7 +238,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                           if (item.description != null && item.description!.isNotEmpty) ...[
                             Text(
                               item.description!,
-                              style: GoogleFonts.outfit(fontSize: 13, color: _kNavy.withOpacity(0.75)),
+                              style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kNavy.withOpacity(0.75)),
                             ),
                             const SizedBox(height: 6),
                           ],
@@ -250,7 +250,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                                 item.discountType == 'percent'
                                     ? 'Giảm ${item.value.toInt()}%'
                                     : 'Giảm ${_fmtVnd(item.value)}',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,
                                   color: _kNavy,
@@ -259,7 +259,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                               if (item.maxDiscountAmount != null && item.maxDiscountAmount! > 0) ...[
                                 Text(
                                   ' (Tối đa ${_fmtVnd(item.maxDiscountAmount!)})',
-                                  style: GoogleFonts.outfit(fontSize: 12, color: _kMuted),
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted),
                                 ),
                               ],
                             ],
@@ -267,13 +267,13 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                           const SizedBox(height: 4),
                           Text(
                             'Đơn tối thiểu: ${_fmtVnd(item.minOrderAmount)}',
-                            style: GoogleFonts.outfit(fontSize: 12, color: _kMuted),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted),
                           ),
                           if (item.endDate != null) ...[
                             const SizedBox(height: 4),
                             Text(
                               'Hạn dùng: ${DateFormat('dd/MM/yyyy HH:mm').format(item.endDate!.toLocal())}',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: isExpired ? Colors.red : _kMuted,
@@ -328,7 +328,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Xóa mã giảm giá', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        title: Text('Xóa mã giảm giá', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
         content: Text('Bạn có chắc chắn muốn xóa mã "${item.code}" không?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
@@ -385,14 +385,14 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
               children: [
                 Text(
                   item == null ? 'Thêm mã giảm giá mới' : 'Chỉnh sửa mã',
-                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w900, color: _kNavy),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: _kNavy),
                 ),
                 const SizedBox(height: 20),
                 TextField(
                   controller: codeCtrl,
                   decoration: InputDecoration(
                     labelText: 'Mã Voucher (Viết liền không dấu)',
-                    labelStyle: GoogleFonts.outfit(color: _kMuted),
+                    labelStyle: GoogleFonts.plusJakartaSans(color: _kMuted),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   textCapitalization: TextCapitalization.characters,
@@ -402,12 +402,12 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                   controller: descCtrl,
                   decoration: InputDecoration(
                     labelText: 'Mô tả ngắn gọn',
-                    labelStyle: GoogleFonts.outfit(color: _kMuted),
+                    labelStyle: GoogleFonts.plusJakartaSans(color: _kMuted),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text('Loại giảm giá', style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: _kNavy)),
+                Text('Loại giảm giá', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: _kNavy)),
                 Row(
                   children: [
                     Expanded(
@@ -437,7 +437,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           labelText: discountType == 'percent' ? 'Mức giảm (%)' : 'Mức giảm (đ)',
-                          labelStyle: GoogleFonts.outfit(color: _kMuted),
+                          labelStyle: GoogleFonts.plusJakartaSans(color: _kMuted),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
@@ -449,7 +449,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           labelText: 'Đơn tối thiểu (đ)',
-                          labelStyle: GoogleFonts.outfit(color: _kMuted),
+                          labelStyle: GoogleFonts.plusJakartaSans(color: _kMuted),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
@@ -463,7 +463,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: 'Mức giảm tối đa (đ) - Để trống nếu không giới hạn',
-                      labelStyle: GoogleFonts.outfit(color: _kMuted),
+                      labelStyle: GoogleFonts.plusJakartaSans(color: _kMuted),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
@@ -476,7 +476,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                       endDate == null
                           ? 'Chưa chọn ngày hết hạn'
                           : 'Hạn dùng: ${DateFormat('dd/MM/yyyy HH:mm').format(endDate!.toLocal())}',
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: _kNavy),
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: _kNavy),
                     ),
                     TextButton.icon(
                       icon: const Icon(Icons.calendar_month_rounded, color: _kOrange),
@@ -557,7 +557,7 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: Text('Lưu Voucher', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+                    child: Text('Lưu Voucher', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
                 ),
               ],

@@ -342,7 +342,7 @@ class _QuickNoteManagerSheetState extends ConsumerState<QuickNoteManagerSheet> {
                   Expanded(
                     child: Text(
                       'Ghi chú nhanh',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
                         color: _navy,
@@ -364,7 +364,7 @@ class _QuickNoteManagerSheetState extends ConsumerState<QuickNoteManagerSheet> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Chip hiện khi gọi món. Món nào chưa được gán thì không hiện chip nào.',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     color: _navy.withValues(alpha: 0.6),
                   ),
@@ -394,7 +394,7 @@ class _QuickNoteManagerSheetState extends ConsumerState<QuickNoteManagerSheet> {
                             ),
                             child: Text(
                               'Chưa có ghi chú tùy chỉnh. Bấm "Thêm" để tạo, hoặc nạp bộ mẫu bên dưới rồi sửa lại.',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 color: _navy.withValues(alpha: 0.7),
                               ),
                             ),
@@ -413,14 +413,14 @@ class _QuickNoteManagerSheetState extends ConsumerState<QuickNoteManagerSheet> {
                               onTap: _busy ? null : () => _edit(name: n),
                               title: Text(
                                 n,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontWeight: FontWeight.w800,
                                   color: _navy,
                                 ),
                               ),
                               subtitle: Text(
                                 'Gán cho ${_notes[n]!.length}/$total món',
-                                style: GoogleFonts.outfit(fontSize: 12),
+                                style: GoogleFonts.plusJakartaSans(fontSize: 12),
                               ),
                               trailing: IconButton(
                                 icon: const Icon(Icons.delete_outline_rounded),
@@ -595,7 +595,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
                   children: [
                     Text(
                       'Đã chọn ${_ids.length} món',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w700,
                         color: _navy,
                       ),

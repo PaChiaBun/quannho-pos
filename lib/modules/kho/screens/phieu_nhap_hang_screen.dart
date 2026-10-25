@@ -10,6 +10,7 @@ import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/utils/app_logger.dart';
 import '../providers/kho_providers.dart';
+import 'receive_stock_sheet.dart' show buildPurchaseFundPicker;
 import '../repository/kho_repository.dart';
 import 'supplier_list_screen.dart';
 
@@ -40,6 +41,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
   String? _selectedSupplierId;
   String? _selectedSupplierName;
   final _noteCtrl = TextEditingController();
+  String _fundType = 'cash';
   bool _loading = false;
 
   // ── Tính năng mới ─────────────────────────────────────────────────────────
@@ -71,10 +73,10 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Phiếu nhập hàng',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17)),
             Text(_draftPoNumber,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     color: Colors.white.withValues(alpha: 0.6),
                     fontWeight: FontWeight.w500, fontSize: 11)),
           ],
@@ -90,7 +92,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
               child: TextButton(
                 onPressed: _loading ? null : _submit,
                 child: Text('XÁC NHẬN',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
                         fontSize: 14)),
@@ -108,7 +110,13 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
                 suppliersAsync.when(
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
-                  data: (suppliers) => _buildSupplierPicker(suppliers),
+                  data: (suppliers) => _buildSupplierPicker(suppliers)),
+            const SizedBox(height: 10),
+            // ── Quỹ trả tiền ─────────────────────────────────────────
+            buildPurchaseFundPicker(
+                value: _fundType,
+                enabled: !_loading,
+                onChanged: (v) => setState(() => _fundType = v),
                 ),
                 const SizedBox(height: 12),
 
@@ -195,7 +203,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
               Expanded(
                 child: Text(
                   _selectedSupplierName ?? 'Nhà cung cấp (tuỳ chọn)',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: _selectedSupplierId != null
                         ? FontWeight.w700 : FontWeight.w600,
@@ -212,7 +220,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
                 ),
                 child: Text(
                   'Quản lý →',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 11.5, fontWeight: FontWeight.w700,
                     color: _kViolet,
                   ),
@@ -224,7 +232,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
             const SizedBox(height: 8),
             Text(
               'Chưa có NCC — vào "Quản lý" để thêm',
-              style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF9CA3AF)),
+              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF9CA3AF)),
             ),
           ],
           if (suppliers.isNotEmpty) ...[
@@ -262,7 +270,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
       Icon(icon, size: 16, color: _kViolet),
       const SizedBox(width: 6),
       Text(title,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
               fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy)),
     ],
   );
@@ -284,7 +292,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
           const Icon(Icons.add_circle_rounded, color: _kViolet, size: 20),
           const SizedBox(width: 8),
           Text('Thêm sản phẩm',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontSize: 14, fontWeight: FontWeight.w700, color: _kViolet)),
         ],
       ),
@@ -295,10 +303,10 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
   Widget _buildNoteField() => TextField(
     controller: _noteCtrl,
     maxLines: 2,
-    style: GoogleFonts.outfit(fontSize: 14, color: _kInk),
+    style: GoogleFonts.plusJakartaSans(fontSize: 14, color: _kInk),
     decoration: InputDecoration(
       hintText: 'Ghi chú cho phiếu nhập...',
-      hintStyle: GoogleFonts.outfit(color: _kMuted, fontSize: 14),
+      hintStyle: GoogleFonts.plusJakartaSans(color: _kMuted, fontSize: 14),
       filled: true, fillColor: _kCard,
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -329,10 +337,10 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Tổng tiền', style: GoogleFonts.outfit(
+            Text('Tổng tiền', style: GoogleFonts.plusJakartaSans(
                 fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
             Text(fmtMoney(_total),
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 22, fontWeight: FontWeight.w900, color: _kNavy)),
           ],
         ),
@@ -359,7 +367,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
                         const Icon(Icons.check_circle_rounded, size: 20),
                         const SizedBox(width: 8),
                         Text('Nhập ${_lines.length} sản phẩm',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 15, fontWeight: FontWeight.w800)),
                       ],
                     ),
@@ -430,12 +438,12 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Ngày nhập hàng',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600)),
               Text(
                 isToday ? 'Hôm nay — ${fmt.format(_importDate)}'
                          : fmt.format(_importDate),
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 14, fontWeight: FontWeight.w700,
                     color: isToday ? _kInk : _kViolet),
               ),
@@ -497,7 +505,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
                         color: Colors.white, size: 13),
                     const SizedBox(width: 4),
                     Text('Đổi ảnh',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 11, color: Colors.white,
                             fontWeight: FontWeight.w600)),
                   ]),
@@ -550,7 +558,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
               ),
               const SizedBox(height: 6),
               Text(label,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 12, fontWeight: FontWeight.w600,
                       color: _kMuted)),
             ],
@@ -592,6 +600,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
         note:              _noteCtrl.text.isEmpty ? null : _noteCtrl.text,
         importDate:        _importDate,
         invoiceImagePath:  _invoiceImagePath,
+          fundType: _fundType
       );
 
       HapticFeedback.heavyImpact();
@@ -604,7 +613,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
             const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 8),
             Text('Nhập hàng thành công — ${_lines.length} sản phẩm',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
           ]),
           backgroundColor: _kGreen,
           behavior: SnackBarBehavior.floating,
@@ -618,7 +627,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
             'Tạo phiếu nhập thất bại. Hãy chụp lại báo chủ app.',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w500),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500),
           ),
           backgroundColor: _kRed,
           behavior: SnackBarBehavior.floating,
@@ -734,11 +743,11 @@ class _PoLineCardState extends State<_PoLineCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(line.productName,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 14, fontWeight: FontWeight.w800,
                           color: KhoTheme.ink)),
                   Text(line.unit,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 11, color: KhoTheme.muted)),
                 ],
               )),
@@ -768,7 +777,7 @@ class _PoLineCardState extends State<_PoLineCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Số lượng',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 11, fontWeight: FontWeight.w600,
                             color: KhoTheme.muted)),
                     const SizedBox(height: 6),
@@ -801,7 +810,7 @@ class _PoLineCardState extends State<_PoLineCard> {
                           controller: line.qtyCtrl,
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 18, fontWeight: FontWeight.w700,
                               color: KhoTheme.ink),
                           onChanged: (_) {
@@ -843,7 +852,7 @@ class _PoLineCardState extends State<_PoLineCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Đơn giá nhập',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 11, fontWeight: FontWeight.w600,
                             color: KhoTheme.muted)),
                     const SizedBox(height: 6),
@@ -851,7 +860,7 @@ class _PoLineCardState extends State<_PoLineCard> {
                       controller: line.costCtrl,
                       keyboardType: TextInputType.number,
                       inputFormatters: [_ThousandsFormatter()],
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 15, fontWeight: FontWeight.w700,
                           color: KhoTheme.ink),
                       onChanged: (_) {
@@ -868,7 +877,7 @@ class _PoLineCardState extends State<_PoLineCard> {
                     if (line.originalCostPrice > 0) ...[
                       const SizedBox(height: 3),
                       Text('↑ Lần trước: ${fmtMoney(line.originalCostPrice)}',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 10, color: KhoTheme.muted,
                               fontStyle: FontStyle.italic)),
                     ],
@@ -894,11 +903,11 @@ class _PoLineCardState extends State<_PoLineCard> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('= Thành tiền',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 12, color: KhoTheme.green,
                           fontWeight: FontWeight.w600)),
                   Text(fmtMoney(subtotal),
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 15, fontWeight: FontWeight.w900,
                           color: KhoTheme.green)),
                 ],
@@ -962,7 +971,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
           child: Row(children: [
             Text('Chọn sản phẩm',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 18, fontWeight: FontWeight.w800, color: _kInk)),
             const Spacer(),
             IconButton(
@@ -976,10 +985,10 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
           child: TextField(
             autofocus: true,
             onChanged: (v) => setState(() => _query = v),
-            style: GoogleFonts.outfit(fontSize: 14, color: _kInk),
+            style: GoogleFonts.plusJakartaSans(fontSize: 14, color: _kInk),
             decoration: InputDecoration(
               hintText: 'Tìm sản phẩm...',
-              hintStyle: GoogleFonts.outfit(color: _kMuted, fontSize: 14),
+              hintStyle: GoogleFonts.plusJakartaSans(color: _kMuted, fontSize: 14),
               prefixIcon: const Icon(Icons.search_rounded, color: _kMuted, size: 20),
               filled: true, fillColor: _kBg,
               contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -999,7 +1008,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
         Expanded(
           child: filtered.isEmpty
               ? Center(child: Text('Không tìm thấy sản phẩm',
-                  style: GoogleFonts.outfit(color: _kMuted)))
+                  style: GoogleFonts.plusJakartaSans(color: _kMuted)))
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   itemCount: filtered.length,
@@ -1021,7 +1030,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                             color: info.color, size: 20),
                       ),
                       title: Text(p.name,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 14, fontWeight: FontWeight.w700,
                               color: _kInk)),
                       subtitle: Row(children: [
@@ -1032,13 +1041,13 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(info.label,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10, fontWeight: FontWeight.w700,
                                   color: info.color)),
                         ),
                         const SizedBox(width: 6),
                         Text('Tồn: ${p.stockQty.toStringAsFixed(0)} ${p.unit}',
-                            style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted)),
                       ]),
                       trailing: const Icon(Icons.add_circle_rounded,
                           color: _kViolet, size: 22),
@@ -1076,7 +1085,7 @@ class _SupplierChip extends StatelessWidget {
         ),
       ),
       child: Text(label,
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.plusJakartaSans(
           fontSize: 12.5, fontWeight: FontWeight.w600,
           color: selected ? Colors.white : _kMuted,
         ),

@@ -14,6 +14,7 @@ import '../core/providers/session_provider.dart';
 import '../core/repositories/dashboard_repository.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/user_auth_service.dart';
+import '../core/services/pos_jwt_auth_service.dart';
 import '../core/widgets/create_store_sheet.dart';
 import '../core/widgets/join_store_sheet.dart';
 import '../core/utils/responsive.dart';
@@ -21,6 +22,10 @@ import '../modules/kho/providers/kho_providers.dart';
 import '../shared/widgets/module_tile.dart';
 import 'module_picker_screen.dart';
 import 'chain_module_offer.dart';
+import 'store_plan_notice.dart';
+import 'billing_screen.dart';
+import '../core/utils/billing_platform.dart';
+import '../core/repositories/store_plan_repository.dart';
 import 'chain_report_screen.dart';
 import '../modules/bill_printer/screens/bill_printer_hub.dart';
 import '../modules/ops/screens/ops_screen.dart';
@@ -112,8 +117,9 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   bool _isEditMode = false;
+  DateTime? _lastModulesRefresh;
 
   // Local order của modules (để drag & drop)
   List<String> _moduleOrder = [];
@@ -132,6 +138,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    PosJwtAuthService.jwtRecovered.addListener(_onJwtRecovered);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _silentRoleRefresh();
       _subscribeStoreRolesRealtime();
@@ -144,8 +152,47 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    PosJwtAuthService.jwtRecovered.removeListener(_onJwtRecovered);
     _rolesChannel?.unsubscribe();
     super.dispose();
+  }
+
+  /// Mở app lúc mất mạng rồi mới có JWT: dữ liệu đọc trước đó (bằng anon) rỗng → nạp lại.
+  void _onJwtRecovered() {
+    if (!mounted || _isEditMode) return;
+    _reloadModulesAndPerms();
+  }
+
+  /// Mở lại app / quay lại tab: nạp lại module bật ở quán + quyền vai trò,
+  /// để máy nhân viên thấy module chủ quán vừa bật mà không phải đăng nhập lại.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !mounted || _isEditMode) return;
+    final last = _lastModulesRefresh;
+    if (last != null &&
+        DateTime.now().difference(last) < const Duration(seconds: 5))
+      return;
+    _reloadModulesAndPerms();
+  }
+
+  Future<void> _reloadModulesAndPerms() async {
+    _lastModulesRefresh = DateTime.now();
+    ref.read(permsVersionProvider.notifier).bump();
+    ref.invalidate(allModulesProvider);
+    // Gói / khoá quán: quản trị có thể vừa gia hạn, đổi gói hoặc khoá / mở khoá
+    final storeId = ref.read(sessionProvider)?.storeId;
+    if (storeId != null && storeId.isNotEmpty) ref.invalidate(storePlanStatusProvider(storeId));
+    await _silentRoleRefresh();
+  }
+
+  /// Kéo xuống để làm tươi Trang chủ. Đang sửa/sắp xếp module thì bỏ qua để không mất thao tác.
+  Future<void> _onPullRefresh() async {
+    if (_isEditMode) return;
+    await _reloadModulesAndPerms();
+    try {
+      await ref.read(allModulesProvider.future);
+    } catch (_) {}
   }
 
   /// Subscribe Postgres Realtime lên store_roles — nhận event khi chủ đổi quyền
@@ -232,6 +279,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           )
         : null;
 
+    // Gói / khoá quán (lỗi mạng → null → chạy bình thường, không bao giờ tự khoá vì lỗi)
+    final planStatus = (session != null && session.hasStore)
+        ? ref.watch(storePlanStatusProvider(session.storeId!)).value
+        : null;
+    if (planStatus != null && planStatus.locked) {
+      return Scaffold(
+        backgroundColor: _kBg,
+        body: StoreLockedView(
+          storeName: session?.storeName ?? 'Quán',
+          // câu liên hệ quản trị tự gõ chỉ hiện ở web / máy tính — iOS / Android dùng câu cố định (quy định cửa hàng)
+          contact: billingAllowedHere() ? planStatus.contact : null,
+          onRetry: () => ref.invalidate(storePlanStatusProvider(session!.storeId!)),
+          onLogout: () async {
+            await ref.read(sessionProvider.notifier).clear();
+            if (context.mounted) {
+              Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
+            }
+          },
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: _kBg,
       body: modulesAsync.when(
@@ -315,69 +384,105 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             }
           }
 
-          final mainContent = CustomScrollView(
-            physics: const ClampingScrollPhysics(),
-            slivers: [
-              // ── HEADER ─────────────────────────────────────────────
-              SliverToBoxAdapter(child: RepaintBoundary(child: _buildHeader())),
+          final mainContent = RefreshIndicator(
+            onRefresh: _onPullRefresh,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: ClampingScrollPhysics(),
+              ),
+              slivers: [
+                // ── HEADER ─────────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: RepaintBoundary(child: _buildHeader()),
+                ),
 
-              // ── BODY ───────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ── Chủ quán nhiều cửa hàng: tự bật module Báo cáo chuỗi một lần ──
-                      if (session != null && session.isOwner && session.hasStore)
-                        ChainModuleOffer(
-                          storeId: session.storeId!,
-                          onEnabled: () => ref.invalidate(allModulesProvider),
-                        ),
+                // ── BODY ───────────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ── Chủ quán nhiều cửa hàng: tự bật module Báo cáo chuỗi một lần ──
+                        if (session != null &&
+                            session.isOwner &&
+                            session.hasStore)
+                          ChainModuleOffer(
+                            storeId: session.storeId!,
+                            onEnabled: () => ref.invalidate(allModulesProvider),
+                          ),
 
-                      // ── Section title ──────────────────────────────
-                      _buildSectionHeader(activeModules),
-                      const SizedBox(height: 14),
+                        // ── Nhắc hết / sắp hết dùng thử, gói Pro (chỉ Chủ quán) ──
+                        if (session != null &&
+                            session.hasStore &&
+                            planStatus != null)
+                          StorePlanBanner(
+                            key: ValueKey('plan_${session.storeId}'),
+                            storeId: session.storeId!,
+                            status: planStatus,
+                            onSelfExtend: () async {
+                              final storeId = session.storeId!;
+                              final err = await const StorePlanRepository().selfExtend(storeId);
+                              if (err == null || err == 'NOT_DUE') ref.invalidate(storePlanStatusProvider(storeId));
+                              return err;
+                            },
+                            // chỉ web / bản máy tính hiện nút (StorePlanBanner tự kiểm billingAllowedHere())
+                            onOpenBilling: () async {
+                              final storeId = session.storeId!;
+                              await Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => BillingScreen(storeId: storeId),
+                              ));
+                              ref.invalidate(storePlanStatusProvider(storeId));
+                            },
+                          ),
 
-                      // ── Lego Module Grid ───────────────────────────
-                      _buildLegoGrid(activeModules),
+                        // ── Section title ──────────────────────────────
+                        _buildSectionHeader(activeModules),
+                        const SizedBox(height: 14),
 
-                      // ── Edit mode bottom hint ──────────────────────
-                      if (_isEditMode) ...[
-                        const SizedBox(height: 12),
-                        _buildEditModeHint(),
+                        // ── Lego Module Grid ───────────────────────────
+                        _buildLegoGrid(activeModules),
+
+                        // ── Edit mode bottom hint ──────────────────────
+                        if (_isEditMode) ...[
+                          const SizedBox(height: 12),
+                          _buildEditModeHint(),
+                        ],
+
+                        // ── Stat cards ─────────────────────────────────
+                        if (!_isEditMode) ...[
+                          const SizedBox(height: 24),
+                          _buildTodayStats(todayStats, lowStockAsync),
+                          const SizedBox(height: 16),
+
+                          // ── Low stock warnings ──────────────────────
+                          lowStockAsync.when(
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, __) => const SizedBox.shrink(),
+                            data: (lowStocks) => lowStocks.isEmpty
+                                ? const SizedBox.shrink()
+                                : _buildLowStockWarning(
+                                    lowStocks
+                                        .map((p) => p.name)
+                                        .take(3)
+                                        .toList(),
+                                  ),
+                          ),
+
+                          const SizedBox(height: 20),
+                          const Center(
+                            child: AppVersionLabel(color: Colors.black38),
+                          ),
+                          const SizedBox(height: 60),
+                        ] else ...[
+                          const SizedBox(height: 80),
+                        ],
                       ],
-
-                      // ── Stat cards ─────────────────────────────────
-                      if (!_isEditMode) ...[
-                        const SizedBox(height: 24),
-                        _buildTodayStats(todayStats, lowStockAsync),
-                        const SizedBox(height: 16),
-
-                        // ── Low stock warnings ──────────────────────
-                        lowStockAsync.when(
-                          loading: () => const SizedBox.shrink(),
-                          error: (_, __) => const SizedBox.shrink(),
-                          data: (lowStocks) => lowStocks.isEmpty
-                              ? const SizedBox.shrink()
-                              : _buildLowStockWarning(
-                                  lowStocks.map((p) => p.name).take(3).toList(),
-                                ),
-                        ),
-
-                        const SizedBox(height: 20),
-                        const Center(
-                          child: AppVersionLabel(color: Colors.black38),
-                        ),
-                        const SizedBox(height: 60),
-                      ] else ...[
-                        const SizedBox(height: 80),
-                      ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
 
           return LayoutBuilder(
@@ -2626,10 +2731,14 @@ class _CreateStoreCtaState extends ConsumerState<_CreateStoreCta> {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
+                          (!kIsWeb &&
+                                  defaultTargetPlatform == TargetPlatform.iOS)
                               ? 'Kết nối quán bằng mã do quản lý cung cấp hoặc kiểm tra lại'
                               : 'Tạo quán mới hoặc kiểm tra xem chủ đã thêm bạn chưa',
-                          style: const TextStyle(color: Colors.white60, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -2678,7 +2787,8 @@ class _CreateStoreCtaState extends ConsumerState<_CreateStoreCta> {
                   const SizedBox(width: 10),
                   // Nút Tạo quán (trên iOS native chuyển thành Kết nối quán)
                   Expanded(
-                    child: (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
+                    child:
+                        (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
                         ? ElevatedButton.icon(
                             onPressed: () => showJoinStoreSheet(context, ref),
                             icon: const Icon(Icons.link_rounded, size: 16),
@@ -2832,7 +2942,7 @@ class _DashboardRightPanel extends ConsumerWidget {
                         Expanded(
                           child: Text(
                             p.name,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               color: _kInk,
                             ),
@@ -2851,7 +2961,7 @@ class _DashboardRightPanel extends ConsumerWidget {
                           ),
                           child: Text(
                             'Còn ${p.stockQty.toStringAsFixed(p.stockQty % 1 == 0 ? 0 : 1)} ${p.unit}',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: _kRed,
@@ -2905,7 +3015,7 @@ class _DRightCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 title,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: _kNavy,
@@ -2944,12 +3054,12 @@ class _DStatRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.outfit(fontSize: 13, color: _kInk),
+            style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kInk),
           ),
         ),
         Text(
           value,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: color,

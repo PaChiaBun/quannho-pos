@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/paged_query.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FINANCE REPOSITORY — 100% Supabase
@@ -82,64 +83,55 @@ class FinanceRepository {
     return id;
   }
 
-  Future<void> deleteRecord(String id) async {
-    // Chỉ xóa giao dịch thủ công
-    await _sb
-        .from('finance_records')
-        .delete()
-        .eq('id', id)
-        .eq('is_auto', false);
-    AppLogger.info('checkout', 'Xoa phieu thu/chi (ID: $id) thanh cong.');
+  /// Xoá phiếu thu/chi nhập tay qua RPC `delete_manual_finance_record_v1`: chỉ Chủ quán/Quản lý,
+  /// bắt buộc [reason]; máy chủ lưu nguyên dòng + người xoá vào `finance_record_deletions`.
+  /// Trả về true nếu phiếu đã bị xoá từ lần bấm trước (gọi lại an toàn).
+  Future<bool> deleteRecord(String id, {required String reason}) async {
+    final storeId = await _storeId();
+    if (storeId == null)
+      throw const FinanceDeleteException('NO_STORE', 'Chưa chọn quán');
+    final raw = await _sb.rpc('delete_manual_finance_record_v1', params: {
+      'p_store_id': storeId,
+      'p_record_id': id,
+      'p_reason': reason.trim()
+    });
+    if (raw is! Map)
+      throw const FinanceDeleteException(
+          'BAD_RESPONSE', 'Phản hồi xoá giao dịch không hợp lệ');
+    final res = Map<String, dynamic>.from(raw);
+    if (res['success'] != true) {
+      throw FinanceDeleteException(res['error_code'] as String? ?? 'UNKNOWN',
+          res['message'] as String? ?? 'Xoá giao dịch thất bại');
+    }
+    final data = res['data'] is Map
+        ? Map<String, dynamic>.from(res['data'] as Map)
+        : const {};
+    return data['already_deleted'] == true;
   }
 
   // ── Records — Queries ─────────────────────────────────────────────────────
 
-  Stream<T> _robustStream<T>(
-    String table,
-    String columnFilter,
-    String valueFilter,
-    T Function(List<Map<String, dynamic>>) mapper,
-  ) async* {
-    Future<T> fetch() async {
-      final rows = await _sb.from(table).select().eq(columnFilter, valueFilter);
-      return mapper(rows);
+  /// Tải ĐỦ phiếu trong khoảng [from, to) (null = không giới hạn), theo trang — máy chủ
+  /// chỉ trả tối đa 1.000 dòng mỗi lần nên không phân trang sẽ thiếu (sai số dư sổ quỹ).
+  Future<List<FinanceRecordModel>> fetchAllRecords(
+      {DateTime? from, DateTime? to}) async {
+    final storeId = await _storeId();
+    if (storeId == null) throw Exception('Chưa chọn quán');
+    const page = 1000;
+    final out = <FinanceRecordModel>[];
+    for (var offset = 0;; offset += page) {
+      var q = _sb.from('finance_records').select().eq('store_id', storeId);
+      if (from != null)
+        q = q.gte('recorded_at', from.toUtc().toIso8601String());
+      if (to != null) q = q.lt('recorded_at', to.toUtc().toIso8601String());
+      final rows = await q
+          .order('recorded_at', ascending: true)
+          .order('id', ascending: true)
+          .range(offset, offset + page - 1);
+      out.addAll(rows.map(FinanceRecordModel.fromMap));
+      if (rows.length < page) break;
     }
-
-    // Initial fetch
-    try {
-      yield await fetch();
-    } catch (e) {
-      AppLogger.error('finance', '[RobustStream] Initial fetch err on $table: $e');
-    }
-
-    // Realtime connection with fallback to polling on async errors (e.g. RealtimeSubscribeException)
-    while (true) {
-      try {
-        final stream = _sb
-            .from(table)
-            .stream(primaryKey: ['id'])
-            .eq(columnFilter, valueFilter);
-        await for (final rows in stream) {
-          yield mapper(rows);
-        }
-      } catch (e) {
-        AppLogger.warning(
-          'finance',
-          '[RobustStream] Realtime err on $table: $e. Falling back to poll 10s.',
-        );
-
-        // Polling âm thầm 10 giây (chia làm 2 lần 5s) trước khi thử kết nối lại Realtime
-        await Future.delayed(const Duration(seconds: 5));
-        try {
-          yield await fetch();
-        } catch (_) {}
-
-        await Future.delayed(const Duration(seconds: 5));
-        try {
-          yield await fetch();
-        } catch (_) {}
-      }
-    }
+    return out;
   }
 
   Stream<List<FinanceRecordModel>> watchRecords({
@@ -154,33 +146,17 @@ class FinanceRepository {
       return;
     }
 
-    // ⚠️ Supabase stream() không hỗ trợ .gte()/.lt() trực tiếp —
-    // Dùng polling + emit ngay lần đầu để giảm bandwidth.
-    // Tải 1 lần đầu
-    yield await _fetchRecords(
+    // Realtime chỉ là tín hiệu; dữ liệu luôn lọc ngày/quỹ ở máy chủ và tải đủ theo trang.
+    yield* watchByRefetch(
+        table: 'finance_records',
+        storeId: storeId,
+        fetch: () => _fetchRecords(
       storeId: storeId,
       from: from,
       to: to,
       type: type,
       fundType: fundType,
-    );
-
-    // Sau đó listen realtime (không filter date ở DB được) — chỉ emit khi có change
-    // Dùng stream bắt signal, rồi refetch server-side để đúng range
-    await for (final _ in _robustStream(
-      'finance_records',
-      'store_id',
-      storeId,
-      (rows) => rows,
-    )) {
-      yield await _fetchRecords(
-        storeId: storeId,
-        from: from,
-        to: to,
-        type: type,
-        fundType: fundType,
-      );
-    }
+    ));
   }
 
   /// Fetch records server-side với filter ngày đúng range — tránh tải toàn bộ về client
@@ -191,6 +167,7 @@ class FinanceRepository {
     String? type,
     String? fundType,
   }) async {
+    final rows = await fetchAllPages((offset, end) {
     var query = _sb
         .from('finance_records')
         .select()
@@ -198,8 +175,14 @@ class FinanceRepository {
         .gte('recorded_at', from.toUtc().toIso8601String())
         .lt('recorded_at', to.toUtc().toIso8601String());
     if (type != null) query = query.eq('type', type);
-    if (fundType != null) query = query.eq('fund_type', fundType);
-    final rows = await query.order('recorded_at', ascending: false);
+      query = fundType != null
+          ? query.eq('fund_type', fundType)
+          : query.or(kCashBookAllFundsFilter);
+      return query
+          .order('recorded_at', ascending: false)
+          .order('id', ascending: false)
+          .range(offset, end);
+    });
     return rows.map(FinanceRecordModel.fromMap).toList();
   }
 
@@ -209,15 +192,19 @@ class FinanceRepository {
     final storeId = await _storeId();
     if (storeId == null) return FinanceStats.empty;
 
-    var query = _sb
+    final rows = await fetchAllPages((offset, end) {
+      var query = _sb
         .from('finance_records')
         // ‼️ FIX Bug #34: chỉ chọn cột cần thiết — tính thẳng từ raw rows, không parse qua model
-        .select('type, amount, category_id')
+        .select('id, type, amount, category_id')
         .eq('store_id', storeId)
         .gte('recorded_at', range.from.toUtc().toIso8601String())
         .lt('recorded_at', range.to.toUtc().toIso8601String());
-    if (fundType != null) query = query.eq('fund_type', fundType);
-    final rows = await query;
+      query = fundType != null
+          ? query.eq('fund_type', fundType)
+          : query.or(kCashBookAllFundsFilter);
+      return query.order('id').range(offset, end);
+    });
 
     double income = 0, expense = 0;
     for (final r in rows) {
@@ -240,15 +227,19 @@ class FinanceRepository {
     // So sánh kỳ trước
     final periodLen = range.to.difference(range.from);
     final prevFrom = range.from.subtract(periodLen);
+    final prevRows = await fetchAllPages((offset, end) {
     var prevQuery = _sb
         .from('finance_records')
         // ‼️ FIX Bug #34: chỉ cần type + amount cho so sánh kỳ trước
-        .select('type, amount')
+        .select('id, type, amount')
         .eq('store_id', storeId)
         .gte('recorded_at', prevFrom.toUtc().toIso8601String())
         .lt('recorded_at', range.from.toUtc().toIso8601String());
-    if (fundType != null) prevQuery = prevQuery.eq('fund_type', fundType);
-    final prevRows = await prevQuery;
+      prevQuery = fundType != null
+          ? prevQuery.eq('fund_type', fundType)
+          : prevQuery.or(kCashBookAllFundsFilter);
+      return prevQuery.order('id').range(offset, end);
+    });
     final prevIncome = prevRows
         .where((r) => r['type'] == 'income')
         .fold<double>(
@@ -270,6 +261,19 @@ class FinanceRepository {
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA CLASSES
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// Bộ lọc quỹ "Tất cả" của sổ Thu Chi: mọi phiếu TRỪ quỹ ví khách (`wallet`).
+/// Bán bằng ví không phải tiền vào quán — tiền đã ghi thu lúc nạp ví; cộng cả hai là tính doanh thu
+/// hai lần (#8). Giữ phiếu chưa có quỹ (NULL) như trước. Khớp `ledgerFunds('all')` của sổ quỹ CSV.
+const kCashBookAllFundsFilter = 'fund_type.is.null,fund_type.neq.wallet';
+
+class FinanceDeleteException implements Exception {
+  final String code;
+  final String message;
+  const FinanceDeleteException(this.code, this.message);
+  @override
+  String toString() => message;
+}
 
 class DateRange {
   final DateTime from;

@@ -1,7 +1,7 @@
 # services/pos_gateway_server.py
 # ─────────────────────────────────────────────────────────────────────────────
 # POS JWT WSGI Gateway Entry Point
-# Mounts /api/auth/pos-jwt, /api/auth/onboarding-jwt, /api/auth/exchange-store-jwt,
+# Mounts /api/auth/pos-jwt, /api/auth/onboarding-jwt, /api/auth/admin-jwt, /api/auth/exchange-store-jwt,
 # /api/auth/refresh, /api/auth/logout,
 # /api/auth/health, and handles CORS & IP resolution.
 # ─────────────────────────────────────────────────────────────────────────────
@@ -21,6 +21,7 @@ from services.pos_jwt_auth_service import (
     handle_refresh_request,
     handle_logout_request,
     handle_qr_ticket_request,
+    handle_admin_jwt_request,
 )
 from services.pos_jwt_route_adapter import _resolve_client_ip
 
@@ -330,6 +331,15 @@ def wsgi_app(environ, start_response):
         start_response(_status_line(res.get("status", 200)), headers)
         return [json.dumps(res).encode("utf-8")]
 
+    if path == "/api/auth/admin-jwt":
+        if method != "POST":
+            start_response("405 Method Not Allowed", headers)
+            return [json.dumps({"success": False, "status": 405, "error": "METHOD_NOT_ALLOWED", "message": "Phương thức không được hỗ trợ"}).encode("utf-8")]
+
+        res = handle_admin_jwt_request(raw_body, client_ip=client_ip)
+        start_response(_status_line(res.get("status", 200)), headers)
+        return [json.dumps(res).encode("utf-8")]
+
     if path == "/api/auth/onboarding-jwt":
         if method != "POST":
             start_response("405 Method Not Allowed", headers)
@@ -454,6 +464,8 @@ class StandaloneGatewayHandler(BaseHTTPRequestHandler):
 
         if self.path == "/api/auth/pos-jwt":
             res = handle_pos_jwt_auth_request(raw_body, client_ip=client_ip)
+        elif self.path == "/api/auth/admin-jwt":
+            res = handle_admin_jwt_request(raw_body, client_ip=client_ip)
         elif self.path == "/api/auth/onboarding-jwt":
             res = handle_onboarding_jwt_request(raw_body, client_ip=client_ip)
         elif self.path == "/api/auth/exchange-store-jwt":

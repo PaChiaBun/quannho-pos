@@ -9,7 +9,7 @@ class DatasetDistribution {
   static const double posAnalysisShare = 0.20;
   static const double privacyPermissionsShare = 0.10;
   static const double missingDataShare = 0.10;
-  static const double bumPersonaShare = 0.05;
+  static const double boomPersonaShare = 0.05;
 
   static const int targetDatasetSizeV1 = 5000;
   static const int goldSetSize = 600;
@@ -27,7 +27,7 @@ class QloraConfig {
 
 class ShadowTestFeatureFlag {
   // Bật Feature Flag duy nhất cho Quán Kay và Owner tài khoản chỉ định
-  static bool isBumEnabledForStore({
+  static bool isBoomEnabledForStore({
     required String storeId,
     required String userRole,
     required bool isOwner,

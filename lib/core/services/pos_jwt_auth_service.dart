@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'supabase_service.dart';
 
 const String _kPosJwtStorageKey = 'pos_supabase_jwt';
@@ -156,6 +157,64 @@ class PosJwtAuthService {
   // ── Refresh token (access 12h + refresh 30 ngày xoay vòng) ─────────────────
   static Completer<PosRefreshOutcome>? _refreshInFlight;
   static Timer? _refreshTimer;
+  static Timer? _offlineRetryTimer;
+  static void Function()? _onSessionRevoked;
+
+  /// true khi mở app lúc mất mạng: còn refresh token nhưng chưa có access token hợp lệ.
+  /// Lúc này REST chạy bằng anon key và app KHÔNG gửi x-user-id nữa (kế hoạch JWT Pha 2) →
+  /// đọc dữ liệu trả rỗng. Các kiểm tra "còn là thành viên quán" phải coi như đang offline.
+  static bool get waitingForRefresh => _waiting;
+  static set waitingForRefresh(bool value) {
+    if (value == _waiting) return;
+    _waiting = value;
+    if (value) {
+      _waitDone = Completer<void>();
+    } else {
+      _waitDone?.complete();
+      _waitDone = null;
+    }
+  }
+
+  static bool _waiting = false;
+  static Completer<void>? _waitDone;
+
+  /// JWT đang gắn cho Supabase REST (null = anon key). Chốt chặn [JwtGateHttpClient] dùng để
+  /// thay header của yêu cầu đã tạo lúc còn anon.
+  static String? currentAccessToken;
+
+  /// Chờ tới khi hết [waitingForRefresh] (có JWT, hoặc đăng xuất). false nếu quá [maxWait].
+  static Future<bool> waitForJwt(Duration maxWait) async {
+    final done = _waitDone;
+    if (!_waiting || done == null) return true;
+    try {
+      await done.future.timeout(maxWait);
+      return true;
+    } on TimeoutException {
+      return false;
+    }
+  }
+
+  /// Tăng 1 mỗi khi thoát trạng thái [waitingForRefresh] bằng JWT mới → màn hình nạp lại dữ liệu
+  /// đã đọc (rỗng) trong lúc chạy anon.
+  static final ValueNotifier<int> jwtRecovered = ValueNotifier<int>(0);
+
+  /// Nhãn máy gửi kèm khi xin JWT (`"<nền tảng> <version>+<build>"`), lưu ở
+  /// `pos_refresh_tokens.client_label` để biết máy nào còn bản cũ. Test đặt sẵn để khỏi gọi plugin.
+  static String? clientLabelOverride;
+  static String? _cachedClientLabel;
+
+  static Future<String?> clientLabel() async {
+    if (clientLabelOverride != null) return clientLabelOverride;
+    if (_cachedClientLabel != null) return _cachedClientLabel;
+    try {
+      final info = await PackageInfo.fromPlatform().timeout(
+        const Duration(seconds: 2),
+      );
+      final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
+      _cachedClientLabel = '$platform ${info.version}+${info.buildNumber}';
+    } catch (_) {}
+    return _cachedClientLabel;
+  }
 
   /// Khi còn ít hơn ngưỡng này thì chủ động làm mới access token.
   static const Duration refreshThreshold = Duration(hours: 2);
@@ -327,11 +386,92 @@ class PosJwtAuthService {
     return true;
   }
 
+  static DateTime? _recoverFailedAt;
+
+  /// API từ chối vé phiên [rejectedToken] (vd sau khi máy chủ đổi khoá ký): xin vé mới bằng
+  /// refresh token. Trả vé để gửi lại, hoặc null (mất mạng / không xin được — 30 giây sau mới thử lại).
+  /// Refresh token bị từ chối hoặc không có → [onSessionRevoked] (về màn đăng nhập).
+  Future<String?> recoverRejectedJwt(String rejectedToken) async {
+    final current = currentAccessToken;
+    if (current == null) return null;
+    // Yêu cầu khác đã xin được vé mới trong lúc yêu cầu này đang đi.
+    if (current != rejectedToken) return current;
+    if (!isConfigured) return null;
+    final failedAt = _recoverFailedAt;
+    if (failedAt != null &&
+        DateTime.now().difference(failedAt) < const Duration(seconds: 30)) {
+      return null;
+    }
+    String? storeId;
+    try {
+      final payload = jsonDecode(utf8.decode(
+              base64Url.decode(base64Url.normalize(current.split('.')[1]))))
+          as Map<String, dynamic>;
+      storeId = payload['store_id'] as String?;
+    } catch (_) {}
+    final outcome = await refreshPosJwt(expectedStoreId: storeId);
+    final fresh = currentAccessToken;
+    if (outcome == PosRefreshOutcome.refreshed &&
+        fresh != null &&
+        fresh != rejectedToken) {
+      _recoverFailedAt = null;
+      AppLogger.info('auth', '[Auth] Ve bi tu choi -> da xin ve moi');
+      return fresh;
+    }
+    _recoverFailedAt = DateTime.now();
+    if (outcome == PosRefreshOutcome.rejected ||
+        outcome == PosRefreshOutcome.noRefreshToken) {
+      _onSessionRevoked?.call();
+    }
+    return null;
+  }
+
+  @visibleForTesting
+  static void resetRecoverCooldown() => _recoverFailedAt = null;
+
+  static void _markJwtRecovered() {
+    _offlineRetryTimer?.cancel();
+    _offlineRetryTimer = null;
+    if (!waitingForRefresh) return;
+    waitingForRefresh = false;
+    AppLogger.info('auth', '[Auth] Da co POS JWT sau khi mo app luc mat mang');
+    jwtRecovered.value++;
+  }
+
+  /// Mở app lúc mất mạng (access token hết hạn, còn refresh token): thử làm mới mỗi [every]
+  /// thay vì chờ bộ hẹn giờ 10 phút, để rút ngắn lúc chạy anon. Dừng khi có JWT, khi bị từ chối
+  /// (gọi onSessionRevoked đã đăng ký ở [startAutoRefresh]) hoặc sau [maxTries] lần.
+  void startOfflineRetry({
+    required String expectedStoreId,
+    Duration every = const Duration(seconds: 20),
+    int maxTries = 45,
+  }) {
+    waitingForRefresh = true;
+    _offlineRetryTimer?.cancel();
+    var tries = 0;
+    var busy = false;
+    _offlineRetryTimer = Timer.periodic(every, (t) async {
+      if (busy) return;
+      busy = true;
+      tries++;
+      final outcome = await refreshPosJwt(expectedStoreId: expectedStoreId);
+      busy = false;
+      if (outcome == PosRefreshOutcome.offline && tries < maxTries) return;
+      t.cancel();
+      if (identical(_offlineRetryTimer, t)) _offlineRetryTimer = null;
+      if (outcome == PosRefreshOutcome.rejected ||
+          outcome == PosRefreshOutcome.noRefreshToken) {
+        _onSessionRevoked?.call();
+      }
+    });
+  }
+
   /// Hẹn giờ kiểm tra mỗi 10 phút (bền với máy ngủ/tab nền hơn một mốc cố định).
   void startAutoRefresh({
     required String? Function() currentStoreId,
     void Function()? onSessionRevoked,
   }) {
+    _onSessionRevoked = onSessionRevoked;
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(minutes: 10), (_) async {
       final storeId = currentStoreId();
@@ -344,6 +484,9 @@ class PosJwtAuthService {
   static void stopAutoRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = null;
+    _offlineRetryTimer?.cancel();
+    _offlineRetryTimer = null;
+    _onSessionRevoked = null;
   }
 
   /// Đăng xuất phía server: thu hồi cả chuỗi refresh token. Không chặn UI.
@@ -506,6 +649,8 @@ class PosJwtAuthService {
     try {
       if (authApplier != null) {
         await authApplier!(token);
+        currentAccessToken = token;
+        if (token != null) _markJwtRecovered();
         return true;
       }
 
@@ -518,6 +663,8 @@ class PosJwtAuthService {
         await client.realtime.setAuth(SupabaseService.supabaseAnonKey);
       }
       _logAuthMode(token != null);
+      currentAccessToken = token;
+      if (token != null) _markJwtRecovered();
       return true;
     } catch (_) {
       // FAIL-CLOSED: Any exception applying auth returns false
@@ -558,6 +705,7 @@ class PosJwtAuthService {
       'password': password.trim(),
       'store_id': storeId.trim(),
       'supports_refresh': true,
+      'client_label': ?await clientLabel(),
     };
 
     try {
@@ -882,6 +1030,7 @@ class PosJwtAuthService {
             body: jsonEncode({
               'store_id': storeId.trim(),
               'supports_refresh': true,
+              'client_label': ?await clientLabel(),
             }),
           )
           .timeout(timeoutDuration);

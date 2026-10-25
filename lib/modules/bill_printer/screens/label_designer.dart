@@ -28,7 +28,7 @@ class _LabelDesignerState extends ConsumerState<LabelDesigner> {
     setState(() => _saving = false);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('✅ Đã lưu thiết kế tem dán ly',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
       backgroundColor: _kIndigo,
       duration: const Duration(seconds: 2),
       behavior: SnackBarBehavior.floating,
@@ -56,7 +56,7 @@ class _LabelDesignerState extends ConsumerState<LabelDesigner> {
           TextButton.icon(
             icon: const Icon(Icons.save_rounded, color: _kTeal, size: 18),
             label: Text('Lưu',
-                style: GoogleFonts.outfit(color: _kTeal, fontWeight: FontWeight.w700)),
+                style: GoogleFonts.plusJakartaSans(color: _kTeal, fontWeight: FontWeight.w700)),
             onPressed: _save,
           ),
       ],
@@ -89,7 +89,7 @@ class _LabelConfigPanel extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'Chọn đúng khổ giấy decal đang lắp trong máy in tem. Chọn sai khổ tem có thể bị cắt chữ.',
-            style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey.shade600, height: 1.5),
+            style: GoogleFonts.plusJakartaSans(fontSize: 11, color: Colors.grey.shade600, height: 1.5),
           ),
         ],
       ),
@@ -154,7 +154,7 @@ class _LabelConfigPanel extends ConsumerWidget {
       OutlinedButton.icon(
         icon: const Icon(Icons.refresh_rounded, size: 16),
         label: Text('Đặt lại mặc định tem ly',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.red.shade400,
           side: BorderSide(color: Colors.red.shade300),
@@ -199,7 +199,7 @@ class _LabelPreview extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       child: Column(children: [
         Text('Xem trước tem ${tpl.widthMm.round()}×${tpl.heightMm.round()}mm (đúng tỉ lệ)',
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade600)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey.shade600)),
         const SizedBox(height: 14),
         Center(
           child: Container(
@@ -252,7 +252,7 @@ class _LabelPreview extends StatelessWidget {
         const SizedBox(height: 14),
         Text('Mỗi ly in một tem riêng; 2 ly cùng món → 2 tem (1/2, 2/2).',
             textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey.shade500)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 11, color: Colors.grey.shade500)),
       ]),
     );
   }

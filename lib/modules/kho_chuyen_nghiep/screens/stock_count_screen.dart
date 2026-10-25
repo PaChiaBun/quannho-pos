@@ -59,17 +59,17 @@ class _StockCountScreenState extends ConsumerState<StockCountScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Xác nhận kiểm kê', style: GoogleFonts.outfit(fontWeight: FontWeight.w800)),
+        title: Text('Xác nhận kiểm kê', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
         content: SizedBox(
           width: 360,
           child: changes.isEmpty
               ? Text('Đã đếm $counted mặt hàng, không có chênh lệch.',
-                  style: GoogleFonts.outfit())
+                  style: GoogleFonts.plusJakartaSans())
               : ListView(
                   shrinkWrap: true,
                   children: [
                     Text('Đã đếm $counted mặt hàng, ${changes.length} mặt hàng lệch:',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 8),
                     for (final c in changes)
                       Padding(
@@ -77,7 +77,7 @@ class _StockCountScreenState extends ConsumerState<StockCountScreen> {
                         child: Text(
                           '${c.item.name}: sổ ${fmtQty(c.system)} → đếm ${fmtQty(c.actual)} '
                           '(${fmtDelta(c.actual - c.system, c.item.unit)})',
-                          style: GoogleFonts.outfit(fontSize: 13),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 13),
                         ),
                       ),
                   ],
@@ -129,7 +129,7 @@ class _StockCountScreenState extends ConsumerState<StockCountScreen> {
         backgroundColor: KhoTheme.navy,
         foregroundColor: Colors.white,
         title: Text('Kiểm kê kho',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: Colors.white)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white)),
       ),
       body: stockAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -184,7 +184,7 @@ class _StockCountScreenState extends ConsumerState<StockCountScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Nhập số lượng ĐẾM THỰC TẾ (theo đơn vị kho). Để trống = không kiểm mặt hàng đó.',
-                  style: GoogleFonts.outfit(fontSize: 11.5, color: KhoTheme.muted),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: KhoTheme.muted),
                 ),
               ),
             ),
@@ -209,13 +209,13 @@ class _StockCountScreenState extends ConsumerState<StockCountScreen> {
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Text(i.name,
-                              style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 14)),
+                              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
                           const SizedBox(height: 2),
                           Text('Sổ sách: ${fmtQty(system)} ${i.unit}',
-                              style: GoogleFonts.outfit(fontSize: 12, color: KhoTheme.muted)),
+                              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted)),
                           if (diff != null && diff.abs() > 0.0005)
                             Text(fmtDelta(diff, i.unit),
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w800,
                                     color: diff > 0 ? KhoTheme.green : KhoTheme.red)),

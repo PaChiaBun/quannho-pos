@@ -21,7 +21,7 @@
 - **Màu Cam**: `#FF6B35` — accent/action
 - **Màu Kem**: `#FFF8F0` — background
 - **Font**: Outfit (Google Fonts)
-- **Mascot**: **Bum** 🐘 — AI assistant (đang xây dựng)
+- **Mascot**: **Boom** 🐘 — AI assistant (đang xây dựng)
 
 ## Công Nghệ Sử Dụng
 | | |
@@ -43,7 +43,7 @@
 
 ## Điều Hướng
 - **Thanh dưới**: 4 ô tuỳ chỉnh (giữ lâu để đổi)
-- **Nút Bum**: Nút tròn giữa thanh dưới, trợ lý AI (đang xây dựng)
+- **Nút Boom**: Nút tròn giữa thanh dưới, trợ lý AI (đang xây dựng)
 - **Luồng khởi động**: Splash → Giới thiệu → Màn hình PIN → Màn chính
 
 ## 9 Màn Hình Chính
@@ -93,7 +93,7 @@
 - Setup: Tên quán → Logo → Danh mục → Sơ đồ bàn → Chọn modules → Tài khoản nhân viên
 - Cho phép skip bước không cần thiết
 
-### Bum AI — Tầm Nhìn
+### Boom AI — Tầm Nhìn
 - Phân tích doanh thu, gợi ý kinh doanh
 - Trả lời câu hỏi nhanh (hôm nay bán bao nhiêu, món nào chạy...)
 - Cảnh báo tự động khi kho sắp hết

@@ -631,21 +631,11 @@ class KhoProRepository {
       if (unitCost > 0) totalCogs += stockDelta * unitCost;
     }
 
-    // Ghi finance_record expense (COGS) — silent fail nếu Finance module tắt
-    if (totalCogs > 0) {
-      try {
-        await _sb.from('finance_records').insert({
-          'id':           _uuid.v4(),
-          'store_id':     storeId,
-          'type':         'expense',
-          'amount':       double.parse(totalCogs.toStringAsFixed(0)),
-          'description':  'Giá vốn NL: ${recipe.name} × ${quantity.toStringAsFixed(0)} phần',
-          'reference_id': referenceId,  // link về orders.id nếu có
-          'is_auto':      true,
-          'recorded_at':  now,
-        });
-      } catch (_) {} // Finance module không bật — bỏ qua
-    }
+    // KHÔNG ghi "Giá vốn NL" vào Thu Chi (23/10/2026): tiền nguyên liệu đã ghi chi một lần lúc
+    // nhập hàng; ghi thêm khi dùng/huỷ/sản xuất là trừ lợi nhuận hai lần. Hao hụt vẫn nằm ở
+    // stock_movements (reason 'loss'/'production'/'sale') để xem trong Kho.
+    debugPrint(
+        '[KhoCN] deductIngredients: giá trị NL đã dùng ≈ ${totalCogs.toStringAsFixed(0)}đ (không ghi Thu Chi)');
   }
 
 
@@ -1094,4 +1084,3 @@ class KhoProRepository {
     return List<Map<String, dynamic>>.from(rows);
   }
 }
-

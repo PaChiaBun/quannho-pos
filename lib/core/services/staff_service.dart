@@ -152,6 +152,17 @@ const kActionMeta = <String, (String, String, String)>{
   ),
 };
 
+/// Ghi chú hiện dưới công tắc ở "Hành động nhạy cảm" cho những quyền app chưa kiểm tra
+/// đầy đủ — để Chủ quán không tưởng đã chặn được. Xoá dòng khi đã gắn kiểm tra thật.
+const kActionLimitNotes = <String, String>{
+  'pos.edit_price': 'Chưa có tác dụng: app chưa kiểm tra quyền này.',
+  'pos.apply_discount': 'Chưa có tác dụng: app chưa kiểm tra quyền này.',
+  'finance.view_all': 'Chưa có tác dụng: vào được Thu Chi là xem được toàn bộ.',
+  'pos.cancel_bill': 'Hiện chỉ chặn nút "Xóa hết" giỏ hàng chưa gửi bếp.',
+  'pos.checkout':
+      'Chỉ chặn thu tiền ở Quản lý Bàn (Thu ngân vẫn thu được) và đơn QR mang đi; màn Bán hàng chưa kiểm quyền này.'
+};
+
 // Quyền action mặc định mỗi role (restrictive by default — owner luôn có tất cả)
 const kDefaultActionPerms = <String, List<String>>{
   'owner': [
@@ -218,11 +229,14 @@ class StaffService {
     final perms = <String>{};
     final mods = modules.map((m) => m.toLowerCase().trim()).toSet();
 
-    // Module pos (Bán hàng): có toàn bộ quyền pos.* bao gồm thanh toán
+    // Module pos (Bán hàng): có toàn bộ quyền pos.* bao gồm thanh toán.
+    // Riêng Phục vụ: mặc định KHÔNG huỷ đơn / sửa giá — Chủ quán bật thêm ở "Hành động nhạy cảm".
     if (mods.contains('pos')) {
+      final isWaiter = roleName != null && canonicalRole(roleName) == 'waiter';
       perms.addAll([
-        'pos.cancel_bill',
+        if (!isWaiter) 'pos.cancel_bill',
         'pos.apply_discount',
+        if (!isWaiter)
         'pos.edit_price',
         'pos.view_history',
         'pos.checkout',
@@ -299,7 +313,6 @@ class StaffService {
     try {
       try {
         db.rest.headers['x-store-id'] = storeId;
-        db.rest.headers['x-user-id'] = userId;
       } catch (_) {}
 
       // Không tin role từ SharedPreferences: khi cài đè/nâng cấp ứng dụng,
@@ -319,6 +332,20 @@ class StaffService {
         return List.from(kAllActions);
       }
 
+      // Màn Phân quyền lưu theo TÊN vai trò của quán ("Phục vụ", "Thu ngân") còn tài khoản
+      // giữ MÃ vai trò ("waiter", "cashier") → tìm cài đặt theo cả hai.
+      final storeRoleRows = await db
+          .from('store_roles')
+          .select('name')
+          .eq('store_id', storeId)
+          .order('name'); // thứ tự cố định khi 2 tên vai trò cùng loại chuẩn
+      final settingKeys = roleSettingKeys(effectiveRole, [
+        for (final r in storeRoleRows) (r['name'] as String?)?.trim() ?? ''
+      ]);
+
+      // Quyền Chủ quán đã TẮT ở "Hành động nhạy cảm" — thắng cả quyền suy từ module.
+      final denied = await _loadDeniedActions(db, storeId, settingKeys);
+
       // 1. NGUỒN SỰ THẬT CHÍNH: Lấy danh sách Lego Modules mà vai trò/nhân viên sở hữu
       final modules = await getModulePermissions(
         storeId,
@@ -331,16 +358,17 @@ class StaffService {
       );
 
       // 2. Tùy biến override từ app_settings nếu chủ quán có cấu hình chi tiết
-      final exactRoleSettings = await db
+      for (final key in settingKeys) {
+        final row = await db
           .from('app_settings')
           .select('value')
           .eq('store_id', storeId)
-          .eq('key', 'action_perms_$effectiveRole')
-          .maybeSingle();
-
-      if (exactRoleSettings != null && exactRoleSettings['value'] != null) {
-        final parsed = parseActionPermissions(exactRoleSettings['value']);
-        if (parsed.isNotEmpty) {
+          .eq('key', 'action_perms_$key')
+            .maybeSingle();
+        if (row == null || row['value'] == null) continue;
+        // Có cài đặt (kể cả rỗng — Chủ quán tắt hết) thì dùng đúng cài đặt này, không rơi
+        // xuống cài đặt cũ theo mã vai trò.
+        final parsed = parseActionPermissions(row['value']);
           final merged = Set<String>.from(parsed);
           // Theo chuẩn Lego Modules (Single Source of Truth), luôn kế thừa quyền từ module:
           merged.addAll(derivedPerms);
@@ -356,52 +384,74 @@ class StaffService {
               effectiveRole.toLowerCase().contains('thu ngân')) {
             merged.add('printer.manage_server');
           }
-          return merged.toList();
-        }
-      }
-
-      if (effectiveRole != canonical) {
-        final canonicalRoleSettings = await db
-            .from('app_settings')
-            .select('value')
-            .eq('store_id', storeId)
-            .eq('key', 'action_perms_$canonical')
-            .maybeSingle();
-
-        if (canonicalRoleSettings != null &&
-            canonicalRoleSettings['value'] != null) {
-          final parsed = parseActionPermissions(canonicalRoleSettings['value']);
-          if (parsed.isNotEmpty) {
-            final merged = Set<String>.from(parsed);
-            merged.addAll(derivedPerms);
-            if (modules.contains('pos') ||
-                modules.contains('ban') ||
-                canonical == 'cashier' ||
-                effectiveRole.toLowerCase().contains('thu ngân')) {
-              merged.add('pos.checkout');
-            }
-            if (modules.contains('bill_printer') ||
-                canonical == 'cashier' ||
-                effectiveRole.toLowerCase().contains('thu ngân')) {
-              merged.add('printer.manage_server');
-            }
-            return merged.toList();
-          }
-        }
+          return applyActionDeny(merged, denied).toList();
       }
 
       // 3. Nếu chưa từng cấu hình app_settings: dùng derivedPerms từ Lego Modules
       if (derivedPerms.isNotEmpty) {
-        return derivedPerms.toList();
+        return applyActionDeny(derivedPerms, denied).toList();
       }
 
       // 4. Fallback mặc định theo vai trò chuẩn
       final defaultPerms = kDefaultActionPerms[canonical] ?? [];
-      return parseActionPermissions(defaultPerms);
+      return applyActionDeny(
+              parseActionPermissions(defaultPerms).toSet(), denied)
+          .toList();
     } catch (e) {
       // Lỗi truy vấn -> fail-closed: trả về mảng rỗng (deny all).
       return [];
     }
+  }
+
+  /// Khoá app_settings lưu các hành động Chủ quán đã TẮT cho vai trò (mảng JSON).
+  /// Tách khỏi `action_perms_<vai trò>` để máy chủ (đọc mảng đó tìm pos.checkout) không bị ảnh hưởng.
+  static String deniedActionsKey(String role) => 'action_perms_deny_$role';
+
+  /// Quyền cuối cùng = quyền có được − quyền bị tắt.
+  static Set<String> applyActionDeny(Set<String> perms, Set<String> denied) =>
+      denied.isEmpty ? perms : perms.difference(denied);
+
+  /// Khi lưu: hành động có nhờ module mà công tắc đang tắt → ghi vào danh sách tắt.
+  static Set<String> computeDeniedActions(
+          {required Set<String> derived, required Set<String> enabled}) =>
+      derived.difference(enabled).intersection(kAllActions.toSet());
+
+  /// Thứ tự khoá cài đặt quyền cho một tài khoản. Màn Phân quyền lưu theo TÊN vai trò của
+  /// quán nên tên quán đứng trước: tên trùng (không phân biệt hoa thường), tên cùng loại
+  /// chuẩn, rồi mới tới mã vai trò của tài khoản và loại chuẩn (cài đặt kiểu cũ).
+  static List<String> roleSettingKeys(
+      String role, List<String> storeRoleNames) {
+    final canonical = canonicalRole(role);
+    final keys = <String>[];
+    void add(String k) {
+      if (k.isNotEmpty && !keys.contains(k)) keys.add(k);
+    }
+
+    for (final n in storeRoleNames) {
+      if (n.toLowerCase() == role.toLowerCase()) add(n);
+    }
+    for (final n in storeRoleNames) {
+      if (canonicalRole(n) == canonical) add(n);
+    }
+    add(role);
+    add(canonical);
+    return keys;
+  }
+
+  static Future<Set<String>> _loadDeniedActions(
+      SupabaseClient db, String storeId, List<String> keys) async {
+    for (final r in keys) {
+      final row = await db
+            .from('app_settings')
+            .select('value')
+            .eq('store_id', storeId)
+            .eq('key', deniedActionsKey(r))
+          .maybeSingle();
+      if (row != null && row['value'] != null) {
+        return parseActionPermissions(row['value']).toSet();
+      }
+    }
+    return <String>{};
   }
 
   static List<String> parseActionPermissions(dynamic rawActions) {
@@ -1835,17 +1885,26 @@ class StaffService {
           .eq('store_id', storeId)
           .eq('key', 'action_perms_$role')
           .maybeSingle();
+      // Màn "Hành động nhạy cảm" phải hiện ĐÚNG quyền thực tế: quyền đã lưu + quyền suy
+      // từ module của vai trò − quyền đã tắt (trước đây chỉ hiện phần đã lưu → công tắc
+      // "tắt" nhưng nhân viên vẫn có quyền nhờ module).
+      final modules = await getModulePermissions(storeId, role);
+      final derived = deriveActionPermsFromModules(modules, roleName: role);
+      final denied = await _loadDeniedActions(
+          db, storeId, roleSettingKeys(role, const []));
       if (res != null) {
         final decoded = jsonDecode(res['value'] as String) as List;
         final perms = decoded.cast<String>().toSet();
-        if (canonical == 'cashier' && !perms.contains('pos.checkout')) {
+        if (canonical == 'cashier' && !perms.contains('pos.checkout') &&
+            !denied.contains('pos.checkout')) {
           perms.add('pos.checkout');
           unawaited(
             setActionPermissions(storeId: storeId, role: role, actions: perms),
           );
         }
-        return perms;
+        return applyActionDeny(perms.union(derived), denied);
       }
+      if (derived.isNotEmpty) return applyActionDeny(derived, denied);
     } catch (e) {
       debugPrint('[StaffService] getActionPermissions error: $e');
     }
@@ -1890,6 +1949,7 @@ class StaffService {
     required String role,
     required Set<String> actions,
     String changedByUserId = 'system',
+      Set<String>? denied
   }) async {
     final db = _db;
     if (db == null || role == 'owner') return; // owner không thể bị giới hạn
@@ -1900,8 +1960,16 @@ class StaffService {
         'key': 'action_perms_$role',
         'value': jsonEncode(actions.toList()),
       }, onConflict: 'store_id,key');
+      if (denied != null) {
+        await db.from('app_settings').upsert({
+          'store_id': storeId,
+          'key': deniedActionsKey(role),
+          'value': jsonEncode(denied.toList())
+        }, onConflict: 'store_id,key');
+      }
     } catch (e) {
       debugPrint('[StaffService] setActionPermissions error: $e');
+      if (denied != null) rethrow; // lưu từ màn Phân quyền: phải báo lỗi thật
     }
 
     await _logPermChange(
@@ -2152,7 +2220,17 @@ class StoreRoleService {
     }
   }
 
-  // ── Xoá role — tự động reassign NV sang role đầu tiên còn lại ───────────
+  /// Vai trò nhận nhân viên khi xoá một vai trò: vai trò đầu tiên KHÔNG phải Chủ quán/Quản lý
+  /// (tránh vô tình nâng quyền). null = không có vai trò an toàn.
+  static String? pickFallbackRole(List<String> remainingRoleNames) {
+    for (final n in remainingRoleNames) {
+      final c = StaffService.canonicalRole(n);
+      if (c != 'owner' && c != 'manager') return n;
+    }
+    return null;
+  }
+
+  // ── Xoá role — chuyển NV sang vai trò thường đầu tiên còn lại ───────────
   static Future<void> deleteRole({
     required String roleId,
     required String storeId,
@@ -2161,21 +2239,31 @@ class StoreRoleService {
     final db = _db;
     if (db == null) return;
 
-    // Tìm role thay thế (role đầu tiên không phải role đang xoá)
     final others = await db
         .from('store_roles')
         .select('name')
         .eq('store_id', storeId)
         .neq('id', roleId)
-        .order('sort_order')
-        .limit(1);
+        .order('sort_order');
+    final otherNames = [
+      for (final r in others) (r['name'] as String?)?.trim() ?? ''
+    ]..removeWhere((n) => n.isEmpty);
+    final fallbackRole = pickFallbackRole(otherNames);
+    if (fallbackRole == null) {
+      throw Exception(
+          'Không còn vai trò thường để chuyển nhân viên sang — hãy đổi vai trò cho từng nhân viên trước khi xoá.');
+    }
 
-    final fallbackRole = others.isNotEmpty
-        ? others.first['name'] as String
-        : 'member'; // mặc định nếu không còn role nào
+    // Tài khoản vai trò chuẩn lưu MÃ ("waiter", "cashier"…) chứ không lưu tên → chuyển cả theo mã,
+    // trừ khi còn vai trò khác cùng loại (khi đó không biết nhân viên thuộc vai trò nào).
+    final roleKeys = <String>{roleName};
+    final code = StaffService.canonicalRole(roleName);
+    if (code != roleName.toLowerCase().trim() &&
+        !otherNames.any((n) => StaffService.canonicalRole(n) == code)) {
+      roleKeys.add(code);
+    }
 
-    // Reassign tất cả NV đang dùng role này sang cả 2 bảng staff_members & store_members
-    try {
+    // Lỗi phải báo ra (trước đây nuốt lỗi → xoá vai trò mà nhân viên vẫn mang vai trò cũ).
       await db
           .from('staff_members')
           .update({
@@ -2183,16 +2271,13 @@ class StoreRoleService {
             'updated_at': DateTime.now().millisecondsSinceEpoch,
           })
           .eq('store_id', storeId)
-          .eq('role', roleName);
-    } catch (_) {}
-
-    try {
+          .inFilter('role', roleKeys.toList());
       await db
           .from('store_members')
           .update({'role': fallbackRole})
           .eq('store_id', storeId)
-          .eq('role', roleName);
-    } catch (_) {}
+          .eq('is_owner', false)
+        .inFilter('role', roleKeys.toList());
 
     // Xoá role
     await db.from('store_roles').delete().eq('id', roleId);

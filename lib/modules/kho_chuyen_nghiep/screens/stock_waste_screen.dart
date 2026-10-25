@@ -148,7 +148,7 @@ class _StockWasteScreenState extends ConsumerState<StockWasteScreen> {
         backgroundColor: KhoTheme.navy,
         foregroundColor: Colors.white,
         title: Text('Ghi hao hụt',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: Colors.white)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white)),
       ),
       body: ListView(padding: const EdgeInsets.all(14), children: [
         InkWell(
@@ -203,7 +203,7 @@ class _StockWasteScreenState extends ConsumerState<StockWasteScreen> {
             padding: const EdgeInsets.only(top: 6),
             child: Text(
               '= ${fmtQty(q)} ${_item!.unit} (1 ${_item!.unit} = ${fmtQty(_item!.conversionRate)} ${_item!.conversionUnit})',
-              style: GoogleFonts.outfit(fontSize: 12, color: KhoTheme.muted),
+              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted),
             ),
           ),
         const SizedBox(height: 12),
@@ -224,7 +224,7 @@ class _StockWasteScreenState extends ConsumerState<StockWasteScreen> {
         ),
         const SizedBox(height: 22),
         Text('Hao hụt gần đây',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 15)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 15)),
         const SizedBox(height: 6),
         FutureBuilder<List<Map<String, dynamic>>>(
           future: _recent,
@@ -235,7 +235,7 @@ class _StockWasteScreenState extends ConsumerState<StockWasteScreen> {
             }
             if (rows.isEmpty) {
               return Text('Chưa có ghi nhận nào.',
-                  style: GoogleFonts.outfit(color: KhoTheme.muted));
+                  style: GoogleFonts.plusJakartaSans(color: KhoTheme.muted));
             }
             return Column(children: [
               for (final r in rows)
@@ -247,7 +247,7 @@ class _StockWasteScreenState extends ConsumerState<StockWasteScreen> {
                       '${reasonLabel('${r['reason']}')}${(r['note'] ?? '').toString().isEmpty ? '' : ' • ${r['note']}'}'),
                   trailing: Text(
                       fmtDelta((r['delta'] as num).toDouble(), nameById[r['product_id']]?.unit ?? ''),
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: KhoTheme.red)),
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: KhoTheme.red)),
                 ),
             ]);
           },

@@ -26,7 +26,7 @@ class PrintDesignScreen extends StatelessWidget {
           backgroundColor: _kIndigo,
           foregroundColor: Colors.white,
           title: Text('Thiết Kế Mẫu In',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 18)),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 18)),
           bottom: TabBar(
             isScrollable: MediaQuery.of(context).size.width < 600,
             tabAlignment: MediaQuery.of(context).size.width < 600
@@ -35,7 +35,7 @@ class PrintDesignScreen extends StatelessWidget {
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white54,
             indicatorColor: _kOrange,
-            labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 13),
+            labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13),
             tabs: const [
               Tab(icon: Icon(Icons.receipt_long_rounded, size: 18), text: 'Hoá Đơn'),
               Tab(icon: Icon(Icons.local_fire_department_rounded, size: 18), text: 'Bếp Nóng'),

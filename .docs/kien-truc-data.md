@@ -1,5 +1,11 @@
 # Quán Nhỏ POS — Kiến Trúc Data
 
+## Vòng đời phiên bàn — chặn client tự đóng (ĐÃ áp production 22/10/2026 20:27)
+
+- `ban_sessions.status`: `open` → `closed` (thanh toán qua `settle_ban_session_v5`, bán quầy qua `complete_pos_sale_v1`, hoặc phiên nguồn rỗng khi gộp bàn) | `cancelled` (huỷ bàn có lý do + duyệt + `void_audit_logs`).
+- Migration `20261022_chan_dong_phien_ban_v1.sql`: trigger `guard_ban_session_status_v1` (BEFORE UPDATE OF status / DELETE) chỉ áp vai trò `anon`/`authenticated` — client không được đặt `closed` khi còn món chưa huỷ (đếm qua `ban_session_active_item_count_v1`, SECURITY DEFINER), không mở lại/đổi phiên đã kết thúc, không đặt trạng thái lạ, không xoá phiên còn món. RPC SECURITY DEFINER không bị ảnh hưởng. `cancelled` từ client tạm vẫn cho phép (app < 1.0.5+16 đặt trước khi ghi audit).
+- App: `BanRepository.closeSession` đã xoá; đóng phiên ở client chỉ còn `mergeSession` (sau khi chuyển hết món) và `runCancelSteps` (huỷ bàn).
+
 ## Checkout V5 — source đang kiểm thử, chưa deploy
 
 Cập nhật rà soát 02/09: `finance_records.checkout_reference_id` được trigger suy ra chỉ khi reference là order/settlement cùng store; unique trên `(store_id, checkout_reference_id)` không chặn nạp ví lặp dùng customer ID. `guard_ban_item_financial_change_v5` serialize thay đổi món với khóa phiên, cấm sửa tiền/hủy sau thanh toán nhưng vẫn cho KDS cập nhật tiến độ. POS truyền `p_kitchen_session_ids`; RPC khóa các phiên, ghi liên kết order và đóng phiên cùng transaction. `reconcile_pos_sale_v1` đọc kết quả theo khóa cho pending phiên bản cũ. PostgreSQL 17.11 local đã qua gate hai database fixture; chưa đối chiếu đầy đủ schema/RLS production.
@@ -110,6 +116,15 @@ store_members (
 
 -- ⚠️ Cập nhật kiến trúc 2026-07-28: Không còn phụ thuộc vào bảng store_roles để cấp quyền nữa.
 -- Danh sách modules & actions được lưu trực tiếp vào từng Nhân viên (staff_members.modules).
+
+-- 🔒 Khóa ghi phân quyền (22/10/2026, ĐÃ ÁP production): migration 20261022_khoa_ghi_phan_quyen_v1.sql
+--   Trigger BEFORE (SECURITY INVOKER) chỉ áp khi current_user = anon/authenticated:
+--   • store_roles  : chỉ Chủ quán/Quản lý (qn_is_manager) được ghi.
+--   • staff_members: Chủ toàn quyền; Quản lý không gán/nâng owner·manager, không sửa/xóa Chủ·Quản lý khác;
+--                    người thường chỉ ghi dòng CỦA MÌNH, máy chủ ép role = store_members.role và giữ nguyên
+--                    modules/hourly_rate/pin_hash/is_active, không được xóa.
+--   RPC SECURITY DEFINER, service_role, admin không bị ảnh hưởng. Test: supabase/tests/khoa_ghi_phan_quyen_v1_test.sql (24 kiểm tra).
+--   Hoàn tác: 20261022_khoa_ghi_phan_quyen_v1_ROLLBACK.sql. Nguồn sự thật quyền thật vẫn là store_members (RLS qn_is_manager).
 ```
 
 ### TẦNG 3: Sản Phẩm & Khách Hàng (Core Data)

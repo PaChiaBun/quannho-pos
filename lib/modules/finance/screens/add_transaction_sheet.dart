@@ -41,7 +41,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   void initState() {
     super.initState();
     _type = widget.initialType;
-    _fundType = ref.read(selectedFundProvider);
+    // Đang xem "Tất cả" thì mặc định Tiền mặt — trước đây lưu nhầm quỹ 'all' (không thuộc quỹ nào).
+    final fund = ref.read(selectedFundProvider);
+    _fundType = fund == 'bank' ? 'bank' : 'cash';
   }
 
   @override
@@ -315,8 +317,12 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     } catch (e, st) {
       AppLogger.error('finance', 'Lỗi thêm giao dịch thu chi: $e', e, st);
       if (mounted) {
+        // Máy chủ chặn phiếu tay của người không có quyền Thu Chi (guard_finance_manual_insert_v1).
+        final denied = e.toString().contains('FINANCE_MANUAL_DENIED');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: const Text('Lưu giao dịch thất bại. Hãy chụp lại báo chủ app.'),
+          content: Text(denied
+                ? 'Bạn không có quyền Thu Chi nên không ghi được phiếu thu/chi. Nhờ Chủ quán hoặc Quản lý.'
+                : 'Lưu giao dịch thất bại. Hãy chụp lại báo chủ app.'),
           backgroundColor: _kRed,
         ));
       }

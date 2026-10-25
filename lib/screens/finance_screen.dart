@@ -1,17 +1,16 @@
-import 'dart:io';
+import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/utils/money_formatter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../core/services/store_auth_service.dart';
 import '../modules/finance/providers/finance_providers.dart';
+import '../modules/finance/fund_ledger_csv.dart';
 import '../modules/finance/repository/finance_repository.dart';
 import '../modules/finance/screens/add_transaction_sheet.dart';
 import '../core/widgets/order_detail_dialog.dart';
@@ -124,7 +123,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               children: [
                 Text(
                   'Chọn thời gian báo cáo',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: _kNavy,
@@ -161,7 +160,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                 ),
                 title: Text(
                   p.$2,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: active ? FontWeight.bold : FontWeight.w500,
                     color: active ? _kNavy : _kInk,
@@ -436,7 +435,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               Expanded(
                 child: Text(
                   'Đang xem: ${current.label} ($rangeText)',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: _kNavy,
@@ -463,7 +462,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                     const SizedBox(width: 4),
                     Text(
                       'Đổi ngày',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -509,14 +508,14 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           ),
           const SizedBox(width: 6),
           _FilterChip(
-            label: '↑ Thu',
+            label: '↓ Thu',
             active: filterType == 'income',
             color: _kGreen,
             onTap: () => ref.read(financeFilterProvider.notifier).showIncome(),
           ),
           const SizedBox(width: 6),
           _FilterChip(
-            label: '↓ Chi',
+            label: '↑ Chi',
             active: filterType == 'expense',
             color: _kRed,
             onTap: () => ref.read(financeFilterProvider.notifier).showExpense(),
@@ -598,120 +597,62 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   Future<void> _exportToCSV(
     AsyncValue<List<FinanceRecordModel>> recordsAsync,
   ) async {
-    final records = recordsAsync.asData?.value;
-    if (records == null || records.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Không có dữ liệu để xuất file!'),
-          backgroundColor: _kRed,
-        ),
-      );
-      return;
-    }
-
     setState(() => _exporting = true);
-
     try {
       final periodState = ref.read(periodProvider);
       final selectedFund = ref.read(selectedFundProvider);
-      final info = await StoreAuthService.getStoreInfo();
-      final storeId = info['store_id'] as String?;
-      if (storeId == null) throw 'Không tìm thấy thông tin cửa hàng';
+      final repo = ref.read(financeRepositoryProvider);
 
-      // 1. Fetch all previous records to calculate the starting balance (Số tồn đầu kỳ)
-      final sb = Supabase.instance.client;
-      final prevRows = await sb
-          .from('finance_records')
-          .select('type, amount')
-          .eq('store_id', storeId)
-          .eq('fund_type', selectedFund)
-          .lt('recorded_at', periodState.from.toUtc().toIso8601String());
-
-      double startingBalance = 0;
-      for (final r in prevRows) {
-        final amt = (r['amount'] as num?)?.toDouble() ?? 0;
-        if (r['type'] == 'income') startingBalance += amt;
-        if (r['type'] == 'expense') startingBalance -= amt;
-      }
-
-      // 2. Sort current period records ascendingly to calculate correct running balances
-      final sortedRecords = List<FinanceRecordModel>.from(records)
-        ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
-
-      // 3. Build CSV string
-      final csvBuffer = StringBuffer();
-
-      // UTF-8 BOM so Excel opens with Vietnamese characters properly formatted
-      csvBuffer.write('\uFEFF');
-
-      // Title & metadata
-      final fundName = selectedFund == 'cash'
-          ? 'TIỀN MẶT'
-          : 'TIỀN GỬI NGÂN HÀNG';
-      csvBuffer.writeln('SỔ CHI TIẾT QUỸ $fundName');
-      csvBuffer.writeln('Kỳ báo cáo: ${periodState.label}');
-      csvBuffer.writeln(
-        'Thời gian xuất: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}',
+      // Tải lại ĐỦ phiếu (không theo bộ lọc Thu/Chi đang chọn, không bị giới hạn 1.000 dòng):
+      // số dư từng dòng chỉ đúng khi có cả thu lẫn chi.
+      final before = await repo.fetchAllRecords(to: periodState.from);
+      final inPeriod = await repo.fetchAllRecords(
+        from: periodState.from,
+        to: periodState.to,
       );
-      csvBuffer.writeln();
-
-      // Headers
-      csvBuffer.writeln(
-        'Ngày chứng từ,Số phiếu thu,Số phiếu chi,Diễn giải,Số tiền thu,Số tiền chi,Số tiền còn lại',
-      );
-
-      // Row 1: Starting balance (Số tồn đầu kỳ)
-      csvBuffer.writeln(
-        ',,,Số tồn đầu kỳ,,,${startingBalance.toStringAsFixed(0)}',
-      );
-
-      double currentBalance = startingBalance;
-      for (final r in sortedRecords) {
-        final dateStr = DateFormat(
-          'dd/MM/yyyy HH:mm',
-        ).format(r.recordedAt.toLocal());
-        final isIncome = r.type == 'income';
-        final amt = r.amount;
-
-        if (isIncome) {
-          currentBalance += amt;
-        } else {
-          currentBalance -= amt;
+      final funds = ledgerFunds(selectedFund);
+      if (!inPeriod.any((r) => funds.contains(r.fundType))) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Không có dữ liệu để xuất file!'),
+              backgroundColor: _kRed,
+            ),
+          );
         }
-
-        final receiptNo = isIncome
-            ? 'PT-${r.id.substring(0, 8).toUpperCase()}'
-            : '';
-        final paymentNo = !isIncome
-            ? 'PC-${r.id.substring(0, 8).toUpperCase()}'
-            : '';
-
-        // Clean description to avoid CSV breaking on commas
-        final cleanDesc = (r.description ?? '')
-            .replaceAll(',', ' ')
-            .replaceAll('\n', ' ');
-
-        final thuAmt = isIncome ? amt.toStringAsFixed(0) : '0';
-        final chiAmt = !isIncome ? amt.toStringAsFixed(0) : '0';
-        final tonAmt = currentBalance.toStringAsFixed(0);
-
-        csvBuffer.writeln(
-          '$dateStr,$receiptNo,$paymentNo,$cleanDesc,$thuAmt,$chiAmt,$tonAmt',
-        );
+        return;
       }
 
-      // 4. Write to temp file and share/download
+      final csv = buildFundLedgerCsv(
+        periodRecords: inPeriod,
+        fund: selectedFund,
+        openingBalance: ledgerBalance(before, selectedFund),
+        periodLabel: periodState.label,
+        exportedAt: DateTime.now(),
+      );
+
       final stamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-      final filename = 'So_Chi_Tiet_Quy_${selectedFund}_$stamp.csv';
-
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/$filename');
-      await file.writeAsString(csvBuffer.toString());
-
+      final fundCode = selectedFund == 'cash' || selectedFund == 'bank'
+          ? selectedFund
+          : 'tat_ca';
+      final filename = 'So_Chi_Tiet_Quy_${fundCode}_$stamp.csv';
+      // XFile.fromData chạy được cả web (trình duyệt tải file về) lẫn máy/điện thoại.
+      // iPad bắt buộc có vị trí hiện bảng chia sẻ.
+      final box = context.findRenderObject() as RenderBox?;
       await SharePlus.instance.share(
         ShareParams(
-          text: 'Báo cáo Sổ chi tiết quỹ $fundName',
-          files: [XFile(file.path, mimeType: 'text/csv', name: filename)],
+          sharePositionOrigin: box == null || !box.hasSize
+              ? null
+              : box.localToGlobal(Offset.zero) & box.size,
+          text: 'Sổ chi tiết quỹ ${ledgerFundTitle(selectedFund)}',
+          files: [
+            XFile.fromData(
+              Uint8List.fromList(utf8.encode(csv)),
+              mimeType: 'text/csv',
+              name: filename,
+            ),
+          ],
+          fileNameOverrides: [filename],
         ),
       );
     } catch (e, st) {
@@ -804,6 +745,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   );
 
   void _confirmDelete(FinanceRecordModel record) {
+    final reasonCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -812,9 +754,26 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           'Xoá giao dịch?',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
-        content: Text(
-          '${record.description ?? 'Giao dịch này'} sẽ bị xoá vĩnh viễn.',
-          style: const TextStyle(color: _kMuted),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${record.description ?? 'Giao dịch này'} sẽ bị xoá khỏi Thu Chi. '
+              'Máy chủ lưu lại người xoá và lý do. Chỉ Chủ quán hoặc Quản lý được xoá.',
+              style: const TextStyle(color: _kMuted),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonCtrl,
+              autofocus: true,
+              maxLength: 300,
+              decoration: const InputDecoration(
+                labelText: 'Lý do xoá *',
+                hintText: 'VD: nhập nhầm số tiền',
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -823,9 +782,51 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
+              final reason = reasonCtrl.text.trim();
+              if (reason.length < 3) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Nhập lý do xoá (ít nhất 3 ký tự)'),
+                  ),
+                );
+                return;
+              }
               Navigator.pop(ctx);
-              // ‼️ FIX: await + invalidate để UI refresh ngay sau khi xóa
-              await ref.read(financeRepositoryProvider).deleteRecord(record.id);
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                final already =
+              await ref
+                    .read(financeRepositoryProvider)
+                    .deleteRecord(record.id, reason: reason);
+                AppLogger.action(
+                  'finance_record_delete',
+                  'Xoá phiếu thu chi',
+                  total: record.amount,
+                  reason: reason,
+                  result: already ? 'đã xoá trước đó' : 'ok',
+                  extra: {
+                    'record_id': record.id,
+                    'type': record.type,
+                    'description': record.description,
+                  },
+                  critical: true,
+                );
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Đã xoá giao dịch')),
+                );
+              } on FinanceDeleteException catch (e) {
+                messenger.showSnackBar(SnackBar(content: Text(e.message)));
+              } catch (e) {
+                AppLogger.error('finance', 'Xoá phiếu thu chi lỗi: $e');
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Chưa rõ đã xoá hay chưa (lỗi mạng). Tải lại rồi thử lại — bấm lại không xoá nhầm phiếu khác.',
+                    ),
+                  ),
+                );
+              }
+              if (!mounted) return;
               ref.invalidate(financeRecordsProvider);
               ref.invalidate(financeStatsProvider);
               ref.invalidate(todayFinanceStatsProvider);
@@ -1427,7 +1428,10 @@ class _FinanceRightPanel extends StatelessWidget {
                     child: Text(
                       'Chưa có giao dịch',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(fontSize: 12, color: _kMuted),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: _kMuted,
+                      ),
                     ),
                   );
                 }
@@ -1467,7 +1471,7 @@ class _FinanceRightPanel extends StatelessWidget {
                                   r.description ?? (isIncome ? 'Thu' : 'Chi'),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: _kInk,
@@ -1475,7 +1479,7 @@ class _FinanceRightPanel extends StatelessWidget {
                                 ),
                                 Text(
                                   time,
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 10,
                                     color: _kMuted,
                                   ),
@@ -1485,7 +1489,7 @@ class _FinanceRightPanel extends StatelessWidget {
                           ),
                           Text(
                             '${isIncome ? '+' : '-'}${fmtMoney(r.amount)}',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: color,
@@ -1539,7 +1543,7 @@ class _FRightCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 title,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: _kNavy,
@@ -1578,12 +1582,12 @@ class _FStatRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.outfit(fontSize: 13, color: _kNavy),
+            style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kNavy),
           ),
         ),
         Text(
           value,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: color,
@@ -1632,7 +1636,7 @@ class _FundTabButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w800,
             color: active ? Colors.white : const Color(0xFF1A1207),

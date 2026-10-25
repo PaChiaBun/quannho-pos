@@ -5,6 +5,7 @@ import '../core/providers/dashboard_providers.dart';
 import '../core/repositories/dashboard_repository.dart';
 import '../core/repositories/einvoice_repository.dart';
 import '../core/utils/money_formatter.dart';
+import 'bill_lookup_section.dart';
 
 const _kNavy = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
@@ -47,8 +48,8 @@ extension on _Period {
   }
 }
 
-/// Tab báo cáo hóa đơn điện tử: số tiền đã xuất hóa đơn, đối chiếu với doanh thu bill cùng kỳ,
-/// hóa đơn chờ và hóa đơn lỗi. Chỉ hiển thị, không cho sửa số liệu.
+/// Tab "Hóa đơn": tra cứu + in lại bill đã thanh toán ([BillLookupSection]), rồi báo cáo
+/// hóa đơn điện tử (đã xuất, đối chiếu doanh thu, chờ/lỗi). Phần điện tử chỉ hiển thị.
 class EinvoiceReportTab extends ConsumerStatefulWidget {
   const EinvoiceReportTab({super.key});
 
@@ -65,6 +66,12 @@ class _EinvoiceReportTabState extends ConsumerState<EinvoiceReportTab> {
   bool _loading = true;
   String? _error;
   int _requestId = 0;
+  int _refreshToken = 0;
+
+  Future<void> _refreshAll() async {
+    setState(() => _refreshToken++);
+    await _load();
+  }
 
   @override
   void initState() {
@@ -104,13 +111,20 @@ class _EinvoiceReportTabState extends ConsumerState<EinvoiceReportTab> {
 
   @override
   Widget build(BuildContext context) {
+    final (from, to) = _period.range();
     return RefreshIndicator(
-      onRefresh: _load,
+        onRefresh: _refreshAll,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _periodPills(),
           const SizedBox(height: 12),
+          BillLookupSection(
+              fromMs: from, toMs: to, refreshToken: _refreshToken),
+          const SizedBox(height: 16),
+          const Text('Hóa đơn điện tử',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
           _statusBanner(),
           const SizedBox(height: 12),
           if (_loading)

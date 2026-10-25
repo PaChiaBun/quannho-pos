@@ -57,6 +57,10 @@ class ThreadSafeRateLimiter:
 
 _rate_limiter = ThreadSafeRateLimiter()
 _refresh_rate_limiter = ThreadSafeRateLimiter()
+# Trang quản trị: bộ đếm RIÊNG (không chặn lây đăng nhập bán hàng cùng mạng). Theo IP: 5 lần sai / 5 phút; theo tài khoản
+# (mọi IP): 30 lần / giờ — người biết tên đăng nhập không khoá được Chủ Quán chỉ bằng 5 lần gõ sai (QC 26/10).
+_admin_ip_limiter = ThreadSafeRateLimiter()
+_admin_account_limiter = ThreadSafeRateLimiter()
 
 LEGACY_POS_JWT_TTL_SECONDS = 2592000  # 30 ngày — chỉ cho bản app cũ chưa hỗ trợ refresh
 
@@ -398,6 +402,119 @@ def issue_hs256_onboarding_jwt(user_id, jwt_secret, ttl_seconds=600):
     sig_b64 = base64.urlsafe_b64encode(signature).decode('utf-8').rstrip('=')
 
     return f"{header_b64}.{payload_b64}.{sig_b64}"
+
+
+ADMIN_JWT_TTL_SECONDS = 14400  # 4 giờ — vé trang quản trị (ke-hoach-trang-quan-tri.md; QC 26/10: ngắn hơn 12 giờ)
+
+
+def issue_hs256_admin_jwt(user_id, jwt_secret, ttl_seconds=ADMIN_JWT_TTL_SECONDS):
+    """Vé trang quản trị: vai trò Postgres riêng `qn_admin` (không phải authenticated → không đọc bảng nào, không dùng
+    được như phiên đăng nhập quán), không gắn quán, token_use='admin'. Chỉ hàm admin_*_v1 nhận loại vé này."""
+    if not jwt_secret:
+        raise PosJwtAuthError("Server JWT signing key missing", status_code=500, error_code="SERVER_CONFIG_ERROR")
+
+    now = int(time.time())
+    header = {"alg": "HS256", "typ": "JWT"}
+    payload = {
+        "sub": str(user_id),
+        "role": "qn_admin",
+        "aud": "authenticated",
+        "iss": "supabase",
+        "iat": now,
+        "nbf": now,
+        "exp": now + int(ttl_seconds),
+        "jti": f"adm_{secrets.token_urlsafe(18)}",
+        "token_use": "admin"
+    }
+
+    header_b64 = _b64url_encode(header)
+    payload_b64 = _b64url_encode(payload)
+    signing_input = f"{header_b64}.{payload_b64}".encode('utf-8')
+
+    signature = hmac.new(jwt_secret.encode('utf-8'), signing_input, hashlib.sha256).digest()
+    sig_b64 = base64.urlsafe_b64encode(signature).decode('utf-8').rstrip('=')
+
+    return f"{header_b64}.{payload_b64}.{sig_b64}"
+
+
+def admin_account_login(supabase_url, service_role_key, username, password, timeout=10):
+    """Kiểm tên + mật khẩu tài khoản QUẢN TRỊ riêng (bảng platform_admin_accounts, không phải tài khoản quán).
+
+    Trả {"id", "name"} khi đúng; None khi sai (sai tên / sai mật khẩu / bị khoá như nhau). Lỗi hạ tầng → 503.
+    """
+    if not service_role_key:
+        raise PosJwtAuthError("Dịch vụ quản trị chưa cấu hình", status_code=503, error_code="ADMIN_STORE_UNAVAILABLE")
+    req = urllib.request.Request(
+        f"{supabase_url.rstrip('/')}/rest/v1/rpc/admin_account_login_v1",
+        data=json.dumps({"p_username": str(username), "p_password": str(password)}).encode("utf-8"),
+        headers={
+            "apikey": service_role_key,
+            "Authorization": f"Bearer {service_role_key}",
+            "User-Agent": "PosJwtAuthService/2.1",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            if resp.status != 200:
+                raise PosJwtAuthError("Dịch vụ quản trị không sẵn sàng", status_code=503, error_code="ADMIN_STORE_UNAVAILABLE")
+            result = json.loads(resp.read().decode("utf-8"))
+    except PosJwtAuthError:
+        raise
+    except Exception as exc:
+        logger.error("Admin login check failed: %s", type(exc).__name__)
+        raise PosJwtAuthError("Dịch vụ quản trị không sẵn sàng", status_code=503, error_code="ADMIN_STORE_UNAVAILABLE") from exc
+    if isinstance(result, dict) and result.get("ok") is True and result.get("id"):
+        return {"id": str(result["id"]), "name": str(result.get("name") or "")}
+    return None
+
+
+def handle_admin_jwt_request(raw_body, client_ip="127.0.0.1"):
+    """POST /api/auth/admin-jwt — đăng nhập trang quản trị bằng TÊN ĐĂNG NHẬP + mật khẩu của tài khoản quản trị riêng
+    (Chủ Quán 25/10: không dùng tài khoản quán) → vé quản trị 4 giờ. Sai tên / sai mật khẩu cùng một lỗi; giới hạn thử.
+    """
+    if len(raw_body or b"") > 4096:
+        return {"success": False, "status": 400, "error": "PAYLOAD_TOO_LARGE", "message": "Dữ liệu yêu cầu vượt quá 4KB"}
+    try:
+        body_text = raw_body.decode('utf-8') if isinstance(raw_body, bytes) else str(raw_body)
+        payload = json.loads(body_text) if body_text else {}
+        if not isinstance(payload, dict):
+            return {"success": False, "status": 400, "error": "MALFORMED_JSON", "message": "Định dạng JSON không hợp lệ"}
+    except Exception:
+        return {"success": False, "status": 400, "error": "MALFORMED_JSON", "message": "Định dạng JSON không hợp lệ"}
+
+    username = str(payload.get("username") or "").strip().lower()
+    password = str(payload.get("password") or "")
+    if not username or not password or len(username) > 40 or len(password) > 200:
+        return {"success": False, "status": 400, "error": "MISSING_PARAMETERS", "message": "Tên đăng nhập và mật khẩu là bắt buộc"}
+
+    per_ip = f"{username}|{client_ip}"
+    per_account = f"acct:{username}"
+    if (_admin_ip_limiter.is_rate_limited(client_ip, per_ip)
+            or _admin_account_limiter.is_rate_limited("", per_account, max_attempts=30, window_sec=3600)):
+        logger.warning("Rate limit exceeded for admin auth principal")
+        return {"success": False, "status": 429, "error": "RATE_LIMIT_EXCEEDED", "message": "Quá nhiều lần thử thất bại. Vui lòng thử lại sau 5 phút."}
+
+    try:
+        supabase_url, _anon_key, jwt_secret = get_supabase_config()
+        service_role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        account = admin_account_login(supabase_url, service_role_key, username, password)
+        if not account:
+            _admin_ip_limiter.record_attempt(client_ip, per_ip)
+            _admin_account_limiter.record_attempt("", per_account)
+            logger.warning("Admin login refused")
+            return {"success": False, "status": 401, "error": "INVALID_CREDENTIALS", "message": "Tên đăng nhập hoặc mật khẩu không đúng"}
+        token = issue_hs256_admin_jwt(account["id"], jwt_secret)
+        logger.info("Successfully issued Admin JWT")
+        return {"success": True, "status": 200, "admin_jwt": token, "expires_in": ADMIN_JWT_TTL_SECONDS}
+    except PosJwtAuthError as e:
+        logger.warning("Admin PosJwtAuthError: code=%s, status=%d", e.error_code, e.status_code)
+        return {"success": False, "status": e.status_code, "error": e.error_code, "message": e.message}
+    except Exception as e:
+        logger.error("Unhandled admin auth error: %s", type(e).__name__)
+        return {"success": False, "status": 500, "error": "SERVER_ERROR", "message": "Lỗi xác thực hệ thống"}
 
 
 def verify_and_decode_hs256_jwt(token, jwt_secret, expected_token_use=None):

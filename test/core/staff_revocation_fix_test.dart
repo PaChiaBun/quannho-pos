@@ -218,6 +218,25 @@ void main() {
     );
 
     test(
+      '4b. validateActiveMembership coi như offline khi còn chờ làm mới JWT (không đọc bằng anon)',
+      () async {
+        PosJwtAuthService.waitingForRefresh = true;
+        try {
+          final res = await UserAuthService.validateActiveMembership(
+            userId: 'u_revoked',
+            storeId: 's1',
+            emptyConfirmationDelay: Duration.zero,
+          );
+          expect(res.isActive, true);
+          expect(res.isOffline, true);
+          expect(fakeRepo.queryStoreMemberCalls, 0);
+        } finally {
+          PosJwtAuthService.waitingForRefresh = false;
+        }
+      },
+    );
+
+    test(
       '5. validateActiveMembership returns isActive=true when store_members present',
       () async {
         fakeRepo.storeMembers.add({

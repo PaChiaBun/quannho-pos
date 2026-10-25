@@ -51,6 +51,8 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    PosJwtAuthService.clientLabelOverride = 'test 1.0.5+99';
+    PosJwtAuthService.waitingForRefresh = false;
     client = MockHttpClient();
     storage = MemoryStorage();
     applied = [];
@@ -117,6 +119,7 @@ void main() {
     expect(res['success'], isTrue);
     expect(res.containsKey('refresh_token'), isFalse);
     expect(sentBodies.single['supports_refresh'], isTrue);
+    expect(sentBodies.single['client_label'], 'test 1.0.5+99');
     expect(await service.getStoredRefreshToken(), 'qnr_first_token_value_abcdef');
   });
 
@@ -245,5 +248,137 @@ void main() {
     await service.storeRefreshToken('qnr_cleared_with_access_123');
     await service.clearPosJwt();
     expect(await service.getStoredRefreshToken(), isNull);
+  });
+
+  // ── Kế hoạch JWT Pha 2: mở app lúc mất mạng ──
+  test('13. offline retry: waits, then recovers JWT, clears flag, notifies once', () async {
+    await service.storeRefreshToken('qnr_offline_retry_token_1234');
+    var online = false;
+    stubPost((_) {
+      if (!online) throw http.ClientException('no network');
+      return jsonResp(200, {
+        'success': true,
+        'pos_jwt': jwt(),
+        'refresh_token': 'qnr_offline_retry_token_5678',
+      });
+    });
+    final before = PosJwtAuthService.jwtRecovered.value;
+    service.startOfflineRetry(
+      expectedStoreId: 's1',
+      every: const Duration(milliseconds: 20),
+    );
+    expect(PosJwtAuthService.waitingForRefresh, isTrue);
+    await Future<void>.delayed(const Duration(milliseconds: 70));
+    expect(PosJwtAuthService.waitingForRefresh, isTrue);
+    expect(applied, isEmpty);
+    online = true;
+    await Future<void>.delayed(const Duration(milliseconds: 70));
+    expect(PosJwtAuthService.waitingForRefresh, isFalse);
+    expect(applied.single, isNotNull);
+    expect(PosJwtAuthService.jwtRecovered.value, before + 1);
+    final calls = sentBodies.length;
+    await Future<void>.delayed(const Duration(milliseconds: 70));
+    expect(sentBodies.length, calls, reason: 'dừng thử lại sau khi có JWT');
+  });
+
+  test('14. offline retry: server rejects refresh => onSessionRevoked, stops', () async {
+    await service.storeRefreshToken('qnr_offline_rejected_token_1');
+    stubPost((_) => jsonResp(401, {'success': false}));
+    var revoked = 0;
+    service.startAutoRefresh(
+      currentStoreId: () => 's1',
+      onSessionRevoked: () => revoked++,
+    );
+    service.startOfflineRetry(
+      expectedStoreId: 's1',
+      every: const Duration(milliseconds: 20),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 90));
+    PosJwtAuthService.stopAutoRefresh();
+    expect(revoked, 1);
+    expect(sentBodies.length, 1);
+    expect(PosJwtAuthService.waitingForRefresh, isTrue,
+        reason: 'chưa có JWT, vẫn không kiểm thành viên bằng anon');
+  });
+
+  test('15. offline retry gives up after maxTries without throwing', () async {
+    await service.storeRefreshToken('qnr_offline_giveup_token_12');
+    stubPost((_) => throw http.ClientException('no network'));
+    service.startOfflineRetry(
+      expectedStoreId: 's1',
+      every: const Duration(milliseconds: 10),
+      maxTries: 3,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    expect(sentBodies.length, 3);
+    PosJwtAuthService.stopAutoRefresh();
+  });
+
+  test('16. anon (token null) does not clear the waiting flag', () async {
+    PosJwtAuthService.waitingForRefresh = true;
+    await service.applyAuthToSupabase(null);
+    expect(PosJwtAuthService.waitingForRefresh, isTrue);
+    PosJwtAuthService.waitingForRefresh = false;
+  });
+
+  group('vé bị API từ chối (đổi khoá ký)', () {
+    setUp(() => PosJwtAuthService.resetRecoverCooldown());
+    tearDown(() {
+      PosJwtAuthService.stopAutoRefresh();
+      PosJwtAuthService.currentAccessToken = null;
+    });
+
+    test('17. xin vé mới bằng refresh token, trả vé mới', () async {
+      final old = jwt(ttl: 2592000);
+      PosJwtAuthService.currentAccessToken = old;
+      await service.storeRefreshToken('qnr_recover_token_value_001');
+      final fresh = jwt(ttl: 2592001);
+      stubPost((_) => jsonResp(200, {
+            'success': true,
+            'pos_jwt': fresh,
+            'refresh_token': 'qnr_recover_token_value_002',
+            'store_id': 's1',
+          }));
+      expect(await service.recoverRejectedJwt(old), fresh);
+      expect(sentBodies.single['refresh_token'], 'qnr_recover_token_value_001');
+      expect(applied.last, fresh);
+    });
+
+    test('18. yêu cầu khác đã có vé mới: dùng luôn, không gọi máy chủ', () async {
+      PosJwtAuthService.currentAccessToken = 've.moi.roi';
+      stubPost((_) => jsonResp(500, {}));
+      expect(await service.recoverRejectedJwt('ve.cu.bi.tu.choi'), 've.moi.roi');
+      expect(sentBodies, isEmpty);
+    });
+
+    test('19. refresh token bị từ chối → về đăng nhập; lần sau trong 30 giây không gọi lại', () async {
+      final old = jwt();
+      PosJwtAuthService.currentAccessToken = old;
+      await service.storeRefreshToken('qnr_recover_rejected_value1');
+      stubPost((_) => jsonResp(401, {'success': false}));
+      var revoked = 0;
+      service.startAutoRefresh(
+        currentStoreId: () => 's1',
+        onSessionRevoked: () => revoked++,
+      );
+      expect(await service.recoverRejectedJwt(old), isNull);
+      expect(revoked, 1);
+      expect(await service.recoverRejectedJwt(old), isNull);
+      expect(sentBodies.length, 1, reason: 'đang nghỉ 30 giây');
+    });
+
+    test('20. mất mạng: trả null, không đá về đăng nhập', () async {
+      final old = jwt();
+      PosJwtAuthService.currentAccessToken = old;
+      await service.storeRefreshToken('qnr_recover_offline_value_1');
+      stubPost((_) => throw http.ClientException('no network'));
+      var revoked = 0;
+      service.startAutoRefresh(
+        currentStoreId: () => 's1',
+        onSessionRevoked: () => revoked++,
+      );
+      expect(await service.recoverRejectedJwt(old), isNull);
+      expect(revoked, 0);
+    });
   });
 }

@@ -130,7 +130,7 @@ Future<void> showOrderDetailDialog(
           SnackBar(
             content: Text(
               'Không tìm thấy đơn hàng "$orderNumber"',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
             ),
             backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
@@ -390,7 +390,7 @@ Future<void> showOrderDetailDialog(
           children: [
             Text(
               'Chi tiết đơn hàng',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.w900,
                 fontSize: isDesktop ? 18 : 16,
                 color: _kNavy,
@@ -429,7 +429,7 @@ Future<void> showOrderDetailDialog(
                         children: [
                           Text(
                             'Số đơn:',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               color: _kMuted,
                               fontWeight: FontWeight.w600,
@@ -440,7 +440,7 @@ Future<void> showOrderDetailDialog(
                             child: Text(
                               order['order_number'] as String,
                               textAlign: TextAlign.end,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
                                 color: _kNavy,
                                 fontWeight: FontWeight.w900,
@@ -456,7 +456,7 @@ Future<void> showOrderDetailDialog(
                         children: [
                           Text(
                             'Thời gian:',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               color: _kMuted,
                               fontWeight: FontWeight.w600,
@@ -469,7 +469,7 @@ Future<void> showOrderDetailDialog(
                                 DateTime.parse(order['created_at'] as String),
                               ),
                               textAlign: TextAlign.end,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 color: _kInk,
                                 fontWeight: FontWeight.w500,
@@ -485,7 +485,7 @@ Future<void> showOrderDetailDialog(
                         children: [
                           Text(
                             'Thu ngân thanh toán:',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               color: _kMuted,
                               fontWeight: FontWeight.w600,
@@ -498,7 +498,7 @@ Future<void> showOrderDetailDialog(
                               textAlign: TextAlign.end,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 color: _kNavy,
                                 fontWeight: FontWeight.w700,
@@ -514,7 +514,7 @@ Future<void> showOrderDetailDialog(
                           children: [
                             Text(
                               'Nhân viên phục vụ:',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 color: _kMuted,
                                 fontWeight: FontWeight.w600,
@@ -525,7 +525,7 @@ Future<void> showOrderDetailDialog(
                               child: Text(
                                 waiterName,
                                 textAlign: TextAlign.end,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   color: _kNavy,
                                   fontWeight: FontWeight.w700,
@@ -544,7 +544,7 @@ Future<void> showOrderDetailDialog(
                           children: [
                             Text(
                               'Khách hàng:',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 color: _kMuted,
                                 fontWeight: FontWeight.w600,
@@ -555,7 +555,7 @@ Future<void> showOrderDetailDialog(
                               child: Text(
                                 order['customer_name'] as String,
                                 textAlign: TextAlign.end,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   color: _kInk,
                                   fontWeight: FontWeight.w500,
@@ -572,7 +572,7 @@ Future<void> showOrderDetailDialog(
                         children: [
                           Text(
                             'Hình thức:',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               color: _kMuted,
                               fontWeight: FontWeight.w600,
@@ -585,7 +585,7 @@ Future<void> showOrderDetailDialog(
                                 order['payment_method'] as String?,
                               ),
                               textAlign: TextAlign.end,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 color: _kInk,
                                 fontWeight: FontWeight.w500,
@@ -600,7 +600,7 @@ Future<void> showOrderDetailDialog(
                 const SizedBox(height: 16),
                 Text(
                   'Danh sách món:',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                     color: _kNavy,
@@ -637,7 +637,7 @@ Future<void> showOrderDetailDialog(
                               Expanded(
                                 child: Text(
                                   name,
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: _kInk,
@@ -647,7 +647,7 @@ Future<void> showOrderDetailDialog(
                               const SizedBox(width: 8),
                               Text(
                                 'x${qty.toStringAsFixed(0)}',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                   color: _kNavy,
@@ -656,7 +656,7 @@ Future<void> showOrderDetailDialog(
                               const SizedBox(width: 16),
                               Text(
                                 _fmtVnd(sub),
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                   color: _kNavy,
@@ -675,11 +675,11 @@ Future<void> showOrderDetailDialog(
                   children: [
                     Text(
                       'Tạm tính:',
-                      style: GoogleFonts.outfit(fontSize: 12, color: _kMuted),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted),
                     ),
                     Text(
                       _fmtVnd((order['subtotal'] as num?)?.toDouble() ?? 0),
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: _kInk,
@@ -695,11 +695,11 @@ Future<void> showOrderDetailDialog(
                     children: [
                       Text(
                         'Giảm giá:',
-                        style: GoogleFonts.outfit(fontSize: 12, color: _kRed),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kRed),
                       ),
                       Text(
                         '-${_fmtVnd((order['discount'] as num).toDouble())}',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: _kRed,
@@ -714,7 +714,7 @@ Future<void> showOrderDetailDialog(
                   children: [
                     Text(
                       'Tổng thanh toán:',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: _kNavy,
@@ -722,7 +722,7 @@ Future<void> showOrderDetailDialog(
                     ),
                     Text(
                       _fmtVnd((order['total'] as num?)?.toDouble() ?? 0),
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                         color: _kGreen,
@@ -744,7 +744,7 @@ Future<void> showOrderDetailDialog(
                             (order['note'] as String).trim().isNotEmpty)
                         ? 'Ghi chú: ${order['note']}'
                         : 'Ghi chú: Không có ghi chú',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       fontStyle: FontStyle.italic,
                       color: _kMuted,
@@ -763,7 +763,7 @@ Future<void> showOrderDetailDialog(
         SnackBar(
           content: Text(
             'Lỗi tải chi tiết đơn hàng: $e',
-            style: GoogleFonts.outfit(),
+            style: GoogleFonts.plusJakartaSans(),
           ),
           backgroundColor: _kRed,
         ),

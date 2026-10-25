@@ -46,7 +46,7 @@ class OpenAiFallbackService {
       return FallbackResult(
         success: false,
         content:
-            'Hệ thống Cloud Fallback tạm ngắt. Bum đang phục vụ bằng dữ liệu Local.',
+            'Hệ thống Cloud Fallback tạm ngắt. Boom đang phục vụ bằng dữ liệu Local.',
         source: 'local_fallback',
         errorReason: 'circuit_breaker_open',
       );
@@ -57,7 +57,7 @@ class OpenAiFallbackService {
       return FallbackResult(
         success: false,
         content:
-            'Quán Kay đã dùng hết hạn mức Cloud trong ngày. Bum tiếp tục phục vụ bằng dữ liệu Local.',
+            'Quán Kay đã dùng hết hạn mức Cloud trong ngày. Boom tiếp tục phục vụ bằng dữ liệu Local.',
         source: 'local_fallback',
         errorReason: 'daily_budget_exceeded',
       );
@@ -69,7 +69,7 @@ class OpenAiFallbackService {
     // 3. Prompt Composer cấu trúc cố định
     final systemPrompt =
         '''
-Bạn là AI Bum - Cố vấn vận hành F&B cho Quán Kay.
+Bạn là AI Boom - Cố vấn vận hành F&B cho Quán Kay.
 Nhiệm vụ: Diễn giải dữ liệu số liệu và hướng dẫn quy trình nghiệp vụ.
 
 QUY TẮC BẤT BIẾN:
@@ -95,7 +95,7 @@ ${ragSources.join('\n')}
         return FallbackResult(
           success: true,
           content:
-              'Bum đã phân tích dữ liệu cho Quán Kay: $safeQuery. Kết quả vận hành ổn định.',
+              'Boom đã phân tích dữ liệu cho Quán Kay: $safeQuery. Kết quả vận hành ổn định.',
           source: 'cloud_fallback_openai',
           tokensUsed: mockTokenCost,
         );
@@ -114,7 +114,7 @@ ${ragSources.join('\n')}
       return FallbackResult(
         success: false,
         content:
-            'Kết nối Cloud quá giờ (Timeout). Bum đã tự động chuyển sang chế độ Local.',
+            'Kết nối Cloud quá giờ (Timeout). Boom đã tự động chuyển sang chế độ Local.',
         source: 'local_fallback',
         errorReason: 'timeout',
       );
@@ -123,7 +123,7 @@ ${ragSources.join('\n')}
       return FallbackResult(
         success: false,
         content:
-            'Lỗi kết nối Cloud API. Bum đã chuyển sang chế độ Local an toàn.',
+            'Lỗi kết nối Cloud API. Boom đã chuyển sang chế độ Local an toàn.',
         source: 'local_fallback',
         errorReason: e.toString(),
       );

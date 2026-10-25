@@ -80,7 +80,7 @@ class _KhoProReportScreenState extends ConsumerState<KhoProReportScreen>
             indicatorColor: KhoTheme.violet,
             indicatorWeight: 2.5,
             tabs: _tabs.map((t) => Tab(
-                child: Text(t, style: GoogleFonts.outfit(
+                child: Text(t, style: GoogleFonts.plusJakartaSans(
                     fontSize: 13, fontWeight: FontWeight.w700)))).toList(),
           ),
         ),
@@ -127,7 +127,7 @@ class _KhoProReportScreenState extends ConsumerState<KhoProReportScreen>
             color: isSelected ? KhoTheme.violet : KhoTheme.violet.withOpacity(0.25),
           ),
         ),
-        child: Text(label, style: GoogleFonts.outfit(
+        child: Text(label, style: GoogleFonts.plusJakartaSans(
             fontSize: 11.5, fontWeight: FontWeight.w700,
             color: isSelected ? Colors.white : KhoTheme.violet)),
       ),
@@ -150,7 +150,7 @@ class _DateChip extends StatelessWidget {
         color: KhoTheme.card, borderRadius: BorderRadius.circular(8),
         border: Border.all(color: KhoTheme.border)),
       child: Text('$label ${date.day}/${date.month}',
-          style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w700,
+          style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w700,
               color: KhoTheme.navy)),
     ),
   );
@@ -196,7 +196,7 @@ class _FoodCostTab extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             // Daily breakdown
-            Text('Chi phí theo ngày', style: GoogleFonts.outfit(
+            Text('Chi phí theo ngày', style: GoogleFonts.plusJakartaSans(
                 fontSize: 13, fontWeight: FontWeight.w800, color: KhoTheme.navy)),
             const SizedBox(height: 8),
             if (data.isEmpty)
@@ -246,22 +246,22 @@ class _ConsumptionTab extends ConsumerWidget {
                 boxShadow: KhoTheme.subtleShadow,
               ),
               child: Row(children: [
-                Text('${i + 1}', style: GoogleFonts.outfit(
+                Text('${i + 1}', style: GoogleFonts.plusJakartaSans(
                     fontSize: 13, color: KhoTheme.muted, fontWeight: FontWeight.w700)),
                 const SizedBox(width: 10),
                 Expanded(child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(item['ingredient_name'] as String? ?? '—',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 14, fontWeight: FontWeight.w800,
                               color: KhoTheme.ink)),
                       Text('${(item['total_qty'] as double).toStringAsFixed(1)} ${item['unit']}',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 12, color: KhoTheme.muted)),
                     ])),
                 Text(fmtMoney(item['total_cost'] as double),
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 14, fontWeight: FontWeight.w800,
                         color: KhoTheme.violet)),
               ]),
@@ -353,12 +353,12 @@ class _ProductionTab extends ConsumerWidget {
                   Expanded(child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(o.recipeName, style: GoogleFonts.outfit(
+                        Text(o.recipeName, style: GoogleFonts.plusJakartaSans(
                             fontSize: 13, fontWeight: FontWeight.w800,
                             color: o.status == 'cancelled' ? KhoTheme.muted : KhoTheme.ink,
                             decoration: o.status == 'cancelled' ? TextDecoration.lineThrough : null)),
                         Text('${o.quantity.toStringAsFixed(0)} phần  ·  ${o.scheduledDate}',
-                            style: GoogleFonts.outfit(fontSize: 11, color: KhoTheme.muted)),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 11, color: KhoTheme.muted)),
                       ])),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -367,7 +367,7 @@ class _ProductionTab extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(statusLabel,
-                        style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700,
                             color: statusColor)),
                   ),
                 ]),
@@ -390,9 +390,9 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: GoogleFonts.outfit(
+      Text(label, style: GoogleFonts.plusJakartaSans(
           fontSize: 11, color: Colors.white60, fontWeight: FontWeight.w600)),
-      Text(value, style: GoogleFonts.outfit(
+      Text(value, style: GoogleFonts.plusJakartaSans(
           fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
     ],
   );
@@ -411,10 +411,10 @@ class _DayCostRow extends StatelessWidget {
       color: KhoTheme.card, borderRadius: BorderRadius.circular(10),
       border: Border.all(color: KhoTheme.border)),
     child: Row(children: [
-      Text(date, style: GoogleFonts.outfit(
+      Text(date, style: GoogleFonts.plusJakartaSans(
           fontSize: 13, color: KhoTheme.muted)),
       const Spacer(),
-      Text(fmtMoney(cost), style: GoogleFonts.outfit(
+      Text(fmtMoney(cost), style: GoogleFonts.plusJakartaSans(
           fontSize: 14, fontWeight: FontWeight.w800, color: KhoTheme.violet)),
     ]),
   );
@@ -434,8 +434,8 @@ class _KpiMini extends StatelessWidget {
       border: Border.all(color: color.withOpacity(0.2)),
     ),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: GoogleFonts.outfit(fontSize: 11, color: color)),
-      Text(value, style: GoogleFonts.outfit(
+      Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: color)),
+      Text(value, style: GoogleFonts.plusJakartaSans(
           fontSize: 22, fontWeight: FontWeight.w900, color: color)),
     ]),
   );
@@ -451,7 +451,7 @@ class _EmptyReport extends StatelessWidget {
     child: Column(mainAxisSize: MainAxisSize.min, children: [
       Icon(Icons.bar_chart_rounded, size: 56, color: KhoTheme.muted.withOpacity(0.4)),
       const SizedBox(height: 12),
-      Text(label, style: GoogleFonts.outfit(
+      Text(label, style: GoogleFonts.plusJakartaSans(
           fontSize: 14, color: KhoTheme.muted, fontWeight: FontWeight.w600),
           textAlign: TextAlign.center),
     ]),

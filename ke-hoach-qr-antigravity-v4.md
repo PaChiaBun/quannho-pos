@@ -101,7 +101,7 @@ Nếu tài liệu nói đã có nhưng source/schema thật chưa có, báo `ch�
 - Không sửa dữ liệu production.
 - Không deploy web/VPS, upload App Store/Play Store, build release hoặc push Git.
 - Không dùng tài khoản thật, mật khẩu thật, reviewer credential hoặc token thật trong log/test/report.
-- Không thay auth toàn hệ thống, print server, AI Bum, payroll hoặc module ngoài blast radius nếu chưa có bằng chứng cần thiết.
+- Không thay auth toàn hệ thống, print server, AI Boom, payroll hoặc module ngoài blast radius nếu chưa có bằng chứng cần thiết.
 - Không xóa migration V3 chỉ vì người dùng nói chưa apply; phải xác minh schema/migration history trước.
 - Không tái sử dụng PIN quản lý làm credential QR hoặc pairing thiết bị.
 - Không thêm QR Payment tự động/webhook ngoài phạm vi.

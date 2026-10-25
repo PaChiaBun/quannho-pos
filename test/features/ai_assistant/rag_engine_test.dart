@@ -11,7 +11,7 @@ void main() {
     setUpAll(() {
       final mockKnowledgeBase = [
         {
-          'path': '.docs/Ai_Bum/cac-module/ban-hang.md',
+          'path': '.docs/Ai_Boom/cac-module/ban-hang.md',
           'module': 'ban_hang',
           'content': '''
 # Module Bán Hàng POS
@@ -23,7 +23,7 @@ Vào danh sách đơn hàng đã thanh toán, chọn đơn hàng cần in và b�
 ''',
         },
         {
-          'path': '.docs/Ai_Bum/cac-module/bep.md',
+          'path': '.docs/Ai_Boom/cac-module/bep.md',
           'module': 'bep',
           'content': '''
 # Module Trạm Bếp
@@ -35,7 +35,7 @@ Bếp nóng nhận các món xào nấu. Bếp bar nhận các món nước và 
 ''',
         },
         {
-          'path': '.docs/Ai_Bum/cac-module/kho-hang.md',
+          'path': '.docs/Ai_Boom/cac-module/kho-hang.md',
           'module': 'kho_hang',
           'content': '''
 # Module Kho Hàng
@@ -47,7 +47,7 @@ Chủ quán vào Quản lý kho -> Sản phẩm -> Nhập số lượng "Tồn t
 ''',
         },
         {
-          'path': '.docs/Ai_Bum/cac-module/nhan-vien.md',
+          'path': '.docs/Ai_Boom/cac-module/nhan-vien.md',
           'module': 'nhan_vien',
           'content': '''
 # Module Nhân Viên
@@ -59,7 +59,7 @@ Quản lý vào Cài đặt cá nhân -> Đổi mã PIN 6 số để duyệt cá
 ''',
         },
         {
-          'path': '.docs/Ai_Bum/cac-module/cham-cong.md',
+          'path': '.docs/Ai_Boom/cac-module/cham-cong.md',
           'module': 'cham_cong',
           'content': '''
 # Module Chấm Công
@@ -68,7 +68,7 @@ Nhân viên mở app Quán Nhỏ -> Chọn Chấm công -> Quét mã QR tại c�
 ''',
         },
         {
-          'path': '.docs/Ai_Bum/cac-module/luong.md',
+          'path': '.docs/Ai_Boom/cac-module/luong.md',
           'module': 'luong',
           'content': '''
 # Module Tính Lương

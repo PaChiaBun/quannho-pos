@@ -1,3 +1,5 @@
+-- ⛔ KHÔNG ÁP FILE NÀY (26/10): đã thay bằng 20261031_doi_ten_an_toan.sql. Bản này cấp cho anon + tin header x-user-id
+--    → người chưa đăng nhập đổi được tên người khác.
 -- Cho người dùng tự đổi tên hiển thị của chính mình.
 -- Bảng user_accounts không cấp quyền UPDATE trực tiếp cho anon/authenticated (chỉ có policy),
 -- nên đi qua hàm SECURITY DEFINER; định danh lấy từ qn_caller_id() (JWT hoặc header x-user-id).

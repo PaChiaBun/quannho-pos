@@ -15,26 +15,26 @@ void main() {
           DatasetDistribution.posAnalysisShare +
           DatasetDistribution.privacyPermissionsShare +
           DatasetDistribution.missingDataShare +
-          DatasetDistribution.bumPersonaShare;
+          DatasetDistribution.boomPersonaShare;
 
       expect(totalShare, closeTo(1.0, 0.001));
       expect(DatasetDistribution.goldSetSize, greaterThanOrEqualTo(500));
     });
 
     test('Feature Flag Shadow Test Quán Kay chỉ bật cho Owner Quán Kay', () {
-      final isKayOwnerEnabled = ShadowTestFeatureFlag.isBumEnabledForStore(
+      final isKayOwnerEnabled = ShadowTestFeatureFlag.isBoomEnabledForStore(
         storeId: '00000000-0000-0000-0000-000000009999',
         userRole: 'owner',
         isOwner: true,
       );
 
-      final isOtherStoreEnabled = ShadowTestFeatureFlag.isBumEnabledForStore(
+      final isOtherStoreEnabled = ShadowTestFeatureFlag.isBoomEnabledForStore(
         storeId: 'other_store_123',
         userRole: 'owner',
         isOwner: true,
       );
 
-      final isStaffEnabled = ShadowTestFeatureFlag.isBumEnabledForStore(
+      final isStaffEnabled = ShadowTestFeatureFlag.isBoomEnabledForStore(
         storeId: '00000000-0000-0000-0000-000000009999',
         userRole: 'cashier',
         isOwner: false,

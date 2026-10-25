@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Quán Nhỏ · Quản trị nền tảng</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231E2A4A'/%3E%3Cpath d='M7 13.5L9.2 8h13.6L25 13.5a2.8 2.8 0 0 1-5 1.7 2.8 2.8 0 0 1-4 0 2.8 2.8 0 0 1-4 0 2.8 2.8 0 0 1-5-1.7Z' fill='%23F07A45'/%3E%3Cpath d='M9 16.5V24h14v-7.5' stroke='%23FFFFFF' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <!-- Màn đăng nhập -->
+  <main id="login" class="login-screen" hidden>
+    <div class="login-topbar">
+      <button type="button" id="login-theme-toggle" class="icon-btn" aria-label="Đổi giao diện sáng / tối">
+        <svg class="ico ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2.5 12H5M19 12h2.5M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="ico ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/></svg>
+      </button>
+    </div>
+
+    <form id="login-form" class="login-card" autocomplete="on" novalidate>
+      <div class="login-brand">
+        <div class="brand-mark large" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><path d="M5.5 13.2L8 7h16l2.5 6.2a3.1 3.1 0 0 1-5.5 1.9 3.1 3.1 0 0 1-5 0 3.1 3.1 0 0 1-5 0 3.1 3.1 0 0 1-5.5-1.9Z" class="mark-roof"/><path d="M8.5 16.8V25h15v-8.2M13.5 25v-5.2h5V25" class="mark-base"/></svg>
+        </div>
+        <div>
+          <h1>Quán Nhỏ · Quản trị</h1>
+          <p class="muted small">Tài khoản quản trị riêng của nền tảng (không dùng tài khoản quán).</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="username">Tên đăng nhập</label>
+        <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Nhập tên đăng nhập" required>
+      </div>
+
+      <div class="field">
+        <label for="password">Mật khẩu</label>
+        <div class="pw-wrap">
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu" required>
+          <button type="button" id="pw-toggle" class="pw-btn" aria-label="Hiện mật khẩu" aria-pressed="false">
+            <svg class="ico pw-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="ico pw-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-4.2 4.9M6.3 6.3A17.4 17.4 0 0 0 2 12s3.6 7 10 7a10.2 10.2 0 0 0 4.5-1"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <p id="login-error" class="login-error" role="alert" aria-live="assertive" hidden></p>
+
+      <button type="submit" class="btn primary full lg" id="login-btn">
+        <span class="btn-spinner" aria-hidden="true"></span>
+        <span id="login-btn-text">Đăng nhập</span>
+      </button>
+    </form>
+  </main>
+
+  <!-- Khung ứng dụng -->
+  <div id="app" class="app-shell" hidden>
+    <aside class="nav-shell" aria-label="Điều hướng quản trị">
+      <div class="nav-top">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><path d="M5.5 13.2L8 7h16l2.5 6.2a3.1 3.1 0 0 1-5.5 1.9 3.1 3.1 0 0 1-5 0 3.1 3.1 0 0 1-5 0 3.1 3.1 0 0 1-5.5-1.9Z" class="mark-roof"/><path d="M8.5 16.8V25h15v-8.2M13.5 25v-5.2h5V25" class="mark-base"/></svg>
+          </div>
+          <div class="brand-copy">
+            <strong class="brand-title">Quán Nhỏ</strong>
+            <span class="brand-badge">Quản trị</span>
+          </div>
+        </div>
+
+        <div class="nav-footer">
+          <button type="button" id="theme-toggle" class="icon-btn nav-theme-btn" aria-label="Đổi giao diện sáng / tối" title="Đổi giao diện sáng / tối">
+            <svg class="ico ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2.5 12H5M19 12h2.5M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+            <svg class="ico ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/></svg>
+          </button>
+          <div class="who-pill">
+            <span id="who-avatar" class="who-avatar" aria-hidden="true">Q</span>
+            <span id="who-name" class="who-name"></span>
+          </div>
+          <button type="button" id="logout" class="btn small nav-logout-btn">Thoát</button>
+        </div>
+      </div>
+
+      <nav class="tabs" role="tablist" aria-label="Các mục quản trị">
+        <button type="button" class="tab" data-tab="overview" role="tab" aria-selected="true" id="tabbtn-overview" aria-controls="tab-overview">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>
+          <span class="tab-label">Tổng quan</span>
+        </button>
+        <button type="button" class="tab" data-tab="stores" role="tab" aria-selected="false" id="tabbtn-stores" aria-controls="tab-stores">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10L5.5 4.5h13L20.5 10a2.6 2.6 0 0 1-4.5 1.8 2.6 2.6 0 0 1-4 0 2.6 2.6 0 0 1-4 0A2.6 2.6 0 0 1 3.5 10Z"/><path d="M5.5 12.2V20h13v-7.8M10 20v-4.5h4V20"/></svg>
+          <span class="tab-label">Quán</span>
+        </button>
+        <button type="button" class="tab" data-tab="plans" role="tab" aria-selected="false" id="tabbtn-plans" aria-controls="tab-plans">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h4"/></svg>
+          <span class="tab-label">Gói</span>
+        </button>
+        <button type="button" class="tab" data-tab="support" role="tab" aria-selected="false" id="tabbtn-support" aria-controls="tab-support">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/></svg>
+          <span class="tab-label">Hỗ trợ</span>
+        </button>
+        <button type="button" class="tab" data-tab="boom" role="tab" aria-selected="false" id="tabbtn-boom" aria-controls="tab-boom">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2v-7.5A8 8 0 1 1 21 12Z"/><path d="M8.5 11.5h7M8.5 14.8h4.5"/></svg>
+          <span class="tab-label">Boom: Hội thoại</span>
+        </button>
+        <button type="button" class="tab" data-tab="knowledge" role="tab" aria-selected="false" id="tabbtn-knowledge" aria-controls="tab-knowledge">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5V5.5Z"/><path d="M4 19h16M8.5 7.5h7M8.5 11h5"/></svg>
+          <span class="tab-label">Boom: Đã dạy</span>
+        </button>
+      </nav>
+    </aside>
+
+    <main class="main-area">
+      <!-- TAB 1: TỔNG QUAN -->
+      <section id="tab-overview" class="page" role="tabpanel" aria-labelledby="tabbtn-overview" hidden>
+        <header class="page-head">
+          <div>
+            <h2>Tổng quan các quán</h2>
+            <p class="muted small page-sub">Theo dõi kích hoạt, tần suất bán hàng và tăng trưởng cửa hàng toàn hệ thống.</p>
+          </div>
+          <div class="head-actions">
+            <label class="switch" for="ov-include-test">
+              <input type="checkbox" id="ov-include-test">
+              <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+              <span class="switch-label">Tính cả quán thử</span>
+            </label>
+            <button type="button" class="icon-btn" id="ov-refresh" aria-label="Làm mới tổng quan" title="Làm mới">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3M20 4v7h-7"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div id="ov-error" hidden></div>
+        <div id="ov-hero" class="kpi-hero-grid"></div>
+        <div id="ov-secondary" class="kpi-sub-grid"></div>
+
+        <div class="card funnel-card">
+          <div class="card-head">
+            <div>
+              <h3>Phễu kích hoạt quán</h3>
+              <p class="muted small">Tỷ lệ chuyển đổi từng bước từ lúc tạo quán đến bán hàng đều đặn trong 7 ngày qua.</p>
+            </div>
+          </div>
+          <div id="ov-funnel" class="funnel-list"></div>
+        </div>
+
+        <div class="grid2">
+          <div class="card chart-card">
+            <div class="card-head">
+              <h3>Quán mới theo ngày (60 ngày)</h3>
+              <div id="ov-new-meta" class="chart-readout"></div>
+            </div>
+            <div id="ov-new-chart" class="chart"></div>
+          </div>
+
+          <div class="card chart-card">
+            <div class="card-head">
+              <h3>Quán có đơn theo tuần (12 tuần)</h3>
+              <div id="ov-week-meta" class="chart-readout"></div>
+            </div>
+            <div id="ov-week-chart" class="chart"></div>
+          </div>
+        </div>
+
+        <p class="footnote muted small">
+          Chú thích: <strong>Đang dùng tích cực</strong> = có ít nhất 1 đơn hoàn thành trong 7 ngày qua.
+          <strong>Ngủ</strong> = đã từng bán nhưng hơn 30 ngày không phát sinh đơn mới.
+        </p>
+      </section>
+
+      <!-- TAB 2: QUÁN -->
+      <section id="tab-stores" class="page" role="tabpanel" aria-labelledby="tabbtn-stores" hidden>
+        <header class="page-head">
+          <div class="title-with-count">
+            <h2>Danh sách quán</h2>
+            <span id="st-total" class="count-pill"></span>
+          </div>
+          <div class="head-actions">
+            <label class="switch" for="st-include-test">
+              <input type="checkbox" id="st-include-test">
+              <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+              <span class="switch-label">Tính cả quán thử</span>
+            </label>
+            <button type="button" class="icon-btn" id="st-refresh" aria-label="Làm mới danh sách quán" title="Làm mới">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3M20 4v7h-7"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="toolbar-card">
+          <div class="chips" id="st-filters" role="group" aria-label="Lọc trạng thái quán">
+            <button type="button" class="chip" data-f="all">Tất cả</button>
+            <button type="button" class="chip" data-f="active">Tích cực</button>
+            <button type="button" class="chip" data-f="new7">Mới 7 ngày</button>
+            <button type="button" class="chip" data-f="sleeping">Ngủ</button>
+            <button type="button" class="chip" data-f="never">Chưa bán</button>
+            <button type="button" class="chip" data-f="test">Quán thử</button>
+          </div>
+          <div class="toolbar-inputs">
+            <div class="search-box">
+              <svg class="ico search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+              <input id="st-search" type="search" placeholder="Tìm tên quán hoặc mã quán…" aria-label="Tìm tên quán hoặc mã quán">
+            </div>
+            <select id="st-sort" class="sort-select" aria-label="Sắp xếp danh sách quán">
+              <option value="default">Mặc định</option>
+              <option value="orders_7d:desc">Đơn 7 ngày: cao → thấp</option>
+              <option value="orders_7d:asc">Đơn 7 ngày: thấp → cao</option>
+              <option value="last_order_at:desc">Đơn gần nhất: mới → cũ</option>
+              <option value="created_at:desc">Ngày tạo: mới → cũ</option>
+              <option value="created_at:asc">Ngày tạo: cũ → mới</option>
+              <option value="menu_items:desc">Món menu: nhiều → ít</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="st-list" class="store-container"></div>
+
+        <div class="pager">
+          <button type="button" class="btn" id="st-prev">‹ Trang trước</button>
+          <span id="st-page" class="pager-info"></span>
+          <button type="button" class="btn" id="st-next">Trang sau ›</button>
+        </div>
+      </section>
+
+      <!-- TAB GÓI & HẠN DÙNG THỬ -->
+      <section id="tab-plans" class="page" role="tabpanel" aria-labelledby="tabbtn-plans" hidden>
+        <header class="page-head">
+          <div class="title-with-count">
+            <div>
+              <h2>Gói &amp; hạn dùng thử</h2>
+              <p class="muted small page-sub">Quán sắp hết / đã hết dùng thử, gói Pro, quán đang khoá và lịch hẹn gọi lại.</p>
+            </div>
+            <span id="pl-total" class="count-pill"></span>
+          </div>
+          <div class="head-actions">
+            <label class="switch" for="pl-include-test">
+              <input type="checkbox" id="pl-include-test">
+              <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+              <span class="switch-label">Tính cả quán thử</span>
+            </label>
+            <button type="button" class="icon-btn" id="pl-refresh" aria-label="Làm mới danh sách gói" title="Làm mới">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3M20 4v7h-7"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div id="pl-error" hidden></div>
+        <div id="pl-kpis" class="kpi-sub-grid"></div>
+        <div id="bl-section" class="bl-section"></div>
+
+        <div class="toolbar-card">
+          <div class="chips" id="pl-filters" role="group" aria-label="Lọc theo gói">
+            <button type="button" class="chip" data-f="all">Tất cả</button>
+            <button type="button" class="chip" data-f="follow_up">Cần gọi hôm nay</button>
+            <button type="button" class="chip" data-f="trial_ending">Sắp hết thử</button>
+            <button type="button" class="chip" data-f="trial_expired">Hết thử</button>
+            <button type="button" class="chip" data-f="pro">Pro</button>
+            <button type="button" class="chip" data-f="pro_ending">Pro sắp hết</button>
+            <button type="button" class="chip" data-f="pro_expired">Pro hết hạn</button>
+            <button type="button" class="chip" data-f="locked">Đang khoá</button>
+          </div>
+          <div class="toolbar-inputs">
+            <div class="search-box">
+              <svg class="ico search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+              <input id="pl-search" type="search" placeholder="Tìm tên quán hoặc mã quán…" aria-label="Tìm tên quán hoặc mã quán">
+            </div>
+          </div>
+        </div>
+
+        <div id="pl-list" class="turn-list"></div>
+
+        <div class="pager">
+          <button type="button" class="btn" id="pl-prev">‹ Trang trước</button>
+          <span id="pl-page" class="pager-info"></span>
+          <button type="button" class="btn" id="pl-next">Trang sau ›</button>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>Câu liên hệ khi quán bị khoá</h3>
+              <p class="muted small">Hiện trên màn "Quán đang tạm khoá" ở web / máy tính (iPhone / Android dùng câu cố định). KHÔNG ghi giá hay lời mời chuyển khoản.</p>
+            </div>
+          </div>
+          <div class="field">
+            <label for="pl-contact">Ví dụ: Gọi / Zalo 0900 000 000 để gia hạn</label>
+            <input id="pl-contact" type="text" maxlength="300" autocomplete="off">
+          </div>
+          <div class="review-actions">
+            <button type="button" class="btn primary" id="pl-contact-save">Lưu câu liên hệ</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB HỖ TRỢ CHỦ QUÁN -->
+      <section id="tab-support" class="page" role="tabpanel" aria-labelledby="tabbtn-support" hidden>
+        <header class="page-head">
+          <div>
+            <h2>Hỗ trợ chủ quán</h2>
+            <p class="muted small page-sub">Yêu cầu gửi từ app (Cài đặt → Gửi phản hồi), tra tài khoản, cấp mật khẩu tạm, xoá PIN nhanh.</p>
+          </div>
+          <div class="head-actions">
+            <button type="button" class="icon-btn" id="sp-refresh" aria-label="Làm mới yêu cầu hỗ trợ" title="Làm mới">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3M20 4v7h-7"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="card">
+          <h3>Tra tài khoản</h3>
+          <p class="muted small">Số điện thoại (0…, 84…, +84… đều được) hoặc tên.</p>
+          <div class="toolbar-inputs bl-toolbar">
+            <div class="search-box">
+              <svg class="ico search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+              <input id="sp-search" type="search" placeholder="Số điện thoại hoặc tên…" aria-label="Tra tài khoản theo số điện thoại hoặc tên" autocomplete="off">
+            </div>
+            <button type="button" class="btn primary" id="sp-search-btn">Tìm</button>
+          </div>
+          <div id="sp-accounts"></div>
+        </div>
+
+        <div class="toolbar-card" id="sp-filters"></div>
+        <div id="sp-list" class="turn-list"></div>
+      </section>
+
+      <!-- TAB 3: BOOM HỘI THOẠI -->
+      <section id="tab-boom" class="page" role="tabpanel" aria-labelledby="tabbtn-boom" hidden>
+        <header class="page-head">
+          <div class="title-with-count">
+            <div>
+              <h2>Boom — Hội thoại</h2>
+              <p class="muted small page-sub">Lịch sử hỏi đáp nguyên văn và kiểm duyệt chất lượng câu trả lời AI Boom.</p>
+            </div>
+          </div>
+          <div class="head-actions">
+            <select id="bm-range" aria-label="Khoảng thời gian thống kê">
+              <option value="1">24 giờ qua</option>
+              <option value="7" selected>7 ngày qua</option>
+              <option value="30">30 ngày qua</option>
+              <option value="90">90 ngày qua</option>
+            </select>
+            <button type="button" class="icon-btn" id="bm-refresh" aria-label="Làm mới hội thoại Boom" title="Làm mới">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3M20 4v7h-7"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div id="bm-stats" class="bm-stats-grid"></div>
+
+        <div id="bm-store-filter" class="active-filter-banner" hidden></div>
+
+        <div class="toolbar-card">
+          <div class="chips" id="bm-filters" role="group" aria-label="Lọc hội thoại Boom">
+            <button type="button" class="chip" data-f="all">Tất cả</button>
+            <button type="button" class="chip" data-f="unreviewed">Chưa chấm</button>
+            <button type="button" class="chip" data-f="down">Bị 👎</button>
+            <button type="button" class="chip" data-f="refused">Từ chối</button>
+            <button type="button" class="chip" data-f="unanswered">Chưa trả lời được</button>
+            <button type="button" class="chip" data-f="error">Lỗi</button>
+            <button type="button" class="chip" data-f="wrong">Tôi chấm sai</button>
+            <button type="button" class="chip" data-f="teach">Cần dạy lại</button>
+          </div>
+          <div class="toolbar-inputs">
+            <div class="search-box">
+              <svg class="ico search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+              <input id="bm-search" type="search" placeholder="Tìm trong câu hỏi hoặc câu trả lời…" aria-label="Tìm trong câu hỏi hoặc câu trả lời">
+            </div>
+            <span id="bm-total" class="count-pill"></span>
+          </div>
+        </div>
+
+        <div id="bm-list" class="turn-list"></div>
+
+        <div class="pager">
+          <button type="button" class="btn" id="bm-prev">‹ Trang trước</button>
+          <span id="bm-page" class="pager-info"></span>
+          <button type="button" class="btn" id="bm-next">Trang sau ›</button>
+        </div>
+      </section>
+
+      <!-- TAB 4: BOOM ĐÃ DẠY -->
+      <section id="tab-knowledge" class="page" role="tabpanel" aria-labelledby="tabbtn-knowledge" hidden>
+        <header class="page-head">
+          <div>
+            <h2>Những gì đã dạy Boom</h2>
+            <p class="muted small page-sub">Nhật ký huấn luyện, kho hướng dẫn ứng dụng, bộ nhớ câu trả lời mẫu và lời dặn hệ thống.</p>
+          </div>
+          <div class="head-actions">
+            <button type="button" class="icon-btn" id="kn-refresh" aria-label="Làm mới dữ liệu đã dạy" title="Làm mới">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3M20 4v7h-7"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div id="kn-error" hidden></div>
+
+        <div class="kn-grid">
+          <div class="card">
+            <div class="card-head">
+              <h3>Nhật ký dạy Boom</h3>
+              <span class="badge">Dòng thời gian</span>
+            </div>
+            <div id="kn-changelog" class="timeline"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Bộ hướng dẫn app đã đăng</h3>
+            </div>
+            <div id="kn-packs"></div>
+            <div id="kn-modules" class="modules"></div>
+          </div>
+        </div>
+
+        <div class="kn-grid">
+          <div class="card">
+            <div class="card-head">
+              <h3>Bộ nhớ câu trả lời đã duyệt</h3>
+              <span class="badge">0 token khi khớp</span>
+            </div>
+            <div id="kn-cache"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Năng lực đọc số (chỉ đọc, theo quyền)</h3>
+              <span class="badge good">An toàn · Read-only</span>
+            </div>
+            <div id="kn-caps"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>Luật và kiến thức nền đang chạy</h3>
+              <p class="muted small">Nguyên văn lời dặn (system prompt) đang chạy trực tiếp trên hàm máy chủ boom-chat.</p>
+            </div>
+          </div>
+          <div id="kn-prompt">
+            <button type="button" class="btn primary" id="kn-load-prompt">Xem nguyên văn lời dặn</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Bảng chi tiết (Drawer) -->
+  <div id="drawer" class="drawer" hidden>
+    <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1">
+      <header class="drawer-head">
+        <div class="drawer-head-left" id="drawer-head-left">
+          <h2 id="drawer-title">Chi tiết</h2>
+        </div>
+        <div class="drawer-head-actions">
+          <div id="drawer-nav" class="drawer-nav" hidden></div>
+          <button type="button" class="btn small" id="drawer-close" aria-label="Đóng bảng chi tiết">Đóng ✕</button>
+        </div>
+      </header>
+      <div id="drawer-body" class="drawer-body"></div>
+    </div>
+  </div>
+
+  <!-- Hộp thoại xác nhận -->
+  <div id="confirm-modal" class="modal-backdrop" hidden>
+    <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-desc" tabindex="-1">
+      <h3 id="confirm-title">Xác nhận thao tác</h3>
+      <p id="confirm-desc" class="muted"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="confirm-cancel">Huỷ</button>
+        <button type="button" class="btn primary" id="confirm-ok">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hộp thoại nhập liệu (gia hạn, đổi gói, khoá quán) -->
+  <div id="form-modal" class="modal-backdrop" hidden>
+    <form id="form-card" class="modal-card" role="dialog" aria-modal="true" aria-labelledby="form-title" novalidate>
+      <h3 id="form-title">Thao tác</h3>
+      <p id="form-desc" class="muted small"></p>
+      <div id="form-body" class="form-body"></div>
+      <p id="form-error" class="login-error" role="alert" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="form-cancel">Huỷ</button>
+        <button type="submit" class="btn primary" id="form-ok">Lưu</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

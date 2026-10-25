@@ -325,19 +325,19 @@ class _GradientKpiCard extends StatelessWidget {
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(value, style: GoogleFonts.outfit(
+              child: Text(value, style: GoogleFonts.plusJakartaSans(
                 fontSize: 26, fontWeight: FontWeight.w900,
                 color: Colors.white, height: 1.0, letterSpacing: -0.8,
               )),
             ),
             const SizedBox(height: 2),
-            Text(label, style: GoogleFonts.outfit(
+            Text(label, style: GoogleFonts.plusJakartaSans(
               fontSize: 11, fontWeight: FontWeight.w600,
               color: Colors.white.withValues(alpha: 0.80),
             ), maxLines: 1, overflow: TextOverflow.ellipsis),
             if (subtitle != null) ...[
               const SizedBox(height: 1),
-              Text(subtitle!, style: GoogleFonts.outfit(
+              Text(subtitle!, style: GoogleFonts.plusJakartaSans(
                 fontSize: 10, color: Colors.white.withValues(alpha: 0.65),
               ), maxLines: 1, overflow: TextOverflow.ellipsis),
             ],
@@ -379,7 +379,7 @@ class _SectionHeader extends StatelessWidget {
         child: Icon(icon, color: iconColor, size: 16),
       ),
       const SizedBox(width: 8),
-      Text(label, style: GoogleFonts.outfit(
+      Text(label, style: GoogleFonts.plusJakartaSans(
         fontSize: 14.5, fontWeight: FontWeight.w800, color: _kInk,
       )),
       const Spacer(),
@@ -391,7 +391,7 @@ class _SectionHeader extends StatelessWidget {
             color: iconColor.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Text(actionLabel, style: GoogleFonts.outfit(
+          child: Text(actionLabel, style: GoogleFonts.plusJakartaSans(
             fontSize: 12, fontWeight: FontWeight.w700, color: iconColor,
           )),
         ),
@@ -453,11 +453,11 @@ class _ProductionTile extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(order.recipeName, style: GoogleFonts.outfit(
+                Text(order.recipeName, style: GoogleFonts.plusJakartaSans(
                   fontSize: 14, fontWeight: FontWeight.w800, color: _kInk)),
                 const SizedBox(height: 2),
                 Text('${order.quantity.toStringAsFixed(0)} phần',
-                  style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted)),
               ])),
               // Status badge
               Container(
@@ -466,7 +466,7 @@ class _ProductionTile extends StatelessWidget {
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(label, style: GoogleFonts.outfit(
+                child: Text(label, style: GoogleFonts.plusJakartaSans(
                   fontSize: 11, fontWeight: FontWeight.w700, color: color)),
               ),
             ]),
@@ -530,16 +530,16 @@ class _RecipeTile extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(recipe.name, style: GoogleFonts.outfit(
+              Text(recipe.name, style: GoogleFonts.plusJakartaSans(
                 fontSize: 14, fontWeight: FontWeight.w800, color: _kInk)),
               const SizedBox(height: 2),
               Text('${recipe.ingredients.length} NL  ·  ${recipe.servingSize.toStringAsFixed(0)} ${recipe.servingUnit}',
-                style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted)),
             ])),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(fmtMoney(recipe.costPerServing), style: GoogleFonts.outfit(
+              Text(fmtMoney(recipe.costPerServing), style: GoogleFonts.plusJakartaSans(
                 fontSize: 14, fontWeight: FontWeight.w900, color: _kViolet)),
-              Text('/phần', style: GoogleFonts.outfit(fontSize: 10, color: _kMuted)),
+              Text('/phần', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kMuted)),
             ]),
           ]),
         ),
@@ -584,7 +584,7 @@ class _EmptyCard extends StatelessWidget {
           child: Icon(icon, color: iconColor, size: 18),
         ),
         const SizedBox(width: 10),
-        Text(label, style: GoogleFonts.outfit(
+        Text(label, style: GoogleFonts.plusJakartaSans(
           fontSize: 13.5, fontWeight: FontWeight.w700, color: iconColor)),
       ]),
     ),
@@ -634,7 +634,7 @@ class _LowStockTile extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(item.name as String,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontSize: 13, fontWeight: FontWeight.w800, color: _kInk)),
           const SizedBox(height: 4),
           // Progress bar
@@ -652,7 +652,7 @@ class _LowStockTile extends StatelessWidget {
             isOut
               ? 'Hết hàng  —  ngưỡng tối thiểu: ${min.toStringAsFixed(0)} ${item.unit}'
               : 'Còn ${qty.toStringAsFixed(0)} ${item.unit}  /  tối thiểu ${min.toStringAsFixed(0)}',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 fontSize: 11, color: urgentColor, fontWeight: FontWeight.w600)),
         ])),
         const SizedBox(width: 8),
@@ -665,7 +665,7 @@ class _LowStockTile extends StatelessWidget {
           ),
           child: Text(
             isOut ? 'Hết' : 'Sắp hết',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 fontSize: 11, fontWeight: FontWeight.w800, color: urgentColor)),
         ),
       ]),

@@ -6,6 +6,7 @@ import '../../../core/services/store_auth_service.dart';
 import '../../../core/repositories/core_product_repository.dart';
 import '../../../core/repositories/core_customer_repository.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/paged_query.dart';
 import '../../kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart';
 import '../models/coupon_model.dart';
 import '../services/pos_sale_operation_manager.dart';
@@ -58,53 +59,6 @@ class PosRepository {
 
   // ── Streams ───────────────────────────────────────────────────────────────
 
-  Stream<T> _robustStream<T>(
-    String table,
-    String columnFilter,
-    String valueFilter,
-    T Function(List<Map<String, dynamic>>) mapper,
-  ) async* {
-    Future<T> fetch() async {
-      final rows = await _sb.from(table).select().eq(columnFilter, valueFilter);
-      return mapper(rows);
-    }
-
-    // Initial fetch
-    try {
-      yield await fetch();
-    } catch (e) {
-      print('[RobustStream] Initial fetch err on $table: $e');
-    }
-
-    // Realtime connection with fallback to polling on async errors (e.g. RealtimeSubscribeException)
-    while (true) {
-      try {
-        final stream = _sb
-            .from(table)
-            .stream(primaryKey: ['id'])
-            .eq(columnFilter, valueFilter);
-        await for (final rows in stream) {
-          yield mapper(rows);
-        }
-      } catch (e) {
-        print(
-          '[RobustStream] Realtime err on $table: $e. Falling back to poll 10s.',
-        );
-
-        // Polling âm thầm 10 giây (chia làm 2 lần 5s) trước khi thử kết nối lại Realtime
-        await Future.delayed(const Duration(seconds: 5));
-        try {
-          yield await fetch();
-        } catch (_) {}
-
-        await Future.delayed(const Duration(seconds: 5));
-        try {
-          yield await fetch();
-        } catch (_) {}
-      }
-    }
-  }
-
   Stream<List<OrderModel>> watchTodayOrders() async* {
     final storeId = await _storeId();
     if (storeId == null) {
@@ -127,21 +81,24 @@ class PosRepository {
       now.day + 1,
     ).toUtc().toIso8601String();
 
-    yield* _robustStream(
-      'orders',
-      'store_id',
-      storeId,
-      (rows) =>
-          rows
-              .where(
-                (r) =>
-                    r['status'] == 'completed' &&
-                    (r['created_at'] as String).compareTo(startOfDay) >= 0 &&
-                    (r['created_at'] as String).compareTo(endOfDay) < 0,
-              ) // ‼️ FIX: thêm upper bound
-              .map(OrderModel.fromMap)
-              .toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+    // Lọc ngày + trạng thái ở máy chủ (trước đây đọc cả bảng đơn của quán rồi lọc ở máy —
+    // quán > 1.000 đơn như KAY nhận toàn đơn cũ, danh sách "hôm nay" trống).
+    yield* watchByRefetch(
+        table: 'orders',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await fetchAllPages((offset, end) => _sb
+              .from('orders')
+              .select()
+              .eq('store_id', storeId)
+              .eq('status', 'completed')
+              .gte('created_at', startOfDay)
+              .lt('created_at', endOfDay)
+              .order('created_at', ascending: false)
+              .order('id', ascending: false)
+              .range(offset, end));
+          return rows.map(OrderModel.fromMap).toList();
+        }
     );
   }
 
@@ -927,10 +884,17 @@ class PosRepository {
     double costTotal = 0;
     if (orders.isNotEmpty) {
       final orderIds = orders.map((o) => o['id'] as String).toList();
-      final items = await _sb
+      // Chia 100 đơn mỗi lần: tránh URL quá dài và giới hạn 1.000 dòng/lần của máy chủ.
+      final items = <Map<String, dynamic>>[];
+      for (var i = 0; i < orderIds.length; i += 100) {
+        final chunk = orderIds.sublist(i, (i + 100).clamp(0, orderIds.length));
+        items.addAll(await fetchAllPages((offset, end) => _sb
           .from('order_items')
           .select()
-          .inFilter('order_id', orderIds);
+          .inFilter('order_id', chunk)
+            .order('id')
+            .range(offset, end)));
+      }
       costTotal = items.fold<double>(
         0,
         (s, i) =>

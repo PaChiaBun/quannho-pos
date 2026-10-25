@@ -616,17 +616,8 @@ class BanRepository {
     );
   }
 
-  Future<void> closeSession(String sessionId, double totalAmount) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await _sb
-        .from('ban_sessions')
-        .update({
-          'status': 'closed',
-          'closed_at': now,
-          'total_amount': totalAmount,
-        })
-        .eq('id', sessionId);
-  }
+  // Không có hàm "đóng phiên" ở client: phiên bàn chỉ kết thúc qua thanh toán
+  // (settle_ban_session_v5), huỷ bàn có duyệt (runCancelSteps) hoặc gộp bàn.
 
   // ── Session Items ──────────────────────────────────────────────────────────
   /// Mỗi lần hỏi máy chủ phải có hạn chót: một request treo (mạng chập chờn) từng

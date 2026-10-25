@@ -8,6 +8,27 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/utils/app_logger.dart';
 import '../core/services/store_auth_service.dart';
 
+/// Tag nhật ký nghiệp vụ/kiểm toán — không xoá được từ app. Giữ khớp
+/// `app_log_is_protected_tag` (supabase/migrations/20261022_khoa_xoa_nhat_ky_v1.sql);
+/// máy chủ so không phân biệt hoa thường nên liệt kê cả dạng viết hoa đang dùng.
+const kProtectedLogTags = [
+  'action',
+  'checkout',
+  'order',
+  'auth',
+  'ban_items',
+  'finance',
+  'payroll',
+  'staff',
+  'staff_shift_audit',
+  'payroll_staff_confirm',
+  'kho',
+  'settings',
+  'inventory',
+  'STAFF_SHIFT_AUDIT',
+  'PAYROLL_STAFF_CONFIRM'
+];
+
 class LogViewerScreen extends StatefulWidget {
   const LogViewerScreen({super.key});
 
@@ -48,6 +69,9 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
 
   final Map<String, String> _tags = {
     'Tất cả': 'Tất cả',
+    'action': '🧾 Hành động nghiệp vụ',
+    'ban_items': '🪑 Món tại bàn',
+    'finance': '💰 Thu chi',
     'auth': '🔐 Tài khoản',
     'order': '🍽️ Đặt món',
     'checkout': '💳 Thanh toán',
@@ -179,14 +203,17 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Xác nhận xóa'),
-        content: const Text('Bạn có chắc chắn muốn xóa toàn bộ nhật ký lỗi trên máy này và đám mây không?'),
+        title: const Text('Xóa log kỹ thuật?'),
+                content: const Text(
+                    'Xóa log kỹ thuật (máy in, hệ thống…) trên máy này và đám mây.\n\n'
+                    'Nhật ký nghiệp vụ (thanh toán, đặt món, huỷ món/bàn, duyệt quản lý, in lại bill, '
+                    'nạp ví, đăng nhập, thu chi, lương, kho, cài đặt) được GIỮ LẠI để đối chiếu, không xóa được.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Xóa hết'),
+            child: const Text('Xóa log kỹ thuật'),
           ),
         ],
       ),
@@ -199,13 +226,15 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
         final storeId = info['store_id'];
         if (storeId != null) {
           Supabase.instance.client.rest.headers['x-store-id'] = storeId;
-          
-          // Xoá theo lô (chunking 500 bản ghi/lần) để tránh lỗi PostgreSQL statement_timeout (57014)
+
+          // Xoá theo lô (chunking 500 bản ghi/lần) để tránh lỗi PostgreSQL statement_timeout (57014).
+          // Chỉ log kỹ thuật: máy chủ chặn xoá tag nghiệp vụ (trigger guard_app_logs_v1).
           while (true) {
             final rows = await Supabase.instance.client
                 .from('app_logs')
                 .select('id')
                 .eq('store_id', storeId)
+                .not('tag', 'in', '(${kProtectedLogTags.join(',')})')
                 .limit(500);
             if (rows.isEmpty) break;
 
@@ -222,7 +251,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
         await _fetchLogs();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã xóa sạch nhật ký!'), backgroundColor: Colors.green),
+            const SnackBar(content: Text('Đã xóa log kỹ thuật. Nhật ký nghiệp vụ được giữ lại.'), backgroundColor: Colors.green),
           );
         }
       } catch (e) {
@@ -294,7 +323,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                 _selectedDateRange == null
                     ? 'Chọn ngày...'
                     : '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}',
-                style: GoogleFonts.outfit(fontSize: 14),
+                style: GoogleFonts.plusJakartaSans(fontSize: 14),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -315,7 +344,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       items: _staffNames.map((name) {
         return DropdownMenuItem<String>(
           value: name,
-          child: Text(name, style: GoogleFonts.outfit(fontSize: 14), overflow: TextOverflow.ellipsis),
+          child: Text(name, style: GoogleFonts.plusJakartaSans(fontSize: 14), overflow: TextOverflow.ellipsis),
         );
       }).toList(),
       onChanged: (val) {
@@ -348,7 +377,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
           children: [
             Text(
               _startTime.format(context),
-              style: GoogleFonts.outfit(fontSize: 14),
+              style: GoogleFonts.plusJakartaSans(fontSize: 14),
             ),
             const Icon(Icons.access_time_rounded, size: 16),
           ],
@@ -379,7 +408,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
           children: [
             Text(
               _endTime.format(context),
-              style: GoogleFonts.outfit(fontSize: 14),
+              style: GoogleFonts.plusJakartaSans(fontSize: 14),
             ),
             const Icon(Icons.access_time_rounded, size: 16),
           ],
@@ -398,7 +427,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       items: _tags.entries.map((e) {
         return DropdownMenuItem<String>(
           value: e.key,
-          child: Text(e.value, style: GoogleFonts.outfit(fontSize: 14), overflow: TextOverflow.ellipsis),
+          child: Text(e.value, style: GoogleFonts.plusJakartaSans(fontSize: 14), overflow: TextOverflow.ellipsis),
         );
       }).toList(),
       onChanged: (val) {
@@ -419,7 +448,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
       items: _levels.map((level) {
         return DropdownMenuItem<String>(
           value: level,
-          child: Text(level, style: GoogleFonts.outfit(fontSize: 14), overflow: TextOverflow.ellipsis),
+          child: Text(level, style: GoogleFonts.plusJakartaSans(fontSize: 14), overflow: TextOverflow.ellipsis),
         );
       }).toList(),
       onChanged: (val) {
@@ -511,7 +540,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
               icon: const Icon(Icons.search_rounded, size: 20),
               label: Text(
                 'Truy xuất Log',
-                style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold),
+                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -570,7 +599,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
-        title: Text('Nhật Ký Hoạt Động & Lỗi', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+        title: Text('Nhật Ký Hoạt Động & Lỗi', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
         backgroundColor: const Color(0xFF1C2151),
         foregroundColor: Colors.white,
         elevation: 0,
@@ -587,7 +616,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline_rounded),
-            tooltip: 'Xóa sạch',
+            tooltip: 'Xóa log kỹ thuật',
             onPressed: _clearLogs,
           ),
         ],
@@ -610,7 +639,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                         child: Center(
                           child: Text(
                             'Vui lòng chọn bộ lọc và nhấn nút "Truy xuất Log" để tải nhật ký.',
-                            style: GoogleFonts.outfit(fontSize: 15, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 15, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                           ),
                         ),
                       )
@@ -620,7 +649,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                             child: Center(
                               child: Text(
                                 'Không tìm thấy bản ghi nhật ký nào.',
-                                style: GoogleFonts.outfit(fontSize: 15, color: Colors.grey),
+                                style: GoogleFonts.plusJakartaSans(fontSize: 15, color: Colors.grey),
                               ),
                             ),
                           )
@@ -652,7 +681,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                                     children: [
                                       Text(
                                         staff,
-                                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14),
+                                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 14),
                                       ),
                                       const SizedBox(width: 8),
                                       Container(
@@ -663,7 +692,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                                         ),
                                         child: Text(
                                           _getTranslatedLevel(level),
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             color: levelColor,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 10,
@@ -677,9 +706,9 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(msg, style: GoogleFonts.outfit(fontSize: 13, color: Colors.black87)),
+                                        Text(msg, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.black87)),
                                         const SizedBox(height: 2),
-                                        Text(timeStr, style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey)),
+                                        Text(timeStr, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: Colors.grey)),
                                       ],
                                     ),
                                   ),
@@ -692,7 +721,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                                         children: [
                                           Text(
                                             'Chi tiết kỹ thuật (Technical Details):',
-                                            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.red.shade800),
+                                            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.red.shade800),
                                           ),
                                           const SizedBox(height: 6),
                                           Container(
@@ -711,7 +740,7 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                                         ],
                                       )
                                     else
-                                      Text('Không có thông tin kỹ thuật bổ sung.', style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey)),
+                                      Text('Không có thông tin kỹ thuật bổ sung.', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey)),
                                   ],
                                 ),
                               );

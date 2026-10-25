@@ -116,7 +116,7 @@ class _PrintRulesScreenState extends ConsumerState<PrintRulesScreen>
         backgroundColor: _kIndigo,
         foregroundColor: Colors.white,
         title: Text('Máy In & Luật In',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 18)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 18)),
         actions: [
           if (_dirty)
             TextButton.icon(
@@ -205,7 +205,7 @@ class _StatusBanner extends StatelessWidget {
                           'rồi tạo luật in ở tab Luật in.')
                   : 'Đang dùng luật in. Loại phiếu nào không có luật thì sẽ KHÔNG in. '
                       'Muốn quay lại cách cũ, bấm "Bỏ thiết lập mới" rồi Lưu.',
-              style: GoogleFonts.outfit(fontSize: 13),
+              style: GoogleFonts.plusJakartaSans(fontSize: 13),
             ),
           ),
           if (empty && canSeed)
@@ -218,7 +218,7 @@ class _StatusBanner extends StatelessWidget {
             TextButton(onPressed: onReset, child: const Text('Bỏ thiết lập mới')),
           if (dirty)
             Text('Chưa lưu',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFFB45309))),
         ],
       ),
@@ -297,7 +297,7 @@ class _PrintersTab extends StatelessWidget {
                           : Icons.print_rounded,
                   color: p.enabled ? _kIndigo : Colors.grey,
                 ),
-                title: Text(p.name, style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                title: Text(p.name, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
                 subtitle: Text(
                   '${printerKindLabel(p.kind)}'
                   '${p.address.isNotEmpty ? ' • ${p.address}${p.kind == PrinterKind.lan ? ':${p.port}' : ''}' : ''}'
@@ -306,7 +306,7 @@ class _PrintersTab extends StatelessWidget {
                   '${p.kind == PrinterKind.sunmiBuiltin && p.darkness != 3 ? ' • độ đậm ${p.darkness}/5' : ''}'
                   '${p.autoCut ? ' • tự cắt' : ''}${p.hasCashDrawer ? ' • có két' : ''}'
                   '${p.kind == PrinterKind.sunmiBuiltin && !SunmiBuiltinDriver.isSupportedPlatform ? '\nChỉ in được trên thiết bị Sunmi (Android)' : ''}',
-                  style: GoogleFonts.outfit(fontSize: 12.5),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12.5),
                 ),
                 isThreeLine: p.kind == PrinterKind.sunmiBuiltin && !SunmiBuiltinDriver.isSupportedPlatform,
                 trailing: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -493,7 +493,13 @@ class _PrinterDialogState extends State<_PrinterDialog> {
             if (_kind == PrinterKind.sunmiBuiltin) ...[
               const SizedBox(height: 4),
               Text(
-                'Độ đậm nét chữ: ${const ['Rất mảnh', 'Mảnh', 'Vừa', 'Đậm', 'Rất đậm'][_darkness - 1]}',
+                        'Độ đậm nét chữ: ${const [
+                          'Rất mảnh',
+                          'Mảnh',
+                          'Vừa',
+                          'Đậm',
+                          'Rất đậm'
+                        ][_darkness - 1]}',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               Slider(
@@ -513,7 +519,7 @@ class _PrinterDialogState extends State<_PrinterDialog> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Chữ đậm dạng bán đậm'),
                 subtitle: const Text(
-                  'Mặc định tắt (Bold). Bật nếu chữ đậm bị loe, bết nét trên máy in này.',
+                            'Mặc định tắt (chữ đậm). Bật nếu chữ đậm bị loe, bết nét trên máy in này.',
                   style: TextStyle(fontSize: 12),
                 ),
                 value: _softBold,
@@ -597,9 +603,9 @@ class _RulesTab extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
                 title: Text(r.name.isEmpty ? jobTypeLabel(r.jobType) : r.name,
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
                 subtitle: Text('${_sentence(r)}\nƯu tiên ${r.priority} (số nhỏ chạy trước)',
-                    style: GoogleFonts.outfit(fontSize: 12.5)),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5)),
                 isThreeLine: true,
                 trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                   Switch(
@@ -741,7 +747,7 @@ class _RuleDialogState extends State<_RuleDialog> {
             ),
             const SizedBox(height: 12),
             Text('Chỉ áp dụng cho hình thức (không chọn = tất cả)',
-                style: GoogleFonts.outfit(fontSize: 12.5, color: Colors.black54)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: Colors.black54)),
             Wrap(spacing: 8, children: [
               for (final s in PrintServiceType.values)
                 FilterChip(
@@ -1057,12 +1063,12 @@ class _ThisDeviceSection extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(
                   active ? '$title  ✓ đang dùng' : title,
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 14.5),
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14.5),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   needAndroid && !isAndroid ? '$desc (chỉ có trên máy Sunmi/Android)' : desc,
-                  style: GoogleFonts.outfit(fontSize: 12.5, color: Colors.black54),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: Colors.black54),
                 ),
               ]),
             ),
@@ -1076,11 +1082,11 @@ class _ThisDeviceSection extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Thiết lập nhanh', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16)),
+            Text('Thiết lập nhanh', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 16)),
             const SizedBox(height: 4),
             Text(
               'Chọn cách in bill khi thanh toán TRÊN MÁY NÀY. Bếp và bar không đổi. Chọn xong bấm Lưu.',
-              style: GoogleFonts.outfit(fontSize: 12.5, color: Colors.black54),
+              style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: Colors.black54),
             ),
             const SizedBox(height: 12),
             quickOption(
@@ -1111,12 +1117,12 @@ class _ThisDeviceSection extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Máy này in bill ra', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16)),
+            Text('Máy này in bill ra', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 16)),
             const SizedBox(height: 4),
             Text(
               'Chỉ áp dụng cho hóa đơn và phiếu tạm tính khi thao tác trên máy này. '
               'Bếp và bar vẫn theo luật chung.',
-              style: GoogleFonts.outfit(fontSize: 12.5, color: Colors.black54),
+              style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: Colors.black54),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String?>(
@@ -1149,12 +1155,12 @@ class _ThisDeviceSection extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Máy in tích hợp (Sunmi V3...)',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16)),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 16)),
             const SizedBox(height: 4),
             Text(
               'Khai báo máy in gắn sẵn trong thiết bị này (khổ giấy 50 mm). Sau khi thêm, chọn nó ở ô '
               '"Máy này in bill ra" phía trên. Bấm "In thử" để kiểm tra giấy và tiếng Việt.',
-              style: GoogleFonts.outfit(fontSize: 12.5, color: Colors.black54),
+              style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: Colors.black54),
             ),
             const SizedBox(height: 12),
             if (isAndroid)
@@ -1202,7 +1208,7 @@ class _EmptyHint extends StatelessWidget {
         child: Column(children: [
           Icon(icon, size: 48, color: Colors.black26),
           const SizedBox(height: 12),
-          Text(text, textAlign: TextAlign.center, style: GoogleFonts.outfit(color: Colors.black54)),
+          Text(text, textAlign: TextAlign.center, style: GoogleFonts.plusJakartaSans(color: Colors.black54)),
         ]),
       );
 }
@@ -1266,13 +1272,13 @@ class _LabelSection extends ConsumerWidget {
             const Icon(Icons.sell_rounded, color: _kIndigo, size: 20),
             const SizedBox(width: 8),
             Text('Tem dán ly',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16)),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 16)),
           ]),
           const SizedBox(height: 4),
           Text(
             'Mỗi ly in một tem riêng. Khổ tem hiện tại: ${tpl.widthMm.round()}×${tpl.heightMm.round()}mm '
             '(đổi ở Thiết Kế Mẫu In → Tem Dán Ly). Khi thêm máy in tem, nhớ chọn đúng khổ giấy decal.',
-            style: GoogleFonts.outfit(fontSize: 12.5, color: Colors.grey.shade700),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: Colors.grey.shade700),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
@@ -1290,7 +1296,7 @@ class _LabelSection extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text('Hãy thêm máy in trước (nút "Thêm máy in"), rồi chọn máy in tem ở đây.',
-                  style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFFB45309))),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFFB45309))),
             ),
           const SizedBox(height: 8),
           Align(

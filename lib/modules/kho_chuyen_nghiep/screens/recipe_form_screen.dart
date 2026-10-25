@@ -96,7 +96,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(isEdit ? 'Sửa công thức' : 'Tạo công thức',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
         actions: [
           if (_nameCtrl.text.isNotEmpty && _lines.isNotEmpty)
@@ -104,7 +104,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
               padding: const EdgeInsets.only(right: 8),
               child: TextButton(
                 onPressed: _loading ? null : _submit,
-                child: Text('LƯU', style: GoogleFonts.outfit(
+                child: Text('LƯU', style: GoogleFonts.plusJakartaSans(
                     color: Colors.white, fontWeight: FontWeight.w800)),
               ),
             ),
@@ -121,7 +121,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
               _buildCard(Column(children: [
                 TextField(
                   controller: _nameCtrl,
-                  style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w700, color: KhoTheme.ink),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w700, color: KhoTheme.ink),
                   onChanged: (_) => setState(() {}),
                   decoration: KhoTheme.inputDecoration(hint: 'Tên món *'),
                 ),
@@ -129,7 +129,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                 TextField(
                   controller: _descCtrl,
                   maxLines: 2,
-                  style: GoogleFonts.outfit(fontSize: 14, color: KhoTheme.ink),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14, color: KhoTheme.ink),
                   decoration: KhoTheme.inputDecoration(hint: 'Mô tả (tuỳ chọn)'),
                 ),
                 const SizedBox(height: 10),
@@ -138,12 +138,12 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _category,
-                      hint: Text('Danh mục', style: GoogleFonts.outfit(
+                      hint: Text('Danh mục', style: GoogleFonts.plusJakartaSans(
                           fontSize: 13, color: KhoTheme.muted)),
                       decoration: KhoTheme.inputDecoration(hint: ''),
                       items: _categories.map((c) => DropdownMenuItem(
                           value: c,
-                          child: Text(c, style: GoogleFonts.outfit(fontSize: 13)))).toList(),
+                          child: Text(c, style: GoogleFonts.plusJakartaSans(fontSize: 13)))).toList(),
                       onChanged: (v) => setState(() => _category = v),
                     ),
                   ),
@@ -153,7 +153,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                     child: TextField(
                       controller: _servingSizeCtrl,
                       keyboardType: TextInputType.number,
-                      style: GoogleFonts.outfit(fontSize: 14, color: KhoTheme.ink),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, color: KhoTheme.ink),
                       decoration: KhoTheme.inputDecoration(hint: '1'),
                     ),
                   ),
@@ -163,7 +163,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                     underline: const SizedBox(),
                     items: _servingUnits.map((u) => DropdownMenuItem(
                         value: u,
-                        child: Text(u, style: GoogleFonts.outfit(fontSize: 13)))).toList(),
+                        child: Text(u, style: GoogleFonts.plusJakartaSans(fontSize: 13)))).toList(),
                     onChanged: (v) => setState(() => _servingUnit = v!),
                   ),
                 ]),
@@ -183,12 +183,12 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Chọn sản phẩm bán hàng tương ứng:',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 12, color: KhoTheme.muted)),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       value: _linkedPosId,
-                      hint: Text('— Không gắn —', style: GoogleFonts.outfit(
+                      hint: Text('— Không gắn —', style: GoogleFonts.plusJakartaSans(
                           fontSize: 13, color: KhoTheme.muted)),
                       decoration: KhoTheme.inputDecoration(hint: ''),
                       isExpanded: true,
@@ -196,12 +196,12 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                         DropdownMenuItem<String>(
                             value: null,
                             child: Text('— Không gắn —',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                     fontSize: 13, color: KhoTheme.muted))),
                         ...products.map((p) => DropdownMenuItem(
                             value: p.id,
                             child: Text(p.name,
-                                style: GoogleFonts.outfit(fontSize: 13)))),
+                                style: GoogleFonts.plusJakartaSans(fontSize: 13)))),
                       ],
                       onChanged: (v) => setState(() {
                         _linkedPosId   = v;
@@ -221,7 +221,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                               ?? products.where((p) => p.id == _linkedPosId).firstOrNull?.name
                               ?? _linkedPosId ?? '';
                           return Text('Khi bán "$displayName" → tự động trừ kho',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5, color: KhoTheme.green,
                                   fontWeight: FontWeight.w600));
                         }),
@@ -255,7 +255,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                             warn != null
                                 ? 'Mỗi mẻ ra ${fmtQty(size)} $_servingUnit nhưng kho "${p.name}" tính bằng "$unit" — $warn'
                                 : 'Hoàn thành lệnh sản xuất 1 mẻ → nhập ${fmtQty(out)} $unit "${p.name}" vào kho.',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11.5, height: 1.3,
                                 color: warn != null ? KhoTheme.amber : KhoTheme.green,
                                 fontWeight: FontWeight.w600)),
@@ -310,7 +310,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
   Widget _buildSection(String label, IconData icon) => Row(children: [
     Icon(icon, size: 15, color: KhoTheme.violet),
     const SizedBox(width: 6),
-    Text(label, style: GoogleFonts.outfit(
+    Text(label, style: GoogleFonts.plusJakartaSans(
         fontSize: 13.5, fontWeight: FontWeight.w800, color: KhoTheme.navy)),
   ]);
 
@@ -338,7 +338,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         const Icon(Icons.add_circle_rounded, color: KhoTheme.violet, size: 18),
         const SizedBox(width: 8),
-        Text('Thêm nguyên liệu', style: GoogleFonts.outfit(
+        Text('Thêm nguyên liệu', style: GoogleFonts.plusJakartaSans(
             fontSize: 14, fontWeight: FontWeight.w700, color: KhoTheme.violet)),
       ]),
     ),
@@ -357,9 +357,9 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       Column(crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Giá vốn/phần', style: GoogleFonts.outfit(
+            Text('Giá vốn/phần', style: GoogleFonts.plusJakartaSans(
                 fontSize: 11, color: KhoTheme.muted, fontWeight: FontWeight.w600)),
-            Text(fmtMoney(_totalCost), style: GoogleFonts.outfit(
+            Text(fmtMoney(_totalCost), style: GoogleFonts.plusJakartaSans(
                 fontSize: 22, fontWeight: FontWeight.w900, color: KhoTheme.navy)),
           ]),
       const SizedBox(width: 16),
@@ -382,7 +382,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2.5))
                 : Text(widget.existing != null ? 'Cập nhật công thức' : 'Lưu công thức',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 15, fontWeight: FontWeight.w800)),
           ),
         ),
@@ -577,7 +577,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                         child: DropdownButtonFormField<String>(
                           value: line.ingredientId,
                           hint: Text('Chọn nguyên liệu...',
-                              style: GoogleFonts.outfit(fontSize: 13, color: KhoTheme.muted)),
+                              style: GoogleFonts.plusJakartaSans(fontSize: 13, color: KhoTheme.muted)),
                           decoration: KhoTheme.inputDecoration(hint: '').copyWith(
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 8),
@@ -598,7 +598,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                   value: p.id as String,
                                   child: Text(
                                     '$name$unitLabel$badge',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 13,
                                       fontWeight: isIng ? FontWeight.w600 : FontWeight.w400,
                                       color: KhoTheme.ink,
@@ -660,7 +660,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                         child: TextField(
                           controller: line.qtyCtrl,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 14, fontWeight: FontWeight.w700, color: KhoTheme.ink),
                           onChanged: (v) {
                             line.quantity = double.tryParse(v) ?? 1;
@@ -670,7 +670,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 8),
                             labelText: 'Số lượng',
-                            labelStyle: GoogleFonts.outfit(
+                            labelStyle: GoogleFonts.plusJakartaSans(
                                 fontSize: 11, color: KhoTheme.muted),
                           ),
                         ),
@@ -684,12 +684,12 @@ class _IngLineCardState extends State<_IngLineCard> {
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 8),
                             labelText: 'Đơn vị',
-                            labelStyle: GoogleFonts.outfit(
+                            labelStyle: GoogleFonts.plusJakartaSans(
                                 fontSize: 11, color: KhoTheme.muted),
                           ),
                           items: _units.map((u) => DropdownMenuItem(
                               value: u,
-                              child: Text(u, style: GoogleFonts.outfit(fontSize: 13)))).toList(),
+                              child: Text(u, style: GoogleFonts.plusJakartaSans(fontSize: 13)))).toList(),
                           onChanged: (v) {
                             setState(() => line.unit = v!);
                             widget.onChanged();
@@ -705,7 +705,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text('= ${fmtMoney(subtotal)}',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12, fontWeight: FontWeight.w800,
                                   color: KhoTheme.green)),
                         ),
@@ -742,7 +742,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(msg,
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11.5,
                                       height: 1.3,
                                       fontWeight: FontWeight.w600,
@@ -760,7 +760,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                           size: 14, color: KhoTheme.amber),
                       const SizedBox(width: 6),
                       Text('Hao phí sơ chế:',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 12.5, color: KhoTheme.ink,
                               fontWeight: FontWeight.w700)),
                       const SizedBox(width: 4),
@@ -801,7 +801,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text('Hao phí sơ chế là gì?',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w800,
                                               color: KhoTheme.navy)),
@@ -812,7 +812,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                   Text(
                                     'Khi chế biến, nguyên liệu bị hao hụt do rửa, lặt, '
                                     'cắt gọt, xương... Phần bị mất đi gọi là hao phí sơ chế.',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                         fontSize: 13.5, color: KhoTheme.ink,
                                         height: 1.5),
                                   ),
@@ -830,7 +830,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text('📦 Ví dụ thực tế:',
-                                            style: GoogleFonts.outfit(
+                                            style: GoogleFonts.plusJakartaSans(
                                                 fontSize: 12.5,
                                                 fontWeight: FontWeight.w800,
                                                 color: KhoTheme.amber)),
@@ -842,7 +842,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                           '• Công thức cần 200g rau/tô\n'
                                           '• Nhập hao phí 20%\n'
                                           '• Hệ thống trừ kho: 200 ÷ 0.8 = 250g/tô ✓',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: 12.5,
                                               color: KhoTheme.ink,
                                               height: 1.6),
@@ -864,7 +864,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text('📊 Tỷ lệ gợi ý theo nguyên liệu:',
-                                            style: GoogleFonts.outfit(
+                                            style: GoogleFonts.plusJakartaSans(
                                                 fontSize: 12.5,
                                                 fontWeight: FontWeight.w800,
                                                 color: const Color(0xFF2563EB))),
@@ -898,7 +898,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                           'Đây là định lượng chuẩn của ngành F&B. '
                                           'Chi phí hao phí sơ chế được tính vào giá vốn '
                                           'và khách hàng sẽ gánh chịu phần này thông qua giá bán menu.',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: 12.5,
                                               color: KhoTheme.ink,
                                               fontWeight: FontWeight.w500,
@@ -920,7 +920,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                           'Bảng trên chỉ để tham khảo. Nên tự cân đo '
                                           'thực tế sau khi sơ chế nguyên liệu tại bếp '
                                           'để ra tỷ lệ % chính xác cho quán mình.',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: 12.5,
                                               color: KhoTheme.amber,
                                               fontWeight: FontWeight.w600,
@@ -945,7 +945,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                                         padding: const EdgeInsets.symmetric(vertical: 12),
                                       ),
                                       child: Text('Đã hiểu',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w700)),
                                     ),
@@ -976,7 +976,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                           controller: line.wasteCtrl,
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 13, fontWeight: FontWeight.w800,
                               color: hasWaste ? KhoTheme.amber : KhoTheme.ink),
                           // FIX: tap vào → select all → gõ số mới ngay, không cần xóa số 0
@@ -994,7 +994,7 @@ class _IngLineCardState extends State<_IngLineCard> {
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 6),
                             suffixText: '%',
-                            suffixStyle: GoogleFonts.outfit(
+                            suffixStyle: GoogleFonts.plusJakartaSans(
                                 fontSize: 12, color: KhoTheme.muted),
                           ),
                         ),
@@ -1010,14 +1010,14 @@ class _IngLineCardState extends State<_IngLineCard> {
                               ),
                               child: Text(
                                 'Lấy ${(line.yieldFactor > 0 ? line.quantity / line.yieldFactor : line.quantity).toStringAsFixed(0)} ${line.unit} từ kho',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                     fontSize: 10.5, fontWeight: FontWeight.w700,
                                     color: KhoTheme.amber),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             )
                           : Text('(0% = không hao phí)',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11, color: KhoTheme.muted),
                               overflow: TextOverflow.ellipsis),
                       ),
@@ -1054,7 +1054,7 @@ class _WasteRow extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(label,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
                         color: KhoTheme.ink,
                         fontWeight: FontWeight.w600)),
@@ -1066,7 +1066,7 @@ class _WasteRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(pct,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF2563EB))),
@@ -1079,7 +1079,7 @@ class _WasteRow extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 13, top: 2),
                 child: Text(
                   '↳ $note',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 10.5,
                       color: KhoTheme.muted,
                       fontWeight: FontWeight.w400,
@@ -1092,4 +1092,3 @@ class _WasteRow extends StatelessWidget {
     );
   }
 }
-

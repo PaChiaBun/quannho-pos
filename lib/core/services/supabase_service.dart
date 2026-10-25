@@ -5,6 +5,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'jwt_gate_http_client.dart';
+
 class SupabaseService {
   // ── Config — Điền sau khi tạo project Supabase ────────────────────────────
   static const _supabaseUrl    = 'https://quannho.lpm.vn/supabase';
@@ -23,6 +25,8 @@ class SupabaseService {
       await Supabase.initialize(
         url:    _supabaseUrl,
         anonKey: _supabaseAnonKey,
+        // Chưa có JWT (mở app lúc mất mạng) thì giữ yêu cầu lại, không gửi bằng anon
+        httpClient: JwtGateHttpClient(anonKey: _supabaseAnonKey),
       );
       _initialized = true;
     } catch (_) {

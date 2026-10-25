@@ -19,9 +19,10 @@ final lowStockKhoProvider = Provider.autoDispose<AsyncValue<List<StockItem>>>((r
       .toList());
 });
 
+/// Hết hàng = có theo dõi tồn (tồn tối thiểu > 0) và tồn ≤ 0 — khớp nhãn tồn và màn Bán hàng.
 final outOfStockProvider = Provider.autoDispose<AsyncValue<List<StockItem>>>((ref) {
   return ref.watch(allStockProvider).whenData(
-      (items) => items.where((item) => item.stockQty <= 0).toList());
+      (items) => items.where((item) => item.minStock > 0 && item.stockQty <= 0).toList());
 });
 
 final recentMovementsProvider =

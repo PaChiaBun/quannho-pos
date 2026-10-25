@@ -6,9 +6,9 @@ description: Điều phối Graphify để hiểu kiến trúc và CodeGraph đ�
 
 Đây là workflow `qn.md` chuẩn của dự án. Khi gọi `/qn` hoặc đính kèm file này, làm việc theo luồng dưới đây. Không gọi hai graph lặp lại cho cùng mục đích.
 
-## 0. Điều phối nhanh — kiểm duyệt bài AI Bum
+## 0. Điều phối nhanh — kiểm duyệt bài AI Boom
 
-Khi Chủ Quán gọi **`/qn vào kiểm tra ai bum đã làm bài chuẩn chưa`**, hoặc diễn đạt tương đương như “kiểm duyệt bài Bum”, “xem Bum học tới đâu, bài có đúng không”, tự chọn nhánh này. Đây là yêu cầu **kiểm tra nội dung và chủ động kiểm duyệt**, không chỉ xem dịch vụ/job còn chạy. Nếu người dùng nói rõ chỉ xem trạng thái, chỉ báo cáo, hoặc không duyệt thì tuân theo phạm vi hẹp đó.
+Khi Chủ Quán gọi **`/qn vào kiểm tra ai boom đã làm bài chuẩn chưa`**, hoặc diễn đạt tương đương như “kiểm duyệt bài Boom”, “xem Boom học tới đâu, bài có đúng không”, tự chọn nhánh này. Đây là yêu cầu **kiểm tra nội dung và chủ động kiểm duyệt**, không chỉ xem dịch vụ/job còn chạy. Nếu người dùng nói rõ chỉ xem trạng thái, chỉ báo cáo, hoặc không duyệt thì tuân theo phạm vi hẹp đó.
 
 **Ủy quyền đã có:** Chủ Quán giao Codex quyết định `approved` / `needs_revision` / `rejected`, kèm lý do; không hỏi lại quyền duyệt từng bài hoặc mỗi lần gọi. Tiết kiệm quota là yêu cầu mặc định.
 
@@ -19,15 +19,15 @@ Luồng thực hiện:
 3. Dùng `review_queue.py pack` theo tài liệu thiết kế trên snapshot được phép xử lý. Đọc manifest rồi lần lượt các trang chưa có quyết định; ưu tiên xử lý tại nơi lưu dữ liệu, không tự sao chép toàn bộ kho sang máy khác. Nếu quyền truy cập hoặc công cụ chưa sẵn sàng, nói rõ phần bị chặn, không báo đã kiểm tra nội dung khi mới xem số lượng.
 4. Đọc đầy đủ dữ kiện, câu hỏi và đáp án dự tuyển; dùng phép tính deterministic hỗ trợ. Chỉ mở bài làm/nhận xét của Thầy khi cần đối chiếu. Gộp duyệt chỉ cho nội dung trùng chính xác; không duyệt theo điểm, theo mẫu đại diện cho bài khác nội dung hoặc theo bản tóm tắt bị cắt ngắn.
 5. Ghi quyết định ngắn theo hash/version, đáp án được duyệt và danh tính reviewer. Lưu checkpoint sau mỗi trang; tiếp tục phần còn lại, không đọc lại nhóm đã duyệt còn nguyên phiên bản. Bài không đủ căn cứ phải giữ chờ hoặc đánh dấu cần sửa, không cố duyệt cho hết.
-6. Phân biệt hai kết luận: **Bum làm đúng hay sai** và **đáp án chuẩn có đủ tốt để dạy Bum hay không**. Điểm học viên thấp vẫn có thể đi cùng đáp án tham chiếu tốt. Nếu đáp án tham chiếu sai, không duyệt nó chỉ vì phần feedback có đáp án sửa đúng.
+6. Phân biệt hai kết luận: **Boom làm đúng hay sai** và **đáp án chuẩn có đủ tốt để dạy Boom hay không**. Điểm học viên thấp vẫn có thể đi cùng đáp án tham chiếu tốt. Nếu đáp án tham chiếu sai, không duyệt nó chỉ vì phần feedback có đáp án sửa đúng.
 7. Báo ngắn: số bài/nhóm đã kiểm tra; duyệt/cần sửa/từ chối/còn chờ; lỗi chính; checkpoint và trạng thái đồng bộ. Không chép lại cả bài làm hoặc mọi lý do vào câu trả lời.
 
-**Ranh giới triển khai hiện tại (08/09/2026):** Công cụ kiểm duyệt mới và ledger chạy local; chưa tích hợp ghi quyết định về dashboard. Quyết định local không được báo thành trạng thái đã đổi trên BunServer. Khi đã có đường ghi server được xác minh, dùng kiểm tra hash/version và audit; chưa có thì giữ ledger và báo rõ thiếu đồng bộ. Không dùng export cũ làm dataset chuẩn vì còn lẫn câu trả lời học viên. AI Bum hiện sử dụng Qwen2.5 làm base model, được nạp và tối ưu huấn luyện/suy luận bằng framework Unsloth. Quán Nhỏ sở hữu dữ liệu tự tạo và LoRA adapter do dự án huấn luyện, trong phạm vi giấy phép của base model và các dependency liên quan. Kiểm duyệt không tự cấp quyền fine-tune, promote kiến thức, deploy POS, tạo job hoặc chạy lịch định kỳ khi chưa có chỉ thị từ Chủ Quán.
+**Ranh giới triển khai hiện tại (08/09/2026):** Công cụ kiểm duyệt mới và ledger chạy local; chưa tích hợp ghi quyết định về dashboard. Quyết định local không được báo thành trạng thái đã đổi trên BunServer. Khi đã có đường ghi server được xác minh, dùng kiểm tra hash/version và audit; chưa có thì giữ ledger và báo rõ thiếu đồng bộ. Không dùng export cũ làm dataset chuẩn vì còn lẫn câu trả lời học viên. AI Boom hiện sử dụng Qwen2.5 làm base model, được nạp và tối ưu huấn luyện/suy luận bằng framework Unsloth. Quán Nhỏ sở hữu dữ liệu tự tạo và LoRA adapter do dự án huấn luyện, trong phạm vi giấy phép của base model và các dependency liên quan. Kiểm duyệt không tự cấp quyền fine-tune, promote kiến thức, deploy POS, tạo job hoặc chạy lịch định kỳ khi chưa có chỉ thị từ Chủ Quán.
 
-### Kích hoạt chương trình dạy AI Bum (Theo lệnh & Chạy đêm)
+### Kích hoạt chương trình dạy AI Boom (Theo lệnh & Chạy đêm)
 
-Chủ Quán có thể điều phối chương trình đào tạo của AI Bum qua các khẩu lệnh:
-- **Theo lệnh tức thì:** Khi Chủ Quán gọi **`/qn dạy bum [số_bài]`** (ví dụ: `/qn dạy bum 10 bài`), thực hiện lệnh:
+Chủ Quán có thể điều phối chương trình đào tạo của AI Boom qua các khẩu lệnh:
+- **Theo lệnh tức thì:** Khi Chủ Quán gọi **`/qn dạy boom [số_bài]`** (ví dụ: `/qn dạy boom 10 bài`), thực hiện lệnh:
   `python3 ../ai-bum-implementation/training/run_bum_class.py run --count [số_bài]` (tính từ root `quan_nho`).
 - **Chạy lớp học đêm:** Khi Chủ Quán gọi **`/qn chạy lớp học đêm`**, thực hiện lệnh:
   `python3 ../ai-bum-implementation/training/run_bum_class.py overnight --count [số_bài] --start-time 23:00` (hoặc cờ `--now` nếu Chủ Quán yêu cầu chạy ngay).
@@ -54,7 +54,7 @@ Quy tắc nghiệp vụ lõi:
 - Món đã gửi Bếp chỉ Chủ quán/Quản lý được hủy, bắt buộc lý do, phê duyệt và audit.
 - Chỉ trừ kho sau thanh toán. Thiếu tồn chỉ cảnh báo; `is_available=false` mới khóa bán.
 - QR COUNTER/mang đi phải thanh toán trước khi gửi Bếp. QR TABLE được gán vào phiên bàn sau khi nhân viên quét/xác nhận và thanh toán toàn bộ bàn theo luồng TABLE.
-- AI Bum chỉ tư vấn/nhắc nhở, không tự tạo hiệu lực kho hoặc tài chính.
+- AI Boom chỉ tư vấn/nhắc nhở, không tự tạo hiệu lực kho hoặc tài chính.
 
 ## 2. Quy chuẩn sản phẩm đã hợp nhất
 
@@ -83,8 +83,8 @@ Quy tắc nghiệp vụ lõi:
      - `tinhluong` $\rightarrow$ Tự động cấp: `tinhluong.view_all`, `tinhluong.manage_config`, `tinhluong.approve_payroll`, `tinhluong.srm_settings`, `tinhluong.srm_review`.
      - `bill_printer` $\rightarrow$ Tự động cấp: `printer.manage_server`.
   3. **Vai trò chuẩn & Fail-safe mặc nhiên**:
-     - Vai trò `owner` (hoặc `is_owner = true`): Có toàn quyền tất cả action permissions trong POS và toàn bộ 9 quyền AI Bum.
-     - Vai trò `manager`: Có toàn quyền tất cả action permissions của POS (`kAllActions`: bán hàng, bàn, kho, thu chi, báo cáo, tính lương, máy in) để điều hành ca làm việc tại quán; nhưng **tuyệt đối KHÔNG tự động được cấp các quyền dữ liệu nhạy cảm qua AI Bum** (`ai_bum.sales`, `ai_bum.inventory`, `ai_bum.finance`, `ai_bum.operations`, `ai_bum.team_shift`, `ai_bum.all_payroll`). Mặc định qua AI Bum, Manager chỉ có 3 quyền an toàn cá nhân (`ai_bum.help`, `ai_bum.my_shift`, `ai_bum.my_payroll`), các quyền nhạy cảm khác phải suy trực tiếp từ Lego Modules (`store_roles.modules`) hoặc được Chủ Quán cấp chủ động; nếu chưa được cấp phải **fail-closed**.
+     - Vai trò `owner` (hoặc `is_owner = true`): Có toàn quyền tất cả action permissions trong POS và toàn bộ 9 quyền AI Boom.
+     - Vai trò `manager`: Có toàn quyền tất cả action permissions của POS (`kAllActions`: bán hàng, bàn, kho, thu chi, báo cáo, tính lương, máy in) để điều hành ca làm việc tại quán; nhưng **tuyệt đối KHÔNG tự động được cấp các quyền dữ liệu nhạy cảm qua AI Boom** (`ai_boom.sales`, `ai_boom.inventory`, `ai_boom.finance`, `ai_boom.operations`, `ai_boom.team_shift`, `ai_boom.all_payroll`). Mặc định qua AI Boom, Manager chỉ có 3 quyền an toàn cá nhân (`ai_boom.help`, `ai_boom.my_shift`, `ai_boom.my_payroll`), các quyền nhạy cảm khác phải suy trực tiếp từ Lego Modules (`store_roles.modules`) hoặc được Chủ Quán cấp chủ động; nếu chưa được cấp phải **fail-closed**.
      - Vai trò `cashier` hoặc tên vai trò có chứa `"thu ngân"`, `"quầy"`: Mặc nhiên có quyền thanh toán `pos.checkout`, xem lịch sử `pos.view_history`, giảm giá `pos.apply_discount`.
   4. **Chuẩn hóa Vai trò Nghiệp vụ F&B & Bộ Quy Tắc Nhận Diện Canonical (`StaffService.canonicalRole`)**:
      - Danh mục mã chuẩn hệ thống (Canonical Codes):
@@ -151,7 +151,7 @@ Quy tắc nghiệp vụ lõi:
       4. Mở sẵn Archive trong Xcode Organizer (cho iOS) và đưa ra hướng dẫn 1-click cho Chủ Quán.
       5. Ghi nhật ký đầy đủ vào `nhat_ky.md`.
 
-### QR Order và AI Bum
+### QR Order và AI Boom
 
 - Mỗi cửa hàng dùng một QR TABLE_SHARED chung và một QR COUNTER mang đi; không in QR riêng từng bàn. **(Cập nhật 13/10/2026)** Khách TỰ CHỌN BÀN trên web khi đặt TABLE; không còn QR bàn giao động và không còn camera quét. Đơn mới vào hàng chờ chung có chuông; nhân viên mở đơn (tự atomic claim), xem/sửa món, đổi bàn nếu sai rồi bấm một nút: TABLE "Duyệt & gửi bếp", COUNTER "Đã thu tiền & gửi bếp". Trạng thái chỉ gồm `submitted, claimed, sent_kitchen, rejected, expired, cancelled`. Hợp đồng RPC: `.docs/qr-rpc-contract-don-gian.md`.
 - QR TABLE/COUNTER phải dùng giá authoritative từ server, atomic claim chống hai nhân viên duyệt trùng và commit boundary rõ ràng. Một request hội tụ vào đúng một order; không rollback sau khi vé Bếp đã commit nếu việc đó có thể in trùng; retry chỉ reconcile trạng thái idempotent (khóa suy ra từ `request_id`, không sinh ở UI).
@@ -159,11 +159,24 @@ Quy tắc nghiệp vụ lõi:
 - **Chống phá QR (14/10/2026)** — migration `20261014_qr_chong_pha_v4.sql` + `20261014b_qr_gateway_config.sql`, rollback `rollback_qr_chong_pha_v4.sql`, test `supabase/tests/qr_chong_pha_v4_test.sql`. Lớp 1: nginx gắn `X-QN-Client-IP` (IP thật qua Cloudflare) + `limit_req` 20 lượt/phút/IP trên `submit_qr_order_v4`; DB băm IP (SHA-256 + muối) và giới hạn 12 lượt/phút, 60/giờ, 10 đơn chờ mỗi IP (cấu hình ở `qr_security_config`). Lớp 2: ≥100 lượt gửi/60 giây trên một kênh ⇒ kênh tự khoá (`locked_at`), nhân viên thấy dải đỏ `QrLockedBanner` (POS + Quản lý bàn) và phải bấm "Tạo mã QR mới" (`rotate_qr_channel_v4`, mã cũ vô hiệu; KHÔNG bật lại bằng mã cũ). Lớp 3: Cloudflare Turnstile → cổng `/api/auth/qr-ticket` cấp vé HMAC 5 phút gắn khoá chống trùng; bật bằng `qr_security_config.require_ticket='true'` + `turnstile_site_key` + `turnstile_secret`. Chữ ký `submit_qr_order_v4` nay có 6 tham số (thêm `p_ticket`).
 - Link QR chỉ được dựng bằng `QrUrlBuilder`; không hard-code tên miền, không in QR khi kênh tắt hoặc chưa có mã. Migration QR `supabase/migrations/20261013_qr_order_simple_v4.sql` chưa áp dụng cho tới khi preflight + test chạy xanh trên staging.
 - Nhân viên đã kết nối quán bằng tài khoản + mã quán; QR không tạo POS device pairing/PIN riêng. `device_id` nếu dùng chỉ là metadata audit/idempotency, không phải credential người dùng.
-- **Nền tảng công nghệ AI Bum (Qwen2.5 + Unsloth Framework):** AI Bum hiện sử dụng Qwen2.5 làm base model, được nạp và tối ưu huấn luyện/suy luận bằng framework Unsloth (`FastLanguageModel`). Quán Nhỏ sở hữu dữ liệu tự tạo và LoRA adapter do dự án huấn luyện, trong phạm vi giấy phép của base model và các dependency liên quan. Các tuyên bố hiệu năng như giảm 70% VRAM hay tăng tốc 2–5x là số liệu tham khảo của framework Unsloth, không phải kết quả đã nghiệm thu của dự án trên cấu hình BunServer. `MAX_SEQ_LENGTH = 512` là cấu hình hiện hành đã được sử dụng/quan sát với ngưỡng VRAM guard; 1024 chưa được nghiệm thu trên BunServer. Không nâng lên 1024 trong đợt này.
-- **Kiến trúc hai tầng của AI Bum (Dual-Layer Architecture):**
+- **Nền tảng công nghệ AI Boom (Qwen2.5 + Unsloth Framework):** AI Boom hiện sử dụng Qwen2.5 làm base model, được nạp và tối ưu huấn luyện/suy luận bằng framework Unsloth (`FastLanguageModel`). Quán Nhỏ sở hữu dữ liệu tự tạo và LoRA adapter do dự án huấn luyện, trong phạm vi giấy phép của base model và các dependency liên quan. Các tuyên bố hiệu năng như giảm 70% VRAM hay tăng tốc 2–5x là số liệu tham khảo của framework Unsloth, không phải kết quả đã nghiệm thu của dự án trên cấu hình BunServer. `MAX_SEQ_LENGTH = 512` là cấu hình hiện hành đã được sử dụng/quan sát với ngưỡng VRAM guard; 1024 chưa được nghiệm thu trên BunServer. Không nâng lên 1024 trong đợt này.
+- **Kiến trúc hai tầng của AI Boom (Dual-Layer Architecture):**
   - **Tầng 1 (RAG Cấp tốc):** Tra cứu tức thì qua SQLite FTS5 index 26 Chuyên đề nghiệp vụ F&B và 17 Cây ma trận quyết định phản xạ thực chiến (< 2ms) phục vụ hỏi đáp thời gian thực cho nhân viên quán mà không tiêu hao tài nguyên mô hình lớn.
   - **Tầng 2 (SFT Huấn luyện chuyên sâu):** Sử dụng framework Unsloth (`FastLanguageModel`) nạp base model Qwen2.5 + LoRA adapter từ kho dữ liệu bài học đã được kiểm duyệt/phê duyệt, tuyệt đối tuân thủ Zero Verbatim Ingestion, Zero PII, Zero Business Secrets.
-- AI Bum phải read-only với nghiệp vụ, chỉ đóng vai trò trợ lý/tư vấn/nhắc nhở, không tự tạo hiệu lực kho hoặc tài chính, khử PII trước cloud fallback, có quota/circuit breaker và cô lập conversation/feedback/memory theo `store_id`.
+- AI Boom phải read-only với nghiệp vụ, chỉ đóng vai trò trợ lý/tư vấn/nhắc nhở, không tự tạo hiệu lực kho hoặc tài chính, khử PII trước cloud fallback, có quota/circuit breaker và cô lập conversation/feedback/memory theo `store_id`.
+- **Boom đang chạy trên production (25/10/2026):** app → hàm Supabase `boom-chat` (Deno, `supabase/functions/boom-chat/`) → OpenAI `gpt-4o-mini` (khoá chỉ ở `/root/quannho-secrets/boom-ai.env`). App tự định tuyến (`lib/features/ai_assistant/providers/boom_chat_provider.dart`): số liệu nhanh / hướng dẫn (bộ `assets/boom_help/huong_dan.json`) / tư vấn kèm số liệu thật / so sánh chi nhánh (báo cáo chuỗi, chỉ chủ chuỗi) / số 5 mục Thu Chi–Kho–Chấm công/Lương–Khách–Khuyến mãi (`services/boom_module_data_service.dart`, **chỉ `select`**, test `boom_read_only_guard_test` quét file). **Quyền xem như app:** RLS chỉ chặn theo quán, không theo vai trò → Boom tự đọc lại vai trò từ `store_members` + module của vai trò + module đang bật (`resolveBoomPerms`), lỗi đọc quyền = không cho xem. Sổ `boom_qa_log` (quản lý quán đọc được) KHÔNG lưu câu trả lời có số chuỗi / số module; bản nguyên văn chỉ ở `boom_qa_full` (trang quản trị).
+
+### Trang quản trị nền tảng (/admin) — 25/10/2026
+
+- `https://quannho.lpm.vn/admin/` = trang tĩnh `admin_web/` (không thuộc app Flutter, không thuộc website Next.js). Đăng nhập bằng **tài khoản quản trị riêng** (`platform_admin_accounts`, tên đăng nhập + bcrypt), KHÔNG dùng tài khoản quán. Hiện chỉ 1 tài khoản: `pachiabun`. Đặt / đổi mật khẩu: Chủ Quán TỰ chạy `bash db-fix/tao_tk_quan_tri.sh <tên> "<Tên hiển thị>"` — agent không bao giờ đặt hay nhập mật khẩu.
+- Cổng `/api/auth/admin-jwt` (`services/pos_jwt_auth_service.py`) cấp vé 4 giờ với **vai trò Postgres riêng `qn_admin`** (`token_use='admin'`): chỉ gọi được hàm `admin_*_v1`, không đọc bảng nào, không dùng được như phiên quán, không đổi sang vé khác. Đổi mật khẩu / khoá tài khoản → vé cũ hết hiệu lực. Giới hạn thử riêng (5 lần/5 phút/IP, 30 lần/giờ/tài khoản).
+- Dữ liệu: `admin_store_overview_v1`, `admin_store_list_v1` (KHÔNG doanh thu — Chủ Quán chốt), `admin_boom_*_v1` (hội thoại nguyên văn `boom_qa_full` lưu 90 ngày, chấm `boom_admin_reviews`, nhật ký dạy `boom_changelog`, bộ hướng dẫn + bộ nhớ). Migration `20261026_trang_quan_tri_v1.sql` + `20261026_trang_quan_tri_v2_tai_khoan.sql` (KHÔNG chạy lại v1 — có chặn). Test `supabase/tests/trang_quan_tri_v1_test.sql`, `trang_quan_tri_v2_tai_khoan_test.sql`, `test/backend/test_admin_jwt.py`.
+- **Đợt 1 (ĐÃ ÁP DB + /admin 26/10 01:40; web /pos có dải nhắc CHƯA đưa):** hồ sơ quán chi tiết (`admin_store_detail_v1`: chủ + SĐT, doanh số 7/30 ngày + biểu đồ, module, tài khoản, nhân viên PIN, thiết bị từ `app_logs`, lần đăng nhập, lỗi app 14 ngày, Boom), tab **Gói** (`admin_plan_overview_v1`, `admin_plan_list_v1`), 4 thao tác có nhật ký `admin_store_actions` (gia hạn dùng thử, đổi gói free/pro + số tiền thu, khoá / mở quán, sổ chăm sóc `admin_store_notes` + hẹn gọi lại), câu liên hệ `platform_settings.plan_contact`. App: `store_plan_status_v1` (chỉ vé authenticated) → dải nhắc hết / sắp hết dùng thử cho Chủ quán + màn "Quán đang tạm khoá". **Khoá quán** = `stores.status='locked'`: `current_store_id()`, `qn_is_member`, `verify_staff_qr_membership_v4` từ chối quán khoá (chặn RLS, bán hàng, quyết toán, báo cáo); vẫn đăng nhập được để thấy màn khoá; vài hàm tự kiểm thành viên riêng (bàn / QR / nhân viên) chưa chặn. **Chốt cột** `plan/status/trial_ends_at/plan_ends_at/owner_user_id/store_code` trên `stores`: người đăng nhập quán không tự đổi được (trigger `qn_stores_guard_plan_cols`). Migration `20261027_quan_tri_dot1_ho_so_goi.sql` (+ROLLBACK trả nguyên văn 4 hàm), test `supabase/tests/quan_tri_dot1_ho_so_goi_test.sql`, Flutter `test/screens/store_plan_notice_test.dart`, áp `db-fix/quan_tri_dot1_ap_dung.sh`.
+- **Cổng thu phí (đợt A: ĐÃ ÁP DB + /admin 26/10 02:20; web /pos CHƯA đưa):** kế hoạch `ke-hoach-cong-thu-phi.md`. MỌI chỗ hiện giá / nút mua / lời mời mua trong app phải đi qua `billingAllowedHere()` (`lib/core/utils/billing_platform.dart`) — iOS / Android (App Store / CH Play) KHÔNG được hiện; KHÔNG đưa giá / thanh toán vào hướng dẫn Boom. Gia hạn Pro chỉ qua `qn_billing_apply_order` (service_role). Migration `20261028_cong_thu_phi_dot_a.sql`, test `supabase/tests/cong_thu_phi_dot_a_test.sql`, `test/screens/billing_screen_test.dart`, áp `db-fix/thu_phi_dot_a_ap_dung.sh`.
+- **Hỗ trợ chủ quán (H1 + H2 ĐÃ ÁP 26/10 03:01; H3 ĐÃ ÁP 04:45 — chủ quán đặt mật khẩu nhân viên đã từng đăng nhập vào quán `store_staff_set_password_v1`; trigger `qn_store_members_guard_owner` chặn tự lên chủ quán):** thiết kế `ke-hoach-ho-tro-chu-quan.md`. "Gửi phản hồi" của app ghi `bug_reports` (chỉ thêm, trigger đóng dấu người thật); /admin tab Hỗ trợ: yêu cầu, tra tài khoản, **mật khẩu tạm** (máy tạo, hiện 1 lần, bắt xác minh 3 bước — quản trị đọc qua điện thoại, người dùng tự đổi trong Cài đặt), xoá PIN nhanh; nhật ký `support_actions` không lưu mật khẩu. Agent KHÔNG bao giờ tự cấp / đọc mật khẩu tạm. Migration `20261029_ho_tro_chu_quan_h1h2.sql`, test `supabase/tests/ho_tro_chu_quan_h1h2_test.sql`, áp `db-fix/ho_tro_h1h2_ap_dung.sh`.
+- **Mỗi lần áp bản Boom mới: thêm một dòng `boom_changelog`** (ngày giờ, phiên bản, đã dạy gì, kết quả kiểm tra) để trang "Boom: Đã dạy" đúng thực tế.
+- Giao diện: chốt an toàn bắt buộc — chữ từ dữ liệu chỉ qua `textContent` (cấm `innerHTML`), không tải gì từ ngoài (CSP `'self'`), vé chỉ ở `sessionStorage`, Thoát xoá sạch DOM. Giao diện hiện tại do Antigravity thiết kế lại theo `ke-hoach-giao-dien-admin-antigravity.md`, đã áp production 26/10 (phông Plus Jakarta Sans tự host ở `admin_web/fonts/`; CSP nginx khối `/admin/` đã có `font-src 'self'`). Xem trước bằng `admin_web/dev/mock_server.py`, không đụng production. Đưa bản mới: `bash admin_web/build.sh` rồi rsync `build/admin_web/` → `/var/www/quannho/admin/` (sao lưu trước).
+- Áp / hoàn tác: `db-fix/trang_quan_tri_v2_ap_dung.sh` (bước 3 = đưa trang); chạy thử migration bằng `db-fix/chuoi_stage_dryrun.sh` nhưng **bỏ mọi lệnh cấp vai trò (CREATE/ALTER/GRANT ROLE)** — bản sao nằm cùng cụm Postgres nên lệnh vai trò ăn thẳng vào production.
 
 ## 3. Phân vai hai graph & Logic vận hành CodeGraph
 
@@ -314,6 +327,19 @@ graphify update .
 - CodeGraph tự đồng bộ source; `status` phải báo index mới.
 - `graphify update .` cập nhật cấu trúc code không cần LLM.
 - Nếu thay đổi tài liệu/kiến trúc quan trọng, chạy `$graphify . --update` để cập nhật cả semantic graph và report trực quan.
+
+**Bài hướng dẫn (`.docs/Huong_dan/`, Boom đọc nguyên văn):** đổi màn hình / chữ hiển thị / quy tắc thì
+`test/docs/huong_dan_dong_bo_test.dart` báo bài nào trỏ tới file vừa đổi. Rà bài đó theo code mới (tên nút
+phải có trong code), rồi:
+
+```bash
+dart run tool/xuat_huong_dan_boom.dart          # xuất lại cho Boom (tự chặn lọt tên kỹ thuật)
+dart run tool/dong_dau_huong_dan.dart <bài>.md  # đóng dấu bài đã rà
+flutter test test/features/ai_assistant/        # bộ câu hỏi kiểm tra Boom
+```
+
+Muốn app đang chạy nhận bài mới không cần phát hành: `bash db-fix/dang_huong_dan_boom.sh` (cần bảng
+`boom_help_packs`; hỏi Chủ Quán trước khi đăng).
 
 ### Bước G — Thay đổi schema/data hoặc thêm module mới
 

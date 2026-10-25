@@ -28,7 +28,7 @@ class BillPrinterHub extends ConsumerWidget {
         backgroundColor: _kIndigo,
         foregroundColor: Colors.white,
         title: Text('In Hoá Đơn',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 18)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 18)),
       ),
       body: asyncTpl.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -88,7 +88,7 @@ class BillPrinterHub extends ConsumerWidget {
               ),
               const SizedBox(width: 10),
               Text('Xem Trước Nhanh',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w800, fontSize: 16, color: _kIndigo)),
               const SizedBox(width: 8),
               Container(
@@ -98,7 +98,7 @@ class BillPrinterHub extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text('hoá đơn thu ngân',
-                    style: GoogleFonts.outfit(fontSize: 11, color: _kIndigo)),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kIndigo)),
               ),
             ]),
             const SizedBox(height: 12),
@@ -128,7 +128,7 @@ class BillPrinterHub extends ConsumerWidget {
             OutlinedButton.icon(
               icon: const Icon(Icons.refresh_rounded, size: 16),
               label: Text('Đặt lại về mặc định',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red.shade400,
                 side: BorderSide(color: Colors.red.shade300),
@@ -158,20 +158,20 @@ class BillPrinterHub extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('Đặt lại thiết kế?',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w800)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
         content: Text('Toàn bộ cài đặt hoá đơn sẽ trở về mặc định.',
-            style: GoogleFonts.outfit()),
+            style: GoogleFonts.plusJakartaSans()),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Huỷ', style: GoogleFonts.outfit(color: _kIndigo))),
+              child: Text('Huỷ', style: GoogleFonts.plusJakartaSans(color: _kIndigo))),
           TextButton(
             onPressed: () {
               ref.read(billTemplateProvider.notifier).reset();
               Navigator.pop(ctx);
             },
             child: Text('Đặt lại',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     color: Colors.red, fontWeight: FontWeight.w700)),
           ),
         ],
@@ -218,7 +218,8 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
         final pdf = pw.Document();
         pdf.addPage(pw.Page(
           build: (context) => pw.Center(
-            child: pw.Text('Quan Nho POS\nTEST PRINTER (WEB MODE)\nStation: $station\nTarget: ${config.name}'),
+            child: pw.Text(
+                    'Quan Nho POS\nIN THU (TRINH DUYET)\nTram: $station\nMay in: ${config.name}'),
           ),
         ));
         await Printing.layoutPdf(onLayout: (_) async => pdf.save());
@@ -228,7 +229,8 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
         final pdf = pw.Document();
         pdf.addPage(pw.Page(
           build: (context) => pw.Center(
-            child: pw.Text('Quan Nho POS\nTEST SYSTEM PRINTER\nStation: $station\nPrinter: ${config.name}'),
+            child: pw.Text(
+                    'Quan Nho POS\nIN THU MAY IN HE THONG\nTram: $station\nMay in: ${config.name}'),
           ),
         ));
         await Printing.directPrintPdf(
@@ -238,10 +240,10 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
       } else {
         final socket = await Socket.connect(config.name, 9100, timeout: const Duration(seconds: 3));
         socket.add(utf8.encode('\x1b\x40')); // Init printer
-        socket.add(utf8.encode('Quan Nho POS - Test IP Printer\n'));
-        socket.add(utf8.encode('Station: $station\n'));
+        socket.add(utf8.encode('Quan Nho POS - In thu may in IP\n'));
+        socket.add(utf8.encode('Tram: $station\n'));
         socket.add(utf8.encode('IP: ${config.name}\n'));
-        socket.add(utf8.encode('Status: Connected successfully!\n\n\n\n\n'));
+        socket.add(utf8.encode('Trang thai: Ket noi thanh cong!\n\n\n\n\n'));
         socket.add(utf8.encode('\x1d\x56\x01')); // Cut command
         await socket.flush();
         await socket.close();
@@ -287,7 +289,7 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
             Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 16),
             Text('Cấu Hình Máy In & Tem Dán Ly',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 18, color: _kIndigo)),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18, color: _kIndigo)),
             const SizedBox(height: 16),
 
             Expanded(
@@ -315,7 +317,7 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
 
                     // Cashier Printer
                     _buildStationSection(
-                      title: '1. Máy in Thu Ngân (Cashier)',
+                      title: '1. Máy in Thu ngân',
                       subtitle: 'In hoá đơn thanh toán đầy đủ cho khách',
                       stationKey: 'cashier',
                       config: settings.cashier,
@@ -325,7 +327,7 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
 
                     // Hot Kitchen Printer
                     _buildStationSection(
-                      title: '2. Máy in Bếp Nóng (Hot Kitchen)',
+                      title: '2. Máy in Bếp nóng',
                       subtitle: 'Chỉ nhận phiếu in các món chế biến bằng lửa',
                       stationKey: 'bepNong',
                       config: settings.bepNong,
@@ -335,7 +337,7 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
 
                     // Bar Printer
                     _buildStationSection(
-                      title: '3. Máy in Bếp Bar (Drinks)',
+                      title: '3. Máy in Quầy bar (đồ uống)',
                       subtitle: 'Chỉ nhận phiếu các món nước uống, sinh tố, trà sữa',
                       stationKey: 'bepBar',
                       config: settings.bepBar,
@@ -345,7 +347,7 @@ class _PrinterSettingsSheetState extends ConsumerState<_PrinterSettingsSheet> {
 
                     // Bar Label Printer
                     _buildStationSection(
-                      title: '4. Máy in Nhãn Dán Ly (Stickers)',
+                      title: '4. Máy in Tem dán ly',
                       subtitle: 'In tem dán ly cho từng cốc trà sữa, đồ uống mang đi',
                       stationKey: 'barLabel',
                       config: settings.barLabel,
@@ -628,7 +630,7 @@ class _HubSquareCard extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
                     fontSize: isMobile ? 14 : 17,
@@ -639,7 +641,7 @@ class _HubSquareCard extends StatelessWidget {
                   subtitle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     color: Colors.white.withValues(alpha: 0.75),
                     fontSize: isMobile ? 11 : 13,
                     height: 1.3,
@@ -679,4 +681,3 @@ class _HubPatternPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

@@ -11,12 +11,20 @@ import '../core/providers/app_providers.dart';
 import '../modules/loyalty/repository/loyalty_repository.dart';
 import '../modules/pos/screens/discount_management_screen.dart';
 import '../core/utils/app_logger.dart';
+import '../core/utils/string_utils.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOYALTY PROVIDERS — local trong file này
 // ─────────────────────────────────────────────────────────────────────────────
 final _loyaltyRepoProvider = Provider<LoyaltyRepository>((ref) {
   return LoyaltyRepository();
+});
+
+// Lịch sử điểm theo khách — provider cố định (trước đây tạo provider mới trong build → bảng chi tiết
+// khách tự dựng lại liên tục, mỗi vòng mở kênh realtime + tải lại).
+final _customerTxProvider = StreamProvider.autoDispose
+    .family<List<LoyaltyTransactionModel>, String>((ref, customerId) {
+  return ref.watch(_loyaltyRepoProvider).watchTransactions(customerId);
 });
 
 final _topCustomersProvider = StreamProvider.autoDispose<List<LoyaltyCustomerModel>>((ref) {
@@ -421,6 +429,16 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
             )),
           ]),
         ),
+            // Nạp lần đầu: danh sách dưới chỉ có khách ĐÃ có tiền trong ví → cần lối chọn khách bất kỳ.
+            Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                        onPressed: () => _pickCustomerForTopUp(customers),
+                        icon: const Icon(Icons.add_card_rounded, size: 18),
+                        label: const Text('Nạp ví cho khách',
+                            style: TextStyle(fontWeight: FontWeight.w700))))),
           if (withWallet.isEmpty)
             Expanded(child: _emptyState(Icons.account_balance_wallet_rounded, 'Chưa có khách nào nạp tiền')),
           if (withWallet.isNotEmpty)
@@ -495,44 +513,150 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
     );
   }
 
-  void _openTopUp(LoyaltyCustomerModel customer) {
-    final packagesAsync = ref.read(_packagesProvider);
-    final packages = packagesAsync.when(
-      data: (d) => d, loading: () => <TopupPackageModel>[], error: (_, __) => <TopupPackageModel>[]);
+  /// So số điện thoại chỉ theo chữ số, coi +84 / 84 đầu số như 0 ("0901 234", "+84901…" đều khớp).
+  static bool _phoneMatches(String? phone, String query) {
+    String norm(String s) {
+      var d = s.replaceAll(RegExp(r'\D'), '');
+      if (d.startsWith('84') && d.length > 9) d = '0${d.substring(2)}';
+      return d;
+    }
+
+    final q = norm(query);
+    return q.isNotEmpty && norm(phone ?? '').contains(q);
+  }
+
+  /// Chọn khách bất kỳ (tìm theo tên / SĐT) để nạp ví — gồm cả khách chưa từng nạp.
+  void _pickCustomerForTopUp(List<LoyaltyCustomerModel> customers) {
+    var query = '';
     showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        builder: (ctx) => StatefulBuilder(builder: (ctx, setS) {
+              final q = query.trim();
+              final list = q.isEmpty
+                  ? customers
+                  : customers
+                      .where((c) =>
+                          c.name.containsSearch(q) || _phoneMatches(c.phone, q))
+                      .toList();
+              return Padding(
+                  padding: EdgeInsets.fromLTRB(
+                      16, 16, 16, MediaQuery.of(ctx).viewInsets.bottom + 16),
+                  child: SizedBox(
+                      height: MediaQuery.of(ctx).size.height * 0.7,
+                      child: Column(children: [
+                        const Text('Chọn khách để nạp ví',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 10),
+                        TextField(
+                            autofocus: true,
+                            decoration: const InputDecoration(
+                                hintText: 'Tên hoặc số điện thoại',
+                                prefixIcon: Icon(Icons.search_rounded)),
+                            onChanged: (v) => setS(() => query = v)),
+                        const SizedBox(height: 8),
+                        Expanded(
+                            child: list.isEmpty
+                                ? const Center(
+                                    child: Text(
+                                        'Không có khách phù hợp — thêm khách ở tab Khách hàng trước.'))
+                                : ListView.builder(
+                                    itemCount: list.length,
+                                    itemBuilder: (_, i) {
+                                      final c = list[i];
+                                      return ListTile(
+                                          title: Text(c.name),
+                                          subtitle: Text(c.phone ?? ''),
+                                          trailing:
+                                              Text(_fmtMoney(c.totalWallet)),
+                                          onTap: () {
+                                            Navigator.pop(ctx);
+                                            _openTopUp(c);
+                                          });
+                                    }))
+                      ])));
+            }));
+  }
+
+  Future<void> _openTopUp(LoyaltyCustomerModel customer) async {
+    // Tải gói nạp THẬT trước khi mở bảng: provider autoDispose chỉ sống khi tab "Gói nạp" đang
+    // mở, đọc ngay sẽ ra danh sách rỗng → bonus 0 → máy chủ từ chối (QUOTE_CHANGED).
+    final List<TopupPackageModel> packages;
+    try {
+      packages = await ref.read(_loyaltyRepoProvider).getPackages();
+    } catch (e, st) {
+      AppLogger.error('loyalty_screen', 'Tải gói nạp lỗi: $e', e, st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Chưa tải được gói nạp (mất kết nối?). Thử lại sau giây lát.'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating));
+      }
+      return;
+    }
+    if (!mounted) return;
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        // Không vuốt đóng: đang gửi lệnh nạp mà đóng bảng thì mất kết quả, dễ nạp lại lần nữa.
+        enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _TopUpSheet(
         customer: customer,
         packages: packages,
-        onTopUp: (real, bonus, months) async {
-          try {
+        onTopUp: (real, bonus, months, fundType, idempotencyKey) async {
+              try {
+                final r =
             await ref.read(_loyaltyRepoProvider).topUpWallet(
               customerId: customer.id,
               realAmount: real,
-              bonusAmount: bonus,
-              bonusMonths: months,
-              customerName: customer.name, // để finance_records rõ tên khách
-            );
-            if (ctx.mounted) {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                content: Text('✅ Đã nạp ${_fmtMoney(real)} cho ${customer.name}'),
+                    idempotencyKey: idempotencyKey,
+                    fundType: fundType,
+                    bonusMonths: months,
+                    expectedBonus: bonus);
+                AppLogger.action('wallet_topup', 'Nạp ví',
+                    total: r.amount,
+                    result:
+                        r.isReplay ? 'đã nạp trước đó (không nạp lại)' : 'ok',
+                    extra: {
+                      'customer': customer.name,
+                      'bonus': r.bonusAmount.round(),
+                      'fund': fundType
+                    },
+                    critical: true);
+                if (ctx.mounted) {
+                  final messenger = ScaffoldMessenger.of(ctx);
+                  Navigator.pop(ctx);
+                  messenger.showSnackBar(SnackBar(
+                      content: Text(r.isReplay
+                          ? '✅ Lần nạp ${_fmtMoney(r.amount)} cho ${customer.name} đã được ghi trước đó (không nạp trùng)'
+                          : '✅ Đã nạp ${_fmtMoney(r.amount)}'
+                              '${r.bonusAmount > 0 ? ' (+${_fmtMoney(r.bonusAmount)} bonus)' : ''}'
+                              ' cho ${customer.name}'),
                 backgroundColor: const Color(0xFF2E7D32),
                 behavior: SnackBarBehavior.floating,
               ));
             }
-          } catch (e, st) {
-            AppLogger.error('loyalty_screen', 'Nạp ví thất bại: $e', e, st);
-            if (ctx.mounted) {
-              ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
-                content: Text('Nạp tiền vào ví thất bại. Hãy chụp lại báo chủ app.'),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-              ));
-            }
-          }
+          } on WalletTopUpException catch (e) {
+                // Máy chủ từ chối, chưa ghi gì: giữ bảng nạp để sửa rồi bấm lại.
+                AppLogger.warning('loyalty_screen',
+                    'Nạp ví bị từ chối: ${e.code} ${e.message}');
+                if (e.code == 'IDEMPOTENCY_CONFLICT') {
+                  return 'Lần bấm trước (lúc mất mạng) ĐÃ nạp với số tiền/quỹ cũ. '
+                      'Đóng bảng, kiểm tra số dư ví của khách trước khi nạp thêm.';
+                }
+                return e.message;
+              } catch (e, st) {
+            AppLogger.error('loyalty_screen', 'Nạp ví lỗi kết nối: $e', e, st);
+                return 'Chưa rõ đã nạp hay chưa do mất kết nối. Bấm "Xác nhận nạp" lại ngay trên bảng này '
+                    '— hệ thống không nạp trùng.';
+              }
+              return null;
         },
       ),
     );
@@ -1059,10 +1183,7 @@ class _CustomerDetailSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final repo = ref.watch(_loyaltyRepoProvider);
-    final txAsync = ref.watch(
-      StreamProvider.autoDispose((r) =>
-          repo.watchTransactions(customer.id)));
+    final txAsync = ref.watch(_customerTxProvider(customer.id));
 
     return Container(
       decoration: const BoxDecoration(
@@ -1227,7 +1348,7 @@ class _CustomerDetailSheet extends ConsumerWidget {
                       title: Text(t.note ?? (isEarn ? 'Tích điểm' : 'Đổi điểm'),
                         style: const TextStyle(fontSize: 13)),
                       subtitle: Text(
-                        '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}',
+                                  '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
                         style: const TextStyle(fontSize: 11, color: _kMuted)),
                       trailing: Text(
                         '${isEarn ? '+' : '-'}${(isEarn ? t.ptsEarned : t.ptsUsed).toStringAsFixed(0)} pt',
@@ -2044,7 +2165,10 @@ class _WalletChip extends StatelessWidget {
 class _TopUpSheet extends StatefulWidget {
   final LoyaltyCustomerModel customer;
   final List<TopupPackageModel> packages;
-  final Future<void> Function(double real, double bonus, int? months) onTopUp;
+
+  /// Trả về câu báo lỗi để hiện ngay trên bảng nạp; null = đã nạp xong (bảng đã đóng).
+  final Future<String?> Function(double real, double bonus, int? months,
+      String fundType, String idempotencyKey) onTopUp;
   const _TopUpSheet({
     required this.customer,
     required this.packages,
@@ -2063,7 +2187,13 @@ class _TopUpSheetState extends State<_TopUpSheet> {
 
   final _customCtrl = TextEditingController();
   int _bonusMonths = 12;
+  String _fundType = 'cash';
   bool _loading = false;
+  String? _error;
+
+  /// Một mã chống trùng cho cả lần mở bảng nạp: bấm lại sau lỗi mạng (kể cả lỡ đổi số tiền,
+  /// quỹ, thời hạn) vẫn gửi đúng mã cũ — máy chủ trả lần nạp cũ hoặc báo xung đột, không nạp trùng.
+  final String _idempotencyKey = 'topup:${const Uuid().v4()}';
 
   @override
   void dispose() {
@@ -2079,7 +2209,10 @@ class _TopUpSheetState extends State<_TopUpSheet> {
     final eligible = widget.packages
         .where((p) => p.minAmount <= _enteredAmount)
         .toList()
-      ..sort((a, b) => b.minAmount.compareTo(a.minAmount));
+      ..sort((a, b) {
+            final c = b.minAmount.compareTo(a.minAmount);
+            return c != 0 ? c : b.bonusPct.compareTo(a.bonusPct);
+          });
     return eligible.isEmpty ? null : eligible.first;
   }
 
@@ -2092,19 +2225,36 @@ class _TopUpSheetState extends State<_TopUpSheet> {
   }
 
   Future<void> _submit() async {
-    if (_realAmount <= 0) return;
-    setState(() => _loading = true);
+    if (_realAmount <= 0 || _loading) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    String? error;
     try {
-      await widget.onTopUp(_realAmount, _bonusAmount, _bonusMonths > 0 ? _bonusMonths : null);
+      error = await widget.onTopUp(
+          _realAmount,
+          _bonusAmount,
+          _bonusAmount > 0 && _bonusMonths > 0 ? _bonusMonths : null,
+          _fundType,
+          _idempotencyKey);
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = error;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final pad = MediaQuery.of(context).viewInsets.bottom;
-    return Container(
+    // Đang gửi lệnh nạp: không cho đóng bảng (bấm nền / nút quay lại).
+    return PopScope(
+        canPop: !_loading,
+        child: Container(
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -2237,6 +2387,27 @@ class _TopUpSheetState extends State<_TopUpSheet> {
           const SizedBox(height: 8),
         ],
 
+                  // Quỹ nhận tiền — ghi vào Thu Chi đúng quỹ
+                  const Text('Khách trả bằng:',
+                      style:
+                          TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    for (final f in const [
+                      ('cash', 'Tiền mặt'),
+                      ('bank', 'Chuyển khoản')
+                    ]) ...[
+                      ChoiceChip(
+                          label: Text(f.$2),
+                          selected: _fundType == f.$1,
+                          onSelected: _loading
+                              ? null
+                              : (_) => setState(() => _fundType = f.$1)),
+                      const SizedBox(width: 8)
+                    ]
+                  ]),
+                  const SizedBox(height: 12),
+
         // Preview
         if (_realAmount > 0) ...[
           Container(
@@ -2272,6 +2443,22 @@ class _TopUpSheetState extends State<_TopUpSheet> {
           const SizedBox(height: 14),
         ],
 
+                  if (_error != null)
+                    Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: Colors.red.withValues(alpha: 0.4))),
+                        child: Text(_error!,
+                            style: const TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13))),
+
         // Button xác nhận
         SizedBox(
           width: double.infinity,
@@ -2293,7 +2480,7 @@ class _TopUpSheetState extends State<_TopUpSheet> {
                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           ),
         ),
-      ]),
+      ])),
     );
   }
 }
@@ -2517,7 +2704,7 @@ class _LRCard extends StatelessWidget {
         child: Row(children: [
           Icon(icon, size: 16, color: _kNavy),
           const SizedBox(width: 6),
-          Text(title, style: GoogleFonts.outfit(
+          Text(title, style: GoogleFonts.plusJakartaSans(
             fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
         ]),
       ),
@@ -2540,8 +2727,8 @@ class _LRRow extends StatelessWidget {
     child: Row(children: [
       Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       const SizedBox(width: 8),
-      Expanded(child: Text(label, style: GoogleFonts.outfit(fontSize: 13, color: _kInk))),
-      Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+      Expanded(child: Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kInk))),
+      Text(value, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
     ]),
   );
 }

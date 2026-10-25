@@ -219,8 +219,9 @@ class _OrderInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     final fs = b.cfg<int>('fontSize', 10).toDouble();
     final now = DateTime.now();
-    final date = '${now.day.toString().padLeft(2,'0')}/${now.month.toString().padLeft(2,'0')}/${now.year} '
-        '${now.hour.toString().padLeft(2,'0')}:${now.minute.toString().padLeft(2,'0')}';
+    final date =
+        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} '
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     return Column(children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text('HÓA ĐƠN', style: TextStyle(fontWeight: FontWeight.w700, fontSize: fs + 1)),
@@ -493,7 +494,7 @@ class _QrPlaceholder extends StatelessWidget {
     decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(4)),
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Icon(Icons.qr_code_2_rounded, size: size * 0.5, color: Colors.grey.shade400),
-      const Text('QR Code', style: TextStyle(fontSize: 9, color: Colors.grey)),
+      const Text('Mã QR', style: TextStyle(fontSize: 9, color: Colors.grey)),
     ]),
   );
 }

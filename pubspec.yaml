@@ -2,7 +2,7 @@ name: quannho_pos
 description: "Quán Nhỏ POS - Quản lý cửa hàng đơn giản"
 publish_to: 'none'
 
-version: 1.0.5+20
+version: 1.0.5+21
 
 environment:
   sdk: ^3.11.5
@@ -95,6 +95,7 @@ flutter:
     - assets/i18n/
     - assets/branding/
     - assets/fonts/
+    - assets/boom_help/
 
 msix_config:
   display_name: "Quán Nhỏ POS"

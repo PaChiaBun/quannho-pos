@@ -756,7 +756,7 @@ class PrintCoordinator {
             item.stationCode: StationPrintResult(
               stationCode: item.stationCode,
               status: StationPrintStatus.failed,
-              errorMessage: 'TaskKey $k is locked by concurrent thread',
+              errorMessage: 'Phiếu $k đang được in ở luồng khác',
             ),
           });
         }
@@ -771,7 +771,7 @@ class PrintCoordinator {
           'barLabel': StationPrintResult(
             stationCode: 'barLabel',
             status: StationPrintStatus.failed,
-            errorMessage: 'BarLabel task key is locked by concurrent thread',
+            errorMessage: 'Tem ly đang được in ở luồng khác',
           ),
         });
       }
@@ -847,7 +847,7 @@ class PrintCoordinator {
         'cashier': StationPrintResult(
           stationCode: 'cashier',
           status: StationPrintStatus.failed,
-          errorMessage: 'Order task key locked',
+          errorMessage: 'Phiếu này đang được in ở luồng khác',
         ),
       });
     }
@@ -1157,7 +1157,7 @@ class PrintDeviceState {
     final isWebEnv = isWebOverride ?? kIsWeb;
     if (isWebEnv) {
       return PrintDeviceState(
-        deviceName: map['deviceName'] as String? ?? 'Web Browser',
+        deviceName: map['deviceName'] as String? ?? 'Trình duyệt web',
         isPrintServer: false,
         allowBackgroundPrinting: false,
         localClaimToken: '',
@@ -1979,7 +1979,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   }
 
   String _getDefaultDeviceName() {
-    if (kIsWeb) return 'Web Browser';
+    if (kIsWeb) return 'Trình duyệt web';
     switch (defaultTargetPlatform) {
       case TargetPlatform.windows:
         return 'Windows POS';

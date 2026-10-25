@@ -431,9 +431,11 @@ class KitchenRepository {
             .whereType<String>()
             .toList();
         if (sessionItemIds.isNotEmpty) {
+          // Món đã huỷ giữ nguyên 'huy' (trước đây bị ghi đè thành đang làm / xong)
           await _sb.from('ban_session_items')
               .update({'kitchen_status': banStatus})
-              .inFilter('id', sessionItemIds);
+              .inFilter('id', sessionItemIds)
+              .neq('kitchen_status', 'huy');
         }
       } catch (e) {
         debugPrint('[KitchenRepo] R1 sync ban_session_items err: $e');
@@ -441,7 +443,7 @@ class KitchenRepository {
     }
   }
 
-  Future<void> cancelTicket(String ticketId) => updateStatus(ticketId, 'huy');
+  // Không có cancelTicket: huỷ món đã gửi bếp phải qua Quản lý duyệt ở màn bàn (máy chủ chặn huỷ không duyệt).
   Future<void> startTicket(String ticketId)  => updateStatus(ticketId, 'dang_lam');
   Future<void> doneTicket(String ticketId)   => updateStatus(ticketId, 'xong');
 
@@ -474,7 +476,8 @@ class KitchenRepository {
       if (sessionItemIds.isNotEmpty) {
         await _sb.from('ban_session_items')
             .update({'kitchen_status': 'dang_lam'})
-            .inFilter('id', sessionItemIds);
+            .inFilter('id', sessionItemIds)
+            .neq('kitchen_status', 'huy');
       }
     } catch (e) {
       debugPrint('[KitchenRepo] reopenTicket sync ban_session_items err: $e');
@@ -506,7 +509,8 @@ class KitchenRepository {
       if (sessionItemId != null) {
         await _sb.from('ban_session_items')
             .update({'kitchen_status': isDone ? 'xong' : 'dang_lam'})
-            .eq('id', sessionItemId);
+            .eq('id', sessionItemId)
+            .neq('kitchen_status', 'huy');
       }
     } catch (e) {
       debugPrint('[KitchenRepo] toggleItemDone sync error: $e');

@@ -7,6 +7,7 @@ import '../../../core/services/store_auth_service.dart';
 import '../../../core/repositories/core_product_repository.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/paged_query.dart';
 import '../../../core/utils/quantity_formatter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -94,13 +95,21 @@ class KhoRepository {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
 
-    yield* _robustStream(
-      'stock_movements', 'store_id', storeId,
-      (rows) => rows
-          .where((r) => r['product_id'] == productId)
-          .map(StockMovementModel.fromMap)
-          .toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt))
+    // Lọc theo món ở máy chủ, lấy 1.000 phiếu mới nhất (trước đây đọc cả bảng phiếu kho của
+    // quán — > 1.000 phiếu thì nhận phiếu cũ ngẫu nhiên, thiếu phiếu mới).
+    yield* watchByRefetch(
+        table: 'stock_movements',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await _sb
+              .from('stock_movements')
+              .select()
+              .eq('store_id', storeId)
+              .eq('product_id', productId)
+              .order('created_at', ascending: false)
+              .limit(1000);
+          return rows.map(StockMovementModel.fromMap).toList();
+        }
     );
   }
 
@@ -108,12 +117,18 @@ class KhoRepository {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
 
-    yield* _robustStream(
-      'stock_movements', 'store_id', storeId,
-      (rows) {
-        final sorted = rows.map(StockMovementModel.fromMap).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return sorted.take(limit).toList();
+    // Sắp xếp + giới hạn ở máy chủ (trước đây "mới nhất" chọn trong 1.000 phiếu cũ ngẫu nhiên).
+    yield* watchByRefetch(
+        table: 'stock_movements',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await _sb
+              .from('stock_movements')
+              .select()
+              .eq('store_id', storeId)
+              .order('created_at', ascending: false)
+              .limit(limit);
+          return rows.map(StockMovementModel.fromMap).toList();
       }
     );
   }
@@ -129,8 +144,9 @@ class KhoRepository {
     String? supplierName,
     String? reference,
     String? note,
-  }) async {
+      String fundType = 'cash'}) async {
     assert(quantity > 0);
+    assert(fundType == 'cash' || fundType == 'bank');
     final storeId = await _storeId();
     if (storeId == null) throw Exception('Chưa chọn quán');
     final now        = DateTime.now().toUtc().toIso8601String();
@@ -175,7 +191,7 @@ class KhoRepository {
         'reference_id': movementId,  // ← audit trail: trace về stock_movement
         'is_auto':      true,
         'recorded_at':  now,
-        'fund_type':    'cash',
+        'fund_type':    fundType,
       });
     } catch (e) {
       debugPrint('[Kho] ⚠️ receiveStock finance_record failed: $e');
@@ -709,7 +725,9 @@ class KhoRepository {
 
     final products = rows.map(ProductModel.fromMap).toList();
     final lowStock  = products.where((p) => p.minStock > 0 && p.stockQty <= p.minStock).length;
-    final outOfStock = products.where((p) => p.stockQty <= 0).length;
+    // Chỉ món có theo dõi tồn (tồn tối thiểu > 0) — món 'Không theo dõi' không tính hết hàng.
+    final outOfStock =
+        products.where((p) => p.minStock > 0 && p.stockQty <= 0).length;
     final totalValue = products.fold<double>(0, (s, p) {
       // ‼️ FIX: dùng costPriceLatest nếu > 0, fallback về costPrice
       final effectiveCost = p.costPriceLatest > 0 ? p.costPriceLatest : p.costPrice;
@@ -839,8 +857,10 @@ class StockItem {
       );
 
   StockStatus get status {
-    if (stockQty <= 0) return StockStatus.outOfStock;
+    // Không đặt tồn tối thiểu = không theo dõi tồn → không báo "Hết hàng" (khớp màn Bán hàng:
+    // chỉ khoá món có tồn tối thiểu mà tồn ≤ 0).
     if (minStock <= 0) return StockStatus.untracked;
+    if (stockQty <= 0) return StockStatus.outOfStock;
     if (stockQty <= minStock) return StockStatus.low;
     return StockStatus.ok;
   }

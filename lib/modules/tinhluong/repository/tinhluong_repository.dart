@@ -969,12 +969,19 @@ class TinhLuongRepository {
     required String staffName,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    try {
+    // Bước chính: lỗi ở đây phải báo cho nhân viên (máy chủ có thể từ chối).
+    final updated =
       await _sb
           .from('payroll_records')
           .update({'payment_status': 'paid'})
-          .eq('id', id);
-
+          .eq('id', id)
+        .select('id');
+    if (updated.isEmpty) {
+      throw Exception(
+          'PAYROLL_CONFIRM_DENIED: không cập nhật được phiếu lương');
+    }
+    // Bước phụ (ghi log): lỗi không làm hỏng việc xác nhận đã thành công.
+    try {
       final record = await fetchRecordById(id);
       final storeId = record?.storeId ?? '';
 
@@ -989,8 +996,26 @@ class TinhLuongRepository {
         'created_at': now,
       });
     } catch (e) {
-      debugPrint('[TinhLuong] confirmStaffPaid error: $e');
+      debugPrint('[TinhLuong] confirmStaffPaid log error: $e');
     }
+  }
+
+  /// Câu báo lỗi dễ hiểu cho các lần máy chủ chặn (guard_payroll_*_v1).
+  static String friendlyError(Object e) {
+    final msg = e.toString();
+    const known = {
+      'PAYROLL_OWNER_ONLY': 'Chỉ Chủ quán được duyệt / chốt kỳ lương.',
+      'PAYROLL_PAY_DENIED': 'Chỉ Chủ quán hoặc Quản lý được trả lương.',
+      'PAYROLL_CONFIRM_DENIED':
+          'Chỉ nhân viên nhận lương được xác nhận đã nhận.',
+      'PAYROLL_NOT_APPROVED':
+          'Kỳ lương chưa được duyệt nên chưa trả lương được.',
+      'PAYROLL_LOCKED': 'Kỳ lương đã duyệt, số liệu bị khoá.'
+    };
+    for (final k in known.entries) {
+      if (msg.contains(k.key)) return k.value;
+    }
+    return 'Có lỗi xảy ra, vui lòng thử lại.';
   }
 
   static Future<void> _guardPeriodByPeriodId(String periodId) async {

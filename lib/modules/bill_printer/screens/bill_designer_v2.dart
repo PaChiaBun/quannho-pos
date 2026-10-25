@@ -53,7 +53,7 @@ String _blockLabel(BillBlockType type) {
     case BillBlockType.totals:        return 'Tổng tiền';
     case BillBlockType.paymentMethod: return 'Phương thức thanh toán';
     case BillBlockType.loyaltyPoints: return 'Điểm thưởng';
-    case BillBlockType.qrCode:        return 'QR Code';
+    case BillBlockType.qrCode:        return 'Mã QR';
     case BillBlockType.customText:    return 'Văn bản tự do';
     case BillBlockType.spacer:        return 'Khoảng trắng';
     case BillBlockType.footer:        return 'Lời cảm ơn';
@@ -86,7 +86,7 @@ class _BillDesignerV2State extends ConsumerState<BillDesignerV2> {
     setState(() => _saving = false);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('✅ Đã lưu thiết kế hoá đơn',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
       backgroundColor: _kIndigo,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -128,7 +128,7 @@ class _BillDesignerV2State extends ConsumerState<BillDesignerV2> {
             TextButton.icon(
               icon: const Icon(Icons.save_rounded, color: _kIndigo, size: 18),
               label: Text('Lưu',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       color: _kIndigo, fontWeight: FontWeight.w700)),
               onPressed: _save,
             ),
@@ -185,7 +185,7 @@ class _PaperSizeBar extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Khổ giấy',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontSize: 13, fontWeight: FontWeight.w700, color: _kIndigo)),
           const SizedBox(height: 8),
           Wrap(spacing: 8, runSpacing: 8, children: [
@@ -214,7 +214,7 @@ class _PaperSizeBar extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(child: Text(
                   paperSpecOf(current).description,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       color: _kIndigo,
                       fontWeight: FontWeight.w500,
@@ -252,7 +252,7 @@ class _PaperChip extends StatelessWidget {
             color: selected ? _kIndigo : Colors.grey.shade300),
       ),
       child: Text(label,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
               fontSize: 12, fontWeight: FontWeight.w700,
               color: selected ? Colors.white : Colors.grey.shade700)),
     ),
@@ -304,7 +304,7 @@ class _BlockCard extends ConsumerWidget {
         ]),
         title: Text(
           _blockLabel(block.type), // tên rõ ràng, không dùng emoji.substring
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13, fontWeight: FontWeight.w600,
             color: block.enabled ? _kIndigo : Colors.grey.shade400,
           ),
@@ -421,7 +421,7 @@ class _AddBlockBtn extends ConsumerWidget {
                   return ListTile(
                     leading: Icon(_blockIcon(type), size: 20, color: _kIndigo.withValues(alpha: 0.7)),
                     title: Text(_blockLabel(type),
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
                     subtitle: type.isLocked ? const Text('Bắt buộc') :
                               type.isMultiAllowed ? const Text('Có thể thêm nhiều lần') : null,
                     trailing: alreadyAdded

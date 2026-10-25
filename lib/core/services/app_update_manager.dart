@@ -251,7 +251,7 @@ class AppUpdateManager {
                       Text(
                         isIos ? 'Thông Báo Cập Nhật' : 'Có Bản Cập Nhật Mới!',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFF1A1207),
@@ -272,7 +272,7 @@ class AppUpdateManager {
                           ),
                           child: Text(
                             'v$currentVersion+$currentBuild → v${versionInfo.versionName}+${versionInfo.buildNumber}',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: _kOrange,
@@ -297,7 +297,7 @@ class AppUpdateManager {
                             children: [
                               Text(
                                 'Có gì mới:',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF5A5260),
@@ -306,7 +306,7 @@ class AppUpdateManager {
                               const SizedBox(height: 6),
                               Text(
                                 versionInfo.changelog,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
                                   height: 1.5,
                                   color: const Color(0xFF1A1207),
@@ -341,7 +341,7 @@ class AppUpdateManager {
                               Expanded(
                                 child: Text(
                                   'Bắt buộc cập nhật để tiếp tục sử dụng hệ thống.',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: _kOrange,
@@ -367,7 +367,7 @@ class AppUpdateManager {
                               ? statusText
                               : 'Đang tải bản cập nhật... ${(downloadProgress * 100).toInt()}%',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             color: const Color(0xFF6B7280),
                           ),
@@ -380,7 +380,7 @@ class AppUpdateManager {
                         Text(
                           errorMessage!,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             color: Colors.red.shade700,
                           ),
@@ -477,7 +477,7 @@ class AppUpdateManager {
                             backgroundColor: _kNavy,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            textStyle: GoogleFonts.outfit(
+                            textStyle: GoogleFonts.plusJakartaSans(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                             ),
@@ -492,7 +492,7 @@ class AppUpdateManager {
                             onPressed: () => Navigator.pop(dialogCtx),
                             child: Text(
                               'Để sau',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF9E9085),

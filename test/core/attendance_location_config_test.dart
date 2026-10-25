@@ -214,7 +214,7 @@ void main() {
           lngText: '106.700806',
           radiusText: '0',
         ),
-        contains('Bán kính cho phép phải lớn hơn 0 mét'),
+        contains('Bán kính cho phép phải là số lớn hơn 0 mét'),
       );
       expect(
         _validateLocationInputs(
@@ -222,7 +222,7 @@ void main() {
           lngText: '106.700806',
           radiusText: '-50',
         ),
-        contains('Bán kính cho phép phải lớn hơn 0 mét'),
+        contains('Bán kính cho phép phải là số lớn hơn 0 mét'),
       );
     });
 
@@ -284,7 +284,7 @@ void main() {
           lngText: '106.700806',
           radiusText: 'NaN',
         ),
-        contains('Bán kính cho phép phải lớn hơn 0 mét'),
+        contains('Bán kính cho phép phải là số lớn hơn 0 mét'),
       );
       expect(
         _validateLocationInputs(
@@ -292,7 +292,7 @@ void main() {
           lngText: '106.700806',
           radiusText: 'Infinity',
         ),
-        contains('Bán kính cho phép phải lớn hơn 0 mét'),
+        contains('Bán kính cho phép phải là số lớn hơn 0 mét'),
       );
       expect(
         _validateLocationInputs(
@@ -300,7 +300,7 @@ void main() {
           lngText: '106.700806',
           radiusText: 'abc',
         ),
-        contains('Bán kính cho phép phải lớn hơn 0 mét'),
+        contains('Bán kính cho phép phải là số lớn hơn 0 mét'),
       );
     });
 

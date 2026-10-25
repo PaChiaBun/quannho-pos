@@ -25,6 +25,12 @@ final _checkoutNavigators = <NavigatorState>{};
 /// The guard is acquired synchronously, before even reading durable storage.
 Future<void> openPosCheckout(BuildContext context, WidgetRef ref) async {
   final navigator = Navigator.of(context);
+  if (ref.read(posKitchenSendingProvider)) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Đang gửi bếp — đợi gửi xong rồi thanh toán.'),
+        behavior: SnackBarBehavior.floating));
+    return;
+  }
   if (ref.read(cartProvider).isProcessing ||
       !_checkoutNavigators.add(navigator))
     return;

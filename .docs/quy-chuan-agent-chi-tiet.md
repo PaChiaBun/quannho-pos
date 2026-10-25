@@ -547,8 +547,8 @@ Sau khi đọc xong, tóm tắt ngắn gọn cho user biết:
 * Professional Inventory suggests purchase quantity from current available stock, recipe demand and recent sales velocity. Default horizon 7 days with 3/7/14 quick choices.
 * Suggestion is advisory only. Owner/Manager/Stock may view scoped explanations/input/coverage, but system never auto-orders or receives stock.
 * Multi-select suggestions can create a purchase draft only. Authorized user must verify supplier/price/unit/qty and confirm; draft has zero stock/cash effect.
-* Future AI Bum may explain scoped suggestions and prepare drafts after explicit user request, but cannot send/approve/receive/create ledger effects autonomously. Require confirmation, server authorization and audit for every write.
-* AI Bum is advisory/reminder-only. Enforce row/field-level caller permissions in retrieval and response; Stock must not receive cost/profit unless explicitly authorized.
+* Future AI Boom may explain scoped suggestions and prepare drafts after explicit user request, but cannot send/approve/receive/create ledger effects autonomously. Require confirmation, server authorization and audit for every write.
+* AI Boom is advisory/reminder-only. Enforce row/field-level caller permissions in retrieval and response; Stock must not receive cost/profit unless explicitly authorized.
 * AI suggestions cite current stock, average sales, forecast horizon, proposed qty and data timestamp. Explicitly label estimate/missing coverage and never fabricate certainty.
 * `Create a 7-day purchase draft` requires preview of ingredients/qty/rationale and explicit confirmation, and creates draft only with no stock/fund effect.
 * Allow one deduped daily proactive shortage forecast reminder to authorized store recipients. No autonomous Zalo/Telegram/supplier messaging in current scope.
@@ -614,7 +614,7 @@ Sau khi đọc xong, tóm tắt ngắn gọn cho user biết:
 * **Bảng Dữ liệu Nhân viên chuẩn (`staff_members`):**
   * Toàn bộ nhân viên thu ngân và phục vụ của quán được lưu trữ duy nhất tại bảng **`public.staff_members`** (`id`, `store_id`, `name`, `role`, `phone`, `is_active`, `modules`, `actions`).
   * Mọi truy vấn báo cáo (`DashboardRepository`, `ReportScreen`, `PosRepository`, `BanRepository`) phải tra cứu trực tiếp từ bảng `staff_members` thay vì bảng cũ `store_members` để tránh lỗi hiển thị *"Nhân viên ẩn"*.
-  * **Quy chuẩn Phân quyền Trực Tiếp (Direct Per-User Permissions - Thống nhất 2026-07-28):** Hệ thống không dùng Role trung gian rắc rối để cấp quyền nữa. Mỗi nhân viên được lưu trực tiếp danh sách `modules` (`["pos","table","kitchen","log_viewer"]`) và `actions` (`["pos.cancel_bill"]`) ngay trong `staff_members`. AI Bum và toàn bộ ứng dụng đọc trực tiếp danh sách này để hiển thị UI chính xác 100%.
+  * **Quy chuẩn Phân quyền Trực Tiếp (Direct Per-User Permissions - Thống nhất 2026-07-28):** Hệ thống không dùng Role trung gian rắc rối để cấp quyền nữa. Mỗi nhân viên được lưu trực tiếp danh sách `modules` (`["pos","table","kitchen","log_viewer"]`) và `actions` (`["pos.cancel_bill"]`) ngay trong `staff_members`. AI Boom và toàn bộ ứng dụng đọc trực tiếp danh sách này để hiển thị UI chính xác 100%.
 * **Bảng Nhật Ký Hoạt Động & Khuyến Mãi (`app_logs`, `coupons`, `void_audit_logs`):**
   * **`public.app_logs`**: Nhật ký hoạt động và theo dõi lỗi ứng dụng (`id`, `store_id`, `device_id`, `staff_name`, `level`, `tag`, `message`, `details`, `created_at`).
   * **`public.coupons`**: Bảng quản lý khuyến mãi & voucher (`id`, `store_id`, `code`, `description`, `discount_type`, `value`, `min_order_amount`, `max_discount_amount`, `is_active`, `start_date`, `end_date`).
@@ -646,7 +646,7 @@ Sau khi đọc xong, tóm tắt ngắn gọn cho user biết:
 
 ---
 
-## 6. Phân Hệ Trợ Lý AI Bum (AI Bum Assistant Pilot - Quán Kay) — Cập nhật 07/08/2026
+## 6. Phân Hệ Trợ Lý AI Boom (AI Boom Assistant Pilot - Quán Kay) — Cập nhật 07/08/2026
 
 ### Hạ tầng Máy chủ Server Host (`BunServer`)
 * **OS:** Ubuntu Desktop 24.04.4 LTS (Kernel `7.0.0-28-generic`).
@@ -655,16 +655,16 @@ Sau khi đọc xong, tóm tắt ngắn gọn cho user biết:
 * **Ổ đĩa:** Ubuntu trên Kingston SATA SSD `/dev/sda`. Ổ Windows 10 NVMe `/dev/nvme0n1` được bảo vệ nguyên vẹn 100% (Rollback Plan).
 * **An ninh & Vận hành:** Firewall UFW fail-closed (chỉ mở 22/SSH, 3389/XRDP trong Tailscale/LAN), mask 4 target sleep/suspend, Docker Engine `29.7.2` + NVIDIA Container Toolkit `1.19.1`.
 
-### Kiến trúc AI Bum Gateway & Engine
+### Kiến trúc AI Boom Gateway & Engine
 * **Mô hình AI Local:** `Qwen2.5 3B 4-bit` chạy trên container Ollama GPU (`bum-ollama` port `127.0.0.1:11434`), đạt tốc độ **45–55 tokens/s**, TTFT `~0.25s`, VRAM chiếm `1.9 GB`.
 * **Flutter Client (`lib/features/ai_assistant/`):**
-  * `BumChatScreen`: Bottom Sheet Responsive (Mobile `< 600px`, Tablet/PC `>= 600px`).
+  * `BoomChatScreen`: Bottom Sheet Responsive (Mobile `< 600px`, Tablet/PC `>= 600px`).
   * `IntentClassifier V1`: Phân loại ý định bằng Rules & Semantic Matching (**Accuracy 96.25%**, **Macro-F1 0.9643**).
   * `RagEngine V1`: Tra cứu tài liệu nghiệp vụ 11 module (**Precision@1 96.67%**, **Precision@3 96.67%**).
   * `PiiRedactor` & `OpenAiFallbackService`: Khử 100% SĐT, email, mã PIN trước khi gửi Cloud Fallback; hỗ trợ Circuit Breaker & Quota per Store.
   * `FeedbackMemoryService`: Lưu phản hồi 👍/👎 và Trí nhớ riêng của quán cô lập theo `store_id`.
   * `ShadowTestFeatureFlag`: Kích hoạt Shadow Mode thử nghiệm độc quyền cho **Quán Kay** và tài khoản Owner.
-* **Database Supabase (`supabase/migrations/20260807000000_ai_bum_phase2_readonly_tools.sql`):**
-  * 4 Bảng AI: `bum_conversations`, `bum_messages`, `bum_feedback`, `bum_memories` (có RLS).
-  * 10 Read-Only RPCs: `get_today_sales_summary`, `compare_sales_periods`, `get_top_products`, `get_slow_products`, `get_low_stock_items`, `get_stock_forecast_inputs`, `get_finance_summary`, `get_staff_on_shift`, `get_pending_operations_tasks`, `get_store_context_for_bum`.
+* **Database Supabase (`supabase/migrations/20260807000000_ai_boom_phase2_readonly_tools.sql`):**
+  * 4 Bảng AI: `boom_conversations`, `boom_messages`, `boom_feedback`, `boom_memories` (có RLS).
+  * 10 Read-Only RPCs: `get_today_sales_summary`, `compare_sales_periods`, `get_top_products`, `get_slow_products`, `get_low_stock_items`, `get_stock_forecast_inputs`, `get_finance_summary`, `get_staff_on_shift`, `get_pending_operations_tasks`, `get_store_context_for_boom`.
   * Khử 100% PII, cô lập tuyệt đối theo `store_id`.

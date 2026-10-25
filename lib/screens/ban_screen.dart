@@ -296,7 +296,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         SnackBar(
           content: Text(
             'Bạn không có quyền "Thêm khu vực".',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
           ),
           backgroundColor: _kRed,
           behavior: SnackBarBehavior.floating,
@@ -345,7 +345,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         SnackBar(
           content: Text(
             'Thêm khu vực thất bại. Hãy chụp lại báo chủ app.',
-            style: GoogleFonts.outfit(),
+            style: GoogleFonts.plusJakartaSans(),
           ),
           backgroundColor: _kRed,
           duration: const Duration(seconds: 6),
@@ -362,7 +362,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         SnackBar(
           content: Text(
             'Bạn không có quyền "Sửa khu vực".',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
           ),
           backgroundColor: _kRed,
           behavior: SnackBarBehavior.floating,
@@ -398,7 +398,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
           SnackBar(
             content: Text(
               'Bạn không có quyền "Sắp xếp khu vực".',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
             ),
             backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
@@ -456,7 +456,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         SnackBar(
           content: Text(
             'Bạn không có quyền "Thêm bàn".',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
           ),
           backgroundColor: _kRed,
           behavior: SnackBarBehavior.floating,
@@ -520,7 +520,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         SnackBar(
           content: Text(
             'Tạo bàn thất bại. Hãy chụp lại báo chủ app.',
-            style: GoogleFonts.outfit(),
+            style: GoogleFonts.plusJakartaSans(),
           ),
           backgroundColor: _kRed,
           duration: const Duration(seconds: 6),
@@ -608,7 +608,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
               SnackBar(
                 content: Text(
                   'Bạn không có quyền "Sửa/Xóa bàn".',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
                 ),
                 backgroundColor: _kRed,
                 behavior: SnackBarBehavior.floating,
@@ -667,7 +667,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                           SnackBar(
                             content: Text(
                               'Chuyển bàn thành công!',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -723,7 +723,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                 Expanded(
                   child: Text(
                     '$tableLabel: Món ăn đã sẵn sàng!',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                       color: Colors.white,
@@ -751,7 +751,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         elevation: 0,
         title: Text(
           'Quản lý bàn',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 20,
             fontWeight: FontWeight.w800,
             color: _kNavy,
@@ -865,7 +865,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text(
           'Thêm bàn',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
             color: Colors.white,
           ),
@@ -928,7 +928,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
             ],
             Text(
               label,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 color: isSelected ? Colors.white : const Color(0xFF1C2151),
@@ -956,7 +956,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
         ),
         child: Text(
           label,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 11,
             fontWeight: FontWeight.w800,
             color: isSelected ? Colors.white : _kNavy.withValues(alpha: 0.6),
@@ -1136,7 +1136,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                                 _statusFilter == 'occupied'
                                     ? 'Hiện tại không có bàn nào có khách'
                                     : 'Không có bàn nào trống',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   color: const Color(0xFF9E9085),
                                   fontWeight: FontWeight.w600,
@@ -1206,7 +1206,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                                               const SizedBox(width: 6),
                                               Text(
                                                 zone.name,
-                                                style: GoogleFonts.outfit(
+                                                style: GoogleFonts.plusJakartaSans(
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w700,
                                                   color: Colors.white,
@@ -1219,7 +1219,7 @@ class _BanScreenState extends ConsumerState<BanScreen> {
                                         Text(
                                           '${zoneTables.length} bàn  •  '
                                           '${zoneTables.where((t) => activeSessions.containsKey(t.id)).length} có khách',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
                                             color: _kNavy.withValues(
@@ -1414,7 +1414,7 @@ class _BanRightPanel extends ConsumerWidget {
                           child: Text(
                             'Chưa có bàn nào có khách',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               color: const Color(0xFF9E9085),
                             ),
@@ -1501,7 +1501,7 @@ class _ActiveTableRow extends ConsumerWidget {
               Expanded(
                 child: Text(
                   table.label,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: _kNavy,
@@ -1517,7 +1517,7 @@ class _ActiveTableRow extends ConsumerWidget {
               const SizedBox(width: 2),
               Text(
                 timeStr,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: isLong
@@ -1525,24 +1525,28 @@ class _ActiveTableRow extends ConsumerWidget {
                       : const Color(0xFF9E9085),
                 ),
               ),
-              // Nút đóng session — hit area 26x26
+            // Mở bàn — đóng bàn chỉ qua "Thanh toán" hoặc "Huỷ bàn" (có lý do,
+            // duyệt quản lý, audit) trong bảng phiên. Nút "X" cũ đóng phiên
+            // không thu tiền nên đã bỏ.
+            Tooltip(
+                message: 'Mở bàn',
+                child:
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () => _confirmClose(context, ref, total),
+                  onTap: () => _openSession(context),
                   borderRadius: BorderRadius.circular(6),
                   child: Container(
                     width: 26,
                     height: 26,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFEBEE),
+                      color: const Color(0xFFE3F2FD),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Icon(
-                      Icons.close_rounded,
-                      size: 14,
-                      color: Color(0xFFC62828),
+                      Icons.chevron_right_rounded,
+                                size: 16, color: Color(0xFF1565C0)),
                     ),
                   ),
                 ),
@@ -1562,7 +1566,7 @@ class _ActiveTableRow extends ConsumerWidget {
                         zone.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           color: const Color(0xFF9E9085),
                         ),
@@ -1581,7 +1585,7 @@ class _ActiveTableRow extends ConsumerWidget {
                       ),
                       child: Text(
                         '${session.guestCount} khách • $totalQty món',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF1565C0),
@@ -1593,7 +1597,7 @@ class _ActiveTableRow extends ConsumerWidget {
                     if (total > 0)
                       Text(
                         fmtVnd(total),
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: _kNavy,
@@ -1607,7 +1611,7 @@ class _ActiveTableRow extends ConsumerWidget {
                     'NV: $waiters',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF9E9085),
@@ -1626,60 +1630,13 @@ class _ActiveTableRow extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmClose(
-    BuildContext context,
-    WidgetRef ref,
-    double total,
-  ) async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _openSession(BuildContext context) => showModalBottomSheet(
       context: context,
-      useRootNavigator: true,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Đóng session "${table.label}"?',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16),
-        ),
-        content: Text(
-          'Session này đang mở ${_elapsedStr()}. Bạn có chắc muốn đóng không?',
-          style: GoogleFonts.outfit(fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Huỷ', style: GoogleFonts.outfit()),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFC62828),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              'Đóng session',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-    final repo = ref.read(banRepositoryProvider);
-    await repo.closeSession(session.id, total);
-  }
-
-  String _elapsedStr() {
-    final elapsed = DateTime.now().difference(
-      DateTime.fromMillisecondsSinceEpoch(session.openedAt),
-    );
-    final m = elapsed.inMinutes;
-    return m >= 60 ? '${elapsed.inHours}h${m % 60}p' : '${m}p';
-  }
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      enableDrag: false,
+      builder: (_) =>
+          _TableSessionSheet(table: table, session: session, zone: zone));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1719,7 +1676,7 @@ class _RightCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 title,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: _kNavy,
@@ -1758,12 +1715,12 @@ class _StatusRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.outfit(fontSize: 13, color: _kNavy),
+            style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kNavy),
           ),
         ),
         Text(
           value,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: color,
@@ -1938,7 +1895,7 @@ class _ZoneChip extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 label,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected ? Colors.white : color,
@@ -2173,7 +2130,7 @@ class _TableCard extends ConsumerWidget {
                               ),
                               Text(
                                 'QR (${activeForTable.length})',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: statusFontSize,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.black,
@@ -2211,7 +2168,7 @@ class _TableCard extends ConsumerWidget {
                             child: Text(
                               isOccupied ? '● Có khách' : '○ Trống',
                               maxLines: 1,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: statusFontSize,
                                 fontWeight: FontWeight.w600,
                                 color: isOccupied ? Colors.white : _kGreen,
@@ -2231,7 +2188,7 @@ class _TableCard extends ConsumerWidget {
                       children: [
                         Text(
                           table.label,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: labelFontSize,
                             fontWeight: FontWeight.w900,
                             color: isOccupied ? Colors.white : _kNavy,
@@ -2241,7 +2198,7 @@ class _TableCard extends ConsumerWidget {
                         if (isOccupied) ...[
                           Text(
                             '${session!.guestCount} khách • $totalQty món',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: infoFontSize,
                               fontWeight: FontWeight.w600,
                               color: Colors.white.withValues(alpha: 0.9),
@@ -2253,7 +2210,7 @@ class _TableCard extends ConsumerWidget {
                               'NV: $waiters',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: infoFontSize - 1.5,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white.withValues(alpha: 0.75),
@@ -2263,7 +2220,7 @@ class _TableCard extends ConsumerWidget {
                         ] else
                           Text(
                             '${table.seats} chỗ',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: infoFontSize,
                               fontWeight: FontWeight.w500,
                               color: _kNavy.withValues(alpha: 0.55),
@@ -2273,7 +2230,7 @@ class _TableCard extends ConsumerWidget {
                           SizedBox(height: cardSize == 'nho' ? 2 : 6),
                           Text(
                             fmtVnd(totalAmount),
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: amountFontSize,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
@@ -2293,7 +2250,7 @@ class _TableCard extends ConsumerWidget {
                             ),
                             child: Text(
                               '⚠ ${overdueUnsent.length} món chưa gửi bếp',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: infoFontSize - 1,
                                 fontWeight: FontWeight.w800,
                                 color: _kRed,
@@ -2336,7 +2293,7 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'Bắt đầu thiết lập',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: _kNavy,
@@ -2346,7 +2303,7 @@ class _EmptyState extends StatelessWidget {
             Text(
               'Thêm khu vực (Trong nhà, Ngoài trời...)\nRồi thêm bàn vào từng khu',
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 height: 1.6,
                 color: _kNavy.withValues(alpha: 0.5),
@@ -2368,7 +2325,7 @@ class _EmptyState extends StatelessWidget {
                 icon: const Icon(Icons.add_rounded),
                 label: Text(
                   'Bắt đầu thiết lập ngay',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                   ),
@@ -2449,7 +2406,7 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                       const SizedBox(width: 8),
                       Text(
                         '${widget.zone.name} · ${widget.table.label}',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
                           color: zoneColor,
@@ -2461,7 +2418,7 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                 const SizedBox(height: 24),
                 Text(
                   'Số khách',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     color: _kNavy.withValues(alpha: 0.6),
                   ),
@@ -2483,7 +2440,7 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                       child: Text(
                         '$_count',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 40,
                           fontWeight: FontWeight.w800,
                           color: _kNavy,
@@ -2503,7 +2460,7 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                 const SizedBox(height: 4),
                 Text(
                   'Sức chứa tiêu chuẩn: ${widget.table.seats} người (Có thể thêm ghế)',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     color: _kNavy.withValues(alpha: 0.4),
                   ),
@@ -2537,7 +2494,7 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                                     SnackBar(
                                       content: Text(
                                         'Mở bàn thất bại. Hãy chụp lại báo chủ app.',
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.plusJakartaSans(
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -2575,7 +2532,7 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                             )
                           : Text(
                               'Mở bàn',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -2605,7 +2562,7 @@ class _OpenTableSheetState extends State<_OpenTableSheet> {
                       const SizedBox(height: 16),
                       Text(
                         'Đang mở bàn...',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -2774,7 +2731,44 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     );
   }
 
+  /// Trạng thái bếp mới nhất của món trên máy chủ; null = không đọc được (đã báo lỗi) hoặc món đã mất.
+  Future<String?> _freshKitchenStatus(BanSessionItemModel item) async {
+    try {
+      final row = await Supabase.instance.client
+          .from('ban_session_items')
+          .select('kitchen_status')
+          .eq('id', item.id)
+          .maybeSingle();
+      if (row == null) {
+        ref.invalidate(sessionItemsProvider(widget.session.id));
+        return null;
+      }
+      return (row['kitchen_status'] as String?) ?? 'chua_gui';
+    } catch (e, st) {
+      AppLogger.error('ban_screen', 'Đọc trạng thái món lỗi: $e', e, st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Mất kết nối, chưa sửa được món. Thử lại.'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating));
+      }
+      return null;
+    }
+  }
+
   Future<void> _removeItem(BanSessionItemModel item) async {
+    final fresh = await _freshKitchenStatus(item);
+    if (fresh == null) return;
+    if (fresh != item.kitchenStatus) {
+      ref.invalidate(sessionItemsProvider(widget.session.id));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Món vừa đổi trạng thái (đã gửi bếp). Đã tải lại — thao tác lại nếu cần.'),
+            behavior: SnackBarBehavior.floating));
+      }
+      return;
+    }
     final status = item.kitchenStatus;
 
     // Món chưa gửi bếp → xoá bình thường
@@ -2801,7 +2795,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               : '📋 Món đã gửi bếp');
     final showWastageOption = status == 'dang_lam' || status == 'xong';
     String? selectedReason;
-    bool deductAsLoss = true;
+    // Bếp chưa làm (chỉ "đã gửi") thì không hao hụt nguyên liệu; công tắc chỉ hiện khi đang làm/xong.
+    bool deductAsLoss = showWastageOption;
 
     final confirm = await showDialog<Map<String, dynamic>>(
       context: context,
@@ -2810,7 +2805,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         builder: (ctx, setS) => AlertDialog(
           title: Text(
             'Huỷ món?',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w800),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -2818,12 +2813,12 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             children: [
               Text(
                 '$label\nBếp sẽ thấy thông báo huỷ.',
-                style: GoogleFonts.outfit(height: 1.5, fontSize: 14),
+                style: GoogleFonts.plusJakartaSans(height: 1.5, fontSize: 14),
               ),
               const SizedBox(height: 14),
               Text(
                 'Lý do huỷ *',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),
@@ -2838,7 +2833,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 RadioListTile<String>(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  title: Text(r, style: GoogleFonts.outfit(fontSize: 13)),
+                  title: Text(r, style: GoogleFonts.plusJakartaSans(fontSize: 13)),
                   value: r,
                   groupValue: selectedReason,
                   onChanged: (v) => setS(() => selectedReason = v),
@@ -2862,7 +2857,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     Expanded(
                       child: Text(
                         'Trừ kho nguyên liệu (hao hụt)',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: _kNavy,
@@ -2877,7 +2872,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Không', style: GoogleFonts.outfit(color: _kNavy)),
+              child: Text('Không', style: GoogleFonts.plusJakartaSans(color: _kNavy)),
             ),
             TextButton(
               onPressed: selectedReason == null
@@ -2888,7 +2883,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     }),
               child: Text(
                 'Huỷ món',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   color: selectedReason == null ? Colors.grey : _kRed,
                   fontWeight: FontWeight.w700,
                 ),
@@ -3113,7 +3108,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         SnackBar(
           content: Text(
             '❌ Đã huỷ "${item.productName}" — bếp đã được thông báo',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
           ),
           backgroundColor: _kRed,
           behavior: SnackBarBehavior.floating,
@@ -3130,6 +3125,20 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     debugPrint(
       '[BAN-TEST] _updateItemQty: ${item.productName} newQty=$newQty status=${item.kitchenStatus}',
     );
+    // Màn hình có thể chưa kịp cập nhật: món vừa được gửi bếp ở máy khác thì không được
+    // sửa/xoá tự do như món chưa gửi.
+    final fresh = await _freshKitchenStatus(item);
+    if (fresh == null) return;
+    if (fresh != item.kitchenStatus) {
+      ref.invalidate(sessionItemsProvider(widget.session.id));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Món vừa đổi trạng thái (đã gửi bếp). Đã tải lại — thao tác lại nếu cần.'),
+            behavior: SnackBarBehavior.floating));
+      }
+      return;
+    }
     final sentStatuses = ['da_gui', 'dang_lam', 'xong'];
     final isSent = sentStatuses.contains(item.kitchenStatus);
 
@@ -3152,12 +3161,18 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
 
     // ─── Đã gửi bếp: bắt buộc chọn lý do ───────────────────────────────────
+    // Món vừa chuyển sang "đã gửi" trong lúc bấm "+": không tăng món đã gửi, chỉ tải lại.
+    if (newQty >= item.quantity) {
+      ref.invalidate(sessionItemsProvider(widget.session.id));
+      return;
+    }
     // Xác định hành động: giảm qty hay huỷ cả món
     final isCancel = newQty <= 0;
     final showWastageOption =
         item.kitchenStatus == 'dang_lam' || item.kitchenStatus == 'xong';
     String? selectedReason;
-    bool deductAsLoss = true;
+    // Bếp chưa làm thì không hao hụt; công tắc chỉ hiện khi đang làm/xong.
+    bool deductAsLoss = showWastageOption;
 
     final confirm = await showDialog<Map<String, dynamic>>(
       context: context,
@@ -3195,7 +3210,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     const SizedBox(width: 12),
                     Text(
                       isCancel ? 'Huỷ món?' : 'Giảm số lượng?',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w800,
                         fontSize: 18,
                         color: _kNavy,
@@ -3218,7 +3233,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     isCancel
                         ? '"${item.productName}"\nHuỷ ${item.quantity.toStringAsFixed(0)} phần'
                         : '"${item.productName}"\n${item.quantity.toStringAsFixed(0)} → $newQty phần',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       height: 1.5,
                       color: _kNavy,
@@ -3229,7 +3244,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 const SizedBox(height: 18),
                 Text(
                   'Lý do *',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                     color: _kNavy,
@@ -3292,7 +3307,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                           const SizedBox(width: 10),
                           Text(
                             r,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
                               fontWeight: selectedReason == r
                                   ? FontWeight.w700
@@ -3322,7 +3337,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                       Expanded(
                         child: Text(
                           'Trừ kho nguyên liệu (hao hụt)',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: _kNavy,
@@ -3350,7 +3365,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         ),
                         child: Text(
                           'Không',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -3379,7 +3394,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         ),
                         child: Text(
                           'Xác nhận',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -3413,6 +3428,9 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
 
     // ─── Giảm qty từng phần ─────────────────────────────────────────────────
+    // Món đã gửi bếp: giảm cũng phải Quản lý duyệt như huỷ (chặn né duyệt bằng cách giảm dần).
+    final reduceApproval = await _verifyManagerApproval();
+    if (reduceApproval == null) return;
     try {
       await sb2
           .from('ban_session_items')
@@ -3505,8 +3523,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           label: '${widget.table.label} (Giảm món: ${item.productName})',
           requestedByUserId: session?.userId ?? '',
           requestedByName: session?.displayName ?? 'Nhân viên',
-          approvedByUserId: session?.userId ?? '',
-          approvedByName: session?.displayName ?? 'Nhân viên',
+          approvedByUserId: reduceApproval['id'] ?? '',
+            approvedByName: reduceApproval['name'] ?? 'Quản lý',
           reason: reason,
           amount: item.price * qtyDelta,
           details: [
@@ -3530,7 +3548,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           SnackBar(
             content: Text(
               '✏️ "${item.productName}": ${item.quantity.toInt()} → $newQty phần',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
             ),
             backgroundColor: _kOrange,
             behavior: SnackBarBehavior.floating,
@@ -3548,7 +3566,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           SnackBar(
             content: Text(
               'Cập nhật món thất bại. Hãy chụp lại báo chủ app.',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
             ),
             backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
@@ -3886,7 +3904,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           SnackBar(
             content: Text(
               'Bill $tableLabelForLog CHƯA in sau 30 giây. Kiểm tra máy in bill.',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
             ),
             backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
@@ -3939,7 +3957,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 // Tiêu đề to rõ
                 Text(
                   'Thanh toán thành công!',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF1E293B),
@@ -3960,7 +3978,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   ),
                   child: Text(
                     'Bàn: ${widget.table.label.isNotEmpty ? widget.table.label : 'Bàn'}',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF475569),
@@ -3988,7 +4006,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     children: [
                       Text(
                         'Tổng thanh toán',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: const Color(0xFF059669),
@@ -3997,7 +4015,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                       const SizedBox(height: 4),
                       Text(
                         fmtVnd(finalTotal),
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
                           color: const Color(0xFF047857),
@@ -4032,7 +4050,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     ),
                     child: Text(
                       'ĐÓNG',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
@@ -4077,7 +4095,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           SnackBar(
             content: Text(
               'Thanh toán thất bại. Hãy chụp lại báo chủ app.',
-              style: GoogleFonts.outfit(),
+              style: GoogleFonts.plusJakartaSans(),
             ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 6),
@@ -4104,7 +4122,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             Expanded(
               child: Text(
                 'Báo giá hóa đơn thay đổi',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
@@ -4118,7 +4136,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           children: [
             Text(
               'Số tiền giảm giá hoặc chiết khấu trên hệ thống đã được cập nhật lại theo dữ liệu mới nhất từ máy chủ:',
-              style: GoogleFonts.outfit(fontSize: 14),
+              style: GoogleFonts.plusJakartaSans(fontSize: 14),
             ),
             const SizedBox(height: 12),
             Container(
@@ -4135,11 +4153,11 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     children: [
                       Text(
                         'Tổng tiền dự kiến cũ:',
-                        style: GoogleFonts.outfit(),
+                        style: GoogleFonts.plusJakartaSans(),
                       ),
                       Text(
                         fmtVnd(oldTotal),
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           decoration: TextDecoration.lineThrough,
                           color: Colors.grey,
                         ),
@@ -4150,18 +4168,18 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Tạm tính mới:', style: GoogleFonts.outfit()),
-                      Text(fmtVnd(quote.subtotal), style: GoogleFonts.outfit()),
+                      Text('Tạm tính mới:', style: GoogleFonts.plusJakartaSans()),
+                      Text(fmtVnd(quote.subtotal), style: GoogleFonts.plusJakartaSans()),
                     ],
                   ),
                   if (quote.discount > 0)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Giảm giá mới:', style: GoogleFonts.outfit()),
+                        Text('Giảm giá mới:', style: GoogleFonts.plusJakartaSans()),
                         Text(
                           '-${fmtVnd(quote.discount)}',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
                           ),
@@ -4172,10 +4190,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Phụ phí mới:', style: GoogleFonts.outfit()),
+                        Text('Phụ phí mới:', style: GoogleFonts.plusJakartaSans()),
                         Text(
                           '+${fmtVnd(quote.surcharge)}',
-                          style: GoogleFonts.outfit(),
+                          style: GoogleFonts.plusJakartaSans(),
                         ),
                       ],
                     ),
@@ -4185,11 +4203,11 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     children: [
                       Text(
                         'Tổng thanh toán mới:',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                       ),
                       Text(
                         fmtVnd(quote.total),
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold,
                           color: Colors.red,
                           fontSize: 16,
@@ -4203,14 +4221,14 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             const SizedBox(height: 8),
             Text(
               'Bạn có muốn xác nhận và tiếp tục thanh toán theo số tiền mới không?',
-              style: GoogleFonts.outfit(fontSize: 13, color: Colors.black87),
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.black87),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: Text('Hủy bỏ', style: GoogleFonts.outfit()),
+            child: Text('Hủy bỏ', style: GoogleFonts.plusJakartaSans()),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -4220,7 +4238,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             onPressed: () => Navigator.of(dialogCtx).pop(true),
             child: Text(
               'Xác nhận & Thanh toán',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -4258,7 +4276,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             SnackBar(
               content: Text(
                 'Bạn không có quyền "Thanh toán".',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
               ),
               backgroundColor: _kRed,
               behavior: SnackBarBehavior.floating,
@@ -4482,7 +4500,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           SnackBar(
             content: Text(
               '⚠️ Gửi bếp thất bại. Hãy chụp lại báo chủ app.',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
             ),
             backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
@@ -4746,7 +4764,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               const SizedBox(width: 8),
               Text(
                 'Đã gửi bếp Đợt $round — ${unsent.length} món',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -4818,7 +4836,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           SnackBar(
             content: Text(
               '🖨️ Không in được phiếu bếp: ${result.error}',
-              style: GoogleFonts.outfit(fontSize: 12),
+              style: GoogleFonts.plusJakartaSans(fontSize: 12),
             ),
             backgroundColor: Colors.orange.shade700,
             behavior: SnackBarBehavior.floating,
@@ -4835,6 +4853,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   }
 
   Future<Map<String, String>?> _verifyManagerApproval() async {
+    if (!mounted) return null;
     final session = ref.read(sessionProvider);
     final canonical = StaffService.canonicalRole(session?.role ?? '');
     final isManager =
@@ -4856,7 +4875,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     }
 
     final storeId = session?.storeId;
-    if (storeId == null) return null;
+    if (storeId == null || !mounted) return null;
 
     final approved = await showDialog<Map<String, String>?>(
       context: context,
@@ -4886,7 +4905,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         builder: (ctx, setS) => AlertDialog(
           title: Text(
             'Lý do huỷ bàn *',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w800),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -4901,7 +4920,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 RadioListTile<String>(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  title: Text(r, style: GoogleFonts.outfit(fontSize: 13)),
+                  title: Text(r, style: GoogleFonts.plusJakartaSans(fontSize: 13)),
                   value: r,
                   groupValue: selectedReason,
                   onChanged: (v) => setS(() => selectedReason = v),
@@ -4916,7 +4935,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   : () => Navigator.pop(ctx, selectedReason),
               child: Text(
                 'Đồng ý',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   color: selectedReason == null ? Colors.grey : _kRed,
                   fontWeight: FontWeight.w700,
                 ),
@@ -4947,7 +4966,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               const SizedBox(width: 8),
               Text(
                 'Cam kết trách nhiệm',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w800,
                   color: _kRed,
                 ),
@@ -4960,7 +4979,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             children: [
               Text(
                 'Quản lý: $managerName',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                   color: _kNavy,
@@ -4969,7 +4988,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               const SizedBox(height: 8),
               Text(
                 'Bàn đã có món đang làm hoặc đã làm xong. Vui lòng chọn lý do hao phí và tích xác nhận chịu trách nhiệm:',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.5,
                   color: Colors.black87,
                 ),
@@ -4985,7 +5004,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 RadioListTile<String>(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  title: Text(r, style: GoogleFonts.outfit(fontSize: 13)),
+                  title: Text(r, style: GoogleFonts.plusJakartaSans(fontSize: 13)),
                   value: r,
                   groupValue: selectedReason,
                   onChanged: (v) => setS(() => selectedReason = v),
@@ -4998,7 +5017,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 controlAffinity: ListTileControlAffinity.leading,
                 title: Text(
                   'Tôi xác nhận chịu trách nhiệm cho các món đã chế biến bị huỷ bỏ.',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: _kRed,
@@ -5013,7 +5032,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, null),
-              child: Text('Hủy', style: GoogleFonts.outfit(color: Colors.grey)),
+              child: Text('Hủy', style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: (selectedReason == null || !committed)
@@ -5032,7 +5051,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               ),
               child: Text(
                 'Đồng ý huỷ bàn',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -5063,7 +5082,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               const SizedBox(width: 8),
               Text(
                 'Huỷ bàn khẩn cấp?',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w700,
                   color: _kRed,
                 ),
@@ -5072,18 +5091,18 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           ),
           content: Text(
             'Cảnh báo cực kỳ quan trọng:\nBàn này đã có món đang chế biến hoặc đã nấu xong! Việc huỷ bàn sẽ gây thất thoát chi phí & hao phí nguyên liệu chế biến.\n\nBạn có thực sự muốn tiếp tục?',
-            style: GoogleFonts.outfit(height: 1.4, fontSize: 13.5),
+            style: GoogleFonts.plusJakartaSans(height: 1.4, fontSize: 13.5),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Không', style: GoogleFonts.outfit(color: _kNavy)),
+              child: Text('Không', style: GoogleFonts.plusJakartaSans(color: _kNavy)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 'Tiếp tục',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   color: _kRed,
                   fontWeight: FontWeight.w700,
                 ),
@@ -5110,22 +5129,22 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
         builder: (_) => AlertDialog(
           title: Text(
             'Huỷ bàn?',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
           ),
           content: Text(
             'Tất cả món đã gọi sẽ bị xoá.',
-            style: GoogleFonts.outfit(),
+            style: GoogleFonts.plusJakartaSans(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text('Không', style: GoogleFonts.outfit(color: _kNavy)),
+              child: Text('Không', style: GoogleFonts.plusJakartaSans(color: _kNavy)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 'Huỷ bàn',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   color: _kRed,
                   fontWeight: FontWeight.w700,
                 ),
@@ -5322,7 +5341,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     const SizedBox(width: 8),
                     Text(
                       'Chuyển bàn thành công!',
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -5373,7 +5392,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                     const SizedBox(width: 8),
                     Text(
                       'Gộp bàn thành công!',
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -5439,7 +5458,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                               ),
                               child: Text(
                                 widget.table.label,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                   fontSize: 14,
@@ -5449,7 +5468,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                             const SizedBox(width: 8),
                             Text(
                               '${widget.session.guestCount} khách',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 color: _kNavy.withValues(alpha: 0.5),
                                 fontSize: 13,
                               ),
@@ -5491,7 +5510,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         const SizedBox(width: 4),
                                         Text(
                                           'Chuyển',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             color: _kAmber,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 12,
@@ -5532,7 +5551,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         const SizedBox(width: 4),
                                         Text(
                                           'Gộp bàn',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             color: const Color(0xFF2563EB),
                                             fontWeight: FontWeight.w700,
                                             fontSize: 12,
@@ -5568,7 +5587,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         const SizedBox(width: 4),
                                         Text(
                                           'Huỷ bàn',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             color: _kRed,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 12,
@@ -5637,7 +5656,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                     const SizedBox(height: 16),
                                     Text(
                                       'Chưa có món nào được chọn',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         color: _kNavy,
                                         fontWeight: FontWeight.w800,
                                         fontSize: 16,
@@ -5647,7 +5666,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                     Text(
                                       'Bấm Gọi món bên dưới để thêm món ăn và thức uống thơm ngon cho khách nhé!',
                                       textAlign: TextAlign.center,
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         color: _kNavy.withValues(alpha: 0.45),
                                         fontSize: 12.5,
                                         height: 1.45,
@@ -5679,7 +5698,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                       ),
                                       label: Text(
                                         'Gọi món ngay',
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.plusJakartaSans(
                                           fontWeight: FontWeight.w800,
                                           fontSize: 14,
                                         ),
@@ -5802,7 +5821,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                                 .isNotEmpty
                                                         ? '${item.productName} (${item.addedBy})'
                                                         : item.productName,
-                                                    style: GoogleFonts.outfit(
+                                                    style: GoogleFonts.plusJakartaSans(
                                                       fontWeight:
                                                           FontWeight.w700,
                                                       color: _kNavy,
@@ -5812,7 +5831,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                   const SizedBox(height: 2),
                                                   Text(
                                                     fmtVnd(item.price),
-                                                    style: GoogleFonts.outfit(
+                                                    style: GoogleFonts.plusJakartaSans(
                                                       fontSize: 12,
                                                       color: _kNavy.withValues(
                                                         alpha: 0.45,
@@ -5886,7 +5905,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                         textAlign:
                                                             TextAlign.center,
                                                         style:
-                                                            GoogleFonts.outfit(
+                                                            GoogleFonts.plusJakartaSans(
                                                               fontWeight:
                                                                   FontWeight
                                                                       .w800,
@@ -5942,7 +5961,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                 ),
                                                 child: Text(
                                                   'x${item.quantity.toStringAsFixed(0)}',
-                                                  style: GoogleFonts.outfit(
+                                                  style: GoogleFonts.plusJakartaSans(
                                                     fontWeight: FontWeight.w800,
                                                     color: _kNavy,
                                                     fontSize: 13,
@@ -5953,7 +5972,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                             const SizedBox(width: 10),
                                             Text(
                                               fmtVnd(item.subtotal),
-                                              style: GoogleFonts.outfit(
+                                              style: GoogleFonts.plusJakartaSans(
                                                 fontWeight: FontWeight.w800,
                                                 color: _kNavy,
                                                 fontSize: 14.5,
@@ -6058,7 +6077,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                                     ? '🥗 $name ×$qty'
                                                                     : '🥗 $name')
                                                               : '✨ $name',
-                                                          style: GoogleFonts.outfit(
+                                                          style: GoogleFonts.plusJakartaSans(
                                                             fontSize: 11,
                                                             fontWeight:
                                                                 FontWeight.w700,
@@ -6261,7 +6280,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                                   ),
                                                                   child: Text(
                                                                     preset,
-                                                                    style: GoogleFonts.outfit(
+                                                                    style: GoogleFonts.plusJakartaSans(
                                                                       fontSize:
                                                                           11,
                                                                       fontWeight:
@@ -6308,7 +6327,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                       children: [
                                         Text(
                                           'TỔNG CỘNG',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,
                                             color: _kNavy.withValues(
@@ -6318,7 +6337,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         ),
                                         Text(
                                           fmtVnd(total),
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 28,
                                             fontWeight: FontWeight.w800,
                                             color: _kNavy,
@@ -6363,7 +6382,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                             '⚠ ${overdue.length} món CHƯA gửi bếp '
                                             'quá 3 phút — bấm "Gửi bếp" để bếp làm.',
                                             textAlign: TextAlign.center,
-                                            style: GoogleFonts.outfit(
+                                            style: GoogleFonts.plusJakartaSans(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w800,
                                               color: _kRed,
@@ -6403,7 +6422,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                             ),
                                             label: Text(
                                               'Thêm món',
-                                              style: GoogleFonts.outfit(
+                                              style: GoogleFonts.plusJakartaSans(
                                                 fontWeight: FontWeight.w800,
                                                 fontSize: 13.5,
                                               ),
@@ -6465,7 +6484,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                         ),
                                         label: Text(
                                           'Thanh toán',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontWeight: FontWeight.w800,
                                             fontSize: 15,
                                           ),
@@ -6506,7 +6525,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         const SizedBox(height: 16),
                         Text(
                           'Đang huỷ bàn...',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -6815,7 +6834,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
               children: [
                 Text(
                   'TỔNG TIỀN CẦN THU',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: Colors.white.withOpacity(0.65),
@@ -6825,7 +6844,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 const SizedBox(height: 4),
                 Text(
                   fmtVnd(finalTotal),
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 26,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
@@ -6845,7 +6864,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       children: [
         Text(
           'Phí dịch vụ / Ship',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: _kNavy.withOpacity(0.7),
@@ -6858,14 +6877,14 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
             controller: _surchargeCtrl,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: _kNavy,
             ),
             decoration: InputDecoration(
               hintText: 'Nhập phí dịch vụ hoặc phí ship...',
-              hintStyle: GoogleFonts.outfit(
+              hintStyle: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 color: Colors.grey.shade400,
               ),
@@ -6876,7 +6895,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 size: 20,
               ),
               suffixText: 'đ',
-              suffixStyle: GoogleFonts.outfit(
+              suffixStyle: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: _kNavy.withOpacity(0.5),
@@ -6910,7 +6929,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       children: [
         Text(
           'Khách hàng (tích điểm)',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: _kNavy.withOpacity(0.7),
@@ -6925,14 +6944,14 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 child: TextField(
                   controller: _phoneCtrl,
                   keyboardType: TextInputType.phone,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: _kNavy,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Nhập số điện thoại...',
-                    hintStyle: GoogleFonts.outfit(
+                    hintStyle: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       color: Colors.grey.shade400,
                     ),
@@ -7011,7 +7030,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                         const SizedBox(width: 6),
                         Text(
                           _customerName ?? '',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                             color: const Color(0xFF2E7D32),
@@ -7030,7 +7049,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                       ),
                       child: Text(
                         '$_customerPts điểm',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF2E7D32),
@@ -7048,7 +7067,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                         _usePts > 0
                             ? 'Đã áp dụng giảm: ${fmtVnd(_usePts * _redeemRate.toDouble())}'
                             : 'Chưa sử dụng điểm tích lũy',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Colors.black54,
@@ -7086,7 +7105,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                       ),
                       label: Text(
                         _usePts > 0 ? 'Hủy' : 'Dùng điểm',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF2E7D32),
@@ -7110,7 +7129,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       children: [
         Text(
           'Khuyến mãi / Voucher',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: _kNavy.withOpacity(0.7),
@@ -7144,7 +7163,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   hasCoupon
                       ? 'Mã: ${_appliedCoupon!.code} (Giảm ${fmtVnd(_couponDiscount)})'
                       : 'Chưa áp dụng voucher',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: hasCoupon
@@ -7171,7 +7190,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   ),
                   child: Text(
                     'Gỡ mã',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.redAccent,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
@@ -7195,7 +7214,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   ),
                   child: Text(
                     'Chọn mã',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w800,
                       fontSize: 11,
                     ),
@@ -7214,7 +7233,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       children: [
         Text(
           'Hình thức thanh toán',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: _kNavy.withOpacity(0.7),
@@ -7263,7 +7282,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
           const SizedBox(height: 16),
           Text(
             'Tiền mặt của khách',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: _kNavy.withOpacity(0.7),
@@ -7276,14 +7295,14 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
               controller: _cashReceivedCtrl,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: _kNavy,
               ),
               decoration: InputDecoration(
                 hintText: 'Nhập tiền khách đưa...',
-                hintStyle: GoogleFonts.outfit(
+                hintStyle: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   color: Colors.grey.shade400,
                 ),
@@ -7366,7 +7385,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                     ),
                     child: Text(
                       fmtVnd(sug.toDouble()),
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: isExact ? Colors.white : _kNavy,
@@ -7406,7 +7425,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                         const SizedBox(width: 8),
                         Text(
                           'TIỀN THỐI LẠI:',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFF2E7D32),
                             fontSize: 13,
@@ -7416,7 +7435,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                     ),
                     Text(
                       fmtVnd(change),
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w900,
                         color: const Color(0xFF2E7D32),
                         fontSize: 18,
@@ -7449,7 +7468,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                         const SizedBox(width: 8),
                         Text(
                           'Còn thiếu:',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFFE65100),
                             fontSize: 13,
@@ -7459,7 +7478,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                     ),
                     Text(
                       fmtVnd(-change),
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w900,
                         color: const Color(0xFFE65100),
                         fontSize: 16,
@@ -7484,7 +7503,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 ),
                 child: Text(
                   'Đang tải thiết lập mẫu in hóa đơn...',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     color: Colors.blue.shade800,
                   ),
@@ -7505,7 +7524,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 ),
                 child: Text(
                   'Chưa thiết lập thông tin ngân hàng ở mục In hóa đơn. Vui lòng thiết lập để hiện mã QR chuyển khoản.',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     color: Colors.blue.shade800,
                   ),
@@ -7525,7 +7544,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 ),
                 child: Text(
                   'Chưa nhập số tài khoản ngân hàng ở mục In hóa đơn. Vui lòng thiết lập để hiện mã QR chuyển khoản.',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     color: Colors.blue.shade800,
                   ),
@@ -7556,7 +7575,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 children: [
                   Text(
                     'QUÉT MÃ QR ĐỂ CHUYỂN KHOẢN',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w900,
                       color: _kNavy,
                       fontSize: 12,
@@ -7594,7 +7613,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   const SizedBox(height: 12),
                   Text(
                     '$bankName • STK: $accNo',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w900,
                       color: _kNavy,
                       fontSize: 14,
@@ -7603,7 +7622,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   const SizedBox(height: 2),
                   Text(
                     accName.toUpperCase(),
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w700,
                       color: Colors.black54,
                       fontSize: 11,
@@ -7633,7 +7652,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
             ),
             child: Text(
               'Hủy bỏ',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.bold,
                 color: _kNavy.withOpacity(0.8),
                 fontSize: 14,
@@ -7680,7 +7699,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                   ),
             label: Text(
               'Xác nhận',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.w800,
                 fontSize: 14,
               ),
@@ -7732,7 +7751,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                           Text(
                             'Thu tiền',
                             maxLines: 1,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
                               color: _kNavy,
@@ -7742,7 +7761,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                             widget.tableName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: _kNavy.withValues(alpha: 0.6),
@@ -7768,7 +7787,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                       icon: const Icon(Icons.print_rounded, size: 14),
                       label: Text(
                         'In tạm tính',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
@@ -7887,7 +7906,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                 children: [
                   Text(
                     'Chọn Voucher giảm giá',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: _kNavy,
@@ -7911,7 +7930,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                           ),
                           title: Text(
                             c.code,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.w700,
                               color: _kNavy,
                             ),
@@ -7920,7 +7939,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
                             c.discountType == 'percent'
                                 ? 'Giảm ${c.value.toInt()}% (Đơn tối thiểu ${fmtVnd(c.minOrderAmount)})'
                                 : 'Giảm ${fmtVnd(c.value)} (Đơn tối thiểu ${fmtVnd(c.minOrderAmount)})',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               color: isApplicable
                                   ? Colors.black54
                                   : Colors.redAccent,
@@ -7998,7 +8017,7 @@ class _PayMethodTile extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 label,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: isSel ? Colors.white : _kNavy,
@@ -8261,7 +8280,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                         const SizedBox(width: 8),
                         Text(
                           'Chi tiết món đã chọn',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: _kNavy,
@@ -8270,7 +8289,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                         const Spacer(),
                         Text(
                           '${_selected.values.fold(0, (s, v) => s + v)} món',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: _kNavy.withValues(alpha: 0.5),
@@ -8291,7 +8310,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                           return Center(
                             child: Text(
                               'Chưa có món nào được chọn',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 color: Colors.grey,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -8341,7 +8360,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                   ),
                                   child: Text(
                                     '${qty}x',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w800,
                                       color: _kNavy,
@@ -8356,7 +8375,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                     children: [
                                       Text(
                                         prod.name,
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.plusJakartaSans(
                                           fontSize: 14.5,
                                           fontWeight: FontWeight.w700,
                                           color: _kNavy,
@@ -8386,7 +8405,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                 ),
                                                 child: Text(
                                                   m['name'] as String,
-                                                  style: GoogleFonts.outfit(
+                                                  style: GoogleFonts.plusJakartaSans(
                                                     fontSize: 10.5,
                                                     color: _kOrange,
                                                     fontWeight: FontWeight.w600,
@@ -8414,7 +8433,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                 ),
                                                 child: Text(
                                                   '+${te.value} $tName',
-                                                  style: GoogleFonts.outfit(
+                                                  style: GoogleFonts.plusJakartaSans(
                                                     fontSize: 10.5,
                                                     color:
                                                         Colors.green.shade800,
@@ -8439,7 +8458,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                 ),
                                                 child: Text(
                                                   '📝 $note',
-                                                  style: GoogleFonts.outfit(
+                                                  style: GoogleFonts.plusJakartaSans(
                                                     fontSize: 10.5,
                                                     color: Colors.grey.shade700,
                                                     fontWeight: FontWeight.w600,
@@ -8508,7 +8527,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
               const SizedBox(width: 8),
               Text(
                 'Món tạm hết',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                   color: _kNavy,
@@ -8518,7 +8537,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
           ),
           content: Text(
             'Món "${p.name}" hiện đang tạm hết. Bạn có chắc chắn muốn thêm vào bàn?',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               color: _kNavy.withValues(alpha: 0.8),
             ),
@@ -8528,7 +8547,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(
                 'Hủy',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   color: Colors.grey.shade600,
                   fontWeight: FontWeight.w600,
                 ),
@@ -8545,7 +8564,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(
                 'Vẫn thêm',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -8623,13 +8642,13 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                   child: TextField(
                     controller: _searchCtrl,
                     onChanged: (v) => setState(() => _search = v),
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       color: _kNavy,
                       fontWeight: FontWeight.w600,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Tìm sản phẩm, thức uống...',
-                      hintStyle: GoogleFonts.outfit(
+                      hintStyle: GoogleFonts.plusJakartaSans(
                         color: _kNavy.withValues(alpha: 0.35),
                         fontWeight: FontWeight.w500,
                       ),
@@ -8727,7 +8746,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                             child: Center(
                               child: Text(
                                 cat,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: isActive
@@ -8792,7 +8811,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                             const SizedBox(height: 10),
                             Text(
                               'Không tìm thấy sản phẩm phù hợp',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 color: _kNavy.withValues(alpha: 0.4),
                                 fontWeight: FontWeight.w600,
                               ),
@@ -8890,7 +8909,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                         _expandedProductIds.contains(p.id)
                                             ? 'Thu gọn'
                                             : 'Tùy chọn',
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.plusJakartaSans(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
                                           color: _kNavy,
@@ -8945,7 +8964,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                       child: Text(
                                         '$qty',
                                         textAlign: TextAlign.center,
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.plusJakartaSans(
                                           fontWeight: FontWeight.w800,
                                           color: _kNavy,
                                           fontSize: 13.5,
@@ -9146,7 +9165,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                         child: Text(
                                                           p.name,
                                                           style:
-                                                              GoogleFonts.outfit(
+                                                              GoogleFonts.plusJakartaSans(
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w700,
@@ -9178,7 +9197,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                           child: Text(
                                                             'TẠM HẾT',
                                                             style:
-                                                                GoogleFonts.outfit(
+                                                                GoogleFonts.plusJakartaSans(
                                                                   fontSize: 9,
                                                                   fontWeight:
                                                                       FontWeight
@@ -9201,7 +9220,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                                 p.sellPrice ??
                                                                     0,
                                                               ),
-                                                        style: GoogleFonts.outfit(
+                                                        style: GoogleFonts.plusJakartaSans(
                                                           fontSize: 13,
                                                           color: modPrice > 0
                                                               ? _kOrange
@@ -9242,7 +9261,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                           child: Text(
                                                             p.sku!,
                                                             style:
-                                                                GoogleFonts.outfit(
+                                                                GoogleFonts.plusJakartaSans(
                                                                   fontSize: 10,
                                                                   color: _kNavy
                                                                       .withValues(
@@ -9321,7 +9340,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                 children: [
                                                   Text(
                                                     '🥗 Topping tùy chọn',
-                                                    style: GoogleFonts.outfit(
+                                                    style: GoogleFonts.plusJakartaSans(
                                                       fontSize: 11.5,
                                                       fontWeight:
                                                           FontWeight.w800,
@@ -9365,7 +9384,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                           children: [
                                                             Text(
                                                               toppingName,
-                                                              style: GoogleFonts.outfit(
+                                                              style: GoogleFonts.plusJakartaSans(
                                                                 fontSize: 13,
                                                                 fontWeight:
                                                                     FontWeight
@@ -9377,7 +9396,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                             ),
                                                             Text(
                                                               '+${fmtVnd(toppingPrice)}/$toppingUnit',
-                                                              style: GoogleFonts.outfit(
+                                                              style: GoogleFonts.plusJakartaSans(
                                                                 fontSize: 11,
                                                                 color: _kOrange
                                                                     .withValues(
@@ -9447,7 +9466,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                         Text(
                                                           '$tQty',
                                                           style:
-                                                              GoogleFonts.outfit(
+                                                              GoogleFonts.plusJakartaSans(
                                                                 fontSize: 14,
                                                                 fontWeight:
                                                                     FontWeight
@@ -9545,7 +9564,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                         children: [
                                           Text(
                                             '✨ Tùy chọn hương vị',
-                                            style: GoogleFonts.outfit(
+                                            style: GoogleFonts.plusJakartaSans(
                                               fontSize: 11.5,
                                               fontWeight: FontWeight.w800,
                                               color: _kNavy.withValues(
@@ -9570,7 +9589,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                         ),
                                                     child: Text(
                                                       groupName,
-                                                      style: GoogleFonts.outfit(
+                                                      style: GoogleFonts.plusJakartaSans(
                                                         fontSize: 11,
                                                         fontWeight:
                                                             FontWeight.w700,
@@ -9665,7 +9684,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                               ? '${mod['name']} +${fmtVnd((mod['price_adjust'] as num).toDouble())}'
                                                               : mod['name']
                                                                     as String,
-                                                          style: GoogleFonts.outfit(
+                                                          style: GoogleFonts.plusJakartaSans(
                                                             fontSize: 11.5,
                                                             fontWeight:
                                                                 FontWeight.w700,
@@ -9784,7 +9803,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                       child: Center(
                                                         child: Text(
                                                           preset,
-                                                          style: GoogleFonts.outfit(
+                                                          style: GoogleFonts.plusJakartaSans(
                                                             fontSize: 11,
                                                             fontWeight:
                                                                 FontWeight.w700,
@@ -9815,7 +9834,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                       title: Text(
                                                         'Ghi chú cho ${p.name}',
                                                         style:
-                                                            GoogleFonts.outfit(
+                                                            GoogleFonts.plusJakartaSans(
                                                               fontWeight:
                                                                   FontWeight
                                                                       .w800,
@@ -9826,7 +9845,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                         controller: ctrl,
                                                         autofocus: true,
                                                         style:
-                                                            GoogleFonts.outfit(
+                                                            GoogleFonts.plusJakartaSans(
                                                               fontSize: 13,
                                                               fontWeight:
                                                                   FontWeight
@@ -9836,7 +9855,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                           hintText:
                                                               'vd: ít rau, không cay...',
                                                           hintStyle:
-                                                              GoogleFonts.outfit(
+                                                              GoogleFonts.plusJakartaSans(
                                                                 color: _kNavy
                                                                     .withValues(
                                                                       alpha:
@@ -9874,7 +9893,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                           child: Text(
                                                             'Huỷ',
                                                             style:
-                                                                GoogleFonts.outfit(
+                                                                GoogleFonts.plusJakartaSans(
                                                                   color: _kNavy
                                                                       .withValues(
                                                                         alpha:
@@ -9902,7 +9921,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                           child: Text(
                                                             'Lưu',
                                                             style:
-                                                                GoogleFonts.outfit(
+                                                                GoogleFonts.plusJakartaSans(
                                                                   color: _kNavy,
                                                                   fontWeight:
                                                                       FontWeight
@@ -9948,7 +9967,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                       Text(
                                                         'Ghi chú',
                                                         style:
-                                                            GoogleFonts.outfit(
+                                                            GoogleFonts.plusJakartaSans(
                                                               fontSize: 11,
                                                               fontWeight:
                                                                   FontWeight
@@ -9973,7 +9992,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                             ),
                                             child: Text(
                                               '📝 ${_notes[p.id]}',
-                                              style: GoogleFonts.outfit(
+                                              style: GoogleFonts.plusJakartaSans(
                                                 fontSize: 11.5,
                                                 color: _kOrange,
                                                 fontWeight: FontWeight.w700,
@@ -10065,7 +10084,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                     ),
                                     child: Text(
                                       '$count món',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w800,
                                         color: Colors.white,
@@ -10101,7 +10120,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                           const SizedBox(width: 4),
                                           Text(
                                             'Xem chi tiết',
-                                            style: GoogleFonts.outfit(
+                                            style: GoogleFonts.plusJakartaSans(
                                               fontSize: 11,
                                               fontWeight: FontWeight.w800,
                                               color: _kOrange,
@@ -10114,7 +10133,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                   const Spacer(),
                                   Text(
                                     'Tổng cộng: ',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: _kNavy.withValues(alpha: 0.5),
@@ -10122,7 +10141,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                   ),
                                   Text(
                                     fmtVnd(total),
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w800,
                                       color: _kNavy,
@@ -10176,7 +10195,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                             count > 0
                                                 ? 'Xác nhận • Thêm $count món'
                                                 : 'Quay lại Bàn',
-                                            style: GoogleFonts.outfit(
+                                            style: GoogleFonts.plusJakartaSans(
                                               fontWeight: FontWeight.w800,
                                               fontSize: 15,
                                             ),
@@ -10300,7 +10319,7 @@ class _ToppingPickerSheetState extends State<_ToppingPickerSheet> {
                   Expanded(
                     child: Text(
                       'Topping cho ${widget.product.name ?? ''}',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: _kNavy,
@@ -10319,7 +10338,7 @@ class _ToppingPickerSheetState extends State<_ToppingPickerSheet> {
                       ),
                       child: Text(
                         '+${fmtVnd(_totalPrice)}',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
                           color: _kOrange,
@@ -10347,7 +10366,7 @@ class _ToppingPickerSheetState extends State<_ToppingPickerSheet> {
                           Text(
                             'Chưa có topping nào\nVào Kho → sửa món để gắn topping',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               color: _kMuted,
                             ),
@@ -10388,7 +10407,7 @@ class _ToppingPickerSheetState extends State<_ToppingPickerSheet> {
                                   children: [
                                     Text(
                                       t['name'] as String? ?? '',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
                                         color: _kNavy,
@@ -10397,7 +10416,7 @@ class _ToppingPickerSheetState extends State<_ToppingPickerSheet> {
                                     if (price > 0)
                                       Text(
                                         '+${fmtVnd(price)}/${t['unit'] ?? 'phần'}',
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.plusJakartaSans(
                                           fontSize: 12,
                                           color: _kOrange,
                                           fontWeight: FontWeight.w600,
@@ -10437,7 +10456,7 @@ class _ToppingPickerSheetState extends State<_ToppingPickerSheet> {
                                     const SizedBox(width: 8),
                                     Text(
                                       '$qty',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w800,
                                         color: _kNavy,
@@ -10493,7 +10512,7 @@ class _ToppingPickerSheetState extends State<_ToppingPickerSheet> {
                       _totalQty > 0
                           ? 'Xong · +${fmtVnd(_totalPrice)}'
                           : 'Không thêm topping',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -10636,7 +10655,7 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
                 children: [
                   Text(
                     'Cài đặt tùy chọn món',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: _kNavy,
@@ -10644,7 +10663,7 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
                   ),
                   Text(
                     widget.product.name,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       color: _kOrange,
                       fontWeight: FontWeight.w600,
@@ -10675,7 +10694,7 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
                                   const SizedBox(height: 12),
                                   Text(
                                     'Chưa có tùy chọn nhanh',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
                                       color: _kNavy,
@@ -10685,7 +10704,7 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
                                   Text(
                                     'Thêm các ghi chú nhanh bên dưới để nhân viên click chọn nhanh khi order (Không cần gõ tay).',
                                     textAlign: TextAlign.center,
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12,
                                       color: _kNavy.withValues(alpha: 0.55),
                                       height: 1.4,
@@ -10707,7 +10726,7 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
                                       children: [
                                         Text(
                                           '💡 Ví dụ cách thiết lập:',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                             color: _kOrange,
@@ -10718,7 +10737,7 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
                                           '• Nhóm: "Mức cay"  -> Tên: "Cấp độ 2"  -> Giá: 0\n'
                                           '• Nhóm: "Ghi chú" -> Tên: "Không hành" -> Giá: 0\n'
                                           '• Nhóm: "Thêm món" -> Tên: "Thêm Mực" -> Giá: 15000',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 11,
                                             color: _kNavy.withValues(
                                               alpha: 0.7,
@@ -10762,7 +10781,7 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
                                           ),
                                           child: Text(
                                             e.key,
-                                            style: GoogleFonts.outfit(
+                                            style: GoogleFonts.plusJakartaSans(
                                               fontSize: 11,
                                               fontWeight: FontWeight.w700,
                                               color: _kNavy.withValues(
@@ -10834,7 +10853,7 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
                                                     priceAdj > 0
                                                         ? '${mod['name']}  +${fmtVnd(priceAdj)}'
                                                         : mod['name'] as String,
-                                                    style: GoogleFonts.outfit(
+                                                    style: GoogleFonts.plusJakartaSans(
                                                       fontSize: 13,
                                                       fontWeight:
                                                           FontWeight.w600,
@@ -10893,11 +10912,11 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
                           width: 80,
                           child: TextField(
                             onChanged: (v) => setState(() => _group = v),
-                            style: GoogleFonts.outfit(fontSize: 12),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12),
                             decoration: InputDecoration(
                               isDense: true,
                               hintText: 'Nhóm',
-                              hintStyle: GoogleFonts.outfit(
+                              hintStyle: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 color: _kNavy.withValues(alpha: 0.35),
                               ),
@@ -10922,11 +10941,11 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
                         Expanded(
                           child: TextField(
                             controller: _nameCtrl,
-                            style: GoogleFonts.outfit(fontSize: 13),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 13),
                             decoration: InputDecoration(
                               isDense: true,
                               hintText: 'Tên tùy chọn',
-                              hintStyle: GoogleFonts.outfit(
+                              hintStyle: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 color: _kNavy.withValues(alpha: 0.35),
                               ),
@@ -10953,11 +10972,11 @@ class _ModifierManagerSheetState extends State<ModifierManagerSheet> {
                           child: TextField(
                             controller: _priceCtrl,
                             keyboardType: TextInputType.number,
-                            style: GoogleFonts.outfit(fontSize: 12),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12),
                             decoration: InputDecoration(
                               isDense: true,
                               hintText: '+Giá',
-                              hintStyle: GoogleFonts.outfit(
+                              hintStyle: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 color: _kNavy.withValues(alpha: 0.35),
                               ),
@@ -11073,7 +11092,7 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
             const SizedBox(height: 16),
             Text(
               isEdit ? 'Sửa khu vực' : 'Thêm khu vực',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: _kNavy,
@@ -11084,10 +11103,10 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
                 controller: _nameCtrl,
-                style: GoogleFonts.outfit(color: _kNavy),
+                style: GoogleFonts.plusJakartaSans(color: _kNavy),
                 decoration: InputDecoration(
                   labelText: 'Tên khu vực',
-                  labelStyle: GoogleFonts.outfit(
+                  labelStyle: GoogleFonts.plusJakartaSans(
                     color: _kNavy.withValues(alpha: 0.6),
                   ),
                   filled: true,
@@ -11120,7 +11139,7 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                 children: [
                   Text(
                     'Biểu tượng',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       color: _kNavy.withValues(alpha: 0.6),
                     ),
@@ -11171,7 +11190,7 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                 children: [
                   Text(
                     'Màu sắc',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       color: _kNavy.withValues(alpha: 0.6),
                     ),
@@ -11236,7 +11255,7 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                         ),
                         child: Text(
                           'Xoá khu',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             color: _kRed,
                             fontWeight: FontWeight.w700,
                           ),
@@ -11266,7 +11285,7 @@ class _ZoneFormSheetState extends State<_ZoneFormSheet> {
                       ),
                       child: Text(
                         isEdit ? 'Lưu' : 'Thêm khu vực',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -11346,7 +11365,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
             const SizedBox(height: 16),
             Text(
               isEdit ? 'Sửa bàn' : 'Thêm bàn',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: _kNavy,
@@ -11358,10 +11377,10 @@ class _TableFormSheetState extends State<_TableFormSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
                 controller: _nameCtrl,
-                style: GoogleFonts.outfit(color: _kNavy),
+                style: GoogleFonts.plusJakartaSans(color: _kNavy),
                 decoration: InputDecoration(
                   labelText: 'Tên bàn (vd: Bàn 1, Bàn VIP)',
-                  labelStyle: GoogleFonts.outfit(
+                  labelStyle: GoogleFonts.plusJakartaSans(
                     color: _kNavy.withValues(alpha: 0.6),
                   ),
                   filled: true,
@@ -11394,7 +11413,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                 children: [
                   Text(
                     'Khu vực',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       color: _kNavy.withValues(alpha: 0.6),
                     ),
@@ -11435,7 +11454,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                               const SizedBox(width: 6),
                               Text(
                                 zone.name,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontWeight: FontWeight.w600,
                                   color: isSel ? Colors.white : zoneColor,
                                   fontSize: 13,
@@ -11462,7 +11481,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                       children: [
                         Text(
                           'Số lượng bàn',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: _kNavy.withValues(alpha: 0.6),
@@ -11480,7 +11499,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                           ),
                           child: Text(
                             'Tiết kiệm thời gian!',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: _kOrange,
@@ -11492,9 +11511,9 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                     const SizedBox(height: 4),
                     Text(
                       _batchCount == 1
-                          ? 'Têm bàn sẽ được dùng nguyên vd: "Bàn 5"'
-                          : 'Sẽ tạo: ${List.generate(_batchCount, (i) => '"${_nameCtrl.text.trim().isEmpty ? "Bàn" : _nameCtrl.text.trim()} ${i + 1}"').join(", ")}',
-                      style: GoogleFonts.outfit(
+                          ? 'Tên bàn sẽ được dùng nguyên, vd: "Bàn 5"'
+                                  : 'Sẽ tạo: ${List.generate(_batchCount, (i) => '"${_nameCtrl.text.trim().isEmpty ? "Bàn" : _nameCtrl.text.trim()} ${i + 1}"').join(", ")}',
+                              style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         color: _kNavy.withValues(alpha: 0.4),
                         fontStyle: _batchCount > 1
@@ -11519,7 +11538,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                               Text(
                                 '$_batchCount',
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w800,
                                   color: _kNavy,
@@ -11527,7 +11546,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                               ),
                               Text(
                                 'bàn',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
                                   color: _kNavy.withValues(alpha: 0.4),
                                 ),
@@ -11567,7 +11586,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                               child: Text(
                                 '$n',
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   color: isSel ? Colors.white : _kNavy,
@@ -11590,7 +11609,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                 children: [
                   Text(
                     'Số chỗ ngồi',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       color: _kNavy.withValues(alpha: 0.6),
                     ),
@@ -11608,7 +11627,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                         child: Text(
                           '$_capacity',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
                             color: _kNavy,
@@ -11643,7 +11662,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                         ),
                         child: Text(
                           'Xoá bàn',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             color: _kRed,
                             fontWeight: FontWeight.w700,
                           ),
@@ -11679,7 +11698,7 @@ class _TableFormSheetState extends State<_TableFormSheet> {
                       ),
                       child: Text(
                         isEdit ? 'Lưu' : 'Thêm bàn',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -11751,7 +11770,7 @@ class _KitchenStatusDot extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: color,
@@ -11845,7 +11864,7 @@ class _SendKitchenButtonState extends ConsumerState<_SendKitchenButton> {
                   : hasUnsent
                   ? 'Gửi bếp (${widget.unsentCount})'
                   : 'Đã gửi hết',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: hasUnsent && isKitchenActive
@@ -11875,7 +11894,7 @@ class _SendKitchenButtonState extends ConsumerState<_SendKitchenButton> {
               content: Text(
                 'KHÔNG gửi bếp được: module Bếp đang tắt trên quán này. '
                 'Báo chủ quán bật lại (Trang chủ → Sửa → + → Bếp).',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
               ),
               backgroundColor: _kRed,
               behavior: SnackBarBehavior.floating,
@@ -11940,7 +11959,7 @@ class _ShapeTile extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 label,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: isSelected ? Colors.white : _kNavy,
@@ -12050,7 +12069,7 @@ class _TableOptionsSheet extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             table.label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.w800,
               color: _kNavy,
@@ -12062,7 +12081,7 @@ class _TableOptionsSheet extends StatelessWidget {
               leading: const Icon(Icons.edit_rounded, color: _kNavy),
               title: Text(
                 'Sửa thông tin bàn',
-                style: GoogleFonts.outfit(color: _kNavy),
+                style: GoogleFonts.plusJakartaSans(color: _kNavy),
               ),
               onTap: onEdit,
             ),
@@ -12071,7 +12090,7 @@ class _TableOptionsSheet extends StatelessWidget {
               leading: const Icon(Icons.swap_horiz_rounded, color: _kNavy),
               title: Text(
                 'Chuyển bàn',
-                style: GoogleFonts.outfit(color: _kNavy),
+                style: GoogleFonts.plusJakartaSans(color: _kNavy),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -12189,7 +12208,7 @@ class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
                                     widget.isMergeMode
                                         ? 'Gộp bàn'
                                         : 'Chuyển bàn',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w900,
                                       color: _kNavy,
@@ -12197,7 +12216,7 @@ class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
                                   ),
                                   Text(
                                     'Từ: ${widget.currentTableLabel}',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 13,
                                       color: _kNavy.withValues(alpha: 0.5),
                                     ),
@@ -12245,7 +12264,7 @@ class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
                                   child: ChoiceChip(
                                     label: Text(
                                       zoneName,
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 13,
                                         fontWeight: isSelected
                                             ? FontWeight.w800
@@ -12300,7 +12319,7 @@ class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
                                 const SizedBox(height: 12),
                                 Text(
                                   'Không có bàn nào khác ở phân khu này',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14,
                                     color: _kNavy.withValues(alpha: 0.5),
                                   ),
@@ -12337,7 +12356,7 @@ class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
                                           SnackBar(
                                             content: Text(
                                               '⚠️ Bàn ${t.label} đang có khách, không thể chuyển sang.',
-                                              style: GoogleFonts.outfit(
+                                              style: GoogleFonts.plusJakartaSans(
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
@@ -12410,7 +12429,7 @@ class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
                                             children: [
                                               Text(
                                                 t.label,
-                                                style: GoogleFonts.outfit(
+                                                style: GoogleFonts.plusJakartaSans(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w800,
                                                   color: isSelected
@@ -12432,7 +12451,7 @@ class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
                                                   widget.isMergeMode
                                                       ? '🔗 Gộp món'
                                                       : 'Có khách',
-                                                  style: GoogleFonts.outfit(
+                                                  style: GoogleFonts.plusJakartaSans(
                                                     fontSize: 9,
                                                     fontWeight: FontWeight.w700,
                                                     color: isSelected
@@ -12511,7 +12530,7 @@ class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
                                         ? 'Gộp ${widget.currentTableLabel} vào $_selectedTableLabel'
                                         : 'Chuyển sang $_selectedTableLabel')
                                   : 'Chọn bàn đích',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -12555,7 +12574,7 @@ class _TransferTableSheetState extends ConsumerState<_TransferTableSheet> {
                             const SizedBox(height: 16),
                             Text(
                               'Đang chuyển bàn...',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -12754,7 +12773,7 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
                 const SizedBox(width: 8),
                 Text(
                   'Quản lý phê duyệt',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
                     color: _kNavy,
@@ -12766,7 +12785,7 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
             Text(
               'Vui lòng gọi Quản lý nhập mã PIN 6 số duyệt thao tác nhạy cảm này.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12.5,
                 color: _kNavy.withValues(alpha: 0.55),
                 height: 1.4,
@@ -12816,7 +12835,7 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
             if (_error != null)
               Text(
                 _error!,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   color: Colors.red,
                   fontWeight: FontWeight.w700,
@@ -12859,7 +12878,7 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
                                     )
                                   : Text(
                                       key,
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 22,
                                         fontWeight: FontWeight.w700,
                                         color: _kNavy,
@@ -12880,7 +12899,7 @@ class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
               onPressed: _loading ? null : () => Navigator.pop(context, null),
               child: Text(
                 'Huỷ bỏ',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   color: _kNavy.withValues(alpha: 0.5),
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
@@ -12962,7 +12981,7 @@ class _ItemNoteInputState extends State<_ItemNoteInput> {
         _edited = true;
         widget.onEdited();
       },
-      style: GoogleFonts.outfit(
+      style: GoogleFonts.plusJakartaSans(
         fontSize: 12,
         fontWeight: FontWeight.w600,
         color: _kNavy,
@@ -12970,7 +12989,7 @@ class _ItemNoteInputState extends State<_ItemNoteInput> {
       decoration: InputDecoration(
         isDense: true,
         hintText: 'Ghi chú cho nhà bếp (vd: ít rau, không hành...)',
-        hintStyle: GoogleFonts.outfit(
+        hintStyle: GoogleFonts.plusJakartaSans(
           fontSize: 12,
           color: _kNavy.withValues(alpha: 0.35),
         ),
@@ -13208,7 +13227,7 @@ class _BillPrintStatusBar extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   'Bill đã gửi máy in',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: _kGreen,
@@ -13230,7 +13249,7 @@ class _BillPrintStatusBar extends StatelessWidget {
                   Text(
                     'Bill CHƯA in sau 30 giây. Kiểm tra máy in bill.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: _kRed,
@@ -13244,7 +13263,7 @@ class _BillPrintStatusBar extends StatelessWidget {
                       icon: const Icon(Icons.print_rounded, size: 18),
                       label: Text(
                         'IN LẠI BILL',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w800),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
                       ),
                     ),
                   ),
@@ -13263,7 +13282,7 @@ class _BillPrintStatusBar extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   'Đang in bill…',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: _kNavy.withValues(alpha: 0.7),

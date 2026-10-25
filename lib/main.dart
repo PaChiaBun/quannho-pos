@@ -49,7 +49,7 @@ import 'screens/role_manager_screen.dart' show storeRolesProvider;
 import 'screens/log_viewer_screen.dart';
 import 'core/utils/responsive.dart';
 import 'core/widgets/active_module_host.dart';
-import 'features/ai_assistant/screens/bum_chat_screen.dart';
+import 'features/ai_assistant/screens/boom_chat_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // METADATA CHO TAB — icon + label (thêm module mới vào đây)
@@ -258,34 +258,34 @@ class _SmoothScrollBehavior extends MaterialScrollBehavior {
 // ✅ FIX #4 — Cache GoogleFonts TextStyle thành static const
 // Tránh tạo TextStyle object mới 28 lần mỗi khi sidebar rebuild
 // ─────────────────────────────────────────────────────────────────────────────
-final _kSidebarActiveStyle = GoogleFonts.outfit(
+final _kSidebarActiveStyle = GoogleFonts.plusJakartaSans(
   fontSize: 9,
   fontWeight: FontWeight.w700,
   color: _kNavy,
 );
-final _kSidebarInactiveStyle = GoogleFonts.outfit(
+final _kSidebarInactiveStyle = GoogleFonts.plusJakartaSans(
   fontSize: 9,
   fontWeight: FontWeight.w400,
   color: const Color(0xFF9E9E9E),
 );
-final _kSidebarActiveLgStyle = GoogleFonts.outfit(
+final _kSidebarActiveLgStyle = GoogleFonts.plusJakartaSans(
   fontSize: 12,
   fontWeight: FontWeight.w700,
   color: _kNavy,
 );
-final _kSidebarInactiveLgStyle = GoogleFonts.outfit(
+final _kSidebarInactiveLgStyle = GoogleFonts.plusJakartaSans(
   fontSize: 12,
   fontWeight: FontWeight.w400,
   color: const Color(0xFF9E9E9E),
 );
-final _kSidebarFooterStyle = GoogleFonts.outfit(
+final _kSidebarFooterStyle = GoogleFonts.plusJakartaSans(
   fontSize: 10,
   fontWeight: FontWeight.w600,
   color: const Color(0xFF9E9E9E),
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MAIN SHELL — 4 slot tuỳ chỉnh + Bum AI ở giữa
+// MAIN SHELL — 4 slot tuỳ chỉnh + Boom AI ở giữa
 // ─────────────────────────────────────────────────────────────────────────────
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -514,14 +514,14 @@ class _MainShellState extends ConsumerState<MainShell>
     super.dispose();
   }
 
-  void _showBumSheet() {
+  void _showBoomSheet() {
     HapticFeedback.lightImpact();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => const BumChatScreen(),
+      builder: (_) => const BoomChatScreen(),
     );
   }
 
@@ -629,10 +629,10 @@ class _MainShellState extends ConsumerState<MainShell>
       return _buildLargeLayout(context, idx, navBarTabs);
     }
 
-    // ── Mobile: Bottom Bar + Bum FAB ──────────────────────────────
+    // ── Mobile: Bottom Bar + Boom FAB ──────────────────────────────
     return Scaffold(
       body: _buildBody(idx),
-      floatingActionButton: _BumButton(onTap: _showBumSheet),
+      floatingActionButton: _BoomButton(onTap: _showBoomSheet),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(displaySlots),
     );
@@ -719,7 +719,7 @@ class _MainShellState extends ConsumerState<MainShell>
             const SizedBox(height: 24),
             Text(
               'YÊU CẦU CHẤM CÔNG',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 color: const Color(0xFF1E1C5E), // _kNavy
@@ -730,7 +730,7 @@ class _MainShellState extends ConsumerState<MainShell>
             Text(
               'Tính năng này tạm khóa vì bạn chưa vào ca làm việc.\nVui lòng hoàn thành chấm công để mở khóa các module của quán.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 color: const Color(0xFF9E9085), // _kMuted
                 height: 1.4,
@@ -757,7 +757,7 @@ class _MainShellState extends ConsumerState<MainShell>
                 icon: const Icon(Icons.fingerprint_rounded, size: 20),
                 label: Text(
                   'Đi chấm công ngay',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
@@ -781,7 +781,7 @@ class _MainShellState extends ConsumerState<MainShell>
             const SizedBox(height: 16),
             Text(
               'Đang kiểm tra ca làm việc...',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 color: const Color(0xFF9E9085),
                 fontWeight: FontWeight.w600,
@@ -816,7 +816,7 @@ class _MainShellState extends ConsumerState<MainShell>
             const SizedBox(height: 24),
             Text(
               'LỖI ĐỒNG BỘ TRẠNG THÁI CA',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 20,
                 fontWeight: FontWeight.w900,
                 color: const Color(0xFF1E1C5E),
@@ -826,7 +826,7 @@ class _MainShellState extends ConsumerState<MainShell>
             Text(
               'Không thể kết nối CSDL để kiểm tra ca làm việc.\nVui lòng kiểm tra kết nối mạng và bấm Thử lại.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 color: const Color(0xFF9E9085),
                 height: 1.4,
@@ -847,7 +847,7 @@ class _MainShellState extends ConsumerState<MainShell>
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: Text(
                 'Thử lại',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -917,7 +917,7 @@ class _MainShellState extends ConsumerState<MainShell>
         children: [
           // ── AI Logo + Name ─────────────────────────────────
           GestureDetector(
-            onTap: _showBumSheet,
+            onTap: _showBoomSheet,
             child: Container(
               width: double.infinity,
               padding: EdgeInsets.fromLTRB(
@@ -935,7 +935,7 @@ class _MainShellState extends ConsumerState<MainShell>
               ),
               child: Column(
                 children: [
-                  // ── Logo Bum AI — to hơn, glow ring ──
+                  // ── Logo Boom AI — to hơn, glow ring ──
                   Container(
                     width: isDesktop ? 72 : 64,
                     height: isDesktop ? 72 : 64,
@@ -977,8 +977,8 @@ class _MainShellState extends ConsumerState<MainShell>
                   SizedBox(height: isDesktop ? 10 : 6),
                   // ── Tên AI ──
                   Text(
-                    'Bum AI',
-                    style: GoogleFonts.outfit(
+                    'Boom AI',
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: isDesktop ? 14 : 11,
                       fontWeight: FontWeight.w800,
                       color: _kNavy,
@@ -988,7 +988,7 @@ class _MainShellState extends ConsumerState<MainShell>
                   if (isDesktop)
                     Text(
                       'Trợ lý thông minh',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF9E9085),
@@ -1450,7 +1450,7 @@ class _NavSlotItemState extends State<_NavSlotItem>
               // ── Label ──
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 250),
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 10,
                   fontWeight: widget.isActive
                       ? FontWeight.w700
@@ -1475,7 +1475,7 @@ class _NavSlotItemState extends State<_NavSlotItem>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ARCH NOTCHED SHAPE — Vòm xanh ôm mascot Bum giữa thanh nav
+// ARCH NOTCHED SHAPE — Vòm xanh ôm mascot Boom giữa thanh nav
 // ─────────────────────────────────────────────────────────────────────────────
 class _ArchNotchedShape extends NotchedShape {
   const _ArchNotchedShape();
@@ -1518,17 +1518,17 @@ class _ArchNotchedShape extends NotchedShape {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BUM BUTTON — Logo chú voi Bum, animation thở nhẹ nhàng
+// BOOM BUTTON — Logo chú voi Boom, animation thở nhẹ nhàng
 // ─────────────────────────────────────────────────────────────────────────────
-class _BumButton extends StatefulWidget {
+class _BoomButton extends StatefulWidget {
   final VoidCallback onTap;
-  const _BumButton({required this.onTap});
+  const _BoomButton({required this.onTap});
 
   @override
-  State<_BumButton> createState() => _BumButtonState();
+  State<_BoomButton> createState() => _BoomButtonState();
 }
 
-class _BumButtonState extends State<_BumButton>
+class _BoomButtonState extends State<_BoomButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseCtrl;
   late Animation<double> _scaleAnim;
@@ -1740,7 +1740,7 @@ class _SlotPickerSheetState extends ConsumerState<_SlotPickerSheet>
                 ),
                 child: Text(
                   'Ô ${widget.slotIndex + 1}',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -1750,7 +1750,7 @@ class _SlotPickerSheetState extends ConsumerState<_SlotPickerSheet>
               const SizedBox(width: 10),
               Text(
                 'Chọn mục hiển thị',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: _kNavy,
@@ -1761,7 +1761,7 @@ class _SlotPickerSheetState extends ConsumerState<_SlotPickerSheet>
           const SizedBox(height: 6),
           Text(
             'Giữ lâu vào ô để thay đổi',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               color: _kNavy.withValues(alpha: 0.40),
             ),
@@ -1925,7 +1925,7 @@ class _SlotTabTileState extends State<_SlotTabTile>
                 const SizedBox(height: 8),
                 Text(
                   widget.meta.label,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: widget.isSelected
                         ? FontWeight.w700

@@ -1,4 +1,7 @@
 -- 20261018_app_logs_retention_v1.sql
+-- ⛔ BỎ — KHÔNG ÁP. Thay bằng 20261023_app_logs_retention_v2.sql (23/10/2026).
+--   Lý do: danh sách tag giữ lâu viết cứng, thiếu finance/payroll/staff/kho/settings/inventory
+--   → log kiểm toán Thu Chi, Lương, Kho sẽ bị xoá sau 30 ngày.
 -- CHƯA ÁP DỤNG lên production (chờ Chủ Quán duyệt). Chưa chạy thử trên bản sao.
 -- Mục đích: log ghi nhiều hơn (hành động nghiệp vụ, tag = 'action') nên cần
 --   1) chỉ mục để tra theo quán/loại/thời gian,

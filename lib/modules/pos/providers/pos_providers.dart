@@ -440,6 +440,18 @@ final cartProvider = NotifierProvider<CartNotifier, CartState>(
   CartNotifier.new,
 );
 
+/// Đang gửi bếp (nhiều lệnh mạng nối tiếp). Trong lúc này không mở gửi bếp lần 2 và không
+/// thanh toán — tránh phiếu bếp trùng / in bếp lại / phiên bếp không được đóng khi thu tiền.
+final posKitchenSendingProvider =
+    NotifierProvider<PosKitchenSendingNotifier, bool>(
+        PosKitchenSendingNotifier.new);
+
+class PosKitchenSendingNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void set(bool v) => state = v;
+}
+
 /// Số lượng item trong giỏ — dùng cho badge
 final cartItemCountProvider = Provider<int>((ref) {
   return ref.watch(cartProvider).itemCount;

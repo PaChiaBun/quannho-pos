@@ -32,7 +32,7 @@ class DesignerSection extends StatelessWidget {
           child: Icon(icon, size: 15, color: _kIndigo),
         ),
         const SizedBox(width: 10),
-        Text(title, style: GoogleFonts.outfit(
+        Text(title, style: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700, fontSize: 14, color: _kIndigo)),
       ]),
       const SizedBox(height: 14),
@@ -58,7 +58,7 @@ class DesignerChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: selected ? _kIndigo : Colors.grey.shade300),
       ),
-      child: Text(label, style: GoogleFonts.outfit(
+      child: Text(label, style: GoogleFonts.plusJakartaSans(
           fontSize: 12, fontWeight: FontWeight.w700,
           color: selected ? Colors.white : Colors.grey.shade600)),
     ),
@@ -84,7 +84,7 @@ class DesignerToggleRow extends StatelessWidget {
       Expanded(child: Row(children: [
         Flexible(child: Text(label,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.outfit(fontSize: 13))),
+            style: GoogleFonts.plusJakartaSans(fontSize: 13))),
         if (isRecommended) ...[
           const SizedBox(width: 6),
           Container(
@@ -93,7 +93,7 @@ class DesignerToggleRow extends StatelessWidget {
               color: _kGreen.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Text('nên bật', style: GoogleFonts.outfit(
+            child: Text('nên bật', style: GoogleFonts.plusJakartaSans(
                 fontSize: 10, fontWeight: FontWeight.w600, color: _kGreen)),
           ),
         ],
@@ -122,14 +122,14 @@ class DesignerSliderRow extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(label, style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade700)),
+        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey.shade700)),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
           decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8)),
           child: Text('${value.round()}px',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w700, fontSize: 12, color: color)),
         ),
       ]),
@@ -138,7 +138,7 @@ class DesignerSliderRow extends StatelessWidget {
           activeColor: color,
           inactiveColor: color.withValues(alpha: 0.15),
           onChanged: onChanged),
-      Text(hint, style: GoogleFonts.outfit(
+      Text(hint, style: GoogleFonts.plusJakartaSans(
           fontSize: 11, color: Colors.grey.shade400, fontStyle: FontStyle.italic)),
     ],
   );

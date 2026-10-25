@@ -98,10 +98,10 @@
 
 ## Features
 
-### 🤖 AI Assistant (Bum)
+### 🤖 AI Assistant (Boom)
 - `features/ai_assistant/`
 - **Trạng thái**: Đang xây dựng — "Coming Soon"
-- Mascot: Bum 🐘, hiện tại chỉ hiển thị bottom sheet thông báo
+- Mascot: Boom 🐘, hiện tại chỉ hiển thị bottom sheet thông báo
 
 ### 💾 Backup
 - `features/backup/`
@@ -204,8 +204,23 @@ ALTER PUBLICATION supabase_realtime ADD TABLE store_roles;
 - Báo cáo → tab "Hóa đơn": số tiền đã xuất hóa đơn, đối chiếu với doanh thu bill cùng kỳ, chờ xử lý, lỗi/từ chối, danh sách hóa đơn cần xử lý. Số liệu là 0 cho đến khi có worker phát hành meInvoice.
 - Cần áp migration `20261016_einvoice_foundation_v1.sql` trước khi dùng; trước đó tab báo cáo hiện thông báo lỗi tải.
 
+## Tra cứu & in lại bill cũ (Báo cáo → tab "Hóa đơn", 22/10/2026)
+
+- Đầu tab "Hóa đơn" có thẻ **"Tra cứu & in lại bill"**, theo kỳ Hôm nay / Tuần này / Tháng này của tab. Không phụ thuộc migration hóa đơn điện tử (chạy được cả khi phần điện tử báo lỗi tải).
+- Danh sách bill = các khoản thu tự động trong `finance_records` có `checkout_reference_id` (một bill bán quầy → `orders.id`; một lần thanh toán bàn → `payment_settlements.id`). Tối đa 500 bill/kỳ, hiện 30 rồi "Xem thêm".
+- Tìm theo số đơn, tên bàn (không cần dấu) hoặc số tiền. Chạm dòng → hộp chi tiết đơn (dùng chung với Thu Chi).
+- Nút máy in → hỏi "In lại bill?" → in **chỉ hoá đơn thu ngân** (không in lại phiếu bếp/tem). Số đơn in kèm **"BẢN IN LẠI"**, giờ trên bill là giờ thanh toán gốc, giảm giá suy từ tổng máy chủ nên bill khớp số đã thu. Bill bàn có dòng "Phí dịch vụ / Ship" nếu có phụ phí.
+- Quyền: cần `pos.view_history` (thu ngân, quản lý, chủ quán mặc định có); thiếu quyền → "Bạn không có quyền in lại bill". Mỗi lần in ghi `app_logs` mã `reprint_bill` (critical) kèm nhân viên, thiết bị, số đơn.
+- Code: `core/repositories/bill_history_repository.dart`, `modules/bill_printer/services/bill_reprint_service.dart`, `screens/bill_lookup_section.dart`; test `test/screens/bill_lookup_reprint_test.dart`. Chỉ đọc DB, không có migration.
+
+## Tạo thêm cửa hàng cho Chủ quán đã có quán (22/10/2026)
+- **Lối vào:** Cài đặt → thẻ quán → **Đổi quán** → nút **Tạo cửa hàng mới** (cuối bảng; chỉ hiện khi tài khoản là chủ của ít nhất một quán; ẩn trên iOS bản App Store theo Guideline 3.1.1).
+- **Luồng:** nhập tên quán → `create_store_with_owner_v4` bằng phiên cửa hàng hiện tại (chủ đã có quán không xin được Onboarding JWT: máy chủ trả 409 `ONBOARDING_NOT_REQUIRED`) → app hỏi mật khẩu để cấp phiên cho quán mới (`selectStore`) → cài mặc định (`seedNewStoreDefaults`) → chuyển sang quán mới. Tài khoản chưa có quán vẫn đi luồng Onboarding JWT cũ.
+- Quán mới KHÔNG tự vào chuỗi; thêm trong module Báo cáo chuỗi.
+- **Trang chủ tự nạp lại module/quyền** khi mở lại app/quay lại tab và khi kéo xuống làm tươi (`dashboard_screen.dart`, bỏ qua khi đang Sửa module). Chưa deploy.
+
 ## Báo cáo chuỗi cửa hàng (Chủ quán)
-- 📄 Tài liệu đầy đủ (cấu trúc, DB, quy tắc nhận xét, kiểm thử): `.docs/Ai_Bum/cac-module/chuoi-cua-hang.md`
+- 📄 Tài liệu đầy đủ (cấu trúc, DB, quy tắc nhận xét, kiểm thử): `.docs/Ai_Boom/cac-module/chuoi-cua-hang.md`
 - **Module `chain`** — ô **"Báo Cáo Nhiều Cửa Hàng / Chuỗi"** (màu xanh chanh) trong lưới Modules ở Trang chủ. CHỈ Chủ quán thấy (lọc cứng ở `dashboard_screen.dart`, không cấp qua vai trò/`store_roles.modules`); Quản lý và nhân viên không thấy, server cũng kiểm lại.
 - Tự bật MỘT LẦN cho mỗi cửa hàng khi Chủ quán sở hữu từ 2 cửa hàng trở lên hoặc đã có chuỗi (`ChainModuleOffer`, cờ `chain_module_offered_<storeId>`); sau đó Chủ quán gỡ/thêm lại như mọi module trong chế độ Sửa, không tự quay lại. Chủ chỉ có 1 cửa hàng thì chưa tự bật nhưng vẫn thêm tay được từ bộ chọn module.
 - Màn **Báo cáo chuỗi** = báo cáo **SO SÁNH các cửa hàng**, thiết kế theo đúng ngôn ngữ của module Báo cáo (header navy + 2 thẻ hero kem, chọn kỳ Hôm nay/Tuần này/Tháng này + thanh ‹ kỳ › để xem kỳ cũ):

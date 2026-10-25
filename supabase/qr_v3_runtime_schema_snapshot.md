@@ -10,10 +10,10 @@ Status: **PHASE 0 PRODUCTION METADATA VERIFIED — STAGING STILL BLOCKED — REA
 ### 1.1 Git Worktree Status (`git status --short`) [`CONFIRMED_FROM_CODE`]
 Worktree có 5 file bẩn có sẵn trước nhiệm vụ và 1 file snapshot của Phase 0C được cập nhật:
 ```text
- M .docs/Ai_Bum/Ai_Bum.md
- M .docs/Ai_Bum/xu-ly-data.md
+ M .docs/Ai_Boom/Ai_Boom.md
+ M .docs/Ai_Boom/xu-ly-data.md
  M nhat_ky.md
-?? .docs/Ai_Bum/cac-module/ai-bum.md
+?? .docs/Ai_Boom/cac-module/ai-boom.md
 ?? ke-hoach-fix-qr-antigravity.md
 ?? supabase/qr_v3_runtime_schema_snapshot.md
 ```

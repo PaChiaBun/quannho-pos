@@ -19,7 +19,7 @@ Luồng POS: CheckoutSheet → CartNotifier → PosRepository → persistent Pos
 ## Cấu Trúc `lib/`
 ```
 lib/
-├── main.dart              ← Entry point, MainShell, BottomNav, Bum FAB
+├── main.dart              ← Entry point, MainShell, BottomNav, Boom FAB
 ├── core/                  ← Lõi hệ thống
 │   ├── auth/              ← Auth logic
 │   ├── database/          ← Drift DB, DAOs, tables
@@ -34,7 +34,7 @@ lib/
 │   └── widgets/           ← Shared widgets
 │
 ├── features/              ← Feature-level modules
-│   ├── ai_assistant/      ← Bum AI (đang xây dựng)
+│   ├── ai_assistant/      ← Boom AI (đang xây dựng)
 │   ├── backup/            ← Backup dữ liệu
 │   ├── bill_designer/     ← Thiết kế hoá đơn
 │   ├── dashboard/         ← Dashboard widgets
@@ -101,6 +101,7 @@ lib/
 
 ## Quy Tắc Thiết Kế
 - Mẫu Repository (`core/repositories/`) — tách biệt logic dữ liệu
+  - `bill_history_repository.dart` (22/10/2026): danh sách bill đã thanh toán từ `finance_records.checkout_reference_id` và dựng lại dữ liệu bill (order POS hoặc `payment_settlements` + `ban_session_orders`) để in lại; chỉ đọc. In lại qua `modules/bill_printer/services/bill_reprint_service.dart` (chỉ hoá đơn thu ngân, log `reprint_bill`).
 - Cấu trúc theo tính năng cho `features/`
 - Cấu trúc theo module nghiệp vụ cho `modules/`
 

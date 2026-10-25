@@ -73,11 +73,9 @@ class _SessionNotifier extends Notifier<SessionData?> {
     );
     try {
       final client = Supabase.instance.client;
-      if (session != null) {
-        client.rest.headers['x-user-id'] = session.userId;
-      } else {
-        client.rest.headers.remove('x-user-id');
-      }
+      // Danh tính lấy từ POS JWT (sub). Không gửi header x-user-id tự khai nữa
+      // (kế hoạch JWT Pha 2) — máy chủ sẽ tắt nhánh tin header ở Pha 3.
+      client.rest.headers.remove('x-user-id');
       if (session != null && session.storeId != null) {
         client.rest.headers['x-store-id'] = session.storeId!;
       } else {
@@ -142,9 +140,6 @@ class _SessionNotifier extends Notifier<SessionData?> {
     );
     try {
       Supabase.instance.client.rest.headers['x-store-id'] = membership.storeId;
-      if (state != null) {
-        Supabase.instance.client.rest.headers['x-user-id'] = state!.userId;
-      }
     } catch (_) {}
 
     _setupSyncService(state);

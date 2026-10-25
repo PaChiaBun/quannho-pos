@@ -129,7 +129,7 @@ class _ModeChip extends StatelessWidget {
             Icon(icon, size: 16, color: selected ? Colors.white : Colors.grey.shade600),
             const SizedBox(width: 6),
             Text(label,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: selected ? Colors.white : Colors.grey.shade700)),

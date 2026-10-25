@@ -1003,11 +1003,22 @@ class _RoleCardState extends ConsumerState<_RoleCard> {
       ),
     );
     if (confirmed != true) return;
+    try {
     await StoreRoleService.deleteRole(
       roleId: widget.role.id,
       storeId: widget.storeId,
       roleName: widget.role.name,
     );
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(msg.startsWith('Không còn vai trò')
+              ? msg
+              : 'Chưa xoá được vai trò (mất kết nối hoặc không đủ quyền). Thử lại.'),
+          backgroundColor: Colors.red));
+      return;
+    }
     // 📡 Broadcast — nhân viên đang dùng role này nhận thông báo để refresh quyền
     await StaffSyncService.broadcastPermsChanged(
       storeId: widget.storeId,

@@ -90,20 +90,20 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20)),
           title: Text('Huỷ phiếu nhập?',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w800, color: _kInk)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Phiếu ${_po.poNumber}',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w700, color: _kViolet)),
               const SizedBox(height: 8),
               Text(
                 'Hàng sẽ được hoàn kho tự động. '
                 'Thao tác này không thể khôi phục.',
-                style: GoogleFonts.outfit(fontSize: 13, color: _kMuted),
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted),
               ),
               const SizedBox(height: 16),
               // ── Ô nhập lý do ───────────────────────────────────
@@ -113,7 +113,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                 maxLength: 200,
                 decoration: InputDecoration(
                   hintText: 'Lý do huỷ (không bắt buộc)...',
-                  hintStyle: GoogleFonts.outfit(
+                  hintStyle: GoogleFonts.plusJakartaSans(
                       fontSize: 13, color: _kMuted),
                   filled: true,
                   fillColor: const Color(0xFFF9F9F9),
@@ -131,17 +131,17 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 10),
-                  counterStyle: GoogleFonts.outfit(
+                  counterStyle: GoogleFonts.plusJakartaSans(
                       fontSize: 10, color: _kMuted),
                 ),
-                style: GoogleFonts.outfit(fontSize: 13, color: _kInk),
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kInk),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Không', style: GoogleFonts.outfit(color: _kMuted)),
+              child: Text('Không', style: GoogleFonts.plusJakartaSans(color: _kMuted)),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
@@ -150,7 +150,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                       borderRadius: BorderRadius.circular(10))),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text('Huỷ phiếu',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -253,16 +253,16 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                   ),
                 ),
                 Text('Chỉnh sửa phiếu',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 18, fontWeight: FontWeight.w800,
                         color: _kNavy)),
                 Text('Chỉ sửa thông tin — kho & tài chính không thay đổi',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 11, color: _kMuted)),
                 const SizedBox(height: 20),
 
                 // Ghi chú
-                Text('Ghi chú', style: GoogleFonts.outfit(
+                Text('Ghi chú', style: GoogleFonts.plusJakartaSans(
                     fontSize: 12, fontWeight: FontWeight.w600, color: _kInk)),
                 const SizedBox(height: 6),
                 TextField(
@@ -270,7 +270,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                   maxLines: 3,
                   decoration: InputDecoration(
                     hintText: 'Ghi chú cho phiếu nhập...',
-                    hintStyle: GoogleFonts.outfit(fontSize: 13, color: _kMuted),
+                    hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted),
                     filled: true,
                     fillColor: const Color(0xFFF9F9F9),
                     border: OutlineInputBorder(
@@ -288,12 +288,12 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 10),
                   ),
-                  style: GoogleFonts.outfit(fontSize: 13, color: _kInk),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kInk),
                 ),
                 const SizedBox(height: 16),
 
                 // Nhà cung cấp
-                Text('Nhà cung cấp', style: GoogleFonts.outfit(
+                Text('Nhà cung cấp', style: GoogleFonts.plusJakartaSans(
                     fontSize: 12, fontWeight: FontWeight.w600, color: _kInk)),
                 const SizedBox(height: 8),
                 if (suppliers.isEmpty)
@@ -303,7 +303,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                     onChanged: (v) => selectedSupplierName = v,
                     decoration: InputDecoration(
                       hintText: 'Nhập tên nhà cung cấp...',
-                      hintStyle: GoogleFonts.outfit(fontSize: 13, color: _kMuted),
+                      hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted),
                       prefixIcon: const Icon(Icons.store_rounded, size: 18, color: Color(0xFF9CA3AF)),
                       filled: true,
                       fillColor: const Color(0xFFF9F9F9),
@@ -321,7 +321,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
-                    style: GoogleFonts.outfit(fontSize: 13, color: _kInk),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kInk),
                   )
                 else
                   // Chips nhà cung cấp
@@ -349,7 +349,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                                 color: selectedSupplierName.isEmpty
                                     ? Colors.white : _kMuted),
                             const SizedBox(width: 4),
-                            Text('Không rõ', style: GoogleFonts.outfit(
+                            Text('Không rõ', style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12, fontWeight: FontWeight.w600,
                                 color: selectedSupplierName.isEmpty
                                     ? Colors.white : _kMuted)),
@@ -374,7 +374,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                               Icon(Icons.store_rounded, size: 13,
                                   color: isSelected ? Colors.white : _kViolet),
                               const SizedBox(width: 4),
-                              Text(s.name, style: GoogleFonts.outfit(
+                              Text(s.name, style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12, fontWeight: FontWeight.w600,
                                   color: isSelected ? Colors.white : _kViolet)),
                             ]),
@@ -386,7 +386,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                 const SizedBox(height: 16),
 
                 // Ảnh hoá đơn
-                Text('Ảnh hoá đơn', style: GoogleFonts.outfit(
+                Text('Ảnh hoá đơn', style: GoogleFonts.plusJakartaSans(
                     fontSize: 12, fontWeight: FontWeight.w600, color: _kInk)),
                 const SizedBox(height: 8),
 
@@ -453,7 +453,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                         const Icon(Icons.camera_alt_rounded, color: Color(0xFF16A34A), size: 18),
                         const SizedBox(width: 6),
-                        Text('Chụp ảnh', style: GoogleFonts.outfit(
+                        Text('Chụp ảnh', style: GoogleFonts.plusJakartaSans(
                             fontSize: 12, color: const Color(0xFF16A34A),
                             fontWeight: FontWeight.w700)),
                       ]),
@@ -480,7 +480,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                         const Icon(Icons.photo_library_rounded, color: _kViolet, size: 18),
                         const SizedBox(width: 6),
-                        Text('Thư viện', style: GoogleFonts.outfit(
+                        Text('Thư viện', style: GoogleFonts.plusJakartaSans(
                             fontSize: 12, color: _kViolet,
                             fontWeight: FontWeight.w700)),
                       ]),
@@ -545,7 +545,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                     },
                     icon: const Icon(Icons.save_rounded, size: 18),
                     label: Text('Lưu thay đổi',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
                     style: FilledButton.styleFrom(
                       backgroundColor: _kViolet,
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -584,11 +584,11 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_po.poNumber,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 16, fontWeight: FontWeight.w800,
                     color: Colors.white)),
             Text(_fmtDate(_po.createdAt),
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 11, color: Colors.white60)),
           ],
         ),
@@ -632,12 +632,12 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Tổng giá trị phiếu',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 12, color: isCancelled ? _kMuted : _kViolet,
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   Text(_fmtMoney(_po.totalAmount),
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 28, fontWeight: FontWeight.w900,
                           color: isCancelled ? _kMuted : _kNavy)),
                 ],
@@ -683,7 +683,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.cancel_outlined, size: 18),
                   label: Text(_cancelling ? 'Đang huỷ...' : 'Huỷ phiếu nhập',
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _kRed,
                     side: const BorderSide(color: _kRed),
@@ -714,7 +714,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
     ),
     child: Text(
       isCancelled ? 'Đã huỷ' : 'Đã nhập',
-      style: GoogleFonts.outfit(
+      style: GoogleFonts.plusJakartaSans(
           fontSize: 11, fontWeight: FontWeight.w700,
           color: isCancelled ? Colors.grey.shade700 : _kGreen),
     ),
@@ -724,7 +724,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
     Icon(icon, size: 16, color: _kViolet),
     const SizedBox(width: 6),
     Text(label,
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.plusJakartaSans(
             fontSize: 13, fontWeight: FontWeight.w700, color: _kInk)),
   ]);
 
@@ -742,9 +742,9 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
         const SizedBox(width: 10),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label,
-              style: GoogleFonts.outfit(fontSize: 10, color: _kMuted)),
+              style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kMuted)),
           Text(value,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontSize: 13, fontWeight: FontWeight.w600, color: _kInk)),
         ]),
       ]),
@@ -762,7 +762,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
     if (_items.isEmpty) {
       return Center(
         child: Text('Không có sản phẩm',
-            style: GoogleFonts.outfit(color: _kMuted)),
+            style: GoogleFonts.plusJakartaSans(color: _kMuted)),
       );
     }
     return Container(
@@ -788,7 +788,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                   ),
                   child: Center(
                     child: Text('${i + 1}',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 12, fontWeight: FontWeight.w800,
                             color: _kViolet)),
                   ),
@@ -798,19 +798,19 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(item.productName,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 13, fontWeight: FontWeight.w700,
                             color: _kInk)),
                     Text(
                       '${item.quantity.toStringAsFixed(0)} × '
                       '${NumberFormat('#,###').format(item.unitCost.toInt())}đ',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 11, color: _kMuted),
                     ),
                   ],
                 )),
                 Text(_fmtMoney(item.subtotal),
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 14, fontWeight: FontWeight.w800,
                         color: _kNavy)),
               ]),

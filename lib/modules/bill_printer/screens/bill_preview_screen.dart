@@ -924,8 +924,7 @@ class BillPdfGenerator {
                 bill.waiterName != null &&
                 bill.waiterName!.isNotEmpty) ...[
               pw.SizedBox(height: 2),
-              pw.Text(
-                'NV Order: ${bill.waiterName!}',
+              pw.Text('NV gọi món: ${bill.waiterName!}',
                 style: pw.TextStyle(
                   font: fontBold,
                   fontSize: 9,
@@ -1479,7 +1478,7 @@ class StationPrinterDispatcher {
                 : StationPrintStatus.failed,
             errorMessage: printOk
                 ? null
-                : 'Lỗi đẩy in hóa đơn thu ngân (user cancel hoặc socket error)',
+                : 'Lỗi đẩy in hóa đơn thu ngân (đã huỷ hoặc lỗi kết nối)'
           );
         } catch (e) {
           results['cashier'] = StationPrintResult(
@@ -1687,7 +1686,7 @@ class StationPrinterDispatcher {
                   : StationPrintStatus.failed,
               errorMessage: barItems.isEmpty
                   ? null
-                  : 'Tạo tem ly thất bại (list empty)',
+                  : 'Tạo tem ly thất bại (không có món)'
             );
           } else {
             bool allLabelOk = true;

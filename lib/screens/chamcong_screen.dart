@@ -42,6 +42,21 @@ final _realtimeEarningsProvider =
       );
     });
 
+/// Ngưỡng tăng ca (giờ) theo cấu hình lương của từng nhân viên — giống cách Lương tính
+/// (`calculateSingleShiftEarnings`: OT khi tổng giờ > ngưỡng, mặc định 8). Trước đây màn
+/// Chấm công cố định 8 giờ → ca vượt ngưỡng nhỏ hơn 8 không duyệt được ở đây mà vẫn chặn gửi kỳ lương.
+final _otThresholdProvider =
+    FutureProvider.autoDispose.family<double, String>((ref, userId) async {
+  final cfg = await StaffSalaryConfigRepo.fetchByUserId(userId);
+  return cfg?.otThresholdHours ?? 8.0;
+});
+
+bool _auditDialogOpening = false;
+
+/// Ca có giờ tăng ca theo đúng quy tắc của Lương.
+bool shiftHasOvertime(ShiftRecord shift, double thresholdHours) =>
+    shift.clockOut != null && shift.duration.inMinutes / 60.0 > thresholdHours;
+
 final _myShiftsProvider = FutureProvider.autoDispose<List<ShiftRecord>>((
   ref,
 ) async {
@@ -2870,7 +2885,13 @@ class _ShiftRow extends ConsumerWidget {
                             ),
                           ),
                         ],
-                        if (shift.duration.inHours >= 8) ...[
+                        if (shiftHasOvertime(
+                                    shift,
+                                    ref
+                                            .watch(_otThresholdProvider(
+                                                shift.userId))
+                                            .value ??
+                                        8.0)) ...[
                           const SizedBox(height: 4),
                           if (shift.isOtApproved)
                             Container(
@@ -3179,7 +3200,7 @@ class _CCCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 title,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: _kNavy,
@@ -3214,12 +3235,12 @@ class _CCRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.outfit(fontSize: 13, color: _kNavy),
+            style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kNavy),
           ),
         ),
         Text(
           value,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: color,
@@ -3348,12 +3369,25 @@ Future<Uint8List> _addWatermarkToImage(
 // ─────────────────────────────────────────────────────────────────────────────
 // DIALOG KIỂM TRA NGẪU NHIÊN ẢNH CHỤP ĐIỂM DANH LIVE CỦA NHÂN VIÊN
 // ─────────────────────────────────────────────────────────────────────────────
-void _showPhotoAuditDialog(
+Future<void> _showPhotoAuditDialog(
   BuildContext context,
   WidgetRef ref,
   ShiftRecord shift,
   bool isManager,
-) {
+) async {
+  // Ngưỡng OT của nhân viên (tải trước khi mở hộp thoại để nút "Duyệt OT" đúng ngay).
+  // Chặn bấm 2 lần trong lúc đang tải → không mở 2 hộp chồng nhau.
+  if (_auditDialogOpening) return;
+  _auditDialogOpening = true;
+  final double otThreshold;
+  try {
+    otThreshold = await ref
+        .read(_otThresholdProvider(shift.userId).future)
+        .catchError((_) => 8.0);
+  } finally {
+    _auditDialogOpening = false;
+  }
+  if (!context.mounted) return;
   final clockInStr = DateFormat(
     'HH:mm dd/MM/yyyy',
   ).format(shift.clockIn.toLocal());
@@ -3601,7 +3635,7 @@ void _showPhotoAuditDialog(
               const SizedBox(height: 16),
 
               if (isManager) ...[
-                if (shift.duration.inHours >= 8 && !shift.isOtApproved) ...[
+                if (shiftHasOvertime(shift, otThreshold) && !shift.isOtApproved) ...[
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _kGreen,
@@ -3789,7 +3823,7 @@ Future<void> _openReassignShiftSheet(
           const SizedBox(height: 16),
           Text(
             'Gán ca này cho nhân viên:',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: _kNavy,

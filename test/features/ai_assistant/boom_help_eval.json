@@ -1,0 +1,678 @@
+{
+  "_ghi_chu": "Bộ câu hỏi kiểm tra Boom tra hướng dẫn. expect = các mã đoạn chấp nhận được (một trong số đó phải nằm trong 3 kết quả đầu). expect rỗng = câu lạc đề, Boom không được trả lời bằng hướng dẫn. Viết bởi người làm bộ tìm kiếm — bộ độc lập ở boom_help_eval_doc_lap.json.",
+  "cases": [
+    {
+      "q": "huỷ món đã gửi bếp thế nào",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon"
+      ]
+    },
+    {
+      "q": "huy mon da gui bep",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon"
+      ]
+    },
+    {
+      "q": "khách gọi 3 ly giờ chỉ lấy 2 thì giảm sao",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon"
+      ]
+    },
+    {
+      "q": "làm sao chuyển bàn cho khách",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-7-chuyen-ban-gop-ban"
+      ]
+    },
+    {
+      "q": "gop ban the nao",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-7-chuyen-ban-gop-ban"
+      ]
+    },
+    {
+      "q": "khách bỏ về thì huỷ bàn kiểu gì",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-9-huy-ban-khach-bo-ve-mo-nham"
+      ]
+    },
+    {
+      "q": "mở nhầm bàn",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-9-huy-ban-khach-bo-ve-mo-nham"
+      ]
+    },
+    {
+      "q": "in tạm tính cho khách xem",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-6-in-tam-tinh"
+      ]
+    },
+    {
+      "q": "thanh toán cả bàn",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-8-thanh-toan-ca-ban"
+      ]
+    },
+    {
+      "q": "tạo khu vực và bàn lần đầu",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-1-thiet-lap-khu-vuc-va-ban-lan-dau"
+      ]
+    },
+    {
+      "q": "them ban moi o tang 2",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-1-thiet-lap-khu-vuc-va-ban-lan-dau"
+      ]
+    },
+    {
+      "q": "gửi bếp ở bàn",
+      "expect": [
+        "quan-ly-ban#cac-viec-thuong-lam-4-gui-bep",
+        "ban-hang#cac-viec-thuong-lam-gui-bep-truoc-khi-thu-tien"
+      ]
+    },
+    {
+      "q": "in lại bill cũ",
+      "expect": [
+        "bao-cao#tung-tab-hoa-don"
+      ]
+    },
+    {
+      "q": "in lai hoa don hom qua",
+      "expect": [
+        "bao-cao#tung-tab-hoa-don"
+      ]
+    },
+    {
+      "q": "tìm bill theo số tiền",
+      "expect": [
+        "bao-cao#tung-tab-hoa-don"
+      ]
+    },
+    {
+      "q": "xem doanh thu theo giờ",
+      "expect": [
+        "bao-cao#tung-tab-doanh-thu"
+      ]
+    },
+    {
+      "q": "món nào bán chạy xem ở đâu",
+      "expect": [
+        "bao-cao#tung-tab-san-pham"
+      ]
+    },
+    {
+      "q": "lãi lỗ tháng này xem chỗ nào",
+      "expect": [
+        "bao-cao#tung-tab-tai-chinh"
+      ]
+    },
+    {
+      "q": "xem lịch sử huỷ món ai duyệt",
+      "expect": [
+        "bao-cao#tung-tab-huy-duyet"
+      ]
+    },
+    {
+      "q": "in báo cáo doanh thu ra giấy",
+      "expect": [
+        "bao-cao#tung-tab-doanh-thu"
+      ]
+    },
+    {
+      "q": "ghi tiền điện vào sổ",
+      "expect": [
+        "thu-chi#cac-viec-thuong-lam-1-ghi-mot-khoan-chi-vd-tien-dien-hoac-th"
+      ]
+    },
+    {
+      "q": "ghi chi tien nuoc",
+      "expect": [
+        "thu-chi#cac-viec-thuong-lam-1-ghi-mot-khoan-chi-vd-tien-dien-hoac-th"
+      ]
+    },
+    {
+      "q": "xoá khoản chi ghi nhầm",
+      "expect": [
+        "thu-chi#cac-viec-thuong-lam-4-xoa-khoan-ghi-nham"
+      ]
+    },
+    {
+      "q": "xuất sổ quỹ cho kế toán",
+      "expect": [
+        "thu-chi#cac-viec-thuong-lam-5-xuat-so-chi-tiet-quy-cho-ke-toan"
+      ]
+    },
+    {
+      "q": "xuat file csv thu chi",
+      "expect": [
+        "thu-chi#cac-viec-thuong-lam-5-xuat-so-chi-tiet-quy-cho-ke-toan"
+      ]
+    },
+    {
+      "q": "xem riêng tiền mặt",
+      "expect": [
+        "thu-chi#cac-viec-thuong-lam-3-xem-rieng-tien-mat-hoac-tien-gui"
+      ]
+    },
+    {
+      "q": "khoản nào thu chi tự ghi",
+      "expect": [
+        "thu-chi#khoan-thu-chi-tu-dong-khong-can-ghi-tay"
+      ]
+    },
+    {
+      "q": "nạp tiền vào ví cho khách",
+      "expect": [
+        "khach-hang#cac-viec-thuong-lam-4-nap-tien-vao-vi-cho-khach"
+      ]
+    },
+    {
+      "q": "nap vi lan dau cho khach",
+      "expect": [
+        "khach-hang#cac-viec-thuong-lam-4-nap-tien-vao-vi-cho-khach"
+      ]
+    },
+    {
+      "q": "tạo mã giảm giá",
+      "expect": [
+        "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
+      ]
+    },
+    {
+      "q": "tao voucher 10%",
+      "expect": [
+        "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
+      ]
+    },
+    {
+      "q": "thêm khách hàng mới",
+      "expect": [
+        "khach-hang#cac-viec-thuong-lam-1-them-khach"
+      ]
+    },
+    {
+      "q": "điểm tích luỹ tính thế nào",
+      "expect": [
+        "khach-hang#cach-tinh-diem-hang-vi"
+      ]
+    },
+    {
+      "q": "tạo gói nạp tặng thêm tiền",
+      "expect": [
+        "khach-hang#cac-viec-thuong-lam-3-tao-goi-nap-khuyen-khich-nap-vi"
+      ]
+    },
+    {
+      "q": "gắn khách để tích điểm khi bán",
+      "expect": [
+        "ban-hang#cac-viec-thuong-lam-gan-khach-hang-de-tich-diem"
+      ]
+    },
+    {
+      "q": "thanh toán ở quầy",
+      "expect": [
+        "ban-hang#cac-viec-thuong-lam-thanh-toan"
+      ]
+    },
+    {
+      "q": "ghi chú ít đá cho món",
+      "expect": [
+        "ban-hang#cac-viec-thuong-lam-ghi-chu-mon-va-ghi-chu-don"
+      ]
+    },
+    {
+      "q": "xoa het gio hang",
+      "expect": [
+        "ban-hang#cac-viec-thuong-lam-xoa-gio-hang"
+      ]
+    },
+    {
+      "q": "thêm nhanh món mới vào menu",
+      "expect": [
+        "ban-hang#cac-viec-thuong-lam-them-nhanh-mon-moi-vao-thuc-don",
+        "kho-hang#cac-viec-thuong-lam-1-them-mon-nguyen-lieu"
+      ]
+    },
+    {
+      "q": "xem đơn gần đây",
+      "expect": [
+        "ban-hang#cac-viec-thuong-lam-xem-don-gan-day"
+      ]
+    },
+    {
+      "q": "thanh toán bị gián đoạn mất mạng",
+      "expect": [
+        "ban-hang#cac-viec-thuong-lam-doi-soat-thanh-toan-bi-gian-doan"
+      ]
+    },
+    {
+      "q": "tắt bán món hết",
+      "expect": [
+        "kho-hang#cac-viec-thuong-lam-5-bat-tat-ban-het-mon-tam-thoi"
+      ]
+    },
+    {
+      "q": "het tran chau tam ngung ban",
+      "expect": [
+        "kho-hang#cac-viec-thuong-lam-5-bat-tat-ban-het-mon-tam-thoi"
+      ]
+    },
+    {
+      "q": "thêm topping trân châu",
+      "expect": [
+        "kho-hang#cac-viec-thuong-lam-2-topping-tra-sua-com-them"
+      ]
+    },
+    {
+      "q": "nhập hàng từ nhà cung cấp",
+      "expect": [
+        "kho-hang#cac-viec-thuong-lam-7-phieu-nhap-hang-nhieu-mon-co-nha-cung"
+      ]
+    },
+    {
+      "q": "nhap kho nhanh 1 mon",
+      "expect": [
+        "kho-hang#cac-viec-thuong-lam-6-nhap-kho-nhanh-mot-mon"
+      ]
+    },
+    {
+      "q": "kiểm kho điều chỉnh tồn",
+      "expect": [
+        "kho-hang#cac-viec-thuong-lam-8-dieu-chinh-ton-kiem-kho-hu-hong",
+        "kho-chuyen-nghiep#cac-viec-thuong-lam-4-kiem-ke-kho"
+      ]
+    },
+    {
+      "q": "mua sữa theo hộp mà trừ theo ml",
+      "expect": [
+        "kho-hang#cac-viec-thuong-lam-4-quy-cach-pha-che-mua-theo-lon-hop-tru"
+      ]
+    },
+    {
+      "q": "tạo công thức món",
+      "expect": [
+        "kho-chuyen-nghiep#cac-viec-thuong-lam-2-tao-cong-thuc-mon"
+      ]
+    },
+    {
+      "q": "dinh luong ly tra sua",
+      "expect": [
+        "kho-chuyen-nghiep#cac-viec-thuong-lam-2-tao-cong-thuc-mon"
+      ]
+    },
+    {
+      "q": "nấu nước cốt lệnh sản xuất",
+      "expect": [
+        "kho-chuyen-nghiep#cac-viec-thuong-lam-3-ban-thanh-pham-pha-cot-nau-nuoc-dung-l"
+      ]
+    },
+    {
+      "q": "giá vốn một ly là bao nhiêu xem ở đâu",
+      "expect": [
+        "kho-chuyen-nghiep#cac-viec-thuong-lam-6-xem-gia-von-va-loi-nhuan-mon"
+      ]
+    },
+    {
+      "q": "ghi hao hụt nguyên liệu hỏng",
+      "expect": [
+        "kho-chuyen-nghiep#cac-viec-thuong-lam-5-ghi-hao-hut",
+        "kho-hang#cac-viec-thuong-lam-8-dieu-chinh-ton-kiem-kho-hu-hong"
+      ]
+    },
+    {
+      "q": "cài máy in lần đầu trên máy tính",
+      "expect": [
+        "in-hoa-don#cac-viec-thuong-lam-1-cai-may-in-tren-may-windows-lan-dau"
+      ]
+    },
+    {
+      "q": "in tem dán ly trà sữa",
+      "expect": [
+        "in-hoa-don#cac-viec-thuong-lam-5-in-tem-dan-ly"
+      ]
+    },
+    {
+      "q": "mở két tiền tự động",
+      "expect": [
+        "in-hoa-don#cac-viec-thuong-lam-6-bat-tat-tu-dong-in-va-mo-ket",
+        "in-hoa-don#cac-viec-thuong-lam-9-ket-tien"
+      ]
+    },
+    {
+      "q": "máy sunmi in bill",
+      "expect": [
+        "in-hoa-don#cac-viec-thuong-lam-4-thiet-lap-nhanh-cho-may-cam-tay-sunmi"
+      ]
+    },
+    {
+      "q": "đổi mẫu in hoá đơn thêm logo",
+      "expect": [
+        "in-hoa-don#cac-viec-thuong-lam-8-thiet-ke-mau-in"
+      ]
+    },
+    {
+      "q": "in thu may in",
+      "expect": [
+        "in-hoa-don#cac-viec-thuong-lam-10-in-thu"
+      ]
+    },
+    {
+      "q": "đồ uống in ra máy bar",
+      "expect": [
+        "in-hoa-don#cac-viec-thuong-lam-3-tao-luat-in-tab-luat-in",
+        "in-hoa-don#loi-do-uong-in-ra-may-bep-nong-thay-vi-bar"
+      ]
+    },
+    {
+      "q": "bếp đánh dấu món xong",
+      "expect": [
+        "bep#cac-viec-thuong-lam-1-nhan-va-lam-phieu"
+      ]
+    },
+    {
+      "q": "mở lại phiếu bếp đã xong",
+      "expect": [
+        "bep#cac-viec-thuong-lam-2-mo-lai-don-phieu"
+      ]
+    },
+    {
+      "q": "lọc phiếu theo bếp nước",
+      "expect": [
+        "bep#cac-viec-thuong-lam-5-loc-theo-tram"
+      ]
+    },
+    {
+      "q": "vào ca chấm công",
+      "expect": [
+        "cham-cong#cac-viec-thuong-lam-2-vao-ca-nhan-vien"
+      ]
+    },
+    {
+      "q": "quen ra ca hom qua",
+      "expect": [
+        "cham-cong#cac-viec-thuong-lam-6-xu-ly-ca-quen-chot",
+        "cham-cong#loi-ca-bi-tru-50"
+      ]
+    },
+    {
+      "q": "duyệt tăng ca OT",
+      "expect": [
+        "cham-cong#cac-viec-thuong-lam-5-duyet-tang-ca-ot"
+      ]
+    },
+    {
+      "q": "cài vị trí quán để chấm công GPS",
+      "expect": [
+        "cham-cong#cac-viec-thuong-lam-1-cai-vi-tri-quan-chu-quan-quan-ly-lam-m"
+      ]
+    },
+    {
+      "q": "tạo kỳ lương",
+      "expect": [
+        "luong#cac-viec-thuong-lam-2-tao-ky-luong"
+      ]
+    },
+    {
+      "q": "trả lương cho nhân viên",
+      "expect": [
+        "luong#cac-viec-thuong-lam-5-tra-luong"
+      ]
+    },
+    {
+      "q": "nhân viên xác nhận đã nhận lương",
+      "expect": [
+        "luong#cac-viec-thuong-lam-6-nhan-vien-xem-phieu-xac-nhan-khieu-nai",
+        "luong#cac-viec-thuong-lam-5-tra-luong"
+      ]
+    },
+    {
+      "q": "cài lương theo giờ",
+      "expect": [
+        "luong#cac-viec-thuong-lam-1-cau-hinh-luong-lam-truoc-khi-tao-ky"
+      ]
+    },
+    {
+      "q": "thêm nhân viên vào quán",
+      "expect": [
+        "nhan-vien#cach-nhan-vien-vao-quan-khong-co-nut-them-nhan-vien"
+      ]
+    },
+    {
+      "q": "doi vai tro cho nhan vien",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-1-gan-doi-vai-tro-cho-nhan-vien"
+      ]
+    },
+    {
+      "q": "đặt mã PIN duyệt nhanh",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-8-ma-pin-duyet-nhanh-chu-quan-quan-ly"
+      ]
+    },
+    {
+      "q": "tạo ca làm việc sáng chiều",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-7-ca-lam-viec"
+      ]
+    },
+    {
+      "q": "tắt quyền giảm giá của thu ngân",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-6-hanh-dong-nhay-cam-tab-phan-quyen"
+      ]
+    },
+    {
+      "q": "bàn giao ca cuối ngày",
+      "expect": [
+        "van-hanh#cac-viec-thuong-lam-5-nhan-vien-ban-giao-ca"
+      ]
+    },
+    {
+      "q": "tạo checklist vệ sinh",
+      "expect": [
+        "van-hanh#cac-viec-thuong-lam-1-quan-ly-tao-checklist"
+      ]
+    },
+    {
+      "q": "nạp checklist mẫu",
+      "expect": [
+        "van-hanh#cac-viec-thuong-lam-2-quan-ly-nap-checklist-mau"
+      ]
+    },
+    {
+      "q": "bật QR gọi món dán ở bàn",
+      "expect": [
+        "qr-goi-mon#cac-viec-thuong-lam-1-bat-qr-va-dan-ma-o-quan"
+      ]
+    },
+    {
+      "q": "duyet don qr tai ban",
+      "expect": [
+        "qr-goi-mon#cac-viec-thuong-lam-4-duyet-don-tai-ban",
+        "quan-ly-ban#cac-viec-thuong-lam-10-don-qr-tai-ban"
+      ]
+    },
+    {
+      "q": "từ chối đơn QR",
+      "expect": [
+        "qr-goi-mon#cac-viec-thuong-lam-6-tu-choi-don"
+      ]
+    },
+    {
+      "q": "mã QR bị khoá do quét phá",
+      "expect": [
+        "qr-goi-mon#cac-viec-thuong-lam-7-khi-ma-qr-bi-khoa-bi-quet-pha"
+      ]
+    },
+    {
+      "q": "tạo chuỗi cửa hàng",
+      "expect": [
+        "bao-cao-chuoi#cac-viec-thuong-lam-2-tao-chuoi-va-them-cua-hang"
+      ]
+    },
+    {
+      "q": "mở thêm chi nhánh mới",
+      "expect": [
+        "bao-cao-chuoi#cac-viec-thuong-lam-1-co-them-cua-hang"
+      ]
+    },
+    {
+      "q": "xem log lỗi máy in",
+      "expect": [
+        "nhat-ky-log#cac-viec-thuong-lam-1-tra-mot-su-co"
+      ]
+    },
+    {
+      "q": "gửi log cho hỗ trợ",
+      "expect": [
+        "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro"
+      ]
+    },
+    {
+      "q": "hôm nay trời mưa không",
+      "expect": []
+    },
+    {
+      "q": "kể chuyện cười đi",
+      "expect": []
+    },
+    {
+      "q": "giá vàng hôm nay",
+      "expect": []
+    },
+    {
+      "q": "chào boom",
+      "expect": []
+    },
+    {
+      "q": "bạn tên gì",
+      "expect": []
+    },
+    {
+      "q": "công thức nấu phở bò",
+      "expect": []
+    },
+    {
+      "q": "thời tiết",
+      "expect": []
+    },
+    {
+      "q": "mấy giờ rồi",
+      "expect": []
+    },
+    {
+      "q": "ăn gì hôm nay",
+      "expect": []
+    },
+    {
+      "q": "giá xăng",
+      "expect": []
+    },
+    {
+      "q": "tỷ số bóng đá",
+      "expect": []
+    },
+    {
+      "q": "mua nhà",
+      "expect": []
+    },
+    {
+      "q": "boom ơi khoẻ không",
+      "expect": []
+    },
+    {
+      "q": "làm thơ",
+      "expect": []
+    },
+    {
+      "q": "quán nào ngon",
+      "expect": []
+    },
+    {
+      "q": "đặt vé máy bay",
+      "expect": []
+    },
+    {
+      "q": "đổi mật khẩu cho nhân viên",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch"
+      ]
+    },
+    {
+      "q": "nhân viên quên mật khẩu thì làm sao",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch"
+      ]
+    },
+    {
+      "q": "reset pass nhân viên",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch"
+      ]
+    },
+    {
+      "q": "làm sao đổi pass cho nhân viên",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch"
+      ]
+    },
+    {
+      "q": "nhan vien quen mat khau",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch"
+      ]
+    },
+    {
+      "q": "quản lý có đổi mật khẩu nhân viên được không",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch"
+      ]
+    },
+    {
+      "q": "không thấy nút đặt lại mật khẩu",
+      "expect": [
+        "nhan-vien#loi-khong-thay-nut-dat-lai-mat-khau",
+        "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch"
+      ]
+    },
+    {
+      "q": "đổi tên nhân viên ở đâu",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3c-doi-ten-nhan-vien-chi-chu-quan-va-tu",
+        "nhan-vien#loi-khong-thay-nut-doi-ten"
+      ]
+    },
+    {
+      "q": "sua ten nhan vien",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3c-doi-ten-nhan-vien-chi-chu-quan-va-tu",
+        "nhan-vien#loi-khong-thay-nut-doi-ten"
+      ]
+    },
+    {
+      "q": "làm sao đổi tên hiển thị của tôi",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3c-doi-ten-nhan-vien-chi-chu-quan-va-tu",
+        "nhan-vien#loi-khong-thay-nut-doi-ten"
+      ]
+    },
+    {
+      "q": "chủ quán đổi tên mình thế nào",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3c-doi-ten-nhan-vien-chi-chu-quan-va-tu",
+        "nhan-vien#loi-khong-thay-nut-doi-ten"
+      ]
+    },
+    {
+      "q": "không thấy nút đổi tên",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3c-doi-ten-nhan-vien-chi-chu-quan-va-tu",
+        "nhan-vien#loi-khong-thay-nut-doi-ten"
+      ]
+    }
+  ]
+}

@@ -2,8 +2,8 @@
 -- TEST HỒI QUY: 4 RPC báo cáo *_for_range_v1 phải kiểm quyền thành viên quán
 -- (get_report_stats / get_daily_revenue / get_top_products / get_sold_categories)
 -- Khóa chặn do FIX05a (20261007_fix05a_khoa_bang_khong_realtime.sql) – test này chống lùi.
--- Cũng chứng minh đường TƯƠNG THÍCH: app cũ gọi bằng role anon + header x-user-id vẫn xem được
--- báo cáo của CHÍNH quán mình, nhưng không xem được quán khác.
+-- Từ 20261026_va_quyen_bep_bao_cao_v1.sql: anon KHÔNG còn quyền gọi 4 RPC này (kể cả kèm x-user-id
+-- thật — header tự khai giả được); app cũ chạy anon tự tính từ bảng (dashboard_repository.dart).
 -- CHỈ CHẠY TRÊN DB STAGING/DISPOSABLE. Một transaction, kết thúc ROLLBACK.
 -- ============================================================================
 BEGIN;
@@ -77,12 +77,12 @@ BEGIN
     -- T3 anon + x-user-id không phải uuid / uuid lạ: bị chặn
     PERFORM public._bcq_as('anon', NULL, gen_random_uuid());
     PERFORM public._bcq_ok(public._bcq_call(fn, S1) = 'denied', names[fn] || ': anon + x-user-id lạ bị chặn');
-    -- T4 TƯƠNG THÍCH app cũ: anon + x-user-id của chủ/nhân viên quán mình: xem được
+    -- T4 anon + x-user-id của chủ/nhân viên quán mình: bị chặn (vá 26/10, trước đây xem được)
     PERFORM public._bcq_as('anon', NULL, A);
     r := public._bcq_call(fn, S1);
-    PERFORM public._bcq_ok(r LIKE 'ok:%', names[fn] || ': app cũ anon + x-user-id chủ quán xem được (' || r || ')');
+    PERFORM public._bcq_ok(r = 'denied', names[fn] || ': anon + x-user-id chủ quán bị chặn (' || r || ')');
     PERFORM public._bcq_as('anon', NULL, M);
-    PERFORM public._bcq_ok(public._bcq_call(fn, S1) LIKE 'ok:%', names[fn] || ': app cũ anon + x-user-id nhân viên xem được');
+    PERFORM public._bcq_ok(public._bcq_call(fn, S1) = 'denied', names[fn] || ': anon + x-user-id nhân viên bị chặn');
     -- T5 …nhưng không xem được quán khác của mình không thuộc về
     PERFORM public._bcq_as('anon', NULL, A);
     PERFORM public._bcq_ok(public._bcq_call(fn, S3) = 'denied', names[fn] || ': chủ S1 không xem được S3 (anon)');

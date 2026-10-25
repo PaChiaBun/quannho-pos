@@ -475,7 +475,38 @@ void main() {
       expect(res.errorMessage, contains('Phiên đăng ký đã hết hạn'));
     });
 
-    test('18. CreateStore validates empty store name and propagates INVALID_STORE_NAME', () async {
+    test(
+        '17b. Chủ đã có quán tạo thêm quán không cần onboarding token, rồi đòi mật khẩu',
+        () async {
+      var rpcCalls = 0;
+      UserAuthService.rpcOverride = (name, {params}) async {
+        rpcCalls++;
+        return {
+          'success': true,
+          'store_id': 'store-extra-1',
+          'store_code': 'QN-EX01',
+          'store_name': 'Mộc Sâm',
+          'role': 'owner',
+          'is_owner': true
+        };
+      };
+      final mockJwt = MockPosJwtService(mockOnboardingResult: {
+        'success': false,
+        'error': 'ONBOARDING_NOT_REQUIRED'
+      });
+
+      final res = await UserAuthService.createStore(
+          userId: 'user-owner-1', storeName: 'Mộc Sâm', jwtService: mockJwt);
+
+      expect(rpcCalls, 1);
+      expect(res.isSuccess, false);
+      expect(res.errorCode, 'STORE_PASSWORD_REQUIRED');
+      expect(res.membership?.storeId, 'store-extra-1');
+      expect(res.membership?.isOwner, true);
+    });
+
+    test(
+        '18. CreateStore validates empty store name and propagates INVALID_STORE_NAME', () async {
       final mockJwt = MockPosJwtService(
         mockOnboardingResult: {'success': true, 'token': 'onb-token-123'},
       );

@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/providers/app_providers.dart';
 import '../core/providers/session_provider.dart';
+import '../modules/bill_printer/utils/station_normalizer.dart';
 import '../core/repositories/kitchen_repository.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/thermal_printer_service.dart';
@@ -365,8 +366,14 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
 
     // Phân loại trạm bếp theo tên sản phẩm hoặc stationCode từ DB
     String _classifyStation(KitchenTicketItemModel item) {
-      if (item.stationCode == 'nuoc') return 'nuoc';
-      if (item.stationCode == 'nong') return 'nong';
+      // Món cài "Bộ phận chế biến" = Bếp Bar (bep_bar / bar / nuoc) → luôn Bếp nước. Trước đây
+      // mã bep_bar không được nhận nên đồ uống tên lạ bị đoán sai sang Bếp nóng.
+      // Bếp nóng là MẶC ĐỊNH của món mới (bep_nong) nên không tin hẳn — giữ cách đoán theo tên
+      // như cũ để đồ uống chưa cài bộ phận không bị dồn sang Bếp nóng. 'nong' (POS gán theo
+      // danh mục) vẫn là Bếp nóng như trước.
+      final raw = item.stationCode?.trim() ?? '';
+      if (raw == 'nong') return 'nong';
+      if (raw.isNotEmpty && normalizeStationCode(raw) == 'bar') return 'nuoc';
       final name = item.productName.toLowerCase();
       // ‼️ FIX #L4: Mở rộng keyword list — thêm matcha, soda, kem, yogurt, cốt dừa, nước ép
       const drinkWords = [
@@ -415,7 +422,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Gián đoạn kết nối máy chủ Bếp',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -423,7 +430,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Hệ thống đang tự động kết nối lại (502 Bad Gateway). Vui lòng đợi trong giây lát...',
+                          'Mất kết nối tới máy chủ. Kiểm tra mạng rồi bấm thử lại.',
                   style: TextStyle(fontSize: 12, color: Colors.white60),
                   textAlign: TextAlign.center,
                 ),
@@ -572,11 +579,11 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                   indicatorWeight: 3,
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.white38,
-                  labelStyle: GoogleFonts.outfit(
+                  labelStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
-                  unselectedLabelStyle: GoogleFonts.outfit(
+                  unselectedLabelStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -663,7 +670,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
             ),
             child: Text(
               '🔥 BẾP',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
@@ -673,7 +680,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           ),
           const SizedBox(width: 10),
           Text('Phiếu bếp',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
@@ -708,7 +715,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
               SnackBar(
                 content: Text(
                   _isMuted ? '🔇 Đã tắt tiếng chuông' : '🔔 Đã bật tiếng chuông',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
                 ),
                 duration: const Duration(seconds: 2),
                 behavior: SnackBarBehavior.floating,
@@ -798,7 +805,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('↩ Đã mở lại phiếu ${ticket.tableLabel ?? ""}',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
           backgroundColor: _kAmber,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
@@ -811,7 +818,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('🧹 Đã dọn phiếu ${ticket.tableLabel ?? ""}',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
           backgroundColor: _kGreen,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
@@ -891,7 +898,7 @@ class _BlinkingBadgeState extends State<_BlinkingBadge>
               const SizedBox(width: 4),
               Text(
                 '${widget.count} chờ',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
@@ -950,7 +957,7 @@ class _StatsDrawer extends ConsumerWidget {
                     children: [
                       Text(
                         'Bếp hôm nay',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
@@ -958,7 +965,7 @@ class _StatsDrawer extends ConsumerWidget {
                       ),
                       Text(
                         'Thống kê hiệu suất',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           color: Colors.white38,
                         ),
@@ -1090,7 +1097,7 @@ class _StatSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: GoogleFonts.outfit(
+      style: GoogleFonts.plusJakartaSans(
         fontSize: 10,
         fontWeight: FontWeight.w800,
         color: Colors.white30,
@@ -1129,7 +1136,7 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 26,
               fontWeight: FontWeight.w900,
               color: color,
@@ -1137,7 +1144,7 @@ class _StatCard extends StatelessWidget {
           ),
           Text(
             label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               color: Colors.white38,
             ),
@@ -1177,7 +1184,7 @@ class _StatRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 color: Colors.white60,
               ),
@@ -1185,7 +1192,7 @@ class _StatRow extends StatelessWidget {
           ),
           Text(
             value,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               fontWeight: FontWeight.w800,
               color: color,
@@ -1220,14 +1227,14 @@ class _CompletionBar extends StatelessWidget {
             children: [
               Text(
                 'Tỷ lệ hoàn thành',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   color: Colors.white54,
                 ),
               ),
               Text(
                 '${(pct * 100).toInt()}%',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                   color: pct >= 0.8 ? _kGreen : pct >= 0.5 ? _kAmber : _kRed,
@@ -1250,7 +1257,7 @@ class _CompletionBar extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '$done / $total phiếu đã hoàn thành',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               color: Colors.white30,
             ),
@@ -1286,7 +1293,7 @@ class _PrinterField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: Colors.white38,
@@ -1302,13 +1309,13 @@ class _PrinterField extends StatelessWidget {
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               color: Colors.white,
               fontSize: 14,
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: GoogleFonts.outfit(
+              hintStyle: GoogleFonts.plusJakartaSans(
                 color: Colors.white24,
                 fontSize: 14,
               ),
@@ -1367,7 +1374,7 @@ class _OutlineBtn extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: isDisabled ? Colors.white24 : color,
@@ -1427,7 +1434,7 @@ class _TabWithBadge extends StatelessWidget {
               ),
               child: Text(
                 '$count',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -1499,7 +1506,7 @@ class _KanbanColumn extends StatelessWidget {
                   Expanded(
                     child: Text(
                       label,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
@@ -1517,7 +1524,7 @@ class _KanbanColumn extends StatelessWidget {
                     ),
                     child: Text(
                       '${tickets.length}',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
@@ -1539,7 +1546,7 @@ class _KanbanColumn extends StatelessWidget {
                           const SizedBox(height: 10),
                           Text(
                             'Trống',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               color: Colors.white24,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -1600,7 +1607,7 @@ class _TicketList extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               emptyLabel,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
                 color: Colors.white24,
                 fontWeight: FontWeight.w500,
@@ -1726,7 +1733,7 @@ class _TicketCard extends ConsumerWidget {
                               if ((ticket.zoneLabel ?? ticket.zoneId ?? '').isNotEmpty)
                                 Text(
                                   (ticket.zoneLabel ?? ticket.zoneId ?? '').toUpperCase(),
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     color: accent.withValues(alpha: 0.7),
@@ -1735,7 +1742,7 @@ class _TicketCard extends ConsumerWidget {
                                 ),
                               Text(
                                 ticket.tableLabel ?? 'Bàn',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
@@ -1758,7 +1765,7 @@ class _TicketCard extends ConsumerWidget {
                                 ),
                                 child: Text(
                                   'Đợt ${ticket.round}',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white54,
@@ -1768,7 +1775,7 @@ class _TicketCard extends ConsumerWidget {
                               const SizedBox(height: 3),
                               Text(
                                 '${items.where((i) => !i.done).length} món',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
                                   color: Colors.white38,
                                 ),
@@ -1802,7 +1809,7 @@ class _TicketCard extends ConsumerWidget {
                                   ),
                                   child: Text(
                                     isOverdue ? 'TRỄ 30P!' : isNew ? 'MỚI' : 'LÀM',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w900,
                                       color: isOverdue ? _kRed : isNew ? _kOrange : _kAmber,
@@ -1834,7 +1841,7 @@ class _TicketCard extends ConsumerWidget {
                                           color: Color(0xFFF97316)),
                                       const SizedBox(width: 3),
                                       Text('In phiếu',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
                                             color: const Color(0xFFF97316),
@@ -1926,7 +1933,7 @@ class _TicketCard extends ConsumerWidget {
                                     ),
                                     child: Text(
                                       'x${item.quantity.toInt()}',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w900,
                                         color: accent,
@@ -1941,7 +1948,7 @@ class _TicketCard extends ConsumerWidget {
                                       children: [
                                         Text(
                                           item.productName,
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 17,
                                             fontWeight: FontWeight.w700,
                                             color: isItemDone
@@ -1976,7 +1983,7 @@ class _TicketCard extends ConsumerWidget {
                                                    ),
                                                    child: Text(
                                                      label,
-                                                     style: GoogleFonts.outfit(
+                                                     style: GoogleFonts.plusJakartaSans(
                                                        fontSize: 11,
                                                        fontWeight: isTopping ? FontWeight.w700 : FontWeight.w400,
                                                        color: isTopping ? _kOrange : Colors.white54,
@@ -2010,7 +2017,7 @@ class _TicketCard extends ConsumerWidget {
                                                   Flexible(
                                                     child: Text(
                                                       item.freeNote!.trim(),
-                                                      style: GoogleFonts.outfit(
+                                                      style: GoogleFonts.plusJakartaSans(
                                                         fontSize: 13,
                                                         fontWeight: FontWeight.w700,
                                                         color: _kAmber,
@@ -2104,7 +2111,7 @@ class _TicketCard extends ConsumerWidget {
                   size: 22, color: Colors.white),
               const SizedBox(width: 8),
               Text('Bắt đầu làm',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: Colors.white)),
@@ -2135,7 +2142,7 @@ class _TicketCard extends ConsumerWidget {
                   size: 22, color: Colors.white),
               const SizedBox(width: 8),
               Text('Xong',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: Colors.white)),
@@ -2162,7 +2169,7 @@ class _TicketCard extends ConsumerWidget {
                   Icon(Icons.undo_rounded, size: 15, color: _kAmber),
                   const SizedBox(width: 4),
                   Text('Mở lại',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: _kAmber)),
@@ -2188,7 +2195,7 @@ class _TicketCard extends ConsumerWidget {
                     Icon(Icons.archive_outlined, size: 16, color: Colors.white30),
                     const SizedBox(width: 4),
                     Text('Dọn phiếu',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: Colors.white30)),
@@ -2215,7 +2222,7 @@ class _TicketCard extends ConsumerWidget {
                       size: 16, color: Color(0xFFF97316)),
                   const SizedBox(width: 4),
                   Text('In',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFFF97316))),
@@ -2311,7 +2318,7 @@ class _NoteChip extends StatelessWidget {
           Text(icon, style: const TextStyle(fontSize: 12)),
           const SizedBox(width: 5),
           Flexible(child: Text(text,
-            style: GoogleFonts.outfit(fontSize: 12, color: color.withValues(alpha: 0.9),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: color.withValues(alpha: 0.9),
                 fontStyle: FontStyle.italic))),
         ]),
       ),
@@ -2362,11 +2369,11 @@ class _ItemNoteSheetState extends State<_ItemNoteSheet> {
           const Text('\u{1F468}\u{200D}\u{1F373}', style: TextStyle(fontSize: 22)),
           const SizedBox(width: 10),
           Expanded(child: Text(widget.item.productName,
-            style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white))),
+            style: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white))),
         ]),
         const SizedBox(height: 4),
         Text('Ghi chú nội bộ bếp (không hiển thị cho khách)',
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.white38)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white38)),
         const SizedBox(height: 14),
         Container(
           decoration: BoxDecoration(
@@ -2376,10 +2383,10 @@ class _ItemNoteSheetState extends State<_ItemNoteSheet> {
           ),
           child: TextField(
             controller: _ctrl, autofocus: true, maxLines: 3,
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 15),
+            style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 15),
             decoration: InputDecoration(
               hintText: 'Ví dụ: làm chín kỹ, không cay...',
-              hintStyle: GoogleFonts.outfit(color: Colors.white24, fontSize: 13),
+              hintStyle: GoogleFonts.plusJakartaSans(color: Colors.white24, fontSize: 13),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(14),
             ),
@@ -2389,7 +2396,7 @@ class _ItemNoteSheetState extends State<_ItemNoteSheet> {
         Row(children: [
           Expanded(child: TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Huỷ', style: GoogleFonts.outfit(color: Colors.white38, fontWeight: FontWeight.w600)),
+            child: Text('Huỷ', style: GoogleFonts.plusJakartaSans(color: Colors.white38, fontWeight: FontWeight.w600)),
           )),
           const SizedBox(width: 8),
           Expanded(flex: 2, child: ElevatedButton(
@@ -2399,7 +2406,7 @@ class _ItemNoteSheetState extends State<_ItemNoteSheet> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            child: Text('Lưu ghi chú', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: Colors.white)),
+            child: Text('Lưu ghi chú', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white)),
           )),
         ]),
         const SizedBox(height: 20),
@@ -2432,9 +2439,9 @@ class _ReasonDialogState extends State<_ReasonDialog> {
       backgroundColor: _kCard,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(widget.title,
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 18)),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 18)),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(widget.hint, style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13)),
+        Text(widget.hint, style: GoogleFonts.plusJakartaSans(color: Colors.white54, fontSize: 13)),
         const SizedBox(height: 14),
         Container(
           decoration: BoxDecoration(
@@ -2444,10 +2451,10 @@ class _ReasonDialogState extends State<_ReasonDialog> {
           ),
           child: TextField(
             controller: _ctrl,
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 14),
+            style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Lý do (không bắt buộc)...',
-              hintStyle: GoogleFonts.outfit(color: Colors.white24, fontSize: 13),
+              hintStyle: GoogleFonts.plusJakartaSans(color: Colors.white24, fontSize: 13),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
@@ -2457,7 +2464,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Huỷ bỏ', style: GoogleFonts.outfit(color: Colors.white38, fontWeight: FontWeight.w600)),
+          child: Text('Huỷ bỏ', style: GoogleFonts.plusJakartaSans(color: Colors.white38, fontWeight: FontWeight.w600)),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, _ctrl.text.trim()),
@@ -2465,7 +2472,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
             backgroundColor: _kOrange,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
-          child: Text('Xác nhận', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: Colors.white)),
+          child: Text('Xác nhận', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white)),
         ),
       ],
     );
@@ -2553,7 +2560,7 @@ class _WaitTimerState extends State<_WaitTimer> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w800,
               color: color,
@@ -2626,7 +2633,7 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
               const Icon(Icons.warning_amber_rounded, color: Color(0xFFFCA5A5), size: 18),
               const SizedBox(width: 6),
               Text('THÔNG BÁO SỬA ĐƠN',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   color: const Color(0xFFFCA5A5),
                   fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5)),
               const Spacer(),
@@ -2637,7 +2644,7 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
                 ),
                 onPressed: () => setState(() => _dismissed.addAll(visible.map((n) => n.id))),
                 child: Text('Đã hiểu ✓',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     color: const Color(0xFF86EFAC), fontWeight: FontWeight.w700, fontSize: 12)),
               ),
             ]),
@@ -2650,11 +2657,11 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(n.shortLabel,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
                   Row(children: [
                     Text(n.tableLabel,
-                      style: GoogleFonts.outfit(color: Colors.white54, fontSize: 11)),
+                      style: GoogleFonts.plusJakartaSans(color: Colors.white54, fontSize: 11)),
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -2662,12 +2669,12 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
                         color: const Color(0xFFEF4444).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4)),
                       child: Text(n.reason,
-                        style: GoogleFonts.outfit(color: const Color(0xFFFCA5A5), fontSize: 10)),
+                        style: GoogleFonts.plusJakartaSans(color: const Color(0xFFFCA5A5), fontSize: 10)),
                     ),
                     if (n.staffName.isNotEmpty) ...[ 
                       const SizedBox(width: 6),
                       Text('— ${n.staffName}',
-                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10)),
+                        style: GoogleFonts.plusJakartaSans(color: Colors.white38, fontSize: 10)),
                     ],
                   ]),
                 ],
@@ -2678,7 +2685,7 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
               child: Text('+${visible.length - 3} thông báo khác',
-                style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+                style: GoogleFonts.plusJakartaSans(color: Colors.white38, fontSize: 11)),
             ),
           const SizedBox(height: 4),
         ],
@@ -2713,7 +2720,7 @@ class _EmptyKitchenState extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             'Bếp đang yên tĩnh',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 22,
               fontWeight: FontWeight.w800,
               color: Colors.white,
@@ -2723,7 +2730,7 @@ class _EmptyKitchenState extends StatelessWidget {
           Text(
             'Chưa có phiếu bếp nào.\nCác phiếu mới sẽ hiện ngay khi nhân viên gửi bếp.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               color: Colors.white38,
               height: 1.55,
@@ -2798,7 +2805,7 @@ class _StationFilterBar extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       label,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                         color: isSelected ? color : Colors.white38,
