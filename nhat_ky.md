@@ -3,6 +3,14 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-26 — Commit + Windows 1.0.5+21 lên web (06:15 VN, Chủ Quán "deloy đi" → chọn Windows + commit/push)
+
+- ✅ Commit `2abd0e0` (nhánh `feature/ai-bum-ui`, đã push; không kèm `scratch/`): trang quản trị đợt 1, thu phí đợt A, hỗ trợ chủ quán H1–H3, đổi tên an toàn, vá bảo mật; `pubspec.yaml` 1.0.5+21.
+- ✅ Workflow `Windows Release Builder` run 40241616683 thành công, đúng commit `2abd0e0`; msix 1.0.5.0, `app.so` có `store_staff_set_name_v1`, `staff_name_save`, `billing_info_v1`.
+- ✅ `QuanNhoPOS-latest.exe` (62.785.306 B, SHA-256 `5e18c6df…`) thay nguyên tử ở `/var/www/lpm-web/public/` + `public/download/`; HTTP công khai 200, mã băm khớp. Bản +20 cũ sao lưu `/root/quannho-backups/web-download/exe_{root,download}_truoc_105b21_20261026_061521.exe`.
+- KHÔNG đụng `app_versions` (máy Windows đang chạy không tự báo cập nhật). Chưa cài thử trên Windows thật.
+- Hoàn tác: chép 2 file sao lưu trên về đúng chỗ.
+
 ## 2026-10-26 — Đổi tên an toàn (ĐÃ ÁP production 26/10 05:33 VN — Chủ Quán duyệt)
 
 - ✅ `db-fix/doi_ten_an_toan_ap_dung.sh` TS=20261026_053332: sao lưu `/root/quannho-backups/quannho_before_doi_ten_20261026_053332.dump` → migration → test trên production TẤT CẢ PASS (tự ROLLBACK) → Boom bộ hướng dẫn 202610252227 → /admin (sao lưu `admin_web_doiten_20261026_053332`) → web /pos (main.dart.js `ad352e80…` khớp bản build, sao lưu `pos_backup_20261026_053332`). Log `db-fix/doi_ten_an_toan_log_20261026_053332.txt`.
