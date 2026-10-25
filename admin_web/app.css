@@ -1761,3 +1761,23 @@ pre.prompt {
   overflow-wrap: anywhere;
 }
 
+
+/* ── Tổng quan nâng cấp (26/10) ── */
+.ov-sales-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ov-sales-body { margin-top: 14px; }
+.ov-sales-body h4 { margin: 0; font-size: 14px; }
+.kpi-sub-card .d { font-size: 12px; font-variant-numeric: tabular-nums; }
+.kpi-sub-card .d.up { color: var(--good); }
+.kpi-sub-card .d.down { color: var(--bad); }
+#ov-todo { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); }
+.ov-todo-ok { grid-column: 1 / -1; }
+.ov-row-main { display: grid; gap: 2px; min-width: 0; }
+.ov-row-main b { overflow-wrap: anywhere; }
+.ov-rank { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 1.5em; }
+.ov-check { display: flex; align-items: center; gap: 10px; min-width: 0; cursor: pointer; }
+.ov-check input { width: 18px; height: 18px; flex: none; }
+.ov-suggest-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+@media (max-width: 720px) {
+  .ov-sales-grid, #ov-todo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.ov-row-main b .badge { margin-left: 6px; vertical-align: middle; }

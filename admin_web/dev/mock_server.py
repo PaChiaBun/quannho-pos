@@ -48,6 +48,24 @@ TURNS = [dict(id=f"t{i}", created_at=iso(0,i*3), store_id="s0", source="gpt" if 
      ("answer:gpt-4o-mini","tách bill thế nào","1. Bấm \"Tách bill\"…"),
      ("boom_tu_choi:politics","bàn chuyện chính trị","Bé Boom xin phép không trả lời ạ."),
    ])]
+# Tổng quan nâng cấp: doanh thu 30 ngày có 1 ngày đột biến; gợi ý quán thử có tên chứa HTML (phải hiện như chữ)
+SUGG = [dict(id=f"g{i}", name=n, code=f"G{i:03}", created_at=iso(25+i), reason=rs, orders_total=o) for i,(n,rs,o) in enumerate([
+  ("aaaaa","name_junk",0),("hghhhh","name_junk",0),("Test","name_test",0),("tao test <b>x</b>","name_test",0),("Quán Nhỏ POS (Demo)","name_test",1869)])]
+def extra():
+    days=[dict(day=(now-datetime.timedelta(days=29-i)).date().isoformat(), n=0, revenue=0) for i in range(30)]
+    for i,d in enumerate(days):
+        d['n']=random.randint(20,60); d['revenue']=d['n']*random.randint(90,130)*1000
+    days[8]['revenue']=95_000_000; days[8]['n']=400; days[29]['revenue']=7_500_000_000  # hôm nay đột biến hàng tỷ: nhãn trục dài
+    return dict(ok=True,
+      sales=dict(orders_7d=1112, revenue_7d=126_401_600, orders_prev7=1312, revenue_prev7=153_249_300, orders_30d=5965, revenue_30d=714_484_380,
+                 orders_prev30=4022, revenue_prev30=498_257_700, stores_selling_7d=7, by_day=days,
+                 top=[dict(id=r['id'], name=r['name'], code=r['store_code'], orders=r['orders_30d']*10, revenue=r['orders_30d']*1_200_000, orders_7d=r['orders_7d']) for r in STORES[:5]]),
+      dropping=dict(total=42, rows=[dict(id=r['id'], name=r['name'], code=r['store_code'], owner_name=r['owner_name'], owner_phone=r['owner_phone'],
+                 last_order_at=iso(9+i), orders_30d=30-i*4, revenue_30d=(30-i*4)*110_000, locked=r['status']=='locked') for i,r in enumerate(STORES[2:7])]
+                 + [dict(id='s9', name='Cà <img src=x onerror=alert(7)>', code='Q009', owner_name='Chủ <b>X</b>', owner_phone=None, last_order_at=iso(12), orders_30d=1, revenue_30d=50000)]
+                 + [dict(id=f'd{k}', name=f'Quán Phụ {k}', code=f'D{k:03}', owner_name=f'Chủ {k}', owner_phone='+84907654321', last_order_at=iso(15+k), orders_30d=1, revenue_30d=40000) for k in range(8)]),
+      todo=dict(trial_ending=2, trial_expired=0, pro_ending=1, pro_expired=0, follow_ups_due=1, support_open=2, support_in_progress=0, billing_pending=2),
+      test_suggest=SUGG)
 class H(http.server.SimpleHTTPRequestHandler):
     def __init__(s,*a,**k): super().__init__(*a, directory=ROOT, **k)
     def log_message(s,*a): pass
@@ -72,7 +90,10 @@ class H(http.server.SimpleHTTPRequestHandler):
         if p.endswith('/admin_store_list_v1'):
             rows=[r for r in STORES if body.get('p_filter')=='test' and r['is_test'] or body.get('p_filter')!='test' and not r['is_test']]
             return s.send_json(200, dict(ok=True,total=len(rows),rows=rows))
-        if p.endswith('/admin_set_test_store_v1'): return s.send_json(200, dict(ok=True))
+        if p.endswith('/admin_overview_extra_v1'): return s.send_json(200, extra())
+        if p.endswith('/admin_set_test_store_v1'):
+            SUGG[:] = [g for g in SUGG if g['id'] != body.get('p_store')]
+            return s.send_json(200, dict(ok=True))
         st = next((r for r in STORES if r['id']==body.get('p_store')), None)
         if p.endswith('/admin_store_detail_v1'):
             if not st: return s.send_json(200, dict(ok=False, error='NOT_FOUND'))

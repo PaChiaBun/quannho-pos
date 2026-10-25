@@ -133,8 +133,42 @@
         </header>
 
         <div id="ov-error" hidden></div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>Việc cần làm hôm nay</h3>
+              <p class="muted small">Bấm vào ô để mở đúng danh sách cần xử lý.</p>
+            </div>
+          </div>
+          <div id="ov-todo" class="kpi-sub-grid"></div>
+        </div>
+
         <div id="ov-hero" class="kpi-hero-grid"></div>
         <div id="ov-secondary" class="kpi-sub-grid"></div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>Doanh số toàn hệ thống</h3>
+              <p class="muted small">Đơn hoàn thành của các quán (không tính đơn huỷ). So với kỳ liền trước.</p>
+            </div>
+          </div>
+          <div id="ov-sales" class="kpi-sub-grid ov-sales-grid"></div>
+          <div class="grid2 ov-sales-body">
+            <div class="chart-box">
+              <div class="card-head">
+                <h4>Doanh thu theo ngày (30 ngày)</h4>
+                <div id="ov-rev-meta" class="chart-readout"></div>
+              </div>
+              <div id="ov-rev-chart" class="chart"></div>
+            </div>
+            <div class="chart-box">
+              <div class="card-head"><h4>5 quán bán nhiều nhất (30 ngày)</h4></div>
+              <div id="ov-top" class="prof-rows"></div>
+            </div>
+          </div>
+        </div>
 
         <div class="card funnel-card">
           <div class="card-head">
@@ -144,6 +178,16 @@
             </div>
           </div>
           <div id="ov-funnel" class="funnel-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>Quán đang bỏ dùng <span id="ov-drop-count" class="badge warn"></span></h3>
+              <p class="muted small">Có bán trong 30 ngày qua nhưng 7 ngày nay không có đơn nào — nên gọi hỏi thăm. Quán bán nhiều xếp trước.</p>
+            </div>
+          </div>
+          <div id="ov-drop" class="prof-rows"></div>
         </div>
 
         <div class="grid2">
@@ -164,9 +208,25 @@
           </div>
         </div>
 
+        <div class="card" id="ov-suggest-card" hidden>
+          <div class="card-head">
+            <div>
+              <h3>Gợi ý đánh dấu quán thử <span id="ov-suggest-count" class="badge"></span></h3>
+              <p class="muted small">Quán tên có chữ test / demo / thử, hoặc tên vô nghĩa mà chưa bán đơn nào. Quán thử bị loại khỏi số liệu
+                (bật "Tính cả quán thử" để xem lại). Đã chọn sẵn quán chưa bán đơn nào — xem lại rồi mới bấm.</p>
+            </div>
+          </div>
+          <div id="ov-suggest" class="prof-rows"></div>
+          <div class="ov-suggest-actions">
+            <button type="button" class="btn primary" id="ov-suggest-mark">Đánh dấu quán đã chọn</button>
+          </div>
+        </div>
+
         <p class="footnote muted small">
           Chú thích: <strong>Đang dùng tích cực</strong> = có ít nhất 1 đơn hoàn thành trong 7 ngày qua.
           <strong>Ngủ</strong> = đã từng bán nhưng hơn 30 ngày không phát sinh đơn mới.
+          <strong>Đang bỏ dùng</strong> = có bán trong 30 ngày nhưng 7 ngày nay không có đơn.
+          Ô "7 ngày / 30 ngày" tính lùi đúng 7×24 / 30×24 giờ; biểu đồ chia theo ngày lịch giờ Việt Nam, nên cộng 7 cột cuối có thể lệch một chút.
         </p>
       </section>
 

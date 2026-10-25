@@ -3,6 +3,19 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-26 — Nâng cấp Tổng quan /admin (ĐÃ ÁP production 26/10 06:43 VN — Chủ Quán duyệt)
+
+- ✅ `db-fix/tong_quan_nang_cap_ap_dung.sh` TS=20261026_064310: sao lưu `/root/quannho-backups/quannho_before_tong_quan_20261026_064310.dump` → migration → test trên production TẤT CẢ PASS (tự ROLLBACK) → /admin (sao lưu `admin_web_tongquan_20261026_064310`, app.js khớp bản build). Log `db-fix/tong_quan_nang_cap_log_20261026_064310.txt`.
+- Kiểm sau áp: gọi từ ngoài bằng khoá công khai → 42501; hàm trả 714 triệu / 5.965 đơn 30 ngày, 42 quán bỏ dùng, 33 gợi ý quán thử, 2 quán sắp hết thử; chưa quán nào bị đánh dấu thử (0) — chờ Chủ Quán tự bấm.
+- Hoàn tác: `ROLLBACK=1 bash db-fix/tong_quan_nang_cap_ap_dung.sh 20261026_064310`.
+
+- Lý do (Chủ Quán hỏi "báo cáo đã trực quan chưa, còn thiếu gì"): Tổng quan không có doanh số; không thấy 42 quán vừa ngừng bán (49 quán có đơn 30 ngày nhưng chỉ 7 quán có đơn 7 ngày); chưa quán nào đánh dấu "quán thử" nên quán rác / Demo làm nhiễu số; biểu đồ quán mới bị ngày ra mắt 30/09 (83 quán) đè; "Tuần này 0" sáng thứ Hai dễ hiểu nhầm.
+- ✅ Migration `supabase/migrations/20261101_tong_quan_nang_cap.sql` (+ `_ROLLBACK`): 1 hàm CHỈ ĐỌC mới `admin_overview_extra_v1` (chỉ qn_admin) — doanh số 7/30 ngày + kỳ trước, doanh thu theo ngày giờ VN, 5 quán bán nhiều nhất, quán đang bỏ dùng (tên + SĐT chủ, có dự phòng chủ là thành viên is_owner, cờ đang khoá), việc hôm nay, gợi ý quán thử theo tên. Không đổi hàm / bảng cũ. Dữ liệu thật: 0,12 giây.
+- ✅ /admin: khối "Việc cần làm hôm nay" (bấm mở đúng bộ lọc Gói / Hỗ trợ / Thu phí), "Doanh số toàn hệ thống" (4 ô có ▲▼ so kỳ trước, biểu đồ doanh thu 30 ngày, top 5), "Quán đang bỏ dùng" (nút Gọi, hiện 10 + xem thêm), "Gợi ý đánh dấu quán thử" (chọn sẵn quán chưa bán, hỏi xác nhận rồi mới đánh dấu). Biểu đồ: ngày đột biến không đè ngày khác (ghi số ↑), trục Y không cắt mép, "Tuần này (mới N ngày)" và trung bình không tính tuần đang chạy.
+- ✅ Kiểm: test SQL 20/20 PASS trên bản sao (gồm ranh giới 23:30 giờ VN, quán thiếu chủ, quán khoá, vé app / vé giả bị chặn), hoàn tác sạch; máy chủ giả: máy tính, 375, 320 không tràn; chữ HTML hiện như chữ; lỗi hàm mới thì khối cũ vẫn chạy; đánh dấu hàng loạt chạy đúng. QC độc lập: 0 nghiêm trọng, đã sửa 3 nên sửa + các lỗi nhỏ.
+- Dữ liệu thật hiện có 33 quán gợi ý đánh dấu thử (gồm 3 quán Demo đang có đơn — để Chủ Quán tự chọn).
+- ➡️ Áp: `bash db-fix/tong_quan_nang_cap_ap_dung.sh` (build → sao lưu → migration → test → /admin). Hoàn tác: `ROLLBACK=1 bash db-fix/tong_quan_nang_cap_ap_dung.sh <TS>`.
+
 ## 2026-10-26 — Commit + Windows 1.0.5+21 lên web (06:15 VN, Chủ Quán "deloy đi" → chọn Windows + commit/push)
 
 - ✅ Commit `2abd0e0` (nhánh `feature/ai-bum-ui`, đã push; không kèm `scratch/`): trang quản trị đợt 1, thu phí đợt A, hỗ trợ chủ quán H1–H3, đổi tên an toàn, vá bảo mật; `pubspec.yaml` 1.0.5+21.
