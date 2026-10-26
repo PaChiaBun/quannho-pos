@@ -30,7 +30,7 @@ class AppUpdateManager {
 
   // URL dự phòng mặc định khi database chưa cấu hình download_url
   static const String defaultWindowsDownloadUrl =
-      'https://quannho.lpm.vn/download/windows/QuanNhoPOS-latest.exe';
+      'https://quannho.lpm.vn/download/QuanNhoPOS-latest.exe';
   static const String defaultAndroidDownloadUrl =
       'https://quannho.lpm.vn/download/QuanNhoPOS-latest.apk';
   static const String defaultIosAppStoreUrl =

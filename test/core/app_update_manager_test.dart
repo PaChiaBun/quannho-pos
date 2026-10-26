@@ -193,7 +193,7 @@ void main() {
     test('verifies single source of truth default endpoint constants', () {
       expect(
         AppUpdateManager.defaultWindowsDownloadUrl,
-        'https://quannho.lpm.vn/download/windows/QuanNhoPOS-latest.exe',
+        'https://quannho.lpm.vn/download/QuanNhoPOS-latest.exe',
       );
       expect(
         AppUpdateManager.defaultAndroidDownloadUrl,

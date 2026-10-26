@@ -253,7 +253,7 @@ class TestR3AppUpdateManagerArchitecture(unittest.TestCase):
         """Verify AppUpdateManager queries Supabase app_versions and VPS fallback."""
         self.assertIn(".from('app_versions')", self.content)
         self.assertIn("https://quannho.lpm.vn/api/versions", self.content)
-        self.assertIn("https://quannho.lpm.vn/download/windows/QuanNhoPOS-latest.exe", self.content)
+        self.assertIn("https://quannho.lpm.vn/download/QuanNhoPOS-latest.exe", self.content)
         self.assertIn("https://quannho.lpm.vn/download/QuanNhoPOS-latest.apk", self.content)
         self.assertIn("https://apps.apple.com/app/id6795376140", self.content)
 
