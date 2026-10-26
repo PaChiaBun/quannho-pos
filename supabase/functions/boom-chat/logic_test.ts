@@ -521,6 +521,13 @@ Deno.test('Cố vấn: số tính sẵn (nguyên nhân đổi doanh thu, giờ, 
   assert(looksBusiness('tôi muốn bạn báo cáo và phân tích chứ tôi đã biết có app báo cáo rồi'));
   assert(guessesAppFeature('2. Chọn "Tách bill" (nếu có chức năng này trong app).'));
   assert(guessesAppFeature('Tìm tùy chọn "Gộp bàn" rồi bấm.'));
+  assert(guessesAppFeature('3. Chọn tùy chọn "Ẩn món" hoặc "Tạm ngừng bán" (tùy theo chức năng của app).'));
+  assert(!guessesAppFeature('Pha đậm hay nhạt (tuỳ theo khẩu vị khách).'));
+  assert(guessesAppFeature('Bấm "Tách bill" (tùy vào chức năng của ứng dụng).'));
+  assert(guessesAppFeature('Chọn "Xuất Excel" (nếu app hỗ trợ).'));
+  // app khác (Grab, hoá đơn điện tử) không phải đoán nút của Quán Nhỏ (QC 26/10)
+  assert(!guessesAppFeature('Mở app Grab Merchant chỉnh giá (tùy theo phiên bản của ứng dụng Grab).'));
+  assert(!guessesAppFeature('Cập nhật thuế suất (tùy theo cài đặt của ứng dụng hoá đơn điện tử).'));
   assert(!guessesAppFeature('Nên dùng máy pha 1 họng (nếu có ngân sách thêm thì 2 họng).'));
 });
 
