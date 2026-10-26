@@ -37,7 +37,8 @@
     {
       "q": "giam gia tay 10k cho khach quen dc ko",
       "expect": [
-        "ban-hang#cac-viec-thuong-lam-thanh-toan"
+        "ban-hang#cac-viec-thuong-lam-thanh-toan",
+        "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
       ]
     },
     {

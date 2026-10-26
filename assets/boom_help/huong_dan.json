@@ -1,6 +1,6 @@
 {
- "version": 202610261249,
- "hash": "c7aabfa0826ee7821b8eef8c8a467ea6af60ecdaa518426c40ac11a7464da651",
+ "version": 202610261507,
+ "hash": "e42e0b847675e81871bf1e908c64bfebc46e2857ee534002219cde4b85c5502e",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -64,7 +64,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Thanh toán",
-   "text": "Khách trả tiền tại quầy (thu ngân tính tiền ở màn Bán hàng):\n1. Bấm \"Thanh toán\" (trong giỏ) hoặc ô tổng tiền màu cam trên thanh giỏ (điện thoại).\n2. Bảng \"Thanh toán\" hiện tóm tắt món. Chọn \"Phương thức\": \"Tiền mặt\", \"Chuyển khoản\", \"Thẻ\". Nếu khách có ví, có thêm \"Thanh toán bằng Ví\".\n3. Tuỳ chọn giảm giá:\n   • \"Điểm thưởng\" — chỉ hiện khi đã gắn khách có điểm và không trả bằng ví.\n   • \"Khuyến mãi / Voucher\" → \"Chọn mã\" → chọn mã → \"Áp dụng\". Bỏ mã: \"Gỡ mã\".\n4. Kiểm phần tổng: \"Tạm tính\", \"Giảm giá\", \"Dùng điểm\", \"TỔNG CỘNG\".\n5. Bấm \"Xác nhận • <số tiền>\".\n6. Màn \"Thanh toán thành công!\" kèm số đơn. Hoá đơn tự in nếu quán bật tự in và máy đã cài máy in.\n   • Bấm \"In hoá đơn\" để in (lại). Nếu vừa in xong vài giây, app hỏi \"Bill vừa được in… In thêm một bản nữa?\".\n   • Bấm \"Đơn mới\" để bắt đầu khách tiếp theo.\n\nThanh toán xong, hệ thống tự: ghi một khoản thu vào Thu Chi, trừ kho theo công thức (có quy đổi đơn vị), cộng/trừ điểm khách, trừ ví nếu trả bằng ví, đóng các đợt đã gửi bếp.\n\nTrả bằng ví: tiền thưởng (bonus) chỉ được dùng tối đa theo % quy định của khách (mặc định 15% giá trị đơn), phần còn lại trừ vào ví thật. Ví không đủ thì nút đổi thành \"⚠️ Ví không đủ — cần thêm tiền mặt\" và không cho xác nhận. Không dùng được điểm cùng lúc với ví.\nKhông có giảm giá gõ tay trong màn Bán hàng; giảm giá chỉ qua voucher hoặc điểm."
+   "text": "Khách trả tiền tại quầy (thu ngân tính tiền ở màn Bán hàng):\n1. Bấm \"Thanh toán\" (trong giỏ) hoặc ô tổng tiền màu cam trên thanh giỏ (điện thoại).\n2. Bảng \"Thanh toán\" hiện tóm tắt món. Chọn \"Phương thức\": \"Tiền mặt\", \"Chuyển khoản\", \"Thẻ\". Nếu khách có ví, có thêm \"Thanh toán bằng Ví\".\n3. Tuỳ chọn giảm giá:\n   • \"Điểm thưởng\" — chỉ hiện khi đã gắn khách có điểm và không trả bằng ví.\n   • \"Khuyến mãi / Voucher\" → \"Chọn mã\" → chọn mã → \"Áp dụng\". Bỏ mã: \"Gỡ mã\".\n   • App chưa có ô giảm giá tay (trừ thẳng một số tiền). Muốn bớt cho khách quen: Chủ quán / Quản lý tạo mã giảm giá ở Khách hàng → \"Khuyến mãi / Voucher\" → \"Thêm mã mới\", rồi chọn mã khi thanh toán. Mã dùng chung cho mọi đơn — nên đặt hạn dùng hoặc tắt mã sau khi dùng.\n4. Kiểm phần tổng: \"Tạm tính\", \"Giảm giá\", \"Dùng điểm\", \"TỔNG CỘNG\".\n5. Bấm \"Xác nhận • <số tiền>\".\n6. Màn \"Thanh toán thành công!\" kèm số đơn. Hoá đơn tự in nếu quán bật tự in và máy đã cài máy in.\n   • Bấm \"In hoá đơn\" để in (lại). Nếu vừa in xong vài giây, app hỏi \"Bill vừa được in… In thêm một bản nữa?\".\n   • Bấm \"Đơn mới\" để bắt đầu khách tiếp theo.\n\nThanh toán xong, hệ thống tự: ghi một khoản thu vào Thu Chi, trừ kho theo công thức (có quy đổi đơn vị), cộng/trừ điểm khách, trừ ví nếu trả bằng ví, đóng các đợt đã gửi bếp.\n\nTrả bằng ví: tiền thưởng (bonus) chỉ được dùng tối đa theo % quy định của khách (mặc định 15% giá trị đơn), phần còn lại trừ vào ví thật. Ví không đủ thì nút đổi thành \"⚠️ Ví không đủ — cần thêm tiền mặt\" và không cho xác nhận. Không dùng được điểm cùng lúc với ví.\nKhông có giảm giá gõ tay trong màn Bán hàng; giảm giá chỉ qua voucher hoặc điểm."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-xem-don-gan-day",
@@ -208,7 +208,7 @@
    "module_name": "Bán hàng",
    "section": "Lỗi thường gặp",
    "title": "Khách muốn huỷ / hoàn tiền đơn đã thanh toán",
-   "text": "Vì sao: App chưa có chức năng huỷ đơn đã thu\nLàm gì: Báo Chủ quán"
+   "text": "Vì sao: App chưa có chức năng huỷ đơn đã thu (kể cả khi lỡ bấm thanh toán nhầm, khách chưa trả tiền)\nLàm gì: Báo Chủ quán — Chủ quán cũng chưa huỷ được trong app, doanh thu / thu chi của đơn đó sẽ lệch"
   },
   {
    "id": "bao-cao-chuoi#bao-cao-nhieu-cua-hang-chuoi-la-gi",
@@ -1224,7 +1224,7 @@
    "module_name": "Kho Chuyên Nghiệp",
    "section": "Các việc thường làm",
    "title": "2. Tạo công thức món",
-   "text": "1. Tab \"Công thức\" → \"Tạo công thức\".\n2. \"Thông tin món\": \"Tên món *\", mô tả, danh mục (Món chính, Khai vị, Tráng miệng, Đồ uống, Súp & Cháo, Khác), khẩu phần (số + đơn vị: phần, tô, đĩa, ly, g, kg, ml, lít).\n3. \"Gắn menu POS\" → \"Chọn sản phẩm bán hàng tương ứng\". Gắn rồi app ghi \"Khi bán \"<món>\" → tự động trừ kho\".\n4. \"Định lượng nguyên liệu\" → \"Thêm nguyên liệu\": chọn nguyên liệu, \"Số lượng\", \"Đơn vị\" (gram, kg, ml, lít, hộp, lon, chai, gói, chiếc, cái, muỗng, chén, phần, ly). App tính \"= <chi phí>\" từng dòng.\n5. \"Hao phí sơ chế\" (%): phần mất khi rửa, lặt, cắt gọt. Ví dụ công thức cần 200 g rau, hao phí 20% → kho trừ 200 ÷ 0,8 = 250 g. Bấm \"Hao phí sơ chế là gì?\" để xem bảng gợi ý (rau 15–25%, thịt 10–20%, tôm 35–45%…).\n6. Xem \"Giá vốn/phần\" → \"Lưu công thức\" (hoặc \"LƯU\" góc trên).\n\nMỗi lần thanh toán món đã gắn công thức (Bán hàng, Bàn, QR mang đi), máy chủ tự trừ từng nguyên liệu theo định lượng, có quy đổi đơn vị và hao phí. Gửi bếp chưa trừ."
+   "text": "Muốn mỗi ly / phần bán ra tự trừ nguyên liệu (cà phê, sữa, thịt…) trong kho: tạo công thức cho món và gắn với món bán.\n1. Tab \"Công thức\" → \"Tạo công thức\".\n2. \"Thông tin món\": \"Tên món *\", mô tả, danh mục (Món chính, Khai vị, Tráng miệng, Đồ uống, Súp & Cháo, Khác), khẩu phần (số + đơn vị: phần, tô, đĩa, ly, g, kg, ml, lít).\n3. \"Gắn menu POS\" → \"Chọn sản phẩm bán hàng tương ứng\". Gắn rồi app ghi \"Khi bán \"<món>\" → tự động trừ kho\".\n4. \"Định lượng nguyên liệu\" → \"Thêm nguyên liệu\": chọn nguyên liệu, \"Số lượng\", \"Đơn vị\" (gram, kg, ml, lít, hộp, lon, chai, gói, chiếc, cái, muỗng, chén, phần, ly). App tính \"= <chi phí>\" từng dòng.\n5. \"Hao phí sơ chế\" (%): phần mất khi rửa, lặt, cắt gọt. Ví dụ công thức cần 200 g rau, hao phí 20% → kho trừ 200 ÷ 0,8 = 250 g. Bấm \"Hao phí sơ chế là gì?\" để xem bảng gợi ý (rau 15–25%, thịt 10–20%, tôm 35–45%…).\n6. Xem \"Giá vốn/phần\" → \"Lưu công thức\" (hoặc \"LƯU\" góc trên).\n\nMỗi lần thanh toán món đã gắn công thức (Bán hàng, Bàn, QR mang đi), máy chủ tự trừ từng nguyên liệu theo định lượng, có quy đổi đơn vị và hao phí. Gửi bếp chưa trừ."
   },
   {
    "id": "kho-chuyen-nghiep#cac-viec-thuong-lam-3-ban-thanh-pham-pha-cot-nau-nuoc-dung-l",
@@ -1384,7 +1384,7 @@
    "module_name": "Kho hàng",
    "section": "Các việc thường làm",
    "title": "5. Bật / tắt bán (hết món tạm thời)",
-   "text": "1. Bấm \"Chọn\" → chọn các món → \"Tắt bán\" (hoặc \"Bật bán\").\n2. Món tắt bán hiện \"Tạm ngưng bán\":\n   • QR: khách không thấy món.\n   • Quản lý Bàn: món có nhãn \"TẠM HẾT\"; nhân viên chọn sẽ được hỏi \"Món tạm hết\" → \"Vẫn thêm\" nếu chắc chắn còn.\n   • Bán hàng (quầy): món mờ, nhãn \"Tạm ngưng\", bấm vào báo \"<món> đang tạm ngưng bán\" và không thêm được."
+   "text": "Hết món / hết nguyên liệu tạm thời, muốn tạm ẩn món: khách quét QR không thấy món, nhân viên gọi món được báo món tạm hết:\n1. Bấm \"Chọn\" → chọn các món → \"Tắt bán\" (hoặc \"Bật bán\").\n2. Món tắt bán hiện \"Tạm ngưng bán\":\n   • QR: khách không thấy món.\n   • Quản lý Bàn: món có nhãn \"TẠM HẾT\"; nhân viên chọn sẽ được hỏi \"Món tạm hết\" → \"Vẫn thêm\" nếu chắc chắn còn.\n   • Bán hàng (quầy): món mờ, nhãn \"Tạm ngưng\", bấm vào báo \"<món> đang tạm ngưng bán\" và không thêm được."
   },
   {
    "id": "kho-hang#cac-viec-thuong-lam-6-nhap-kho-nhanh-mot-mon",
@@ -1704,7 +1704,7 @@
    "module_name": "Nhân viên & Phân quyền",
    "section": "",
    "title": "Cách nhân viên vào quán (không có nút \"Thêm nhân viên\")",
-   "text": "1. Chủ quán mở Cài đặt → \"Mã kết nối nhân viên\" (\"Chia sẻ mã này để thêm thành viên vào quán\") → sao chép mã quán (dạng QN-…) gửi nhân viên.\n2. Nhân viên cài app, đăng ký / đăng nhập bằng số điện thoại + mật khẩu (trên iPhone chỉ đăng nhập; tạo tài khoản ở Android/Web/Windows).\n3. Chọn \"Nhập mã quán\" → điền \"Mã quán\" → \"Kết nối vào quán\".\n4. Nhân viên mới hiện trong danh sách với nhãn \"⚡ MỚI\" / nhóm \"Chưa phân vai trò\". Chủ quán / Quản lý bấm \"Cấp quyền\" để gán vai trò."
+   "text": "Có nhân viên mới (phục vụ, thu ngân, bếp…), muốn cho vào app của quán: gửi mã quán cho họ, họ vào xong thì bấm \"Cấp quyền\" gán vai trò.\n1. Chủ quán mở Cài đặt → \"Mã kết nối nhân viên\" (\"Chia sẻ mã này để thêm thành viên vào quán\") → sao chép mã quán (dạng QN-…) gửi nhân viên.\n2. Nhân viên cài app, đăng ký / đăng nhập bằng số điện thoại + mật khẩu (trên iPhone chỉ đăng nhập; tạo tài khoản ở Android/Web/Windows).\n3. Chọn \"Nhập mã quán\" → điền \"Mã quán\" → \"Kết nối vào quán\".\n4. Nhân viên mới hiện trong danh sách với nhãn \"⚡ MỚI\" / nhóm \"Chưa phân vai trò\". Chủ quán / Quản lý bấm \"Cấp quyền\" để gán vai trò."
   },
   {
    "id": "nhan-vien#man-hinh-gom-nhung-gi",
@@ -1976,7 +1976,7 @@
    "module_name": "Nhật Ký Log",
    "section": "Các việc thường làm",
    "title": "1. Tra một sự cố",
-   "text": "Xem log lỗi máy in / lỗi hệ thống lúc xảy ra sự cố:\n1. Chọn \"Khoảng thời gian\" và giờ quanh lúc xảy ra.\n2. Lọc \"Nhân viên\" (nếu biết ai), \"Phân loại Log\" = Lỗi nghiêm trọng hoặc Cảnh báo hệ thống.\n3. Bấm \"Truy xuất Log\", chạm dòng cần xem để đọc chi tiết kỹ thuật.\n\nMuốn xem hành động nghiệp vụ (in lại bill, duyệt PIN, huỷ bàn…): chọn \"Loại thao tác\" = 🧾 Hành động nghiệp vụ."
+   "text": "Xem lại lỗi máy in (bill, phiếu bếp không in ra) / lỗi hệ thống lúc xảy ra sự cố:\n1. Chọn \"Khoảng thời gian\" và giờ quanh lúc xảy ra.\n2. Lọc \"Nhân viên\" (nếu biết ai), \"Phân loại Log\" = Lỗi nghiêm trọng hoặc Cảnh báo hệ thống.\n   • Lỗi máy in: chọn \"Loại thao tác\" = 🖨️ Máy in và \"Phân loại Log\" = Tất cả — lỗi in thường ghi ở mức Thông tin hoạt động (dòng có chữ ERROR). Lỗi in phiếu bếp ngay ở Quản lý Bàn chỉ báo trên màn, không ghi log.\n3. Bấm \"Truy xuất Log\", chạm dòng cần xem để đọc chi tiết kỹ thuật.\n\nMuốn xem hành động nghiệp vụ (in lại bill, duyệt PIN, huỷ bàn…): chọn \"Loại thao tác\" = 🧾 Hành động nghiệp vụ."
   },
   {
    "id": "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro",
@@ -2328,7 +2328,7 @@
    "module_name": "Quản lý Bàn",
    "section": "Các việc thường làm",
    "title": "8. Thanh toán cả bàn",
-   "text": "1. Bấm \"Thanh toán\" → màn \"Thu tiền\" với \"TỔNG TIỀN CẦN THU\".\n2. Tuỳ chọn:\n   • \"Phí dịch vụ / Ship\" — nhập phí thêm.\n   • \"Khách hàng (tích điểm)\" — nhập SĐT; có điểm thì \"Dùng điểm\".\n   • \"Khuyến mãi / Voucher\" → \"Chọn mã\" → \"Áp dụng\" (bỏ: \"Gỡ mã\").\n3. \"Hình thức thanh toán\": \"Tiền mặt\", \"Chuyển khoản\", \"Thẻ\" (không có ví).\n   • Tiền mặt: nhập \"Tiền mặt của khách\" → app tính \"TIỀN THỐI LẠI:\" hoặc \"Còn thiếu:\".\n   • Chuyển khoản: hiện \"QUÉT MÃ QR ĐỂ CHUYỂN KHOẢN\" theo tài khoản ngân hàng khai trong mẫu hoá đơn (In Hoá Đơn → Thiết kế → khối QR Code).\n4. \"Xác nhận\" → \"Thanh toán thành công!\". Hệ thống ghi thu, trừ kho theo công thức, cộng/trừ điểm, đóng bàn — tất cả trong một lần.\n5. Nếu máy chủ tính lại giảm giá/phụ phí khác màn hình: hộp \"Báo giá hóa đơn thay đổi\" → \"Xác nhận & Thanh toán\" hoặc \"Hủy bỏ\".\n6. Bill tự in nếu đã cài. Chưa in sau 30 giây: \"Bill <bàn> CHƯA in sau 30 giây. Kiểm tra máy in bill.\" → \"IN LẠI BILL\".\n\nMất mạng lúc thanh toán: mở lại và thanh toán lại — máy chủ nhận ra lần trước, không thu hai lần."
+   "text": "1. Bấm \"Thanh toán\" → màn \"Thu tiền\" với \"TỔNG TIỀN CẦN THU\".\n2. Tuỳ chọn:\n   • \"Phí dịch vụ / Ship\" — nhập phí thêm.\n   • \"Khách hàng (tích điểm)\" — nhập SĐT; có điểm thì \"Dùng điểm\".\n   • \"Khuyến mãi / Voucher\" → \"Chọn mã\" → \"Áp dụng\" (bỏ: \"Gỡ mã\").\n   • Chưa có ô giảm giá tay — muốn bớt tiền cho khách: dùng mã giảm giá (voucher).\n3. \"Hình thức thanh toán\": \"Tiền mặt\", \"Chuyển khoản\", \"Thẻ\" (không có ví).\n   • Tiền mặt: nhập \"Tiền mặt của khách\" → app tính \"TIỀN THỐI LẠI:\" hoặc \"Còn thiếu:\".\n   • Chuyển khoản: hiện \"QUÉT MÃ QR ĐỂ CHUYỂN KHOẢN\" theo tài khoản ngân hàng khai trong mẫu hoá đơn (In Hoá Đơn → Thiết kế → khối QR Code).\n4. \"Xác nhận\" → \"Thanh toán thành công!\". Hệ thống ghi thu, trừ kho theo công thức, cộng/trừ điểm, đóng bàn — tất cả trong một lần.\n5. Nếu máy chủ tính lại giảm giá/phụ phí khác màn hình: hộp \"Báo giá hóa đơn thay đổi\" → \"Xác nhận & Thanh toán\" hoặc \"Hủy bỏ\".\n6. Bill tự in nếu đã cài. Chưa in sau 30 giây: \"Bill <bàn> CHƯA in sau 30 giây. Kiểm tra máy in bill.\" → \"IN LẠI BILL\".\n\nMất mạng lúc thanh toán: mở lại và thanh toán lại — máy chủ nhận ra lần trước, không thu hai lần."
   },
   {
    "id": "quan-ly-ban#cac-viec-thuong-lam-9-huy-ban-khach-bo-ve-mo-nham",

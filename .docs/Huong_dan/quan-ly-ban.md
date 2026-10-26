@@ -84,6 +84,7 @@ nguon:
    - **"Phí dịch vụ / Ship"** — nhập phí thêm.
    - **"Khách hàng (tích điểm)"** — nhập SĐT; có điểm thì **"Dùng điểm"**.
    - **"Khuyến mãi / Voucher"** → **"Chọn mã"** → **"Áp dụng"** (bỏ: **"Gỡ mã"**).
+   - Chưa có ô giảm giá tay — muốn bớt tiền cho khách: dùng mã giảm giá (voucher).
 3. **"Hình thức thanh toán"**: **"Tiền mặt"**, **"Chuyển khoản"**, **"Thẻ"** (không có ví).
    - Tiền mặt: nhập **"Tiền mặt của khách"** → app tính **"TIỀN THỐI LẠI:"** hoặc **"Còn thiếu:"**.
    - Chuyển khoản: hiện **"QUÉT MÃ QR ĐỂ CHUYỂN KHOẢN"** theo tài khoản ngân hàng khai trong mẫu hoá đơn (In Hoá Đơn → Thiết kế → khối QR Code).

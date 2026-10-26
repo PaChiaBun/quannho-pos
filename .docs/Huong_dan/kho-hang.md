@@ -67,6 +67,7 @@ Với nguyên liệu mua theo đơn vị lớn mà công thức dùng theo ml/g 
 3. Lưu. Công thức ở Kho Chuyên Nghiệp sẽ trừ kho đúng theo quy đổi.
 
 ### 5. Bật / tắt bán (hết món tạm thời)
+Hết món / hết nguyên liệu tạm thời, muốn tạm ẩn món: khách quét QR không thấy món, nhân viên gọi món được báo món tạm hết:
 1. Bấm **"Chọn"** → chọn các món → **"Tắt bán"** (hoặc **"Bật bán"**).
 2. Món tắt bán hiện **"Tạm ngưng bán"**:
    - **QR**: khách **không thấy** món.

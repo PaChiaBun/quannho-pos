@@ -23,6 +23,7 @@ nguon:
 - Nhân viên khác: chỉ xem danh sách.
 
 ## Cách nhân viên vào quán (không có nút "Thêm nhân viên")
+Có nhân viên mới (phục vụ, thu ngân, bếp…), muốn cho vào app của quán: gửi mã quán cho họ, họ vào xong thì bấm "Cấp quyền" gán vai trò.
 1. Chủ quán mở **Cài đặt → "Mã kết nối nhân viên"** ("Chia sẻ mã này để thêm thành viên vào quán") → sao chép mã quán (dạng `QN-…`) gửi nhân viên.
 2. Nhân viên cài app, **đăng ký / đăng nhập** bằng số điện thoại + mật khẩu (trên iPhone chỉ đăng nhập; tạo tài khoản ở Android/Web/Windows).
 3. Chọn **"Nhập mã quán"** → điền **"Mã quán"** → **"Kết nối vào quán"**.

@@ -34,6 +34,7 @@ Tiêu đề **"Kho Chuyên Nghiệp"**, hai nút trên đầu: **"Kiểm kê kho
 2. Nguyên liệu mua theo gói/lon nhưng công thức dùng g/ml: khai **"Quy cách pha chế"** (vd 1 gói = 500 g). Nếu thiếu, form công thức sẽ cảnh báo lệch đơn vị và giá vốn có thể sai.
 
 ### 2. Tạo công thức món
+Muốn mỗi ly / phần bán ra tự trừ nguyên liệu (cà phê, sữa, thịt…) trong kho: tạo công thức cho món và gắn với món bán.
 1. Tab **"Công thức"** → **"Tạo công thức"**.
 2. **"Thông tin món"**: **"Tên món *"**, mô tả, danh mục (Món chính, Khai vị, Tráng miệng, Đồ uống, Súp & Cháo, Khác), **khẩu phần** (số + đơn vị: phần, tô, đĩa, ly, g, kg, ml, lít).
 3. **"Gắn menu POS"** → **"Chọn sản phẩm bán hàng tương ứng"**. Gắn rồi app ghi "Khi bán "<món>" → tự động trừ kho".

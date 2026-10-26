@@ -36,9 +36,10 @@ nguon:
 ## Các việc thường làm
 
 ### 1. Tra một sự cố
-Xem log lỗi máy in / lỗi hệ thống lúc xảy ra sự cố:
+Xem lại lỗi máy in (bill, phiếu bếp không in ra) / lỗi hệ thống lúc xảy ra sự cố:
 1. Chọn **"Khoảng thời gian"** và giờ quanh lúc xảy ra.
 2. Lọc **"Nhân viên"** (nếu biết ai), **"Phân loại Log"** = **Lỗi nghiêm trọng** hoặc **Cảnh báo hệ thống**.
+   - Lỗi máy in: chọn **"Loại thao tác"** = **🖨️ Máy in** và **"Phân loại Log"** = **Tất cả** — lỗi in thường ghi ở mức Thông tin hoạt động (dòng có chữ ERROR). Lỗi in phiếu bếp ngay ở Quản lý Bàn chỉ báo trên màn, không ghi log.
 3. Bấm **"Truy xuất Log"**, chạm dòng cần xem để đọc chi tiết kỹ thuật.
 
 > Muốn xem hành động nghiệp vụ (in lại bill, duyệt PIN, huỷ bàn…): chọn **"Loại thao tác"** = **🧾 Hành động nghiệp vụ**.

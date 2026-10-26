@@ -75,6 +75,7 @@ Khách trả tiền tại quầy (thu ngân tính tiền ở màn Bán hàng):
 3. Tuỳ chọn giảm giá:
    - **"Điểm thưởng"** — chỉ hiện khi đã gắn khách có điểm và **không** trả bằng ví.
    - **"Khuyến mãi / Voucher"** → **"Chọn mã"** → chọn mã → **"Áp dụng"**. Bỏ mã: **"Gỡ mã"**.
+   - App **chưa có ô giảm giá tay** (trừ thẳng một số tiền). Muốn bớt cho khách quen: Chủ quán / Quản lý tạo mã giảm giá ở Khách hàng → **"Khuyến mãi / Voucher"** → **"Thêm mã mới"**, rồi chọn mã khi thanh toán. Mã dùng chung cho mọi đơn — nên đặt hạn dùng hoặc tắt mã sau khi dùng.
 4. Kiểm phần tổng: "Tạm tính", "Giảm giá", "Dùng điểm", **"TỔNG CỘNG"**.
 5. Bấm **"Xác nhận • <số tiền>"**.
 6. Màn **"Thanh toán thành công!"** kèm số đơn. Hoá đơn tự in nếu quán bật tự in và máy đã cài máy in.
@@ -133,7 +134,7 @@ Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — kh
 | "Gửi bếp thất bại. Hãy chụp lại báo chủ app." | Lỗi mạng hoặc dữ liệu khi gửi bếp | Thử lại; còn lỗi thì chụp màn gửi chủ app |
 | "Bạn không có quyền huỷ đơn hàng" | Vai trò không có quyền "Huỷ đơn hàng" (vd Phục vụ) | Dùng nút thùng rác trên cùng, hoặc nhờ Thu ngân/Quản lý |
 | Đồ uống thêm bằng nút dấu + lại in ra máy bếp nóng | Món thêm nhanh mặc định "Bộ phận chế biến" = Bếp Nóng | Kho hàng → sửa món → chọn "Bếp Bar" |
-| Khách muốn huỷ / hoàn tiền đơn đã thanh toán | App chưa có chức năng huỷ đơn đã thu | Báo Chủ quán |
+| Khách muốn huỷ / hoàn tiền đơn đã thanh toán | App chưa có chức năng huỷ đơn đã thu (kể cả khi lỡ bấm thanh toán nhầm, khách chưa trả tiền) | Báo Chủ quán — Chủ quán cũng chưa huỷ được trong app, doanh thu / thu chi của đơn đó sẽ lệch |
 
 ## Liên quan module khác
 - **Thu Chi**: mỗi đơn thanh toán tạo đúng một khoản thu.
