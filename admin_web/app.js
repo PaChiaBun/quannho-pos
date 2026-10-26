@@ -222,14 +222,21 @@ function logout(msg) {
   bm.rows = []; bm.total = 0; bm.offset = 0; bm.store = null;
 
   const idsToClear = [
-    'ov-error', 'ov-hero', 'ov-secondary', 'ov-funnel',
-    'ov-new-meta', 'ov-new-chart', 'ov-week-meta', 'ov-week-chart',
+    'ov-error', 'ov-todo', 'ov-k-rev', 'ov-k-ord', 'ov-k-act', 'ov-k-new', 'ov-rev-meta', 'ov-rev-chart',
+    'ov-top', 'ov-funnel', 'ov-drop', 'ov-suggest', 'ov-new-meta', 'ov-new-chart', 'ov-week-meta', 'ov-week-chart',
     'st-list', 'bm-stats', 'bm-list', 'bm-store-filter',
     'kn-error', 'kn-changelog', 'kn-packs', 'kn-modules', 'kn-cache', 'kn-caps',
     'pl-error', 'pl-kpis', 'pl-list', 'bl-section', 'sp-list', 'sp-filters', 'sp-accounts',
   ];
   for (const id of idsToClear) clear($(id));
   $('ov-error').hidden = true;
+  $('ov-suggest-card').hidden = true;
+  $('ov-drop-count').textContent = '';
+  $('ov-suggest-count').textContent = '';
+  $('ov-updated').textContent = 'Đang tải số liệu…';
+  $('ov-suggest-card').open = false;
+  $('ov-rev-sum').textContent = '';
+  ovRevPts = []; ovSuggest = [];
   $('pl-error').hidden = true;
   $('kn-error').hidden = true;
   $('bm-store-filter').hidden = true;
@@ -545,7 +552,7 @@ function renderChart(container, metaBox, points, opts) {
     const h = val === 0 ? 2 : Math.max(3, rawH);
     const x = padL + i * slotW + (slotW - barW) / 2;
     const y = padT + plotH - h;
-    const cls = `bar${val === 0 ? ' zero' : ''}${isLast ? ' current' : ''}`;
+    const cls = `bar${val === 0 ? ' zero' : ''}${isLast ? ` ${opts.lastCls || 'current'}` : ''}`;
     const rect = svgEl('rect', {
       x: x.toFixed(1),
       y: y.toFixed(1),
@@ -559,15 +566,6 @@ function renderChart(container, metaBox, points, opts) {
     if (over) {
       barsGroup.append(svgEl('text', { x: (x + barW / 2).toFixed(1), y: (padT - 6).toFixed(1), 'text-anchor': 'middle',
                                        class: 'axis-lbl', text: `↑${axisFmt(val)}` }));
-    }
-
-    if (isLast && val > 0 && !over) {
-      barsGroup.append(svgEl('circle', {
-        cx: (x + barW / 2).toFixed(1),
-        cy: Math.max(padT + 3, y - 5).toFixed(1),
-        r: '3',
-        fill: '#f07a45',
-      }));
     }
 
     const hit = svgEl('rect', {
@@ -588,23 +586,52 @@ function renderChart(container, metaBox, points, opts) {
 }
 
 // ── Tab 1: Tổng quan ──────────────────────────────────────────────────────────
-function heroCard(title, value, badgeText, badgeCls, subText, accentCls) {
-  return el('div', { class: `kpi-hero ${accentCls}` },
-    el('div', { class: 'kpi-label' },
-      el('span', { text: title }),
-      badgeText ? el('span', { class: `badge ${badgeCls || ''}`, text: badgeText }) : null,
-    ),
-    el('div', { class: 'kpi-val-row' },
-      el('span', { class: 'kpi-val', text: fmtN(value) }),
-    ),
-    el('div', { class: 'kpi-sub', text: subText }),
+// Một ngày đột biến (> 3 lần ngày cao thứ nhì) → trần theo ngày thứ nhì, để các ngày khác không bị bẹp
+function softMax(vals) {
+  const s = vals.slice().sort((a, b) => b - a);
+  return s[1] > 0 && s[0] > s[1] * 3 ? s[1] * 1.25 : Math.max(1, s[0] || 0);
+}
+
+function sparkline(values, label) {
+  const vals = values.map((v) => Number(v || 0));
+  if (vals.length < 2) return null;
+  const W = 120, H = 32;
+  const max = softMax(vals);
+  const step = vals.length > 1 ? W / (vals.length - 1) : W;
+  const pts = vals.map((v, i) => `${(i * step).toFixed(1)},${(H - 2 - (Math.min(v, max) / max) * (H - 4)).toFixed(1)}`);
+  return svgEl('svg', { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'none', class: 'ov-spark', role: 'img', 'aria-label': label },
+    svgEl('path', { d: `M0,${H} L${pts.join(' L')} L${W},${H} Z`, class: 'ov-spark-area' }),
+    svgEl('polyline', { points: pts.join(' '), class: 'ov-spark-line', 'vector-effect': 'non-scaling-stroke' }),
   );
 }
 
-function subKpi(value, label, cls = '') {
-  return el('div', { class: `kpi-sub-card ${cls}` },
-    el('div', { class: 'v', text: fmtN(value) }),
-    el('div', { class: 'k', text: label }),
+// "▲ 18% so với 7 ngày trước" — xanh tăng, đỏ giảm
+function kpiDelta(cur, prev, vsText) {
+  cur = Number(cur || 0); prev = Number(prev || 0);
+  if (prev <= 0) return el('span', { class: 'muted', text: cur > 0 ? 'Kỳ trước 0' : 'Chưa có đơn' });
+  if (cur === prev) return el('span', { class: 'muted', text: `Bằng ${vsText.replace(/^so với /, '')}` });
+  const raw = ((cur - prev) / prev) * 100;
+  const pct = Math.round(Math.abs(raw));
+  return el('span', {},
+    el('span', { class: `ov-delta ${raw > 0 ? 'up' : 'down'}`, text: `${raw > 0 ? '▲' : '▼'} ${pct < 1 ? '<1' : fmtN(pct)}%` }),
+    el('span', { class: 'muted', text: ` ${vsText}` }),
+  );
+}
+
+function fillKpi(id, label, value, foot, spark) {
+  clear($(id)).append(...[
+    el('div', { class: 'ov-kpi-label', text: label }),
+    el('div', { class: 'ov-kpi-val', text: value }),
+    el('div', { class: 'ov-kpi-foot small' }, foot),
+    spark,
+  ].filter(Boolean));
+}
+
+function hBar(ratio, cls) {
+  const w = Math.round(Math.max(0, Math.min(1, ratio)) * 1000);
+  return svgEl('svg', { viewBox: '0 0 1000 6', preserveAspectRatio: 'none', class: 'ov-hbar', 'aria-hidden': 'true' },
+    svgEl('rect', { x: 0, y: 0, width: 1000, height: 6, rx: 3, class: 'ov-hbar-track' }),
+    w > 0 ? svgEl('rect', { x: 0, y: 0, width: Math.max(12, w), height: 6, rx: 3, class: cls || 'ov-hbar-fill' }) : null,
   );
 }
 
@@ -614,161 +641,76 @@ function renderFunnel(d) {
   const everSold = Math.max(0, total - never);
   const act30 = Number(d.active_30d || 0);
   const act7 = Number(d.active_7d || 0);
-  const base = Math.max(1, total);
-
   const steps = [
-    {
-      idx: '1',
-      name: 'Tạo quán',
-      count: total,
-      stepBadge: '100% đầu phễu',
-      badgeCls: 'info',
-      sub: 'Tổng số quán đã khởi tạo trên nền tảng',
-      ratio: total > 0 ? 1000 : 0,
-      fillCls: 'funnel-fill-1',
-      filterTarget: 'all',
-    },
-    {
-      idx: '2',
-      name: 'Đã từng bán hàng',
-      count: everSold,
-      stepBadge: `Chuyển đổi ${fmtPct(everSold, total)}`,
-      badgeCls: 'good',
-      sub: `Còn ${fmtN(never)} quán chưa phát sinh đơn nào (${fmtPct(never, total)})`,
-      ratio: Math.round((everSold / base) * 1000),
-      fillCls: 'funnel-fill-2',
-      filterTarget: 'never',
-      filterLabel: 'Xem quán chưa bán ›',
-    },
-    {
-      idx: '3',
-      name: 'Còn bán 30 ngày qua',
-      count: act30,
-      stepBadge: `${fmtPct(act30, everSold)} từ Đã bán`,
-      badgeCls: 'warn',
-      sub: `Chiếm ${fmtPct(act30, total)} tổng số quán · ${fmtN(d.sleeping)} quán đang ngủ`,
-      ratio: Math.round((act30 / base) * 1000),
-      fillCls: 'funnel-fill-3',
-      filterTarget: 'sleeping',
-      filterLabel: 'Xem quán ngủ ›',
-    },
-    {
-      idx: '4',
-      name: 'Đang dùng tích cực (7 ngày)',
-      count: act7,
-      stepBadge: `${fmtPct(act7, act30)} từ 30 ngày`,
-      badgeCls: 'good',
-      sub: `Chiếm ${fmtPct(act7, total)} tổng số quán trên hệ thống`,
-      ratio: Math.round((act7 / base) * 1000),
-      fillCls: 'funnel-fill-4',
-      filterTarget: 'active',
-      filterLabel: 'Xem quán tích cực ›',
-    },
+    { name: 'Đã tạo quán', count: total, note: `${fmtN(d.new_30d)} quán mới trong 30 ngày` },
+    { name: 'Đã từng bán', count: everSold, prev: total, note: `${fmtN(never)} quán chưa bán đơn nào`, filter: 'never', link: 'Xem quán chưa bán' },
+    { name: 'Còn bán trong 30 ngày', count: act30, prev: everSold, note: `${fmtN(d.sleeping)} quán đang ngủ`, filter: 'sleeping', link: 'Xem quán ngủ' },
+    { name: 'Tích cực 7 ngày', count: act7, prev: act30, note: `${fmtPct(act7, total)} tổng số quán`, filter: 'active', link: 'Xem quán tích cực' },
   ];
-
-  const box = clear($('ov-funnel'));
-  for (const s of steps) {
-    const barSvg = svgEl('svg', { viewBox: '0 0 1000 10', preserveAspectRatio: 'none', class: 'funnel-bar-svg', 'aria-hidden': 'true' },
-      svgEl('rect', { x: 0, y: 0, width: 1000, height: 10, rx: 5, class: 'funnel-track' }),
-      s.ratio > 0 ? svgEl('rect', { x: 0, y: 0, width: Math.max(8, s.ratio), height: 10, rx: 5, class: s.fillCls }) : null,
-    );
-    box.append(el('div', { class: 'funnel-step' },
-      el('div', { class: 'funnel-top' },
-        el('div', { class: 'funnel-name' },
-          el('span', { class: 'funnel-idx', text: s.idx }),
-          el('span', { text: s.name }),
-        ),
-        el('div', { class: 'funnel-nums' },
-          el('span', { class: 'funnel-count', text: `${fmtN(s.count)} quán` }),
-          el('span', { class: `badge ${s.badgeCls}`, text: s.stepBadge }),
-        ),
-      ),
-      barSvg,
-      el('div', { class: 'funnel-top small muted' },
-        el('span', { text: s.sub }),
-        s.filterLabel ? el('button', {
-          type: 'button',
-          class: 'link small',
-          text: s.filterLabel,
-          onclick: () => {
-            st.filter = s.filterTarget;
-            st.offset = 0;
-            showTab('stores');
-          },
-        }) : null,
-      ),
-    ));
-  }
+  clear($('ov-funnel')).append(...steps.map((s) => el('div', { class: 'ov-step' },
+    el('div', { class: 'ov-step-name small', text: s.name }),
+    el('div', { class: 'ov-step-val' },
+      el('span', { text: fmtN(s.count) }),
+      s.prev !== undefined ? el('span', { class: 'ov-step-pct', text: fmtPct(s.count, s.prev) }) : null,
+    ),
+    hBar(total > 0 ? s.count / total : 0),
+    el('div', { class: 'ov-step-note small muted', text: s.note }),
+    s.filter ? el('button', {
+      type: 'button',
+      class: 'link small ov-step-link',
+      text: `${s.link}\u00a0›`,
+      onclick: () => {
+        st.filter = s.filter;
+        st.offset = 0;
+        showTab('stores');
+      },
+    }) : null,
+  )));
 }
 
 loaders.overview = async () => {
   const errBox = $('ov-error');
   errBox.hidden = true;
   clear(errBox);
-  if (!$('ov-hero').children.length) {
-    showSkeletons($('ov-hero'), 3, 'h-kpi');
-  }
+  for (const id of ['ov-k-act', 'ov-k-new']) if (!$(id).children.length) showSkeletons($(id), 1, 'h-kpi');
   try {
     const includeTest = $('ov-include-test').checked;
-    loadOverviewExtra(includeTest);  // khối mới chạy song song; lỗi riêng không làm hỏng khối cũ
+    loadOverviewExtra(includeTest);  // khối doanh số chạy song song; lỗi riêng không làm hỏng khối này
     const d = await rpc('admin_store_overview_v1', { p_include_test: includeTest });
 
-    clear($('ov-hero')).append(
-      heroCard(
-        'Đang dùng tích cực (7 ngày)',
-        d.active_7d,
-        `${fmtPct(d.active_7d, d.total)} tổng quán`,
-        'good',
-        'Có ít nhất 1 đơn hoàn thành trong 7 ngày qua',
-        'accent-primary',
-      ),
-      heroCard(
-        'Quán mới 7 ngày',
-        d.new_7d,
-        `+${fmtN(d.new_today)} hôm nay`,
-        'info',
-        `${fmtN(d.new_30d)} quán đăng ký mới trong 30 ngày`,
-        'accent-good',
-      ),
-      heroCard(
-        'Tổng số quán',
-        d.total,
-        includeTest ? 'Gồm quán thử' : 'Quán thật',
-        '',
-        includeTest ? `Đang tính gộp ${fmtN(d.test_stores)} quán thử` : `Đã loại trừ ${fmtN(d.test_stores)} quán thử khỏi số liệu`,
-        'accent-navy',
-      ),
-    );
+    const now = new Date();
+    $('ov-updated').textContent = `Cập nhật lúc ${pad2(now.getHours())}:${pad2(now.getMinutes())} · `
+      + (includeTest ? `Đang tính cả ${fmtN(d.test_stores)} quán thử` : `Đã loại ${fmtN(d.test_stores)} quán thử khỏi số liệu`);
 
-    clear($('ov-secondary')).append(
-      subKpi(d.new_today, 'Mới hôm nay'),
-      subKpi(d.new_30d, 'Mới 30 ngày'),
-      subKpi(d.active_30d, 'Có đơn 30 ngày', 'good'),
-      subKpi(d.sleeping, 'Ngủ (>30 ngày không đơn)', d.sleeping > 0 ? 'warn' : ''),
-      subKpi(d.never_sold, `Chưa bán đơn nào (${fmtPct(d.never_sold, d.total)})`),
-      subKpi(d.test_stores, 'Quán thử đã đánh dấu'),
-    );
+    const weeks = d.active_by_week || [];
+    fillKpi('ov-k-act', 'Quán đang dùng tích cực', fmtN(d.active_7d),
+      el('span', { class: 'muted', text: `${fmtPct(d.active_7d, d.total)} trên ${fmtN(d.total)} quán · 7 ngày qua` }),
+      sparkline(weeks.slice(0, -1).map((w) => w.n), 'Xu hướng số quán có đơn theo tuần (các tuần đã trọn)'));
+    fillKpi('ov-k-new', 'Quán mới 7 ngày', fmtN(d.new_7d),
+      el('span', { class: 'muted', text: `+${fmtN(d.new_today)} hôm nay · ${fmtN(d.new_30d)} trong 30 ngày` }),
+      sparkline((d.new_by_day || []).slice(-30).map((p) => p.n), 'Xu hướng quán mới theo ngày, 30 ngày qua'));
 
     renderFunnel(d);
 
     renderChart($('ov-new-chart'), $('ov-new-meta'), d.new_by_day || [], {
       capOutlier: true,
       ariaLabel: 'Biểu đồ số quán mới theo ngày trong 60 ngày qua',
-      xAxisLabel: (p, isLast) => (isLast ? `Hôm nay (${fmtShortDay(p.day)})` : fmtShortDay(p.day)),
+      xAxisLabel: (p, isLast) => (isLast ? 'Hôm nay' : fmtShortDay(p.day)),
       tooltipLabel: (p, isLast) => (isLast ? `Hôm nay ${fmtShortDay(p.day)}` : `Ngày ${fmtShortDay(p.day)}`),
-      summaryText: (sum, last) => `Tổng ${fmtN(sum)} · Hôm nay +${fmtN(last)}`,
+      summaryText: (sum, last) => `Tổng ${fmtN(sum)} quán · hôm nay +${fmtN(last)}`,
     });
 
-    renderChart($('ov-week-chart'), $('ov-week-meta'), d.active_by_week || [], {
+    renderChart($('ov-week-chart'), $('ov-week-meta'), weeks, {
+      lastCls: 'partial',
       ariaLabel: 'Biểu đồ số quán có đơn theo tuần trong 12 tuần qua',
       xAxisLabel: (p, isLast) => (isLast ? 'Tuần này' : fmtShortDay(p.week_start)),
       tooltipLabel: (p, isLast) => (isLast ? `Tuần này (mới ${weekDaysSoFar(p.week_start)} ngày)` : `Tuần ${fmtShortDay(p.week_start)}`),
-      // tuần này chưa hết → không đưa vào trung bình, ghi rõ đang chạy
-      summaryText: (sum, last, len) => `TB ${fmtN(Math.round((sum - last) / Math.max(1, len - 1)))}/tuần · Tuần này ${fmtN(last)} (mới ${weekDaysSoFar((d.active_by_week || []).at(-1)?.week_start)} ngày)`,
+      // tuần này chưa hết → không đưa vào trung bình
+      summaryText: (sum, last, len) => `Trung bình ${fmtN(Math.round((sum - last) / Math.max(1, len - 1)))} quán/tuần · tuần này ${fmtN(last)}`,
     });
   } catch (err) {
     if (err && (err.message === 'NO_TOKEN' || err.message === 'UNAUTHORIZED' || err.message === 'FORBIDDEN')) return;
-    clear($('ov-hero'));
+    clear($('ov-k-act')); clear($('ov-k-new'));
     errBox.hidden = false;
     errBox.append(errorBox('Không tải được tổng quan các quán.', () => loaders.overview()));
   }
@@ -782,30 +724,6 @@ function weekDaysSoFar(weekStart) {
   return Math.min(7, Math.max(1, Math.floor((Date.now() - start.getTime()) / 86400000) + 1));
 }
 
-function deltaText(cur, prev) {
-  cur = Number(cur || 0); prev = Number(prev || 0);
-  if (prev <= 0) return cur > 0 ? ['Kỳ trước 0', 'up'] : ['', ''];
-  const pct = Math.round(((cur - prev) / prev) * 100);
-  if (pct === 0) return ['Bằng kỳ trước', ''];
-  return [`${pct > 0 ? '▲' : '▼'} ${Math.abs(pct)}% so với kỳ trước`, pct > 0 ? 'up' : 'down'];
-}
-
-function salesKpi(value, label, cur, prev) {
-  const [dt, dc] = deltaText(cur, prev);
-  return el('div', { class: 'kpi-sub-card' },
-    el('div', { class: 'v', text: value }),
-    el('div', { class: 'k', text: label }),
-    dt ? el('div', { class: `d ${dc}`, text: dt }) : null,
-  );
-}
-
-function todoKpi(value, label, cls, onClick) {
-  return el('button', { type: 'button', class: `kpi-sub-card pl-kpi ${value > 0 ? cls : ''}`, onclick: onClick },
-    el('div', { class: 'v', text: fmtN(value) }),
-    el('div', { class: 'k', text: label }),
-  );
-}
-
 function goPlans(filter, scrollToBilling) {
   pl.filter = filter;
   pl.offset = 0;
@@ -816,12 +734,51 @@ function goPlans(filter, scrollToBilling) {
   if (scrollToBilling) setTimeout(() => $('bl-section').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
 }
 
+// Biểu đồ doanh số: chuyển Doanh thu / Số đơn không gọi lại máy chủ
+let ovRevPts = [];
+let ovRevMode = 'rev';
+function drawRevChart() {
+  const byRev = ovRevMode === 'rev';
+  renderChart($('ov-rev-chart'), $('ov-rev-meta'), ovRevPts.map((p) => ({ ...p, n: byRev ? p.revenue : p.orders })), {
+    capOutlier: true,
+    axisFmt: byRev ? fmtMoneyShort : fmtN,
+    ariaLabel: `Biểu đồ ${byRev ? 'doanh thu' : 'số đơn'} toàn hệ thống theo ngày trong 30 ngày qua`,
+    xAxisLabel: (p, isLast) => (isLast ? 'Hôm nay' : fmtShortDay(p.day)),
+    tooltipLabel: (p, isLast) => (isLast ? 'Hôm nay' : `Ngày ${fmtShortDay(p.day)}`),
+    valueText: (p) => `${fmtMoney(p.revenue)} · ${fmtN(p.orders)} đơn`,
+    summaryText: (sum, last) => (byRev ? `Tổng ${fmtMoneyShort(sum)} · hôm nay ${fmtMoneyShort(last)}` : `Tổng ${fmtN(sum)} đơn · hôm nay ${fmtN(last)}`),
+    emptyNode: () => emptyBox('Chưa có doanh thu', 'Chưa quán nào bán trong 30 ngày qua.'),
+  });
+}
+for (const [id, mode] of [['ov-rev-mode-rev', 'rev'], ['ov-rev-mode-ord', 'ord']]) {
+  $(id).addEventListener('click', () => {
+    ovRevMode = mode;
+    for (const b of [$('ov-rev-mode-rev'), $('ov-rev-mode-ord')]) {
+      const on = b.id === id;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    }
+    if (ovRevPts.length) drawRevChart();
+  });
+}
+
+function todoItem(value, label, cls, onClick) {
+  return el('button', { type: 'button', class: `ov-todo-item ${cls}`, onclick: onClick },
+    el('span', { class: 'ov-todo-v', text: fmtN(value) }),
+    el('span', { class: 'ov-todo-k', text: label }),
+  );
+}
+
 let ovSuggest = [];
 let ovExtraGen = 0;
 async function loadOverviewExtra(includeTest) {
   const gen = ++ovExtraGen;
-  const ids = ['ov-todo', 'ov-sales', 'ov-top', 'ov-drop'];
-  if (!$('ov-todo').children.length) ids.forEach((id) => { const kpi = id === 'ov-todo' || id === 'ov-sales'; showSkeletons($(id), kpi ? 4 : 3, kpi ? 'h-kpi' : 'h-row'); });
+  if (!$('ov-todo').children.length) {
+    showSkeletons($('ov-todo'), 1, 'h-row');
+    for (const id of ['ov-k-rev', 'ov-k-ord']) showSkeletons($(id), 1, 'h-kpi');
+    for (const id of ['ov-top', 'ov-drop']) showSkeletons($(id), 3, 'h-row');
+    showSkeletons($('ov-rev-chart'), 1, 'h-chart');
+  }
   let x;
   try {
     x = await rpc('admin_overview_extra_v1', { p_include_test: includeTest });
@@ -829,92 +786,116 @@ async function loadOverviewExtra(includeTest) {
     if (!x || x.ok === false) throw new Error((x && x.error) || 'ERR');
   } catch (err) {
     if (isAuthErr(err) || gen !== ovExtraGen) return;
-    for (const id of ids) clear($(id));
+    for (const id of ['ov-todo', 'ov-top', 'ov-drop', 'ov-rev-chart', 'ov-rev-meta', 'ov-rev-sum']) clear($(id));
+    fillKpi('ov-k-rev', 'Doanh thu 7 ngày', '—', el('span', { class: 'muted', text: 'Không tải được' }));
+    fillKpi('ov-k-ord', 'Đơn hoàn thành 7 ngày', '—', el('span', { class: 'muted', text: 'Không tải được' }));
+    $('ov-rev-chart').append(emptyBox('Không tải được doanh số', 'Bấm "Thử lại" ở dải việc cần làm.'));
     $('ov-drop-count').textContent = '';
-    clear($('ov-rev-chart')); clear($('ov-rev-meta'));
-    $('ov-todo').append(el('div', { class: 'ov-todo-ok' }, errorBox('Không tải được doanh số / việc hôm nay.', () => loadOverviewExtra(includeTest))));
+    ovRevPts = [];
+    $('ov-todo').append(errorBox('Không tải được doanh số / việc hôm nay.', () => loadOverviewExtra(includeTest)));
     $('ov-suggest-card').hidden = true;
     return;
   }
+
   const t = x.todo || {};
-  const todoBox = clear($('ov-todo'));
   const drop = x.dropping || { total: 0, rows: [] };
-  todoBox.append(
-    todoKpi(t.trial_ending, 'Sắp hết dùng thử', 'warn', () => goPlans('trial_ending')),
-    todoKpi(t.trial_expired, 'Đã hết dùng thử', 'bad', () => goPlans('trial_expired')),
-    todoKpi(Number(t.pro_ending || 0) + Number(t.pro_expired || 0), 'Gói Pro sắp hết / hết hạn', 'warn',
-            () => goPlans('pro_due')),
-    todoKpi(t.follow_ups_due, 'Ghi chú cần gọi lại', 'warn', () => goPlans('follow_up')),
-    todoKpi(t.support_open, `Hỗ trợ mới${Number(t.support_in_progress || 0) ? ` (+${fmtN(t.support_in_progress)} đang xử lý)` : ''}`, 'bad', () => {
-      sp.status = Number(t.support_open || 0) > 0 || !Number(t.support_in_progress || 0) ? 'open' : 'in_progress';
-      sp.kind = 'all';
-      showTab('support');
-    }),
-    todoKpi(t.billing_pending, 'Đơn thu phí chờ xác nhận', 'warn', () => { bl.filter = 'pending'; goPlans('all', true); }),
-    todoKpi(drop.total, 'Quán đang bỏ dùng', 'warn', () => $('ov-drop').scrollIntoView({ behavior: 'smooth', block: 'start' })),
-  );
+  const items = [
+    [t.trial_ending, 'Sắp hết dùng thử', 'warn', () => goPlans('trial_ending')],
+    [t.trial_expired, 'Đã hết dùng thử', 'bad', () => goPlans('trial_expired')],
+    [Number(t.pro_ending || 0) + Number(t.pro_expired || 0), 'Gói Pro sắp hết / hết hạn', 'warn', () => goPlans('pro_due')],
+    [t.follow_ups_due, 'Ghi chú cần gọi lại', 'warn', () => goPlans('follow_up')],
+    [Number(t.support_open || 0) || Number(t.support_in_progress || 0),
+      Number(t.support_open || 0) ? `Hỗ trợ mới${Number(t.support_in_progress || 0) ? ` (+${fmtN(t.support_in_progress)} đang xử lý)` : ''}` : 'Hỗ trợ đang xử lý',
+      Number(t.support_open || 0) ? 'bad' : 'warn', () => {
+        sp.status = Number(t.support_open || 0) > 0 ? 'open' : 'in_progress';
+        sp.kind = 'all';
+        showTab('support');
+      }],
+    [t.billing_pending, 'Đơn thu phí chờ xác nhận', 'warn', () => { bl.filter = 'pending'; goPlans('all', true); }],
+    [drop.total, 'Quán đang bỏ dùng', 'warn', () => $('ov-drop-panel').scrollIntoView({ behavior: 'smooth', block: 'start' })],
+  ].filter((it) => Number(it[0] || 0) > 0);
+  clear($('ov-todo')).append(...(items.length
+    ? items.map((it) => todoItem(...it))
+    : [el('p', { class: 'ov-todo-none muted', text: 'Hôm nay không có việc nào cần xử lý.' })]));
 
   const sa = x.sales || {};
-  clear($('ov-sales')).append(
-    salesKpi(fmtMoneyShort(sa.revenue_7d), `Doanh thu 7 ngày · ${fmtN(sa.orders_7d)} đơn`, sa.revenue_7d, sa.revenue_prev7),
-    salesKpi(fmtMoneyShort(sa.revenue_30d), `Doanh thu 30 ngày · ${fmtN(sa.orders_30d)} đơn`, sa.revenue_30d, sa.revenue_prev30),
-    salesKpi(fmtN(sa.orders_7d), 'Đơn 7 ngày', sa.orders_7d, sa.orders_prev7),
-    salesKpi(fmtN(sa.stores_selling_7d), 'Quán có bán 7 ngày qua', 0, 0),
+  const byDay = sa.by_day || [];
+  fillKpi('ov-k-rev', 'Doanh thu 7 ngày', fmtMoneyShort(sa.revenue_7d),
+    kpiDelta(sa.revenue_7d, sa.revenue_prev7, 'so với kỳ trước'),
+    sparkline(byDay.map((p) => p.revenue), 'Xu hướng doanh thu theo ngày, 30 ngày qua'));
+  fillKpi('ov-k-ord', 'Đơn hoàn thành 7 ngày', fmtN(sa.orders_7d),
+    kpiDelta(sa.orders_7d, sa.orders_prev7, 'so với kỳ trước'),
+    sparkline(byDay.map((p) => p.n), 'Xu hướng số đơn theo ngày, 30 ngày qua'));
+
+  clear($('ov-rev-sum')).append(
+    `30 ngày: ${fmtMoneyShort(sa.revenue_30d)} · ${fmtN(sa.orders_30d)} đơn · ${fmtN(sa.stores_selling_7d)} quán có bán 7 ngày qua · `,
+    kpiDelta(sa.revenue_30d, sa.revenue_prev30, 'so với 30 ngày trước'),
   );
-  const revPts = (sa.by_day || []).map((p) => ({ day: p.day, n: Number(p.revenue || 0), orders: Number(p.n || 0) }));
-  renderChart($('ov-rev-chart'), $('ov-rev-meta'), revPts, {
-    capOutlier: true,
-    axisFmt: fmtMoneyShort,
-    ariaLabel: 'Biểu đồ doanh thu toàn hệ thống theo ngày trong 30 ngày qua',
-    xAxisLabel: (p, isLast) => (isLast ? 'Hôm nay' : fmtShortDay(p.day)),
-    tooltipLabel: (p, isLast) => (isLast ? 'Hôm nay' : `Ngày ${fmtShortDay(p.day)}`),
-    valueText: (p) => `${fmtMoney(p.n)} · ${fmtN(p.orders)} đơn`,
-    summaryText: (sum, last) => `Tổng ${fmtMoneyShort(sum)} · Hôm nay ${fmtMoneyShort(last)}`,
-    emptyNode: () => emptyBox('Chưa có doanh thu', 'Chưa quán nào bán trong 30 ngày qua.'),
-  });
+  ovRevPts = byDay.map((p) => ({ day: p.day, revenue: Number(p.revenue || 0), orders: Number(p.n || 0) }));
+  drawRevChart();
 
   const top = sa.top || [];
-  clear($('ov-top')).append(...(top.length ? top.map((r, i) => el('div', { class: 'prof-row' },
-    el('div', { class: 'ov-check' },
-      el('span', { class: 'ov-rank', text: `${i + 1}.` }),
-      el('div', { class: 'ov-row-main' },
-        el('b', { text: r.name || r.code || 'Quán' }),
-        el('span', { class: 'small muted', text: `${fmtN(r.orders)} đơn · ${fmtN(r.orders_7d)} đơn tuần này` }),
+  const topMax = Math.max(1, ...top.map((r) => Number(r.revenue || 0)));
+  clear($('ov-top')).append(...(top.length ? top.map((r, i) => el('li', { class: 'ov-top-row' },
+    el('span', { class: 'ov-rank', text: String(i + 1) }),
+    el('div', { class: 'ov-top-main' },
+      el('div', { class: 'ov-top-line' },
+        el('button', { type: 'button', class: 'ov-link', text: r.name || r.code || 'Quán', onclick: (ev) => openStoreDetail(r, ev.currentTarget) }),
+        el('span', { class: 'ov-top-val', text: fmtMoneyShort(r.revenue) }),
       ),
+      hBar(Number(r.revenue || 0) / topMax),
+      el('span', { class: 'small muted', text: `${fmtN(r.orders)} đơn · ${fmtN(r.orders_7d)} đơn trong 7 ngày` }),
     ),
-    el('div', { class: 'prof-row-end' },
-      el('b', { text: fmtMoneyShort(r.revenue) }),
-      el('button', { type: 'button', class: 'btn small', text: 'Hồ sơ', onclick: (ev) => openStoreDetail(r, ev.currentTarget) }),
-    ),
-  )) : [emptyBox('Chưa có quán bán', 'Chưa quán nào có đơn trong 30 ngày qua.')]));
+  )) : [el('li', {}, emptyBox('Chưa có quán bán', 'Chưa quán nào có đơn trong 30 ngày qua.'))]));
 
-  $('ov-drop-count').textContent = fmtN(drop.total);
+  $('ov-drop-count').textContent = drop.total ? fmtN(drop.total) : '';
   const dropBox = clear($('ov-drop'));
   if (!drop.rows || !drop.rows.length) {
     dropBox.append(emptyBox('Không có quán nào đang bỏ dùng', 'Mọi quán có bán trong 30 ngày đều còn bán tuần này.'));
   } else {
-    const DROP_FIRST = 10;
-    dropBox.append(...drop.rows.map((r, i) => el('div', { class: 'prof-row', hidden: i >= DROP_FIRST },
-      el('div', { class: 'ov-row-main' },
-        el('b', {}, r.name || r.code || 'Quán', r.locked ? el('span', { class: 'badge bad', text: 'đang khoá' }) : null),
-        el('span', { class: 'small muted', text: `Đơn cuối ${ago(r.last_order_at)} (${fmtDay(r.last_order_at)}) · ${fmtN(r.orders_30d)} đơn / ${fmtMoneyShort(r.revenue_30d)} trong 30 ngày` }),
-        el('span', { class: 'small muted', text: `Chủ: ${r.owner_name || '—'}${r.owner_phone ? ` · ${r.owner_phone}` : ''}` }),
-      ),
-      el('div', { class: 'prof-row-end' },
+    const DROP_FIRST = 6;
+    const td = (label, cls, ...kids) => el('td', { 'data-label': label, class: cls }, ...kids);
+    const tbody = el('tbody', {}, ...drop.rows.map((r, i) => el('tr', { hidden: i >= DROP_FIRST },
+      td('Quán', 'ov-td-name',
+        el('b', { text: r.name || r.code || 'Quán' }),
+        r.locked ? el('span', { class: 'ov-tag bad', text: 'Đang khoá' }) : null),
+      td('Chủ quán', '',
+        el('div', { text: r.owner_name || '—' }),
+        r.owner_phone ? el('div', { class: 'small muted num', text: r.owner_phone }) : null),
+      td('Đơn cuối', '',
+        el('div', { text: ago(r.last_order_at) }),
+        el('div', { class: 'small muted num', text: fmtDay(r.last_order_at) })),
+      td('30 ngày', 'num-col',
+        el('div', { class: 'num', text: fmtMoneyShort(r.revenue_30d) }),
+        el('div', { class: 'small muted num', text: `${fmtN(r.orders_30d)} đơn` })),
+      td('', 'ov-td-act',
         r.owner_phone ? el('a', { class: 'btn small', href: `tel:${String(r.owner_phone).replace(/[^+\d]/g, '')}`, text: 'Gọi' }) : null,
-        el('button', { type: 'button', class: 'btn small', text: 'Hồ sơ', onclick: (ev) => openStoreDetail(r, ev.currentTarget) }),
-      ),
+        el('button', { type: 'button', class: 'btn small', text: 'Hồ sơ', onclick: (ev) => openStoreDetail(r, ev.currentTarget) })),
     )));
+    dropBox.append(el('table', { class: 'ov-table' },
+      el('thead', {}, el('tr', {},
+        el('th', { scope: 'col', text: 'Quán' }),
+        el('th', { scope: 'col', text: 'Chủ quán' }),
+        el('th', { scope: 'col', text: 'Đơn cuối' }),
+        el('th', { scope: 'col', class: 'num-col', text: '30 ngày' }),
+        el('th', { scope: 'col' }, el('span', { class: 'ov-sr', text: 'Thao tác' })),
+      )),
+      tbody,
+    ));
+    const foot = el('div', { class: 'ov-table-foot small muted' });
     if (drop.rows.length > DROP_FIRST) {
       const more = el('button', { type: 'button', class: 'btn small', text: `Xem thêm ${fmtN(drop.rows.length - DROP_FIRST)} quán`, onclick: () => {
-        for (const n of dropBox.querySelectorAll('.prof-row[hidden]')) n.hidden = false;
+        for (const n of tbody.querySelectorAll('tr[hidden]')) n.hidden = false;
         more.remove();
+        const next = tbody.rows[DROP_FIRST] && tbody.rows[DROP_FIRST].querySelector('.ov-td-act .btn');
+        if (next) next.focus();  // giữ chỗ đang xem, không nhảy về đầu trang
       } });
-      dropBox.append(more);
+      foot.append(more);
     }
     if (Number(drop.total) > drop.rows.length) {
-      dropBox.append(el('p', { class: 'small muted', text: `Danh sách có ${fmtN(drop.rows.length)} / ${fmtN(drop.total)} quán bán nhiều nhất.` }));
+      foot.append(el('span', { text: `Hiện ${fmtN(drop.rows.length)} / ${fmtN(drop.total)} quán bán nhiều nhất.` }));
     }
+    if (foot.childNodes.length) dropBox.append(foot);
   }
 
   ovSuggest = x.test_suggest || [];
@@ -923,7 +904,7 @@ async function loadOverviewExtra(includeTest) {
   clear($('ov-suggest')).append(...ovSuggest.map((r) => {
     const cb = el('input', { type: 'checkbox', 'data-id': r.id });
     cb.checked = Number(r.orders_total || 0) === 0;
-    return el('div', { class: 'prof-row' },
+    return el('div', { class: 'ov-list-row' },
       el('label', { class: 'ov-check' }, cb,
         el('div', { class: 'ov-row-main' },
           el('b', { text: r.name || '(chưa đặt tên)' }),

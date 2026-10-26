@@ -114,11 +114,11 @@
 
     <main class="main-area">
       <!-- TAB 1: TỔNG QUAN -->
-      <section id="tab-overview" class="page" role="tabpanel" aria-labelledby="tabbtn-overview" hidden>
-        <header class="page-head">
+      <section id="tab-overview" class="page ov" role="tabpanel" aria-labelledby="tabbtn-overview" hidden>
+        <header class="page-head ov-head">
           <div>
-            <h2>Tổng quan các quán</h2>
-            <p class="muted small page-sub">Theo dõi kích hoạt, tần suất bán hàng và tăng trưởng cửa hàng toàn hệ thống.</p>
+            <h2>Tổng quan</h2>
+            <p class="muted small page-sub" id="ov-updated">Đang tải số liệu…</p>
           </div>
           <div class="head-actions">
             <label class="switch" for="ov-include-test">
@@ -134,100 +134,112 @@
 
         <div id="ov-error" hidden></div>
 
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h3>Việc cần làm hôm nay</h3>
-              <p class="muted small">Bấm vào ô để mở đúng danh sách cần xử lý.</p>
-            </div>
-          </div>
-          <div id="ov-todo" class="kpi-sub-grid"></div>
-        </div>
+        <section class="ov-todo" aria-labelledby="ov-todo-title">
+          <h3 id="ov-todo-title" class="ov-eyebrow">Việc cần làm hôm nay</h3>
+          <div id="ov-todo" class="ov-todo-list"></div>
+        </section>
 
-        <div id="ov-hero" class="kpi-hero-grid"></div>
-        <div id="ov-secondary" class="kpi-sub-grid"></div>
+        <section class="ov-panel ov-kpis" aria-label="Chỉ số chính">
+          <div class="ov-kpi" id="ov-k-rev"></div>
+          <div class="ov-kpi" id="ov-k-ord"></div>
+          <div class="ov-kpi" id="ov-k-act"></div>
+          <div class="ov-kpi" id="ov-k-new"></div>
+        </section>
 
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h3>Doanh số toàn hệ thống</h3>
-              <p class="muted small">Đơn hoàn thành của các quán (không tính đơn huỷ). So với kỳ liền trước.</p>
-            </div>
-          </div>
-          <div id="ov-sales" class="kpi-sub-grid ov-sales-grid"></div>
-          <div class="grid2 ov-sales-body">
-            <div class="chart-box">
-              <div class="card-head">
-                <h4>Doanh thu theo ngày (30 ngày)</h4>
-                <div id="ov-rev-meta" class="chart-readout"></div>
+        <div class="ov-row ov-row-main-side">
+          <section class="ov-panel" aria-labelledby="ov-rev-title">
+            <div class="ov-panel-head">
+              <div>
+                <h3 id="ov-rev-title">Doanh số toàn hệ thống</h3>
+                <p class="muted small" id="ov-rev-sum">Đơn hoàn thành 30 ngày qua, không tính đơn huỷ.</p>
               </div>
-              <div id="ov-rev-chart" class="chart"></div>
+              <div class="ov-seg" role="group" aria-label="Chọn số liệu biểu đồ">
+                <button type="button" class="ov-seg-btn on" id="ov-rev-mode-rev" aria-pressed="true">Doanh thu</button>
+                <button type="button" class="ov-seg-btn" id="ov-rev-mode-ord" aria-pressed="false">Số đơn</button>
+              </div>
             </div>
-            <div class="chart-box">
-              <div class="card-head"><h4>5 quán bán nhiều nhất (30 ngày)</h4></div>
-              <div id="ov-top" class="prof-rows"></div>
+            <div id="ov-rev-meta" class="ov-readout" aria-live="polite"></div>
+            <div id="ov-rev-chart" class="chart ov-chart"></div>
+          </section>
+
+          <section class="ov-panel" aria-labelledby="ov-top-title">
+            <div class="ov-panel-head">
+              <div>
+                <h3 id="ov-top-title">Quán bán nhiều nhất</h3>
+                <p class="muted small">Doanh thu 30 ngày qua</p>
+              </div>
             </div>
-          </div>
+            <ol id="ov-top" class="ov-top"></ol>
+          </section>
         </div>
 
-        <div class="card funnel-card">
-          <div class="card-head">
+        <section class="ov-panel" aria-labelledby="ov-funnel-title">
+          <div class="ov-panel-head">
             <div>
-              <h3>Phễu kích hoạt quán</h3>
-              <p class="muted small">Tỷ lệ chuyển đổi từng bước từ lúc tạo quán đến bán hàng đều đặn trong 7 ngày qua.</p>
+              <h3 id="ov-funnel-title">Phễu kích hoạt quán</h3>
+              <p class="muted small">Từ lúc tạo quán đến khi bán hàng đều đặn. Phần trăm tính trên bước liền trước.</p>
             </div>
           </div>
-          <div id="ov-funnel" class="funnel-list"></div>
-        </div>
+          <div id="ov-funnel" class="ov-funnel"></div>
+        </section>
 
-        <div class="card">
-          <div class="card-head">
+        <section class="ov-panel" id="ov-drop-panel" aria-labelledby="ov-drop-title">
+          <div class="ov-panel-head">
             <div>
-              <h3>Quán đang bỏ dùng <span id="ov-drop-count" class="badge warn"></span></h3>
+              <h3 id="ov-drop-title">Quán đang bỏ dùng <span id="ov-drop-count" class="ov-count"></span></h3>
               <p class="muted small">Có bán trong 30 ngày qua nhưng 7 ngày nay không có đơn nào — nên gọi hỏi thăm. Quán bán nhiều xếp trước.</p>
             </div>
           </div>
-          <div id="ov-drop" class="prof-rows"></div>
+          <div id="ov-drop"></div>
+        </section>
+
+        <div class="ov-row ov-row-half">
+          <section class="ov-panel" aria-labelledby="ov-new-title">
+            <div class="ov-panel-head">
+              <div>
+                <h3 id="ov-new-title">Quán mới theo ngày</h3>
+                <p class="muted small" id="ov-new-sum">60 ngày qua</p>
+              </div>
+            </div>
+            <div id="ov-new-meta" class="ov-readout" aria-live="polite"></div>
+            <div id="ov-new-chart" class="chart ov-chart"></div>
+          </section>
+
+          <section class="ov-panel" aria-labelledby="ov-week-title">
+            <div class="ov-panel-head">
+              <div>
+                <h3 id="ov-week-title">Quán có đơn theo tuần</h3>
+                <p class="muted small" id="ov-week-sum">12 tuần qua · tuần đang chạy vẽ nhạt</p>
+              </div>
+            </div>
+            <div id="ov-week-meta" class="ov-readout" aria-live="polite"></div>
+            <div id="ov-week-chart" class="chart ov-chart"></div>
+          </section>
         </div>
 
-        <div class="grid2">
-          <div class="card chart-card">
-            <div class="card-head">
-              <h3>Quán mới theo ngày (60 ngày)</h3>
-              <div id="ov-new-meta" class="chart-readout"></div>
-            </div>
-            <div id="ov-new-chart" class="chart"></div>
-          </div>
-
-          <div class="card chart-card">
-            <div class="card-head">
-              <h3>Quán có đơn theo tuần (12 tuần)</h3>
-              <div id="ov-week-meta" class="chart-readout"></div>
-            </div>
-            <div id="ov-week-chart" class="chart"></div>
-          </div>
-        </div>
-
-        <div class="card" id="ov-suggest-card" hidden>
-          <div class="card-head">
-            <div>
-              <h3>Gợi ý đánh dấu quán thử <span id="ov-suggest-count" class="badge"></span></h3>
-              <p class="muted small">Quán tên có chữ test / demo / thử, hoặc tên vô nghĩa mà chưa bán đơn nào. Quán thử bị loại khỏi số liệu
-                (bật "Tính cả quán thử" để xem lại). Đã chọn sẵn quán chưa bán đơn nào — xem lại rồi mới bấm.</p>
-            </div>
-          </div>
-          <div id="ov-suggest" class="prof-rows"></div>
+        <details class="ov-panel ov-fold" id="ov-suggest-card" hidden>
+          <summary class="ov-fold-sum">
+            <span><b>Gợi ý đánh dấu quán thử</b> <span id="ov-suggest-count" class="ov-count"></span></span>
+            <span class="muted small ov-fold-hint">Xem lại</span>
+          </summary>
+          <p class="muted small ov-fold-desc">Quán tên có chữ test / demo / thử, hoặc tên vô nghĩa mà chưa bán đơn nào. Quán thử bị loại khỏi số liệu
+            (bật "Tính cả quán thử" để xem lại). Đã chọn sẵn quán chưa bán đơn nào — xem lại rồi mới bấm.</p>
+          <div id="ov-suggest" class="ov-list"></div>
           <div class="ov-suggest-actions">
             <button type="button" class="btn primary" id="ov-suggest-mark">Đánh dấu quán đã chọn</button>
           </div>
-        </div>
+        </details>
 
-        <p class="footnote muted small">
-          Chú thích: <strong>Đang dùng tích cực</strong> = có ít nhất 1 đơn hoàn thành trong 7 ngày qua.
-          <strong>Ngủ</strong> = đã từng bán nhưng hơn 30 ngày không phát sinh đơn mới.
-          <strong>Đang bỏ dùng</strong> = có bán trong 30 ngày nhưng 7 ngày nay không có đơn.
-          Ô "7 ngày / 30 ngày" tính lùi đúng 7×24 / 30×24 giờ; biểu đồ chia theo ngày lịch giờ Việt Nam, nên cộng 7 cột cuối có thể lệch một chút.
-        </p>
+        <details class="ov-fold ov-notes">
+          <summary class="ov-fold-sum"><span class="muted small">Cách tính các chỉ số</span></summary>
+          <ul class="muted small">
+            <li><strong>Đang dùng tích cực</strong>: có ít nhất 1 đơn hoàn thành trong 7 ngày qua.</li>
+            <li><strong>Ngủ</strong>: đã từng bán nhưng hơn 30 ngày không có đơn mới.</li>
+            <li><strong>Đang bỏ dùng</strong>: có bán trong 30 ngày nhưng 7 ngày nay không có đơn.</li>
+            <li>Số "7 ngày / 30 ngày" tính lùi đúng 7×24 / 30×24 giờ; biểu đồ chia theo ngày lịch giờ Việt Nam, nên cộng 7 cột cuối có thể lệch một chút.</li>
+            <li>Mức tăng / giảm so với kỳ liền trước cùng độ dài.</li>
+          </ul>
+        </details>
       </section>
 
       <!-- TAB 2: QUÁN -->
