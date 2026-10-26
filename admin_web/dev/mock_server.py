@@ -211,7 +211,8 @@ class H(http.server.SimpleHTTPRequestHandler):
         if p.endswith('/admin_boom_knowledge_v1'):
             return s.send_json(200, dict(ok=True, packs=[dict(version=202610231048,chunk_count=331,note='Boom AI v1 — bản đầu',created_at=iso(2))],
                chunks=[dict(id=f'm{i%3}#c{i}',module=['Bán hàng','Kho hàng','Quản lý Bàn'][i%3],title=f'Đoạn {i}',uses=i,ups=i//2,downs=i%2) for i in range(9)],
-               cache=[], changelog=[dict(applied_at=iso(0,2),version='đọc 5 mục',title='Đọc số Thu Chi, Kho…',detail='CHỈ ĐỌC, theo quyền',checks='QC 3 vòng'),dict(applied_at=iso(1),version='v1',title='Boom AI v1',detail='GPT trả lời theo hướng dẫn',checks='24/24 PASS')]))
+               cache=[dict(id='c1',kind='guide',questions=['in tạm tính ở đâu','cách in phiếu tạm tính'],answer='Dạ {goi} ơi, mở bàn rồi bấm "In tạm tính".',status='approved',hits=12,ups=3,downs=0,note='mẫu',updated_at=iso(1)),
+                      dict(id='c2',kind='advice',questions=['làm sao tăng khách buổi sáng'],answer='1. …',status='retired',hits=2,ups=0,downs=2,note='tự gỡ',updated_at=iso(2))], changelog=[dict(applied_at=iso(0,2),version='đọc 5 mục',title='Đọc số Thu Chi, Kho…',detail='CHỈ ĐỌC, theo quyền',checks='QC 3 vòng'),dict(applied_at=iso(1),version='v1',title='Boom AI v1',detail='GPT trả lời theo hướng dẫn',checks='24/24 PASS')]))
         if p.endswith('/functions/v1/boom-chat'): return s.send_json(200, dict(model='gpt-4o-mini',enabled=True,cache_on=True,logic_version='abc123def456',advice_prompt='Bạn là Bé Boom…\n1. Phạm vi…',guide_prompt='Trả lời theo ĐOẠN HƯỚNG DẪN…',refusal=dict(scope='Bé Boom chỉ hỗ trợ…')))
         return s.send_json(404, {})
 http.server.ThreadingHTTPServer(('127.0.0.1', PORT), H).serve_forever()

@@ -2832,8 +2832,8 @@ loaders.knowledge = async () => {
         cache.append(el('div', { class: 'turn-card' },
           el('div', { class: 'turn-top' },
             el('div', { class: 'turn-badges' },
-              el('span', { class: 'badge info', text: c.kind || 'Mẫu' }),
-              el('span', { class: `badge ${c.status === 'active' ? 'good' : ''}`, text: c.status || '' }),
+              el('span', { class: 'badge info', text: CACHE_KIND_NAMES[c.kind] || 'Mẫu' }),
+              el('span', { class: `badge ${c.status === 'approved' ? 'good' : ''}`, text: CACHE_STATUS_NAMES[c.status] || c.status || '' }),
             ),
             el('span', { class: 'turn-meta', text: `Dùng ${fmtN(c.hits)} · 👍 ${fmtN(c.ups)} / 👎 ${fmtN(c.downs)}` }),
           ),
@@ -2854,6 +2854,10 @@ loaders.knowledge = async () => {
 };
 
 $('kn-refresh').addEventListener('click', () => loaders.knowledge());
+
+// Bộ nhớ câu trả lời: giá trị máy chủ (boom_answer_cache.kind / status) → nhãn tiếng Việt
+const CACHE_KIND_NAMES = { guide: 'Hướng dẫn', advice: 'Tư vấn' };
+const CACHE_STATUS_NAMES = { approved: 'Đang dùng', retired: 'Đã gỡ' };
 
 function renderCaps() {
   const rows = [
