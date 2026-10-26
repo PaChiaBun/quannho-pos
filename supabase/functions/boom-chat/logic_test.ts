@@ -328,10 +328,10 @@ Deno.test('Bộ nhớ câu đã duyệt: khớp cách hỏi khác, không nhầm
   ];
   // cách hỏi khác cùng nghĩa (lời mời, khung câu hỏi, dấu thanh kiểu cũ, chữ hoa) → khớp
   for (const q of ['Boom ơi, cho tớ hỏi hủy món đã gửi bếp thế nào?', 'làm sao để huỷ món đã gửi bếp ạ', 'CÁCH ĐỂ HUỶ MÓN ĐÃ GỬI BẾP']) {
-    assertEquals(findCached(e, q, 'guide', ID)?.entry.id, 'g1', q);
+    assertEquals(findCached(e, q, 'guide', [ID])?.entry.id, 'g1', q);
   }
-  assertEquals(findCached(e, 'cách để tăng khách buổi sáng', 'advice', undefined)?.entry.id, 'a1');
-  assertEquals(findCached(e, 'Boom ơi làm thế nào để tăng khách buổi sáng nhỉ', 'advice', undefined)?.entry.id, 'a1');
+  assertEquals(findCached(e, 'cách để tăng khách buổi sáng', 'advice', [])?.entry.id, 'a1');
+  assertEquals(findCached(e, 'Boom ơi làm thế nào để tăng khách buổi sáng nhỉ', 'advice', [])?.entry.id, 'a1');
   // khác nghĩa / khác loại / khác bài / không dấu → không khớp
   for (const [q, kind, top] of [
     ['huỷ món chưa gửi bếp', 'guide', ID],
@@ -348,8 +348,15 @@ Deno.test('Bộ nhớ câu đã duyệt: khớp cách hỏi khác, không nhầm
     ['làm sao tăng khách buổi tối', 'advice', undefined],
     ['giảm 10% cho khách buổi sáng', 'advice', undefined],
   ] as [string, 'guide' | 'advice', string | undefined][]) {
-    assertEquals(findCached(e, q, kind, top), null, q);
+    assertEquals(findCached(e, q, kind, top ? [top] : []), null, q);
   }
+  // bài đúng đứng thứ 2 / 3 trong các đoạn app gửi → vẫn khớp; thứ 4 trở đi (app chỉ gửi 3) hoặc không có → không
+  assertEquals(findCached(e, 'huỷ món đã gửi bếp thế nào', 'guide', ['khac#a', ID])?.entry.id, 'g1');
+  assertEquals(findCached(e, 'huỷ món đã gửi bếp thế nào', 'guide', ['khac#a', 'khac#b', ID])?.entry.id, 'g1');
+  assertEquals(findCached(e, 'huỷ món đã gửi bếp thế nào', 'guide', ['khac#a', 'khac#b', 'khac#c', ID]), null);
+  assertEquals(findCached(e, 'huỷ món đã gửi bếp thế nào', 'guide', []), null);
+  // đúng bài nhưng câu khác nghĩa → vẫn không khớp
+  assertEquals(findCached(e, 'huỷ món chưa gửi bếp thế nào', 'guide', ['khac#a', ID]), null);
   assertEquals(matchTokens('Cho tớ hỏi hủy hóa đơn thế nào ạ'), ['huỷ', 'hoá', 'đơn', '#the_nao']);
   assertEquals(cacheKey('khách hàng nợ tớ tiền'), cacheKey('khách hàng nợ mình tiền'));
   assert(cacheKey('khách hàng nợ tớ tiền') !== cacheKey('khách hàng tớ nợ tiền'));

@@ -2766,13 +2766,20 @@ loaders.knowledge = async () => {
       byMod.get(c.module).push(c);
     }
 
-    const modStats = [...byMod.entries()].map(([m, cs]) => ({
-      m,
-      cs,
-      uses: cs.reduce((a, x) => a + Number(x.uses || 0), 0),
-      ups: cs.reduce((a, x) => a + Number(x.ups || 0), 0),
-      downs: cs.reduce((a, x) => a + Number(x.downs || 0), 0),
-    }));
+    // Số CÂU HỎI theo module do máy chủ đếm (một câu gửi kèm nhiều đoạn cùng module chỉ tính 1 — 26/10);
+    // máy chủ cũ chưa có khoá 'modules' → cộng theo đoạn như trước
+    const byModQ = Array.isArray(d.modules) ? new Map(d.modules.map((x) => [x.module, x])) : null;
+    const sumBy = (cs, k) => cs.reduce((a, x) => a + Number(x[k] || 0), 0);
+    const modStats = [...byMod.entries()].map(([m, cs]) => {
+      const q = byModQ ? (byModQ.get(m) || {}) : null;
+      return {
+        m,
+        cs,
+        uses: q ? Number(q.questions || 0) : sumBy(cs, 'uses'),
+        ups: q ? Number(q.ups || 0) : sumBy(cs, 'ups'),
+        downs: q ? Number(q.downs || 0) : sumBy(cs, 'downs'),
+      };
+    });
     const maxUses = Math.max(1, ...modStats.map((x) => x.uses));
 
     const mods = clear($('kn-modules'));
@@ -2801,7 +2808,7 @@ loaders.knowledge = async () => {
         el('thead', {},
           el('tr', {},
             el('th', { scope: 'col', text: 'Đoạn hướng dẫn' }),
-            el('th', { scope: 'col', text: 'Lần dùng' }),
+            el('th', { scope: 'col', text: 'Số câu hỏi' }),
             el('th', { scope: 'col', text: 'Đánh giá' }),
           ),
         ),
@@ -2812,7 +2819,7 @@ loaders.knowledge = async () => {
         el('summary', {},
           el('div', { class: 'mod-sum-top' },
             el('span', { class: 'mod-title', text: `${item.m} (${fmtN(item.cs.length)} đoạn)` }),
-            el('span', { class: 'mod-stats', text: `Dùng ${fmtN(item.uses)} lần · 👍 ${fmtN(item.ups)} / 👎 ${fmtN(item.downs)}` }),
+            el('span', { class: 'mod-stats', text: `${byModQ ? `${fmtN(item.uses)} câu hỏi` : `Dùng ${fmtN(item.uses)} lần`} · 👍 ${fmtN(item.ups)} / 👎 ${fmtN(item.downs)}` }),
           ),
           usageSvg,
         ),

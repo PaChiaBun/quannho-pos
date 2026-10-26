@@ -232,7 +232,7 @@ async function fromCache(
 ) {
   let hit;
   try {
-    hit = findCached(await cachedAnswers(), r.question, r.mode === 'answer' ? 'guide' : 'advice', r.chunk_ids[0]);
+    hit = findCached(await cachedAnswers(), r.question, r.mode === 'answer' ? 'guide' : 'advice', r.chunk_ids);
     if (!hit) return null;
     if (hit.entry.kind === 'guide') {
       const chunks = pickChunks(await helpPack(r.pack_version), hit.entry.chunk_ids);

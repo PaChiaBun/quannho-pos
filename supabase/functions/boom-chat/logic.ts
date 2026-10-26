@@ -1168,20 +1168,22 @@ export function cacheKey(question: string): string {
 }
 
 /**
- * Câu đã duyệt TRÙNG câu hỏi: đúng loại; loại 'guide' phải chứa đoạn hướng dẫn đứng đầu của câu hỏi.
- * null = không có (gọi GPT như thường).
+ * Câu đã duyệt TRÙNG câu hỏi: đúng loại; loại 'guide' phải chứa một trong ≤ 3 đoạn hướng dẫn app gửi kèm câu hỏi
+ * (26/10: trước chỉ xét đoạn đứng đầu → bộ tìm của app xếp bài đúng thứ 2–3 thì câu đã duyệt không bao giờ dùng được;
+ * câu hỏi vẫn phải trùng hệt nên không tăng khớp nhầm). null = không có (gọi GPT như thường).
  */
 export function findCached(
   entries: CachedAnswer[],
   question: string,
   kind: 'guide' | 'advice',
-  topChunk: string | undefined,
+  sentChunks: readonly string[],
 ): { entry: CachedAnswer; score: number } | null {
   const key = cacheKey(question);
   if (!key) return null;
+  const sent = sentChunks.slice(0, 3);
   for (const e of entries) {
     if (e.kind !== kind) continue;
-    if (kind === 'guide' && (!topChunk || !e.chunk_ids.includes(topChunk))) continue;
+    if (kind === 'guide' && !sent.some((id) => e.chunk_ids.includes(id))) continue;
     if ((e.keys ?? e.questions.map(cacheKey)).includes(key)) return { entry: e, score: 1 };
   }
   return null;

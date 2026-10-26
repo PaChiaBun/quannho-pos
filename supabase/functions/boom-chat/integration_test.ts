@@ -400,8 +400,11 @@ Deno.test('boom-chat chạy thật với máy chủ giả', async (t) => {
       assert(j1.log_id);
       const r2 = await call(u2, { store_id: S, question: 'cho tớ hỏi mẹo giữ chân khách quen', mode: 'advice', chunk_ids: [] });
       assertEquals((await r2.json()).answer, 'Dạ Chị Lan ơi, tích điểm cho khách quen (đã duyệt).'); // {goi} điền theo người hỏi
+      // app xếp bài đúng thứ 2 trong 3 đoạn gửi lên → vẫn dùng câu đã duyệt (26/10)
+      const r3 = await call(u2, { ...ask, question: 'làm sao để huỷ món đã gửi bếp', chunk_ids: ['khac#muc-gan', ID] });
+      assertEquals((await r3.json()).cached, true);
       assertEquals(state.openaiCalls.length, before);
-      assertEquals(state.logs.filter((l) => l.status === 'cached').length, 2);
+      assertEquals(state.logs.filter((l) => l.status === 'cached').length, 3);
       // "chưa gửi bếp" khác nghĩa "đã gửi bếp" → không trả câu đã duyệt
       for (const body of [
         { ...ask, question: 'huỷ món chưa gửi bếp' },
