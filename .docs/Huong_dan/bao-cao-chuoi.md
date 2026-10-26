@@ -27,10 +27,12 @@ nguon:
 ## Các việc thường làm
 
 ### 1. Có thêm cửa hàng
+Mở thêm chi nhánh / quán mới:
 1. **Cài đặt** → thẻ quán → **"Đổi quán"** → **"Tạo cửa hàng mới"** (không có trên iPhone cài từ App Store).
 2. Nhập tên quán, xác nhận mật khẩu. Quán mới **không tự vào chuỗi**.
 
 ### 2. Tạo chuỗi và thêm cửa hàng
+Có 2 quán trở lên, muốn gom lại xem tổng doanh thu chung: tạo chuỗi rồi thêm các quán vào chuỗi.
 1. Mở **Báo cáo chuỗi**. Chưa có chuỗi: "Bạn có N cửa hàng. Tạo một chuỗi để so sánh số liệu các chi nhánh." → **"Tạo chuỗi"**.
 2. Hoặc bấm **"Quản lý chuỗi"** → **"Quản lý chuỗi cửa hàng"**:
    - **"Tạo chuỗi mới"**: nhập **"Tên chuỗi"** → **"Tạo"**.
@@ -49,7 +51,7 @@ nguon:
 
 ### 4. Hiểu chip tăng / giảm
 - So với **cùng kỳ trước**: hôm nay so với **cùng thứ tuần trước** trong cùng khoảng giờ đã trôi qua; tuần/tháng đang chạy so với phần tương ứng của kỳ trước.
-- **Xanh / đỏ** chỉ khi thay đổi **vượt mức dao động bình thường** (đã quy đổi theo số ngày có bán). **Xám**: trong mức bình thường.
+- **Xanh / đỏ** chỉ khi thay đổi **vượt mức dao động bình thường** (đã quy đổi theo số ngày có bán). Chip **màu xám**: trong mức bình thường.
 - **"Ít dữ liệu"**: chưa đủ đơn mỗi bên để so. **"Quán mới"**: chưa đủ lịch sử. **"Chưa so sánh"** / **"Mới"**: kỳ trước không có số liệu.
 - **Chạm vào chip** để đọc lý do.
 - Tổng chuỗi **không tính quán mới** khi so sánh ("Chưa tính quán mới (chưa đủ lịch sử để so sánh): …"), nên mở quán mới không làm tổng tăng ảo.

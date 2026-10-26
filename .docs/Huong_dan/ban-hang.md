@@ -69,6 +69,7 @@ Chỉ dùng khi quán bật module **Bếp**.
 3. Không thấy: "Không tìm thấy khách hàng" — khách chưa có trong danh sách; tạo ở module Khách hàng.
 
 ### Thanh toán
+Khách trả tiền tại quầy (thu ngân tính tiền ở màn Bán hàng):
 1. Bấm **"Thanh toán"** (trong giỏ) hoặc ô **tổng tiền màu cam** trên thanh giỏ (điện thoại).
 2. Bảng **"Thanh toán"** hiện tóm tắt món. Chọn **"Phương thức"**: "Tiền mặt", "Chuyển khoản", "Thẻ". Nếu khách có ví, có thêm **"Thanh toán bằng Ví"**.
 3. Tuỳ chọn giảm giá:
@@ -103,6 +104,7 @@ Thanh toán xong, hệ thống tự: ghi **một** khoản thu vào Thu Chi, tr�
 > Riêng phiếu hiện trên **màn Bếp** khi bấm "Bếp" ở điện thoại: món danh mục "Đồ uống" vào "Bếp nước", món khác vào "Bếp nóng".
 
 ### Xoá giỏ hàng
+Xoá hết giỏ hàng khi khách đổi ý bỏ hết món:
 - Nút **thùng rác** trên thanh trên cùng → hỏi "Xóa giỏ hàng?" → **"Xóa"**.
 - Hoặc **"Xóa hết"** trong giỏ — chỉ người có quyền **"Huỷ đơn hàng"** mới bấm được (mặc định Chủ quán, Quản lý, Thu ngân; **Phục vụ không có**); người khác thấy "Bạn không có quyền huỷ đơn hàng". Quyền này chỉ chặn nút "Xóa hết" của giỏ chưa thanh toán, không liên quan đơn đã thu.
 

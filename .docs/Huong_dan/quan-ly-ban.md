@@ -53,7 +53,7 @@ nguon:
 > Nhiều nhân viên gọi cùng một bàn được; mỗi món ghi tên người thêm. Gọi món **chưa** gửi bếp.
 
 ### 4. Gửi bếp
-1. Bấm **"Gửi bếp (N)"** — N là số món chưa gửi. Gửi xong: "Đã gửi bếp Đợt X — N món".
+1. Gửi bếp ở bàn: bấm **"Gửi bếp (N)"** — N là số món chưa gửi. Gửi xong: "Đã gửi bếp Đợt X — N món".
 2. Trạng thái từng món: **"Đã gửi"** → **"Đang làm"** → **"Bếp xong"**.
 3. Món chưa gửi quá 3 phút: cảnh báo "⚠ N món CHƯA gửi bếp quá 3 phút — bấm "Gửi bếp" để bếp làm."
 4. Bếp báo xong: app hiện "<bàn>: Món ăn đã sẵn sàng!".

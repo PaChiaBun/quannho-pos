@@ -43,7 +43,7 @@ nguon:
 - Lọc theo danh mục; **"Top sản phẩm bán chạy"**: số phần, giá trung bình/phần, doanh thu.
 
 ### Tài chính
-- Thẻ **"LỢI NHUẬN"** / **"ĐANG LỖ"**: Thu nhập, Chi phí, Biên LN.
+- Xem quán lời hay lỗ theo kỳ: thẻ **"LỢI NHUẬN"** / **"ĐANG LỖ"**: Thu nhập, Chi phí, Biên LN.
 - **"Kết quả kinh doanh"**: I. Doanh thu từ bán hàng (Tiền hàng; dòng "Tiền thuế GTGT (app chưa tính)" hiện "—" vì app không tính thuế) – II. Chi phí (theo danh mục) – III. Lợi nhuận (I − II), kèm tỷ trọng.
 - Nhận xét tăng/giảm so với kỳ trước ("Thu nhập tăng X% so với kỳ trước").
 
@@ -54,7 +54,7 @@ nguon:
 - **"Nhập hàng <kỳ>"**: số phiếu nhập; **"Sản phẩm nhập nhiều nhất"**.
 
 ### Huỷ/Duyệt
-- **"Nhật ký hủy / duyệt"**: tổng tiền thất thoát do huỷ trong kỳ, số lượt huỷ "được kiểm toán".
+- Xem lịch sử huỷ món / huỷ bàn / huỷ hoá đơn và ai duyệt. **"Nhật ký hủy / duyệt"**: tổng tiền thất thoát do huỷ trong kỳ, số lượt huỷ "được kiểm toán".
 - Mỗi dòng: **Huỷ bàn / Huỷ hoá đơn / Huỷ món**, người **yêu cầu**, người **duyệt**, **lý do**, số tiền.
 - Chạm **"Nhấn để xem chi tiết món huỷ (N)"**: từng món, số lượng, đơn giá, **"Đã trừ hao hụt"** / **"Không trừ kho"**, **"Tổng tiền huỷ"**.
 
@@ -63,7 +63,7 @@ nguon:
 - Từng người: số ca, số giờ, nhãn **"🕒 N trễ"**, **"⚠️ N ca lệch"**, **"📍 N ko GPS"** hoặc **"✓ Đầy đủ"**.
 
 ### Voucher
-- **Tổng đơn áp mã**, **Tổng tiền giảm**; danh sách theo mã: Mã đơn / Bàn, Nhân viên, Thời gian, Giảm giá.
+- Xem voucher / mã giảm giá đã dùng: số lần dùng là **Tổng đơn áp mã**, **Tổng tiền giảm**; danh sách theo mã: Mã đơn / Bàn, Nhân viên, Thời gian, Giảm giá.
 
 ### Hóa đơn
 - **"Tra cứu & in lại bill"**: tìm bill đã thanh toán theo số đơn, tên bàn (không cần dấu) hoặc số tiền; chạm để xem chi tiết; nút máy in để **in lại** (bill có dòng "BẢN IN LẠI", ghi nhật ký người in). Màn này tải đủ bill trong kỳ đang chọn (tối đa 20.000 bill); không thấy bill thì chọn đúng ngày của bill.

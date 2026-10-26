@@ -36,6 +36,7 @@ nguon:
 ## Các việc thường làm
 
 ### 1. Tra một sự cố
+Xem log lỗi máy in / lỗi hệ thống lúc xảy ra sự cố:
 1. Chọn **"Khoảng thời gian"** và giờ quanh lúc xảy ra.
 2. Lọc **"Nhân viên"** (nếu biết ai), **"Phân loại Log"** = **Lỗi nghiêm trọng** hoặc **Cảnh báo hệ thống**.
 3. Bấm **"Truy xuất Log"**, chạm dòng cần xem để đọc chi tiết kỹ thuật.
@@ -51,6 +52,7 @@ nguon:
 - Nhật ký huỷ bàn/món ở **Báo cáo → Huỷ/Duyệt** là bảng riêng, không bị xoá.
 
 ### 4. Máy chủ tự dọn log cũ
+Thời hạn giữ log:
 - Mỗi đêm 00:40 máy chủ tự xoá **log kỹ thuật cũ hơn 30 ngày**.
 - **Nhật ký nghiệp vụ** (thanh toán, thu chi, huỷ, duyệt PIN…) giữ **1 năm**.
 - Vì vậy tra lỗi máy in / hệ thống chỉ xem được 30 ngày gần nhất.

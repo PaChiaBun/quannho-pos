@@ -63,6 +63,7 @@ Phần cài đặt:
 6. Mất mạng lúc gửi: khách bấm **"GỬI LẠI ĐƠN HÀNG"** — hệ thống **không tạo đơn trùng**.
 
 ### 3. Nhận đơn mới (nhân viên)
+Khách quét QR gọi món xong, nhân viên nhận đơn ở đây rồi duyệt để món xuống bếp (đơn tại bàn: mục 4; đơn mang đi: mục 5).
 1. Có đơn mới: app **kêu chuông** (một lần cho mỗi đơn) và hiện nhãn **"Đơn QR (n)"** trên thanh trên cùng của **Bán hàng**, hoặc nút đơn QR ở **Quản lý Bàn**.
    - Cam: có đơn mới đang chờ. Xanh: đơn đang được xử lý. Xám + biểu tượng mất sóng: mất kết nối, danh sách có thể cũ.
 2. Bấm nhãn → danh sách **"Đơn gọi món QR (n)"**: bàn/mã lấy món, số món, tiền, đã chờ bao lâu.

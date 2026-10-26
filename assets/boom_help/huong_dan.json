@@ -1,6 +1,6 @@
 {
- "version": 202610260946,
- "hash": "990ca3ca8758a2aa9f8c175d92f13a04865ace60e5810e695042a690dcf0ac5b",
+ "version": 202610261249,
+ "hash": "c7aabfa0826ee7821b8eef8c8a467ea6af60ecdaa518426c40ac11a7464da651",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -64,7 +64,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Thanh toán",
-   "text": "1. Bấm \"Thanh toán\" (trong giỏ) hoặc ô tổng tiền màu cam trên thanh giỏ (điện thoại).\n2. Bảng \"Thanh toán\" hiện tóm tắt món. Chọn \"Phương thức\": \"Tiền mặt\", \"Chuyển khoản\", \"Thẻ\". Nếu khách có ví, có thêm \"Thanh toán bằng Ví\".\n3. Tuỳ chọn giảm giá:\n   • \"Điểm thưởng\" — chỉ hiện khi đã gắn khách có điểm và không trả bằng ví.\n   • \"Khuyến mãi / Voucher\" → \"Chọn mã\" → chọn mã → \"Áp dụng\". Bỏ mã: \"Gỡ mã\".\n4. Kiểm phần tổng: \"Tạm tính\", \"Giảm giá\", \"Dùng điểm\", \"TỔNG CỘNG\".\n5. Bấm \"Xác nhận • <số tiền>\".\n6. Màn \"Thanh toán thành công!\" kèm số đơn. Hoá đơn tự in nếu quán bật tự in và máy đã cài máy in.\n   • Bấm \"In hoá đơn\" để in (lại). Nếu vừa in xong vài giây, app hỏi \"Bill vừa được in… In thêm một bản nữa?\".\n   • Bấm \"Đơn mới\" để bắt đầu khách tiếp theo.\n\nThanh toán xong, hệ thống tự: ghi một khoản thu vào Thu Chi, trừ kho theo công thức (có quy đổi đơn vị), cộng/trừ điểm khách, trừ ví nếu trả bằng ví, đóng các đợt đã gửi bếp.\n\nTrả bằng ví: tiền thưởng (bonus) chỉ được dùng tối đa theo % quy định của khách (mặc định 15% giá trị đơn), phần còn lại trừ vào ví thật. Ví không đủ thì nút đổi thành \"⚠️ Ví không đủ — cần thêm tiền mặt\" và không cho xác nhận. Không dùng được điểm cùng lúc với ví.\nKhông có giảm giá gõ tay trong màn Bán hàng; giảm giá chỉ qua voucher hoặc điểm."
+   "text": "Khách trả tiền tại quầy (thu ngân tính tiền ở màn Bán hàng):\n1. Bấm \"Thanh toán\" (trong giỏ) hoặc ô tổng tiền màu cam trên thanh giỏ (điện thoại).\n2. Bảng \"Thanh toán\" hiện tóm tắt món. Chọn \"Phương thức\": \"Tiền mặt\", \"Chuyển khoản\", \"Thẻ\". Nếu khách có ví, có thêm \"Thanh toán bằng Ví\".\n3. Tuỳ chọn giảm giá:\n   • \"Điểm thưởng\" — chỉ hiện khi đã gắn khách có điểm và không trả bằng ví.\n   • \"Khuyến mãi / Voucher\" → \"Chọn mã\" → chọn mã → \"Áp dụng\". Bỏ mã: \"Gỡ mã\".\n4. Kiểm phần tổng: \"Tạm tính\", \"Giảm giá\", \"Dùng điểm\", \"TỔNG CỘNG\".\n5. Bấm \"Xác nhận • <số tiền>\".\n6. Màn \"Thanh toán thành công!\" kèm số đơn. Hoá đơn tự in nếu quán bật tự in và máy đã cài máy in.\n   • Bấm \"In hoá đơn\" để in (lại). Nếu vừa in xong vài giây, app hỏi \"Bill vừa được in… In thêm một bản nữa?\".\n   • Bấm \"Đơn mới\" để bắt đầu khách tiếp theo.\n\nThanh toán xong, hệ thống tự: ghi một khoản thu vào Thu Chi, trừ kho theo công thức (có quy đổi đơn vị), cộng/trừ điểm khách, trừ ví nếu trả bằng ví, đóng các đợt đã gửi bếp.\n\nTrả bằng ví: tiền thưởng (bonus) chỉ được dùng tối đa theo % quy định của khách (mặc định 15% giá trị đơn), phần còn lại trừ vào ví thật. Ví không đủ thì nút đổi thành \"⚠️ Ví không đủ — cần thêm tiền mặt\" và không cho xác nhận. Không dùng được điểm cùng lúc với ví.\nKhông có giảm giá gõ tay trong màn Bán hàng; giảm giá chỉ qua voucher hoặc điểm."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-xem-don-gan-day",
@@ -88,7 +88,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Xoá giỏ hàng",
-   "text": "• Nút thùng rác trên thanh trên cùng → hỏi \"Xóa giỏ hàng?\" → \"Xóa\".\n• Hoặc \"Xóa hết\" trong giỏ — chỉ người có quyền \"Huỷ đơn hàng\" mới bấm được (mặc định Chủ quán, Quản lý, Thu ngân; Phục vụ không có); người khác thấy \"Bạn không có quyền huỷ đơn hàng\". Quyền này chỉ chặn nút \"Xóa hết\" của giỏ chưa thanh toán, không liên quan đơn đã thu."
+   "text": "Xoá hết giỏ hàng khi khách đổi ý bỏ hết món:\n• Nút thùng rác trên thanh trên cùng → hỏi \"Xóa giỏ hàng?\" → \"Xóa\".\n• Hoặc \"Xóa hết\" trong giỏ — chỉ người có quyền \"Huỷ đơn hàng\" mới bấm được (mặc định Chủ quán, Quản lý, Thu ngân; Phục vụ không có); người khác thấy \"Bạn không có quyền huỷ đơn hàng\". Quyền này chỉ chặn nút \"Xóa hết\" của giỏ chưa thanh toán, không liên quan đơn đã thu."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-doi-soat-thanh-toan-bi-gian-doan",
@@ -240,7 +240,7 @@
    "module_name": "Báo Cáo Nhiều Cửa Hàng / Chuỗi",
    "section": "Các việc thường làm",
    "title": "1. Có thêm cửa hàng",
-   "text": "1. Cài đặt → thẻ quán → \"Đổi quán\" → \"Tạo cửa hàng mới\" (không có trên iPhone cài từ App Store).\n2. Nhập tên quán, xác nhận mật khẩu. Quán mới không tự vào chuỗi."
+   "text": "Mở thêm chi nhánh / quán mới:\n1. Cài đặt → thẻ quán → \"Đổi quán\" → \"Tạo cửa hàng mới\" (không có trên iPhone cài từ App Store).\n2. Nhập tên quán, xác nhận mật khẩu. Quán mới không tự vào chuỗi."
   },
   {
    "id": "bao-cao-chuoi#cac-viec-thuong-lam-2-tao-chuoi-va-them-cua-hang",
@@ -248,7 +248,7 @@
    "module_name": "Báo Cáo Nhiều Cửa Hàng / Chuỗi",
    "section": "Các việc thường làm",
    "title": "2. Tạo chuỗi và thêm cửa hàng",
-   "text": "1. Mở Báo cáo chuỗi. Chưa có chuỗi: \"Bạn có N cửa hàng. Tạo một chuỗi để so sánh số liệu các chi nhánh.\" → \"Tạo chuỗi\".\n2. Hoặc bấm \"Quản lý chuỗi\" → \"Quản lý chuỗi cửa hàng\":\n   • \"Tạo chuỗi mới\": nhập \"Tên chuỗi\" → \"Tạo\".\n   • \"Thêm cửa hàng của bạn\": bấm \"Thêm vào chuỗi\" ở từng quán.\n   • \"Cửa hàng trong \"<chuỗi>\"\": \"Gỡ khỏi chuỗi\" → \"Gỡ khỏi chuỗi?\" → \"Gỡ\" (dữ liệu cửa hàng không bị xoá).\n3. Có nhiều chuỗi: chọn ở \"Chọn chuỗi\" trên đầu."
+   "text": "Có 2 quán trở lên, muốn gom lại xem tổng doanh thu chung: tạo chuỗi rồi thêm các quán vào chuỗi.\n1. Mở Báo cáo chuỗi. Chưa có chuỗi: \"Bạn có N cửa hàng. Tạo một chuỗi để so sánh số liệu các chi nhánh.\" → \"Tạo chuỗi\".\n2. Hoặc bấm \"Quản lý chuỗi\" → \"Quản lý chuỗi cửa hàng\":\n   • \"Tạo chuỗi mới\": nhập \"Tên chuỗi\" → \"Tạo\".\n   • \"Thêm cửa hàng của bạn\": bấm \"Thêm vào chuỗi\" ở từng quán.\n   • \"Cửa hàng trong \"<chuỗi>\"\": \"Gỡ khỏi chuỗi\" → \"Gỡ khỏi chuỗi?\" → \"Gỡ\" (dữ liệu cửa hàng không bị xoá).\n3. Có nhiều chuỗi: chọn ở \"Chọn chuỗi\" trên đầu."
   },
   {
    "id": "bao-cao-chuoi#cac-viec-thuong-lam-3-doc-bao-cao",
@@ -264,7 +264,7 @@
    "module_name": "Báo Cáo Nhiều Cửa Hàng / Chuỗi",
    "section": "Các việc thường làm",
    "title": "4. Hiểu chip tăng / giảm",
-   "text": "• So với cùng kỳ trước: hôm nay so với cùng thứ tuần trước trong cùng khoảng giờ đã trôi qua; tuần/tháng đang chạy so với phần tương ứng của kỳ trước.\n• Xanh / đỏ chỉ khi thay đổi vượt mức dao động bình thường (đã quy đổi theo số ngày có bán). Xám: trong mức bình thường.\n• \"Ít dữ liệu\": chưa đủ đơn mỗi bên để so. \"Quán mới\": chưa đủ lịch sử. \"Chưa so sánh\" / \"Mới\": kỳ trước không có số liệu.\n• Chạm vào chip để đọc lý do.\n• Tổng chuỗi không tính quán mới khi so sánh (\"Chưa tính quán mới (chưa đủ lịch sử để so sánh): …\"), nên mở quán mới không làm tổng tăng ảo."
+   "text": "• So với cùng kỳ trước: hôm nay so với cùng thứ tuần trước trong cùng khoảng giờ đã trôi qua; tuần/tháng đang chạy so với phần tương ứng của kỳ trước.\n• Xanh / đỏ chỉ khi thay đổi vượt mức dao động bình thường (đã quy đổi theo số ngày có bán). Chip màu xám: trong mức bình thường.\n• \"Ít dữ liệu\": chưa đủ đơn mỗi bên để so. \"Quán mới\": chưa đủ lịch sử. \"Chưa so sánh\" / \"Mới\": kỳ trước không có số liệu.\n• Chạm vào chip để đọc lý do.\n• Tổng chuỗi không tính quán mới khi so sánh (\"Chưa tính quán mới (chưa đủ lịch sử để so sánh): …\"), nên mở quán mới không làm tổng tăng ảo."
   },
   {
    "id": "bao-cao-chuoi#loi-ban-can-la-chu-cua-tu-2-cua-hang-tro-len-de-lap-chuoi-va-so",
@@ -384,7 +384,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Tài chính",
-   "text": "• Thẻ \"LỢI NHUẬN\" / \"ĐANG LỖ\": Thu nhập, Chi phí, Biên LN.\n• \"Kết quả kinh doanh\": I. Doanh thu từ bán hàng (Tiền hàng; dòng \"Tiền thuế GTGT (app chưa tính)\" hiện \"—\" vì app không tính thuế) – II. Chi phí (theo danh mục) – III. Lợi nhuận (I − II), kèm tỷ trọng.\n• Nhận xét tăng/giảm so với kỳ trước (\"Thu nhập tăng X% so với kỳ trước\").\n\nSố liệu lấy từ Thu Chi — mọi lưu ý của Thu Chi áp dụng ở đây (ví dụ lương phải ghi tay mới vào chi phí; đơn trả bằng ví không tính vào sổ Thu Chi vì tiền đã ghi thu lúc nạp ví)."
+   "text": "• Xem quán lời hay lỗ theo kỳ: thẻ \"LỢI NHUẬN\" / \"ĐANG LỖ\": Thu nhập, Chi phí, Biên LN.\n• \"Kết quả kinh doanh\": I. Doanh thu từ bán hàng (Tiền hàng; dòng \"Tiền thuế GTGT (app chưa tính)\" hiện \"—\" vì app không tính thuế) – II. Chi phí (theo danh mục) – III. Lợi nhuận (I − II), kèm tỷ trọng.\n• Nhận xét tăng/giảm so với kỳ trước (\"Thu nhập tăng X% so với kỳ trước\").\n\nSố liệu lấy từ Thu Chi — mọi lưu ý của Thu Chi áp dụng ở đây (ví dụ lương phải ghi tay mới vào chi phí; đơn trả bằng ví không tính vào sổ Thu Chi vì tiền đã ghi thu lúc nạp ví)."
   },
   {
    "id": "bao-cao#tung-tab-kho",
@@ -400,7 +400,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Huỷ/Duyệt",
-   "text": "• \"Nhật ký hủy / duyệt\": tổng tiền thất thoát do huỷ trong kỳ, số lượt huỷ \"được kiểm toán\".\n• Mỗi dòng: Huỷ bàn / Huỷ hoá đơn / Huỷ món, người yêu cầu, người duyệt, lý do, số tiền.\n• Chạm \"Nhấn để xem chi tiết món huỷ (N)\": từng món, số lượng, đơn giá, \"Đã trừ hao hụt\" / \"Không trừ kho\", \"Tổng tiền huỷ\"."
+   "text": "• Xem lịch sử huỷ món / huỷ bàn / huỷ hoá đơn và ai duyệt. \"Nhật ký hủy / duyệt\": tổng tiền thất thoát do huỷ trong kỳ, số lượt huỷ \"được kiểm toán\".\n• Mỗi dòng: Huỷ bàn / Huỷ hoá đơn / Huỷ món, người yêu cầu, người duyệt, lý do, số tiền.\n• Chạm \"Nhấn để xem chi tiết món huỷ (N)\": từng món, số lượng, đơn giá, \"Đã trừ hao hụt\" / \"Không trừ kho\", \"Tổng tiền huỷ\"."
   },
   {
    "id": "bao-cao#tung-tab-nhan-vien",
@@ -416,7 +416,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Voucher",
-   "text": "• Tổng đơn áp mã, Tổng tiền giảm; danh sách theo mã: Mã đơn / Bàn, Nhân viên, Thời gian, Giảm giá."
+   "text": "• Xem voucher / mã giảm giá đã dùng: số lần dùng là Tổng đơn áp mã, Tổng tiền giảm; danh sách theo mã: Mã đơn / Bàn, Nhân viên, Thời gian, Giảm giá."
   },
   {
    "id": "bao-cao#tung-tab-hoa-don",
@@ -528,7 +528,7 @@
    "module_name": "Bếp",
    "section": "Các việc thường làm",
    "title": "1. Nhận và làm phiếu",
-   "text": "1. Phiếu mới hiện ở cột/tab Chờ, chuông kêu (máy vai trò Bếp).\n2. Bấm \"Bắt đầu làm\" → phiếu sang Đang làm. Phục vụ thấy món chuyển \"Đang làm\".\n3. Làm xong từng món: chạm vòng tròn bên trái món để đánh dấu xong (chạm lại để bỏ). Xong hết món → phiếu tự sang Hoàn thành.\n4. Hoặc bấm \"Xong\" để đánh dấu cả phiếu xong.\n5. Phục vụ/thu ngân nhận thông báo \"<bàn>: Món ăn đã sẵn sàng!\" và món hiện \"Bếp xong\" ở Quản lý Bàn."
+   "text": "1. Phiếu mới hiện ở cột/tab Chờ, chuông kêu (máy vai trò Bếp).\n2. Bấm \"Bắt đầu làm\" → phiếu sang Đang làm. Phục vụ thấy món chuyển \"Đang làm\".\n3. Làm xong từng món: chạm vòng tròn bên trái món để đánh dấu món xong (chạm lại để bỏ). Xong hết món → phiếu tự sang Hoàn thành.\n4. Hoặc bấm \"Xong\" để đánh dấu cả phiếu xong.\n5. Phục vụ/thu ngân nhận thông báo \"<bàn>: Món ăn đã sẵn sàng!\" và món hiện \"Bếp xong\" ở Quản lý Bàn."
   },
   {
    "id": "bep#cac-viec-thuong-lam-2-mo-lai-don-phieu",
@@ -672,7 +672,7 @@
    "module_name": "Chấm công",
    "section": "Các việc thường làm",
    "title": "2. Vào ca (nhân viên)",
-   "text": "1. Bấm \"VÀO CA\".\n2. Chụp selfie trực tiếp bằng camera — không chọn ảnh có sẵn, không vào ca được nếu không có ảnh.\n3. App lấy vị trí. Nếu xa quán hơn bán kính: hỏi \"Định vị lệch phạm vi\" — bấm \"Tiếp tục\" thì ca vẫn được ghi nhưng gắn cờ \"Lệch vị trí\" gửi chủ quán; \"Hủy\" để không vào ca.\n4. Thành công: \"Đã vào ca lúc HH:mm\"."
+   "text": "1. Bấm \"VÀO CA\" để chấm công vào ca.\n2. Chụp selfie trực tiếp bằng camera — không chọn ảnh có sẵn, không vào ca được nếu không có ảnh.\n3. App lấy vị trí. Nếu xa quán hơn bán kính: hỏi \"Định vị lệch phạm vi\" — bấm \"Tiếp tục\" thì ca vẫn được ghi nhưng gắn cờ \"Lệch vị trí\" gửi chủ quán; \"Hủy\" để không vào ca.\n4. Thành công: \"Đã vào ca lúc HH:mm\"."
   },
   {
    "id": "cham-cong#cac-viec-thuong-lam-3-ra-ca",
@@ -1040,7 +1040,7 @@
    "module_name": "Khách hàng – Giảm giá – Khuyến mãi",
    "section": "",
    "title": "Cách tính điểm, hạng, ví",
-   "text": "• Tích điểm: mỗi đơn thanh toán có gắn khách được cộng tổng tiền ÷ mức tích điểm (làm tròn xuống). Mặc định 10.000đ = 1 điểm; đổi ở Cài đặt → \"Cài đặt điểm thưởng\" (\"đ = 1 điểm\") → \"Lưu cài đặt\".\n• Dùng điểm khi thanh toán: mỗi điểm trừ 1.000đ (mặc định, hiện chưa có chỗ đổi trong app).\n• Mỗi lần thanh toán có gắn khách còn cộng tổng chi và số lần ghé.\n• Hạng (chỉ để hiển thị, chưa có ưu đãi tự động): Đồng 🥉 < 50 điểm, Bạc 🥈 từ 50, Vàng ⭐ từ 200, VIP 💎 từ 500.\n• Ví: gồm tiền thật khách đã nạp và bonus được tặng. Khi trả bằng ví ở Bán hàng: bonus chỉ dùng tối đa 15% giá trị đơn (mặc định), phần còn lại trừ tiền thật. Không dùng điểm cùng lúc với ví. Quản lý Bàn chưa trả được bằng ví."
+   "text": "• Tích điểm (điểm tích luỹ): mỗi đơn thanh toán có gắn khách được cộng tổng tiền ÷ mức tích điểm (làm tròn xuống). Mặc định 10.000đ = 1 điểm; đổi ở Cài đặt → \"Cài đặt điểm thưởng\" (\"đ = 1 điểm\") → \"Lưu cài đặt\".\n• Dùng điểm khi thanh toán: mỗi điểm trừ 1.000đ (mặc định, hiện chưa có chỗ đổi trong app).\n• Mỗi lần thanh toán có gắn khách còn cộng tổng chi và số lần ghé.\n• Hạng (chỉ để hiển thị, chưa có ưu đãi tự động): Đồng 🥉 < 50 điểm, Bạc 🥈 từ 50, Vàng ⭐ từ 200, VIP 💎 từ 500.\n• Ví: gồm tiền thật khách đã nạp và bonus được tặng. Khi trả bằng ví ở Bán hàng: bonus chỉ dùng tối đa 15% giá trị đơn (mặc định), phần còn lại trừ tiền thật. Không dùng điểm cùng lúc với ví. Quản lý Bàn chưa trả được bằng ví."
   },
   {
    "id": "khach-hang#cac-viec-thuong-lam-1-them-khach",
@@ -1720,7 +1720,7 @@
    "module_name": "Nhân viên & Phân quyền",
    "section": "Các việc thường làm",
    "title": "1. Gán / đổi vai trò cho nhân viên",
-   "text": "1. Chạm nhân viên (hoặc \"Cấp quyền\" với người mới).\n2. Mục \"Vai trò & Quyền hạn\" → \"Chọn vai trò cho nhân viên...\" → \"Lưu vai trò\" → \"✅ Đã cập nhật vai trò\".\n3. Nhân viên đang dùng app thấy ngay \"🔄 Vai trò của bạn đã đổi sang: …\" / \"⚡ Quyền truy cập của bạn vừa được cập nhật\"."
+   "text": "1. Chạm nhân viên (hoặc \"Cấp quyền\" với người mới).\n2. Mục \"Vai trò & Quyền hạn\" → \"Chọn vai trò cho nhân viên...\" → \"Lưu vai trò\" → \"✅ Đã cập nhật vai trò\".\n3. Nhân viên đang dùng app thấy ngay \"🔄 Vai trò của bạn đã đổi sang: …\" / \"⚡ Quyền truy cập của bạn vừa được cập nhật\".\n\nVí dụ: đổi nhân viên từ Nhân viên (hoặc Phục vụ) sang Thu ngân, hoặc gán vai trò Thu ngân cho nhân viên mới vào."
   },
   {
    "id": "nhan-vien#cac-viec-thuong-lam-2-ho-so-nhan-vien",
@@ -1976,7 +1976,7 @@
    "module_name": "Nhật Ký Log",
    "section": "Các việc thường làm",
    "title": "1. Tra một sự cố",
-   "text": "1. Chọn \"Khoảng thời gian\" và giờ quanh lúc xảy ra.\n2. Lọc \"Nhân viên\" (nếu biết ai), \"Phân loại Log\" = Lỗi nghiêm trọng hoặc Cảnh báo hệ thống.\n3. Bấm \"Truy xuất Log\", chạm dòng cần xem để đọc chi tiết kỹ thuật.\n\nMuốn xem hành động nghiệp vụ (in lại bill, duyệt PIN, huỷ bàn…): chọn \"Loại thao tác\" = 🧾 Hành động nghiệp vụ."
+   "text": "Xem log lỗi máy in / lỗi hệ thống lúc xảy ra sự cố:\n1. Chọn \"Khoảng thời gian\" và giờ quanh lúc xảy ra.\n2. Lọc \"Nhân viên\" (nếu biết ai), \"Phân loại Log\" = Lỗi nghiêm trọng hoặc Cảnh báo hệ thống.\n3. Bấm \"Truy xuất Log\", chạm dòng cần xem để đọc chi tiết kỹ thuật.\n\nMuốn xem hành động nghiệp vụ (in lại bill, duyệt PIN, huỷ bàn…): chọn \"Loại thao tác\" = 🧾 Hành động nghiệp vụ."
   },
   {
    "id": "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro",
@@ -2000,7 +2000,7 @@
    "module_name": "Nhật Ký Log",
    "section": "Các việc thường làm",
    "title": "4. Máy chủ tự dọn log cũ",
-   "text": "• Mỗi đêm 00:40 máy chủ tự xoá log kỹ thuật cũ hơn 30 ngày.\n• Nhật ký nghiệp vụ (thanh toán, thu chi, huỷ, duyệt PIN…) giữ 1 năm.\n• Vì vậy tra lỗi máy in / hệ thống chỉ xem được 30 ngày gần nhất."
+   "text": "Thời hạn giữ log:\n• Mỗi đêm 00:40 máy chủ tự xoá log kỹ thuật cũ hơn 30 ngày.\n• Nhật ký nghiệp vụ (thanh toán, thu chi, huỷ, duyệt PIN…) giữ 1 năm.\n• Vì vậy tra lỗi máy in / hệ thống chỉ xem được 30 ngày gần nhất."
   },
   {
    "id": "nhat-ky-log#loi-vui-long-chon-bo-loc-va-nhan-nut-truy-xuat-log-de-tai-nhat-k",
@@ -2096,7 +2096,7 @@
    "module_name": "QR Gọi Món",
    "section": "Các việc thường làm",
    "title": "3. Nhận đơn mới (nhân viên)",
-   "text": "1. Có đơn mới: app kêu chuông (một lần cho mỗi đơn) và hiện nhãn \"Đơn QR (n)\" trên thanh trên cùng của Bán hàng, hoặc nút đơn QR ở Quản lý Bàn.\n   • Cam: có đơn mới đang chờ. Xanh: đơn đang được xử lý. Xám + biểu tượng mất sóng: mất kết nối, danh sách có thể cũ.\n2. Bấm nhãn → danh sách \"Đơn gọi món QR (n)\": bàn/mã lấy món, số món, tiền, đã chờ bao lâu.\n3. Chạm một đơn để mở. Mở đơn = nhận đơn: người khác không duyệt trùng được (họ sẽ thấy \"Đơn này đã được xử lý ở thiết bị khác.\")."
+   "text": "Khách quét QR gọi món xong, nhân viên nhận đơn ở đây rồi duyệt để món xuống bếp (đơn tại bàn: mục 4; đơn mang đi: mục 5).\n1. Có đơn mới: app kêu chuông (một lần cho mỗi đơn) và hiện nhãn \"Đơn QR (n)\" trên thanh trên cùng của Bán hàng, hoặc nút đơn QR ở Quản lý Bàn.\n   • Cam: có đơn mới đang chờ. Xanh: đơn đang được xử lý. Xám + biểu tượng mất sóng: mất kết nối, danh sách có thể cũ.\n2. Bấm nhãn → danh sách \"Đơn gọi món QR (n)\": bàn/mã lấy món, số món, tiền, đã chờ bao lâu.\n3. Chạm một đơn để mở. Mở đơn = nhận đơn: người khác không duyệt trùng được (họ sẽ thấy \"Đơn này đã được xử lý ở thiết bị khác.\")."
   },
   {
    "id": "qr-goi-mon#cac-viec-thuong-lam-4-duyet-don-tai-ban",
@@ -2296,7 +2296,7 @@
    "module_name": "Quản lý Bàn",
    "section": "Các việc thường làm",
    "title": "4. Gửi bếp",
-   "text": "1. Bấm \"Gửi bếp (N)\" — N là số món chưa gửi. Gửi xong: \"Đã gửi bếp Đợt X — N món\".\n2. Trạng thái từng món: \"Đã gửi\" → \"Đang làm\" → \"Bếp xong\".\n3. Món chưa gửi quá 3 phút: cảnh báo \"⚠ N món CHƯA gửi bếp quá 3 phút — bấm \"Gửi bếp\" để bếp làm.\"\n4. Bếp báo xong: app hiện \"<bàn>: Món ăn đã sẵn sàng!\".\n\nCần bật module Bếp. Nếu tắt: \"KHÔNG gửi bếp được: module Bếp đang tắt trên quán này…\". Phiếu bếp tự in nếu đã cài máy in (xem In Hoá Đơn)."
+   "text": "1. Gửi bếp ở bàn: bấm \"Gửi bếp (N)\" — N là số món chưa gửi. Gửi xong: \"Đã gửi bếp Đợt X — N món\".\n2. Trạng thái từng món: \"Đã gửi\" → \"Đang làm\" → \"Bếp xong\".\n3. Món chưa gửi quá 3 phút: cảnh báo \"⚠ N món CHƯA gửi bếp quá 3 phút — bấm \"Gửi bếp\" để bếp làm.\"\n4. Bếp báo xong: app hiện \"<bàn>: Món ăn đã sẵn sàng!\".\n\nCần bật module Bếp. Nếu tắt: \"KHÔNG gửi bếp được: module Bếp đang tắt trên quán này…\". Phiếu bếp tự in nếu đã cài máy in (xem In Hoá Đơn)."
   },
   {
    "id": "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon",

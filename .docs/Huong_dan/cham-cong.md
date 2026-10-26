@@ -41,7 +41,7 @@ nguon:
 4. **"Lưu cài đặt"** → "Đã lưu cấu hình định vị của quán."
 
 ### 2. Vào ca (nhân viên)
-1. Bấm **"VÀO CA"**.
+1. Bấm **"VÀO CA"** để chấm công vào ca.
 2. Chụp **selfie trực tiếp** bằng camera — không chọn ảnh có sẵn, không vào ca được nếu không có ảnh.
 3. App lấy vị trí. Nếu xa quán hơn bán kính: hỏi **"Định vị lệch phạm vi"** — bấm **"Tiếp tục"** thì ca vẫn được ghi nhưng **gắn cờ "Lệch vị trí"** gửi chủ quán; **"Hủy"** để không vào ca.
 4. Thành công: "Đã vào ca lúc HH:mm".

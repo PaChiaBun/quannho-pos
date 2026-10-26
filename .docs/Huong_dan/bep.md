@@ -39,7 +39,7 @@ nguon:
 ### 1. Nhận và làm phiếu
 1. Phiếu mới hiện ở cột/tab **Chờ**, chuông kêu (máy vai trò Bếp).
 2. Bấm **"Bắt đầu làm"** → phiếu sang **Đang làm**. Phục vụ thấy món chuyển "Đang làm".
-3. Làm xong từng món: **chạm vòng tròn** bên trái món để đánh dấu xong (chạm lại để bỏ). Xong hết món → phiếu tự sang Hoàn thành.
+3. Làm xong từng món: **chạm vòng tròn** bên trái món để đánh dấu món xong (chạm lại để bỏ). Xong hết món → phiếu tự sang Hoàn thành.
 4. Hoặc bấm **"Xong"** để đánh dấu cả phiếu xong.
 5. Phục vụ/thu ngân nhận thông báo "<bàn>: Món ăn đã sẵn sàng!" và món hiện **"Bếp xong"** ở Quản lý Bàn.
 

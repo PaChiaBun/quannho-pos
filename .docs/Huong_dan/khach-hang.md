@@ -31,7 +31,7 @@ nguon:
   - **"Khuyến mãi / Voucher"** — mã giảm giá.
 
 ## Cách tính điểm, hạng, ví
-- **Tích điểm**: mỗi đơn thanh toán có gắn khách được cộng `tổng tiền ÷ mức tích` điểm (làm tròn xuống). Mặc định **10.000đ = 1 điểm**; đổi ở **Cài đặt → "Cài đặt điểm thưởng"** ("đ = 1 điểm") → **"Lưu cài đặt"**.
+- **Tích điểm** (điểm tích luỹ): mỗi đơn thanh toán có gắn khách được cộng `tổng tiền ÷ mức tích` điểm (làm tròn xuống). Mặc định **10.000đ = 1 điểm**; đổi ở **Cài đặt → "Cài đặt điểm thưởng"** ("đ = 1 điểm") → **"Lưu cài đặt"**.
 - **Dùng điểm** khi thanh toán: mỗi điểm trừ **1.000đ** (mặc định, hiện chưa có chỗ đổi trong app).
 - Mỗi lần thanh toán có gắn khách còn cộng **tổng chi** và **số lần** ghé.
 - **Hạng** (chỉ để hiển thị, chưa có ưu đãi tự động): **Đồng 🥉** < 50 điểm, **Bạc 🥈** từ 50, **Vàng ⭐** từ 200, **VIP 💎** từ 500.
