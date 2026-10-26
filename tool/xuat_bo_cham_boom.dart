@@ -1,5 +1,5 @@
 // Xuất bộ câu chấm Boom bằng GPT thật (26/10): mỗi câu hỏi kèm ĐÚNG các mã đoạn app sẽ gửi máy chủ
-// (chắc chắn → đoạn đầu + đoạn cùng bài trong 5 đoạn đầu; chưa chắc → 5 đoạn đầu), như boom_chat_provider.
+// (chắc chắn → đoạn đầu + đoạn cùng bài trong 8 đoạn đầu; chưa chắc → 8 đoạn đầu), như boom_chat_provider.
 //   dart run tool/xuat_bo_cham_boom.dart [bộ câu .json ...]   (mặc định: bộ độc lập boom_help_eval_doc_lap.json)
 // Ghi build/boom_cham/bo_cau.json — dùng cho supabase/functions/boom-chat/cham_gpt.ts.
 import 'dart:convert';
@@ -30,14 +30,13 @@ void main(List<String> args) {
       final q = c['q'] as String;
       final r = decideHelp(index, q);
       if (r.hits.isEmpty) continue;
-      final first = r.hits.first.chunk;
-      final ids = r.decision == HelpDecision.answer
-          ? [
-              first.id,
-              for (final h in r.wider.skip(1))
-                if (h.chunk.module == first.module) h.chunk.id,
-            ]
-          : [for (final h in r.wider) h.chunk.id];
+      final ids = [
+        for (final c in helpChunksForGpt(
+          r,
+          sure: r.decision == HelpDecision.answer,
+        ))
+          c.id,
+      ];
       out.add({
         'q': q,
         'expect': expect,

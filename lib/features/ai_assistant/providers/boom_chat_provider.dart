@@ -1091,15 +1091,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
       if (helpWins ||
           ((help.decision != HelpDecision.none || weakHits) &&
               !boomGeneralKnowledge(query))) {
-        // Chắc chắn → gửi đoạn đầu (+ đoạn cùng bài); chưa chắc → gửi tới 5 đoạn đầu để GPT tự chọn đoạn đúng.
-        final ctx = helpWins
-            ? [
-                help.hits.first.chunk,
-                // đoạn cùng bài trong 5 đoạn đầu (26/10: "vào ca chấm công" — đoạn "Vào ca" đứng thứ 4)
-                for (final h in help.wider.skip(1))
-                  if (h.chunk.module == help.hits.first.chunk.module) h.chunk,
-              ]
-            : [for (final h in help.wider) h.chunk];
+        final ctx = helpChunksForGpt(help, sure: helpWins);
         final answered = canAsk
             ? await ai.ask(
                 storeId: storeId,

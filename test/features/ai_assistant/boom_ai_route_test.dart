@@ -326,8 +326,8 @@ void main() {
         return; // bộ tìm kiếm đổi thì bỏ qua ca này
       }
       await ask(q);
-      expect(ai.asked.single.length, r.wider.length); // tới 5 đoạn để GPT tự chọn (26/10)
-      expect(r.wider.length, inInclusiveRange(r.hits.length, 5));
+      expect(ai.asked.single.length, r.wider.length); // tới 8 đoạn để GPT tự chọn (26/10)
+      expect(r.wider.length, inInclusiveRange(r.hits.length, 8));
       expect([for (final h in r.wider.take(3)) h.chunk.id], [for (final h in r.hits) h.chunk.id]);
       expect(r.hits.length, lessThanOrEqualTo(3)); // gợi ý cho người dùng vẫn tối đa 3 mục
     },
@@ -578,7 +578,7 @@ void main() {
         return; // bộ tìm đổi thì bỏ qua ca này
       }
       final m = await ask(q);
-      expect(ai.asked.single.length, h.wider.length); // tới 5 đoạn để GPT tự chọn (26/10)
+      expect(ai.asked.single.length, h.wider.length); // tới 8 đoạn để GPT tự chọn (26/10)
       expect(m.content, isNot(contains('hướng dẫn:')));
     },
   );

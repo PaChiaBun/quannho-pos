@@ -79,7 +79,7 @@ class BoomAiService {
     }
   }
 
-  /// GPT trả lời dựa trên [chunks] (tối đa 5). null = dùng câu trả lời nguyên văn.
+  /// GPT trả lời dựa trên [chunks] (tối đa 8). null = dùng câu trả lời nguyên văn.
   Future<BoomAiReply?> ask({
     required String storeId,
     required String question,
@@ -94,7 +94,7 @@ class BoomAiService {
       'question': question.length > 500 ? question.substring(0, 500) : question,
       'mode': 'answer',
       // Chỉ gửi MÃ đoạn — máy chủ tự lấy nội dung từ bản hướng dẫn đã đăng.
-      'chunk_ids': [for (final c in chunks.take(5)) c.id],
+      'chunk_ids': [for (final c in chunks.take(8)) c.id],
       // Máy chủ lấy đúng bản hướng dẫn app đang dùng (không lệch nội dung giữa app và máy chủ).
       if (packVersion > 0) 'pack_version': packVersion,
     });
@@ -213,7 +213,10 @@ class BoomAiService {
       final r = await client.rpc('boom_xung_ho_get_v1').timeout(timeout);
       if (r is! Map) return (ok: false, xungHo: null);
       final x = r['xung_ho'];
-      return (ok: true, xungHo: x is String && kBoomDanhXung.containsKey(x) ? x : null);
+      return (
+        ok: true,
+        xungHo: x is String && kBoomDanhXung.containsKey(x) ? x : null,
+      );
     } catch (_) {
       return (ok: false, xungHo: null);
     }

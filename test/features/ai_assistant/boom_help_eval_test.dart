@@ -115,6 +115,46 @@ void main() {
     );
   });
 
+  test('Bộ độc lập 26/10 (128 câu mới): GPT nhận được đoạn đúng', () {
+    // Lần đo đầu (chưa sửa): GPT nhận được đoạn đúng A 82% / B 79%, trả lời thẳng sai bài 9 câu → sau khi bỏ từ đơn
+    // trùng nghĩa trong nhóm đồng nghĩa + gửi tới 8 đoạn: A 89% / B 89% (B không dùng để sửa).
+    final index = loadIndex();
+    final cases =
+        (jsonDecode(
+                  File(
+                    'test/features/ai_assistant/boom_help_eval_moi.json',
+                  ).readAsStringSync(),
+                )
+                as Map)['cases']
+            as List;
+    var pos = 0, got = 0, wrongAnswer = 0, negAnswered = 0;
+    final notes = <String>[];
+    for (final c in cases) {
+      final q = c['q'] as String;
+      final expect = (c['expect'] as List).cast<String>();
+      final r = decideHelp(index, q);
+      final sure = r.decision == HelpDecision.answer;
+      if (expect.isEmpty) {
+        if (sure) negAnswered++;
+        continue;
+      }
+      pos++;
+      if (helpChunksForGpt(r, sure: sure).any((x) => expect.contains(x.id))) {
+        got++;
+      } else {
+        notes.add('GPT KHÔNG NHẬN ĐOẠN ĐÚNG: "$q"');
+      }
+      if (sure && !expect.contains(r.hits.first.chunk.id)) wrongAnswer++;
+    }
+    // ignore: avoid_print
+    print(
+      'Bộ độc lập 26/10: $pos câu — GPT nhận đoạn đúng $got, trả lời thẳng sai bài $wrongAnswer; lạc đề trả lời $negAnswered\n${notes.join('\n')}',
+    );
+    expect(got / pos, greaterThanOrEqualTo(0.85), reason: notes.join('\n'));
+    expect(wrongAnswer / pos, lessThanOrEqualTo(0.10));
+    expect(negAnswered, lessThanOrEqualTo(2));
+  });
+
   test(
     'Luồng thật (bộ đoán ý → chọn đường → tra hướng dẫn) với cả hai bộ câu hỏi',
     () {

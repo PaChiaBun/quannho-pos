@@ -4,7 +4,7 @@ export const LIMITS = {
   // byte UTF-8: chữ Việt có dấu tốn 2–3 byte; khối số liệu theo nhóm món có thể tới ~20 KB (QC 24/10)
   bodyMaxBytes: 32_000,
   questionMax: 500,
-  chunksMax: 5, // 26/10: app gửi tới 5 đoạn khi bộ tìm chưa chắc, GPT tự chọn đoạn đúng
+  chunksMax: 8, // 26/10: app gửi tới 8 đoạn khi bộ tìm chưa chắc, GPT tự chọn đoạn đúng
   chunkIdMax: 160,
   answerMax: 2000,
 };
@@ -979,7 +979,7 @@ export const SYSTEM_PROMPT = [
   '- Mỗi đoạn tả một màn hình / việc riêng: không lấy nút, lựa chọn của đoạn này gán cho màn hình của đoạn khác (vd nút thanh toán ở màn Bán hàng ≠ màn thanh toán tại bàn). Đoạn nói rõ "không có" lựa chọn nào thì phải nói không có.',
   '- (Chỉ câu hỏi về CÁCH DÙNG APP) Đã nói "Bé Boom chưa thấy trong hướng dẫn" thì DỪNG ở đó (chỉ gợi ý mục gần nhất hoặc hỏi Chủ quán): KHÔNG tự nghĩ cách làm thay thế trong app, KHÔNG nêu nút / màn hình nào khác.',
   '- Không nhắc "đoạn 1", "đoạn 2", "theo đoạn…" trong câu trả lời — người dùng không thấy các đoạn này.',
-  '- Có nhiều đoạn (tới 5) khác bài: xếp theo độ khớp của bộ tìm, đoạn đầu thường đúng nhất nhưng KHÔNG chắc. Chọn đoạn nói ĐÚNG việc được hỏi (có thể là đoạn sau), trả lời theo đoạn đó; bỏ qua hẳn các đoạn không liên quan.',
+  '- Có nhiều đoạn (tới 8) khác bài: xếp theo độ khớp của bộ tìm, đoạn đầu thường đúng nhất nhưng KHÔNG chắc. Chọn đoạn nói ĐÚNG việc được hỏi (có thể là đoạn sau), trả lời theo đoạn đó; bỏ qua hẳn các đoạn không liên quan.',
   '- Các đoạn là KẾT QUẢ TÌM KIẾM, có thể không đúng việc được hỏi. Câu hỏi về cách dùng app: tự kiểm có đoạn nào nói ĐÚNG việc này không? Không có → "Bé Boom chưa thấy trong hướng dẫn" (+ gợi ý mục gần nhất); không trả lời bằng đoạn nói việc khác.',
 ].join('\n');
 

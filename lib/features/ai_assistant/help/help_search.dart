@@ -114,10 +114,18 @@ const _kStop = {
 /// Nhóm đồng nghĩa (đã bỏ dấu). Mỗi cụm có thể nhiều từ.
 const _kSynonyms = <List<String>>[
   ['bill', 'hoa don', 'hd', 'phieu tinh tien', 'tam tinh'],
-  ['huy', 'xoa', 'bo', 'go'],
+  ['huy', 'xoa', 'bo mon', 'go mon', 'go ma', 'bo bot', 'bo ban'],
   ['in lai', 'in bill cu', 'in lai bill'],
   ['may in', 'printer', 'may in bill'],
-  ['nap vi', 'nap tien', 'vi khach', 'vi', 'nap vo vi', 'nap vao vi'],
+  [
+    'nap vi',
+    'nap tien',
+    'vi khach',
+    'vo vi',
+    'vao vi',
+    'nap vo vi',
+    'nap vao vi',
+  ],
   ['giam gia', 'voucher', 'ma giam gia', 'khuyen mai', 'ma giam'],
   [
     'cham cong',
@@ -130,11 +138,22 @@ const _kSynonyms = <List<String>>[
     'bam vao ca',
   ],
   ['tra luong', 'luong', 'phat luong', 'ky luong'],
-  ['kho', 'ton kho', 'ton', 'hang ton'],
+  ['kho', 'ton kho', 'hang ton'],
   ['het hang', 'het mon', 'tam het', 'tat ban', 'ngung ban'],
   ['nhap hang', 'nhap kho', 'phieu nhap'],
   ['ma qr', 'qr', 'quet ma'],
-  ['khach hang', 'khach', 'thanh vien', 'tich diem', 'diem'],
+  // 26/10: bỏ từ đơn 'khach' / 'diem' ("chuyển khách qua bàn", "địa điểm quán" bị kéo về bài tích điểm); giữ cụm rõ nghĩa
+  [
+    'khach hang',
+    'thanh vien',
+    'tich diem',
+    'diem thuong',
+    'khach quen',
+    'chi tiet khach',
+    'ghe may lan',
+    'sdt khach',
+    'so dien thoai khach',
+  ],
   ['thu chi', 'so quy', 'chi phi', 'ghi chi', 'tien dien'],
   ['bep', 'phieu bep', 'man bep', 'kds'],
   ['nhan vien', 'nv', 'nhan su', 'staff'],
@@ -143,7 +162,14 @@ const _kSynonyms = <List<String>>[
   ['dat lai', 'reset', 'cap lai', 'lay lai'],
   ['vai tro', 'chuc vu'],
   ['doanh thu', 'bao cao', 'thong ke'],
-  ['ket tien', 'ket', 'mo ket', 'ngan keo'],
+  [
+    'ket tien',
+    'mo ket',
+    'ngan keo',
+    'cam ket',
+    'ket khong mo',
+    'ket khong bat',
+  ],
   [
     'chuyen ban',
     'doi ban',
@@ -207,9 +233,9 @@ const _kSynonyms = <List<String>>[
     'khu vuc',
     'chinh ban',
   ],
-  ['ma pin', 'pin', 'duyet'],
+  ['ma pin', 'pin'],
   ['thanh toan', 'tinh tien', 'thu tien', 'checkout'],
-  ['topping', 'them', 'mon them'],
+  ['topping', 'mon them'],
   ['tem ly', 'tem dan ly', 'in tem'],
   ['ban giao ca', 'giao ca', 'ban giao'],
   ['checklist', 'viec', 'cong viec', 'nhiem vu'],
@@ -226,7 +252,7 @@ const _kSynonyms = <List<String>>[
   ['nhat ky', 'log', 'lich su'],
   ['cong thuc', 'dinh luong', 'dinh muc'],
   ['kiem ke', 'kiem kho', 'dieu chinh ton'],
-  ['hao hut', 'hu hong', 'hong'],
+  ['hao hut', 'hu hong', 'bi hong'],
   ['gui bep', 'bao bep', 'order bep', 'xuong bep'],
   ['ghi chu', 'note', 'dan do'],
   // "lời lỗ" (26/10): "loi" một mình = "lỗi" nên chỉ nhận cả cụm
@@ -241,7 +267,7 @@ const _kSynonyms = <List<String>>[
   ],
   ['huy duyet', 'nhat ky huy', 'lich su huy', 'ai duyet'],
   ['tu ghi', 'tu dong', 'tu dong ghi', 'khong can ghi tay'],
-  ['ban hang', 'quay', 'ban quay', 'pos', 'thu ngan'],
+  ['ban hang', 'tai quay', 'o quay', 'ban quay', 'pos', 'thu ngan'],
   ['phan quyen', 'tat quyen', 'cap quyen', 'hanh dong nhay cam', 'quyen'],
   ['doi thuong', 'phan thuong', 'doi diem', 'qua tang'],
   ['gan vai tro', 'doi vai tro', 'set vai tro', 'chuyen vai tro'],
@@ -523,15 +549,16 @@ class HelpResult {
   final HelpDecision decision;
   final List<HelpHit> hits;
 
-  /// Tới 5 đoạn đầu (3 đoạn [hits] + 2 đoạn kế) — gửi GPT khi bộ tìm chưa chắc để GPT tự chọn đoạn đúng (26/10:
-  /// bài đúng trong 3 đoạn đầu 93–99% nhưng app trả lời thẳng đúng chỉ 42–68%). Gợi ý cho người dùng vẫn 3 mục.
+  /// Tới 8 đoạn đầu (3 đoạn [hits] + 5 đoạn kế) — gửi GPT khi bộ tìm chưa chắc để GPT tự chọn đoạn đúng (26/10:
+  /// bài đúng trong 3 đoạn đầu 93–99% nhưng app trả lời thẳng đúng chỉ 42–68%; bộ 128 câu mới: đoạn đúng trong 5 đầu
+  /// 80%, 8 đầu 88%). Gợi ý cho người dùng vẫn 3 mục.
   final List<HelpHit> wider;
   const HelpResult(this.decision, this.hits, [List<HelpHit>? wider])
     : wider = wider ?? hits;
 }
 
 HelpResult decideHelp(HelpIndex index, String query) {
-  final wider = index.search(query, topK: 5);
+  final wider = index.search(query, topK: 8);
   final hits = wider.take(3).toList();
   if (hits.isEmpty) return const HelpResult(HelpDecision.none, []);
   final top = hits.first.score;
@@ -550,6 +577,20 @@ HelpResult decideHelp(HelpIndex index, String query) {
     return HelpResult(HelpDecision.suggest, hits, wider);
   }
   return HelpResult(HelpDecision.none, hits, wider);
+}
+
+/// Các đoạn gửi GPT: chắc chắn → đoạn đầu + đoạn cùng bài trong [HelpResult.wider] (26/10: "vào ca chấm công" —
+/// đoạn "Vào ca" đứng thứ 4); chưa chắc → cả [HelpResult.wider] để GPT tự chọn đoạn đúng.
+List<HelpChunk> helpChunksForGpt(HelpResult r, {required bool sure}) {
+  if (r.hits.isEmpty) return const [];
+  final first = r.hits.first.chunk;
+  return sure
+      ? [
+          first,
+          for (final h in r.wider.skip(1))
+            if (h.chunk.module == first.module) h.chunk,
+        ]
+      : [for (final h in r.wider) h.chunk];
 }
 
 /// Câu trả lời hiển thị trong bong bóng chat.
