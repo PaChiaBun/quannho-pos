@@ -97,6 +97,10 @@ class IntentClassifier {
       'top món',
       'đắt hàng',
       'danh sách món bán chạy',
+      // bộ câu số liệu độc lập 26/10: cách nói đời thường
+      'ra nhiều nhất',
+      'gọi nhiều nhất',
+      'đặt nhiều nhất',
     ])) {
       return ClassificationResult(
         domain: BoomDomain.sales,
@@ -119,6 +123,10 @@ class IntentClassifier {
       'không ai mua',
       'ế ẩm',
       'bán ít nhất',
+      'không ai gọi',
+      'ít ai gọi',
+      'ít người gọi',
+      'gọi ít nhất',
     ])) {
       return ClassificationResult(
         domain: BoomDomain.sales,
@@ -131,20 +139,21 @@ class IntentClassifier {
     }
 
     // 4. Intent: revenue_summary
-    if (_matchesKeywords(lower, [
-      'doanh thu',
-      'doanh số',
-      'bán được bao nhiêu',
-      'thu được bao nhiêu',
-      'thu bao nhiêu',
-      'bán dc bao nhiêu',
-      'tiền bán',
-      'tổng tiền bán',
-      'hôm nay bán sao',
-      'doanh so hom nay',
-      'tiền hôm nay',
-      'bán hàng hôm nay',
-    ])) {
+    if (_revenueLoose(lower) ||
+        _matchesKeywords(lower, [
+          'doanh thu',
+          'doanh số',
+          'bán được bao nhiêu',
+          'thu được bao nhiêu',
+          'thu bao nhiêu',
+          'bán dc bao nhiêu',
+          'tiền bán',
+          'tổng tiền bán',
+          'hôm nay bán sao',
+          'doanh so hom nay',
+          'tiền hôm nay',
+          'bán hàng hôm nay',
+        ])) {
       final timeRange = _extractTimeRange(lower);
       return ClassificationResult(
         domain: BoomDomain.sales,
@@ -314,6 +323,48 @@ class IntentClassifier {
 
     return _unknownResult();
   }
+
+  /// "dt hôm nay" (viết tắt doanh thu — chỉ "dt" không dấu, "đt" là điện thoại), "thu được tổng cộng bao nhiêu tiền"
+  /// (từ khoá liền cụm không bắt được khi chen chữ) — bộ câu số liệu độc lập 26/10.
+  /// Số đơn / bill ("được mấy đơn", "hôm qua bao nhiêu bill") — trừ "đơn vị", "đơn giá" và câu báo lỗi số bill
+  /// ("số bill bị nhảy cóc"); "xem lại mấy đơn vừa bán" là xem danh sách đơn (QC 26/10).
+  static bool _revenueLoose(String lower) {
+    final f = ' ${foldVietnamese(lower)} ';
+    if (RegExp(r' (?:la gi|nhay|trung|bi mat|bi sai|in ra) ').hasMatch(f)) {
+      return false;
+    }
+    // "dt" chỉ khi kèm kỳ / từ hỏi ("dt hôm nay", "dt tháng 9"); "đt" (điện thoại) giữ chữ đ nên không khớp
+    final w = f.trim().split(' ');
+    final i = w.indexOf('dt');
+    if (i >= 0 &&
+        !RegExp(r'(?:^|[^\p{L}])đt', unicode: true).hasMatch(lower) &&
+        w.skip(i + 1).take(3).any(_dtCue.contains)) {
+      return true;
+    }
+    final orders =
+        RegExp(
+          r' (?:so|bao nhieu|may) (?:don|bill)(?! (?:vi|gia) )',
+        ).hasMatch(f) &&
+        !f.contains(' xem lai ');
+    return orders ||
+        RegExp(
+          r' (?:ban|thu) (?:duoc|dc) (?:\S+ ){0,4}(?:bao nhieu|nhieu|may) (?:tien|don|ly|phan|bill) ',
+        ).hasMatch(f);
+  }
+
+  static const _dtCue = {
+    'hom',
+    'nay',
+    'hnay',
+    'qua',
+    'tuan',
+    'thang',
+    'nam',
+    'quy',
+    'bao',
+    'bn',
+    'sao',
+  };
 
   static bool _matchesWords(String text, List<String> phrases) {
     final padded =

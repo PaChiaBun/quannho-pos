@@ -190,34 +190,45 @@ final _dataAdviceCue = RegExp(
   // "phải làm gì" chỉ khi tả tình hình xấu ("doanh thu giảm phải làm gì"), không phải hỏi quy trình ("nhân viên phải
   // làm gì để món xuống bếp")
   r'nhận xét|tình hình|ổn không|(?:giảm|ít|vắng|ế|lỗ|chậm|tụt) (?:thì |quá |vậy )?phải làm gì|vì sao|tại sao|'
-  r'làm gì để|tăng doanh thu|bán thêm|combo) ',
+  r'làm gì để|tăng doanh thu|bán thêm|combo|'
+  // "dựa vào số bán đề xuất…", "coi số liệu rồi…", "nhìn số đơn…" (bộ câu số liệu độc lập 26/10)
+  r'dựa (?:vào |trên |theo )?(?:số|số liệu|số bán|doanh số)|(?:coi|xem|nhìn|đọc) (?:qua )?số (?:\S+ ){0,4}(?:rồi|xong|để) (?:góp ý|đề xuất|tư vấn|nói|nhận xét|phân tích)|theo doanh số|'
+  r'góp ý (?:giúp|cho|tui|tôi|mình|anh|chị)) ',
 );
 final _shopDataTopic = RegExp(
   r' (?:món|doanh thu|bán chạy|bán được|bán ế|bán chậm|bán ít|menu|thực đơn|sản phẩm|mặt hàng|kinh doanh|'
-  r'bán hàng|buôn bán|quán mình|số liệu|phân tích) ',
+  r'bán hàng|buôn bán|quán mình|số liệu|phân tích|số bán|doanh số|số đơn|khách quen) ',
 );
 final _howToCue = RegExp(
   r' (?:ở đâu|chỗ nào|mục nào|tab nào|nằm đâu|bấm|cài|cách xem|xem ở|trong app|app có|màn hình|mở báo cáo|làm sao|'
-  r'cách nào|xuất|excel|pdf|in báo cáo|tải|gửi báo cáo|có những gì|gồm những gì|xem được|quyền|phân quyền|bị sai|'
-  r'không khớp|bị lệch|không hiện|không cập nhật|không ra|bằng 0|bị lỗi|báo lỗi|phải làm gì để|báo khách|chuỗi|chi nhánh|2 quán|hai quán|các quán) ',
+  r'cách nào|(?<!đề )xuất|excel|pdf|in báo cáo|tải|gửi báo cáo|có những gì|gồm những gì|xem được|quyền|phân quyền|bị sai|'
+  r'không khớp|bị lệch|không hiện|không cập nhật|không ra|bằng 0|bị lỗi|báo lỗi|phải làm gì để|báo khách|chuỗi|chi nhánh|2 quán|hai quán|các quán|nhảy|trùng số|bị trùng|bị mất) ',
 );
 
 /// Câu hỏi cách dùng / báo lỗi / quyền trong app ("báo cáo doanh thu bị sai", "tải báo cáo về máy") — không trả
 /// số liệu, không tư vấn số.
-bool boomAsksHowTo(String query) => _howToCue.hasMatch(_padVi(query));
+bool boomAsksHowTo(String query) => _viHit(_howToCueP, _padVi(query));
+
+// Câu gõ không dấu ("tu van xu ly dua tren so") dùng bản không dấu của luật (bộ câu số liệu độc lập 26/10)
+final _howToCueP = _viPair(_howToCue.pattern);
+final _dataAdviceCueP = _viPair(_dataAdviceCue.pattern);
+final _shopDataTopicP = _viPair(_shopDataTopic.pattern);
+final _askOneNumberP = _viPair(
+  r' (?:bao nhiêu|mấy (?:đơn|ly|phần|tiền|khách|người|bàn)) ',
+);
+final _askAnalysisP = _viPair(r' (?:phân tích|đánh giá|nhận xét|tư vấn|nên) ');
+bool _viHit((RegExp, RegExp) p, String s) =>
+    (_foldKeep(s) == s ? p.$2 : p.$1).hasMatch(s);
 
 bool boomWantsDataAdvice(String query) {
   final s = _padVi(query);
   // Hỏi một con số ("tổng kết ca sáng doanh thu bao nhiêu") → số nhanh, không cần GPT phân tích
-  if (RegExp(
-        r' (?:bao nhiêu|mấy (?:đơn|ly|phần|tiền|khách|người|bàn)) ',
-      ).hasMatch(s) &&
-      !RegExp(r' (?:phân tích|đánh giá|nhận xét|tư vấn|nên) ').hasMatch(s)) {
+  if (_viHit(_askOneNumberP, s) && !_viHit(_askAnalysisP, s)) {
     return false;
   }
-  return _dataAdviceCue.hasMatch(s) &&
-      _shopDataTopic.hasMatch(s) &&
-      !_howToCue.hasMatch(s) &&
+  return _viHit(_dataAdviceCueP, s) &&
+      _viHit(_shopDataTopicP, s) &&
+      !_viHit(_howToCueP, s) &&
       !RegExp(' $_rival ').hasMatch(s) &&
       !boomAsksOtherStore(query);
 }
@@ -417,18 +428,22 @@ const _moduleTopicSrc = {
   BoomModule.finance:
       r' (?:thu chi|chi phí|khoản chi|tiền chi|chi tiêu|chi ra|tiền ra|tiền vào|thu vào|lợi nhuận|lời lãi|có lãi|có lời (?:không|chưa|bao nhiêu|nhiều|ít)|'
       r'lãi bao nhiêu|lời bao nhiêu|lỗ không|bị lỗ|đang lỗ|lời hay lỗ|lãi hay lỗ|dòng tiền|sổ quỹ|quỹ tiền mặt|tiền mặt|'
-      r'tiền điện|tiền nước|tiền thuê|tiền nhà|chi nhiều|chi những gì|chi gì|chi hết) ',
+      r'tiền điện|tiền nước|tiền thuê|tiền nhà|chi nhiều|chi những gì|chi gì|chi hết|lãi lỗ|lời lỗ|(?:lời|lãi) (?:không|ko|hông|chưa)) ',
   BoomModule.kho:
       r' (?:tồn kho|còn tồn|hàng tồn|kho còn|kho có|trong kho còn|(?:còn|có|hết) (?:\S+ ){0,2}trong kho|kho hàng|giá trị kho|hết hàng|sắp hết|nhập hàng|nhập kho|hàng nhập|'
       r'nguyên liệu (?:nào|còn|sắp|hết|tồn|nhập)|còn bao nhiêu (?:hộp|kg|gói|lon|chai|thùng|cái|ly|bịch|túi)|hao hụt|'
-      r'hư hỏng|đổ bỏ|hàng hết hạn|nguyên liệu hết hạn|nhà cung cấp nào|nhập của ai) ',
+      r'hư hỏng|đổ bỏ|hàng hết hạn|nguyên liệu hết hạn|nhà cung cấp nào|nhập của ai|còn nhiêu(?! (?:ngày|lâu|tháng|năm|thời gian))) ',
   BoomModule.nhanSu:
       r' (?:chấm công|ca làm|giờ làm|làm (?:bao nhiêu|mấy) (?:giờ|ca|tiếng)|quên chấm|bảng lương|kỳ lương|quỹ lương|tổng lương|'
       r'lương tháng (?:này|trước)|lương tuần (?:này|trước)|(?:tháng|tuần) (?:này|trước) lương|trả lương tháng|nhân viên nào|'
-      r'ai làm|ai đi làm|ai nghỉ làm|ai nghỉ|làm nhiều nhất|làm ít nhất|đi làm (?:bao nhiêu|mấy)) ',
+      r'ai làm|ai đi làm|ai nghỉ làm|ai nghỉ|làm nhiều nhất|làm ít nhất|đi làm (?:bao nhiêu|mấy)|lương (?:nv|nhân viên) (?:tháng|tuần)|'
+      r'ca (?:sáng|chiều|tối) (?:\S+ ){0,2}(?:có )?(?:ai|mấy người)|nào vào ca|ai vào ca|vào ca (?:rồi|chưa)|'
+      r'lương (?:\S+ ){0,3}(?:tháng|tuần) (?:này|trước)|(?:tháng|tuần|kỳ) (?:này|trước|rồi) (?:\S+ ){0,3}trả lương|trả lương (?:\S+ ){0,3}(?:tháng|tuần|kỳ) (?:này|trước)|'
+      // "nên trả lương nhân viên bao nhiêu" là tư vấn chung → chỉ nhận "tiền lương" kèm kỳ / tên
+      r'tiền lương (?:\S+ ){0,3}(?:tháng|tuần|kỳ) (?:này|trước)) ',
   BoomModule.khach:
       r' (?:khách quen|khách hàng (?:nào|của|quay|mới|thân)|khách mới|khách quay lại|thành viên (?:mới|của)|tích điểm|'
-      r'ví khách|số dư ví|nạp ví|khách vip|khách chi|khách nào|khách cũ) ',
+      r'ví khách|số dư ví|nạp ví|khách vip|khách chi|khách nào|khách cũ|top khách|khách (?:nào )?(?:mua|ghé) nhiều nhất) ',
   BoomModule.khuyenMai:
       r' (?:khuyến mãi|voucher|mã giảm|coupon|mã khuyến mãi|chương trình giảm giá|'
       r'giảm giá (?:tháng|tuần|hôm|tổng|bao nhiêu tiền|hết bao nhiêu)) ',
@@ -438,15 +453,19 @@ const _moduleAskSrc =
     r' (?:bao nhiêu|mấy|nào|nhất|tổng|tình hình|phân tích|đánh giá|nhận xét|so sánh|so với|tăng|giảm|ra sao|'
     r'kiểm tra|xem giúp|báo cáo|liệt kê|danh sách|hiệu quả|tháng này|tuần này|hôm nay|hôm qua|tháng trước|tuần trước|'
     r'kỳ này|có lãi|lỗ không|lời hay lỗ|lãi hay lỗ|tốn|nhiều không|ít không|những gì|chi gì|sắp hết|hết hàng|'
-    r'quay lại|ai làm) ';
+    r'quay lại|ai làm|có ai|còn nhiêu(?! (?:ngày|lâu|tháng|năm|thời gian))|top|(?:tháng|tuần) (?!13 )\d+) ';
 // Hỏi cách làm / thao tác / lỗi / kiến thức chung → hướng dẫn hoặc tư vấn như cũ
 const _moduleHowSrc =
     r' (?:ở đâu|chỗ nào|mục nào|tab nào|bấm|nút|màn hình|cách|làm sao để (?:thêm|tạo|nhập|sửa|xoá|xóa|in|xuất|xem|mở|'
     r'chấm|cài|bật|tắt|đổi|dùng)|(?:thêm|tạo|sửa|xoá|xóa|cài|bật|tắt|đổi|duyệt|chốt) (?:\S+ ){0,2}(?:mã|voucher|khuyến mãi|'
-    r'khách|nhân viên|lương|ca|phiếu|món|hàng|nguyên liệu|nhà cung cấp|quỹ|danh mục|khoản|chi|thu|tiền)|xuất|excel|pdf|in phiếu|in bảng|'
+    r'khách|nhân viên|lương|ca|phiếu|món|hàng|nguyên liệu|nhà cung cấp|quỹ|danh mục|khoản|chi|thu|tiền)|(?<!đề )xuất|excel|pdf|in phiếu|in bảng|'
     r'bị lỗi|báo lỗi|không hiện|không thấy|bị sai|bị lệch|không khớp|quyền|phân quyền|là gì|công thức|luật|quy định|'
     r'bảo hiểm|thuế|hợp đồng|tối thiểu vùng|nên giữ|hợp lý|uy tín|rẻ nhất|nhiệt độ|xử lý sao|thì xử lý|phải không|'
-    r'ở quận|ở sài gòn|ở hà nội|ở đà nẵng|thị trường|thường bao nhiêu|báo khách) ';
+    r'ở quận|ở sài gòn|ở hà nội|ở đà nẵng|thị trường|thường bao nhiêu|báo khách|'
+    // "sao báo cáo lãi lỗ ko có giá vốn" — màn hình thiếu số là hỏi về app (26/10)
+    r'(?:báo cáo|màn|tab|mục) (?:\S+ ){0,3}(?:không|ko|chưa) (?:có|hiện|ra)|'
+    // QC 26/10: "lãi lỗ tính như thế nào", "lương tháng 13 có bắt buộc không", "ca tối mấy người là đủ"
+    r'như thế nào|tính thế nào|tính sao|là đủ|bắt buộc|tính trên|thì tính|thì nên) ';
 final _moduleTopics = {
   for (final e in _moduleTopicSrc.entries) e.key: _viPair(e.value),
 };
