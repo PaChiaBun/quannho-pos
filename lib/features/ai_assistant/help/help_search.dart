@@ -453,6 +453,10 @@ class HelpIndex {
     final q = _queryTerms(query);
     if (q.isEmpty) return const [];
     final howTo = _kHowToCue.hasMatch(' ${foldVietnamese(query)} ');
+    // hỏi giới thiệu / định nghĩa → bài "… là gì" không bị giảm điểm (QC 26/10: "tính năng chấm công", "khác gì")
+    final askWhat = RegExp(
+      r' la (cai )?gi | la j | gom (nhung )?gi | (de|dung) lam gi | dung de | khac (gi|nhau)| la sao | tac dung | tinh nang | gioi thieu ',
+    ).hasMatch(' ${foldVietnamese(query)} ');
     final hits = <HelpHit>[];
     for (var i = 0; i < chunks.length; i++) {
       final tf = _tf[i];
@@ -467,6 +471,9 @@ class HelpIndex {
       // Hỏi "cách làm / thế nào" → ưu tiên mục hướng dẫn việc hơn dòng bảng lỗi (tiêu đề ngắn,
       // hay được điểm cao); hỏi bằng nguyên văn thông báo lỗi thì dòng lỗi vẫn thắng.
       if (howTo && chunks[i].section == 'Lỗi thường gặp') score *= 0.85;
+      // Bài giới thiệu chung ("Bếp là gì", "Lương là gì") nhiều từ khoá nên hay thắng câu hỏi việc cụ thể
+      // (26/10: "bếp đánh dấu món xong", "cài lương theo giờ" trả bài giới thiệu) — trừ khi hỏi đúng "là gì".
+      if (!askWhat && chunks[i].id.endsWith('-la-gi')) score *= 0.75;
       if (score > 0) hits.add(HelpHit(chunks[i], score));
     }
     hits.sort((a, b) => b.score.compareTo(a.score));
@@ -498,11 +505,17 @@ enum HelpDecision { answer, suggest, none }
 class HelpResult {
   final HelpDecision decision;
   final List<HelpHit> hits;
-  const HelpResult(this.decision, this.hits);
+
+  /// Tới 5 đoạn đầu (3 đoạn [hits] + 2 đoạn kế) — gửi GPT khi bộ tìm chưa chắc để GPT tự chọn đoạn đúng (26/10:
+  /// bài đúng trong 3 đoạn đầu 93–99% nhưng app trả lời thẳng đúng chỉ 42–68%). Gợi ý cho người dùng vẫn 3 mục.
+  final List<HelpHit> wider;
+  const HelpResult(this.decision, this.hits, [List<HelpHit>? wider])
+    : wider = wider ?? hits;
 }
 
 HelpResult decideHelp(HelpIndex index, String query) {
-  final hits = index.search(query, topK: 3);
+  final wider = index.search(query, topK: 5);
+  final hits = wider.take(3).toList();
   if (hits.isEmpty) return const HelpResult(HelpDecision.none, []);
   final top = hits.first.score;
   final (cov, n) = index.coverage(query, hits.first.chunk);
@@ -514,12 +527,12 @@ HelpResult decideHelp(HelpIndex index, String query) {
       clearWinner &&
       ((top >= kHelpStrongScore && cov >= kHelpSuggestCoverage && n >= 2) ||
           (top >= kHelpAnswerScore && cov >= kHelpAnswerCoverage && n >= 2))) {
-    return HelpResult(HelpDecision.answer, hits);
+    return HelpResult(HelpDecision.answer, hits, wider);
   }
   if (top >= kHelpSuggestScore && cov >= kHelpSuggestCoverage) {
-    return HelpResult(HelpDecision.suggest, hits);
+    return HelpResult(HelpDecision.suggest, hits, wider);
   }
-  return HelpResult(HelpDecision.none, hits);
+  return HelpResult(HelpDecision.none, hits, wider);
 }
 
 /// Câu trả lời hiển thị trong bong bóng chat.

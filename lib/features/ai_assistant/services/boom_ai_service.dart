@@ -15,6 +15,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/repositories/module_repository.dart'
     show jwtIsAuthenticated;
+import '../boom_xung_ho.dart';
 import '../help/huong_dan_parser.dart';
 
 class BoomAiReply {
@@ -78,7 +79,7 @@ class BoomAiService {
     }
   }
 
-  /// GPT trả lời dựa trên [chunks] (tối đa 3). null = dùng câu trả lời nguyên văn.
+  /// GPT trả lời dựa trên [chunks] (tối đa 5). null = dùng câu trả lời nguyên văn.
   Future<BoomAiReply?> ask({
     required String storeId,
     required String question,
@@ -93,7 +94,7 @@ class BoomAiService {
       'question': question.length > 500 ? question.substring(0, 500) : question,
       'mode': 'answer',
       // Chỉ gửi MÃ đoạn — máy chủ tự lấy nội dung từ bản hướng dẫn đã đăng.
-      'chunk_ids': [for (final c in chunks.take(3)) c.id],
+      'chunk_ids': [for (final c in chunks.take(5)) c.id],
       // Máy chủ lấy đúng bản hướng dẫn app đang dùng (không lệch nội dung giữa app và máy chủ).
       if (packVersion > 0) 'pack_version': packVersion,
     });
@@ -205,20 +206,20 @@ class BoomAiService {
     return data?['logged'] == true;
   }
 
-  /// Cách gọi người dùng đã chọn ('anh' / 'chi'); ok=false khi chưa đọc được (chưa đăng nhập thật, mất mạng).
+  /// Cách gọi người dùng đã chọn (mã trong kBoomDanhXung); ok=false khi chưa đọc được (chưa đăng nhập thật, mất mạng).
   Future<({bool ok, String? xungHo})> getXungHo() async {
     if (!canSend) return (ok: false, xungHo: null);
     try {
       final r = await client.rpc('boom_xung_ho_get_v1').timeout(timeout);
       if (r is! Map) return (ok: false, xungHo: null);
       final x = r['xung_ho'];
-      return (ok: true, xungHo: x == 'anh' || x == 'chi' ? x as String : null);
+      return (ok: true, xungHo: x is String && kBoomDanhXung.containsKey(x) ? x : null);
     } catch (_) {
       return (ok: false, xungHo: null);
     }
   }
 
-  /// Lưu cách gọi ('anh' / 'chi') cho chính tài khoản đang đăng nhập.
+  /// Lưu cách gọi (mã trong kBoomDanhXung) cho chính tài khoản đang đăng nhập.
   Future<bool> setXungHo(String xungHo) async {
     try {
       final r = await client

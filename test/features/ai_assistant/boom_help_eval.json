@@ -624,7 +624,8 @@
     {
       "q": "nhan vien quen mat khau",
       "expect": [
-        "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch"
+        "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch",
+        "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc"
       ]
     },
     {
@@ -699,6 +700,19 @@
       "expect": [
         "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc",
         "nhan-vien#loi-dang-nhap-bang-mat-khau-tam-ma-app-bao-dang-nhap-that-bai-kh"
+      ]
+    },
+    {
+      "q": "tính năng chấm công",
+      "expect": [
+        "cham-cong#cham-cong-la-gi"
+      ]
+    },
+    {
+      "q": "kho chuyên nghiệp khác gì kho hàng",
+      "expect": [
+        "kho-chuyen-nghiep#kho-chuyen-nghiep-la-gi",
+        "kho-hang#kho-hang-la-gi"
       ]
     }
   ]

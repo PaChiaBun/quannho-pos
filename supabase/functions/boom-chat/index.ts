@@ -32,6 +32,7 @@ import {
   costUsd,
   findCached,
   goiNguoiHoi,
+  DANH_XUNG,
   type HelpChunk,
   type Persona,
   modelRefused,
@@ -185,7 +186,7 @@ async function persona(userId: string): Promise<Persona | null> {
     const rows = await rest(`user_accounts?select=display_name,boom_xung_ho&id=eq.${userId}&limit=1`);
     const r = Array.isArray(rows) ? rows[0] : null;
     if (!r) return null;
-    const x = r.boom_xung_ho === 'anh' || r.boom_xung_ho === 'chi' ? r.boom_xung_ho : null;
+    const x = typeof r.boom_xung_ho === 'string' && Object.hasOwn(DANH_XUNG, r.boom_xung_ho) ? r.boom_xung_ho : null;
     return { xung_ho: x, ten: typeof r.display_name === 'string' ? r.display_name : null };
   } catch {
     return null;

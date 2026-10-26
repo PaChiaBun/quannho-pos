@@ -2347,6 +2347,8 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   void _setupOwnerRecoveryMonitor(String storeId) {
     _ownerRecoveryTimer?.cancel();
     _ownerRecoveryTimer = null;
+    // gọi sau các lần chờ (await) — bị huỷ trong lúc chờ (đổi quán / thoát) thì không đọc state nữa
+    if (!ref.mounted) return;
 
     if (storeId.isEmpty ||
         kIsWeb ||

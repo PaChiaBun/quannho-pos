@@ -326,7 +326,10 @@ void main() {
         return; // bộ tìm kiếm đổi thì bỏ qua ca này
       }
       await ask(q);
-      expect(ai.asked.single.length, r.hits.length);
+      expect(ai.asked.single.length, r.wider.length); // tới 5 đoạn để GPT tự chọn (26/10)
+      expect(r.wider.length, inInclusiveRange(r.hits.length, 5));
+      expect([for (final h in r.wider.take(3)) h.chunk.id], [for (final h in r.hits) h.chunk.id]);
+      expect(r.hits.length, lessThanOrEqualTo(3)); // gợi ý cho người dùng vẫn tối đa 3 mục
     },
   );
 
@@ -575,7 +578,7 @@ void main() {
         return; // bộ tìm đổi thì bỏ qua ca này
       }
       final m = await ask(q);
-      expect(ai.asked.single.length, h.hits.length);
+      expect(ai.asked.single.length, h.wider.length); // tới 5 đoạn để GPT tự chọn (26/10)
       expect(m.content, isNot(contains('hướng dẫn:')));
     },
   );
@@ -600,6 +603,18 @@ void main() {
       expect(m.content, isNot(contains('cậu')));
     },
   );
+
+  test('Xưng hô tuỳ chọn: "Gọi chế xưng bé" → lưu "che", gọi "Chế", không gửi GPT (Chủ Quán chấm sai 25/10)', () async {
+    c.read(boomChatProvider);
+    await Future<void>.delayed(Duration.zero);
+    final m = await ask('Gọi chế xưng bé');
+    expect(ai.setXungHoCalls, ['che']);
+    expect(m.content, contains('Bé Boom gọi là Chế NV'));
+    expect(ai.asked, isEmpty);
+    // câu hỏi bình thường có chữ "gọi" không bị coi là đổi cách gọi
+    await ask('gọi món cho bàn 3 thế nào');
+    expect(ai.setXungHoCalls, ['che']);
+  });
 
   group('So sánh chi nhánh (báo cáo chuỗi, Chủ Quán 25/10)', () {
     late List<String> rpcs;
