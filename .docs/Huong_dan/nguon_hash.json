@@ -50,7 +50,7 @@
       "lib/modules/loyalty/repository/loyalty_repository.dart": "bcaecfe01367e189",
       "lib/modules/pos/screens/discount_management_screen.dart": "b030afc0a6318806",
       "lib/screens/loyalty_screen.dart": "a97a72709cc0a9ae",
-      "lib/screens/settings_screen.dart": "c2d0d65385692bfc",
+      "lib/screens/settings_screen.dart": "7cb546e8c3eb09b0",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "kho-chuyen-nghiep.md": {
@@ -99,9 +99,11 @@
       ".agents/workflows/qn.md": "82d407a7d0ddd73f",
       "lib/core/repositories/staff_password_repository.dart": "81f92c218cd81884",
       "lib/core/services/staff_service.dart": "fa19874c1655c33a",
+      "lib/screens/auth_screen.dart": "11c97645e7b4f888",
+      "lib/screens/forgot_password_sheet.dart": "524be154bcd75ef5",
       "lib/screens/nhan_vien_screen.dart": "fba6d7917a5e5a20",
       "lib/screens/role_manager_screen.dart": "04653ab80506e48b",
-      "lib/screens/settings_screen.dart": "c2d0d65385692bfc",
+      "lib/screens/settings_screen.dart": "7cb546e8c3eb09b0",
       "lib/screens/staff_name_dialog.dart": "d7b0c13c25abbe61",
       "lib/screens/staff_password_dialog.dart": "a90484134346c964",
       "lib/screens/store_setup_screen.dart": "6db77783c1b44bab"

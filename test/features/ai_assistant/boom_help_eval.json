@@ -605,7 +605,8 @@
     {
       "q": "nhân viên quên mật khẩu thì làm sao",
       "expect": [
-        "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch"
+        "nhan-vien#cac-viec-thuong-lam-3b-dat-lai-mat-khau-cho-nhan-vien-chi-ch",
+        "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc"
       ]
     },
     {
@@ -672,6 +673,32 @@
       "expect": [
         "nhan-vien#cac-viec-thuong-lam-3c-doi-ten-nhan-vien-chi-chu-quan-va-tu",
         "nhan-vien#loi-khong-thay-nut-doi-ten"
+      ]
+    },
+    {
+      "q": "chủ quán quên mật khẩu thì làm sao",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc"
+      ]
+    },
+    {
+      "q": "quên mật khẩu không đăng nhập được",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc"
+      ]
+    },
+    {
+      "q": "mật khẩu tạm hết hạn",
+      "expect": [
+        "nhan-vien#loi-mat-khau-tam-da-het-han-qua-24-gio",
+        "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc"
+      ]
+    },
+    {
+      "q": "đăng nhập bằng mật khẩu tạm bắt đặt mật khẩu mới",
+      "expect": [
+        "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc",
+        "nhan-vien#loi-dang-nhap-bang-mat-khau-tam-ma-app-bao-dang-nhap-that-bai-kh"
       ]
     }
   ]

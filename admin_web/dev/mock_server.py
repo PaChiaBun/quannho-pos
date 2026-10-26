@@ -159,7 +159,7 @@ class H(http.server.SimpleHTTPRequestHandler):
             if not (c.get('callback') and c.get('store_info') and c.get('secret')): return s.send_json(200, dict(ok=False,error='CHECKS_REQUIRED'))
             if len((body.get('p_reason') or '').strip())<5: return s.send_json(200, dict(ok=False,error='REASON_REQUIRED'))
             a=ACCOUNTS[body['p_user']]; a['password_kind']='bcrypt'; a['support'].insert(0, dict(action='temp_password',reason=body['p_reason'],created_at=now.isoformat(),admin='Giang'))
-            return s.send_json(200, dict(ok=True,temp_password='K7MQ4XPR2T'))
+            return s.send_json(200, dict(ok=True,temp_password='K7MQ4XPR2T',expires_at=(now+datetime.timedelta(hours=24)).isoformat()))
         if p.endswith('/admin_account_clear_pin_v1'):
             a=ACCOUNTS[body['p_user']]; a['has_quick_pin']=False; a['support'].insert(0, dict(action='clear_quick_pin',reason=body['p_reason'],created_at=now.isoformat(),admin='Giang'))
             return s.send_json(200, dict(ok=True))

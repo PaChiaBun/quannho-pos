@@ -1627,6 +1627,38 @@ class UserAuthService {
     }
   }
 
+  /// Đặt mật khẩu mới khi đăng nhập bằng mật khẩu tạm quản trị cấp (RPC `change_temp_password_v1`, không cần
+  /// đăng nhập — máy chủ kiểm mật khẩu tạm + hạn 24 giờ, dùng chung bộ đếm lần thử với đăng nhập).
+  static Future<Map<String, dynamic>> changeTempPassword({
+    required String phone,
+    required String tempPassword,
+    required String newPassword,
+  }) async {
+    final db = _db;
+    if (db == null) return {'success': false, 'message': 'Không kết nối được máy chủ. Vui lòng thử lại.'};
+    try {
+      final rpcRes = await db.rpc(
+        'change_temp_password_v1',
+        params: {
+          'p_phone': _normalizePhone(phone),
+          'p_temp_password': tempPassword,
+          'p_new_password': newPassword,
+        },
+      );
+      if (rpcRes is! Map) {
+        return {'success': false, 'message': 'Chức năng đặt mật khẩu mới chưa sẵn sàng trên máy chủ'};
+      }
+      final map = Map<String, dynamic>.from(rpcRes);
+      return {
+        'success': map['success'] == true,
+        'message': map['message'] as String? ?? (map['success'] == true ? 'Đã đặt mật khẩu mới' : 'Đặt mật khẩu mới thất bại'),
+      };
+    } catch (e) {
+      debugPrint('[UserAuthService] changeTempPassword error: $e');
+      return {'success': false, 'message': 'Không kết nối được máy chủ. Vui lòng thử lại.'};
+    }
+  }
+
   /// Đổi tên hiển thị của chính người dùng (RPC `update_my_display_name_v4`).
   /// Thành công thì cập nhật luôn tên lưu trên máy.
   static Future<Map<String, dynamic>> updateDisplayName(String name) async {

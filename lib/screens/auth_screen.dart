@@ -10,6 +10,7 @@ import '../core/services/user_auth_service.dart';
 import '../core/providers/session_provider.dart';
 import 'store_picker_screen.dart';
 import '../core/widgets/app_version_label.dart';
+import 'forgot_password_sheet.dart';
 
 String routeAfterSuccessfulLogin(AuthResult result) =>
     result.selectedStore != null ? '/home' : '/store_picker';
@@ -20,7 +21,7 @@ String routeAfterSuccessfulLogin(AuthResult result) =>
 String loginErrorMessage(String? code, String? serverMessage) {
   const wrongCredentials = {'USER_NOT_FOUND', 'WRONG_PASSWORD', 'INVALID_CREDENTIALS'};
   if (wrongCredentials.contains(code)) {
-    return 'Sai số điện thoại hoặc mật khẩu. Nếu bạn quên mật khẩu, hãy nhờ chủ quán đặt lại.';
+    return 'Sai số điện thoại hoặc mật khẩu. Quên mật khẩu? Bấm "Quên mật khẩu?" bên dưới ô mật khẩu.';
   }
   // Các lỗi mà server/app đã có câu giải thích rõ cho người dùng
   const friendly = {
@@ -31,6 +32,7 @@ String loginErrorMessage(String? code, String? serverMessage) {
     'GATEWAY_UNAVAILABLE',
     'MISSING_PARAMETERS',
     'STORE_MEMBERSHIP_FORBIDDEN',
+    'TEMP_PASSWORD_EXPIRED',
   };
   final m = serverMessage?.trim();
   if (friendly.contains(code) && m != null && m.isNotEmpty) return m;
@@ -124,6 +126,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           },
         );
       }
+    } else if (result.errorCode == 'MUST_CHANGE_PASSWORD') {
+      // Mật khẩu tạm quản trị cấp: máy chủ không cấp phiên → đặt mật khẩu mới rồi tự đăng nhập lại
+      setState(() => _loading = false);
+      final phone = _loginPhoneCtrl.text;
+      final temp = _loginPassCtrl.text;
+      final newPw = await showTempPasswordChangeDialog(
+        context,
+        tempPassword: temp,
+        submit: (pw) => UserAuthService.changeTempPassword(phone: phone, tempPassword: temp, newPassword: pw),
+      );
+      if (!mounted) return;
+      if (newPw == null) {
+        setState(() => _error = 'Cần đặt mật khẩu mới trước khi vào app. Bấm "Đăng nhập" lại bằng mật khẩu tạm để đặt.');
+        return;
+      }
+      _loginPassCtrl.text = newPw;
+      await _login();
     } else {
       final errCode = result.errorCode;
       setState(() {
@@ -488,7 +507,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             onPressed: () => setState(() => _showPass = !_showPass),
           ),
         ),
-        const SizedBox(height: 28),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            key: const ValueKey('forgot_password'),
+            onPressed: () => showForgotPasswordSheet(context),
+            child: const Text('Quên mật khẩu?', style: TextStyle(color: _orange, fontWeight: FontWeight.w600)),
+          ),
+        ),
+        const SizedBox(height: 12),
         _ActionBtn(label: 'Đăng nhập', loading: _loading, onTap: _login),
       ],
     );

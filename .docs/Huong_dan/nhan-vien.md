@@ -9,6 +9,7 @@ nguon:
   - lib/screens/role_manager_screen.dart (Vai trò & Phân quyền, gợi ý vai trò F&B, chống trùng, khoá owner)
   - lib/core/services/staff_service.dart (kDefaultPerms, kAllActions, deriveActionPermsFromModules, getEffectiveActionPermissions)
   - lib/screens/settings_screen.dart (Mã kết nối nhân viên, Mã PIN duyệt nhanh), lib/screens/store_setup_screen.dart (Kết nối vào quán)
+  - lib/screens/auth_screen.dart, lib/screens/forgot_password_sheet.dart (Quên mật khẩu? ở màn đăng nhập, bắt đặt mật khẩu mới khi dùng mật khẩu tạm)
   - .agents/workflows/qn.md mục "Data, quyền và audit"
 ---
 
@@ -52,7 +53,13 @@ nguon:
 3. Báo mật khẩu mới **trực tiếp** cho nhân viên. Mật khẩu cũ hết dùng ngay; máy nhân viên đang đăng nhập sẽ phải đăng nhập lại khi phiên hết hạn.
 - Quản lý **không** đặt lại được mật khẩu. Không đặt lại được mật khẩu của Chủ quán hay của chính mình (tự đổi: Cài đặt → **"Đổi mật khẩu"**).
 - Nhân viên còn làm ở quán của **người khác**, hoặc **chưa từng tự đăng nhập vào quán bằng app** → không đổi được từ đây → nhờ hỗ trợ qua Cài đặt → **"Gửi phản hồi"** hoặc Hotline.
-- Chủ quán quên mật khẩu của chính mình → Cài đặt → **"Khôi phục / Quên mật khẩu"** (Hotline gọi lại đúng số đăng ký, cấp mật khẩu tạm).
+- Chủ quán quên mật khẩu của chính mình → xem mục 3d.
+
+### 3d. Quên mật khẩu khi chưa đăng nhập được
+1. Ở màn đăng nhập bấm **"Quên mật khẩu?"** (dưới ô Mật khẩu).
+2. Nhân viên: nhờ Chủ quán đặt lại (mục 3b). Chủ quán: bấm **"Gọi Hotline 0927 55 8888"** — kỹ thuật viên gọi lại đúng số đăng ký để xác minh rồi đọc **mật khẩu tạm**.
+3. Mật khẩu tạm **dùng được 24 giờ**. Đăng nhập bằng mật khẩu tạm → app hiện **"Đặt mật khẩu mới"** → gõ **"Mật khẩu mới"** (8–72 ký tự, khác mật khẩu tạm) và **"Nhập lại mật khẩu mới"** → **"Lưu và đăng nhập"**. Bấm "Để sau" thì chưa vào được app.
+- Còn máy khác đang đăng nhập: trên máy đó vào Cài đặt → **"Gửi phản hồi"**, ghi cần cấp lại mật khẩu cho số điện thoại nào.
 
 ### 3c. Đổi tên nhân viên (chỉ Chủ quán) và tự đổi tên của mình
 1. Nhân viên → chọn tên nhân viên → **"Đổi tên"** (cạnh nút "Đặt lại mật khẩu", chỉ Chủ quán thấy).
@@ -132,6 +139,9 @@ Bật module nào cho vai trò thì vai trò đó **tự có** các quyền đi 
 | Không thấy nút "Đổi tên" | Chỉ Chủ quán thấy; không hiện cho Chủ quán / chính mình | Tự đổi: Cài đặt → "Tên hiển thị" |
 | "Nhân viên này còn làm ở quán khác…" | Người đó thuộc cả quán của người khác | Gửi phản hồi / gọi Hotline |
 | "Mật khẩu phải từ 8 đến 72 ký tự." / "Hai lần nhập mật khẩu không giống nhau." | Nhập sai | Gõ lại |
+| "Mật khẩu tạm đã hết hạn (quá 24 giờ)…" | Mật khẩu tạm quá 24 giờ chưa đổi | Gọi Hotline 0927 55 8888 cấp lại |
+| Đăng nhập bằng mật khẩu tạm mà app báo "Đăng nhập thất bại", không hiện hộp "Đặt mật khẩu mới" | App trên máy chưa cập nhật | Mở quannho.lpm.vn/pos, đăng nhập bằng mật khẩu tạm để đặt mật khẩu mới, rồi đăng nhập lại app bằng mật khẩu mới |
+| "Cần đặt mật khẩu mới trước khi vào app…" | Đã bấm "Để sau" ở hộp "Đặt mật khẩu mới" | Bấm "Đăng nhập" lại bằng mật khẩu tạm và đặt mật khẩu mới |
 
 ## Liên quan module khác
 - **Mọi module**: quyền vào module theo vai trò.

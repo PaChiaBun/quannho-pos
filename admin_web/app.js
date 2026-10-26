@@ -2228,7 +2228,7 @@ async function openAccount(userId, triggerEl, reportId, keep) {
 function actTempPassword(a, reportId) {
   openForm({
     title: `Cấp mật khẩu tạm — ${a.name || 'tài khoản'}`,
-    desc: 'Mật khẩu cũ hết dùng ngay; máy đang đăng nhập phải đăng nhập lại khi phiên hết hạn (tối đa 30 ngày). Máy tạo mật khẩu tạm, hiện MỘT LẦN để anh/chị đọc cho người dùng; họ đăng nhập rồi vào Cài đặt → Đổi mật khẩu. Chỉ làm sau khi xác minh đủ 3 bước:',
+    desc: 'Mật khẩu cũ hết dùng ngay; máy đang đăng nhập phải đăng nhập lại khi phiên hết hạn (tối đa 30 ngày). Máy tạo mật khẩu tạm, hiện MỘT LẦN để anh/chị đọc cho người dùng. Mật khẩu tạm dùng được 24 giờ; đăng nhập bằng nó, app bắt đặt mật khẩu mới ngay. Chỉ làm sau khi xác minh đủ 3 bước:',
     fields: [
       { name: 'callback', type: 'checkbox', label: `Đã GỌI LẠI đúng số đăng ký ${a.phone || ''} (không gọi số khác người đó đưa)` },
       { name: 'store_info', type: 'checkbox', label: 'Người nghe nói đúng tên quán + mã quán' },
@@ -2246,7 +2246,7 @@ function actTempPassword(a, reportId) {
           p_checks: { callback: true, store_info: true, secret: true }, p_report: reportId || null });
       } catch (err) { return isAuthErr(err) ? null : supportErr(err); }
       // hiện mật khẩu tạm 1 lần (hộp mới) — không lưu ở đâu trên trang
-      setTimeout(() => showTempPassword(a, r.temp_password), 0);
+      setTimeout(() => showTempPassword(a, r.temp_password, r.expires_at), 0);
       if (accountOpenId === a.id && !$('drawer').hidden) openAccount(a.id, null, reportId, true);
       if (location.hash.slice(1) === 'support') lastReload = loaders.support();
       return null;
@@ -2254,12 +2254,12 @@ function actTempPassword(a, reportId) {
   });
 }
 
-function showTempPassword(a, pw) {
+function showTempPassword(a, pw, expiresAt) {
   const pwBox = el('div', { class: 'temp-pw', text: pw });
   const groups = el('div', { class: 'small muted', text: `Đọc theo nhóm: ${pw.slice(0, 5)} - ${pw.slice(5)} (chữ IN HOA, không có O / I / L / 0 / 1)` });
   openForm({
     title: 'Mật khẩu tạm — chỉ hiện một lần',
-    desc: `Đọc cho ${a.name || 'người dùng'} (${a.phone || ''}). Nhắc họ đăng nhập ngay rồi vào Cài đặt → Đổi mật khẩu. Mật khẩu tạm KHÔNG tự hết hạn — gọi lại sau 24 giờ hỏi họ đã đổi chưa.`,
+    desc: `Đọc cho ${a.name || 'người dùng'} (${a.phone || ''}). Mật khẩu tạm dùng được tới ${expiresAt ? fmtD(expiresAt) : '24 giờ nữa'}; đăng nhập bằng nó, app bắt đặt mật khẩu mới ngay (app bản cũ chưa hỏi thì nhắc họ mở quannho.lpm.vn/pos để đặt). Quá hạn chưa đổi thì phải cấp lại.`,
     fields: [],
     extra: [pwBox, groups],
     okLabel: 'Đã đọc xong',

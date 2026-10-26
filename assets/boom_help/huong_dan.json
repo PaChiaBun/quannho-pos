@@ -1,6 +1,6 @@
 {
- "version": 202610252227,
- "hash": "9851f10b500db8096f102882d62125710c3d2abb2b18ac8ba463e340e30760a8",
+ "version": 202610260946,
+ "hash": "990ca3ca8758a2aa9f8c175d92f13a04865ace60e5810e695042a690dcf0ac5b",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -1744,7 +1744,15 @@
    "module_name": "Nhân viên & Phân quyền",
    "section": "Các việc thường làm",
    "title": "3b. Đặt lại mật khẩu cho nhân viên (chỉ Chủ quán)",
-   "text": "1. Nhân viên → chọn tên nhân viên → \"Đặt lại mật khẩu\" (nút nằm dưới \"Lưu vai trò\" / \"Xóa\", chỉ Chủ quán thấy).\n2. Gõ \"Mật khẩu mới\" (ít nhất 8 ký tự) và \"Nhập lại mật khẩu mới\" → \"Lưu mật khẩu mới\".\n3. Báo mật khẩu mới trực tiếp cho nhân viên. Mật khẩu cũ hết dùng ngay; máy nhân viên đang đăng nhập sẽ phải đăng nhập lại khi phiên hết hạn.\n• Quản lý không đặt lại được mật khẩu. Không đặt lại được mật khẩu của Chủ quán hay của chính mình (tự đổi: Cài đặt → \"Đổi mật khẩu\").\n• Nhân viên còn làm ở quán của người khác, hoặc chưa từng tự đăng nhập vào quán bằng app → không đổi được từ đây → nhờ hỗ trợ qua Cài đặt → \"Gửi phản hồi\" hoặc Hotline.\n• Chủ quán quên mật khẩu của chính mình → Cài đặt → \"Khôi phục / Quên mật khẩu\" (Hotline gọi lại đúng số đăng ký, cấp mật khẩu tạm)."
+   "text": "1. Nhân viên → chọn tên nhân viên → \"Đặt lại mật khẩu\" (nút nằm dưới \"Lưu vai trò\" / \"Xóa\", chỉ Chủ quán thấy).\n2. Gõ \"Mật khẩu mới\" (ít nhất 8 ký tự) và \"Nhập lại mật khẩu mới\" → \"Lưu mật khẩu mới\".\n3. Báo mật khẩu mới trực tiếp cho nhân viên. Mật khẩu cũ hết dùng ngay; máy nhân viên đang đăng nhập sẽ phải đăng nhập lại khi phiên hết hạn.\n• Quản lý không đặt lại được mật khẩu. Không đặt lại được mật khẩu của Chủ quán hay của chính mình (tự đổi: Cài đặt → \"Đổi mật khẩu\").\n• Nhân viên còn làm ở quán của người khác, hoặc chưa từng tự đăng nhập vào quán bằng app → không đổi được từ đây → nhờ hỗ trợ qua Cài đặt → \"Gửi phản hồi\" hoặc Hotline.\n• Chủ quán quên mật khẩu của chính mình → xem mục 3d."
+  },
+  {
+   "id": "nhan-vien#cac-viec-thuong-lam-3d-quen-mat-khau-khi-chua-dang-nhap-duoc",
+   "module": "staff",
+   "module_name": "Nhân viên & Phân quyền",
+   "section": "Các việc thường làm",
+   "title": "3d. Quên mật khẩu khi chưa đăng nhập được",
+   "text": "1. Ở màn đăng nhập bấm \"Quên mật khẩu?\" (dưới ô Mật khẩu).\n2. Nhân viên: nhờ Chủ quán đặt lại (mục 3b). Chủ quán: bấm \"Gọi Hotline 0927 55 8888\" — kỹ thuật viên gọi lại đúng số đăng ký để xác minh rồi đọc mật khẩu tạm.\n3. Mật khẩu tạm dùng được 24 giờ. Đăng nhập bằng mật khẩu tạm → app hiện \"Đặt mật khẩu mới\" → gõ \"Mật khẩu mới\" (8–72 ký tự, khác mật khẩu tạm) và \"Nhập lại mật khẩu mới\" → \"Lưu và đăng nhập\". Bấm \"Để sau\" thì chưa vào được app.\n• Còn máy khác đang đăng nhập: trên máy đó vào Cài đặt → \"Gửi phản hồi\", ghi cần cấp lại mật khẩu cho số điện thoại nào."
   },
   {
    "id": "nhan-vien#cac-viec-thuong-lam-3c-doi-ten-nhan-vien-chi-chu-quan-va-tu",
@@ -1905,6 +1913,30 @@
    "section": "Lỗi thường gặp",
    "title": "\"Mật khẩu phải từ 8 đến 72 ký tự.\" / \"Hai lần nhập mật khẩu không giống nhau.\"",
    "text": "Vì sao: Nhập sai\nLàm gì: Gõ lại"
+  },
+  {
+   "id": "nhan-vien#loi-mat-khau-tam-da-het-han-qua-24-gio",
+   "module": "staff",
+   "module_name": "Nhân viên & Phân quyền",
+   "section": "Lỗi thường gặp",
+   "title": "\"Mật khẩu tạm đã hết hạn (quá 24 giờ)…\"",
+   "text": "Vì sao: Mật khẩu tạm quá 24 giờ chưa đổi\nLàm gì: Gọi Hotline 0927 55 8888 cấp lại"
+  },
+  {
+   "id": "nhan-vien#loi-dang-nhap-bang-mat-khau-tam-ma-app-bao-dang-nhap-that-bai-kh",
+   "module": "staff",
+   "module_name": "Nhân viên & Phân quyền",
+   "section": "Lỗi thường gặp",
+   "title": "Đăng nhập bằng mật khẩu tạm mà app báo \"Đăng nhập thất bại\", không hiện hộp \"Đặt mật khẩu mới\"",
+   "text": "Vì sao: App trên máy chưa cập nhật\nLàm gì: Mở quannho.lpm.vn/pos, đăng nhập bằng mật khẩu tạm để đặt mật khẩu mới, rồi đăng nhập lại app bằng mật khẩu mới"
+  },
+  {
+   "id": "nhan-vien#loi-can-dat-mat-khau-moi-truoc-khi-vao-app",
+   "module": "staff",
+   "module_name": "Nhân viên & Phân quyền",
+   "section": "Lỗi thường gặp",
+   "title": "\"Cần đặt mật khẩu mới trước khi vào app…\"",
+   "text": "Vì sao: Đã bấm \"Để sau\" ở hộp \"Đặt mật khẩu mới\"\nLàm gì: Bấm \"Đăng nhập\" lại bằng mật khẩu tạm và đặt mật khẩu mới"
   },
   {
    "id": "nhat-ky-log#nhat-ky-log-la-gi",

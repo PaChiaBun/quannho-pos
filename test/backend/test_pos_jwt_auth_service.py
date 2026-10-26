@@ -621,6 +621,25 @@ class TestCanonicalPosJwtAuthService(unittest.TestCase):
             verify_and_decode_hs256_jwt(token_str, secret)
         self.assertEqual(ctx.exception.error_code, "INVALID_TOKEN_CLAIMS")
 
+    @patch('urllib.request.urlopen')
+    def test_30_temp_password_never_gets_a_token(self, mock_urlopen):
+        """26/10: mật khẩu tạm (MUST_CHANGE_PASSWORD 403 / TEMP_PASSWORD_EXPIRED 401) → không cấp vé, chuyển nguyên mã lỗi."""
+        for code, status in (("MUST_CHANGE_PASSWORD", 403), ("TEMP_PASSWORD_EXPIRED", 401)):
+            mock_urlopen.return_value = MockResponse({
+                "success": False, "status": status, "error_code": code, "message": "Mật khẩu tạm",
+            })
+            for res in (
+                handle_pos_jwt_auth_request(json.dumps({"phone": "0900000030", "password": "TAMTAM2345", "store_id": "s-1"}).encode("utf-8")),
+                handle_onboarding_jwt_request(json.dumps({"phone": "0900000030", "password": "TAMTAM2345"}).encode("utf-8")),
+            ):
+                self.assertFalse(res["success"], code)
+                self.assertEqual(res["status"], status, code)
+                self.assertEqual(res["error"], code)
+                self.assertNotIn("pos_jwt", res)
+                self.assertNotIn("onboarding_jwt", res)
+                self.assertNotIn("refresh_token", res)
+
+
 
 if __name__ == "__main__":
     unittest.main()

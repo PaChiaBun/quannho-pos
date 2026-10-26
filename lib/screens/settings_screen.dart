@@ -2879,8 +2879,8 @@ class _PasswordRecoverySheet extends StatelessWidget {
               stepNumber: 'CÁCH 2',
               title: 'Gọi Hotline hỗ trợ',
               description:
-                  'Gọi Hotline 0838.518.618 (LPM Digital). Kỹ thuật viên sẽ GỌI LẠI đúng số điện thoại đăng ký và hỏi tên quán, mã quán để xác minh, '
-                  'rồi đọc cho bạn một mật khẩu tạm. Đăng nhập xong, vào Cài đặt → Đổi mật khẩu để đặt mật khẩu của riêng bạn.',
+                  'Gọi Hotline 0927 55 8888 (LPM Digital). Kỹ thuật viên sẽ GỌI LẠI đúng số điện thoại đăng ký và hỏi tên quán, mã quán để xác minh, '
+                  'rồi đọc cho bạn một mật khẩu tạm dùng được trong 24 giờ. Đăng nhập bằng mật khẩu tạm, app sẽ yêu cầu đặt mật khẩu mới ngay.',
             ),
 
             const SizedBox(height: 12),
