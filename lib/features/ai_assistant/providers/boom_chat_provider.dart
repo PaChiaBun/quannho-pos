@@ -253,6 +253,44 @@ final _shopBusinessTopic = RegExp(
 bool boomMentionsShopBusiness(String query) =>
     _shopBusinessTopic.hasMatch(_padVi(query));
 
+// Câu HỎI SỐ của chính quán mà từ khoá chưa nhận ra ("tối qua có bao nhiêu bill mang về", "năm nay tới giờ bán được
+// tổng cộng nhiêu", "hôm nay hủy mấy hđ"): có từ hỏi số + mốc thời gian → đọc số bán của quán và để GPT trả lời,
+// thay vì đưa bài hướng dẫn "na ná" (bộ câu số liệu độc lập 26/10: chọn đường bằng từ khoá tăng chậm trên câu mới).
+final _askNumberP = _viPair(
+  r' (?:bao nhiêu|bn|mấy|nhiêu|tổng|top|nhất|liệt kê|danh sách|(?:ai|nào) (?:đang|vào|làm|nghỉ|đi)) ',
+);
+final _periodP = _viPair(
+  r' (?:hôm nay|hnay|hôm qua|tuần (?:này|trước|rồi|qua)|tháng (?:này|trước|rồi|\d+)|năm nay|quý \d|'
+  r'(?:sáng|trưa|chiều|tối) (?:nay|qua)|ca (?:sáng|chiều|tối)|gần đây|tới giờ|từ đầu|\d+ ngày|\d+ \d+) ',
+);
+// hỏi luật / ngưỡng / cách tính → tư vấn chung, không đọc số
+final _askRuleP = _viPair(
+  r' (?:nên|có nên|là đủ|bắt buộc|như thế nào|thế nào là|tính sao|quy định|theo luật|thường|nghỉ lễ|hợp lý|thì phải|phạt|xử lý|sao) ',
+);
+
+// Phải nói tới chuyện bán hàng; "mấy giờ", "ngày mấy", "bao nhiêu độ / phần trăm", thuế, giá gói… là câu khác (QC 26/10:
+// không lọc thì 48/100 câu hỏi cách làm / kiến thức bị kéo sang đọc số)
+final _salesNounP = _viPair(
+  r' (?:bán|doanh thu|doanh số|dt|đơn|bill|hđ|hoá đơn|hóa đơn|ly|phần|món|khách|bàn|mang về|giao hàng|huỷ|hủy|lời|lãi|lỗ|'
+  r'tiền mặt|chuyển khoản|thu được|thu về) ',
+);
+final _notSalesNumberP = _viPair(
+  r' (?:(?:mấy|bao nhiêu) (?:giờ|ngày|lần|độ|phần trăm|máy|người|tuổi)|ngày mấy|thuế|bảo hiểm|giá(?! trị)|gói|cảm ơn|tết|lễ) ',
+);
+
+bool boomAsksShopNumber(String query) {
+  final s = _padVi(query);
+  return _viHit(_askNumberP, s) &&
+      _viHit(_periodP, s) &&
+      _viHit(_salesNounP, s) &&
+      !_viHit(_notSalesNumberP, s) &&
+      !_viHit(_askRuleP, s) &&
+      !boomAsksHowTo(query) &&
+      !hasHelpActionWord(query) &&
+      !boomGeneralKnowledge(query) &&
+      !boomAsksOtherStore(query);
+}
+
 // Tiếng đệm / đại từ / động từ chung trong câu nói tiếp — bỏ đi mà còn ≤ 2 chữ = câu không tự đủ nghĩa.
 const _followUpFiller = {
   'bạn',
@@ -440,7 +478,9 @@ const _moduleTopicSrc = {
       r'ca (?:sáng|chiều|tối) (?:\S+ ){0,2}(?:có )?(?:ai|mấy người)|nào vào ca|ai vào ca|vào ca (?:rồi|chưa)|'
       r'lương (?:\S+ ){0,3}(?:tháng|tuần) (?:này|trước)|(?:tháng|tuần|kỳ) (?:này|trước|rồi) (?:\S+ ){0,3}trả lương|trả lương (?:\S+ ){0,3}(?:tháng|tuần|kỳ) (?:này|trước)|'
       // "nên trả lương nhân viên bao nhiêu" là tư vấn chung → chỉ nhận "tiền lương" kèm kỳ / tên
-      r'tiền lương (?:\S+ ){0,3}(?:tháng|tuần|kỳ) (?:này|trước)) ',
+      r'tiền lương (?:\S+ ){0,3}(?:tháng|tuần|kỳ) (?:này|trước)|'
+      // bộ E 26/10: giờ làm / đi trễ / lương tháng N
+      r'làm (?:\S+ ){0,2}(?:mấy|bao nhiêu) (?:tiếng|giờ)|đi trễ|giờ công|lương tháng \d+) ',
   BoomModule.khach:
       r' (?:khách quen|khách hàng (?:nào|của|quay|mới|thân)|khách mới|khách quay lại|thành viên (?:mới|của)|tích điểm|'
       r'ví khách|số dư ví|nạp ví|khách vip|khách chi|khách nào|khách cũ|top khách|khách (?:nào )?(?:mua|ghé) nhiều nhất) ',
@@ -453,7 +493,7 @@ const _moduleAskSrc =
     r' (?:bao nhiêu|mấy|nào|nhất|tổng|tình hình|phân tích|đánh giá|nhận xét|so sánh|so với|tăng|giảm|ra sao|'
     r'kiểm tra|xem giúp|báo cáo|liệt kê|danh sách|hiệu quả|tháng này|tuần này|hôm nay|hôm qua|tháng trước|tuần trước|'
     r'kỳ này|có lãi|lỗ không|lời hay lỗ|lãi hay lỗ|tốn|nhiều không|ít không|những gì|chi gì|sắp hết|hết hàng|'
-    r'quay lại|ai làm|có ai|còn nhiêu(?! (?:ngày|lâu|tháng|năm|thời gian))|top|(?:tháng|tuần) (?!13 )\d+) ';
+    r'quay lại|ai làm|có ai|còn nhiêu(?! (?:ngày|lâu|tháng|năm|thời gian))|top|(?:tháng|tuần) (?!13 )\d+|quý \d|hết nhiêu) ';
 // Hỏi cách làm / thao tác / lỗi / kiến thức chung → hướng dẫn hoặc tư vấn như cũ
 const _moduleHowSrc =
     r' (?:ở đâu|chỗ nào|mục nào|tab nào|bấm|nút|màn hình|cách|làm sao để (?:thêm|tạo|nhập|sửa|xoá|xóa|in|xuất|xem|mở|'
@@ -465,7 +505,7 @@ const _moduleHowSrc =
     // "sao báo cáo lãi lỗ ko có giá vốn" — màn hình thiếu số là hỏi về app (26/10)
     r'(?:báo cáo|màn|tab|mục) (?:\S+ ){0,3}(?:không|ko|chưa) (?:có|hiện|ra)|'
     // QC 26/10: "lãi lỗ tính như thế nào", "lương tháng 13 có bắt buộc không", "ca tối mấy người là đủ"
-    r'như thế nào|tính thế nào|tính sao|là đủ|bắt buộc|tính trên|thì tính|thì nên) ';
+    r'như thế nào|tính thế nào|tính sao|là đủ|bắt buộc|tính trên|thì tính|thì nên|sửa sao|nên có|nên chạy) ';
 final _moduleTopics = {
   for (final e in _moduleTopicSrc.entries) e.key: _viPair(e.value),
 };
@@ -928,7 +968,9 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
                 !helpWins &&
                 !hasHelpActionWord(query) &&
                 !boomAsksHowTo(query) &&
-                !boomGeneralKnowledge(query)));
+                !boomGeneralKnowledge(query)) ||
+            // đã khớp một mục (lương, ca, khách…) → để nhánh số theo mục đọc, khỏi đọc thêm số bán
+            (boomAsksShopNumber(query) && boomModuleTopics(query).isEmpty));
     // Câu xin số các module (thu chi, kho, nhân sự, khách, khuyến mãi) → đọc CHỈ ĐỌC theo quyền của người hỏi
     final moduleFollow = followUsed && followUp!.modules;
     final topics =
