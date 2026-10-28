@@ -1,0 +1,1301 @@
+{
+ "ten": "Quán C — Bún cơm Cô Ba",
+ "mo_ta": "Quán bún / cơm bình dân gần chợ và công trình, 4 người làm. Mở 6h–14h và 16h–20h mỗi ngày; khách chủ yếu ăn sáng và trưa.",
+ "facts": {
+  "thang_truoc": {
+   "period": "Tháng 9/2026",
+   "revenue": 139430000,
+   "orders": 2558,
+   "prev_period": "Tháng 8/2026",
+   "prev_revenue": 143461000,
+   "prev_orders": 2632,
+   "top": [
+    {
+     "name": "Trà đá",
+     "qty": 945,
+     "revenue": 2835000
+    },
+    {
+     "name": "Bún bò Huế",
+     "qty": 861,
+     "revenue": 38745000
+    },
+    {
+     "name": "Cơm sườn",
+     "qty": 798,
+     "revenue": 31920000
+    },
+    {
+     "name": "Bún thịt nướng",
+     "qty": 546,
+     "revenue": 21840000
+    },
+    {
+     "name": "Cơm gà xối mỡ",
+     "qty": 399,
+     "revenue": 17955000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Nước chanh",
+     "qty": 84
+    },
+    {
+     "name": "Canh thêm",
+     "qty": 94
+    },
+    {
+     "name": "Cơm chiên dương châu",
+     "qty": 100
+    }
+   ],
+   "groups": [
+    {
+     "name": "Món chính",
+     "revenue": 123260000,
+     "qty": 2924,
+     "items": 7,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Bún bò Huế",
+       "qty": 861,
+       "revenue": 38745000,
+       "price": 45000
+      },
+      {
+       "name": "Cơm sườn",
+       "qty": 798,
+       "revenue": 31920000,
+       "price": 40000,
+       "cost": 19200
+      },
+      {
+       "name": "Bún thịt nướng",
+       "qty": 546,
+       "revenue": 21840000,
+       "price": 40000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Cơm chiên dương châu",
+       "qty": 100,
+       "revenue": 4000000,
+       "price": 40000
+      },
+      {
+       "name": "Bún riêu",
+       "qty": 220,
+       "revenue": 8800000,
+       "price": 40000
+      },
+      {
+       "name": "Cơm gà xối mỡ",
+       "qty": 399,
+       "revenue": 17955000,
+       "price": 45000
+      }
+     ],
+     "unsold_names": [
+      "Cơm cá kho"
+     ]
+    },
+    {
+     "name": "Đồ uống",
+     "revenue": 9579000,
+     "qty": 1407,
+     "items": 6,
+     "unsold": 2,
+     "top": [
+      {
+       "name": "Trà đá",
+       "qty": 945,
+       "revenue": 2835000,
+       "price": 3000
+      },
+      {
+       "name": "Nước sâm",
+       "qty": 220,
+       "revenue": 2640000,
+       "price": 12000
+      },
+      {
+       "name": "Cà phê sữa đá",
+       "qty": 158,
+       "revenue": 2844000,
+       "price": 18000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Nước chanh",
+       "qty": 84,
+       "revenue": 1260000,
+       "price": 15000
+      }
+     ],
+     "unsold_names": [
+      "Nước cam",
+      "Sữa đậu nành"
+     ]
+    },
+    {
+     "name": "Món thêm",
+     "revenue": 9437000,
+     "qty": 913,
+     "items": 5,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trứng ốp la",
+       "qty": 357,
+       "revenue": 2856000,
+       "price": 8000
+      },
+      {
+       "name": "Chả thêm",
+       "qty": 273,
+       "revenue": 3276000,
+       "price": 12000
+      },
+      {
+       "name": "Thịt thêm",
+       "qty": 189,
+       "revenue": 2835000,
+       "price": 15000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Canh thêm",
+       "qty": 94,
+       "revenue": 470000,
+       "price": 5000
+      }
+     ],
+     "unsold_names": [
+      "Giò heo thêm"
+     ]
+    }
+   ],
+   "items_revenue": 142276000,
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9842000,
+    16404000,
+    11482000,
+    6561000,
+    9842000,
+    22965000,
+    26246000,
+    13123000,
+    0,
+    0,
+    3281000,
+    6561000,
+    8202000,
+    4921000,
+    0,
+    0,
+    0,
+    0
+   ],
+   "by_weekday": [
+    20695000,
+    25867000,
+    14228000,
+    20695000,
+    20695000,
+    19660000,
+    17590000
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Bún bò Huế",
+      "qty": 441
+     },
+     {
+      "name": "Trà đá",
+      "qty": 315
+     },
+     {
+      "name": "Bún riêu",
+      "qty": 126
+     }
+    ],
+    [
+     {
+      "name": "Cơm sườn",
+      "qty": 546
+     },
+     {
+      "name": "Trà đá",
+      "qty": 472
+     },
+     {
+      "name": "Cơm gà xối mỡ",
+      "qty": 273
+     }
+    ],
+    [
+     {
+      "name": "Cơm sườn",
+      "qty": 42
+     },
+     {
+      "name": "Bún thịt nướng",
+      "qty": 32
+     },
+     {
+      "name": "Trà đá",
+      "qty": 26
+     }
+    ],
+    [
+     {
+      "name": "Bún thịt nướng",
+      "qty": 220
+     },
+     {
+      "name": "Cơm sườn",
+      "qty": 158
+     },
+     {
+      "name": "Bún bò Huế",
+      "qty": 136
+     }
+    ]
+   ]
+  },
+  "thang_nay": {
+   "period": "Tháng này (1–28/10/2026)",
+   "revenue": 132800000,
+   "orders": 2450,
+   "prev_period": "Cùng kỳ tháng trước (1–28/9/2026)",
+   "prev_revenue": 130162000,
+   "prev_orders": 2388,
+   "top": [
+    {
+     "name": "Trà đá",
+     "qty": 900,
+     "revenue": 2700000
+    },
+    {
+     "name": "Bún bò Huế",
+     "qty": 820,
+     "revenue": 36900000
+    },
+    {
+     "name": "Cơm sườn",
+     "qty": 760,
+     "revenue": 30400000
+    },
+    {
+     "name": "Bún thịt nướng",
+     "qty": 520,
+     "revenue": 20800000
+    },
+    {
+     "name": "Cơm gà xối mỡ",
+     "qty": 380,
+     "revenue": 17100000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Nước chanh",
+     "qty": 80
+    },
+    {
+     "name": "Canh thêm",
+     "qty": 90
+    },
+    {
+     "name": "Cơm chiên dương châu",
+     "qty": 95
+    }
+   ],
+   "groups": [
+    {
+     "name": "Món chính",
+     "revenue": 117400000,
+     "qty": 2785,
+     "items": 7,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Bún bò Huế",
+       "qty": 820,
+       "revenue": 36900000,
+       "price": 45000
+      },
+      {
+       "name": "Cơm sườn",
+       "qty": 760,
+       "revenue": 30400000,
+       "price": 40000,
+       "cost": 19200
+      },
+      {
+       "name": "Bún thịt nướng",
+       "qty": 520,
+       "revenue": 20800000,
+       "price": 40000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Cơm chiên dương châu",
+       "qty": 95,
+       "revenue": 3800000,
+       "price": 40000
+      },
+      {
+       "name": "Bún riêu",
+       "qty": 210,
+       "revenue": 8400000,
+       "price": 40000
+      },
+      {
+       "name": "Cơm gà xối mỡ",
+       "qty": 380,
+       "revenue": 17100000,
+       "price": 45000
+      }
+     ],
+     "unsold_names": [
+      "Cơm cá kho"
+     ]
+    },
+    {
+     "name": "Đồ uống",
+     "revenue": 9120000,
+     "qty": 1340,
+     "items": 6,
+     "unsold": 2,
+     "top": [
+      {
+       "name": "Trà đá",
+       "qty": 900,
+       "revenue": 2700000,
+       "price": 3000
+      },
+      {
+       "name": "Nước sâm",
+       "qty": 210,
+       "revenue": 2520000,
+       "price": 12000
+      },
+      {
+       "name": "Cà phê sữa đá",
+       "qty": 150,
+       "revenue": 2700000,
+       "price": 18000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Nước chanh",
+       "qty": 80,
+       "revenue": 1200000,
+       "price": 15000
+      }
+     ],
+     "unsold_names": [
+      "Nước cam",
+      "Sữa đậu nành"
+     ]
+    },
+    {
+     "name": "Món thêm",
+     "revenue": 8990000,
+     "qty": 870,
+     "items": 5,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trứng ốp la",
+       "qty": 340,
+       "revenue": 2720000,
+       "price": 8000
+      },
+      {
+       "name": "Chả thêm",
+       "qty": 260,
+       "revenue": 3120000,
+       "price": 12000
+      },
+      {
+       "name": "Thịt thêm",
+       "qty": 180,
+       "revenue": 2700000,
+       "price": 15000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Canh thêm",
+       "qty": 90,
+       "revenue": 450000,
+       "price": 5000
+      }
+     ],
+     "unsold_names": [
+      "Giò heo thêm"
+     ]
+    }
+   ],
+   "items_revenue": 135510000,
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9374000,
+    15624000,
+    10936000,
+    6249000,
+    9374000,
+    21873000,
+    24998000,
+    12499000,
+    0,
+    0,
+    3125000,
+    6249000,
+    7812000,
+    4687000,
+    0,
+    0,
+    0,
+    0
+   ],
+   "by_weekday": [
+    20915000,
+    20913000,
+    11502000,
+    20913000,
+    20913000,
+    19868000,
+    17776000
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Bún bò Huế",
+      "qty": 420
+     },
+     {
+      "name": "Trà đá",
+      "qty": 300
+     },
+     {
+      "name": "Bún riêu",
+      "qty": 120
+     }
+    ],
+    [
+     {
+      "name": "Cơm sườn",
+      "qty": 520
+     },
+     {
+      "name": "Trà đá",
+      "qty": 450
+     },
+     {
+      "name": "Cơm gà xối mỡ",
+      "qty": 260
+     }
+    ],
+    [
+     {
+      "name": "Cơm sườn",
+      "qty": 40
+     },
+     {
+      "name": "Bún thịt nướng",
+      "qty": 30
+     },
+     {
+      "name": "Trà đá",
+      "qty": 25
+     }
+    ],
+    [
+     {
+      "name": "Bún thịt nướng",
+      "qty": 210
+     },
+     {
+      "name": "Cơm sườn",
+      "qty": 150
+     },
+     {
+      "name": "Bún bò Huế",
+      "qty": 130
+     }
+    ]
+   ]
+  },
+  "tuan_nay": {
+   "period": "Tuần này (26–28/10/2026)",
+   "revenue": 12314000,
+   "orders": 254,
+   "prev_period": "Cùng kỳ tuần trước (19–21/10)",
+   "prev_revenue": 15689000,
+   "prev_orders": 285,
+   "top": [
+    {
+     "name": "Trà đá",
+     "qty": 93,
+     "revenue": 279000
+    },
+    {
+     "name": "Cơm sườn",
+     "qty": 78,
+     "revenue": 3120000
+    },
+    {
+     "name": "Bún bò Huế",
+     "qty": 68,
+     "revenue": 3060000
+    },
+    {
+     "name": "Bún thịt nướng",
+     "qty": 54,
+     "revenue": 2160000
+    },
+    {
+     "name": "Cơm gà xối mỡ",
+     "qty": 39,
+     "revenue": 1755000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Thịt thêm",
+     "qty": 8
+    },
+    {
+     "name": "Nước chanh",
+     "qty": 8
+    },
+    {
+     "name": "Canh thêm",
+     "qty": 9
+    }
+   ],
+   "groups": [
+    {
+     "name": "Món chính",
+     "revenue": 11375000,
+     "qty": 271,
+     "items": 7,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Cơm sườn",
+       "qty": 78,
+       "revenue": 3120000,
+       "price": 40000,
+       "cost": 19200
+      },
+      {
+       "name": "Bún bò Huế",
+       "qty": 68,
+       "revenue": 3060000,
+       "price": 45000
+      },
+      {
+       "name": "Bún thịt nướng",
+       "qty": 54,
+       "revenue": 2160000,
+       "price": 40000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Cơm chiên dương châu",
+       "qty": 10,
+       "revenue": 400000,
+       "price": 40000
+      },
+      {
+       "name": "Bún riêu",
+       "qty": 22,
+       "revenue": 880000,
+       "price": 40000
+      },
+      {
+       "name": "Cơm gà xối mỡ",
+       "qty": 39,
+       "revenue": 1755000,
+       "price": 45000
+      }
+     ],
+     "unsold_names": [
+      "Cơm cá kho"
+     ]
+    },
+    {
+     "name": "Đồ uống",
+     "revenue": 717000,
+     "qty": 123,
+     "items": 6,
+     "unsold": 2,
+     "top": [
+      {
+       "name": "Trà đá",
+       "qty": 93,
+       "revenue": 279000,
+       "price": 3000
+      },
+      {
+       "name": "Nước sâm",
+       "qty": 13,
+       "revenue": 156000,
+       "price": 12000
+      },
+      {
+       "name": "Cà phê sữa đá",
+       "qty": 9,
+       "revenue": 162000,
+       "price": 18000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Nước chanh",
+       "qty": 8,
+       "revenue": 120000,
+       "price": 15000
+      }
+     ],
+     "unsold_names": [
+      "Nước cam",
+      "Sữa đậu nành"
+     ]
+    },
+    {
+     "name": "Món thêm",
+     "revenue": 473000,
+     "qty": 49,
+     "items": 5,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trứng ốp la",
+       "qty": 19,
+       "revenue": 152000,
+       "price": 8000
+      },
+      {
+       "name": "Chả thêm",
+       "qty": 13,
+       "revenue": 156000,
+       "price": 12000
+      },
+      {
+       "name": "Canh thêm",
+       "qty": 9,
+       "revenue": 45000,
+       "price": 5000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Thịt thêm",
+       "qty": 8,
+       "revenue": 120000,
+       "price": 15000
+      }
+     ],
+     "unsold_names": [
+      "Giò heo thêm"
+     ]
+    }
+   ],
+   "items_revenue": 12565000,
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    869000,
+    1449000,
+    1014000,
+    579000,
+    869000,
+    2028000,
+    2319000,
+    1159000,
+    0,
+    0,
+    290000,
+    579000,
+    724000,
+    435000,
+    0,
+    0,
+    0,
+    0
+   ],
+   "by_weekday": [
+    4829000,
+    4829000,
+    2656000,
+    0,
+    0,
+    0,
+    0
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Bún bò Huế",
+      "qty": 43
+     },
+     {
+      "name": "Trà đá",
+      "qty": 31
+     },
+     {
+      "name": "Bún riêu",
+      "qty": 12
+     }
+    ],
+    [
+     {
+      "name": "Cơm sườn",
+      "qty": 54
+     },
+     {
+      "name": "Trà đá",
+      "qty": 46
+     },
+     {
+      "name": "Cơm gà xối mỡ",
+      "qty": 27
+     }
+    ],
+    [
+     {
+      "name": "Cơm sườn",
+      "qty": 4
+     },
+     {
+      "name": "Bún thịt nướng",
+      "qty": 3
+     },
+     {
+      "name": "Trà đá",
+      "qty": 3
+     }
+    ],
+    [
+     {
+      "name": "Bún thịt nướng",
+      "qty": 22
+     },
+     {
+      "name": "Cơm sườn",
+      "qty": 15
+     },
+     {
+      "name": "Bún bò Huế",
+      "qty": 13
+     }
+    ]
+   ]
+  },
+  "hom_nay": {
+   "period": "Hôm nay (28/10/2026, tới 14h)",
+   "revenue": 2638000,
+   "orders": 54,
+   "prev_period": "Thứ 4 tuần trước (21/10, tới 14h)",
+   "prev_revenue": 2764000,
+   "prev_orders": 51,
+   "top": [
+    {
+     "name": "Trà đá",
+     "qty": 18,
+     "revenue": 54000
+    },
+    {
+     "name": "Bún bò Huế",
+     "qty": 16,
+     "revenue": 720000
+    },
+    {
+     "name": "Cơm sườn",
+     "qty": 15,
+     "revenue": 600000
+    },
+    {
+     "name": "Bún thịt nướng",
+     "qty": 10,
+     "revenue": 400000
+    },
+    {
+     "name": "Cơm gà xối mỡ",
+     "qty": 8,
+     "revenue": 360000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Cơm chiên dương châu",
+     "qty": 2
+    },
+    {
+     "name": "Canh thêm",
+     "qty": 2
+    },
+    {
+     "name": "Nước chanh",
+     "qty": 2
+    }
+   ],
+   "groups": [
+    {
+     "name": "Món chính",
+     "revenue": 2320000,
+     "qty": 55,
+     "items": 7,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Bún bò Huế",
+       "qty": 16,
+       "revenue": 720000,
+       "price": 45000
+      },
+      {
+       "name": "Cơm sườn",
+       "qty": 15,
+       "revenue": 600000,
+       "price": 40000,
+       "cost": 19200
+      },
+      {
+       "name": "Bún thịt nướng",
+       "qty": 10,
+       "revenue": 400000,
+       "price": 40000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Cơm chiên dương châu",
+       "qty": 2,
+       "revenue": 80000,
+       "price": 40000
+      },
+      {
+       "name": "Bún riêu",
+       "qty": 4,
+       "revenue": 160000,
+       "price": 40000
+      },
+      {
+       "name": "Cơm gà xối mỡ",
+       "qty": 8,
+       "revenue": 360000,
+       "price": 45000
+      }
+     ],
+     "unsold_names": [
+      "Cơm cá kho"
+     ]
+    },
+    {
+     "name": "Món thêm",
+     "revenue": 186000,
+     "qty": 18,
+     "items": 5,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trứng ốp la",
+       "qty": 7,
+       "revenue": 56000,
+       "price": 8000
+      },
+      {
+       "name": "Chả thêm",
+       "qty": 5,
+       "revenue": 60000,
+       "price": 12000
+      },
+      {
+       "name": "Thịt thêm",
+       "qty": 4,
+       "revenue": 60000,
+       "price": 15000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Canh thêm",
+       "qty": 2,
+       "revenue": 10000,
+       "price": 5000
+      }
+     ],
+     "unsold_names": [
+      "Giò heo thêm"
+     ]
+    },
+    {
+     "name": "Đồ uống",
+     "revenue": 186000,
+     "qty": 27,
+     "items": 6,
+     "unsold": 2,
+     "top": [
+      {
+       "name": "Trà đá",
+       "qty": 18,
+       "revenue": 54000,
+       "price": 3000
+      },
+      {
+       "name": "Nước sâm",
+       "qty": 4,
+       "revenue": 48000,
+       "price": 12000
+      },
+      {
+       "name": "Cà phê sữa đá",
+       "qty": 3,
+       "revenue": 54000,
+       "price": 18000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Nước chanh",
+       "qty": 2,
+       "revenue": 30000,
+       "price": 15000
+      }
+     ],
+     "unsold_names": [
+      "Nước cam",
+      "Sữa đậu nành"
+     ]
+    }
+   ],
+   "items_revenue": 2692000,
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    223000,
+    372000,
+    260000,
+    149000,
+    223000,
+    520000,
+    594000,
+    297000,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Bún bò Huế",
+      "qty": 8
+     },
+     {
+      "name": "Trà đá",
+      "qty": 6
+     },
+     {
+      "name": "Bún riêu",
+      "qty": 2
+     }
+    ],
+    [
+     {
+      "name": "Cơm sườn",
+      "qty": 10
+     },
+     {
+      "name": "Trà đá",
+      "qty": 9
+     },
+     {
+      "name": "Cơm gà xối mỡ",
+      "qty": 5
+     }
+    ],
+    [
+     {
+      "name": "Cơm sườn",
+      "qty": 1
+     },
+     {
+      "name": "Bún thịt nướng",
+      "qty": 1
+     },
+     {
+      "name": "Trà đá",
+      "qty": 0
+     }
+    ],
+    []
+   ]
+  }
+ },
+ "modules": {
+  "thang_nay": {
+   "finance": {
+    "period": "Tháng này (1–28/10/2026)",
+    "income": 133100000,
+    "prev_income": 130362000,
+    "auto_income": 132800000,
+    "expense": 95900000,
+    "prev_expense": 82950000,
+    "count": 88,
+    "top_expense": [
+     {
+      "name": "Nguyên liệu (thịt, rau, bún, gạo)",
+      "amount": 58000000,
+      "prev": 45300000
+     },
+     {
+      "name": "Lương nhân viên",
+      "amount": 22000000,
+      "prev": 22000000
+     },
+     {
+      "name": "Mặt bằng",
+      "amount": 10000000,
+      "prev": 10000000
+     },
+     {
+      "name": "Gas",
+      "amount": 3200000,
+      "prev": 3000000
+     },
+     {
+      "name": "Điện nước",
+      "amount": 2100000,
+      "prev": 2000000
+     }
+    ],
+    "top_income": [
+     {
+      "name": "Bán hàng",
+      "amount": 132800000
+     },
+     {
+      "name": "Thu khác",
+      "amount": 300000
+     }
+    ],
+    "expense_cash": 67130000,
+    "expense_bank": 28770000
+   },
+   "kho": {
+    "period": "Tháng này (1–28/10/2026)",
+    "items": 35,
+    "stock_value": 9400000,
+    "low_count": 2,
+    "out_count": 0,
+    "low": [
+     {
+      "name": "Gas",
+      "qty": 1,
+      "unit": "bình",
+      "min": 2
+     },
+     {
+      "name": "Gạo",
+      "qty": 8,
+      "unit": "kg",
+      "min": 20
+     }
+    ],
+    "imports": 31,
+    "import_total": 57200000,
+    "top_suppliers": [
+     {
+      "name": "Lò thịt Bà Hai",
+      "amount": 29800000
+     },
+     {
+      "name": "Mối rau chợ Bình Điền",
+      "amount": 9600000
+     },
+     {
+      "name": "Bún tươi Cô Tư",
+      "amount": 7400000
+     }
+    ],
+    "losses": [
+     {
+      "name": "Bún tươi",
+      "qty": 26,
+      "unit": "kg",
+      "value": 312000
+     },
+     {
+      "name": "Rau sống",
+      "qty": 15,
+      "unit": "kg",
+      "value": 300000
+     },
+     {
+      "name": "Sườn heo",
+      "qty": 2.5,
+      "unit": "kg",
+      "value": 300000
+     }
+    ]
+   },
+   "nhan_su": {
+    "period": "Tháng này (1–28/10/2026)",
+    "self": false,
+    "shifts": 140,
+    "total_hours": 980,
+    "staff_count": 4,
+    "staff": [
+     {
+      "name": "Cô Sáu",
+      "hours": 280,
+      "shifts": 40
+     },
+     {
+      "name": "Tâm",
+      "hours": 266,
+      "shifts": 38
+     },
+     {
+      "name": "Bảo",
+      "hours": 238,
+      "shifts": 34
+     },
+     {
+      "name": "Hiền",
+      "hours": 196,
+      "shifts": 28
+     }
+    ],
+    "open_now": 3,
+    "forgot_clock_out": 0,
+    "payroll": [
+     {
+      "name": "Lương tháng 9/2026",
+      "from": "01/09/2026",
+      "to": "30/09/2026",
+      "status": "paid",
+      "total": 22000000
+     }
+    ]
+   },
+   "khach": {
+    "period": "Tháng này (1–28/10/2026)",
+    "total": 95,
+    "new": 12,
+    "returning": 60,
+    "with_points": 0,
+    "wallet_customers": 0,
+    "wallet_real": 0,
+    "wallet_bonus": 0,
+    "top": [
+     {
+      "name": "Anh Tài (công trình)",
+      "spent": 2350000,
+      "visits": 52
+     },
+     {
+      "name": "Chú Bảy",
+      "spent": 1680000,
+      "visits": 40
+     }
+    ]
+   },
+   "khuyen_mai": {
+    "period": "Tháng này (1–28/10/2026)",
+    "active_count": 1,
+    "active": [
+     {
+      "code": "TRUAVUI",
+      "type": "amount",
+      "value": 5000,
+      "min_order": 80000,
+      "end": "30/11/2026"
+     }
+    ],
+    "orders_with_discount": 542,
+    "orders": 2450,
+    "discount_total": 2710000,
+    "revenue": 132800000,
+    "used": [
+     {
+      "code": "TRUAVUI",
+      "times": 542,
+      "discount": 2710000
+     }
+    ]
+   }
+  }
+ },
+ "van_de": [
+  {
+   "id": "C1",
+   "mo_ta": "Đồ uống chỉ 9.120.000đ = 6,7% tiền món; 900 ly là trà đá 3.000đ, nước sâm / cà phê / chanh cộng lại ~440 ly trên 2.450 đơn; nước cam, sữa đậu nành chưa bán."
+  },
+  {
+   "id": "C2",
+   "mo_ta": "Thứ 4 tụt mạnh: 11.502.000đ cả tháng so ~20,9 triệu của Thứ 2, 3, 5, 6 (chỉ ~55%); không có số giải thích vì sao (chợ nghỉ? công trình?)."
+  },
+  {
+   "id": "C3",
+   "mo_ta": "Ca tối 16h–20h chỉ 21.873.000đ ≈ 16,5% doanh thu dù mở 4 giờ (≈ bằng 1 giờ 12h trưa 24.998.000đ) → ca tối yếu, cần cân nhắc rút giờ / người hoặc món tối riêng."
+  },
+  {
+   "id": "C4",
+   "mo_ta": "Cơm sườn giá 40.000đ, giá vốn 19.200đ = 48% giá bán, bán 760 phần (món bán chạy thứ 2) → món chủ lực lời mỏng."
+  },
+  {
+   "id": "C5",
+   "mo_ta": "Chi nguyên liệu 58.000.000đ so 45.300.000đ kỳ trước (+28%) trong khi doanh thu chỉ +2%; tổng chi 95.900.000đ (+15,6%)."
+  },
+  {
+   "id": "C6",
+   "mo_ta": "Hao hụt ghi sổ: bún tươi 26 kg ≈ 312.000đ, rau sống 15 kg ≈ 300.000đ, sườn heo 2,5 kg ≈ 300.000đ (~912.000đ / tháng) → nhập dư, nhất là ngày Thứ 4 vắng."
+  },
+  {
+   "id": "C7",
+   "mo_ta": "Tuần này (26–28/10) doanh thu 12.314.000đ giảm 21,5% so cùng kỳ tuần trước 15.689.000đ; số đơn −10,9% (254 so 285) nhưng giá trị mỗi đơn −11,9% (48.500đ so 55.000đ) → chủ yếu do khách ít gọi món thêm / đồ uống (món thêm tuần này chỉ 3,8% tiền món so 6,6% cả tháng)."
+  }
+ ]
+}

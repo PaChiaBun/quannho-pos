@@ -681,7 +681,8 @@ final _askNumberP = _viPair(
   r' (?:bao nhiêu|bn|bnhiu|bnhieu|nhiu|mấy|nhiêu|tổng|top|nhất|liệt kê|danh sách|(?:ai|nào) (?:đang|vào|làm|nghỉ|đi)) ',
 );
 final _periodP = _viPair(
-  r' (?:hôm nay|hnay|hôm qua|tuần (?:này|trước|trc|rồi|qua)|tháng (?:này|trước|trc|rồi|\d+)|năm (?:nay|ngoái|trước|rồi)|quý (?:\d|này|trước)|'
+  // "nay có mấy đơn bị hủy" — "nay" trần là hôm nay (đợt 16)
+  r' (?:hôm nay|hnay|nay|hôm qua|tuần (?:này|trước|trc|rồi|qua)|tháng (?:này|trước|trc|rồi|\d+)|năm (?:nay|ngoái|trước|rồi)|quý (?:\d|này|trước)|'
   r'(?:sáng|trưa|chiều|tối) (?:nay|qua)|ca (?:sáng|chiều|tối)|gần đây|tới giờ|từ đầu|\d+ ngày|\d+ \d+|'
   r'\d+ (?:tuần|tháng) (?:nay|qua|rồi)) ',
 );
@@ -690,7 +691,9 @@ final _periodP = _viPair(
 // → câu xin số, không phải hỏi cách làm (bộ F 27/10). Có "cách / ở đâu / bị / lỗi / sao" thì vẫn là hỏi cách làm.
 final _countedP = _viPair(
   r' (?:(?:mấy|bao nhiêu|bn) (?:cái |tờ |lần )?(?:đơn|bill|hđ|hoá đơn|hóa đơn|lần|ly|món|phiếu|khoản)|'
-  r'ai (?:\S+ ){1,3}nhiều nhất) ',
+  r'ai (?:\S+ ){1,3}nhiều nhất|'
+  // "tuần này nhập hàng hết bao nhiêu tiền" (đợt 16)
+  r'(?:hết|tốn|mất) (?:\S+ )?(?:bao nhiêu|bn|nhiêu|nhiu)|bao nhiêu tiền) ',
 );
 final _strictHowP = _viPair(
   r' (?:cách|làm sao|ở đâu|chỗ nào|hướng dẫn|kiểu gì|sao để|bằng cách|sao|lỗi|'
@@ -745,6 +748,32 @@ bool boomAsksShopNumber(String query) {
       _viHit(_salesNounP, s) &&
       !_viHit(_notSalesNumberP, s) &&
       !_viHit(_askRuleP, s) &&
+      !boomAsksHowTo(query) &&
+      !_helpAction(query) &&
+      !boomGeneralKnowledge(query) &&
+      !boomAsksOtherStore(query);
+}
+
+// Câu có kỳ + một con số của quán + từ hỏi ("tháng này lỗ hay lời", "7 ngày qua bán sao", "thang 9 food cost co cao
+// ko", "khung giờ nào hôm nay đông nhất") → tư vấn kèm số, không để bài hướng dẫn khớp chữ "na ná" thắng (đợt 16)
+final _metricP = _viPair(
+  r' (?:đông|vắng|bán|food cost|giá vốn|khung (?:giờ|sáng|trưa|chiều|tối)|giờ nào|nhập hàng|lời|lãi|lỗ|doanh thu|'
+  r'lợi nhuận|chi phí|đơn|khách|hủy|huỷ) ',
+);
+final _metricAskP = _viPair(
+  r' (?:bao nhiêu|bn|nhiêu|nhiu|mấy|sao|ổn|cao|thấp|hay|nào|không|ít|nhiều|đi lên|đi xuống|tăng|giảm|nhất|thế nào|ra sao) ',
+);
+final _metricHowP = _viPair(
+  r' (?:cách|ở đâu|chỗ nào|mục nào|bấm|lỗi|hướng dẫn|cài|quy định|theo luật|bắt buộc|thuế) ',
+);
+
+bool boomAsksPeriodMetric(String query) {
+  final s = _padVi(query);
+  return (IntentClassifier.timeRangeIn(query) != null || _viHit(_periodP, s)) &&
+      _viHit(_metricP, s) &&
+      _viHit(_metricAskP, s) &&
+      !_viHit(_metricHowP, s) &&
+      !_viHit(_appIssueP, s) &&
       !boomAsksHowTo(query) &&
       !_helpAction(query) &&
       !boomGeneralKnowledge(query) &&
@@ -1399,7 +1428,13 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
             followUsed = true;
             // Lượt trước là số bán / tư vấn → tư vấn tiếp (bên dưới), không để bài hướng dẫn "cướp" câu nói tiếp
             // (hỏi cách làm về đúng thứ vừa nói thì vẫn tìm bài theo câu ghép — đợt 15)
-            help = (followUp.shopData || followUp.advice) && !helpFollowOnly
+            // lượt số theo mục / chuỗi cũng vậy ("nhập vậy có bị dư không" sau câu nhập hàng — đợt 16)
+            help =
+                (followUp.shopData ||
+                        followUp.advice ||
+                        followUp.modules ||
+                        followUp.chain) &&
+                    !helpFollowOnly
                 ? const HelpResult(HelpDecision.none, [])
                 : decideHelp(index, '${followUp.turn.question} $query');
           }
@@ -1505,7 +1540,8 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
                 !boomAsksHowTo(query) &&
                 !boomGeneralKnowledge(query)) ||
             // đã khớp một mục (lương, ca, khách…) → để nhánh số theo mục đọc, khỏi đọc thêm số bán
-            (boomAsksShopNumber(query) && boomModuleTopics(query).isEmpty));
+            ((boomAsksShopNumber(query) || boomAsksPeriodMetric(query)) &&
+                boomModuleTopics(query).isEmpty));
     // Câu xin số các module (thu chi, kho, nhân sự, khách, khuyến mãi) → đọc CHỈ ĐỌC theo quyền của người hỏi
     final moduleFollow = followUsed && followUp!.modules && !helpFollowOnly;
     final topics =

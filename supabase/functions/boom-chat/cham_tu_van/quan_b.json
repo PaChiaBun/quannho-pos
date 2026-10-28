@@ -1,0 +1,1492 @@
+{
+ "ten": "Quán B — Trà sữa Mây",
+ "mo_ta": "Quán trà sữa có chỗ ngồi gần trường học và khu dân cư, 6 nhân viên. Mở 9h–22h mỗi ngày, đông buổi tối và cuối tuần.",
+ "facts": {
+  "thang_truoc": {
+   "period": "Tháng 9/2026",
+   "revenue": 145524000,
+   "orders": 2479,
+   "prev_period": "Tháng 8/2026",
+   "prev_revenue": 149958000,
+   "prev_orders": 2542,
+   "top": [
+    {
+     "name": "Trà sữa trân châu đường đen",
+     "qty": 1044,
+     "revenue": 36540000
+    },
+    {
+     "name": "Trà sữa truyền thống",
+     "qty": 818,
+     "revenue": 22904000
+    },
+    {
+     "name": "Trà đào cam sả",
+     "qty": 509,
+     "revenue": 16288000
+    },
+    {
+     "name": "Trà dâu tây",
+     "qty": 434,
+     "revenue": 15190000
+    },
+    {
+     "name": "Trân châu đen",
+     "qty": 434,
+     "revenue": 2604000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Cá viên chiên",
+     "qty": 25
+    },
+    {
+     "name": "Thạch dừa",
+     "qty": 33
+    },
+    {
+     "name": "Trà ổi hồng",
+     "qty": 50
+    }
+   ],
+   "groups": [
+    {
+     "name": "Trà sữa",
+     "revenue": 87160000,
+     "qty": 2597,
+     "items": 6,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trà sữa trân châu đường đen",
+       "qty": 1044,
+       "revenue": 36540000,
+       "price": 35000
+      },
+      {
+       "name": "Trà sữa truyền thống",
+       "qty": 818,
+       "revenue": 22904000,
+       "price": 28000
+      },
+      {
+       "name": "Trà sữa matcha",
+       "qty": 351,
+       "revenue": 13338000,
+       "price": 38000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Trà sữa phô mai tươi",
+       "qty": 134,
+       "revenue": 5628000,
+       "price": 42000
+      },
+      {
+       "name": "Trà sữa khoai môn",
+       "qty": 250,
+       "revenue": 8750000,
+       "price": 35000
+      }
+     ],
+     "unsold_names": [
+      "Trà sữa bạc hà"
+     ]
+    },
+    {
+     "name": "Trà trái cây",
+     "revenue": 45864000,
+     "qty": 1427,
+     "items": 5,
+     "unsold": 0,
+     "top": [
+      {
+       "name": "Trà đào cam sả",
+       "qty": 509,
+       "revenue": 16288000,
+       "price": 32000,
+       "cost": 10000
+      },
+      {
+       "name": "Trà dâu tây",
+       "qty": 434,
+       "revenue": 15190000,
+       "price": 35000,
+       "cost": 16000
+      },
+      {
+       "name": "Trà vải",
+       "qty": 317,
+       "revenue": 9510000,
+       "price": 30000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Trà ổi hồng",
+       "qty": 50,
+       "revenue": 1600000,
+       "price": 32000
+      },
+      {
+       "name": "Trà chanh dây",
+       "qty": 117,
+       "revenue": 3276000,
+       "price": 28000
+      }
+     ],
+     "unsold_names": []
+    },
+    {
+     "name": "Ăn vặt",
+     "revenue": 10760000,
+     "qty": 492,
+     "items": 8,
+     "unsold": 4,
+     "top": [
+      {
+       "name": "Khoai tây chiên",
+       "qty": 217,
+       "revenue": 5425000,
+       "price": 25000
+      },
+      {
+       "name": "Bánh tráng trộn",
+       "qty": 192,
+       "revenue": 3840000,
+       "price": 20000
+      },
+      {
+       "name": "Xúc xích chiên",
+       "qty": 58,
+       "revenue": 870000,
+       "price": 15000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Cá viên chiên",
+       "qty": 25,
+       "revenue": 625000,
+       "price": 25000
+      }
+     ],
+     "unsold_names": [
+      "Phô mai que",
+      "Nem chua rán",
+      "Gà lắc phô mai"
+     ]
+    },
+    {
+     "name": "Topping",
+     "revenue": 6241000,
+     "qty": 876,
+     "items": 6,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trân châu đen",
+       "qty": 434,
+       "revenue": 2604000,
+       "price": 6000
+      },
+      {
+       "name": "Thạch phô mai",
+       "qty": 175,
+       "revenue": 1400000,
+       "price": 8000
+      },
+      {
+       "name": "Pudding trứng",
+       "qty": 134,
+       "revenue": 1072000,
+       "price": 8000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Thạch dừa",
+       "qty": 33,
+       "revenue": 165000,
+       "price": 5000
+      },
+      {
+       "name": "Kem cheese",
+       "qty": 100,
+       "revenue": 1000000,
+       "price": 10000
+      }
+     ],
+     "unsold_names": [
+      "Trân châu trắng"
+     ]
+    }
+   ],
+   "items_revenue": 150025000,
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2274000,
+    3411000,
+    6821000,
+    9095000,
+    7958000,
+    6821000,
+    9095000,
+    11369000,
+    13643000,
+    15917000,
+    20464000,
+    22739000,
+    15917000,
+    0,
+    0
+   ],
+   "by_weekday": [
+    14621000,
+    18276000,
+    19418000,
+    16449000,
+    20104000,
+    27414000,
+    29242000
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Trà sữa truyền thống",
+      "qty": 59
+     },
+     {
+      "name": "Trà đào cam sả",
+      "qty": 44
+     },
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 39
+     }
+    ],
+    [
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 196
+     },
+     {
+      "name": "Trà đào cam sả",
+      "qty": 147
+     },
+     {
+      "name": "Trà dâu tây",
+      "qty": 108
+     }
+    ],
+    [
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 255
+     },
+     {
+      "name": "Trà sữa truyền thống",
+      "qty": 187
+     },
+     {
+      "name": "Bánh tráng trộn",
+      "qty": 79
+     }
+    ],
+    [
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 550
+     },
+     {
+      "name": "Trà sữa truyền thống",
+      "qty": 472
+     },
+     {
+      "name": "Khoai tây chiên",
+      "qty": 147
+     }
+    ]
+   ]
+  },
+  "thang_nay": {
+   "period": "Tháng này (1–28/10/2026)",
+   "revenue": 138999000,
+   "orders": 2574,
+   "prev_period": "Cùng kỳ tháng trước (1–28/9/2026)",
+   "prev_revenue": 135991000,
+   "prev_orders": 2317,
+   "top": [
+    {
+     "name": "Trà sữa trân châu đường đen",
+     "qty": 1062,
+     "revenue": 37170000
+    },
+    {
+     "name": "Trà sữa truyền thống",
+     "qty": 833,
+     "revenue": 23324000
+    },
+    {
+     "name": "Trà đào cam sả",
+     "qty": 518,
+     "revenue": 16576000
+    },
+    {
+     "name": "Trà dâu tây",
+     "qty": 442,
+     "revenue": 15470000
+    },
+    {
+     "name": "Trân châu đen",
+     "qty": 442,
+     "revenue": 2652000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Cá viên chiên",
+     "qty": 26
+    },
+    {
+     "name": "Thạch dừa",
+     "qty": 34
+    },
+    {
+     "name": "Trà ổi hồng",
+     "qty": 51
+    }
+   ],
+   "groups": [
+    {
+     "name": "Trà sữa",
+     "revenue": 88697000,
+     "qty": 2643,
+     "items": 6,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trà sữa trân châu đường đen",
+       "qty": 1062,
+       "revenue": 37170000,
+       "price": 35000
+      },
+      {
+       "name": "Trà sữa truyền thống",
+       "qty": 833,
+       "revenue": 23324000,
+       "price": 28000
+      },
+      {
+       "name": "Trà sữa matcha",
+       "qty": 357,
+       "revenue": 13566000,
+       "price": 38000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Trà sữa phô mai tươi",
+       "qty": 136,
+       "revenue": 5712000,
+       "price": 42000
+      },
+      {
+       "name": "Trà sữa khoai môn",
+       "qty": 255,
+       "revenue": 8925000,
+       "price": 35000
+      }
+     ],
+     "unsold_names": [
+      "Trà sữa bạc hà"
+     ]
+    },
+    {
+     "name": "Trà trái cây",
+     "revenue": 46700000,
+     "qty": 1453,
+     "items": 5,
+     "unsold": 0,
+     "top": [
+      {
+       "name": "Trà đào cam sả",
+       "qty": 518,
+       "revenue": 16576000,
+       "price": 32000,
+       "cost": 10000
+      },
+      {
+       "name": "Trà dâu tây",
+       "qty": 442,
+       "revenue": 15470000,
+       "price": 35000,
+       "cost": 16000
+      },
+      {
+       "name": "Trà vải",
+       "qty": 323,
+       "revenue": 9690000,
+       "price": 30000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Trà ổi hồng",
+       "qty": 51,
+       "revenue": 1632000,
+       "price": 32000
+      },
+      {
+       "name": "Trà chanh dây",
+       "qty": 119,
+       "revenue": 3332000,
+       "price": 28000
+      }
+     ],
+     "unsold_names": []
+    },
+    {
+     "name": "Ăn vặt",
+     "revenue": 10995000,
+     "qty": 503,
+     "items": 8,
+     "unsold": 4,
+     "top": [
+      {
+       "name": "Khoai tây chiên",
+       "qty": 221,
+       "revenue": 5525000,
+       "price": 25000
+      },
+      {
+       "name": "Bánh tráng trộn",
+       "qty": 196,
+       "revenue": 3920000,
+       "price": 20000
+      },
+      {
+       "name": "Xúc xích chiên",
+       "qty": 60,
+       "revenue": 900000,
+       "price": 15000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Cá viên chiên",
+       "qty": 26,
+       "revenue": 650000,
+       "price": 25000
+      }
+     ],
+     "unsold_names": [
+      "Phô mai que",
+      "Nem chua rán",
+      "Gà lắc phô mai"
+     ]
+    },
+    {
+     "name": "Topping",
+     "revenue": 6354000,
+     "qty": 892,
+     "items": 6,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trân châu đen",
+       "qty": 442,
+       "revenue": 2652000,
+       "price": 6000
+      },
+      {
+       "name": "Thạch phô mai",
+       "qty": 178,
+       "revenue": 1424000,
+       "price": 8000
+      },
+      {
+       "name": "Pudding trứng",
+       "qty": 136,
+       "revenue": 1088000,
+       "price": 8000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Thạch dừa",
+       "qty": 34,
+       "revenue": 170000,
+       "price": 5000
+      },
+      {
+       "name": "Kem cheese",
+       "qty": 102,
+       "revenue": 1020000,
+       "price": 10000
+      }
+     ],
+     "unsold_names": [
+      "Trân châu trắng"
+     ]
+    }
+   ],
+   "items_revenue": 152746000,
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2172000,
+    3258000,
+    6516000,
+    8687000,
+    7602000,
+    6516000,
+    8687000,
+    10859000,
+    13031000,
+    15203000,
+    19547000,
+    21718000,
+    15203000,
+    0,
+    0
+   ],
+   "by_weekday": [
+    14728000,
+    14728000,
+    15649000,
+    16569000,
+    20252000,
+    27616000,
+    29457000
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Trà sữa truyền thống",
+      "qty": 60
+     },
+     {
+      "name": "Trà đào cam sả",
+      "qty": 45
+     },
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 40
+     }
+    ],
+    [
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 200
+     },
+     {
+      "name": "Trà đào cam sả",
+      "qty": 150
+     },
+     {
+      "name": "Trà dâu tây",
+      "qty": 110
+     }
+    ],
+    [
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 260
+     },
+     {
+      "name": "Trà sữa truyền thống",
+      "qty": 190
+     },
+     {
+      "name": "Bánh tráng trộn",
+      "qty": 80
+     }
+    ],
+    [
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 560
+     },
+     {
+      "name": "Trà sữa truyền thống",
+      "qty": 480
+     },
+     {
+      "name": "Khoai tây chiên",
+      "qty": 150
+     }
+    ]
+   ]
+  },
+  "tuan_nay": {
+   "period": "Tuần này (26–28/10/2026)",
+   "revenue": 12541000,
+   "orders": 233,
+   "prev_period": "Cùng kỳ tuần trước (19–21/10)",
+   "prev_revenue": 12040000,
+   "prev_orders": 221,
+   "top": [
+    {
+     "name": "Trà sữa trân châu đường đen",
+     "qty": 96,
+     "revenue": 3360000
+    },
+    {
+     "name": "Trà sữa truyền thống",
+     "qty": 75,
+     "revenue": 2100000
+    },
+    {
+     "name": "Trà đào cam sả",
+     "qty": 47,
+     "revenue": 1504000
+    },
+    {
+     "name": "Trà dâu tây",
+     "qty": 40,
+     "revenue": 1400000
+    },
+    {
+     "name": "Trân châu đen",
+     "qty": 40,
+     "revenue": 240000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Cá viên chiên",
+     "qty": 2
+    },
+    {
+     "name": "Thạch dừa",
+     "qty": 3
+    },
+    {
+     "name": "Trà ổi hồng",
+     "qty": 5
+    }
+   ],
+   "groups": [
+    {
+     "name": "Trà sữa",
+     "revenue": 7985000,
+     "qty": 238,
+     "items": 6,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trà sữa trân châu đường đen",
+       "qty": 96,
+       "revenue": 3360000,
+       "price": 35000
+      },
+      {
+       "name": "Trà sữa truyền thống",
+       "qty": 75,
+       "revenue": 2100000,
+       "price": 28000
+      },
+      {
+       "name": "Trà sữa matcha",
+       "qty": 32,
+       "revenue": 1216000,
+       "price": 38000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Trà sữa phô mai tươi",
+       "qty": 12,
+       "revenue": 504000,
+       "price": 42000
+      },
+      {
+       "name": "Trà sữa khoai môn",
+       "qty": 23,
+       "revenue": 805000,
+       "price": 35000
+      }
+     ],
+     "unsold_names": [
+      "Trà sữa bạc hà"
+     ]
+    },
+    {
+     "name": "Trà trái cây",
+     "revenue": 4242000,
+     "qty": 132,
+     "items": 5,
+     "unsold": 0,
+     "top": [
+      {
+       "name": "Trà đào cam sả",
+       "qty": 47,
+       "revenue": 1504000,
+       "price": 32000,
+       "cost": 10000
+      },
+      {
+       "name": "Trà dâu tây",
+       "qty": 40,
+       "revenue": 1400000,
+       "price": 35000,
+       "cost": 16000
+      },
+      {
+       "name": "Trà vải",
+       "qty": 29,
+       "revenue": 870000,
+       "price": 30000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Trà ổi hồng",
+       "qty": 5,
+       "revenue": 160000,
+       "price": 32000
+      },
+      {
+       "name": "Trà chanh dây",
+       "qty": 11,
+       "revenue": 308000,
+       "price": 28000
+      }
+     ],
+     "unsold_names": []
+    },
+    {
+     "name": "Ăn vặt",
+     "revenue": 985000,
+     "qty": 45,
+     "items": 8,
+     "unsold": 4,
+     "top": [
+      {
+       "name": "Khoai tây chiên",
+       "qty": 20,
+       "revenue": 500000,
+       "price": 25000
+      },
+      {
+       "name": "Bánh tráng trộn",
+       "qty": 18,
+       "revenue": 360000,
+       "price": 20000
+      },
+      {
+       "name": "Xúc xích chiên",
+       "qty": 5,
+       "revenue": 75000,
+       "price": 15000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Cá viên chiên",
+       "qty": 2,
+       "revenue": 50000,
+       "price": 25000
+      }
+     ],
+     "unsold_names": [
+      "Phô mai que",
+      "Nem chua rán",
+      "Gà lắc phô mai"
+     ]
+    },
+    {
+     "name": "Topping",
+     "revenue": 569000,
+     "qty": 80,
+     "items": 6,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trân châu đen",
+       "qty": 40,
+       "revenue": 240000,
+       "price": 6000
+      },
+      {
+       "name": "Thạch phô mai",
+       "qty": 16,
+       "revenue": 128000,
+       "price": 8000
+      },
+      {
+       "name": "Pudding trứng",
+       "qty": 12,
+       "revenue": 96000,
+       "price": 8000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Thạch dừa",
+       "qty": 3,
+       "revenue": 15000,
+       "price": 5000
+      },
+      {
+       "name": "Kem cheese",
+       "qty": 9,
+       "revenue": 90000,
+       "price": 10000
+      }
+     ],
+     "unsold_names": [
+      "Trân châu trắng"
+     ]
+    }
+   ],
+   "items_revenue": 13781000,
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    196000,
+    294000,
+    588000,
+    784000,
+    686000,
+    588000,
+    784000,
+    980000,
+    1176000,
+    1372000,
+    1764000,
+    1957000,
+    1372000,
+    0,
+    0
+   ],
+   "by_weekday": [
+    4095000,
+    4095000,
+    4351000,
+    0,
+    0,
+    0,
+    0
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Trà sữa truyền thống",
+      "qty": 5
+     },
+     {
+      "name": "Trà đào cam sả",
+      "qty": 4
+     },
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 4
+     }
+    ],
+    [
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 18
+     },
+     {
+      "name": "Trà đào cam sả",
+      "qty": 14
+     },
+     {
+      "name": "Trà dâu tây",
+      "qty": 10
+     }
+    ],
+    [
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 24
+     },
+     {
+      "name": "Trà sữa truyền thống",
+      "qty": 17
+     },
+     {
+      "name": "Bánh tráng trộn",
+      "qty": 7
+     }
+    ],
+    [
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 51
+     },
+     {
+      "name": "Trà sữa truyền thống",
+      "qty": 43
+     },
+     {
+      "name": "Khoai tây chiên",
+      "qty": 14
+     }
+    ]
+   ]
+  },
+  "hom_nay": {
+   "period": "Hôm nay (28/10/2026, tới 15h)",
+   "revenue": 1257000,
+   "orders": 25,
+   "prev_period": "Thứ 4 tuần trước (21/10, tới 15h)",
+   "prev_revenue": 1384000,
+   "prev_orders": 27,
+   "top": [
+    {
+     "name": "Trà sữa trân châu đường đen",
+     "qty": 10,
+     "revenue": 350000
+    },
+    {
+     "name": "Trà sữa truyền thống",
+     "qty": 8,
+     "revenue": 224000
+    },
+    {
+     "name": "Trà đào cam sả",
+     "qty": 5,
+     "revenue": 160000
+    },
+    {
+     "name": "Trà dâu tây",
+     "qty": 4,
+     "revenue": 140000
+    },
+    {
+     "name": "Trân châu đen",
+     "qty": 4,
+     "revenue": 24000
+    }
+   ],
+   "slow": [
+    {
+     "name": "Trà sữa phô mai tươi",
+     "qty": 1
+    },
+    {
+     "name": "Trà chanh dây",
+     "qty": 1
+    },
+    {
+     "name": "Pudding trứng",
+     "qty": 1
+    }
+   ],
+   "groups": [
+    {
+     "name": "Trà sữa",
+     "revenue": 800000,
+     "qty": 24,
+     "items": 6,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trà sữa trân châu đường đen",
+       "qty": 10,
+       "revenue": 350000,
+       "price": 35000
+      },
+      {
+       "name": "Trà sữa truyền thống",
+       "qty": 8,
+       "revenue": 224000,
+       "price": 28000
+      },
+      {
+       "name": "Trà sữa matcha",
+       "qty": 3,
+       "revenue": 114000,
+       "price": 38000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Trà sữa phô mai tươi",
+       "qty": 1,
+       "revenue": 42000,
+       "price": 42000
+      },
+      {
+       "name": "Trà sữa khoai môn",
+       "qty": 2,
+       "revenue": 70000,
+       "price": 35000
+      }
+     ],
+     "unsold_names": [
+      "Trà sữa bạc hà"
+     ]
+    },
+    {
+     "name": "Trà trái cây",
+     "revenue": 418000,
+     "qty": 13,
+     "items": 5,
+     "unsold": 1,
+     "top": [
+      {
+       "name": "Trà đào cam sả",
+       "qty": 5,
+       "revenue": 160000,
+       "price": 32000,
+       "cost": 10000
+      },
+      {
+       "name": "Trà dâu tây",
+       "qty": 4,
+       "revenue": 140000,
+       "price": 35000,
+       "cost": 16000
+      },
+      {
+       "name": "Trà vải",
+       "qty": 3,
+       "revenue": 90000,
+       "price": 30000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Trà chanh dây",
+       "qty": 1,
+       "revenue": 28000,
+       "price": 28000
+      }
+     ],
+     "unsold_names": [
+      "Trà ổi hồng"
+     ]
+    },
+    {
+     "name": "Ăn vặt",
+     "revenue": 105000,
+     "qty": 5,
+     "items": 8,
+     "unsold": 5,
+     "top": [
+      {
+       "name": "Khoai tây chiên",
+       "qty": 2,
+       "revenue": 50000,
+       "price": 25000
+      },
+      {
+       "name": "Bánh tráng trộn",
+       "qty": 2,
+       "revenue": 40000,
+       "price": 20000
+      },
+      {
+       "name": "Xúc xích chiên",
+       "qty": 1,
+       "revenue": 15000,
+       "price": 15000
+      }
+     ],
+     "slow": [],
+     "unsold_names": [
+      "Phô mai que",
+      "Nem chua rán",
+      "Gà lắc phô mai"
+     ]
+    },
+    {
+     "name": "Topping",
+     "revenue": 58000,
+     "qty": 8,
+     "items": 6,
+     "unsold": 2,
+     "top": [
+      {
+       "name": "Trân châu đen",
+       "qty": 4,
+       "revenue": 24000,
+       "price": 6000
+      },
+      {
+       "name": "Thạch phô mai",
+       "qty": 2,
+       "revenue": 16000,
+       "price": 8000
+      },
+      {
+       "name": "Pudding trứng",
+       "qty": 1,
+       "revenue": 8000,
+       "price": 8000
+      }
+     ],
+     "slow": [
+      {
+       "name": "Kem cheese",
+       "qty": 1,
+       "revenue": 10000,
+       "price": 10000
+      }
+     ],
+     "unsold_names": [
+      "Trân châu trắng",
+      "Thạch dừa"
+     ]
+    }
+   ],
+   "items_revenue": 1381000,
+   "by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    63000,
+    94000,
+    189000,
+    251000,
+    220000,
+    189000,
+    251000,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "by_band": [
+    [
+     {
+      "name": "Trà sữa truyền thống",
+      "qty": 1
+     },
+     {
+      "name": "Trà đào cam sả",
+      "qty": 0
+     },
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 0
+     }
+    ],
+    [
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 2
+     },
+     {
+      "name": "Trà đào cam sả",
+      "qty": 1
+     },
+     {
+      "name": "Trà dâu tây",
+      "qty": 1
+     }
+    ],
+    [
+     {
+      "name": "Trà sữa trân châu đường đen",
+      "qty": 2
+     },
+     {
+      "name": "Trà sữa truyền thống",
+      "qty": 2
+     },
+     {
+      "name": "Bánh tráng trộn",
+      "qty": 1
+     }
+    ],
+    []
+   ]
+  }
+ },
+ "modules": {
+  "thang_nay": {
+   "finance": {
+    "period": "Tháng này (1–28/10/2026)",
+    "income": 140599000,
+    "prev_income": 136891000,
+    "auto_income": 138999000,
+    "expense": 116200000,
+    "prev_expense": 106800000,
+    "count": 63,
+    "top_expense": [
+     {
+      "name": "Nguyên liệu",
+      "amount": 51800000,
+      "prev": 47900000
+     },
+     {
+      "name": "Lương nhân viên",
+      "amount": 38500000,
+      "prev": 34200000
+     },
+     {
+      "name": "Mặt bằng",
+      "amount": 15000000,
+      "prev": 15000000
+     },
+     {
+      "name": "Ly, ống hút, túi",
+      "amount": 5400000,
+      "prev": 4600000
+     },
+     {
+      "name": "Điện nước",
+      "amount": 4300000,
+      "prev": 4000000
+     }
+    ],
+    "top_income": [
+     {
+      "name": "Bán hàng",
+      "amount": 138999000
+     },
+     {
+      "name": "Khách nạp ví",
+      "amount": 1600000
+     }
+    ],
+    "expense_cash": 29050000,
+    "expense_bank": 87150000
+   },
+   "kho": {
+    "period": "Tháng này (1–28/10/2026)",
+    "items": 42,
+    "stock_value": 18600000,
+    "low_count": 3,
+    "out_count": 1,
+    "low": [
+     {
+      "name": "Ly 700ml",
+      "qty": 0,
+      "unit": "cái",
+      "min": 200
+     },
+     {
+      "name": "Trân châu đen (bột)",
+      "qty": 1.5,
+      "unit": "kg",
+      "min": 5
+     },
+     {
+      "name": "Sữa tươi",
+      "qty": 4,
+      "unit": "lít",
+      "min": 10
+     }
+    ],
+    "imports": 14,
+    "import_total": 50300000,
+    "top_suppliers": [
+     {
+      "name": "Nguyên liệu trà sữa Hưng Phát",
+      "amount": 31500000
+     },
+     {
+      "name": "Bao bì Minh Tâm",
+      "amount": 5400000
+     },
+     {
+      "name": "Trái cây Chợ Đầu Mối",
+      "amount": 8200000
+     }
+    ],
+    "losses": [
+     {
+      "name": "Trân châu đen (nấu dư)",
+      "qty": 7,
+      "unit": "kg",
+      "value": 315000
+     },
+     {
+      "name": "Sữa tươi",
+      "qty": 5,
+      "unit": "lít",
+      "value": 180000
+     }
+    ]
+   },
+   "nhan_su": {
+    "period": "Tháng này (1–28/10/2026)",
+    "self": false,
+    "shifts": 168,
+    "total_hours": 1008,
+    "staff_count": 6,
+    "staff": [
+     {
+      "name": "Ngọc",
+      "hours": 230,
+      "shifts": 38
+     },
+     {
+      "name": "Phúc",
+      "hours": 205,
+      "shifts": 34
+     },
+     {
+      "name": "Thảo",
+      "hours": 180,
+      "shifts": 30
+     },
+     {
+      "name": "Duy",
+      "hours": 160,
+      "shifts": 27
+     },
+     {
+      "name": "My",
+      "hours": 125,
+      "shifts": 21
+     },
+     {
+      "name": "Khang",
+      "hours": 108,
+      "shifts": 18
+     }
+    ],
+    "open_now": 2,
+    "forgot_clock_out": 1,
+    "payroll": [
+     {
+      "name": "Lương tháng 9/2026",
+      "from": "01/09/2026",
+      "to": "30/09/2026",
+      "status": "paid",
+      "total": 36500000
+     }
+    ]
+   },
+   "khach": {
+    "period": "Tháng này (1–28/10/2026)",
+    "total": 1850,
+    "new": 240,
+    "returning": 210,
+    "with_points": 1320,
+    "wallet_customers": 35,
+    "wallet_real": 2100000,
+    "wallet_bonus": 315000,
+    "top": [
+     {
+      "name": "Bạn Trâm",
+      "spent": 2650000,
+      "visits": 48
+     },
+     {
+      "name": "Bạn Huy",
+      "spent": 1980000,
+      "visits": 37
+     },
+     {
+      "name": "Chị Nga",
+      "spent": 1720000,
+      "visits": 25
+     }
+    ]
+   },
+   "khuyen_mai": {
+    "period": "Tháng này (1–28/10/2026)",
+    "active_count": 2,
+    "active": [
+     {
+      "code": "GIAM15",
+      "type": "percent",
+      "value": 15,
+      "min_order": 60000,
+      "max_discount": 20000,
+      "end": "30/11/2026"
+     },
+     {
+      "code": "HSSV10",
+      "type": "percent",
+      "value": 10,
+      "end": "31/12/2026"
+     }
+    ],
+    "orders_with_discount": 985,
+    "orders": 2574,
+    "discount_total": 13747000,
+    "revenue": 138999000,
+    "used": [
+     {
+      "code": "GIAM15",
+      "times": 610,
+      "discount": 9348000
+     },
+     {
+      "code": "HSSV10",
+      "times": 375,
+      "discount": 4399000
+     }
+    ]
+   }
+  }
+ },
+ "van_de": [
+  {
+   "id": "B1",
+   "mo_ta": "Nhóm Topping chỉ 6.354.000đ = 4,2% tiền món, bình quân ~0,35 phần / đơn dù quán bán ~4.100 ly trà → gần như không mời thêm topping; trân châu trắng chưa bán."
+  },
+  {
+   "id": "B2",
+   "mo_ta": "Doanh thu tháng này chỉ +2,2% (138.999.000đ so 135.991.000đ) dù SỐ ĐƠN tăng 11,1% (2.574 so 2.317) vì giá trị mỗi đơn GIẢM 8% (54.000đ so 58.700đ)."
+  },
+  {
+   "id": "B3",
+   "mo_ta": "Mã giảm giá ăn 13.747.000đ = 9% giá trị trước giảm; 985/2.574 đơn (38,3%) có giảm; GIAM15 (15%, đơn từ 60.000đ, tối đa 20.000đ) dùng 610 lần → là nguyên nhân chính làm giá trị đơn giảm (tháng trước giảm giá ~3%)."
+  },
+  {
+   "id": "B4",
+   "mo_ta": "Nhóm Ăn vặt 8 món nhưng 4 món chưa bán phần nào (Phô mai que, Nem chua rán, Gà lắc phô mai và 1 món khác), Cá viên chiên chỉ 26 phần → menu ăn vặt dư, giữ nguyên liệu riêng dễ hư."
+  },
+  {
+   "id": "B5",
+   "mo_ta": "Trà dâu tây giá 35.000đ, giá vốn 16.000đ = 46% giá bán (Trà đào cam sả chỉ 31%), bán 442 phần — top 2 nhóm trà trái cây nhưng lời mỏng."
+  },
+  {
+   "id": "B6",
+   "mo_ta": "Lương nhân viên 38.500.000đ = 27,7% doanh thu, tăng 12,6% so 34.200.000đ kỳ trước trong khi doanh thu chỉ +2,2%; 6 người, 1.008 giờ công; buổi sáng 9h–11h rất vắng (9h 2,2 triệu cả tháng) mà vẫn xếp ca."
+  },
+  {
+   "id": "B7",
+   "mo_ta": "Khách quay lại thấp: 1.850 khách đã lưu nhưng chỉ 210 khách đến từ 2 lần (11,4%); 240 khách mới trong kỳ."
+  },
+  {
+   "id": "B8",
+   "mo_ta": "Ly 700ml đã HẾT (0 / tối thiểu 200), trân châu đen còn 1,5 kg (tối thiểu 5), sữa tươi 4 lít (tối thiểu 10); đồng thời hao hụt trân châu nấu dư 7 kg ≈ 315.000đ."
+  }
+ ]
+}

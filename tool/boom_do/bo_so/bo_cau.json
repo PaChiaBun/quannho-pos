@@ -1,0 +1,725 @@
+{
+ "note": "Bộ câu đo chọn đường Boom (SO_LIEU/TU_VAN_SO/HUONG_DAN/TU_VAN), viết độc lập không đọc mã bộ chọn đường. Nhóm A/B xen kẽ trong từng loại.",
+ "cases": [
+  {
+   "q": "hôm nay bán được bao nhiêu rồi",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "tuần này lời không",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "lai_lo"
+  },
+  {
+   "q": "dt hom nay",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "doanh thu hôm qua bao nhiêu em",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "tháng trước quán thu được tổng cộng bao nhiêu tiền",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "nay bán đc nhiêu z",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "doanh thu tuần này so với tuần trước tăng hay giảm",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "hôm nay so với hôm qua sao rồi",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "doanh thu sáng nay tới giờ",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "tui muốn coi doanh thu 7 ngày gần nhất",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "dt thang 9",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "hôm nay bao nhiêu đơn rồi",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "so_don"
+  },
+  {
+   "q": "so don hom qua",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "so_don"
+  },
+  {
+   "q": "tối qua có bao nhiêu bill mang về",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "so_don"
+  },
+  {
+   "q": "tuần này được mấy đơn giao hàng",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "so_don"
+  },
+  {
+   "q": "món nào bán chạy nhất hôm nay",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "ban_chay"
+  },
+  {
+   "q": "top 5 món bán chạy tháng này",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "ban_chay"
+  },
+  {
+   "q": "sp ban chay tuan nay",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "ban_chay"
+  },
+  {
+   "q": "tháng rồi món gì ra nhiều nhất vậy",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "ban_chay"
+  },
+  {
+   "q": "món nào bán ế nhất tuần này",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "ban_cham"
+  },
+  {
+   "q": "liệt kê mấy món cả tháng nay không ai gọi",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "ban_cham"
+  },
+  {
+   "q": "mon nao ban cham",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "ban_cham"
+  },
+  {
+   "q": "món nào sắp hết hàng",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "ton_kho"
+  },
+  {
+   "q": "kho còn bao nhiêu kg đường",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "ton_kho"
+  },
+  {
+   "q": "trân châu còn nhiêu hông",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "ton_kho"
+  },
+  {
+   "q": "nguyen lieu nao duoi muc toi thieu",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "ton_kho"
+  },
+  {
+   "q": "ai đang trong ca",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "ca_lam"
+  },
+  {
+   "q": "sáng nay nv nào vào ca rồi",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "ca_lam"
+  },
+  {
+   "q": "hôm qua ca tối có mấy người làm",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "ca_lam"
+  },
+  {
+   "q": "bé Lan vào ca lúc mấy giờ",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "ca_lam"
+  },
+  {
+   "q": "chi phí tháng này hết bao nhiêu",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "thu_chi"
+  },
+  {
+   "q": "thu chi thang 10",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "thu_chi"
+  },
+  {
+   "q": "tuần này chi tiền điện nước với nhập hàng bao nhiêu",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "thu_chi"
+  },
+  {
+   "q": "tháng này phải trả lương tổng bao nhiêu",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "luong"
+  },
+  {
+   "q": "luong nv thang truoc",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "luong"
+  },
+  {
+   "q": "tiền lương bé Tùng tháng này được bao nhiêu",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "luong"
+  },
+  {
+   "q": "tuần này có bao nhiêu khách mới",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "khach"
+  },
+  {
+   "q": "khách quen nào lâu rồi không quay lại",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "khach"
+  },
+  {
+   "q": "top khach mua nhieu nhat thang nay",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "khach"
+  },
+  {
+   "q": "voucher đã dùng bao nhiêu lượt",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "voucher"
+  },
+  {
+   "q": "mã giảm giá KM20 tuần rồi xài mấy lần",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "voucher"
+  },
+  {
+   "q": "công nợ nhà cung cấp còn bao nhiêu",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "khac"
+  },
+  {
+   "q": "khách nào còn nợ quán",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "khac"
+  },
+  {
+   "q": "tháng trước lãi hay lỗ",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "lai_lo"
+  },
+  {
+   "q": "lai lo thang 9 the nao",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "lai_lo"
+  },
+  {
+   "q": "tháng này trừ hết chi phí còn lời bao nhiêu",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "lai_lo"
+  },
+  {
+   "q": "so sánh doanh thu chi nhánh Quận 1 với Thủ Đức tháng này",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "chi_nhanh"
+  },
+  {
+   "q": "chi nhánh nào bán tốt nhất tuần này",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "chi_nhanh"
+  },
+  {
+   "q": "Anh là quản lý chi nhánh 2, sếp hỏi từ đầu tháng tới giờ chi nhánh em được bao nhiêu đơn với doanh thu bao nhiêu, em đọc giúp anh số",
+   "loai": "SO_LIEU",
+   "nhom": "A",
+   "chu_de": "chi_nhanh"
+  },
+  {
+   "q": "giờ nào trong ngày hôm qua bán đông nhất",
+   "loai": "SO_LIEU",
+   "nhom": "B",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "doanh thu tháng này giảm, phân tích giúp",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "nên bỏ món nào",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "ban_cham"
+  },
+  {
+   "q": "dựa vào số bán hãy đề xuất combo",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "ban_chay"
+  },
+  {
+   "q": "sao tuần này bán ít hơn tuần trước vậy, em xem số rồi nói anh nguyên nhân",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "nhìn doanh thu theo giờ thì nên xếp ca nv sao cho hợp lý",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "ca_lam"
+  },
+  {
+   "q": "chi phi thang nay cao qua, phan tich xem cat cho nao",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "thu_chi"
+  },
+  {
+   "q": "dựa trên tồn kho với tốc độ bán thì tuần sau nên nhập bao nhiêu sữa",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "ton_kho"
+  },
+  {
+   "q": "lãi tháng này thấp, em coi số rồi góp ý tui coi",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "lai_lo"
+  },
+  {
+   "q": "nhận xét tình hình bán hàng tuần này",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "khac"
+  },
+  {
+   "q": "đánh giá giùm chi nhánh nào đang kéo lùi cả hệ thống",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "chi_nhanh"
+  },
+  {
+   "q": "món bán chậm nên giảm giá hay bỏ hẳn, dựa số quán mình nha",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "ban_cham"
+  },
+  {
+   "q": "voucher tháng rồi có hiệu quả hông, có đáng chạy tiếp ko",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "voucher"
+  },
+  {
+   "q": "khách quen của quán đang giảm phải không, phân tích và đề xuất cách giữ",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "khach"
+  },
+  {
+   "q": "Tháng 10 lương nhân viên chiếm bao nhiêu phần trăm doanh thu, vậy có cao không, nên điều chỉnh gì",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "luong"
+  },
+  {
+   "q": "dựa số bán đề xuất giờ khuyến mãi giờ vàng",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "phan tich mon ban chay va goi y tang gia mon nao",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "ban_chay"
+  },
+  {
+   "q": "Quán tui mấy tuần nay thứ hai thứ ba vắng lắm, em coi số liệu rồi đề xuất chương trình gì cho mấy ngày đó",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "so sánh 3 tháng gần đây rồi dự đoán tháng sau",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "nhìn số đơn mang về tăng, có nên mở thêm app giao hàng ko",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "so_don"
+  },
+  {
+   "q": "tồn kho đang dư nhiều món nào, gợi ý cách xả",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "ton_kho"
+  },
+  {
+   "q": "đánh giá hiệu quả từng nv theo doanh số",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "ca_lam"
+  },
+  {
+   "q": "phân tích lãi lỗ quý này giúp anh",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "lai_lo"
+  },
+  {
+   "q": "cong no dang cao, tu van xu ly dua tren so hien tai",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "khac"
+  },
+  {
+   "q": "Em là quản lý, chủ quán muốn biết có nên mở thêm chi nhánh thứ 3 không, dựa trên doanh thu 2 chi nhánh hiện tại thì em nghĩ sao",
+   "loai": "TU_VAN_SO",
+   "nhom": "B",
+   "chu_de": "chi_nhanh"
+  },
+  {
+   "q": "dựa vào món bán chạy gợi ý menu mùa đông",
+   "loai": "TU_VAN_SO",
+   "nhom": "A",
+   "chu_de": "ban_chay"
+  },
+  {
+   "q": "xem doanh thu theo giờ ở đâu",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "xuất báo cáo excel sao",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "sao doanh thu bị sai",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "cách thêm món mới vô menu",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "khac"
+  },
+  {
+   "q": "lam sao de nv cham cong vao ca",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "ca_lam"
+  },
+  {
+   "q": "coi báo cáo tồn kho chỗ nào z",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "ton_kho"
+  },
+  {
+   "q": "tạo voucher giảm 10% sao",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "voucher"
+  },
+  {
+   "q": "cách nhập phiếu chi",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "thu_chi"
+  },
+  {
+   "q": "doanh thu hôm nay hiện 0 đồng là sao, máy bị lỗi hả",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "in lại hóa đơn",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "so_don"
+  },
+  {
+   "q": "hủy đơn đã thanh toán làm sao",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "so_don"
+  },
+  {
+   "q": "cach xem bao cao ban chay",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "ban_chay"
+  },
+  {
+   "q": "thiết lập lương theo giờ cho nhân viên ở đâu",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "luong"
+  },
+  {
+   "q": "thêm chi nhánh mới trong app như nào",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "chi_nhanh"
+  },
+  {
+   "q": "sao báo cáo lãi lỗ ko có giá vốn",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "lai_lo"
+  },
+  {
+   "q": "đặt cảnh báo sắp hết nguyên liệu ở đâu",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "ton_kho"
+  },
+  {
+   "q": "lưu thông tin khách quen kiểu gì",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "khach"
+  },
+  {
+   "q": "Tui mới đổi giá ly trà đào mà báo cáo tuần này vẫn tính giá cũ, chỉnh lại sao em",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "cách ghi nợ cho khách",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "khac"
+  },
+  {
+   "q": "phân quyền thu ngân không xem doanh thu được ko",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "kết ca cuối ngày bấm đâu",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "ca_lam"
+  },
+  {
+   "q": "lọc báo cáo theo chi nhánh sao",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "chi_nhanh"
+  },
+  {
+   "q": "kiem kho tren app",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "ton_kho"
+  },
+  {
+   "q": "xem lịch sử dùng voucher ở mục nào",
+   "loai": "HUONG_DAN",
+   "nhom": "B",
+   "chu_de": "voucher"
+  },
+  {
+   "q": "Thu ngân bên chi nhánh 2 báo không thấy nút đóng ca, quản lý như anh phải mở cho tụi nó ở đâu",
+   "loai": "HUONG_DAN",
+   "nhom": "A",
+   "chu_de": "ca_lam"
+  },
+  {
+   "q": "giá vốn ly trà sữa bao nhiêu là ổn",
+   "loai": "TU_VAN",
+   "nhom": "A",
+   "chu_de": "khac"
+  },
+  {
+   "q": "cách giữ khách quen",
+   "loai": "TU_VAN",
+   "nhom": "B",
+   "chu_de": "khach"
+  },
+  {
+   "q": "mở quán cafe nhỏ cần bao nhiêu vốn",
+   "loai": "TU_VAN",
+   "nhom": "A",
+   "chu_de": "khac"
+  },
+  {
+   "q": "nên trả lương theo giờ hay theo tháng",
+   "loai": "TU_VAN",
+   "nhom": "B",
+   "chu_de": "luong"
+  },
+  {
+   "q": "chạy khuyến mãi mua 1 tặng 1 có lỗ không",
+   "loai": "TU_VAN",
+   "nhom": "A",
+   "chu_de": "voucher"
+  },
+  {
+   "q": "bao quan tran chau duoc bao lau",
+   "loai": "TU_VAN",
+   "nhom": "B",
+   "chu_de": "ton_kho"
+  },
+  {
+   "q": "cách đặt tên món cho hấp dẫn",
+   "loai": "TU_VAN",
+   "nhom": "A",
+   "chu_de": "khac"
+  },
+  {
+   "q": "quán vắng mùa mưa thì làm gì",
+   "loai": "TU_VAN",
+   "nhom": "B",
+   "chu_de": "doanh_thu"
+  },
+  {
+   "q": "tỉ lệ chi phí mặt bằng bao nhiêu % là hợp lý",
+   "loai": "TU_VAN",
+   "nhom": "A",
+   "chu_de": "thu_chi"
+  },
+  {
+   "q": "nv hay đi trễ xử lý sao",
+   "loai": "TU_VAN",
+   "nhom": "B",
+   "chu_de": "ca_lam"
+  },
+  {
+   "q": "có nên lên Grab với Shopee Food hông",
+   "loai": "TU_VAN",
+   "nhom": "A",
+   "chu_de": "so_don"
+  },
+  {
+   "q": "menu nên có bao nhiêu món là vừa",
+   "loai": "TU_VAN",
+   "nhom": "B",
+   "chu_de": "ban_chay"
+  },
+  {
+   "q": "công thức tính giá bán từ giá vốn",
+   "loai": "TU_VAN",
+   "nhom": "A",
+   "chu_de": "lai_lo"
+  },
+  {
+   "q": "Tui tính mở thêm chi nhánh thứ hai gần trường học, cần chú ý những gì trước khi mở",
+   "loai": "TU_VAN",
+   "nhom": "B",
+   "chu_de": "chi_nhanh"
+  },
+  {
+   "q": "làm sao tăng giá mà khách không bỏ",
+   "loai": "TU_VAN",
+   "nhom": "A",
+   "chu_de": "khac"
+  },
+  {
+   "q": "xu hướng đồ uống năm nay",
+   "loai": "TU_VAN",
+   "nhom": "B",
+   "chu_de": "ban_chay"
+  },
+  {
+   "q": "cách tránh thất thoát tiền mặt ở quầy",
+   "loai": "TU_VAN",
+   "nhom": "A",
+   "chu_de": "thu_chi"
+  },
+  {
+   "q": "tuyển nhân viên part-time ở đâu",
+   "loai": "TU_VAN",
+   "nhom": "B",
+   "chu_de": "ca_lam"
+  },
+  {
+   "q": "chương trình tích điểm có hiệu quả ko",
+   "loai": "TU_VAN",
+   "nhom": "A",
+   "chu_de": "khach"
+  },
+  {
+   "q": "nhap hang so luong lon co loi hon ko",
+   "loai": "TU_VAN",
+   "nhom": "B",
+   "chu_de": "ton_kho"
+  }
+ ]
+}

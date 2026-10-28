@@ -1,0 +1,412 @@
+{
+ "note": "QC15",
+ "cases": [
+  {
+   "q1": "doanh thu tháng này bao nhiêu",
+   "q2": "nâng giá bạc xỉu lên 30k chỉnh kiểu gì",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-1-them-mon-nguyen-lieu"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "tuần trước nhập hàng hết bao nhiêu tiền",
+   "q2": "nhập hàng nhiều món một lúc thì làm thế nào",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-7-phieu-nhap-hang-nhieu-mon-co-nha-cung"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "hôm nay hủy mấy đơn",
+   "q2": "hủy nhầm đơn rồi có lấy lại được không",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-9-huy-ban-khach-bo-ve-mo-nham",
+    "ban-hang#loi-khach-muon-huy-hoan-tien-don-da-thanh-toan"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "doanh thu tuần này",
+   "q2": "mục giảm giá chỗ nào vậy",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-6-tao-ma-giam-gia-voucher-chu-quan-quan"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "chi phí tháng trước bao nhiêu",
+   "q2": "tìm khách số này 0909123456",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-2-xem-chi-tiet-khach"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "tháng này bán được bao nhiêu ly",
+   "q2": "app nào quản lý quán tốt hơn vậy",
+   "loai": "LAC_DE",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "cách in tạm tính",
+   "q2": "quán vắng quá thì nên làm gì",
+   "loai": "TU_VAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "cách gộp bàn",
+   "q2": "nhân viên quên ra ca thì sửa sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "cham-cong#cac-viec-thuong-lam-6-xu-ly-ca-quen-chot"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "cách bật bán món hết",
+   "q2": "còn máy in bill bị cụt chữ thì sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "in-hoa-don#loi-bill-bi-cut-mep-chu-qua-to"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "doanh thu hôm qua",
+   "q2": "nó báo lỗi máy in không in được thì sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "ban-hang#loi-in-hoa-don-that-bai-kiem-tra-may-in-roi-bam-in-hoa-don",
+    "in-hoa-don#loi-bill-chua-in-sau-30-giay-kiem-tra-may-in-bill-khi-thanh-toan"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "doanh thu tháng này",
+   "q2": "kéo thả sắp xếp bàn trong sơ đồ sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-1-thiet-lap-khu-vuc-va-ban-lan-dau"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "dt thang nay bn",
+   "q2": "keo tha sap xep ban trong so do sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-1-thiet-lap-khu-vuc-va-ban-lan-dau"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "doanh thu tuần trước",
+   "q2": "giữ chân nv part time có mẹo gì",
+   "loai": "TU_VAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "hôm qua bán bao nhiêu đơn",
+   "q2": "sao nó cứ bắt đăng nhập lại hoài vậy",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "bao-cao-chuoi#loi-phien-dang-nhap-da-het-han-vui-long-dang-nhap-lai"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "món nào bán chạy nhất tháng này",
+   "q2": "ai sửa giá món gần nhất",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-1-tra-mot-su-co",
+    "nhat-ky-log#app-ghi-lai-nhung-gi-vi-du"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "cách thêm món mới",
+   "q2": "rồi khách quét mã qr gọi món sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-2-khach-goi-mon-de-huong-dan-khach"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "tồn kho cà phê hạt còn bao nhiêu",
+   "q2": "tính lương theo giờ thì cài sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "luong#cac-viec-thuong-lam-1-cau-hinh-luong-lam-truoc-khi-tao-ky"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "tuần trước bán được bao nhiêu",
+   "q2": "mai quán nghỉ lễ thì tắt qr gọi món sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-1-bat-qr-va-dan-ma-o-quan"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "cách thêm khách hàng mới",
+   "q2": "nếu khách quen thì nên giảm giá bao nhiêu phần trăm",
+   "loai": "TU_VAN",
+   "noi_tiep": false,
+   "ky": null,
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "cách duyệt tăng ca",
+   "q2": "vậy lương tháng 9 tổng bao nhiêu",
+   "loai": "SO_LIEU",
+   "noi_tiep": false,
+   "ky": "month:2026-9",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "doanh thu tuần này bao nhiêu",
+   "q2": "sao nó giảm vậy",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "doanh thu tháng trước",
+   "q2": "nó thấp vậy thì làm gì cho tăng",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "lợi nhuận tháng 7",
+   "q2": "sao no lai giam",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "month:2026-7",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "tuần trước hủy bao nhiêu món",
+   "q2": "tiền hủy tổng cộng là nhiu",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "last_week",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "tháng trước giá trị đơn trung bình bao nhiêu",
+   "q2": "có cách nào nâng giá trị đơn",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "hôm qua hủy mấy đơn",
+   "q2": "ai hủy nhiều nhất",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "yesterday",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "hôm qua hủy mấy đơn",
+   "q2": "nv nao huy nhieu nhat",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "yesterday",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "tuần trước hủy bao nhiêu món",
+   "q2": "tien huy tong cong la nhiu",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "last_week",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "tuần này nhập hàng bao nhiêu tiền",
+   "q2": "nhập vậy có bị dư không",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "doanh thu tháng 9",
+   "q2": "lương nv tháng đó tổng bao nhiêu",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "month:2026-9",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "tồn kho sữa tươi còn bao nhiêu",
+   "q2": "nó bị âm thì chỉnh lại kiểu gì",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "kho-hang#loi-ton-am",
+    "kho-hang#cac-viec-thuong-lam-8-dieu-chinh-ton-kiem-kho-hu-hong"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "doanh thu theo giờ hôm nay",
+   "q2": "xem cái này trong app ở đâu",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "bao-cao#tung-tab-doanh-thu"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "cách gộp bàn",
+   "q2": "lỡ gộp nhầm thì tách lại đc ko",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-7-chuyen-ban-gop-ban"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "cách tắt bán món hết",
+   "q2": "mai có hàng thì bật lại sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-5-bat-tat-ban-het-mon-tam-thoi"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "cách tạo vai trò thu ngân",
+   "q2": "rồi cho nó chỉ bán hàng thôi thì chỉnh ở đâu",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "nhan-vien#cac-viec-thuong-lam-4-tao-sua-vai-tro"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "cach in tam tinh",
+   "q2": "in xong roi khach doi mon thi sao",
+   "loai": "HUONG_DAN",
+   "noi_tiep": true,
+   "ky": null,
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon",
+    "quan-ly-ban#cac-viec-thuong-lam-6-in-tam-tinh"
+   ],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "chi phí tháng này bao nhiêu",
+   "q2": "nên cắt bớt chỗ nào",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "this_month",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "doanh thu tháng trước",
+   "q2": "sao lãi mỏng dữ vậy hụt ở khúc nào chỉ t coi với",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "tuần này bán được bao nhiêu",
+   "q2": "còn sữa dừa thì sao",
+   "loai": "SO_LIEU",
+   "noi_tiep": true,
+   "ky": "this_week",
+   "expect": [],
+   "nhom": "QC15"
+  },
+  {
+   "q1": "tháng trước có bao nhiêu khách mới",
+   "q2": "làm sao giữ chân khách cũ tốt hơn",
+   "loai": "TU_VAN_SO",
+   "noi_tiep": true,
+   "ky": "last_month",
+   "expect": [],
+   "nhom": "QC15"
+  }
+ ]
+}

@@ -135,6 +135,32 @@ void main() {
     },
   );
 
+  test(
+    'Đợt 16: kỳ + con số + từ hỏi → tư vấn kèm số; đếm "hết bao nhiêu tiền"',
+    () {
+      for (final q in [
+        'tháng này lỗ hay lời',
+        '7 ngày qua bán sao',
+        'thang 9 food cost co cao khong',
+        'khung giờ nào hôm nay đông nhất',
+      ]) {
+        expect(boomAsksPeriodMetric(q), isTrue, reason: q);
+      }
+      for (final q in [
+        'cách xem doanh thu tháng này ở đâu',
+        'tháng này lỗi máy in hoài',
+        'nên trả lương nhân viên bao nhiêu',
+      ]) {
+        expect(boomAsksPeriodMetric(q), isFalse, reason: q);
+      }
+      expect(
+        boomCountsShopAction('tuần này nhập hàng hết bao nhiêu tiền'),
+        isTrue,
+      );
+      expect(boomCountsShopAction('nay có mấy đơn bị hủy vậy'), isTrue);
+    },
+  );
+
   test('Đợt 15: nói tiếp sau lượt số liệu / hướng dẫn', () {
     // câu xin phân tích dài, xếp hạng, chữ thao tác đã có ở câu trước, xin tư vấn tăng chỉ số → nói tiếp
     for (final (q, prev) in [

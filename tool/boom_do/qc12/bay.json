@@ -1,0 +1,263 @@
+{
+ "note": "QC đợt 12 — câu gài bẫy: hỏi cách làm / báo lỗi bị kéo sang tư vấn kèm số, số nhanh, lạc đề",
+ "cases": [
+  {
+   "q": "tại sao đơn bị huỷ mà không báo gì hết",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "vì sao khách quét mã không gọi món được",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "bill in ra cao quá phải chỉnh khổ giấy chỗ nào",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "vì sao nhân viên không đăng nhập được",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "tại sao khách không nhận được hoá đơn điện tử",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "vì sao đơn mang về không lên bếp",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "tại sao bill không in tên quán",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "nhân viên có nên được huỷ đơn không, chỉnh quyền sao",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "nên để ai duyệt huỷ đơn trong app",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "có nên bật in bill tự động không",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "khách có nên tích điểm bằng số điện thoại không",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "cần thêm nhân viên vào app thì làm gì",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "cần thêm khách vào danh sách thành viên",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "cần nhập đơn tay khi mất mạng",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "tại sao khách nạp ví mà số dư không tăng",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "vì sao lương nhân viên tính ra 0",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "tại sao giá vốn món bằng không",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "tại sao tiệm không in được bill",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "nhân viên pha chế không thấy đơn vì sao",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "vì sao đơn online không về máy",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "người dùng thứ hai đăng nhập bị văng ra tại sao",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "nhân viên chấm công trễ vì sao bị trừ lương",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "in bill khổ 58 hay 80 tốt hơn",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "nguyên nhân đơn không in được",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "nguyên nhân bill bị in 2 lần",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "đơn nhiều quá app bị đơ",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "nên cho mấy người dùng chung tài khoản",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "nhân viên nên chấm công bằng gì",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "có nên bật thông báo đơn mới không",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "vi sao khach quet ma khong goi mon duoc",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "tai sao nhan vien khong dang nhap duoc",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "lợi nhuận tháng này thấp bất thường, hình như tiền nhập hàng bị tính 2 lần",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "tóm lại vì sao đơn tách bàn bị mất món",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "làm sao giảm tỉ lệ huỷ đơn",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "chi phí tháng này cao bất thường chỗ nào",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "ca tối có cần thêm người không",
+   "loai": "TU_VAN_SO",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "hôm nay bao nhiêu đơn",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "gà sốt 3 phần hôm nay bán mấy đơn",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "phí dịch vụ hôm nay thu bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "nước đá mấy giờ giao tới",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "thoi tiet hom nay the nao",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "bong da toi nay doi tuyen da may gio",
+   "loai": "LAC_DE",
+   "expect": [],
+   "nhom": "Q12"
+  },
+  {
+   "q": "làm sao giảm giá món cho khách",
+   "loai": "HUONG_DAN",
+   "expect": [],
+   "nhom": "Q12"
+  }
+ ]
+}
