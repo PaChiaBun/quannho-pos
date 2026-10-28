@@ -1477,10 +1477,14 @@ class StationPrintersState {
   bool get anyDeviceBillRule =>
       printSetup.rules.any((r) => _isDeviceBillRule(r) && !_isDualRule(r));
 
+  /// Mã máy là số ngẫu nhiên, đổi khi cài lại app: luật chỉ in ra máy in Sunmi tích hợp
+  /// vẫn thuộc về máy Sunmi đang chạy (giống [PrintRouter] khi chọn máy in).
   bool _deviceRuleMatches(PrintRule r) =>
-      currentDeviceId.isNotEmpty &&
       _isDeviceBillRule(r) &&
-      r.sourceDeviceIds.contains(currentDeviceId);
+      ((currentDeviceId.isNotEmpty &&
+              r.sourceDeviceIds.contains(currentDeviceId)) ||
+          (SunmiBuiltinDriver.hasBuiltinPrinter &&
+              PrintRouter.onlyBuiltin(r, printSetup)));
 
   /// Thiết bị NÀY tự in bill riêng và máy chủ in nhường -> phải giành quyền in trước.
   bool get deviceOwnsBillPrinting =>

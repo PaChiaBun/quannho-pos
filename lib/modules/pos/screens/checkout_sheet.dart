@@ -1091,9 +1091,18 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                     billData: _billData!,
                   );
               final cashierSt = printRes.stationResults['cashier']?.status;
+              if (cashierSt == StationPrintStatus.notConfigured ||
+                  cashierSt == StationPrintStatus.failed) {
+                AppLogger.warning(
+                  'printer',
+                  '[Checkout Print] Không in bill ${saleResult.orderNumber}: '
+                      '${cashierSt!.name} ${printRes.stationResults['cashier']?.errorMessage ?? ''}',
+                );
+              }
               if (mounted &&
                   (cashierSt == StationPrintStatus.notConfigured ||
                       cashierSt == StationPrintStatus.failed)) {
+                // Đứng yên tới khi thu ngân bấm Đóng: bill không ra là chuyện phải thấy.
                 ScaffoldMessenger.maybeOf(context)?.showSnackBar(
                   SnackBar(
                     content: Text(
@@ -1102,7 +1111,8 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                               'Vào In Hoá Đơn → Máy In & Luật In để chọn máy in.'
                           : 'In hóa đơn thất bại. Kiểm tra máy in rồi bấm "In hoá đơn".',
                     ),
-                    duration: const Duration(seconds: 6),
+                    duration: const Duration(days: 1),
+                    action: SnackBarAction(label: 'Đóng', onPressed: () {}),
                   ),
                 );
               }

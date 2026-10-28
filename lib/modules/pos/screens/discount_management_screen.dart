@@ -8,6 +8,7 @@ import '../repository/pos_repository.dart';
 import '../../../core/providers/session_provider.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/responsive.dart';
 
 const _kNavy = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
@@ -126,11 +127,16 @@ class _DiscountManagementScreenState extends ConsumerState<DiscountManagementScr
           : _coupons.isEmpty
               ? _buildEmptyState()
               : _buildCouponsList(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCouponForm(),
-        backgroundColor: _kOrange,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: Text('Thêm mã mới', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: Colors.white)),
+      floatingActionButton: Padding(
+        // Là tab trong Khách hàng thân thiết trên mobile: nâng nút lên khỏi nút Boom giữa thanh dưới.
+        padding: EdgeInsets.only(
+            bottom: widget.isTab && !Responsive.isLargeScreen(context) ? 40 : 0),
+        child: FloatingActionButton.extended(
+          onPressed: () => _showCouponForm(),
+          backgroundColor: _kOrange,
+          icon: const Icon(Icons.add_rounded, color: Colors.white),
+          label: Text('Thêm mã mới', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: Colors.white)),
+        ),
       ),
     );
   }

@@ -11,6 +11,7 @@ import '../core/providers/app_providers.dart';
 import '../modules/loyalty/repository/loyalty_repository.dart';
 import '../modules/pos/screens/discount_management_screen.dart';
 import '../core/utils/app_logger.dart';
+import '../core/utils/responsive.dart';
 import '../core/utils/string_utils.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -149,9 +150,15 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
 
     return Scaffold(
       backgroundColor: _kBg,
-      floatingActionButton: AnimatedSwitcher(
+      floatingActionButton: Padding(
+        // Mobile: nâng nút lên khỏi nút Boom tròn nhô lên giữa thanh dưới (main.dart, centerDocked).
+        padding: EdgeInsets.only(bottom: Responsive.isLargeScreen(context) ? 0 : 40),
+        child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 250),
-        child: _tabIndex == 3
+        // Tab Khuyến mãi (4) có nút "Thêm mã mới" riêng của DiscountManagementScreen.
+        child: _tabIndex == 4
+          ? const SizedBox.shrink(key: ValueKey('fab_none'))
+          : _tabIndex == 3
           ? FloatingActionButton.extended(
               key: const ValueKey('fab_pkg'),
               heroTag: 'loyalty_fab_pkg',
@@ -170,6 +177,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
               label: const Text('Thêm khách',
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
             ),
+        ),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {

@@ -102,13 +102,23 @@ class SunmiBuiltinDriver {
   /// Đã xác nhận máy này có máy in Sunmi tích hợp (gọi [detect] lúc khởi động).
   static bool hasBuiltinPrinter = false;
 
-  /// Dò máy in tích hợp một lần; chỉ máy Sunmi thật mới trả trạng thái.
-  static Future<void> detect() async {
+  /// Dò máy in tích hợp; chỉ máy Sunmi thật mới trả trạng thái.
+  /// Dịch vụ in Sunmi kết nối xong sau khi app mở vài trăm ms (trước đó getStatus lỗi),
+  /// nên dò lại tới khi thấy máy in thay vì kết luận "không có" ngay lần đầu.
+  static Future<void> detect({
+    int tries = 10,
+    Duration gap = const Duration(milliseconds: 500),
+  }) async {
     if (!isSupportedPlatform) return;
-    try {
-      hasBuiltinPrinter = (await SunmiPrinterPlus().getStatus()) != null;
-    } catch (_) {
-      hasBuiltinPrinter = false;
+    for (var i = 0; i < tries && !hasBuiltinPrinter; i++) {
+      try {
+        hasBuiltinPrinter = (await SunmiPrinterPlus().getStatus()) != null;
+      } catch (_) {}
+      if (hasBuiltinPrinter) {
+        _log('phát hiện máy in tích hợp (lần dò ${i + 1})');
+      } else {
+        await Future.delayed(gap);
+      }
     }
   }
 
@@ -126,9 +136,11 @@ class SunmiBuiltinDriver {
       final version = await p.getVersion();
       final type = await p.getType();
       _log('status=$status paper=$paper version=$version type=$type');
-      if (status != null) return true;
+      if (status != null) return hasBuiltinPrinter = true;
       _log('status null -> thử rebind');
-      return await p.rebindPrinter();
+      final ok = await p.rebindPrinter();
+      if (ok) hasBuiltinPrinter = true;
+      return ok;
     } catch (e) {
       _log('kiểm tra dịch vụ in lỗi: $e');
       return false;
