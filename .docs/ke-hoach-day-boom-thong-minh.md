@@ -112,6 +112,7 @@ Kết quả giai đoạn 0 sẽ chỉ ra tiêu chí yếu nhất. Thứ tự cá
 | Thận trọng | 1,38 | | | |
 | Gọn | 1,30 | | | |
 
+- **Chấm tay (lần 5):** Chủ Quán đồng ý cả 10/10 điểm gpt-4o chấm → tin được điểm chấm tự động, không cần chấm tay mỗi mốc.
 - Vấn đề cài sẵn tìm ra 49/57. Câu mà app thiếu số: 9,8; câu đủ số: 11,1.
 - Ba tiêu chí yếu nhất là **trả lời thẳng, lý lẽ, việc làm cụ thể**, đều là lỗi của cách suy luận. Nên **đưa lần 28–31 (khung 4 bước, khung theo loại câu, mẫu trả lời) lên trước**.
 - Lỗi điển hình:
