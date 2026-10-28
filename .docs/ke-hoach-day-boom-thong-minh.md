@@ -144,6 +144,23 @@ Kết quả giai đoạn 0 sẽ chỉ ra tiêu chí yếu nhất. Thứ tự cá
 | 14 | Lịch sử gửi GPT dùng **câu gốc** của người dùng | app |
 | 15 | Tìm đúng bài hướng dẫn cho 10 việc hay hỏi (sơ đồ bàn, QR, nhật ký sửa giá, máy in, đổi món sau in, thu chi ghi sai, báo cáo lệch thu chi, sửa giá, tìm khách theo số điện thoại, gán quản lý) | app (bộ hướng dẫn) |
 
+### Kết quả Giai đoạn 1 (28/10, chưa áp)
+
+| Bộ | Trước | Sau |
+|---|---|---|
+| Q — hội thoại, **kín** | 42/80 | **48/80** |
+| Q1 — một lượt, **kín**: đúng đường | 47/60 | **50/60** |
+| Q1: tìm đúng bài | 23/30 | **24/30** |
+| QC giai đoạn 1 (bẫy) | — | 19/30 |
+| O / N / M / L / P / QC15 | 67 / 53 / 68 / 76 / 58 / 26 | 71 / 52 / 74 / 79 / 60 / 32 |
+
+- Bộ một lượt cũ: không tụt; câu kho / ca làm vẫn trả số nhanh.
+- Câu tụt còn lại:
+  - "xem khách này đã chi tổng bao nhiêu chỗ nào" (đi tư vấn thay vì hướng dẫn).
+  - "tháng này nhập kho hết bao nhiêu tiền" vẫn đọc số bán.
+- 112 bài kiểm qua.
+- Script áp chung: `db-fix/boom_ap_dung.sh <nhãn> "<dấu hiệu>"` (lần 46 làm sớm).
+
 ### Giai đoạn 2: Đủ số và số đã tính sẵn (lần 16–27)
 
 Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên mọi tỉ lệ, chênh lệch, dự báo đều do app tính sẵn rồi ghi thành chữ.

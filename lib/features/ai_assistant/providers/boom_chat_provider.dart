@@ -246,6 +246,12 @@ final _teenPhrase = <(RegExp, String, String)>[
     'khong',
   ),
   (RegExp(r'(?<![\p{L}\p{N}])j(?![\p{L}\p{N}])', unicode: true), 'gì', 'gi'),
+  // "dt hnay cn 1" — "cn" kèm số là chi nhánh (lần 8, giai đoạn 1)
+  (
+    RegExp(r'(?<![\p{L}\p{N}])cn(?= \d)(?! \d+/)', unicode: true),
+    'chi nhánh',
+    'chi nhanh',
+  ),
   (RegExp(r'(?<![\p{L}\p{N}])z(?![\p{L}\p{N}])', unicode: true), 'vậy', 'vay'),
   (RegExp(r'(?<![\p{L}\p{N}])r(?![\p{L}\p{N}])', unicode: true), 'rồi', 'roi'),
   // "wa" sau chữ chỉ thời gian = qua ("hôm wa"), còn lại = quá ("vắng wa")
@@ -332,7 +338,8 @@ final _dataAdviceCue = RegExp(
   // "phải làm gì" chỉ khi tả tình hình xấu ("doanh thu giảm phải làm gì"), không phải hỏi quy trình ("nhân viên phải
   // làm gì để món xuống bếp")
   r'nhận xét|tình hình|ổn không|(?:giảm|ít|vắng|ế|lỗ|chậm|tụt) (?:thì |quá |vậy )?phải làm gì|vì sao|tại sao|'
-  r'làm gì để|tăng doanh thu|bán thêm|combo|đáng lo|(?:có )?(?:cao|thấp) (?:không|ko|hông)|ổn (?:ko|hông|chưa)|'
+  r'làm gì để|tăng doanh thu|bán thêm|combo|đáng lo|sao (?:giảm|tăng|thấp|cao|ít|nhiều|tụt)(?! giá)(?!(?: \S+){0,4} vô lý)|'
+  r'(?:tốt|tệ|ổn|cao|thấp) hay (?:tệ|tốt|xấu|thấp|cao|không)|(?:đi lên|đi xuống) (?:không|ko|hông|chưa)|(?:có )?(?:cao|thấp) (?:không|ko|hông)|ổn (?:ko|hông|chưa)|'
   // bộ F, G, I 27/10 (đợt 12): xếp người theo giờ bán, chỗ nào nên cắt, làm sao giảm tỉ lệ huỷ, hiệu quả không
   r'(?:cần|nên|có nên) (?:thêm|bớt|cắt|giảm|nhập|chạy|tiếp tục|xếp|chuẩn bị)|làm sao (?:để )?(?:giảm|tăng|cải thiện|kéo|giữ)|'
   r'hiệu quả (?:không|ko|hông|chưa)|(?:cao|tăng|nhiều|tốn|huỷ|hủy|ít|thấp|chi|lỗ)(?: \S+){0,2} bất thường|'
@@ -349,13 +356,16 @@ final _shopDataTopic = RegExp(
   r'bán hàng|buôn bán|quán mình|số liệu|phân tích|số bán|doanh số|số đơn|khách quen|bán vậy|bán thế|'
   r'(?:nhìn|coi|xem|dựa vào|dựa trên|theo) (?:\S+ ){0,2}số(?! (?:điện|đt|tài khoản|bàn|thứ tự))|'
   r'giờ bán|theo giờ|giờ đông|giờ vắng|giờ cao điểm|tháng nào|quý nào|tăng hay giảm|(?:lời|lãi) hơn|'
-  r'tỉ lệ|tỷ lệ|chi phí|khoản chi|tiền lương|lương (?:nv|nhân viên)|lợi nhuận|hao hụt|giá vốn|chi nhánh) ',
+  r'tỉ lệ|tỷ lệ|chi phí|khoản chi|tiền lương|lương (?:nv|nhân viên)|lợi nhuận|hao hụt|giá vốn|chi nhánh|'
+  // "dựa vào tuần này thì tuần sau nên nhập gì", "so với tuần trước / quán bình thường" (lần 7, 9)
+  r'dựa (?:vào|trên) (?:\S+ ){0,2}(?:tuần|tháng|hôm|ngày|năm)|so với (?:quán|mức|ngành|tuần|tháng|hôm|năm|kỳ|bình thường)|'
+  r'quán (?:\S+ ){0,2}(?:đi lên|đi xuống)|dạo này quán) ',
 );
 final _howToCue = RegExp(
   r' (?:ở đâu|chỗ nào|mục nào|tab nào|nằm đâu|bấm|cài|cách xem|xem ở|trong app|app có|màn hình|mở báo cáo|làm sao|'
   r'cách nào|(?<!đề )xuất|excel|pdf|in báo cáo|tải|gửi báo cáo|có những gì|gồm những gì|xem được|quyền|phân quyền|bị sai|'
   r'không khớp|bị lệch|lệch nhau|sao lệch|tin cái nào|(?:kho|tồn|tồn kho|số lượng|nguyên liệu|quỹ|số dư) (?:\S+ ){0,2}bị âm|'
-  r'(?:bên|báo cáo) (?:\S+ ){0,4}khác (?:nhau|với)(?! (?:\S+ )?(?:tuần|tháng|hôm|quý|năm|kỳ))|báo (?:hết hạn|lỗi|sai)|không hiện|không cập nhật|(?:không|ko|hông) (?:hề |bị )?(?:trừ|nhúc nhích|hụt)|không ra|bằng 0|bị lỗi|báo lỗi|phải làm gì để|báo khách|chuỗi|chi nhánh|2 quán|hai quán|các quán|nhảy|trùng số|bị trùng|bị mất) ',
+  r'(?:bên|báo cáo) (?:\S+ ){0,4}khác (?:nhau|với)(?! (?:\S+ )?(?:tuần|tháng|hôm|quý|năm|kỳ))|(?:báo cáo|lãi|lời|lợi nhuận) (?:\S+ ){0,3}khác bên|báo (?:hết hạn|lỗi|sai)|không hiện|không cập nhật|(?:không|ko|hông) (?:hề |bị )?(?:trừ|nhúc nhích|hụt)|không ra|bằng 0|bị lỗi|báo lỗi|lỗi gì|lỗi (?:chỗ|ở) nào|vô lý|gấp (?:\S+ ){0,3}lần|phải làm gì để|báo khách|chuỗi|chi nhánh|2 quán|hai quán|các quán|nhảy|trùng số|bị trùng|bị mất) ',
 );
 
 /// Câu hỏi cách dùng / báo lỗi / quyền trong app ("báo cáo doanh thu bị sai", "tải báo cáo về máy") — không trả
@@ -442,6 +452,8 @@ final _followUpStrongP = _viPair(
   r'(?:nút|cái|món|chỗ|bạn|người|khoản|ca|tiệm|bên|giờ|khung|lúc) (?:đó|đấy|kia)|ngày đó|(?:giữ chân|nhắc nhở|nhắc) (?:họ|bạn đó|nó)|'
   // "chiếm mấy % doanh thu tháng đó" — kỳ chỉ trỏ về câu trước (bộ N, đợt 15)
   r'(?:tháng|tuần|hôm|năm|quý|kỳ|đợt) (?:đó|đấy|ấy)|'
+  // "nói lại ngắn gọn thôi", "mỗi con số tổng", "số lượng cụ thể bao nhiêu" (lần 11)
+  r'nói lại|số lượng cụ thể|cụ thể (?:là )?bao nhiêu|'
   // bộ O (đợt 15): "dựa trên số đó", "nhìn số này", "nhập vậy có bị dư không"
   r'(?:số|con số) (?:đó|này|đấy|vậy)(?! \d)|(?:nhập|bán|chi|xài|dùng|lời|lãi|hủy|huỷ) (?:như )?vậy (?:có|là)|'
   r'sao (?:giảm|thấp|cao|ít|nhiều|tụt|tăng|chậm) (?:vậy|thế|quá)|(?:có )?đáng lo|nhiều vậy|ít vậy) ',
@@ -449,7 +461,7 @@ final _followUpStrongP = _viPair(
 // Nhánh yếu: chỉ khi câu rất ngắn và không có chủ đề / thao tác riêng ("chi tiết từng ngày đi", "có hiệu quả không")
 final _followUpWeakP = _viPair(
   r' (?:nếu (?:không|chỉ|chưa|ko)|(?:sửa|xoá|xóa) sao|bật lại|có hiệu quả|có bất thường|đề xuất giúp|nhận xét|đánh giá giúp|'
-  r'chi tiết|từng (?:ngày|khoản|món|giờ|ca)|top \d+|chia theo|giờ nào|ai (?:hủy|huỷ|làm|bán)|nên làm gì|thì sao) ',
+  r'chi tiết|từng (?:ngày|khoản|món|giờ|ca)|top \d+|chia theo|giờ nào|ai (?:hủy|huỷ|làm|bán)|nên làm gì|thì sao|ngắn gọn|tóm (?:lại|tắt)|mỗi con số) ',
 );
 // câu hỏi chỗ mới ("còn cái nút in tạm tính nằm đâu") là câu mới, không phải nói tiếp
 // "nên cắt bớt chỗ nào", "hụt ở chỗ nào" là hỏi khoản nào trên số, không phải chỗ trong app (đợt 15)
@@ -468,15 +480,23 @@ final _rankAskP = _viPair(
 // dùng app (bộ O, đợt 15)
 final _bizGoalP = _viPair(
   r' (?:nâng (?:giá trị|doanh|số|lợi)|giữ chân|kéo (?:khách|lại)|cải thiện|tốt hơn|hiệu quả hơn|'
-  r'tăng (?:doanh thu|doanh số|khách|đơn|lợi nhuận|lãi|lời)|giảm (?:chi phí|chi|hủy|huỷ|hao hụt|tồn)) ',
+  r'tăng (?:doanh thu|doanh số|khách|đơn|lợi nhuận|lãi|lời)|giảm (?:chi phí|chi|hủy|huỷ|hao hụt|tồn)|'
+  // "giam kieu gi", "tăng bằng cách nào" (lần 10)
+  r'(?:giảm|tăng|kéo|cải thiện) (?:kiểu gì|sao|thế nào|bằng cách nào|cách nào)) ',
 );
 // chữ thao tác thật trong app — câu có chữ này không được coi là xin tư vấn tăng chỉ số (QC đợt 15)
 final _realEditP = _viPair(
-  r' (?:chỉnh|sửa|cài|bấm|ở đâu|kéo thả|nâng cấp|kiểu gì) ',
+  r' (?:chỉnh|sửa|cài|bấm|ở đâu|kéo thả|nâng cấp|tạo|thêm|bật|tắt|xuất|in) ',
 );
 // Chữ chỉ về thứ vừa nói ("xem cái này trong app ở đâu", "nó bị âm thì chỉnh lại kiểu gì") — đợt 15
 final _pronounP = _viPair(
   r' (?:nó|cái này|cái đó|số này|số đó|mấy món đó|món đó|khoản đó|chỗ đó) ',
+);
+// "doanh thu tiền mặt hôm nay" vẫn là số bán dù chạm chữ "tiền mặt" của thu chi (QC giai đoạn 1)
+final _salesWordP = _viPair(r' (?:doanh thu|doanh số|bán được|bán đc) ');
+// "bán giá bao nhiêu là hợp", "định giá ly trà sữa sao cho hợp lý" — tư vấn chung, không đọc số nhanh (lần 12)
+final _priceAdviceP = _viPair(
+  r' (?:là hợp|hợp lý|nên bán (?:giá )?(?:bao nhiêu|mấy)|định giá|bán giá (?:bao nhiêu|mấy) (?:là|thì)) ',
 );
 // "kinh nghiệm giữ chân nv part time là gì" — hỏi chuyện chung, là câu mới
 final _generalAskP = _viPair(
@@ -505,7 +525,9 @@ final _tailFollowP = _viPair(
 // Chào / cảm ơn / tạm biệt / chuyện trời mưa — không phải nói tiếp (bộ M 28/10)
 final _closingP = _viPair(
   r' (?:bye|bai|tạm biệt|vậy thôi|thôi nha|mai nói tiếp|để sau|cảm ơn|cám ơn|thank|thanks|hiểu rồi|ok rồi|được rồi|là ai|'
-  r'ai làm ra|trời (?:mưa|nắng|nóng|lạnh)|mưa quá|chào|đá banh|đá bóng) ',
+  r'ai làm ra|trời (?:mưa|nắng|nóng|lạnh)|mưa quá|chào|đá banh|đá bóng|'
+  // khen (lần 13)
+  r'hay quá|giỏi (?:quá|ghê|thật)|tuyệt (?:vời|quá)|xịn (?:quá|ghê|thật)|thông minh (?:quá|ghê)|đỉnh (?:quá|thật|ghê)) ',
 );
 
 // "xem chi tiết đơn hàng thế nào" — hỏi cách xem trong app
@@ -537,6 +559,7 @@ bool boomShortFollowUp(String query, {String? previous}) {
       !_viHit(_newPlaceP, s) &&
       !_viHit(_closingP, s) &&
       !_viHit(_generalAskP, s) &&
+      !_viHit(_priceAdviceP, s) &&
       !_viHit(_seeHowP, s) &&
       // câu báo lỗi app ("bếp ko nghe chuông khi có phiếu mới") / câu tự nói kỳ + chủ đề riêng ("tháng 9 lương nv
       // tổng bao nhiêu") là câu mới (bộ N 28/10)
@@ -582,6 +605,10 @@ bool boomHelpFollowUp(String query) {
       !boomGeneralKnowledge(query) &&
       !boomWantsDataAdvice(query) &&
       !_viHit(_dataAdviceCueP, s) &&
+      // câu số tự đủ nghĩa ("vậy hôm qua ai đi trễ" sau bài nạp ví) là câu mới (lần 12)
+      !(IntentClassifier.timeRangeIn(query) != null &&
+          (boomModuleTopics(query).isNotEmpty ||
+              boomAsksPeriodMetric(query))) &&
       !kBoomDataIntents.contains(IntentClassifier.classify(query).intent);
 }
 
@@ -634,6 +661,18 @@ String? boomRewriteFollowUp(String query, String previous) {
   // câu nói tiếp rõ ("vậy sao giảm vậy", "chi tiết từng ngày") → để GPT đọc kèm lượt trước, không viết lại
   if (r(_followUpStrongP).hasMatch(s) || r(_followUpWeakP).hasMatch(core)) {
     return null;
+  }
+  // "khung tối thì sao" sau "khung trưa bán ổn ko", "còn chi nhánh 2" sau "doanh thu chi nhánh 1" → đổi đúng chữ đó trong
+  // câu trước (lần 8, giai đoạn 1)
+  for (final unit in [
+    r'(?:khung giờ|khung gio|khung|ca|buổi|buoi) (?:sáng|trưa|chiều|tối|sang|trua|chieu|toi)',
+    r'(?:chi nhánh|chi nhanh|cơ sở|co so) \d+',
+  ]) {
+    final own = RegExp('^ ($unit) \$').firstMatch(core);
+    final old = RegExp(unit).firstMatch(prev);
+    if (own != null && old != null && old[0] != own[1]) {
+      return out(prev.replaceFirst(old[0]!, own[1]!).trim());
+    }
   }
   final period = r(_periodPhraseP).firstMatch(core);
   final rest = core.replaceAll(r(_periodPhraseP), ' ').trim();
@@ -758,13 +797,16 @@ bool boomAsksShopNumber(String query) {
 // ko", "khung giờ nào hôm nay đông nhất") → tư vấn kèm số, không để bài hướng dẫn khớp chữ "na ná" thắng (đợt 16)
 final _metricP = _viPair(
   r' (?:đông|vắng|bán|food cost|giá vốn|khung (?:giờ|sáng|trưa|chiều|tối)|giờ nào|nhập hàng|lời|lãi|lỗ|doanh thu|'
-  r'lợi nhuận|chi phí|đơn|khách|hủy|huỷ) ',
+  r'lợi nhuận|chi phí|đơn|khách|hủy|huỷ|'
+  // "nhìn số năm nay quán có đang đi lên không" (lần 7, giai đoạn 1)
+  r'quán (?:\S+ ){0,2}(?:đi lên|đi xuống|tăng|giảm|ổn|khá)|tăng trưởng|làm ăn) ',
 );
 final _metricAskP = _viPair(
   r' (?:bao nhiêu|bn|nhiêu|nhiu|mấy|sao|ổn|cao|thấp|hay|nào|không|ít|nhiều|đi lên|đi xuống|tăng|giảm|nhất|thế nào|ra sao) ',
 );
 final _metricHowP = _viPair(
-  r' (?:cách|ở đâu|chỗ nào|mục nào|bấm|lỗi|hướng dẫn|cài|quy định|theo luật|bắt buộc|thuế) ',
+  // "báo cáo hôm nay chưa có giao dịch" là báo lỗi app (lần 6)
+  r' (?:cách|ở đâu|chỗ nào|mục nào|bấm|lỗi|hướng dẫn|cài|quy định|theo luật|bắt buộc|thuế|chưa có giao dịch|chưa thấy|không thấy|giao dịch|xử lý) ',
 );
 
 bool boomAsksPeriodMetric(String query) {
@@ -891,7 +933,14 @@ final _generalKnowledge = RegExp(
   // lạc đề (đợt 12)
   r'thời tiết|có mưa|mưa (?:không|ko|hông)|bóng đá|đá banh|đá bóng|đội tuyển|(?:bóng|trận|việt nam)(?: \S+){0,2} đá mấy giờ|uống thuốc|'
   r'(?:bị|đang|lên cơn) sốt|sốt \d+ độ|xổ số|giá vàng|'
-  r'phim (?:gì|nào|hay)|bài tập) ',
+  r'phim (?:gì|nào|hay)|bài tập|'
+  // lạc đề sau lượt số: bóng đá viết tắt, so app khác (lần 13)
+  r'(?:mu|man ?u|man utd|man city|chelsea|arsenal|liverpool|barca)(?: \S+){0,3} (?:đá|thắng|thua|mấy giờ)|ngoại hạng|'
+  r'(?:app|phần mềm|ứng dụng) (?:nào|gì) (?:\S+ ){0,3}(?:tốt hơn|hay hơn|tốt nhất|rẻ hơn|ngon hơn)|(?:app|phần mềm) khác) ',
+);
+// gõ không dấu: chỉ vài cụm lạc đề chắc chắn (gấp cả bộ luật bỏ dấu dễ trùng "bò", "bỏ"…) — lần 13
+final _offTopicPlain = RegExp(
+  r' (?:thoi tiet|troi (?:mua|nang)|co mua (?:khong|ko)|bong da|da banh|da bong|doi tuyen|tran mu|(?:mu|man u|man utd|man city)(?: \S+){0,3} (?:da|thang|thua)|xo so|gia vang|(?:app|phan mem) (?:nao|gi) (?:\S+ ){0,3}(?:tot hon|hay hon|tot nhat)) ',
 );
 
 // Câu hỏi so sánh / tình hình các chi nhánh CỦA CHỦ QUÁN ("so sánh doanh thu 2 quán tháng này", "chi nhánh nào bán
@@ -1021,7 +1070,7 @@ const _moduleHowSrc =
     r'như thế nào|tính thế nào|tính sao|là đủ|bắt buộc|tính trên|thì tính|thì nên|sửa sao|nên có|nên chạy|'
     // bộ G 27/10: báo lỗi / hỏi chỗ ghi ("lệch nhau hoài", "sao ít bất thường", "ghi vô đâu", "ko thấy khoản lương")
     r'lệch nhau|sao lệch|sao (?:ít|nhiều|cao|thấp) bất thường|(?:ghi|nhập|bấm|để|lưu) (?:\S+ ){0,2}(?:vô|vào) đâu|(?:ko|hông) thấy|nó báo|báo hết hạn|(?:kho|tồn|nguyên liệu) (?:\S+ ){0,2}bị âm|trong app|'
-    r'(?:báo cáo|màn|app|bên) (?:\S+ ){0,4}khác (?:với|nhau)|khác (?:với|nhau) (?:\S+ ){0,3}(?:báo cáo|thu chi|sổ)) ';
+    r'(?:báo cáo|màn|app|bên) (?:\S+ ){0,4}khác (?:với|nhau)|(?:báo cáo|lãi|lời|lợi nhuận) (?:\S+ ){0,3}khác bên|khác (?:với|nhau) (?:\S+ ){0,3}(?:báo cáo|thu chi|sổ)) ';
 final _moduleTopics = {
   for (final e in _moduleTopicSrc.entries) e.key: _viPair(e.value),
 };
@@ -1074,8 +1123,11 @@ const kBoomModuleKeys = {
   BoomModule.khuyenMai: 'khuyen_mai',
 };
 
-bool boomGeneralKnowledge(String query) =>
-    _generalKnowledge.hasMatch(_padVi(query));
+bool boomGeneralKnowledge(String query) {
+  final s = _padVi(query);
+  return _generalKnowledge.hasMatch(s) ||
+      (_foldKeep(s) == s && _offTopicPlain.hasMatch(s));
+}
 
 bool boomAsksOtherStore(String query) {
   final t = boomComposeVi(
@@ -1117,6 +1169,9 @@ class _LastTurn {
 
   /// Lượt trước phân tích số module (thu chi, kho…) → câu nói tiếp đọc lại đúng các module đó.
   final bool modules;
+
+  /// Câu người dùng gõ nguyên văn — GPT đọc câu gốc, `turn.question` (đã chuẩn hoá / viết lại) chỉ để chọn đường (lần 14).
+  final String raw;
   const _LastTurn(
     this.turn,
     this.shopData,
@@ -1124,6 +1179,7 @@ class _LastTurn {
     this.advice = false,
     this.chain = false,
     this.modules = false,
+    this.raw = '',
   });
 }
 
@@ -1354,7 +1410,15 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         !wantsDataAdvice &&
         !boomAsksHowTo(query) &&
         // "doanh thu bao nhiêu thì phải đóng thuế" là hỏi luật (bộ F, G 27/10)
-        !_viHit(_taxP, _padVi(query));
+        !_viHit(_taxP, _padVi(query)) &&
+        // "tháng này nhập kho hết bao nhiêu tiền" → số kho; "bán giá bao nhiêu là hợp" → tư vấn (lần 6, 12)
+        !({
+              'revenue_summary',
+              'sales_comparison',
+            }.contains(classification.intent) &&
+            boomModuleTopics(query).isNotEmpty &&
+            !_viHit(_salesWordP, _padVi(query))) &&
+        !_viHit(_priceAdviceP, _padVi(query));
     // Câu nói tiếp (trong 30 phút): tìm hướng dẫn theo cả câu trước, tư vấn kèm lượt trước.
     final last = _lastTurn;
     final followUp =
@@ -1525,7 +1589,12 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
     // Câu trả lời đến từ máy chủ (máy chủ tự ghi lịch sử nguyên văn cho trang quản trị)
     var serverWrote = false;
     String? aiLogId;
-    final history = followUsed ? followUp?.turn : null;
+    final history = followUsed && followUp != null
+        ? BoomTurn(
+            followUp.raw.isEmpty ? followUp.turn.question : followUp.raw,
+            followUp.turn.answer,
+          )
+        : null;
     final dataAdvice =
         !usesData &&
         !otherStore &&
@@ -2068,6 +2137,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
             advice: helpTool.startsWith('boom_tu_van'),
             chain: helpTool == 'boom_tu_van_so_lieu_chuoi',
             modules: helpTool == 'boom_tu_van_so_lieu_module',
+            raw: rawQuery,
           )
         : null;
 

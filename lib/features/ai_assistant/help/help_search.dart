@@ -258,6 +258,31 @@ const _kSynonyms = <List<String>>[
     'co 2 quan',
     'hai quan',
   ],
+  // Giai đoạn 1 lần 15 (28/10): 10 việc hay hỏi — chữ người dùng ↔ chữ trong bài
+  ['tim khach', 'tim khach theo so', 'chi tiet khach', 'xem chi tiet khach'],
+  ['may in khong in', 'loi may in', 'bao loi may in', 'kiem tra may in'],
+  ['keo tha', 'sap xep ban', 'doi cho ban', 'so do ban', 'thiet lap khu vuc'],
+  [
+    'ai sua',
+    'ai xoa',
+    'ai doi gia',
+    'ai huy',
+    'nhat ky',
+    'lich su thao tac',
+    'tra mot su co',
+  ],
+  ['tat qr', 'tat goi mon', 'ngung qr', 'tam ngung goi mon', 'bat qr'],
+  ['khach doi mon', 'doi sang mon', 'khach doi y', 'sua giam huy mon'],
+  ['ghi sai', 'nhap sai', 'ghi lon', 'ghi nham'],
+  [
+    'lai khac thu chi',
+    'loi nhuan khac',
+    'khac thu chi',
+    'khac ben thu chi',
+    'lech thu chi',
+  ],
+  ['nang gia', 'chinh gia', 'sua gia'],
+  ['gan quan ly', 'cap quyen quan ly', 'lam quan ly', 'gan vai tro quan ly'],
   // Bộ F 27/10: người dùng tả triệu chứng, bài viết tên chức năng
   [
     'in hoa don that bai',

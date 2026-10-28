@@ -1,0 +1,117 @@
+{
+ "note": "Câu hỏi cách làm còn sai ở bộ O / QC15 / M (không kín) — dạy lần 15",
+ "cases": [
+  {
+   "q": "nâng giá bạc xỉu lên 30k chỉnh kiểu gì",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "kho-hang#cac-viec-thuong-lam-1-them-mon-nguyen-lieu"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "doanh thu tháng này bao nhiêu"
+  },
+  {
+   "q": "tìm khách số này 0909123456",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "khach-hang#cac-viec-thuong-lam-2-xem-chi-tiet-khach"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "chi phí tháng trước bao nhiêu"
+  },
+  {
+   "q": "nó báo lỗi máy in không in được thì sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#loi-in-hoa-don-that-bai-kiem-tra-may-in-roi-bam-in-hoa-don",
+    "in-hoa-don#loi-bill-chua-in-sau-30-giay-kiem-tra-may-in-bill-khi-thanh-toan"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "doanh thu hôm qua"
+  },
+  {
+   "q": "kéo thả sắp xếp bàn trong sơ đồ sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-1-thiet-lap-khu-vuc-va-ban-lan-dau"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "doanh thu tháng này"
+  },
+  {
+   "q": "ai sửa giá món gần nhất",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhat-ky-log#cac-viec-thuong-lam-1-tra-mot-su-co",
+    "nhat-ky-log#app-ghi-lai-nhung-gi-vi-du"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "món nào bán chạy nhất tháng này"
+  },
+  {
+   "q": "mai quán nghỉ lễ thì tắt qr gọi món sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "qr-goi-mon#cac-viec-thuong-lam-1-bat-qr-va-dan-ma-o-quan"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "tuần trước bán được bao nhiêu"
+  },
+  {
+   "q": "in xong roi khach doi mon thi sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "quan-ly-ban#cac-viec-thuong-lam-5-sua-giam-huy-mon",
+    "quan-ly-ban#cac-viec-thuong-lam-6-in-tam-tinh"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "cach in tam tinh"
+  },
+  {
+   "q": "lỡ ghi sai số thì xóa sao",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "thu-chi#cac-viec-thuong-lam-4-xoa-khoan-ghi-nham"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "ghi tiền điện vào đâu"
+  },
+  {
+   "q": "sao lãi trong báo cáo khác bên thu chi",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#loi-loi-nhuan-khac-thu-chi"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "lãi tháng này bn"
+  },
+  {
+   "q": "sao bên báo cáo ra khác bên thu chi",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "bao-cao#loi-loi-nhuan-khac-thu-chi",
+    "bao-cao#tung-tab-tai-chinh"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "tháng này lợi nhuận bn"
+  },
+  {
+   "q": "trên ipad có giống không",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "ban-hang#ai-dung-duoc"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "bán hàng trên đt thì giỏ hàng nằm đâu"
+  },
+  {
+   "q": "quản lý gán người khác làm quản lý bị chặn",
+   "loai": "HUONG_DAN",
+   "expect": [
+    "nhan-vien#loi-quan-ly-khong-duoc-phep-gan-vai-tro-quan-ly"
+   ],
+   "chu_de": "giai đoạn 1 lần 15",
+   "q1": "đổi vai trò nv ntn"
+  }
+ ]
+}

@@ -135,6 +135,63 @@ void main() {
     },
   );
 
+  test('Giai đoạn 1 (lần 6–15): hiểu đúng câu hỏi', () {
+    // lần 6
+    expect(
+      boomAsksHowTo('lương bé Thảo tháng rồi ít bất thường, lỗi gì vậy'),
+      isTrue,
+    );
+    expect(
+      boomAsksPeriodMetric('báo cáo hôm nay chưa có giao dịch nào'),
+      isFalse,
+    );
+    // lần 7
+    expect(
+      boomAsksPeriodMetric('nhìn số năm nay quán có đang đi lên không'),
+      isTrue,
+    );
+    // lần 8
+    expect(
+      boomRewriteFollowUp(
+        'khung tối thì sao',
+        'tuần rồi khung trưa bán ổn không',
+      ),
+      'tuần rồi khung tối bán ổn không',
+    );
+    expect(
+      boomRewriteFollowUp('còn chi nhánh 2', 'doanh thu hôm nay chi nhánh 1'),
+      'doanh thu hôm nay chi nhánh 2',
+    );
+    expect(boomNormalizeTeen('doanh thu hnay cn 1'), contains('chi nhanh 1'));
+    // lần 9
+    expect(
+      boomWantsDataAdvice('doanh thu sao giảm so với tuần trước vậy'),
+      isTrue,
+    );
+    // lần 10, 11
+    expect(
+      boomShortFollowUp(
+        'giảm kiểu gì',
+        previous: 'food cost tháng 9 có cao không',
+      ),
+      isTrue,
+    );
+    expect(
+      boomIsFollowUp('nói lại ngắn gọn thôi', previous: 'doanh thu tháng 9'),
+      isTrue,
+    );
+    // lần 12, 13
+    expect(boomHelpFollowUp('vậy hôm qua ai đi trễ'), isFalse);
+    for (final q in [
+      'tối nay MU đá mấy giờ',
+      'thoi tiet mai sao',
+      'app nào quản lý quán tốt hơn',
+    ]) {
+      expect(boomGeneralKnowledge(q), isTrue, reason: q);
+    }
+    expect(boomGeneralKnowledge('bun bo hue ban chay khong'), isFalse);
+  });
+
   test(
     'Đợt 16: kỳ + con số + từ hỏi → tư vấn kèm số; đếm "hết bao nhiêu tiền"',
     () {
