@@ -25,9 +25,10 @@ class BoomReadOnlyDataService {
     String storeId,
     BoomPeriod period, {
     DateTime? now,
+    BoomPeriodRange? range,
   }) async {
     _validateStoreId(storeId);
-    final r = boomPeriodRange(period, now ?? DateTime.now());
+    final r = range ?? boomPeriodRange(period, now ?? DateTime.now());
     final both = await Future.wait([
       _completedOrders(
         storeId,
@@ -145,9 +146,10 @@ class BoomReadOnlyDataService {
     int limit = 3,
     BoomPeriod period = BoomPeriod.today,
     DateTime? now,
+    BoomPeriodRange? range,
   }) async {
     _validateStoreId(storeId);
-    final range = boomPeriodRange(period, now ?? DateTime.now());
+    range ??= boomPeriodRange(period, now ?? DateTime.now());
     final orders = await _completedOrders(
       storeId,
       range.start,
@@ -470,6 +472,79 @@ BoomPeriodRange boomPeriodRange(BoomPeriod p, DateTime now) {
         prevLabel: 'tháng ${before.month}',
       );
   }
+}
+
+/// Kỳ dài (đợt 11, từ [IntentClassifier]): 'days:N' (N ngày gần nhất, gồm hôm nay), 'month:Y-M', 'quarter:Y-Q',
+/// 'year:Y'. Kỳ đang chạy tính tới bây giờ, so với cùng độ dài kỳ trước; mã cũ → [boomPeriodRange].
+BoomPeriodRange boomRangeOf(String? timeRange, DateTime now) {
+  final p = (timeRange ?? '').split(':');
+  if (p.length != 2) return boomPeriodRange(boomPeriodFrom(timeRange), now);
+  final today = DateTime(now.year, now.month, now.day);
+  final v = p[1].split('-').map(int.parse).toList();
+  // Kỳ [s, e) và kỳ trước [ps, s); kỳ chưa hết → cắt ở bây giờ, kỳ trước cắt cùng độ dài
+  BoomPeriodRange span(
+    DateTime s,
+    DateTime e,
+    DateTime ps,
+    String label,
+    String prev,
+  ) {
+    final running = e.isAfter(now);
+    final end = running ? now : e;
+    var pe = running ? ps.add(now.difference(s)) : s;
+    if (pe.isAfter(s)) pe = s;
+    final last = end.subtract(const Duration(seconds: 1));
+    return BoomPeriodRange(
+      start: s,
+      end: end,
+      prevStart: ps,
+      prevEnd: pe,
+      label: '$label (${_dm(s)}/${s.year}–${_dm(last)}/${last.year})',
+      prevLabel: running ? 'cùng kỳ $prev' : prev,
+    );
+  }
+
+  switch (p[0]) {
+    case 'days':
+      final n = v[0];
+      final s = today.subtract(Duration(days: n - 1));
+      return span(
+        s,
+        today.add(const Duration(days: 1)),
+        s.subtract(Duration(days: n)),
+        '$n ngày qua',
+        '$n ngày trước đó',
+      );
+    case 'month':
+      final s = DateTime(v[0], v[1]);
+      final ps = DateTime(v[0], v[1] - 1);
+      return span(
+        s,
+        DateTime(v[0], v[1] + 1),
+        ps,
+        'Tháng ${v[1]}/${v[0]}',
+        'tháng ${ps.month}/${ps.year}',
+      );
+    case 'quarter':
+      final s = DateTime(v[0], v[1] * 3 - 2);
+      final ps = DateTime(v[0], v[1] * 3 - 5);
+      return span(
+        s,
+        DateTime(v[0], v[1] * 3 + 1),
+        ps,
+        'Quý ${v[1]}/${v[0]}',
+        'quý ${(ps.month + 2) ~/ 3}/${ps.year}',
+      );
+    case 'year':
+      return span(
+        DateTime(v[0]),
+        DateTime(v[0] + 1),
+        DateTime(v[0] - 1),
+        'Năm ${v[0]}',
+        'năm ${v[0] - 1}',
+      );
+  }
+  return boomPeriodRange(BoomPeriod.today, now);
 }
 
 class BoomRevenueSummary {

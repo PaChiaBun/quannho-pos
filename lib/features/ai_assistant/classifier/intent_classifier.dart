@@ -443,8 +443,8 @@ class IntentClassifier {
         r'\b(?:(?:ngay )?hom qua|hqua|hum qua|hom wa|bua qua|toi qua|dem qua|sang qua|trua qua|chieu qua)\b',
       ),
     ),
-    ('last_month', RegExp(r'\b(?:thang|thg) (?:truoc|roi|qua)\b(?! nua)')),
-    ('last_week', RegExp(r'\btuan (?:truoc|roi|qua)\b(?! nua)')),
+    ('last_month', RegExp(r'\b(?:thang|thg) (?:truoc|trc|roi|qua)\b(?! nua)')),
+    ('last_week', RegExp(r'\btuan (?:truoc|trc|roi|qua)\b(?! nua)')),
   ];
   // Từ chỉ thời gian CÓ DẤU còn sót (kỳ khác / chi tiết hơn): một từ, hoặc từ + từ sau.
   static const _hintWords = {
@@ -470,8 +470,12 @@ class IntentClassifier {
   /// null = câu không nhắc thời gian.
   static String? _findTimeRange(String text, {DateTime? now}) {
     final n = now ?? DateTime.now();
+    // "quỹ" bỏ dấu = "quy" (quý) — QC đợt 11
+    text = text.replaceAll('quỹ', 'quyx');
     // Ngày / năm cụ thể ("20/10", "10/2025", "năm 2025", "ngày 20") → chưa đọc được
-    if (RegExp(r'\d+\s*/\s*\d+|\b(?:19|20)\d{2}\b').hasMatch(text)) {
+    if (RegExp(
+      r'\d+\s*/\s*\d+|(?<!năm |nam )\b(?:19|20)\d{2}\b',
+    ).hasMatch(text)) {
       return 'unsupported';
     }
     final raw = text
@@ -480,19 +484,61 @@ class IntentClassifier {
         .toList();
     final folded = [for (final w in raw) foldVietnamese(w)];
     final f = folded.join(' ');
-    // "ngày 20", "T10", "1 tuần qua", "7 ngày", "mấy hôm nay", "thứ 7" → chưa đọc được
-    if (RegExp(
-      r'\bngay \d|\bt\d{1,2}\b|\b\d+ (?:ngay|tuan|thang|hom|bua)\b|\bmay (?:hom|bua|ngay|tuan)\b|\bthu \d',
-    ).hasMatch(f)) {
-      return 'unsupported';
-    }
-    final month = RegExp(r'\b(?:thang|thg)\s*(\d{1,2})\b').firstMatch(f);
+    // "ngày 20", "T10" → chưa đọc được
+    if (RegExp(r'\bngay \d|\bt\d{1,2}\b').hasMatch(f)) return 'unsupported';
+    // Phần câu còn lại sau khi bỏ cụm kỳ [s, e) — trên chữ CÓ DẤU khi được ("cuối", "sáng" chỉ có trong
+    // _hintWords bản có dấu), rồi đọc kỳ lần nữa (QC đợt 11)
+    final plain = raw.join(' ');
+    String? restOf(int s, int e) => _findTimeRange(
+      (plain.length == f.length ? plain : f).replaceRange(s, e, ' '),
+      now: n,
+    );
+    // câu so sánh hai kỳ → kỳ đầu ("quý này so quý trước", "tháng 8 với tháng 7")
+    final compare = RegExp(
+      r'\bso (?:voi|sanh|quy|nam|thang|tuan|\d)\b|\bvoi (?:thang|quy|nam|tuan)\b|\bhon\b|\bkem\b',
+    ).hasMatch(f);
+    final month = RegExp(
+      r'\b(?:thang|thg)\s*(\d{1,2})\b(?! (?:lan|trieu|tr|k|nghin|ngan)\b)(?: nam (ngoai|truoc|trc|roi|qua|nay)\b)?',
+    ).firstMatch(f);
     if (month != null) {
-      if (RegExp(r'\bnam\b(?! nay)').hasMatch(f)) return 'unsupported';
       final m = int.parse(month.group(1)!);
+      if (m < 1 || m > 12) return 'unsupported';
+      final y = month.group(2);
+      // "từ tháng 7 tới nay" là khoảng khác; năm khác ngoài "năm nay / năm rồi" → chưa đọc được
+      if (RegExp(r'\b(?:tu|den|toi) (?:thang|thg)\b').hasMatch(f) ||
+          (y == null && RegExp(r'\bnam\b').hasMatch(f))) {
+        return 'unsupported';
+      }
+      final rest = restOf(month.start, month.end);
+      if (rest != null && !compare) return 'unsupported';
+      // "tháng 12 năm rồi" (đợt 11)
+      if (y != null && y != 'nay') return 'month:${n.year - 1}-$m';
       final last = n.month == 1 ? 12 : n.month - 1;
       if (m == n.month) return 'this_month';
-      if (m == last) return 'last_month';
+      if (m == last && y == null) return 'last_month';
+      // tháng khác trong 12 tháng gần nhất ("tháng 7", "tháng 12" của năm ngoái) — đợt 11
+      if (m > n.month && y == 'nay') return 'unsupported';
+      return 'month:${m < n.month ? n.year : n.year - 1}-$m';
+    }
+    // Kỳ dài (đợt 11): "30 ngày qua", "2 tuần nay", "quý 3", "năm nay", "từ đầu năm" → mã riêng; câu còn nhắc kỳ
+    // khác → chưa đọc được, trừ câu so sánh ("quý này so quý trước" → kỳ đầu) và "năm ngoái … cả năm"
+    final long = _longPeriod(f, n);
+    if (long != null) {
+      if (long.$1 == 'unsupported') return 'unsupported';
+      // "cùng kỳ năm ngoái" là một đoạn của năm ngoái, không phải cả năm
+      if (!compare && RegExp(r'\bcung ky\b').hasMatch(f)) return 'unsupported';
+      final rest = restOf(long.$2, long.$3);
+      final keep =
+          rest == null ||
+          rest == long.$1 ||
+          compare ||
+          (long.$1.startsWith('year:') && RegExp(r'\bca nam\b').hasMatch(f));
+      return keep ? long.$1 : 'unsupported';
+    }
+    // "1 năm qua", "7 tuần", "mấy hôm nay", "thứ 7" → chưa đọc được
+    if (RegExp(
+      r'\b\d+ (?:ngay|tuan|thang|hom|bua)\b|\bmay (?:hom|bua|ngay|tuan)\b|\bthu \d',
+    ).hasMatch(f)) {
       return 'unsupported';
     }
     // Đánh dấu các từ thuộc kỳ đã nhận ra
@@ -526,6 +572,76 @@ class IntentClassifier {
     return found;
   }
 
+  static final _longDays = RegExp(
+    r'(?<!\b(?:ngay|thang|thg|quy|nam) )(?<!(?<!doanh )\bthu )\b(\d{1,3}) (ngay|hom|bua|tuan|thang)(?: (?:qua|nay|gan day|gan nhat|vua qua|vua roi|roi|tro lai day))?\b'
+    r'(?! (?:truoc|trc|nua|toi|sau|tet|le|phep|cong|luong|nghi|lan|\d))',
+  );
+  static final _longQuarter = RegExp(
+    r'\bquy (1|2|3|4|iv|iii|ii|i|nay|truoc|trc|roi)\b(?! nua)(?: nam nay\b)?',
+  );
+  static final _longYear = RegExp(
+    r'(?<!\d )\b(?:(?:tu )?dau nam(?! (?:ngoai|truoc|trc|roi|qua|20))(?: (?:toi|den) (?:gio|nay))?|nam nay(?: (?:toi|den) gio)?|'
+    r'ca nam(?! (?:ngoai|truoc|trc|roi|qua|20))(?: nay)?|nam (ngoai|truoc|trc|roi|qua|20\d{2}))\b(?! nua)',
+  );
+
+  /// (mã kỳ, đầu, cuối cụm trong [f]) — "N ngày/tuần/tháng" tới 92 ngày, quý, năm; quá dài → 'unsupported'.
+  static (String, int, int)? _longPeriod(String f, DateTime n) {
+    final d = _longDays.firstMatch(f);
+    if (d != null) {
+      final k = int.parse(d.group(1)!);
+      // "tháng 7" không phải "7 tháng"; "1 tháng" = 30 ngày
+      final days =
+          k *
+          switch (d.group(2)) {
+            'tuan' => 7,
+            'thang' => 30,
+            _ => 1,
+          };
+      return (
+        k < 1 || days > 92 ? 'unsupported' : 'days:$days',
+        d.start,
+        d.end,
+      );
+    }
+    final q = _longQuarter.firstMatch(f);
+    if (q != null) {
+      final cur = (n.month + 2) ~/ 3;
+      final g = q.group(1)!;
+      final want = switch (g) {
+        'nay' => cur,
+        'truoc' || 'trc' || 'roi' => cur - 1,
+        'i' => 1,
+        'ii' => 2,
+        'iii' => 3,
+        'iv' => 4,
+        _ => int.parse(g),
+      };
+      // quý chưa tới trong năm nay → quý đó năm ngoái
+      final (y, qq) = want < 1
+          ? (n.year - 1, 4)
+          : want > cur
+          ? (n.year - 1, want)
+          : (n.year, want);
+      return ('quarter:$y-$qq', q.start, q.end);
+    }
+    final y = _longYear.firstMatch(f);
+    if (y != null) {
+      final g = y.group(1);
+      final yr = g == null
+          ? n.year
+          : g.startsWith('20')
+          ? int.parse(g)
+          : n.year - 1;
+      // năm cụ thể chưa tới / quá xa → chưa đọc được
+      return (
+        yr > n.year || yr < n.year - 2 ? 'unsupported' : 'year:$yr',
+        y.start,
+        y.end,
+      );
+    }
+    return null;
+  }
+
   /// Câu so sánh: kỳ đứng TRƯỚC "so với / hơn / kém" là kỳ được hỏi; chỉ nói kỳ trước ("doanh thu so với hôm qua")
   /// → hỏi kỳ hiện tại so với kỳ đó.
   static String _comparisonRange(String text) {
@@ -540,6 +656,11 @@ class IntentClassifier {
       'yesterday' || null => 'today',
       'last_week' => 'this_week',
       'last_month' => 'this_month',
+      // kỳ dài (đợt 11): "so với năm ngoái / quý trước" → năm nay / quý này
+      final other when other.startsWith('year:') =>
+        'year:${DateTime.now().year}',
+      final other when other.startsWith('quarter:') =>
+        'quarter:${DateTime.now().year}-${(DateTime.now().month + 2) ~/ 3}',
       final other => other,
     };
   }

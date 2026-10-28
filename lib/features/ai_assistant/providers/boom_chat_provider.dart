@@ -29,8 +29,37 @@ const kBoomDataIntents = {
   'top_products',
   'slow_products',
   'low_stock',
+  'purchase_forecast',
   'staff_on_shift',
 };
+
+/// Trả lời "kho sắp hết" / "cần nhập thêm gì". Dự báo mua hàng = bù về mức tồn tối thiểu, chưa tính lượng bán
+/// sắp tới (shortcut: chưa dùng RPC get_stock_forecast_inputs — nối khi có số bán theo nguyên liệu).
+String boomStockReply(
+  List<BoomStockAlert> alerts, {
+  required bool forecast,
+  required String Function(num) qty,
+}) {
+  if (alerts.isEmpty) {
+    return 'Dữ liệu kho hiện không có mặt hàng nào chạm hoặc thấp hơn mức tồn tối thiểu.';
+  }
+  final details = alerts
+      .take(5)
+      .map((item) {
+        final base =
+            '${item.name}: còn ${qty(item.stockQuantity)}, tối thiểu ${qty(item.minimumStock)}';
+        if (!forecast) return base;
+        final need = item.minimumStock - item.stockQuantity;
+        return need > 0
+            ? '$base → nhập thêm ít nhất ${qty(need)}'
+            : '$base → đang chạm mức tối thiểu';
+      })
+      .join('; ');
+  return forecast
+      ? 'Theo mức tồn tối thiểu, có ${alerts.length} mặt hàng nên nhập: $details. Đây là lượng bù về mức tối thiểu, '
+            'chưa tính lượng bán sắp tới; Bé Boom không tự tạo phiếu nhập.'
+      : 'Có ${alerts.length} mặt hàng cần chú ý: $details. Gợi ý: kiểm tra thực tế và lập kế hoạch nhập hàng; Bé Boom không tự tạo phiếu nhập.';
+}
 
 /// Trả lời bằng hướng dẫn thay vì số liệu? Câu số liệu (doanh thu, bán chạy…) vẫn trả số liệu; chỉ
 /// nhường cho hướng dẫn khi bộ đoán ý không chắc, hoặc câu có động từ thao tác ("tắt bán món hết",
@@ -45,7 +74,7 @@ bool boomHelpWins({
     (picked ||
         !kBoomDataIntents.contains(classification.intent) ||
         classification.confidence < IntentClassifier.kHighConfidenceThreshold ||
-        hasHelpActionWord(query) ||
+        _helpAction(query) ||
         boomAsksHowTo(query));
 
 /// Câu bị đoán là số liệu nhưng có động từ thao tác ("thêm nhân viên mới", "duyệt OT…") và bộ hướng
@@ -62,7 +91,7 @@ bool boomHelpSuggestInstead({
             help.hits.isNotEmpty &&
             help.hits.first.score >= kHelpStrongScore)) &&
     kBoomDataIntents.contains(classification.intent) &&
-    hasHelpActionWord(query);
+    _helpAction(query);
 
 /// Luật của Boom: không nêu số liệu của quán khác / đối thủ / thương hiệu khác (cùng quy tắc với hàm máy chủ
 /// boom-chat, logic.ts). Kiểm ngay trên máy: câu "doanh thu quán đối thủ" bị bộ đoán ý xếp vào câu số liệu
@@ -173,6 +202,119 @@ bool boomWantsAdvice(String query) {
       RegExp(r'["“”]').hasMatch(query);
 }
 
+// Teencode / viết tắt tin nhắn → chữ đầy đủ (đợt 13): (có dấu, không dấu). Câu gõ không dấu dùng bản không dấu để
+// các luật bản không dấu vẫn khớp. Chỉ thay NGUYÊN TỪ.
+const _kTeen = <String, (String, String)>{
+  'ko': ('không', 'khong'),
+  'hok': ('không', 'khong'),
+  'khum': ('không', 'khong'),
+  'hông': ('không', 'khong'),
+  'đc': ('được', 'duoc'),
+  'dc': ('được', 'duoc'),
+  'bnhiu': ('bao nhiêu', 'bao nhieu'),
+  'bnhieu': ('bao nhiêu', 'bao nhieu'),
+  'nhiu': ('nhiêu', 'nhieu'),
+  'trc': ('trước', 'truoc'),
+  'hnay': ('hôm nay', 'hom nay'),
+  'hqua': ('hôm qua', 'hom qua'),
+  'lm': ('làm', 'lam'),
+  'ntn': ('như thế nào', 'nhu the nao'),
+  'mún': ('muốn', 'muon'),
+  'bít': ('biết', 'biet'),
+  'cx': ('cũng', 'cung'),
+  'vs': ('với', 'voi'),
+  'ng': ('người', 'nguoi'),
+  'sp': ('sản phẩm', 'san pham'),
+  'tk': ('tài khoản', 'tai khoan'),
+  'đt': ('điện thoại', 'dien thoai'),
+};
+final _teenWord = RegExp(
+  '(?<![\\p{L}\\p{N}])(${_kTeen.keys.join('|')})(?![\\p{L}\\p{N}])',
+  unicode: true,
+  caseSensitive: false,
+);
+// "bn" = "bao nhiêu" trừ khi gọi "bạn" ("bn ơi", đầu câu); "hum nay / hum qua"; "lm s" / "vì s" = sao; "v" cuối câu = vậy
+final _teenPhrase = <(RegExp, String, String)>[
+  // chữ một ký tự: chỉ chữ thường ("size R", "Bàn K" giữ nguyên) — QC đợt 13
+  // "k" = không, trừ "25 k", "mấy trăm k" (nghìn), "vitamin k"
+  (
+    RegExp(
+      r'(?<![\p{L}\p{N}])(?<!\d |(?:trăm|tram|chục|chuc|vài|vai|mấy|may|vitamin) )k(?![\p{L}\p{N}])',
+      unicode: true,
+    ),
+    'không',
+    'khong',
+  ),
+  (RegExp(r'(?<![\p{L}\p{N}])j(?![\p{L}\p{N}])', unicode: true), 'gì', 'gi'),
+  (RegExp(r'(?<![\p{L}\p{N}])z(?![\p{L}\p{N}])', unicode: true), 'vậy', 'vay'),
+  (RegExp(r'(?<![\p{L}\p{N}])r(?![\p{L}\p{N}])', unicode: true), 'rồi', 'roi'),
+  // "wa" sau chữ chỉ thời gian = qua ("hôm wa"), còn lại = quá ("vắng wa")
+  (
+    RegExp(
+      r'(?<=(?:hôm|hom|hum|tuần|tuan|tháng|thang|năm|nam|bữa|bua|tối|toi|đêm|dem|ngày|ngay) )wa(?![\p{L}\p{N}])',
+      unicode: true,
+      caseSensitive: false,
+    ),
+    'qua',
+    'qua',
+  ),
+  (
+    RegExp(
+      r'(?<![\p{L}\p{N}])wa(?![\p{L}\p{N}])',
+      unicode: true,
+      caseSensitive: false,
+    ),
+    'quá',
+    'qua',
+  ),
+  // "ck" = chuyển khoản, trừ chiết khấu ("ck 10%", "giảm ck")
+  (
+    RegExp(
+      r'(?<![\p{L}\p{N}])(?<!giảm |giam )ck(?![\p{L}\p{N}])(?! ?\d+ ?%)',
+      unicode: true,
+      caseSensitive: false,
+    ),
+    'chuyển khoản',
+    'chuyen khoan',
+  ),
+  (
+    RegExp(
+      r'(?<=\S )(?<!(?:cho|nhờ|nho|hỏi|hoi|ơn|on|giúp|giup|chào|chao|với|voi) )bn'
+      r'(?![\p{L}\p{N}]| ơi| oi| (?:là|la|có|co|hỏi|hoi|giúp|giup|biết|biet|tên|ten|ạ|nha|nhé|nhe)\b)',
+      unicode: true,
+      caseSensitive: false,
+    ),
+    'bao nhiêu',
+    'bao nhieu',
+  ),
+  (RegExp(r'\bhum (?=nay|qua)', caseSensitive: false), 'hôm ', 'hom '),
+  (
+    RegExp(
+      r'(?<=\b(?:lm|làm|lam|vì|vi|tại|tai|bị|bi|thì|thi) )s(?![\p{L}\p{N}])',
+      unicode: true,
+      caseSensitive: false,
+    ),
+    'sao',
+    'sao',
+  ),
+  (RegExp(r'(?<=\S )v(?=[\s?!.]*$)', caseSensitive: false), 'vậy', 'vay'),
+];
+
+/// Chuẩn hoá teencode / viết tắt tin nhắn trước khi tìm bài và chọn đường (đợt 13).
+String boomNormalizeTeen(String text) {
+  // cả câu gõ không dấu — xét trên chữ (bỏ emoji, "…") và bỏ chính các chữ tắt ("đc") — QC đợt 13
+  final probe = _padVi(text).replaceAll(_teenWord, ' ');
+  final plain = _foldKeep(probe) == probe;
+  var t = text;
+  for (final (rx, acc, pl) in _teenPhrase) {
+    t = t.replaceAll(rx, plain ? pl : acc);
+  }
+  return t.replaceAllMapped(_teenWord, (m) {
+    final v = _kTeen[m[1]!.toLowerCase()]!;
+    return plain ? v.$2 : v.$1;
+  });
+}
+
 String _padVi(String query) {
   final t = boomComposeVi(
     query.toLowerCase(),
@@ -190,33 +332,79 @@ final _dataAdviceCue = RegExp(
   // "phải làm gì" chỉ khi tả tình hình xấu ("doanh thu giảm phải làm gì"), không phải hỏi quy trình ("nhân viên phải
   // làm gì để món xuống bếp")
   r'nhận xét|tình hình|ổn không|(?:giảm|ít|vắng|ế|lỗ|chậm|tụt) (?:thì |quá |vậy )?phải làm gì|vì sao|tại sao|'
-  r'làm gì để|tăng doanh thu|bán thêm|combo|'
+  r'làm gì để|tăng doanh thu|bán thêm|combo|đáng lo|(?:có )?(?:cao|thấp) (?:không|ko|hông)|ổn (?:ko|hông|chưa)|'
+  // bộ F, G, I 27/10 (đợt 12): xếp người theo giờ bán, chỗ nào nên cắt, làm sao giảm tỉ lệ huỷ, hiệu quả không
+  r'(?:cần|nên|có nên) (?:thêm|bớt|cắt|giảm|nhập|chạy|tiếp tục|xếp|chuẩn bị)|làm sao (?:để )?(?:giảm|tăng|cải thiện|kéo|giữ)|'
+  r'hiệu quả (?:không|ko|hông|chưa)|(?:cao|tăng|nhiều|tốn|huỷ|hủy|ít|thấp|chi|lỗ)(?: \S+){0,2} bất thường|'
+  // bộ J 27/10: lời xin nhận xét / so sánh / tìm nguyên nhân trên số của quán
+  r'nguyên nhân|do đâu|do (?:món|giờ|ca|ai|khoản) nào|(?:có )?đáng (?:không|ko|hông|ngờ|lo)|là vừa|(?:cao|nhiều|thấp|ít) quá|'
+  r'cao hay thấp|nhiều hay ít|(?:nhiều|ít) (?:không|ko|hông)|nên đẩy|hơn hay|(?:tốt|hiệu quả|lời|lãi|cao|đông|ngon) hơn|'
+  r'cắt (?:bớt|giảm)|giảm bớt|(?:tốt|khá) lên hay|xấu đi|(?<!gửi |chuyển |in )đi xuống(?! bếp| kho)|'
   // "dựa vào số bán đề xuất…", "coi số liệu rồi…", "nhìn số đơn…" (bộ câu số liệu độc lập 26/10)
   r'dựa (?:vào |trên |theo )?(?:số|số liệu|số bán|doanh số)|(?:coi|xem|nhìn|đọc) (?:qua )?số (?:\S+ ){0,4}(?:rồi|xong|để) (?:góp ý|đề xuất|tư vấn|nói|nhận xét|phân tích)|theo doanh số|'
   r'góp ý (?:giúp|cho|tui|tôi|mình|anh|chị)) ',
 );
 final _shopDataTopic = RegExp(
   r' (?:món|doanh thu|bán chạy|bán được|bán ế|bán chậm|bán ít|menu|thực đơn|sản phẩm|mặt hàng|kinh doanh|'
-  r'bán hàng|buôn bán|quán mình|số liệu|phân tích|số bán|doanh số|số đơn|khách quen) ',
+  r'bán hàng|buôn bán|quán mình|số liệu|phân tích|số bán|doanh số|số đơn|khách quen|bán vậy|bán thế|'
+  r'(?:nhìn|coi|xem|dựa vào|dựa trên|theo) (?:\S+ ){0,2}số(?! (?:điện|đt|tài khoản|bàn|thứ tự))|'
+  r'giờ bán|theo giờ|giờ đông|giờ vắng|giờ cao điểm|tháng nào|quý nào|tăng hay giảm|(?:lời|lãi) hơn|'
+  r'tỉ lệ|tỷ lệ|chi phí|khoản chi|tiền lương|lương (?:nv|nhân viên)|lợi nhuận|hao hụt|giá vốn|chi nhánh) ',
 );
 final _howToCue = RegExp(
   r' (?:ở đâu|chỗ nào|mục nào|tab nào|nằm đâu|bấm|cài|cách xem|xem ở|trong app|app có|màn hình|mở báo cáo|làm sao|'
   r'cách nào|(?<!đề )xuất|excel|pdf|in báo cáo|tải|gửi báo cáo|có những gì|gồm những gì|xem được|quyền|phân quyền|bị sai|'
-  r'không khớp|bị lệch|không hiện|không cập nhật|không ra|bằng 0|bị lỗi|báo lỗi|phải làm gì để|báo khách|chuỗi|chi nhánh|2 quán|hai quán|các quán|nhảy|trùng số|bị trùng|bị mất) ',
+  r'không khớp|bị lệch|lệch nhau|sao lệch|tin cái nào|(?:kho|tồn|tồn kho|số lượng|nguyên liệu|quỹ|số dư) (?:\S+ ){0,2}bị âm|'
+  r'(?:bên|báo cáo) (?:\S+ ){0,4}khác (?:nhau|với)(?! (?:\S+ )?(?:tuần|tháng|hôm|quý|năm|kỳ))|báo (?:hết hạn|lỗi|sai)|không hiện|không cập nhật|(?:không|ko|hông) (?:hề |bị )?(?:trừ|nhúc nhích|hụt)|không ra|bằng 0|bị lỗi|báo lỗi|phải làm gì để|báo khách|chuỗi|chi nhánh|2 quán|hai quán|các quán|nhảy|trùng số|bị trùng|bị mất) ',
 );
 
 /// Câu hỏi cách dùng / báo lỗi / quyền trong app ("báo cáo doanh thu bị sai", "tải báo cáo về máy") — không trả
 /// số liệu, không tư vấn số.
-bool boomAsksHowTo(String query) => _viHit(_howToCueP, _padVi(query));
+bool boomAsksHowTo(String query) =>
+    _viHit(_howToCueP, _padVi(query).replaceAll(_adviceWhereP(query), ' '));
+
+// "cao bất thường chỗ nào", "nên cắt chỗ nào", "làm sao giảm" là xin phân tích, không phải hỏi chỗ bấm (đợt 12)
+RegExp _adviceWhereP(String query) {
+  final s = _padVi(query);
+  return _foldKeep(s) == s ? _adviceWhere.$2 : _adviceWhere.$1;
+}
+
+final _adviceWhere = _viPair(
+  r'(?<= )(?:(?:cao|tăng|tốn|cắt|giảm|bớt|lời|lỗ|tiết kiệm|bất thường)(?: \S+){0,3} (?:ở )?chỗ nào|'
+  r'chỗ nào (?:làm|gây|bị) (?:lỗ|lời|tốn|hụt)|(?:có )?cách nào (?:để )?(?:tăng|giảm|kéo|cải thiện|giữ)|'
+  r'(?:tăng|giảm|kéo|cải thiện) (?:\S+ )?kiểu gì|'
+  // "làm sao giảm" ở cuối câu nói về số vừa nhắc ("tỉ lệ huỷ có cao không, làm sao giảm")
+  r'làm sao (?:để )?(?:giảm|tăng|cải thiện|kéo|giữ)(?= (?:(?:\S+ )?(?:doanh thu|doanh số|tỉ lệ|tỷ lệ|chi phí|lợi nhuận|lời|lãi|lỗ|'
+  r'hao hụt|khách|số đơn|đơn huỷ|đơn hủy)|(?:nó |xuống |lên |lại |vậy |đây |được )?$)))(?= )',
+);
 
 // Câu gõ không dấu ("tu van xu ly dua tren so") dùng bản không dấu của luật (bộ câu số liệu độc lập 26/10)
 final _howToCueP = _viPair(_howToCue.pattern);
 final _dataAdviceCueP = _viPair(_dataAdviceCue.pattern);
 final _shopDataTopicP = _viPair(_shopDataTopic.pattern);
+// Chủ đề yếu (QC đợt 12): "đơn", "khách", "người"… chỉ là chuyện số của quán khi có kỳ / lời so lượng — không thì
+// "tại sao đơn bị huỷ mà không báo", "cần thêm khách vào danh sách" bị kéo sang tư vấn kèm số
+final _weakTopicP = _viPair(
+  r' (?:đơn|bill|huỷ|hủy|tiệm|nhân viên|người|pha chế|nạp ví|khách|lời|lãi|lỗ) ',
+);
+final _qtyCueP = _viPair(
+  r' (?:hôm nay|hôm qua|tuần|tháng|quý|năm|ca (?:sáng|chiều|tối)|dạo này|gần đây|mỗi (?:ngày|tối|ca)|cuối tuần|nhiều|ít|'
+  r'đông|vắng|tăng|giảm|tụt|cao|thấp|so với|trung bình|bao nhiêu|mấy|bn|hơn|(?:khách|món|ca|nhân viên|người|tiệm|đơn) nào) ',
+);
+// Câu tả lỗi / cài đặt / quyền trong app → hướng dẫn, không tư vấn kèm số (QC đợt 12)
+final _appIssueP = _viPair(
+  r' (?:(?:không|ko|hông|k|chưa) (?:in|báo|lên|về|nhận(?! xét)|gọi|vào|vô|hiện|thấy|chạy|đăng nhập|được|đc|cập nhật|trừ|cộng|ra|nghe|kêu)|'
+  r'bị (?:văng|đơ|treo|lỗi|mất|in|trừ|khoá|khóa|tính)|đăng nhập|máy in|in bill|khổ|in ra|tính ra|bằng (?:0|không)|số dư|'
+  r'cài|bật|(?<!tóm )tắt|quyền|tài khoản|thông báo|điện tử|bằng gì|thì làm gì|vào app|trong app|trên app|luật|quy định|'
+  r'cho nhân viên xem) ',
+);
 final _askOneNumberP = _viPair(
   r' (?:bao nhiêu|mấy (?:đơn|ly|phần|tiền|khách|người|bàn)) ',
 );
-final _askAnalysisP = _viPair(r' (?:phân tích|đánh giá|nhận xét|tư vấn|nên) ');
+final _askAnalysisP = _viPair(
+  r' (?:phân tích|đánh giá|nhận xét|tư vấn|nên|(?:vậy |có )?ổn (?:không|ko|hông|chưa)|(?:có )?(?:cao|thấp) (?:không|ko|hông)|đáng lo|'
+  r'cao hay thấp|nhiều hay ít|(?:cao|nhiều|thấp|ít) quá|là vừa|nguyên nhân|do đâu|vì sao|tại sao) ',
+);
 bool _viHit((RegExp, RegExp) p, String s) =>
     (_foldKeep(s) == s ? p.$2 : p.$1).hasMatch(s);
 
@@ -227,8 +415,11 @@ bool boomWantsDataAdvice(String query) {
     return false;
   }
   return _viHit(_dataAdviceCueP, s) &&
-      _viHit(_shopDataTopicP, s) &&
-      !_viHit(_howToCueP, s) &&
+      (_viHit(_shopDataTopicP, s) ||
+          (_viHit(_weakTopicP, s) && _viHit(_qtyCueP, s))) &&
+      !_viHit(_appIssueP, s) &&
+      // bỏ cụm xin phân tích "cao … chỗ nào", "làm sao giảm …" trước khi xét hỏi cách làm (QC đợt 12)
+      !boomAsksHowTo(query) &&
       !RegExp(' $_rival ').hasMatch(s) &&
       !boomAsksOtherStore(query);
 }
@@ -241,6 +432,236 @@ final _followUpCue = RegExp(
   // tính ("cách in hoá đơn chi tiết" là câu hỏi mới)
   r'tiếp tục|nói tiếp|chi tiết hơn|kỹ hơn|kĩ hơn|cụ thể hơn|rõ hơn|sâu hơn|nói thêm|thêm nữa)(?= )',
 );
+
+// Bộ L 28/10 (đợt 14): câu nói tiếp chỉ hiểu được khi ghép câu trước
+// Nhánh mạnh: chữ chỉ trỏ / "vẫn không" / "bước tiếp" — câu chỉ hiểu được khi ghép câu trước (QC đợt 14: từ chung như
+// "chi tiết", "thì sao" để nhánh yếu, không thì "cách in hoá đơn chi tiết" thành nói tiếp)
+final _followUpStrongP = _viPair(
+  r' (?:(?:làm|bấm|tạo|cài|nhập|gửi|thử) (?:\S+ )?rồi (?:mà|nhưng)|xong rồi (?:thì|làm)|vẫn (?:không|chưa|bị)|'
+  r'bước (?:tiếp|kế|\d)|tiếp theo|làm gì tiếp|'
+  r'(?:nút|cái|món|chỗ|bạn|người|khoản|ca|tiệm|bên|giờ|khung|lúc) (?:đó|đấy|kia)|ngày đó|(?:giữ chân|nhắc nhở|nhắc) (?:họ|bạn đó|nó)|'
+  // "chiếm mấy % doanh thu tháng đó" — kỳ chỉ trỏ về câu trước (bộ N, đợt 15)
+  r'(?:tháng|tuần|hôm|năm|quý|kỳ|đợt) (?:đó|đấy|ấy)|'
+  // bộ O (đợt 15): "dựa trên số đó", "nhìn số này", "nhập vậy có bị dư không"
+  r'(?:số|con số) (?:đó|này|đấy|vậy)(?! \d)|(?:nhập|bán|chi|xài|dùng|lời|lãi|hủy|huỷ) (?:như )?vậy (?:có|là)|'
+  r'sao (?:giảm|thấp|cao|ít|nhiều|tụt|tăng|chậm) (?:vậy|thế|quá)|(?:có )?đáng lo|nhiều vậy|ít vậy) ',
+);
+// Nhánh yếu: chỉ khi câu rất ngắn và không có chủ đề / thao tác riêng ("chi tiết từng ngày đi", "có hiệu quả không")
+final _followUpWeakP = _viPair(
+  r' (?:nếu (?:không|chỉ|chưa|ko)|(?:sửa|xoá|xóa) sao|bật lại|có hiệu quả|có bất thường|đề xuất giúp|nhận xét|đánh giá giúp|'
+  r'chi tiết|từng (?:ngày|khoản|món|giờ|ca)|top \d+|chia theo|giờ nào|ai (?:hủy|huỷ|làm|bán)|nên làm gì|thì sao) ',
+);
+// câu hỏi chỗ mới ("còn cái nút in tạm tính nằm đâu") là câu mới, không phải nói tiếp
+// "nên cắt bớt chỗ nào", "hụt ở chỗ nào" là hỏi khoản nào trên số, không phải chỗ trong app (đợt 15)
+final _newPlaceP = _viPair(
+  r' (?:nằm đâu|ở đâu|(?<!(?:cắt|giảm (?:chi|bớt)|bớt|hụt|lỗ|tốn|hao|thất thoát|tiết kiệm)(?: \S+){0,2} )chỗ nào|tab nào|mục nào) ',
+);
+// Câu xin phân tích tiếp trên số vừa xem — cho dài tới 14 chữ ("sao lãi mỏng dữ, hụt ở khúc nào chỉ t coi")
+final _followAnalysisP = _viPair(
+  r' (?:sao (?:lại|giảm|tăng|thấp|cao|ít|nhiều|lãi|lời|lỗ|hụt)|vì sao|tại sao|do đâu|nguyên nhân|bất thường|nên (?:cắt|giảm|tăng|bớt)|hụt|khúc nào|cao quá|thấp quá|ít quá|nhiều quá) ',
+);
+// "ai hủy nhiều nhất", "món nào bị xoá nhiều nhất" — hỏi xếp hạng trên số, chữ thao tác chỉ là thứ được đếm
+final _rankAskP = _viPair(
+  r' (?:ai|nhân viên nào|nv nào|người nào|bạn nào|món nào|ngày nào|giờ nào|ca nào|bàn nào) (?:\S+ ){0,3}(?:nhiều|ít|cao|thấp) nhất ',
+);
+// "có cách nào nâng giá trị đơn", "làm sao giữ chân khách cũ tốt hơn" sau lượt số liệu — xin tư vấn, không hỏi cách
+// dùng app (bộ O, đợt 15)
+final _bizGoalP = _viPair(
+  r' (?:nâng (?:giá trị|doanh|số|lợi)|giữ chân|kéo (?:khách|lại)|cải thiện|tốt hơn|hiệu quả hơn|'
+  r'tăng (?:doanh thu|doanh số|khách|đơn|lợi nhuận|lãi|lời)|giảm (?:chi phí|chi|hủy|huỷ|hao hụt|tồn)) ',
+);
+// chữ thao tác thật trong app — câu có chữ này không được coi là xin tư vấn tăng chỉ số (QC đợt 15)
+final _realEditP = _viPair(
+  r' (?:chỉnh|sửa|cài|bấm|ở đâu|kéo thả|nâng cấp|kiểu gì) ',
+);
+// Chữ chỉ về thứ vừa nói ("xem cái này trong app ở đâu", "nó bị âm thì chỉnh lại kiểu gì") — đợt 15
+final _pronounP = _viPair(
+  r' (?:nó|cái này|cái đó|số này|số đó|mấy món đó|món đó|khoản đó|chỗ đó) ',
+);
+// "kinh nghiệm giữ chân nv part time là gì" — hỏi chuyện chung, là câu mới
+final _generalAskP = _viPair(
+  r' (?:kinh nghiệm|mẹo|bí quyết|bí kíp|kiến thức) ',
+);
+
+// Kỳ nói trong câu (để đổi kỳ / mượn kỳ của câu trước) — đợt 14
+final _periodPhraseP = _viPair(
+  r'(?<= )(?:hôm nay|hôm qua|tuần (?:này|trước|rồi|qua)|tháng (?:này|trước|rồi|qua|\d+)(?: năm (?:nay|ngoái|rồi|trước))?|'
+  r'quý (?:\d|này|trước)|năm (?:nay|ngoái|trước|rồi|\d{4})|\d+ (?:ngày|tuần|tháng)(?: (?:qua|nay|gần đây|gần nhất))?|'
+  r'(?:sáng|trưa|chiều|tối) (?:nay|qua))(?= )',
+);
+final _leadFollowP = _viPair(
+  r'^ (?:thế còn|vậy còn|còn|vậy|thế|rồi|ok|à|ừ|với lại)(?= )',
+);
+final _leadConP = _viPair(r'^ (?:thế còn|vậy còn|còn)(?= )');
+// "còn bao nhiêu / còn mấy / còn hàng / còn nợ" — "còn" là động từ (tồn, dư), không phải nói tiếp
+final _conVerbP = _viPair(
+  r'^(?:bao nhiêu|mấy|bn|nhiêu|hàng|nợ|lại|tồn|dư|gì|nữa|bàn|chỗ)\b',
+);
+final _tailFollowP = _viPair(
+  // "tuần trước nữa" là kỳ khác — không cắt "nữa" sau trước / rồi / qua (QC đợt 14)
+  r' (?:thì sao|thế nào|ra sao|sao|vậy|nhỉ|đi|thì|(?<!(?:trước|rồi|qua) )nữa|nha|ạ)(?= +$)',
+);
+
+// Chào / cảm ơn / tạm biệt / chuyện trời mưa — không phải nói tiếp (bộ M 28/10)
+final _closingP = _viPair(
+  r' (?:bye|bai|tạm biệt|vậy thôi|thôi nha|mai nói tiếp|để sau|cảm ơn|cám ơn|thank|thanks|hiểu rồi|ok rồi|được rồi|là ai|'
+  r'ai làm ra|trời (?:mưa|nắng|nóng|lạnh)|mưa quá|chào|đá banh|đá bóng) ',
+);
+
+// "xem chi tiết đơn hàng thế nào" — hỏi cách xem trong app
+final _seeHowP = _viPair(
+  r' (?:xem|coi|mở|tìm) (?:\S+ ){0,4}(?:thế nào|như nào|sao|ra sao)(?= )',
+);
+
+/// Câu ngắn (≤ 10 chữ) không hỏi cách làm / chỗ mới / thao tác — sau lượt số liệu thì coi là nói tiếp (đợt 14).
+bool boomShortFollowUp(String query, {String? previous}) {
+  final s = _padVi(query);
+  final n = s.trim().split(' ').length;
+  final rank = _viHit(_rankAskP, s);
+  // chữ thao tác đã có ở câu trước ("tuần trước hủy bao nhiêu món" → "tiền hủy tổng cộng là nhiu") là thứ được đếm
+  // (chỉ với câu hỏi số; so trên chữ bỏ dấu để câu gõ không dấu vẫn khớp — QC đợt 15)
+  final prevWords = previous == null || !_viHit(_askNumberP, s)
+      ? const <String>{}
+      : _foldKeep(_padVi(previous)).trim().split(' ').toSet();
+  final own = s
+      .trim()
+      .split(' ')
+      .where((w) => !prevWords.contains(_foldKeep(w)))
+      .join(' ');
+  final goal =
+      previous != null && _viHit(_bizGoalP, s) && !_viHit(_realEditP, s);
+  // "nên cắt bớt chỗ nào" sau câu chi phí — chữ "cắt" là xin phân tích, không phải thao tác
+  final analysis =
+      previous != null && _viHit(_followAnalysisP, s) && !_viHit(_realEditP, s);
+  return (n <= 10 || (n <= 14 && _viHit(_followAnalysisP, s))) &&
+      !_viHit(_newPlaceP, s) &&
+      !_viHit(_closingP, s) &&
+      !_viHit(_generalAskP, s) &&
+      !_viHit(_seeHowP, s) &&
+      // câu báo lỗi app ("bếp ko nghe chuông khi có phiếu mới") / câu tự nói kỳ + chủ đề riêng ("tháng 9 lương nv
+      // tổng bao nhiêu") là câu mới (bộ N 28/10)
+      !_viHit(_appIssueP, s) &&
+      !(IntentClassifier.timeRangeIn(query) != null &&
+          (boomModuleTopics(query).isNotEmpty ||
+              kBoomDataIntents.contains(
+                IntentClassifier.classify(query).intent,
+              ))) &&
+      (goal || !boomAsksHowTo(query)) &&
+      (rank || goal || analysis || !_helpAction(own)) &&
+      !boomGeneralKnowledge(query);
+}
+
+// Chữ nối ý của câu hỏi tiếp sau bài hướng dẫn ("lỡ gộp nhầm thì tách lại đc ko", "mai có hàng thì bật lại sao",
+// "rồi cho nó chỉ bán hàng thôi thì chỉnh ở đâu") — đợt 15
+final _helpFollowCueP = _viPair(
+  r'(?:^ (?:lỡ|nếu|rồi|xong|mai|sau đó|vậy|ủa|à mà|mà|còn|thế còn|vậy còn)| (?:nó|họ|cái đó|cái này|chỗ đó|'
+  r'(?:bật|mở|làm|thêm|tách|đổi|gộp|in|hiện) lại|nói lại|giải thích lại|(?:không|hông|ko) hiểu)) ',
+);
+
+/// Hỏi cách làm / chỗ trong app về đúng thứ vừa nói ("nó bị âm thì chỉnh lại kiểu gì" sau câu tồn kho) — đợt 15
+bool boomHelpAboutPrevious(String query) {
+  final s = _padVi(query);
+  return s.trim().split(' ').length <= 12 &&
+      _viHit(_pronounP, s) &&
+      (boomAsksHowTo(query) ||
+          _viHit(_newPlaceP, s) ||
+          _viHit(_seeHowP, s) ||
+          // "ủa sao nó lại âm vậy" — báo lỗi số trong app (không phải "sao nó giảm vậy")
+          RegExp(
+            r' (?:kiểu gì|kieu gi|chỉnh|chinh|sửa|sua|nó (?:\S+ )?(?:âm|lỗi|sai|lệch|mất)|no (?:\S+ )?(?:am|loi|lech)) ',
+          ).hasMatch(s));
+}
+
+/// Câu ngắn sau lượt hướng dẫn có chữ nối ý → tìm bài theo cả câu trước khi câu này tự tìm không chắc (đợt 15).
+bool boomHelpFollowUp(String query) {
+  final s = _padVi(query);
+  return s.trim().split(' ').length <= 12 &&
+      _viHit(_helpFollowCueP, s) &&
+      !_viHit(_closingP, s) &&
+      !_viHit(_generalAskP, s) &&
+      !boomGeneralKnowledge(query) &&
+      !boomWantsDataAdvice(query) &&
+      !_viHit(_dataAdviceCueP, s) &&
+      !kBoomDataIntents.contains(IntentClassifier.classify(query).intent);
+}
+
+/// Câu ngắn sau lượt số liệu không tự nói kỳ → mượn kỳ của câu trước ("trung bình mỗi đơn nhiêu tiền" sau "hôm qua
+/// có bao nhiêu đơn"). Kỳ trước là "hôm nay" thì thôi (số theo mục mặc định tháng này) — đợt 14.
+String? boomCarryPeriod(String query, String previous) {
+  final s = _padVi(query);
+  final prev = _padVi(previous);
+  // câu nói tiếp rõ ("chi tiết hơn đi") đã được đọc kèm câu trước — gắn kỳ vào sẽ làm mất chủ đề câu trước
+  if (!boomShortFollowUp(query, previous: previous) ||
+      boomIsFollowUp(query, previous: previous) ||
+      IntentClassifier.timeRangeIn(query) != null ||
+      IntentClassifier.classify(query).intent == 'smalltalk') {
+    return null;
+  }
+  final rp = _foldKeep(prev) == prev ? _periodPhraseP.$2 : _periodPhraseP.$1;
+  final ms = rp.allMatches(prev).toList();
+  if (ms.length != 1) return null;
+  final p = ms.first[0]!;
+  if (RegExp(
+    r'^(?:hôm nay|hom nay|sáng nay|sang nay|trưa nay|trua nay|chiều nay|chieu nay|tối nay|toi nay)$',
+  ).hasMatch(p)) {
+    return null;
+  }
+  final plain = _foldKeep(s) == s;
+  return '${query.trim()} ${plain ? _foldKeep(p) : p}';
+}
+
+/// Câu nói tiếp NGẮN của câu số liệu → câu đầy đủ (đợt 14), null = không viết lại:
+/// - chỉ đổi kỳ ("còn hôm qua?", "tuần trước thì sao", "năm ngoái?") → câu trước bỏ kỳ cũ + kỳ mới
+/// - "còn …" đổi chủ đề, không nói kỳ ("còn món bán ế nhất?") → câu này + kỳ của câu trước
+String? boomRewriteFollowUp(String query, String previous) {
+  final s = _padVi(query);
+  final prev = _padVi(previous);
+  final plain = _foldKeep(s) == s;
+  final prevPlain = _foldKeep(prev) == prev;
+  RegExp r((RegExp, RegExp) p) => plain ? p.$2 : p.$1;
+  final rp = prevPlain ? _periodPhraseP.$2 : _periodPhraseP.$1;
+  if (s.trim().split(' ').length > 8) return null;
+  // câu trước có hai kỳ (câu so sánh) → không đoán được kỳ nào cần đổi
+  if (rp.allMatches(prev).length > 1) return null;
+  // câu này / câu trước khác kiểu gõ (có dấu / không dấu) → câu ghép đưa về không dấu cho luật bản không dấu khớp
+  String out(String x) => plain == prevPlain ? x : _foldKeep(x);
+  final lead = r(_leadFollowP).hasMatch(s);
+  final leadCon = r(_leadConP).hasMatch(s);
+  var core = s.replaceFirst(r(_leadFollowP), ' ');
+  for (var i = 0; i < 3; i++) {
+    core = ' ${core.replaceAll(r(_tailFollowP), ' ').trim()} ';
+  }
+  // câu nói tiếp rõ ("vậy sao giảm vậy", "chi tiết từng ngày") → để GPT đọc kèm lượt trước, không viết lại
+  if (r(_followUpStrongP).hasMatch(s) || r(_followUpWeakP).hasMatch(core)) {
+    return null;
+  }
+  final period = r(_periodPhraseP).firstMatch(core);
+  final rest = core.replaceAll(r(_periodPhraseP), ' ').trim();
+  if (period != null && rest.isEmpty) {
+    final prevNo = prev
+        .replaceAll(rp, ' ')
+        .replaceAll(RegExp(r' +'), ' ')
+        .trim();
+    return out('$prevNo ${period[0]}');
+  }
+  final pp = rp.firstMatch(prev);
+  final restP = ' $rest ';
+  if (lead &&
+      leadCon &&
+      period == null &&
+      pp != null &&
+      rest.isNotEmpty &&
+      rest.split(' ').length <= 5 &&
+      !r(_conVerbP).hasMatch(rest) &&
+      !_viHit(_newPlaceP, s) &&
+      // phần còn lại phải là một chủ đề số ("còn món bán ế", "còn doanh thu", "còn khách quay lại")
+      (kBoomDataIntents.contains(IntentClassifier.classify(rest).intent) ||
+          _viHit(_shopDataTopicP, restP) ||
+          _viHit(_weakTopicP, restP))) {
+    return out('$rest ${pp[0]}');
+  }
+  return null;
+}
 
 /// Câu xin tư vấn về chuyện kinh doanh CỦA QUÁN (kế hoạch, quảng cáo, khuyến mãi, khách, doanh thu…) → app tự đọc số
 /// liệu gửi kèm, không bắt chủ quán tự xem Báo cáo (Chủ Quán 24/10: "có thể tự vào đọc db mà").
@@ -257,12 +678,46 @@ bool boomMentionsShopBusiness(String query) =>
 // tổng cộng nhiêu", "hôm nay hủy mấy hđ"): có từ hỏi số + mốc thời gian → đọc số bán của quán và để GPT trả lời,
 // thay vì đưa bài hướng dẫn "na ná" (bộ câu số liệu độc lập 26/10: chọn đường bằng từ khoá tăng chậm trên câu mới).
 final _askNumberP = _viPair(
-  r' (?:bao nhiêu|bn|mấy|nhiêu|tổng|top|nhất|liệt kê|danh sách|(?:ai|nào) (?:đang|vào|làm|nghỉ|đi)) ',
+  r' (?:bao nhiêu|bn|bnhiu|bnhieu|nhiu|mấy|nhiêu|tổng|top|nhất|liệt kê|danh sách|(?:ai|nào) (?:đang|vào|làm|nghỉ|đi)) ',
 );
 final _periodP = _viPair(
-  r' (?:hôm nay|hnay|hôm qua|tuần (?:này|trước|rồi|qua)|tháng (?:này|trước|rồi|\d+)|năm nay|quý \d|'
-  r'(?:sáng|trưa|chiều|tối) (?:nay|qua)|ca (?:sáng|chiều|tối)|gần đây|tới giờ|từ đầu|\d+ ngày|\d+ \d+) ',
+  r' (?:hôm nay|hnay|hôm qua|tuần (?:này|trước|trc|rồi|qua)|tháng (?:này|trước|trc|rồi|\d+)|năm (?:nay|ngoái|trước|rồi)|quý (?:\d|này|trước)|'
+  r'(?:sáng|trưa|chiều|tối) (?:nay|qua)|ca (?:sáng|chiều|tối)|gần đây|tới giờ|từ đầu|\d+ ngày|\d+ \d+|'
+  r'\d+ (?:tuần|tháng) (?:nay|qua|rồi)) ',
 );
+
+// Động từ thao tác là THỨ ĐƯỢC ĐẾM ("hôm nay huỷ mấy đơn", "tuần trước xoá món bao nhiêu lần", "in lại mấy cái bill")
+// → câu xin số, không phải hỏi cách làm (bộ F 27/10). Có "cách / ở đâu / bị / lỗi / sao" thì vẫn là hỏi cách làm.
+final _countedP = _viPair(
+  r' (?:(?:mấy|bao nhiêu|bn) (?:cái |tờ |lần )?(?:đơn|bill|hđ|hoá đơn|hóa đơn|lần|ly|món|phiếu|khoản)|'
+  r'ai (?:\S+ ){1,3}nhiều nhất) ',
+);
+final _strictHowP = _viPair(
+  r' (?:cách|làm sao|ở đâu|chỗ nào|hướng dẫn|kiểu gì|sao để|bằng cách|sao|lỗi|'
+  // "bị huỷ / bị xoá" là thứ được đếm; "bị đơ / bị lỗi" là báo lỗi; "không in / không thanh toán được" cũng vậy
+  r'bị(?! (?:huỷ|hủy|xoá|xóa|trả|hoàn))|(?:1|một) (?:ngày|tuần|tháng|ca|đơn|khách)|lỡ|nhầm|lộn|khôi phục|lấy lại|mở lại|muốn|giờ (?:làm|thêm)|mỗi|tối đa|giới hạn|'
+  r'được phép|(?:không|ko|hông|k) (?:in|được|đc|lên|ra|vào|vô|hiện|chạy|nhận|thanh toán|cho)|'
+  r'được không|đc không|đc ko) ',
+);
+
+final _taxP = _viPair(r' (?:thuế(?! nhà| mặt bằng)|hộ kinh doanh) ');
+
+bool boomCountsShopAction(String query) {
+  final s = _padVi(query);
+  return hasHelpActionWord(query) &&
+      _viHit(_countedP, s) &&
+      _viHit(_periodP, s) &&
+      !_viHit(_strictHowP, s) &&
+      !boomAsksHowTo(query) &&
+      !boomAsksOtherStore(query);
+}
+
+/// Động từ thao tác thật (bỏ trường hợp động từ là thứ được đếm, hoặc là lời xin phân tích trên số của quán:
+/// "ca tối có cần thêm người", "nên nhập thêm bao nhiêu", "tỉ lệ huỷ đơn có cao không, làm sao giảm" — đợt 12).
+bool _helpAction(String query) =>
+    hasHelpActionWord(query) &&
+    !boomCountsShopAction(query) &&
+    !boomWantsDataAdvice(query);
 // hỏi luật / ngưỡng / cách tính → tư vấn chung, không đọc số
 final _askRuleP = _viPair(
   r' (?:nên|có nên|là đủ|bắt buộc|như thế nào|thế nào là|tính sao|quy định|theo luật|thường|nghỉ lễ|hợp lý|thì phải|phạt|xử lý|sao) ',
@@ -272,7 +727,7 @@ final _askRuleP = _viPair(
 // không lọc thì 48/100 câu hỏi cách làm / kiến thức bị kéo sang đọc số)
 final _salesNounP = _viPair(
   r' (?:bán|doanh thu|doanh số|dt|đơn|bill|hđ|hoá đơn|hóa đơn|ly|phần|món|khách|bàn|mang về|giao hàng|huỷ|hủy|lời|lãi|lỗ|'
-  r'tiền mặt|chuyển khoản|thu được|thu về) ',
+  r'tiền mặt|chuyển khoản|thu được|thu đc|thu về) ',
 );
 final _notSalesNumberP = _viPair(
   r' (?:(?:mấy|bao nhiêu) (?:giờ|ngày|lần|độ|phần trăm|máy|người|tuổi)|ngày mấy|thuế|bảo hiểm|giá(?! trị)|gói|cảm ơn|tết|lễ) ',
@@ -280,13 +735,18 @@ final _notSalesNumberP = _viPair(
 
 bool boomAsksShopNumber(String query) {
   final s = _padVi(query);
+  if (boomCountsShopAction(query) &&
+      !_viHit(_askRuleP, s) &&
+      !boomGeneralKnowledge(query)) {
+    return true;
+  }
   return _viHit(_askNumberP, s) &&
       _viHit(_periodP, s) &&
       _viHit(_salesNounP, s) &&
       !_viHit(_notSalesNumberP, s) &&
       !_viHit(_askRuleP, s) &&
       !boomAsksHowTo(query) &&
-      !hasHelpActionWord(query) &&
+      !_helpAction(query) &&
       !boomGeneralKnowledge(query) &&
       !boomAsksOtherStore(query);
 }
@@ -343,6 +803,18 @@ const _followUpFiller = {
 /// không có nội dung riêng ("thêm nhân viên mới đi", "giải thích phiếu tạm tính" là câu hỏi mới).
 bool boomIsFollowUp(String query, {String? previous}) {
   final s = _padVi(query);
+  // dấu hiệu nói tiếp rõ ràng trong câu ngắn ("làm rồi mà vẫn không được", "món đó tháng trước thì sao") — đợt 14
+  if (previous != null && !_viHit(_newPlaceP, s)) {
+    final n = s.trim().split(' ').length;
+    if (n <= 12 && _viHit(_followUpStrongP, s)) return true;
+    if (n <= 6 &&
+        _viHit(_followUpWeakP, s) &&
+        !hasHelpActionWord(query) &&
+        !_viHit(_weakTopicP, s) &&
+        !_viHit(_shopDataTopicP, s)) {
+      return true;
+    }
+  }
   if (!_followUpCue.hasMatch(s)) return false;
   final rest = s
       .replaceAll(_followUpCue, ' ')
@@ -359,7 +831,9 @@ bool boomIsFollowUp(String query, {String? previous}) {
 }
 
 /// Có nhắc kỳ cụ thể ("hôm nay", "tuần trước"…) — không nhắc thì tư vấn theo số tháng này (đủ đơn để phân tích).
-final _mentionsPeriod = RegExp(r' (?:hôm nay|hôm qua|nay|tuần|tháng) ');
+final _mentionsPeriodP = _viPair(
+  r' (?:hôm nay|hôm qua|nay|tuần|tháng|ngày|quý|năm) ',
+);
 
 /// Câu chào / cảm ơn / hỏi Boom là ai — đáp thân thiện ngay trên máy, không tốn lượt GPT (trước đây trả
 /// "Bé Boom chưa hiểu rõ lắm ạ" — Chủ Quán 24/10: Boom bị luật kìm).
@@ -380,11 +854,15 @@ String boomSmalltalkReply(String query, String goi) {
 /// chế độ hướng dẫn app (QC 24/10: 32/40 câu loại này bị kéo vào đó → GPT từ chối / thiếu kiến thức nghề).
 final _generalKnowledge = RegExp(
   r' (?:công thức (?:nấu|pha|làm|nước|sốt)|cách (?:nấu|pha|làm món|làm nước|ướp|ninh)|ninh xương|ướp|định lượng|'
-  r'làm được (?:bao nhiêu|mấy)|bảo quản|để được mấy ngày|để ngoài|hết hạn|an toàn thực phẩm|ngộ độc|dịch|tiếng anh|'
+  r'làm được (?:bao nhiêu|mấy)(?! (?:giờ|tiếng|ca|ngày công|tiền))|bảo quản|để được mấy ngày|để ngoài|hết hạn|an toàn thực phẩm|ngộ độc|dịch(?! vụ)|tiếng anh|'
   r'viết (?:giúp|giùm|bài|tin|câu|thư|nội dung|lời)|bài đăng|đăng tuyển|tuyển (?:nhân viên|người|phục vụ)|hàm excel|'
   r'google sheets|sheets|công thức excel|lương tối thiểu|thử việc|hợp đồng lao động|bảo hiểm|nghỉ ngang|giữ lương|'
   r'máy pha|tủ mát|tủ đông|nên mua|loại nào tốt|trang trí|decor|nhạc|wifi cho khách|phòng cháy|chữa cháy|pccc|bình chữa cháy|'
-  r'giấy phép|rượu bia|bán bia|đau lưng|mỏi chân|sức khoẻ|sức khỏe|chuyện cười|kể chuyện|tình cảm|người yêu|bồ) ',
+  r'giấy phép|rượu bia|bán bia|đau lưng|mỏi chân|sức khoẻ|sức khỏe|chuyện cười|kể chuyện|tình cảm|người yêu|bồ|'
+  // lạc đề (đợt 12)
+  r'thời tiết|có mưa|mưa (?:không|ko|hông)|bóng đá|đá banh|đá bóng|đội tuyển|(?:bóng|trận|việt nam)(?: \S+){0,2} đá mấy giờ|uống thuốc|'
+  r'(?:bị|đang|lên cơn) sốt|sốt \d+ độ|xổ số|giá vàng|'
+  r'phim (?:gì|nào|hay)|bài tập) ',
 );
 
 // Câu hỏi so sánh / tình hình các chi nhánh CỦA CHỦ QUÁN ("so sánh doanh thu 2 quán tháng này", "chi nhánh nào bán
@@ -401,9 +879,10 @@ const _chainBareChuoi = r' chuỗi ';
 // là câu so sánh / xếp hạng ("so sánh 2 quán", "quán nào…").
 const _chainWeakSrc =
     r' (?:các quán|2 quán|hai quán|3 quán|ba quán|mấy quán|từng quán|các cơ sở|2 cơ sở|hai cơ sở|3 cơ sở|từng cơ sở|các cửa hàng|2 cửa hàng|hai cửa hàng|từng cửa hàng|'
+    r'2 tiệm|hai tiệm|3 tiệm|các tiệm|mấy tiệm|từng tiệm|tiệm kia|'
     r'quán kia|cửa hàng kia|quán còn lại|cửa hàng còn lại|so sánh quán \S+(?: \S+){0,3} (?:với|và) quán) ';
 const _chainMineSrc =
-    r' (?:(?:của|bên) (?:tôi|mình|tui|tớ|em|chúng tôi|nhà mình)|quán mình|nhà mình|so sánh|quán nào|cửa hàng nào) ';
+    r' (?:(?:của|bên) (?:tôi|mình|tui|tớ|em|chúng tôi|nhà mình)|quán mình|nhà mình|so sánh|quán nào|cửa hàng nào|tiệm nào) ';
 const _chainAskSrc =
     r' (?:so sánh|so với|doanh thu|doanh số|bán|đơn|khách|tình hình|kinh doanh|hơn|kém|tốt|tệ|yếu|mạnh|nhất|'
     r'thế nào|ra sao|nhận xét|phân tích|đánh giá|tổng|tăng|giảm|chênh|tụt|cải thiện|sao rồi|dạo này|dồn|xếp người|'
@@ -417,7 +896,7 @@ const _chainSetupSrc =
     r'nâng cấp|gói|phí|để xem|để coi|xem được|coi được|được xem|được coi|xem chung|xem tổng|gom|là gì|hoạt động thế nào|'
     r'hoạt động ra sao|cách (?:in|tạo|thêm|xem|cài|dùng|mở|đổi|gỡ|xoá|xóa|chuyển)|chuỗi ngày|chuỗi cung ứng|cung ứng|'
     r'đối diện|bên kia|bên cạnh|gần đây|gần trường|quanh đây|xung quanh|cạnh nhau|ăn vặt|mặt bằng|việt nam|thị trường|'
-    r'nổi tiếng|thương hiệu|đối thủ|số điện thoại|ngân hàng) ';
+    r'nổi tiếng|thương hiệu|đối thủ|số điện thoại|ngân hàng|kiểu gì|(?:ko|k|hông) thấy|xem gộp|chỗ xem) ';
 
 // Bỏ dấu nhưng GIỮ cú pháp regex (foldVietnamese xoá mọi ký tự không phải chữ / số)
 String _foldKeep(String s) => s
@@ -466,21 +945,26 @@ const _moduleTopicSrc = {
   BoomModule.finance:
       r' (?:thu chi|chi phí|khoản chi|tiền chi|chi tiêu|chi ra|tiền ra|tiền vào|thu vào|lợi nhuận|lời lãi|có lãi|có lời (?:không|chưa|bao nhiêu|nhiều|ít)|'
       r'lãi bao nhiêu|lời bao nhiêu|lỗ không|bị lỗ|đang lỗ|lời hay lỗ|lãi hay lỗ|dòng tiền|sổ quỹ|quỹ tiền mặt|tiền mặt|'
-      r'tiền điện|tiền nước|tiền thuê|tiền nhà|chi nhiều|chi những gì|chi gì|chi hết|lãi lỗ|lời lỗ|(?:lời|lãi) (?:không|ko|hông|chưa)) ',
+      r'tiền điện|tiền nước|tiền thuê|tiền nhà|chi nhiều|tổng chi(?! nhánh| nhanh)|chi(?! nhánh| nhanh) (?:\S+ ){0,2}hết|chi những gì|chi (?:những )?khoản (?:gì|nào)|chi gì|chi hết|lãi lỗ|lời lỗ|(?:lời|lãi) (?:không|ko|hông|chưa)) ',
   BoomModule.kho:
       r' (?:tồn kho|còn tồn|hàng tồn|kho còn|kho có|trong kho còn|(?:còn|có|hết) (?:\S+ ){0,2}trong kho|kho hàng|giá trị kho|hết hàng|sắp hết|nhập hàng|nhập kho|hàng nhập|'
       r'nguyên liệu (?:nào|còn|sắp|hết|tồn|nhập)|còn bao nhiêu (?:hộp|kg|gói|lon|chai|thùng|cái|ly|bịch|túi)|hao hụt|'
-      r'hư hỏng|đổ bỏ|hàng hết hạn|nguyên liệu hết hạn|nhà cung cấp nào|nhập của ai|còn nhiêu(?! (?:ngày|lâu|tháng|năm|thời gian))) ',
+      r'hư hỏng|đổ bỏ|hàng hết hạn|nguyên liệu hết hạn|nhà cung cấp nào|nhập của ai|còn nhiêu(?! (?:ngày|lâu|tháng|năm|thời gian))|'
+      // bộ G 27/10: "trân châu còn bao nhiêu", "còn mấy chai siro", "đường còn nhiu kg"
+      r'(?:xài|dùng) (?:hết )?(?:bao nhiêu|nhiêu|nhiu)|nhập thêm (?:bao nhiêu|nhiêu|mấy)|'
+      r'(?<!(?:gói|hạn|điểm|ví|tiền|bàn|két|quỹ|mã|voucher|mức|lượt|nợ|dư)(?: \S+){0,2} )còn (?:bao nhiêu|nhiêu|nhiu)(?= (?:(?:vậy|ạ|nhỉ|á|ha|hả|z|vay|a|nhi) )?$)|còn (?:mấy|nhiu) (?:hộp|kg|ký|gói|lon|chai|thùng|bịch|túi|lít|bao)) ',
   BoomModule.nhanSu:
       r' (?:chấm công|ca làm|giờ làm|làm (?:bao nhiêu|mấy) (?:giờ|ca|tiếng)|quên chấm|bảng lương|kỳ lương|quỹ lương|tổng lương|'
       r'lương tháng (?:này|trước)|lương tuần (?:này|trước)|(?:tháng|tuần) (?:này|trước) lương|trả lương tháng|nhân viên nào|'
-      r'ai làm|ai đi làm|ai nghỉ làm|ai nghỉ|làm nhiều nhất|làm ít nhất|đi làm (?:bao nhiêu|mấy)|lương (?:nv|nhân viên) (?:tháng|tuần)|'
-      r'ca (?:sáng|chiều|tối) (?:\S+ ){0,2}(?:có )?(?:ai|mấy người)|nào vào ca|ai vào ca|vào ca (?:rồi|chưa)|'
-      r'lương (?:\S+ ){0,3}(?:tháng|tuần) (?:này|trước)|(?:tháng|tuần|kỳ) (?:này|trước|rồi) (?:\S+ ){0,3}trả lương|trả lương (?:\S+ ){0,3}(?:tháng|tuần|kỳ) (?:này|trước)|'
+      r'ai làm(?! ra)|ai đi làm|ai nghỉ làm|ai nghỉ|làm nhiều nhất|làm ít nhất|đi làm (?:bao nhiêu|mấy)|lương (?:nv|nhân viên) (?:tháng|tuần)|'
+      r'ca (?:sáng|chiều|tối) (?:\S+ ){0,2}(?:có )?(?:ai|mấy người)|nào vào ca|ai (?:đang )?(?:vào|vô|trong) ca|vào ca (?:rồi|chưa)|'
+      r'lương (?:\S+ ){0,3}(?:tháng|tuần) (?:này|trước)|(?:tháng|tuần|kỳ) (?:này|trước|rồi|\d+) (?:\S+ ){0,3}trả lương|trả lương (?:\S+ ){0,3}(?:tháng|tuần|kỳ) (?:này|trước)|'
       // "nên trả lương nhân viên bao nhiêu" là tư vấn chung → chỉ nhận "tiền lương" kèm kỳ / tên
       r'tiền lương (?:\S+ ){0,3}(?:tháng|tuần|kỳ) (?:này|trước)|'
       // bộ E 26/10: giờ làm / đi trễ / lương tháng N
-      r'làm (?:\S+ ){0,2}(?:mấy|bao nhiêu) (?:tiếng|giờ)|đi trễ|giờ công|lương tháng \d+) ',
+      r'làm (?:\S+ ){0,2}(?:mấy|bao nhiêu) (?:tiếng|giờ)|đi trễ|giờ công|lương tháng \d+|chi (?:tiền )?lương|lương (?:\S+ ){0,3}phải trả|'
+      // bộ N (đợt 15): "tháng 9 lương nv tổng bao nhiêu"
+      r'(?<!(?:trả|nên) )lương (?:nv|nhân viên) (?!(?:\S+ ){0,2}chiếm)(?:\S+ ){0,2}(?:tổng|hết|bao nhiêu|nhiêu|nhiu|bn)) ',
   BoomModule.khach:
       r' (?:khách quen|khách hàng (?:nào|của|quay|mới|thân)|khách mới|khách quay lại|thành viên (?:mới|của)|tích điểm|'
       r'ví khách|số dư ví|nạp ví|khách vip|khách chi|khách nào|khách cũ|top khách|khách (?:nào )?(?:mua|ghé) nhiều nhất) ',
@@ -491,9 +975,9 @@ const _moduleTopicSrc = {
 // Câu xin SỐ / phân tích (không phải hỏi cách làm)
 const _moduleAskSrc =
     r' (?:bao nhiêu|mấy|nào|nhất|tổng|tình hình|phân tích|đánh giá|nhận xét|so sánh|so với|tăng|giảm|ra sao|'
-    r'kiểm tra|xem giúp|báo cáo|liệt kê|danh sách|hiệu quả|tháng này|tuần này|hôm nay|hôm qua|tháng trước|tuần trước|'
+    r'kiểm tra|xem giúp|xem giùm|coi giùm|xem dùm|bất thường|báo cáo|liệt kê|danh sách|hiệu quả|tháng này|tuần này|hôm nay|hôm qua|tháng trước|tuần trước|'
     r'kỳ này|có lãi|lỗ không|lời hay lỗ|lãi hay lỗ|tốn|nhiều không|ít không|những gì|chi gì|sắp hết|hết hàng|'
-    r'quay lại|ai làm|có ai|còn nhiêu(?! (?:ngày|lâu|tháng|năm|thời gian))|top|(?:tháng|tuần) (?!13 )\d+|quý \d|hết nhiêu) ';
+    r'quay lại|ai làm|có ai|ai đang|còn (?:nhiêu|nhiu)(?! (?:ngày|lâu|tháng|năm|thời gian))|\d+ ngày (?:qua|nay|gần đây)|top|(?:tháng|tuần) (?!13 )\d+|quý \d|hết nhiêu|bn|nhiu|bnhiu) ';
 // Hỏi cách làm / thao tác / lỗi / kiến thức chung → hướng dẫn hoặc tư vấn như cũ
 const _moduleHowSrc =
     r' (?:ở đâu|chỗ nào|mục nào|tab nào|bấm|nút|màn hình|cách|làm sao để (?:thêm|tạo|nhập|sửa|xoá|xóa|in|xuất|xem|mở|'
@@ -505,7 +989,10 @@ const _moduleHowSrc =
     // "sao báo cáo lãi lỗ ko có giá vốn" — màn hình thiếu số là hỏi về app (26/10)
     r'(?:báo cáo|màn|tab|mục) (?:\S+ ){0,3}(?:không|ko|chưa) (?:có|hiện|ra)|'
     // QC 26/10: "lãi lỗ tính như thế nào", "lương tháng 13 có bắt buộc không", "ca tối mấy người là đủ"
-    r'như thế nào|tính thế nào|tính sao|là đủ|bắt buộc|tính trên|thì tính|thì nên|sửa sao|nên có|nên chạy) ';
+    r'như thế nào|tính thế nào|tính sao|là đủ|bắt buộc|tính trên|thì tính|thì nên|sửa sao|nên có|nên chạy|'
+    // bộ G 27/10: báo lỗi / hỏi chỗ ghi ("lệch nhau hoài", "sao ít bất thường", "ghi vô đâu", "ko thấy khoản lương")
+    r'lệch nhau|sao lệch|sao (?:ít|nhiều|cao|thấp) bất thường|(?:ghi|nhập|bấm|để|lưu) (?:\S+ ){0,2}(?:vô|vào) đâu|(?:ko|hông) thấy|nó báo|báo hết hạn|(?:kho|tồn|nguyên liệu) (?:\S+ ){0,2}bị âm|trong app|'
+    r'(?:báo cáo|màn|app|bên) (?:\S+ ){0,4}khác (?:với|nhau)|khác (?:với|nhau) (?:\S+ ){0,3}(?:báo cáo|thu chi|sổ)) ';
 final _moduleTopics = {
   for (final e in _moduleTopicSrc.entries) e.key: _viPair(e.value),
 };
@@ -515,7 +1002,7 @@ final _moduleHow = _viPair(_moduleHowSrc);
 /// Các module mà câu hỏi xin SỐ LIỆU ("tháng này chi phí gì nhiều nhất", "hàng nào sắp hết", "ai làm nhiều giờ nhất",
 /// "voucher nào hiệu quả"). Câu hỏi cách làm / báo lỗi / luật → rỗng (đi hướng dẫn / tư vấn như cũ).
 Set<BoomModule> boomModuleTopics(String query) {
-  final s = _padVi(query);
+  final s = _padVi(query).replaceAll(_adviceWhereP(query), ' ');
   final plain = _foldKeep(s) == s;
   RegExp r((RegExp, RegExp) p) => plain ? p.$2 : p.$1;
   // Câu kiến thức chung / chi nhánh (đã có đường riêng) → không đọc số module
@@ -540,6 +1027,11 @@ typedef BoomModuleLoader =
       String query,
     );
 final boomModuleLoaderProvider = Provider<BoomModuleLoader?>((ref) => null);
+
+/// Cổng đọc số nhanh (thử nghiệm thay bằng bản giả). null → cổng chỉ đọc thật.
+final boomReadOnlyDataProvider = Provider<BoomReadOnlyDataService?>(
+  (ref) => null,
+);
 
 /// Quyền của người hỏi (thử nghiệm thay bằng bản giả). null → đọc chặt từ máy chủ.
 final boomPermsLoaderProvider =
@@ -688,6 +1180,10 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
   String? _xungHo;
   bool _xungHoLoaded = false;
 
+  /// Khoảng ngày của câu số nhanh (kỳ cũ hoặc kỳ dài đợt 11).
+  BoomPeriodRange _rangeOf(ClassificationResult c) =>
+      boomRangeOf(c.entities['time_range'] as String?, DateTime.now());
+
   String get _goi =>
       boomGoiNguoiDung(_xungHo, ref.read(sessionProvider)?.displayName);
 
@@ -795,11 +1291,26 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
   }
 
   Future<void> _processReply(
-    String query, {
+    String rawQuery, {
     bool isRetry = false,
     String? sourceUserMessageId,
   }) async {
     final generation = _generation;
+    // Tìm bài / chọn đường trên câu đã chuẩn hoá teencode; GPT và nhật ký nhận câu gốc (đợt 13)
+    // nút gợi ý bấm lại phải khớp nguyên văn nhãn (nhãn cắt ở "k…" — QC đợt 13)
+    var query = _helpLabels.containsKey(rawQuery.trim())
+        ? rawQuery
+        : boomNormalizeTeen(rawQuery);
+    // câu nói tiếp ngắn của câu số liệu → câu đầy đủ ("còn hôm qua?" → "doanh thu … hôm qua") — đợt 14
+    final prevTurn = _lastTurn;
+    if (prevTurn != null &&
+        (prevTurn.shopData || prevTurn.modules || prevTurn.chain) &&
+        DateTime.now().difference(prevTurn.at) < const Duration(minutes: 30)) {
+      query =
+          boomRewriteFollowUp(query, prevTurn.turn.question) ??
+          boomCarryPeriod(query, prevTurn.turn.question) ??
+          query;
+    }
     final classification = IntentClassifier.classify(query);
 
     // Current pilot only executes direct read-only DB queries for these intents.
@@ -812,7 +1323,9 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         !otherStore &&
         !boomWantsAdvice(query) &&
         !wantsDataAdvice &&
-        !boomAsksHowTo(query);
+        !boomAsksHowTo(query) &&
+        // "doanh thu bao nhiêu thì phải đóng thuế" là hỏi luật (bộ F, G 27/10)
+        !_viHit(_taxP, _padVi(query));
     // Câu nói tiếp (trong 30 phút): tìm hướng dẫn theo cả câu trước, tư vấn kèm lượt trước.
     final last = _lastTurn;
     final followUp =
@@ -821,9 +1334,28 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
             classification.intent != 'smalltalk' &&
             last != null &&
             DateTime.now().difference(last.at) < const Duration(minutes: 30) &&
-            boomIsFollowUp(query, previous: last.turn.question)
+            (boomIsFollowUp(query, previous: last.turn.question) ||
+                // sau lượt số liệu / tư vấn: câu ngắn không hỏi cách làm / chỗ mới mặc định là nói tiếp (bộ M 28/10:
+                // người dùng nói tiếp rất nhiều kiểu — "mấy giờ đông nhất", "có cách nào tăng ko", "nói lại ngắn gọn")
+                ((last.shopData || last.advice || last.modules || last.chain) &&
+                    boomShortFollowUp(query, previous: last.turn.question)) ||
+                boomHelpAboutPrevious(query) ||
+                // sau lượt hướng dẫn: câu ngắn có chữ nối ý — chỉ dùng câu ghép khi câu này tự tìm không chắc (đợt 15)
+                (!last.shopData &&
+                    !last.advice &&
+                    !last.modules &&
+                    !last.chain &&
+                    boomHelpFollowUp(query)))
         ? last
         : null;
+    final helpFollowOnly =
+        followUp != null &&
+        (boomHelpAboutPrevious(query) ||
+            (!followUp.shopData &&
+                !followUp.advice &&
+                !followUp.modules &&
+                !followUp.chain &&
+                !boomIsFollowUp(query, previous: followUp.turn.question)));
     var followUsed = false;
 
     // 1. Loading Phase — hiện ngay, trước khi nạp bộ hướng dẫn (tránh gửi chồng khi chờ).
@@ -861,10 +1393,13 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
                 ])
               : decideHelp(index, query);
           // Câu nói tiếp (không có nội dung riêng) → tìm theo câu trước + câu này
-          if (!picked && followUp != null) {
+          if (!picked &&
+              followUp != null &&
+              !(helpFollowOnly && help.decision == HelpDecision.answer)) {
             followUsed = true;
             // Lượt trước là số bán / tư vấn → tư vấn tiếp (bên dưới), không để bài hướng dẫn "cướp" câu nói tiếp
-            help = followUp.shopData || followUp.advice
+            // (hỏi cách làm về đúng thứ vừa nói thì vẫn tìm bài theo câu ghép — đợt 15)
+            help = (followUp.shopData || followUp.advice) && !helpFollowOnly
                 ? const HelpResult(HelpDecision.none, [])
                 : decideHelp(index, '${followUp.turn.question} $query');
           }
@@ -902,7 +1437,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
             chainStore != null &&
             chainStore.isNotEmpty &&
             // Bài hướng dẫn chắc chắn + động từ thao tác ("in hoá đơn chi nhánh") → hướng dẫn, không so số
-            !(helpWins && hasHelpActionWord(query)) &&
+            !(helpWins && _helpAction(query)) &&
             (boomAsksChain(query) || chainFollow)
         ? await _chainFacts(
             chainStore,
@@ -962,29 +1497,30 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         !picked &&
         // Câu xin phân tích không có động từ thao tác ("báo cáo xem", "phân tích giúp") thắng cả bài hướng dẫn
         // "Báo cáo" (bộ tìm hay khớp chữ "báo cáo"); câu hỏi cách làm ("xuất báo cáo thế nào") vẫn đi hướng dẫn.
-        ((wantsDataAdvice && (!helpWins || !hasHelpActionWord(query))) ||
-            (followUsed && followUp!.shopData) ||
+        ((wantsDataAdvice && (!helpWins || !_helpAction(query))) ||
+            (followUsed && followUp!.shopData && !helpFollowOnly) ||
             (boomMentionsShopBusiness(query) &&
                 !helpWins &&
-                !hasHelpActionWord(query) &&
+                !_helpAction(query) &&
                 !boomAsksHowTo(query) &&
                 !boomGeneralKnowledge(query)) ||
             // đã khớp một mục (lương, ca, khách…) → để nhánh số theo mục đọc, khỏi đọc thêm số bán
             (boomAsksShopNumber(query) && boomModuleTopics(query).isEmpty));
     // Câu xin số các module (thu chi, kho, nhân sự, khách, khuyến mãi) → đọc CHỈ ĐỌC theo quyền của người hỏi
-    final moduleFollow = followUsed && followUp!.modules;
+    final moduleFollow = followUsed && followUp!.modules && !helpFollowOnly;
     final topics =
         chainFacts == null &&
             !usesData &&
             !otherStore &&
             !picked &&
-            !(helpWins && hasHelpActionWord(query)) &&
+            !(helpWins && _helpAction(query)) &&
             aiForAdvice != null &&
             storeId != null &&
             storeId.isNotEmpty
-        ? boomModuleTopics(
-            moduleFollow ? '${followUp.turn.question} $query' : query,
-          )
+        // câu nói tiếp ("đề xuất giúp cách cắt giảm") → mục theo câu trước; ghép hai câu thì chữ "cách" làm mất mục
+        ? (moduleFollow && boomModuleTopics(query).isEmpty
+              ? boomModuleTopics(followUp.turn.question)
+              : boomModuleTopics(query))
         : const <BoomModule>{};
     final mod = topics.isEmpty
         ? null
@@ -1001,7 +1537,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
     if (chainFacts != null) {
       final reply = await aiForAdvice!.advise(
         storeId: storeId!,
-        question: query,
+        question: rawQuery,
         chain: chainFacts,
         history: history,
         memorySince: _chatStartedAt,
@@ -1017,7 +1553,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         serverWrote = true;
         helpTool = 'boom_tu_choi';
       } else {
-        aiForAdvice.logUnanswered(storeId: storeId, question: query);
+        aiForAdvice.logUnanswered(storeId: storeId, question: rawQuery);
         helpTool = 'boom_so_lieu_chuoi_du_phong';
         fullReply =
             '${_chainText(chainFacts)}\nBé Boom chưa phân tích được câu này lúc này ạ.';
@@ -1040,7 +1576,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         modFacts == null &&
         mod.denied.isNotEmpty &&
         // Bài hướng dẫn khớp chắc chắn + động từ thao tác → để hướng dẫn trả lời, không chặn
-        !(helpWins && hasHelpActionWord(query)) &&
+        !(helpWins && _helpAction(query)) &&
         !dataAdvice) {
       // Không có quyền xem mục đó trong app → nói rõ, không gọi GPT, không đọc số
       final names = [
@@ -1058,8 +1594,13 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         storeId != null &&
         storeId.isNotEmpty) {
       // Tư vấn trên số liệu thật: đọc số (chỉ đọc) → GPT phân tích. GPT chưa bật / lỗi → hiện số đã đọc.
-      final factsQuery = followUsed
-          ? '${followUp!.turn.question} $query'
+      // câu nói tiếp: không tự nói kỳ → kỳ của câu trước; có kỳ → kỳ của câu này (ghép hai câu dễ ra hai kỳ / "từng
+      // ngày" bị coi là kỳ lạ → rơi về tháng này) — đợt 14
+      final ownRange = IntentClassifier.timeRangeIn(query);
+      final factsQuery = !followUsed
+          ? query
+          : ownRange == null || ownRange == 'unsupported'
+          ? followUp!.turn.question
           : query;
       // Nhân viên không được xem Báo cáo → tư vấn chung, không kèm số bán hàng
       final salesPerms = await _perms(storeId);
@@ -1076,7 +1617,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
       if (!_mounted || generation != _generation) return;
       final reply = await aiForAdvice.advise(
         storeId: storeId,
-        question: query,
+        question: rawQuery,
         facts: facts,
         modules: modFacts,
         history: history,
@@ -1098,7 +1639,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         helpTool = 'boom_tu_choi';
       } else {
         // GPT chưa bật / hết lượt / lỗi → hiện số đã đọc + ghi hàng chờ cải thiện
-        aiForAdvice.logUnanswered(storeId: storeId, question: query);
+        aiForAdvice.logUnanswered(storeId: storeId, question: rawQuery);
         helpTool = 'boom_so_lieu_du_phong';
         fullReply = facts == null
             ? (salesPerms != null && !boomCanSeeSales(salesPerms)
@@ -1111,7 +1652,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
       // Phân tích số module (đã kiểm quyền). GPT chưa bật / lỗi → hiện số chính đã đọc.
       final reply = await aiForAdvice!.advise(
         storeId: storeId!,
-        question: query,
+        question: rawQuery,
         modules: modFacts,
         history: history,
         memorySince: _chatStartedAt,
@@ -1127,7 +1668,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         serverWrote = true;
         helpTool = 'boom_tu_choi';
       } else {
-        aiForAdvice.logUnanswered(storeId: storeId, question: query);
+        aiForAdvice.logUnanswered(storeId: storeId, question: rawQuery);
         helpTool = 'boom_so_lieu_module_du_phong';
         fullReply =
             '${boomModulesText(modFacts, _formatCurrency)}\nBé Boom chưa phân tích được câu này lúc này ạ.';
@@ -1156,7 +1697,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         final answered = canAsk
             ? await ai.ask(
                 storeId: storeId,
-                question: query,
+                question: rawQuery,
                 chunks: ctx,
                 packVersion: packVersion,
               )
@@ -1199,7 +1740,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
           helpTool = 'huong_dan';
         } else if (weakHits) {
           // GPT lỗi / hết lượt với đoạn chỉ gần đúng → như câu chưa có hướng dẫn
-          ai.logUnanswered(storeId: storeId, question: query);
+          ai.logUnanswered(storeId: storeId, question: rawQuery);
         } else {
           fullReply =
               'Bé Boom chưa chắc $_goi hỏi phần nào. Có phải một trong các mục dưới đây không ạ? '
@@ -1210,13 +1751,13 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
       } else if (canAsk) {
         final reply = await ai.advise(
           storeId: storeId,
-          question: query,
+          question: rawQuery,
           history: history,
           memorySince: _chatStartedAt,
         );
         if (!_mounted || generation != _generation) return;
         if (reply == null) {
-          ai.logUnanswered(storeId: storeId, question: query);
+          ai.logUnanswered(storeId: storeId, question: rawQuery);
         } else if (reply.blocked) {
           fullReply = reply.answer;
           serverWrote = true;
@@ -1240,15 +1781,15 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         final perms = await _perms(storeId);
         if (!_mounted || generation != _generation) return;
         final blockedModule = switch (classification.intent) {
-          'low_stock' =>
+          'low_stock' || 'purchase_forecast' =>
             perms != null && boomCanSeeStock(perms) ? null : 'Kho hàng',
           'staff_on_shift' =>
             perms != null && boomCanSeeShifts(perms) ? null : 'Chấm công',
           _ => perms != null && boomCanSeeSales(perms) ? null : 'Báo cáo',
         };
-        late final readOnlyData = BoomReadOnlyDataService(
-          Supabase.instance.client,
-        );
+        late final readOnlyData =
+            ref.read(boomReadOnlyDataProvider) ??
+            BoomReadOnlyDataService(Supabase.instance.client);
         final storeName = session?.storeName?.trim().isNotEmpty == true
             ? session!.storeName!.trim()
             : 'quán';
@@ -1259,17 +1800,26 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
               ? 'Bé Boom chưa kiểm tra được quyền xem số liệu lúc này. $_goi thử lại sau một chút nhé!'
               : 'Bé Boom chưa xem được số liệu $blockedModule vì tài khoản của $_goi chưa được mở mục này trong app. '
                     '$_goi nhờ chủ quán hoặc quản lý xem giúp, hoặc xin cấp quyền nhé ạ.';
-        } else if (classification.entities['time_range'] == 'unsupported' &&
-            const {
-              'revenue_summary',
-              'sales_comparison',
-              'top_products',
-              'slow_products',
-            }.contains(classification.intent)) {
-          // Kỳ Boom chưa đọc được ("tháng 5", "năm nay", "7 ngày qua") — nói rõ, không trả nhầm số hôm nay.
+        } else if ((classification.entities['time_range'] == 'unsupported' &&
+                const {
+                  'revenue_summary',
+                  'sales_comparison',
+                  'top_products',
+                  'slow_products',
+                }.contains(classification.intent)) ||
+            // xếp hạng món đọc từng món của mọi đơn → tối đa 92 ngày (đợt 11)
+            (const {
+                  'top_products',
+                  'slow_products',
+                }.contains(classification.intent) &&
+                _rangeOf(
+                      classification,
+                    ).end.difference(_rangeOf(classification).start).inDays >
+                    92)) {
+          // Kỳ Boom chưa đọc được ("hôm kia", "20/10", "tháng 5 năm ngoái") — nói rõ, không trả nhầm số hôm nay.
           fullReply =
-              'Bé Boom hiện xem được số liệu theo: hôm nay, hôm qua, tuần này, tuần trước, tháng này, tháng trước. '
-              'Kỳ khác $_goi xem ở màn Báo cáo nhé.';
+              'Bé Boom xem được số liệu theo: hôm nay, hôm qua, tuần này / trước, tháng này / trước, tháng N, '
+              'quý, N ngày gần đây (tối đa 92 ngày) và doanh thu cả năm. Kỳ khác $_goi xem ở màn Báo cáo nhé.';
           suggestions = ['Doanh thu tháng này?', 'Doanh thu tháng trước?'];
           // Không phải lượt đọc dữ liệu: không ghi "tool_completed" (không làm đẹp số liệu đo lường)
         } else if (classification.intent == 'revenue_summary' ||
@@ -1278,7 +1828,11 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
           final period = boomPeriodFrom(
             classification.entities['time_range'] as String?,
           );
-          final summary = await readOnlyData.getRevenueSummary(storeId, period);
+          final summary = await readOnlyData.getRevenueSummary(
+            storeId,
+            period,
+            range: _rangeOf(classification),
+          );
           final label = summary.range.label;
           final prev = summary.range.prevLabel;
           final change = summary.changePercent;
@@ -1306,10 +1860,12 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
           final period = boomPeriodFrom(
             classification.entities['time_range'] as String?,
           );
-          final label = boomPeriodRange(period, DateTime.now()).label;
+          final range = _rangeOf(classification);
+          final label = range.label;
           final performance = await readOnlyData.getProductPerformance(
             storeId,
             period: period,
+            range: range,
           );
           final soldItems = performance.top
               .where((item) => item.quantity > 0)
@@ -1336,10 +1892,12 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
           final period = boomPeriodFrom(
             classification.entities['time_range'] as String?,
           );
-          final label = boomPeriodRange(period, DateTime.now()).label;
+          final range = _rangeOf(classification);
+          final label = range.label;
           final performance = await readOnlyData.getProductPerformance(
             storeId,
             period: period,
+            range: range,
           );
           if (performance.slow.isNotEmpty) {
             final details = performance.slow
@@ -1358,26 +1916,18 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
           toolTimer.stop();
           completedTool = 'slow_products_read_only';
           toolLatencyMs = toolTimer.elapsedMilliseconds;
-        } else if (classification.intent == 'low_stock') {
+        } else if (classification.intent == 'low_stock' ||
+            classification.intent == 'purchase_forecast') {
           final toolTimer = Stopwatch()..start();
           final alerts = await readOnlyData.getLowStock(storeId);
-          if (alerts.isEmpty) {
-            fullReply =
-                'Dữ liệu kho hiện không có mặt hàng nào chạm hoặc thấp hơn mức tồn tối thiểu.';
-          } else {
-            final details = alerts
-                .take(5)
-                .map(
-                  (item) =>
-                      '${item.name}: còn ${_formatQuantity(item.stockQuantity)}, tối thiểu ${_formatQuantity(item.minimumStock)}',
-                )
-                .join('; ');
-            fullReply =
-                'Có ${alerts.length} mặt hàng cần chú ý: $details. Gợi ý: kiểm tra thực tế và lập kế hoạch nhập hàng; Bé Boom không tự tạo phiếu nhập.';
-          }
+          fullReply = boomStockReply(
+            alerts,
+            forecast: classification.intent == 'purchase_forecast',
+            qty: _formatQuantity,
+          );
           suggestions = ['Hôm nay ai đang làm?', 'Món nào bán chạy nhất?'];
           toolTimer.stop();
-          completedTool = 'low_stock_read_only';
+          completedTool = '${classification.intent}_read_only';
           toolLatencyMs = toolTimer.elapsedMilliseconds;
         } else if (classification.intent == 'staff_on_shift') {
           final toolTimer = Stopwatch()..start();
@@ -1495,7 +2045,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
           .read(boomAiServiceProvider)
           ?.transcript(
             storeId: storeId,
-            question: query,
+            question: rawQuery,
             answer: fullReply,
             tool: completedTool ?? helpTool,
           );
@@ -1718,10 +2268,9 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         ),
       );
       final known = tr != null && tr != 'unsupported' && tr != 'current_shift';
-      final range = boomPeriodRange(
-        known ? boomPeriodFrom(tr) : BoomPeriod.thisMonth,
-        DateTime.now(),
-      );
+      final range = known
+          ? boomRangeOf(tr, DateTime.now())
+          : boomPeriodRange(BoomPeriod.thisMonth, DateTime.now());
       // Đúng 0 giờ đầu kỳ → kỳ rỗng (máy chủ báo INVALID_RANGE)
       if (!range.end.isAfter(range.start)) return null;
       // Kỳ trước chậm / lỗi → vẫn so sánh kỳ này
@@ -1857,10 +2406,14 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
       late final svc = BoomModuleDataService(Supabase.instance.client);
       final tr = IntentClassifier.timeRangeIn(query);
       final known = tr != null && tr != 'unsupported' && tr != 'current_shift';
-      final range = boomPeriodRange(
-        known ? boomPeriodFrom(tr) : BoomPeriod.thisMonth,
-        DateTime.now(),
-      );
+      var range = known
+          ? boomRangeOf(tr, DateTime.now())
+          : boomPeriodRange(BoomPeriod.thisMonth, DateTime.now());
+      // các mục đọc từng dòng (thu chi, chấm công, đơn) → kỳ quá 92 ngày đọc quá lâu, dùng tháng này (nhãn kỳ gửi
+      // kèm nên GPT nói rõ đang xem tháng này) — QC đợt 11
+      if (range.end.difference(range.start).inDays > 92) {
+        range = boomPeriodRange(BoomPeriod.thisMonth, DateTime.now());
+      }
       await Future.wait([
         for (final m in topics)
           () async {
@@ -1917,18 +2470,32 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
                       : IntentClassifier.classify('doanh thu $query'))
                   .entities['time_range']
               as String?;
+      final mentions = _viHit(_mentionsPeriodP, _padVi(query));
+      // kỳ dài ("year:2026") không phải kỳ cũ → boomPeriodFrom sẽ rơi về hôm nay (QC đợt 11)
       final period =
-          tr != null &&
-              tr != 'unsupported' &&
-              _mentionsPeriod.hasMatch(_padVi(query))
+          tr != null && tr != 'unsupported' && !tr.contains(':') && mentions
           ? boomPeriodFrom(tr)
           : BoomPeriod.thisMonth;
-      final data = BoomReadOnlyDataService(Supabase.instance.client);
-      final summary = await data.getRevenueSummary(storeId, period);
+      final now = DateTime.now();
+      // Kỳ dài (đợt 11: "30 ngày qua", "quý 3") — quá 92 ngày đọc từng món quá lâu → tháng này như cũ
+      var range = boomPeriodRange(period, now);
+      if (tr != null && tr.contains(':') && mentions) {
+        final long = boomRangeOf(tr, now);
+        if (long.end.difference(long.start).inDays <= 92) range = long;
+      }
+      final data =
+          ref.read(boomReadOnlyDataProvider) ??
+          BoomReadOnlyDataService(Supabase.instance.client);
+      final summary = await data.getRevenueSummary(
+        storeId,
+        period,
+        range: range,
+      );
       final perf = await data.getProductPerformance(
         storeId,
         period: period,
         limit: 10,
+        range: range,
       );
       final sold = perf.top.where((t) => t.quantity > 0).take(5).toList();
       String clip(String s, int n) => s.length > n ? s.substring(0, n) : s;

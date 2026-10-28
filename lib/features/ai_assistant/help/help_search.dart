@@ -126,7 +126,7 @@ const _kSynonyms = <List<String>>[
     'nap vo vi',
     'nap vao vi',
   ],
-  ['giam gia', 'voucher', 'ma giam gia', 'khuyen mai', 'ma giam'],
+  ['giam gia', 'voucher', 'ma giam gia', 'khuyen mai', 'ma giam', 'ma km'],
   [
     'cham cong',
     'vao ca',
@@ -213,11 +213,20 @@ const _kSynonyms = <List<String>>[
   ['nhap hang moi mua', 'mua ve nhap', 'nhap kho nhanh', 'moi mua ve'],
   // Bộ 96 câu giữ riêng (24/10)
   ['mo lai phieu', 'mo lai don', 'lo bam xong', 'bam nham xong'],
-  ['ghi nham', 'ghi trung', 'ghi 2 lan', 'ghi hai lan', 'xoa khoan', 'xoa bot'],
+  [
+    'ghi nham',
+    'ghi trung',
+    'ghi 2 lan',
+    'ghi hai lan',
+    'xoa khoan',
+    'xoa bot',
+    'ghi lon',
+    'nhap lon',
+  ],
   ['vao quan', 'vo quan', 'cho vao quan', 'ket noi vao quan', 'ma ket noi'],
   ['chon sai ban', 'chon nham ban', 'chon lon ban', 'doi sang ban khac'],
   ['muc tru', 'tru luong', 'phat tien', 'cau hinh luong'],
-  ['khong thay viec', 'khong thay nhiem vu', 'khong hien viec'],
+  ['khong thay viec', 'khong thay nhiem vu', 'khong hien viec', 'tao viec'],
   ['sua vai tro', 'tao vai tro', 'bat module', 'cho vai tro'],
   ['nhan don', 'don moi', 'don qr moi', 'nhan don qr'],
   // "bàn" bỏ dấu = "bạn" (từ hư) → việc với bàn phải khớp bằng cặp từ (Chủ Quán test 24/10: "sửa bàn" → chưa thấy)
@@ -236,7 +245,7 @@ const _kSynonyms = <List<String>>[
   ['ma pin', 'pin'],
   ['thanh toan', 'tinh tien', 'thu tien', 'checkout'],
   ['topping', 'mon them'],
-  ['tem ly', 'tem dan ly', 'in tem'],
+  ['tem ly', 'tem dan ly', 'in tem', 'nhan dan ly', 'dan len ly', 'sticker'],
   ['ban giao ca', 'giao ca', 'ban giao'],
   ['checklist', 'viec', 'cong viec', 'nhiem vu'],
   [
@@ -249,10 +258,77 @@ const _kSynonyms = <List<String>>[
     'co 2 quan',
     'hai quan',
   ],
-  ['nhat ky', 'log', 'lich su'],
+  // Bộ F 27/10: người dùng tả triệu chứng, bài viết tên chức năng
+  [
+    'in hoa don that bai',
+    'khong nha giay',
+    'ko nha giay',
+    'khong ra giay',
+    'khong in ra',
+  ],
+  [
+    'het hang',
+    'mon mo mo',
+    'bi mo mo',
+    'mon bi mo',
+    'khong cho chon',
+    'ko cho chon',
+  ],
+  [
+    'tieng chuong',
+    'khong nghe chuong',
+    'tinh tinh',
+    'ting ting',
+    'am bao',
+    'tieng bao',
+    'khong keu',
+    'ko keu',
+  ],
+  ['dinh vi', 'bao o xa', 'ngoai pham vi', 'gps', 'lech vi tri'],
+  ['tru 50', 'nua tien', 'cat nua', 'mat nua', 'tru mot nua'],
+  [
+    'nguyen lieu khong giam',
+    'khong hut',
+    'ko hut',
+    'khong tru kho',
+    'kho khong giam',
+    'kho khong bi tru',
+    'khong tru di',
+  ],
+  ['gia von', 'tien von', 'von ly', 'von cao bat thuong'],
+  [
+    'khong tim thay ban ghi',
+    'khong ra dong nao',
+    'ko ra dong nao',
+    'khong co dong nao',
+  ],
+  ['tu choi don', 'dat bay', 'dat linh tinh', 'don ao', 'don bay'],
+  ['tam tinh', 'coi truoc tong', 'xem truoc tong', 'in truoc'],
+  [
+    'chuoi',
+    'nhom quan',
+    'nam o nhom khac',
+    'may tiem',
+    'cac tiem',
+    'nhieu tiem',
+    'xem gop',
+  ],
+  ['thu chi', 'tien ra vo', 'so tien ra vo'],
+  ['ngoi chung', 'doi qua ban', 'gop ban'],
+  ['phieu luong', 'duoc tra bao nhieu', 'dc tra bao nhieu', 'duoc tra luong'],
+  ['hanh dong nhay cam', 'tu y'],
+  [
+    'nhat ky',
+    'log',
+    'lich su',
+    'truy vet',
+    'ghi vet',
+    'ai da sua',
+    'ai doi gia',
+  ],
   ['cong thuc', 'dinh luong', 'dinh muc'],
   ['kiem ke', 'kiem kho', 'dieu chinh ton'],
-  ['hao hut', 'hu hong', 'bi hong'],
+  ['hao hut', 'hu hong', 'bi hong', 'do vo', 'lam vo'],
   ['gui bep', 'bao bep', 'order bep', 'xuong bep'],
   ['ghi chu', 'note', 'dan do'],
   // "lời lỗ" (26/10): "loi" một mình = "lỗi" nên chỉ nhận cả cụm
@@ -265,7 +341,15 @@ const _kSynonyms = <List<String>>[
     'loi lo',
     'loi hay lo',
   ],
-  ['huy duyet', 'nhat ky huy', 'lich su huy', 'ai duyet'],
+  [
+    'huy duyet',
+    'nhat ky huy',
+    'lich su huy',
+    'ai duyet',
+    'ai da huy',
+    'ai huy',
+    'ai xoa mon',
+  ],
   ['tu ghi', 'tu dong', 'tu dong ghi', 'khong can ghi tay'],
   ['ban hang', 'tai quay', 'o quay', 'ban quay', 'pos', 'thu ngan'],
   ['phan quyen', 'tat quyen', 'cap quyen', 'hanh dong nhay cam', 'quyen'],
@@ -664,6 +748,19 @@ const _kActionPhrases = [
 const _kAccentedActionWords = ['cài', 'ẩn', 'gắn', 'đặt', 'đổi'];
 
 bool hasHelpActionWord(String query) {
+  // bộ F 27/10: "trà sữa" bỏ dấu thành "sua" (= "sửa"); "chuyển khoản" là cách trả tiền, không phải thao tác chuyển
+  // câu có dấu: "sữa" (ữ) luôn là đồ uống, khác "sửa" (ử) — QC đợt 15 ("sữa dừa", "ly sữa")
+  query = query.replaceAll(RegExp('sữa', caseSensitive: false), ' ');
+  query = query.replaceAll(
+    RegExp(
+      // "bất thường" bỏ dấu thành "bat" (= "bật") — QC đợt 15
+      r'bất thường|\bbat thuong\b|trà sữa|sữa (?:tươi|đặc|chua|bột|hạt|bò|đá|nóng)|(?:cà phê|cafe|cf) sữa|chuyển khoản|chuyen khoan|'
+      // gõ không dấu: "tra sua", "sua dac" là sữa (đợt 13); "cà phê sữa đá" (bộ O, đợt 15)
+      r'\btra sua\b|\bsua (?:tuoi|dac|bot|hat|da|nong)\b|\b(?:ca phe|cafe|cf) sua\b',
+      caseSensitive: false,
+    ),
+    ' ',
+  );
   final padded = ' ${foldVietnamese(query)} ';
   if (_kActionPhrases.any((p) => padded.contains(' $p '))) return true;
   final lower =

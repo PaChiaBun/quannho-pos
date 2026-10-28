@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quannho_pos/features/ai_assistant/classifier/intent_classifier.dart';
+import 'package:quannho_pos/features/ai_assistant/help/help_search.dart';
 import 'package:quannho_pos/features/ai_assistant/providers/boom_chat_provider.dart';
 import 'package:quannho_pos/features/ai_assistant/services/boom_module_data_service.dart'
     show BoomModule;
@@ -66,6 +67,244 @@ void main() {
   );
 
   test(
+    'Bộ F, G 27/10: động từ là thứ được đếm → xin số; "sữa", "chuyển khoản" không phải thao tác',
+    () {
+      for (final q in [
+        'hôm nay huỷ mấy đơn rồi',
+        'tháng trước có bao nhiêu đơn bị huỷ',
+        'hôm qua xoá món bao nhiêu lần',
+        'hôm nay ai huỷ đơn nhiều nhất',
+      ]) {
+        expect(boomAsksShopNumber(q), isTrue, reason: q);
+      }
+      for (final q in [
+        'hôm nay huỷ đơn sao',
+        'hôm qua in lại mấy bill bị lỗi',
+        'tuần trước huỷ mấy đơn thì xem ở đâu',
+        // QC 27/10: "mấy" = "vài"; hỏi giới hạn
+        'hôm qua lỡ huỷ mấy đơn giờ khôi phục lại',
+        '1 ngày khách được nhập mã km mấy lần',
+      ]) {
+        expect(boomAsksShopNumber(q), isFalse, reason: q);
+      }
+      expect(
+        hasHelpActionWord('2 tuần nay bán đc bao nhiêu ly trà sữa'),
+        isFalse,
+      );
+      expect(hasHelpActionWord('tiền mặt với chuyển khoản hôm nay'), isFalse);
+      expect(hasHelpActionWord('sửa giá món'), isTrue);
+      expect(hasHelpActionWord('chuyển bàn cho khách'), isTrue);
+    },
+  );
+
+  test(
+    'Đợt 12: xin phân tích trên số của quán → tư vấn kèm số; hỏi cách làm / báo lỗi / lạc đề → không',
+    () {
+      for (final q in [
+        'nhìn doanh thu theo giờ thì ca tối có cần thêm người ko',
+        'chi phí tháng này cao bất thường chỗ nào, xem giùm',
+        'lương đang chiếm mấy phần trăm doanh thu, vậy ổn ko',
+        'tỉ lệ huỷ đơn của quán có cao không, làm sao giảm',
+        'quý 3 vs quý 2 lời hơn hay lỗ hơn, nguyên nhân do đâu',
+      ]) {
+        expect(boomWantsDataAdvice(q), isTrue, reason: q);
+      }
+      for (final q in [
+        'tại sao đơn bị huỷ mà không báo',
+        'vì sao nhân viên không đăng nhập được',
+        'cần thêm khách vào danh sách thành viên',
+        'có nên bật in bill tự động không',
+        'bill in ra cao quá phải chỉnh khổ giấy',
+        'làm sao giảm giá món cho khách',
+      ]) {
+        expect(boomWantsDataAdvice(q), isFalse, reason: q);
+      }
+      for (final q in [
+        'hôm nay sài gòn mưa không',
+        'con bị sốt 39 độ uống thuốc gì',
+      ]) {
+        expect(boomGeneralKnowledge(q), isTrue, reason: q);
+      }
+      for (final q in [
+        'gà sốt 3 phần hôm nay bán mấy đơn',
+        'phí dịch vụ hôm nay thu bao nhiêu',
+        'trà đá mấy giờ bán chạy nhất',
+      ]) {
+        expect(boomGeneralKnowledge(q), isFalse, reason: q);
+      }
+    },
+  );
+
+  test('Đợt 15: nói tiếp sau lượt số liệu / hướng dẫn', () {
+    // câu xin phân tích dài, xếp hạng, chữ thao tác đã có ở câu trước, xin tư vấn tăng chỉ số → nói tiếp
+    for (final (q, prev) in [
+      (
+        'sao lãi mỏng dữ, hụt ở khúc nào chỉ tôi coi',
+        'tháng 9 lãi được bao nhiêu',
+      ),
+      (
+        'nhiều thế có bất thường không, nên cắt bớt chỗ nào',
+        'tháng 8 tiền điện nước hết bao nhiêu',
+      ),
+      ('ai hủy nhiều nhất', 'nay có mấy đơn bị hủy'),
+      ('tiền hủy tổng cộng là nhiêu', 'tuần trước hủy bao nhiêu món'),
+      ('cà phê sữa đá thì sao', '30 ngày qua bán được bao nhiêu ly trà sữa'),
+      (
+        'có cách nào nâng giá trị đơn lên không',
+        'trung bình mỗi đơn hôm nay bao nhiêu',
+      ),
+    ]) {
+      expect(boomShortFollowUp(q, previous: prev), isTrue, reason: q);
+    }
+    // câu mới / hỏi chỗ trong app / kiến thức chung → không
+    for (final q in [
+      'tháng 9 lương nhân viên tổng bao nhiêu',
+      'kinh nghiệm giữ chân nv part time là gì',
+      'nút in tạm tính ở đâu',
+      'cách thêm món mới',
+    ]) {
+      expect(
+        boomShortFollowUp(q, previous: 'doanh thu hôm nay'),
+        isFalse,
+        reason: q,
+      );
+    }
+    expect(
+      boomModuleTopics('tháng 9 lương nhân viên tổng bao nhiêu'),
+      contains(BoomModule.nhanSu),
+    );
+    expect(
+      boomIsFollowUp(
+        'chiếm mấy % doanh thu tháng đó',
+        previous: 'tháng 7 lương nv tổng hết nhiêu',
+      ),
+      isTrue,
+    );
+    expect(hasHelpActionWord('cà phê sữa đá bán mấy ly'), isFalse);
+    // hỏi cách làm về đúng thứ vừa nói / câu nối ý sau bài hướng dẫn
+    expect(boomHelpAboutPrevious('nó bị âm thì chỉnh lại kiểu gì'), isTrue);
+    expect(boomHelpAboutPrevious('xem cái này trong app ở đâu'), isTrue);
+    expect(boomHelpAboutPrevious('món đó tháng trước thì sao'), isFalse);
+    expect(boomHelpFollowUp('lỡ gộp nhầm thì tách lại được không'), isTrue);
+    expect(boomHelpFollowUp('doanh thu hôm nay bao nhiêu'), isFalse);
+    expect(boomHelpFollowUp('cảm ơn nha'), isFalse);
+  });
+
+  test('Đợt 14: câu nói tiếp ngắn → câu đầy đủ; dấu hiệu nói tiếp rõ', () {
+    for (final (q, prev, want) in [
+      (
+        'còn hôm qua?',
+        'doanh thu hôm nay bao nhiêu',
+        'doanh thu bao nhiêu hôm qua',
+      ),
+      (
+        'tuần trước thì sao',
+        'doanh thu tuần này được nhiêu rồi',
+        'doanh thu được nhiêu rồi tuần trước',
+      ),
+      (
+        'còn món bán ế nhất?',
+        'món nào bán chạy nhất tuần này',
+        'món bán ế nhất tuần này',
+      ),
+      (
+        'con thang truoc',
+        'thang nay ban duoc bao nhieu',
+        'ban duoc bao nhieu thang truoc',
+      ),
+    ]) {
+      expect(boomRewriteFollowUp(q, prev), want, reason: q);
+    }
+    // câu mới tự đủ nghĩa / hỏi chỗ mới → không viết lại
+    expect(
+      boomRewriteFollowUp(
+        'còn cái nút in tạm tính nằm đâu',
+        'doanh thu hôm nay',
+      ),
+      isNull,
+    );
+    expect(boomRewriteFollowUp('cảm ơn nha', 'doanh thu hôm nay'), isNull);
+    // QC đợt 14: "còn" là động từ; lời đệm đầu câu mới; câu nói tiếp rõ; "nữa"; câu trước có hai kỳ
+    for (final (q, prev) in [
+      ('còn mấy ly trà sữa', 'doanh thu hôm nay'),
+      ('còn hàng không', 'doanh thu hôm nay'),
+      ('ok in lại bill sao', 'doanh thu hôm nay'),
+      ('vậy thôi cảm ơn', 'doanh thu hôm nay'),
+      ('vậy sao giảm vậy', 'doanh thu hôm nay'),
+      ('còn tuần trước nữa', 'doanh thu tuần trước'),
+      ('còn tuần này', 'doanh thu hôm nay so với hôm qua'),
+    ]) {
+      final r = boomRewriteFollowUp(q, prev);
+      expect(r == null || !r.endsWith('tuần trước'), isTrue, reason: '$q → $r');
+      if (!q.contains('nữa')) expect(r, isNull, reason: q);
+    }
+    expect(
+      boomRewriteFollowUp('còn hôm qua thì sao nhỉ', 'doanh thu hôm nay'),
+      'doanh thu hôm qua',
+    );
+    for (final q in [
+      'làm rồi mà vẫn không in được',
+      'nếu không có quyền thì sao',
+      'bước tiếp theo là gì',
+      'món đó tháng trước thì sao',
+      'có đáng lo không',
+      'chi tiết từng ngày đi',
+    ]) {
+      // "lương nhân viên chiếm bao nhiêu % doanh thu" cần cả số bán → tư vấn kèm số như cũ
+      expect(
+        boomModuleTopics(
+          'Lương nhân viên đang chiếm bao nhiêu phần doanh thu, vậy có cao quá không?',
+        ),
+        isEmpty,
+      );
+      expect(boomIsFollowUp(q, previous: 'câu trước'), isTrue, reason: q);
+    }
+    expect(
+      boomIsFollowUp('còn cái nút in tạm tính nằm đâu', previous: 'x'),
+      isFalse,
+    );
+    for (final q in [
+      'cách in hoá đơn chi tiết',
+      'xem chi tiết đơn hàng thế nào',
+      'bật lại món đã tắt bán',
+      'nếu không có internet thì bán được không',
+      'ngày kia mở cửa mấy giờ',
+    ]) {
+      expect(
+        boomIsFollowUp(q, previous: 'doanh thu hôm nay'),
+        isFalse,
+        reason: q,
+      );
+    }
+  });
+
+  test('Đợt 13: chuẩn hoá teencode / viết tắt trước khi chọn đường', () {
+    for (final (q, want) in [
+      ('hnay ban dc bn', 'hom nay ban duoc bao nhieu'),
+      ('lm s để in lại bill z', 'làm sao để in lại bill vậy'),
+      ('tuần trc có bn đơn', 'tuần trước có bao nhiêu đơn'),
+      ('giá 25 k ko đổi', 'giá 25 k không đổi'),
+      ('k in đc bill', 'khong in duoc bill'),
+      ('bn ơi giúp mình', 'bn ơi giúp mình'),
+      // QC đợt 13
+      ('cho bn hỏi cách in lại bill', 'cho bn hỏi cách in lại bill'),
+      ('ly size R còn mấy cái', 'ly size R còn mấy cái'),
+      ('hôm nay vắng wa', 'hôm nay vắng quá'),
+      ('hôm wa bán được nhiêu', 'hôm qua bán được nhiêu'),
+      ('giảm ck 10% cho khách', 'giảm ck 10% cho khách'),
+      ('dt hom nay bn 😅', 'dt hom nay bao nhieu 😅'),
+      ('mấy trăm k một ly', 'mấy trăm k một ly'),
+      ('hum qua nv nào nghỉ v', 'hôm qua nv nào nghỉ vậy'),
+      (
+        'ck với tm hnay mỗi loại nhiu',
+        'chuyển khoản với tm hôm nay mỗi loại nhiêu',
+      ),
+    ]) {
+      expect(boomNormalizeTeen(q), want, reason: q);
+    }
+  });
+
+  test(
     '"đề xuất" không phải "xuất file"; xin phân tích dựa trên số → tư vấn kèm số',
     () {
       expect(boomAsksHowTo('dựa vào số bán hãy đề xuất combo'), isFalse);
@@ -96,7 +335,24 @@ void main() {
         boomModuleTopics('Bé Lan tháng này làm tổng bao nhiêu giờ rồi'),
         contains(BoomModule.nhanSu),
       );
+      // bộ F, G 27/10
+      for (final (q, m) in [
+        ('trân châu đen còn bao nhiêu', BoomModule.kho),
+        ('còn mấy chai siro đào', BoomModule.kho),
+        ('trân châu còn bao nhiêu vậy', BoomModule.kho),
+        ('giờ ai đang vào ca vậy', BoomModule.nhanSu),
+        ('tháng 9 trả lương cho Tuấn bao nhiêu', BoomModule.nhanSu),
+        ('tháng này bé Hân làm được bao nhiêu giờ', BoomModule.nhanSu),
+        ('tháng này chi những khoản gì, tổng bao nhiêu', BoomModule.finance),
+        ('lợi nhuận 30 ngày qua', BoomModule.finance),
+      ]) {
+        expect(boomModuleTopics(q), contains(m), reason: q);
+      }
       for (final q in [
+        'sao lợi nhuận bên báo cáo với bên sổ thu chi nó lệch nhau hoài vậy',
+        'tiền điện tháng 10 hết 2 triệu 3, ghi vô đâu',
+        'gói còn bao nhiêu',
+        'hạn mức boom còn bao nhiêu',
         'lãi lỗ tính như thế nào',
         'lương nhân viên tháng 13 có bắt buộc không',
         'vào ca lúc nào thì tính đi trễ',

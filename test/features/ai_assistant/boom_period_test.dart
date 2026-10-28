@@ -37,18 +37,14 @@ void main() {
     expect(range('doanh thu tháng này so với tháng trước'), 'this_month');
     expect(range('tuần này so với tuần trước bán sao'), 'this_week');
     expect(range('tháng này quán bán ra sao'), 'this_month');
-    // Tháng theo số: tháng hiện tại / tháng trước; kỳ khác → chưa hỗ trợ
+    // Tháng theo số: tháng hiện tại / tháng trước; tháng khác → mã tháng (đợt 11)
     final now = DateTime.now();
     final last = now.month == 1 ? 12 : now.month - 1;
     final other = ((now.month + 5) % 12) + 1;
     expect(range('doanh thu tháng ${now.month}'), 'this_month');
     expect(range('doanh thu trong tháng $last'), 'last_month');
-    expect(range('doanh thu tháng $other'), 'unsupported');
-    for (final q in [
-      'doanh thu năm nay',
-      'doanh thu 7 ngày qua',
-      'doanh thu hôm kia',
-    ]) {
+    expect(range('doanh thu tháng $other'), startsWith('month:'));
+    for (final q in ['doanh thu hôm kia']) {
       expect(range(q), 'unsupported', reason: q);
     }
     // QC vòng 2: "này" (quán này) bỏ dấu = "nay" — không được thành hôm nay
@@ -66,14 +62,15 @@ void main() {
     expect(range('doanh thu thg ${now.month}'), 'this_month');
     for (final q in [
       'doanh thu ngày 5 tháng ${now.month}',
-      'doanh thu tháng ${now.month} năm ngoái',
-      'doanh thu năm trước',
-      'doanh thu quý này',
       'dạo này bán sao',
       'doanh thu mấy hôm nay',
     ]) {
       expect(range(q), 'unsupported', reason: q);
     }
+    expect(
+      range('doanh thu tháng ${now.month} năm ngoái'),
+      'month:${now.year - 1}-${now.month}',
+    );
     expect(range('món bán ế tháng này'), 'this_month');
     // QC vòng 3: cách nói hôm qua khác; kỳ chưa đọc được → nói rõ, không trả số hôm nay
     for (final q in [
@@ -88,10 +85,12 @@ void main() {
     expect(range('doanh thu thang${now.month}'), 'this_month');
     for (final q in [
       'doanh thu thứ 7',
-      'doanh thu 1 tuần qua',
+      'doanh thu 6 tháng qua',
+      'doanh thu ngày 2 tháng 1',
+      '3 ngày trước bán bao nhiêu',
       'doanh thu mấy bữa nay',
       'doanh thu 20/10',
-      'doanh thu năm 2025',
+      'doanh thu năm 2019',
       'doanh thu đầu tháng trước',
       'doanh thu tuần trước nữa',
       'doanh thu cuối tuần',
@@ -123,6 +122,87 @@ void main() {
         reason: q,
       );
     }
+  });
+
+  test('Kỳ dài (đợt 11): N ngày / tuần / tháng qua, tháng N, quý, năm', () {
+    final now = DateTime(2026, 10, 27, 15);
+    String? tr(String q) => IntentClassifier.timeRangeIn(q, now: now);
+    for (final (q, want) in [
+      ('doanh thu 30 ngày qua', 'days:30'),
+      ('doanh thu 1 tuần qua', 'days:7'),
+      ('2 tuần nay bán đc bao nhiêu ly', 'days:14'),
+      ('3 tháng nay doanh thu', 'days:90'),
+      ('doanh thu tháng 7', 'month:2026-7'),
+      ('doanh thu tháng 12', 'month:2025-12'),
+      ('quý 3 doanh thu', 'quarter:2026-3'),
+      ('doanh thu quý này', 'quarter:2026-4'),
+      ('doanh thu năm nay', 'year:2026'),
+      ('từ đầu năm tới giờ thu được bao nhiêu', 'year:2026'),
+      ('doanh thu năm trước', 'year:2025'),
+      ('doanh thu năm 2025', 'year:2025'),
+      ('quý này so quý trước tăng hay giảm', 'quarter:2026-4'),
+      ('tuần trc có bn đơn bị huỷ', 'last_week'),
+    ]) {
+      expect(tr(q), want, reason: q);
+    }
+    // QC đợt 11
+    for (final (q, want) in [
+      ('doanh thu cả năm ngoái', 'year:2025'),
+      ('tháng 8 với tháng 7 tháng nào lời hơn', 'month:2026-8'),
+      ('tháng 12 năm rồi doanh thu', 'month:2025-12'),
+      ('doanh thu quý 1 năm nay', 'quarter:2026-1'),
+    ]) {
+      expect(tr(q), want, reason: q);
+    }
+    for (final q in [
+      'thứ 7 tuần này bán bao nhiêu',
+      '2 tuần trc bán sao',
+      'doanh thu năm trước nữa',
+      'doanh thu quý trước nữa',
+      'cuối tháng 9 bán được bao nhiêu',
+      'tuần đầu tháng 9 doanh thu',
+      'từ tháng 7 tới nay doanh thu',
+      'doanh thu cuối quý 3',
+      '30 ngày qua buổi sáng bán bao nhiêu',
+      'doanh thu 1 năm qua',
+      'từ đầu năm ngoái tới giờ',
+      'doanh thu cùng kỳ năm ngoái',
+    ]) {
+      expect(tr(q), 'unsupported', reason: q);
+    }
+    for (final q in [
+      'quỹ này còn bao nhiêu',
+      'nộp vào quỹ 1 triệu',
+      'mỗi tháng 1 lần',
+    ]) {
+      expect(
+        tr(q),
+        isNot(anyOf(startsWith('quarter:'), startsWith('month:'))),
+        reason: q,
+      );
+    }
+    expect(tr('nghỉ 3 ngày tết'), isNot(startsWith('days:')));
+    expect(tr('lương 2 tháng lương'), isNot(startsWith('days:')));
+    final m = boomRangeOf('month:2026-7', now);
+    expect(m.start, DateTime(2026, 7));
+    expect(m.end, DateTime(2026, 8));
+    expect(m.prevStart, DateTime(2026, 6));
+    expect(m.prevEnd, DateTime(2026, 7));
+    // kỳ đang chạy: tới bây giờ, so với cùng độ dài kỳ trước
+    final q = boomRangeOf('quarter:2026-4', now);
+    expect(q.start, DateTime(2026, 10));
+    expect(q.end, now);
+    expect(q.prevStart, DateTime(2026, 7));
+    expect(
+      q.prevEnd,
+      DateTime(2026, 7).add(now.difference(DateTime(2026, 10))),
+    );
+    final d = boomRangeOf('days:30', now);
+    expect(d.start, DateTime(2026, 9, 28));
+    expect(d.prevStart, DateTime(2026, 8, 29));
+    final y = boomRangeOf('year:2025', now);
+    expect(y.end, DateTime(2026));
+    expect(y.prevEnd, DateTime(2025));
   });
 
   test('Khoảng thời gian + cùng kỳ so sánh', () {
