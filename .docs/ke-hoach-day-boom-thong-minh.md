@@ -218,6 +218,27 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 | 36 | Câu nói tiếp đi sâu: "chi tiết hơn / sao vậy" → đi xuống một tầng phân rã (nhóm → món → giờ), không lặp lại | máy chủ |
 | 37 | Chấm GPT thật lần 2 trên bộ đề; sửa 3 tiêu chí điểm thấp nhất | — |
 
+### Kết quả Giai đoạn 3 (29/10, chưa áp): chấm GPT thật 10,9 → **11,2/16** (mốc gốc 10,2)
+
+| Tiêu chí | GĐ 2 | GĐ 3 | | Loại câu | GĐ 2 | GĐ 3 |
+|---|---|---|---|---|---|---|
+| Trả lời thẳng | 0,97 | 1,05 | | Kế hoạch | 10,4 | **11,7** |
+| Lý lẽ | 0,98 | 1,08 | | Nói tiếp | 9,6 | **10,7** |
+| Tìm vấn đề | 1,58 | 1,67 (52/57) | | Quyết định | 11,0 | 11,4 |
+| Đúng quán | 1,92 | 2,00 | | Dự báo | 11,1 | 11,4 |
+| Việc làm cụ thể | 0,95 | 0,93 | | Chẩn đoán | 12,0 | 11,7 |
+| Gọn | 1,27 | 1,25 | | So sánh | 11,2 | **10,4** |
+
+- Đã làm:
+  - Khung 4 bước (kết luận → Vì sao → Việc tuần này → Cần xem lại).
+  - Khung theo loại câu, máy chủ tự nhận loại (đúng 56/60 câu bộ đề).
+  - Hỏi lại 1 câu khi thiếu số; câu kế hoạch 900 token.
+  - Câu viết bài / app / chào không theo khung.
+  - QC 7 điểm đã sửa.
+- So sánh giảm vì khung thiếu việc làm → đã thêm "Việc tuần này" vào khung so sánh (chưa chấm lại).
+- **Việc làm cụ thể vẫn yếu (0,93):** GPT hay đưa việc chung ("chạy khuyến mãi buổi chiều", "tổ chức sự kiện"). Lần 31 (mẫu trả lời tốt) và thử gpt-4o (lần 33) là bước kế.
+- GPT vẫn chèn `**` dù đã dặn, nhưng máy chủ đã tự bỏ ký hiệu này trước khi gửi cho app.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

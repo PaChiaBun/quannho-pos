@@ -5,7 +5,7 @@
 //   OPENAI_API_KEY=… deno run --allow-read --allow-write --allow-net=api.openai.com \
 //     --allow-env=OPENAI_API_KEY,BOOM_OPENAI_MODEL,CHAM_MODEL,CHAM_MAX,CHAM_DRY cham_tu_van.ts [de.json] [ket_qua.json]
 // Chạy thử không gọi GPT (không cần khoá): CHAM_DRY=1 … — in tin nhắn của 2 câu đầu và ước lượng token / chi phí.
-import { buildMessages, formatFacts, formatModules, type MemoryTurn, parseFacts, parseModules } from './logic.ts';
+import { buildMessages, formatFacts, formatModules, loaiCau, type MemoryTurn, parseFacts, parseModules } from './logic.ts';
 
 const DIR = new URL('./cham_tu_van/', import.meta.url);
 const inFile: string | URL = Deno.args[0] ?? new URL('de.json', DIR);
@@ -84,7 +84,8 @@ for (const [i, c] of cases.entries()) {
     continue;
   }
   try {
-    const answer = await chat(MODEL, msgs, 600);
+    // cùng độ dài như index.ts (câu kế hoạch 900)
+    const answer = await chat(MODEL, msgs, loaiCau(c.q) === 'ke_hoach' ? 900 : 600);
     const vd = s.van_de.filter((v) => c.van_de.includes(v.id));
     const g = JSON.parse(await chat(JUDGE, [
       { role: 'system', content: GRADER },

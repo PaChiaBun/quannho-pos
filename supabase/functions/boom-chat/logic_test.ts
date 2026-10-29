@@ -15,6 +15,7 @@ import {
   cacheKey,
   blockReason,
   buildMessages,
+  loaiCau,
   clipAnswer,
   costUsd,
   LIMITS,
@@ -396,7 +397,7 @@ Deno.test('Bé Boom gọi Anh / Chị + tên theo lựa chọn của người d�
   assertEquals(goiNguoiHoi({ xung_ho: 'anh', ten: 'NGUYỄN VĂN AN' }), 'Anh An');
   assertEquals(goiNguoiHoi({ xung_ho: 'chi', ten: 'Lan (thu ngân)' }), 'Chị Lan');
   const m = buildMessages('huỷ món', [], { xung_ho: 'chi', ten: 'Lan' });
-  assert(m[0].content.endsWith('CÁCH GỌI NGƯỜI HỎI: "Chị Lan" (vd "Dạ Chị Lan ơi, …", "Bé Boom gợi ý Chị Lan …"); không gọi "cậu", "bạn".'));
+  assert(m[0].content.endsWith('CÁCH GỌI NGƯỜI HỎI: "Chị Lan" (vd "Dạ Chị Lan, <kết luận / con số> …", "Bé Boom gợi ý Chị Lan …"); không gọi "cậu", "bạn".'));
   assert(m[0].content.includes('Luôn tự xưng "Bé Boom"'));
   assert(!REFUSAL.scope.includes('Tớ') && !REFUSAL.other_store.includes('cậu'));
 });
@@ -762,4 +763,36 @@ Deno.test('Giai đoạn 2: tuần chưa trọn / hôm nay dở không gọi là 
   // kỳ chưa trọn tháng → không so mốc
   const p = fin([{ name: 'Tiền mặt bằng', amount: 8000000 }], 'Tuần này');
   assert(p.includes('chưa trọn tháng') && !p.includes('Tỉ lệ trên'), p);
+});
+
+Deno.test('Giai đoạn 3: khung 4 bước + khung theo loại câu (chỉ gửi đúng loại)', () => {
+  assert(ADVICE_PROMPT.includes('KHUNG TRẢ LỜI') && ADVICE_PROMPT.includes('hỏi lại đúng 1 câu'));
+  for (const [q, h, want] of [
+    ['bạc xỉu có nên tăng giá ko', false, 'quyet_dinh'],
+    ['cứ đà này cuối tháng 10 được bao nhiêu', false, 'du_bao'],
+    ['gạo còn 8 ký đủ bán mấy ngày', false, 'du_bao'],
+    ['Lên giúp em kế hoạch tháng 11 để kéo doanh thu lại', false, 'ke_hoach'],
+    ['so với tháng trước thì món nào giảm nhiều nhất', false, 'so_sanh'],
+    ['sao buoi chieu quan vang qua', false, 'chan_doan'],
+    ['sao vậy', true, 'noi_tiep'],
+    ['viết giúp bài đăng tuyển nhân viên', false, null],
+    // QC giai đoạn 3
+    ['nên mở thêm ca tối không', false, 'quyet_dinh'],
+    ['nen mo them ca toi ko', false, 'quyet_dinh'],
+    ['Món nào bán chạy nhất', false, 'so_sanh'],
+    ['Viết giúp thông báo giảm giá 20% cuối tuần này', false, null],
+    ['Viết bài đăng khai trương tuần sau', false, null],
+    ['Cho mình công thức trà sữa để tháng sau bán thử', false, null],
+    ['trả lời đánh giá 1 sao giúp em', false, null],
+    ['Sao app không in được hoá đơn', false, null],
+    ['Mong ước của em là mở thêm quán', false, null],
+    ['Cảm ơn Boom nhé', true, null],
+    ['Sao doanh thu giảm', true, 'chan_doan'],
+    ['vậy còn ca tối', true, 'noi_tiep'],
+  ] as [string, boolean, string | null][]) {
+    assertEquals(loaiCau(q, h), want, q);
+  }
+  const m = buildMessages('bạc xỉu có nên tăng giá ko', [], null, { now: new Date('2026-10-28T09:00:00+07:00') });
+  assert(m[1].content.includes('KHUNG CHO LOẠI CÂU NÀY: Dòng đầu: NÊN / KHÔNG NÊN'));
+  assert(!m[1].content.includes('Tuần 1 / Tuần 2'));
 });

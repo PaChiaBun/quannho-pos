@@ -46,6 +46,7 @@ import {
   REFUSAL,
   RETRY_SCOPE_NOTE,
   looksBusiness,
+  loaiCau,
   isScopeRefusal,
   guessesAppFeature,
   memorySince,
@@ -462,7 +463,7 @@ Deno.serve(async (req) => {
       method: 'POST',
       signal,
       headers: { Authorization: `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, temperature: 0.2, max_tokens: r.mode === 'advice' ? 600 : 650, messages: msgs }), // hướng dẫn 450 → 650: chép đủ bước (26/10)
+      body: JSON.stringify({ model: MODEL, temperature: 0.2, max_tokens: r.mode === 'advice' ? (loaiCau(r.question, !!r.history || (memory?.length ?? 0) > 0) === 'ke_hoach' ? 900 : 600) : 650, messages: msgs }), // hướng dẫn 450 → 650: chép đủ bước (26/10)
     });
   try {
     const up = await callGpt(messages);
