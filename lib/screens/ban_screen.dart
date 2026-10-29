@@ -5833,47 +5833,50 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
+                                        // Tên món trải hết chiều ngang (trước đây bị ép thành cột hẹp bên trái, 4 dòng
+                                        // trên Sunmi); hàng dưới: trạng thái bên trái, nút chỉnh + xoá bên phải.
                                         Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    item.addedBy != null &&
-                                                            item
-                                                                .addedBy!
-                                                                .isNotEmpty
-                                                        ? '${item.productName} (${item.addedBy})'
-                                                        : item.productName,
-                                                    style: GoogleFonts.plusJakartaSans(
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      color: _kNavy,
-                                                      fontSize: 14.5,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    fmtVnd(item.price),
-                                                    style: GoogleFonts.plusJakartaSans(
-                                                      fontSize: 12,
-                                                      color: _kNavy.withValues(
-                                                        alpha: 0.45,
-                                                      ),
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 6),
-                                                  _KitchenStatusDot(
-                                                    status: item.kitchenStatus,
-                                                  ),
-                                                ],
+                                              child: Text(
+                                                item.productName,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  fontWeight: FontWeight.w700,
+                                                  color: _kNavy,
+                                                  fontSize: 14.5,
+                                                ),
                                               ),
                                             ),
-                                            // Vùng hiển thị số lượng và nút chỉnh cho món CHƯA GỬI BẾP
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              fmtVnd(item.subtotal),
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontWeight: FontWeight.w800,
+                                                color: _kNavy,
+                                                fontSize: 14.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          item.addedBy != null && item.addedBy!.isNotEmpty
+                                              ? '${fmtVnd(item.price)} · ${item.addedBy}'
+                                              : fmtVnd(item.price),
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            color: _kNavy.withValues(alpha: 0.45),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            _KitchenStatusDot(status: item.kitchenStatus),
+                                            const Spacer(),
                                             if (!_isItemSent) ...[
                                               Container(
                                                 decoration: BoxDecoration(
@@ -5995,16 +5998,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                                                 ),
                                               ),
                                             ],
-                                            const SizedBox(width: 10),
-                                            Text(
-                                              fmtVnd(item.subtotal),
-                                              style: GoogleFonts.plusJakartaSans(
-                                                fontWeight: FontWeight.w800,
-                                                color: _kNavy,
-                                                fontSize: 14.5,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 6),
+                                            const SizedBox(width: 8),
                                             GestureDetector(
                                               behavior: HitTestBehavior.opaque,
                                               onTap: () => _removeItem(item),
@@ -8893,9 +8887,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
 
                         final stackControls =
                             qty > 0 && MediaQuery.sizeOf(context).width < 520;
-                        final Widget controlsW = Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
+                        final controls = <Widget>[
                             if (qty > 0) ...[
                               GestureDetector(
                                 onTap: () {
@@ -9057,7 +9049,10 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                 ),
                               ),
                             ],
-                          ],
+                          ];
+                        final Widget controlsW = Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: controls,
                         );
 
                         return Opacity(
@@ -9095,7 +9090,10 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                     children: [
                                       Row(
                                         children: [
-                                          // ── Ảnh sản phẩm cao cấp ──
+                                          // ── Ảnh món: chỉ chừa chỗ khi món có ảnh (trước đây ô trống
+                                          // dao nĩa 58px đẩy tên món sang một bên) ──
+                                          if (p.imageUrl != null &&
+                                              p.imageUrl!.isNotEmpty) ...[
                                           Container(
                                             width: 58,
                                             height: 58,
@@ -9114,10 +9112,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                             child: ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(14),
-                                              child:
-                                                  p.imageUrl != null &&
-                                                      p.imageUrl!.isNotEmpty
-                                                  ? Image.network(
+                                              child: Image.network(
                                                       p.imageUrl!,
                                                       width: 58,
                                                       height: 58,
@@ -9142,24 +9137,11 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                               size: 26,
                                                             ),
                                                           ),
-                                                    )
-                                                  : Container(
-                                                      color: _kNavy.withValues(
-                                                        alpha: 0.05,
-                                                      ),
-                                                      child: Icon(
-                                                        Icons
-                                                            .restaurant_rounded,
-                                                        color: _kNavy
-                                                            .withValues(
-                                                              alpha: 0.35,
-                                                            ),
-                                                        size: 26,
-                                                      ),
                                                     ),
                                             ),
                                           ),
                                           const SizedBox(width: 12),
+                                          ],
                                           // ── Chi tiết sản phẩm ──
                                           Expanded(
                                             child: GestureDetector(
@@ -9319,9 +9301,11 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                           padding: const EdgeInsets.only(
                                             top: 10,
                                           ),
-                                          child: Align(
-                                            alignment: Alignment.centerRight,
-                                            child: controlsW,
+                                          // "Tùy chọn" bên trái, số lượng bên phải — không dồn hết về góc phải.
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: controls,
                                           ),
                                         ),
                                     ],
