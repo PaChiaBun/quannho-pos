@@ -34,6 +34,7 @@ import '../modules/bill_printer/providers/printer_settings_provider.dart';
 import '../core/services/app_update_manager.dart';
 import '../core/widgets/app_version_label.dart';
 import '../core/utils/app_logger.dart';
+import '../core/widgets/status_bar_scrim.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MÀU LOCAL
@@ -384,7 +385,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             }
           }
 
-          final mainContent = RefreshIndicator(
+          final mainContent = StatusBarScrim(
+            color: _kNavy,
+            child: RefreshIndicator(
             onRefresh: _onPullRefresh,
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(
@@ -483,6 +486,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ],
             ),
+          ),
           );
 
           return LayoutBuilder(
@@ -1685,7 +1689,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     Row(
                       children: [
                         _TodayStat(
-                          label: 'Huỷ Bàn / Huỷ Bill',
+                          // Ngắn để vừa 1 dòng trong ô nửa hàng (Sunmi từng gãy "Huỷ Bàn / Huỷ / Bill").
+                          label: 'Huỷ bàn / bill',
                           value: '$voidCount lượt',
                           icon: Icons.delete_sweep_rounded,
                           color: const Color(0xFFE65100),

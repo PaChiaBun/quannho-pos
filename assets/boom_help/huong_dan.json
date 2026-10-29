@@ -1,6 +1,6 @@
 {
- "version": 202610290658,
- "hash": "19c050f757c52bbf3c8174780ececfb2074a53817829fecb80805fe8091ca365",
+ "version": 202610290940,
+ "hash": "01383ad70cbf6a668db28c81899cb4f05af76d8e84222fa5d5681437b47722cf",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -1024,7 +1024,7 @@
    "module_name": "Khách hàng – Giảm giá – Khuyến mãi",
    "section": "",
    "title": "Ai dùng được",
-   "text": "• Người có module Khách hàng (tên trên Trang chủ: \"Khách Hàng - Giảm Giá - Khuyến mãi\"; mặc định tắt).\n• Tạo / sửa / xoá voucher: chỉ Chủ quán hoặc Quản lý (\"Chỉ Chủ quán hoặc Quản lý mới có quyền thiết lập voucher.\"). Vai trò phải tên đúng là \"Quản lý\" — vai trò tên khác như \"Quản lý nhà hàng\" cũng bị chặn.\n• Thêm khách, phần thưởng, gói nạp: ai vào được module đều làm được.\n• Nạp ví: cần quyền \"Thanh toán hoá đơn\" (Chủ quán, Quản lý và vai trò có quyền thu tiền); thiếu quyền sẽ thấy \"Bạn không có quyền thu tiền (pos.checkout)\"."
+   "text": "• Người có module Khách hàng (tên trên Trang chủ: \"Khách hàng & Khuyến mãi\"; mặc định tắt).\n• Tạo / sửa / xoá voucher: chỉ Chủ quán hoặc Quản lý (\"Chỉ Chủ quán hoặc Quản lý mới có quyền thiết lập voucher.\"). Vai trò phải tên đúng là \"Quản lý\" — vai trò tên khác như \"Quản lý nhà hàng\" cũng bị chặn.\n• Thêm khách, phần thưởng, gói nạp: ai vào được module đều làm được.\n• Nạp ví: cần quyền \"Thanh toán hoá đơn\" (Chủ quán, Quản lý và vai trò có quyền thu tiền); thiếu quyền sẽ thấy \"Bạn không có quyền thu tiền (pos.checkout)\"."
   },
   {
    "id": "khach-hang#man-hinh-gom-nhung-gi",

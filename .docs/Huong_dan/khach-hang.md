@@ -16,7 +16,7 @@ nguon:
 > Danh sách khách thân thiết, tích điểm theo chi tiêu, ví trả trước có thưởng nạp, phần thưởng đổi điểm và mã giảm giá (voucher).
 
 ## Ai dùng được
-- Người có module **Khách hàng** (tên trên Trang chủ: "Khách Hàng - Giảm Giá - Khuyến mãi"; mặc định **tắt**).
+- Người có module **Khách hàng** (tên trên Trang chủ: "Khách hàng & Khuyến mãi"; mặc định **tắt**).
 - **Tạo / sửa / xoá voucher**: chỉ Chủ quán hoặc Quản lý ("Chỉ Chủ quán hoặc Quản lý mới có quyền thiết lập voucher."). Vai trò phải tên **đúng là "Quản lý"** — vai trò tên khác như "Quản lý nhà hàng" cũng bị chặn.
 - Thêm khách, phần thưởng, gói nạp: ai vào được module đều làm được.
 - **Nạp ví**: cần quyền **"Thanh toán hoá đơn"** (Chủ quán, Quản lý và vai trò có quyền thu tiền); thiếu quyền sẽ thấy "Bạn không có quyền thu tiền (pos.checkout)".

@@ -65,11 +65,13 @@ const Map<String, ModuleTileData> kModuleConfigs = {
   ),
   'loyalty': ModuleTileData(
     id: 'loyalty',
-    title: 'Khách Hàng - Giảm Giá - Khuyến mãi',
-    subtitle: 'Tích điểm, ví thành viên & mã voucher',
+    // Tên ngắn cho thẻ: bản dài "Khách Hàng - Giảm Giá - Khuyến mãi" bị cắt trên Sunmi 360dp.
+    title: 'Khách hàng & Khuyến mãi',
+    subtitle: 'Điểm, ví, voucher',
     icon: Icons.card_giftcard_rounded,
     baseColor: Color(0xFFDB2777), // hot pink
     route: '/loyalty',
+    titleLines: 2,
   ),
   'table': ModuleTileData(
     id: 'table',
@@ -111,6 +113,7 @@ const Map<String, ModuleTileData> kModuleConfigs = {
     baseColor: Color(0xFF9333EA),
     badge: '⭐',
     route: '/kho_pro',
+    titleLines: 2,
   ),
   'tinhluong': ModuleTileData(
     id: 'tinhluong',

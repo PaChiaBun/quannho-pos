@@ -106,7 +106,11 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
     final monthRev   = ref.watch(_monthRevProvider);
 
     Widget buildMainContent(bool isMobile) {
-      return NestedScrollView(
+      // Cả khung cuộn nằm dưới thanh trạng thái: tab dính (pinned) từng chạy lên đè dưới
+      // đồng hồ/pin (Sunmi 29/10/2026). Chỉ dải thanh trạng thái tô xanh, thân giữ nền kem.
+      return Column(children: [
+        Container(color: _kNavy, height: MediaQuery.paddingOf(context).top),
+        Expanded(child: MediaQuery.removePadding(context: context, removeTop: true, child: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverToBoxAdapter(
             child: _buildHeaderTop(todayStats, todayFin, monthRev, isMobile),
@@ -153,7 +157,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
             EinvoiceReportTab(),
           ],
         ),
-      );
+      ))),
+      ]);
     }
 
     return Scaffold(

@@ -680,13 +680,16 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          Text('Phiếu bếp',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              )),
+          // Màn hẹp (Sunmi 360dp): huy hiệu "N chờ" từng đè lên chữ này; chip BẾP đã đủ nghĩa.
+          if (MediaQuery.sizeOf(context).width >= 400) ...[
+            const SizedBox(width: 10),
+            Text('Phiếu bếp',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                )),
+          ],
         ],
       ),
       actions: [

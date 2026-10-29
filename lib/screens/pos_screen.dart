@@ -211,7 +211,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               ? _buildEmptyProducts()
                               : _buildProductGrid(filtered),
                         ),
-                        if (!cartIsEmpty) const SizedBox(height: 90),
+                        if (!cartIsEmpty) const SizedBox(height: 130),
                       ],
                     ),
                     if (!cartIsEmpty)
@@ -813,11 +813,18 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             : w >= 600
             ? 3
             : 2;
+        // Chưa món nào có ảnh: thẻ thấp lại cho thấy nhiều món hơn (thẻ cao 0.88 chừa chỗ ảnh
+        // nhưng chỉ có biểu tượng mờ — Sunmi chỉ thấy ~4 món một màn).
+        final anyImage = products.any(
+          (p) => p.imageUrl != null && p.imageUrl!.isNotEmpty,
+        );
         final aspectRatio = cols >= 4
             ? 1.1
             : cols >= 3
             ? 1.3
-            : 0.88;
+            : anyImage
+            ? 0.88
+            : 1.3;
         final delegate = SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: cols,
           mainAxisSpacing: 10,
@@ -1057,7 +1064,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       onTap: _openCart,
       child:
           Container(
-                margin: const EdgeInsets.fromLTRB(12, 0, 12, 18),
+                // Đáy 58: nằm trên nút voi Boom nhô lên giữa thanh điều hướng (trước 18 bị che).
+                margin: const EdgeInsets.fromLTRB(12, 0, 12, 58),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
                   vertical: 14,
@@ -1099,6 +1107,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
+                    // Màn hẹp chỉ còn ~50dp cho dòng này ("2 loạ…"): ô cam đã ghi số món nên bỏ.
+                    if (MediaQuery.sizeOf(context).width < 400)
+                      const Spacer()
+                    else
                     Expanded(
                       child: Text(
                         cart.lines.length == 1
@@ -1563,6 +1575,7 @@ class _ProductCard extends ConsumerWidget {
         child: LayoutBuilder(
           builder: (ctx2, cs) {
             final w = cs.maxWidth;
+            final h = cs.maxHeight;
             final isCompact = w < 260;
             final isTiny = w < 160;
             final pad = isTiny
@@ -1672,7 +1685,7 @@ class _ProductCard extends ConsumerWidget {
                           bottomRight: Radius.circular(radius),
                         ),
                         child: Container(
-                          padding: EdgeInsets.fromLTRB(pad, 8, 44, pad),
+                          padding: EdgeInsets.fromLTRB(pad, 8, pad, pad),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.42),
                           ),
@@ -1743,7 +1756,8 @@ class _ProductCard extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    // Icon căn giữa phần trên card — trang trí có chủ đích
+                    // Icon căn giữa phần trên card — trang trí có chủ đích (thẻ thấp: bỏ, nhường chữ)
+                    if (h >= 160)
                     Positioned.fill(
                       child: Align(
                         alignment: const Alignment(0, -0.25),
@@ -1769,7 +1783,7 @@ class _ProductCard extends ConsumerWidget {
                           bottomRight: Radius.circular(radius),
                         ),
                         child: Container(
-                          padding: EdgeInsets.fromLTRB(pad, 8, 44, pad),
+                          padding: EdgeInsets.fromLTRB(pad, 8, pad, pad),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.18),
                           ),

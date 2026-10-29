@@ -112,6 +112,9 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
             color: _kNavy,
             child: TabBar(
               controller: _tab,
+              // Cuộn ngang: 5 tab chia đều trên Sunmi 360dp bị cắt "Thưởn", "Gói nạ", "Khuyế".
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
               indicatorColor: _kGold,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white54,

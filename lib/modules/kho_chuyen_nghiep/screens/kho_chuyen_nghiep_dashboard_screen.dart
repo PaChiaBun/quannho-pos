@@ -287,6 +287,8 @@ class _GradientKpiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12), // ‼️ FIX: giảm padding tránh overflow
+      // Cắt hình tròn trang trí theo góc bo của thẻ (trước bị Stack cắt vuông trong lớp đệm).
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.circular(20),
@@ -297,7 +299,7 @@ class _GradientKpiCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Stack(children: [
+      child: Stack(clipBehavior: Clip.none, children: [
         // Background circle decoration
         Positioned(right: -14, bottom: -14,
           child: Container(
