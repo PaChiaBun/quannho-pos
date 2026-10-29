@@ -266,6 +266,26 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
   - Giảm: chẩn đoán 12,8 → 12,4.
 - **Tính từ mốc gốc: 10,2 → 11,8/16.**
 
+### Đổi người chấm: CLAUDE chấm (29/10, Chủ Quán yêu cầu) — mốc mới 9,6/16
+
+- Từ 29/10 Claude chấm (3 trợ lý Claude chấm song song, không xem điểm cũ); gpt-4o-mini chỉ sinh câu trả lời của Boom
+  (khoảng 0,05 USD / lượt). `cham_tu_van.ts` mặc định không gọi gpt-4o; tổng hợp bằng `cham_tu_van/tong_hop.py`.
+- Claude chấm lại đúng 60 câu trả lời lần 38 (lượt 1): **9,57/16** (gpt-4o cho 11,77). Hai người chấm xếp hạng câu
+  khá giống nhau (tương quan 0,73), nhưng Claude nghiêm hơn ở đúng số, tìm vấn đề, lý lẽ, việc làm.
+- **Từ nay so sánh theo mốc Claude 9,6** (các mốc gpt-4o 10,2 → 11,8 chỉ để tham khảo).
+- Điểm yếu thật theo Claude:
+  - Tiêu chí: lý lẽ 0,75, việc làm 0,85, tìm vấn đề 0,98 (34/57).
+  - Loại câu: dự báo 7,3, nói tiếp 8,9, so sánh 9,0.
+- Lỗi điển hình gpt-4o bỏ qua:
+  - Lấy dự báo tháng 10 làm dự báo tháng 11; coi doanh thu 3 ngày là ước cả tuần.
+  - Bịa số khi khối không có (số từng món tháng trước, phần thịt / rau / bún trong chi nguyên liệu, tỉ lệ khách quay lại).
+  - Cộng / chia sai khi tự tính (thu − chi kỳ trước, % một khoản).
+  - Khuyên chạy tiếp mã giảm giá đang ăn 9% tiền hàng.
+- Việc kế tiếp (ưu tiên):
+  1. Dự báo tuần / tháng sau tính sẵn và cấm dùng dự báo tháng này cho tháng khác.
+  2. Luật "không có số → nói không có, không ước" mạnh hơn.
+  3. Tính sẵn thêm (thu − chi kỳ trước, % từng mã giảm giá).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

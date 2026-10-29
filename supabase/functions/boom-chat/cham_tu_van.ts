@@ -5,6 +5,9 @@
 //   OPENAI_API_KEY=… deno run --allow-read --allow-write --allow-net=api.openai.com \
 //     --allow-env=OPENAI_API_KEY,BOOM_OPENAI_MODEL,CHAM_MODEL,CHAM_MAX,CHAM_DRY cham_tu_van.ts [de.json] [ket_qua.json]
 // Chạy thử không gọi GPT (không cần khoá): CHAM_DRY=1 … — in tin nhắn của 2 câu đầu và ước lượng token / chi phí.
+// NGƯỜI CHẤM (29/10, Chủ Quán): mặc định CLAUDE chấm — script chỉ gọi gpt-4o-mini sinh câu trả lời của Boom (đúng mô hình
+// Boom thật) rồi ghi kèm số liệu / vấn đề / ý chính để Claude chấm theo thang 8 tiêu chí; tổng hợp: cham_tu_van/tong_hop.py.
+// CHAM_JUDGE=gpt mới gọi gpt-4o chấm như cũ (chỉ để đối chiếu).
 import { buildMessages, formatFacts, formatModules, loaiCau, type MemoryTurn, parseFacts, parseModules } from './logic.ts';
 
 const DIR = new URL('./cham_tu_van/', import.meta.url);
@@ -15,6 +18,7 @@ const KEY = Deno.env.get('OPENAI_API_KEY') ?? '';
 if (!DRY && !KEY.startsWith('sk-')) { console.error('❌ Cần OPENAI_API_KEY (hoặc CHAM_DRY=1 để chạy thử)'); Deno.exit(1); }
 const MODEL = Deno.env.get('BOOM_OPENAI_MODEL') ?? 'gpt-4o-mini';
 const JUDGE = Deno.env.get('CHAM_MODEL') ?? 'gpt-4o';
+const GPT_JUDGE = Deno.env.get('CHAM_JUDGE') === 'gpt';
 // Cố định "hôm nay" = ngày số liệu quán mẫu (28/10/2026, giờ VN) — câu trả lời không trôi theo ngày chạy
 const NOW = new Date('2026-10-28T09:00:00+07:00');
 
@@ -87,6 +91,12 @@ for (const [i, c] of cases.entries()) {
     // cùng độ dài như index.ts (câu kế hoạch 900)
     const answer = await chat(MODEL, msgs, loaiCau(c.q) === 'ke_hoach' ? 900 : 600);
     const vd = s.van_de.filter((v) => c.van_de.includes(v.id));
+    if (!GPT_JUDGE) {
+      // để Claude chấm: kèm đúng thứ người chấm cần (hồ sơ, số Boom đã thấy, vấn đề cài sẵn, ý chính, điều cần tránh)
+      rows.push({ ...c, answer, ho_so: `${s.ten} — ${s.mo_ta}`, so_lieu_boom_thay: seen, van_de_mo_ta: vd.map((v) => `${v.id}: ${v.mo_ta}`) });
+      console.log(`${i + 1}/${cases.length} đã có câu trả lời ${c.id}`);
+      continue;
+    }
     const g = JSON.parse(await chat(JUDGE, [
       { role: 'system', content: GRADER },
       { role: 'user', content: [
@@ -118,6 +128,10 @@ if (DRY) {
 
 await Deno.mkdir(outFile.replace(/\/[^/]*$/, '') || '.', { recursive: true });
 await Deno.writeTextFile(outFile, JSON.stringify(rows, null, 1));
+if (!GPT_JUDGE) {
+  console.log(`\nĐã ghi ${rows.length} câu trả lời để Claude chấm: ${outFile}. Token vào ${tokIn}, ra ${tokOut} (gpt-4o-mini) ≈ ${((tokIn * 0.15 + tokOut * 0.6) / 1e6).toFixed(3)} USD.`);
+  Deno.exit(0);
+}
 const ok = rows.filter((r) => typeof r.tong === 'number') as { loai: string; tong: number; diem: Record<string, number>; van_de: string[]; van_de_tim_ra: string[] }[];
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 console.log(`\nĐIỂM TRUNG BÌNH ${avg(ok.map((r) => r.tong)).toFixed(1)}/16 trên ${ok.length}/${rows.length} câu`);
