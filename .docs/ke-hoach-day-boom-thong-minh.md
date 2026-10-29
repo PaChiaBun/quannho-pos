@@ -286,6 +286,23 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
   2. Luật "không có số → nói không có, không ước" mạnh hơn.
   3. Tính sẵn thêm (thu − chi kỳ trước, % từng mã giảm giá).
 
+### Lần 39 (29/10, Claude chấm, chưa áp): số tính sẵn + cấm số giả + **ĐIỂM CẦN CHÚ Ý tính sẵn** → 9,6 → **10,2/16** (1 lượt)
+
+- Bản A (số tính sẵn: dự báo đúng kỳ, tuần chưa trọn, thu − chi kỳ trước, % từng mã; cấm số giả):
+  - 9,61 (2 lượt), không đổi so mốc 9,57.
+  - Dự báo 7,3 → 9,0.
+- Bản B (A + câu mẫu không số): 8,79 → **bỏ**. Mẫu chỗ trống làm câu trả lời chung chung hơn.
+  - Phát hiện lúc thử bản B: GPT chép số mẫu (9%, 2.000đ, 1/3) sang quán khác, in nguyên "[Mốc 1]" → máy chủ bỏ dấu ngoặc nhãn; quay lại mẫu bản A.
+- **Bản C = A + "ĐIỂM CẦN CHÚ Ý (tính sẵn)"**:
+  - Nội dung: máy chủ tự liệt kê combo đắt hơn mua lẻ, giá vốn > 35%, nhóm topping / món thêm < 5%, món chưa bán, khoản chi tăng ≥ 50%, giảm giá > 8%, khách quay lại < 20%, hao hụt kho, hàng hết, ca quên chấm ra.
+  - Lượt 1: **10,23/16** (+0,66 ±0,32 so mốc). Tìm vấn đề 0,98 → 1,15, đúng số 1,40 → 1,57.
+  - Lượt 2 chưa chạy được: **tài khoản OpenAI của khoá chấm hết tiền** (credit_balance_exhausted).
+- Còn yếu:
+  - Lý lẽ 0,7.
+  - Câu "có nên" nghiêng về NÊN ở quyết định lớn (cắt người, đóng ca, đổi mối, chạy tiếp mã giảm giá).
+  - Khuôn "thử 2 tuần" lặp máy móc.
+  - Câu nói tiếp còn lạc chủ đề.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

@@ -813,3 +813,33 @@ Deno.test('Lần 38: hồ sơ quán tự suy; nói tiếp ghi rõ chủ đề l�
   const k = buildMessages('tuần sau nên làm gì cho quán', [], null, { now: new Date('2026-10-28T09:00:00+07:00') });
   assert(k[1].content.includes('Chia theo ĐÚNG khoảng thời gian được hỏi'), k[1].content);
 });
+
+Deno.test('Claude chấm 29/10: tuần chưa trọn, dự báo chỉ tháng này, thu − chi kỳ trước, % từng mã, cấm số giả', () => {
+  const NOW = new Date('2026-10-29T09:00:00+07:00');
+  const w = formatFacts(parseFacts({ period: 'Tuần này', revenue: 300, orders: 3, top: [], slow: [], from: '2026-10-26', to: '2026-10-28',
+    by_weekday: [100, 100, 100, 0, 0, 0, 0] })!, NOW);
+  assert(w.includes('Kỳ tuần mới có 3/7 ngày') && w.includes('khoảng 700đ'), w);
+  const m = formatFacts(parseFacts({ period: 'Tháng này', revenue: 1000, orders: 10, top: [], slow: [], from: '2026-10-01', to: '2026-10-28',
+    by_weekday: [200, 200, 200, 200, 100, 100, 0] })!, NOW);
+  assert(m.includes('Đây là dự báo CỦA THÁNG NÀY'), m);
+  const f = formatModules(parseModules({ finance: { period: 'Tháng trước', income: 100, expense: 80, prev_income: 90, prev_expense: 60, auto_income: 100 },
+    khuyen_mai: { period: 'Tháng này', active_count: 1, orders: 10, orders_with_discount: 5, discount_total: 100, revenue: 900, used: [{ code: 'GIAM15', times: 4, discount: 60 }] } })!, NOW);
+  assert(f.includes('Kỳ trước thu − chi = 30đ → kỳ này ÍT hơn 10đ'), f);
+  assert(f.includes('GIAM15 4 lần, giảm 60đ = 6% giá trị trước giảm'), f);
+  assert(ADVICE_PROMPT.includes('CẤM SỐ GIẢ'));
+});
+
+Deno.test('plainAnswer bỏ dấu ngoặc nhãn mẫu', () => {
+  assertEquals(plainAnswer('[Mốc 1]: đẩy combo\n[Tuần 2]: ưu đãi 14–16h'), 'Mốc 1: đẩy combo\nTuần 2: ưu đãi 14–16h');
+});
+
+Deno.test('Điểm cần chú ý tính sẵn: combo đắt, giá vốn cao, giảm giá > 8%, khách quay lại thấp', () => {
+  const N = new Date('2026-10-28T09:00:00+07:00');
+  const f = formatFacts(parseFacts({ period: 'Tháng này', revenue: 1000, orders: 10, top: [], slow: [], items_revenue: 1000,
+    groups: [{ name: 'Cà phê', revenue: 1000, qty: 10, items: 2, unsold: 0, unsold_names: [], slow: [],
+      top: [{ name: 'Bạc xỉu', qty: 5, revenue: 500, price: 29000, cost: 13000 }, { name: 'Combo sáng', qty: 5, revenue: 500, price: 52000, retail: 50000 }] }] })!, N);
+  assert(f.includes('ĐIỂM CẦN CHÚ Ý') && f.indexOf('ĐẮT HƠN mua lẻ 2.000đ') < f.lastIndexOf('giá vốn 45%'), f);
+  const m = formatModules(parseModules({ khuyen_mai: { period: 'x', orders: 10, orders_with_discount: 5, discount_total: 100, revenue: 900 },
+    khach: { period: 'x', total: 100, returning: 10 } })!, N);
+  assert(m.includes('giảm giá ăn 10%') && m.includes('chỉ 10% khách đã lưu quay lại'), m);
+});

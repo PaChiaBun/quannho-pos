@@ -8,7 +8,7 @@
 // NGƯỜI CHẤM (29/10, Chủ Quán): mặc định CLAUDE chấm — script chỉ gọi gpt-4o-mini sinh câu trả lời của Boom (đúng mô hình
 // Boom thật) rồi ghi kèm số liệu / vấn đề / ý chính để Claude chấm theo thang 8 tiêu chí; tổng hợp: cham_tu_van/tong_hop.py.
 // CHAM_JUDGE=gpt mới gọi gpt-4o chấm như cũ (chỉ để đối chiếu).
-import { buildMessages, formatFacts, formatModules, loaiCau, type MemoryTurn, parseFacts, parseModules } from './logic.ts';
+import { buildMessages, formatFacts, formatModules, loaiCau, type MemoryTurn, parseFacts, parseModules, plainAnswer } from './logic.ts';
 
 const DIR = new URL('./cham_tu_van/', import.meta.url);
 const inFile: string | URL = Deno.args[0] ?? new URL('de.json', DIR);
@@ -89,7 +89,8 @@ for (const [i, c] of cases.entries()) {
   }
   try {
     // cùng độ dài như index.ts (câu kế hoạch 900)
-    const answer = await chat(MODEL, msgs, loaiCau(c.q) === 'ke_hoach' ? 900 : 600);
+    // làm sạch như máy chủ (index.ts → plainAnswer) — chấm đúng thứ chủ quán thấy
+    const answer = plainAnswer(await chat(MODEL, msgs, loaiCau(c.q) === 'ke_hoach' ? 900 : 600));
     const vd = s.van_de.filter((v) => c.van_de.includes(v.id));
     if (!GPT_JUDGE) {
       // để Claude chấm: kèm đúng thứ người chấm cần (hồ sơ, số Boom đã thấy, vấn đề cài sẵn, ý chính, điều cần tránh)
