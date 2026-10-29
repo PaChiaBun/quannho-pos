@@ -1518,54 +1518,37 @@ class _ArchNotchedShape extends NotchedShape {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BOOM BUTTON — Logo chú voi Boom, animation thở nhẹ nhàng
+// BOOM BUTTON — Logo chú voi Boom (đứng yên: hiệu ứng "thở" lặp vô hạn bắt máy
+// vẽ lại 60 lần/giây trên mọi màn, Sunmi V3 tốn ~64% một lõi CPU — 29/10/2026)
 // ─────────────────────────────────────────────────────────────────────────────
-class _BoomButton extends StatefulWidget {
+class _BoomButton extends StatelessWidget {
   final VoidCallback onTap;
   const _BoomButton({required this.onTap});
 
   @override
-  State<_BoomButton> createState() => _BoomButtonState();
-}
-
-class _BoomButtonState extends State<_BoomButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseCtrl;
-  late Animation<double> _scaleAnim;
-  late Animation<double> _glowAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3000), // thở chậm hơn
-    )..repeat(reverse: true);
-
-    _scaleAnim = Tween<double>(
-      begin: 1.0,
-      end: 1.04,
-    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
-    _glowAnim = Tween<double>(
-      begin: 0.25,
-      end: 0.50,
-    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _pulseCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulseCtrl,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _kNavy.withValues(alpha: 0.375),
+            blurRadius: 18,
+            spreadRadius: 1,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: _kOrange.withValues(alpha: 0.15),
+            blurRadius: 28,
+            spreadRadius: -2,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: GestureDetector(
         onTap: () {
           HapticFeedback.lightImpact();
-          widget.onTap();
+          onTap();
         },
         child: Container(
           width: 80,
@@ -1591,31 +1574,6 @@ class _BoomButtonState extends State<_BoomButton>
           ),
         ),
       ),
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnim.value,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: _kNavy.withValues(alpha: _glowAnim.value),
-                  blurRadius: 18,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: _kOrange.withValues(alpha: _glowAnim.value * 0.4),
-                  blurRadius: 28,
-                  spreadRadius: -2,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: child,
-          ),
-        );
-      },
     );
   }
 }
