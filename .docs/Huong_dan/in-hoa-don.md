@@ -127,7 +127,7 @@ Dùng khi quán có nhiều máy bán (web, điện thoại) nhưng chỉ **mộ
 | Bill bị cụt mép / chữ quá to | Khổ giấy hoặc cỡ chữ không hợp | Sửa máy in: đúng khổ giấy, giảm tỉ lệ cỡ chữ |
 | Chữ mờ hoặc bết (Sunmi) | Độ đậm chưa hợp | Đổi độ đậm; bật "Chữ đậm dạng bán đậm" nếu chữ đậm bị loe |
 | "Bill … CHƯA in sau 30 giây. Kiểm tra máy in bill." (khi thanh toán bàn) | Máy in chậm, tắt hoặc hết giấy | Kiểm tra máy in rồi bấm **"IN LẠI BILL"** trên thông báo |
-| Sunmi cài lại app thì không in nữa | Luật in cũ gắn với mã thiết bị cũ | Khai báo lại máy in tích hợp và chọn ở "Máy này in bill ra" |
+| Máy cài lại app thì không tự in bill nữa | Luật "Máy này in bill ra" ra máy LAN/Bluetooth gắn với mã của máy cũ (cài lại app là đổi mã). Luật chỉ in ra máy in tích hợp Sunmi thì Sunmi tự nhận lại, không bị | Vào In Hoá Đơn → chọn lại ở "Máy này in bill ra" rồi **"Lưu"** |
 | "Máy in đang được dùng trong một luật, hãy sửa luật trước." | Xoá máy in đang được luật dùng | Sửa/xoá luật trước rồi mới xoá máy in |
 | "Không thể đăng ký. Đã có thiết bị khác làm máy chủ in." | Quán đã có máy chủ in | Dùng "Chuyển máy chủ sang thiết bị này" |
 | "Bạn không có quyền quản lý máy chủ in (printer.manage_server)." | Vai trò không có quyền "Quản lý Máy chủ in" | Nhờ Chủ quán/Quản lý |

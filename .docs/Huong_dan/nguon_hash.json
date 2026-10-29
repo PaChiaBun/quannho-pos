@@ -6,9 +6,9 @@
       "lib/core/widgets/order_detail_dialog.dart": "15f7dabf2c644eb2",
       "lib/modules/pos/providers/pos_providers.dart": "3475552a266d5259",
       "lib/modules/pos/repository/pos_repository.dart": "e5127ad3b08bbc88",
-      "lib/modules/pos/screens/checkout_sheet.dart": "2af6cdbd33b07e2c",
+      "lib/modules/pos/screens/checkout_sheet.dart": "883c8f8856ecf0e9",
       "lib/screens/finance_screen.dart": "c0e3149703166cdd",
-      "lib/screens/pos_screen.dart": "6ae2e0e1b399128b",
+      "lib/screens/pos_screen.dart": "c52b656a54725d2e",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "bao-cao-chuoi.md": {
@@ -28,8 +28,8 @@
       "lib/screens/report_screen.dart": "a2680410dfb6bde6"
     },
     "bep.md": {
-      "lib/core/repositories/kitchen_repository.dart": "fecfcf4ed2107c48",
-      "lib/screens/kitchen_screen.dart": "5bb41603a7c746de",
+      "lib/core/repositories/kitchen_repository.dart": "4eb4256d4578d6f5",
+      "lib/screens/kitchen_screen.dart": "56b69270eac1ebd8",
       "supabase/migrations/20260912_atomic_send_kitchen_ticket_v2.sql": "3242f0573a0ef36a",
       "test/screens/kitchen_sound_policy_test.dart": "52ab1b02b8994af5"
     },
@@ -38,7 +38,7 @@
       "lib/screens/chamcong_screen.dart": "b15a772a76e8392b"
     },
     "in-hoa-don.md": {
-      "lib/modules/bill_printer/providers/printer_settings_provider.dart": "6361671a5c01d3c1",
+      "lib/modules/bill_printer/providers/printer_settings_provider.dart": "c8a5c0a2d95a68be",
       "lib/modules/bill_printer/screens/bill_preview_screen.dart": "15db0b979728055b",
       "lib/modules/bill_printer/screens/bill_printer_hub.dart": "d8decddfa5160eb5",
       "lib/modules/bill_printer/screens/print_design_screen.dart": "cdca414c5cae7abf",
@@ -78,7 +78,7 @@
       "lib/modules/kho/screens/supplier_form_screen.dart": "cd17bfaafd38df68",
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "2d49d516b533a490",
+      "lib/screens/ban_screen.dart": "7417d40dc1ba9f5c",
       "lib/screens/inventory_screen.dart": "5e02c8832f119d5d",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
@@ -130,7 +130,7 @@
     },
     "quan-ly-ban.md": {
       "lib/core/repositories/ban_repository.dart": "88a8382abaab4830",
-      "lib/screens/ban_screen.dart": "2d49d516b533a490",
+      "lib/screens/ban_screen.dart": "7417d40dc1ba9f5c",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },

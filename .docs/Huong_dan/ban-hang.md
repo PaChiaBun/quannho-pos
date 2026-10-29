@@ -42,7 +42,7 @@ nguon:
 ## Các việc thường làm
 
 ### Gọi món
-1. Chạm vào thẻ món → món bay vào giỏ. Chạm lại để tăng số lượng.
+1. Chạm vào thẻ món → món bay vào giỏ. Chạm lại để tăng số lượng. Lướt tay cuộn danh sách đi qua thẻ món thì **không** tính là chạm.
 2. Khi món đã có trong giỏ, trên thẻ hiện **[−] xN**: bấm **−** để giảm.
 3. Muốn tìm nhanh: gõ tên vào ô tìm kiếm, hoặc chọn danh mục.
 4. **Giữ lâu** một thẻ món để mở bảng thêm **nhiều món cùng lúc kèm ghi chú bếp**; chọn số lượng rồi bấm **"Thêm N món vào giỏ"**.

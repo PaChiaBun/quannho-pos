@@ -1,6 +1,6 @@
 {
- "version": 202610261507,
- "hash": "e42e0b847675e81871bf1e908c64bfebc46e2857ee534002219cde4b85c5502e",
+ "version": 202610290658,
+ "hash": "19c050f757c52bbf3c8174780ececfb2074a53817829fecb80805fe8091ca365",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -32,7 +32,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Gọi món",
-   "text": "1. Chạm vào thẻ món → món bay vào giỏ. Chạm lại để tăng số lượng.\n2. Khi món đã có trong giỏ, trên thẻ hiện [−] xN: bấm − để giảm.\n3. Muốn tìm nhanh: gõ tên vào ô tìm kiếm, hoặc chọn danh mục.\n4. Giữ lâu một thẻ món để mở bảng thêm nhiều món cùng lúc kèm ghi chú bếp; chọn số lượng rồi bấm \"Thêm N món vào giỏ\".\n\nMón mờ có nhãn \"Hết\" thì không bấm được: món đó đang theo dõi tồn kho, có đặt tồn tối thiểu, và tồn đã về 0. Món không đặt tồn tối thiểu thì vẫn bán bình thường dù tồn âm. Món mờ có nhãn \"Tạm ngưng\" là món đã \"Tắt bán\" ở Kho hàng: bấm vào báo \"<món> đang tạm ngưng bán\" — bật bán lại ở Kho hàng."
+   "text": "1. Chạm vào thẻ món → món bay vào giỏ. Chạm lại để tăng số lượng. Lướt tay cuộn danh sách đi qua thẻ món thì không tính là chạm.\n2. Khi món đã có trong giỏ, trên thẻ hiện [−] xN: bấm − để giảm.\n3. Muốn tìm nhanh: gõ tên vào ô tìm kiếm, hoặc chọn danh mục.\n4. Giữ lâu một thẻ món để mở bảng thêm nhiều món cùng lúc kèm ghi chú bếp; chọn số lượng rồi bấm \"Thêm N món vào giỏ\".\n\nMón mờ có nhãn \"Hết\" thì không bấm được: món đó đang theo dõi tồn kho, có đặt tồn tối thiểu, và tồn đã về 0. Món không đặt tồn tối thiểu thì vẫn bán bình thường dù tồn âm. Món mờ có nhãn \"Tạm ngưng\" là món đã \"Tắt bán\" ở Kho hàng: bấm vào báo \"<món> đang tạm ngưng bán\" — bật bán lại ở Kho hàng."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-ghi-chu-mon-va-ghi-chu-don",
@@ -955,12 +955,12 @@
    "text": "Vì sao: Máy in chậm, tắt hoặc hết giấy\nLàm gì: Kiểm tra máy in rồi bấm \"IN LẠI BILL\" trên thông báo"
   },
   {
-   "id": "in-hoa-don#loi-sunmi-cai-lai-app-thi-khong-in-nua",
+   "id": "in-hoa-don#loi-may-cai-lai-app-thi-khong-tu-in-bill-nua",
    "module": "bill_printer",
    "module_name": "In Hoá Đơn",
    "section": "Lỗi thường gặp",
-   "title": "Sunmi cài lại app thì không in nữa",
-   "text": "Vì sao: Luật in cũ gắn với mã thiết bị cũ\nLàm gì: Khai báo lại máy in tích hợp và chọn ở \"Máy này in bill ra\""
+   "title": "Máy cài lại app thì không tự in bill nữa",
+   "text": "Vì sao: Luật \"Máy này in bill ra\" ra máy LAN/Bluetooth gắn với mã của máy cũ (cài lại app là đổi mã). Luật chỉ in ra máy in tích hợp Sunmi thì Sunmi tự nhận lại, không bị\nLàm gì: Vào In Hoá Đơn → chọn lại ở \"Máy này in bill ra\" rồi \"Lưu\""
   },
   {
    "id": "in-hoa-don#loi-may-in-dang-duoc-dung-trong-mot-luat-hay-sua-luat-truoc",
