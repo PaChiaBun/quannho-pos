@@ -1408,7 +1408,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
   }
 
-  void _addToCart(ProductModel product, TapDownDetails details) {
+  void _addToCart(ProductModel product, TapUpDetails details) {
     // Món "tạm ngưng bán" (Kho hàng → tắt bán) — khoá như quy chuẩn qn.md.
     if (!product.isAvailable) {
       HapticFeedback.heavyImpact();
@@ -1496,7 +1496,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _ProductCard extends ConsumerWidget {
   final ProductModel product;
-  final Function(TapDownDetails) onTapWithDetails;
+  final Function(TapUpDetails) onTapWithDetails;
 
   const _ProductCard({required this.product, required this.onTapWithDetails});
 
@@ -1545,7 +1545,8 @@ class _ProductCard extends ConsumerWidget {
       // Mờ 50% khi hết hàng — vẫn hiện để biết món tồn tại nhưng disable
       opacity: isLocked ? 0.45 : 1.0,
       child: GestureDetector(
-        onTapDown:
+        // onTapUp, không phải onTapDown: lướt tay cuộn qua thẻ món từng tự cộng món (Bò Đen 29/10).
+        onTapUp:
             isLocked
             ? null
             : onTapWithDetails, // disable click khi hết hàng

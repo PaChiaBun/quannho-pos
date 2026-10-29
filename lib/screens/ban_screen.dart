@@ -8998,7 +8998,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                       ),
                                     ),
                                     GestureDetector(
-                                      onTapDown: (details) {
+                                      onTapUp: (details) {
                                         _addItemWithCheck(
                                           p,
                                           details.globalPosition,
@@ -9025,7 +9025,8 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                               ),
                             ] else ...[
                               GestureDetector(
-                                onTapDown: (details) {
+                                // onTapUp: lướt cuộn danh sách qua nút + không được tính là thêm món.
+                                onTapUp: (details) {
                                   _addItemWithCheck(p, details.globalPosition);
                                 },
                                 child: Container(
