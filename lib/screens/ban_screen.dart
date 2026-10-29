@@ -10141,21 +10141,35 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                       ),
                                     ),
                                   ),
-                                  const Spacer(),
-                                  Text(
-                                    'Tổng cộng: ',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: _kNavy.withValues(alpha: 0.5),
-                                    ),
-                                  ),
-                                  Text(
-                                    fmtVnd(total),
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w800,
-                                      color: _kNavy,
+                                  const SizedBox(width: 8),
+                                  // Màn hẹp (Sunmi 360dp) từng cắt mất chữ "đ": nhãn ngắn + tự thu nhỏ khi số lớn.
+                                  Expanded(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerRight,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'Tổng: ',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: _kNavy.withValues(
+                                                alpha: 0.5,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            fmtVnd(total),
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w800,
+                                              color: _kNavy,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],

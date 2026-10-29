@@ -78,7 +78,7 @@
       "lib/modules/kho/screens/supplier_form_screen.dart": "cd17bfaafd38df68",
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "620d557d1a34db4d",
+      "lib/screens/ban_screen.dart": "000b8b55c347c0e6",
       "lib/screens/inventory_screen.dart": "bf39e6305c7ffe35",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
@@ -130,7 +130,7 @@
     },
     "quan-ly-ban.md": {
       "lib/core/repositories/ban_repository.dart": "88a8382abaab4830",
-      "lib/screens/ban_screen.dart": "620d557d1a34db4d",
+      "lib/screens/ban_screen.dart": "000b8b55c347c0e6",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
