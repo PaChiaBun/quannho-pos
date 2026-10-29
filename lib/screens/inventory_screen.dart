@@ -31,6 +31,7 @@ import '../core/services/product_image_service.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/store_auth_service.dart';
 import '../modules/topping/topping_group_repository.dart';
+import '../core/utils/stagger.dart';
 
 // ─ Màu local ─────────────────────────────────────────────────────────────────
 const _kNavy   = Color(0xFF1E1C5E);
@@ -2656,7 +2657,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (_, i) => _PoCard(order: filtered[i])
-                        .animate(delay: (i * 50).ms)
+                        .animate(delay: staggerDelay(i, 50))
                         .fadeIn(duration: 250.ms)
                         .slideY(begin: 0.05, end: 0),
                     childCount: filtered.length,

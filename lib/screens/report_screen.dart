@@ -25,6 +25,7 @@ import '../core/repositories/module_repository.dart';
 import '../core/widgets/order_detail_dialog.dart';
 import '../core/utils/app_logger.dart';
 import 'einvoice_report_tab.dart';
+import '../core/utils/stagger.dart';
 import 'chain_report_screen.dart';
 import '../core/providers/session_provider.dart';
 
@@ -3466,7 +3467,7 @@ class _VoidAuditTabState extends ConsumerState<_VoidAuditTab> {
           ),
         ),
       ),
-    ).animate(delay: (index * 30).ms)
+    ).animate(delay: staggerDelay(index, 30))
         .fadeIn(duration: 200.ms)
         .slideY(begin: 0.04, end: 0, duration: 200.ms, curve: Curves.easeOut);
   }

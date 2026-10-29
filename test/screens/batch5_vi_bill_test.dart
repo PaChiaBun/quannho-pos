@@ -24,7 +24,8 @@ void main() {
         final src = File(
           'lib/modules/finance/repository/finance_repository.dart',
         ).readAsStringSync();
-        expect('await fetchAllPages('.allMatches(src).length, 3);
+        // Danh sách + thống kê kỳ này + kỳ trước (2 cái sau chạy song song, chờ chung).
+        expect('fetchAllPages('.allMatches(src).length, 3);
         expect(src, contains(".order('id').range(offset, end)"));
       });
     },

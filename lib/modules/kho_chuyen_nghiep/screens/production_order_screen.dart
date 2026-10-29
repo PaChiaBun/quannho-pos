@@ -8,6 +8,7 @@ import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../providers/kho_chuyen_nghiep_providers.dart';
 import '../repository/kho_chuyen_nghiep_repository.dart';
+import '../../../core/utils/stagger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRODUCTION ORDER SCREEN — Lệnh sản xuất hằng ngày
@@ -145,7 +146,7 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
                               _updateStatus(filtered[i], recipe, newStatus),
                           onCancel: () => _cancelOrder(filtered[i]),
                         )
-                            .animate(delay: (i * 50).ms)
+                            .animate(delay: staggerDelay(i, 50))
                             .fadeIn(duration: 250.ms)
                             .slideY(begin: 0.04, end: 0);
                       },

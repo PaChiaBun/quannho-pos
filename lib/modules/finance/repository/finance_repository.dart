@@ -192,7 +192,9 @@ class FinanceRepository {
     final storeId = await _storeId();
     if (storeId == null) return FinanceStats.empty;
 
-    final rows = await fetchAllPages((offset, end) {
+    // Kỳ này, danh mục và kỳ trước gọi song song: mỗi lượt qua mạng quán ~0,3–1 giây,
+    // nối đuôi 3 lượt từng làm số đầu trang Thu Chi hiện chậm (Bò Đen 29/10/2026).
+    final rowsF = fetchAllPages((offset, end) {
       var query = _sb
         .from('finance_records')
         // ‼️ FIX Bug #34: chỉ chọn cột cần thiết — tính thẳng từ raw rows, không parse qua model
@@ -205,29 +207,10 @@ class FinanceRepository {
           : query.or(kCashBookAllFundsFilter);
       return query.order('id').range(offset, end);
     });
-
-    double income = 0, expense = 0;
-    for (final r in rows) {
-      final amt = (r['amount'] as num?)?.toDouble() ?? 0;
-      if (r['type'] == 'income') income += amt;
-      if (r['type'] == 'expense') expense += amt;
-    }
-
-    // Breakdown theo category
-    final categories = await getCategories();
-    final catMap = {for (var c in categories) c.id: c.name};
-    final expenseByCategory = <String, double>{};
-    for (final r in rows.where((r) => r['type'] == 'expense')) {
-      final cat = catMap[r['category_id'] as String? ?? ''] ?? 'Khác';
-      expenseByCategory[cat] =
-          (expenseByCategory[cat] ?? 0) +
-          ((r['amount'] as num?)?.toDouble() ?? 0);
-    }
-
-    // So sánh kỳ trước
+    final categoriesF = getCategories();
     final periodLen = range.to.difference(range.from);
     final prevFrom = range.from.subtract(periodLen);
-    final prevRows = await fetchAllPages((offset, end) {
+    final prevRowsF = fetchAllPages((offset, end) {
     var prevQuery = _sb
         .from('finance_records')
         // ‼️ FIX Bug #34: chỉ cần type + amount cho so sánh kỳ trước
@@ -240,6 +223,27 @@ class FinanceRepository {
           : prevQuery.or(kCashBookAllFundsFilter);
       return prevQuery.order('id').range(offset, end);
     });
+    final (rows, categories, prevRows) =
+        await (rowsF, categoriesF, prevRowsF).wait;
+
+    double income = 0, expense = 0;
+    for (final r in rows) {
+      final amt = (r['amount'] as num?)?.toDouble() ?? 0;
+      if (r['type'] == 'income') income += amt;
+      if (r['type'] == 'expense') expense += amt;
+    }
+
+    // Breakdown theo category
+    final catMap = {for (var c in categories) c.id: c.name};
+    final expenseByCategory = <String, double>{};
+    for (final r in rows.where((r) => r['type'] == 'expense')) {
+      final cat = catMap[r['category_id'] as String? ?? ''] ?? 'Khác';
+      expenseByCategory[cat] =
+          (expenseByCategory[cat] ?? 0) +
+          ((r['amount'] as num?)?.toDouble() ?? 0);
+    }
+
+    // So sánh kỳ trước
     final prevIncome = prevRows
         .where((r) => r['type'] == 'income')
         .fold<double>(

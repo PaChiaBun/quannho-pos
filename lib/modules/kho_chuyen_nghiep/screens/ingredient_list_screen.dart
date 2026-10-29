@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../modules/kho/providers/kho_providers.dart';
+import '../../../core/utils/stagger.dart';
 
 class IngredientListScreen extends ConsumerStatefulWidget {
   const IngredientListScreen({super.key});
@@ -81,7 +82,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
                     (_, i) {
                       final item = filtered[i];
                       return _IngredientCard(item: item)
-                          .animate(delay: (i * 40).ms)
+                          .animate(delay: staggerDelay(i, 40))
                           .fadeIn(duration: 200.ms)
                           .slideY(begin: 0.04);
                     },

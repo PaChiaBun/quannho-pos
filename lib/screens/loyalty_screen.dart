@@ -13,6 +13,7 @@ import '../modules/pos/screens/discount_management_screen.dart';
 import '../core/utils/app_logger.dart';
 import '../core/utils/responsive.dart';
 import '../core/utils/string_utils.dart';
+import '../core/utils/stagger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOYALTY PROVIDERS — local trong file này
@@ -339,7 +340,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
             rank: i + 1,
             onTap: () => _openCustomerDetail(filtered[i]),
           )
-              .animate(delay: (i * 35).ms)
+              .animate(delay: staggerDelay(i, 35))
               .fadeIn(duration: 200.ms)
               .slideX(begin: 0.05, end: 0, duration: 200.ms),
         );
@@ -367,7 +368,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
           itemCount: rewards.length,
           itemBuilder: (_, i) => _RewardCard(reward: rewards[i])
-              .animate(delay: (i * 40).ms)
+              .animate(delay: staggerDelay(i, 40))
               .fadeIn(duration: 200.ms),
         );
       },
@@ -512,7 +513,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
                         ),
                       ),
                     ]),
-                  ).animate(delay: (i * 30).ms).fadeIn(duration: 200.ms);
+                  ).animate(delay: staggerDelay(i, 30)).fadeIn(duration: 200.ms);
                 },
               ),
             ),
@@ -821,7 +822,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
                       ),
                     ]),
                   ]),
-                ).animate(delay: (i * 40).ms).fadeIn(duration: 200.ms);
+                ).animate(delay: staggerDelay(i, 40)).fadeIn(duration: 200.ms);
               },
             ),
           ),

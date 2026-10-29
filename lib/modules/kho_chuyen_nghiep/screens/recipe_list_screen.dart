@@ -8,6 +8,7 @@ import '../providers/kho_chuyen_nghiep_providers.dart';
 import '../repository/kho_chuyen_nghiep_repository.dart';
 import 'recipe_form_screen.dart';
 import 'recipe_detail_screen.dart';
+import '../../../core/utils/stagger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RECIPE LIST SCREEN — Danh sách công thức món ăn
@@ -155,7 +156,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                           onEdit: () => _openForm(context, recipe: r),
                           onDelete: () => _delete(r),
                         )
-                            .animate(delay: (i * 50).ms)
+                            .animate(delay: staggerDelay(i, 50))
                             .fadeIn(duration: 250.ms)
                             .slideY(begin: 0.05, end: 0);
                       },

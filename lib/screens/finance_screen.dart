@@ -15,6 +15,7 @@ import '../modules/finance/repository/finance_repository.dart';
 import '../modules/finance/screens/add_transaction_sheet.dart';
 import '../core/widgets/order_detail_dialog.dart';
 import '../core/utils/app_logger.dart';
+import '../core/utils/stagger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE
@@ -215,17 +216,23 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     final recordsAsync = ref.watch(filteredRecordsProvider);
     final selectedFund = ref.watch(selectedFundProvider);
 
-    final mainContent = SingleChildScrollView(
+    // CustomScrollView + SliverList: chỉ dựng giao dịch đang thấy (trước đây ListView shrinkWrap
+    // trong SingleChildScrollView dựng hết mọi dòng mỗi lần mở / làm mới).
+    final mainContent = CustomScrollView(
       physics: const BouncingScrollPhysics(),
-      child: Column(
-        children: [
-          _buildHeader(statsAsync, periodState),
-          _buildFundTabs(selectedFund),
-          _buildPeriodChips(periodState),
-          _buildFilterTabs(filterType, recordsAsync),
-          _buildList(recordsAsync),
-        ],
-      ),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            children: [
+              _buildHeader(statsAsync, periodState),
+              _buildFundTabs(selectedFund),
+              _buildPeriodChips(periodState),
+              _buildFilterTabs(filterType, recordsAsync),
+            ],
+          ),
+        ),
+        _buildList(recordsAsync),
+      ],
     );
 
     return Scaffold(
@@ -298,7 +305,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               const SizedBox(height: 18),
 
               // ── Stats ──
+              // Làm mới (thêm phiếu, realtime) giữ số cũ tới khi có số mới, không chớp khung chờ.
               statsAsync.when(
+                skipLoadingOnReload: true,
                 loading: () => const _HeaderSkeleton(),
                 error: (_, __) => const SizedBox.shrink(),
                 data: (stats) => Column(
@@ -675,13 +684,16 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildList(AsyncValue<List<FinanceRecordModel>> recordsAsync) {
     return recordsAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 40),
-        child: Center(child: CircularProgressIndicator(color: _kNavy)),
+      loading: () => const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 40),
+          child: Center(child: CircularProgressIndicator(color: _kNavy)),
+        ),
       ),
-      error: (e, _) => Center(child: Text('Lỗi: $e')),
+      error: (e, _) =>
+          SliverToBoxAdapter(child: Center(child: Text('Lỗi: $e'))),
       data: (records) {
-        if (records.isEmpty) return _buildEmpty();
+        if (records.isEmpty) return SliverToBoxAdapter(child: _buildEmpty());
         // Group by date
         final items = <dynamic>[];
         String? lastKey;
@@ -695,23 +707,23 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           }
           items.add(r);
         }
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        return SliverPadding(
           padding: const EdgeInsets.fromLTRB(12, 4, 12, 100),
-          itemCount: items.length,
-          itemBuilder: (_, i) {
-            final item = items[i];
-            if (item is DateTime) return _DateHeader(date: item);
-            final r = item as FinanceRecordModel;
-            return _TransactionCard(
-                  record: r,
-                  onDelete: r.isAuto ? null : () => _confirmDelete(r),
-                )
-                .animate(delay: (i * 25).ms)
-                .fadeIn(duration: 200.ms)
-                .slideY(begin: 0.04, end: 0, duration: 200.ms);
-          },
+          sliver: SliverList.builder(
+            itemCount: items.length,
+            itemBuilder: (_, i) {
+              final item = items[i];
+              if (item is DateTime) return _DateHeader(date: item);
+              final r = item as FinanceRecordModel;
+              return _TransactionCard(
+                    record: r,
+                    onDelete: r.isAuto ? null : () => _confirmDelete(r),
+                  )
+                  .animate(delay: staggerDelay(i, 25))
+                  .fadeIn(duration: 200.ms)
+                  .slideY(begin: 0.04, end: 0, duration: 200.ms);
+            },
+          ),
         );
       },
     );

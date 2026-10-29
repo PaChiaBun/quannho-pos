@@ -28,6 +28,7 @@ import '../modules/qr_order/providers/qr_order_providers.dart';
 import '../modules/qr_order/widgets/qr_locked_banner.dart';
 import '../modules/qr_order/widgets/qr_order_review_sheet.dart';
 import '../modules/qr_order/widgets/qr_counter_queue_sheet.dart';
+import '../core/utils/stagger.dart';
 
 // Màu local
 const _kNavy = Color(0xFF1E1C5E);
@@ -837,7 +838,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               );
               return reduceMotion
                   ? card
-                  : card.animate(delay: (i * 40).ms).fadeIn(duration: 250.ms);
+                  : card.animate(delay: staggerDelay(i, 40)).fadeIn(duration: 250.ms);
             },
           );
         }
