@@ -210,6 +210,12 @@ class KitchenRepository {
                 event: PostgresChangeEvent.all,
                 schema: 'public',
                 table: 'kitchen_ticket_items',
+                // Không lọc thì món bếp của MỌI quán đổi cũng làm máy này tải lại.
+                filter: PostgresChangeFilter(
+                  type: PostgresChangeFilterType.eq,
+                  column: 'store_id',
+                  value: storeId,
+                ),
               callback: (_) {
                 if (!isCancelled) refresh(storeId);
               },

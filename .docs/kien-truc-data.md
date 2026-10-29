@@ -1,5 +1,10 @@
 # Quán Nhỏ POS — Kiến Trúc Data
 
+## Chỉ mục cho truy vấn POS gọi liên tục (ĐÃ áp production 28/10/2026)
+
+- Migration `20261107_chi_muc_mon_ban_thu_chi.sql` (CONCURRENTLY, rollback ở cuối file): `ban_session_items(session_id)`, `finance_records(store_id, recorded_at DESC)`, `product_modifiers(store_id)`. Món của bàn 10,7ms → 0,1ms.
+- App: ghi chú nhanh tải 1 lần cho cả quán (`storeModifiersProvider`, `productModifiersProvider` chỉ cắt theo món); `kitchenReadyStreamProvider` dùng `expand` để rời màn Bàn là dừng vòng tải phiếu bếp; realtime `kitchen_ticket_items` lọc theo `store_id`. Test `test/screens/ban_polling_leak_test.dart`.
+
 ## Vòng đời phiên bàn — chặn client tự đóng (ĐÃ áp production 22/10/2026 20:27)
 
 - `ban_sessions.status`: `open` → `closed` (thanh toán qua `settle_ban_session_v5`, bán quầy qua `complete_pos_sale_v1`, hoặc phiên nguồn rỗng khi gộp bàn) | `cancelled` (huỷ bàn có lý do + duyệt + `void_audit_logs`).

@@ -86,13 +86,15 @@ final kitchenStatsProvider = FutureProvider.autoDispose<_KitchenStats>((ref) asy
 
 /// Stream thông báo khi phiếu bếp mới chuyển thành 'xong'.
 /// Theo dõi repository trực tiếp để subscription sống đúng vòng đời provider.
-final kitchenReadyStreamProvider = StreamProvider.autoDispose<String>((ref) async* {
+/// Dùng expand (không phải async* + await for): async* chỉ dừng ở yield, mà ở đây
+/// hiếm khi yield nên rời màn Bàn vẫn để sót vòng tải phiếu bếp 10s/lần (Bò Đen 28/10).
+final kitchenReadyStreamProvider = StreamProvider.autoDispose<String>((ref) {
   final Set<String> knownDoneIds = {};
   final startedAtMs = DateTime.now().millisecondsSinceEpoch;
-  final ticketsStream = ref
+  return ref
       .watch(kitchenRepositoryProvider)
-      .watchActiveTickets();
-  await for (final tickets in ticketsStream) {
+      .watchActiveTickets()
+      .expand((tickets) sync* {
     for (final tw in tickets) {
       final t = tw.ticket;
       if (t.status == 'xong' && !knownDoneIds.contains(t.id)) {
@@ -104,7 +106,7 @@ final kitchenReadyStreamProvider = StreamProvider.autoDispose<String>((ref) asyn
       // ‼️ FIX #L3b: Remove 'xong' tickets khỏi knownDoneIds khi các ticket biến mất
       // (chú ý: không remove để tránh notify lại — chỉ reset khi reopen tích cực)
     }
-  }
+  });
 });
 
 /// Stream thông báo hủy/sửa món từ Ban screen — KDS hiện Cancel Notice Card

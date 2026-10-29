@@ -181,26 +181,52 @@ final sessionItemsProvider = StreamProvider.autoDispose
       return ref.watch(banRepositoryProvider).watchSessionItems(sessionId);
     });
 
-/// Stream modifiers của 1 sản phẩm (query Supabase thật)
-final productModifiersProvider = StreamProvider.autoDispose
-    .family<List<Map<String, dynamic>>, String>((ref, productId) async* {
-      // Poll mỗi 30s (Supabase realtime không hỗ trợ arbitrary tables dễ)
+/// Ghi chú nhanh của cả quán, gom theo món: 1 request mỗi 30s thay vì 1 request
+/// cho từng món đang hiện trong danh sách (Bò Đen 28/10: 435 request / 10 phút).
+final storeModifiersProvider =
+    StreamProvider.autoDispose<Map<String, List<Map<String, dynamic>>>>((
+      ref,
+    ) async* {
+      final storeId = ref.watch(sessionProvider)?.storeId;
+      if (storeId == null || storeId.isEmpty) {
+        yield const {};
+        return;
+      }
+      Map<String, List<Map<String, dynamic>>>? last;
       while (true) {
         try {
           final rows = await Supabase.instance.client
               .from('product_modifiers')
               .select()
-              .eq('product_id', productId)
+              .eq('store_id', storeId)
               .eq('is_active', true)
               .order('group_name')
               .order('sort_order');
-          yield List<Map<String, dynamic>>.from(rows as List);
+          last = groupModifiersByProduct(rows);
+          yield last;
         } catch (_) {
-          yield [];
+          yield last ?? const {}; // mạng chập chờn: giữ danh sách cũ, không xoá trắng
         }
         await Future.delayed(const Duration(seconds: 30));
       }
     });
+
+Map<String, List<Map<String, dynamic>>> groupModifiersByProduct(List rows) {
+  final out = <String, List<Map<String, dynamic>>>{};
+  for (final r in rows) {
+    final pid = r['product_id'] as String?;
+    if (pid != null) (out[pid] ??= []).add(Map<String, dynamic>.from(r as Map));
+  }
+  return out;
+}
+
+/// Ghi chú nhanh của 1 món, cắt từ [storeModifiersProvider] (không tự gọi máy chủ).
+final productModifiersProvider = Provider.autoDispose
+    .family<AsyncValue<List<Map<String, dynamic>>>, String>(
+      (ref, productId) => ref
+          .watch(storeModifiersProvider)
+          .whenData((m) => m[productId] ?? const []),
+    );
 
 // ── Topping catalog — lấy từ bảng products có is_topping=true ─────────────
 final toppingCatalogProvider = StreamProvider.autoDispose
