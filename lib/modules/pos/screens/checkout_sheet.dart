@@ -1023,6 +1023,18 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
       // Đánh dấu thành công ngay lập tức để chuyển sang màn hình success!
       // Tránh việc bất kỳ tác vụ phụ nào sau đó (lấy thông tin, invalidation) bị lỗi/timeout làm sập màn hình thanh toán về 0đ.
       if (mounted) {
+        // Kết quả đã về và hiện cho thu ngân → gỡ bản ghi chờ đối soát ngay. Trước đây chỉ gỡ khi
+        // bấm "Đơn mới": đóng màn bằng nút quay lại / tắt app làm bản ghi kẹt, lần thanh toán sau
+        // bị chặn bằng "Thanh toán chưa đối soát" (Bò Đen 28/10 từ 20:01). Chưa nhận kết quả
+        // (mạng rớt) thì không tới đây, bản ghi vẫn giữ để đối soát.
+        final posRepo = ref.read(posRepositoryProvider);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          unawaited(
+            posRepo.acknowledgeSale(saleResult).catchError((Object e) {
+              AppLogger.warning('checkout', 'Chưa gỡ được bản ghi chờ đối soát: $e');
+            }),
+          );
+        });
         setState(() {
           _success = true;
           _saleResult = saleResult;

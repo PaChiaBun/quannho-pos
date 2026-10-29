@@ -6,7 +6,7 @@
       "lib/core/widgets/order_detail_dialog.dart": "15f7dabf2c644eb2",
       "lib/modules/pos/providers/pos_providers.dart": "3475552a266d5259",
       "lib/modules/pos/repository/pos_repository.dart": "e5127ad3b08bbc88",
-      "lib/modules/pos/screens/checkout_sheet.dart": "883c8f8856ecf0e9",
+      "lib/modules/pos/screens/checkout_sheet.dart": "89f241885ba4d222",
       "lib/screens/finance_screen.dart": "8c9b51b9bb21e81e",
       "lib/screens/pos_screen.dart": "777c6e8d2c72da98",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"

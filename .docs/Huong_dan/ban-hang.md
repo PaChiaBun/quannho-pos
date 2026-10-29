@@ -110,7 +110,7 @@ Xoá hết giỏ hàng khi khách đổi ý bỏ hết món:
 - Hoặc **"Xóa hết"** trong giỏ — chỉ người có quyền **"Huỷ đơn hàng"** mới bấm được (mặc định Chủ quán, Quản lý, Thu ngân; **Phục vụ không có**); người khác thấy "Bạn không có quyền huỷ đơn hàng". Quyền này chỉ chặn nút "Xóa hết" của giỏ chưa thanh toán, không liên quan đơn đã thu.
 
 ### Đối soát thanh toán bị gián đoạn
-Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — không biết tiền đã ghi nhận chưa.
+Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — không biết tiền đã ghi nhận chưa. Đơn đã hiện **"Thanh toán thành công!"** thì không cần đối soát, kể cả khi đóng màn đó bằng nút quay lại.
 1. Mở lại màn Bán hàng, bấm **"Thanh toán"** hoặc nút **đồng hồ quay ngược** trên thanh trên cùng.
 2. Nếu có giao dịch dang dở, app hiện **"Thanh toán chưa đối soát"** kèm số tiền, phương thức. Bấm **"Đối soát / tiếp tục đơn cũ"**.
 3. App hỏi máy chủ: nếu đơn **đã thu**, chỉ lấy lại kết quả ("Đã thanh toán: <số đơn>") — **không thu lần hai**, không tự in lại. Nếu chưa, gửi lại đúng giao dịch cũ.

@@ -1,6 +1,6 @@
 {
- "version": 202610290940,
- "hash": "01383ad70cbf6a668db28c81899cb4f05af76d8e84222fa5d5681437b47722cf",
+ "version": 202610291032,
+ "hash": "1eec15e0ad56fe105404a7974ffe99c61d16e20d3e45ea1634c74e238809af76",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -96,7 +96,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Đối soát thanh toán bị gián đoạn",
-   "text": "Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — không biết tiền đã ghi nhận chưa.\n1. Mở lại màn Bán hàng, bấm \"Thanh toán\" hoặc nút đồng hồ quay ngược trên thanh trên cùng.\n2. Nếu có giao dịch dang dở, app hiện \"Thanh toán chưa đối soát\" kèm số tiền, phương thức. Bấm \"Đối soát / tiếp tục đơn cũ\".\n3. App hỏi máy chủ: nếu đơn đã thu, chỉ lấy lại kết quả (\"Đã thanh toán: <số đơn>\") — không thu lần hai, không tự in lại. Nếu chưa, gửi lại đúng giao dịch cũ.\n4. Thành công thì giỏ đang hiển thị được xoá để tránh bán lại đơn cũ.\n\nKhông thanh toán lại đơn đó trên máy khác trong lúc đang đối soát. Không có giao dịch dang dở thì app báo \"Không có thanh toán đang chờ đối soát\"."
+   "text": "Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — không biết tiền đã ghi nhận chưa. Đơn đã hiện \"Thanh toán thành công!\" thì không cần đối soát, kể cả khi đóng màn đó bằng nút quay lại.\n1. Mở lại màn Bán hàng, bấm \"Thanh toán\" hoặc nút đồng hồ quay ngược trên thanh trên cùng.\n2. Nếu có giao dịch dang dở, app hiện \"Thanh toán chưa đối soát\" kèm số tiền, phương thức. Bấm \"Đối soát / tiếp tục đơn cũ\".\n3. App hỏi máy chủ: nếu đơn đã thu, chỉ lấy lại kết quả (\"Đã thanh toán: <số đơn>\") — không thu lần hai, không tự in lại. Nếu chưa, gửi lại đúng giao dịch cũ.\n4. Thành công thì giỏ đang hiển thị được xoá để tránh bán lại đơn cũ.\n\nKhông thanh toán lại đơn đó trên máy khác trong lúc đang đối soát. Không có giao dịch dang dở thì app báo \"Không có thanh toán đang chờ đối soát\"."
   },
   {
    "id": "ban-hang#loi-mon-da-het-hang-khi-cham-mon",
