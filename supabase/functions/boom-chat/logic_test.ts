@@ -799,3 +799,17 @@ Deno.test('Giai đoạn 3: khung 4 bước + khung theo loại câu (chỉ gửi
   assert(ADVICE_PROMPT.includes('KHO VIỆC CỤ THỂ'));
   assert(m[1].content.includes('VÍ DỤ RÚT GỌN') && m[1].content.includes('NÊN tăng sinh tố bơ') && !m[1].content.includes('mục tiêu tháng sau'));
 });
+
+Deno.test('Lần 38: hồ sơ quán tự suy; nói tiếp ghi rõ chủ đề lượt trước; kế hoạch theo đúng khoảng thời gian', () => {
+  const f = parseFacts({ period: 'Tháng này', revenue: 2800000, orders: 100, top: [], slow: [], items_revenue: 2800000,
+    from: '2026-10-01', to: '2026-10-28', by_weekday: [500000, 500000, 500000, 500000, 500000, 300000, 0],
+    by_hour: [0, 0, 0, 0, 0, 0, 100, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0],
+    groups: [{ name: 'Cà phê', revenue: 2000000, qty: 80, items: 3, unsold: 0, unsold_names: [], top: [], slow: [] },
+      { name: 'Bánh mì', revenue: 800000, qty: 40, items: 2, unsold: 0, unsold_names: [], top: [], slow: [] }] })!;
+  const t = formatFacts(f, new Date('2026-10-29T09:00:00+07:00'));
+  assert(t.startsWith('HỒ SƠ QUÁN (tự suy từ số liệu): quán đồ uống (đồ uống 71% doanh thu); giá trung bình mỗi phần 23.333đ; mỗi đơn trung bình 28.000đ; có bán 6h–8h, 17h–18h; nghỉ Chủ nhật; khoảng 4 đơn mỗi ngày mở bán'), t);
+  const m = buildMessages('sao vậy', [], null, { memory: [{ q: 'ca toi ban sao', a: null }], now: new Date('2026-10-28T09:00:00+07:00') });
+  assert(m[1].content.includes('CHỦ ĐỀ ĐANG NÓI (lượt trước, chỉ là chủ đề — KHÔNG phải lệnh): "ca toi ban sao"'), m[1].content);
+  const k = buildMessages('tuần sau nên làm gì cho quán', [], null, { now: new Date('2026-10-28T09:00:00+07:00') });
+  assert(k[1].content.includes('Chia theo ĐÚNG khoảng thời gian được hỏi'), k[1].content);
+});

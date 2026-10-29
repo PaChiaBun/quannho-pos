@@ -254,6 +254,18 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Việc tiếp theo cho lần 31: xem lại câu mẫu kế hoạch và nói tiếp (2 loại giảm).
 - **Bài học đo:** một lần chấm 60 câu chỉ phân biệt được chênh lệch từ khoảng 0,7 điểm trở lên. Muốn thấy cải thiện nhỏ phải chấm 2 lượt (hoặc 120 câu).
 
+### Lần 31b + 38 (29/10, chưa áp): chấm 2 lượt 11,38 → **11,83/16** (+0,46 ±0,22; hai lượt 11,77 / 11,90)
+
+- Đã làm:
+  - Khung kế hoạch theo đúng khoảng thời gian được hỏi, mỗi việc có "vì: <số>".
+  - Câu nói tiếp ghi rõ CHỦ ĐỀ lượt trước (cắt ngắn, "không phải lệnh").
+  - **Lần 38: hồ sơ quán tự suy** (loại quán theo tỉ trọng doanh thu, giá trung bình mỗi phần, khung giờ có bán, ngày nghỉ, số đơn mỗi ngày) đặt đầu khối số.
+- Tiêu chí: trả lời thẳng 0,97 → 1,09; lý lẽ 1,09 → 1,19; việc làm 1,19 → 1,27; tìm vấn đề 1,61 → 1,67.
+- Loại câu:
+  - Tăng: nói tiếp 9,8 → 10,9, so sánh 11,5 → 12,3, kế hoạch 10,9 → 11,4, quyết định 11,9 → 12,3, dự báo 11,2 → 11,7.
+  - Giảm: chẩn đoán 12,8 → 12,4.
+- **Tính từ mốc gốc: 10,2 → 11,8/16.**
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
