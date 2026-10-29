@@ -3,6 +3,32 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-10-29 — Bò Đen (Sunmi V3): hết lag + chỉnh giao diện màn 360dp (8 commit, CHƯA push; chỉ mục DB ĐÃ ÁP production)
+
+- ⚠️ Chủ Quán báo tối 28/10 xem thu chi, bill cũ, thêm món bàn rất lag. Đo trên máy + nhật ký nginx/pg_stat_statements: 5 nguyên nhân cộng dồn.
+- ✅ `379e4a8` Nút voi Boom "thở" lặp vô hạn (3 lớp bóng mờ) bắt app vẽ lại 60 lần/giây trên mọi màn: Sunmi đứng yên tốn luồng vẽ 54–64% + giao diện 21–25% CPU → nay 0%. (Nguyên nhân nặng nhất.)
+- ✅ `3f29721` + migration `20261107_chi_muc_mon_ban_thu_chi.sql` (CONCURRENTLY, ĐÃ ÁP production 28/10): chỉ mục `ban_session_items(session_id)` (10,7ms → 0,1ms; truy vấn này đã chạy 1,3 triệu lần quét 30k dòng), `finance_records(store_id, recorded_at)`, `product_modifiers(store_id)`. App: ghi chú nhanh tải 1 lần cho cả quán (trước 1 request/món, 435 request/10 phút); `kitchenReadyStreamProvider` dùng `expand` — `async*`+`await for` không dừng khi rời màn Bàn nên sót vòng tải phiếu bếp 10s/lần chồng dần (2–3 vòng khi đang ở Thu Chi); realtime `kitchen_ticket_items` lọc `store_id`. Máy đứng yên: 60–170 request/phút → ~4.
+- ✅ `98b4f58` 11 danh sách trễ hiện dòng `i × 25–50ms` không giới hạn (dòng 60 chờ ~3 giây) → `staggerDelay()` chỉ 8 dòng đầu. Thu Chi: `CustomScrollView + SliverList` (trước dựng hết mọi giao dịch), số đầu trang giữ số cũ khi làm mới, `getStats` gọi 3 truy vấn song song. Cuộn Thu Chi cả tháng: 133 khung, 0 khung chậm.
+- ✅ `d1b62f3` Nút thêm món (Bán hàng + bảng gọi món bàn) dùng `onTapDown` → lướt cuộn qua nút cũng cộng món; đổi `onTapUp`. Thử trên máy: lướt không cộng, bấm 1 lần ra 1.
+- ✅ `7f37d36`, `a2cd9e2` Gọi món bàn: dòng món đã gọi tên trải ngang (trước ép cột hẹp 4 dòng, tên người gọi dính vào tên món); bảng thêm món bỏ ô ảnh trống 58px, "Tùy chọn" trái / số lượng phải; tổng tiền thanh dưới không mất chữ "đ".
+- ✅ `dbbd5f7` 7 lỗi giao diện 360dp: `StatusBarScrim` mới (Trang chủ) + Báo cáo đặt khung cuộn dưới thanh trạng thái (tab dính không chui dưới đồng hồ); thanh giỏ Bán hàng nâng lên trên nút Boom; thẻ món Bán hàng thấp lại khi chưa món nào có ảnh; tab Khách hàng cuộn ngang; bỏ chữ "Phiếu bếp" thừa trên màn hẹp; thẻ module 2 dòng, đổi tên thẻ "Khách hàng & Khuyến mãi"; nhãn "Huỷ bàn / bill".
+- ✅ `8b1acdb` Hướng dẫn Boom: in-hoa-don (Sunmi cài lại app tự nhận máy in tích hợp), ban-hang (lướt không tính là chạm); đóng dấu các bài nguồn chỉ gồm phần đã sửa; xuất lại `huong_dan.json`.
+- ✅ Thử thật trên Sunmi (Chủ Quán cho phép): gửi bếp 0,11–0,82 giây (28/10 có lần 5,7 giây); tiền, topping, ghi chú "Ít đá", 3 phiếu bếp trên máy chủ đều đúng. Bàn 5 thử (mở → huỷ) đã sao lưu `db-fix/ban5_thu_bam_mon_prev_20261029.json` rồi xoá.
+- ⚠️ Đường mạng quán → Cloudflare Hồng Kông → máy chủ Singapore: 0,3 đến >1 giây/request (máy chủ tự xử lý 5–12ms). Mở màn còn khựng ~0,2–0,4 giây chủ yếu do chờ mạng. Chưa đổi hạ tầng.
+- ⚠️ Cài bản Flutter profile lên Sunmi để đo khung hình làm app tự đăng xuất (bản không phải release trả URL máy chủ POS JWT rỗng); Chủ Quán đăng nhập lại. Không cài bản profile/debug lên máy quán nữa.
+- ⚠️ Sunmi còn 1 bản ghi thanh toán quầy "chưa đối soát" 64.000đ tiền mặt cho đơn QN-20261028-013 đã `completed` trên máy chủ — bản ghi chờ không được xoá sau khi đơn thành công (có thể do mạng chập chờn 28/10). Chưa đối soát, chưa sửa.
+- ⚠️ Luật in Bò Đen chỉ in hoá đơn; gửi bếp không in phiếu bếp (chưa có luật).
+- 🔲 Còn mở trên production: Bàn 1 (198.000đ) và Bàn 2 (89.000đ) thử của Chủ Quán, 3 phiếu bếp đang chờ.
+- ➡️ Push 8 commit (`3f29721`…`dbbd5f7`) khi Chủ Quán duyệt; xem lỗi bản ghi đối soát kẹt; cân nhắc đường mạng qua Cloudflare.
+
+## 2026-10-28 — Bò Đen Trà Quán: thực đơn, Sunmi V3 in bill, dọn đơn test (commit `b4a7279`, CHƯA push)
+
+- ✅ Thực đơn khớp ảnh menu: sửa giá, thêm món thiếu, Trà sữa HK 45k uống tại chỗ / 39k chai, Cá viên đổi "Sốt Me", topping gắn 5 món. Sao lưu `db-fix/menu_bo_den_prev_20261028_133307.json`, script `db-fix/menu_bo_den_20261028.sql`.
+- ✅ Cài app build 21 qua APK (gỡ bản CH Play vì khác chữ ký) lên Sunmi V3 mới; bật ADB.
+- ✅ Xoá 30 đơn test + 50 phiếu thu chi (lưu vết `finance_record_deletions`), giữ nguyên tồn kho. Sao lưu `db-fix/don_don_test_bo_den_prev_20261028.json`.
+- ⚠️ Thanh toán không tự in bill: luật "Máy này in bill ra" gắn mã máy (UUID đổi khi cài lại app) và `SunmiBuiltinDriver.hasBuiltinPrinter` dò một lần lúc mở app, thua cuộc đua với dịch vụ in → luôn false.
+- ✅ `b4a7279`: luật chỉ in ra máy in tích hợp áp cho mọi Sunmi có máy in tích hợp (luật LAN/Bluetooth vẫn gắn đúng máy); dò máy in thử lại tới 10 lần; báo lỗi in không tự tắt. Nút "Thêm khách" / "Thêm mã mới" không bị nút Boom che. Test `test/modules/bill_printer/sunmi_reinstall_test.dart`. Đã thử trên máy: đơn QN-20261028-006 tự in.
+
 ## 2026-10-26 — Nâng cấp Tổng quan /admin (ĐÃ ÁP production 26/10 06:43 VN — Chủ Quán duyệt)
 
 - ✅ `db-fix/tong_quan_nang_cap_ap_dung.sh` TS=20261026_064310: sao lưu `/root/quannho-backups/quannho_before_tong_quan_20261026_064310.dump` → migration → test trên production TẤT CẢ PASS (tự ROLLBACK) → /admin (sao lưu `admin_web_tongquan_20261026_064310`, app.js khớp bản build). Log `db-fix/tong_quan_nang_cap_log_20261026_064310.txt`.
