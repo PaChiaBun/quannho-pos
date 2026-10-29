@@ -239,6 +239,21 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - **Việc làm cụ thể vẫn yếu (0,93):** GPT hay đưa việc chung ("chạy khuyến mãi buổi chiều", "tổ chức sự kiện"). Lần 31 (mẫu trả lời tốt) và thử gpt-4o (lần 33) là bước kế.
 - GPT vẫn chèn `**` dù đã dặn, nhưng máy chủ đã tự bỏ ký hiệu này trước khi gửi cho app.
 
+### Lần 31 — mẫu trả lời tốt (29/10, chưa áp): chấm 11,2 → 11,1 (không đổi; dao động giữa 2 lần chấm ±0,34)
+
+- Kho việc cụ thể + câu mẫu theo loại (món / số ngoài bộ đề, GPT không chép số mẫu).
+- Tốt lên: việc làm 0,93 → **1,12**, so sánh 10,4 → **11,8** (sửa khung so sánh), gọn 1,25 → 1,47.
+- Xấu đi: câu trả lời ngắn đi 35% (bắt chước mẫu) → đúng số 1,72 → 1,57, lý lẽ 1,08 → 0,93, dự báo 11,4 → 10,3.
+- Đã sửa: ghi rõ mẫu là bản RÚT GỌN, câu thật vẫn đủ 4 phần 8–12 dòng (chưa chấm lại).
+- **Bản sửa, chấm 2 lượt (11,40 và 11,35) → trung bình 11,38/16** (+0,16 ±0,3 so GĐ 3).
+  - Việc làm cụ thể 0,93 → **1,19**, tăng ở cả 2 lượt.
+  - Gọn 1,25 → 1,43.
+  - Theo loại câu: chẩn đoán 11,7 → 12,8, so sánh 10,4 → 11,5, quyết định 11,4 → 11,9.
+  - Giảm: kế hoạch 11,7 → 10,9, nói tiếp 10,7 → 9,8, đúng số 1,72 → 1,64.
+  - Câu trả lời dài 456 ký tự (GĐ 3: 532).
+- Việc tiếp theo cho lần 31: xem lại câu mẫu kế hoạch và nói tiếp (2 loại giảm).
+- **Bài học đo:** một lần chấm 60 câu chỉ phân biệt được chênh lệch từ khoảng 0,7 điểm trở lên. Muốn thấy cải thiện nhỏ phải chấm 2 lượt (hoặc 120 câu).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

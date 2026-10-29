@@ -795,4 +795,7 @@ Deno.test('Giai đoạn 3: khung 4 bước + khung theo loại câu (chỉ gửi
   const m = buildMessages('bạc xỉu có nên tăng giá ko', [], null, { now: new Date('2026-10-28T09:00:00+07:00') });
   assert(m[1].content.includes('KHUNG CHO LOẠI CÂU NÀY: Dòng đầu: NÊN / KHÔNG NÊN'));
   assert(!m[1].content.includes('Tuần 1 / Tuần 2'));
+  // lần 31: kho việc cụ thể trong lời nhắc; câu mẫu chỉ gửi đúng loại
+  assert(ADVICE_PROMPT.includes('KHO VIỆC CỤ THỂ'));
+  assert(m[1].content.includes('VÍ DỤ RÚT GỌN') && m[1].content.includes('NÊN tăng sinh tố bơ') && !m[1].content.includes('mục tiêu tháng sau'));
 });

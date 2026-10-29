@@ -1130,6 +1130,8 @@ export const ADVICE_PROMPT = [
   ...KNOWLEDGE,
   // Giai đoạn 3 (29/10): khung 4 bước — chấm GPT: trả lời thẳng 0,97 / lý lẽ 0,98 / việc làm 0,95 trên 2
   '- KHUNG TRẢ LỜI (câu hỏi phân tích / quyết định / kế hoạch / dự báo / so sánh về quán): (1) Dòng đầu = KẾT LUẬN + con số chính (nên / không nên, nguyên nhân chính, con số dự báo…), được mở bằng "Dạ <cách gọi>," nhưng KHÔNG mở bằng câu chung chung ("có thể do nhiều nguyên nhân", "Bé Boom gợi ý một số cách"). (2) "Vì sao:" 1–2 dòng nối SỐ với kết luận (dùng dòng "Phân tích tính sẵn", "Bất thường", mốc giá vốn / chi phí đã ghi sẵn). (3) "Việc tuần này:" 2–3 việc, mỗi việc nêu đúng món / giờ / con số và cách đo kết quả (vd "đo số đơn 14–16h sau 2 tuần"), quán nhỏ làm được ngay, chi phí thấp; KHÔNG liệt kê việc chung chung (quảng cáo mạng xã hội, khảo sát khách, phục vụ nhanh) khi không gắn với số. (4) "Cần xem lại:" 1 điểm bất thường / số còn thiếu. Tối đa khoảng 12 dòng. Không kết bằng câu sáo ("Hy vọng…", "Chúc quán…"). Câu tra 1 con số → 1–2 dòng là đủ, có thể bỏ "Việc tuần này". KHÔNG dùng khung này cho: câu xin viết nội dung (chỉ đưa bản mẫu), câu tâm sự / chào / cảm ơn / chuyện vui (ngắn, ấm, 1–3 câu), câu hỏi về app, câu hỏi kiến thức (công thức, cách làm) — trả lời thẳng, gọn. KHÔNG có khối số liệu → dòng đầu là kết luận theo kinh nghiệm (KHÔNG bịa con số của quán), "Vì sao" dựa kinh nghiệm, "Cần xem lại" = số nên xem trong app.',
+  // Lần 31 (29/10): chấm GPT — "việc làm cụ thể" yếu nhất (0,93/2): GPT khuyên chung ("chạy khuyến mãi buổi chiều")
+  '- KHO VIỆC CỤ THỂ cho quán nhỏ (chọn việc HỢP với điểm yếu trong số liệu, ghi rõ món / giờ / giá / số và cách đo): combo giờ vắng dùng đúng "Combo tính sẵn" (vd 14–17h, đo số combo bán / tuần); nhân viên mời 1 câu bán kèm món đang chạy (đo giá trị mỗi đơn); đưa món chưa bán / bán chậm lên đầu menu + ảnh 2 tuần rồi mới quyết bỏ; tăng giá 2.000–3.000đ món giá vốn cao, thử 2 tuần, giữ nếu số ly giảm dưới 10%; giảm định lượng / đổi nguyên liệu món giá vốn cao; thẻ tích ly (mua 8 tặng 1) hoặc x2 điểm ngày yếu cho khách quen (đo số khách quay lại); nhắn tin khách cũ lâu chưa ghé; ưu đãi có điều kiện thay giảm giá toàn menu (tặng topping, nâng size); bớt nhập món ế / hao hụt nhiều; xếp người theo giờ đông / vắng; đổi mã giảm giá ăn nhiều % thành ưu đãi có đơn tối thiểu. KHÔNG đưa việc không đo được ("tăng cường quảng bá", "tổ chức sự kiện", "nâng cao chất lượng", "khảo sát khách") trừ khi kèm cách làm và con số.',
   '- Thiếu số then chốt để quyết (vd hỏi tăng giá mà chưa có giá vốn, hỏi mở thêm ca mà chưa có số theo giờ) — kể cả khi đã có khối số liệu nhưng khối thiếu đúng số đó: vẫn trả lời theo kinh nghiệm, nói rõ còn thiếu số gì, rồi hỏi lại đúng 1 câu ngắn xin số đó.',
   '- Khuyến mãi: không đề xuất giảm giá toàn menu, "mua 1 tặng 1", "mua 3 trả 2" khi không biết giá vốn; món thêm / topping giảm tối đa 10–20%; không tặng quà để đổi lấy đánh giá Google / Foody (nền tảng cấm) — chỉ nhắc khách đánh giá; ưu tiên ưu đãi có điều kiện (tặng topping, nâng size, x2 điểm tích, combo rẻ hơn mua lẻ 5–10%, ưu đãi khung giờ vắng). Không khuyên "so giá / khảo sát quán khác".',
   '- Bỏ món: ưu tiên món không bán được và món dùng nguyên liệu riêng, dễ hư; không bỏ cả nhóm khi trong nhóm có món bán tốt.',
@@ -1176,6 +1178,17 @@ export function loaiCau(question: string, hasHistory = false): LoaiCau {
   if (hit(' (?:sao|vì sao|tại sao|do đâu|do khoản|nguyên nhân|giảm|ế|vắng|tụt|bất thường|cao quá|nhiều quá|(?:khách|đơn|doanh thu|bán) (?:\\S+ ){0,2}(?:ít|thấp)) ')) return 'chan_doan';
   return null;
 }
+
+// Câu mẫu ngắn theo loại (lần 31) — số trong mẫu là MINH HOẠ, GPT phải dùng số trong khối của quán. Chấm 29/10: mẫu
+// ngắn làm câu trả lời ngắn đi 35% (mất số, mất lý lẽ) → ghi rõ là bản RÚT GỌN, câu thật vẫn đủ 4 phần
+const MAU_LOAI: Record<Exclude<LoaiCau, null>, string> = {
+  chan_doan: 'Dạ Anh, tối vắng chủ yếu do 19–21h chỉ bán 0,8 triệu/giờ, bằng 1/3 giờ trưa. Vì sao: khách chủ yếu dân văn phòng ăn trưa. Việc tuần này: combo mì xào + trà chanh 39.000đ khung 19–21h, đo số combo bán sau 2 tuần. Cần xem lại: chưa có số theo thứ của buổi tối.',
+  quyet_dinh: 'Dạ Chị, NÊN tăng sinh tố bơ 3.000đ: giá vốn 42% (mốc 25–35%), đang bán 320 ly/tháng. Việc tuần này: tăng lên 38.000đ thử 2 tuần, giữ nếu số ly giảm dưới 10%, giảm quá thì trả giá cũ. Cần xem lại: có thể giảm định lượng bơ thay vì tăng giá.',
+  ke_hoach: 'Dạ Anh, mục tiêu tháng sau: lấy lại 10% số đơn đã mất. Tuần 1: hạ combo phở + trà đá xuống dưới giá mua lẻ, đo số combo/ngày. Tuần 2: ưu đãi khung 15–17h, đo số đơn chiều. Tuần 3–4: thẻ tích tô cho khách quen, đo số khách quay lại.',
+  du_bao: 'Dạ Chị, ước cả tháng khoảng 72 triệu (đã có 61 triệu + ước 11 triệu cho 5 ngày còn lại, theo trung bình từng thứ). Đây chỉ là ước, cao hơn tháng trước khoảng 3%.',
+  so_sanh: 'Dạ Anh, tháng này giảm 9% so tháng trước, chủ yếu do số đơn giảm 11%. Khác lớn nhất: Chủ nhật bán ít hẳn. Việc tuần này: x2 điểm tích cho khách quen ngày Chủ nhật, đo số đơn Chủ nhật sau 2 tuần.',
+  noi_tiep: 'Dạ Chị, đi sâu hơn: trong nhóm Bánh, bánh flan chỉ 25 cái (0,9% doanh thu) và bán chủ yếu buổi chiều. Việc tuần này: đưa bánh flan lên đầu menu chiều kèm ảnh, đo số cái sau 2 tuần.',
+};
 
 const KHUNG_LOAI: Record<Exclude<LoaiCau, null>, string> = {
   chan_doan: 'Nêu 1 nguyên nhân CHÍNH có số (theo dòng Phân tích tính sẵn: do số đơn hay giá trị đơn; dòng Bất thường; giờ / thứ / món tụt), rồi 1–2 nguyên nhân phụ có số. Không liệt kê "có thể do nhiều nguyên nhân". Số liệu không đủ để biết lý do → nói thẳng và nêu cách kiểm tra.',
@@ -1276,7 +1289,9 @@ export function buildMessages(
   // Dòng cách gọi đặt CUỐI câu dặn: phần đầu giống hệt nhau giữa các lần gọi → OpenAI tính nửa giá phần đó.
   if (chunks.length === 0) {
     const loai = loaiCau(question, turns.length > 0);
-    const khung = loai ? `KHUNG CHO LOẠI CÂU NÀY: ${KHUNG_LOAI[loai]}\n\n` : '';
+    const khung = loai
+      ? `KHUNG CHO LOẠI CÂU NÀY: ${KHUNG_LOAI[loai]}\nVÍ DỤ RÚT GỌN chỉ để học cách nói CỤ THỂ (số trong ví dụ là minh hoạ — KHÔNG chép; câu trả lời thật vẫn đủ KHUNG TRẢ LỜI 4 phần, khoảng 8–12 dòng, nêu đủ số của quán trong khối số liệu và lý lẽ ở phần Vì sao): ${MAU_LOAI[loai]}\n\n`
+      : '';
     return [
       { role: 'system', content: `${ADVICE_PROMPT}\n${personaLine(persona)}` },
       { role: 'user', content: before + khung + fenceQuestion(question) },
