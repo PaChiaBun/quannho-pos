@@ -180,6 +180,29 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 | 26 | Bỏ giới hạn 92 ngày cho số tổng (vẫn giữ 92 ngày cho số theo món để nhẹ) | app |
 | 27 | Rà **riêng tư**: thêm số mới không gửi tên / số điện thoại khách cho OpenAI; lương chỉ gửi khi người hỏi có quyền; giữ luật "số theo mục không lưu vào sổ hỏi đáp" | app + máy chủ |
 
+### Kết quả Giai đoạn 2 (29/10, chưa áp): chấm GPT thật 10,2 → **10,9/16**
+
+| Tiêu chí (0–2) | Mốc gốc | GĐ 2 | | Loại câu (/16) | Mốc gốc | GĐ 2 |
+|---|---|---|---|---|---|---|
+| Trả lời thẳng | 0,82 | 0,97 | | Chẩn đoán | 11,7 | 12,0 |
+| Đúng số | 1,53 | 1,68 | | Quyết định | 9,7 | 11,0 |
+| Tìm vấn đề | 1,52 | 1,58 | | Kế hoạch | 10,6 | 10,4 |
+| Lý lẽ | 0,88 | 0,98 | | So sánh | 11,3 | 11,2 |
+| Việc làm cụ thể | 0,90 | 0,95 | | Dự báo | 8,9 | **11,1** |
+| Đúng quán | 1,88 | 1,92 | | Nói tiếp | 9,1 | 9,6 |
+| Thận trọng | 1,38 | 1,53 | | | | |
+| Gọn | 1,30 | 1,27 | | | | |
+
+- Đã làm:
+  - Máy chủ tính sẵn: thứ trong tuần (sửa lỗi "tuần này"), ngày bán yếu bất thường, dự báo cả tháng, giá vốn so mốc 25–35%, tỉ lệ chi phí trên doanh thu (cộng theo nhóm, chỉ khi kỳ trọn tháng); cấm GPT tự tính "đủ dùng mấy ngày"; QC 9 lỗi đã sửa.
+  - App gửi ngày đầu / cuối của kỳ (giờ VN).
+- Để lại (cần view database, Chủ Quán duyệt):
+  - Lần 18 (chuỗi 12 tháng), lần 19 (cùng kỳ năm trước). Máy chủ đã nhận sẵn hai trường này.
+  - Lần 24 (số theo thu ngân).
+- Mỗi câu dao động ±2–4 điểm giữa hai lần chấm (GPT trả lời có ngẫu nhiên) → chỉ tin số trung bình.
+- Ba tiêu chí còn yếu nhất (trả lời thẳng, lý lẽ, việc làm) là việc của Giai đoạn 3 (lời nhắc).
+- "Khách quay lại 11,4%" vẫn bị gọi là "tín hiệu tích cực" → cần mốc cho tỉ lệ khách quay lại.
+
 ### Giai đoạn 3: Cách suy luận (lời nhắc) (lần 28–37)
 
 | # | Việc | Áp lên đâu |

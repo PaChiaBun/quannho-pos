@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:quannho_pos/features/ai_assistant/classifier/intent_classifier.dart';
 import 'package:quannho_pos/features/ai_assistant/providers/boom_chat_provider.dart'
     show
+        boomFactsDates,
         boomWantsAdvice,
         boomGoiNguoiDung,
         boomWantsDataAdvice,
@@ -387,5 +388,21 @@ void main() {
     for (final q in ['cảm ơn', 'chào boom', 'bạn là ai']) {
       expect(boomSmalltalkReply(q, 'Anh'), isNot(contains('chưa hiểu')));
     }
+  });
+
+  test('Giai đoạn 2: ngày đầu / cuối của kỳ gửi máy chủ', () {
+    final now = DateTime(2026, 10, 28, 9, 30);
+    expect(boomFactsDates(boomRangeOf('this_month', now)), (
+      '2026-10-01',
+      '2026-10-28',
+    ));
+    expect(boomFactsDates(boomRangeOf('yesterday', now)), (
+      '2026-10-27',
+      '2026-10-27',
+    ));
+    expect(boomFactsDates(boomRangeOf('this_week', now)), (
+      '2026-10-26',
+      '2026-10-28',
+    ));
   });
 }

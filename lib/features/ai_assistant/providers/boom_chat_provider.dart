@@ -1097,6 +1097,18 @@ Set<BoomModule> boomModuleTopics(String query) {
   };
 }
 
+/// Ngày đầu / ngày cuối có số của kỳ [start, end), dạng YYYY-MM-DD theo giờ Việt Nam (+7, cùng mốc với số theo thứ
+/// `byWeekday`) — máy đặt múi giờ khác không làm lệch số ngày mỗi thứ (QC giai đoạn 2).
+(String, String) boomFactsDates(BoomPeriodRange r) {
+  String d(DateTime t) {
+    final x = t.toUtc().add(const Duration(hours: 7));
+    return '${x.year}-${x.month.toString().padLeft(2, '0')}-${x.day.toString().padLeft(2, '0')}';
+  }
+
+  final last = r.end.subtract(const Duration(microseconds: 1));
+  return (d(r.start), d(last.isBefore(r.start) ? r.start : last));
+}
+
 /// Đọc số các module (thử nghiệm thay bằng bản giả). null → dùng cổng chỉ đọc thật.
 typedef BoomModuleLoader =
     Future<({Map<String, dynamic> facts, List<BoomModule> denied})> Function(
@@ -2678,8 +2690,12 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
             (a, b) =>
                 (b['revenue'] as double).compareTo(a['revenue'] as double),
           );
+      final (from, to) = boomFactsDates(summary.range);
       final facts = <String, dynamic>{
         'period': clip(summary.range.label, 40),
+        // ngày đầu / cuối có số: máy chủ đếm mỗi thứ mấy ngày (thứ chưa tới ≠ ngày nghỉ), dự báo cả tháng (giai đoạn 2)
+        'from': from,
+        'to': to,
         'revenue': summary.revenue,
         'orders': summary.orderCount,
         if (summary.previousOrderCount > 0) ...{

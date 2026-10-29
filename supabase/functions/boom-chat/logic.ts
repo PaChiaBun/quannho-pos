@@ -93,6 +93,13 @@ export interface ShopFacts {
   by_weekday?: number[] | null;
   /** Món bán chạy (≤3) theo khung giờ: sáng 5–11h, trưa 11–14h, chiều 14–17h, tối 17h trở đi. */
   by_band?: { name: string; qty: number }[][] | null;
+  /** Ngày đầu / ngày cuối có số của kỳ (YYYY-MM-DD, giờ VN) — tính số lần mỗi thứ, dự báo cuối tháng (giai đoạn 2). */
+  from?: string | null;
+  to?: string | null;
+  /** Doanh thu theo tháng (cũ → mới, ≤ 13 tháng, nhãn "T10/2025"; tháng cuối có thể chưa trọn) — câu hỏi xu hướng. */
+  series?: { label: string; revenue: number; orders: number }[] | null;
+  /** Cùng kỳ năm trước — app PHẢI cắt cùng độ dài kỳ (1–28/10/2025 khi kỳ này 1–28/10/2026). */
+  yoy?: { period: string; revenue: number; orders: number } | null;
 }
 
 export interface FactItem {
@@ -353,7 +360,7 @@ const chg = (a: number, b: number) => (b > 0 ? ` (${a >= b ? 'TĂNG' : 'GIẢM'}
 const qty = (x: unknown) => String(Math.round(nn(x) * 100) / 100).replace('.', ',');
 
 /** Số module → chữ cho GPT; tính sẵn tỷ lệ, so kỳ trước, xếp hạng (GPT nhỏ hay tính sai). */
-export function formatModules(m: ModuleFacts): string {
+export function formatModules(m: ModuleFacts, now: Date = new Date()): string {
   const out: string[] = [];
   const f = m.finance;
   if (f) {
@@ -368,6 +375,36 @@ export function formatModules(m: ModuleFacts): string {
       // Khoản tăng nhiều nhất (tiền) — câu "chi phí tăng do đâu"
       const up = te.filter((x) => typeof x.prev === 'number').map((x) => ({ n: ss(x.name), d: nn(x.amount) - nn(x.prev) })).sort((a, b) => b.d - a.d)[0];
       if (up && up.d > 0) out.push(`Khoản chi tăng nhiều nhất so kỳ trước: ${up.n} (+${vnd(up.d)}).`);
+      // Tỉ lệ trên doanh thu bán hàng + mốc kinh nghiệm (tính sẵn — giai đoạn 2)
+      const base = nn(f.auto_income);
+      // [mẫu tên khoản, tên nhóm, mốc dưới, mốc trên] — mẫu chặt: "nước ngọt", "điện thoại", "lương thực" không lọt
+      const marks: [RegExp, string, number, number][] = [
+        [/^(?:tiền )?lương\b(?! thực)|lương nhân viên|nhân công|trả lương/i, 'Lương', 0.2, 0.3],
+        [/mặt bằng|tiền nhà|thuê (?:nhà|mặt bằng|quán)/i, 'Mặt bằng', 0, 0.15],
+        [/^(?:tiền )?điện(?! thoại)\b|điện[ \-–/]*nước|^(?:tiền )?nước\b(?! (?:ngọt|suối|mắm|giải khát|ép))|^(?:tiền )?gas\b/i, 'Điện nước / gas', 0, 0.06],
+        [/nguyên liệu|^nhập hàng\b|vật tư/i, 'Nguyên liệu / nhập hàng', 0.25, 0.35],
+      ];
+      // kỳ chưa trọn tháng: lương / mặt bằng trả theo tháng → chia cho doanh thu vài ngày ra số vô nghĩa
+      const per = ss(f.period);
+      const partial = /tuần|hôm nay|hôm qua/i.test(per) || (/tháng này/i.test(per) && new Date(vnDay(now)).getUTCDate() < 28);
+      if (base > 0 && partial) {
+        out.push('Kỳ thu chi chưa trọn tháng → KHÔNG so tỉ lệ chi phí / doanh thu với mốc (lương, mặt bằng trả theo tháng).');
+      } else if (base > 0) {
+        const sum = new Map<string, { a: number; m: (typeof marks)[number]; names: string[] }>();
+        for (const x of te) {
+          const m = marks.find(([rx]) => rx.test(ss(x.name).trim()));
+          if (!m) continue;
+          const g = sum.get(m[1]) ?? { a: 0, m, names: [] };
+          g.a += nn(x.amount); g.names.push(ss(x.name)); sum.set(m[1], g);
+        }
+        const r = [...sum.values()].map(({ a, m, names }) => {
+          const k = a / base, p = Math.round(k * 1000) / 10;
+          // lương dưới mốc (quán gia đình) không phải vấn đề → không gắn nhãn
+          const tag = p > m[3] * 100 ? 'cao hơn mốc' : m[1] !== 'Lương' && m[2] > 0 && p < m[2] * 100 ? 'dưới mốc' : 'trong mốc';
+          return `${m[1]} (${names.join(' + ')}) = ${pctTxt(p)}% (mốc ${m[2] > 0 ? `${m[2] * 100}–` : 'dưới '}${m[3] * 100}% → ${tag})`;
+        });
+        if (r.length) out.push(`Tỉ lệ trên doanh thu bán hàng (${vnd(base)}), mốc là kinh nghiệm chung của quán nhỏ (chỉ tính 6 khoản chi lớn nhất): ${r.join('; ')}.`);
+      }
     }
     const ti = arr(f.top_income);
     if (ti.length) out.push(`Nguồn thu: ${ti.map((x) => `${ss(x.name)} ${vnd(nn(x.amount))}`).join('; ')}.`);
@@ -392,6 +429,7 @@ export function formatModules(m: ModuleFacts): string {
       ? `Hao hụt / hư hỏng ghi trong kỳ: ${ls.map((x) => `${ss(x.name)} ${qty(x.qty)} ${ss(x.unit)}${x.value !== undefined ? ` ≈ ${vnd(nn(x.value))}` : ''}`).join('; ')}.`
       : 'Không có phiếu hao hụt / hư hỏng nào trong kỳ (có thể quán chưa ghi).');
     if (k.stock_value === undefined) out.push('Người hỏi không được xem giá vốn / tiền nhập hàng → không nêu số tiền kho.');
+    out.push('KHÔNG có lượng dùng mỗi ngày → KHÔNG tự tính "đủ dùng mấy ngày"; chỉ so số còn với mức tối thiểu và khuyên nhập.');
   }
   const n = m.nhan_su;
   if (n) {
@@ -481,8 +519,46 @@ export function parseFacts(v: unknown): ShopFacts | null {
     by_hour: numList(f.by_hour, 24),
     by_weekday: numList(f.by_weekday, 7),
     by_band: parseBands(f.by_band),
+    from: ymd(f.from),
+    to: ymd(f.to),
+    series: parseSeries(f.series),
+    yoy: parseYoy(f.yoy),
   };
 }
+
+const ymd = (v: unknown) =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && new Date(`${v}T00:00:00Z`).toISOString().startsWith(v) ? v : null;
+
+function parseSeries(v: unknown): ShopFacts['series'] {
+  if (!Array.isArray(v) || v.length === 0 || v.length > 13) return null;
+  const out: { label: string; revenue: number; orders: number }[] = [];
+  for (const x of v) {
+    const r = (x ?? {}) as Record<string, unknown>;
+    const label = cleanText(r.label, 20), revenue = num(r.revenue, 1e13), orders = num(r.orders, 1e8);
+    if (!/^T\d{1,2}\/\d{4}$/.test(label) || revenue === null || orders === null) return null;
+    out.push({ label, revenue, orders });
+  }
+  return out;
+}
+
+function parseYoy(v: unknown): ShopFacts['yoy'] {
+  const r = (v ?? null) as Record<string, unknown> | null;
+  if (!r || typeof r !== 'object') return null;
+  const period = cleanText(r.period, 40), revenue = num(r.revenue, 1e13), orders = num(r.orders, 1e8);
+  return /^[\d/–\- ]{6,30}$/.test(period) && revenue !== null && orders !== null ? { period, revenue, orders } : null;
+}
+
+/** Số lần mỗi thứ (Thứ 2 … Chủ nhật) xuất hiện trong [from, to]; null khi thiếu ngày. */
+export function weekdayCounts(from?: string | null, to?: string | null): number[] | null {
+  if (!from || !to) return null;
+  const a = Date.parse(`${from}T00:00:00Z`), b = Date.parse(`${to}T00:00:00Z`);
+  if (!(b >= a) || b - a > 400 * 86_400_000) return null;
+  const out = [0, 0, 0, 0, 0, 0, 0];
+  for (let t = a; t <= b; t += 86_400_000) out[(new Date(t).getUTCDay() + 6) % 7]++;
+  return out;
+}
+
+const pctTxt = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
 
 function parseBands(v: unknown): { name: string; qty: number }[][] | null {
   if (!Array.isArray(v) || v.length !== 4) return null;
@@ -510,7 +586,18 @@ function numList(v: unknown, len: number): number[] | null {
 
 const vnd = (n: number) => `${Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}đ`;
 
-export function formatFacts(f: ShopFacts): string {
+// Mốc kinh nghiệm ngành: giá vốn nên 25–35% giá bán (tính sẵn để GPT không đánh giá ngược — chấm 28/10)
+const costTag = (r: number) => {
+  const p = Math.round(r * 100);
+  return p > 35
+    ? ' → cao hơn mốc 25–35% của món tự pha chế / nấu (hàng bán lại như bia lon, nước suối thì bình thường)'
+    : p < 25 ? ' → dưới mốc, lời tốt' : ' → trong mốc 25–35%';
+};
+
+export function formatFacts(f: ShopFacts, now: Date = new Date()): string {
+  // Kỳ kết thúc HÔM NAY (giờ VN): hôm nay mới bán dở → không tính thứ hôm nay vào bất thường / ngày nghỉ (QC giai đoạn 2)
+  const today = new Date(vnDay(now)).toISOString().slice(0, 10);
+  const todayD = f.to === today ? (new Date(vnDay(now)).getUTCDay() + 6) % 7 : -1;
   // Kỳ 1 ngày: nhiều món chưa ai gọi là bình thường → không nêu "món chưa bán" (Chủ Quán thấy "57 món chưa bán" 24/10)
   const shortPeriod = /^hôm (nay|qua|kia)/i.test(f.period.normalize('NFC'));
   // Tính sẵn % so kỳ trước + giá trị đơn trung bình (GPT hay bỏ qua / tính sai — chấm cố vấn 24/10)
@@ -518,14 +605,14 @@ export function formatFacts(f: ShopFacts): string {
   const lines = [`Kỳ: ${f.period}. Doanh thu ${vnd(f.revenue)} từ ${f.orders} đơn hoàn thành.${avg}`];
   if (f.prev_period && f.prev_revenue !== null) {
     const pct = f.prev_revenue > 0 ? Math.round(((f.revenue - f.prev_revenue) / f.prev_revenue) * 1000) / 10 : null;
-    const trend = pct === null ? '' : ` → ${pct >= 0 ? 'TĂNG' : 'GIẢM'} ${Math.abs(pct)}%`;
+    const trend = pct === null ? '' : ` → ${pct >= 0 ? 'TĂNG' : 'GIẢM'} ${pctTxt(Math.abs(pct))}%`;
     const po = f.prev_orders ? `, ${f.prev_orders} đơn (trung bình ${vnd(f.prev_revenue / f.prev_orders)} / đơn)` : '';
     lines.push(`${f.prev_period}: ${vnd(f.prev_revenue)}${po}${trend}.`);
     // Doanh thu đổi vì số đơn hay vì giá trị mỗi đơn (tính sẵn — GPT không tự tách)
     if (f.prev_orders && f.orders > 0 && f.prev_revenue > 0) {
       const pctOrders = Math.round(((f.orders - f.prev_orders) / f.prev_orders) * 1000) / 10;
       const pctAvg = Math.round(((f.revenue / f.orders - f.prev_revenue / f.prev_orders) / (f.prev_revenue / f.prev_orders)) * 1000) / 10;
-      const sign = (x: number) => `${x >= 0 ? '+' : ''}${x}%`;
+      const sign = (x: number) => `${x >= 0 ? '+' : ''}${pctTxt(x)}%`;
       const main = Math.abs(pctOrders) >= Math.abs(pctAvg) ? 'chủ yếu do SỐ ĐƠN (lượng khách)' : 'chủ yếu do GIÁ TRỊ MỖI ĐƠN';
       lines.push(`Phân tích tính sẵn: số đơn ${sign(pctOrders)}, giá trị trung bình mỗi đơn ${sign(pctAvg)} → doanh thu đổi ${main}.`);
     }
@@ -540,15 +627,61 @@ export function formatFacts(f: ShopFacts): string {
       );
     }
   }
+  const cnt = weekdayCounts(f.from, f.to);
   if (f.by_weekday && f.by_weekday.some((v) => v > 0)) {
     const names = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
-    const days = f.by_weekday.map((v, d) => ({ d: names[d], v }));
-    const open = days.filter((x) => x.v > 0), closed = days.filter((x) => x.v === 0);
+    // Kỳ chưa trọn tuần ("tuần này" giữa tuần): thứ chưa tới KHÔNG phải ngày nghỉ (giai đoạn 2)
+    const days = f.by_weekday.map((v, d) => ({ d: names[d], v, n: cnt ? cnt[d] : null }));
+    const open = days.filter((x) => x.v > 0);
+    const closed = days.filter((x, d) => x.v === 0 && x.n !== 0 && !(d === todayD && x.n === 1));
+    const notYet = days.filter((x, d) => x.v === 0 && (x.n === 0 || (d === todayD && x.n === 1)));
     const low = [...open].sort((a, b) => a.v - b.v)[0], high = [...open].sort((a, b) => b.v - a.v)[0];
     lines.push(
-      `Doanh thu theo thứ (tổng trong kỳ): ${open.map((x) => `${x.d} ${vnd(x.v)}`).join('; ')}. Cao nhất: ${high.d}; thấp nhất: ${low.d}` +
-        (closed.length ? `; ${closed.map((x) => x.d).join(', ')}: quán NGHỈ (không mở bán).` : '.'),
+      `Doanh thu theo thứ (tổng trong kỳ): ${open.map((x) => `${x.d} ${vnd(x.v)}${x.n ? ` (${x.n} ngày, trung bình ${vnd(x.v / x.n)}/ngày)` : ''}`).join('; ')}. Cao nhất: ${high.d}; thấp nhất: ${low.d}` +
+        (closed.length ? `; ${closed.map((x) => x.d).join(', ')}: quán NGHỈ (không mở bán)` : '') +
+        (notYet.length ? `; ${notYet.map((x) => x.d).join(', ')}: chưa tới trong kỳ (KHÔNG phải ngày nghỉ)` : '') + '.',
     );
+    // Thứ bán yếu bất thường: trung bình/ngày < 60% trung vị các thứ có bán (tính sẵn). Kỳ < 14 ngày: hôm nay chưa hết
+    // ngày, mỗi thứ chỉ 1 ngày → không kết luận
+    if (cnt && cnt.reduce((a, b) => a + b, 0) >= 14) {
+      const per = open.filter((x) => x.n).map((x) => ({ d: x.d, a: x.v / x.n! }));
+      const perFull = per.filter((x) => x.d !== (todayD >= 0 ? days[todayD].d : ''));
+      const sorted = perFull.map((x) => x.a).sort((a, b) => a - b);
+      const med = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0;
+      const weak = perFull.filter((x) => med > 0 && x.a < med * 0.6);
+      if (weak.length) {
+        lines.push(`Bất thường (tính sẵn): ${weak.map((x) => `${x.d} trung bình ${vnd(x.a)}/ngày, chỉ bằng ${Math.round((x.a / med) * 100)}% một ngày bình thường (${vnd(med)})`).join('; ')}.`);
+      }
+      // Dự báo cả tháng: kỳ bắt đầu ngày 1, chưa hết tháng → cộng trung bình từng thứ cho các ngày còn lại
+      const fd = f.from!, td = f.to!;
+      const end = new Date(Date.UTC(+fd.slice(0, 4), +fd.slice(5, 7), 0)).toISOString().slice(0, 10);
+      // chỉ kỳ "tháng" (không phải quý / 30 ngày đang ở tháng đầu)
+      if (/tháng/i.test(f.period) && fd.endsWith('-01') && td.slice(0, 7) === fd.slice(0, 7) && td < end) {
+        const avgDay = per.reduce((s2, x) => s2 + x.a, 0) / Math.max(1, per.length);
+        let add = 0, n = 0;
+        for (let t = Date.parse(`${td}T00:00:00Z`) + 86_400_000; t <= Date.parse(`${end}T00:00:00Z`); t += 86_400_000) {
+          const d = (new Date(t).getUTCDay() + 6) % 7;
+          n++;
+          if (cnt[d] > 0) add += f.by_weekday[d] / cnt[d]; // thứ quán nghỉ (có ngày mà 0đ) → 0
+          else add += avgDay;
+        }
+        lines.push(`Dự báo cả tháng (tính sẵn theo trung bình từng thứ, còn ${n} ngày): khoảng ${vnd(f.revenue + add)} (đã có ${vnd(f.revenue)} + ước ${vnd(add)})${todayD >= 0 ? '; hôm nay chưa hết ngày nên ước có thể hơi thấp' : ''}. Chỉ là ước, nói rõ với người hỏi.`);
+      }
+    }
+  }
+  if (f.series?.length) {
+    lines.push(`Doanh thu theo tháng (tính sẵn): ${f.series.map((x) => `${x.label} ${vnd(x.revenue)} (${x.orders} đơn)`).join('; ')}.`);
+    const first = f.series.findIndex((x) => x.revenue > 0);
+    const full = f.series.slice(Math.max(0, first), -1); // bỏ tháng chưa mở quán; tháng cuối có thể chưa trọn
+    if (first >= 0 && full.length >= 6 && full.slice(-6).every((x) => x.revenue > 0)) {
+      const sum = (xs: typeof full) => xs.reduce((a, b) => a + b.revenue, 0);
+      const a = sum(full.slice(-3)), b = sum(full.slice(-6, -3));
+      if (b > 0) lines.push(`Xu hướng: 3 tháng gần nhất (trọn tháng) ${a >= b ? 'TĂNG' : 'GIẢM'} ${pctTxt(Math.abs(((a - b) / b) * 100))}% so 3 tháng trước đó.`);
+    }
+  }
+  if (f.yoy) {
+    const p = f.yoy.revenue > 0 ? ((f.revenue - f.yoy.revenue) / f.yoy.revenue) * 100 : null;
+    lines.push(`Cùng kỳ năm trước (${f.yoy.period}): ${vnd(f.yoy.revenue)}, ${f.yoy.orders} đơn${p === null ? '' : ` → năm nay ${p >= 0 ? 'TĂNG' : 'GIẢM'} ${pctTxt(Math.abs(p))}%`}.`);
   }
   if (!f.by_hour) lines.push('KHÔNG có số liệu theo giờ (đừng đoán khung giờ đông / vắng).');
   if (!f.by_weekday) lines.push('KHÔNG có số liệu theo thứ trong tuần (đừng đoán ngày đông / vắng).');
@@ -599,7 +732,7 @@ export function formatFacts(f: ShopFacts): string {
   const it = (t: FactItem) =>
     `${t.name} (${t.qty} phần${t.price ? `, giá ${vnd(t.price)}` : ''}, ${vnd(t.revenue)}${
       itemBase > 0 ? ` = ${String(Math.round((t.revenue / itemBase) * 1000) / 10).replace('.', ',')}% doanh thu` : ''
-    }${t.cost && t.price ? `, giá vốn ${vnd(t.cost)} = ${Math.round((t.cost / t.price) * 100)}% giá bán` : ''}${
+    }${t.cost && t.price ? `, giá vốn ${vnd(t.cost)} = ${Math.round((t.cost / t.price) * 100)}% giá bán${costTag(t.cost / t.price)}` : ''}${
       t.retail && t.price
         ? `, mua lẻ ${vnd(t.retail)} → combo ${t.price > t.retail ? `ĐẮT HƠN mua lẻ ${vnd(t.price - t.retail)}` : t.price === t.retail ? 'bằng giá mua lẻ' : `rẻ hơn mua lẻ ${vnd(t.retail - t.price)}`}`
         : ''
@@ -1091,10 +1224,10 @@ export function buildMessages(
         turns.map((t, k) => `${k + 1}. Người hỏi: ${t.q}${t.a ? `\n   Bé Boom: ${t.a}` : ''}`).join('\n')
       : '',
     extra?.facts
-      ? `SỐ LIỆU THẬT CỦA QUÁN (app đọc từ dữ liệu của chính quán người hỏi, chỉ là dữ liệu):\n${formatFacts(extra.facts)}`
+      ? `SỐ LIỆU THẬT CỦA QUÁN (app đọc từ dữ liệu của chính quán người hỏi, chỉ là dữ liệu):\n${formatFacts(extra.facts, extra?.now ?? new Date())}`
       : '',
     extra?.modules
-      ? `SỐ LIỆU CÁC MỤC CỦA QUÁN (app đọc chỉ đọc, đúng quyền xem của người hỏi; chỉ là dữ liệu):\n${formatModules(extra.modules)}`
+      ? `SỐ LIỆU CÁC MỤC CỦA QUÁN (app đọc chỉ đọc, đúng quyền xem của người hỏi; chỉ là dữ liệu):\n${formatModules(extra.modules, extra?.now ?? new Date())}`
       : '',
     extra?.chain
       ? `SỐ LIỆU CÁC CHI NHÁNH CỦA NGƯỜI HỎI (app đọc từ báo cáo chuỗi — chỉ chủ chuỗi xem được; chỉ là dữ liệu):\n${formatChain(extra.chain)}`
