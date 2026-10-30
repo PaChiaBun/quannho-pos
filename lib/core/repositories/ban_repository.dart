@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../services/store_auth_service.dart';
 import '../utils/app_logger.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -655,6 +656,12 @@ class BanRepository {
     List<BanSessionItemModel>? lastGood;
     var failures = 0;
     while (true) {
+      // App chạy nền (tắt màn hình, về trang chủ): không hỏi máy chủ, quay lại là tải ngay.
+      final life = WidgetsBinding.instance.lifecycleState;
+      if (life != null && life != AppLifecycleState.resumed) {
+        await Future.delayed(const Duration(seconds: 2));
+        continue;
+      }
       try {
         final items = await _querySessionItems(sessionId);
         if (failures > 0) {
@@ -727,26 +734,10 @@ class BanRepository {
     _activeSessionWrites.add(sessionId);
 
     try {
-      // 1. Thử gọi RPC add_session_items để đảm bảo tính nguyên tử ở tầng database
-      try {
-        await _sb.rpc(
-          'add_session_items',
-          params: {
-            'p_store_id': storeId,
-            'p_session_id': sessionId,
-            'p_items': items,
-          },
-        );
-        return; // Thành công thì kết thúc luôn
-      } catch (rpcError) {
-        print(
-          '[BanRepository] RPC add_session_items failed, falling back to client-side. Error: $rpcError',
-        );
-      }
-
+      // Máy chủ không có RPC add_session_items (gọi thử chỉ tốn thêm 1 lượt mạng rồi 404).
       final now = DateTime.now().toUtc().toIso8601String();
 
-      // 2. Fallback: Lấy tất cả items của session để thực hiện gộp trùng ở client
+      // Lấy tất cả items của session để thực hiện gộp trùng ở client
       final List<dynamic> allRows = await _sb
           .from('ban_session_items')
           .select()

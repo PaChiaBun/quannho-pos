@@ -2650,6 +2650,9 @@ class _TableSessionSheet extends ConsumerStatefulWidget {
 
 class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
   bool _isCancelling = false;
+  // Bàn đã thanh toán: giữ danh sách món cuối, ngừng hỏi máy chủ (Bò Đen 30/10: màn
+  // "Thanh toán thành công" để mở qua đêm, app hỏi món Bàn 6 suốt 3 tiếng).
+  List<BanSessionItemModel>? _settledItems;
   final _settlementOpManager = SettlementOperationManager();
   // Map lưu TextEditingController theo item.id — tránh tạo mới mỗi build
   final Map<String, TextEditingController> _noteControllers = {};
@@ -3879,6 +3882,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       }
 
       if (!mounted) return;
+      setState(() => _settledItems = items);
       ref.invalidate(activeSessionsProvider);
       ref.invalidate(todayStatsProvider);
       ref.invalidate(financeRecordsProvider);
@@ -5438,7 +5442,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final itemsAsync = ref.watch(sessionItemsProvider(widget.session.id));
+    final settled = _settledItems;
+    final itemsAsync = settled != null
+        ? AsyncValue.data(settled)
+        : ref.watch(sessionItemsProvider(widget.session.id));
     final zoneColor = Color(widget.zone.colorValue);
 
     return PopScope(
