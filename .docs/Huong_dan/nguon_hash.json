@@ -4,11 +4,11 @@
     "ban-hang.md": {
       "lib/core/providers/app_providers.dart": "52f086b4bb2ae164",
       "lib/core/widgets/order_detail_dialog.dart": "885bce66b222166e",
-      "lib/modules/pos/providers/pos_providers.dart": "bc209ad50b142c92",
+      "lib/modules/pos/providers/pos_providers.dart": "8756e0d16daa75de",
       "lib/modules/pos/repository/pos_repository.dart": "e5127ad3b08bbc88",
       "lib/modules/pos/screens/checkout_sheet.dart": "84634ace48b77e53",
       "lib/screens/finance_screen.dart": "1efd28f22dbc5f19",
-      "lib/screens/pos_screen.dart": "1a09f3997ddca6f4",
+      "lib/screens/pos_screen.dart": "53a801a06ddfcea0",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "bao-cao-chuoi.md": {

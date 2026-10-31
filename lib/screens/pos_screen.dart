@@ -1347,7 +1347,6 @@ class _PosScreenState extends ConsumerState<PosScreen>
     final now = DateTime.now().toUtc().toIso8601String();
     final cartNotifier = ref.read(cartProvider.notifier);
     final cart = ref.read(cartProvider);
-    final tableLabel = cart.tableName ?? 'Mang đi';
     final session = ref.read(sessionProvider);
 
     // Lấy store_id từ session
@@ -1361,6 +1360,20 @@ class _PosScreenState extends ConsumerState<PosScreen>
           ),
         );
       return;
+    }
+
+    // Giỏ mang đi chưa có số: lấy "Mang đi N" trong ngày (đếm trên máy này) để bếp phân biệt khách.
+    var tableLabel = cart.kitchenLabel;
+    if (cart.tableName == null && cart.takeawayNo == null) {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'pos_mang_di_so_$storeId';
+      final next = nextDailyTakeawayNo(
+        prefs.getString(key),
+        DateTime.now().toIso8601String().substring(0, 10),
+      );
+      await prefs.setString(key, next.saved);
+      cartNotifier.setTakeawayNo(next.no);
+      tableLabel = 'Mang đi ${next.no}';
     }
 
     // Mỗi giỏ MỘT phiên bếp: đợt 2 trở đi gửi tiếp vào phiên đó (máy chủ tự tăng "Đợt"). Nhiều phiên
@@ -2182,7 +2195,7 @@ Future<bool> cancelPosKitchenTickets(BuildContext context, WidgetRef ref) async 
   AppLogger.action(
     'manager_approval',
     'Duyệt huỷ phiếu bếp (Bán hàng)',
-    table: cart.tableName ?? 'Mang đi',
+    table: cart.kitchenLabel,
     approver: approval?['name'],
     result: approval == null ? 'không duyệt/hủy' : 'ok',
     critical: true,
@@ -2253,7 +2266,7 @@ Future<bool> cancelPosKitchenTickets(BuildContext context, WidgetRef ref) async 
     await banRepo.logVoidEvent(
       voidType: 'void_item',
       referenceId: sessionIds.first,
-      label: '${cart.tableName ?? 'Mang đi'} (Huỷ phiếu bếp)',
+      label: '${cart.kitchenLabel} (Huỷ phiếu bếp)',
       requestedByUserId: session?.userId ?? '',
       requestedByName: session?.displayName ?? 'Nhân viên',
       approvedByUserId: approval['id'] ?? '',
@@ -2277,7 +2290,7 @@ Future<bool> cancelPosKitchenTickets(BuildContext context, WidgetRef ref) async 
   AppLogger.action(
     'pos_cancel_kitchen',
     'Huỷ phiếu bếp',
-    table: cart.tableName ?? 'Mang đi',
+    table: cart.kitchenLabel,
     sessionId: sessionIds.join(','),
     lines: sentLines.length,
     reason: reason,
@@ -2423,9 +2436,13 @@ class _CartPanel extends ConsumerWidget {
                 ],
                 Row(
                   children: [
-                    const Text(
-                      'Giỏ hàng',
-                      style: TextStyle(
+                    Text(
+                      // Đã gửi bếp: tiêu đề thành "Mang đi N" như trên phiếu bếp để gọi khách
+                      // (ngắn như "Giỏ hàng", hàng tiêu đề không tràn trên 360dp).
+                      cart.takeawayNo == null
+                          ? 'Giỏ hàng'
+                          : 'Mang đi ${cart.takeawayNo}',
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
                         color: _kInk,

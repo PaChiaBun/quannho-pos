@@ -32,7 +32,7 @@ nguon:
 - **Lọc trạm**: **"Tất cả"**, **"Bếp nóng"**, **"Bếp nước"**.
 - **Máy tính bảng / PC**: ba cột **"Chờ xử lý"**, **"Đang làm"**, **"Hoàn thành"**.
 - **Điện thoại**: ba tab **"Chờ"**, **"Đang làm"**, **"Xong"**.
-- **Thẻ phiếu**: tên bàn (hoặc "Mang di" với đơn gửi từ Bán hàng), **"Đợt N"**, số món còn lại, đồng hồ chờ, nhãn **"MỚI"** / **"LÀM"** / **"TRỄ 30P!"**, danh sách món kèm số lượng, topping, ghi chú (📌), và nút **"In phiếu"**.
+- **Thẻ phiếu**: tên bàn (hoặc "Mang đi N" với đơn gửi từ Bán hàng — số trong ngày của giỏ, để gọi đúng khách), **"Đợt N"**, số món còn lại, đồng hồ chờ, nhãn **"MỚI"** / **"LÀM"** / **"TRỄ 30P!"**, danh sách món kèm số lượng, topping, ghi chú (📌), và nút **"In phiếu"**.
 
 ## Các việc thường làm
 
@@ -96,6 +96,6 @@ Chỉ món **đã gửi bếp** mới báo bếp; huỷ trước khi gửi thì 
 4. Chuông chỉ theo vai trò Bếp (`shouldPlayKitchenSoundsForRole`): quán nhỏ để thu ngân kiêm xem bếp sẽ không nghe chuông.
 5. **[ĐÃ SỬA 23/10 — chưa phát hành]** Thông báo lỗi kết nối bỏ mã "502 Bad Gateway": nay "Mất kết nối tới máy chủ. Kiểm tra mạng rồi bấm thử lại." (màn này không tự thử lại).
 6. Chuông: `shouldPlayKitchenSoundsForRole` = `canonicalRole(role)=="kitchen"`; `canonicalRole` chỉ nhận bếp/bep/chef/cook/kitchen → vai trò "Pha chế" không kêu (bài cũ ghi nhầm "gồm Pha chế").
-7. Phiếu từ POS điện thoại ghi tên bàn "Mang di" (không dấu, `pos_screen.dart`).
+7. **[ĐÃ SỬA 01/11 — chưa phát hành]** Phiếu từ Bán hàng ghi "Mang đi N" (số trong ngày, đếm trên từng máy — hai máy thu ngân có thể trùng số; trước đây mọi phiếu đều "Mang di"/"Mang đi" nên bếp không phân biệt được khách).
 8. Món thêm nhanh ở POS (dấu +) lưu `station_code='nong'` (`core_product_repository.dart` ~215) nên `_classifyStation` trả thẳng `nong` — luôn vào Bếp nóng, không đoán theo tên. Món sửa ở Kho hàng lưu `bep_nong`/`bep_bar`/`thu_ngan` → rơi vào đoán theo tên.
 9. Vai trò mặc định quán mới (`seedDefaults`): chỉ "Bếp" `["kitchen","ban"]` có `kitchen`; Thu ngân `["pos","ban","report"]`, Nhân viên `["ban"]` không có (bài cũ ghi "Phục vụ, Thu ngân có sẵn").

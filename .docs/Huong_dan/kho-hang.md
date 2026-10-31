@@ -21,7 +21,7 @@ nguon:
 - Các thao tác khác (thêm/sửa món, nhập kho, điều chỉnh tồn): ai vào được module đều làm được (xem Ghi chú cho Chủ Quán).
 
 ## Màn hình gồm những gì
-- **Đầu trang "Kho hàng"**: thống kê **"Sản phẩm"**, **"Sắp hết"**, **"Hết hàng"**, **"Giá trị kho"** (tồn × giá nhập gần nhất). Các nút:
+- **Đầu trang "Kho hàng"**: thống kê **"Sản phẩm"**, **"Sắp hết"**, **"Hết hàng"**, **"Giá trị kho"** (tồn × giá nhập gần nhất; Boom nói giá trị kho theo đúng cách tính này). Các nút:
   - **"Biến động kho gần đây"** — xem nhập/xuất mới nhất.
   - **"Ghi chú nhanh"** — cài chip ghi chú (Ít cay, Ít đá…) hiện khi gọi món ở **Quản lý Bàn**.
   - **Bật/tắt phiếu nhập nâng cao** — hiện thêm tab "Phiếu nhập". Dải giới thiệu "Quản lý kho nâng cao" bấm tắt thì máy này nhớ, không hiện lại.

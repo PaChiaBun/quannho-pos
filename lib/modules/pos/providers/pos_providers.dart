@@ -36,6 +36,9 @@ class CartState {
   final int walletBonusCapPct; // % tối đa dùng bonus/bill
   final DateTime? walletBonusExpiresAt;
 
+  /// Số "Mang đi N" trong ngày của giỏ, lấy lúc gửi bếp lần đầu (bếp phân biệt khách mang đi).
+  final int? takeawayNo;
+
   const CartState({
     this.lines = const [],
     this.sentLineIds = const {},
@@ -57,7 +60,12 @@ class CartState {
     this.walletBonusAvailable = 0,
     this.walletBonusCapPct = 15,
     this.walletBonusExpiresAt,
+    this.takeawayNo,
   });
+
+  /// Tên giỏ trên phiếu bếp / nhật ký: bàn đã gán, hoặc "Mang đi N".
+  String get kitchenLabel =>
+      tableName ?? (takeawayNo == null ? 'Mang đi' : 'Mang đi $takeawayNo');
 
   bool get hasWallet => walletRealAvailable > 0 || walletBonusAvailable > 0;
   double get walletTotal => walletRealAvailable + walletBonusAvailable;
@@ -92,6 +100,7 @@ class CartState {
     double? walletBonusAvailable,
     int? walletBonusCapPct,
     DateTime? Function()? walletBonusExpiresAt,
+    int? takeawayNo,
   }) => CartState(
     lines: lines ?? this.lines,
     sentLineIds: sentLineIds ?? this.sentLineIds,
@@ -115,8 +124,16 @@ class CartState {
     walletBonusExpiresAt: walletBonusExpiresAt != null
         ? walletBonusExpiresAt()
         : this.walletBonusExpiresAt,
+    takeawayNo: takeawayNo ?? this.takeawayNo,
   );
 } // end CartState
+
+/// Số "Mang đi" kế tiếp trong ngày từ chuỗi đã lưu "yyyy-MM-dd:N" (sang ngày khác đếm lại từ 1).
+({int no, String saved}) nextDailyTakeawayNo(String? saved, String today) {
+  final parts = (saved ?? '').split(':');
+  final last = parts.length == 2 && parts[0] == today ? int.tryParse(parts[1]) ?? 0 : 0;
+  return (no: last + 1, saved: '$today:${last + 1}');
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CART NOTIFIER
@@ -274,6 +291,8 @@ class CartNotifier extends Notifier<CartState> {
       ),
     );
   }
+
+  void setTakeawayNo(int no) => _updateState(state.copyWith(takeawayNo: no));
 
   /// Sau khi đã huỷ các phiếu bếp của giỏ: món còn trong giỏ thành "chưa gửi" để bớt
   /// rồi gửi lại hoặc xoá; bỏ phiên đã huỷ để thanh toán không vướng phiên đó.

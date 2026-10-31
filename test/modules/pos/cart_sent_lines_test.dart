@@ -56,17 +56,29 @@ void main() {
       expect(c.read(cartProvider).lines.single.lineId, sent);
     });
 
-    test('huỷ phiếu bếp xong: món ở lại giỏ dạng chưa gửi, bỏ phiên bếp', () {
+    test('huỷ phiếu bếp xong: món ở lại giỏ dạng chưa gửi, bỏ phiên bếp, giữ số Mang đi', () {
       cart.addProduct(_tra);
       cart.markLinesSent([c.read(cartProvider).lines.single.lineId]);
       cart.addKitchenSession('sess-1');
+      cart.setTakeawayNo(7);
       cart.unsendAll();
       final s = c.read(cartProvider);
+      expect(s.takeawayNo, 7); // cùng khách, gửi lại vẫn "Mang đi 7"
       expect(s.lines, hasLength(1));
       expect(s.sentLineIds, isEmpty);
       expect(s.kitchenSessionIds, isEmpty);
       expect(cart.decreaseQtyByProductId(_tra.id), isTrue);
+      cart.clearCart(); // khách mới → số mới
+      expect(c.read(cartProvider).takeawayNo, isNull);
     });
+  });
+
+  test('số "Mang đi" trong ngày: tăng dần, sang ngày mới đếm lại', () {
+    expect(nextDailyTakeawayNo(null, '2026-11-01'), (no: 1, saved: '2026-11-01:1'));
+    expect(nextDailyTakeawayNo('2026-11-01:4', '2026-11-01'), (no: 5, saved: '2026-11-01:5'));
+    expect(nextDailyTakeawayNo('2026-10-31:9', '2026-11-01'), (no: 1, saved: '2026-11-01:1'));
+    expect(const CartState(takeawayNo: 3).kitchenLabel, 'Mang đi 3');
+    expect(const CartState().kitchenLabel, 'Mang đi');
   });
 
   test('giờ máy chủ (UTC) đổi sang giờ máy để hiển thị', () {

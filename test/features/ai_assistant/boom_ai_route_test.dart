@@ -1051,6 +1051,15 @@ void main() {
           'min_stock': 2,
           'cost_price_latest': 200000,
         },
+        // Ngừng bán nhưng còn hàng: vẫn tính vào giá trị kho như màn Kho, không vào danh sách sắp hết.
+        {
+          'id': 'e',
+          'name': 'Siro cũ',
+          'stock_qty': 5,
+          'min_stock': 9,
+          'cost_price': 10000,
+          'is_active': false,
+        },
       ];
       final k = boomKhoFacts(
         products: products,
@@ -1075,7 +1084,7 @@ void main() {
       expect(k['low_count'], 2);
       expect(k['out_count'], 1);
       expect((k['low'] as List).first['name'], 'Đường');
-      expect(k['stock_value'], 2 * 30000 + 10 * 200000);
+      expect(k['stock_value'], 2 * 30000 + 10 * 200000 + 5 * 10000);
       expect(k['imports'], 1);
       expect(k['import_total'], 500000);
       expect((k['losses'] as List).single, containsPair('value', 30000.0));

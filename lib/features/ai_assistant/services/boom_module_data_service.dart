@@ -523,15 +523,20 @@ Map<String, dynamic> boomKhoFacts({
     for (final p in products)
       if (p['product_type'] != 'combo' && p['is_active'] != false) p,
   ];
+  // Giá trị kho tính như màn Kho (mọi món chưa xoá, tồn âm không trừ) để Boom nói khớp số chủ quán
+  // thấy; trước đây bỏ combo / món ngừng bán nên lệch. Danh sách sắp hết vẫn chỉ hàng đang theo dõi.
   double value = 0;
-  final low = <Map<String, dynamic>>[];
-  var out = 0;
-  for (final p in tracked) {
-    final q = _n(p['stock_qty']), min = _n(p['min_stock']);
+  for (final p in products) {
+    final q = _n(p['stock_qty']);
     final cost = _n(p['cost_price_latest']) > 0
         ? _n(p['cost_price_latest'])
         : _n(p['cost_price']);
     if (q > 0) value += q * cost;
+  }
+  final low = <Map<String, dynamic>>[];
+  var out = 0;
+  for (final p in tracked) {
+    final q = _n(p['stock_qty']), min = _n(p['min_stock']);
     if (min > 0 && q <= min) {
       if (q <= 0) out++;
       low.add({
