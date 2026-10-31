@@ -16,7 +16,10 @@ import {
   blockReason,
   buildMessages,
   loaiCau,
-  noteSoLa,
+  khuyenNguoc,
+  MAU_LOAI,
+  kiemTraLoi,
+  noteKiem,
   soLa,
   clipAnswer,
   costUsd,
@@ -867,5 +870,17 @@ Deno.test('Lần 41: tự kiểm số — bắt số bịa, cho qua số làm tr
   assertEquals(soLa('Dạ, tháng trước bán 3656 phần.', ref + '\nSáng: Bạc xỉu 3046; Trưa: Bạc xỉu 610.'), ['3656 phần']);
   // tiền viết đủ chữ số, "đ" ở cuối câu
   assertEquals(soLa('Dạ Chị, chi thịt 25.000.000đ', ref), ['25.000.000đ']);
-  assert(noteSoLa(['760 phần']).includes('760 phần'));
+  assert(noteKiem(kiemTraLoi('Dạ, bán 760 phần.', ref)).includes('760 phần'));
+});
+
+Deno.test('Lần 42: khuyên ngược món giá vốn cao + lộ chữ nội bộ → hỏi lại', () => {
+  const ref = 'NHÓM "Cà phê": Cà phê sữa đá (1150 phần, giá 25.000đ, 28.750.000đ = 28,2% doanh thu); Bạc xỉu (610 phần, giá 29.000đ, 17.690.000đ = 17,3% doanh thu, giá vốn 13.000đ = 45% giá bán → cao hơn mốc 25–35%).\nĐIỂM CẦN CHÚ Ý: 1) "Bạc xỉu" giá vốn 45% giá bán (mốc 25–35%), đang bán 610 phần.';
+  assertEquals(khuyenNguoc('Việc tuần này: mua 1 tặng 1 Bạc xỉu giờ chiều.', ref), ['Bạc xỉu']);
+  assertEquals(khuyenNguoc('Việc tuần này: thử giảm giá "Bạc xỉu" xuống 27.000đ.', ref), ['Bạc xỉu']);
+  // đúng hướng: giảm giá vốn / tăng giá; đẩy món khác ở vế khác
+  assertEquals(khuyenNguoc('Bạc xỉu cần giảm giá vốn hoặc tăng giá 2.000đ.', ref), []);
+  assertEquals(khuyenNguoc('Kiểm lại giá Bạc xỉu, đồng thời đẩy mạnh Cà phê sữa đá buổi sáng.', ref), []);
+  assert(kiemTraLoi('Dạ Anh, hạ giá combo (vì dòng ĐIỂM CẦN CHÚ Ý ghi combo đắt hơn mua lẻ).', ref).some((x) => x.includes('nội bộ')));
+  assertEquals(kiemTraLoi('Dạ Anh, NÊN tăng giá Bạc xỉu: giá vốn 45%, bán 610 phần. Việc tuần này: tăng 2.000đ thử 2 tuần.', ref), []);
+  assert(!/dòng [A-ZĐ]|khối [A-ZĐ]/.test(MAU_LOAI.ke_hoach));
 });

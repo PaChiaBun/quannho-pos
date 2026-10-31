@@ -54,8 +54,8 @@ import {
   pickMemory,
   redact,
   refusalFor,
-  noteSoLa,
-  soLa,
+  kiemTraLoi,
+  noteKiem,
   soLieuGoc,
 } from './logic.ts';
 
@@ -511,17 +511,17 @@ Deno.serve(async (req) => {
       kind += '+retry';
       latency = Date.now() - t0;
     }
-    // Tự kiểm số (lần 41): câu tư vấn có số không có trong khối số liệu và không tính ra được → hỏi lại GPT MỘT lần
-    // kèm danh sách số đó (bỏ / nói "chưa có số đó"). Còn ≥ 4 giây; lỗi / quá giờ thì giữ câu trả lời lần trước.
+    // Tự kiểm (lần 41–42): số không có trong khối / không tính ra được, khuyên giảm giá món giá vốn cao, lộ tên dòng nội bộ
+    // → hỏi lại GPT MỘT lần kèm danh sách lỗi. Còn ≥ 4 giây; lỗi / quá giờ thì giữ câu trả lời lần trước.
     const left2 = UPSTREAM_TIMEOUT_MS - (Date.now() - t0);
     const bad = r.mode === 'advice' && (r.facts || r.modules || r.chain) && left2 >= 4000
-      ? soLa(answer, soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory }))
+      ? kiemTraLoi(answer, soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory }))
       : [];
     if (bad.length) {
       const ac3 = new AbortController();
       const timer3 = setTimeout(() => ac3.abort(), Math.min(left2, 8000));
       try {
-        const again = await callGpt([...messages, { role: 'assistant', content: answer }, { role: 'user', content: noteSoLa(bad) }], ac3.signal);
+        const again = await callGpt([...messages, { role: 'assistant', content: answer }, { role: 'user', content: noteKiem(bad) }], ac3.signal);
         if (again.ok) {
           const d3 = await again.json();
           const a3 = clipAnswer(plainAnswer(String(d3?.choices?.[0]?.message?.content ?? '')));

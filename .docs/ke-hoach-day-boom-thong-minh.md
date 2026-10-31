@@ -339,6 +339,17 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
   - Sau lần chấm: siết cộng số lượng cùng vế + cho phép tiền × số phần → bắt thêm D32 "740 / 710 phần" (chưa chấm lại).
 - Bước kế: (b) app gửi số từng món kỳ trước; (c) thử gpt-4o cho câu khó (cần duyệt).
 
+### Lần 42 (31/10, Claude chấm 2 lượt, đã áp): 10,51 → **10,82/16**
+
+- Đã làm:
+  - Câu mẫu kế hoạch nói lý do bằng lời thường (bỏ "vì dòng ĐIỂM CẦN CHÚ Ý…", "khối KHÁCH HÀNG…" mà GPT chép, có khi bịa khối không có).
+  - `kiemTraLoi` gộp 3 lỗi vào 1 lần hỏi lại: số lạ (lần 41), `khuyenNguoc` (giảm giá / tặng / đẩy mạnh món giá vốn cao hơn mốc trong cùng vế câu; bỏ qua "giảm giá vốn"), lộ tên dòng nội bộ.
+- Kết quả: lý lẽ 0,76 → 0,84, việc làm 0,84 → 0,93, đúng quán 1,61 → 1,71; kế hoạch 9,2 → 10,5, quyết định 12,0 → 12,4; lộ chữ nội bộ 7 câu → 0. Hỏi lại 8–10 / 60 câu.
+- Còn yếu:
+  - Câu bị hỏi lại điểm lẫn lộn (D08 +3, D23 +4; D50, D58 −4): bản viết lại không luôn tốt hơn → lợi chính đến từ sửa câu mẫu.
+  - Lọt "tăng cường quảng bá Bạc xỉu (vì giá vốn cao hơn mốc)" (D21, D22): GPT hiểu điểm cần chú ý là món cần đẩy.
+- Bước kế (lần 43): ghi thẳng ở dòng điểm cần chú ý "→ lời mỏng: không đẩy / không giảm giá, xem tăng giá hoặc giảm định lượng" (sửa từ dữ liệu gốc thay vì bắt lỗi rồi hỏi lại).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

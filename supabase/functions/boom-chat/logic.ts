@@ -1271,11 +1271,11 @@ export function loaiCau(question: string, hasHistory = false): LoaiCau {
 
 // Câu mẫu ngắn theo loại (lần 31) — số trong mẫu là MINH HOẠ, GPT phải dùng số trong khối của quán. Chấm 29/10: mẫu
 // ngắn làm câu trả lời ngắn đi 35% (mất số, mất lý lẽ) → ghi rõ là bản RÚT GỌN, câu thật vẫn đủ 4 phần
-const MAU_LOAI: Record<Exclude<LoaiCau, null>, string> = {
+export const MAU_LOAI: Record<Exclude<LoaiCau, null>, string> = {
   chan_doan: 'Dạ Anh, tối vắng chủ yếu do 19–21h chỉ bán 0,8 triệu/giờ, bằng 1/3 giờ trưa. Vì sao: khách chủ yếu dân văn phòng ăn trưa. Việc tuần này: combo mì xào + trà chanh 39.000đ khung 19–21h, đo số combo bán sau 2 tuần. Cần xem lại: chưa có số theo thứ của buổi tối.',
   quyet_dinh: 'Dạ Chị, NÊN tăng sinh tố bơ 3.000đ: giá vốn 42% (mốc 25–35%), đang bán 320 ly/tháng. Việc tuần này: tăng lên 38.000đ thử 2 tuần, giữ nếu số ly giảm dưới 10%, giảm quá thì trả giá cũ. Cần xem lại: có thể giảm định lượng bơ thay vì tăng giá.',
   // Claude chấm 31/10: GPT vẫn chép "khách quay lại 9%", "chiều bằng 1/3 buổi sáng" từ mẫu → mẫu trỏ tới DÒNG số, không có số
-  ke_hoach: 'Dạ Anh, mục tiêu tháng sau: lấy lại số đơn đã mất (theo dòng Phân tích tính sẵn). Tuần 1: hạ combo phở + trà đá xuống dưới giá mua lẻ (vì dòng ĐIỂM CẦN CHÚ Ý ghi combo đắt hơn mua lẻ), đo số combo/ngày. Tuần 2: ưu đãi khung chiều quán có bán (vì dòng Doanh thu theo giờ ghi chiều vắng nhất), đo số đơn chiều. Tuần 3–4: thẻ tích tô cho khách quen (vì khối KHÁCH HÀNG ghi tỉ lệ quay lại thấp), đo số khách quay lại.',
+  ke_hoach: 'Dạ Anh, mục tiêu tháng sau: lấy lại số đơn đã mất (doanh thu giảm chủ yếu do ít đơn hơn). Tuần 1: hạ combo phở + trà đá xuống dưới giá mua lẻ (vì combo đang đắt hơn mua lẻ), đo số combo/ngày. Tuần 2: ưu đãi khung chiều quán có bán (vì chiều vắng nhất trong ngày), đo số đơn chiều. Tuần 3–4: nhân viên mời thêm trà đá / quẩy khi gọi phở (vì mỗi đơn chỉ có 1 món), đo giá trị mỗi đơn.',
   du_bao: 'Dạ Chị, ước cả tháng khoảng 72 triệu (đã có 61 triệu + ước 11 triệu cho 5 ngày còn lại, theo trung bình từng thứ). Đây chỉ là ước, cao hơn tháng trước khoảng 3%.',
   so_sanh: 'Dạ Anh, tháng này giảm 9% so tháng trước, chủ yếu do số đơn giảm 11%. Khác lớn nhất: Chủ nhật bán ít hẳn. Việc tuần này: x2 điểm tích cho khách quen ngày Chủ nhật, đo số đơn Chủ nhật sau 2 tuần.',
   noi_tiep: 'Dạ Chị, đi sâu hơn: trong nhóm Bánh, bánh flan chỉ 25 cái (0,9% doanh thu) và bán chủ yếu buổi chiều. Việc tuần này: đưa bánh flan lên đầu menu chiều kèm ảnh, đo số cái sau 2 tuần.',
@@ -1641,10 +1641,40 @@ export function soLa(answer: string, ref: string): string[] {
   return bad;
 }
 
-/** Lời nhắc hỏi lại khi có số đáng ngờ. */
-export function noteSoLa(bad: string[]): string {
-  return `KIỂM SỐ: các số sau trong câu trả lời KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')}. ` +
-    'Viết lại TOÀN BỘ câu trả lời theo đúng khung: bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới.';
+// Lần 42 (31/10): Claude chấm — GPT khuyên giảm giá / tặng / đẩy món giá vốn cao hơn mốc (khuyên ngược "ĐIỂM CẦN CHÚ Ý")
+// và lộ tên dòng nội bộ ("dòng ĐIỂM CẦN CHÚ Ý", "khối KHÁCH HÀNG") ra câu trả lời → gộp vào lần hỏi lại của kiểm số.
+const NOI_BO = /ĐIỂM CẦN CHÚ Ý|HỒ SƠ QUÁN|tính sẵn|khối (?:số liệu|[A-ZĐ]{2,})|dòng (?:[A-ZĐ]{2,}|Phân tích|Doanh thu theo|Combo|Món bán|Bất thường|Dự báo)/;
+const KHUYEN_GIAM = /giảm giá(?! vốn)|khuyến mãi|ưu đãi|tặng|hạ giá|giảm (?:xuống|còn|\d)|đẩy mạnh|mua \d+ tặng/i;
+
+/** Món có giá vốn cao hơn mốc (theo khối) mà câu trả lời khuyên giảm giá / tặng / đẩy mạnh trong cùng vế câu. */
+export function khuyenNguoc(answer: string, ref: string): string[] {
+  const t = ref.normalize('NFC');
+  const names = new Set([
+    ...[...t.matchAll(/"([^"]{2,40})" giá vốn \d+% giá bán/g)].map((m) => m[1]),
+    ...[...t.matchAll(/([^();:,"]{2,40}?) \([^()]*giá vốn [\d.]+đ = \d+% giá bán → cao hơn mốc/g)].map((m) => m[1].trim()),
+  ]);
+  const out: string[] = [];
+  for (const clause of answer.normalize('NFC').split(/[.;,!?\n]|\bđồng thời\b/)) {
+    if (!KHUYEN_GIAM.test(clause)) continue;
+    for (const n of names) if (clause.toLowerCase().includes(n.toLowerCase()) && !out.includes(n)) out.push(n);
+  }
+  return out;
+}
+
+/** Mọi lỗi cần hỏi lại (rỗng = câu trả lời qua): số lạ, khuyên ngược món giá vốn cao, lộ chữ nội bộ. */
+export function kiemTraLoi(answer: string, ref: string): string[] {
+  const bad = soLa(answer, ref);
+  const nguoc = khuyenNguoc(answer, ref);
+  return [
+    ...(bad.length ? [`các số sau KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')} → bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới`] : []),
+    ...(nguoc.length ? [`khuyên giảm giá / tặng / đẩy mạnh món có giá vốn CAO HƠN MỐC (${nguoc.join(', ')}) là khuyên ngược, càng bán càng mỏng lời → với món đó chỉ khuyên tăng giá nhẹ, giảm định lượng / đổi nguyên liệu, hoặc đẩy món lời tốt hơn thay thế`] : []),
+    ...(NOI_BO.test(answer) ? ['câu trả lời lộ tên dòng / khối nội bộ (vd "dòng ĐIỂM CẦN CHÚ Ý", "khối ...", "tính sẵn") → nói lý do bằng lời thường cho chủ quán, không nhắc tên dòng'] : []),
+  ];
+}
+
+/** Lời nhắc hỏi lại khi kiemTraLoi có lỗi. */
+export function noteKiem(issues: string[]): string {
+  return `KIỂM TRA: ${issues.map((x, i) => `${i + 1}) ${x}`).join('; ')}. Viết lại TOÀN BỘ câu trả lời theo đúng khung, sửa đúng các lỗi trên, giữ nguyên phần đúng.`;
 }
 
 /** Nguồn đối chiếu số: câu hỏi + lượt trước + đúng các khối số liệu gửi GPT (KHÔNG gồm lời nhắc / câu mẫu). */
