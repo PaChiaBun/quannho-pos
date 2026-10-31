@@ -375,6 +375,14 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Lần 45b (áp): dòng số món kỳ trước chỉ ghi khi câu hỏi có "món" và "trước"; dòng thu chi giữ. 8 câu có dòng mới 9,94 → **11,12** (D32 5–6 → 13; D59 6 → 10–11); 22 câu bị hỏi lại (mã không đổi) 10,41 → 9,64 là dao động.
 - Còn yếu: D59 nói thiếu số rồi bảo xem app, không nêu chi nguyên liệu +28% và đối chiếu phiếu nhập; D42 lấy dự báo tháng này cho tháng sau; D18 lấy số 1 giờ làm cả ca; so tỉ lệ trên tổng chi với mốc trên doanh thu (D09).
 
+### Lần 46 (01/11, Claude chấm 2 lượt, đã áp): hỏi tháng khác thì không đưa số dự báo tháng này
+
+- Gốc lỗi: dòng "Dự báo cả tháng" dù dặn "KHÔNG dùng cho tháng khác" vẫn bị GPT chép làm dự báo tháng 11 (D42).
+- Đã làm: câu hỏi có "tháng sau / tới / tiếp / kế" hoặc "tháng N" khác tháng đang xem → bỏ con số dự báo, chỉ ghi "CHƯA có dự báo cho tháng đó; mốc là tháng này đã có …, còn … ngày".
+- Kết quả: 3 câu có dòng mới (D21, D42, D45) 8,83 → **10,33** (D42 5 / 9 → 11 / 11); 19 câu bị hỏi lại (mã không đổi) 9,37 → 9,00 là dao động. Chấm 1 trợ lý khoảng 0,13 triệu token.
+- Bài học chung lần 45b–46: bỏ con số dễ chép nhầm khỏi khối số liệu hiệu quả hơn lời dặn "không dùng"; chỉ thêm dòng khi câu hỏi đúng loại.
+- Còn yếu: D45 chưa dùng điểm riêng của quán (đông tối, cuối tuần); lấy số 1 giờ làm cả ca (D18, D57); bỏ sót khung 14–16h vắng; D13 nói "số nghiêng về mở" khi không có số; D50 tự đặt dự báo chi nguyên liệu.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

@@ -737,7 +737,10 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
           if (cnt[d] > 0) add += f.by_weekday[d] / cnt[d]; // thứ quán nghỉ (có ngày mà 0đ) → 0
           else add += avgDay;
         }
-        lines.push(`Dự báo cả tháng (tính sẵn theo trung bình từng thứ, còn ${n} ngày): khoảng ${vnd(f.revenue + add)} (đã có ${vnd(f.revenue)} + ước ${vnd(add)})${todayD >= 0 ? '; hôm nay chưa hết ngày nên ước có thể hơi thấp' : ''}. Chỉ là ước, nói rõ với người hỏi. Đây là dự báo CỦA THÁNG NÀY — câu hỏi tháng sau / tháng khác: KHÔNG dùng con số này làm dự báo tháng đó; chưa có dự báo tháng khác → nêu tháng này làm mốc + kinh nghiệm mùa vụ, KHÔNG tự đặt % tăng / giảm.`);
+        // lần 46: hỏi tháng sau / tháng N khác → GPT chép dự báo tháng này làm số tháng đó dù đã dặn (D42) — không đưa số đó
+        const hoi = /tháng (?:sau|tới|tiếp|kế)/i.test(question) ? 0 : +(question.match(/tháng\s*(\d{1,2})\b/i)?.[1] ?? +fd.slice(5, 7));
+        if (hoi !== +fd.slice(5, 7)) lines.push(`Câu hỏi về tháng khác tháng này: CHƯA có dự báo cho tháng đó; mốc là tháng này đã có ${vnd(f.revenue)}, còn ${n} ngày. Nêu mốc + kinh nghiệm mùa vụ, KHÔNG tự đặt con số / % cho tháng đó.`);
+        else lines.push(`Dự báo cả tháng (tính sẵn theo trung bình từng thứ, còn ${n} ngày): khoảng ${vnd(f.revenue + add)} (đã có ${vnd(f.revenue)} + ước ${vnd(add)})${todayD >= 0 ? '; hôm nay chưa hết ngày nên ước có thể hơi thấp' : ''}. Chỉ là ước, nói rõ với người hỏi. Đây là dự báo CỦA THÁNG NÀY — câu hỏi tháng sau / tháng khác: KHÔNG dùng con số này làm dự báo tháng đó; chưa có dự báo tháng khác → nêu tháng này làm mốc + kinh nghiệm mùa vụ, KHÔNG tự đặt % tăng / giảm.`);
       }
     }
   }

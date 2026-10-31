@@ -744,6 +744,12 @@ Deno.test('Giai đoạn 2: tuần chưa trọn / hôm nay dở không gọi là 
   assert(t.includes('Thứ 5 250đ (4 ngày'), t);
   assert(t.includes('Thứ 7 trung bình 13đ/ngày, chỉ bằng 25% một ngày bình thường'), t);
   assert(t.includes('Dự báo cả tháng (tính sẵn theo trung bình từng thứ, còn 3 ngày)'), t);
+  // lần 46: hỏi tháng khác → không đưa số dự báo tháng này
+  for (const q of ['Tháng 11 có khả năng tăng lại không', 'tháng sau bán được bao nhiêu']) {
+    const t2 = formatFacts(f, NOW, q);
+    assert(!t2.includes('Dự báo cả tháng') && t2.includes('CHƯA có dự báo cho tháng đó'), q);
+  }
+  assert(formatFacts(f, NOW, 'cuối tháng 10 được bao nhiêu').includes('Dự báo cả tháng'));
   assert(t.includes('45% giá bán → cao hơn mốc 25–35% của món tự pha chế'), t);
   assert(t.includes('Xu hướng: 3 tháng gần nhất (trọn tháng) TĂNG 33,3%'), t); // tháng 0 ở đầu bị bỏ
   assert(t.includes('Cùng kỳ năm trước (1–28/10/2025): 800đ, 8 đơn → năm nay TĂNG 25%'), t);
