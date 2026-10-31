@@ -793,7 +793,7 @@ Deno.test('Giai đoạn 3: khung 4 bước + khung theo loại câu (chỉ gửi
     assertEquals(loaiCau(q, h), want, q);
   }
   const m = buildMessages('bạc xỉu có nên tăng giá ko', [], null, { now: new Date('2026-10-28T09:00:00+07:00') });
-  assert(m[1].content.includes('KHUNG CHO LOẠI CÂU NÀY: Dòng đầu: NÊN / KHÔNG NÊN'));
+  assert(m[1].content.includes('KHUNG CHO LOẠI CÂU NÀY: Quyết định NHỎ, đảo lại được'));
   assert(!m[1].content.includes('Tuần 1 / Tuần 2'));
   // lần 31: kho việc cụ thể trong lời nhắc; câu mẫu chỉ gửi đúng loại
   assert(ADVICE_PROMPT.includes('KHO VIỆC CỤ THỂ'));
@@ -842,4 +842,12 @@ Deno.test('Điểm cần chú ý tính sẵn: combo đắt, giá vốn cao, gi�
   const m = formatModules(parseModules({ khuyen_mai: { period: 'x', orders: 10, orders_with_discount: 5, discount_total: 100, revenue: 900 },
     khach: { period: 'x', total: 100, returning: 10 } })!, N);
   assert(m.includes('giảm giá ăn 10%') && m.includes('chỉ 10% khách đã lưu quay lại'), m);
+});
+
+Deno.test('Lần 40: quyết định lớn không phán thay, vì sao phải có phép so, việc làm trong giờ quán bán', () => {
+  assert(ADVICE_PROMPT.includes('VÌ SAO phải có ÍT NHẤT 1 phép so') && ADVICE_PROMPT.includes('GIỜ / NGÀY QUÁN CÓ BÁN'));
+  const m = buildMessages('ca toi co nen dong luon ko, ban it qua', [], null, { now: new Date('2026-10-28T09:00:00+07:00') });
+  assert(m[1].content.includes('Quyết định LỚN') && m[1].content.includes('KHÔNG phán thay chủ'), m[1].content);
+  const n = buildMessages('sao vậy', [], null, { memory: [{ q: 'topping ban sao', a: null }], now: new Date('2026-10-28T09:00:00+07:00') });
+  assert(n[1].content.includes('MỞ BẰNG đúng chủ đề'), n[1].content);
 });

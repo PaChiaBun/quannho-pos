@@ -303,6 +303,26 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
   - Khuôn "thử 2 tuần" lặp máy móc.
   - Câu nói tiếp còn lạc chủ đề.
 
+### Lần 40 (31/10, Claude chấm 2 lượt, chưa áp): 10,23 → **10,30/16** (không đổi về tổng)
+
+- Đã làm:
+  - Quyết định LỚN (cắt người, đóng ca, đổi mối, chạy / tắt khuyến mãi) không phán thay chủ: nêu số ủng hộ / phản đối + điều kiện.
+  - "Vì sao" phải có ≥ 1 phép so có số, cấm đoán nguyên nhân không có trong khối.
+  - Việc làm chỉ trong giờ / ngày quán có bán; "thử 2 tuần" chỉ cho đổi giá / combo.
+  - Câu nói tiếp mở bằng đúng chủ đề.
+- Kết quả:
+  - Tăng: quyết định 10,2 → **11,4**, thận trọng 1,10 → 1,27, trả lời thẳng 1,37 → 1,52, kế hoạch 9,0 → 9,6, nói tiếp 10,4 → 10,9.
+  - Giảm: so sánh 10,9 → 10,0, dự báo 10,0 → 9,2, việc làm 0,95 → 0,86.
+- Sau lần chấm, câu mẫu kế hoạch được bỏ số: trỏ tới DÒNG số liệu thay vì "9%", "1/3" vì GPT vẫn chép (chưa chấm lại).
+- **Trần của cách sửa lời nhắc:** 4 lần gần nhất đều quanh 10,2–10,3.
+- Lỗi lặp lại mọi bản (giới hạn của gpt-4o-mini):
+  - Bịa số khi khối không có (số từng món tháng trước, chia nhỏ khoản nguyên liệu, % tăng tháng sau).
+  - Khuyên ngược điểm cần chú ý (đẩy món giá vốn 45–48%).
+- Bước kế đề xuất:
+  - (a) Máy chủ tự kiểm số trong câu trả lời, số không có trong khối → hỏi lại GPT 1 lần.
+  - (b) App gửi thêm số từng món kỳ trước.
+  - (c) Thử gpt-4o cho câu khó (cần duyệt chi phí).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
