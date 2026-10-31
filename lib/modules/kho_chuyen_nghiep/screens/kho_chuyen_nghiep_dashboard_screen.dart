@@ -24,6 +24,15 @@ const _kCard       = Colors.white;
 const _kInk        = Color(0xFF1A1207);
 const _kMuted      = Color(0xFF9187A0);
 
+
+/// Nguyên liệu / bán thành phẩm có đặt tồn tối thiểu và đã chạm mức đó (kể cả hết hàng).
+bool _isLowIngredient(StockItem i) {
+  final min = (i.minStock as double?) ?? 0;
+  return (i.productType == 'ingredient' || i.productType == 'semi_finished') &&
+      min > 0 &&
+      ((i.stockQty as double?) ?? 0) <= min;
+}
+
 class KhoProDashboardScreen extends ConsumerWidget {
   const KhoProDashboardScreen({super.key});
 
@@ -31,7 +40,6 @@ class KhoProDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final recipesAsync     = ref.watch(recipesProvider);
     final todayOrdersAsync = ref.watch(todayProductionOrdersProvider);
-    final khoStats         = ref.watch(khoStatsProvider);
     final allStockAsync    = ref.watch(allStockProvider); // để đếm ingredient
 
     return Container(
@@ -40,7 +48,7 @@ class KhoProDashboardScreen extends ConsumerWidget {
         physics: const BouncingScrollPhysics(),
         slivers: [
           // ── Hero banner ────────────────────────────────────────────────
-          SliverToBoxAdapter(child: _buildHeroBanner(ref, recipesAsync, todayOrdersAsync, khoStats, allStockAsync)),
+          SliverToBoxAdapter(child: _buildHeroBanner(ref, recipesAsync, todayOrdersAsync, allStockAsync)),
 
           // ── Lệnh SX hôm nay ────────────────────────────────────────────
           SliverToBoxAdapter(
@@ -90,10 +98,7 @@ class KhoProDashboardScreen extends ConsumerWidget {
           ...allStockAsync.whenOrNull(
             data: (items) {
               final lowItems = (items as List<StockItem>)
-                  .where((i) =>
-                      (i.productType == 'ingredient' || i.productType == 'semi_finished') &&
-                      ((i.stockQty as double?) ?? 0) <= ((i.minStock as double?) ?? 0) &&
-                      ((i.minStock as double?) ?? 0) > 0)
+                  .where(_isLowIngredient)
                   .toList()
                   ..sort((a, b) {
                     final aqty = (a.stockQty as double?) ?? 0;
@@ -185,7 +190,6 @@ class KhoProDashboardScreen extends ConsumerWidget {
     WidgetRef ref,
     AsyncValue recipesAsync,
     AsyncValue todayOrdersAsync,
-    AsyncValue khoStats,
     AsyncValue allStockAsync,
   ) {
     final recipeCount = recipesAsync.whenOrNull(data: (r) => (r as List).length) ?? 0;
@@ -196,7 +200,9 @@ class KhoProDashboardScreen extends ConsumerWidget {
     final ingredientCount = allStockAsync.whenOrNull(
         data: (items) => (items as List<StockItem>)
             .where((i) => i.productType == 'ingredient').length) ?? 0;
-    final lowCount = khoStats.whenOrNull(data: (s) => s.lowStockItems) ?? 0;
+    // Cùng điều kiện danh sách "sắp hết" bên dưới; trước đây lấy số của màn Kho (mọi loại món) nên lệch.
+    final lowCount = allStockAsync.whenOrNull(
+        data: (items) => (items as List<StockItem>).where(_isLowIngredient).length) ?? 0;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -248,7 +254,7 @@ class KhoProDashboardScreen extends ConsumerWidget {
                 label: 'Sắp hết kho',
                 value: '$lowCount',
                 icon: Icons.warning_amber_rounded,
-                gradient: (lowCount as int) > 0
+                gradient: lowCount > 0
                   ? const LinearGradient(
                       colors: [Color(0xFFB91C1C), Color(0xFFDC2626)],
                       begin: Alignment.topLeft, end: Alignment.bottomRight,

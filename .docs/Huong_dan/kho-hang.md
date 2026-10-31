@@ -24,7 +24,7 @@ nguon:
 - **Đầu trang "Kho hàng"**: thống kê **"Sản phẩm"**, **"Sắp hết"**, **"Hết hàng"**, **"Giá trị kho"** (tồn × giá nhập gần nhất). Các nút:
   - **"Biến động kho gần đây"** — xem nhập/xuất mới nhất.
   - **"Ghi chú nhanh"** — cài chip ghi chú (Ít cay, Ít đá…) hiện khi gọi món ở **Quản lý Bàn**.
-  - **Bật/tắt phiếu nhập nâng cao** — hiện thêm tab "Phiếu nhập".
+  - **Bật/tắt phiếu nhập nâng cao** — hiện thêm tab "Phiếu nhập". Dải giới thiệu "Quản lý kho nâng cao" bấm tắt thì máy này nhớ, không hiện lại.
   - **"Thêm sản phẩm"**.
 - **Các tab**: **"Hàng hoá & Menu"** và **"Cảnh báo"** (sắp hết + hết hàng). Khi **bật phiếu nhập nâng cao** có thêm **"Tất cả"**, **"Nguyên liệu"**, **"Phiếu nhập"**; lúc đó "Hàng hoá & Menu" chỉ còn món bán (chưa bật thì tab này hiện mọi mặt hàng).
 - **Ô tìm "Tìm sản phẩm, SKU..."**, lọc theo danh mục, nút **"Chọn"** để chọn nhiều món.

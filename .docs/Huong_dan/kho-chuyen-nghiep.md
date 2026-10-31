@@ -21,8 +21,8 @@ Dùng **cùng danh sách hàng** với module Kho hàng: nguyên liệu và món
 
 ## Màn hình gồm những gì
 Tiêu đề **"Kho Chuyên Nghiệp"**, hai nút trên đầu: **"Kiểm kê kho"** và **"Ghi hao hụt"**. Năm tab:
-- **"Tổng quan"** — số công thức, "SX hôm nay", số nguyên liệu, "Sắp hết kho"; **"Lệnh sản xuất hôm nay"** (+ "Tạo lệnh sản xuất hôm nay"), **"Cần nhập hàng"**, **"Công thức gần đây"**.
-- **"Nguyên liệu"** — nguyên liệu và bán thành phẩm, kèm tồn.
+- **"Tổng quan"** — số công thức, "SX hôm nay", số nguyên liệu, "Sắp hết kho" (số nguyên liệu / bán thành phẩm có đặt tồn tối thiểu và đã chạm mức, khớp danh sách "Cần nhập hàng"); **"Lệnh sản xuất hôm nay"** (+ "Tạo lệnh sản xuất hôm nay"), **"Cần nhập hàng"**, **"Công thức gần đây"**.
+- **"Nguyên liệu"** — nguyên liệu và bán thành phẩm, kèm tồn và nhãn **"Còn" / "Sắp hết" / "Hết"**; món không đặt tồn tối thiểu ghi **"Không theo dõi"** (xám), không bị gắn "Hết" đỏ khi trừ âm.
 - **"Công thức"** — mỗi công thức hiện số nguyên liệu, khẩu phần, **Giá vốn**, **Giá bán**, **Lãi gộp**, **Tỉ lệ giá vốn** (food cost, %), và nhãn **"Đã gắn menu POS — Tự trừ kho khi bán"** nếu đã gắn.
 - **"Sản xuất"** — lệnh sản xuất theo ngày, lọc Tất cả / Chờ / Đang làm / Hoàn thành / Đã hủy.
 - **"Báo cáo"** — chọn **Từ → Đến**: tổng giá vốn, trung bình/ngày, chi phí theo ngày, nguyên liệu tiêu thụ nhiều, thống kê lệnh sản xuất.

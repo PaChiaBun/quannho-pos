@@ -551,8 +551,38 @@ class _MainShellState extends ConsumerState<MainShell>
   /// 4 mục thanh dưới đang hiện (sau lọc quyền / tự ghim) — hộp chọn lấy làm gốc.
   List<int> _shownSlots = const [];
 
+  DateTime? _lastBackAt;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => _exitGuard(_buildShell(context));
+
+  /// Android, nút quay lại ở màn gốc: bấm lần nữa trong 2 giây mới thoát app (trước đây thoát ngay,
+  /// máy POS bấm nhầm là mất màn đang bán).
+  Widget _exitGuard(Widget child) {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return child;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        final now = DateTime.now();
+        if (_lastBackAt != null &&
+            now.difference(_lastBackAt!) < const Duration(seconds: 2)) {
+          SystemNavigator.pop();
+          return;
+        }
+        _lastBackAt = now;
+        ScaffoldMessenger.maybeOf(context)
+          ?..hideCurrentSnackBar()
+          ..showSnackBar(const SnackBar(
+            content: Text('Bấm quay lại lần nữa để thoát app'),
+            duration: Duration(seconds: 2),
+          ));
+      },
+      child: child,
+    );
+  }
+
+  Widget _buildShell(BuildContext context) {
     ref.listen<SessionData?>(sessionProvider, (previous, next) {
       if (previous?.storeId != next?.storeId ||
           previous?.userId != next?.userId) {

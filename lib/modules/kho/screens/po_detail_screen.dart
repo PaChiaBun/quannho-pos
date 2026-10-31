@@ -39,7 +39,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
   static const _kCard   = Colors.white;
   static const _kBorder = Color(0xFFE5E7EB);
 
-  String _fmtMoney(double v) => fmtMoney(v); // định dạng chung ("1.250.000 đ", "12,5 triệu")
+  String _fmtMoney(double v) => fmtVnd(v); // chứng từ: đủ số, không rút gọn "12,3 triệu"
 
   String _fmtDate(String iso) {
     try {

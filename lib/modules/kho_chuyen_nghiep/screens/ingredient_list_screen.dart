@@ -113,9 +113,12 @@ class _IngredientCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final qty    = (item.stockQty as double?) ?? 0;
     final min    = (item.minStock as double?) ?? 0;
-    final isLow  = min > 0 && qty <= min;
-    final isOut  = qty <= 0;
-    final statusColor = isOut  ? KhoTheme.red
+    // Tồn tối thiểu 0 = không theo dõi tồn (như màn Kho hàng): không gắn "Hết" đỏ khi bị trừ âm.
+    final untracked = min <= 0;
+    final isLow  = !untracked && qty <= min;
+    final isOut  = !untracked && qty <= 0;
+    final statusColor = untracked ? KhoTheme.muted
+                       : isOut  ? KhoTheme.red
                        : isLow ? KhoTheme.amber
                        : KhoTheme.green;
     final ts = _typeStyle(item.productType as String? ?? 'ingredient');
@@ -165,7 +168,7 @@ class _IngredientCard extends StatelessWidget {
               color: statusColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Text(isOut ? 'Hết' : isLow ? 'Sắp hết' : 'Còn',
+            child: Text(untracked ? 'Không theo dõi' : isOut ? 'Hết' : isLow ? 'Sắp hết' : 'Còn',
                 style: GoogleFonts.plusJakartaSans(
                     fontSize: 11, fontWeight: FontWeight.w700,
                     color: statusColor)),

@@ -40,13 +40,6 @@ class KhoRepository {
         .toList());
   }
 
-  Stream<List<StockItem>> watchOutOfStock() async* {
-    yield* _productRepo.watchAll().map((products) => products
-        .where((p) => p.stockQty <= 0)
-        .map(StockItem.fromProduct)
-        .toList());
-  }
-
   // ── Stock movements ───────────────────────────────────────────────────────
 
   Stream<T> _robustStream<T>(

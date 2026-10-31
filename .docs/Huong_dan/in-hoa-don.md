@@ -115,7 +115,7 @@ Dùng khi quán có nhiều máy bán (web, điện thoại) nhưng chỉ **mộ
 
 ### 9. Két tiền
 - Két cắm dây (cổng RJ11) vào **máy in hoá đơn thu ngân**.
-- Thử két (quán in theo 4 trạm): Cấu Hình Trạm In → trạm **Thu ngân** → **"Mở két tiền"**. Quán đã dùng luật in hiện **chưa có nút thử mở két bằng tay** — thử bằng một đơn tiền mặt.
+- Thử két (quán in theo 4 trạm): Cấu Hình Trạm In → trạm **Thu ngân** → **"Mở két tiền"**. Quán dùng luật in: Máy In & Luật In → tab "Máy in" → nút **"Mở két"** ở máy in có đánh dấu **"Có két tiền gắn kèm"** (máy in hệ thống chỉ mở két được từ máy Windows).
 - Máy in mạng (IP): app gửi lệnh mở két trực tiếp. Máy in hệ thống Windows: app gửi lệnh qua máy in; nếu không mở, cấu hình "Cash Drawer" trong driver máy in.
 
 ### 10. In thử

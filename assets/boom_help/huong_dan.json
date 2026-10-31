@@ -1,6 +1,6 @@
 {
- "version": 202610312253,
- "hash": "4d45cbb4abe848872a073c1f70b27a3480dd5bfb5f480ac2f884cee12decffe8",
+ "version": 202610312323,
+ "hash": "a2c401bc64610409cf8758145b62b4fafaf8b22a161b3220239e91db0446d698",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -185,6 +185,14 @@
    "section": "Lỗi thường gặp",
    "title": "\"Lỗi: … Phiên bếp đã đóng hoặc đã thanh toán…\" / \"Giỏ hàng thiếu món đã gửi bếp; chưa thu tiền.\"",
    "text": "Vì sao: Đơn đã gửi bếp bị thay đổi hoặc đã được thu ở nơi khác\nLàm gì: Kiểm tra \"Đơn gần đây\" xem đã thu chưa; chưa thu thì báo quản lý"
+  },
+  {
+   "id": "ban-hang#loi-bam-quay-lai-lan-nua-de-thoat-app-may-android",
+   "module": "pos",
+   "module_name": "Bán hàng",
+   "section": "Lỗi thường gặp",
+   "title": "\"Bấm quay lại lần nữa để thoát app\" (máy Android)",
+   "text": "Vì sao: Bấm nút quay lại của máy ở màn chính\nLàm gì: Bấm tiếp trong 2 giây nếu muốn thoát; không thì cứ dùng tiếp"
   },
   {
    "id": "ban-hang#loi-gui-bep-that-bai-bep-chua-nhan-phieu-kiem-tra-mang-roi-bam-b",
@@ -912,7 +920,7 @@
    "module_name": "In Hoá Đơn",
    "section": "Các việc thường làm",
    "title": "9. Két tiền",
-   "text": "• Két cắm dây (cổng RJ11) vào máy in hoá đơn thu ngân.\n• Thử két (quán in theo 4 trạm): Cấu Hình Trạm In → trạm Thu ngân → \"Mở két tiền\". Quán đã dùng luật in hiện chưa có nút thử mở két bằng tay — thử bằng một đơn tiền mặt.\n• Máy in mạng (IP): app gửi lệnh mở két trực tiếp. Máy in hệ thống Windows: app gửi lệnh qua máy in; nếu không mở, cấu hình \"Cash Drawer\" trong driver máy in."
+   "text": "• Két cắm dây (cổng RJ11) vào máy in hoá đơn thu ngân.\n• Thử két (quán in theo 4 trạm): Cấu Hình Trạm In → trạm Thu ngân → \"Mở két tiền\". Quán dùng luật in: Máy In & Luật In → tab \"Máy in\" → nút \"Mở két\" ở máy in có đánh dấu \"Có két tiền gắn kèm\" (máy in hệ thống chỉ mở két được từ máy Windows).\n• Máy in mạng (IP): app gửi lệnh mở két trực tiếp. Máy in hệ thống Windows: app gửi lệnh qua máy in; nếu không mở, cấu hình \"Cash Drawer\" trong driver máy in."
   },
   {
    "id": "in-hoa-don#cac-viec-thuong-lam-10-in-thu",
@@ -1224,7 +1232,7 @@
    "module_name": "Kho Chuyên Nghiệp",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "Tiêu đề \"Kho Chuyên Nghiệp\", hai nút trên đầu: \"Kiểm kê kho\" và \"Ghi hao hụt\". Năm tab:\n• \"Tổng quan\" — số công thức, \"SX hôm nay\", số nguyên liệu, \"Sắp hết kho\"; \"Lệnh sản xuất hôm nay\" (+ \"Tạo lệnh sản xuất hôm nay\"), \"Cần nhập hàng\", \"Công thức gần đây\".\n• \"Nguyên liệu\" — nguyên liệu và bán thành phẩm, kèm tồn.\n• \"Công thức\" — mỗi công thức hiện số nguyên liệu, khẩu phần, Giá vốn, Giá bán, Lãi gộp, Tỉ lệ giá vốn (food cost, %), và nhãn \"Đã gắn menu POS — Tự trừ kho khi bán\" nếu đã gắn.\n• \"Sản xuất\" — lệnh sản xuất theo ngày, lọc Tất cả / Chờ / Đang làm / Hoàn thành / Đã hủy.\n• \"Báo cáo\" — chọn Từ → Đến: tổng giá vốn, trung bình/ngày, chi phí theo ngày, nguyên liệu tiêu thụ nhiều, thống kê lệnh sản xuất."
+   "text": "Tiêu đề \"Kho Chuyên Nghiệp\", hai nút trên đầu: \"Kiểm kê kho\" và \"Ghi hao hụt\". Năm tab:\n• \"Tổng quan\" — số công thức, \"SX hôm nay\", số nguyên liệu, \"Sắp hết kho\" (số nguyên liệu / bán thành phẩm có đặt tồn tối thiểu và đã chạm mức, khớp danh sách \"Cần nhập hàng\"); \"Lệnh sản xuất hôm nay\" (+ \"Tạo lệnh sản xuất hôm nay\"), \"Cần nhập hàng\", \"Công thức gần đây\".\n• \"Nguyên liệu\" — nguyên liệu và bán thành phẩm, kèm tồn và nhãn \"Còn\" / \"Sắp hết\" / \"Hết\"; món không đặt tồn tối thiểu ghi \"Không theo dõi\" (xám), không bị gắn \"Hết\" đỏ khi trừ âm.\n• \"Công thức\" — mỗi công thức hiện số nguyên liệu, khẩu phần, Giá vốn, Giá bán, Lãi gộp, Tỉ lệ giá vốn (food cost, %), và nhãn \"Đã gắn menu POS — Tự trừ kho khi bán\" nếu đã gắn.\n• \"Sản xuất\" — lệnh sản xuất theo ngày, lọc Tất cả / Chờ / Đang làm / Hoàn thành / Đã hủy.\n• \"Báo cáo\" — chọn Từ → Đến: tổng giá vốn, trung bình/ngày, chi phí theo ngày, nguyên liệu tiêu thụ nhiều, thống kê lệnh sản xuất."
   },
   {
    "id": "kho-chuyen-nghiep#cac-viec-thuong-lam-1-chuan-bi-nguyen-lieu-o-kho-hang",
@@ -1360,7 +1368,7 @@
    "module_name": "Kho hàng",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Đầu trang \"Kho hàng\": thống kê \"Sản phẩm\", \"Sắp hết\", \"Hết hàng\", \"Giá trị kho\" (tồn × giá nhập gần nhất). Các nút:\n  • \"Biến động kho gần đây\" — xem nhập/xuất mới nhất.\n  • \"Ghi chú nhanh\" — cài chip ghi chú (Ít cay, Ít đá…) hiện khi gọi món ở Quản lý Bàn.\n  • Bật/tắt phiếu nhập nâng cao — hiện thêm tab \"Phiếu nhập\".\n  • \"Thêm sản phẩm\".\n• Các tab: \"Hàng hoá & Menu\" và \"Cảnh báo\" (sắp hết + hết hàng). Khi bật phiếu nhập nâng cao có thêm \"Tất cả\", \"Nguyên liệu\", \"Phiếu nhập\"; lúc đó \"Hàng hoá & Menu\" chỉ còn món bán (chưa bật thì tab này hiện mọi mặt hàng).\n• Ô tìm \"Tìm sản phẩm, SKU...\", lọc theo danh mục, nút \"Chọn\" để chọn nhiều món.\n• Điện thoại / máy POS cầm tay (màn hẹp): mỗi món là một thẻ — tên (tối đa 2 dòng), mã SKU (nếu có), dòng \"Tồn: … · min …\", giá bán bên phải, nhãn danh mục, trạng thái, nút ⋮ (menu thao tác). Nhấn giữ một thẻ (hoặc nút \"Chọn\" cạnh ô tìm, hiện cho ai được thao tác nhiều món) để bắt đầu chọn nhiều món (có dòng \"Chọn tất cả\"); cuối danh sách ghi \"Hiển thị N / N món\"; cuộn xa có nút tròn \"Lên đầu trang\".\n• Máy tính bảng / PC (màn rộng): bảng đủ cột (Ảnh, Tên món & SKU, Danh mục, Tồn kho & Min, Giá bán, Trạng thái) vừa khít màn, không phải vuốt ngang; ô tích để chọn nhiều luôn hiện.\n• Mỗi món hiện: tên, danh mục, tồn / min, giá bán (đủ số, vd \"25.000 đ\"), trạng thái \"Đang bán\" / \"Tạm ngưng bán\", nhãn tồn:\n  • \"Hết hàng\" — có đặt tồn tối thiểu và tồn ≤ 0 (màn Bán hàng khoá món này).\n  • \"Sắp hết\" — tồn ≤ mức tối thiểu.\n  • \"Còn hàng\".\n  • \"Không theo dõi\" — món không đặt tồn tối thiểu (dù tồn âm vẫn bán được). Món loại này bị trừ âm thì ô tồn ghi \"Không theo dõi\" thay cho số âm, và phần âm không trừ vào \"Giá trị kho\".\n• Menu \"Thao tác\" của từng món: \"Sửa thông tin món\", \"Nhập kho\", \"Điều chỉnh tồn kho\", \"Lịch sử xuất nhập\", \"Cấu hình Topping\", \"Tùy chọn món (Modifiers)\", \"Xóa món\"."
+   "text": "• Đầu trang \"Kho hàng\": thống kê \"Sản phẩm\", \"Sắp hết\", \"Hết hàng\", \"Giá trị kho\" (tồn × giá nhập gần nhất). Các nút:\n  • \"Biến động kho gần đây\" — xem nhập/xuất mới nhất.\n  • \"Ghi chú nhanh\" — cài chip ghi chú (Ít cay, Ít đá…) hiện khi gọi món ở Quản lý Bàn.\n  • Bật/tắt phiếu nhập nâng cao — hiện thêm tab \"Phiếu nhập\". Dải giới thiệu \"Quản lý kho nâng cao\" bấm tắt thì máy này nhớ, không hiện lại.\n  • \"Thêm sản phẩm\".\n• Các tab: \"Hàng hoá & Menu\" và \"Cảnh báo\" (sắp hết + hết hàng). Khi bật phiếu nhập nâng cao có thêm \"Tất cả\", \"Nguyên liệu\", \"Phiếu nhập\"; lúc đó \"Hàng hoá & Menu\" chỉ còn món bán (chưa bật thì tab này hiện mọi mặt hàng).\n• Ô tìm \"Tìm sản phẩm, SKU...\", lọc theo danh mục, nút \"Chọn\" để chọn nhiều món.\n• Điện thoại / máy POS cầm tay (màn hẹp): mỗi món là một thẻ — tên (tối đa 2 dòng), mã SKU (nếu có), dòng \"Tồn: … · min …\", giá bán bên phải, nhãn danh mục, trạng thái, nút ⋮ (menu thao tác). Nhấn giữ một thẻ (hoặc nút \"Chọn\" cạnh ô tìm, hiện cho ai được thao tác nhiều món) để bắt đầu chọn nhiều món (có dòng \"Chọn tất cả\"); cuối danh sách ghi \"Hiển thị N / N món\"; cuộn xa có nút tròn \"Lên đầu trang\".\n• Máy tính bảng / PC (màn rộng): bảng đủ cột (Ảnh, Tên món & SKU, Danh mục, Tồn kho & Min, Giá bán, Trạng thái) vừa khít màn, không phải vuốt ngang; ô tích để chọn nhiều luôn hiện.\n• Mỗi món hiện: tên, danh mục, tồn / min, giá bán (đủ số, vd \"25.000 đ\"), trạng thái \"Đang bán\" / \"Tạm ngưng bán\", nhãn tồn:\n  • \"Hết hàng\" — có đặt tồn tối thiểu và tồn ≤ 0 (màn Bán hàng khoá món này).\n  • \"Sắp hết\" — tồn ≤ mức tối thiểu.\n  • \"Còn hàng\".\n  • \"Không theo dõi\" — món không đặt tồn tối thiểu (dù tồn âm vẫn bán được). Món loại này bị trừ âm thì ô tồn ghi \"Không theo dõi\" thay cho số âm, và phần âm không trừ vào \"Giá trị kho\".\n• Menu \"Thao tác\" của từng món: \"Sửa thông tin món\", \"Nhập kho\", \"Điều chỉnh tồn kho\", \"Lịch sử xuất nhập\", \"Cấu hình Topping\", \"Tùy chọn món (Modifiers)\", \"Xóa món\"."
   },
   {
    "id": "kho-hang#cac-viec-thuong-lam-1-them-mon-nguyen-lieu",

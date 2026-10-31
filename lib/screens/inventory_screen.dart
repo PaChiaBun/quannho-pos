@@ -65,6 +65,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   bool _phieuNhapEnabled = false;
   bool _hideFeatureBanner = false;
   static const _kPrefKey = 'phieu_nhap_enabled';
+  static const _kHideBannerKey = 'kho_an_dai_kho_nang_cao';
   static const _kViolet  = Color(0xFF7C3AED);
 
   String _selectedCategory = 'Tất cả';
@@ -520,6 +521,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   Future<void> _loadPref() async {
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool(_kPrefKey) ?? false;
+    // Đã tắt dải "Quản lý kho nâng cao" thì không hiện lại mỗi lần mở màn.
+    if ((prefs.getBool(_kHideBannerKey) ?? false) && !_hideFeatureBanner && mounted) {
+      setState(() => _hideFeatureBanner = true);
+    }
     if (enabled != _phieuNhapEnabled) {
       setState(() {
         _phieuNhapEnabled = enabled;
@@ -857,7 +862,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
       : _FeatureToggleCard(
           enabled: _phieuNhapEnabled,
           onToggle: _togglePhieuNhap,
-          onDismiss: () => setState(() => _hideFeatureBanner = true),
+          onDismiss: () {
+            setState(() => _hideFeatureBanner = true);
+            SharedPreferences.getInstance()
+                .then((p) => p.setBool(_kHideBannerKey, true));
+          },
         );
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -2962,7 +2971,7 @@ class _PoCard extends StatelessWidget {
                         color: isCancelled ? Colors.grey : _kNavy)),
               ])),
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text(fmtMoney(order.totalAmount),
+                Text(fmtVnd(order.totalAmount), // phiếu nhập: đủ số
                     style: GoogleFonts.plusJakartaSans(
                         fontSize: 16, fontWeight: FontWeight.w900,
                         color: isCancelled ? Colors.grey : _kViolet,

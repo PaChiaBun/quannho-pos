@@ -339,7 +339,7 @@ class _PhieuNhapHangScreenState extends ConsumerState<PhieuNhapHangScreen> {
           children: [
             Text('Tổng tiền', style: GoogleFonts.plusJakartaSans(
                 fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
-            Text(fmtMoney(_total),
+            Text(fmtVnd(_total), // chứng từ: đủ số
                 style: GoogleFonts.plusJakartaSans(
                     fontSize: 22, fontWeight: FontWeight.w900, color: _kNavy)),
           ],
@@ -876,7 +876,7 @@ class _PoLineCardState extends State<_PoLineCard> {
                     ),
                     if (line.originalCostPrice > 0) ...[
                       const SizedBox(height: 3),
-                      Text('↑ Lần trước: ${fmtMoney(line.originalCostPrice)}',
+                      Text('↑ Lần trước: ${fmtVnd(line.originalCostPrice)}',
                           style: GoogleFonts.plusJakartaSans(
                               fontSize: 10, color: KhoTheme.muted,
                               fontStyle: FontStyle.italic)),
@@ -906,7 +906,7 @@ class _PoLineCardState extends State<_PoLineCard> {
                       style: GoogleFonts.plusJakartaSans(
                           fontSize: 12, color: KhoTheme.green,
                           fontWeight: FontWeight.w600)),
-                  Text(fmtMoney(subtotal),
+                  Text(fmtVnd(subtotal),
                       style: GoogleFonts.plusJakartaSans(
                           fontSize: 15, fontWeight: FontWeight.w900,
                           color: KhoTheme.green)),

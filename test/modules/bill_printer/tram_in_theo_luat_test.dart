@@ -63,6 +63,8 @@ const _legacy = StationPrintersState(
 
 const _bill = PrinterEntry(id: 'p1', name: 'Bill quầy', kind: PrinterKind.system, address: 'XP-80C');
 const _bep = PrinterEntry(id: 'p2', name: 'Bếp nóng', kind: PrinterKind.lan, address: '192.168.1.50');
+const _billKet = PrinterEntry(
+    id: 'p1', name: 'Bill quầy', kind: PrinterKind.system, address: 'XP-80C', hasCashDrawer: true);
 
 StationPrintersState _withSetup(PrintSetup s) => StationPrintersState(
       cashier: _legacy.cashier,
@@ -239,9 +241,12 @@ void main() {
       testWidgets(
           '(${size.width.toInt()}dp) mỗi máy in có nút In thử; gợi ý tên máy in hệ thống đúng, không tràn',
           (tester) async {
-        await _open(tester, const PrintRulesScreen(), _withSetup(const PrintSetup(printers: [_bill, _bep])),
+        await _open(tester, const PrintRulesScreen(),
+            _withSetup(const PrintSetup(printers: [_billKet, _bep])),
             size: size);
         expect(find.text('In thử'), findsNWidgets(2));
+        // Máy in bill có két: thêm nút thử mở két (quán dùng Luật in không còn nút ở 4 trạm cũ).
+        expect(find.text('Mở két'), findsOneWidget);
         await tester.tap(find.text('Thêm máy in'));
         await tester.pumpAndSettle();
         expect(find.text('Tên máy in trong hệ thống'), findsOneWidget);

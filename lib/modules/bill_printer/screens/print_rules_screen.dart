@@ -319,6 +319,23 @@ class _PrintersTab extends StatelessWidget {
     ));
   }
 
+  /// Thử mở két gắn với máy in này: quán dùng Luật in không còn nút "Mở két tiền" của 4 trạm cũ.
+  Future<void> _testDrawer(BuildContext context, PrinterEntry p) async {
+    final messenger = ScaffoldMessenger.of(context);
+    var ok = true;
+    if (p.kind == PrinterKind.lan && !kIsWeb) {
+      await ThermalPrinterService.openCashDrawer(printerIp: p.address);
+    } else {
+      // Máy in hệ thống: chỉ máy Windows gửi được lệnh thô mở két.
+      ok = await ThermalPrinterService.openCashDrawerWindows(printerName: p.address);
+    }
+    messenger.showSnackBar(SnackBar(
+      content: Text(ok
+          ? 'Đã gửi lệnh mở két qua "${p.name}". Két không mở: kiểm tra dây két cắm vào máy in.'
+          : 'Chỉ mở két qua máy in hệ thống được trên máy Windows.'),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
@@ -385,11 +402,19 @@ class _PrintersTab extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
-                    child: TextButton.icon(
-                      onPressed: () => _testPrint(context, p),
-                      icon: const Icon(Icons.print_rounded, size: 18),
-                      label: const Text('In thử'),
-                    ),
+                    child: Wrap(alignment: WrapAlignment.end, children: [
+                      if (p.hasCashDrawer && p.kind != PrinterKind.sunmiBuiltin)
+                        TextButton.icon(
+                          onPressed: () => _testDrawer(context, p),
+                          icon: const Icon(Icons.point_of_sale_rounded, size: 18),
+                          label: const Text('Mở két'),
+                        ),
+                      TextButton.icon(
+                        onPressed: () => _testPrint(context, p),
+                        icon: const Icon(Icons.print_rounded, size: 18),
+                        label: const Text('In thử'),
+                      ),
+                    ]),
                   ),
                 ),
               ]),
