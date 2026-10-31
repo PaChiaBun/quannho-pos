@@ -839,7 +839,9 @@ Deno.test('Claude chấm 29/10: tuần chưa trọn, dự báo chỉ tháng này
   const f = formatModules(parseModules({ finance: { period: 'Tháng trước', income: 100, expense: 80, prev_income: 90, prev_expense: 60, auto_income: 100 },
     khuyen_mai: { period: 'Tháng này', active_count: 1, orders: 10, orders_with_discount: 5, discount_total: 100, revenue: 900, used: [{ code: 'GIAM15', times: 4, discount: 60 }] } })!, NOW);
   assert(f.includes('Kỳ trước thu − chi = 30đ → kỳ này ÍT hơn 10đ'), f);
-  assert(f.includes('GIAM15 4 lần, giảm 60đ = 6% giá trị trước giảm'), f);
+  assert(f.includes('GIAM15 4 lần, quán bớt cho khách 60đ (trung bình 15đ / lần) = 6% giá trị trước giảm'), f);
+  // lần 49: tiền giảm là chi phí, không phải doanh thu mã mang về
+  assert(f.includes('mã bớt nhiều nhất = mã TỐN nhất') && f.includes('THU THÊM tối đa'), f);
   assert(ADVICE_PROMPT.includes('CẤM SỐ GIẢ'));
 });
 

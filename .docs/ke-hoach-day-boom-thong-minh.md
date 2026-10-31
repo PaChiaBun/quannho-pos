@@ -383,6 +383,44 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Bài học chung lần 45b–46: bỏ con số dễ chép nhầm khỏi khối số liệu hiệu quả hơn lời dặn "không dùng"; chỉ thêm dòng khi câu hỏi đúng loại.
 - Còn yếu: D45 chưa dùng điểm riêng của quán (đông tối, cuối tuần); lấy số 1 giờ làm cả ca (D18, D57); bỏ sót khung 14–16h vắng; D13 nói "số nghiêng về mở" khi không có số; D50 tự đặt dự báo chi nguyên liệu.
 
+### Lần 47 (01/11, thử rồi BỎ, không áp): 78 câu bị ảnh hưởng 11,08 → 10,68
+
+- Thử: thêm dòng "Doanh thu theo ca (cộng sẵn từ số theo giờ)" theo khung sáng 5–11h / trưa 11–14h / chiều 14–17h / tối từ 17h vào mọi khối có số theo giờ (35/60 câu).
+- Được: D18, D57 dùng đúng số ca tối 18.748.000đ (14,1%), không lấy số 1 giờ nữa; nhưng điểm hai câu gần như không đổi (khung "tối từ 17h" lệch ca tối thật 16–20h của quán, D18 vẫn tự mâu thuẫn "không nên đóng" rồi "thử không mở").
+- Hỏng: cả 8 tiêu chí tụt nhẹ (lý lẽ 0,96 → 0,87, việc làm 0,95 → 0,88). Lần thứ hai thấy dòng thêm vào mọi khối làm điểm chung tụt (lần 45 cũng vậy).
+- Nếu thử lại: chỉ thêm khi câu hỏi / lượt trước nói về ca / giờ / buổi, và chia ca theo giờ mở bán thật của quán (vd 16–20h), không theo khung cố định.
+
+### Lần 47b (01/11, thử rồi BỎ): 5 câu có dòng mới 10,2 → 10,0
+
+- Thử: dòng doanh thu theo ca chỉ khi câu hỏi / lượt trước nói về ca / giờ / buổi; ca theo giờ quán có bán thật (vd Sáng 6h–11h, Trưa 11h–14h, Tối 16h–20h). Chỉ 5 câu có dòng này.
+- Được: số ca đúng (D18, D57 nói ca tối 16h–20h 21.873.000đ = 16,5%).
+- Không lên điểm: chỗ mất điểm của các câu này là lý lẽ và việc làm (D18 lý lẽ nghiêng về đóng mà kết luận không đóng, không tính chi phí ca tối; D57 giải thích vòng tròn "vì quán vắng"), không phải số. Bài học: đúng số chưa đủ, cần sửa cách suy luận.
+- Nhận thấy: người chấm nhiều lần chê Boom chèn "tăng giá Bạc xỉu / Cơm sườn" vào câu không hỏi về giá (D01, D21, D38, D48, D57, D58) → nhiều khả năng do dòng điểm cần chú ý của lần 43b ("hướng đúng là TĂNG GIÁ") có trong mọi khối. Ứng viên cho lần 48.
+
+### Lần 48 (01/11, thử rồi BỎ): 25 câu bỏ hướng 10,84 → 9,96
+
+- Thử: chỉ ghi "→ món lời mỏng: hướng đúng là TĂNG GIÁ nhẹ…" khi câu hỏi nói giá / lời / vốn / món / combo / menu; câu khác chỉ ghi giá vốn N% (mốc 25–35%).
+- Được: câu không hỏi giá mà chèn "tăng giá" giảm từ 7–8 xuống 3 / 25.
+- Hỏng: lý lẽ 0,88 → 0,58, việc làm 0,84 → 0,72, đúng quán 1,46 → 1,30. Bỏ hướng thì GPT tự suy sai ("món giá vốn thấp hơn mốc", "lãi tốt nhất" cho món không có giá vốn, mời thêm Bạc xỉu vì giá vốn cao). Bài học: dòng hướng đúng của lần 43b đang giữ lý lẽ đứng vững; việc chèn tăng giá là cái giá nhỏ hơn.
+- Nhận định sau 4 lần thử liền không lên (44, 47, 47b, 48): sửa khối số liệu đã gần hết tác dụng; chỗ mất điểm lớn còn lại là lý lẽ và việc làm của gpt-4o-mini (giải thích vòng tròn, việc làm lạc đề, chép khuôn kế hoạch 4 tuần). Hướng tiếp: thử mô hình mạnh hơn cho câu tư vấn có số liệu (cần Chủ Quán duyệt chi phí), hoặc chấm đủ 120 câu để lấy mốc mới trước khi dạy tiếp.
+
+### Thử gpt-4o (01/11, Chủ Quán duyệt ~3,3 USD): đủ 60 câu × 2 lượt, chấm KÍN cạnh gpt-4o-mini (bản lần 46)
+
+- Cách chấm: mỗi câu đặt 2 câu trả lời A / B xáo thứ tự, 4 trợ lý không biết câu nào của mô hình nào (kết quả `gpt4o_vs_mini_l46_claude_20261101.json`).
+- Kết quả: gpt-4o-mini **11,46** → gpt-4o **12,26/16** (+0,80); 4o hơn 64 câu, kém 37, bằng 19. Mọi loại câu đều tăng (kế hoạch 10,70 → 11,75, quyết định 12,20 → 13,05, nói tiếp 11,95 → 12,95).
+- Theo tiêu chí: tìm vấn đề 1,20 → 1,57, lý lẽ 0,81 → 1,13, việc làm 1,02 → 1,32, thận trọng 1,47 → 1,65; riêng **gọn 1,80 → 1,21** (4o viết dài hơn).
+- Chi phí đo được: khoảng 0,027 USD (≈ 700đ) mỗi câu tư vấn có số liệu với gpt-4o, so với khoảng 0,0017 USD (≈ 40đ) với gpt-4o-mini (≈ 16 lần).
+- Lỗi chung cả hai mô hình (sửa bằng dạy được): coi mã giảm giá dùng nhiều là hiệu quả (D37), tính ngược tác động tắt mã (D46), kết luận trà sữa lời hơn khi chưa có giá vốn (D35), đẩy món chưa bán thay vì ẩn / bỏ.
+
+### Lần 49 / 49b (01/11, Claude chấm kín, đã áp 49b): mã giảm giá — tiền bớt là chi phí, tắt mã thì quán thu thêm
+
+- Gốc lỗi: khối khuyến mãi ghi "GIAM15 610 lần, giảm 9.348.000đ" → GPT đọc như doanh thu mã mang về: "GIAM15 hiệu quả hơn" (D37), "tắt GIAM15 doanh thu giảm 9,3 triệu" (D46).
+- Lần 49 (bỏ): chỉ dặn thêm "tiền giảm là chi phí, không phải doanh thu" → GPT vẫn trả lời y cũ.
+- Lần 49b (áp): đổi chữ thành "quán bớt cho khách …" kèm trung bình mỗi lần; tính sẵn "mã bớt nhiều nhất = mã TỐN nhất, chưa chắc hiệu quả nhất" và "tắt mã: khách vẫn mua thì quán THU THÊM tối đa …; doanh thu chỉ giảm ở phần khách bỏ đi → tắt thử 1–2 tuần rồi so số đơn".
+- Kết quả: chấm kín 3 câu × 2 lượt cạnh bản lần 46: 8,17 → **12,5/16** (D46 5 / 6 → 13 / 13; D15 11 → 14 / 15; D37 8 → 12 / 8).
+- Còn yếu: D37 lượt 2 vẫn "GIAM15 hiệu quả hơn vì bớt nhiều"; chưa gợi ý thu hẹp mã (giảm mức bớt, chỉ giờ vắng, để hết hạn 30/11).
+- Bài học (khớp lần 45b–46): sửa cách VIẾT số để GPT không đọc ngược hiệu quả hơn lời dặn; tính sẵn hướng đúng của phép tính.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

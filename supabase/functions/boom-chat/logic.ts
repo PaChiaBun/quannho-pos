@@ -472,12 +472,17 @@ export function formatModules(m: ModuleFacts, now: Date = new Date()): string {
       `Trong kỳ: ${nn(p.orders_with_discount)}/${nn(p.orders)} đơn có giảm giá (${pctOf(nn(p.orders_with_discount), nn(p.orders))}), tổng giảm ${vnd(nn(p.discount_total))} = ${pctOf(nn(p.discount_total), nn(p.revenue) + nn(p.discount_total))} giá trị trước giảm.` +
         (p.used_scope === 'ban'
           ? used.length
-            ? ` Mã được dùng (CHỈ tính bán tại bàn; bán tại quầy chưa đọc được theo từng mã): ${used.map((x) => `${ss(x.code)} ${nn(x.times)} lần, giảm ${vnd(nn(x.discount))} = ${pctOf(nn(x.discount), nn(p.revenue) + nn(p.discount_total))} giá trị trước giảm`).join('; ')}.`
+            ? ` Mã được dùng (CHỈ tính bán tại bàn; bán tại quầy chưa đọc được theo từng mã): ${used.map((x) => `${ss(x.code)} ${nn(x.times)} lần, quán bớt cho khách ${vnd(nn(x.discount))} (trung bình ${vnd(nn(x.discount) / Math.max(1, nn(x.times)))} / lần) = ${pctOf(nn(x.discount), nn(p.revenue) + nn(p.discount_total))} giá trị trước giảm`).join('; ')}.`
             : ' Số lần dùng từng mã: chưa có số (chỉ đọc được bán tại bàn, kỳ này chưa có) — KHÔNG kết luận mã nào không ai dùng.'
           : used.length
-          ? ` Mã được dùng: ${used.map((x) => `${ss(x.code)} ${nn(x.times)} lần, giảm ${vnd(nn(x.discount))} = ${pctOf(nn(x.discount), nn(p.revenue) + nn(p.discount_total))} giá trị trước giảm`).join('; ')}.`
+          ? ` Mã được dùng: ${used.map((x) => `${ss(x.code)} ${nn(x.times)} lần, quán bớt cho khách ${vnd(nn(x.discount))} (trung bình ${vnd(nn(x.discount) / Math.max(1, nn(x.times)))} / lần) = ${pctOf(nn(x.discount), nn(p.revenue) + nn(p.discount_total))} giá trị trước giảm`).join('; ')}.`
           : ' Chưa mã nào được dùng trong kỳ.'),
     );
+    // lần 49: GPT coi tiền giảm là doanh thu mã mang về → "mã dùng nhiều hiệu quả hơn" (D37), "tắt mã thì doanh thu giảm 9 triệu" (D46)
+    if (used.length) {
+      const top = [...used].sort((x, y) => nn(y.discount) - nn(x.discount))[0];
+      out.push(`Tính sẵn: tiền bớt là CHI PHÍ quán bỏ ra, không phải doanh thu mã mang về; mã bớt nhiều nhất = mã TỐN nhất (${ss(top.code)}), chưa chắc hiệu quả nhất vì chưa có số khách / đơn mỗi mã kéo thêm. Nếu tắt ${ss(top.code)}: khách vẫn mua thì quán THU THÊM tối đa ${vnd(nn(top.discount))} / kỳ; doanh thu chỉ giảm ở phần khách bỏ đi (chưa có số) → muốn biết thì tắt thử 1–2 tuần rồi so số đơn.`);
+    }
   }
   // Điểm cần chú ý TÍNH SẴN cho các mục (Claude chấm 29/10)
   const al: string[] = [];
