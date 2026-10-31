@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/finance_providers.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/money_formatter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADD TRANSACTION SHEET — Bottom sheet thêm thu/chi
@@ -170,7 +171,11 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                     error: (_, __) => const SizedBox.shrink(),
                     data: (cats) => Wrap(
                       spacing: 8, runSpacing: 8,
-                      children: cats.map((c) {
+                      // Doanh thu bán hàng do máy tự ghi khi thanh toán — ghi tay sẽ trùng doanh thu.
+                      children: cats
+                          .where((c) => !(c.type == 'income' &&
+                              (c.isSystem || c.name == 'Doanh thu bán hàng')))
+                          .map((c) {
                         final isSelected = _selectedCategoryId == c.id;
                         return GestureDetector(
                           onTap: () => setState(
@@ -267,7 +272,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                                 strokeWidth: 2.5))
                           : Text(
                               amount > 0
-                                  ? '${_type == 'income' ? 'Ghi thu' : 'Ghi chi'} • ${_fmtMoney(amount.toInt())}đ'
+                                  ? '${_type == 'income' ? 'Ghi thu' : 'Ghi chi'} • ${fmtVnd(amount)}'
                                   : _type == 'income'
                                       ? 'Ghi thu'
                                       : 'Ghi chi',
@@ -331,8 +336,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     }
   }
 
-  String _fmtMoney(int v) => v.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

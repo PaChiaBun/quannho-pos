@@ -2,9 +2,9 @@
 module: loyalty
 ten: Khách hàng – Giảm giá – Khuyến mãi
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-23
+cap_nhat: 2026-10-31
 nguon:
-  - lib/screens/loyalty_screen.dart (Khách, Ví, Thưởng, Gói nạp, Khuyến mãi / Voucher)
+  - lib/screens/loyalty_screen.dart (Khách, Ví, Thưởng, Gói nạp, Khuyến mãi)
   - lib/modules/loyalty/repository/loyalty_repository.dart (nạp ví, gói nạp, phần thưởng)
   - lib/modules/pos/screens/discount_management_screen.dart (voucher)
   - lib/screens/settings_screen.dart ("Cài đặt điểm thưởng" — loyalty_rate)
@@ -22,13 +22,13 @@ nguon:
 - **Nạp ví**: cần quyền **"Thanh toán hoá đơn"** (Chủ quán, Quản lý và vai trò có quyền thu tiền); thiếu quyền sẽ thấy "Bạn không có quyền thu tiền (pos.checkout)".
 
 ## Màn hình gồm những gì
-- Đầu trang **"Khách hàng thân thiết"** – "Loyalty & Ví điện tử": số **Khách**, **Có điểm**, **Điểm active**, **Đã đổi**.
+- Đầu trang **"Khách hàng thân thiết"** – "Tích điểm & Ví điện tử": số **Khách**, **Có điểm**, **Điểm đang có**, **Đã đổi**.
 - 5 tab:
   - **"Khách"** — danh sách khách (tìm "Tìm khách hàng..."), hạng, điểm, tổng chi. Nút **"Thêm khách"**.
   - **"Ví"** — "Tổng ví thật" (tiền thật đã nạp), "Tổng bonus"; từng khách có nút **"Nạp"**.
   - **"Thưởng"** — danh sách phần thưởng đổi bằng điểm.
   - **"Gói nạp"** — các mức nạp được tặng thêm %. Nút **"Thêm gói"**.
-  - **"Khuyến mãi / Voucher"** — mã giảm giá.
+  - **"Khuyến mãi"** — mã giảm giá.
 
 ## Cách tính điểm, hạng, ví
 - **Tích điểm** (điểm tích luỹ): mỗi đơn thanh toán có gắn khách được cộng `tổng tiền ÷ mức tích` điểm (làm tròn xuống). Mặc định **10.000đ = 1 điểm**; đổi ở **Cài đặt → "Cài đặt điểm thưởng"** ("đ = 1 điểm") → **"Lưu cài đặt"**.
@@ -76,7 +76,7 @@ nguon:
 > Danh sách phần thưởng hiện **chỉ để tham khảo**: chưa có nút đổi thưởng trừ điểm. Muốn trừ điểm cho khách, dùng **"Dùng điểm"** khi thanh toán (trừ tiền theo 1.000đ/điểm).
 
 ### 6. Tạo mã giảm giá (voucher) — Chủ quán / Quản lý
-1. Tab **"Khuyến mãi / Voucher"** → **"Thêm mã mới"** → **"Thêm mã giảm giá mới"**.
+1. Tab **"Khuyến mãi"** → **"Thêm mã mới"** → **"Thêm mã giảm giá mới"**.
 2. **"Mã Voucher (Viết liền không dấu)"**, **"Mô tả ngắn gọn"**.
 3. **"Loại giảm giá"**: **"Phần trăm (%)"** hoặc **"Tiền mặt (đ)"** → **"Mức giảm"**.
 4. **"Đơn tối thiểu (đ)"**, **"Mức giảm tối đa (đ) - Để trống nếu không giới hạn"**, hạn dùng (**"Chọn ngày"**).

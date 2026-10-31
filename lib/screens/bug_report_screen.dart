@@ -372,7 +372,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.send_rounded, size: 18),
-                label: Text(_sending ? 'Đang gửi...' : 'Gửi phản hồi kèm Log kỹ thuật'),
+                label: Text(_sending ? 'Đang gửi...' : 'Gửi phản hồi kèm nhật ký kỹ thuật'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kNavy,
                   foregroundColor: Colors.white,

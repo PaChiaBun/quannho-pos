@@ -13,6 +13,10 @@ const _kGreen = Color(0xFF2E7D32);
 const _kRed = Color(0xFFC62828);
 const _kMuted = Color(0xFF9E9085);
 
+/// Chủ Quán 29/10: chưa tích hợp hóa đơn điện tử (migration chưa áp) → tab chỉ còn
+/// "Tra cứu & in lại bill". Bật lại khi đã áp `20261016_einvoice_foundation_v1.sql`.
+const _kEinvoiceVisible = false;
+
 enum _Period { today, week, month }
 
 extension on _Period {
@@ -80,6 +84,7 @@ class _EinvoiceReportTabState extends ConsumerState<EinvoiceReportTab> {
   }
 
   Future<void> _load() async {
+    if (!_kEinvoiceVisible) return;
     final id = ++_requestId;
     setState(() {
       _loading = true;
@@ -121,6 +126,7 @@ class _EinvoiceReportTabState extends ConsumerState<EinvoiceReportTab> {
           const SizedBox(height: 12),
           BillLookupSection(
               fromMs: from, toMs: to, refreshToken: _refreshToken),
+          if (_kEinvoiceVisible) ...[
           const SizedBox(height: 16),
           const Text('Hóa đơn điện tử',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
@@ -155,6 +161,7 @@ class _EinvoiceReportTabState extends ConsumerState<EinvoiceReportTab> {
             'Số liệu để đối chiếu và hỗ trợ kê khai. Việc kê khai thuế và độ chính xác cuối cùng thuộc chủ hộ hoặc kế toán.',
             style: TextStyle(fontSize: 11, color: _kMuted, height: 1.4),
           ),
+          ],
         ],
       ),
     );

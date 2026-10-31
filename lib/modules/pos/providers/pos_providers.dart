@@ -169,9 +169,13 @@ class CartNotifier extends Notifier<CartState> {
   /// Thêm sản phẩm thường — merge cùng productId nếu chưa có ghi chú riêng
   void addProduct(ProductModel product, {double qty = 1}) {
     final lines = List<CartLine>.from(state.lines);
-    // Chỉ merge vào dòng không có ghi chú
+    // Chỉ merge vào dòng không có ghi chú và CHƯA gửi bếp — gộp vào dòng đã gửi thì
+    // phần thêm sau không bao giờ được gửi bếp.
     final idx = lines.indexWhere(
-      (l) => l.productId == product.id && (l.note == null || l.note!.isEmpty),
+      (l) =>
+          l.productId == product.id &&
+          (l.note == null || l.note!.isEmpty) &&
+          !state.isLineSent(l.lineId),
     );
 
     if (idx >= 0) {
@@ -213,6 +217,7 @@ class CartNotifier extends Notifier<CartState> {
   }
 
   void increaseQty(String lineId) {
+    if (state.isLineSent(lineId)) return; // số đã gửi bếp chỉ đổi qua "Huỷ phiếu bếp"
     final lines = List<CartLine>.from(state.lines);
     final idx = lines.indexWhere((l) => l.lineId == lineId);
     if (idx >= 0) {
@@ -222,6 +227,7 @@ class CartNotifier extends Notifier<CartState> {
   }
 
   void decreaseQty(String lineId) {
+    if (state.isLineSent(lineId)) return; // bớt món đã gửi mà bếp không biết
     final lines = List<CartLine>.from(state.lines);
     final idx = lines.indexWhere((l) => l.lineId == lineId);
     if (idx < 0) return;
@@ -234,10 +240,15 @@ class CartNotifier extends Notifier<CartState> {
     _updateState(state.copyWith(lines: lines));
   }
 
-  /// Giảm qty theo productId (dùng cho product card trong grid)
-  void decreaseQtyByProductId(String productId) {
-    final idx = state.lines.indexWhere((l) => l.productId == productId);
-    if (idx >= 0) decreaseQty(state.lines[idx].lineId);
+  /// Giảm qty theo productId (dùng cho product card trong grid) — chỉ dòng chưa gửi bếp.
+  /// false = món này chỉ còn phần đã gửi bếp (phải huỷ phiếu bếp mới bớt được).
+  bool decreaseQtyByProductId(String productId) {
+    final idx = state.lines.lastIndexWhere(
+      (l) => l.productId == productId && !state.isLineSent(l.lineId),
+    );
+    if (idx < 0) return false;
+    decreaseQty(state.lines[idx].lineId);
+    return true;
   }
 
   void removeLine(String lineId) {
@@ -262,6 +273,12 @@ class CartNotifier extends Notifier<CartState> {
         kitchenSessionIds: {...state.kitchenSessionIds, sessionId},
       ),
     );
+  }
+
+  /// Sau khi đã huỷ các phiếu bếp của giỏ: món còn trong giỏ thành "chưa gửi" để bớt
+  /// rồi gửi lại hoặc xoá; bỏ phiên đã huỷ để thanh toán không vướng phiên đó.
+  void unsendAll() {
+    _updateState(state.copyWith(sentLineIds: {}, kitchenSessionIds: {}));
   }
 
   void setItemNote(String lineId, String? note) {

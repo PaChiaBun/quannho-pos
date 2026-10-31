@@ -5,6 +5,7 @@ import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../providers/kho_chuyen_nghiep_providers.dart';
 import '../repository/kho_chuyen_nghiep_repository.dart';
+import '../../../core/utils/chain_compare.dart' show fmtPct;
 
 class RecipeDetailScreen extends ConsumerWidget {
   final RecipeModel recipe;
@@ -341,7 +342,7 @@ class _ProfitCard extends StatelessWidget {
                 Text('Food Cost Ratio', style: GoogleFonts.plusJakartaSans(
                     fontSize: 12, fontWeight: FontWeight.w700, color: KhoTheme.muted)),
                 const Spacer(),
-                Text('${(foodCostPct * 100).toStringAsFixed(1)}%',
+                Text('${fmtPct((foodCostPct * 100))}',
                     style: GoogleFonts.plusJakartaSans(
                         fontSize: 13, fontWeight: FontWeight.w800,
                         color: marginColor)),
@@ -381,7 +382,7 @@ class _ProfitCard extends StatelessWidget {
                 _BarLegend(color: KhoTheme.green, label: 'Lãi gộp'),
                 const Spacer(),
                 Text(
-                  'Margin: ${(margin * 100).toStringAsFixed(1)}%',
+                  'Biên lãi: ${fmtPct(margin * 100, signed: margin < 0)}',
                   style: GoogleFonts.plusJakartaSans(
                       fontSize: 11, fontWeight: FontWeight.w700,
                       color: marginColor),

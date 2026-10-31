@@ -2,7 +2,7 @@
 module: report
 ten: Báo cáo
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-23
+cap_nhat: 2026-10-31
 nguon:
   - lib/screens/report_screen.dart (8 tab: Doanh thu, Sản phẩm, Tài chính, Kho, Huỷ/Duyệt, Nhân viên, Voucher, Hóa đơn)
   - lib/core/repositories/dashboard_repository.dart (get_report_stats/daily_revenue/top_products_for_range_v1)
@@ -67,7 +67,6 @@ nguon:
 
 ### Hóa đơn
 - **"Tra cứu & in lại bill"**: tìm bill đã thanh toán theo số đơn, tên bàn (không cần dấu) hoặc số tiền; chạm để xem chi tiết; nút máy in để **in lại** (bill có dòng "BẢN IN LẠI", ghi nhật ký người in). Màn này tải đủ bill trong kỳ đang chọn (tối đa 20.000 bill); không thấy bill thì chọn đúng ngày của bill.
-- **"Hóa đơn điện tử"**: tình trạng bật/tắt, số đã xuất, đối chiếu doanh thu, chờ xử lý, lỗi. Hiện báo "Chưa tải được báo cáo hóa đơn. Có thể máy chủ chưa được cập nhật." cho tới khi áp phần hoá đơn điện tử lên máy chủ.
 
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
@@ -75,7 +74,6 @@ nguon:
 | "Chưa có giao dịch hôm nay" / "Chưa có doanh thu kỳ này" | Chưa có đơn đã thanh toán | Kiểm tra kỳ đang chọn |
 | "Module Kho đang tắt" | Chưa bật Kho | Bật module Kho |
 | "Không tải được nhật ký kiểm toán" / "Không tải được dữ liệu kho" | Mạng / máy chủ | Bấm "Thử lại" |
-| "Chưa tải được báo cáo hóa đơn…" (tab Hóa đơn) | Phần hoá đơn điện tử chưa áp trên máy chủ | Bình thường — phần tra cứu bill phía trên vẫn dùng được |
 | Lợi nhuận khác Thu Chi | Hai màn đang xem kỳ/quỹ khác nhau | Chọn cùng kỳ; Thu Chi xem "Tất cả" quỹ |
 | "In báo cáo thất bại. Hãy chụp lại báo chủ app." | Lỗi tạo PDF / máy in | Thử lại hoặc lưu PDF |
 | Không thấy nút Báo cáo chuỗi | Không phải Chủ quán | — |

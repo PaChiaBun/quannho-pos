@@ -2,7 +2,7 @@
 module: finance
 ten: Thu Chi
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-23
+cap_nhat: 2026-10-31
 nguon:
   - lib/screens/finance_screen.dart
   - lib/modules/finance/screens/add_transaction_sheet.dart
@@ -25,7 +25,7 @@ nguon:
 - Hai nút **"+ Ghi thu"** và **"− Ghi chi"**.
 - Dòng **"Đang xem: <kỳ> (<ngày>)"** và nút **"Đổi ngày"**.
 - **"Giao dịch"**: lọc **"Tất cả" / "↓ Thu" / "↑ Chi"**; lọc quỹ **"Tất cả" / "Tiền mặt" / "Tiền gửi"**; nút **xuất CSV** (gợi ý "Xuất tệp CSV cho kế toán").
-- Danh sách giao dịch nhóm theo ngày ("Hôm nay", "Hôm qua", "T2, 20/10"…). Khoản **tự động** có nhãn **"Auto"**.
+- Danh sách giao dịch nhóm theo ngày ("Hôm nay", "Hôm qua", "T2, 20/10"…). Khoản **tự động** có nhãn **"Tự động"**.
 
 ## Khoản thu/chi tự động (không cần ghi tay)
 | Khi nào | Ghi | Mô tả trên sổ |
@@ -49,7 +49,7 @@ nguon:
 2. Nhập **"Số tiền"**.
 3. Chọn **"Quỹ giao dịch"**: **"Tiền mặt"** hoặc **"Tiền gửi (NH)"** — chọn đúng nơi tiền thực sự ra/vào.
 4. Chọn **"Danh mục"**. Danh mục có sẵn khi tạo quán:
-   - Thu: Doanh thu bán hàng, Thu khác.
+   - Thu: Thu khác (và danh mục riêng của quán). **"Doanh thu bán hàng" không còn trong ô ghi tay** — tiền bán hàng đã tự ghi khi thanh toán, ghi tay sẽ trùng doanh thu.
    - Chi: Nhập hàng, Điện - Nước, Thuê mặt bằng, Lương nhân viên, Marketing, Chi khác.
 5. **"Ghi chú (tuỳ chọn)"** — ghi rõ nội dung (vd "Tiền điện tháng 10").
 6. Bấm **"Ghi chi • <số tiền>đ"** để lưu.
@@ -80,7 +80,7 @@ nguon:
 | Thấy gì | Vì sao | Làm gì |
 |---|---|---|
 | "Bạn không có quyền Thu Chi nên không ghi được phiếu thu/chi…" | Vai trò không có module Thu Chi (máy chủ kiểm) | Nhờ Chủ quán/Quản lý ghi, hoặc Chủ quán giao module Thu Chi cho vai trò |
-| Không xoá được một khoản | Khoản tự động ("Auto") | Khoản tự động không xoá được. Đơn đã thanh toán hiện **không huỷ / hoàn tiền được trong app**; nhập hàng sai thì **Huỷ phiếu nhập** ở Kho hàng (hệ thống ghi khoản thu hoàn). Trường hợp khác báo Chủ quán |
+| Không xoá được một khoản | Khoản tự động ("Tự động") | Khoản tự động không xoá được. Đơn đã thanh toán hiện **không huỷ / hoàn tiền được trong app**; nhập hàng sai thì **Huỷ phiếu nhập** ở Kho hàng (hệ thống ghi khoản thu hoàn). Trường hợp khác báo Chủ quán |
 | Không vào được Thu Chi (Thu ngân, Phục vụ…) | Vai trò mặc định không có module Thu Chi | Nhờ Chủ quán bật module Thu Chi cho vai trò |
 | "Chỉ Chủ quán hoặc Quản lý được xoá giao dịch thu chi" | Nhân viên không phải Chủ quán/Quản lý | Nhờ Chủ quán/Quản lý xoá |
 | "Nhập lý do xoá (ít nhất 3 ký tự)" | Để trống lý do | Ghi rõ vì sao xoá |

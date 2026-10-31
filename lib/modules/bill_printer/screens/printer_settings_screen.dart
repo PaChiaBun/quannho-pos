@@ -219,18 +219,21 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
     });
 
     final isWide = MediaQuery.of(context).size.width > 800;
+    // Cùng điều kiện lúc in (StationPrinterDispatcher.effectiveSettings): đã có máy in/luật
+    // ở "Máy In & Luật In" thì 4 trạm bị bỏ qua, nên ẩn đi.
+    final usingRules = !ref.watch(printerSettingsProvider.select((s) => s.printSetup.isEmpty));
 
     return Scaffold(
       backgroundColor: _kBg,
       appBar: AppBar(
         backgroundColor: _kIndigo,
         foregroundColor: Colors.white,
-        title: Text('Cấu Hình Máy In & Tem Dán Ly',
+        title: Text(usingRules ? 'Tự Động In & Máy Chủ In' : 'Cấu Hình Máy In & Tem Dán Ly',
             style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 18)),
       ),
       body: Column(
         children: [
-          if (!ref.watch(printerSettingsProvider.select((s) => s.printSetup.isEmpty)))
+          if (usingRules)
             Container(
               width: double.infinity,
               color: const Color(0xFFFFF4E0),
@@ -241,15 +244,26 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Quán đang dùng "Máy In & Luật In". Máy in ở 4 trạm bên dưới KHÔNG còn tác dụng '
-                      'khi in thật. Chỉ các công tắc "Tuỳ chọn tự động" và Máy chủ in vẫn áp dụng.',
+                      'Máy in của quán đang chọn ở "Máy In & Luật In". '
+                      'Ở đây chỉ còn: tự động in, tự mở két và máy chủ in.',
                       style: GoogleFonts.plusJakartaSans(fontSize: 13),
                     ),
                   ),
                 ],
               ),
             ),
-          Expanded(child: isWide ? _buildWideLayout() : _buildMobileLayout()),
+          Expanded(
+            child: usingRules
+                // Chỉ còn vài công tắc: một cột, không kéo quá rộng trên máy tính.
+                ? Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 720),
+                      child: _buildMobileLayout(showStations: false),
+                    ),
+                  )
+                : isWide ? _buildWideLayout() : _buildMobileLayout(),
+          ),
         ],
       ),
     );
@@ -383,7 +397,7 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
   }
 
   // ── Layout cho Điện thoại di động ───────────────────────────────────────────
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout({bool showStations = true}) {
     final settings = ref.watch(printerSettingsProvider);
 
     return SingleChildScrollView(
@@ -430,20 +444,22 @@ class _PrinterSettingsScreenState extends ConsumerState<PrinterSettingsScreen> {
           ),
           const SizedBox(height: 12),
           _buildHelpSection(),
-          const SizedBox(height: 20),
+          if (showStations) ...[
+            const SizedBox(height: 20),
 
-          Text('Các trạm in cấu hình:',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14, color: _kIndigo)),
-          const SizedBox(height: 10),
+            Text('Các trạm in cấu hình:',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14, color: _kIndigo)),
+            const SizedBox(height: 10),
 
-          // Danh sách các trạm in (dạng mở rộng chi tiết hoặc Click)
-          _buildMobileStationSection('cashier', '1. Thu ngân', settings.cashier),
-          const SizedBox(height: 12),
-          _buildMobileStationSection('bepNong', '2. Bếp nóng', settings.bepNong),
-          const SizedBox(height: 12),
-          _buildMobileStationSection('bepBar', '3. Quầy bar (đồ uống)', settings.bepBar),
-          const SizedBox(height: 12),
-          _buildMobileStationSection('barLabel', '4. Tem dán ly', settings.barLabel),
+            // Danh sách các trạm in (dạng mở rộng chi tiết hoặc Click)
+            _buildMobileStationSection('cashier', '1. Thu ngân', settings.cashier),
+            const SizedBox(height: 12),
+            _buildMobileStationSection('bepNong', '2. Bếp nóng', settings.bepNong),
+            const SizedBox(height: 12),
+            _buildMobileStationSection('bepBar', '3. Quầy bar (đồ uống)', settings.bepBar),
+            const SizedBox(height: 12),
+            _buildMobileStationSection('barLabel', '4. Tem dán ly', settings.barLabel),
+          ],
         ],
       ),
     );

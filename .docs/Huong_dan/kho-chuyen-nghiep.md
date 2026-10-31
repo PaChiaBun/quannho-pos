@@ -17,7 +17,7 @@ nguon:
 Dùng **cùng danh sách hàng** với module Kho hàng: nguyên liệu và món tạo ở Kho hàng; Kho Chuyên Nghiệp thêm phần công thức và sản xuất.
 
 ## Ai dùng được
-- Người có module **Kho Chuyên Nghiệp** (mặc định **tắt**, Chủ quán bật trong Modules). Quán mới tạo, các vai trò có sẵn (Thu ngân, Nhân viên, Bếp) đều **chưa** có module này; Chủ quán thêm module cho vai trò bất kỳ ở **Nhân viên → Vai trò** (mẫu gợi ý "Kho hàng" khi tạo vai trò mới có sẵn Kho Chuyên Nghiệp).
+- Người có module **Kho Chuyên Nghiệp** (mặc định **tắt**, Chủ quán bật ở mục "Chức năng" trên Trang chủ). Quán mới tạo, các vai trò có sẵn (Thu ngân, Nhân viên, Bếp) đều **chưa** có module này; Chủ quán thêm module cho vai trò bất kỳ ở **Nhân viên → Vai trò** (mẫu gợi ý "Kho hàng" khi tạo vai trò mới có sẵn Kho Chuyên Nghiệp).
 
 ## Màn hình gồm những gì
 Tiêu đề **"Kho Chuyên Nghiệp"**, hai nút trên đầu: **"Kiểm kê kho"** và **"Ghi hao hụt"**. Năm tab:

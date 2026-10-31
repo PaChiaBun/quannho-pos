@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../../../core/repositories/core_product_repository.dart';
 import '../../../core/utils/quantity_formatter.dart';
+import '../../../core/utils/server_time.dart';
+import '../../../core/utils/chain_compare.dart' show ymd;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODELS & REPOSITORY — Kho Hàng Chuyên Nghiệp
@@ -820,7 +822,8 @@ class KhoProRepository {
     final result = <String, double>{};
     for (final row in (rows as List)) {
       final r    = row as Map<String, dynamic>;
-      final date = (r['created_at'] as String).substring(0, 10);
+      // Gom theo ngày Việt Nam — cắt chuỗi UTC thì sản xuất 00:00–06:59 bị tính sang hôm trước.
+      final date = ymd(parseServerTime(r['created_at'] as String?) ?? DateTime.now());
       result[date] = (result[date] ?? 0) + ((r['total_cost'] as num?)?.toDouble() ?? 0);
     }
     return result;

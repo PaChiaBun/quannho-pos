@@ -1023,6 +1023,8 @@ class _StaffCard extends ConsumerWidget {
                                         fontWeight: FontWeight.w800,
                                         color: _kNavy,
                                       ),
+                                      // 2 dòng: máy 360dp có nhãn vai trò bên phải nên tên đầy đủ bị cắt "Nguyễn Thanh …"
+                                      maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
@@ -3213,13 +3215,6 @@ class _PermissionsTab extends ConsumerWidget {
     'sports': Icons.sports_rounded,
   };
 
-  static const _modLabels = <String, String>{
-    'pos': 'Bán hàng', 'kho': 'Kho', 'kho_pro': 'Kho CN',
-    'ban': 'Bàn', 'kitchen': 'Bếp', 'finance': 'Thu chi', 'report': 'Báo cáo',
-    'loyalty': 'Điểm', 'staff': 'Nhân viên', 'chamcong': 'Chấm công',
-    'tinhluong': 'Lương',
-    'kay_ops': 'Vận hành', // ✅ FIX: thêm 2 module còn thiếu
-  };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -3370,7 +3365,7 @@ class _PermissionsTab extends ConsumerWidget {
                                               ),
                                             ),
                                             Text(
-                                              '${r.modules.length}/${_modLabels.length} module',
+                                              '${r.modules.where(kRoleModuleNames.containsKey).length}/${kRoleModuleNames.length} module',
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w700,
@@ -3440,7 +3435,7 @@ class _PermissionsTab extends ConsumerWidget {
                                                         ),
                                                   ),
                                                   child: Text(
-                                                    _modLabels[m] ?? m,
+                                                    kRoleModuleNames[m]?.$1 ?? m,
                                                     style: TextStyle(
                                                       fontSize: 10,
                                                       fontWeight:

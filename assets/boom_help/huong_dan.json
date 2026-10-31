@@ -1,6 +1,6 @@
 {
- "version": 202610291032,
- "hash": "1eec15e0ad56fe105404a7974ffe99c61d16e20d3e45ea1634c74e238809af76",
+ "version": 202610310655,
+ "hash": "0d1be2801a265f9c2bd69fb3d13674a4a4625dfd5afe7efb450a11d5138a3390",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -24,7 +24,7 @@
    "module_name": "Bán hàng",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Thanh trên cùng: chữ \"Bán hàng\" + giờ, ngày. Bên phải lần lượt:\n  • Nút đồng hồ quay ngược (gợi ý khi giữ: \"Đối soát thanh toán bị gián đoạn\") — xem mục Đối soát.\n  • Nhãn \"Đơn QR (n)\" — chỉ hiện khi có đơn khách tự gọi qua QR. Màu cam: có đơn mới chờ; xanh: đang xử lý; xám kèm biểu tượng mất sóng: mất kết nối hàng đợi QR.\n  • Nút dấu +: thêm nhanh món mới vào thực đơn.\n  • Nút giỏ hàng (hiện số món).\n  • Nút thùng rác: xoá giỏ (chỉ hiện khi giỏ có món).\n• Dải đỏ khoá QR (chỉ khi mã QR của quán bị khoá do bị quét phá) — xem hướng dẫn QR Gọi Món.\n• Ô tìm kiếm (chữ mờ \"Tìm món, mã SKU...\"): tìm theo tên món hoặc mã SKU, không cần gõ dấu.\n• Nút \"Đơn gần đây\"; bên phải có nhãn \"Bếp sẵn sàng\" khi quán bật module Bếp.\n• Hàng danh mục: \"Tất cả\" và các danh mục của quán. Ở \"Tất cả\", món được nhóm theo danh mục.\n• Lưới món: mỗi thẻ có tên, giá, số tồn (nếu có theo dõi tồn)."
+   "text": "• Thanh trên cùng: chữ \"Bán hàng\" + giờ, ngày. Bên phải lần lượt:\n  • Nút đồng hồ quay ngược có chấm đỏ (gợi ý khi giữ: \"Đối soát thanh toán bị gián đoạn\") — chỉ hiện khi máy có thanh toán dang dở cần đối soát; xem mục Đối soát.\n  • Nhãn \"Đơn QR (n)\" — chỉ hiện khi có đơn khách tự gọi qua QR. Màu cam: có đơn mới chờ; xanh: đang xử lý; xám kèm biểu tượng mất sóng: mất kết nối hàng đợi QR.\n  • Nút dấu +: thêm nhanh món mới vào thực đơn — chỉ Chủ quán và Quản lý thấy.\n  • Nút giỏ hàng (hiện số món).\n  • Nút thùng rác: xoá giỏ (ẩn khi giỏ trống; vị trí các nút không đổi khi thêm món).\n• Dải đỏ khoá QR (chỉ khi mã QR của quán bị khoá do bị quét phá) — xem hướng dẫn QR Gọi Món.\n• Ô tìm kiếm (chữ mờ \"Tìm món, mã SKU...\"): tìm theo tên món hoặc mã SKU, không cần gõ dấu. Cuộn xuống danh sách món thì ô tìm kiếm và nút \"Đơn gần đây\" tự gập lại cho rộng chỗ; cuộn lên thì hiện lại.\n• Nút \"Đơn gần đây\"; bên phải có nhãn \"Bếp sẵn sàng\" khi quán bật module Bếp.\n• Hàng danh mục: \"Tất cả\" và các danh mục của quán. Ở \"Tất cả\", món được nhóm theo danh mục.\n• Lưới món: mỗi thẻ có tên, giá, số tồn (nếu có theo dõi tồn)."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-goi-mon",
@@ -32,7 +32,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Gọi món",
-   "text": "1. Chạm vào thẻ món → món bay vào giỏ. Chạm lại để tăng số lượng. Lướt tay cuộn danh sách đi qua thẻ món thì không tính là chạm.\n2. Khi món đã có trong giỏ, trên thẻ hiện [−] xN: bấm − để giảm.\n3. Muốn tìm nhanh: gõ tên vào ô tìm kiếm, hoặc chọn danh mục.\n4. Giữ lâu một thẻ món để mở bảng thêm nhiều món cùng lúc kèm ghi chú bếp; chọn số lượng rồi bấm \"Thêm N món vào giỏ\".\n\nMón mờ có nhãn \"Hết\" thì không bấm được: món đó đang theo dõi tồn kho, có đặt tồn tối thiểu, và tồn đã về 0. Món không đặt tồn tối thiểu thì vẫn bán bình thường dù tồn âm. Món mờ có nhãn \"Tạm ngưng\" là món đã \"Tắt bán\" ở Kho hàng: bấm vào báo \"<món> đang tạm ngưng bán\" — bật bán lại ở Kho hàng."
+   "text": "1. Chạm vào thẻ món → món bay vào giỏ. Chạm lại để tăng số lượng. Lướt tay cuộn danh sách đi qua thẻ món thì không tính là chạm.\n2. Khi món đã có trong giỏ, trên thẻ hiện [−] xN: bấm − để giảm. Phần đã gửi bếp không bớt bằng nút − được (app nhắc mở giỏ, bấm \"Huỷ phiếu bếp\"); gọi thêm món đó sau khi đã gửi bếp thì app tạo dòng mới để gửi bếp đợt sau.\n3. Muốn tìm nhanh: gõ tên vào ô tìm kiếm, hoặc chọn danh mục.\n4. Giữ lâu một thẻ món để mở bảng thêm nhiều món cùng lúc kèm ghi chú bếp; chọn số lượng rồi bấm \"Thêm N món vào giỏ\".\n\nMón mờ có nhãn \"Hết\" thì không bấm được: món đó đang theo dõi tồn kho, có đặt tồn tối thiểu, và tồn đã về 0. Món không đặt tồn tối thiểu thì vẫn bán bình thường dù tồn âm. Món mờ có nhãn \"Tạm ngưng\" là món đã \"Tắt bán\" ở Kho hàng: bấm vào báo \"<món> đang tạm ngưng bán\" — bật bán lại ở Kho hàng."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-ghi-chu-mon-va-ghi-chu-don",
@@ -48,7 +48,15 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Gửi bếp trước khi thu tiền",
-   "text": "Chỉ dùng khi quán bật module Bếp.\n1. Điện thoại: trên thanh giỏ hàng ở dưới, bấm \"Bếp (n)\" — n là số món chưa gửi. Máy tính bảng / PC / web: trong giỏ hàng bên phải, bấm \"Gửi bếp (n món)\" ngay trên nút \"Thanh toán\".\n2. Bảng \"Xác nhận gửi bếp\" hiện danh sách món; có thể ghi chú từng món và \"Ghi chú chung cho bếp (tuỳ chọn)\".\n3. Bấm \"Gửi bếp ngay\". Thông báo: \"Đã gửi bếp đợt X: Mang đi — N món\".\n4. Giỏ hàng vẫn giữ nguyên để thu tiền sau; món đã gửi có nhãn \"đã gửi bếp\". Gọi thêm món rồi bấm nút gửi bếp lần nữa (\"Bếp\" trên điện thoại, \"Gửi bếp\" trên máy tính bảng / PC / web) sẽ gửi đợt mới chỉ gồm món chưa gửi. Gửi hết thì nút đổi thành \"Đã gửi hết\" (máy tính bảng / PC / web: \"Đã gửi bếp hết\").\n5. Trong lúc đang gửi, nút gửi bếp bị khoá (máy tính bảng / PC / web hiện \"Đang gửi bếp…\"). Bấm \"Thanh toán\" lúc này, app báo \"Đang gửi bếp — đợi gửi xong rồi thanh toán.\"\n\nNút \"Bếp\" mờ và báo cần bật module Bếp khi quán chưa bật module này."
+   "text": "Chỉ dùng khi quán bật module Bếp.\n1. Điện thoại: trên thanh giỏ hàng ở dưới, bấm \"Bếp (n)\" — n là số món chưa gửi. Máy tính bảng / PC / web: trong giỏ hàng bên phải, bấm \"Gửi bếp (n món)\" ngay trên nút \"Thanh toán\".\n2. Bảng \"Xác nhận gửi bếp\" hiện danh sách món; có thể ghi chú từng món và \"Ghi chú chung cho bếp (tuỳ chọn)\".\n3. Bấm \"Gửi bếp ngay\". Thông báo: \"Đã gửi bếp đợt X: Mang đi — N món\". Đổi ý thì bấm \"Huỷ\" cạnh nút gửi (đóng bảng, không gửi gì).\n4. Giỏ hàng vẫn giữ nguyên để thu tiền sau; món đã gửi có nhãn \"đã gửi bếp\". Gọi thêm món rồi bấm nút gửi bếp lần nữa (\"Bếp\" trên điện thoại, \"Gửi bếp\" trên máy tính bảng / PC / web) sẽ gửi đợt mới chỉ gồm món chưa gửi. Gửi hết thì nút đổi thành \"Đã gửi hết\" (máy tính bảng / PC / web: \"Đã gửi bếp hết\").\n5. Trong lúc đang gửi, nút gửi bếp bị khoá (máy tính bảng / PC / web hiện \"Đang gửi bếp…\"). Bấm \"Thanh toán\" lúc này, app báo \"Đang gửi bếp — đợi gửi xong rồi thanh toán.\"\n\nNút \"Bếp\" mờ và báo cần bật module Bếp khi quán chưa bật module này."
+  },
+  {
+   "id": "ban-hang#cac-viec-thuong-lam-huy-phieu-bep-o-quay-chua-thu-tien",
+   "module": "pos",
+   "module_name": "Bán hàng",
+   "section": "Các việc thường làm",
+   "title": "Huỷ phiếu bếp ở quầy (chưa thu tiền)",
+   "text": "Khách bỏ đơn hoặc đổi ý sau khi thu ngân đã bấm \"Bếp\" ở màn Bán hàng, chưa thu tiền:\n1. Mở giỏ hàng, bấm \"Huỷ phiếu bếp\" (nút mờ cho tới khi giỏ có phiếu bếp, sáng đỏ khi đã có).\n2. Chọn \"Lý do huỷ *\" rồi bấm \"Huỷ phiếu bếp\". Chủ quán / Quản lý duyệt luôn; người khác nhờ Quản lý nhập PIN.\n3. Màn Bếp nhận phiếu HUỶ. Các dòng vẫn ở lại giỏ, coi như chưa gửi: bớt thứ khách không lấy rồi bấm \"Bếp\" gửi lại, hoặc xoá giỏ.\n\nHuỷ là huỷ cả các phiếu của giỏ (máy chủ không cho thu tiền một phiếu bếp có dòng bị huỷ). Đơn đã thanh toán thì không huỷ ở đây."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-gan-khach-hang-de-tich-diem",
@@ -64,7 +72,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Thanh toán",
-   "text": "Khách trả tiền tại quầy (thu ngân tính tiền ở màn Bán hàng):\n1. Bấm \"Thanh toán\" (trong giỏ) hoặc ô tổng tiền màu cam trên thanh giỏ (điện thoại).\n2. Bảng \"Thanh toán\" hiện tóm tắt món. Chọn \"Phương thức\": \"Tiền mặt\", \"Chuyển khoản\", \"Thẻ\". Nếu khách có ví, có thêm \"Thanh toán bằng Ví\".\n3. Tuỳ chọn giảm giá:\n   • \"Điểm thưởng\" — chỉ hiện khi đã gắn khách có điểm và không trả bằng ví.\n   • \"Khuyến mãi / Voucher\" → \"Chọn mã\" → chọn mã → \"Áp dụng\". Bỏ mã: \"Gỡ mã\".\n   • App chưa có ô giảm giá tay (trừ thẳng một số tiền). Muốn bớt cho khách quen: Chủ quán / Quản lý tạo mã giảm giá ở Khách hàng → \"Khuyến mãi / Voucher\" → \"Thêm mã mới\", rồi chọn mã khi thanh toán. Mã dùng chung cho mọi đơn — nên đặt hạn dùng hoặc tắt mã sau khi dùng.\n4. Kiểm phần tổng: \"Tạm tính\", \"Giảm giá\", \"Dùng điểm\", \"TỔNG CỘNG\".\n5. Bấm \"Xác nhận • <số tiền>\".\n6. Màn \"Thanh toán thành công!\" kèm số đơn. Hoá đơn tự in nếu quán bật tự in và máy đã cài máy in.\n   • Bấm \"In hoá đơn\" để in (lại). Nếu vừa in xong vài giây, app hỏi \"Bill vừa được in… In thêm một bản nữa?\".\n   • Bấm \"Đơn mới\" để bắt đầu khách tiếp theo.\n\nThanh toán xong, hệ thống tự: ghi một khoản thu vào Thu Chi, trừ kho theo công thức (có quy đổi đơn vị), cộng/trừ điểm khách, trừ ví nếu trả bằng ví, đóng các đợt đã gửi bếp.\n\nTrả bằng ví: tiền thưởng (bonus) chỉ được dùng tối đa theo % quy định của khách (mặc định 15% giá trị đơn), phần còn lại trừ vào ví thật. Ví không đủ thì nút đổi thành \"⚠️ Ví không đủ — cần thêm tiền mặt\" và không cho xác nhận. Không dùng được điểm cùng lúc với ví.\nKhông có giảm giá gõ tay trong màn Bán hàng; giảm giá chỉ qua voucher hoặc điểm."
+   "text": "Khách trả tiền tại quầy (thu ngân tính tiền ở màn Bán hàng):\n1. Bấm \"Thanh toán\" (trong giỏ) hoặc ô tổng tiền màu cam trên thanh giỏ (điện thoại).\n2. Bảng \"Thanh toán\" hiện tóm tắt món. Chọn \"Phương thức\": \"Tiền mặt\", \"Chuyển khoản\", \"Thẻ\". Nếu khách có ví, có thêm \"Thanh toán bằng Ví\".\n3. Tuỳ chọn giảm giá:\n   • \"Điểm thưởng\" — chỉ hiện khi đã gắn khách có điểm và không trả bằng ví.\n   • \"Khuyến mãi / Voucher\" → \"Chọn mã\" → chọn mã → \"Áp dụng\". Bỏ mã: \"Gỡ mã\".\n   • App chưa có ô giảm giá tay (trừ thẳng một số tiền). Muốn bớt cho khách quen: Chủ quán / Quản lý tạo mã giảm giá ở Khách hàng → tab \"Khuyến mãi\" → \"Thêm mã mới\", rồi chọn mã khi thanh toán. Mã dùng chung cho mọi đơn — nên đặt hạn dùng hoặc tắt mã sau khi dùng.\n4. Kiểm phần tổng: \"Tạm tính\", \"Giảm giá\", \"Dùng điểm\", \"TỔNG CỘNG\".\n5. Bấm \"Xác nhận • <số tiền>\".\n6. Màn \"Thanh toán thành công!\" kèm số đơn. Hoá đơn tự in nếu quán bật tự in và máy đã cài máy in.\n   • Bấm \"In hoá đơn\" để in (lại). Nếu vừa in xong vài giây, app hỏi \"Bill vừa được in… In thêm một bản nữa?\".\n   • Bấm \"Đơn mới\" để bắt đầu khách tiếp theo.\n\nThanh toán xong, hệ thống tự: ghi một khoản thu vào Thu Chi, trừ kho theo công thức (có quy đổi đơn vị), cộng/trừ điểm khách, trừ ví nếu trả bằng ví, đóng các đợt đã gửi bếp.\n\nTrả bằng ví: tiền thưởng (bonus) chỉ được dùng tối đa theo % quy định của khách (mặc định 15% giá trị đơn), phần còn lại trừ vào ví thật. Ví không đủ thì nút đổi thành \"⚠️ Ví không đủ — cần thêm tiền mặt\" và không cho xác nhận. Không dùng được điểm cùng lúc với ví.\nKhông có giảm giá gõ tay trong màn Bán hàng; giảm giá chỉ qua voucher hoặc điểm."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-xem-don-gan-day",
@@ -80,7 +88,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Thêm nhanh món mới vào thực đơn",
-   "text": "1. Bấm nút dấu + trên thanh trên cùng (hoặc khi tìm không ra, bấm \"Thêm \"<tên>\"\").\n2. Bảng \"Thêm sản phẩm mới\": \"Tên sản phẩm *\", \"Giá bán (đ)\", \"Giá vốn (đ)\", danh mục (\"Đồ ăn\", \"Đồ uống\", \"Tráng miệng\", \"Combo\", \"Khác\" hoặc danh mục riêng), đơn vị (mặc định \"phần\").\n3. Bấm \"Thêm vào thực đơn\" → \"✅ Đã thêm \"<tên>\" vào thực đơn\". Món hiện ngay trong lưới.\n\nPhiếu bếp in ra trạm nào là theo \"Bộ phận chế biến\" của món (Kho hàng → Sửa thông tin món: Bếp Nóng / Bếp Bar / Thu Ngân), không theo danh mục. Món thêm nhanh bằng nút dấu + mặc định là Bếp Nóng — nếu là đồ uống, vào Kho hàng sửa món và chọn \"Bếp Bar\".\nRiêng phiếu hiện trên màn Bếp khi bấm \"Bếp\" ở điện thoại: món danh mục \"Đồ uống\" vào \"Bếp nước\", món khác vào \"Bếp nóng\"."
+   "text": "1. Bấm nút dấu + trên thanh trên cùng — chỉ Chủ quán / Quản lý có nút này (hoặc khi tìm không ra, bấm \"Thêm \"<tên>\"\").\n2. Bảng \"Thêm sản phẩm mới\": \"Tên sản phẩm *\", \"Giá bán (đ)\", \"Giá vốn (đ)\", danh mục (\"Đồ ăn\", \"Đồ uống\", \"Tráng miệng\", \"Combo\", \"Khác\" hoặc danh mục riêng), đơn vị (mặc định \"phần\").\n3. Bấm \"Thêm vào thực đơn\" → \"✅ Đã thêm \"<tên>\" vào thực đơn\". Món hiện ngay trong lưới.\n\nPhiếu bếp in ra trạm nào là theo \"Bộ phận chế biến\" của món (Kho hàng → Sửa thông tin món: Bếp Nóng / Bếp Bar / Thu Ngân), không theo danh mục. Món thêm nhanh bằng nút dấu + mặc định là Bếp Nóng — nếu là đồ uống, vào Kho hàng sửa món và chọn \"Bếp Bar\".\nRiêng phiếu hiện trên màn Bếp khi bấm \"Bếp\" ở điện thoại: món danh mục \"Đồ uống\" vào \"Bếp nước\", món khác vào \"Bếp nóng\"."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-xoa-gio-hang",
@@ -88,7 +96,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Xoá giỏ hàng",
-   "text": "Xoá hết giỏ hàng khi khách đổi ý bỏ hết món:\n• Nút thùng rác trên thanh trên cùng → hỏi \"Xóa giỏ hàng?\" → \"Xóa\".\n• Hoặc \"Xóa hết\" trong giỏ — chỉ người có quyền \"Huỷ đơn hàng\" mới bấm được (mặc định Chủ quán, Quản lý, Thu ngân; Phục vụ không có); người khác thấy \"Bạn không có quyền huỷ đơn hàng\". Quyền này chỉ chặn nút \"Xóa hết\" của giỏ chưa thanh toán, không liên quan đơn đã thu."
+   "text": "Xoá hết giỏ hàng khi khách đổi ý bỏ hết món:\n• Nút thùng rác trên thanh trên cùng → hỏi \"Xóa giỏ hàng?\" → \"Xóa\".\n• Hoặc \"Xóa hết\" trong giỏ — chỉ người có quyền \"Huỷ đơn hàng\" mới bấm được (mặc định Chủ quán, Quản lý, Thu ngân; Phục vụ không có); người khác thấy \"Bạn không có quyền huỷ đơn hàng\". Quyền này chỉ chặn nút \"Xóa hết\" của giỏ chưa thanh toán, không liên quan đơn đã thu.\n• Giỏ có món đã gửi bếp: cả hai nút đều mở bảng \"Huỷ phiếu đã gửi bếp?\" trước (lý do + duyệt, xem Huỷ phiếu bếp ở quầy); huỷ phiếu xong giỏ mới được xoá, để bếp không làm món khách đã bỏ."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-doi-soat-thanh-toan-bi-gian-doan",
@@ -96,7 +104,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Đối soát thanh toán bị gián đoạn",
-   "text": "Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — không biết tiền đã ghi nhận chưa. Đơn đã hiện \"Thanh toán thành công!\" thì không cần đối soát, kể cả khi đóng màn đó bằng nút quay lại.\n1. Mở lại màn Bán hàng, bấm \"Thanh toán\" hoặc nút đồng hồ quay ngược trên thanh trên cùng.\n2. Nếu có giao dịch dang dở, app hiện \"Thanh toán chưa đối soát\" kèm số tiền, phương thức. Bấm \"Đối soát / tiếp tục đơn cũ\".\n3. App hỏi máy chủ: nếu đơn đã thu, chỉ lấy lại kết quả (\"Đã thanh toán: <số đơn>\") — không thu lần hai, không tự in lại. Nếu chưa, gửi lại đúng giao dịch cũ.\n4. Thành công thì giỏ đang hiển thị được xoá để tránh bán lại đơn cũ.\n\nKhông thanh toán lại đơn đó trên máy khác trong lúc đang đối soát. Không có giao dịch dang dở thì app báo \"Không có thanh toán đang chờ đối soát\"."
+   "text": "Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — không biết tiền đã ghi nhận chưa. Đơn đã hiện \"Thanh toán thành công!\" thì không cần đối soát, kể cả khi đóng màn đó bằng nút quay lại.\n1. Mở lại màn Bán hàng, bấm \"Thanh toán\" hoặc nút đồng hồ quay ngược (có chấm đỏ) trên thanh trên cùng — nút này chỉ hiện khi máy còn giao dịch dang dở.\n2. Nếu có giao dịch dang dở, app hiện \"Thanh toán chưa đối soát\" kèm số tiền, phương thức. Bấm \"Đối soát / tiếp tục đơn cũ\".\n3. App hỏi máy chủ: nếu đơn đã thu, chỉ lấy lại kết quả (\"Đã thanh toán: <số đơn>\") — không thu lần hai, không tự in lại. Nếu chưa, gửi lại đúng giao dịch cũ.\n4. Thành công thì giỏ đang hiển thị được xoá để tránh bán lại đơn cũ.\n\nKhông thanh toán lại đơn đó trên máy khác trong lúc đang đối soát. Không có giao dịch dang dở thì app báo \"Không có thanh toán đang chờ đối soát\"."
   },
   {
    "id": "ban-hang#loi-mon-da-het-hang-khi-cham-mon",
@@ -185,6 +193,22 @@
    "section": "Lỗi thường gặp",
    "title": "\"Gửi bếp thất bại. Hãy chụp lại báo chủ app.\"",
    "text": "Vì sao: Lỗi mạng hoặc dữ liệu khi gửi bếp\nLàm gì: Thử lại; còn lỗi thì chụp màn gửi chủ app"
+  },
+  {
+   "id": "ban-hang#loi-mon-nay-da-gui-bep-muon-bot-hay-mo-gio-bam-huy-phieu-bep",
+   "module": "pos",
+   "module_name": "Bán hàng",
+   "section": "Lỗi thường gặp",
+   "title": "\"Món này đã gửi bếp — muốn bớt hãy mở giỏ, bấm \"Huỷ phiếu bếp\".\"",
+   "text": "Vì sao: Bấm − trên món chỉ còn phần đã gửi bếp\nLàm gì: Mở giỏ → \"Huỷ phiếu bếp\" → bớt món → gửi bếp lại"
+  },
+  {
+   "id": "ban-hang#loi-chua-huy-duoc-phieu-bep",
+   "module": "pos",
+   "module_name": "Bán hàng",
+   "section": "Lỗi thường gặp",
+   "title": "\"Chưa huỷ được phiếu bếp: …\"",
+   "text": "Vì sao: Mất mạng, hoặc PIN quản lý không còn hiệu lực\nLàm gì: Kiểm tra mạng rồi làm lại; nhờ Quản lý nhập PIN lại"
   },
   {
    "id": "ban-hang#loi-ban-khong-co-quyen-huy-don-hang",
@@ -424,7 +448,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Hóa đơn",
-   "text": "• \"Tra cứu & in lại bill\": tìm bill đã thanh toán theo số đơn, tên bàn (không cần dấu) hoặc số tiền; chạm để xem chi tiết; nút máy in để in lại (bill có dòng \"BẢN IN LẠI\", ghi nhật ký người in). Màn này tải đủ bill trong kỳ đang chọn (tối đa 20.000 bill); không thấy bill thì chọn đúng ngày của bill.\n• \"Hóa đơn điện tử\": tình trạng bật/tắt, số đã xuất, đối chiếu doanh thu, chờ xử lý, lỗi. Hiện báo \"Chưa tải được báo cáo hóa đơn. Có thể máy chủ chưa được cập nhật.\" cho tới khi áp phần hoá đơn điện tử lên máy chủ."
+   "text": "• \"Tra cứu & in lại bill\": tìm bill đã thanh toán theo số đơn, tên bàn (không cần dấu) hoặc số tiền; chạm để xem chi tiết; nút máy in để in lại (bill có dòng \"BẢN IN LẠI\", ghi nhật ký người in). Màn này tải đủ bill trong kỳ đang chọn (tối đa 20.000 bill); không thấy bill thì chọn đúng ngày của bill."
   },
   {
    "id": "bao-cao#loi-chua-co-giao-dich-hom-nay-chua-co-doanh-thu-ky-nay",
@@ -449,14 +473,6 @@
    "section": "Lỗi thường gặp",
    "title": "\"Không tải được nhật ký kiểm toán\" / \"Không tải được dữ liệu kho\"",
    "text": "Vì sao: Mạng / máy chủ\nLàm gì: Bấm \"Thử lại\""
-  },
-  {
-   "id": "bao-cao#loi-chua-tai-duoc-bao-cao-hoa-don-tab-hoa-don",
-   "module": "report",
-   "module_name": "Báo cáo",
-   "section": "Lỗi thường gặp",
-   "title": "\"Chưa tải được báo cáo hóa đơn…\" (tab Hóa đơn)",
-   "text": "Vì sao: Phần hoá đơn điện tử chưa áp trên máy chủ\nLàm gì: Bình thường — phần tra cứu bill phía trên vẫn dùng được"
   },
   {
    "id": "bao-cao#loi-loi-nhuan-khac-thu-chi",
@@ -504,7 +520,7 @@
    "module_name": "Bếp",
    "section": "",
    "title": "Ai dùng được",
-   "text": "• Người có module Bếp (mặc định tắt, Chủ quán bật trong Modules). Quán mới tạo, trong các vai trò có sẵn chỉ Bếp có module này (Thu ngân, Nhân viên thì không); Chủ quán thêm module cho vai trò bất kỳ ở Nhân viên → Vai trò.\n• Chuông báo chỉ kêu trên máy đăng nhập bằng vai trò có chữ \"Bếp\" trong tên (vd Bếp, Bếp chính, Phụ bếp, Bếp bar). Vai trò đặt tên \"Pha chế\" (không có chữ \"Bếp\") sẽ không kêu — đổi tên vai trò thành vd \"Bếp pha chế\". Máy Chủ quán, Quản lý, Thu ngân, Phục vụ mở màn Bếp cũng không kêu."
+   "text": "• Người có module Bếp (mặc định tắt, Chủ quán bật ở mục \"Chức năng\" trên Trang chủ). Quán mới tạo, trong các vai trò có sẵn chỉ Bếp có module này (Thu ngân, Nhân viên thì không); Chủ quán thêm module cho vai trò bất kỳ ở Nhân viên → Vai trò.\n• Chuông báo chỉ kêu trên máy đăng nhập bằng vai trò có chữ \"Bếp\" trong tên (vd Bếp, Bếp chính, Phụ bếp, Bếp bar). Vai trò đặt tên \"Pha chế\" (không có chữ \"Bếp\") sẽ không kêu — đổi tên vai trò thành vd \"Bếp pha chế\". Máy Chủ quán, Quản lý, Thu ngân, Phục vụ mở màn Bếp cũng không kêu."
   },
   {
    "id": "bep#phieu-den-tu-dau",
@@ -568,7 +584,7 @@
    "module_name": "Bếp",
    "section": "Các việc thường làm",
    "title": "6. Thông báo huỷ / sửa món",
-   "text": "• Khi phục vụ huỷ hoặc giảm món, đầu màn hình hiện \"THÔNG BÁO SỬA ĐƠN\" (bàn, món, lý do, người làm). Bấm \"Đã hiểu ✓\" hoặc chờ 30 giây để ẩn.\n• Món bị huỷ biến mất khỏi phiếu; bàn bị huỷ thì cả phiếu bị huỷ."
+   "text": "Chỉ món đã gửi bếp mới báo bếp; huỷ trước khi gửi thì bếp không thấy gì.\n• Huỷ cả phiếu (huỷ bàn, hoặc thu ngân bấm \"Huỷ phiếu bếp\" ở Bán hàng): đầu màn hiện thẻ đỏ \"ĐÃ HUỶ\" (tên bàn/khu, \"Huỷ lúc HH:mm\", các món bị gạch ngang) trong 15 phút. Bấm \"Đã xem\" để ẩn thẻ trên máy này. Phiếu huỷ không còn rơi vào cột \"Hoàn thành\".\n• Huỷ một món trong phiếu còn món khác: món đó bị gạch ngang, có nhãn đỏ \"HUỶ\", không bấm xong được — đừng làm món này.\n• Đầu màn còn dải \"THÔNG BÁO SỬA ĐƠN\" cho món bị huỷ / giảm trên phiếu đang hiện (bàn, món, số lượng, lý do, \"Duyệt: <tên>\"). Bấm \"Đã hiểu ✓\" hoặc chờ 30 giây để ẩn.\n• In lại phiếu thì món đã huỷ không in ra."
   },
   {
    "id": "bep#cac-viec-thuong-lam-7-phieu-tre",
@@ -816,7 +832,7 @@
    "module_name": "In Hoá Đơn",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "Mở module In Hoá Đơn từ Trang chủ:\n• \"Cấu Hình Trạm In\" — cách cũ (4 trạm: Thu ngân, Bếp nóng, Quầy bar (đồ uống), Tem dán ly) + các công tắc tự động + Máy chủ in.\n• \"Thiết Kế Mẫu In\" — mẫu Hoá Đơn, Bếp Nóng, Bếp Bar, Tem Dán Ly và mẫu dựng sẵn.\n• \"Máy In & Luật In\" — cách mới: khai báo máy in và luật in theo loại phiếu, số bản, máy dự phòng.\n• \"Xem Trước Nhanh\" hoá đơn thu ngân và nút \"Đặt lại về mặc định\" (đưa thiết kế hoá đơn về mặc định)."
+   "text": "Mở module In Hoá Đơn từ Trang chủ:\n• Dòng \"Đang in theo: …\" ở đầu trang cho biết quán in theo cách nào: \"4 trạm (Cấu Hình Trạm In)\" hoặc \"Máy In & Luật In – X máy in, Y luật\". Nếu hiện khung đỏ \"Chưa có luật nào in ra máy in đang bật, nên KHÔNG phiếu nào được in…\" thì vào \"Máy In & Luật In\" thêm luật hoặc bật máy in.\n• \"Cấu Hình Trạm In\" — cách cũ (4 trạm: Thu ngân, Bếp nóng, Quầy bar (đồ uống), Tem dán ly) + các công tắc tự động + Máy chủ in. Quán đã dùng luật in thì màn này chỉ còn tự động in, tự mở két và máy chủ in (tiêu đề \"Tự Động In & Máy Chủ In\").\n• \"Máy In & Luật In\" — phần nâng cao: khai báo máy in và luật in theo loại phiếu, số bản, máy dự phòng.\n• \"Thiết Kế Mẫu In\" — mẫu Hoá Đơn, Bếp Nóng, Bếp Bar, Tem Dán Ly và mẫu dựng sẵn.\n• \"Xem Trước Nhanh\" hoá đơn thu ngân và nút \"Đặt lại mẫu hoá đơn\" (chỉ đưa mẫu hoá đơn thu ngân về mặc định; máy in, phiếu bếp, tem không đổi)."
   },
   {
    "id": "in-hoa-don#man-hinh-gom-nhung-gi-hai-cach-cau-hinh-dung-cach-nao",
@@ -824,7 +840,7 @@
    "module_name": "In Hoá Đơn",
    "section": "Màn hình gồm những gì",
    "title": "Hai cách cấu hình — dùng cách nào?",
-   "text": "• Khi quán đã lưu \"Máy In & Luật In\" (chỉ cần đã khai báo một máy in, kể cả chưa có luật nào), app in theo luật; máy in chọn ở 4 trạm cũ không còn tác dụng. Màn Cấu Hình Trạm In sẽ báo: \"Quán đang dùng \"Máy In & Luật In\". Máy in ở 4 trạm bên dưới KHÔNG còn tác dụng khi in thật…\". Các công tắc tự động và Máy chủ in vẫn áp dụng.\n• Khi chưa khai báo máy in và chưa có luật ở \"Máy In & Luật In\", app in theo 4 trạm cũ. Đã thêm máy in mà chưa tạo luật thì không phiếu nào in: tạo luật ngay sau khi thêm máy in.\n• Khuyến nghị: dùng Máy In & Luật In. Quán đang dùng trạm cũ có thể bấm \"Dựng từ cấu hình hiện tại\" để chuyển sang mà không phải khai báo lại."
+   "text": "• Khi quán đã lưu \"Máy In & Luật In\" (chỉ cần đã khai báo một máy in, kể cả chưa có luật nào), app in theo luật; máy in chọn ở 4 trạm cũ không còn tác dụng. Màn Cấu Hình Trạm In khi đó ẩn 4 trạm và báo: \"Máy in của quán đang chọn ở \"Máy In & Luật In\". Ở đây chỉ còn: tự động in, tự mở két và máy chủ in.\" Các công tắc tự động và Máy chủ in vẫn áp dụng.\n• Khi chưa khai báo máy in và chưa có luật ở \"Máy In & Luật In\", app in theo 4 trạm cũ. Đã thêm máy in mà chưa tạo luật thì không phiếu nào in: tạo luật ngay sau khi thêm máy in.\n• Khuyến nghị: dùng Máy In & Luật In. Quán đang dùng trạm cũ có thể bấm \"Dựng từ cấu hình hiện tại\" để chuyển sang mà không phải khai báo lại."
   },
   {
    "id": "in-hoa-don#cac-viec-thuong-lam-1-cai-may-in-tren-may-windows-lan-dau",
@@ -840,7 +856,7 @@
    "module_name": "In Hoá Đơn",
    "section": "Các việc thường làm",
    "title": "2. Thêm máy in (Máy In & Luật In → tab \"Máy in\")",
-   "text": "1. Bấm \"Thêm máy in\".\n2. \"Tên máy in (vd: Bill quầy, Bếp nóng)\".\n3. \"Cách kết nối\":\n   • \"Máy in hệ thống (Windows/Mac)\" — nhập tên máy in trong hệ thống (để trống = máy in mặc định).\n   • \"Máy in mạng LAN / Wi-Fi (IP)\" — nhập \"Địa chỉ IP\" (vd 192.168.1.242) và \"Cổng\" (thường 9100).\n   • \"Máy in tích hợp Sunmi\" — chỉ in được trên đúng thiết bị Sunmi (Android).\n4. \"Khổ giấy\": 50 / 58 / 80 mm.\n5. Tuỳ chỉnh: tỉ lệ cỡ chữ (giảm khi bill bị cụt mép), độ đậm (Sunmi), \"Chữ đậm dạng bán đậm\", \"Tự cắt giấy\", \"Có két tiền gắn kèm\".\n6. Bấm \"Xong\", rồi \"Lưu\" ở góc trên."
+   "text": "1. Bấm \"Thêm máy in\".\n2. \"Tên máy in (vd: Bill quầy, Bếp nóng)\".\n3. \"Cách kết nối\":\n   • \"Máy in hệ thống (Windows/Mac)\" — gõ đúng tên máy in như trong Windows/Mac; để trống sẽ không in được.\n   • \"Máy in mạng LAN / Wi-Fi (IP)\" — nhập \"Địa chỉ IP\" (vd 192.168.1.242) và \"Cổng\" (thường 9100).\n   • \"Máy in tích hợp Sunmi\" — chỉ in được trên đúng thiết bị Sunmi (Android).\n4. \"Khổ giấy\": 50 / 58 / 80 mm.\n5. Tuỳ chỉnh: tỉ lệ cỡ chữ (giảm khi bill bị cụt mép), độ đậm (Sunmi), \"Chữ đậm dạng bán đậm\", \"Tự cắt giấy\", \"Có két tiền gắn kèm\".\n6. Bấm \"Xong\", rồi \"Lưu\" ở góc trên.\n7. Bấm \"In thử\" ở máy in vừa thêm để kiểm giấy và kết nối (in thử được cả khi chưa bấm Lưu; không lưu gì)."
   },
   {
    "id": "in-hoa-don#cac-viec-thuong-lam-3-tao-luat-in-tab-luat-in",
@@ -872,7 +888,7 @@
    "module_name": "In Hoá Đơn",
    "section": "Các việc thường làm",
    "title": "6. Bật/tắt tự động in và mở két",
-   "text": "Trong Cấu Hình Trạm In → \"Tuỳ Chọn Tự Động\":\n• \"In khi thanh toán\" — in hoá đơn khi bán thành công.\n• \"In khi báo chế biến\" — gửi phiếu đến trạm bếp và nhãn ly.\n• \"Tự động mở két tiền\" — mở két khi in hoá đơn thanh toán."
+   "text": "Trong Cấu Hình Trạm In (mục \"Tuỳ Chọn Tự Động\"; quán dùng luật in thì các công tắc nằm ngay đầu màn \"Tự Động In & Máy Chủ In\"):\n• \"In khi thanh toán\" — in hoá đơn khi bán thành công.\n• \"In khi báo chế biến\" — gửi phiếu đến trạm bếp và nhãn ly.\n• \"Tự động mở két tiền\" — mở két khi in hoá đơn thanh toán."
   },
   {
    "id": "in-hoa-don#cac-viec-thuong-lam-7-may-chu-in-print-server",
@@ -896,7 +912,7 @@
    "module_name": "In Hoá Đơn",
    "section": "Các việc thường làm",
    "title": "9. Két tiền",
-   "text": "• Két cắm dây (cổng RJ11) vào máy in hoá đơn thu ngân.\n• Thử két: Cấu Hình Trạm In → trạm Thu ngân → \"Mở két tiền\".\n• Máy in mạng (IP): app gửi lệnh mở két trực tiếp. Máy in hệ thống Windows: app gửi lệnh qua máy in; nếu không mở, cấu hình \"Cash Drawer\" trong driver máy in."
+   "text": "• Két cắm dây (cổng RJ11) vào máy in hoá đơn thu ngân.\n• Thử két (quán in theo 4 trạm): Cấu Hình Trạm In → trạm Thu ngân → \"Mở két tiền\". Quán đã dùng luật in hiện chưa có nút thử mở két bằng tay — thử bằng một đơn tiền mặt.\n• Máy in mạng (IP): app gửi lệnh mở két trực tiếp. Máy in hệ thống Windows: app gửi lệnh qua máy in; nếu không mở, cấu hình \"Cash Drawer\" trong driver máy in."
   },
   {
    "id": "in-hoa-don#cac-viec-thuong-lam-10-in-thu",
@@ -904,7 +920,7 @@
    "module_name": "In Hoá Đơn",
    "section": "Các việc thường làm",
    "title": "10. In thử",
-   "text": "• Máy in ở 4 trạm cũ: \"In thử nghiệm\" trong từng trạm.\n• Máy in tích hợp Sunmi: \"In thử máy in tích hợp\".\n• Máy in mạng: \"Quét\" để dò máy in cổng 9100 trong cùng Wi-Fi, chạm IP để chọn, \"Lưu IP\"."
+   "text": "• Máy In & Luật In → tab \"Máy in\": nút \"In thử\" ở từng máy in.\n• Máy in ở 4 trạm cũ (quán chưa dùng luật in): \"In thử nghiệm\" trong từng trạm.\n• Máy in tích hợp Sunmi: \"In thử máy in tích hợp\".\n• Máy in mạng: \"Quét\" để dò máy in cổng 9100 trong cùng Wi-Fi, chạm IP để chọn, \"Lưu IP\"."
   },
   {
    "id": "in-hoa-don#loi-may-nay-chua-duoc-cai-may-in-hoa-don-nen-chua-in-vao-in-hoa",
@@ -1032,7 +1048,7 @@
    "module_name": "Khách hàng – Giảm giá – Khuyến mãi",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Đầu trang \"Khách hàng thân thiết\" – \"Loyalty & Ví điện tử\": số Khách, Có điểm, Điểm active, Đã đổi.\n• 5 tab:\n  • \"Khách\" — danh sách khách (tìm \"Tìm khách hàng...\"), hạng, điểm, tổng chi. Nút \"Thêm khách\".\n  • \"Ví\" — \"Tổng ví thật\" (tiền thật đã nạp), \"Tổng bonus\"; từng khách có nút \"Nạp\".\n  • \"Thưởng\" — danh sách phần thưởng đổi bằng điểm.\n  • \"Gói nạp\" — các mức nạp được tặng thêm %. Nút \"Thêm gói\".\n  • \"Khuyến mãi / Voucher\" — mã giảm giá."
+   "text": "• Đầu trang \"Khách hàng thân thiết\" – \"Tích điểm & Ví điện tử\": số Khách, Có điểm, Điểm đang có, Đã đổi.\n• 5 tab:\n  • \"Khách\" — danh sách khách (tìm \"Tìm khách hàng...\"), hạng, điểm, tổng chi. Nút \"Thêm khách\".\n  • \"Ví\" — \"Tổng ví thật\" (tiền thật đã nạp), \"Tổng bonus\"; từng khách có nút \"Nạp\".\n  • \"Thưởng\" — danh sách phần thưởng đổi bằng điểm.\n  • \"Gói nạp\" — các mức nạp được tặng thêm %. Nút \"Thêm gói\".\n  • \"Khuyến mãi\" — mã giảm giá."
   },
   {
    "id": "khach-hang#cach-tinh-diem-hang-vi",
@@ -1088,7 +1104,7 @@
    "module_name": "Khách hàng – Giảm giá – Khuyến mãi",
    "section": "Các việc thường làm",
    "title": "6. Tạo mã giảm giá (voucher) — Chủ quán / Quản lý",
-   "text": "1. Tab \"Khuyến mãi / Voucher\" → \"Thêm mã mới\" → \"Thêm mã giảm giá mới\".\n2. \"Mã Voucher (Viết liền không dấu)\", \"Mô tả ngắn gọn\".\n3. \"Loại giảm giá\": \"Phần trăm (%)\" hoặc \"Tiền mặt (đ)\" → \"Mức giảm\".\n4. \"Đơn tối thiểu (đ)\", \"Mức giảm tối đa (đ) - Để trống nếu không giới hạn\", hạn dùng (\"Chọn ngày\").\n5. \"Lưu Voucher\". Sửa / tắt / xoá mã trong danh sách (\"Xóa mã giảm giá\").\n6. Nhân viên áp mã khi thanh toán: \"Khuyến mãi / Voucher\" → \"Chọn mã\" → \"Áp dụng\". Máy chủ kiểm lại mã còn hiệu lực, hạn dùng và đơn tối thiểu."
+   "text": "1. Tab \"Khuyến mãi\" → \"Thêm mã mới\" → \"Thêm mã giảm giá mới\".\n2. \"Mã Voucher (Viết liền không dấu)\", \"Mô tả ngắn gọn\".\n3. \"Loại giảm giá\": \"Phần trăm (%)\" hoặc \"Tiền mặt (đ)\" → \"Mức giảm\".\n4. \"Đơn tối thiểu (đ)\", \"Mức giảm tối đa (đ) - Để trống nếu không giới hạn\", hạn dùng (\"Chọn ngày\").\n5. \"Lưu Voucher\". Sửa / tắt / xoá mã trong danh sách (\"Xóa mã giảm giá\").\n6. Nhân viên áp mã khi thanh toán: \"Khuyến mãi / Voucher\" → \"Chọn mã\" → \"Áp dụng\". Máy chủ kiểm lại mã còn hiệu lực, hạn dùng và đơn tối thiểu."
   },
   {
    "id": "khach-hang#loi-khong-tim-thay-khach-hang-khi-thanh-toan",
@@ -1200,7 +1216,7 @@
    "module_name": "Kho Chuyên Nghiệp",
    "section": "",
    "title": "Ai dùng được",
-   "text": "• Người có module Kho Chuyên Nghiệp (mặc định tắt, Chủ quán bật trong Modules). Quán mới tạo, các vai trò có sẵn (Thu ngân, Nhân viên, Bếp) đều chưa có module này; Chủ quán thêm module cho vai trò bất kỳ ở Nhân viên → Vai trò (mẫu gợi ý \"Kho hàng\" khi tạo vai trò mới có sẵn Kho Chuyên Nghiệp)."
+   "text": "• Người có module Kho Chuyên Nghiệp (mặc định tắt, Chủ quán bật ở mục \"Chức năng\" trên Trang chủ). Quán mới tạo, các vai trò có sẵn (Thu ngân, Nhân viên, Bếp) đều chưa có module này; Chủ quán thêm module cho vai trò bất kỳ ở Nhân viên → Vai trò (mẫu gợi ý \"Kho hàng\" khi tạo vai trò mới có sẵn Kho Chuyên Nghiệp)."
   },
   {
    "id": "kho-chuyen-nghiep#man-hinh-gom-nhung-gi",
@@ -1344,7 +1360,7 @@
    "module_name": "Kho hàng",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Đầu trang \"Kho hàng\": thống kê \"Sản phẩm\", \"Sắp hết\", \"Hết hàng\", \"Giá trị kho\" (tồn × giá nhập gần nhất). Các nút:\n  • \"Biến động kho gần đây\" — xem nhập/xuất mới nhất.\n  • \"Ghi chú nhanh\" — cài chip ghi chú (Ít cay, Ít đá…) hiện khi gọi món ở Quản lý Bàn.\n  • Bật/tắt phiếu nhập nâng cao — hiện thêm tab \"Phiếu nhập\".\n  • \"Thêm sản phẩm\".\n• Các tab: \"Hàng hoá & Menu\" và \"Cảnh báo\" (sắp hết + hết hàng). Khi bật phiếu nhập nâng cao có thêm \"Tất cả\", \"Nguyên liệu\", \"Phiếu nhập\"; lúc đó \"Hàng hoá & Menu\" chỉ còn món bán (chưa bật thì tab này hiện mọi mặt hàng).\n• Ô tìm \"Tìm sản phẩm, SKU...\", lọc theo danh mục, nút \"Chọn\" để chọn nhiều món.\n• Mỗi món hiện: tên, danh mục, tồn / min, giá bán, trạng thái \"Đang bán\" / \"Tạm ngưng bán\", nhãn tồn:\n  • \"Hết hàng\" — có đặt tồn tối thiểu và tồn ≤ 0 (màn Bán hàng khoá món này).\n  • \"Sắp hết\" — tồn ≤ mức tối thiểu.\n  • \"Còn hàng\".\n  • \"Không theo dõi\" — món không đặt tồn tối thiểu (dù tồn âm vẫn bán được).\n• Menu \"Thao tác\" của từng món: \"Sửa thông tin món\", \"Nhập kho\", \"Điều chỉnh tồn kho\", \"Lịch sử xuất nhập\", \"Cấu hình Topping\", \"Tùy chọn món (Modifiers)\", \"Xóa món\"."
+   "text": "• Đầu trang \"Kho hàng\": thống kê \"Sản phẩm\", \"Sắp hết\", \"Hết hàng\", \"Giá trị kho\" (tồn × giá nhập gần nhất). Các nút:\n  • \"Biến động kho gần đây\" — xem nhập/xuất mới nhất.\n  • \"Ghi chú nhanh\" — cài chip ghi chú (Ít cay, Ít đá…) hiện khi gọi món ở Quản lý Bàn.\n  • Bật/tắt phiếu nhập nâng cao — hiện thêm tab \"Phiếu nhập\".\n  • \"Thêm sản phẩm\".\n• Các tab: \"Hàng hoá & Menu\" và \"Cảnh báo\" (sắp hết + hết hàng). Khi bật phiếu nhập nâng cao có thêm \"Tất cả\", \"Nguyên liệu\", \"Phiếu nhập\"; lúc đó \"Hàng hoá & Menu\" chỉ còn món bán (chưa bật thì tab này hiện mọi mặt hàng).\n• Ô tìm \"Tìm sản phẩm, SKU...\", lọc theo danh mục, nút \"Chọn\" để chọn nhiều món.\n• Điện thoại / máy POS cầm tay (màn hẹp): mỗi món là một thẻ — tên (tối đa 2 dòng), dòng \"Tồn: … · min …\", giá bán bên phải, nhãn danh mục, trạng thái, nút ⋮ (menu thao tác). Nhấn giữ một thẻ để bắt đầu chọn nhiều món (có dòng \"Chọn tất cả\"); cuối danh sách ghi \"Hiển thị N / N món\"; cuộn xa có nút tròn \"Lên đầu trang\".\n• Máy tính bảng / PC (màn rộng): bảng đủ cột (Ảnh, Tên món & SKU, Danh mục, Tồn kho & Min, Giá bán, Trạng thái) vừa khít màn, không phải vuốt ngang; ô tích để chọn nhiều luôn hiện.\n• Mỗi món hiện: tên, danh mục, tồn / min, giá bán (đủ số, vd \"25.000 đ\"), trạng thái \"Đang bán\" / \"Tạm ngưng bán\", nhãn tồn:\n  • \"Hết hàng\" — có đặt tồn tối thiểu và tồn ≤ 0 (màn Bán hàng khoá món này).\n  • \"Sắp hết\" — tồn ≤ mức tối thiểu.\n  • \"Còn hàng\".\n  • \"Không theo dõi\" — món không đặt tồn tối thiểu (dù tồn âm vẫn bán được). Món loại này bị trừ âm thì ô tồn ghi \"Không theo dõi\" thay cho số âm, và phần âm không trừ vào \"Giá trị kho\".\n• Menu \"Thao tác\" của từng món: \"Sửa thông tin món\", \"Nhập kho\", \"Điều chỉnh tồn kho\", \"Lịch sử xuất nhập\", \"Cấu hình Topping\", \"Tùy chọn món (Modifiers)\", \"Xóa món\"."
   },
   {
    "id": "kho-hang#cac-viec-thuong-lam-1-them-mon-nguyen-lieu",
@@ -1952,7 +1968,7 @@
    "module_name": "Nhật Ký Log",
    "section": "",
    "title": "Ai dùng được",
-   "text": "• Người có module Nhật Ký Log (mặc định có ở Chủ quán và Quản lý; bật trong Modules)."
+   "text": "• Người có module Nhật Ký Log (mặc định có ở Chủ quán và Quản lý; bật ở mục \"Chức năng\" trên Trang chủ)."
   },
   {
    "id": "nhat-ky-log#man-hinh-gom-nhung-gi",
@@ -1984,7 +2000,7 @@
    "module_name": "Nhật Ký Log",
    "section": "Các việc thường làm",
    "title": "2. Gửi log cho người hỗ trợ",
-   "text": "• Bấm \"Sao chép Logs\" → \"Đã sao chép toàn bộ nhật ký vào Clipboard!\" → dán vào tin nhắn.\n• Hoặc Cài đặt → \"Gửi phản hồi\" (\"Báo lỗi & tự động đính kèm Log kỹ thuật\"): chọn \"Loại phản hồi\", \"Mô tả chi tiết *\", thêm \"Ảnh chụp màn hình (tuỳ chọn)\" → gửi."
+   "text": "• Bấm \"Sao chép Logs\" → \"Đã sao chép toàn bộ nhật ký vào Clipboard!\" → dán vào tin nhắn.\n• Hoặc Cài đặt → \"Gửi phản hồi\" (\"Báo lỗi & tự động đính kèm nhật ký kỹ thuật\"): chọn \"Loại phản hồi\", \"Mô tả chi tiết *\", thêm \"Ảnh chụp màn hình (tuỳ chọn)\" → gửi."
   },
   {
    "id": "nhat-ky-log#cac-viec-thuong-lam-3-xoa-nhat-ky",
@@ -2464,7 +2480,7 @@
    "module_name": "Thu Chi",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Đầu trang: \"Thu Chi\", \"LỢI NHUẬN\" (thu − chi), \"Biên lợi nhuận\" (%), ô \"Tổng thu\" và \"Tổng chi\" kèm % tăng/giảm so với kỳ trước.\n• Hai nút \"+ Ghi thu\" và \"− Ghi chi\".\n• Dòng \"Đang xem: <kỳ> (<ngày>)\" và nút \"Đổi ngày\".\n• \"Giao dịch\": lọc \"Tất cả\" / \"↓ Thu\" / \"↑ Chi\"; lọc quỹ \"Tất cả\" / \"Tiền mặt\" / \"Tiền gửi\"; nút xuất CSV (gợi ý \"Xuất tệp CSV cho kế toán\").\n• Danh sách giao dịch nhóm theo ngày (\"Hôm nay\", \"Hôm qua\", \"T2, 20/10\"…). Khoản tự động có nhãn \"Auto\"."
+   "text": "• Đầu trang: \"Thu Chi\", \"LỢI NHUẬN\" (thu − chi), \"Biên lợi nhuận\" (%), ô \"Tổng thu\" và \"Tổng chi\" kèm % tăng/giảm so với kỳ trước.\n• Hai nút \"+ Ghi thu\" và \"− Ghi chi\".\n• Dòng \"Đang xem: <kỳ> (<ngày>)\" và nút \"Đổi ngày\".\n• \"Giao dịch\": lọc \"Tất cả\" / \"↓ Thu\" / \"↑ Chi\"; lọc quỹ \"Tất cả\" / \"Tiền mặt\" / \"Tiền gửi\"; nút xuất CSV (gợi ý \"Xuất tệp CSV cho kế toán\").\n• Danh sách giao dịch nhóm theo ngày (\"Hôm nay\", \"Hôm qua\", \"T2, 20/10\"…). Khoản tự động có nhãn \"Tự động\"."
   },
   {
    "id": "thu-chi#khoan-thu-chi-tu-dong-khong-can-ghi-tay",
@@ -2480,7 +2496,7 @@
    "module_name": "Thu Chi",
    "section": "Các việc thường làm",
    "title": "1. Ghi một khoản chi (vd tiền điện) hoặc thu khác",
-   "text": "1. Bấm \"− Ghi chi\" (hoặc \"+ Ghi thu\"). Có thể đổi loại ngay trong bảng.\n2. Nhập \"Số tiền\".\n3. Chọn \"Quỹ giao dịch\": \"Tiền mặt\" hoặc \"Tiền gửi (NH)\" — chọn đúng nơi tiền thực sự ra/vào.\n4. Chọn \"Danh mục\". Danh mục có sẵn khi tạo quán:\n   • Thu: Doanh thu bán hàng, Thu khác.\n   • Chi: Nhập hàng, Điện - Nước, Thuê mặt bằng, Lương nhân viên, Marketing, Chi khác.\n5. \"Ghi chú (tuỳ chọn)\" — ghi rõ nội dung (vd \"Tiền điện tháng 10\").\n6. Bấm \"Ghi chi • <số tiền>đ\" để lưu.\n\nKhông ghi tay khoản nhập hàng hay bán hàng đã có ở module khác — sẽ bị tính hai lần. Lương thì phải ghi tay (danh mục \"Lương nhân viên\"): trả lương ở module Lương hiện chưa tự ghi chi."
+   "text": "1. Bấm \"− Ghi chi\" (hoặc \"+ Ghi thu\"). Có thể đổi loại ngay trong bảng.\n2. Nhập \"Số tiền\".\n3. Chọn \"Quỹ giao dịch\": \"Tiền mặt\" hoặc \"Tiền gửi (NH)\" — chọn đúng nơi tiền thực sự ra/vào.\n4. Chọn \"Danh mục\". Danh mục có sẵn khi tạo quán:\n   • Thu: Thu khác (và danh mục riêng của quán). \"Doanh thu bán hàng\" không còn trong ô ghi tay — tiền bán hàng đã tự ghi khi thanh toán, ghi tay sẽ trùng doanh thu.\n   • Chi: Nhập hàng, Điện - Nước, Thuê mặt bằng, Lương nhân viên, Marketing, Chi khác.\n5. \"Ghi chú (tuỳ chọn)\" — ghi rõ nội dung (vd \"Tiền điện tháng 10\").\n6. Bấm \"Ghi chi • <số tiền>đ\" để lưu.\n\nKhông ghi tay khoản nhập hàng hay bán hàng đã có ở module khác — sẽ bị tính hai lần. Lương thì phải ghi tay (danh mục \"Lương nhân viên\"): trả lương ở module Lương hiện chưa tự ghi chi."
   },
   {
    "id": "thu-chi#cac-viec-thuong-lam-2-xem-theo-khoang-thoi-gian",
@@ -2528,7 +2544,7 @@
    "module_name": "Thu Chi",
    "section": "Lỗi thường gặp",
    "title": "Không xoá được một khoản",
-   "text": "Vì sao: Khoản tự động (\"Auto\")\nLàm gì: Khoản tự động không xoá được. Đơn đã thanh toán hiện không huỷ / hoàn tiền được trong app; nhập hàng sai thì Huỷ phiếu nhập ở Kho hàng (hệ thống ghi khoản thu hoàn). Trường hợp khác báo Chủ quán"
+   "text": "Vì sao: Khoản tự động (\"Tự động\")\nLàm gì: Khoản tự động không xoá được. Đơn đã thanh toán hiện không huỷ / hoàn tiền được trong app; nhập hàng sai thì Huỷ phiếu nhập ở Kho hàng (hệ thống ghi khoản thu hoàn). Trường hợp khác báo Chủ quán"
   },
   {
    "id": "thu-chi#loi-khong-vao-duoc-thu-chi-thu-ngan-phuc-vu",

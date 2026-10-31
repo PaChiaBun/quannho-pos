@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/kho_providers.dart';
 import '../repository/kho_repository.dart';
+import '../../../core/utils/money_formatter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NHẬP HÀNG SHEET — Bottom sheet nhập kho
@@ -176,7 +177,7 @@ class _ReceiveStockSheetState extends ConsumerState<ReceiveStockSheet> {
                             const Text('Tổng tiền: ',
                               style: TextStyle(
                                 fontSize: 14, color: Color(0xFF2E7D32))),
-                            Text(_formatMoney(totalCost.toInt()) + 'đ',
+                            Text(fmtVnd(totalCost),
                               style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w800,
                                 color: Color(0xFF2E7D32))),
@@ -379,8 +380,6 @@ class _ReceiveStockSheetState extends ConsumerState<ReceiveStockSheet> {
     }
   }
 
-  String _formatMoney(int v) => v.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
 }
 
 /// Chọn quỹ trả tiền nhập hàng: Tiền mặt / Chuyển khoản (trước đây luôn ghi Tiền mặt).

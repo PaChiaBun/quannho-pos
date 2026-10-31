@@ -540,10 +540,16 @@ class _MainShellState extends ConsumerState<MainShell>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) =>
-          _SlotPickerSheet(slotIndex: slotIndex, allowedTabs: allowed),
+      builder: (_) => _SlotPickerSheet(
+        slotIndex: slotIndex,
+        allowedTabs: allowed,
+        shownSlots: _shownSlots,
+      ),
     );
   }
+
+  /// 4 mục thanh dưới đang hiện (sau lọc quyền / tự ghim) — hộp chọn lấy làm gốc.
+  List<int> _shownSlots = const [];
 
   @override
   Widget build(BuildContext context) {
@@ -575,7 +581,6 @@ class _MainShellState extends ConsumerState<MainShell>
       sessionProvider.select((s) => s?.isOwner ?? false),
     );
     final session = ref.read(sessionProvider); // read full object chỉ khi cần
-    final rawSlots = slotsAsync.value ?? [0, 1, 2, 6];
 
     // Tabs trên nav bar theo role (tính từ store_roles modules + action perms)
     // ✅ FIX #3: đọc storeRolesAsync để kiểm soát trạng thái loading tránh redirect nhầm
@@ -591,6 +596,20 @@ class _MainShellState extends ConsumerState<MainShell>
 
     // ⭐ Vận Hành (tab 13) luôn accessible cho mọi nhân viên — phải add TRƯỚC khi filter slots
     navBarTabs.add(13);
+
+    final isCustomNav = ref.read(navSlotsProvider.notifier).isCustom;
+    final activeIds =
+        ref.watch(activeModulesProvider).value?.map((m) => m.id).toSet();
+    // Tự ghim: chỉ mục được phép VÀ module đang bật (chưa tải xong thì chưa lọc).
+    final autoTabs = navBarTabs
+        .where((t) =>
+            activeIds == null ||
+            !kTabModuleIds.containsKey(t) ||
+            activeIds.contains(kTabModuleIds[t]))
+        .toSet();
+    final rawSlots = isCustomNav
+        ? (slotsAsync.value ?? [0, 1, 2, 6])
+        : kAutoNavPriority.where(autoTabs.contains).take(4).toList();
 
     // ⭐ Với nhân viên: Tôn trọng cấu hình slot đã chọn nếu hợp lệ, nếu là slot mặc định thì pad hợp lý
     final isStaff =
@@ -611,8 +630,10 @@ class _MainShellState extends ConsumerState<MainShell>
         navBarTabs,
       );
     } else {
-      displaySlots = _padSlots(validSlots, navBarTabs);
+      displaySlots =
+          _padSlots(validSlots, isCustomNav ? navBarTabs : autoTabs);
     }
+    _shownSlots = displaySlots;
 
     // Tự động chuyển về tab đầu tiên nếu tab hiện tại không nằm trong danh sách được phép
     // Chỉ kích hoạt redirect khi roles đã nạp xong (tránh đá văng tab khi provider đang async loading)
@@ -631,8 +652,15 @@ class _MainShellState extends ConsumerState<MainShell>
 
     // ── Mobile: Bottom Bar + Boom FAB ──────────────────────────────
     return Scaffold(
+      // Màn Bếp nền tối: 2 góc bo của thanh dưới lộ nền kem của khung → dùng cùng màu nền Bếp.
+      backgroundColor: idx == NavTab.kitchen ? const Color(0xFF0D1117) : null,
       body: _buildBody(idx),
-      floatingActionButton: _BoomButton(onTap: _showBoomSheet),
+      // Bàn phím mở thì ẩn voi — không thì voi nổi lên che kết quả tìm / ô nhập.
+      floatingActionButton: Builder(
+        builder: (context) => MediaQuery.viewInsetsOf(context).bottom > 0
+            ? const SizedBox.shrink()
+            : _BoomButton(onTap: _showBoomSheet),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(displaySlots),
     );
@@ -1606,7 +1634,12 @@ const _kTabColors = [
 class _SlotPickerSheet extends ConsumerStatefulWidget {
   final int slotIndex;
   final Set<int> allowedTabs;
-  const _SlotPickerSheet({required this.slotIndex, required this.allowedTabs});
+  final List<int> shownSlots;
+  const _SlotPickerSheet({
+    required this.slotIndex,
+    required this.allowedTabs,
+    required this.shownSlots,
+  });
 
   @override
   ConsumerState<_SlotPickerSheet> createState() => _SlotPickerSheetState();
@@ -1657,7 +1690,9 @@ class _SlotPickerSheetState extends ConsumerState<_SlotPickerSheet>
 
   @override
   Widget build(BuildContext context) {
-    final slots = ref.watch(navSlotsProvider).value ?? [0, 1, 2, 6];
+    final slots = widget.shownSlots.length == 4
+        ? widget.shownSlots
+        : (ref.watch(navSlotsProvider).value ?? [0, 1, 2, 6]);
     final allowedList = List.generate(
       _kTabMeta.length,
       (i) => i,
@@ -1767,7 +1802,11 @@ class _SlotPickerSheetState extends ConsumerState<_SlotPickerSheet>
                                 HapticFeedback.lightImpact();
                                 ref
                                     .read(navSlotsProvider.notifier)
-                                    .updateSlot(widget.slotIndex, tabIdx);
+                                    .updateSlot(
+                                      widget.slotIndex,
+                                      tabIdx,
+                                      shown: widget.shownSlots,
+                                    );
                                 Navigator.pop(context);
                               },
                       ),

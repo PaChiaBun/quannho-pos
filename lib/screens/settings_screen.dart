@@ -13,7 +13,6 @@ import '../core/widgets/create_store_sheet.dart';
 import '../core/widgets/join_store_sheet.dart';
 import '../features/backup/backup_screen.dart';
 import 'bug_report_screen.dart';
-import 'einvoice_setting_tile.dart';
 import 'log_viewer_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../modules/bill_printer/screens/printer_settings_screen.dart';
@@ -85,12 +84,6 @@ class SettingsScreen extends ConsumerWidget {
               child: _ShopInfoCard(shopName: shopNameAsync.value ?? 'Quán Nhỏ'),
             ),
           ),
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: EinvoiceSettingTile(),
-            ),
-          ),
 
           // ── 2. Bảo Mật Tài Khoản ───────────────────────────────────
           SliverToBoxAdapter(
@@ -143,7 +136,7 @@ class SettingsScreen extends ConsumerWidget {
                 _SettingsTile(
                   icon: Icons.bug_report_rounded,
                   label: 'Gửi phản hồi',
-                  subtitle: 'Báo lỗi & tự động đính kèm Log kỹ thuật',
+                  subtitle: 'Báo lỗi & tự động đính kèm nhật ký kỹ thuật',
                   color: const Color(0xFF1565C0),
                   onTap: () => Navigator.push(
                     context,
@@ -714,7 +707,7 @@ class _StoreCodeCard extends StatelessWidget {
                               ),
                               SizedBox(width: 5),
                               Text(
-                                'Copy',
+                                'Sao chép',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,

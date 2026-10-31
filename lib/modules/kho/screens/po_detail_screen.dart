@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../repository/kho_repository.dart';
 import '../providers/kho_providers.dart';
+import '../../../core/utils/money_formatter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PO DETAIL SCREEN — xem chi tiết + huỷ phiếu nhập
@@ -38,11 +39,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
   static const _kCard   = Colors.white;
   static const _kBorder = Color(0xFFE5E7EB);
 
-  String _fmtMoney(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} Tr Đ';
-    if (v >= 1000)    return '${(v / 1000).toStringAsFixed(0)} K Đ';
-    return '${v.toStringAsFixed(0)} Đ';
-  }
+  String _fmtMoney(double v) => fmtMoney(v); // định dạng chung ("1.250.000 đ", "12,5 triệu")
 
   String _fmtDate(String iso) {
     try {

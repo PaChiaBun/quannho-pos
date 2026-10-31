@@ -4910,7 +4910,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     final approved = await showDialog<Map<String, String>?>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => _ManagerPinInputDialog(storeId: storeId),
+      builder: (ctx) => ManagerPinInputDialog(storeId: storeId),
     );
     // Không bao giờ ghi PIN; chỉ ghi kết quả và tên người duyệt.
     AppLogger.action(
@@ -5249,7 +5249,11 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           CancelStep('hủy phiếu bếp', () async {
             await client
                 .from('kitchen_tickets')
-                .update({'status': 'huy'})
+                // done_at = giờ huỷ: màn bếp hiện thẻ "ĐÃ HUỶ" 15 phút tính từ đây.
+                .update({
+                  'status': 'huy',
+                  'done_at': DateTime.now().toUtc().toIso8601String(),
+                })
                 .eq('session_id', widget.session.id)
                 .inFilter('status', ['cho', 'dang_lam']);
           }),
@@ -12696,15 +12700,15 @@ class _StampRow extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // MANAGER PIN INPUT DIALOG — Duyệt nhanh huỷ món, huỷ bàn tại chỗ
 // ─────────────────────────────────────────────────────────────────────────────
-class _ManagerPinInputDialog extends StatefulWidget {
+class ManagerPinInputDialog extends StatefulWidget {
   final String storeId;
-  const _ManagerPinInputDialog({required this.storeId});
+  const ManagerPinInputDialog({required this.storeId});
 
   @override
-  State<_ManagerPinInputDialog> createState() => _ManagerPinInputDialogState();
+  State<ManagerPinInputDialog> createState() => _ManagerPinInputDialogState();
 }
 
-class _ManagerPinInputDialogState extends State<_ManagerPinInputDialog>
+class _ManagerPinInputDialogState extends State<ManagerPinInputDialog>
     with SingleTickerProviderStateMixin {
   String _pin = '';
   String? _error;

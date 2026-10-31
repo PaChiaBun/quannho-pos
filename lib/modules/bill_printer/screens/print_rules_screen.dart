@@ -7,12 +7,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pdf/pdf.dart' show PdfPageFormat;
+import 'package:pdf/widgets.dart' as pw;
 import 'package:uuid/uuid.dart';
+import '../../../core/services/thermal_printer_service.dart' show ThermalPrinterService;
+import '../fonts/bill_fonts.dart';
 import '../providers/bar_label_template_provider.dart';
 import '../providers/printer_settings_provider.dart';
 import '../routing/legacy_print_setup.dart';
 import '../routing/print_setup.dart';
 import '../drivers/sunmi_builtin_driver.dart';
+import 'bill_preview_screen.dart' show StationPrinterDispatcher;
 import 'print_design_screen.dart';
 
 const _kIndigo = Color(0xFF1C2151);
@@ -265,6 +270,55 @@ class _PrintersTab extends StatelessWidget {
     ));
   }
 
+  /// In thử ra đúng máy này theo loại kết nối (cả máy chưa Lưu). Chỉ in, không lưu gì.
+  Future<void> _testPrint(BuildContext context, PrinterEntry p) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(SnackBar(content: Text('Đang gửi phiếu in thử tới "${p.name}"...')));
+    String? err;
+    try {
+      if (p.kind == PrinterKind.sunmiBuiltin) {
+        final r = await SunmiBuiltinDriver.printTestSlip(deviceName: state.deviceState.deviceName);
+        if (!r.ok) err = r.message;
+      } else if (p.kind == PrinterKind.lan && !kIsWeb) {
+        // Gửi lệnh thẳng tới máy IP (không qua hộp chọn máy in). Lúc in thật luôn dùng cổng 9100.
+        final r = await ThermalPrinterService.testConnection(printerIp: p.address);
+        if (!r.ok) {
+          err = 'không kết nối được ${p.address}:9100. Kiểm tra máy in đã bật và cùng mạng Wi-Fi.';
+        }
+      } else {
+        // Cùng hàm in hoá đơn thật: đúng tên máy in hệ thống, máy QN-… trên Windows, trình duyệt.
+        final wMm = p.paper == PaperWidth.mm80 ? 70.0 : 48.0;
+        final format = PdfPageFormat(wMm * PdfPageFormat.mm, double.infinity,
+            marginAll: 2 * PdfPageFormat.mm);
+        final doc = pw.Document(
+            theme: pw.ThemeData.withFont(base: await BillFonts.regular(), bold: await BillFonts.bold()));
+        doc.addPage(pw.Page(
+          pageFormat: format,
+          build: (_) => pw.Text('Quán Nhỏ POS\nIN THỬ MÁY IN\n${p.name}\nKhổ giấy ${paperLabel(p.paper)}'),
+        ));
+        final ok = await StationPrinterDispatcher.dispatchPrintDefault(
+          await doc.save(),
+          PrinterConfig(name: p.address, type: 'system', enabled: true, paperMm: wMm),
+          'in_thu_may_in',
+          format: format,
+        );
+        if (!ok) {
+          err = p.address.isEmpty
+              ? 'chưa nhập tên máy in trong hệ thống.'
+              : 'máy in không nhận lệnh. Kiểm tra đúng tên máy in và máy đang bật.';
+        }
+      }
+    } catch (_) {
+      err = 'có lỗi khi gửi lệnh in.';
+    }
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(
+      content: Text(err == null
+          ? 'Đã gửi phiếu in thử tới "${p.name}".'
+          : 'In thử "${p.name}" không được: $err'),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
@@ -288,43 +342,57 @@ class _PrintersTab extends StatelessWidget {
           for (final p in setup.printers)
             Card(
               margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                leading: Icon(
-                  p.kind == PrinterKind.lan
-                      ? Icons.wifi_rounded
-                      : p.kind == PrinterKind.sunmiBuiltin
-                          ? Icons.phone_android_rounded
-                          : Icons.print_rounded,
-                  color: p.enabled ? _kIndigo : Colors.grey,
-                ),
-                title: Text(p.name, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                subtitle: Text(
-                  '${printerKindLabel(p.kind)}'
-                  '${p.address.isNotEmpty ? ' • ${p.address}${p.kind == PrinterKind.lan ? ':${p.port}' : ''}' : ''}'
-                  ' • ${paperLabel(p.paper)}'
-                  '${p.fontScale != 1.0 ? ' • chữ ${(p.fontScale * 100).round()}%' : ''}'
-                  '${p.kind == PrinterKind.sunmiBuiltin && p.darkness != 3 ? ' • độ đậm ${p.darkness}/5' : ''}'
-                  '${p.autoCut ? ' • tự cắt' : ''}${p.hasCashDrawer ? ' • có két' : ''}'
-                  '${p.kind == PrinterKind.sunmiBuiltin && !SunmiBuiltinDriver.isSupportedPlatform ? '\nChỉ in được trên thiết bị Sunmi (Android)' : ''}',
-                  style: GoogleFonts.plusJakartaSans(fontSize: 12.5),
-                ),
-                isThreeLine: p.kind == PrinterKind.sunmiBuiltin && !SunmiBuiltinDriver.isSupportedPlatform,
-                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Switch(value: p.enabled, onChanged: (v) => _replace(_copy(p, enabled: v))),
-                  IconButton(
-                    icon: const Icon(Icons.edit_rounded),
-                    onPressed: () async {
-                      final r = await showDialog<PrinterEntry>(
-                          context: context, builder: (_) => _PrinterDialog(initial: p));
-                      if (r != null) _replace(r);
-                    },
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                ListTile(
+                  leading: Icon(
+                    p.kind == PrinterKind.lan
+                        ? Icons.wifi_rounded
+                        : p.kind == PrinterKind.sunmiBuiltin
+                            ? Icons.phone_android_rounded
+                            : Icons.print_rounded,
+                    color: p.enabled ? _kIndigo : Colors.grey,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                    onPressed: () => _remove(context, p),
+                  title: Text(p.name, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+                  subtitle: Text(
+                    '${printerKindLabel(p.kind)}'
+                    '${p.address.isNotEmpty ? ' • ${p.address}${p.kind == PrinterKind.lan ? ':${p.port}' : ''}' : ''}'
+                    ' • ${paperLabel(p.paper)}'
+                    '${p.fontScale != 1.0 ? ' • chữ ${(p.fontScale * 100).round()}%' : ''}'
+                    '${p.kind == PrinterKind.sunmiBuiltin && p.darkness != 3 ? ' • độ đậm ${p.darkness}/5' : ''}'
+                    '${p.autoCut ? ' • tự cắt' : ''}${p.hasCashDrawer ? ' • có két' : ''}'
+                    '${p.kind == PrinterKind.sunmiBuiltin && !SunmiBuiltinDriver.isSupportedPlatform ? '\nChỉ in được trên thiết bị Sunmi (Android)' : ''}',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5),
                   ),
-                ]),
-              ),
+                  isThreeLine: p.kind == PrinterKind.sunmiBuiltin && !SunmiBuiltinDriver.isSupportedPlatform,
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Switch(value: p.enabled, onChanged: (v) => _replace(_copy(p, enabled: v))),
+                    IconButton(
+                      icon: const Icon(Icons.edit_rounded),
+                      onPressed: () async {
+                        final r = await showDialog<PrinterEntry>(
+                            context: context, builder: (_) => _PrinterDialog(initial: p));
+                        if (r != null) _replace(r);
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                      onPressed: () => _remove(context, p),
+                    ),
+                  ]),
+                ),
+                // Nút riêng một hàng: hàng trên đã chật trên điện thoại 360dp.
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
+                    child: TextButton.icon(
+                      onPressed: () => _testPrint(context, p),
+                      icon: const Icon(Icons.print_rounded, size: 18),
+                      label: const Text('In thử'),
+                    ),
+                  ),
+                ),
+              ]),
             ),
         ],
       ),
@@ -429,6 +497,7 @@ class _PrinterDialogState extends State<_PrinterDialog> {
             const SizedBox(height: 12),
             DropdownButtonFormField<PrinterKind>(
               initialValue: _kind,
+              isExpanded: true, // 360dp: tên cách kết nối dài xuống dòng thay vì tràn ô
               decoration: const InputDecoration(labelText: 'Cách kết nối'),
               items: [
                 for (final k in PrinterKind.values)
@@ -443,7 +512,12 @@ class _PrinterDialogState extends State<_PrinterDialog> {
                 decoration: InputDecoration(
                   labelText: _kind == PrinterKind.lan
                       ? 'Địa chỉ IP (vd 192.168.1.242)'
-                      : 'Tên máy in trong hệ thống (để trống = máy in mặc định)',
+                      : 'Tên máy in trong hệ thống',
+                  // Lúc in, tên trống bị từ chối (không tự dùng máy in mặc định của Windows).
+                  helperText: _kind == PrinterKind.lan
+                      ? null
+                      : 'Gõ đúng tên máy in như trong Windows/Mac. Để trống sẽ không in được.',
+                  helperMaxLines: 2,
                 ),
               ),
             ],

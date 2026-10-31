@@ -21,6 +21,11 @@ import '../repository/pos_repository.dart';
 
 final _checkoutNavigators = <NavigatorState>{};
 
+/// Có thanh toán treo chờ đối soát trên máy này không — nút "Đối soát" ở Bán hàng chỉ hiện khi có.
+final pendingPosSaleProvider = FutureProvider.autoDispose<bool>(
+  (ref) async => await ref.watch(posRepositoryProvider).pendingSale() != null,
+);
+
 /// Shared by mobile cart, desktop panel and the quick checkout button.
 /// The guard is acquired synchronously, before even reading durable storage.
 Future<void> openPosCheckout(BuildContext context, WidgetRef ref) async {
@@ -47,6 +52,7 @@ Future<void> openPosCheckout(BuildContext context, WidgetRef ref) async {
     );
   } finally {
     _checkoutNavigators.remove(navigator);
+    if (context.mounted) ref.invalidate(pendingPosSaleProvider);
   }
 }
 
@@ -91,6 +97,7 @@ Future<bool> recoverPendingPosSale(BuildContext context, WidgetRef ref) async {
         },
       ),
     );
+    if (context.mounted) ref.invalidate(pendingPosSaleProvider);
     return true;
   } catch (e) {
     if (context.mounted)

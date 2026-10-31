@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/store_auth_service.dart';
+import '../utils/server_time.dart';
 
 const _kNavy = Color(0xFF1C2151);
 const _kInk = Color(0xFF1A1207);
@@ -466,7 +467,7 @@ Future<void> showOrderDetailDialog(
                           Expanded(
                             child: Text(
                               DateFormat('dd/MM/yyyy HH:mm').format(
-                                DateTime.parse(order['created_at'] as String),
+                                parseServerTime(order['created_at'] as String?) ?? DateTime.now(),
                               ),
                               textAlign: TextAlign.end,
                               style: GoogleFonts.plusJakartaSans(

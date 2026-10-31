@@ -2,7 +2,7 @@
 module: kho
 ten: Kho hàng
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-23
+cap_nhat: 2026-10-31
 nguon:
   - lib/screens/inventory_screen.dart (danh sách, form món, topping, điều chỉnh, lịch sử)
   - lib/modules/kho/screens/receive_stock_sheet.dart, phieu_nhap_hang_screen.dart, po_detail_screen.dart, supplier_list_screen.dart, supplier_form_screen.dart
@@ -28,11 +28,13 @@ nguon:
   - **"Thêm sản phẩm"**.
 - **Các tab**: **"Hàng hoá & Menu"** và **"Cảnh báo"** (sắp hết + hết hàng). Khi **bật phiếu nhập nâng cao** có thêm **"Tất cả"**, **"Nguyên liệu"**, **"Phiếu nhập"**; lúc đó "Hàng hoá & Menu" chỉ còn món bán (chưa bật thì tab này hiện mọi mặt hàng).
 - **Ô tìm "Tìm sản phẩm, SKU..."**, lọc theo danh mục, nút **"Chọn"** để chọn nhiều món.
-- Mỗi món hiện: tên, danh mục, **tồn / min**, giá bán, trạng thái **"Đang bán" / "Tạm ngưng bán"**, nhãn tồn:
+- **Điện thoại / máy POS cầm tay** (màn hẹp): mỗi món là **một thẻ** — tên (tối đa 2 dòng), dòng **"Tồn: … · min …"**, giá bán bên phải, nhãn danh mục, trạng thái, nút **⋮** (menu thao tác). **Nhấn giữ một thẻ** để bắt đầu chọn nhiều món (có dòng **"Chọn tất cả"**); cuối danh sách ghi "Hiển thị N / N món"; cuộn xa có nút tròn **"Lên đầu trang"**.
+- **Máy tính bảng / PC** (màn rộng): **bảng** đủ cột (Ảnh, Tên món & SKU, Danh mục, Tồn kho & Min, Giá bán, Trạng thái) vừa khít màn, không phải vuốt ngang; ô tích để chọn nhiều luôn hiện.
+- Mỗi món hiện: tên, danh mục, **tồn / min**, giá bán (đủ số, vd "25.000 đ"), trạng thái **"Đang bán" / "Tạm ngưng bán"**, nhãn tồn:
   - **"Hết hàng"** — có đặt tồn tối thiểu và tồn ≤ 0 (màn Bán hàng khoá món này).
   - **"Sắp hết"** — tồn ≤ mức tối thiểu.
   - **"Còn hàng"**.
-  - **"Không theo dõi"** — món không đặt tồn tối thiểu (dù tồn âm vẫn bán được).
+  - **"Không theo dõi"** — món không đặt tồn tối thiểu (dù tồn âm vẫn bán được). Món loại này bị trừ âm thì ô tồn ghi **"Không theo dõi"** thay cho số âm, và phần âm **không** trừ vào "Giá trị kho".
 - Menu **"Thao tác"** của từng món: **"Sửa thông tin món"**, **"Nhập kho"**, **"Điều chỉnh tồn kho"**, **"Lịch sử xuất nhập"**, **"Cấu hình Topping"**, **"Tùy chọn món (Modifiers)"**, **"Xóa món"**.
 
 ## Các việc thường làm

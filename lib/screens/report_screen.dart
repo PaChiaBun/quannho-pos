@@ -28,6 +28,8 @@ import 'einvoice_report_tab.dart';
 import '../core/utils/stagger.dart';
 import 'chain_report_screen.dart';
 import '../core/providers/session_provider.dart';
+import '../core/utils/money_formatter.dart' show fmtVnd;
+import '../core/utils/chain_compare.dart' show fmtPct;
 
 // ─── Design Tokens (nhất quán với toàn app) ───────────────────────────────────
 const _kNavy   = Color(0xFF1C2151);  // Đồng bộ với toàn app
@@ -1126,7 +1128,7 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text('${pct.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kMuted)),
+              Text('${fmtPct(pct)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kMuted)),
             ],
           ),
         ],
@@ -1324,7 +1326,7 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                Text('${pct.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kMuted)),
+                                Text('${fmtPct(pct)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kMuted)),
                               ],
                             ),
                           ],
@@ -1844,7 +1846,7 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
         return buildTableRow(
           name: name,
           value: formatVnd(e.value),
-          pct: '${pct.toStringAsFixed(1)}%',
+          pct: '${fmtPct(pct)}',
           indent: true,
         );
       }).toList();
@@ -2080,8 +2082,8 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800,
                     color: stats.incomeGrowth > 0 ? _kGreen : _kRed)),
                 Text(stats.incomeGrowth > 0
-                  ? 'Thu nhập tăng ${stats.incomeGrowth.toStringAsFixed(1)}% so với kỳ trước'
-                  : 'Thu nhập giảm ${stats.incomeGrowth.abs().toStringAsFixed(1)}% so với kỳ trước',
+                  ? 'Thu nhập tăng ${fmtPct(stats.incomeGrowth)} so với kỳ trước'
+                  : 'Thu nhập giảm ${fmtPct(stats.incomeGrowth.abs())} so với kỳ trước',
                   style: TextStyle(fontSize: 11, color: (stats.incomeGrowth > 0 ? _kGreen : _kRed).withValues(alpha: 0.8))),
               ])),
             ])),
@@ -2313,11 +2315,8 @@ class _RNavBtnState extends State<_RNavBtn> with SingleTickerProviderStateMixin 
 }
 
 // ─── Formatters
-// Định dạng tiền: 2.5 trĐ / 500 KĐ / 100 Đ
-String _fmt(double v) {
-  final formatted = NumberFormat('#,###', 'vi_VN').format(v.round());
-  return '$formatted Đ';
-}
+// Định dạng tiền chung của app: "387.000 đ" (trước đây "387.000 Đ" — lệch các màn khác)
+String _fmt(double v) => fmtVnd(v);
 String _fmtShort(double v) => _fmt(v);
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2796,7 +2795,7 @@ class _ReportRightPanel extends ConsumerWidget {
                 color: f.profit >= 0 ? _kGreen : _kRed),
               if (f.profitMargin != 0) ...[
                 const Divider(height: 1),
-                _RPRow(label: 'Biên LN', value: '${f.profitMargin.toStringAsFixed(1)}%', color: _kNavy),
+                _RPRow(label: 'Biên LN', value: '${fmtPct(f.profitMargin, signed: f.profitMargin < 0)}', color: _kNavy),
               ],
             ]),
           ),
