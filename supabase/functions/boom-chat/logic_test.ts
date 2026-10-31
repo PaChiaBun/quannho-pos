@@ -879,6 +879,9 @@ Deno.test('Lần 42: khuyên ngược món giá vốn cao + lộ chữ nội b�
   assertEquals(khuyenNguoc('Việc tuần này: thử giảm giá "Bạc xỉu" xuống 27.000đ.', ref), ['Bạc xỉu']);
   // đúng hướng: giảm giá vốn / tăng giá; đẩy món khác ở vế khác
   assertEquals(khuyenNguoc('Bạc xỉu cần giảm giá vốn hoặc tăng giá 2.000đ.', ref), []);
+  // lần 43b: quảng bá / mời thêm món lời mỏng cũng là khuyên ngược
+  assertEquals(khuyenNguoc('Tuần 2: tăng cường quảng bá Bạc xỉu (vì giá vốn cao hơn mốc).', ref), ['Bạc xỉu']);
+  assertEquals(khuyenNguoc('Tuần 3: nhân viên mời thêm Bạc xỉu khi khách gọi cà phê.', ref), ['Bạc xỉu']);
   assertEquals(khuyenNguoc('Kiểm lại giá Bạc xỉu, đồng thời đẩy mạnh Cà phê sữa đá buổi sáng.', ref), []);
   assert(kiemTraLoi('Dạ Anh, hạ giá combo (vì dòng ĐIỂM CẦN CHÚ Ý ghi combo đắt hơn mua lẻ).', ref).some((x) => x.includes('nội bộ')));
   assertEquals(kiemTraLoi('Dạ Anh, NÊN tăng giá Bạc xỉu: giá vốn 45%, bán 610 phần. Việc tuần này: tăng 2.000đ thử 2 tuần.', ref), []);

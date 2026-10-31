@@ -821,7 +821,9 @@ export function formatFacts(f: ShopFacts, now: Date = new Date()): string {
   for (const g of f.groups ?? []) {
     for (const t of [...g.top, ...g.slow]) {
       if (t.retail && t.price && t.price > t.retail) alerts.push(`combo "${t.name}" ĐẮT HƠN mua lẻ ${vnd(t.price - t.retail)} (${t.qty} phần)`);
-      if (t.cost && t.price && Math.round((t.cost / t.price) * 100) > 35) alerts.push(`"${t.name}" giá vốn ${Math.round((t.cost / t.price) * 100)}% giá bán (mốc 25–35%), đang bán ${t.qty} phần`);
+      // lần 43b: ghi hướng đúng theo kiểu NÊN — GPT hiểu điểm cần chú ý là món cần đẩy (D21, D22); bản 43 viết "không … món này"
+      // làm GPT đảo câu "có nên tăng giá" thành KHÔNG NÊN
+      if (t.cost && t.price && Math.round((t.cost / t.price) * 100) > 35) alerts.push(`"${t.name}" giá vốn ${Math.round((t.cost / t.price) * 100)}% giá bán (mốc 25–35%), đang bán ${t.qty} phần → món lời mỏng: hướng đúng là TĂNG GIÁ nhẹ hoặc giảm định lượng (giảm giá / tặng / quảng bá thêm chỉ làm mỏng lời hơn)`);
     }
     const base = f.items_revenue && f.items_revenue > 0 ? f.items_revenue : f.revenue;
     if (/topping|món thêm|thêm|ăn kèm|phụ/i.test(g.name) && base > 0 && g.revenue / base < 0.05) alerts.push(`nhóm "${g.name}" chỉ ${pctTxt((g.revenue / base) * 100)}% doanh thu`);
@@ -1644,7 +1646,7 @@ export function soLa(answer: string, ref: string): string[] {
 // Lần 42 (31/10): Claude chấm — GPT khuyên giảm giá / tặng / đẩy món giá vốn cao hơn mốc (khuyên ngược "ĐIỂM CẦN CHÚ Ý")
 // và lộ tên dòng nội bộ ("dòng ĐIỂM CẦN CHÚ Ý", "khối KHÁCH HÀNG") ra câu trả lời → gộp vào lần hỏi lại của kiểm số.
 const NOI_BO = /ĐIỂM CẦN CHÚ Ý|HỒ SƠ QUÁN|tính sẵn|khối (?:số liệu|[A-ZĐ]{2,})|dòng (?:[A-ZĐ]{2,}|Phân tích|Doanh thu theo|Combo|Món bán|Bất thường|Dự báo)/;
-const KHUYEN_GIAM = /giảm giá(?! vốn)|khuyến mãi|ưu đãi|tặng|hạ giá|giảm (?:xuống|còn|\d)|đẩy mạnh|mua \d+ tặng/i;
+const KHUYEN_GIAM = /giảm giá(?! vốn)|khuyến mãi|ưu đãi|tặng|hạ giá|giảm (?:xuống|còn|\d)|đẩy mạnh|mua \d+ tặng|quảng bá|mời thêm|giới thiệu/i;
 
 /** Món có giá vốn cao hơn mốc (theo khối) mà câu trả lời khuyên giảm giá / tặng / đẩy mạnh trong cùng vế câu. */
 export function khuyenNguoc(answer: string, ref: string): string[] {

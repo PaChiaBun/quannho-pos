@@ -350,6 +350,24 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
   - Lọt "tăng cường quảng bá Bạc xỉu (vì giá vốn cao hơn mốc)" (D21, D22): GPT hiểu điểm cần chú ý là món cần đẩy.
 - Bước kế (lần 43): ghi thẳng ở dòng điểm cần chú ý "→ lời mỏng: không đẩy / không giảm giá, xem tăng giá hoặc giảm định lượng" (sửa từ dữ liệu gốc thay vì bắt lỗi rồi hỏi lại).
 
+### Lần 43 (31/10, thử rồi BỎ, không áp): 80 câu bị ảnh hưởng 10,51 → 10,30
+
+- Thử: dòng điểm cần chú ý của món giá vốn cao ghi "→ LỜI MỎNG: không đẩy / quảng bá / giảm giá / tặng món này; hướng đúng là tăng giá nhẹ hoặc giảm định lượng"; bộ dò khuyên ngược thêm "quảng bá / mời thêm / giới thiệu".
+- Hỏng: GPT hiểu "không … món này" thành đừng đụng món → câu "có nên tăng giá Trà dâu tây / Cơm sườn" thành KHÔNG NÊN (16 → 7–11). Bài học: câu cấm phủ cả món làm đảo quyết định; nếu thử lại phải viết theo hướng NÊN ("NÊN tăng giá nhẹ / giảm định lượng; tránh giảm giá, tặng").
+- Cách chấm tiết kiệm lần đầu: chỉ chấm câu bị ảnh hưởng, khối số liệu ghi 1 lần, 2 trợ lý → khoảng 0,27 triệu token (so 0,5 triệu).
+
+### Lần 43b (31/10, Claude chấm 2 lượt, đã áp 01/11): 78 câu bị ảnh hưởng 10,62 → **11,13/16**; ước cả đề 10,82 → **11,15**
+
+- Đã làm: dòng điểm cần chú ý của món giá vốn cao viết theo hướng NÊN: "món lời mỏng: hướng đúng là TĂNG GIÁ nhẹ hoặc giảm định lượng (giảm giá / tặng / quảng bá thêm chỉ làm mỏng lời hơn)"; bộ dò khuyên ngược bắt thêm "quảng bá / mời thêm / giới thiệu".
+- Kết quả: cả 8 tiêu chí tăng (thẳng 1,42 → 1,54; lý lẽ 0,86 → 0,92; việc làm 0,88 → 0,95; gọn 1,59 → 1,72). Câu "có nên tăng giá" (D12, D16, D19) giữ 16/16; D42 +5, D58 +4.
+- Còn yếu: D35 gọi giá bán là giá vốn; D32 bịa số món tháng trước; D59 chia nhỏ khoản nguyên liệu; khuyên tặng topping ở quán không bán topping (lần 44 thử sửa, bỏ).
+
+### Lần 44 (01/11, thử rồi BỎ, không áp): 57 câu bị ảnh hưởng 10,65 → 10,18
+
+- Thử: hồ sơ quán thêm "quán không bán topping: ưu đãi kèm hợp quán là nâng size, x2 điểm tích, combo theo giá tính sẵn"; bước tự kiểm hỏi lại khi khuyên topping ở quán đó.
+- Được: hết khuyên tặng topping ở quán không bán (D33, D51).
+- Hỏng: GPT chép "nâng size / x2 điểm" vào mọi câu, kể cả món chính quán bún cơm và combo không có → đúng quán 1,60 → 1,32, thận trọng 1,46 → 1,33. Bài học: dòng hồ sơ không gợi ý việc cụ thể; nếu thử lại chỉ ghi "không bán topping".
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
