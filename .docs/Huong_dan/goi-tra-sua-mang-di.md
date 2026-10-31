@@ -65,7 +65,7 @@ một phần đơn qua GrabFood/ShopeeFood; 2–6 nhân viên chia ca.
 - **Đề xuất:** Phần A của [kế hoạch topping & giảm giá](../ke-hoach-topping-giam-gia-pos.md) (đã viết, chờ duyệt).
 
 ## Bắt đầu nhanh cho quán mới (làm được ngay với app hiện tại)
-1. Bật module theo bảng trên: trang chủ, mục Modules → **"+ Thêm module"**.
+1. Bật module theo bảng trên: Trang chủ, mục **"Chức năng"** → **"+ Thêm module"**.
 2. Kho hàng: tạo danh mục (Trà sữa, Trà trái cây, Topping…), món, topping; nguyên liệu mua theo hộp thì nhập "Quy cách pha chế".
 3. In Hoá Đơn: cài máy in bill + máy in tem (chọn đúng khổ decal), thiết kế tem.
 4. Nhân viên: vai trò Thu ngân / Pha chế, ca làm việc; Chấm công: cài vị trí quán.

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../services/store_auth_service.dart';
 import '../utils/app_logger.dart';
+import '../utils/server_time.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODELS — tương đương Drift KitchenTicket & KitchenTicketItem
@@ -85,6 +86,8 @@ class KitchenTicketItemModel {
   final String? kitchenNote; // Ghi chú nội bộ bếp: "làm chín kỹ" → bếp tự ghi
   final String? stationCode;
   final bool done;
+  final String? sessionItemId; // món ở bàn (ban_session_items.id); null ở phiếu cũ
+  final bool cancelled;        // món ở bàn đã huỷ — máy chủ vẫn để done = true như món xong
 
   const KitchenTicketItemModel({
     required this.id,
@@ -97,9 +100,11 @@ class KitchenTicketItemModel {
     this.kitchenNote,
     this.stationCode,
     this.done = false,
+    this.sessionItemId,
+    this.cancelled = false,
   });
 
-  factory KitchenTicketItemModel.fromMap(Map<String, dynamic> m) => KitchenTicketItemModel(
+  factory KitchenTicketItemModel.fromMap(Map<String, dynamic> m, {bool cancelled = false}) => KitchenTicketItemModel(
     id: m['id'] as String,
     ticketId: m['ticket_id'] as String,
     productId: m['product_id'] as String? ?? '',
@@ -110,8 +115,18 @@ class KitchenTicketItemModel {
     kitchenNote: m['kitchen_note'] as String?,
     stationCode: m['station_code'] as String?,
     done: m['done'] as bool? ?? false,
+    sessionItemId: m['session_item_id'] as String?,
+    cancelled: cancelled,
   );
 }
+
+/// Phiếu đã gửi bếp bị huỷ: bếp thấy thẻ "ĐÃ HUỶ" trong 15 phút kể từ giờ huỷ (done_at).
+/// Phiếu huỷ thiếu done_at coi là cũ, không hiện.
+const cancelledTicketWindow = Duration(minutes: 15);
+bool isRecentCancelledTicket(KitchenTicketModel t, DateTime now) =>
+    t.status == 'huy' &&
+    t.doneAt != null &&
+    now.millisecondsSinceEpoch - t.doneAt! < cancelledTicketWindow.inMilliseconds;
 
 class TicketWithItems {
   final KitchenTicketModel ticket;
@@ -127,6 +142,8 @@ class KitchenRepository {
 
   // Local cache to survive read replica lag / temporary empty items issues
   final Map<String, List<KitchenTicketItemModel>> _itemsCache = {};
+  // Món ở bàn đã huỷ (huỷ là vĩnh viễn) — truy vấn lỗi thì dùng lại kết quả lần trước
+  Set<String> _cancelledItemIds = {};
 
   Future<String?> _storeId() async {
     try {
@@ -242,6 +259,9 @@ class KitchenRepository {
   Future<List<TicketWithItems>> _fetchActiveTickets(String storeId) async {
     // Chỉ lấy phiếu trong 4 giờ gần nhất và giới hạn tối đa 50 phiếu để tránh bão payload 87KB
     final since = DateTime.now().subtract(const Duration(hours: 4)).toUtc().toIso8601String();
+    // Phiếu huỷ: chỉ lấy phiếu vừa huỷ (thẻ "ĐÃ HUỶ"); phiếu huỷ cũ / thiếu giờ huỷ vẫn bỏ như trước
+    final cancelledSince =
+        DateTime.now().subtract(cancelledTicketWindow).toUtc().toIso8601String();
 
     Set<String> openSessionIds = {};
     try {
@@ -260,7 +280,7 @@ class KitchenRepository {
         .from('kitchen_tickets')
         .select()
         .eq('store_id', storeId)
-        .neq('status', 'huy')
+        .or('status.neq.huy,done_at.gte.$cancelledSince')
         .gte('sent_at', since)
         .order('sent_at', ascending: false)
         .limit(50)
@@ -292,7 +312,8 @@ class KitchenRepository {
     final activeIds = ticketModels.map((t) => t.id).toSet();
     _itemsCache.removeWhere((id, _) => !activeIds.contains(id));
 
-    return ticketModels.where((ticket) {
+    final shown = ticketModels.where((ticket) {
+      if (ticket.status == 'huy') return isRecentCancelledTicket(ticket, now);
       // ‼️ Lọc phiếu của các bàn đã thanh toán
       // Chỉ ẩn phiếu nếu phiếu đó đã HOÀN THÀNH ('xong') VÀ session đã đóng (không còn nằm trong openSessionIds).
       // Nếu phiếu chưa làm xong ('cho' hoặc 'dang_lam'), BẮT BUỘC phải hiển thị để bếp làm (đơn mang đi hoặc bàn chưa đủ món).
@@ -310,10 +331,34 @@ class KitchenRepository {
         }
       }
       return true;
-    }).map((ticket) {
+    }).toList();
+
+    // Món huỷ ở bàn: máy chủ để done = true như món xong → hỏi kitchen_status của các món "xong" đang hiện
+    final shownIds = shown.map((t) => t.id).toSet();
+    final doneSessionItemIds = [
+      for (final i in allItems)
+        if (i['done'] == true && i['session_item_id'] != null && shownIds.contains(i['ticket_id']))
+          i['session_item_id'] as String,
+    ];
+    if (doneSessionItemIds.isNotEmpty) {
+      try {
+        final rows = await _sb
+            .from('ban_session_items')
+            .select('id')
+            .inFilter('id', doneSessionItemIds)
+            .eq('kitchen_status', 'huy')
+            .timeout(const Duration(seconds: 4));
+        _cancelledItemIds = rows.map((r) => r['id'] as String).toSet();
+      } catch (e) {
+        debugPrint('[KitchenRepo] fetch cancelled items error: $e');
+      }
+    }
+
+    return shown.map((ticket) {
       final fetchedItems = allItems
           .where((i) => i['ticket_id'] == ticket.id)
-          .map(KitchenTicketItemModel.fromMap)
+          .map((i) => KitchenTicketItemModel.fromMap(i,
+              cancelled: _cancelledItemIds.contains(i['session_item_id'])))
           .toList()
         ..sort((a, b) => a.id.compareTo(b.id));
 
@@ -589,50 +634,57 @@ class KitchenRepository {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VOID NOTICE MODEL — Thông báo hủy/sửa món hiển thị trên KDS
+// VOID NOTICE MODEL — Thông báo hủy/giảm món (một dòng void_audit_logs) hiển thị trên KDS
 // ─────────────────────────────────────────────────────────────────────────────
 class VoidNoticeModel {
   final String id;
+  final String referenceId; // id món ở bàn (huỷ / giảm món) hoặc id phiên bàn (huỷ bàn, huỷ phiếu ở Bán hàng)
   final String tableLabel;
-  final String productName;
-  final String action;       // 'cancel' | 'reduce_qty'
-  final double oldQty;
-  final double newQty;
+  final bool isReduce;      // giảm số lượng, không phải huỷ
+  final List<(String, double)> items; // (tên món, số lượng huỷ / giảm) từ details_json
   final String reason;
-  final String staffName;
-  final int    createdAt;   // milliseconds
+  final String approvedBy;
 
   const VoidNoticeModel({
     required this.id,
+    required this.referenceId,
     required this.tableLabel,
-    required this.productName,
-    required this.action,
-    required this.oldQty,
-    required this.newQty,
+    required this.isReduce,
+    required this.items,
     required this.reason,
-    required this.staffName,
-    required this.createdAt,
+    required this.approvedBy,
   });
 
-  factory VoidNoticeModel.fromMap(Map<String, dynamic> m) => VoidNoticeModel(
-    id:          m['id'] as String,
-    tableLabel:  m['table_label'] as String? ?? '',
-    productName: m['product_name'] as String? ?? '',
-    action:      m['action'] as String? ?? 'cancel',
-    oldQty:      (m['old_qty'] as num?)?.toDouble() ?? 0,
-    newQty:      (m['new_qty'] as num?)?.toDouble() ?? 0,
-    reason:      m['reason'] as String? ?? '',
-    staffName:   m['staff_name'] as String? ?? '',
-    createdAt:   _toMs(m['created_at']),
-  );
+  // label do logVoidEvent ghi: "Bàn 3 (Món: Trà sữa)", "Bàn 3 (Giảm món: Trà sữa)",
+  // "Mang đi (Huỷ phiếu bếp)", hoặc chỉ tên bàn (huỷ bàn)
+  static final _labelRe = RegExp(r'^(.+) \((Giảm món|Món|H(?:uỷ|ủy) phiếu bếp)[:)]');
+
+  factory VoidNoticeModel.fromMap(Map<String, dynamic> m) {
+    final label = m['label'] as String? ?? '';
+    final match = _labelRe.firstMatch(label);
+    final details = m['details_json'];
+    return VoidNoticeModel(
+      id:          m['id'] as String,
+      referenceId: m['reference_id'] as String? ?? '',
+      tableLabel:  match?.group(1) ?? label,
+      isReduce:    match?.group(2) == 'Giảm món',
+      items: [
+        if (details is List)
+          for (final d in details.whereType<Map>())
+            ('${d['product_name'] ?? ''}', (d['quantity'] as num?)?.toDouble() ?? 0),
+      ],
+      reason:      m['reason'] as String? ?? '',
+      approvedBy:  m['approved_by_name'] as String? ?? '',
+    );
+  }
 
   /// Label hiển thị ngắn gọn trên KDS card
   String get shortLabel {
-    final qty = oldQty.toStringAsFixed(0);
-    final name = productName;
-    if (action == 'cancel') return '❌ Huỷ ×$qty "$name"';
-    final nQty = newQty.toStringAsFixed(0);
-    return '✏️ Sửa "$name": $qty → $nQty';
+    String qty(double q) => q == q.roundToDouble() ? '${q.toInt()}' : '$q';
+    final verb = isReduce ? '✏️ Giảm' : '❌ Huỷ';
+    if (items.length == 1) return '$verb ×${qty(items.first.$2)} "${items.first.$1}"';
+    if (items.isEmpty) return '$verb món';
+    return '$verb: ${items.map((i) => '${i.$1} ×${qty(i.$2)}').join(', ')}';
   }
 }
 
@@ -662,12 +714,17 @@ Stream<List<VoidNoticeModel>> watchVoidNotices(String storeId) async* {
 
   await fetch();
 
-  // Realtime: Subscribe tất cả INSERT (không filter UUID column — có thể fail silently)
+  // Realtime: chỉ dòng của quán này (trước đây nghe mọi quán → quán khác huỷ món cũng làm máy này tải lại)
   final channel = sb.channel('void_notices_$storeId')
       .onPostgresChanges(
         event: PostgresChangeEvent.insert,
         schema: 'public',
         table: 'void_audit_logs',
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'store_id',
+          value: storeId,
+        ),
         callback: (payload) {
           debugPrint('[KitchenRepo] void_notice Realtime INSERT received');
           fetch();
@@ -698,6 +755,6 @@ class _KitchenDayStats {
 // Helper: convert Supabase timestamp (String or int) → ms
 int _toMs(dynamic val) {
   if (val is int) return val;
-  if (val is String) return DateTime.tryParse(val)?.millisecondsSinceEpoch ?? 0;
+  if (val is String) return parseServerTime(val)?.millisecondsSinceEpoch ?? 0;
   return 0;
 }

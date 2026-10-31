@@ -731,7 +731,7 @@ class KhoRepository {
     final totalValue = products.fold<double>(0, (s, p) {
       // ‼️ FIX: dùng costPriceLatest nếu > 0, fallback về costPrice
       final effectiveCost = p.costPriceLatest > 0 ? p.costPriceLatest : p.costPrice;
-      return s + p.stockQty * effectiveCost;
+      return s + (p.stockQty > 0 ? p.stockQty : 0) * effectiveCost; // tồn âm không kéo giảm giá trị kho
     });
 
     // ‼️ FIX Bug #23: dùng DateTime(y,m,d) thay .copyWith() — tránh lệch giờ DST
@@ -867,8 +867,13 @@ class StockItem {
 
   double get stockValue {
     final effectiveCost = costPriceLatest > 0 ? costPriceLatest : costPrice;
-    return stockQty * effectiveCost;
+    return (stockQty > 0 ? stockQty : 0) * effectiveCost; // tồn âm không phải hàng có thật
   }
+
+  /// Món không theo dõi tồn vẫn bị trừ khi bán nên có thể âm — hiện chữ thay số âm gây hiểu nhầm.
+  String get stockLabel => status == StockStatus.untracked && stockQty < 0
+      ? 'Không theo dõi'
+      : formattedStockDisplay;
 
   /// Hiển thị tồn kho thông minh (ví dụ: '9 lon + 355 ml')
   String get formattedStockDisplay {

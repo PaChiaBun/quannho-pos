@@ -744,7 +744,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         builder: (ctx, r, __) {
                           final lowStockAsync = r.watch(lowStockKhoProvider);
                           final lowCount = lowStockAsync.value?.length ?? 0;
-                          return GestureDetector(
+                          return Tooltip(
+                            message: 'Cảnh báo hàng sắp hết',
+                            child: GestureDetector(
                             onTap: () {
                               final items = lowStockAsync.value ?? [];
                               if (items.isEmpty) {
@@ -916,12 +918,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   ),
                               ],
                             ),
+                          ),
                           );
                         },
                       ),
                       const SizedBox(width: 8),
                       // Avatar → Settings
-                      GestureDetector(
+                      Tooltip(
+                        message: 'Cài đặt',
+                        child: GestureDetector(
                         onTap: () => ref
                             .read(navTabProvider.notifier)
                             .goTo(NavTab.settings),
@@ -943,6 +948,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             ),
                           ),
                         ),
+                      ),
                       ),
                     ],
                   ),
@@ -1124,13 +1130,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 children: [
                                   _HeaderPill(
                                     icon: Icons.receipt_long_rounded,
-                                    label: 'Số đơn',
+                                    label: 'đơn',
                                     value: '$orders',
                                   ),
                                   const SizedBox(width: 8),
                                   _HeaderPill(
                                     icon: Icons.people_rounded,
-                                    label: 'Khách',
+                                    label: 'khách',
                                     value: '$customers',
                                   ),
                                 ],
@@ -1162,7 +1168,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Modules',
+              'Chức năng',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -1173,13 +1179,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             Text(
               _isEditMode
                   ? 'Nhấn  –  để xoá · Nhấn  +  để thêm'
-                  : '${activeModules.length} đang bật • Giữ để sắp xếp',
+                  : '${activeModules.length} đang bật • Giữ ô để sắp xếp',
               style: TextStyle(
                 fontSize: 11.5,
                 color: _isEditMode ? _kOrange.withValues(alpha: 0.85) : _kMuted,
                 fontWeight: _isEditMode ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
+            // Thanh dưới chỉ có trên điện thoại; đổi mục bằng cách giữ lâu — trước đây không ai biết.
+            if (!_isEditMode && !Responsive.isLargeScreen(context))
+              const Text(
+                'Giữ lâu một mục ở thanh dưới để đổi',
+                style: TextStyle(fontSize: 11.5, color: _kMuted),
+              ),
           ],
         ),
         const Spacer(),
@@ -1671,10 +1683,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           margin: const EdgeInsets.symmetric(horizontal: 12),
                         ),
                         _TodayStat(
-                          label: 'Sắp hết hàng',
+                          label: 'Tồn kho',
                           value: lowCount == 0
                               ? 'Ổn định'
-                              : '$lowCount sản phẩm',
+                              : '$lowCount món sắp hết',
                           icon: lowCount == 0
                               ? Icons.check_circle_rounded
                               : Icons.warning_amber_rounded,

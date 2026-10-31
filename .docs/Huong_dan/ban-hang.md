@@ -2,7 +2,7 @@
 module: pos
 ten: Bán hàng
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-23
+cap_nhat: 2026-10-31
 nguon:
   - lib/screens/pos_screen.dart
   - lib/modules/pos/screens/checkout_sheet.dart
@@ -28,13 +28,13 @@ nguon:
 
 ## Màn hình gồm những gì
 - **Thanh trên cùng**: chữ "Bán hàng" + giờ, ngày. Bên phải lần lượt:
-  - Nút **đồng hồ quay ngược** (gợi ý khi giữ: "Đối soát thanh toán bị gián đoạn") — xem mục [Đối soát](#đối-soát-thanh-toán-bị-gián-đoạn).
+  - Nút **đồng hồ quay ngược** có **chấm đỏ** (gợi ý khi giữ: "Đối soát thanh toán bị gián đoạn") — **chỉ hiện khi máy có thanh toán dang dở** cần đối soát; xem mục [Đối soát](#đối-soát-thanh-toán-bị-gián-đoạn).
   - Nhãn **"Đơn QR (n)"** — chỉ hiện khi có đơn khách tự gọi qua QR. Màu cam: có đơn mới chờ; xanh: đang xử lý; xám kèm biểu tượng mất sóng: mất kết nối hàng đợi QR.
-  - Nút **dấu +**: thêm nhanh món mới vào thực đơn.
+  - Nút **dấu +**: thêm nhanh món mới vào thực đơn — **chỉ Chủ quán và Quản lý thấy**.
   - Nút **giỏ hàng** (hiện số món).
-  - Nút **thùng rác**: xoá giỏ (chỉ hiện khi giỏ có món).
+  - Nút **thùng rác**: xoá giỏ (ẩn khi giỏ trống; vị trí các nút không đổi khi thêm món).
 - **Dải đỏ khoá QR** (chỉ khi mã QR của quán bị khoá do bị quét phá) — xem hướng dẫn QR Gọi Món.
-- **Ô tìm kiếm** (chữ mờ "Tìm món, mã SKU..."): tìm theo tên món hoặc mã SKU, không cần gõ dấu.
+- **Ô tìm kiếm** (chữ mờ "Tìm món, mã SKU..."): tìm theo tên món hoặc mã SKU, không cần gõ dấu. Cuộn xuống danh sách món thì ô tìm kiếm và nút "Đơn gần đây" tự **gập lại** cho rộng chỗ; cuộn lên thì hiện lại.
 - Nút **"Đơn gần đây"**; bên phải có nhãn "Bếp sẵn sàng" khi quán bật module Bếp.
 - **Hàng danh mục**: "Tất cả" và các danh mục của quán. Ở "Tất cả", món được nhóm theo danh mục.
 - **Lưới món**: mỗi thẻ có tên, giá, số tồn (nếu có theo dõi tồn).
@@ -43,7 +43,7 @@ nguon:
 
 ### Gọi món
 1. Chạm vào thẻ món → món bay vào giỏ. Chạm lại để tăng số lượng. Lướt tay cuộn danh sách đi qua thẻ món thì **không** tính là chạm.
-2. Khi món đã có trong giỏ, trên thẻ hiện **[−] xN**: bấm **−** để giảm.
+2. Khi món đã có trong giỏ, trên thẻ hiện **[−] xN**: bấm **−** để giảm. Phần **đã gửi bếp** không bớt bằng nút − được (app nhắc mở giỏ, bấm **"Huỷ phiếu bếp"**); gọi thêm món đó sau khi đã gửi bếp thì app tạo dòng mới để gửi bếp đợt sau.
 3. Muốn tìm nhanh: gõ tên vào ô tìm kiếm, hoặc chọn danh mục.
 4. **Giữ lâu** một thẻ món để mở bảng thêm **nhiều món cùng lúc kèm ghi chú bếp**; chọn số lượng rồi bấm **"Thêm N món vào giỏ"**.
 
@@ -57,11 +57,19 @@ nguon:
 Chỉ dùng khi quán bật module **Bếp**.
 1. **Điện thoại:** trên thanh giỏ hàng ở dưới, bấm **"Bếp (n)"** — n là số món chưa gửi. **Máy tính bảng / PC / web:** trong giỏ hàng bên phải, bấm **"Gửi bếp (n món)"** ngay trên nút "Thanh toán".
 2. Bảng **"Xác nhận gửi bếp"** hiện danh sách món; có thể ghi chú từng món và **"Ghi chú chung cho bếp (tuỳ chọn)"**.
-3. Bấm **"Gửi bếp ngay"**. Thông báo: "Đã gửi bếp đợt X: Mang đi — N món".
+3. Bấm **"Gửi bếp ngay"**. Thông báo: "Đã gửi bếp đợt X: Mang đi — N món". Đổi ý thì bấm **"Huỷ"** cạnh nút gửi (đóng bảng, không gửi gì).
 4. Giỏ hàng **vẫn giữ nguyên** để thu tiền sau; món đã gửi có nhãn **"đã gửi bếp"**. Gọi thêm món rồi bấm nút gửi bếp lần nữa ("Bếp" trên điện thoại, "Gửi bếp" trên máy tính bảng / PC / web) sẽ gửi **đợt mới** chỉ gồm món chưa gửi. Gửi hết thì nút đổi thành **"Đã gửi hết"** (máy tính bảng / PC / web: **"Đã gửi bếp hết"**).
 5. Trong lúc đang gửi, nút gửi bếp bị khoá (máy tính bảng / PC / web hiện **"Đang gửi bếp…"**). Bấm "Thanh toán" lúc này, app báo "Đang gửi bếp — đợi gửi xong rồi thanh toán."
 
 > Nút "Bếp" mờ và báo cần bật module Bếp khi quán chưa bật module này.
+
+### Huỷ phiếu bếp ở quầy (chưa thu tiền)
+Khách bỏ đơn hoặc đổi ý sau khi thu ngân đã bấm "Bếp" ở màn Bán hàng, chưa thu tiền:
+1. Mở giỏ hàng, bấm **"Huỷ phiếu bếp"** (nút mờ cho tới khi giỏ có phiếu bếp, sáng đỏ khi đã có).
+2. Chọn **"Lý do huỷ *"** rồi bấm **"Huỷ phiếu bếp"**. Chủ quán / Quản lý duyệt luôn; người khác nhờ Quản lý nhập **PIN**.
+3. Màn Bếp nhận **phiếu HUỶ**. Các dòng vẫn ở lại giỏ, coi như chưa gửi: bớt thứ khách không lấy rồi bấm "Bếp" gửi lại, hoặc xoá giỏ.
+
+> Huỷ là huỷ cả các phiếu của giỏ (máy chủ không cho thu tiền một phiếu bếp có dòng bị huỷ). Đơn đã thanh toán thì không huỷ ở đây.
 
 ### Gắn khách hàng để tích điểm
 1. Mở giỏ hàng, ở ô **"SĐT khách hàng (tích điểm)..."** gõ số điện thoại của khách (ít nhất 9 số, đúng như đã lưu trong module Khách hàng) rồi bấm tìm.
@@ -75,7 +83,7 @@ Khách trả tiền tại quầy (thu ngân tính tiền ở màn Bán hàng):
 3. Tuỳ chọn giảm giá:
    - **"Điểm thưởng"** — chỉ hiện khi đã gắn khách có điểm và **không** trả bằng ví.
    - **"Khuyến mãi / Voucher"** → **"Chọn mã"** → chọn mã → **"Áp dụng"**. Bỏ mã: **"Gỡ mã"**.
-   - App **chưa có ô giảm giá tay** (trừ thẳng một số tiền). Muốn bớt cho khách quen: Chủ quán / Quản lý tạo mã giảm giá ở Khách hàng → **"Khuyến mãi / Voucher"** → **"Thêm mã mới"**, rồi chọn mã khi thanh toán. Mã dùng chung cho mọi đơn — nên đặt hạn dùng hoặc tắt mã sau khi dùng.
+   - App **chưa có ô giảm giá tay** (trừ thẳng một số tiền). Muốn bớt cho khách quen: Chủ quán / Quản lý tạo mã giảm giá ở Khách hàng → tab **"Khuyến mãi"** → **"Thêm mã mới"**, rồi chọn mã khi thanh toán. Mã dùng chung cho mọi đơn — nên đặt hạn dùng hoặc tắt mã sau khi dùng.
 4. Kiểm phần tổng: "Tạm tính", "Giảm giá", "Dùng điểm", **"TỔNG CỘNG"**.
 5. Bấm **"Xác nhận • <số tiền>"**.
 6. Màn **"Thanh toán thành công!"** kèm số đơn. Hoá đơn tự in nếu quán bật tự in và máy đã cài máy in.
@@ -97,7 +105,7 @@ Thanh toán xong, hệ thống tự: ghi **một** khoản thu vào Thu Chi, tr�
 > Ngay sau khi thanh toán thì in lại bằng nút "In hoá đơn" trên màn "Thanh toán thành công!".
 
 ### Thêm nhanh món mới vào thực đơn
-1. Bấm nút **dấu +** trên thanh trên cùng (hoặc khi tìm không ra, bấm **"Thêm "<tên>""**).
+1. Bấm nút **dấu +** trên thanh trên cùng — chỉ Chủ quán / Quản lý có nút này (hoặc khi tìm không ra, bấm **"Thêm "<tên>""**).
 2. Bảng **"Thêm sản phẩm mới"**: "Tên sản phẩm *", "Giá bán (đ)", "Giá vốn (đ)", danh mục ("Đồ ăn", "Đồ uống", "Tráng miệng", "Combo", "Khác" hoặc danh mục riêng), đơn vị (mặc định "phần").
 3. Bấm **"Thêm vào thực đơn"** → "✅ Đã thêm "<tên>" vào thực đơn". Món hiện ngay trong lưới.
 
@@ -108,10 +116,11 @@ Thanh toán xong, hệ thống tự: ghi **một** khoản thu vào Thu Chi, tr�
 Xoá hết giỏ hàng khi khách đổi ý bỏ hết món:
 - Nút **thùng rác** trên thanh trên cùng → hỏi "Xóa giỏ hàng?" → **"Xóa"**.
 - Hoặc **"Xóa hết"** trong giỏ — chỉ người có quyền **"Huỷ đơn hàng"** mới bấm được (mặc định Chủ quán, Quản lý, Thu ngân; **Phục vụ không có**); người khác thấy "Bạn không có quyền huỷ đơn hàng". Quyền này chỉ chặn nút "Xóa hết" của giỏ chưa thanh toán, không liên quan đơn đã thu.
+- Giỏ có món **đã gửi bếp**: cả hai nút đều mở bảng **"Huỷ phiếu đã gửi bếp?"** trước (lý do + duyệt, xem [Huỷ phiếu bếp ở quầy](#huỷ-phiếu-bếp-ở-quầy-chưa-thu-tiền)); huỷ phiếu xong giỏ mới được xoá, để bếp không làm món khách đã bỏ.
 
 ### Đối soát thanh toán bị gián đoạn
 Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — không biết tiền đã ghi nhận chưa. Đơn đã hiện **"Thanh toán thành công!"** thì không cần đối soát, kể cả khi đóng màn đó bằng nút quay lại.
-1. Mở lại màn Bán hàng, bấm **"Thanh toán"** hoặc nút **đồng hồ quay ngược** trên thanh trên cùng.
+1. Mở lại màn Bán hàng, bấm **"Thanh toán"** hoặc nút **đồng hồ quay ngược** (có chấm đỏ) trên thanh trên cùng — nút này chỉ hiện khi máy còn giao dịch dang dở.
 2. Nếu có giao dịch dang dở, app hiện **"Thanh toán chưa đối soát"** kèm số tiền, phương thức. Bấm **"Đối soát / tiếp tục đơn cũ"**.
 3. App hỏi máy chủ: nếu đơn **đã thu**, chỉ lấy lại kết quả ("Đã thanh toán: <số đơn>") — **không thu lần hai**, không tự in lại. Nếu chưa, gửi lại đúng giao dịch cũ.
 4. Thành công thì giỏ đang hiển thị được xoá để tránh bán lại đơn cũ.
@@ -132,6 +141,8 @@ Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — kh
 | "Lỗi: … Số dư ví không đủ; chưa ghi nhận thanh toán" | Ví khách thay đổi trong lúc thanh toán | Chọn phương thức khác |
 | "Lỗi: … Phiên bếp đã đóng hoặc đã thanh toán…" / "Giỏ hàng thiếu món đã gửi bếp; chưa thu tiền." | Đơn đã gửi bếp bị thay đổi hoặc đã được thu ở nơi khác | Kiểm tra "Đơn gần đây" xem đã thu chưa; chưa thu thì báo quản lý |
 | "Gửi bếp thất bại. Hãy chụp lại báo chủ app." | Lỗi mạng hoặc dữ liệu khi gửi bếp | Thử lại; còn lỗi thì chụp màn gửi chủ app |
+| "Món này đã gửi bếp — muốn bớt hãy mở giỏ, bấm "Huỷ phiếu bếp"." | Bấm − trên món chỉ còn phần đã gửi bếp | Mở giỏ → "Huỷ phiếu bếp" → bớt món → gửi bếp lại |
+| "Chưa huỷ được phiếu bếp: …" | Mất mạng, hoặc PIN quản lý không còn hiệu lực | Kiểm tra mạng rồi làm lại; nhờ Quản lý nhập PIN lại |
 | "Bạn không có quyền huỷ đơn hàng" | Vai trò không có quyền "Huỷ đơn hàng" (vd Phục vụ) | Dùng nút thùng rác trên cùng, hoặc nhờ Thu ngân/Quản lý |
 | Đồ uống thêm bằng nút dấu + lại in ra máy bếp nóng | Món thêm nhanh mặc định "Bộ phận chế biến" = Bếp Nóng | Kho hàng → sửa món → chọn "Bếp Bar" |
 | Khách muốn huỷ / hoàn tiền đơn đã thanh toán | App chưa có chức năng huỷ đơn đã thu (kể cả khi lỡ bấm thanh toán nhầm, khách chưa trả tiền) | Báo Chủ quán — Chủ quán cũng chưa huỷ được trong app, doanh thu / thu chi của đơn đó sẽ lệch |
@@ -156,8 +167,9 @@ Mình phát hiện các điểm sau khi đọc code. Tài liệu trên mô tả 
 1. **Khoá món hết tồn — ĐÚNG THIẾT KẾ (Chủ Quán xác nhận 23/10):** món có đặt tồn tối thiểu mà tồn ≤ 0 thì khoá ("Hết"); món không đặt tồn tối thiểu thì không khoá. `qn.md` ghi khác ("thiếu tồn chỉ cảnh báo") → cần sửa `qn.md` cho khớp. **[ĐÃ SỬA trong app 23/10 — chưa phát hành]** món tạm ngưng bán (`is_available=false`) nay mờ, nhãn "Tạm ngưng", không thêm vào giỏ được — kể cả qua bảng nhấn giữ ("thêm nhiều món", trước đây lọt cả món hết tồn) và nút + của món đã có trong giỏ (`posProductSellable`); máy chủ chưa chặn.
 2. **Không có topping ở POS quầy.** Topping chỉ có ở Quản lý Bàn và QR khách. Với quán trà sữa mang đi đây là khoảng trống lớn.
 3. **[ĐÃ SỬA trong app 23/10 — chưa phát hành] Nút gửi bếp trên máy tính bảng / PC / web**: Chủ Quán xác nhận bản rộng không có nút gửi bếp (chỉ điện thoại có). Đã thêm nút "Gửi bếp (n món)" vào giỏ hàng bên phải; kiểm trên bản xem trước: mở đúng bảng "Xác nhận gửi bếp". Khi đang gửi: nút hiện "Đang gửi bếp…" và bị khoá (điện thoại cũng khoá); bấm "Thanh toán" lúc đó báo "Đang gửi bếp — đợi gửi xong rồi thanh toán.".
-4. **Hai nút xoá giỏ khác quyền**: thùng rác trên cùng ai cũng xoá được; "Xóa hết" trong giỏ cần `pos.cancel_bill` (Phục vụ mặc định không có → nhân viên vẫn xoá được bằng thùng rác).
+4. **Hai nút xoá giỏ khác quyền**: thùng rác trên cùng ai cũng xoá được; "Xóa hết" trong giỏ cần `pos.cancel_bill` (Phục vụ mặc định không có → nhân viên vẫn xoá được bằng thùng rác). **[ĐÃ SỬA 31/10 — chưa phát hành]** giỏ có món đã gửi bếp thì cả hai nút phải qua "Huỷ phiếu bếp" (lý do + duyệt quản lý, ghi `void_audit_logs`); trước đây xoá giỏ / nút − / gộp món vào dòng đã gửi làm bếp vẫn làm món khách đã bỏ.
 5. **[ĐÃ SỬA trong app 23/10 — chưa phát hành]** Chữ không dấu trên giao diện: "Tim mon, ma SKU...", "N mon", "Bep san sang", "Can bat Module Bep trong Modules truoc", "Mang di".
+5b. **[ĐÃ SỬA 01/11 — chưa phát hành] Gửi bếp từ quầy lỗi ở gần như mọi quán:** khu "Bán mang đi" / bàn "Mang đi" dùng **một mã cố định chung cho cả hệ thống** (`pos_screen.dart`); quán tạo trước giữ mã, quán khác bấm "Bếp" bị RLS chặn (42501, "Gửi bếp thất bại"). Nay mỗi quán một mã riêng (sinh cố định từ mã quán, `Uuid.v5`), tạo **ẩn** (`is_active=false`) nên không hiện ở màn Bàn / danh sách bàn khách QR; chỉ ghi lần đầu mỗi quán. Mỗi đợt gửi bếp dùng **một bàn "Mang đi" ẩn riêng** vì máy chủ chỉ cho mỗi bàn một phiên mở (`uq_ban_sessions_one_open_per_table`, từ QR v4 13/10) — trước đây đợt 2 / đơn thứ 2 chưa thu tiền bị chặn. Bỏ cột cũ `price` (kiểu số nguyên, "35000.0" bị từ chối) khi ghi món; lỗi giữa chừng thì đóng phiên vừa tạo. Đã thử 01/11 trên quán demo: gửi 2 đợt → Huỷ phiếu bếp → bếp hiện 2 thẻ ĐÃ HUỶ → bớt món, gửi lại → thu tiền 90.000 đ. Quán đang giữ mã chung cũ vẫn còn khu/bàn cũ (đang bật).
 6. **Thông báo lỗi máy chủ hiện kèm chữ "Exception:"** (vd "Lỗi: Exception: Giá món đã đổi…") — nên bỏ cho dễ đọc.
 7. **Không có giảm giá tay**: `manualDiscount` / `CartNotifier.setDiscount` có nhưng không có ô nhập. Máy chủ (`complete_pos_sale_v1`) nhận `p_discount` nhưng từ chối Quản lý và vai trò lưu quyền theo tên → xem `.docs/ke-hoach-topping-giam-gia-pos.md`.
 8. Có code chọn bàn trong POS (`_TablePickerSheet`, `_LocationSelector`) nhưng **không được dùng** — mọi đơn POS là "Mang đi".

@@ -2,7 +2,7 @@
 module: kitchen
 ten: Bếp
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-23
+cap_nhat: 2026-10-31
 nguon:
   - lib/screens/kitchen_screen.dart
   - lib/core/repositories/kitchen_repository.dart (lọc phiếu, trạng thái, dọn phiếu, thông báo huỷ)
@@ -15,7 +15,7 @@ nguon:
 > Màn hình phiếu bếp (KDS) cho bếp và quầy pha chế: nhận phiếu theo thời gian thực, đánh dấu từng món xong, nhận thông báo huỷ/sửa món, chuông báo phiếu mới và phiếu trễ.
 
 ## Ai dùng được
-- Người có module **Bếp** (mặc định **tắt**, Chủ quán bật trong Modules). Quán mới tạo, trong các vai trò có sẵn chỉ **Bếp** có module này (Thu ngân, Nhân viên thì không); Chủ quán thêm module cho vai trò bất kỳ ở **Nhân viên → Vai trò**.
+- Người có module **Bếp** (mặc định **tắt**, Chủ quán bật ở mục "Chức năng" trên Trang chủ). Quán mới tạo, trong các vai trò có sẵn chỉ **Bếp** có module này (Thu ngân, Nhân viên thì không); Chủ quán thêm module cho vai trò bất kỳ ở **Nhân viên → Vai trò**.
 - **Chuông báo chỉ kêu trên máy đăng nhập bằng vai trò có chữ "Bếp" trong tên** (vd Bếp, Bếp chính, Phụ bếp, Bếp bar). Vai trò đặt tên **"Pha chế"** (không có chữ "Bếp") sẽ **không** kêu — đổi tên vai trò thành vd "Bếp pha chế". Máy Chủ quán, Quản lý, Thu ngân, Phục vụ mở màn Bếp cũng không kêu.
 
 ## Phiếu đến từ đâu
@@ -58,8 +58,11 @@ nguon:
 - Món cài **"Bộ phận chế biến" = Bếp Bar** ở Kho hàng luôn vào **Bếp nước**. Món để mặc định Bếp nóng thì màn Bếp **đoán theo tên** (trà, cà phê, sữa, sinh tố, nước, kem, soda, cam… → Bếp nước; còn lại → Bếp nóng). Đồ uống tên lạ bị vào Bếp nóng → sửa "Bộ phận chế biến" thành Bếp Bar. Món thêm nhanh bằng dấu + ở Bán hàng luôn vào **Bếp nóng**.
 
 ### 6. Thông báo huỷ / sửa món
-- Khi phục vụ huỷ hoặc giảm món, đầu màn hình hiện **"THÔNG BÁO SỬA ĐƠN"** (bàn, món, lý do, người làm). Bấm **"Đã hiểu ✓"** hoặc chờ 30 giây để ẩn.
-- Món bị huỷ biến mất khỏi phiếu; bàn bị huỷ thì cả phiếu bị huỷ.
+Chỉ món **đã gửi bếp** mới báo bếp; huỷ trước khi gửi thì bếp không thấy gì.
+- **Huỷ cả phiếu** (huỷ bàn, hoặc thu ngân bấm "Huỷ phiếu bếp" ở Bán hàng): đầu màn hiện **thẻ đỏ "ĐÃ HUỶ"** (tên bàn/khu, "Huỷ lúc HH:mm", các món bị gạch ngang) trong **15 phút**. Bấm **"Đã xem"** để ẩn thẻ trên máy này. Phiếu huỷ không còn rơi vào cột "Hoàn thành".
+- **Huỷ một món** trong phiếu còn món khác: món đó bị **gạch ngang**, có nhãn đỏ **"HUỶ"**, không bấm xong được — đừng làm món này.
+- Đầu màn còn dải **"THÔNG BÁO SỬA ĐƠN"** cho món bị huỷ / giảm trên phiếu đang hiện (bàn, món, số lượng, lý do, "Duyệt: <tên>"). Bấm **"Đã hiểu ✓"** hoặc chờ 30 giây để ẩn.
+- In lại phiếu thì món đã huỷ không in ra.
 
 ### 7. Phiếu trễ
 - Phiếu chờ/đang làm quá **30 phút**: nhãn **"TRỄ 30P!"** và chuông báo động (máy vai trò Bếp).

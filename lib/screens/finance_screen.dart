@@ -16,6 +16,7 @@ import '../modules/finance/screens/add_transaction_sheet.dart';
 import '../core/widgets/order_detail_dialog.dart';
 import '../core/utils/app_logger.dart';
 import '../core/utils/stagger.dart';
+import '../core/utils/chain_compare.dart' show fmtPct;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE
@@ -343,7 +344,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Biên lợi nhuận: ${stats.profitMargin.toStringAsFixed(1)}%',
+                                'Biên lợi nhuận: ${fmtPct(stats.profitMargin, signed: stats.profitMargin < 0)}',
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.38),
                                   fontSize: 11,
@@ -983,7 +984,7 @@ class _TransactionCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text(
-                          'Auto',
+                          'Tự động',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -1007,7 +1008,7 @@ class _TransactionCard extends StatelessWidget {
             ],
           ),
           trailing: Text(
-            '${isIncome ? '+' : '-'}${_fmtMoney(record.amount.toInt())}',
+            '${isIncome ? '+' : '-'}${fmtVnd(record.amount.abs())}',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -1153,7 +1154,7 @@ class _GrowthBadge extends StatelessWidget {
           ),
           const SizedBox(width: 2),
           Text(
-            '${pct.abs().toStringAsFixed(1)}%',
+            '${fmtPct(pct.abs())}',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -1354,11 +1355,6 @@ class _DateHeader extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
-String _fmtMoney(int v) => v.toString().replaceAllMapped(
-  RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-  (m) => '${m[1]},',
-);
-
 String _fmtShort(double v) => fmtMoney(v);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1413,7 +1409,7 @@ class _FinanceRightPanel extends StatelessWidget {
                     const Divider(height: 1),
                     _FStatRow(
                       label: 'Biên LN',
-                      value: '${stats.profitMargin.toStringAsFixed(1)}%',
+                      value: '${fmtPct(stats.profitMargin, signed: stats.profitMargin < 0)}',
                       color: _kNavy,
                     ),
                   ],

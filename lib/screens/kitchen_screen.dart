@@ -242,6 +242,8 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   final Set<String> _optimisticReopenedTickets = {};
   final Set<String> _optimisticDoneItems = {};
   final Set<String> _optimisticReopenedItems = {};
+  // Thẻ ĐÃ HUỶ đã bấm "Đã xem" — chỉ trên máy này, trong bộ nhớ
+  final Set<String> _seenCancelledIds = {};
 
   @override
   void initState() {
@@ -455,8 +457,6 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           ),
         ),
         data: (tickets) {
-          if (tickets.isEmpty) return const _EmptyKitchenState();
-
           final voidNotices = ref.watch(voidNoticesProvider).value ?? [];
           final filtered = _filterByStation(tickets);
 
@@ -473,12 +473,12 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
               if (_optimisticDoneItems.contains(i.id)) isDone = true;
               else if (_optimisticReopenedItems.contains(i.id)) isDone = false;
 
-              if (isDone == i.done) return i;
+              if (isDone == i.done || i.cancelled) return i; // món huỷ: máy chủ luôn giữ done = true
               return KitchenTicketItemModel(
                 id: i.id, ticketId: i.ticketId, productId: i.productId,
                 productName: i.productName, quantity: i.quantity,
                 note: i.note, freeNote: i.freeNote, kitchenNote: i.kitchenNote,
-                stationCode: i.stationCode, done: isDone,
+                stationCode: i.stationCode, done: isDone, sessionItemId: i.sessionItemId,
               );
             }).toList();
             return TicketWithItems(ticket: updatedTicket, items: updatedItems);
@@ -488,6 +488,12 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           // Khi lọc theo trạm, trạng thái dựa hoàn toàn vào item.done của trạm đó
           // KHÔNG dùng ticket.status — mỗi trạm theo dõi tiến độ độc lập
           String effectiveStatus(_TicketWithItems tw) {
+            // Thẻ ĐÃ HUỶ (không xếp vào Hoàn thành): mọi món (của trạm) đã huỷ, hoặc phiếu huỷ có món
+            // (của trạm) bị huỷ. Phiếu huỷ mà món của trạm đã làm xong hết → trạm này tính là xong.
+            if (tw.items.every((i) => i.cancelled) ||
+                (tw.ticket.status == 'huy' && tw.items.any((i) => i.cancelled))) {
+              return 'huy';
+            }
             if (stationFilter == 'all') return tw.ticket.status;
             // Item-level tracking: chỉ nhìn vào item.done của trạm này
             final active = tw.items.where((i) => !i.done).toList();
@@ -500,10 +506,49 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           final doingTickets = optimisticFiltered.where((t) => effectiveStatus(t) == 'dang_lam').toList();
           final doneTickets  = optimisticFiltered.where((t) => effectiveStatus(t) == 'xong').toList();
 
+          // Thông báo huỷ/giảm món chỉ hiện khi món còn nằm trên phiếu đang hiện (không phải thẻ huỷ):
+          // huỷ cả phiếu / cả bàn đã có thẻ ĐÃ HUỶ, huỷ trước khi gửi bếp thì bếp không cần biết.
+          final cancelledTickets = <_TicketWithItems>[];
+          final noticeRefs = <String?>{};
+          for (final tw in optimisticFiltered) {
+            if (effectiveStatus(tw) != 'huy') {
+              noticeRefs.addAll(tw.items.map((i) => i.sessionItemId));
+            } else if (!_seenCancelledIds.contains(tw.ticket.id)) {
+              cancelledTickets.add(tw);
+            }
+          }
+          final notices =
+              voidNotices.where((n) => noticeRefs.contains(n.referenceId)).toList();
+
+          // Dải thông báo + thẻ ĐÃ HUỶ: đứng đầu mọi bố cục (điện thoại, Kanban, màn trống)
+          final alerts = ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.4),
+            child: SingleChildScrollView(
+              primary: false,
+              child: Column(
+                children: [
+                  _VoidNoticeBanner(notices: notices),
+                  for (final tw in cancelledTickets)
+                    _CancelledTicketCard(
+                      tw: tw,
+                      onSeen: () => setState(() => _seenCancelledIds.add(tw.ticket.id)),
+                    ),
+                ],
+              ),
+            ),
+          );
+
+          if (tickets.every((t) => t.ticket.status == 'huy')) {
+            return Column(
+              children: [alerts, const Expanded(child: _EmptyKitchenState())],
+            );
+          }
+
           // ── Tablet/Desktop: Kanban 3 cột ──────────────────────────────
           if (Responsive.isLargeScreen(context)) {
             return Column(
               children: [
+                alerts,
                 _StationFilterBar(
                   selected: stationFilter,
                   onChanged: (s) =>
@@ -557,9 +602,8 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           // ── Mobile: Tab layout ─────────────────────────────────────────
           return Column(
             children: [
-              // ── Void notice banner (hủy/sửa món từ Bàn) ──
-              if (voidNotices.isNotEmpty)
-                _VoidNoticeBanner(notices: voidNotices),
+              // ── Thông báo huỷ/giảm món + thẻ ĐÃ HUỶ ──
+              alerts,
 
               // ── Station filter bar ──
 
@@ -1866,7 +1910,10 @@ class _TicketCard extends ConsumerWidget {
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
                       child: Column(
                         children: [...items.map((item) {
-                          final isItemDone = item.done;
+                          // Món huỷ: máy chủ để done = true — không hiện như món xong, không bấm được
+                          final isCancelled = item.cancelled;
+                          final isItemDone = item.done && !isCancelled;
+                          final strike = isCancelled ? TextDecoration.lineThrough : null;
                           // Modifiers — JSON array từ POS (ghi vào kitchen_note)
                           List modifiers = [];
                           final _rawModNote = item.kitchenNote; // ✅ FIX: dùng kitchenNote
@@ -1875,7 +1922,7 @@ class _TicketCard extends ConsumerWidget {
                           }
 
                           return InkWell(
-                            onTap: isDone
+                            onTap: isDone || isCancelled
                                 ? null
                                 : () => _showItemBottomSheet(context, item),
                             borderRadius: BorderRadius.circular(10),
@@ -1884,12 +1931,16 @@ class _TicketCard extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 11),
                               decoration: BoxDecoration(
-                                color: isItemDone
+                                color: isCancelled
+                                    ? _kRed.withValues(alpha: 0.08)
+                                    : isItemDone
                                     ? _kGreen.withValues(alpha: 0.06)
                                     : Colors.white.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: isItemDone
+                                  color: isCancelled
+                                      ? _kRed.withValues(alpha: 0.35)
+                                      : isItemDone
                                       ? _kGreen.withValues(alpha: 0.25)
                                       : Colors.white.withValues(alpha: 0.08),
                                 ),
@@ -1897,8 +1948,25 @@ class _TicketCard extends ConsumerWidget {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
+                                  // Món huỷ: nhãn HUỶ thay vòng tròn (không bấm xong được)
+                                  if (isCancelled)
+                                    Container(
+                                      margin: const EdgeInsets.only(right: 10),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: _kRed,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text('HUỶ',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          )),
+                                    )
                                   // Status circle — tap để toggle done
-                                  GestureDetector(
+                                  else GestureDetector(
                                     onTap: isDone
                                         ? () async {
                                             HapticFeedback.selectionClick();
@@ -1942,6 +2010,7 @@ class _TicketCard extends ConsumerWidget {
                                         fontSize: 15,
                                         fontWeight: FontWeight.w900,
                                         color: accent,
+                                        decoration: strike,
                                       ),
                                     ),
                                   ),
@@ -1956,9 +2025,12 @@ class _TicketCard extends ConsumerWidget {
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 17,
                                             fontWeight: FontWeight.w700,
-                                            color: isItemDone
+                                            color: isItemDone || isCancelled
                                                 ? Colors.white38
                                                 : Colors.white.withValues(alpha: 0.95),
+                                            decoration: strike,
+                                            decorationColor: _kRed,
+                                            decorationThickness: 2,
                                           ),
                                         ),
                                          if (modifiers.isNotEmpty)
@@ -2052,7 +2124,7 @@ class _TicketCard extends ConsumerWidget {
                                       ],
                                     ),
                                   ),
-                                  if (!isDone)
+                                  if (!isDone && !isCancelled)
                                     Icon(Icons.edit_note_rounded,
                                         size: 17, color: Colors.white24),
                                 ],
@@ -2250,7 +2322,7 @@ class _TicketCard extends ConsumerWidget {
       orderNumber: ticket.id.substring(0, 8).toUpperCase(),
       createdAt:   DateTime.fromMillisecondsSinceEpoch(ticket.sentAt),
       tableName:   ticket.tableLabel ?? 'Mang về',
-      items: tw.items.map((i) {
+      items: tw.items.where((i) => !i.cancelled).map((i) { // in lại không kèm món đã huỷ
         // ‼️ FIX Bug #24: i.note có thể là JSON array ["modifier1","extra"]
         // Parse thành text thuần để in đúng trên phiếu bếp
         String? noteText;
@@ -2664,10 +2736,10 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
                   Text(n.shortLabel,
                     style: GoogleFonts.plusJakartaSans(
                       color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
-                  Row(children: [
+                  // Wrap: lý do dài không tràn màn 360dp
+                  Wrap(spacing: 6, runSpacing: 2, crossAxisAlignment: WrapCrossAlignment.center, children: [
                     Text(n.tableLabel,
                       style: GoogleFonts.plusJakartaSans(color: Colors.white54, fontSize: 11)),
-                    const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
@@ -2676,11 +2748,9 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
                       child: Text(n.reason,
                         style: GoogleFonts.plusJakartaSans(color: const Color(0xFFFCA5A5), fontSize: 10)),
                     ),
-                    if (n.staffName.isNotEmpty) ...[ 
-                      const SizedBox(width: 6),
-                      Text('— ${n.staffName}',
+                    if (n.approvedBy.isNotEmpty)
+                      Text('Duyệt: ${n.approvedBy}',
                         style: GoogleFonts.plusJakartaSans(color: Colors.white38, fontSize: 10)),
-                    ],
                   ]),
                 ],
               )),
@@ -2693,6 +2763,89 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
                 style: GoogleFonts.plusJakartaSans(color: Colors.white38, fontSize: 11)),
             ),
           const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CANCELLED TICKET CARD — Phiếu đã gửi bếp bị huỷ (hiện 15 phút), "Đã xem" ẩn trên máy này
+// ─────────────────────────────────────────────────────────────────────────────
+class _CancelledTicketCard extends StatelessWidget {
+  final _TicketWithItems tw;
+  final VoidCallback onSeen;
+  const _CancelledTicketCard({required this.tw, required this.onSeen});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = tw.ticket;
+    // done_at của phiếu huỷ = giờ huỷ; mốc ms → giờ máy (giờ Việt Nam)
+    final at = t.status == 'huy' && t.doneAt != null
+        ? DateTime.fromMillisecondsSinceEpoch(t.doneAt!)
+        : null;
+    final sub = [
+      if ((t.zoneLabel ?? '').isNotEmpty) t.zoneLabel!,
+      if (at != null)
+        'Huỷ lúc ${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}',
+    ].join(' · ');
+    // Chỉ kê món bị huỷ (món bếp đã làm xong thì thôi); chưa biết món nào huỷ thì kê cả phiếu
+    final cancelled = tw.items.where((i) => i.cancelled).toList();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF7C1D1D),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _kRed, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(color: _kRed, borderRadius: BorderRadius.circular(6)),
+              child: Text('ĐÃ HUỶ',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1)),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(t.tableLabel ?? 'Bàn',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+              ),
+              onPressed: onSeen,
+              child: Text('Đã xem',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13)),
+            ),
+          ]),
+          if (sub.isNotEmpty)
+            Text(sub,
+              style: GoogleFonts.plusJakartaSans(
+                color: const Color(0xFFFCA5A5), fontWeight: FontWeight.w700, fontSize: 12)),
+          for (final i in cancelled.isEmpty ? tw.items : cancelled)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text('x${i.quantity.toInt()}  ${i.productName}',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  decoration: TextDecoration.lineThrough,
+                  decorationColor: const Color(0xFFFCA5A5),
+                  decorationThickness: 2,
+                )),
+            ),
         ],
       ),
     );

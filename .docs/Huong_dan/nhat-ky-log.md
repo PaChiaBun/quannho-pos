@@ -2,7 +2,7 @@
 module: log_viewer
 ten: Nhật Ký Log
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-23
+cap_nhat: 2026-10-31
 nguon:
   - lib/screens/log_viewer_screen.dart
   - lib/screens/bug_report_screen.dart (Cài đặt → "Gửi phản hồi")
@@ -15,7 +15,7 @@ nguon:
 > Xem lại hoạt động và lỗi của app theo thời gian, nhân viên, loại thao tác — dùng để tra sự cố ("ai huỷ bàn lúc mấy giờ", "vì sao không in bill") và gửi cho người hỗ trợ.
 
 ## Ai dùng được
-- Người có module **Nhật Ký Log** (mặc định có ở Chủ quán và Quản lý; bật trong Modules).
+- Người có module **Nhật Ký Log** (mặc định có ở Chủ quán và Quản lý; bật ở mục "Chức năng" trên Trang chủ).
 
 ## Màn hình gồm những gì
 - Tiêu đề **"Nhật Ký Hoạt Động & Lỗi"**; nút **"Sao chép Logs"**, **"Tải lại"**, **"Xóa log kỹ thuật"**.
@@ -46,7 +46,7 @@ Xem lại lỗi máy in (bill, phiếu bếp không in ra) / lỗi hệ thống 
 
 ### 2. Gửi log cho người hỗ trợ
 - Bấm **"Sao chép Logs"** → "Đã sao chép toàn bộ nhật ký vào Clipboard!" → dán vào tin nhắn.
-- Hoặc **Cài đặt → "Gửi phản hồi"** ("Báo lỗi & tự động đính kèm Log kỹ thuật"): chọn **"Loại phản hồi"**, **"Mô tả chi tiết *"**, thêm **"Ảnh chụp màn hình (tuỳ chọn)"** → gửi.
+- Hoặc **Cài đặt → "Gửi phản hồi"** ("Báo lỗi & tự động đính kèm nhật ký kỹ thuật"): chọn **"Loại phản hồi"**, **"Mô tả chi tiết *"**, thêm **"Ảnh chụp màn hình (tuỳ chọn)"** → gửi.
 
 ### 3. Xoá nhật ký
 - Nút **"Xóa log kỹ thuật"** → **"Xóa log kỹ thuật?"** → **"Xóa log kỹ thuật"** → "Đã xóa log kỹ thuật. Nhật ký nghiệp vụ được giữ lại." Chỉ xoá log kỹ thuật (máy in, hệ thống…); **nhật ký nghiệp vụ luôn được giữ** (hành động nghiệp vụ, thanh toán, đặt món, món tại bàn, thu chi, lương, nhân viên, tài khoản, kho, cài đặt) — máy chủ cũng chặn xoá.

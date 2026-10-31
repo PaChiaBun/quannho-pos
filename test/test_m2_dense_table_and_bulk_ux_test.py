@@ -3,7 +3,8 @@
 Test Suite: Milestone 2 — InventoryScreen Dense Data Table & Bulk UX Redesign
 Verifies all 5 Scope & Task requirements for Milestone 2:
 1. 100% Full-Width Layout (removal of _InventoryRightPanel & 280px sidebar)
-2. Dense Data Table Layout (8 columns, itemExtent: 50.0, min-width 820px horizontal scroll, row tap navigation)
+2. Dense Data Table Layout (8 columns, itemExtent: 50.0, row tap navigation) — từ 31/10/2026: bảng chỉ khi
+   vùng danh sách ≥ 600dp, cột co giãn (không còn cố định 820px cuộn ngang); < 600dp (máy POS 360dp) dùng thẻ
 3. Sticky Top Bar & Anti-Overlap UX (elimination of bottom floating bar, docked sticky top bar, bulk actions)
 4. Single Row Actions via 3-dots Menu (PopupMenuButton with edit, receive, adjust, history, delete)
 5. Hierarchy Guard & Permissions (_canManageBulk, _canDeleteItems, _canEditItems, zero hard delete)
@@ -37,7 +38,7 @@ class TestM2FullWidthLayout(unittest.TestCase):
 
 
 class TestM2DenseDataTableLayout(unittest.TestCase):
-    """Task 2: Dense Data Table Layout (8 Columns, itemExtent: 50.0, responsive horizontal scroll)"""
+    """Task 2: Dense Data Table Layout (8 Columns, itemExtent: 50.0) ≥ 600dp; danh sách thẻ < 600dp"""
 
     def setUp(self):
         self.code = INV_SCREEN_PATH.read_text(encoding='utf-8')
@@ -46,10 +47,18 @@ class TestM2DenseDataTableLayout(unittest.TestCase):
         # Verify ListView.builder uses itemExtent: 50.0 for dense performance
         self.assertIn("itemExtent: 50.0", self.code)
 
-    def test_dual_axis_responsive_scroll(self):
-        # Table must use horizontal SingleChildScrollView with min-width ~820px
-        self.assertIn("scrollDirection: Axis.horizontal", self.code)
-        self.assertIn("math.max(820.0,", self.code)
+    def test_cards_below_600_and_flex_table_without_horizontal_scroll(self):
+        # < 600dp: danh sách thẻ (bảng 820px cũ phải vuốt ngang mới thấy tồn/giá trên máy POS 360dp)
+        self.assertIn("constraints.maxWidth < 600", self.code)
+        self.assertIn("_buildCardList(filtered", self.code)
+        self.assertIn("_StockCard(", self.code)
+        # ≥ 600dp: bảng cột co giãn, không còn bề rộng tối thiểu 820px + cuộn ngang
+        self.assertNotIn("math.max(820.0,", self.code)
+        self.assertNotIn("_horizontalScrollCtrl", self.code)
+        # ListView bảng ghi rõ padding 0 — để trống thì tự cộng lề thanh trạng thái thành 1 hàng trống
+        self.assertRegex(self.code, r"padding:\s*EdgeInsets\.zero,\s*physics:\s*const AlwaysScrollableScrollPhysics")
+        # Thẻ chừa 56dp cuối danh sách cho nút voi Boom giữa thanh dưới
+        self.assertIn("padding: const EdgeInsets.fromLTRB(12, 8, 12, 56)", self.code)
 
     def test_table_header_8_columns(self):
         # Verify 8 header columns
@@ -57,18 +66,14 @@ class TestM2DenseDataTableLayout(unittest.TestCase):
         self.assertIn("width: 44", self.code)
         # Col 2: Ảnh/Icon (48px)
         self.assertIn("width: 48", self.code)
-        # Col 3: Tên món & SKU (Expanded / Flex)
+        # Col 3: Tên món & SKU (flex 3)
         self.assertIn("Tên món & SKU", self.code)
-        # Col 4: Danh mục (110px)
-        self.assertIn("width: 110", self.code)
-        self.assertIn("'Danh mục'", self.code)
-        # Col 5: Tồn kho & Min stock (110px)
-        self.assertIn("'Tồn kho & Min'", self.code)
-        # Col 6: Giá bán (110px)
-        self.assertIn("'Giá bán'", self.code)
-        # Col 7: Trạng thái kinh doanh (120px)
-        self.assertIn("width: 120", self.code)
-        self.assertIn("'Trạng thái'", self.code)
+        self.assertIn("flex: 3,", self.code)
+        # Col 4-7: Danh mục / Tồn kho & Min / Giá bán / Trạng thái — cột co giãn flex 2 (_flexCell)
+        self.assertIn("_flexCell(const Text('Danh mục'", self.code)
+        self.assertIn("_flexCell(const Text('Tồn kho & Min'", self.code)
+        self.assertIn("_flexCell(const Text('Giá bán'", self.code)
+        self.assertIn("_flexCell(const Text('Trạng thái'", self.code)
         # Col 8: Thao tác (46px)
         self.assertIn("width: 46", self.code)
 
@@ -86,8 +91,9 @@ class TestM2DenseDataTableLayout(unittest.TestCase):
         # Col 5: Stock quantity & minStock color coding
         self.assertIn("item.stockQty", self.code)
         self.assertIn("item.minStock", self.code)
-        # Col 6: Formatted price
-        self.assertIn("fmtMoney(item.sellPrice)", self.code)
+        # Col 6: Formatted price — đủ số "25.000 đ" (fmtVnd), không rút gọn fmtMoney
+        self.assertIn("fmtVnd(item.sellPrice)", self.code)
+        self.assertNotIn("fmtMoney(item.sellPrice)", self.code)
         # Col 7: Business status badge ("Đang bán" vs "Tạm ngưng bán")
         self.assertIn("'Đang bán'", self.code)
         self.assertIn("'Tạm ngưng bán'", self.code)

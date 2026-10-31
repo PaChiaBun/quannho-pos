@@ -377,7 +377,7 @@ class _RoleTemplate {
   const _RoleTemplate(this.name, this.icon, this.color, this.modules);
 }
 
-const _kModuleNames = <String, (String, IconData)>{
+const kRoleModuleNames = <String, (String, IconData)>{
   'pos': ('Bán hàng', Icons.point_of_sale_rounded),
   'kho': ('Kho hàng', Icons.inventory_2_rounded),
   'kho_pro': ('Kho CN', Icons.restaurant_menu_rounded),
@@ -754,7 +754,7 @@ class _RoleCardState extends ConsumerState<_RoleCard> {
             ],
           ),
           subtitle: Text(
-            '${_perms.length}/${_kModuleNames.length} modules • ${info.description}',
+            '${_perms.where(kRoleModuleNames.containsKey).length}/${kRoleModuleNames.length} module • ${info.description}',
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -801,7 +801,7 @@ class _RoleCardState extends ConsumerState<_RoleCard> {
                       ),
                       const Spacer(),
                       Text(
-                        '${_perms.length}/${_kModuleNames.length}',
+                        '${_perms.where(kRoleModuleNames.containsKey).length}/${kRoleModuleNames.length}',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
@@ -819,7 +819,7 @@ class _RoleCardState extends ConsumerState<_RoleCard> {
                     crossAxisSpacing: 8,
                     mainAxisSpacing: 8,
                     childAspectRatio: 0.88,
-                    children: _kModuleNames.entries.map((e) {
+                    children: kRoleModuleNames.entries.map((e) {
                       final enabled = _perms.contains(e.key);
                       return GestureDetector(
                         onTap: () => setState(() {
@@ -1297,7 +1297,7 @@ class _RoleEditSheetState extends State<_RoleEditSheet> {
             // ── Modules ──
             _Label('Quyền truy cập module'),
             const SizedBox(height: 8),
-            ..._kModuleNames.entries.map((e) {
+            ...kRoleModuleNames.entries.map((e) {
               final on = _modules.contains(e.key);
               return CheckboxListTile(
                 dense: true,
@@ -1764,7 +1764,7 @@ class _RoleEditSheetState extends State<_RoleEditSheet> {
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kMuted),
                       ),
                       ...matchedSuggestion.modules.map((m) {
-                        final modInfo = _kModuleNames[m];
+                        final modInfo = kRoleModuleNames[m];
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(

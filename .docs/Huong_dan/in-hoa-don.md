@@ -2,7 +2,7 @@
 module: bill_printer
 ten: In Hoá Đơn
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-23
+cap_nhat: 2026-10-31
 nguon:
   - lib/modules/bill_printer/screens/bill_printer_hub.dart
   - lib/modules/bill_printer/screens/print_rules_screen.dart
@@ -27,13 +27,14 @@ nguon:
 
 ## Màn hình gồm những gì
 Mở module **In Hoá Đơn** từ Trang chủ:
-- **"Cấu Hình Trạm In"** — cách cũ (4 trạm: Thu ngân, Bếp nóng, Quầy bar (đồ uống), Tem dán ly) + các công tắc tự động + **Máy chủ in**.
+- Dòng **"Đang in theo: …"** ở đầu trang cho biết quán in theo cách nào: "4 trạm (Cấu Hình Trạm In)" hoặc "Máy In & Luật In – X máy in, Y luật". Nếu hiện **khung đỏ** "Chưa có luật nào in ra máy in đang bật, nên KHÔNG phiếu nào được in…" thì vào "Máy In & Luật In" thêm luật hoặc bật máy in.
+- **"Cấu Hình Trạm In"** — cách cũ (4 trạm: Thu ngân, Bếp nóng, Quầy bar (đồ uống), Tem dán ly) + các công tắc tự động + **Máy chủ in**. Quán đã dùng luật in thì màn này chỉ còn **tự động in, tự mở két và máy chủ in** (tiêu đề "Tự Động In & Máy Chủ In").
+- **"Máy In & Luật In"** — phần nâng cao: khai báo máy in và luật in theo loại phiếu, số bản, máy dự phòng.
 - **"Thiết Kế Mẫu In"** — mẫu Hoá Đơn, Bếp Nóng, Bếp Bar, Tem Dán Ly và mẫu dựng sẵn.
-- **"Máy In & Luật In"** — cách mới: khai báo máy in và luật in theo loại phiếu, số bản, máy dự phòng.
-- **"Xem Trước Nhanh"** hoá đơn thu ngân và nút **"Đặt lại về mặc định"** (đưa thiết kế hoá đơn về mặc định).
+- **"Xem Trước Nhanh"** hoá đơn thu ngân và nút **"Đặt lại mẫu hoá đơn"** (chỉ đưa mẫu hoá đơn thu ngân về mặc định; máy in, phiếu bếp, tem không đổi).
 
 ### Hai cách cấu hình — dùng cách nào?
-- Khi quán **đã lưu "Máy In & Luật In"** (chỉ cần đã khai báo **một máy in**, kể cả chưa có luật nào), app in **theo luật**; máy in chọn ở 4 trạm cũ **không còn tác dụng**. Màn Cấu Hình Trạm In sẽ báo: "Quán đang dùng "Máy In & Luật In". Máy in ở 4 trạm bên dưới KHÔNG còn tác dụng khi in thật…". Các công tắc tự động và Máy chủ in vẫn áp dụng.
+- Khi quán **đã lưu "Máy In & Luật In"** (chỉ cần đã khai báo **một máy in**, kể cả chưa có luật nào), app in **theo luật**; máy in chọn ở 4 trạm cũ **không còn tác dụng**. Màn Cấu Hình Trạm In khi đó ẩn 4 trạm và báo: "Máy in của quán đang chọn ở "Máy In & Luật In". Ở đây chỉ còn: tự động in, tự mở két và máy chủ in." Các công tắc tự động và Máy chủ in vẫn áp dụng.
 - Khi **chưa khai báo máy in và chưa có luật** ở "Máy In & Luật In", app in theo 4 trạm cũ. Đã thêm máy in mà chưa tạo luật thì **không phiếu nào in**: tạo luật ngay sau khi thêm máy in.
 - Khuyến nghị: dùng **Máy In & Luật In**. Quán đang dùng trạm cũ có thể bấm **"Dựng từ cấu hình hiện tại"** để chuyển sang mà không phải khai báo lại.
 
@@ -51,12 +52,13 @@ Mở module **In Hoá Đơn** từ Trang chủ:
 1. Bấm **"Thêm máy in"**.
 2. **"Tên máy in (vd: Bill quầy, Bếp nóng)"**.
 3. **"Cách kết nối"**:
-   - "Máy in hệ thống (Windows/Mac)" — nhập tên máy in trong hệ thống (để trống = máy in mặc định).
+   - "Máy in hệ thống (Windows/Mac)" — gõ **đúng tên máy in** như trong Windows/Mac; để trống sẽ **không in được**.
    - "Máy in mạng LAN / Wi-Fi (IP)" — nhập **"Địa chỉ IP"** (vd 192.168.1.242) và **"Cổng"** (thường 9100).
    - "Máy in tích hợp Sunmi" — chỉ in được trên đúng thiết bị Sunmi (Android).
 4. **"Khổ giấy"**: 50 / 58 / 80 mm.
 5. Tuỳ chỉnh: **tỉ lệ cỡ chữ** (giảm khi bill bị cụt mép), **độ đậm** (Sunmi), **"Chữ đậm dạng bán đậm"**, **"Tự cắt giấy"**, **"Có két tiền gắn kèm"**.
 6. Bấm **"Xong"**, rồi **"Lưu"** ở góc trên.
+7. Bấm **"In thử"** ở máy in vừa thêm để kiểm giấy và kết nối (in thử được cả khi chưa bấm Lưu; không lưu gì).
 
 ### 3. Tạo luật in (tab "Luật in")
 Luật nói: *loại phiếu nào → in ra máy nào → mấy bản*.
@@ -87,7 +89,7 @@ Trước đó cần khai báo **máy in tích hợp**: bấm **"Thêm máy in t�
 3. Đổi khổ tem và nội dung ở **Thiết Kế Mẫu In → Tem Dán Ly** (nút **"Thiết kế tem"**). Khi thêm máy in tem, chọn đúng khổ giấy decal.
 
 ### 6. Bật/tắt tự động in và mở két
-Trong **Cấu Hình Trạm In → "Tuỳ Chọn Tự Động"**:
+Trong **Cấu Hình Trạm In** (mục "Tuỳ Chọn Tự Động"; quán dùng luật in thì các công tắc nằm ngay đầu màn "Tự Động In & Máy Chủ In"):
 - **"In khi thanh toán"** — in hoá đơn khi bán thành công.
 - **"In khi báo chế biến"** — gửi phiếu đến trạm bếp và nhãn ly.
 - **"Tự động mở két tiền"** — mở két khi in hoá đơn thanh toán.
@@ -110,11 +112,12 @@ Dùng khi quán có nhiều máy bán (web, điện thoại) nhưng chỉ **mộ
 
 ### 9. Két tiền
 - Két cắm dây (cổng RJ11) vào **máy in hoá đơn thu ngân**.
-- Thử két: Cấu Hình Trạm In → trạm **Thu ngân** → **"Mở két tiền"**.
+- Thử két (quán in theo 4 trạm): Cấu Hình Trạm In → trạm **Thu ngân** → **"Mở két tiền"**. Quán đã dùng luật in hiện **chưa có nút thử mở két bằng tay** — thử bằng một đơn tiền mặt.
 - Máy in mạng (IP): app gửi lệnh mở két trực tiếp. Máy in hệ thống Windows: app gửi lệnh qua máy in; nếu không mở, cấu hình "Cash Drawer" trong driver máy in.
 
 ### 10. In thử
-- Máy in ở 4 trạm cũ: **"In thử nghiệm"** trong từng trạm.
+- Máy In & Luật In → tab "Máy in": nút **"In thử"** ở từng máy in.
+- Máy in ở 4 trạm cũ (quán chưa dùng luật in): **"In thử nghiệm"** trong từng trạm.
 - Máy in tích hợp Sunmi: **"In thử máy in tích hợp"**.
 - Máy in mạng: **"Quét"** để dò máy in cổng 9100 trong cùng Wi-Fi, chạm IP để chọn, **"Lưu IP"**.
 

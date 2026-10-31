@@ -14,6 +14,7 @@ import '../core/utils/app_logger.dart';
 import '../core/utils/responsive.dart';
 import '../core/utils/string_utils.dart';
 import '../core/utils/stagger.dart';
+import '../core/utils/server_time.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOYALTY PROVIDERS — local trong file này
@@ -125,7 +126,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
                 Tab(text: 'Ví'),
                 Tab(text: 'Thưởng'),
                 Tab(text: 'Gói nạp'),
-                Tab(text: 'Khuyến mãi / Voucher'),
+                Tab(text: 'Khuyến mãi'),
               ],
             ),
           ),
@@ -234,7 +235,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
                   Text('Khách hàng thân thiết',
                     style: TextStyle(color: Colors.white,
                       fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3)),
-                  Text('Loyalty & Ví điện tử',
+                  Text('Tích điểm & Ví điện tử',
                     style: TextStyle(color: Colors.white60, fontSize: 11)),
                 ]),
                 const Spacer(),
@@ -257,7 +258,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
                     label: 'Có điểm', icon: Icons.stars_rounded, highlight: true),
                   const SizedBox(width: 8),
                   _StatPill(value: _fmtPts(stats.totalActivePts),
-                    label: 'Điểm active', icon: Icons.loyalty_rounded),
+                    label: 'Điểm đang có', icon: Icons.loyalty_rounded),
                   const SizedBox(width: 8),
                   _StatPill(value: _fmtPts(stats.totalPtsRedeemed),
                     label: 'Đã đổi', icon: Icons.redeem_rounded),
@@ -1339,7 +1340,7 @@ class _CustomerDetailSheet extends ConsumerWidget {
                   itemBuilder: (_, i) {
                     final t = txs[i];
                     final isEarn = t.ptsEarned > 0;
-                    final dt = DateTime.tryParse(t.createdAt) ?? DateTime.now();
+                    final dt = parseServerTime(t.createdAt) ?? DateTime.now();
                     return ListTile(
                       dense: true,
                       leading: Container(
@@ -2683,7 +2684,7 @@ class _LoyaltyRightPanel extends StatelessWidget {
               const Divider(height: 1),
               _LRRow(label: 'Có điểm', value: '${s?.customersWithPts ?? 0}', color: _kPurple),
               const Divider(height: 1),
-              _LRRow(label: 'Điểm active', value: '${s?.totalActivePts ?? 0}', color: _kGold),
+              _LRRow(label: 'Điểm đang có', value: '${s?.totalActivePts ?? 0}', color: _kGold),
               const Divider(height: 1),
               _LRRow(label: 'Đã đổi', value: '${s?.totalPtsRedeemed ?? 0}', color: const Color(0xFF2E7D32)),
             ]),

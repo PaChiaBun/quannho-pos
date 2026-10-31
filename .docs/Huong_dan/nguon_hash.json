@@ -2,13 +2,13 @@
   "_ghi_chu": "Mã băm file nguồn lúc bài được rà lại lần cuối. Ghi bằng tool/dong_dau_huong_dan.dart.",
   "bai": {
     "ban-hang.md": {
-      "lib/core/providers/app_providers.dart": "962e5ff6c3b6556f",
-      "lib/core/widgets/order_detail_dialog.dart": "15f7dabf2c644eb2",
-      "lib/modules/pos/providers/pos_providers.dart": "3475552a266d5259",
+      "lib/core/providers/app_providers.dart": "0f21da878380229e",
+      "lib/core/widgets/order_detail_dialog.dart": "885bce66b222166e",
+      "lib/modules/pos/providers/pos_providers.dart": "bc209ad50b142c92",
       "lib/modules/pos/repository/pos_repository.dart": "e5127ad3b08bbc88",
-      "lib/modules/pos/screens/checkout_sheet.dart": "89f241885ba4d222",
-      "lib/screens/finance_screen.dart": "8c9b51b9bb21e81e",
-      "lib/screens/pos_screen.dart": "777c6e8d2c72da98",
+      "lib/modules/pos/screens/checkout_sheet.dart": "451edb0c0ce2e191",
+      "lib/screens/finance_screen.dart": "775d3b82dd9114ed",
+      "lib/screens/pos_screen.dart": "07b98a55b0cd7b39",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "bao-cao-chuoi.md": {
@@ -24,12 +24,12 @@
     "bao-cao.md": {
       "lib/core/repositories/dashboard_repository.dart": "c9a9e7a726ff2c63",
       "lib/screens/bill_lookup_section.dart": "138788fb15169c20",
-      "lib/screens/einvoice_report_tab.dart": "b3673eec6d3b3792",
-      "lib/screens/report_screen.dart": "a2680410dfb6bde6"
+      "lib/screens/einvoice_report_tab.dart": "12b91f21f525b216",
+      "lib/screens/report_screen.dart": "d49b30a6629697a3"
     },
     "bep.md": {
-      "lib/core/repositories/kitchen_repository.dart": "4eb4256d4578d6f5",
-      "lib/screens/kitchen_screen.dart": "e82bd2c321c8efbf",
+      "lib/core/repositories/kitchen_repository.dart": "6d24bef325dde24b",
+      "lib/screens/kitchen_screen.dart": "ce1392cc7a8a5c54",
       "supabase/migrations/20260912_atomic_send_kitchen_ticket_v2.sql": "3242f0573a0ef36a",
       "test/screens/kitchen_sound_policy_test.dart": "52ab1b02b8994af5"
     },
@@ -40,27 +40,27 @@
     "in-hoa-don.md": {
       "lib/modules/bill_printer/providers/printer_settings_provider.dart": "c8a5c0a2d95a68be",
       "lib/modules/bill_printer/screens/bill_preview_screen.dart": "15db0b979728055b",
-      "lib/modules/bill_printer/screens/bill_printer_hub.dart": "d8decddfa5160eb5",
+      "lib/modules/bill_printer/screens/bill_printer_hub.dart": "0d7dbab282972b19",
       "lib/modules/bill_printer/screens/print_design_screen.dart": "cdca414c5cae7abf",
-      "lib/modules/bill_printer/screens/print_rules_screen.dart": "541d09a67034524e",
-      "lib/modules/bill_printer/screens/printer_settings_screen.dart": "de490737ae16e553",
+      "lib/modules/bill_printer/screens/print_rules_screen.dart": "6393cf6495030116",
+      "lib/modules/bill_printer/screens/printer_settings_screen.dart": "a74b4b0851a19050",
       "lib/modules/bill_printer/utils/qn_queue_resolver.dart": "ade48c7fc2be5cf5"
     },
     "khach-hang.md": {
       "lib/modules/loyalty/repository/loyalty_repository.dart": "bcaecfe01367e189",
-      "lib/modules/pos/screens/discount_management_screen.dart": "b030afc0a6318806",
-      "lib/screens/loyalty_screen.dart": "a97a72709cc0a9ae",
-      "lib/screens/settings_screen.dart": "7cb546e8c3eb09b0",
+      "lib/modules/pos/screens/discount_management_screen.dart": "ca52be3d08e9a326",
+      "lib/screens/loyalty_screen.dart": "4aac341ba72a60d6",
+      "lib/screens/settings_screen.dart": "436d2a8a2d26902e",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "kho-chuyen-nghiep.md": {
-      "lib/modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart": "15c9191c957e99a1",
+      "lib/modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart": "8f6538f36cb8e876",
       "lib/modules/kho_chuyen_nghiep/screens/ingredient_list_screen.dart": "8520c8b391a163b0",
       "lib/modules/kho_chuyen_nghiep/screens/kho_chuyen_nghiep_dashboard_screen.dart": "80fa73527f28cdbd",
       "lib/modules/kho_chuyen_nghiep/screens/kho_chuyen_nghiep_report_screen.dart": "18210d5903de1149",
       "lib/modules/kho_chuyen_nghiep/screens/kho_chuyen_nghiep_screen.dart": "ad4f66fcb3fd4f63",
       "lib/modules/kho_chuyen_nghiep/screens/production_order_screen.dart": "47dd066bb8bb6a6b",
-      "lib/modules/kho_chuyen_nghiep/screens/recipe_detail_screen.dart": "60c8e2f0f1284460",
+      "lib/modules/kho_chuyen_nghiep/screens/recipe_detail_screen.dart": "1a27b193c16bce40",
       "lib/modules/kho_chuyen_nghiep/screens/recipe_form_screen.dart": "a40561242821a73c",
       "lib/modules/kho_chuyen_nghiep/screens/recipe_list_screen.dart": "78b58f5a277bb25c",
       "lib/modules/kho_chuyen_nghiep/screens/stock_count_screen.dart": "8bcb86fa710a6d4f",
@@ -70,21 +70,21 @@
       "supabase/migrations/20261010_fix11_lenh_san_xuat_cong_thanh_pham.sql": "42320042798c5546"
     },
     "kho-hang.md": {
-      "lib/core/providers/app_providers.dart": "962e5ff6c3b6556f",
-      "lib/modules/kho/repository/kho_repository.dart": "e4b94114f8a270b7",
+      "lib/core/providers/app_providers.dart": "0f21da878380229e",
+      "lib/modules/kho/repository/kho_repository.dart": "78b2b73350cb4ea5",
       "lib/modules/kho/screens/phieu_nhap_hang_screen.dart": "eb17403c2735a4e2",
-      "lib/modules/kho/screens/po_detail_screen.dart": "edcb4d028bc193c9",
-      "lib/modules/kho/screens/receive_stock_sheet.dart": "a54787c4f13480f0",
+      "lib/modules/kho/screens/po_detail_screen.dart": "0c92518863493d3f",
+      "lib/modules/kho/screens/receive_stock_sheet.dart": "efcd55018e4af4c9",
       "lib/modules/kho/screens/supplier_form_screen.dart": "cd17bfaafd38df68",
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "000b8b55c347c0e6",
-      "lib/screens/inventory_screen.dart": "bf39e6305c7ffe35",
+      "lib/screens/ban_screen.dart": "6c7d663b7633d67b",
+      "lib/screens/inventory_screen.dart": "5d5fc9b464b2c1e9",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
     "luong.md": {
       ".docs/Ai_Boom/cac-module/quy-chuan-cham-cong-tinh-luong-chuan.md": "ac64501ae10b6158",
-      "lib/main.dart": "132f221aebf2b5e4",
+      "lib/main.dart": "1cac3753eda9b006",
       "lib/modules/tinhluong/repository/tinhluong_repository.dart": "e4ce4880dea03d47",
       "lib/modules/tinhluong/screens/dispute_sheet.dart": "8f7e1c48fec1a30a",
       "lib/modules/tinhluong/screens/my_payslip_screen.dart": "3391a374782da5cd",
@@ -101,16 +101,16 @@
       "lib/core/services/staff_service.dart": "fa19874c1655c33a",
       "lib/screens/auth_screen.dart": "11c97645e7b4f888",
       "lib/screens/forgot_password_sheet.dart": "524be154bcd75ef5",
-      "lib/screens/nhan_vien_screen.dart": "fba6d7917a5e5a20",
-      "lib/screens/role_manager_screen.dart": "04653ab80506e48b",
-      "lib/screens/settings_screen.dart": "7cb546e8c3eb09b0",
+      "lib/screens/nhan_vien_screen.dart": "5b134c5bdb2a1204",
+      "lib/screens/role_manager_screen.dart": "f84d6eff5065126d",
+      "lib/screens/settings_screen.dart": "436d2a8a2d26902e",
       "lib/screens/staff_name_dialog.dart": "d7b0c13c25abbe61",
       "lib/screens/staff_password_dialog.dart": "a90484134346c964",
       "lib/screens/store_setup_screen.dart": "6db77783c1b44bab"
     },
     "nhat-ky-log.md": {
       "lib/core/utils/app_logger.dart": "361921ba54844e5f",
-      "lib/screens/bug_report_screen.dart": "0080439289394cd0",
+      "lib/screens/bug_report_screen.dart": "e2489f51f059b7f9",
       "lib/screens/log_viewer_screen.dart": "8ed8afef9cc930ce",
       "supabase/migrations/20261023_app_logs_retention_v2.sql": "8ec8e14674908a60"
     },
@@ -129,22 +129,22 @@
       "supabase/migrations/20261014_qr_chong_pha_v4.sql": "51c552567bbb2691"
     },
     "quan-ly-ban.md": {
-      "lib/core/repositories/ban_repository.dart": "88a8382abaab4830",
-      "lib/screens/ban_screen.dart": "000b8b55c347c0e6",
+      "lib/core/repositories/ban_repository.dart": "012502e6267bc744",
+      "lib/screens/ban_screen.dart": "6c7d663b7633d67b",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "thu-chi.md": {
       "lib/core/services/store_auth_service.dart": "7249691cf8c6c380",
-      "lib/core/widgets/order_detail_dialog.dart": "15f7dabf2c644eb2",
+      "lib/core/widgets/order_detail_dialog.dart": "885bce66b222166e",
       "lib/modules/finance/providers/finance_providers.dart": "5d916c446a0b538b",
-      "lib/modules/finance/repository/finance_repository.dart": "a6224fe78a921f52",
-      "lib/modules/finance/screens/add_transaction_sheet.dart": "c168f26c68662d45",
-      "lib/modules/kho/repository/kho_repository.dart": "e4b94114f8a270b7",
-      "lib/modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart": "15c9191c957e99a1",
+      "lib/modules/finance/repository/finance_repository.dart": "39cb9712d908242b",
+      "lib/modules/finance/screens/add_transaction_sheet.dart": "6ceb6e6a19698c4a",
+      "lib/modules/kho/repository/kho_repository.dart": "78b2b73350cb4ea5",
+      "lib/modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart": "8f6538f36cb8e876",
       "lib/modules/loyalty/repository/loyalty_repository.dart": "bcaecfe01367e189",
       "lib/modules/tinhluong/repository/tinhluong_repository.dart": "e4ce4880dea03d47",
-      "lib/screens/finance_screen.dart": "c0e3149703166cdd",
+      "lib/screens/finance_screen.dart": "775d3b82dd9114ed",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "van-hanh.md": {
