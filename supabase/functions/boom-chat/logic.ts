@@ -1543,3 +1543,120 @@ export async function chunkHash(chunks: HelpChunk[]): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
+
+// ── Tự kiểm số (lần 41, 31/10): Claude chấm — GPT bịa số khi khối không có (số từng món tháng trước, chia nhỏ khoản
+// nguyên liệu, % tăng tháng sau). Dò số tiền / % / số lượng ở phần kết luận, "Vì sao", "Cần xem lại" (phần "Việc tuần
+// này" là ĐỀ XUẤT — giá mới, % giảm — không kiểm); số không có trong khối và không tính ra được → hỏi lại GPT 1 lần.
+type SoDo = { raw: string; v: number; kind: 'tien' | 'pct' | 'sl' };
+
+const toNum = (s: string): number => {
+  // "1.150.000" → 1150000; "95,9" → 95.9; "14.2" (GPT viết dấu chấm thập phân) → 14.2
+  if (/^\d{1,3}(?:\.\d{3})+$/.test(s)) return Number(s.replace(/\./g, ''));
+  return Number(s.replace(',', '.'));
+};
+
+function soTrong(text: string): SoDo[] {
+  const out: SoDo[] = [];
+  const t = text.normalize('NFC');
+  for (const m of t.matchAll(/(\d{1,3}(?:\.\d{3})+|\d+(?:[.,]\d+)?)\s*(tỷ|tỉ|triệu|tr\b|nghìn|ngàn|k\b|đồng|đ(?![a-zA-Zà-ỹÀ-Ỹ]))/gi)) {
+    const u = m[2].toLowerCase();
+    const mul = /tỷ|tỉ/.test(u) ? 1e9 : /triệu|tr/.test(u) ? 1e6 : /nghìn|ngàn|k/.test(u) ? 1e3 : 1;
+    out.push({ raw: m[0].trim(), v: toNum(m[1]) * mul, kind: 'tien' });
+  }
+  for (const m of t.matchAll(/(\d+(?:[.,]\d+)?)\s*%/g)) out.push({ raw: m[0].trim(), v: toNum(m[1]), kind: 'pct' });
+  for (const m of t.matchAll(/(\d{1,3}(?:\.\d{3})+|\d+(?:[.,]\d+)?)\s*(phần|ly|đơn|kg|ký|lít|ổ|khách|bình|hộp|chai|lon|gói)\b/gi)) {
+    out.push({ raw: m[0].trim(), v: toNum(m[1]), kind: 'sl' });
+  }
+  return out.filter((x) => Number.isFinite(x.v));
+}
+
+const MUL = (u: string) => /tỷ|tỉ/.test(u) ? 1e9 : /triệu|tr/.test(u) ? 1e6 : /nghìn|ngàn|k/.test(u) ? 1e3 : 1;
+
+/** Số trong từng dòng của khối (đã quy đổi triệu → đồng) — phép ghép chỉ trong cùng dòng / dòng kề, không ghép bừa cả khối. */
+function soGoc(ref: string): number[][] {
+  // tách theo dòng và vế câu ("; " / ". " NGOÀI ngoặc): một dòng có thể chứa cả danh sách khoản chi
+  const parts: string[] = [];
+  for (const line of ref.normalize('NFC').split('\n')) {
+    let depth = 0, cur = '';
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      depth += ch === '(' ? 1 : ch === ')' ? -1 : 0;
+      if (depth <= 0 && (ch === ';' || ch === '.') && line[i + 1] === ' ') {
+        parts.push(cur);
+        cur = '';
+      } else cur += ch;
+    }
+    parts.push(cur);
+  }
+  return parts.map((line) =>
+    [...line.matchAll(/(\d{1,3}(?:\.\d{3})+|\d+(?:[.,]\d+)?)\s*(tỷ|tỉ|triệu|nghìn|ngàn)?/gi)]
+      .map((m) => toNum(m[1]) * MUL((m[2] ?? '').toLowerCase()))
+      .filter((x) => Number.isFinite(x) && x > 0)
+  );
+}
+
+/** Sai số theo cách viết: "106 triệu" ±0,5 triệu, "66.700.000đ" ±50.000đ, "14,2%" ±0,05, "45%" ±0,5. */
+function saiSo(s: SoDo): number {
+  const m = s.raw.match(/^(\d{1,3}(?:\.\d{3})+|\d+(?:[.,]\d+)?)\s*(.*)$/);
+  if (!m) return 0.5;
+  const digits = m[1].includes('.') && /^\d{1,3}(?:\.\d{3})+$/.test(m[1]) ? m[1].replace(/\./g, '') : m[1];
+  const dec = digits.match(/[.,](\d+)$/);
+  if (dec) return 0.5 * 10 ** -dec[1].length * MUL(m[2].toLowerCase());
+  // số tròn chỉ là làm tròn với TIỀN ("60 triệu" từ 58.400.000đ), tối đa 4%; % / số lượng nguyên thì ±0,5
+  const zeros = s.kind === 'tien' ? (digits.match(/0*$/)?.[0].length ?? 0) : 0;
+  return Math.min(0.5 * 10 ** zeros * MUL(m[2].toLowerCase()), Math.max(0.04 * s.v, 0.5));
+}
+
+// mốc ngành lời nhắc cho dùng (giá vốn 25–35%, 30%, 50%) — % khác phải có căn cứ trong khối
+const MOC_PCT = [25, 30, 35, 50];
+
+/** Số đáng ngờ trong câu trả lời (≤ 6): không có trong khối, không làm tròn / cộng / trừ / chia % được từ số CÙNG DÒNG. */
+export function soLa(answer: string, ref: string): string[] {
+  // chỉ kiểm phần khẳng định: bỏ đoạn "Việc tuần này" (tới "Cần xem lại" hoặc hết) và "(ví dụ …)"
+  const claim = answer.replace(/Việc tuần này:[\s\S]*?(?=Cần xem lại:|$)/gi, ' ').replace(/\(ví dụ[^)]*\)/gi, ' ');
+  const lines = soGoc(ref);
+  const all = lines.flat();
+  // nhóm = dòng i + dòng kề (số liệu và dòng giải thích của nó)
+  const groups = lines.map((l, i) => [...l, ...(lines[i + 1] ?? [])]).filter((g) => g.length > 1);
+  // tiền × số lượng: "tăng 5.000đ × 760 phần = 3.800.000đ" (mức tăng do Boom đề xuất, số phần có trong khối)
+  const tienTraLoi = soTrong(answer).filter((x) => x.kind === 'tien').map((x) => x.v);
+  const bad: string[] = [];
+  for (const s of soTrong(claim)) {
+    if (s.kind === 'tien' && s.v < 1000) continue;
+    if (s.kind === 'sl' && s.v < 10) continue;
+    const tol = Math.max(saiSo(s), s.kind === 'pct' ? 0.05 : 1);
+    const near = (r: number) => Math.abs(s.v - r) <= tol;
+    let ok = all.some(near) || (s.kind === 'pct' && MOC_PCT.includes(s.v));
+    // cộng / trừ: tiền trong vế + vế kề; số lượng chỉ trong CÙNG vế (620 sáng + 120 trưa không phải số món nào)
+    if (!ok && s.kind !== 'pct') {
+      ok = (s.kind === 'tien' ? groups : lines).some((g) => g.some((a, i) => g.some((b, j) => j > i && (near(a + b) || near(Math.abs(a - b))))));
+    }
+    if (!ok && s.kind === 'tien') ok = tienTraLoi.some((t) => t !== s.v && all.some((q) => q < 10000 && near(t * q)));
+    if (!ok && s.kind === 'pct') {
+      ok = groups.some((g) => g.some((a) => g.some((b) => b > 0 && a !== b && (near((a / b) * 100) || near((Math.abs(a - b) / b) * 100)))));
+    }
+    if (!ok && !bad.includes(s.raw)) bad.push(s.raw);
+    if (bad.length >= 6) break;
+  }
+  return bad;
+}
+
+/** Lời nhắc hỏi lại khi có số đáng ngờ. */
+export function noteSoLa(bad: string[]): string {
+  return `KIỂM SỐ: các số sau trong câu trả lời KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')}. ` +
+    'Viết lại TOÀN BỘ câu trả lời theo đúng khung: bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới.';
+}
+
+/** Nguồn đối chiếu số: câu hỏi + lượt trước + đúng các khối số liệu gửi GPT (KHÔNG gồm lời nhắc / câu mẫu). */
+export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; now?: Date }): string {
+  const now = extra?.now ?? new Date();
+  return [
+    question,
+    ...(extra?.memory ?? []).flatMap((t) => [t.q, t.a ?? '']),
+    extra?.history ? `${extra.history.q}\n${extra.history.a}` : '',
+    extra?.facts ? formatFacts(extra.facts, now) : '',
+    extra?.modules ? formatModules(extra.modules, now) : '',
+    extra?.chain ? formatChain(extra.chain) : '',
+    todayBlock(now),
+  ].filter(Boolean).join('\n');
+}

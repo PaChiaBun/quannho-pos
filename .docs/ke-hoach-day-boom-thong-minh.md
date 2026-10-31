@@ -303,7 +303,7 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
   - Khuôn "thử 2 tuần" lặp máy móc.
   - Câu nói tiếp còn lạc chủ đề.
 
-### Lần 40 (31/10, Claude chấm 2 lượt, chưa áp): 10,23 → **10,30/16** (không đổi về tổng)
+### Lần 40 (31/10, Claude chấm 2 lượt, đã áp): 10,23 → **10,30/16** (không đổi về tổng)
 
 - Đã làm:
   - Quyết định LỚN (cắt người, đóng ca, đổi mối, chạy / tắt khuyến mãi) không phán thay chủ: nêu số ủng hộ / phản đối + điều kiện.
@@ -322,6 +322,22 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
   - (a) Máy chủ tự kiểm số trong câu trả lời, số không có trong khối → hỏi lại GPT 1 lần.
   - (b) App gửi thêm số từng món kỳ trước.
   - (c) Thử gpt-4o cho câu khó (cần duyệt chi phí).
+
+### Lần 41 (31/10, Claude chấm 2 lượt, đã áp): 10,30 → **10,51/16**
+
+- Đã làm (bước kế (a) của lần 40): máy chủ tự kiểm số.
+  - `soLa(answer, soLieuGoc(...))` trong logic.ts dò tiền / % / số lượng ở kết luận, "Vì sao", "Cần xem lại".
+  - Bỏ qua phần "Việc tuần này" (đề xuất) và "(ví dụ …)".
+  - Cho qua: số có trong khối (sai số theo cách viết, tiền tròn tối đa 4%); cộng / trừ tiền trong cùng vế câu hoặc vế kề; cộng / trừ số lượng chỉ trong cùng vế; tỉ lệ % giữa 2 số cùng vế; tiền trong câu trả lời × số phần trong khối; mốc 25 / 30 / 35 / 50%.
+  - Có số lạ → index.ts hỏi lại GPT 1 lần (còn ≥ 4 giây, hẹn giờ ≤ 8 giây), nhật ký ghi `+kiem_so`. cham_tu_van.ts làm y hệt.
+  - Lỗi đã gặp: mẫu `đ\b` không khớp khi "đ" ở cuối (đ không phải chữ ASCII) → số tiền "25.000.000đ" không được kiểm; ghép số cả dòng dài (danh sách khoản chi 1 dòng) → gần như số nào cũng "tính ra được" → tách theo vế câu.
+- Kết quả: hỏi lại 4–7 / 60 câu. Đúng số 1,49 → 1,57, thận trọng 1,27 → 1,43; D50 (dự báo chi tháng sau) 6–7 → 12–13.
+- Còn yếu:
+  - Bịa số trùng số khác có trong khối thì lọt (D59 "rau 15 triệu, bún 10 triệu").
+  - Bản viết lại đôi khi kém hơn (D60 lượt 2: bắt đúng phép nhân sai nhưng 15 → 9).
+  - Lý lẽ 0,76, việc làm 0,84; khuyên ngược điểm cần chú ý.
+  - Sau lần chấm: siết cộng số lượng cùng vế + cho phép tiền × số phần → bắt thêm D32 "740 / 710 phần" (chưa chấm lại).
+- Bước kế: (b) app gửi số từng món kỳ trước; (c) thử gpt-4o cho câu khó (cần duyệt).
 
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 

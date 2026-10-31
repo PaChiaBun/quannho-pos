@@ -54,6 +54,9 @@ import {
   pickMemory,
   redact,
   refusalFor,
+  noteSoLa,
+  soLa,
+  soLieuGoc,
 } from './logic.ts';
 
 const env = (k: string, d = '') => Deno.env.get(k) ?? d;
@@ -458,7 +461,7 @@ Deno.serve(async (req) => {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
   const messages = buildMessages(r.question, chunks, who, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory });
-  const callGpt = (msgs: typeof messages, signal: AbortSignal = ac.signal) =>
+  const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',
       signal,
@@ -506,6 +509,34 @@ Deno.serve(async (req) => {
         clearTimeout(timer2);
       }
       kind += '+retry';
+      latency = Date.now() - t0;
+    }
+    // Tự kiểm số (lần 41): câu tư vấn có số không có trong khối số liệu và không tính ra được → hỏi lại GPT MỘT lần
+    // kèm danh sách số đó (bỏ / nói "chưa có số đó"). Còn ≥ 4 giây; lỗi / quá giờ thì giữ câu trả lời lần trước.
+    const left2 = UPSTREAM_TIMEOUT_MS - (Date.now() - t0);
+    const bad = r.mode === 'advice' && (r.facts || r.modules || r.chain) && left2 >= 4000
+      ? soLa(answer, soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory }))
+      : [];
+    if (bad.length) {
+      const ac3 = new AbortController();
+      const timer3 = setTimeout(() => ac3.abort(), Math.min(left2, 8000));
+      try {
+        const again = await callGpt([...messages, { role: 'assistant', content: answer }, { role: 'user', content: noteSoLa(bad) }], ac3.signal);
+        if (again.ok) {
+          const d3 = await again.json();
+          const a3 = clipAnswer(plainAnswer(String(d3?.choices?.[0]?.message?.content ?? '')));
+          inTok += Number(d3?.usage?.prompt_tokens) || 0;
+          outTok += Number(d3?.usage?.completion_tokens) || 0;
+          if (a3) answer = a3;
+        } else {
+          await again.body?.cancel();
+        }
+      } catch {
+        // hỏi lại lỗi / quá giờ → giữ câu trả lời trước
+      } finally {
+        clearTimeout(timer3);
+      }
+      kind += '+kiem_so';
       latency = Date.now() - t0;
     }
     // Câu hướng dẫn app mà GPT đoán nút / chức năng "(nếu có…)" → không đưa bước bịa ra, nói thẳng chưa có hướng dẫn (QC 24/10)

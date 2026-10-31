@@ -8,7 +8,7 @@
 // NGƯỜI CHẤM (29/10, Chủ Quán): mặc định CLAUDE chấm — script chỉ gọi gpt-4o-mini sinh câu trả lời của Boom (đúng mô hình
 // Boom thật) rồi ghi kèm số liệu / vấn đề / ý chính để Claude chấm theo thang 8 tiêu chí; tổng hợp: cham_tu_van/tong_hop.py.
 // CHAM_JUDGE=gpt mới gọi gpt-4o chấm như cũ (chỉ để đối chiếu).
-import { buildMessages, formatFacts, formatModules, loaiCau, type MemoryTurn, parseFacts, parseModules, plainAnswer } from './logic.ts';
+import { buildMessages, formatFacts, formatModules, loaiCau, type MemoryTurn, noteSoLa, parseFacts, parseModules, plainAnswer, soLa, soLieuGoc } from './logic.ts';
 
 const DIR = new URL('./cham_tu_van/', import.meta.url);
 const inFile: string | URL = Deno.args[0] ?? new URL('de.json', DIR);
@@ -74,14 +74,14 @@ function caseMessages(c: Case, s: Store) {
   if (c.facts && !facts) throw new Error(`${c.id}: số bán "${c.facts}" không hợp lệ`);
   if (c.modules && !modules) throw new Error(`${c.id}: số mục "${c.modules}" không hợp lệ`);
   const seen = [facts ? formatFacts(facts, NOW) : '', modules ? formatModules(modules, NOW) : ''].filter(Boolean).join('\n') || '(không có số liệu)';
-  return { msgs: buildMessages(c.q, [], null, { facts, modules, memory: c.history, now: NOW }), seen };
+  return { msgs: buildMessages(c.q, [], null, { facts, modules, memory: c.history, now: NOW }), seen, ref: soLieuGoc(c.q, { facts, modules, memory: c.history, now: NOW }) };
 }
 
 const rows: Record<string, unknown>[] = [];
 let chars = 0;
 for (const [i, c] of cases.entries()) {
   const s = stores[c.quan];
-  const { msgs, seen } = caseMessages(c, s);
+  const { msgs, seen, ref } = caseMessages(c, s);
   if (DRY) {
     chars += msgs.reduce((n, m) => n + m.content.length, 0);
     if (i < 2) console.log(`── ${c.id} (${c.loai}, quán ${c.quan})\n${msgs.map((m) => `[${m.role}] ${m.role === 'system' ? `${m.content.length} ký tự lời nhắc` : m.content}`).join('\n')}\n`);
@@ -90,11 +90,16 @@ for (const [i, c] of cases.entries()) {
   try {
     // cùng độ dài như index.ts (câu kế hoạch 900)
     // làm sạch như máy chủ (index.ts → plainAnswer) — chấm đúng thứ chủ quán thấy
-    const answer = plainAnswer(await chat(MODEL, msgs, loaiCau(c.q) === 'ke_hoach' ? 900 : 600));
+    const maxTok = loaiCau(c.q) === 'ke_hoach' ? 900 : 600;
+    let answer = plainAnswer(await chat(MODEL, msgs, maxTok));
+    // tự kiểm số như index.ts: số không căn cứ → hỏi lại 1 lần
+    const bad = soLa(answer, ref);
+    const kiem_so = bad.length ? { so_la: bad, truoc: answer } : undefined;
+    if (bad.length) answer = plainAnswer(await chat(MODEL, [...msgs, { role: 'assistant', content: answer }, { role: 'user', content: noteSoLa(bad) }], maxTok)) || answer;
     const vd = s.van_de.filter((v) => c.van_de.includes(v.id));
     if (!GPT_JUDGE) {
       // để Claude chấm: kèm đúng thứ người chấm cần (hồ sơ, số Boom đã thấy, vấn đề cài sẵn, ý chính, điều cần tránh)
-      rows.push({ ...c, answer, ho_so: `${s.ten} — ${s.mo_ta}`, so_lieu_boom_thay: seen, van_de_mo_ta: vd.map((v) => `${v.id}: ${v.mo_ta}`) });
+      rows.push({ ...c, answer, ho_so: `${s.ten} — ${s.mo_ta}`, so_lieu_boom_thay: seen, van_de_mo_ta: vd.map((v) => `${v.id}: ${v.mo_ta}`), kiem_so });
       console.log(`${i + 1}/${cases.length} đã có câu trả lời ${c.id}`);
       continue;
     }

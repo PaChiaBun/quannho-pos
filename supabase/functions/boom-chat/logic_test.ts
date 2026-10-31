@@ -16,6 +16,8 @@ import {
   blockReason,
   buildMessages,
   loaiCau,
+  noteSoLa,
+  soLa,
   clipAnswer,
   costUsd,
   LIMITS,
@@ -850,4 +852,20 @@ Deno.test('Lần 40: quyết định lớn không phán thay, vì sao phải có
   assert(m[1].content.includes('Quyết định LỚN') && m[1].content.includes('KHÔNG phán thay chủ'), m[1].content);
   const n = buildMessages('sao vậy', [], null, { memory: [{ q: 'topping ban sao', a: null }], now: new Date('2026-10-28T09:00:00+07:00') });
   assert(n[1].content.includes('MỞ BẰNG đúng chủ đề'), n[1].content);
+});
+
+Deno.test('Lần 41: tự kiểm số — bắt số bịa, cho qua số làm tròn / tính được / đề xuất ở Việc tuần này', () => {
+  const ref = 'Doanh thu 95.951.000đ từ 3046 đơn. Cùng kỳ tháng trước: 111.894.000đ → GIẢM 14,2%. Bạc xỉu (610 phần, giá 29.000đ, giá vốn 13.000đ = 45% giá bán). Dự báo cả tháng khoảng 106.390.000đ (đã có 95.951.000đ + ước 10.439.000đ).';
+  // đúng / làm tròn / tính được
+  assertEquals(soLa('Dạ Anh, doanh thu khoảng 96 triệu, giảm 14,2%. Vì sao: bạc xỉu 610 phần, ước cả tháng 106 triệu, ít hơn tháng trước khoảng 16 triệu.', ref), []);
+  // bịa: số món tháng trước, % tăng tháng sau
+  assertEquals(soLa('Dạ Anh, bạc xỉu tháng trước bán 760 phần, giảm 20%. Tháng sau chi nguyên liệu khoảng 66 triệu.', ref), ['66 triệu', '20%', '760 phần']);
+  // phần Việc tuần này là đề xuất — không kiểm
+  assertEquals(soLa('Dạ Chị, NÊN tăng giá bạc xỉu vì giá vốn 45%. Việc tuần này: tăng lên 32.000đ, thử 2 tuần, giữ nếu số ly giảm dưới 10%.', ref), []);
+  // tiền × số lượng có trong khối (đề xuất tăng 3.000đ × 610 phần) được; cộng số lượng khác vế thì không
+  assertEquals(soLa('Dạ Chị, tăng 3.000đ thì thêm khoảng 1.830.000đ nếu vẫn bán 610 phần.', ref), []);
+  assertEquals(soLa('Dạ, tháng trước bán 3656 phần.', ref + '\nSáng: Bạc xỉu 3046; Trưa: Bạc xỉu 610.'), ['3656 phần']);
+  // tiền viết đủ chữ số, "đ" ở cuối câu
+  assertEquals(soLa('Dạ Chị, chi thịt 25.000.000đ', ref), ['25.000.000đ']);
+  assert(noteSoLa(['760 phần']).includes('760 phần'));
 });
