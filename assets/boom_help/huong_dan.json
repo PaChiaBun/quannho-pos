@@ -1,6 +1,6 @@
 {
- "version": 202610310655,
- "hash": "0d1be2801a265f9c2bd69fb3d13674a4a4625dfd5afe7efb450a11d5138a3390",
+ "version": 202610312036,
+ "hash": "b5c735c535480ffdf8de2d6338d88b534c68e791a487afdbcb46700bf608b698",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -856,7 +856,7 @@
    "module_name": "In Hoá Đơn",
    "section": "Các việc thường làm",
    "title": "2. Thêm máy in (Máy In & Luật In → tab \"Máy in\")",
-   "text": "1. Bấm \"Thêm máy in\".\n2. \"Tên máy in (vd: Bill quầy, Bếp nóng)\".\n3. \"Cách kết nối\":\n   • \"Máy in hệ thống (Windows/Mac)\" — gõ đúng tên máy in như trong Windows/Mac; để trống sẽ không in được.\n   • \"Máy in mạng LAN / Wi-Fi (IP)\" — nhập \"Địa chỉ IP\" (vd 192.168.1.242) và \"Cổng\" (thường 9100).\n   • \"Máy in tích hợp Sunmi\" — chỉ in được trên đúng thiết bị Sunmi (Android).\n4. \"Khổ giấy\": 50 / 58 / 80 mm.\n5. Tuỳ chỉnh: tỉ lệ cỡ chữ (giảm khi bill bị cụt mép), độ đậm (Sunmi), \"Chữ đậm dạng bán đậm\", \"Tự cắt giấy\", \"Có két tiền gắn kèm\".\n6. Bấm \"Xong\", rồi \"Lưu\" ở góc trên.\n7. Bấm \"In thử\" ở máy in vừa thêm để kiểm giấy và kết nối (in thử được cả khi chưa bấm Lưu; không lưu gì)."
+   "text": "1. Bấm \"Thêm máy in\".\n2. \"Tên máy in (vd: Bill quầy, Bếp nóng)\".\n3. \"Cách kết nối\":\n   • \"Máy in hệ thống (Windows/Mac)\" — gõ đúng tên máy in như trong Windows/Mac; để trống sẽ không in được.\n   • \"Máy in mạng LAN / Wi-Fi (IP)\" — nhập \"Địa chỉ IP\" (vd 192.168.1.242) và \"Cổng\" (thường 9100).\n   • \"Máy in tích hợp Sunmi\" — chỉ in được trên đúng thiết bị Sunmi (Android).\n   • Quán chưa chọn máy in bill (chưa dùng Máy In & Luật In; trạm Thu ngân đang bật nhưng chưa chọn máy — mặc định của quán mới): máy Sunmi tự in bill và tạm tính ra máy in liền thân, không cần cài. Trang In Hoá Đơn ghi \"Quán chưa chọn máy in bill nên bill in ra máy in liền thân của máy Sunmi này.\" Phiếu bếp vẫn không in. Không muốn in bill: tắt trạm Thu ngân hoặc tắt \"In khi thanh toán\".\n4. \"Khổ giấy\": 50 / 58 / 80 mm.\n5. Tuỳ chỉnh: tỉ lệ cỡ chữ (giảm khi bill bị cụt mép), độ đậm (Sunmi), \"Chữ đậm dạng bán đậm\", \"Tự cắt giấy\", \"Có két tiền gắn kèm\".\n6. Bấm \"Xong\", rồi \"Lưu\" ở góc trên.\n7. Bấm \"In thử\" ở máy in vừa thêm để kiểm giấy và kết nối (in thử được cả khi chưa bấm Lưu; không lưu gì)."
   },
   {
    "id": "in-hoa-don#cac-viec-thuong-lam-3-tao-luat-in-tab-luat-in",
@@ -963,12 +963,12 @@
    "text": "Vì sao: Độ đậm chưa hợp\nLàm gì: Đổi độ đậm; bật \"Chữ đậm dạng bán đậm\" nếu chữ đậm bị loe"
   },
   {
-   "id": "in-hoa-don#loi-bill-chua-in-sau-30-giay-kiem-tra-may-in-bill-khi-thanh-toan",
+   "id": "in-hoa-don#loi-bill-chua-in-kiem-tra-may-in-bill-khi-thanh-toan-ban",
    "module": "bill_printer",
    "module_name": "In Hoá Đơn",
    "section": "Lỗi thường gặp",
-   "title": "\"Bill … CHƯA in sau 30 giây. Kiểm tra máy in bill.\" (khi thanh toán bàn)",
-   "text": "Vì sao: Máy in chậm, tắt hoặc hết giấy\nLàm gì: Kiểm tra máy in rồi bấm \"IN LẠI BILL\" trên thông báo"
+   "title": "\"Bill CHƯA in. Kiểm tra máy in bill.\" (khi thanh toán bàn)",
+   "text": "Vì sao: Lệnh in lỗi ngay, hoặc máy in không trả lời sau 30 giây (chậm, tắt, hết giấy)\nLàm gì: Kiểm tra máy in rồi bấm \"IN LẠI BILL\" trên màn thành công hoặc trên dòng đỏ (dòng đỏ tự tắt sau 10 giây hoặc khi chuyển màn)"
   },
   {
    "id": "in-hoa-don#loi-may-cai-lai-app-thi-khong-tu-in-bill-nua",
@@ -2304,7 +2304,7 @@
    "module_name": "Quản lý Bàn",
    "section": "Các việc thường làm",
    "title": "3. Gọi món",
-   "text": "1. Trong bàn bấm \"Gọi món ngay\" (bàn chưa có món) hoặc \"Thêm món\".\n2. Tìm \"Tìm sản phẩm, thức uống...\" hoặc chọn danh mục; chạm món để thêm.\n3. Món có thêm lựa chọn: bấm \"Tùy chọn\" trên thẻ món:\n   • \"🥗 Topping tùy chọn\" — tăng/giảm số lượng từng topping.\n   • \"✨ Tùy chọn hương vị\" — các tùy chọn món (mức cay, thêm món…) và chip ghi chú nhanh.\n   • \"Ghi chú\" — ghi chú riêng (\"vd: ít rau, không cay...\").\n4. Món \"TẠM HẾT\" (đã tắt bán hoặc hết tồn): app hỏi \"Món tạm hết\" → \"Vẫn thêm\" nếu chắc còn.\n5. \"Xem chi tiết\" để kiểm lại → \"Xác nhận • Thêm N món\".\n\nNhiều nhân viên gọi cùng một bàn được; mỗi món ghi tên người thêm. Gọi món chưa gửi bếp."
+   "text": "1. Trong bàn bấm \"Gọi món ngay\" (bàn chưa có món) hoặc \"Thêm món\".\n2. Tìm \"Tìm sản phẩm, thức uống...\" hoặc chọn danh mục; chạm món để thêm.\n3. Món có thêm lựa chọn: bấm \"Tùy chọn\" trên thẻ món (máy màn hẹp như Sunmi: nút nhỏ nằm cạnh giá, chạm tên món cũng mở; thêm món không làm thẻ giãn ra nên các món bên dưới không dời chỗ):\n   • \"🥗 Topping tùy chọn\" — tăng/giảm số lượng từng topping.\n   • \"✨ Tùy chọn hương vị\" — các tùy chọn món (mức cay, thêm món…) và chip ghi chú nhanh.\n   • \"Ghi chú\" — ghi chú riêng (\"vd: ít rau, không cay...\").\n4. Món \"TẠM HẾT\" (đã tắt bán hoặc hết tồn): app hỏi \"Món tạm hết\" → \"Vẫn thêm\" nếu chắc còn.\n5. \"Xem chi tiết\" để kiểm lại → \"Xác nhận • Thêm N món\".\n\nNhiều nhân viên gọi cùng một bàn được; mỗi món ghi tên người thêm. Gọi món chưa gửi bếp."
   },
   {
    "id": "quan-ly-ban#cac-viec-thuong-lam-4-gui-bep",
@@ -2344,7 +2344,7 @@
    "module_name": "Quản lý Bàn",
    "section": "Các việc thường làm",
    "title": "8. Thanh toán cả bàn",
-   "text": "1. Bấm \"Thanh toán\" → màn \"Thu tiền\" với \"TỔNG TIỀN CẦN THU\".\n2. Tuỳ chọn:\n   • \"Phí dịch vụ / Ship\" — nhập phí thêm.\n   • \"Khách hàng (tích điểm)\" — nhập SĐT; có điểm thì \"Dùng điểm\".\n   • \"Khuyến mãi / Voucher\" → \"Chọn mã\" → \"Áp dụng\" (bỏ: \"Gỡ mã\").\n   • Chưa có ô giảm giá tay — muốn bớt tiền cho khách: dùng mã giảm giá (voucher).\n3. \"Hình thức thanh toán\": \"Tiền mặt\", \"Chuyển khoản\", \"Thẻ\" (không có ví).\n   • Tiền mặt: nhập \"Tiền mặt của khách\" → app tính \"TIỀN THỐI LẠI:\" hoặc \"Còn thiếu:\".\n   • Chuyển khoản: hiện \"QUÉT MÃ QR ĐỂ CHUYỂN KHOẢN\" theo tài khoản ngân hàng khai trong mẫu hoá đơn (In Hoá Đơn → Thiết kế → khối QR Code).\n4. \"Xác nhận\" → \"Thanh toán thành công!\". Hệ thống ghi thu, trừ kho theo công thức, cộng/trừ điểm, đóng bàn — tất cả trong một lần.\n5. Nếu máy chủ tính lại giảm giá/phụ phí khác màn hình: hộp \"Báo giá hóa đơn thay đổi\" → \"Xác nhận & Thanh toán\" hoặc \"Hủy bỏ\".\n6. Bill tự in nếu đã cài. Chưa in sau 30 giây: \"Bill <bàn> CHƯA in sau 30 giây. Kiểm tra máy in bill.\" → \"IN LẠI BILL\".\n\nMất mạng lúc thanh toán: mở lại và thanh toán lại — máy chủ nhận ra lần trước, không thu hai lần."
+   "text": "1. Bấm \"Thanh toán\" → màn \"Thu tiền\" với \"TỔNG TIỀN CẦN THU\".\n2. Tuỳ chọn:\n   • \"Phí dịch vụ / Ship\" — nhập phí thêm.\n   • \"Khách hàng (tích điểm)\" — nhập SĐT; có điểm thì \"Dùng điểm\".\n   • \"Khuyến mãi / Voucher\" → \"Chọn mã\" → \"Áp dụng\" (bỏ: \"Gỡ mã\").\n   • Chưa có ô giảm giá tay — muốn bớt tiền cho khách: dùng mã giảm giá (voucher).\n3. \"Hình thức thanh toán\": \"Tiền mặt\", \"Chuyển khoản\", \"Thẻ\" (không có ví).\n   • Tiền mặt: nhập \"Tiền mặt của khách\" → app tính \"TIỀN THỐI LẠI:\" hoặc \"Còn thiếu:\".\n   • Chuyển khoản: hiện \"QUÉT MÃ QR ĐỂ CHUYỂN KHOẢN\" theo tài khoản ngân hàng khai trong mẫu hoá đơn (In Hoá Đơn → Thiết kế → khối QR Code).\n4. \"Xác nhận\" → \"Thanh toán thành công!\". Hệ thống ghi thu, trừ kho theo công thức, cộng/trừ điểm, đóng bàn — tất cả trong một lần.\n5. Nếu máy chủ tính lại giảm giá/phụ phí khác màn hình: hộp \"Báo giá hóa đơn thay đổi\" → \"Xác nhận & Thanh toán\" hoặc \"Hủy bỏ\".\n6. Bill tự in nếu đã cài (máy Sunmi mà quán chưa chọn máy in bill thì tự in ra máy in liền thân, xem in-hoa-don.md).\n   • In lỗi: màn thành công báo ngay \"Bill CHƯA in. Kiểm tra máy in bill.\" → \"IN LẠI BILL\". Máy in không trả lời sau 30 giây cũng báo như vậy.\n   • Máy chưa cài máy in hoá đơn: báo \"Máy này chưa được cài máy in hóa đơn nên chưa in…\", không có nút in lại.\n   • Đóng màn khi bill chưa in: dòng đỏ \"Bill <bàn> CHƯA in…\" hiện 10 giây (có nút ✕), tự tắt khi chuyển sang màn khác (vd Bếp).\n\nMất mạng lúc thanh toán: mở lại và thanh toán lại — máy chủ nhận ra lần trước, không thu hai lần."
   },
   {
    "id": "quan-ly-ban#cac-viec-thuong-lam-9-huy-ban-khach-bo-ve-mo-nham",

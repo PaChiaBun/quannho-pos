@@ -1306,6 +1306,25 @@ class StationPrinterDispatcher {
 
   static const _offConfig = PrinterConfig(name: '', type: 'system', enabled: false);
 
+  /// Máy in liền thân dùng khi quán chưa chọn máy in bill (xem [usesBuiltinBillFallback]);
+  /// thông số như lúc thêm "Máy in tích hợp" ở Máy In & Luật In.
+  static const _kAutoBuiltin = PrinterEntry(
+    id: 'builtin_auto',
+    name: 'Máy in tích hợp',
+    kind: PrinterKind.sunmiBuiltin,
+    paper: PaperWidth.mm50,
+    fontScale: 0.8,
+  );
+
+  /// Quán chưa cài máy in (chưa dùng Luật in; trạm thu ngân bật nhưng chưa chọn máy — mặc định
+  /// của quán mới) mà máy này là Sunmi có máy in liền thân: bill in ra máy in đó, khỏi phải cài.
+  /// Trạm thu ngân đã TẮT là chủ quán không muốn in bill: giữ nguyên.
+  static bool usesBuiltinBillFallback(StationPrintersState s) =>
+      SunmiBuiltinDriver.hasBuiltinPrinter &&
+      s.printSetup.isEmpty &&
+      s.cashier.enabled &&
+      s.cashier.name.trim().isEmpty;
+
   static PrinterConfig _pickConfig(
     PrintSetup setup,
     PrintJobType job,
@@ -1318,7 +1337,10 @@ class StationPrinterDispatcher {
       supportedKinds: kSupportedPrinterKinds,
     );
     if (resolved.isEmpty) return _offConfig;
-    final printer = resolved.first.printer;
+    return _configOf(resolved.first.printer);
+  }
+
+  static PrinterConfig _configOf(PrinterEntry printer) {
     return PrinterConfig(
       darkness: printer.darkness,
       softBold: printer.softBold && printer.kind == PrinterKind.sunmiBuiltin,
@@ -1370,7 +1392,11 @@ class StationPrinterDispatcher {
     PrintServiceType? serviceType,
   }) {
     final setup = settings.printSetup;
-    if (setup.isEmpty) return settings;
+    if (setup.isEmpty) {
+      return usesBuiltinBillFallback(settings)
+          ? settings.copyWith(cashier: _configOf(_kAutoBuiltin))
+          : settings;
+    }
     final ctx = _ctxOf(settings, serviceType: serviceType);
     return settings.copyWith(
       cashier: _pickConfig(
@@ -1396,7 +1422,7 @@ class StationPrinterDispatcher {
   /// Máy in dùng cho báo cáo: luật "báo cáo" nếu có, không thì máy in hóa đơn.
   static PrinterConfig reportPrinterConfig(StationPrintersState settings) {
     final setup = settings.printSetup;
-    if (setup.isEmpty) return settings.cashier;
+    if (setup.isEmpty) return effectiveSettings(settings).cashier;
     final ctx = _ctxOf(settings);
     final byReport = _pickConfig(setup, PrintJobType.report, ctx);
     return byReport.enabled

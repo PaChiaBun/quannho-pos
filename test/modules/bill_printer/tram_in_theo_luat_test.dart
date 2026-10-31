@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:printing/printing.dart';
 import 'package:quannho_pos/core/providers/permission_provider.dart';
+import 'package:quannho_pos/modules/bill_printer/drivers/sunmi_builtin_driver.dart';
 import 'package:quannho_pos/modules/bill_printer/models/bill_block_template.dart';
 import 'package:quannho_pos/modules/bill_printer/providers/bar_label_template_provider.dart';
 import 'package:quannho_pos/modules/bill_printer/providers/bill_template_provider.dart';
@@ -179,6 +180,21 @@ void main() {
         'Nâng cao: máy in, luật in theo loại phiếu',
         'Hoá đơn, phiếu bếp, bar, tem dán ly',
       ]);
+    });
+
+    testWidgets('máy Sunmi, quán chưa chọn máy in bill: báo bill ra máy in liền thân',
+        (tester) async {
+      SunmiBuiltinDriver.hasBuiltinPrinter = true;
+      addTearDown(() => SunmiBuiltinDriver.hasBuiltinPrinter = false);
+      const fresh = StationPrintersState(
+        cashier: PrinterConfig(name: '', type: 'system', enabled: true),
+        bepNong: PrinterConfig(name: '', type: 'system'),
+        bepBar: PrinterConfig(name: '', type: 'system'),
+        barLabel: PrinterConfig(name: '', type: 'system'),
+      );
+      await _open(tester, const BillPrinterHub(), fresh);
+      expect(find.textContaining('máy in liền thân của máy Sunmi này'), findsOneWidget);
+      expectNoEllipsis(tester, ['Đang in theo: 4 trạm (Cấu Hình Trạm In)']);
     });
 
     testWidgets('có máy in mà chưa có luật: báo đỏ không phiếu nào in', (tester) async {

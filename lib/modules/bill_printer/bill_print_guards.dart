@@ -36,15 +36,20 @@ class BillPrintWatchdog {
     if (!_disposed) status.value = BillPrintStatus.printed;
   }
 
-  /// In lại thất bại ngay: báo quá hạn tức thì (không chờ hết chu kỳ).
-  void markOverdue() {
+  /// Lần báo `overdue` gần nhất là vì máy chưa cài máy in bill (in lại cũng không ra).
+  bool notConfigured = false;
+
+  /// In (hoặc in lại) thất bại ngay: báo quá hạn tức thì (không chờ hết chu kỳ).
+  void markOverdue({bool notConfigured = false}) {
     _timer?.cancel();
+    this.notConfigured = notConfigured;
     if (!_disposed) status.value = BillPrintStatus.overdue;
   }
 
   /// In lại đang chạy: về `pending` và canh lại một chu kỳ.
   void restart() {
     if (_disposed) return;
+    notConfigured = false;
     status.value = BillPrintStatus.pending;
     start();
   }

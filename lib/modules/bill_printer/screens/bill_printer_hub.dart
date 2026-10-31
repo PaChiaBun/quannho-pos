@@ -5,6 +5,7 @@ import '../providers/bill_template_provider.dart';
 import '../providers/printer_settings_provider.dart';
 import '../routing/print_setup.dart';
 import '../widgets/bill_preview_widget.dart';
+import 'bill_preview_screen.dart' show StationPrinterDispatcher;
 import 'print_design_screen.dart';
 import 'printer_settings_screen.dart';
 import 'print_rules_screen.dart';
@@ -18,6 +19,8 @@ class BillPrinterHub extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncTpl = ref.watch(billTemplateProvider);
     final setup = ref.watch(printerSettingsProvider.select((s) => s.printSetup));
+    final builtinBill = ref.watch(
+        printerSettingsProvider.select(StationPrinterDispatcher.usesBuiltinBillFallback));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F8),
@@ -34,7 +37,7 @@ class BillPrinterHub extends ConsumerWidget {
           padding: const EdgeInsets.all(20),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
 
-            _PrintModeStatus(setup: setup),
+            _PrintModeStatus(setup: setup, builtinBill: builtinBill),
             const SizedBox(height: 14),
 
             GridView.count(
@@ -177,7 +180,8 @@ class BillPrinterHub extends ConsumerWidget {
 // ─── Dòng trạng thái: quán đang in theo cách nào ─────────────────────────────
 class _PrintModeStatus extends StatelessWidget {
   final PrintSetup setup;
-  const _PrintModeStatus({required this.setup});
+  final bool builtinBill;
+  const _PrintModeStatus({required this.setup, this.builtinBill = false});
 
   @override
   Widget build(BuildContext context) {
@@ -214,6 +218,13 @@ class _PrintModeStatus extends StatelessWidget {
               Text(
                 'Chưa có luật nào in ra máy in đang bật, nên KHÔNG phiếu nào được in. '
                 'Vào "Máy In & Luật In" để thêm luật hoặc bật máy in.',
+                style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: color),
+              ),
+            ],
+            if (builtinBill) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Quán chưa chọn máy in bill nên bill in ra máy in liền thân của máy Sunmi này.',
                 style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: color),
               ),
             ],

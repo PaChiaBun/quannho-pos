@@ -2,7 +2,7 @@
 module: bill_printer
 ten: In Hoá Đơn
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-31
+cap_nhat: 2026-11-01
 nguon:
   - lib/modules/bill_printer/screens/bill_printer_hub.dart
   - lib/modules/bill_printer/screens/print_rules_screen.dart
@@ -55,6 +55,7 @@ Mở module **In Hoá Đơn** từ Trang chủ:
    - "Máy in hệ thống (Windows/Mac)" — gõ **đúng tên máy in** như trong Windows/Mac; để trống sẽ **không in được**.
    - "Máy in mạng LAN / Wi-Fi (IP)" — nhập **"Địa chỉ IP"** (vd 192.168.1.242) và **"Cổng"** (thường 9100).
    - "Máy in tích hợp Sunmi" — chỉ in được trên đúng thiết bị Sunmi (Android).
+   - Quán **chưa chọn máy in bill** (chưa dùng Máy In & Luật In; trạm Thu ngân đang bật nhưng chưa chọn máy — mặc định của quán mới): máy Sunmi **tự in bill và tạm tính ra máy in liền thân**, không cần cài. Trang In Hoá Đơn ghi "Quán chưa chọn máy in bill nên bill in ra máy in liền thân của máy Sunmi này." Phiếu bếp vẫn không in. Không muốn in bill: tắt trạm Thu ngân hoặc tắt **"In khi thanh toán"**.
 4. **"Khổ giấy"**: 50 / 58 / 80 mm.
 5. Tuỳ chỉnh: **tỉ lệ cỡ chữ** (giảm khi bill bị cụt mép), **độ đậm** (Sunmi), **"Chữ đậm dạng bán đậm"**, **"Tự cắt giấy"**, **"Có két tiền gắn kèm"**.
 6. Bấm **"Xong"**, rồi **"Lưu"** ở góc trên.
@@ -129,7 +130,7 @@ Dùng khi quán có nhiều máy bán (web, điện thoại) nhưng chỉ **mộ
 | Một loại phiếu (vd phiếu bar) không in | Đang dùng luật in nhưng thiếu luật cho loại phiếu đó | Thêm luật cho loại phiếu đó, bấm Lưu |
 | Bill bị cụt mép / chữ quá to | Khổ giấy hoặc cỡ chữ không hợp | Sửa máy in: đúng khổ giấy, giảm tỉ lệ cỡ chữ |
 | Chữ mờ hoặc bết (Sunmi) | Độ đậm chưa hợp | Đổi độ đậm; bật "Chữ đậm dạng bán đậm" nếu chữ đậm bị loe |
-| "Bill … CHƯA in sau 30 giây. Kiểm tra máy in bill." (khi thanh toán bàn) | Máy in chậm, tắt hoặc hết giấy | Kiểm tra máy in rồi bấm **"IN LẠI BILL"** trên thông báo |
+| "Bill CHƯA in. Kiểm tra máy in bill." (khi thanh toán bàn) | Lệnh in lỗi ngay, hoặc máy in không trả lời sau 30 giây (chậm, tắt, hết giấy) | Kiểm tra máy in rồi bấm **"IN LẠI BILL"** trên màn thành công hoặc trên dòng đỏ (dòng đỏ tự tắt sau 10 giây hoặc khi chuyển màn) |
 | Máy cài lại app thì không tự in bill nữa | Luật "Máy này in bill ra" ra máy LAN/Bluetooth gắn với mã của máy cũ (cài lại app là đổi mã). Luật chỉ in ra máy in tích hợp Sunmi thì Sunmi tự nhận lại, không bị | Vào In Hoá Đơn → chọn lại ở "Máy này in bill ra" rồi **"Lưu"** |
 | "Máy in đang được dùng trong một luật, hãy sửa luật trước." | Xoá máy in đang được luật dùng | Sửa/xoá luật trước rồi mới xoá máy in |
 | "Không thể đăng ký. Đã có thiết bị khác làm máy chủ in." | Quán đã có máy chủ in | Dùng "Chuyển máy chủ sang thiết bị này" |

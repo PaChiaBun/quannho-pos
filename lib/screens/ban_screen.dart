@@ -3040,6 +3040,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             .select('id')
             .eq('ticket_id', ticketId)
             .eq('done', false);
+        // Phiếu còn món: bếp tự cập nhật qua thay đổi của kitchen_ticket_items (realtime + 10 giây).
+        // Trước đây còn "chạm" cột order_note — cột này không có trên máy chủ nên luôn báo lỗi ngầm.
         if (remaining.isEmpty) {
           await sb
               .from('kitchen_tickets')
@@ -3049,16 +3051,6 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               })
               .eq('id', ticketId)
               .inFilter('status', ['cho', 'dang_lam']);
-        } else {
-          final ticketRow = await sb
-              .from('kitchen_tickets')
-              .select('order_note')
-              .eq('id', ticketId)
-              .maybeSingle();
-          await sb
-              .from('kitchen_tickets')
-              .update({'order_note': ticketRow?['order_note']})
-              .eq('id', ticketId);
         }
       }
     } catch (e) {
@@ -3868,6 +3860,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   '[Checkout Print] Failed settlement=$settlementId: '
                       '${printResult.stationResults['cashier']?.errorMessage}',
                 );
+                // Lỗi ngay thì báo ngay, không để "Đang in bill…" 30 giây.
+                watch.markOverdue(
+                  notConfigured: st == StationPrintStatus.notConfigured,
+                );
               }
             } catch (e, st) {
               AppLogger.error(
@@ -3876,6 +3872,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 e,
                 st,
               );
+              watch.markOverdue();
             }
           }());
         }
@@ -3921,7 +3918,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           if (r.isStationSuccess('cashier')) {
             watch.markPrinted();
           } else {
-            watch.markOverdue();
+            watch.markOverdue(
+              notConfigured: r.stationResults['cashier']?.status ==
+                  StationPrintStatus.notConfigured,
+            );
           }
         } catch (e, st) {
           AppLogger.error('printer', 'In lại bill lỗi: $e', e, st);
@@ -3930,15 +3930,20 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
       }
 
       void showReprintSnack() {
+        // Máy chưa cài máy in: màn thành công đã báo, in lại cũng không ra.
+        if (watchForDialog?.notConfigured ?? false) return;
         messenger.showSnackBar(
           SnackBar(
             content: Text(
-              'Bill $tableLabelForLog CHƯA in sau 30 giây. Kiểm tra máy in bill.',
+              'Bill $tableLabelForLog CHƯA in. Kiểm tra máy in bill.',
               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
             ),
             backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 30),
+            // Ngắn + có nút tắt: dòng này từng che món trên màn Bếp suốt 30 giây.
+            duration: const Duration(seconds: 10),
+            showCloseIcon: true,
+            closeIconColor: Colors.white,
             action: SnackBarAction(
               label: 'IN LẠI BILL',
               textColor: Colors.white,
@@ -8896,10 +8901,12 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                               .add(m);
                         }
 
-                        final stackControls =
-                            qty > 0 && MediaQuery.sizeOf(context).width < 520;
+                        // Màn hẹp: cột nút bên phải giữ cố định 96px (vừa bộ − số +), "Tùy chọn"
+                        // nằm cạnh giá -> thêm món không làm dòng giãn, dòng dưới không dời chỗ.
+                        final narrow = MediaQuery.sizeOf(context).width < 520;
                         final controls = <Widget>[
                             if (qty > 0) ...[
+                              if (!narrow)
                               GestureDetector(
                                 onTap: () {
                                   HapticFeedback.selectionClick();
@@ -9080,7 +9087,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                 color: qty > 0
                                     ? _kNavy.withValues(alpha: 0.3)
                                     : Colors.black.withValues(alpha: 0.04),
-                                width: qty > 0 ? 1.8 : 1.0,
+                                width: 1.8, // viền dày làm thẻ cao thêm: giữ cố định để dòng dưới không dời
                               ),
                               boxShadow: [
                                 BoxShadow(
@@ -9233,13 +9240,16 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                   const SizedBox(height: 3),
                                                   Row(
                                                     children: [
-                                                      Text(
+                                                      Flexible(
+                                                        child: Text(
                                                         modPrice > 0
                                                             ? '${fmtVnd(p.sellPrice ?? 0)} +${fmtVnd(modPrice)} = ${fmtVnd(finalPrice)}'
                                                             : fmtVnd(
                                                                 p.sellPrice ??
                                                                     0,
                                                               ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
                                                         style: GoogleFonts.plusJakartaSans(
                                                           fontSize: 13,
                                                           color: modPrice > 0
@@ -9255,6 +9265,41 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                               : FontWeight.w600,
                                                         ),
                                                       ),
+                                                      ),
+                                                      // Thấp hơn dòng giá: hiện ra không làm dòng cao thêm.
+                                                      if (narrow && qty > 0) ...[
+                                                        const SizedBox(width: 6),
+                                                        Container(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                                                          decoration: BoxDecoration(
+                                                            color: _kNavy.withValues(alpha: 0.08),
+                                                            borderRadius: BorderRadius.circular(6),
+                                                          ),
+                                                          child: Row(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            children: [
+                                                              Icon(
+                                                                _expandedProductIds.contains(p.id)
+                                                                    ? Icons.expand_less_rounded
+                                                                    : Icons.tune_rounded,
+                                                                size: 12,
+                                                                color: _kNavy,
+                                                              ),
+                                                              const SizedBox(width: 3),
+                                                              Text(
+                                                                _expandedProductIds.contains(p.id)
+                                                                    ? 'Thu gọn'
+                                                                    : 'Tùy chọn',
+                                                                style: GoogleFonts.plusJakartaSans(
+                                                                  fontSize: 11,
+                                                                  fontWeight: FontWeight.w700,
+                                                                  color: _kNavy,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ],
                                                       if (p.sku != null &&
                                                           p
                                                               .sku!
@@ -9301,24 +9346,19 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                               ),
                                             ),
                                           ),
-                                          if (!stackControls) ...[
-                                            const SizedBox(width: 12),
+                                          const SizedBox(width: 12),
+                                          if (narrow)
+                                            SizedBox(
+                                              width: 96,
+                                              child: Align(
+                                                alignment: Alignment.centerRight,
+                                                child: controlsW,
+                                              ),
+                                            )
+                                          else
                                             controlsW,
-                                          ],
                                         ],
                                       ),
-                                      if (stackControls)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 10,
-                                          ),
-                                          // "Tùy chọn" bên trái, số lượng bên phải — không dồn hết về góc phải.
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: controls,
-                                          ),
-                                        ),
                                     ],
                                   ),
                                 ),
@@ -13237,8 +13277,8 @@ class _PulsingTableBorderState extends State<_PulsingTableBorder>
   }
 }
 
-/// Dòng trạng thái bill trong hộp thoại thanh toán thành công: đang in / đã gửi / chưa in sau
-/// 30 giây (kèm nút In lại bill).
+/// Dòng trạng thái bill trong hộp thoại thanh toán thành công: đang in / đã gửi / chưa in (lỗi
+/// ngay hoặc quá 30 giây, kèm nút In lại bill).
 class _BillPrintStatusBar extends StatelessWidget {
   const _BillPrintStatusBar({required this.watch, required this.onReprint});
 
@@ -13283,7 +13323,10 @@ class _BillPrintStatusBar extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Bill CHƯA in sau 30 giây. Kiểm tra máy in bill.',
+                    watch.notConfigured
+                        ? 'Máy này chưa được cài máy in hóa đơn nên chưa in. '
+                            'Vào In Hoá Đơn → Máy In & Luật In để chọn máy in.'
+                        : 'Bill CHƯA in. Kiểm tra máy in bill.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
@@ -13291,18 +13334,20 @@ class _BillPrintStatusBar extends StatelessWidget {
                       color: _kRed,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: onReprint,
-                      icon: const Icon(Icons.print_rounded, size: 18),
-                      label: Text(
-                        'IN LẠI BILL',
-                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                  if (!watch.notConfigured) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: onReprint,
+                        icon: const Icon(Icons.print_rounded, size: 18),
+                        label: Text(
+                          'IN LẠI BILL',
+                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             );

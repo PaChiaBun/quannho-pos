@@ -573,6 +573,10 @@ class _MainShellState extends ConsumerState<MainShell>
     });
 
     final idx = ref.watch(navTabProvider);
+    // Thông báo thuộc màn vừa rời: không để nó che màn mới (dòng "Bill CHƯA in" từng che món ở Bếp).
+    ref.listen<int>(navTabProvider, (prev, next) {
+      if (prev != next) ScaffoldMessenger.maybeOf(context)?.clearSnackBars();
+    });
     final slotsAsync = ref.watch(navSlotsProvider);
     // ✅ .select() — chỉ rebuild khi role hoặc isOwner thay đổi
     // Không rebuild khi storeName, token, hay các field khác update

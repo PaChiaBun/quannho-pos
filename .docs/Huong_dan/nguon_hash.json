@@ -39,8 +39,8 @@
     },
     "in-hoa-don.md": {
       "lib/modules/bill_printer/providers/printer_settings_provider.dart": "c8a5c0a2d95a68be",
-      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "15db0b979728055b",
-      "lib/modules/bill_printer/screens/bill_printer_hub.dart": "0d7dbab282972b19",
+      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "4b15df92a24dbbe2",
+      "lib/modules/bill_printer/screens/bill_printer_hub.dart": "0f89216b1dae21ac",
       "lib/modules/bill_printer/screens/print_design_screen.dart": "cdca414c5cae7abf",
       "lib/modules/bill_printer/screens/print_rules_screen.dart": "6393cf6495030116",
       "lib/modules/bill_printer/screens/printer_settings_screen.dart": "a74b4b0851a19050",
@@ -78,13 +78,13 @@
       "lib/modules/kho/screens/supplier_form_screen.dart": "cd17bfaafd38df68",
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "6c7d663b7633d67b",
+      "lib/screens/ban_screen.dart": "43588248352a47ea",
       "lib/screens/inventory_screen.dart": "5d5fc9b464b2c1e9",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
     "luong.md": {
       ".docs/Ai_Boom/cac-module/quy-chuan-cham-cong-tinh-luong-chuan.md": "ac64501ae10b6158",
-      "lib/main.dart": "1cac3753eda9b006",
+      "lib/main.dart": "96a6b55e2d1cba0b",
       "lib/modules/tinhluong/repository/tinhluong_repository.dart": "e4ce4880dea03d47",
       "lib/modules/tinhluong/screens/dispute_sheet.dart": "8f7e1c48fec1a30a",
       "lib/modules/tinhluong/screens/my_payslip_screen.dart": "3391a374782da5cd",
@@ -130,7 +130,7 @@
     },
     "quan-ly-ban.md": {
       "lib/core/repositories/ban_repository.dart": "012502e6267bc744",
-      "lib/screens/ban_screen.dart": "6c7d663b7633d67b",
+      "lib/screens/ban_screen.dart": "43588248352a47ea",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
