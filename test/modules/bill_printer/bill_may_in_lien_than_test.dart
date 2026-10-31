@@ -35,13 +35,20 @@ void main() {
     expect(StationPrinterDispatcher.reportPrinterConfig(_state()).type, 'sunmi');
   });
 
-  test('không phải Sunmi, tắt trạm thu ngân, đã chọn máy hoặc dùng Luật in: giữ nguyên', () {
+  test('Sunmi, quán chọn máy in của máy tính (Android không in được): bill ra máy in liền thân', () {
+    SunmiBuiltinDriver.hasBuiltinPrinter = true;
+    final pc = _state(cashier: const PrinterConfig(name: 'XP-80C', type: 'system', enabled: true));
+    expect(StationPrinterDispatcher.effectiveSettings(pc).cashier.type, 'sunmi');
+  });
+
+  test('không phải Sunmi, tắt trạm thu ngân, máy in mạng hoặc dùng Luật in: giữ nguyên', () {
     expect(StationPrinterDispatcher.effectiveSettings(_state()).cashier.type, 'system');
 
     SunmiBuiltinDriver.hasBuiltinPrinter = true;
     expect(StationPrinterDispatcher.usesBuiltinBillFallback(_state(cashier: _off)), isFalse);
-    final chose = _state(cashier: const PrinterConfig(name: 'XP-80C', type: 'system', enabled: true));
-    expect(StationPrinterDispatcher.effectiveSettings(chose).cashier.name, 'XP-80C');
+    // Máy in mạng (IP) Sunmi in được → giữ như quán chọn.
+    final lan = _state(cashier: const PrinterConfig(name: '192.168.1.50', type: 'network', enabled: true));
+    expect(StationPrinterDispatcher.effectiveSettings(lan).cashier.name, '192.168.1.50');
     final rules = _state(
       printSetup: const PrintSetup(
         printers: [PrinterEntry(id: 'p1', name: 'Bếp', kind: PrinterKind.lan, address: '192.168.1.50')],
@@ -50,15 +57,20 @@ void main() {
     expect(StationPrinterDispatcher.usesBuiltinBillFallback(rules), isFalse);
   });
 
-  test('in lỗi ngay: báo chưa in tức thì, nhớ lý do "chưa cài máy in"', () {
-    final w = BillPrintWatchdog()..start();
+  test('in lỗi ngay: báo chưa in tức thì, ghi nhật ký (trừ khi chỉ là chưa cài máy in)', () {
+    var logged = 0;
+    final w = BillPrintWatchdog(onOverdue: () => logged++)..start();
     w.markOverdue(notConfigured: true);
     expect(w.status.value, BillPrintStatus.overdue);
     expect(w.notConfigured, isTrue);
+    expect(logged, 0);
     w.restart();
     expect(w.notConfigured, isFalse);
     w.markOverdue();
     expect(w.status.value, BillPrintStatus.overdue);
+    expect(logged, 1);
+    w.markOverdue(); // đã báo rồi: không ghi lại
+    expect(logged, 1);
     w.dispose();
   });
 }

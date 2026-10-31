@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,14 @@ const _kOrange = Color(0xFFFF6B35);
 const _kGreen  = Color(0xFF22C55E);
 const _kRed    = Color(0xFFEF4444);
 const _kAmber  = Color(0xFFF59E0B);
+
+/// Thẻ "ĐÃ HUỶ" đã bấm "Đã xem" trên máy này. Để ngoài màn: khung chính dựng lại màn Bếp mỗi lần
+/// đổi thẻ, để trong màn thì thẻ đã xem lại hiện ra (máy vừa thu ngân vừa bếp đổi thẻ liên tục).
+final _seenCancelledIds = <String>{};
+
+/// Cho kiểm thử: mỗi bài bắt đầu với chưa thẻ nào "Đã xem".
+@visibleForTesting
+void clearSeenCancelledTickets() => _seenCancelledIds.clear();
 const _kBg     = Color(0xFF0D1117);
 const _kCard   = Color(0xFF1A2233);
 const _kCardBorder = Color(0xFF2D3748);
@@ -243,7 +252,6 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   final Set<String> _optimisticDoneItems = {};
   final Set<String> _optimisticReopenedItems = {};
   // Thẻ ĐÃ HUỶ đã bấm "Đã xem" — chỉ trên máy này, trong bộ nhớ
-  final Set<String> _seenCancelledIds = {};
 
   @override
   void initState() {

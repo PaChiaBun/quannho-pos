@@ -339,9 +339,9 @@ class _PosScreenState extends ConsumerState<PosScreen>
       builder: (context, ref, _) {
         final cart = ref.watch(cartProvider);
         final session = ref.watch(sessionProvider);
+        final role = StaffService.canonicalRole(session?.role ?? '');
         final canEditMenu = session != null &&
-            (session.isOwner ||
-                StaffService.canonicalRole(session.role) == 'manager');
+            (session.isOwner || role == 'owner' || role == 'manager');
         return LayoutBuilder(
           builder: (context, constraints) {
             final isCompact = constraints.maxWidth < 500;
@@ -400,7 +400,9 @@ class _PosScreenState extends ConsumerState<PosScreen>
                               ),
                               initialData: DateTime.now(),
                               builder: (context, snap) {
-                                final now = snap.data!;
+                                // Giờ lúc dựng, không lấy snap.data: thanh trên dựng lại liên tục (thêm món, gõ
+                                // tìm) làm luồng 15 giây đăng ký lại và giữ giờ cũ.
+                                final now = DateTime.now();
                                 final hm =
                                     '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
                                 return Text(
@@ -776,6 +778,7 @@ class _PosScreenState extends ConsumerState<PosScreen>
   }
 
   void _openRecentOrders() {
+    _searchFocus.unfocus(); // không thì đóng bảng xong ô tìm nhận lại con trỏ, bàn phím bật lên
     HapticFeedback.selectionClick();
     showModalBottomSheet(
       context: context,
@@ -856,7 +859,10 @@ class _PosScreenState extends ConsumerState<PosScreen>
           final cat = categories[i];
           final selected = cat == _selectedCategory;
           return GestureDetector(
-            onTap: () => setState(() => _selectedCategory = cat),
+            onTap: () => setState(() {
+              _selectedCategory = cat;
+              _searchCollapsed = false; // danh mục ít món không cuộn được → không tự mở lại ô tìm
+            }),
             child: AnimatedContainer(
               duration: 180.ms,
               margin: const EdgeInsets.only(right: 8),
@@ -1031,6 +1037,11 @@ class _PosScreenState extends ConsumerState<PosScreen>
 
   Widget _buildEmptyProducts() {
     final hasSearch = _searchQuery.isNotEmpty;
+    final s = ref.watch(sessionProvider);
+    final role = StaffService.canonicalRole(s?.role ?? '');
+    // Thêm món vào thực đơn: chỉ Chủ quán / Quản lý (như nút "+" trên đầu màn).
+    final canEditMenu =
+        s != null && (s.isOwner || role == 'owner' || role == 'manager');
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -1066,12 +1077,15 @@ class _PosScreenState extends ConsumerState<PosScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              hasSearch
+              !canEditMenu
+                  ? 'Nhờ Chủ quán hoặc Quản lý thêm món vào thực đơn.'
+                  : hasSearch
                   ? 'Thêm sản phẩm mới với tên này?'
                   : 'Bấm nút bên dưới để thêm sản phẩm đầu tiên',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 13, color: _kMuted),
             ),
+            if (canEditMenu) ...[
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => _openQuickAddProduct(_searchQuery),
@@ -1095,6 +1109,7 @@ class _PosScreenState extends ConsumerState<PosScreen>
                 ),
               ),
             ),
+            ],
           ],
         ),
       ),
@@ -1102,6 +1117,7 @@ class _PosScreenState extends ConsumerState<PosScreen>
   }
 
   void _openQuickAddProduct([String prefillName = '']) {
+    _searchFocus.unfocus(); // không thì đóng bảng xong ô tìm nhận lại con trỏ, bàn phím bật lên
     final products = ref.read(posProductsProvider).value ?? [];
     final storeCustomCats = products
         .map((p) => (p.category ?? '').trim())
@@ -1267,6 +1283,7 @@ class _PosScreenState extends ConsumerState<PosScreen>
   // CART PANEL — Bottom sheet chi tiết giỏ hàng
   // ─────────────────────────────────────────────────────────────────────────
   void _openCart() {
+    _searchFocus.unfocus(); // không thì đóng bảng xong ô tìm nhận lại con trỏ, bàn phím bật lên
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1291,6 +1308,8 @@ class _PosScreenState extends ConsumerState<PosScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      // Vuốt xuống là đóng ngay, không qua chặn "đang gửi": giỏ phải đứng yên tới khi gửi xong.
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (_) => _KitchenConfirmSheet(
         cart: unsentCart,
@@ -1326,12 +1345,13 @@ class _PosScreenState extends ConsumerState<PosScreen>
     final sb = Supabase.instance.client;
     const uuid = Uuid();
     final now = DateTime.now().toUtc().toIso8601String();
+    final cartNotifier = ref.read(cartProvider.notifier);
     final cart = ref.read(cartProvider);
     final tableLabel = cart.tableName ?? 'Mang đi';
-    String? createdSessionId;
+    final session = ref.read(sessionProvider);
 
     // Lấy store_id từ session
-    final storeId = ref.read(sessionProvider)?.storeId;
+    final storeId = session?.storeId;
     if (storeId == null) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1343,201 +1363,223 @@ class _PosScreenState extends ConsumerState<PosScreen>
       return;
     }
 
+    // Mỗi giỏ MỘT phiên bếp: đợt 2 trở đi gửi tiếp vào phiên đó (máy chủ tự tăng "Đợt"). Nhiều phiên
+    // thì thu ngân không huỷ được phiếu — một lượt PIN quản lý chỉ dùng được cho một phiên.
+    String? sessionId =
+        cart.kitchenSessionIds.isEmpty ? null : cart.kitchenSessionIds.first;
+    String? createdSessionId;
+    final itemIds = [for (final _ in unsentLines) uuid.v4()];
+    var sent = false;
+    int? round;
     try {
-      // 1. Khu hệ thống "Bán mang đi" RIÊNG TỪNG QUÁN (mã sinh cố định từ mã quán; trước đây một mã
-      // chung cho mọi quán → quán khác bị RLS chặn 42501). Tạo ẩn (is_active=false) để không lọt vào
-      // màn Bàn / danh sách bàn khách QR; chỉ ghi lần đầu mỗi quán.
-      final zoneId = const Uuid().v5(Uuid.NAMESPACE_URL, 'quannho:pos-takeaway-zone:$storeId');
-      if (!_takeawayReadyStores.contains(storeId)) {
-        final exists = await sb
-            .from('ban_zones')
-            .select('id')
-            .eq('id', zoneId)
-            .maybeSingle();
-        if (exists == null) {
-          debugPrint('[POS→Bếp] 1. tạo khu Bán mang đi của quán...');
-          await sb.from('ban_zones').upsert({
-            'id': zoneId,
-            'store_id': storeId,
-            'name': 'Bán mang đi',
-            'color_value': 0xFFE85D20,
-            'sort_order': 99,
-            'is_active': false,
-          }, onConflict: 'id');
-        }
-        _takeawayReadyStores.add(storeId);
+      if (sessionId == null) {
+        sessionId = await _openTakeawaySession(sb, storeId, now);
+        createdSessionId = sessionId;
       }
 
-      // 2. Mỗi đợt gửi bếp một bàn "Mang đi" ẩn riêng: máy chủ chỉ cho MỖI BÀN MỘT PHIÊN MỞ
-      // (uq_ban_sessions_one_open_per_table) nên đợt 2 / đơn thứ 2 chưa thu tiền trên cùng bàn bị chặn.
-      final tableId = uuid.v4();
-      await sb.from('ban_dining_tables').insert({
-        'id': tableId,
-        'store_id': storeId,
-        'zone_id': zoneId,
-        'name': 'Mang đi',
-        'label': 'Mang đi',
-        'seats': 1,
-        'shape': 'rect',
-        'is_active': false,
-      });
-
-      // 3. Tạo session mới
-      debugPrint('[POS→Bếp] 3. insert ban_sessions...');
-      final sessionId = uuid.v4();
-      createdSessionId = sessionId;
-      await sb.from('ban_sessions').insert({
-        'id': sessionId,
-        'store_id': storeId,
-        'table_id': tableId,
-        'status': 'open',
-        'guest_count': 1,
-        'opened_at': now,
-      });
-      debugPrint('[POS→Bếp] 3. done ✓');
-
-      // 4. Tạo session items cho unsent lines
-      debugPrint(
-        '[POS→Bếp] 4. insert ${unsentLines.length} ban_session_items...',
-      );
-      final sessionItemIds = <String>[];
-      for (final line in unsentLines) {
-        final itemId = uuid.v4();
-        sessionItemIds.add(itemId);
-        await sb.from('ban_session_items').insert({
-          'id': itemId,
-          'store_id': storeId,
-          'session_id': sessionId,
-          'product_id': line.productId,
-          'product_name': line.productName,
-          'unit_price': line.unitPrice, // cột gốc NOT NULL
-          // Không gửi cột cũ 'price' (kiểu số nguyên): "35000.0" bị từ chối → gửi bếp lỗi (như màn Bàn).
-          'quantity': line.quantity,
-          'subtotal': line.subtotal,
-          'kitchen_status': 'da_gui',
-          'added_at': now,
-        });
-      }
-      debugPrint('[POS→Bếp] 4. done ✓');
-
-      // 5. Tạo kitchen ticket
-      debugPrint('[POS→Bếp] 5. insert kitchen_tickets...');
-      final ticketId = uuid.v4();
-      await sb.from('kitchen_tickets').insert({
-        'id': ticketId,
-        'store_id': storeId,
-        'session_id': sessionId,
-        'table_label': tableLabel,
-        'zone_label': 'Mang đi',
-        'round': 1,
-        'sent_at': now,
-        'status': 'cho', // ← khớp với kitchen_screen filter
-      });
-      debugPrint('[POS→Bếp] 5. done ✓');
-
-      // 6. Batch query station code + insert ticket items
-      debugPrint('[POS→Bếp] 6. batch lookup station codes...');
-      final productIds = unsentLines.map((l) => l.productId).toList();
-      final productRows = await sb
-          .from('products')
-          .select('id, category')
-          .inFilter('id', productIds);
-      final categoryMap = <String, String>{
-        for (final r in productRows)
-          r['id'] as String: r['category'] as String? ?? '',
-      };
-
-      debugPrint(
-        '[POS→Bếp] 6. insert ${unsentLines.length} kitchen_ticket_items...',
-      );
-      for (int i = 0; i < unsentLines.length; i++) {
-        final line = unsentLines[i];
-        // FIX #2: dùng map thay vì query riêng từng item
-        final stationCode = (categoryMap[line.productId] == 'Đồ uống')
-            ? 'nuoc'
-            : 'nong';
-
-        final parts = <String>[
-          if (itemNotes != null && (itemNotes[line.lineId] ?? '').isNotEmpty)
-            itemNotes[line.lineId]!,
+      // Ghi chú từng món + ghi chú chung "📋 …" → cột note của món, máy chủ chép sang phiếu bếp.
+      String? noteOf(CartLine l) {
+        final parts = [
+          if ((itemNotes?[l.lineId] ?? '').isNotEmpty) itemNotes![l.lineId]!,
           if (kitchenNote != null && kitchenNote.isNotEmpty) '📋 $kitchenNote',
         ];
-
-        await sb.from('kitchen_ticket_items').insert({
-          'id': uuid.v4(),
-          'store_id': storeId, // NOT NULL
-          'ticket_id': ticketId,
-          'session_item_id': sessionItemIds[i],
-          // ‼️ FIX #1: Dùng đúng field names khớp với KitchenTicketItemModel
-          'name': line
-              .productName, // cột NOT NULL — thiếu thì gửi bếp từ quầy lỗi (23/10)
-          'product_name': line.productName, // ✅ model đọc 'product_name'
-          'quantity': line.quantity % 1 == 0
-              ? line.quantity.toInt()
-              : line.quantity, // ✅ model đọc 'quantity'
-          'station_code': stationCode,
-          'free_note': parts.isEmpty ? null : parts.join(' | '),
-          // ‼️ FIX #5: Explicit done=false thay vì NULL
-          'done': false,
-        });
+        return parts.isEmpty ? null : parts.join(' | ');
       }
-      debugPrint('[POS→Bếp] 6. done ✓ — ALL STEPS COMPLETE');
 
-      // Hướng 1: GIỮ cart, đánh dấu lines đã gửi
-      ref
-          .read(cartProvider.notifier)
-          .markLinesSent(unsentLines.map((l) => l.lineId).toList());
-      ref.read(cartProvider.notifier).addKitchenSession(sessionId);
-
-      if (mounted) {
-        final sentCount = unsentLines.fold(0, (s, l) => s + l.quantity.toInt());
-        final batchNum = ref.read(cartProvider).kitchenSessionIds.length;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(
-                  Icons.local_fire_department_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text('Đã gửi bếp đợt $batchNum: $tableLabel — $sentCount món'),
-              ],
-            ),
-            backgroundColor: _kOrange,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-            margin: const EdgeInsets.all(12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
+      // Món vào phiên ở trạng thái CHƯA GỬI, rồi hàm máy chủ send_kitchen_ticket_v2 (như màn Bàn) tạo
+      // phiếu + món phiếu + đánh dấu đã gửi trong MỘT giao dịch: rớt mạng không để phiếu dở ở bếp.
+      await sb.from('ban_session_items').insert([
+        for (var i = 0; i < unsentLines.length; i++)
+          {
+            'id': itemIds[i],
+            'store_id': storeId,
+            'session_id': sessionId,
+            'product_id': unsentLines[i].productId,
+            'product_name': unsentLines[i].productName,
+            'unit_price': unsentLines[i].unitPrice, // cột gốc NOT NULL
+            // Không gửi cột cũ 'price' (kiểu số nguyên): "35000.0" bị từ chối → gửi bếp lỗi (như màn Bàn).
+            'quantity': unsentLines[i].quantity,
+            'subtotal': unsentLines[i].subtotal,
+            'note': noteOf(unsentLines[i]),
+            'kitchen_status': 'chua_gui',
+            'added_at': now,
+          },
+      ]);
+      final res = await sb.rpc('send_kitchen_ticket_v2', params: {
+        'p_session_id': sessionId,
+        'p_store_id': storeId,
+        'p_table_label': tableLabel,
+        'p_zone_label': 'Mang đi',
+        'p_note': session?.displayName,
+        'p_item_ids': itemIds,
+      });
+      if (res is! Map || res['success'] != true) {
+        throw Exception('send_kitchen_ticket_v2: $res');
       }
+      round = (res['round'] as num?)?.toInt();
+      sent = true;
     } catch (e, st) {
       AppLogger.error('pos_screen', 'Gửi bếp thất bại: $e', e, st);
-      // Lỗi sau khi đã tạo phiên → đóng phiên đó, không để phiên rỗng mở mãi trên bàn Mang đi.
-      if (createdSessionId != null) {
-        try {
-          await sb
-              .from('ban_sessions')
-              .update({'status': 'cancelled', 'closed_at': now})
-              .eq('id', createdSessionId)
-              .eq('status', 'open');
-        } catch (_) {}
+      sent = await _settleFailedKitchenSend(sb, itemIds, createdSessionId, now);
+    }
+
+    if (sent) {
+      cartNotifier.markLinesSent([for (final l in unsentLines) l.lineId]);
+      if (createdSessionId != null) cartNotifier.addKitchenSession(createdSessionId);
+    }
+    if (!mounted) return;
+    final sentCount = unsentLines.fold(0, (s, l) => s + l.quantity.toInt());
+    ScaffoldMessenger.of(context).showSnackBar(
+      sent
+          ? SnackBar(
+              content: Row(
+                children: [
+                  const Icon(
+                    Icons.local_fire_department_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Đã gửi bếp${round == null ? '' : ' đợt $round'}: $tableLabel — $sentCount món',
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: _kOrange,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+              margin: const EdgeInsets.all(12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            )
+          : const SnackBar(
+              content: Text(
+                'Gửi bếp thất bại, bếp chưa nhận phiếu. Kiểm tra mạng rồi bấm "Bếp" gửi lại.',
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 8),
+            ),
+    );
+  }
+
+  /// Phiên bếp cho giỏ bán mang đi, trên khu "Bán mang đi" ẩn RIÊNG từng quán (mã sinh cố định từ mã
+  /// quán; trước đây một mã chung cho mọi quán → quán khác bị RLS chặn 42501) và một bàn "Mang đi" ẩn
+  /// ĐANG RẢNH. Máy chủ chỉ cho mỗi bàn một phiên mở (uq_ban_sessions_one_open_per_table), nên số bàn ẩn
+  /// chỉ bằng số giỏ cùng lúc chưa thu tiền; thu tiền / huỷ xong bàn rảnh lại.
+  Future<String> _openTakeawaySession(
+    SupabaseClient sb,
+    String storeId,
+    String now,
+  ) async {
+    const uuid = Uuid();
+    final zoneId = uuid.v5(Uuid.NAMESPACE_URL, 'quannho:pos-takeaway-zone:$storeId');
+    if (!_takeawayReadyStores.contains(storeId)) {
+      final exists = await sb
+          .from('ban_zones')
+          .select('id')
+          .eq('id', zoneId)
+          .maybeSingle();
+      if (exists == null) {
+        await sb.from('ban_zones').upsert({
+          'id': zoneId,
+          'store_id': storeId,
+          'name': 'Bán mang đi',
+          'color_value': 0xFFE85D20,
+          'sort_order': 99,
+          'is_active': false,
+        }, onConflict: 'id');
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Gửi bếp thất bại. Hãy chụp lại báo chủ app.'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 8),
-          ),
-        );
+      _takeawayReadyStores.add(storeId);
+    }
+
+    final tables = await sb
+        .from('ban_dining_tables')
+        .select('id')
+        .eq('store_id', storeId)
+        .eq('zone_id', zoneId);
+    final ids = [for (final t in tables) t['id'] as String];
+    final busy = <String>{
+      if (ids.isNotEmpty)
+        for (final r in await sb
+            .from('ban_sessions')
+            .select('table_id')
+            .inFilter('table_id', ids)
+            .eq('status', 'open'))
+          r['table_id'] as String,
+    };
+    String? tableId = ids.where((id) => !busy.contains(id)).firstOrNull;
+    for (var attempt = 0; ; attempt++) {
+      if (tableId == null) {
+        tableId = uuid.v4();
+        await sb.from('ban_dining_tables').insert({
+          'id': tableId,
+          'store_id': storeId,
+          'zone_id': zoneId,
+          'name': 'Mang đi',
+          'label': 'Mang đi',
+          'seats': 1,
+          'shape': 'rect',
+          'is_active': false,
+        });
+      }
+      final sessionId = uuid.v4();
+      try {
+        await sb.from('ban_sessions').insert({
+          'id': sessionId,
+          'store_id': storeId,
+          'table_id': tableId,
+          'status': 'open',
+          'guest_count': 1,
+          'opened_at': now,
+        });
+        return sessionId;
+      } on PostgrestException catch (e) {
+        // Máy khác vừa mở phiên trên đúng bàn rảnh này → lấy bàn mới.
+        if (e.code != '23505' || attempt > 0) rethrow;
+        tableId = null;
       }
     }
+  }
+
+  /// Gửi bếp báo lỗi: hỏi lại máy chủ. Món đã thành "đã gửi" (mất phản hồi sau khi máy chủ gửi xong)
+  /// → coi như thành công, vì gửi lại sẽ thành phiếu trùng. Chưa gửi → xoá món dở (chưa gửi thì xoá
+  /// không cần duyệt) và đóng phiên vừa mở, để không còn phiên treo trên bàn Mang đi.
+  Future<bool> _settleFailedKitchenSend(
+    SupabaseClient sb,
+    List<String> itemIds,
+    String? createdSessionId,
+    String now,
+  ) async {
+    try {
+      final rows = await sb
+          .from('ban_session_items')
+          .select('kitchen_status')
+          .inFilter('id', itemIds);
+      if (rows.isNotEmpty && rows.every((r) => r['kitchen_status'] == 'da_gui')) {
+        return true;
+      }
+      if (rows.isNotEmpty) {
+        await sb
+            .from('ban_session_items')
+            .delete()
+            .inFilter('id', itemIds)
+            .eq('kitchen_status', 'chua_gui');
+      }
+      if (createdSessionId != null) {
+        await sb
+            .from('ban_sessions')
+            .update({'status': 'cancelled', 'closed_at': now})
+            .eq('id', createdSessionId)
+            .eq('status', 'open');
+      }
+    } catch (e) {
+      debugPrint('[POS→Bếp] dọn lần gửi lỗi: $e');
+    }
+    return false;
   }
 
   void _addToCart(ProductModel product, TapUpDetails details) {
@@ -2107,7 +2149,12 @@ class _StockBadge extends StatelessWidget {
 // lại hoặc xoá. Ghi DB như "Huỷ món" ở Quản lý bàn: lý do + duyệt quản lý (PIN).
 // ─────────────────────────────────────────────────────────────────────────────
 Future<bool> cancelPosKitchenTickets(BuildContext context, WidgetRef ref) async {
+  // Lấy sẵn trước mọi lần chờ: đóng giỏ giữa chừng thì `ref` của nó không dùng được nữa
+  // (từng để máy chủ đã huỷ mà giỏ vẫn giữ phiếu cũ → thu tiền bị từ chối).
+  final cartNotifier = ref.read(cartProvider.notifier);
+  final banRepo = ref.read(banRepositoryProvider);
   final cart = ref.read(cartProvider);
+  final session = ref.read(sessionProvider);
   final sessionIds = cart.kitchenSessionIds.toList();
   if (sessionIds.isEmpty) return true;
   final sentLines = cart.lines.where((l) => cart.isLineSent(l.lineId)).toList();
@@ -2120,7 +2167,6 @@ Future<bool> cancelPosKitchenTickets(BuildContext context, WidgetRef ref) async 
   if (reason == null || !context.mounted) return false;
 
   // Chủ quán / Quản lý tự duyệt; người khác nhập PIN quản lý (lượt duyệt dùng cho 1 lần ghi món).
-  final session = ref.read(sessionProvider);
   final role = StaffService.canonicalRole(session?.role ?? '');
   Map<String, String>? approval;
   if (session != null &&
@@ -2189,10 +2235,22 @@ Future<bool> cancelPosKitchenTickets(BuildContext context, WidgetRef ref) async 
         .inFilter('id', sessionIds)
         .eq('status', 'open');
   } catch (e) {
-    debugPrint('[POS] huỷ phiếu bếp (phiếu/phiên): $e');
+    // Món đã thành HUỶ nhưng phiếu/phiên chưa: báo lỗi, giữ giỏ như cũ để bấm lại (bước món đã lọc
+    // `neq huy` nên làm lại an toàn). Trước đây lỗi bị nuốt mà vẫn báo "đã huỷ" → bếp vẫn nấu.
+    AppLogger.error('pos_screen', 'Huỷ phiếu bếp (phiếu/phiên) lỗi: $e', e);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Chưa huỷ xong phiếu bếp, bấm "Huỷ phiếu bếp" lại: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+    return false;
   }
   try {
-    await ref.read(banRepositoryProvider).logVoidEvent(
+    await banRepo.logVoidEvent(
       voidType: 'void_item',
       referenceId: sessionIds.first,
       label: '${cart.tableName ?? 'Mang đi'} (Huỷ phiếu bếp)',
@@ -2215,7 +2273,7 @@ Future<bool> cancelPosKitchenTickets(BuildContext context, WidgetRef ref) async 
     debugPrint('[POS] void_audit_logs huỷ phiếu bếp: $e');
   }
 
-  ref.read(cartProvider.notifier).unsendAll();
+  cartNotifier.unsendAll();
   AppLogger.action(
     'pos_cancel_kitchen',
     'Huỷ phiếu bếp',
@@ -2401,12 +2459,13 @@ class _CartPanel extends ConsumerWidget {
                       blockMessage: 'Bạn không có quyền huỷ đơn hàng',
                       child: TextButton(
                         onPressed: () async {
+                          final cartNotifier = ref.read(cartProvider.notifier);
                           // Món đã gửi bếp: huỷ phiếu bếp (báo bếp) trước rồi mới xoá.
                           if (cart.kitchenSessionIds.isNotEmpty &&
                               !await cancelPosKitchenTickets(context, ref)) {
                             return;
                           }
-                          ref.read(cartProvider.notifier).clearCart();
+                          cartNotifier.clearCart();
                           if (!isPanel && context.mounted) Navigator.pop(context);
                         },
                         child: const Text(
@@ -5400,7 +5459,10 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
+    // Đang gửi bếp: không cho đóng bằng nút quay lại / chạm ra ngoài.
+    return PopScope(
+      canPop: !_sending,
+      child: DraggableScrollableSheet(
       initialChildSize: 0.85,
       maxChildSize: 0.95,
       minChildSize: 0.5,
@@ -5678,8 +5740,12 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
                                     _kitchenNoteCtrl.text.trim().isEmpty
                                     ? null
                                     : _kitchenNoteCtrl.text.trim();
-                                Navigator.pop(context);
-                                await widget.onConfirm(kitchenNote, itemNotes);
+                                // Đóng bảng SAU khi gửi xong: trong lúc gửi mà sửa giỏ thì giỏ và bếp lệch nhau.
+                                try {
+                                  await widget.onConfirm(kitchenNote, itemNotes);
+                                } finally {
+                                  if (context.mounted) Navigator.pop(context);
+                                }
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _kOrange,
@@ -5721,6 +5787,7 @@ class _KitchenConfirmSheetState extends State<_KitchenConfirmSheet> {
           ],
         ),
       ),
+    ),
     );
   }
 }

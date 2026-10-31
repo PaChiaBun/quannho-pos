@@ -3081,6 +3081,14 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
   Future<void> _processOrder(String orderId, String storeId) async {
     if (_printCache.isOrderPrinted(orderId)) return;
     if (!state.canRunBackgroundPrintServer) return;
+    // Quán tắt "In khi thanh toán" thì máy chủ in cũng không tự in bill. Máy KHÁC đang giữ quyền máy
+    // chủ in (còn nhịp tim) thì để máy đó in — trước đây mọi máy được chỉ định đều in → bill trùng.
+    // Không đòi chính máy này giữ quyền: mất bản ghi quyền (rớt mạng, đổi ca) từng làm quầy hết in bill.
+    if (!state.autoPrintCheckout ||
+        (hasActivePrintServerOwner(state.ownerState) &&
+            !state.isCurrentDeviceOwner)) {
+      return;
+    }
 
     try {
       await Future.delayed(const Duration(milliseconds: 300));

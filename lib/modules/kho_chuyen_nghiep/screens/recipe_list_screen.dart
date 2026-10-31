@@ -410,7 +410,7 @@ class _RecipeCard extends StatelessWidget {
                           color: profit > 0 ? KhoTheme.green : KhoTheme.red)),
                     ])),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text('Food cost', style: GoogleFonts.plusJakartaSans(
+                      Text('Tỉ lệ giá vốn', style: GoogleFonts.plusJakartaSans(
                           fontSize: 10, color: KhoTheme.muted)),
                       Text('${(foodCostPct * 100).toStringAsFixed(0)}%',
                           style: GoogleFonts.plusJakartaSans(

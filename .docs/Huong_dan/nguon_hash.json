@@ -2,13 +2,13 @@
   "_ghi_chu": "Mã băm file nguồn lúc bài được rà lại lần cuối. Ghi bằng tool/dong_dau_huong_dan.dart.",
   "bai": {
     "ban-hang.md": {
-      "lib/core/providers/app_providers.dart": "0f21da878380229e",
+      "lib/core/providers/app_providers.dart": "52f086b4bb2ae164",
       "lib/core/widgets/order_detail_dialog.dart": "885bce66b222166e",
       "lib/modules/pos/providers/pos_providers.dart": "bc209ad50b142c92",
       "lib/modules/pos/repository/pos_repository.dart": "e5127ad3b08bbc88",
-      "lib/modules/pos/screens/checkout_sheet.dart": "451edb0c0ce2e191",
-      "lib/screens/finance_screen.dart": "775d3b82dd9114ed",
-      "lib/screens/pos_screen.dart": "07b98a55b0cd7b39",
+      "lib/modules/pos/screens/checkout_sheet.dart": "84634ace48b77e53",
+      "lib/screens/finance_screen.dart": "1efd28f22dbc5f19",
+      "lib/screens/pos_screen.dart": "1a09f3997ddca6f4",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "bao-cao-chuoi.md": {
@@ -29,7 +29,7 @@
     },
     "bep.md": {
       "lib/core/repositories/kitchen_repository.dart": "6d24bef325dde24b",
-      "lib/screens/kitchen_screen.dart": "ce1392cc7a8a5c54",
+      "lib/screens/kitchen_screen.dart": "7341f7405a91ca6e",
       "supabase/migrations/20260912_atomic_send_kitchen_ticket_v2.sql": "3242f0573a0ef36a",
       "test/screens/kitchen_sound_policy_test.dart": "52ab1b02b8994af5"
     },
@@ -38,9 +38,9 @@
       "lib/screens/chamcong_screen.dart": "b15a772a76e8392b"
     },
     "in-hoa-don.md": {
-      "lib/modules/bill_printer/providers/printer_settings_provider.dart": "c8a5c0a2d95a68be",
-      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "4b15df92a24dbbe2",
-      "lib/modules/bill_printer/screens/bill_printer_hub.dart": "0f89216b1dae21ac",
+      "lib/modules/bill_printer/providers/printer_settings_provider.dart": "fc71acb96a0fa5c2",
+      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "d7edf7fb03217e7c",
+      "lib/modules/bill_printer/screens/bill_printer_hub.dart": "9c49d815d7b82821",
       "lib/modules/bill_printer/screens/print_design_screen.dart": "cdca414c5cae7abf",
       "lib/modules/bill_printer/screens/print_rules_screen.dart": "6393cf6495030116",
       "lib/modules/bill_printer/screens/printer_settings_screen.dart": "a74b4b0851a19050",
@@ -49,8 +49,8 @@
     "khach-hang.md": {
       "lib/modules/loyalty/repository/loyalty_repository.dart": "bcaecfe01367e189",
       "lib/modules/pos/screens/discount_management_screen.dart": "ca52be3d08e9a326",
-      "lib/screens/loyalty_screen.dart": "4aac341ba72a60d6",
-      "lib/screens/settings_screen.dart": "436d2a8a2d26902e",
+      "lib/screens/loyalty_screen.dart": "289274eb7420098a",
+      "lib/screens/settings_screen.dart": "22b501fe600b0e09",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "kho-chuyen-nghiep.md": {
@@ -62,7 +62,7 @@
       "lib/modules/kho_chuyen_nghiep/screens/production_order_screen.dart": "47dd066bb8bb6a6b",
       "lib/modules/kho_chuyen_nghiep/screens/recipe_detail_screen.dart": "1a27b193c16bce40",
       "lib/modules/kho_chuyen_nghiep/screens/recipe_form_screen.dart": "a40561242821a73c",
-      "lib/modules/kho_chuyen_nghiep/screens/recipe_list_screen.dart": "78b58f5a277bb25c",
+      "lib/modules/kho_chuyen_nghiep/screens/recipe_list_screen.dart": "535d567a0cc6aef5",
       "lib/modules/kho_chuyen_nghiep/screens/stock_count_screen.dart": "8bcb86fa710a6d4f",
       "lib/modules/kho_chuyen_nghiep/screens/stock_waste_screen.dart": "295df9917a4a18d7",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3",
@@ -70,21 +70,21 @@
       "supabase/migrations/20261010_fix11_lenh_san_xuat_cong_thanh_pham.sql": "42320042798c5546"
     },
     "kho-hang.md": {
-      "lib/core/providers/app_providers.dart": "0f21da878380229e",
+      "lib/core/providers/app_providers.dart": "52f086b4bb2ae164",
       "lib/modules/kho/repository/kho_repository.dart": "78b2b73350cb4ea5",
       "lib/modules/kho/screens/phieu_nhap_hang_screen.dart": "eb17403c2735a4e2",
-      "lib/modules/kho/screens/po_detail_screen.dart": "0c92518863493d3f",
+      "lib/modules/kho/screens/po_detail_screen.dart": "e71d8fff90d11d55",
       "lib/modules/kho/screens/receive_stock_sheet.dart": "efcd55018e4af4c9",
       "lib/modules/kho/screens/supplier_form_screen.dart": "cd17bfaafd38df68",
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "43588248352a47ea",
-      "lib/screens/inventory_screen.dart": "5d5fc9b464b2c1e9",
+      "lib/screens/ban_screen.dart": "7415de5f040bcbd7",
+      "lib/screens/inventory_screen.dart": "4a01d197c3350ba2",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
     "luong.md": {
       ".docs/Ai_Boom/cac-module/quy-chuan-cham-cong-tinh-luong-chuan.md": "ac64501ae10b6158",
-      "lib/main.dart": "96a6b55e2d1cba0b",
+      "lib/main.dart": "e9f52de9df38204a",
       "lib/modules/tinhluong/repository/tinhluong_repository.dart": "e4ce4880dea03d47",
       "lib/modules/tinhluong/screens/dispute_sheet.dart": "8f7e1c48fec1a30a",
       "lib/modules/tinhluong/screens/my_payslip_screen.dart": "3391a374782da5cd",
@@ -103,7 +103,7 @@
       "lib/screens/forgot_password_sheet.dart": "524be154bcd75ef5",
       "lib/screens/nhan_vien_screen.dart": "5b134c5bdb2a1204",
       "lib/screens/role_manager_screen.dart": "f84d6eff5065126d",
-      "lib/screens/settings_screen.dart": "436d2a8a2d26902e",
+      "lib/screens/settings_screen.dart": "22b501fe600b0e09",
       "lib/screens/staff_name_dialog.dart": "d7b0c13c25abbe61",
       "lib/screens/staff_password_dialog.dart": "a90484134346c964",
       "lib/screens/store_setup_screen.dart": "6db77783c1b44bab"
@@ -130,7 +130,7 @@
     },
     "quan-ly-ban.md": {
       "lib/core/repositories/ban_repository.dart": "012502e6267bc744",
-      "lib/screens/ban_screen.dart": "43588248352a47ea",
+      "lib/screens/ban_screen.dart": "7415de5f040bcbd7",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
@@ -144,7 +144,7 @@
       "lib/modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart": "8f6538f36cb8e876",
       "lib/modules/loyalty/repository/loyalty_repository.dart": "bcaecfe01367e189",
       "lib/modules/tinhluong/repository/tinhluong_repository.dart": "e4ce4880dea03d47",
-      "lib/screens/finance_screen.dart": "775d3b82dd9114ed",
+      "lib/screens/finance_screen.dart": "1efd28f22dbc5f19",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "van-hanh.md": {

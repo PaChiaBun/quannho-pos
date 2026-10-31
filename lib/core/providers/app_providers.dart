@@ -176,6 +176,20 @@ const kTabModuleIds = {
   13: 'kay_ops', 14: 'log_viewer',
 };
 
+/// Đủ 4 ô thanh dưới: thêm mục trong [allowed] chưa có, rồi tới [fallback]; chỉ khi hết mục mới lặp
+/// mục đầu.
+List<int> padNavSlots(List<int> slots, Set<int> allowed, [Set<int> fallback = const {}]) {
+  final result = List<int>.from(slots);
+  for (final pool in [allowed, fallback]) {
+    for (final t in pool.toList()..sort()) {
+      if (result.length >= 4) break;
+      if (!result.contains(t)) result.add(t);
+    }
+  }
+  while (result.length < 4) result.add(result.first);
+  return result.take(4).toList();
+}
+
 class NavSlotsNotifier extends AsyncNotifier<List<int>> {
   static const _prefKey = 'nav_slots_v2'; // v2 → reset khi thêm Kho Pro
   static const _defaults = [0, 1, 2, 11]; // Home, Bán hàng, Kho, Kho Pro

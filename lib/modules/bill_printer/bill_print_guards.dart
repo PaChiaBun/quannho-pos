@@ -43,7 +43,11 @@ class BillPrintWatchdog {
   void markOverdue({bool notConfigured = false}) {
     _timer?.cancel();
     this.notConfigured = notConfigured;
-    if (!_disposed) status.value = BillPrintStatus.overdue;
+    if (_disposed) return;
+    final wasPending = status.value == BillPrintStatus.pending;
+    status.value = BillPrintStatus.overdue;
+    // Ghi nhật ký "bill chưa in" như khi quá 30 giây; máy chưa cài máy in thì không phải sự cố.
+    if (wasPending && !notConfigured) onOverdue?.call();
   }
 
   /// In lại đang chạy: về `pending` và canh lại một chu kỳ.

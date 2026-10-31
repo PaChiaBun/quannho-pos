@@ -193,7 +193,7 @@ void main() {
         barLabel: PrinterConfig(name: '', type: 'system'),
       );
       await _open(tester, const BillPrinterHub(), fresh);
-      expect(find.textContaining('máy in liền thân của máy Sunmi này'), findsOneWidget);
+      expect(find.textContaining('in ra máy in liền thân'), findsOneWidget);
       expectNoEllipsis(tester, ['Đang in theo: 4 trạm (Cấu Hình Trạm In)']);
     });
 

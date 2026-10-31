@@ -481,7 +481,9 @@ class TestInventoryScreenPermissionGating(unittest.TestCase):
                         "_confirmBatchDelete must guard with if (!_canDeleteItems) return; as very first statement")
 
     def test_multi_select_button_rendering_guard(self):
-        self.assertIn("if (_canDeleteItems) ...[", self.inv_code)
+        # 01/11/2026: nút "Chọn" theo quyền thao tác hàng loạt (bật/tắt bán, đổi danh mục) — màn hẹp không
+        # còn ô tích; nút Xoá trong thanh chọn vẫn chỉ cho người có quyền xoá (_confirmBatchDelete).
+        self.assertIn("if (_canManageBulk) ...[", self.inv_code)
 
     def test_single_delete_on_delete_callback_guard(self):
         self.assertIn("onDelete: _canDeleteItems ? () async", self.inv_code)

@@ -22,9 +22,10 @@ import '../repository/pos_repository.dart';
 final _checkoutNavigators = <NavigatorState>{};
 
 /// Có thanh toán treo chờ đối soát trên máy này không — nút "Đối soát" ở Bán hàng chỉ hiện khi có.
-final pendingPosSaleProvider = FutureProvider.autoDispose<bool>(
-  (ref) async => await ref.watch(posRepositoryProvider).pendingSale() != null,
-);
+final pendingPosSaleProvider = FutureProvider.autoDispose<bool>((ref) async {
+  ref.watch(sessionProvider.select((s) => s?.storeId)); // đổi quán → hỏi lại
+  return await ref.watch(posRepositoryProvider).pendingSale() != null;
+});
 
 /// Shared by mobile cart, desktop panel and the quick checkout button.
 /// The guard is acquired synchronously, before even reading durable storage.
@@ -61,7 +62,12 @@ Future<bool> recoverPendingPosSale(BuildContext context, WidgetRef ref) async {
   final repo = ref.read(posRepositoryProvider);
   try {
     final pending = await repo.pendingSale();
-    if (!context.mounted || pending == null) return false;
+    if (pending == null) {
+      // Không còn giao dịch treo (máy khác/lần trước đã xử lý): tắt chấm đỏ "Đối soát".
+      if (context.mounted) ref.invalidate(pendingPosSaleProvider);
+      return false;
+    }
+    if (!context.mounted) return false;
     final intent = pending['intent'] as Map?;
     final proceed = await showDialog<bool>(
       context: context,
@@ -1118,20 +1124,24 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                       '${cashierSt!.name} ${printRes.stationResults['cashier']?.errorMessage ?? ''}',
                 );
               }
-              if (mounted &&
-                  (cashierSt == StationPrintStatus.notConfigured ||
-                      cashierSt == StationPrintStatus.failed)) {
+              if (mounted && cashierSt == StationPrintStatus.failed) {
                 // Đứng yên tới khi thu ngân bấm Đóng: bill không ra là chuyện phải thấy.
                 ScaffoldMessenger.maybeOf(context)?.showSnackBar(
                   SnackBar(
-                    content: Text(
-                      cashierSt == StationPrintStatus.notConfigured
-                          ? 'Máy này chưa được cài máy in hóa đơn nên chưa in. '
-                              'Vào In Hoá Đơn → Máy In & Luật In để chọn máy in.'
-                          : 'In hóa đơn thất bại. Kiểm tra máy in rồi bấm "In hoá đơn".',
+                    content: const Text(
+                      'In hóa đơn thất bại. Kiểm tra máy in rồi bấm "In hoá đơn".',
                     ),
                     duration: const Duration(days: 1),
                     action: SnackBarAction(label: 'Đóng', onPressed: () {}),
+                  ),
+                );
+              } else if (mounted &&
+                  cashierSt == StationPrintStatus.notConfigured) {
+                // Máy chưa cài máy in (vd quán bán bằng điện thoại): nhắc nhẹ rồi tự tắt, không chặn màn.
+                ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                  const SnackBar(
+                    content: Text('Máy này chưa cài máy in hoá đơn nên không in bill.'),
+                    duration: Duration(seconds: 4),
                   ),
                 );
               }

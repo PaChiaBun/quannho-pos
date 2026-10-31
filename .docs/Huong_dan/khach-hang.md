@@ -2,7 +2,7 @@
 module: loyalty
 ten: Khách hàng – Giảm giá – Khuyến mãi
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-31
+cap_nhat: 2026-11-01
 nguon:
   - lib/screens/loyalty_screen.dart (Khách, Ví, Thưởng, Gói nạp, Khuyến mãi)
   - lib/modules/loyalty/repository/loyalty_repository.dart (nạp ví, gói nạp, phần thưởng)
@@ -56,7 +56,7 @@ nguon:
 
 ### 4. Nạp tiền vào ví cho khách
 1. Tab **"Ví"** → nút **"Nạp"** ở dòng của khách → **"Nạp tiền — <tên khách>"**, thấy số dư hiện tại. Khách **chưa có tiền trong ví** (nạp lần đầu): bấm **"Nạp ví cho khách"** ở đầu tab Ví → tìm theo tên hoặc số điện thoại → chọn khách. Chi tiết khách không có nút nạp.
-2. Chọn gói hoặc nhập **số tiền**; app hiện "Áp dụng: <gói> (+X% bonus)".
+2. Chọn gói hoặc nhập **số tiền**; app hiện "Áp dụng: <gói> (+X% thưởng)".
 3. **"Thời hạn bonus"**: 6 tháng, 12 tháng (mặc định), 2 năm, Không hạn.
    - Nếu lần nạp này **có thưởng** và chọn **một thời hạn**, hạn dùng của **toàn bộ** số bonus khách đang có (cả bonus cũ) được đặt lại theo thời hạn mới.
    - Lần nạp **không có thưởng**, hoặc chọn **"Không hạn"**, thì giữ nguyên hạn bonus hiện có của khách.

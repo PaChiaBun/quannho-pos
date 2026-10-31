@@ -1316,14 +1316,15 @@ class StationPrinterDispatcher {
     fontScale: 0.8,
   );
 
-  /// Quán chưa cài máy in (chưa dùng Luật in; trạm thu ngân bật nhưng chưa chọn máy — mặc định
-  /// của quán mới) mà máy này là Sunmi có máy in liền thân: bill in ra máy in đó, khỏi phải cài.
+  /// Máy Sunmi có máy in liền thân, quán chưa dùng Luật in, trạm thu ngân đang bật nhưng chưa chọn
+  /// máy (mặc định quán mới) HOẶC chọn máy in hệ thống của máy tính (tên máy in Windows/Mac — Android
+  /// không in được, chỉ bật bảng in): bill in ra máy in liền thân. Máy in mạng (IP) vẫn dùng như chọn.
   /// Trạm thu ngân đã TẮT là chủ quán không muốn in bill: giữ nguyên.
   static bool usesBuiltinBillFallback(StationPrintersState s) =>
       SunmiBuiltinDriver.hasBuiltinPrinter &&
       s.printSetup.isEmpty &&
       s.cashier.enabled &&
-      s.cashier.name.trim().isEmpty;
+      (s.cashier.name.trim().isEmpty || s.cashier.type == 'system');
 
   static PrinterConfig _pickConfig(
     PrintSetup setup,

@@ -1001,9 +1001,14 @@ class _TransactionCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              Text(
-                '$timeStr  •  ${_dayLabel(dt)}',
-                style: const TextStyle(fontSize: 12, color: _kMuted),
+              // Co lại được: nhãn "Tự động" + số tiền có " đ" từng làm dòng này tràn trên màn 360dp.
+              Flexible(
+                child: Text(
+                  '$timeStr  •  ${_dayLabel(dt)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, color: _kMuted),
+                ),
               ),
             ],
           ),

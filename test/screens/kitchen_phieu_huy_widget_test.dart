@@ -77,6 +77,7 @@ Future<void> _open(WidgetTester tester, Size size, List<TicketWithItems> tickets
 }
 
 void main() {
+  setUp(clearSeenCancelledTickets); // "Đã xem" giờ nhớ suốt phiên app: bài trước bấm thì bài sau mất thẻ
   setUpAll(() async {
     GoogleFonts.config.allowRuntimeFetching = false;
     // Phông thật (như tram_in_theo_luat_test) để kiểm tra tràn chữ ở 360dp đo đúng độ rộng.

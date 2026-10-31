@@ -43,7 +43,7 @@ nguon:
 ### 3. Gọi món
 1. Trong bàn bấm **"Gọi món ngay"** (bàn chưa có món) hoặc **"Thêm món"**.
 2. Tìm **"Tìm sản phẩm, thức uống..."** hoặc chọn danh mục; chạm món để thêm.
-3. Món có thêm lựa chọn: bấm **"Tùy chọn"** trên thẻ món (máy màn hẹp như Sunmi: nút nhỏ nằm cạnh giá, chạm tên món cũng mở; thêm món không làm thẻ giãn ra nên các món bên dưới không dời chỗ):
+3. Món có thêm lựa chọn: bấm **"Tùy chọn"** trên thẻ món (máy màn hẹp như Sunmi: nút nhỏ nằm cạnh giá — món có ảnh chỉ còn biểu tượng, giá hiện số cuối cùng; chạm tên món cũng mở; thêm món không làm thẻ giãn ra nên các món bên dưới không dời chỗ):
    - **"🥗 Topping tùy chọn"** — tăng/giảm số lượng từng topping.
    - **"✨ Tùy chọn hương vị"** — các tùy chọn món (mức cay, thêm món…) và chip ghi chú nhanh.
    - **"Ghi chú"** — ghi chú riêng ("vd: ít rau, không cay...").
@@ -92,7 +92,7 @@ nguon:
 5. Nếu máy chủ tính lại giảm giá/phụ phí khác màn hình: hộp **"Báo giá hóa đơn thay đổi"** → **"Xác nhận & Thanh toán"** hoặc **"Hủy bỏ"**.
 6. Bill tự in nếu đã cài (máy Sunmi mà quán chưa chọn máy in bill thì tự in ra máy in liền thân, xem `in-hoa-don.md`).
    - In lỗi: màn thành công báo **ngay** "Bill CHƯA in. Kiểm tra máy in bill." → **"IN LẠI BILL"**. Máy in không trả lời sau 30 giây cũng báo như vậy.
-   - Máy chưa cài máy in hoá đơn: báo "Máy này chưa được cài máy in hóa đơn nên chưa in…", không có nút in lại.
+   - Máy chưa cài máy in hoá đơn: chỉ một dòng chữ xám "Máy này chưa cài máy in hoá đơn nên không in bill." (không khung đỏ, không nút in lại).
    - Đóng màn khi bill chưa in: dòng đỏ "Bill <bàn> CHƯA in…" hiện **10 giây** (có nút ✕), tự tắt khi chuyển sang màn khác (vd Bếp).
 
 > Mất mạng lúc thanh toán: mở lại và thanh toán lại — máy chủ nhận ra lần trước, **không thu hai lần**.

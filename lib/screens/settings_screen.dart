@@ -680,7 +680,7 @@ class _StoreCodeCard extends StatelessWidget {
                                     size: 16,
                                   ),
                                   SizedBox(width: 8),
-                                  Text('Đã copy mã quán'),
+                                  Text('Đã sao chép mã quán'),
                                 ],
                               ),
                               behavior: SnackBarBehavior.floating,
@@ -775,7 +775,7 @@ class _StoreCodeCard extends StatelessWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            '📋 Đã copy lời mời — dán vào Zalo/Messenger gửi nhân viên!',
+                            '📋 Đã sao chép lời mời — dán vào Zalo/Messenger gửi nhân viên!',
                           ),
                           behavior: SnackBarBehavior.floating,
                           duration: Duration(seconds: 3),

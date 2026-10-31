@@ -1037,6 +1037,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                     color: _kMuted, size: 20),
                 suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
+                        tooltip: 'Xoá chữ tìm',
                         icon: const Icon(Icons.close_rounded,
                             color: _kMuted, size: 18),
                         onPressed: () {
@@ -1064,10 +1065,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
               ),
             ),
           ),
-          if (_canDeleteItems) ...[
+          // Người được bật/tắt bán, đổi danh mục hàng loạt cũng cần nút này (màn hẹp không có ô tích).
+          if (_canManageBulk) ...[
             const SizedBox(width: 8),
             Tooltip(
-              message: _isMultiSelect ? 'Hủy chế độ chọn nhiều' : 'Chọn nhiều món để xóa',
+              message: _isMultiSelect ? 'Hủy chế độ chọn nhiều' : 'Chọn nhiều món',
               child: Material(
                 color: _isMultiSelect ? _kRed : _kNavy.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(14),
@@ -1544,13 +1546,14 @@ class _StockListState extends ConsumerState<_StockList> {
             if (selectedIds.isNotEmpty && canManageBulk)
               _buildStickyTopBar(context, categories),
 
-            // ── Danh sách thẻ (< 600dp) / Dense Data Table (≥ 600dp) ──
-            // Đo bề rộng thật của vùng danh sách (máy tính bảng còn thanh bên 89dp).
+            // ── Danh sách thẻ (< 660dp) / Dense Data Table (≥ 660dp) ──
+            // Đo bề rộng thật của vùng danh sách (máy tính bảng còn thanh bên 89dp). Dưới 660dp bảng
+            // cắt "Không theo dõi" và giá từ 10 triệu thành "…" nên vẫn dùng thẻ.
             Expanded(
               child: filtered.isEmpty
                   ? _buildEmpty(widget.emptyMsg, widget.emptyIcon, widget.emptyColor)
                   : LayoutBuilder(
-                      builder: (context, constraints) => constraints.maxWidth < 600
+                      builder: (context, constraints) => constraints.maxWidth < 660
                           ? _buildCardList(filtered, isAllSelected, allFilteredIds, items.length)
                           : _buildDenseDataTable(
                               context, filtered, isAllSelected, allFilteredIds, items.length),
@@ -3129,6 +3132,14 @@ class _StockCard extends StatelessWidget {
                           height: 1.25,
                         ),
                       ),
+                      // Ô tìm vẫn khớp theo SKU: hiện mã để biết vì sao món này ra trong kết quả.
+                      if ((item.sku ?? '').isNotEmpty)
+                        Text(
+                          item.sku!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11, color: _kMuted),
+                        ),
                       const SizedBox(height: 3),
                       Row(
                         children: [
@@ -3393,6 +3404,7 @@ class _HistorySheet extends ConsumerWidget {
                     ),
                     const Spacer(),
                     IconButton(
+                      tooltip: 'Đóng',
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.close_rounded, color: _kMuted),
                     ),
@@ -3546,6 +3558,7 @@ class _RecentMovementsSheet extends ConsumerWidget {
                 ),
                 const Spacer(),
                 IconButton(
+                  tooltip: 'Đóng',
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded, color: _kMuted),
                 ),
@@ -5907,6 +5920,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                   _isEdit ? 'Sửa nhóm topping' : 'Tạo nhóm topping mới',
                   style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white))),
                 IconButton(
+                  tooltip: 'Đóng',
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded, color: Colors.white54)),
               ]),

@@ -2,7 +2,7 @@
 module: log_viewer
 ten: Nhật Ký Log
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-31
+cap_nhat: 2026-11-01
 nguon:
   - lib/screens/log_viewer_screen.dart
   - lib/screens/bug_report_screen.dart (Cài đặt → "Gửi phản hồi")
@@ -28,7 +28,7 @@ nguon:
 - Mỗi dòng: thời gian, mức (**Thông tin / Cảnh báo / Lỗi hệ thống / Gỡ lỗi**), nhân viên, nội dung; chạm để xem **"Chi tiết kỹ thuật (Technical Details)"**.
 
 ## App ghi lại những gì (ví dụ)
-- **Hành động nghiệp vụ**: mở bàn, gửi bếp, huỷ món/huỷ bàn, Quản lý duyệt bằng PIN, thanh toán, in lại bill, món chưa gửi bếp quá 3 phút, bill chưa in sau 30 giây…
+- **Hành động nghiệp vụ**: mở bàn, gửi bếp, huỷ món/huỷ bàn, Quản lý duyệt bằng PIN, thanh toán, in lại bill, món chưa gửi bếp quá 3 phút, bill chưa in (lệnh in lỗi, hoặc quá 30 giây máy in chưa xác nhận)…
 - **Lỗi**: tải dữ liệu thất bại, in thất bại, mất kết nối…
 - Mỗi dòng kèm tên nhân viên và mã thiết bị.
 - Dòng dò định kỳ (polling) đơn/phiếu bếp được ẩn khỏi danh sách cho đỡ rối.

@@ -55,11 +55,13 @@ Mở module **In Hoá Đơn** từ Trang chủ:
    - "Máy in hệ thống (Windows/Mac)" — gõ **đúng tên máy in** như trong Windows/Mac; để trống sẽ **không in được**.
    - "Máy in mạng LAN / Wi-Fi (IP)" — nhập **"Địa chỉ IP"** (vd 192.168.1.242) và **"Cổng"** (thường 9100).
    - "Máy in tích hợp Sunmi" — chỉ in được trên đúng thiết bị Sunmi (Android).
-   - Quán **chưa chọn máy in bill** (chưa dùng Máy In & Luật In; trạm Thu ngân đang bật nhưng chưa chọn máy — mặc định của quán mới): máy Sunmi **tự in bill và tạm tính ra máy in liền thân**, không cần cài. Trang In Hoá Đơn ghi "Quán chưa chọn máy in bill nên bill in ra máy in liền thân của máy Sunmi này." Phiếu bếp vẫn không in. Không muốn in bill: tắt trạm Thu ngân hoặc tắt **"In khi thanh toán"**.
+   - Quán **chưa chọn máy in bill dùng được trên Sunmi** (chưa dùng Máy In & Luật In; trạm Thu ngân đang bật nhưng chưa chọn máy — mặc định của quán mới — hoặc chọn máy in hệ thống của máy tính, thứ Android không in được): máy Sunmi **tự in bill và tạm tính ra máy in liền thân**, không cần cài. Trang In Hoá Đơn ghi "Bill trên máy Sunmi này in ra máy in liền thân …". Trạm Thu ngân chọn máy in mạng (IP) thì vẫn in ra máy đó. Phiếu bếp vẫn không in. Không muốn in bill: tắt trạm Thu ngân hoặc tắt **"In khi thanh toán"**.
 4. **"Khổ giấy"**: 50 / 58 / 80 mm.
 5. Tuỳ chỉnh: **tỉ lệ cỡ chữ** (giảm khi bill bị cụt mép), **độ đậm** (Sunmi), **"Chữ đậm dạng bán đậm"**, **"Tự cắt giấy"**, **"Có két tiền gắn kèm"**.
 6. Bấm **"Xong"**, rồi **"Lưu"** ở góc trên.
 7. Bấm **"In thử"** ở máy in vừa thêm để kiểm giấy và kết nối (in thử được cả khi chưa bấm Lưu; không lưu gì).
+
+- **Máy chủ in** chỉ tự in bill khi bật **"In khi thanh toán"**; máy được chỉ định làm máy chủ in mà đang có **máy khác giữ quyền máy chủ in (còn hoạt động)** thì nhường máy đó, không in trùng. Máy giữ quyền bị rớt mạng / mất bản ghi quyền thì máy được chỉ định vẫn in như cũ.
 
 ### 3. Tạo luật in (tab "Luật in")
 Luật nói: *loại phiếu nào → in ra máy nào → mấy bản*.
@@ -125,7 +127,7 @@ Dùng khi quán có nhiều máy bán (web, điện thoại) nhưng chỉ **mộ
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
 |---|---|---|
-| "Máy này chưa được cài máy in hóa đơn nên chưa in. Vào In Hoá Đơn → Máy In & Luật In để chọn máy in." | Máy đang thao tác không có máy in hoá đơn / không có luật in hoá đơn | Thêm máy in + luật "Hóa đơn thanh toán", hoặc đặt Máy chủ in |
+| "Máy này chưa cài máy in hoá đơn nên không in bill." (thu tiền ở quầy: dòng tự tắt; ở bàn: dòng chữ xám) | Máy đang thao tác không có máy in hoá đơn / không có luật in hoá đơn | Thêm máy in + luật "Hóa đơn thanh toán", hoặc đặt Máy chủ in |
 | Bán trên **web** mà không ra bill | Trình duyệt không tự in | Đặt một máy Windows/Sunmi làm **Máy chủ in** và giữ app luôn mở |
 | Một loại phiếu (vd phiếu bar) không in | Đang dùng luật in nhưng thiếu luật cho loại phiếu đó | Thêm luật cho loại phiếu đó, bấm Lưu |
 | Bill bị cụt mép / chữ quá to | Khổ giấy hoặc cỡ chữ không hợp | Sửa máy in: đúng khổ giấy, giảm tỉ lệ cỡ chữ |

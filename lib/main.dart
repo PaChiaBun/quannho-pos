@@ -629,13 +629,15 @@ class _MainShellState extends ConsumerState<MainShell>
       final staffAllowed =
           navBarTabs.where((t) => t != 0 && t != 6 && t != 13).toList()..sort();
       final mid = staffAllowed.isNotEmpty ? staffAllowed.first : 1;
-      displaySlots = _padSlots(
+      displaySlots = padNavSlots(
         [0, mid, 13, 6].where((t) => navBarTabs.contains(t)).toList(),
         navBarTabs,
       );
     } else {
-      displaySlots =
-          _padSlots(validSlots, isCustomNav ? navBarTabs : autoTabs);
+      // Vai trò ít mục (Bảo vệ, Tạp vụ…): tự ghim hết mục đang bật mà chưa đủ 4 thì lấp bằng mục được
+      // phép khác, không lặp nút Trang chủ.
+      displaySlots = padNavSlots(
+          validSlots, isCustomNav ? navBarTabs : autoTabs, navBarTabs);
     }
     _shownSlots = displaySlots;
 
@@ -1312,18 +1314,6 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 
   /// Đảm bảo luôn có đủ 4 slot cho bottom bar (padding với các allowed tabs khác nhau)
-  List<int> _padSlots(List<int> slots, Set<int> allowed) {
-    final result = List<int>.from(slots);
-    // Thêm các tab được phép chưa có trong result
-    for (final t in allowed.toList()..sort()) {
-      if (result.length >= 4) break;
-      if (!result.contains(t)) result.add(t);
-    }
-    // Vẫn thiếu? dùng tab đầu tiên lặp lại
-    while (result.length < 4) result.add(result.first);
-    return result.take(4).toList();
-  }
-
   Widget _buildBottomBar(List<int> slots) {
     return Column(
       mainAxisSize: MainAxisSize.min,

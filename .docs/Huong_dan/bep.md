@@ -2,7 +2,7 @@
 module: kitchen
 ten: Bếp
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-31
+cap_nhat: 2026-11-01
 nguon:
   - lib/screens/kitchen_screen.dart
   - lib/core/repositories/kitchen_repository.dart (lọc phiếu, trạng thái, dọn phiếu, thông báo huỷ)
@@ -59,7 +59,7 @@ nguon:
 
 ### 6. Thông báo huỷ / sửa món
 Chỉ món **đã gửi bếp** mới báo bếp; huỷ trước khi gửi thì bếp không thấy gì.
-- **Huỷ cả phiếu** (huỷ bàn, hoặc thu ngân bấm "Huỷ phiếu bếp" ở Bán hàng): đầu màn hiện **thẻ đỏ "ĐÃ HUỶ"** (tên bàn/khu, "Huỷ lúc HH:mm", các món bị gạch ngang) trong **15 phút**. Bấm **"Đã xem"** để ẩn thẻ trên máy này. Phiếu huỷ không còn rơi vào cột "Hoàn thành".
+- **Huỷ cả phiếu** (huỷ bàn, hoặc thu ngân bấm "Huỷ phiếu bếp" ở Bán hàng): đầu màn hiện **thẻ đỏ "ĐÃ HUỶ"** (tên bàn/khu, "Huỷ lúc HH:mm", các món bị gạch ngang) trong **15 phút**. Bấm **"Đã xem"** để ẩn thẻ trên máy này (đổi qua thẻ khác rồi quay về, thẻ vẫn ẩn). Phiếu huỷ không còn rơi vào cột "Hoàn thành".
 - **Huỷ một món** trong phiếu còn món khác: món đó bị **gạch ngang**, có nhãn đỏ **"HUỶ"**, không bấm xong được — đừng làm món này.
 - Đầu màn còn dải **"THÔNG BÁO SỬA ĐƠN"** cho món bị huỷ / giảm trên phiếu đang hiện (bàn, món, số lượng, lý do, "Duyệt: <tên>"). Bấm **"Đã hiểu ✓"** hoặc chờ 30 giây để ẩn.
 - In lại phiếu thì món đã huỷ không in ra.

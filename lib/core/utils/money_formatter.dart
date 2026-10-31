@@ -31,11 +31,13 @@ String fmtVndSigned(num v) {
 /// Rút gọn cho ô hẹp: dưới 10 triệu hiện đủ như [fmtVnd] ("387.000 đ"); từ 10 triệu
 /// "12,5 triệu"; từ 1 tỷ "1,2 tỷ". Trước đây "387 K Đ" / "196.0 Tr Đ" lệch với phần còn lại của app.
 String fmtMoney(double v) {
+  if (!v.isFinite) return '—';
   final a = v.abs();
   final sign = v < 0 ? '-' : '';
   String dec(double x) =>
       x.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '').replaceAll('.', ',');
-  if (a >= 1e9) return '$sign${dec(a / 1e9)} tỷ';
+  // Từ 999,95 triệu làm tròn thành "1000 triệu" → tính theo tỷ.
+  if (a >= 999.95e6) return '$sign${dec(a / 1e9)} tỷ';
   if (a >= 1e7) return '$sign${dec(a / 1e6)} triệu';
   return fmtVnd(v);
 }

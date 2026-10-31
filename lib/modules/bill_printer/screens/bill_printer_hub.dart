@@ -224,7 +224,7 @@ class _PrintModeStatus extends StatelessWidget {
             if (builtinBill) ...[
               const SizedBox(height: 4),
               Text(
-                'Quán chưa chọn máy in bill nên bill in ra máy in liền thân của máy Sunmi này.',
+                'Bill trên máy Sunmi này in ra máy in liền thân (quán chưa chọn máy in bill dùng được trên máy này).',
                 style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: color),
               ),
             ],

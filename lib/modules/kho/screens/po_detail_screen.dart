@@ -799,8 +799,7 @@ class _PoDetailScreenState extends ConsumerState<PoDetailScreen> {
                             fontSize: 13, fontWeight: FontWeight.w700,
                             color: _kInk)),
                     Text(
-                      '${item.quantity.toStringAsFixed(0)} × '
-                      '${NumberFormat('#,###').format(item.unitCost.toInt())}đ',
+                      '${item.quantity.toStringAsFixed(0)} × ${fmtVnd(item.unitCost)}',
                       style: GoogleFonts.plusJakartaSans(
                           fontSize: 11, color: _kMuted),
                     ),

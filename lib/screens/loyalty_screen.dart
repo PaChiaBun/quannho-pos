@@ -2329,7 +2329,7 @@ class _TopUpSheetState extends State<_TopUpSheet> {
             Row(children: [
               const Icon(Icons.check_circle_rounded, color: _kGreen, size: 15),
               const SizedBox(width: 6),
-              Text('Áp dụng: ${_applicablePkg!.name} (+${_applicablePkg!.bonusPct.toStringAsFixed(0)}% bonus)',
+              Text('Áp dụng: ${_applicablePkg!.name} (+${_applicablePkg!.bonusPct.toStringAsFixed(0)}% thưởng)',
                 style: const TextStyle(fontSize: 12, color: _kGreen, fontWeight: FontWeight.w700)),
             ]),
           ] else ...[

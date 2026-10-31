@@ -4,7 +4,7 @@ Test Suite: Milestone 2 — InventoryScreen Dense Data Table & Bulk UX Redesign
 Verifies all 5 Scope & Task requirements for Milestone 2:
 1. 100% Full-Width Layout (removal of _InventoryRightPanel & 280px sidebar)
 2. Dense Data Table Layout (8 columns, itemExtent: 50.0, row tap navigation) — từ 31/10/2026: bảng chỉ khi
-   vùng danh sách ≥ 600dp, cột co giãn (không còn cố định 820px cuộn ngang); < 600dp (máy POS 360dp) dùng thẻ
+   vùng danh sách ≥ 660dp, cột co giãn (không còn cố định 820px cuộn ngang); < 660dp (máy POS 360dp) dùng thẻ
 3. Sticky Top Bar & Anti-Overlap UX (elimination of bottom floating bar, docked sticky top bar, bulk actions)
 4. Single Row Actions via 3-dots Menu (PopupMenuButton with edit, receive, adjust, history, delete)
 5. Hierarchy Guard & Permissions (_canManageBulk, _canDeleteItems, _canEditItems, zero hard delete)
@@ -38,7 +38,7 @@ class TestM2FullWidthLayout(unittest.TestCase):
 
 
 class TestM2DenseDataTableLayout(unittest.TestCase):
-    """Task 2: Dense Data Table Layout (8 Columns, itemExtent: 50.0) ≥ 600dp; danh sách thẻ < 600dp"""
+    """Task 2: Dense Data Table Layout (8 Columns, itemExtent: 50.0) ≥ 660dp; danh sách thẻ < 660dp"""
 
     def setUp(self):
         self.code = INV_SCREEN_PATH.read_text(encoding='utf-8')
@@ -48,8 +48,9 @@ class TestM2DenseDataTableLayout(unittest.TestCase):
         self.assertIn("itemExtent: 50.0", self.code)
 
     def test_cards_below_600_and_flex_table_without_horizontal_scroll(self):
-        # < 600dp: danh sách thẻ (bảng 820px cũ phải vuốt ngang mới thấy tồn/giá trên máy POS 360dp)
-        self.assertIn("constraints.maxWidth < 600", self.code)
+        # < 660dp: danh sách thẻ (bảng 820px cũ phải vuốt ngang mới thấy tồn/giá trên máy POS 360dp;
+        # 600–660dp bảng cắt "Không theo dõi" / giá từ 10 triệu)
+        self.assertIn("constraints.maxWidth < 660", self.code)
         self.assertIn("_buildCardList(filtered", self.code)
         self.assertIn("_StockCard(", self.code)
         # ≥ 600dp: bảng cột co giãn, không còn bề rộng tối thiểu 820px + cuộn ngang

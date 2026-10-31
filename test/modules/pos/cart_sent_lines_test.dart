@@ -84,5 +84,10 @@ void main() {
     expect(fmtMoney(12500000), '12,5 triệu');
     expect(fmtMoney(1200000000), '1,2 tỷ');
     expect(fmtMoney(-25000), '-25.000 đ');
+    expect(fmtMoney(9999999), '9.999.999 đ');
+    expect(fmtMoney(10000000), '10 triệu');
+    expect(fmtMoney(999940000), '999,9 triệu');
+    expect(fmtMoney(999999999), '1 tỷ'); // trước đây "1000 triệu"
+    expect(fmtMoney(double.nan), '—');
   });
 }

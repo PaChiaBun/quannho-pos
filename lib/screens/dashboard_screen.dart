@@ -1164,37 +1164,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final isOwner = sessionSnap?.isOwner ?? true;
     return Row(
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Chức năng',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: _kInk,
-                letterSpacing: -0.3,
-              ),
-            ),
-            Text(
-              _isEditMode
-                  ? 'Nhấn  –  để xoá · Nhấn  +  để thêm'
-                  : '${activeModules.length} đang bật • Giữ ô để sắp xếp',
-              style: TextStyle(
-                fontSize: 11.5,
-                color: _isEditMode ? _kOrange.withValues(alpha: 0.85) : _kMuted,
-                fontWeight: _isEditMode ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-            // Thanh dưới chỉ có trên điện thoại; đổi mục bằng cách giữ lâu — trước đây không ai biết.
-            if (!_isEditMode && !Responsive.isLargeScreen(context))
+        // Expanded: chữ dài xuống dòng thay vì đẩy nhãn bên phải tràn mép (360dp, tài khoản nhân viên).
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               const Text(
-                'Giữ lâu một mục ở thanh dưới để đổi',
-                style: TextStyle(fontSize: 11.5, color: _kMuted),
+                'Chức năng',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: _kInk,
+                  letterSpacing: -0.3,
+                ),
               ),
-          ],
+              Text(
+                _isEditMode
+                    ? 'Nhấn  –  để xoá · Nhấn  +  để thêm'
+                    : '${activeModules.length} đang bật • Giữ ô để sắp xếp',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: _isEditMode ? _kOrange.withValues(alpha: 0.85) : _kMuted,
+                  fontWeight: _isEditMode ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+              // Thanh dưới chỉ có trên điện thoại; đổi mục bằng cách giữ lâu — trước đây không ai biết.
+              if (!_isEditMode && !Responsive.isLargeScreen(context))
+                const Text(
+                  'Giữ lâu một mục ở thanh dưới để đổi',
+                  style: TextStyle(fontSize: 11.5, color: _kMuted),
+                ),
+            ],
+          ),
         ),
-        const Spacer(),
+        const SizedBox(width: 8),
         // Chủ quán: nút Sửa / Xong | Staff: text không có quyền
         if (!isOwner && (sessionSnap?.hasStore ?? false))
           Container(
@@ -2527,15 +2530,20 @@ class _TodayStat extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: _kInk,
-                    letterSpacing: -0.5,
+                // Co chữ cho vừa ô hẹp (360dp): "3 món sắp hết", "1.250.000 đ" từng bị cắt "…".
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: _kInk,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(

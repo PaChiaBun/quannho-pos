@@ -3829,7 +3829,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           final watch = billWatch = BillPrintWatchdog(
             onOverdue: () => AppLogger.action(
               'bill_overdue',
-              'Bill chưa in sau 30 giây',
+              'Bill chưa in',
               table: widget.table.label,
               sessionId: widget.session.id,
               total: finalTotal,
@@ -3940,8 +3940,10 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
             ),
             backgroundColor: _kRed,
             behavior: SnackBarBehavior.floating,
-            // Ngắn + có nút tắt: dòng này từng che món trên màn Bếp suốt 30 giây.
+            // Ngắn + có nút tắt: dòng này từng che món trên màn Bếp suốt 30 giây. `persist: false`:
+            // Flutter mới mặc định giữ mãi thông báo có nút bấm, bỏ qua `duration`.
             duration: const Duration(seconds: 10),
+            persist: false,
             showCloseIcon: true,
             closeIconColor: Colors.white,
             action: SnackBarAction(
@@ -8904,6 +8906,8 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                         // Màn hẹp: cột nút bên phải giữ cố định 96px (vừa bộ − số +), "Tùy chọn"
                         // nằm cạnh giá -> thêm món không làm dòng giãn, dòng dưới không dời chỗ.
                         final narrow = MediaQuery.sizeOf(context).width < 520;
+                        final hasImage =
+                            p.imageUrl != null && p.imageUrl!.isNotEmpty;
                         final controls = <Widget>[
                             if (qty > 0) ...[
                               if (!narrow)
@@ -9242,8 +9246,11 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                     children: [
                                                       Flexible(
                                                         child: Text(
-                                                        modPrice > 0
+                                                        // Màn hẹp đã chọn món: chỉ giá cuối (dòng có nút Tùy chọn, cột chữ hẹp).
+                                                        modPrice > 0 && !(narrow && qty > 0)
                                                             ? '${fmtVnd(p.sellPrice ?? 0)} +${fmtVnd(modPrice)} = ${fmtVnd(finalPrice)}'
+                                                            : modPrice > 0
+                                                            ? fmtVnd(finalPrice)
                                                             : fmtVnd(
                                                                 p.sellPrice ??
                                                                     0,
@@ -9285,6 +9292,8 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                                 size: 12,
                                                                 color: _kNavy,
                                                               ),
+                                                              // Món có ảnh: cột chữ chỉ ~118px, chữ "Tùy chọn" làm cụt giá.
+                                                              if (!hasImage) ...[
                                                               const SizedBox(width: 3),
                                                               Text(
                                                                 _expandedProductIds.contains(p.id)
@@ -9296,6 +9305,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                                   color: _kNavy,
                                                                 ),
                                                               ),
+                                                              ],
                                                             ],
                                                           ),
                                                         ),
@@ -9303,7 +9313,8 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                                                       if (p.sku != null &&
                                                           p
                                                               .sku!
-                                                              .isNotEmpty) ...[
+                                                              .isNotEmpty &&
+                                                          !(narrow && qty > 0)) ...[
                                                         const SizedBox(
                                                           width: 8,
                                                         ),
@@ -13312,6 +13323,32 @@ class _BillPrintStatusBar extends StatelessWidget {
               ],
             );
           case BillPrintStatus.overdue:
+            // Máy chưa cài máy in hoá đơn (vd quán bán bằng điện thoại, không in bill): chỉ một dòng
+            // xám — khung đỏ mỗi lần thu tiền là báo động giả.
+            if (watch.notConfigured) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: _kNavy.withValues(alpha: 0.45),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'Máy này chưa cài máy in hoá đơn nên không in bill.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: _kNavy.withValues(alpha: 0.55),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
             return Container(
               width: double.infinity,
               padding: const EdgeInsets.all(10),
@@ -13323,10 +13360,7 @@ class _BillPrintStatusBar extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    watch.notConfigured
-                        ? 'Máy này chưa được cài máy in hóa đơn nên chưa in. '
-                            'Vào In Hoá Đơn → Máy In & Luật In để chọn máy in.'
-                        : 'Bill CHƯA in. Kiểm tra máy in bill.',
+                    'Bill CHƯA in. Kiểm tra máy in bill.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
@@ -13334,20 +13368,18 @@ class _BillPrintStatusBar extends StatelessWidget {
                       color: _kRed,
                     ),
                   ),
-                  if (!watch.notConfigured) ...[
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: onReprint,
-                        icon: const Icon(Icons.print_rounded, size: 18),
-                        label: Text(
-                          'IN LẠI BILL',
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
-                        ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: onReprint,
+                      icon: const Icon(Icons.print_rounded, size: 18),
+                      label: Text(
+                        'IN LẠI BILL',
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
                       ),
                     ),
-                  ],
+                  ),
                 ],
               ),
             );

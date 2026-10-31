@@ -2,7 +2,7 @@
 module: kho_pro
 ten: Kho Chuyên Nghiệp
 phien_ban: 1.0.5+20
-cap_nhat: 2026-10-23
+cap_nhat: 2026-11-01
 nguon:
   - lib/modules/kho_chuyen_nghiep/screens/*.dart (kho_chuyen_nghiep_screen, dashboard, ingredient_list, recipe_list/detail/form, production_order, stock_count, stock_waste, report)
   - lib/modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart
@@ -23,7 +23,7 @@ Dùng **cùng danh sách hàng** với module Kho hàng: nguyên liệu và món
 Tiêu đề **"Kho Chuyên Nghiệp"**, hai nút trên đầu: **"Kiểm kê kho"** và **"Ghi hao hụt"**. Năm tab:
 - **"Tổng quan"** — số công thức, "SX hôm nay", số nguyên liệu, "Sắp hết kho"; **"Lệnh sản xuất hôm nay"** (+ "Tạo lệnh sản xuất hôm nay"), **"Cần nhập hàng"**, **"Công thức gần đây"**.
 - **"Nguyên liệu"** — nguyên liệu và bán thành phẩm, kèm tồn.
-- **"Công thức"** — mỗi công thức hiện số nguyên liệu, khẩu phần, **Giá vốn**, **Giá bán**, **Lãi gộp**, **Food cost %**, và nhãn **"Đã gắn menu POS — Tự trừ kho khi bán"** nếu đã gắn.
+- **"Công thức"** — mỗi công thức hiện số nguyên liệu, khẩu phần, **Giá vốn**, **Giá bán**, **Lãi gộp**, **Tỉ lệ giá vốn** (food cost, %), và nhãn **"Đã gắn menu POS — Tự trừ kho khi bán"** nếu đã gắn.
 - **"Sản xuất"** — lệnh sản xuất theo ngày, lọc Tất cả / Chờ / Đang làm / Hoàn thành / Đã hủy.
 - **"Báo cáo"** — chọn **Từ → Đến**: tổng giá vốn, trung bình/ngày, chi phí theo ngày, nguyên liệu tiêu thụ nhiều, thống kê lệnh sản xuất.
 
