@@ -28,12 +28,16 @@ String fmtVndSigned(num v) {
 
 // ── Legacy (giữ tương thích với code cũ) ─────────────────────────────────────
 
-/// Định dạng rút gọn cũ: 2.5 Tr Đ | 500 K Đ | 100 Đ
-/// Chỉ dùng cho Dashboard và Report — KHÔNG dùng cho card/giỏ hàng/thanh toán
+/// Rút gọn cho ô hẹp: dưới 10 triệu hiện đủ như [fmtVnd] ("387.000 đ"); từ 10 triệu
+/// "12,5 triệu"; từ 1 tỷ "1,2 tỷ". Trước đây "387 K Đ" / "196.0 Tr Đ" lệch với phần còn lại của app.
 String fmtMoney(double v) {
-  if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)} Tr Đ';
-  if (v >= 1000)    return '${(v / 1000).toStringAsFixed(0)} K Đ';
-  return '${v.toStringAsFixed(0)} Đ';
+  final a = v.abs();
+  final sign = v < 0 ? '-' : '';
+  String dec(double x) =>
+      x.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '').replaceAll('.', ',');
+  if (a >= 1e9) return '$sign${dec(a / 1e9)} tỷ';
+  if (a >= 1e7) return '$sign${dec(a / 1e6)} triệu';
+  return fmtVnd(v);
 }
 
 /// Phiên bản int (dùng cho price từ database lưu dạng int)

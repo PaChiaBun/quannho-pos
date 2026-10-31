@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../modules/kho/providers/kho_providers.dart';
+import '../../../core/utils/stagger.dart';
 
 class IngredientListScreen extends ConsumerStatefulWidget {
   const IngredientListScreen({super.key});
@@ -43,7 +44,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
                   child: Column(children: [
                     TextField(
                       onChanged: (v) => setState(() => _query = v),
-                      style: GoogleFonts.outfit(fontSize: 14, color: KhoTheme.ink),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, color: KhoTheme.ink),
                       decoration: KhoTheme.inputDecoration(
                         hint: 'Tìm nguyên liệu...',
                         prefix: const Icon(Icons.search_rounded,
@@ -65,7 +66,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
                         const SizedBox(width: 6),
                         Expanded(child: Text(
                             'Dùng chung với Kho Hàng. Nhập hàng qua tab Phiếu nhập.',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11.5, color: KhoTheme.violet,
                                 fontWeight: FontWeight.w500))),
                       ]),
@@ -81,7 +82,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
                     (_, i) {
                       final item = filtered[i];
                       return _IngredientCard(item: item)
-                          .animate(delay: (i * 40).ms)
+                          .animate(delay: staggerDelay(i, 40))
                           .fadeIn(duration: 200.ms)
                           .slideY(begin: 0.04);
                     },
@@ -139,7 +140,7 @@ class _IngredientCard extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(item.name as String, style: GoogleFonts.outfit(
+          Text(item.name as String, style: GoogleFonts.plusJakartaSans(
               fontSize: 14, fontWeight: FontWeight.w800, color: KhoTheme.ink)),
           const SizedBox(height: 2),
           Row(children: [
@@ -149,12 +150,12 @@ class _IngredientCard extends StatelessWidget {
                 color: ts.color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Text(ts.label, style: GoogleFonts.outfit(
+              child: Text(ts.label, style: GoogleFonts.plusJakartaSans(
                   fontSize: 10, fontWeight: FontWeight.w700, color: ts.color)),
             ),
             const SizedBox(width: 6),
             Text('Tồn: ${qty.toStringAsFixed(0)} ${item.unit}',
-                style: GoogleFonts.outfit(fontSize: 12, color: KhoTheme.muted)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted)),
           ]),
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -165,7 +166,7 @@ class _IngredientCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(isOut ? 'Hết' : isLow ? 'Sắp hết' : 'Còn',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 11, fontWeight: FontWeight.w700,
                     color: statusColor)),
           ),

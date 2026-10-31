@@ -59,7 +59,7 @@ class _OpsReportScreenState extends ConsumerState<OpsReportScreen> {
             child: Center(child: CircularProgressIndicator(color: _kNavy)),
           ),
           error: (e, _) => SliverFillRemaining(
-            child: Center(child: Text('Lỗi: $e', style: GoogleFonts.outfit())),
+            child: Center(child: Text('Lỗi: $e', style: GoogleFonts.plusJakartaSans())),
           ),
           data: (report) {
             final total  = report.total;
@@ -136,9 +136,9 @@ class _DateNav extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                Text(label, style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w800, color: _kNavy), textAlign: TextAlign.center),
+                Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: _kNavy), textAlign: TextAlign.center),
                 if (!isToday)
-                  Text(DateFormat('dd/MM/yyyy').format(date), style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                  Text(DateFormat('dd/MM/yyyy').format(date), style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted)),
               ],
             ),
           ),
@@ -204,11 +204,11 @@ class _StoreOverview extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('TỔNG QUAN CA HÔM NAY', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
+                      Text('TỔNG QUAN CA HÔM NAY', style: GoogleFonts.plusJakartaSans(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
                       const SizedBox(height: 4),
-                      Text('${(pct * 100).round()}%', style: GoogleFonts.outfit(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900, height: 1.0)),
+                      Text('${(pct * 100).round()}%', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900, height: 1.0)),
                       const SizedBox(height: 2),
-                      Text('hoàn thành', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text('hoàn thành', style: GoogleFonts.plusJakartaSans(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
@@ -273,9 +273,9 @@ class _OverviewPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('$value', style: GoogleFonts.outfit(color: color, fontSize: 13, fontWeight: FontWeight.w800)),
+          Text('$value', style: GoogleFonts.plusJakartaSans(color: color, fontSize: 13, fontWeight: FontWeight.w800)),
           const SizedBox(width: 4),
-          Text(label, style: GoogleFonts.outfit(color: color.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w600)),
+          Text(label, style: GoogleFonts.plusJakartaSans(color: color.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -304,7 +304,7 @@ class _SectionHeader extends StatelessWidget {
             child: Icon(icon, size: 14, color: color),
           ),
           const SizedBox(width: 8),
-          Text(title, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy, letterSpacing: 0.2)),
+          Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy, letterSpacing: 0.2)),
         ],
       ),
     );
@@ -336,7 +336,7 @@ class _AlertRow extends StatelessWidget {
           Expanded(
             child: Text(
               staff.staffName,
-              style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy),
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy),
             ),
           ),
           Container(
@@ -347,7 +347,7 @@ class _AlertRow extends StatelessWidget {
             ),
             child: Text(
               'Còn ${staff.pending} việc',
-              style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: _kYellow),
+              style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: _kYellow),
             ),
           ),
         ],
@@ -407,7 +407,7 @@ class _StaffCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Center(
-                  child: Text(letter, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: _kNavy)),
+                  child: Text(letter, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: _kNavy)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -417,13 +417,13 @@ class _StaffCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(staff.staffName, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy)),
+                    Text(staff.staffName, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800, color: _kNavy)),
                     const SizedBox(height: 3),
                     Row(
                       children: [
                         Icon(statusIcon, size: 12, color: statusColor),
                         const SizedBox(width: 4),
-                        Text(statusLabel, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor)),
+                        Text(statusLabel, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor)),
                       ],
                     ),
                   ],
@@ -436,11 +436,11 @@ class _StaffCard extends StatelessWidget {
                 children: [
                   Text(
                     '${(pct * 100).round()}%',
-                    style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w900, color: barColor),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 22, fontWeight: FontWeight.w900, color: barColor),
                   ),
                   Text(
                     '${staff.completed}/${staff.total}',
-                    style: GoogleFonts.outfit(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -490,7 +490,7 @@ class _MiniStat extends StatelessWidget {
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text('$value $label', style: GoogleFonts.outfit(fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),
+      child: Text('$value $label', style: GoogleFonts.plusJakartaSans(fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),
     );
   }
 }
@@ -532,8 +532,8 @@ class _RoleRow extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(role.roleName, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
-                    Text('${role.completed}/${role.total}', style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800, color: barColor)),
+                    Text(role.roleName, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
+                    Text('${role.completed}/${role.total}', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: barColor)),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -575,12 +575,12 @@ class _EmptyReport extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             isToday ? 'Chưa có dữ liệu hôm nay' : 'Không có dữ liệu',
-            style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy),
+            style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: _kNavy),
           ),
           const SizedBox(height: 6),
           Text(
             isToday ? 'Nhân viên chưa bắt đầu ca làm việc.' : 'Ngày này không có log được ghi nhận.',
-            style: GoogleFonts.outfit(fontSize: 13, color: _kMuted),
+            style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted),
             textAlign: TextAlign.center,
           ),
         ],

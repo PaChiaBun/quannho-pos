@@ -7,6 +7,8 @@ import '../../../core/services/store_auth_service.dart';
 import '../../../core/repositories/core_product_repository.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/paged_query.dart';
+import '../../../core/utils/quantity_formatter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // KHO REPOSITORY — 100% Supabase
@@ -93,13 +95,21 @@ class KhoRepository {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
 
-    yield* _robustStream(
-      'stock_movements', 'store_id', storeId,
-      (rows) => rows
-          .where((r) => r['product_id'] == productId)
-          .map(StockMovementModel.fromMap)
-          .toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt))
+    // Lọc theo món ở máy chủ, lấy 1.000 phiếu mới nhất (trước đây đọc cả bảng phiếu kho của
+    // quán — > 1.000 phiếu thì nhận phiếu cũ ngẫu nhiên, thiếu phiếu mới).
+    yield* watchByRefetch(
+        table: 'stock_movements',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await _sb
+              .from('stock_movements')
+              .select()
+              .eq('store_id', storeId)
+              .eq('product_id', productId)
+              .order('created_at', ascending: false)
+              .limit(1000);
+          return rows.map(StockMovementModel.fromMap).toList();
+        }
     );
   }
 
@@ -107,12 +117,18 @@ class KhoRepository {
     final storeId = await _storeId();
     if (storeId == null) { yield []; return; }
 
-    yield* _robustStream(
-      'stock_movements', 'store_id', storeId,
-      (rows) {
-        final sorted = rows.map(StockMovementModel.fromMap).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return sorted.take(limit).toList();
+    // Sắp xếp + giới hạn ở máy chủ (trước đây "mới nhất" chọn trong 1.000 phiếu cũ ngẫu nhiên).
+    yield* watchByRefetch(
+        table: 'stock_movements',
+        storeId: storeId,
+        fetch: () async {
+          final rows = await _sb
+              .from('stock_movements')
+              .select()
+              .eq('store_id', storeId)
+              .order('created_at', ascending: false)
+              .limit(limit);
+          return rows.map(StockMovementModel.fromMap).toList();
       }
     );
   }
@@ -128,8 +144,9 @@ class KhoRepository {
     String? supplierName,
     String? reference,
     String? note,
-  }) async {
+      String fundType = 'cash'}) async {
     assert(quantity > 0);
+    assert(fundType == 'cash' || fundType == 'bank');
     final storeId = await _storeId();
     if (storeId == null) throw Exception('Chưa chọn quán');
     final now        = DateTime.now().toUtc().toIso8601String();
@@ -174,7 +191,7 @@ class KhoRepository {
         'reference_id': movementId,  // ← audit trail: trace về stock_movement
         'is_auto':      true,
         'recorded_at':  now,
-        'fund_type':    'cash',
+        'fund_type':    fundType,
       });
     } catch (e) {
       debugPrint('[Kho] ⚠️ receiveStock finance_record failed: $e');
@@ -483,6 +500,7 @@ class KhoRepository {
       'supplier_id':        supplierId,
       'supplier_name':      supplierName ?? '',
       'status':             'received',
+      'total_cost':         total,
       'total_amount':       total,
       'note':               note,
       'invoice_image_url':  invoiceImageUrl,    // ← fix: đã bị bỏ sót
@@ -607,11 +625,12 @@ class KhoRepository {
     // 3. Load PO
     final poRow = await _sb
         .from('purchase_orders')
-        .select('po_number, total_amount')
+        .select('po_number, total_amount, total_cost')
         .eq('id', poId)
         .single();
     final poNumber    = poRow['po_number'] as String? ?? poId;
-    final totalAmount = (poRow['total_amount'] as num?)?.toDouble() ?? 0;
+    final totalAmount = (poRow['total_amount'] as num?)?.toDouble() ??
+                        (poRow['total_cost'] as num?)?.toDouble() ?? 0;
 
     // 4. Hoàn kho
     for (final item in items) {
@@ -706,11 +725,13 @@ class KhoRepository {
 
     final products = rows.map(ProductModel.fromMap).toList();
     final lowStock  = products.where((p) => p.minStock > 0 && p.stockQty <= p.minStock).length;
-    final outOfStock = products.where((p) => p.stockQty <= 0).length;
+    // Chỉ món có theo dõi tồn (tồn tối thiểu > 0) — món 'Không theo dõi' không tính hết hàng.
+    final outOfStock =
+        products.where((p) => p.minStock > 0 && p.stockQty <= 0).length;
     final totalValue = products.fold<double>(0, (s, p) {
       // ‼️ FIX: dùng costPriceLatest nếu > 0, fallback về costPrice
       final effectiveCost = p.costPriceLatest > 0 ? p.costPriceLatest : p.costPrice;
-      return s + p.stockQty * effectiveCost;
+      return s + (p.stockQty > 0 ? p.stockQty : 0) * effectiveCost; // tồn âm không kéo giảm giá trị kho
     });
 
     // ‼️ FIX Bug #23: dùng DateTime(y,m,d) thay .copyWith() — tránh lệch giờ DST
@@ -786,6 +807,10 @@ class StockItem {
   final bool isTopping;
   final String toppingUnit;
   final String stationCode;
+  final bool isAvailable;
+  final bool isActive;
+  final double conversionRate;
+  final String conversionUnit;
 
   const StockItem({
     required this.id,
@@ -803,6 +828,10 @@ class StockItem {
     this.isTopping = false,
     this.toppingUnit = 'phần',
     this.stationCode = 'bep_nong',
+    this.isAvailable = true,
+    this.isActive = true,
+    this.conversionRate = 0,
+    this.conversionUnit = '',
   });
 
   factory StockItem.fromProduct(ProductModel p) => StockItem(
@@ -821,20 +850,55 @@ class StockItem {
         isTopping:        p.isTopping,
         toppingUnit:      p.toppingUnit,
         stationCode:      p.stationCode,
+        isAvailable:      p.isAvailable,
+        isActive:         p.isActive,
+        conversionRate:   p.conversionRate,
+        conversionUnit:   p.conversionUnit,
       );
 
   StockStatus get status {
-    if (stockQty <= 0) return StockStatus.outOfStock;
+    // Không đặt tồn tối thiểu = không theo dõi tồn → không báo "Hết hàng" (khớp màn Bán hàng:
+    // chỉ khoá món có tồn tối thiểu mà tồn ≤ 0).
     if (minStock <= 0) return StockStatus.untracked;
+    if (stockQty <= 0) return StockStatus.outOfStock;
     if (stockQty <= minStock) return StockStatus.low;
     return StockStatus.ok;
   }
 
   double get stockValue {
     final effectiveCost = costPriceLatest > 0 ? costPriceLatest : costPrice;
-    return stockQty * effectiveCost;
+    return (stockQty > 0 ? stockQty : 0) * effectiveCost; // tồn âm không phải hàng có thật
   }
 
+  /// Món không theo dõi tồn vẫn bị trừ khi bán nên có thể âm — hiện chữ thay số âm gây hiểu nhầm.
+  String get stockLabel => status == StockStatus.untracked && stockQty < 0
+      ? 'Không theo dõi'
+      : formattedStockDisplay;
+
+  /// Hiển thị tồn kho thông minh (ví dụ: '9 lon + 355 ml')
+  String get formattedStockDisplay {
+    if (conversionRate > 0 && conversionUnit.isNotEmpty) {
+      if (stockQty == 0) return '0 $unit';
+      final isNegative = stockQty < 0;
+      final absQty = stockQty.abs();
+      final whole = absQty.floor();
+      final frac = absQty - whole;
+      final convertedFrac = (frac * conversionRate).round();
+
+      final parts = <String>[];
+      if (whole > 0 || convertedFrac == 0) {
+        parts.add('$whole $unit');
+      }
+      if (convertedFrac > 0) {
+        parts.add('$convertedFrac $conversionUnit');
+      }
+      final res = parts.join(' + ');
+      return isNegative ? '-$res' : res;
+    }
+    return stockQty % 1 == 0
+        ? '${stockQty.toInt()} $unit'
+        : '${fmtQty(stockQty)} $unit';
+  }
 }
 
 enum StockStatus { ok, low, outOfStock, untracked }
@@ -959,7 +1023,8 @@ class PurchaseOrderModel {
       supplierId:      m['supplier_id'] as String?,
       supplierName:    m['supplier_name'] as String?,
       status:          m['status'] as String? ?? 'received',
-      totalAmount:     (m['total_amount'] as num?)?.toDouble() ?? 0,
+      totalAmount:     (m['total_amount'] as num?)?.toDouble() ??
+                       (m['total_cost'] as num?)?.toDouble() ?? 0,
       note:            m['note'] as String?,
       createdAt:       m['created_at'] as String? ?? '',
       invoiceImageUrl: m['invoice_image_url'] as String?,

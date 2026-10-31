@@ -42,7 +42,7 @@ echo -e "${GREEN}   ✅ Clean done${NC}"
 
 # ── 2. Android APK ──
 echo -e "${BLUE}🤖 Building Android APK...${NC}"
-flutter build apk --release --no-tree-shake-icons 2>&1 | tail -1
+flutter build apk --release --no-tree-shake-icons --dart-define=POS_JWT_AUTH_URL=https://quannho.lpm.vn 2>&1 | tail -1
 APK_SRC="$PROJECT_DIR/build/app/outputs/flutter-apk/app-release.apk"
 if [ -f "$APK_SRC" ]; then
   cp "$APK_SRC" "$OUTPUT_DIR/QuanNhoPOS-$VERSION.apk"
@@ -62,7 +62,7 @@ fi
 
 # ── 3. Android AAB (Google Play) ──
 echo -e "${BLUE}📦 Building Android AAB...${NC}"
-flutter build appbundle --release --no-tree-shake-icons 2>&1 | tail -1
+flutter build appbundle --release --no-tree-shake-icons --dart-define=POS_JWT_AUTH_URL=https://quannho.lpm.vn 2>&1 | tail -1
 AAB_SRC="$PROJECT_DIR/build/app/outputs/bundle/release/app-release.aab"
 if [ -f "$AAB_SRC" ]; then
   cp "$AAB_SRC" "$OUTPUT_DIR/QuanNhoPOS-$VERSION.aab"
@@ -74,7 +74,7 @@ fi
 
 # ── 4. iOS ──
 echo -e "${BLUE}🍎 Building iOS...${NC}"
-flutter build ios --release --no-tree-shake-icons --no-codesign 2>&1 | tail -1
+flutter build ios --release --no-tree-shake-icons --no-codesign --dart-define=POS_JWT_AUTH_URL=https://quannho.lpm.vn 2>&1 | tail -1
 IOS_APP="$PROJECT_DIR/build/ios/iphoneos/Runner.app"
 if [ -d "$IOS_APP" ]; then
   IOS_SIZE=$(du -sh "$IOS_APP" | cut -f1)
@@ -85,7 +85,7 @@ fi
 
 # ── 5. macOS ──
 echo -e "${BLUE}💻 Building macOS...${NC}"
-flutter build macos --release --no-tree-shake-icons 2>&1 | tail -1
+flutter build macos --release --no-tree-shake-icons --dart-define=POS_JWT_AUTH_URL=https://quannho.lpm.vn 2>&1 | tail -1
 MACOS_APP="$PROJECT_DIR/build/macos/Build/Products/Release/quannho_pos.app"
 if [ -d "$MACOS_APP" ]; then
   # Tạo DMG-like zip
@@ -104,6 +104,17 @@ if [ -d "$MACOS_APP" ]; then
   fi
 else
   echo -e "${RED}   ❌ macOS build failed${NC}"
+fi
+
+# ── 6. Web ──
+echo -e "${BLUE}🌐 Building Web...${NC}"
+flutter build web --release --base-href "/pos/" --no-tree-shake-icons --dart-define=POS_JWT_AUTH_URL=https://quannho.lpm.vn 2>&1 | tail -1
+WEB_DIR="$PROJECT_DIR/build/web"
+if [ -d "$WEB_DIR" ]; then
+  cd "$PROJECT_DIR/build"
+  tar -czf "$OUTPUT_DIR/QuanNhoPOS-$VERSION-web.tar.gz" web/
+  cd "$PROJECT_DIR"
+  echo -e "${GREEN}   ✅ Web: release-builds/QuanNhoPOS-$VERSION-web.tar.gz${NC}"
 fi
 
 echo ""

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/services.dart';
@@ -5,20 +6,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers/app_providers.dart';
 import '../core/repositories/module_repository.dart';
 import '../core/providers/session_provider.dart';
+import '../core/providers/permission_provider.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/user_auth_service.dart';
 import '../core/widgets/create_store_sheet.dart';
 import '../core/widgets/join_store_sheet.dart';
 import '../features/backup/backup_screen.dart';
 import 'bug_report_screen.dart';
-import 'pin_lock_screen.dart';
 import 'log_viewer_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../modules/bill_printer/screens/printer_settings_screen.dart';
 import '../core/services/auto_update_service.dart';
 import '../modules/pos/screens/discount_management_screen.dart';
 import 'role_manager_screen.dart';
-import '../modules/qr_order/screens/qr_order_screen.dart';
+import 'billing_screen.dart';
+import '../core/utils/billing_platform.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS SCREEN — Cài đặt Quán Nhỏ POS
@@ -95,35 +97,10 @@ class SettingsScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                const _DisplayNameTile(),
                 _QuickPinTile(),
                 const _ChangePasswordTile(),
                 const _PasswordRecoveryTile(),
-              ]),
-            ),
-          ),
-
-          // ── 2b. QR Gọi Món (Bàn & Quầy) ─────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              icon: Icons.qr_code_scanner_rounded,
-              title: 'Cấu hình QR Gọi Món',
-              color: const Color(0xFF8B5CF6),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _SettingsTile(
-                  icon: Icons.qr_code_2_rounded,
-                  label: 'Thiết lập & In ấn Mã QR',
-                  subtitle: 'Tên miền, mẫu tem decal bàn, poster quầy thu ngân',
-                  color: const Color(0xFF8B5CF6),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const QrOrderScreen()),
-                  ),
-                ),
               ]),
             ),
           ),
@@ -140,10 +117,26 @@ class SettingsScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                // Cổng thu phí: CHỈ Chủ quán, CHỈ web / bản máy tính (App Store / CH Play không hiện giá)
+                if (session?.isOwner == true &&
+                    session?.hasStore == true &&
+                    billingAllowedHere())
+                  _SettingsTile(
+                    icon: Icons.workspace_premium_rounded,
+                    label: 'Gói & thanh toán',
+                    subtitle: 'Xem gói của quán, gia hạn gói Pro',
+                    color: _kOrange,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BillingScreen(storeId: session!.storeId!),
+                      ),
+                    ),
+                  ),
                 _SettingsTile(
                   icon: Icons.bug_report_rounded,
                   label: 'Gửi phản hồi',
-                  subtitle: 'Báo lỗi & tự động đính kèm Log kỹ thuật',
+                  subtitle: 'Báo lỗi & tự động đính kèm nhật ký kỹ thuật',
                   color: const Color(0xFF1565C0),
                   onTap: () => Navigator.push(
                     context,
@@ -382,21 +375,58 @@ class _ShopInfoCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              // Edit button
-              GestureDetector(
-                onTap: () => _openEditShop(context, ref, shopName),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3E0),
-                    borderRadius: BorderRadius.circular(12),
+              // Action buttons: Switch store & Edit
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => _showStorePicker(context, ref),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1C5E),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.swap_horiz_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Đổi quán',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.edit_rounded,
-                    color: Color(0xFFE85D20),
-                    size: 18,
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => _openEditShop(context, ref, shopName),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF3E0),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.edit_rounded,
+                        color: Color(0xFFE85D20),
+                        size: 18,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -451,49 +481,72 @@ class _ShopInfoCard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => showJoinStoreSheet(context, ref),
-                        icon: const Icon(Icons.link_rounded, size: 18),
-                        label: const Text('Kết nối quán'),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFE85D20)),
-                          foregroundColor: const Color(0xFFE85D20),
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
+                if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => showJoinStoreSheet(context, ref),
+                      icon: const Icon(Icons.link_rounded, size: 18),
+                      label: const Text('Kết nối quán'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE85D20),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        textStyle: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => showCreateStoreSheet(context, ref),
-                        icon: const Icon(Icons.add_rounded, size: 18),
-                        label: const Text('Tạo quán ngay'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE85D20),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                  ),
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => showJoinStoreSheet(context, ref),
+                          icon: const Icon(Icons.link_rounded, size: 18),
+                          label: const Text('Kết nối quán'),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFE85D20)),
+                            foregroundColor: const Color(0xFFE85D20),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            textStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => showCreateStoreSheet(context, ref),
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('Tạo quán ngay'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE85D20),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            textStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -654,7 +707,7 @@ class _StoreCodeCard extends StatelessWidget {
                               ),
                               SizedBox(width: 5),
                               Text(
-                                'Copy',
+                                'Sao chép',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -1358,10 +1411,11 @@ class _AccountTile extends ConsumerWidget {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await UserAuthService.logout();
-              ref.read(sessionProvider.notifier).clear();
+              await ref.read(sessionProvider.notifier).clear();
               if (context.mounted) {
-                Navigator.of(context).pushReplacementNamed('/auth');
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/auth', (route) => false);
               }
             },
             style: ElevatedButton.styleFrom(
@@ -1467,6 +1521,267 @@ class _SettingsTile extends StatelessWidget {
         HapticFeedback.selectionClick();
         onTap();
       },
+    ),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STORE PICKER DIALOG (ĐỔI QUÁN)
+// ─────────────────────────────────────────────────────────────────────────────
+void _showStorePicker(BuildContext context, WidgetRef ref) async {
+  final session = ref.read(sessionProvider);
+  if (session == null) return;
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(child: CircularProgressIndicator()),
+  );
+
+  final stores = await UserAuthService.getUserStores(session.userId);
+
+  if (context.mounted) {
+    Navigator.pop(context); // Close loading
+  }
+
+  if (stores.isEmpty) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không tìm thấy danh sách quán nào.')),
+      );
+    }
+    return;
+  }
+
+  if (!context.mounted) return;
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (ctx) => Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.store_rounded,
+                color: Color(0xFF1E1C5E),
+                size: 24,
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Chọn phiên làm việc (Đổi quán)',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF1A1207),
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Chọn quán bạn muốn làm việc. Hệ thống sẽ tự động cập nhật đúng vai trò & quyền hạn.',
+            style: TextStyle(fontSize: 12.5, color: Color(0xFF9E9085)),
+          ),
+          const SizedBox(height: 16),
+          Flexible(
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: stores.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, index) {
+                final st = stores[index];
+                final isCurrent = st.storeId == session.storeId;
+                return Container(
+                  decoration: BoxDecoration(
+                    color: isCurrent
+                        ? const Color(0xFFFFF3E0)
+                        : const Color(0xFFFAF7F2),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isCurrent
+                          ? const Color(0xFFE85D20)
+                          : const Color(0xFFE0D8CC),
+                      width: isCurrent ? 2 : 1,
+                    ),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    leading: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: isCurrent
+                            ? const Color(0xFFE85D20)
+                            : const Color(0xFF1E1C5E),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          st.storeName.isNotEmpty
+                              ? st.storeName[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      st.storeName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: isCurrent
+                            ? const Color(0xFFE85D20)
+                            : const Color(0xFF1A1207),
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Mã quán: ${st.storeCode}${st.isOwner ? ' • Chủ quán' : (st.role.isNotEmpty ? ' • ${st.role}' : '')}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF7A6E66),
+                      ),
+                    ),
+                    trailing: isCurrent
+                        ? const Icon(
+                            Icons.check_circle_rounded,
+                            color: Color(0xFFE85D20),
+                          )
+                        : const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Color(0xFF9E9085),
+                          ),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      if (isCurrent) return;
+                      final pwdCtrl = TextEditingController();
+                      final pwd = await showDialog<String>(
+                        context: context,
+                        builder: (dCtx) => AlertDialog(
+                          title: Text('Xác thực chuyển sang ${st.storeName}'),
+                          content: TextField(
+                            controller: pwdCtrl,
+                            obscureText: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Nhập mật khẩu tài khoản',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(dCtx).pop(null),
+                              child: const Text('Hủy'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () =>
+                                  Navigator.of(dCtx).pop(pwdCtrl.text.trim()),
+                              child: const Text('Xác nhận'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (pwd == null || pwd.isEmpty) return;
+                      final session = await UserAuthService.getCurrentSession();
+                      final ok = await UserAuthService.selectStore(
+                        st,
+                        password: pwd,
+                        phone: session?.phone,
+                      );
+                      if (ok) {
+                        ref.read(sessionProvider.notifier).updateStore(st);
+                        ref.invalidate(userActionPermsProvider);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.swap_horiz_rounded,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Đã chuyển sang làm việc tại "${st.storeName}" (${st.storeCode})',
+                                  ),
+                                ],
+                              ),
+                              backgroundColor: const Color(0xFF2E7D32),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Xác thực đổi quán thất bại. Vui lòng kiểm tra mật khẩu.',
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+                // Chủ quán thêm cửa hàng mới; iOS không được tạo quán (Guideline 3.1.1).
+                if (stores.any((s) => s.isOwner) &&
+                    (kIsWeb ||
+                        defaultTargetPlatform != TargetPlatform.iOS)) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            showCreateStoreSheet(context, ref, onSuccess: () {
+                              ref.invalidate(userActionPermsProvider);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Đã tạo cửa hàng mới và chuyển sang quán đó.'),
+                                        backgroundColor: Color(0xFF2E7D32),
+                                        behavior: SnackBarBehavior.floating));
+                              }
+                            });
+                          },
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('Tạo cửa hàng mới'),
+                          style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFE85D20)),
+                              foregroundColor: const Color(0xFFE85D20),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              textStyle: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w800),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)))))
+                ],
+          const SizedBox(height: 12),
+        ],
+      ),
     ),
   );
 }
@@ -1912,310 +2227,6 @@ class _BillSettingsSheetState extends ConsumerState<_BillSettingsSheet> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PIN TOGGLE TILE — Bật/Tắt khoá PIN trong Settings
-// ─────────────────────────────────────────────────────────────────────────────
-class _PinToggleTile extends ConsumerWidget {
-  static const _kNavy = Color(0xFF1E1C5E);
-  static const _kBlue = Color(0xFF1565C0);
-  static const _kMuted = Color(0xFF9E9085);
-  static const _kBorder = Color(0xFFE0D8CC);
-
-  const _PinToggleTile();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final pinAsync = ref.watch(pinEnabledProvider);
-    final enabled = pinAsync.value ?? false;
-    final settingsRepo = ref.read(settingsRepositoryProvider);
-
-    return Column(
-      children: [
-        // ── Toggle ─────────────────────────────────────────────────────
-        Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _kBorder),
-          ),
-          child: SwitchListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
-            ),
-            secondary: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: _kBlue.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.lock_rounded, color: _kBlue, size: 20),
-            ),
-            title: const Text(
-              'Khoá bằng PIN',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: _kNavy,
-              ),
-            ),
-            subtitle: Text(
-              enabled
-                  ? 'Yêu cầu PIN khi mở ứng dụng'
-                  : 'Tắt — không cần PIN khi mở app',
-              style: const TextStyle(fontSize: 12, color: _kMuted),
-            ),
-            value: enabled,
-            activeColor: _kBlue, // ignore: deprecated_member_use
-            onChanged: (v) async {
-              HapticFeedback.selectionClick();
-              if (v) {
-                // Bật PIN → mở màn hình đặt PIN
-                await showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.92,
-                    child: const PinLockScreen(mode: PinMode.set),
-                  ),
-                );
-              } else {
-                // Tắt PIN
-                await settingsRepo.set('pin_enabled', 'false');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('🔓 Đã tắt khoá PIN'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-              // Reactive: invalidate để rebuild
-              ref.invalidate(pinEnabledProvider);
-            },
-          ),
-        ),
-
-        // ── Đổi PIN (chỉ hiện khi bật) ─────────────────────────────────
-        if (enabled)
-          Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: _kBorder),
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 4,
-              ),
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: _kBlue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.edit_rounded, color: _kBlue, size: 20),
-              ),
-              title: const Text(
-                'Đổi mã PIN',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: _kNavy,
-                ),
-              ),
-              subtitle: const Text(
-                'Thay đổi mã PIN hiện tại',
-                style: TextStyle(fontSize: 12, color: _kMuted),
-              ),
-              trailing: const Icon(Icons.chevron_right_rounded, color: _kMuted),
-              onTap: () async {
-                await showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.92,
-                    child: const PinLockScreen(mode: PinMode.change),
-                  ),
-                );
-                ref.invalidate(pinEnabledProvider);
-              },
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// RECOVERY EMAIL TILE — Hiển thị + chỉnh sửa email khôi phục PIN
-// ─────────────────────────────────────────────────────────────────────────────
-class _RecoveryEmailTile extends ConsumerWidget {
-  const _RecoveryEmailTile();
-
-  static const _kNavy = Color(0xFF1E1C5E);
-  static const _kBlue = Color(0xFF4F9EFF);
-  static const _kMuted = Color(0xFF9E9085);
-  static const _kBorder = Color(0xFFE0D8CC);
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return FutureBuilder<String?>(
-      future: ref.read(settingsRepositoryProvider).get('recovery_email'),
-      builder: (_, snapshot) {
-        final email = snapshot.data ?? '';
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          elevation: 0,
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: const BorderSide(color: _kBorder),
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
-            ),
-            leading: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: _kBlue.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.mail_outline_rounded,
-                color: _kBlue,
-                size: 20,
-              ),
-            ),
-            title: const Text(
-              'Email khôi phục PIN',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: _kNavy,
-              ),
-            ),
-            subtitle: Text(
-              email.isEmpty ? 'Chưa đặt — Nhấn để thêm' : email,
-              style: TextStyle(
-                fontSize: 12,
-                color: email.isEmpty ? _kMuted : _kBlue,
-                fontStyle: email.isEmpty ? FontStyle.italic : FontStyle.normal,
-              ),
-            ),
-            trailing: const Icon(Icons.edit_rounded, color: _kMuted, size: 18),
-            onTap: () => _showEditDialog(context, ref, email),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showEditDialog(
-    BuildContext context,
-    WidgetRef ref,
-    String currentEmail,
-  ) {
-    final ctrl = TextEditingController(text: currentEmail);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Email khôi phục PIN',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Dùng để nhận mã OTP khi quên PIN.\nNên dùng email bạn thường xuyên kiểm tra.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.black54,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ctrl,
-              keyboardType: TextInputType.emailAddress,
-              autofillHints: const [AutofillHints.email],
-              decoration: InputDecoration(
-                hintText: 'your@email.com',
-                prefixIcon: const Icon(
-                  Icons.email_rounded,
-                  color: _kBlue,
-                  size: 18,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: _kBlue, width: 2),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy', style: TextStyle(color: _kMuted)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final email = ctrl.text.trim();
-              if (email.isEmpty || email.contains('@')) {
-                await ref
-                    .read(settingsRepositoryProvider)
-                    .set('recovery_email', email);
-                if (ctx.mounted) {
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        email.isEmpty
-                            ? '✅ Đã xóa email khôi phục'
-                            : '✅ Email khôi phục: $email',
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kBlue,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Lưu'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // QUICK PIN TILE — Cấu hình mã PIN duyệt nhanh 4 số
 // ─────────────────────────────────────────────────────────────────────────────
 class _QuickPinTile extends ConsumerWidget {
@@ -2307,6 +2318,83 @@ class _QuickPinTile extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // CHANGE PASSWORD TILE & SHEET
 // ─────────────────────────────────────────────────────────────────────────────
+class _DisplayNameTile extends ConsumerWidget {
+  const _DisplayNameTile();
+
+  Future<void> _edit(BuildContext context, WidgetRef ref, String current) async {
+    final ctrl = TextEditingController(text: current);
+    final messenger = ScaffoldMessenger.of(context);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tên hiển thị'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLength: 50,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            hintText: 'Ví dụ: Chị Lan',
+            helperText: 'Tên này hiện trên bill, ca làm và các màn hình của quán.',
+            helperMaxLines: 2,
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
+    if (newName == null || newName.isEmpty || newName == current) return;
+    final res = await UserAuthService.updateDisplayName(newName);
+    if (res['success'] == true) {
+      ref.read(sessionProvider.notifier).updateDisplayName(res['display_name'] as String);
+    }
+    messenger.showSnackBar(SnackBar(content: Text(res['message'] as String? ?? '')));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    const navy = Color(0xFF1E1C5E);
+    const muted = Color(0xFF9E9085);
+    const border = Color(0xFFE0D8CC);
+    final name = ref.watch(sessionProvider)?.displayName ?? '';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: border),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: navy.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(Icons.badge_rounded, color: navy, size: 20),
+        ),
+        title: const Text(
+          'Tên hiển thị',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: navy),
+        ),
+        subtitle: Text(
+          name.isEmpty ? 'Chưa đặt tên' : name,
+          style: const TextStyle(fontSize: 12, color: muted),
+        ),
+        trailing: const Icon(Icons.edit_rounded, color: muted, size: 18),
+        onTap: () => _edit(context, ref, name),
+      ),
+    );
+  }
+}
+
 class _ChangePasswordTile extends StatelessWidget {
   const _ChangePasswordTile();
 
@@ -2434,7 +2522,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                   const SizedBox(width: 10),
                   Text(
                     'Đổi mật khẩu tài khoản',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
                       color: _kNavy,
@@ -2585,7 +2673,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                       : const Icon(Icons.save_rounded),
                   label: Text(
                     _saving ? 'Đang cập nhật...' : 'Lưu mật khẩu mới',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                     ),
@@ -2754,7 +2842,7 @@ class _PasswordRecoverySheet extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   'Khôi phục & Quên mật khẩu',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                     color: _kNavy,
@@ -2764,14 +2852,15 @@ class _PasswordRecoverySheet extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Card 1: Nhờ Chủ quán / Quản lý
+            // Card 1: Nhờ Chủ quán (nút có thật từ H3 — chỉ Chủ quán)
             _buildOptionCard(
               icon: Icons.supervisor_account_rounded,
               color: const Color(0xFF1565C0),
               stepNumber: 'CÁCH 1 (NHANH NHẤT)',
-              title: 'Nhờ Chủ quán / Quản lý đặt lại tại chỗ',
+              title: 'Nhờ Chủ quán đặt lại tại chỗ',
               description:
-                  'Chủ quán hoặc Quản lý truy cập vào mục Nhân Viên → Tìm tên tài khoản của bạn → Bấm "Đặt lại mật khẩu" để tạo mật khẩu mới ngay tức thì.',
+                  'Chủ quán vào mục Nhân viên → chọn tên bạn → bấm "Đặt lại mật khẩu", gõ mật khẩu mới rồi báo cho bạn. '
+                  'Chỉ Chủ quán làm được. Nếu bạn còn làm ở quán của người khác, hoặc chính bạn là Chủ quán, dùng cách 2 hoặc 3.',
             ),
 
             const SizedBox(height: 12),
@@ -2781,9 +2870,10 @@ class _PasswordRecoverySheet extends StatelessWidget {
               icon: Icons.headset_mic_rounded,
               color: _kOrange,
               stepNumber: 'CÁCH 2',
-              title: 'Liên hệ Hotline Hỗ Trợ Kỹ Thuật 24/7',
+              title: 'Gọi Hotline hỗ trợ',
               description:
-                  'Gọi trực tiếp Hotline: 0838.518.618 (LPM Digital) đọc Số điện thoại đăng ký tài khoản để kỹ thuật viên xác minh và khôi phục cho bạn.',
+                  'Gọi Hotline 0927 55 8888 (LPM Digital). Kỹ thuật viên sẽ GỌI LẠI đúng số điện thoại đăng ký và hỏi tên quán, mã quán để xác minh, '
+                  'rồi đọc cho bạn một mật khẩu tạm dùng được trong 24 giờ. Đăng nhập bằng mật khẩu tạm, app sẽ yêu cầu đặt mật khẩu mới ngay.',
             ),
 
             const SizedBox(height: 12),
@@ -2793,9 +2883,10 @@ class _PasswordRecoverySheet extends StatelessWidget {
               icon: Icons.mark_email_unread_rounded,
               color: _kGreen,
               stepNumber: 'CÁCH 3',
-              title: 'Gửi yêu cầu khôi phục trực tiếp cho IT',
+              title: 'Gửi yêu cầu qua "Gửi phản hồi"',
               description:
-                  'Sử dụng tính năng "Gửi phản hồi" ngay bên dưới để gửi yêu cầu cấp lại mật khẩu. Hệ thống sẽ tự động gói kèm ID tài khoản để kỹ thuật xử lý.',
+                  'Trên máy đang đăng nhập, vào Cài đặt → "Gửi phản hồi", ghi rõ cần cấp lại mật khẩu cho số điện thoại nào. '
+                  'Quán Nhỏ sẽ gọi lại đúng số đăng ký để xác minh.',
             ),
 
             const SizedBox(height: 20),
@@ -2814,7 +2905,7 @@ class _PasswordRecoverySheet extends StatelessWidget {
                 icon: const Icon(Icons.check_rounded, color: _kNavy),
                 label: Text(
                   'Đã hiểu',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
                     color: _kNavy,
                   ),
@@ -2859,7 +2950,7 @@ class _PasswordRecoverySheet extends StatelessWidget {
               children: [
                 Text(
                   stepNumber,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                     color: color,
@@ -2869,7 +2960,7 @@ class _PasswordRecoverySheet extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   title,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
                     color: _kNavy,
@@ -2878,7 +2969,7 @@ class _PasswordRecoverySheet extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     color: _kNavy.withValues(alpha: 0.75),
                     height: 1.4,
@@ -3001,7 +3092,7 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                         const SizedBox(width: 6),
                         Text(
                           'MÃ PIN DUYỆT NHANH DÙNG LÀM GÌ?',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: _kOrange,
@@ -3012,7 +3103,7 @@ class _QuickPinSheetState extends ConsumerState<_QuickPinSheet> {
                     const SizedBox(height: 8),
                     Text(
                       'Đây là mã PIN 6 chữ số được sử dụng để Quản lý hoặc Chủ quán phê duyệt nhanh tại chỗ khi nhân viên thực hiện các thao tác nhạy cảm như Hủy bàn hoặc Hủy món đã gửi bếp.\n\nSử dụng mã PIN này giúp bảo vệ doanh thu quán của bạn khỏi thất thoát mà không cần tiết lộ mật khẩu đăng nhập chính.',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         color: _kNavy.withValues(alpha: 0.75),
                         height: 1.45,

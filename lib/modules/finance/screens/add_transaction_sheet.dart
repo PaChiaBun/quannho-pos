@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/finance_providers.dart';
+import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/money_formatter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADD TRANSACTION SHEET — Bottom sheet thêm thu/chi
@@ -40,7 +42,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   void initState() {
     super.initState();
     _type = widget.initialType;
-    _fundType = ref.read(selectedFundProvider);
+    // Đang xem "Tất cả" thì mặc định Tiền mặt — trước đây lưu nhầm quỹ 'all' (không thuộc quỹ nào).
+    final fund = ref.read(selectedFundProvider);
+    _fundType = fund == 'bank' ? 'bank' : 'cash';
   }
 
   @override
@@ -167,7 +171,11 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                     error: (_, __) => const SizedBox.shrink(),
                     data: (cats) => Wrap(
                       spacing: 8, runSpacing: 8,
-                      children: cats.map((c) {
+                      // Doanh thu bán hàng do máy tự ghi khi thanh toán — ghi tay sẽ trùng doanh thu.
+                      children: cats
+                          .where((c) => !(c.type == 'income' &&
+                              (c.isSystem || c.name == 'Doanh thu bán hàng')))
+                          .map((c) {
                         final isSelected = _selectedCategoryId == c.id;
                         return GestureDetector(
                           onTap: () => setState(
@@ -264,7 +272,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                                 strokeWidth: 2.5))
                           : Text(
                               amount > 0
-                                  ? '${_type == 'income' ? 'Ghi thu' : 'Ghi chi'} • ${_fmtMoney(amount.toInt())}đ'
+                                  ? '${_type == 'income' ? 'Ghi thu' : 'Ghi chi'} • ${fmtVnd(amount)}'
                                   : _type == 'income'
                                       ? 'Ghi thu'
                                       : 'Ghi chi',
@@ -311,10 +319,15 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         HapticFeedback.heavyImpact();
         Navigator.pop(context, true);
       }
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.error('finance', 'Lỗi thêm giao dịch thu chi: $e', e, st);
       if (mounted) {
+        // Máy chủ chặn phiếu tay của người không có quyền Thu Chi (guard_finance_manual_insert_v1).
+        final denied = e.toString().contains('FINANCE_MANUAL_DENIED');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Lỗi: $e'),
+          content: Text(denied
+                ? 'Bạn không có quyền Thu Chi nên không ghi được phiếu thu/chi. Nhờ Chủ quán hoặc Quản lý.'
+                : 'Lưu giao dịch thất bại. Hãy chụp lại báo chủ app.'),
           backgroundColor: _kRed,
         ));
       }
@@ -323,8 +336,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     }
   }
 
-  String _fmtMoney(int v) => v.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

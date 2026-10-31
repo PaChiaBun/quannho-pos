@@ -9,7 +9,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/providers/app_providers.dart';
+import '../core/providers/session_provider.dart';
+import '../modules/bill_printer/utils/station_normalizer.dart';
 import '../core/repositories/kitchen_repository.dart';
+import '../core/services/staff_service.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
 import '../core/utils/responsive.dart';
@@ -30,10 +33,15 @@ const _kCardBorder = Color(0xFF2D3748);
 // Alias cho backward compat với code cũ còn dùng _TicketWithItems
 typedef _TicketWithItems = TicketWithItems;
 
+@visibleForTesting
+bool shouldPlayKitchenSoundsForRole(String? role) {
+  return StaffService.canonicalRole(role ?? '') == 'kitchen';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PROVIDERS
 // ─────────────────────────────────────────────────────────────────────────────
-final kitchenTicketsProvider = StreamProvider<List<TicketWithItems>>((ref) {
+final kitchenTicketsProvider = StreamProvider.autoDispose<List<TicketWithItems>>((ref) {
   return ref.watch(kitchenRepositoryProvider).watchActiveTickets();
 });
 
@@ -48,7 +56,7 @@ final stationFilterProvider =
     NotifierProvider<_StationNotifier, String>(_StationNotifier.new);
 
 /// Stats cuối ngày — tính từ tickets hôm nay, tự refresh khi ticket thay đổi
-final kitchenStatsProvider = FutureProvider<_KitchenStats>((ref) async {
+final kitchenStatsProvider = FutureProvider.autoDispose<_KitchenStats>((ref) async {
   // Watch → tự động chạy lại khi có phiếu mới hoặc cập nhật
   ref.watch(kitchenTicketsProvider);
   final repo = ref.watch(kitchenRepositoryProvider);
@@ -76,32 +84,33 @@ final kitchenStatsProvider = FutureProvider<_KitchenStats>((ref) async {
   );
 });
 
-/// Stream thông báo khi phiếu bếp mới chuyển thành 'xong'
-// ‼️ FIX #R2: Dùng kitchenTicketsProvider.stream thay Stream.value (single-emit)
-// Stream.value chỉ emit 1 lần rồi close → provider không nhận realtime update
-final kitchenReadyStreamProvider = StreamProvider<String>((ref) async* {
+/// Stream thông báo khi phiếu bếp mới chuyển thành 'xong'.
+/// Theo dõi repository trực tiếp để subscription sống đúng vòng đời provider.
+/// Dùng expand (không phải async* + await for): async* chỉ dừng ở yield, mà ở đây
+/// hiếm khi yield nên rời màn Bàn vẫn để sót vòng tải phiếu bếp 10s/lần (Bò Đen 28/10).
+final kitchenReadyStreamProvider = StreamProvider.autoDispose<String>((ref) {
   final Set<String> knownDoneIds = {};
-  // Theo dõi trực tiếp từ provider stream — tự rebuild khi kitchenTicketsProvider thay đổi
-  await for (final ticketsAsync in Stream.periodic(const Duration(seconds: 3))
-      .asyncMap((_) async => ref.read(kitchenTicketsProvider).value ?? [])
-      .distinct()) {
-    for (final tw in ticketsAsync) {
+  final startedAtMs = DateTime.now().millisecondsSinceEpoch;
+  return ref
+      .watch(kitchenRepositoryProvider)
+      .watchActiveTickets()
+      .expand((tickets) sync* {
+    for (final tw in tickets) {
       final t = tw.ticket;
       if (t.status == 'xong' && !knownDoneIds.contains(t.id)) {
         knownDoneIds.add(t.id);
-        if (t.doneAt != null) {
-          final secAgo = (DateTime.now().millisecondsSinceEpoch - t.doneAt!) / 1000;
-          if (secAgo < 90) yield t.tableLabel ?? 'Phíiếu bếp';
+        if (t.doneAt != null && t.doneAt! >= startedAtMs) {
+          yield t.tableLabel ?? 'Phiếu bếp';
         }
       }
       // ‼️ FIX #L3b: Remove 'xong' tickets khỏi knownDoneIds khi các ticket biến mất
       // (chú ý: không remove để tránh notify lại — chỉ reset khi reopen tích cực)
     }
-  }
+  });
 });
 
 /// Stream thông báo hủy/sửa món từ Ban screen — KDS hiện Cancel Notice Card
-final voidNoticesProvider = StreamProvider<List<VoidNoticeModel>>((ref) async* {
+final voidNoticesProvider = StreamProvider.autoDispose<List<VoidNoticeModel>>((ref) async* {
   // Dùng SharedPreferences vì app dùng custom phone auth (không phải Supabase Auth)
   final prefs = await SharedPreferences.getInstance();
   final storeId = prefs.getString('auth_store_id');
@@ -211,6 +220,7 @@ class KitchenScreen extends ConsumerStatefulWidget {
 
 class _KitchenScreenState extends ConsumerState<KitchenScreen>
     with TickerProviderStateMixin {
+  late final int _mountedAtMs;
   final Set<String> _knownTicketIds = {};
   bool _isMuted = false;
   bool _newTicketBlink = false;
@@ -221,16 +231,24 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   final Set<String> _overdueCardIds    = {};
   Timer? _overdueCheckTimer;
 
+  /// Âm thanh Phiếu Bếp thuộc riêng phiên đăng nhập của nhân viên Bếp.
+  bool get _canPlayKitchenSounds {
+    return shouldPlayKitchenSoundsForRole(ref.read(sessionProvider)?.role);
+  }
+
   // Optimistic UI state
   final Set<String> _optimisticStartedTickets = {};
   final Set<String> _optimisticDoneTickets = {};
   final Set<String> _optimisticReopenedTickets = {};
   final Set<String> _optimisticDoneItems = {};
   final Set<String> _optimisticReopenedItems = {};
+  // Thẻ ĐÃ HUỶ đã bấm "Đã xem" — chỉ trên máy này, trong bộ nhớ
+  final Set<String> _seenCancelledIds = {};
 
   @override
   void initState() {
     super.initState();
+    _mountedAtMs = DateTime.now().millisecondsSinceEpoch;
     _tabCtrl = TabController(length: 3, vsync: this);
     _overdueCheckTimer = Timer.periodic(
       const Duration(minutes: 1),
@@ -255,7 +273,11 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
     final newIds = waitingIds.difference(_knownTicketIds);
     if (newIds.isNotEmpty) {
       _knownTicketIds.addAll(newIds);
-      _onNewTicket();
+      final hasActuallyNewTicket = tickets.any(
+        (t) =>
+            newIds.contains(t.ticket.id) && t.ticket.sentAt >= _mountedAtMs,
+      );
+      if (hasActuallyNewTicket) _onNewTicket();
     }
     // ‼️ FIX #L2: Prune _knownTicketIds — chỉ giữ IDs còn hiện trên màn hình
     // Ngăn memory accumulation khi chạy lâu ngày
@@ -302,14 +324,18 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
         if (waitMin >= 30) {
           currentOverdueIds.add(tw.ticket.id);
           if (!_overdueAlertedIds.contains(tw.ticket.id)) {
-            hasNewOverdue = true;
             _overdueAlertedIds.add(tw.ticket.id);
+            final becameOverdueAt =
+                tw.ticket.sentAt + const Duration(minutes: 30).inMilliseconds;
+            if (becameOverdueAt >= _mountedAtMs) hasNewOverdue = true;
           }
         }
       }
     }
 
-    if (hasNewOverdue) _KitchenSoundService.playAlarm();
+    if (hasNewOverdue && _canPlayKitchenSounds) {
+      _KitchenSoundService.playAlarm();
+    }
     if (mounted) {
       setState(() {
         _overdueCardIds
@@ -320,7 +346,9 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
   }
 
   void _onNewTicket() {
-    _KitchenSoundService.playBell();
+    if (_canPlayKitchenSounds) {
+      _KitchenSoundService.playBell();
+    }
     setState(() => _newTicketBlink = true);
     _blinkTimer?.cancel();
     _blinkTimer = Timer(const Duration(seconds: 5), () {
@@ -342,8 +370,14 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
 
     // Phân loại trạm bếp theo tên sản phẩm hoặc stationCode từ DB
     String _classifyStation(KitchenTicketItemModel item) {
-      if (item.stationCode == 'nuoc') return 'nuoc';
-      if (item.stationCode == 'nong') return 'nong';
+      // Món cài "Bộ phận chế biến" = Bếp Bar (bep_bar / bar / nuoc) → luôn Bếp nước. Trước đây
+      // mã bep_bar không được nhận nên đồ uống tên lạ bị đoán sai sang Bếp nóng.
+      // Bếp nóng là MẶC ĐỊNH của món mới (bep_nong) nên không tin hẳn — giữ cách đoán theo tên
+      // như cũ để đồ uống chưa cài bộ phận không bị dồn sang Bếp nóng. 'nong' (POS gán theo
+      // danh mục) vẫn là Bếp nóng như trước.
+      final raw = item.stationCode?.trim() ?? '';
+      if (raw == 'nong') return 'nong';
+      if (raw.isNotEmpty && normalizeStationCode(raw) == 'bar') return 'nuoc';
       final name = item.productName.toLowerCase();
       // ‼️ FIX #L4: Mở rộng keyword list — thêm matcha, soda, kem, yogurt, cốt dừa, nước ép
       const drinkWords = [
@@ -392,7 +426,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                 const SizedBox(height: 16),
                 Text(
                   'Gián đoạn kết nối máy chủ Bếp',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -400,7 +434,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Hệ thống đang tự động kết nối lại (502 Bad Gateway). Vui lòng đợi trong giây lát...',
+                          'Mất kết nối tới máy chủ. Kiểm tra mạng rồi bấm thử lại.',
                   style: TextStyle(fontSize: 12, color: Colors.white60),
                   textAlign: TextAlign.center,
                 ),
@@ -423,8 +457,6 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           ),
         ),
         data: (tickets) {
-          if (tickets.isEmpty) return const _EmptyKitchenState();
-
           final voidNotices = ref.watch(voidNoticesProvider).value ?? [];
           final filtered = _filterByStation(tickets);
 
@@ -441,12 +473,12 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
               if (_optimisticDoneItems.contains(i.id)) isDone = true;
               else if (_optimisticReopenedItems.contains(i.id)) isDone = false;
 
-              if (isDone == i.done) return i;
+              if (isDone == i.done || i.cancelled) return i; // món huỷ: máy chủ luôn giữ done = true
               return KitchenTicketItemModel(
                 id: i.id, ticketId: i.ticketId, productId: i.productId,
                 productName: i.productName, quantity: i.quantity,
                 note: i.note, freeNote: i.freeNote, kitchenNote: i.kitchenNote,
-                stationCode: i.stationCode, done: isDone,
+                stationCode: i.stationCode, done: isDone, sessionItemId: i.sessionItemId,
               );
             }).toList();
             return TicketWithItems(ticket: updatedTicket, items: updatedItems);
@@ -456,6 +488,12 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           // Khi lọc theo trạm, trạng thái dựa hoàn toàn vào item.done của trạm đó
           // KHÔNG dùng ticket.status — mỗi trạm theo dõi tiến độ độc lập
           String effectiveStatus(_TicketWithItems tw) {
+            // Thẻ ĐÃ HUỶ (không xếp vào Hoàn thành): mọi món (của trạm) đã huỷ, hoặc phiếu huỷ có món
+            // (của trạm) bị huỷ. Phiếu huỷ mà món của trạm đã làm xong hết → trạm này tính là xong.
+            if (tw.items.every((i) => i.cancelled) ||
+                (tw.ticket.status == 'huy' && tw.items.any((i) => i.cancelled))) {
+              return 'huy';
+            }
             if (stationFilter == 'all') return tw.ticket.status;
             // Item-level tracking: chỉ nhìn vào item.done của trạm này
             final active = tw.items.where((i) => !i.done).toList();
@@ -468,10 +506,49 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           final doingTickets = optimisticFiltered.where((t) => effectiveStatus(t) == 'dang_lam').toList();
           final doneTickets  = optimisticFiltered.where((t) => effectiveStatus(t) == 'xong').toList();
 
+          // Thông báo huỷ/giảm món chỉ hiện khi món còn nằm trên phiếu đang hiện (không phải thẻ huỷ):
+          // huỷ cả phiếu / cả bàn đã có thẻ ĐÃ HUỶ, huỷ trước khi gửi bếp thì bếp không cần biết.
+          final cancelledTickets = <_TicketWithItems>[];
+          final noticeRefs = <String?>{};
+          for (final tw in optimisticFiltered) {
+            if (effectiveStatus(tw) != 'huy') {
+              noticeRefs.addAll(tw.items.map((i) => i.sessionItemId));
+            } else if (!_seenCancelledIds.contains(tw.ticket.id)) {
+              cancelledTickets.add(tw);
+            }
+          }
+          final notices =
+              voidNotices.where((n) => noticeRefs.contains(n.referenceId)).toList();
+
+          // Dải thông báo + thẻ ĐÃ HUỶ: đứng đầu mọi bố cục (điện thoại, Kanban, màn trống)
+          final alerts = ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.4),
+            child: SingleChildScrollView(
+              primary: false,
+              child: Column(
+                children: [
+                  _VoidNoticeBanner(notices: notices),
+                  for (final tw in cancelledTickets)
+                    _CancelledTicketCard(
+                      tw: tw,
+                      onSeen: () => setState(() => _seenCancelledIds.add(tw.ticket.id)),
+                    ),
+                ],
+              ),
+            ),
+          );
+
+          if (tickets.every((t) => t.ticket.status == 'huy')) {
+            return Column(
+              children: [alerts, const Expanded(child: _EmptyKitchenState())],
+            );
+          }
+
           // ── Tablet/Desktop: Kanban 3 cột ──────────────────────────────
           if (Responsive.isLargeScreen(context)) {
             return Column(
               children: [
+                alerts,
                 _StationFilterBar(
                   selected: stationFilter,
                   onChanged: (s) =>
@@ -525,9 +602,8 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           // ── Mobile: Tab layout ─────────────────────────────────────────
           return Column(
             children: [
-              // ── Void notice banner (hủy/sửa món từ Bàn) ──
-              if (voidNotices.isNotEmpty)
-                _VoidNoticeBanner(notices: voidNotices),
+              // ── Thông báo huỷ/giảm món + thẻ ĐÃ HUỶ ──
+              alerts,
 
               // ── Station filter bar ──
 
@@ -549,11 +625,11 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                   indicatorWeight: 3,
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.white38,
-                  labelStyle: GoogleFonts.outfit(
+                  labelStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
-                  unselectedLabelStyle: GoogleFonts.outfit(
+                  unselectedLabelStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -640,7 +716,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
             ),
             child: Text(
               '🔥 BẾP',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
@@ -648,13 +724,16 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          Text('Phiếu bếp',
-              style: GoogleFonts.outfit(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              )),
+          // Màn hẹp (Sunmi 360dp): huy hiệu "N chờ" từng đè lên chữ này; chip BẾP đã đủ nghĩa.
+          if (MediaQuery.sizeOf(context).width >= 400) ...[
+            const SizedBox(width: 10),
+            Text('Phiếu bếp',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                )),
+          ],
         ],
       ),
       actions: [
@@ -685,7 +764,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
               SnackBar(
                 content: Text(
                   _isMuted ? '🔇 Đã tắt tiếng chuông' : '🔔 Đã bật tiếng chuông',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
                 ),
                 duration: const Duration(seconds: 2),
                 behavior: SnackBarBehavior.floating,
@@ -748,7 +827,9 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
           if (!item.done) repo.toggleItemDone(item.id, ticket.id, true);
         }
       }
-      _KitchenSoundService.playDone();
+      if (_canPlayKitchenSounds) {
+        _KitchenSoundService.playDone();
+      }
     } else if (action == 'reopen') {
       setState(() {
         if (stationFilter == 'all') {
@@ -773,7 +854,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('↩ Đã mở lại phiếu ${ticket.tableLabel ?? ""}',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
           backgroundColor: _kAmber,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
@@ -786,7 +867,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('🧹 Đã dọn phiếu ${ticket.tableLabel ?? ""}',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
           backgroundColor: _kGreen,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
@@ -866,7 +947,7 @@ class _BlinkingBadgeState extends State<_BlinkingBadge>
               const SizedBox(width: 4),
               Text(
                 '${widget.count} chờ',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
@@ -925,7 +1006,7 @@ class _StatsDrawer extends ConsumerWidget {
                     children: [
                       Text(
                         'Bếp hôm nay',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
@@ -933,7 +1014,7 @@ class _StatsDrawer extends ConsumerWidget {
                       ),
                       Text(
                         'Thống kê hiệu suất',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           color: Colors.white38,
                         ),
@@ -1065,7 +1146,7 @@ class _StatSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: GoogleFonts.outfit(
+      style: GoogleFonts.plusJakartaSans(
         fontSize: 10,
         fontWeight: FontWeight.w800,
         color: Colors.white30,
@@ -1104,7 +1185,7 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 26,
               fontWeight: FontWeight.w900,
               color: color,
@@ -1112,7 +1193,7 @@ class _StatCard extends StatelessWidget {
           ),
           Text(
             label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               color: Colors.white38,
             ),
@@ -1152,7 +1233,7 @@ class _StatRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 color: Colors.white60,
               ),
@@ -1160,7 +1241,7 @@ class _StatRow extends StatelessWidget {
           ),
           Text(
             value,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               fontWeight: FontWeight.w800,
               color: color,
@@ -1195,14 +1276,14 @@ class _CompletionBar extends StatelessWidget {
             children: [
               Text(
                 'Tỷ lệ hoàn thành',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   color: Colors.white54,
                 ),
               ),
               Text(
                 '${(pct * 100).toInt()}%',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                   color: pct >= 0.8 ? _kGreen : pct >= 0.5 ? _kAmber : _kRed,
@@ -1225,7 +1306,7 @@ class _CompletionBar extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '$done / $total phiếu đã hoàn thành',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               color: Colors.white30,
             ),
@@ -1261,7 +1342,7 @@ class _PrinterField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: Colors.white38,
@@ -1277,13 +1358,13 @@ class _PrinterField extends StatelessWidget {
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               color: Colors.white,
               fontSize: 14,
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: GoogleFonts.outfit(
+              hintStyle: GoogleFonts.plusJakartaSans(
                 color: Colors.white24,
                 fontSize: 14,
               ),
@@ -1342,7 +1423,7 @@ class _OutlineBtn extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: isDisabled ? Colors.white24 : color,
@@ -1402,7 +1483,7 @@ class _TabWithBadge extends StatelessWidget {
               ),
               child: Text(
                 '$count',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -1474,7 +1555,7 @@ class _KanbanColumn extends StatelessWidget {
                   Expanded(
                     child: Text(
                       label,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
@@ -1492,7 +1573,7 @@ class _KanbanColumn extends StatelessWidget {
                     ),
                     child: Text(
                       '${tickets.length}',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
@@ -1514,7 +1595,7 @@ class _KanbanColumn extends StatelessWidget {
                           const SizedBox(height: 10),
                           Text(
                             'Trống',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               color: Colors.white24,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -1575,7 +1656,7 @@ class _TicketList extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               emptyLabel,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
                 color: Colors.white24,
                 fontWeight: FontWeight.w500,
@@ -1701,7 +1782,7 @@ class _TicketCard extends ConsumerWidget {
                               if ((ticket.zoneLabel ?? ticket.zoneId ?? '').isNotEmpty)
                                 Text(
                                   (ticket.zoneLabel ?? ticket.zoneId ?? '').toUpperCase(),
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     color: accent.withValues(alpha: 0.7),
@@ -1710,7 +1791,7 @@ class _TicketCard extends ConsumerWidget {
                                 ),
                               Text(
                                 ticket.tableLabel ?? 'Bàn',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
@@ -1733,7 +1814,7 @@ class _TicketCard extends ConsumerWidget {
                                 ),
                                 child: Text(
                                   'Đợt ${ticket.round}',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white54,
@@ -1743,7 +1824,7 @@ class _TicketCard extends ConsumerWidget {
                               const SizedBox(height: 3),
                               Text(
                                 '${items.where((i) => !i.done).length} món',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
                                   color: Colors.white38,
                                 ),
@@ -1777,7 +1858,7 @@ class _TicketCard extends ConsumerWidget {
                                   ),
                                   child: Text(
                                     isOverdue ? 'TRỄ 30P!' : isNew ? 'MỚI' : 'LÀM',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w900,
                                       color: isOverdue ? _kRed : isNew ? _kOrange : _kAmber,
@@ -1809,7 +1890,7 @@ class _TicketCard extends ConsumerWidget {
                                           color: Color(0xFFF97316)),
                                       const SizedBox(width: 3),
                                       Text('In phiếu',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
                                             color: const Color(0xFFF97316),
@@ -1829,7 +1910,10 @@ class _TicketCard extends ConsumerWidget {
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
                       child: Column(
                         children: [...items.map((item) {
-                          final isItemDone = item.done;
+                          // Món huỷ: máy chủ để done = true — không hiện như món xong, không bấm được
+                          final isCancelled = item.cancelled;
+                          final isItemDone = item.done && !isCancelled;
+                          final strike = isCancelled ? TextDecoration.lineThrough : null;
                           // Modifiers — JSON array từ POS (ghi vào kitchen_note)
                           List modifiers = [];
                           final _rawModNote = item.kitchenNote; // ✅ FIX: dùng kitchenNote
@@ -1838,7 +1922,7 @@ class _TicketCard extends ConsumerWidget {
                           }
 
                           return InkWell(
-                            onTap: isDone
+                            onTap: isDone || isCancelled
                                 ? null
                                 : () => _showItemBottomSheet(context, item),
                             borderRadius: BorderRadius.circular(10),
@@ -1847,12 +1931,16 @@ class _TicketCard extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 11),
                               decoration: BoxDecoration(
-                                color: isItemDone
+                                color: isCancelled
+                                    ? _kRed.withValues(alpha: 0.08)
+                                    : isItemDone
                                     ? _kGreen.withValues(alpha: 0.06)
                                     : Colors.white.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: isItemDone
+                                  color: isCancelled
+                                      ? _kRed.withValues(alpha: 0.35)
+                                      : isItemDone
                                       ? _kGreen.withValues(alpha: 0.25)
                                       : Colors.white.withValues(alpha: 0.08),
                                 ),
@@ -1860,8 +1948,25 @@ class _TicketCard extends ConsumerWidget {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
+                                  // Món huỷ: nhãn HUỶ thay vòng tròn (không bấm xong được)
+                                  if (isCancelled)
+                                    Container(
+                                      margin: const EdgeInsets.only(right: 10),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: _kRed,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text('HUỶ',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          )),
+                                    )
                                   // Status circle — tap để toggle done
-                                  GestureDetector(
+                                  else GestureDetector(
                                     onTap: isDone
                                         ? () async {
                                             HapticFeedback.selectionClick();
@@ -1901,10 +2006,11 @@ class _TicketCard extends ConsumerWidget {
                                     ),
                                     child: Text(
                                       'x${item.quantity.toInt()}',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w900,
                                         color: accent,
+                                        decoration: strike,
                                       ),
                                     ),
                                   ),
@@ -1916,12 +2022,15 @@ class _TicketCard extends ConsumerWidget {
                                       children: [
                                         Text(
                                           item.productName,
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 17,
                                             fontWeight: FontWeight.w700,
-                                            color: isItemDone
+                                            color: isItemDone || isCancelled
                                                 ? Colors.white38
                                                 : Colors.white.withValues(alpha: 0.95),
+                                            decoration: strike,
+                                            decorationColor: _kRed,
+                                            decorationThickness: 2,
                                           ),
                                         ),
                                          if (modifiers.isNotEmpty)
@@ -1951,7 +2060,7 @@ class _TicketCard extends ConsumerWidget {
                                                    ),
                                                    child: Text(
                                                      label,
-                                                     style: GoogleFonts.outfit(
+                                                     style: GoogleFonts.plusJakartaSans(
                                                        fontSize: 11,
                                                        fontWeight: isTopping ? FontWeight.w700 : FontWeight.w400,
                                                        color: isTopping ? _kOrange : Colors.white54,
@@ -1985,7 +2094,7 @@ class _TicketCard extends ConsumerWidget {
                                                   Flexible(
                                                     child: Text(
                                                       item.freeNote!.trim(),
-                                                      style: GoogleFonts.outfit(
+                                                      style: GoogleFonts.plusJakartaSans(
                                                         fontSize: 13,
                                                         fontWeight: FontWeight.w700,
                                                         color: _kAmber,
@@ -2015,7 +2124,7 @@ class _TicketCard extends ConsumerWidget {
                                       ],
                                     ),
                                   ),
-                                  if (!isDone)
+                                  if (!isDone && !isCancelled)
                                     Icon(Icons.edit_note_rounded,
                                         size: 17, color: Colors.white24),
                                 ],
@@ -2079,7 +2188,7 @@ class _TicketCard extends ConsumerWidget {
                   size: 22, color: Colors.white),
               const SizedBox(width: 8),
               Text('Bắt đầu làm',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: Colors.white)),
@@ -2110,7 +2219,7 @@ class _TicketCard extends ConsumerWidget {
                   size: 22, color: Colors.white),
               const SizedBox(width: 8),
               Text('Xong',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: Colors.white)),
@@ -2137,7 +2246,7 @@ class _TicketCard extends ConsumerWidget {
                   Icon(Icons.undo_rounded, size: 15, color: _kAmber),
                   const SizedBox(width: 4),
                   Text('Mở lại',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: _kAmber)),
@@ -2163,7 +2272,7 @@ class _TicketCard extends ConsumerWidget {
                     Icon(Icons.archive_outlined, size: 16, color: Colors.white30),
                     const SizedBox(width: 4),
                     Text('Dọn phiếu',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: Colors.white30)),
@@ -2190,7 +2299,7 @@ class _TicketCard extends ConsumerWidget {
                       size: 16, color: Color(0xFFF97316)),
                   const SizedBox(width: 4),
                   Text('In',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFFF97316))),
@@ -2213,7 +2322,7 @@ class _TicketCard extends ConsumerWidget {
       orderNumber: ticket.id.substring(0, 8).toUpperCase(),
       createdAt:   DateTime.fromMillisecondsSinceEpoch(ticket.sentAt),
       tableName:   ticket.tableLabel ?? 'Mang về',
-      items: tw.items.map((i) {
+      items: tw.items.where((i) => !i.cancelled).map((i) { // in lại không kèm món đã huỷ
         // ‼️ FIX Bug #24: i.note có thể là JSON array ["modifier1","extra"]
         // Parse thành text thuần để in đúng trên phiếu bếp
         String? noteText;
@@ -2286,7 +2395,7 @@ class _NoteChip extends StatelessWidget {
           Text(icon, style: const TextStyle(fontSize: 12)),
           const SizedBox(width: 5),
           Flexible(child: Text(text,
-            style: GoogleFonts.outfit(fontSize: 12, color: color.withValues(alpha: 0.9),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: color.withValues(alpha: 0.9),
                 fontStyle: FontStyle.italic))),
         ]),
       ),
@@ -2337,11 +2446,11 @@ class _ItemNoteSheetState extends State<_ItemNoteSheet> {
           const Text('\u{1F468}\u{200D}\u{1F373}', style: TextStyle(fontSize: 22)),
           const SizedBox(width: 10),
           Expanded(child: Text(widget.item.productName,
-            style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white))),
+            style: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white))),
         ]),
         const SizedBox(height: 4),
         Text('Ghi chú nội bộ bếp (không hiển thị cho khách)',
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.white38)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white38)),
         const SizedBox(height: 14),
         Container(
           decoration: BoxDecoration(
@@ -2351,10 +2460,10 @@ class _ItemNoteSheetState extends State<_ItemNoteSheet> {
           ),
           child: TextField(
             controller: _ctrl, autofocus: true, maxLines: 3,
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 15),
+            style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 15),
             decoration: InputDecoration(
               hintText: 'Ví dụ: làm chín kỹ, không cay...',
-              hintStyle: GoogleFonts.outfit(color: Colors.white24, fontSize: 13),
+              hintStyle: GoogleFonts.plusJakartaSans(color: Colors.white24, fontSize: 13),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(14),
             ),
@@ -2364,7 +2473,7 @@ class _ItemNoteSheetState extends State<_ItemNoteSheet> {
         Row(children: [
           Expanded(child: TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Huỷ', style: GoogleFonts.outfit(color: Colors.white38, fontWeight: FontWeight.w600)),
+            child: Text('Huỷ', style: GoogleFonts.plusJakartaSans(color: Colors.white38, fontWeight: FontWeight.w600)),
           )),
           const SizedBox(width: 8),
           Expanded(flex: 2, child: ElevatedButton(
@@ -2374,7 +2483,7 @@ class _ItemNoteSheetState extends State<_ItemNoteSheet> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            child: Text('Lưu ghi chú', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: Colors.white)),
+            child: Text('Lưu ghi chú', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white)),
           )),
         ]),
         const SizedBox(height: 20),
@@ -2407,9 +2516,9 @@ class _ReasonDialogState extends State<_ReasonDialog> {
       backgroundColor: _kCard,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(widget.title,
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 18)),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 18)),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(widget.hint, style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13)),
+        Text(widget.hint, style: GoogleFonts.plusJakartaSans(color: Colors.white54, fontSize: 13)),
         const SizedBox(height: 14),
         Container(
           decoration: BoxDecoration(
@@ -2419,10 +2528,10 @@ class _ReasonDialogState extends State<_ReasonDialog> {
           ),
           child: TextField(
             controller: _ctrl,
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 14),
+            style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Lý do (không bắt buộc)...',
-              hintStyle: GoogleFonts.outfit(color: Colors.white24, fontSize: 13),
+              hintStyle: GoogleFonts.plusJakartaSans(color: Colors.white24, fontSize: 13),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
@@ -2432,7 +2541,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Huỷ bỏ', style: GoogleFonts.outfit(color: Colors.white38, fontWeight: FontWeight.w600)),
+          child: Text('Huỷ bỏ', style: GoogleFonts.plusJakartaSans(color: Colors.white38, fontWeight: FontWeight.w600)),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, _ctrl.text.trim()),
@@ -2440,7 +2549,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
             backgroundColor: _kOrange,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
-          child: Text('Xác nhận', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: Colors.white)),
+          child: Text('Xác nhận', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white)),
         ),
       ],
     );
@@ -2528,7 +2637,7 @@ class _WaitTimerState extends State<_WaitTimer> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w800,
               color: color,
@@ -2601,7 +2710,7 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
               const Icon(Icons.warning_amber_rounded, color: Color(0xFFFCA5A5), size: 18),
               const SizedBox(width: 6),
               Text('THÔNG BÁO SỬA ĐƠN',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                   color: const Color(0xFFFCA5A5),
                   fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5)),
               const Spacer(),
@@ -2612,7 +2721,7 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
                 ),
                 onPressed: () => setState(() => _dismissed.addAll(visible.map((n) => n.id))),
                 child: Text('Đã hiểu ✓',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     color: const Color(0xFF86EFAC), fontWeight: FontWeight.w700, fontSize: 12)),
               ),
             ]),
@@ -2625,25 +2734,23 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(n.shortLabel,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
-                  Row(children: [
+                  // Wrap: lý do dài không tràn màn 360dp
+                  Wrap(spacing: 6, runSpacing: 2, crossAxisAlignment: WrapCrossAlignment.center, children: [
                     Text(n.tableLabel,
-                      style: GoogleFonts.outfit(color: Colors.white54, fontSize: 11)),
-                    const SizedBox(width: 6),
+                      style: GoogleFonts.plusJakartaSans(color: Colors.white54, fontSize: 11)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEF4444).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4)),
                       child: Text(n.reason,
-                        style: GoogleFonts.outfit(color: const Color(0xFFFCA5A5), fontSize: 10)),
+                        style: GoogleFonts.plusJakartaSans(color: const Color(0xFFFCA5A5), fontSize: 10)),
                     ),
-                    if (n.staffName.isNotEmpty) ...[ 
-                      const SizedBox(width: 6),
-                      Text('— ${n.staffName}',
-                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10)),
-                    ],
+                    if (n.approvedBy.isNotEmpty)
+                      Text('Duyệt: ${n.approvedBy}',
+                        style: GoogleFonts.plusJakartaSans(color: Colors.white38, fontSize: 10)),
                   ]),
                 ],
               )),
@@ -2653,9 +2760,92 @@ class _VoidNoticeBannerState extends State<_VoidNoticeBanner> {
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
               child: Text('+${visible.length - 3} thông báo khác',
-                style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+                style: GoogleFonts.plusJakartaSans(color: Colors.white38, fontSize: 11)),
             ),
           const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CANCELLED TICKET CARD — Phiếu đã gửi bếp bị huỷ (hiện 15 phút), "Đã xem" ẩn trên máy này
+// ─────────────────────────────────────────────────────────────────────────────
+class _CancelledTicketCard extends StatelessWidget {
+  final _TicketWithItems tw;
+  final VoidCallback onSeen;
+  const _CancelledTicketCard({required this.tw, required this.onSeen});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = tw.ticket;
+    // done_at của phiếu huỷ = giờ huỷ; mốc ms → giờ máy (giờ Việt Nam)
+    final at = t.status == 'huy' && t.doneAt != null
+        ? DateTime.fromMillisecondsSinceEpoch(t.doneAt!)
+        : null;
+    final sub = [
+      if ((t.zoneLabel ?? '').isNotEmpty) t.zoneLabel!,
+      if (at != null)
+        'Huỷ lúc ${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}',
+    ].join(' · ');
+    // Chỉ kê món bị huỷ (món bếp đã làm xong thì thôi); chưa biết món nào huỷ thì kê cả phiếu
+    final cancelled = tw.items.where((i) => i.cancelled).toList();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF7C1D1D),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _kRed, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(color: _kRed, borderRadius: BorderRadius.circular(6)),
+              child: Text('ĐÃ HUỶ',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1)),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(t.tableLabel ?? 'Bàn',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+              ),
+              onPressed: onSeen,
+              child: Text('Đã xem',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13)),
+            ),
+          ]),
+          if (sub.isNotEmpty)
+            Text(sub,
+              style: GoogleFonts.plusJakartaSans(
+                color: const Color(0xFFFCA5A5), fontWeight: FontWeight.w700, fontSize: 12)),
+          for (final i in cancelled.isEmpty ? tw.items : cancelled)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text('x${i.quantity.toInt()}  ${i.productName}',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  decoration: TextDecoration.lineThrough,
+                  decorationColor: const Color(0xFFFCA5A5),
+                  decorationThickness: 2,
+                )),
+            ),
         ],
       ),
     );
@@ -2688,7 +2878,7 @@ class _EmptyKitchenState extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             'Bếp đang yên tĩnh',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 22,
               fontWeight: FontWeight.w800,
               color: Colors.white,
@@ -2698,7 +2888,7 @@ class _EmptyKitchenState extends StatelessWidget {
           Text(
             'Chưa có phiếu bếp nào.\nCác phiếu mới sẽ hiện ngay khi nhân viên gửi bếp.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               color: Colors.white38,
               height: 1.55,
@@ -2773,7 +2963,7 @@ class _StationFilterBar extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       label,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                         color: isSelected ? color : Colors.white38,

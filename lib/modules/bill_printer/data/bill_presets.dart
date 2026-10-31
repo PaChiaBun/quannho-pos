@@ -87,14 +87,14 @@ List<BillPreset> get billPresets => [
       _b(BillBlockType.itemsList,    {'showPrice':true,'showQty':true,'showTotal':true,'fontSize':9}),
       _b(BillBlockType.divider,      {'style':'solid','thickness':0.5}),
       _b(BillBlockType.totals,       {'showSubtotal':false,'showDiscount':true,'boldTotal':true,'totalFontSize':12,'fontSize':9}),
-      _b(BillBlockType.footer,       {'text':'Thanks! See you soon ☕','subText':'','fontSize':10,'align':'center','bold':false}),
+      _b(BillBlockType.footer,       {'text': 'Cảm ơn, hẹn gặp lại ☕','subText':'','fontSize':10,'align':'center','bold':false}),
       _b(BillBlockType.appBranding,   {'fontSize':8,'align':'center'}),
     ]),
   ),
   BillPreset(
     id: 'takeaway_58',
     name: 'Mang Đi',
-    tag: 'Takeaway',
+    tag: 'Mang đi',
     description: 'Tập trung tên khách, số đơn to để giao đúng túi.',
     template: BillBlockTemplate(paperSize: '58mm', blocks: [
       _b(BillBlockType.shopHeader,   {'shopName':'','fontSize':13,'bold':true,'align':'center'}),
@@ -111,9 +111,9 @@ List<BillPreset> get billPresets => [
   ),
   BillPreset(
     id: 'foodcourt_80',
-    name: 'Food Court',
-    tag: 'Chuỗi',
-    description: 'Phù hợp chuỗi, food court: mã đơn nổi bật, in nhanh.',
+    name: 'Khu Ẩm Thực',
+          tag: 'Chuỗi',
+          description: 'Phù hợp chuỗi, khu ẩm thực: mã đơn nổi bật, in nhanh.',
     template: BillBlockTemplate(paperSize: '80mm', blocks: [
       _b(BillBlockType.shopHeader,   {'shopName':'','fontSize':15,'bold':true,'align':'center'}),
       _b(BillBlockType.shopAddress,  {'address':'','fontSize':9,'align':'center'}),
@@ -131,7 +131,7 @@ List<BillPreset> get billPresets => [
   BillPreset(
     id: 'qr_80',
     name: 'QR Thanh Toán',
-    tag: 'Cashless',
+    tag: 'Không tiền mặt',
     description: 'Tích hợp QR chuyển khoản, không cần tiền mặt.',
     template: BillBlockTemplate(paperSize: '80mm', blocks: [
       _b(BillBlockType.shopHeader,   {'shopName':'','fontSize':15,'bold':true,'align':'center'}),
@@ -152,7 +152,7 @@ List<BillPreset> get billPresets => [
   BillPreset(
     id: 'loyalty_80',
     name: 'Tích Điểm',
-    tag: 'Loyalty',
+    tag: 'Khách quen',
     description: 'Nhấn mạnh điểm thưởng, khuyến khích khách quay lại.',
     template: BillBlockTemplate(paperSize: '80mm', blocks: [
       _b(BillBlockType.shopHeader,   {'shopName':'','tagline':'Tích điểm - Nhận quà','fontSize':15,'bold':true,'align':'center'}),
@@ -174,7 +174,7 @@ List<BillPreset> get billPresets => [
   BillPreset(
     id: 'elegant_a4',
     name: 'Sang Trọng A4',
-    tag: 'Fine dining',
+    tag: 'Nhà hàng sang',
     description: 'Khổ A4 cho nhà hàng cao cấp, in máy văn phòng.',
     template: BillBlockTemplate(paperSize: 'a4', blocks: [
       _b(BillBlockType.shopHeader,   {'shopName':'','tagline':'','fontSize':20,'bold':true,'align':'center'}),

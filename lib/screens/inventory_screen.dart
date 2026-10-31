@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import '../core/utils/money_formatter.dart';
+import '../core/utils/quantity_formatter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,8 +14,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/providers/app_providers.dart';
+import '../core/providers/permission_provider.dart';
+import '../core/providers/session_provider.dart';
 import '../core/repositories/core_product_repository.dart';
+import '../core/utils/app_logger.dart';
 import 'ban_screen.dart';
+import '../modules/quick_notes/quick_notes.dart';
 import '../modules/kho/providers/kho_providers.dart';
 import '../modules/kho/repository/kho_repository.dart';
 import '../modules/kho/screens/receive_stock_sheet.dart';
@@ -21,7 +27,11 @@ import '../modules/kho/screens/phieu_nhap_hang_screen.dart';
 import '../modules/kho/screens/po_detail_screen.dart';
 import '../modules/kho/screens/supplier_list_screen.dart';
 import '../core/services/product_image_service.dart';
+import '../core/services/staff_service.dart';
+import '../core/services/store_auth_service.dart';
 import '../modules/topping/topping_group_repository.dart';
+import '../core/utils/stagger.dart';
+import '../core/utils/server_time.dart';
 
 // ─ Màu local ─────────────────────────────────────────────────────────────────
 const _kNavy   = Color(0xFF1E1C5E);
@@ -48,23 +58,462 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     with TickerProviderStateMixin {
   late TabController _tabCtrl;
   final _searchCtrl = TextEditingController();
+  late final AnimationController _headerAnimCtrl;
+  late final Animation<double> _headerHeightFactor;
+  bool _isHeaderCollapsed = false;
   int _tabIndex = 0;
   bool _phieuNhapEnabled = false;
+  bool _hideFeatureBanner = false;
   static const _kPrefKey = 'phieu_nhap_enabled';
   static const _kViolet  = Color(0xFF7C3AED);
+
+  String _selectedCategory = 'Tất cả';
+  bool _isMultiSelect = false;
+  final Set<String> _selectedIds = {};
+
+  bool get _canDeleteItems {
+    final session = ref.watch(sessionProvider);
+    if (session == null) return false;
+    final r = StaffService.canonicalRole(session.role);
+    final hasDeletePerm = ref.canDo('kho.delete_item');
+    return session.isOwner || r == 'owner' || r == 'manager' || hasDeletePerm;
+  }
+
+  bool get _canEditItems {
+    final session = ref.watch(sessionProvider);
+    if (session == null) return false;
+    final r = StaffService.canonicalRole(session.role);
+    final hasEditPerm = ref.canDo('kho.edit_item') || ref.canDo('kho.edit_quantity');
+    return session.isOwner || r == 'owner' || r == 'manager' || hasEditPerm;
+  }
+
+  bool get _canManageBulk {
+    final session = ref.watch(sessionProvider);
+    if (session == null) return false;
+    final r = StaffService.canonicalRole(session.role);
+    final hasDeletePerm = ref.canDo('kho.delete_item');
+    final hasEditPerm = ref.canDo('kho.edit_item');
+    return session.isOwner || r == 'owner' || r == 'manager' || hasDeletePerm || hasEditPerm;
+  }
+
+  Future<String> _getStoreId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final prefId = prefs.getString('auth_store_id');
+    if (prefId != null && prefId.isNotEmpty) return prefId;
+    final info = await StoreAuthService.getStoreInfo();
+    return info['store_id'] ?? '';
+  }
+
+  void _toggleSelect(String id) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  void _selectAll(List<String> ids) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selectedIds.addAll(ids);
+    });
+  }
+
+  void _clearSelect() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selectedIds.clear();
+    });
+  }
+
+  String _sanitizeErrorMessage(dynamic error, String fallbackPrefix) {
+    final str = error.toString();
+    if (str.contains('<!DOCTYPE html>') ||
+        str.contains('520') ||
+        str.contains('Cloudflare') ||
+        str.contains('Bad Gateway') ||
+        str.contains('502') ||
+        str.contains('504')) {
+      return 'Không thể kết nối máy chủ (Máy chủ bận hoặc lỗi mạng). Vui lòng thử lại.';
+    }
+    return '$fallbackPrefix: $error';
+  }
+
+  Future<void> _confirmBatchDelete() async {
+    if (!_canDeleteItems) return;
+    final count = _selectedIds.length;
+    if (count == 0) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: _kRed, size: 28),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text('Xóa $count món đã chọn?',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Các món này sẽ được chuyển vào trạng thái đã xoá (Soft Delete). Dữ liệu doanh thu và hoá đơn lịch sử vẫn được bảo toàn.',
+          style: TextStyle(fontSize: 14, color: _kInk, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy', style: TextStyle(color: _kMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kRed,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        final idsToDelete = _selectedIds.toList();
+        await CoreProductRepository.instance.batchSoftDelete(idsToDelete);
+        setState(() {
+          _selectedIds.clear();
+          _isMultiSelect = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ Đã xóa $count món thành công'),
+              backgroundColor: _kGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e, st) {
+        AppLogger.error('inventory', 'Lỗi khi xóa hàng loạt $count món', e, st);
+        if (mounted) {
+          final userMsg = _sanitizeErrorMessage(e, 'Lỗi khi xóa món');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(userMsg),
+              backgroundColor: _kRed,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _batchUpdateAvailability(bool isAvailable) async {
+    if (!_canManageBulk) return;
+    final count = _selectedIds.length;
+    if (count == 0) return;
+    try {
+      final storeId = await _getStoreId();
+      if (storeId.isEmpty) throw Exception('Chưa chọn quán');
+      final ids = _selectedIds.toList();
+      await CoreProductRepository.instance.batchUpdateAvailability(storeId, ids, isAvailable);
+      setState(() {
+        _selectedIds.clear();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isAvailable
+                ? '✅ Đã bật bán $count món thành công'
+                : '⏸️ Đã tắt bán $count món thành công'),
+            backgroundColor: isAvailable ? _kGreen : _kOrange,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e, st) {
+      AppLogger.error('inventory', 'Lỗi cập nhật trạng thái bán hàng loạt ($count món)', e, st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cập nhật trạng thái thất bại. Hãy chụp lại báo chủ app.'),
+            backgroundColor: _kRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _openBatchCategoryDialog(List<String> existingCategories) async {
+    if (!_canManageBulk) return;
+    final count = _selectedIds.length;
+    if (count == 0) return;
+
+    final distinctCats = existingCategories
+        .where((c) => c.isNotEmpty && c != 'Tất cả')
+        .toSet()
+        .toList()
+      ..sort();
+
+    String? selectedCat = distinctCats.isNotEmpty ? distinctCats.first : null;
+    final customCatCtrl = TextEditingController();
+    bool isCustom = false;
+
+    final newCategory = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(Icons.drive_file_move_rounded, color: _kViolet, size: 26),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text('Đổi danh mục ($count món)',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Chọn danh mục mới cho các món đã chọn:',
+                  style: TextStyle(fontSize: 13, color: _kMuted)),
+              const SizedBox(height: 12),
+              if (distinctCats.isNotEmpty) ...[
+                RadioListTile<bool>(
+                  title: const Text('Danh mục hiện có', style: TextStyle(fontSize: 14)),
+                  value: false,
+                  groupValue: isCustom,
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  activeColor: _kNavy,
+                  onChanged: (val) => setDlgState(() => isCustom = val ?? false),
+                ),
+                if (!isCustom)
+                  DropdownButtonFormField<String>(
+                    value: selectedCat,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: distinctCats
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (val) => setDlgState(() => selectedCat = val),
+                  ),
+                const SizedBox(height: 8),
+              ],
+              RadioListTile<bool>(
+                title: const Text('Nhập danh mục mới', style: TextStyle(fontSize: 14)),
+                value: true,
+                groupValue: isCustom,
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                activeColor: _kNavy,
+                onChanged: (val) => setDlgState(() => isCustom = val ?? true),
+              ),
+              if (isCustom)
+                TextField(
+                  controller: customCatCtrl,
+                  decoration: InputDecoration(
+                    hintText: 'Ví dụ: Món nhậu đặc biệt...',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy', style: TextStyle(color: _kMuted)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kNavy,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                final targetCat = isCustom
+                    ? customCatCtrl.text.trim()
+                    : (selectedCat ?? '').trim();
+                if (targetCat.isNotEmpty) {
+                  Navigator.pop(ctx, targetCat);
+                }
+              },
+              child: const Text('Cập nhật', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (newCategory != null && newCategory.isNotEmpty && mounted) {
+      try {
+        final storeId = await _getStoreId();
+        if (storeId.isEmpty) throw Exception('Chưa chọn quán');
+        final ids = _selectedIds.toList();
+        await CoreProductRepository.instance.batchUpdateCategory(storeId, ids, newCategory);
+        setState(() {
+          _selectedIds.clear();
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ Đã chuyển $count món sang danh mục "$newCategory"'),
+              backgroundColor: _kGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e, st) {
+        AppLogger.error('inventory', 'Lỗi đổi danh mục hàng loạt ($count món)', e, st);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đổi danh mục thất bại. Hãy chụp lại báo chủ app.'),
+              backgroundColor: _kRed,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _confirmSingleDelete(StockItem item) async {
+    if (!_canDeleteItems) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: _kRed, size: 28),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text('Xóa "${item.name}"?',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Món này sẽ được chuyển vào trạng thái đã xoá (Soft Delete). Dữ liệu doanh thu và hoá đơn lịch sử vẫn được bảo toàn.',
+          style: TextStyle(fontSize: 14, color: _kInk, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy', style: TextStyle(color: _kMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kRed,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xác nhận xóa', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await ref.read(productRepositoryProvider).softDelete(item.id);
+        setState(() {
+          _selectedIds.remove(item.id);
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ Đã xóa "${item.name}" thành công'),
+              backgroundColor: _kGreen,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e, st) {
+        AppLogger.error('inventory', 'Lỗi khi xóa món: ${item.name} (${item.id})', e, st);
+        if (mounted) {
+          final userMsg = _sanitizeErrorMessage(e, 'Lỗi khi xóa món');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(userMsg),
+              backgroundColor: _kRed,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _headerAnimCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 240),
+      value: 1.0,
+    );
+    _headerHeightFactor = CurvedAnimation(
+      parent: _headerAnimCtrl,
+      curve: Curves.easeInOutCubic,
+    );
     _buildTabCtrl(2); // Hàng hoá & Menu / Cảnh báo
     _loadPref();
+  }
+
+  void _collapseHeader() {
+    if (_headerAnimCtrl.value > 0 && !_headerAnimCtrl.isAnimating) {
+      _headerAnimCtrl.reverse();
+      if (!_isHeaderCollapsed) setState(() => _isHeaderCollapsed = true);
+    }
+  }
+
+  void _expandHeader() {
+    if (_headerAnimCtrl.value < 1 && !_headerAnimCtrl.isAnimating) {
+      _headerAnimCtrl.forward();
+      if (_isHeaderCollapsed) setState(() => _isHeaderCollapsed = false);
+    }
+  }
+
+  String get _currentTabName {
+    if (!_phieuNhapEnabled) {
+      return _tabIndex == 0 ? 'Hàng hoá & Menu' : 'Cảnh báo';
+    }
+    switch (_tabIndex) {
+      case 0: return 'Tất cả';
+      case 1: return 'Hàng hoá & Menu';
+      case 2: return 'Nguyên liệu';
+      case 3: return 'Cảnh báo';
+      case 4: return 'Phiếu nhập';
+      default: return 'Kho hàng';
+    }
   }
 
   void _buildTabCtrl(int length) {
     _tabCtrl = TabController(length: length, vsync: this)
       ..addListener(() {
         if (!_tabCtrl.indexIsChanging) return;
-        setState(() => _tabIndex = _tabCtrl.index);
+        setState(() {
+          _tabIndex = _tabCtrl.index;
+          _expandHeader();
+        });
       });
   }
 
@@ -95,6 +544,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
 
   @override
   void dispose() {
+    _headerAnimCtrl.dispose();
     _tabCtrl.dispose();
     _searchCtrl.dispose();
     super.dispose();
@@ -112,58 +562,59 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     final lowCount = lowAsync.value?.length ?? 0;
     final outCount = outAsync.value?.length ?? 0;
 
-    final mainBody = Stack(
+    final mainBody = NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification.metrics.axis == Axis.vertical) {
+          if (notification is ScrollUpdateNotification) {
+            final delta = notification.scrollDelta ?? 0;
+            final pixels = notification.metrics.pixels;
+            if (pixels <= 10) {
+              _expandHeader();
+            } else if (delta > 4 && pixels > 40) {
+              _collapseHeader();
+            } else if (delta < -8) {
+              _expandHeader();
+            }
+          } else if (notification is UserScrollNotification) {
+            if (notification.direction == ScrollDirection.reverse &&
+                notification.metrics.pixels > 40) {
+              _collapseHeader();
+            } else if (notification.direction == ScrollDirection.forward) {
+              _expandHeader();
+            }
+          }
+        }
+        return false;
+      },
+      child: Column(
         children: [
-          // ── Main Column ─────────────────────────────────────────────
-          Column(
-            children: [
-          _buildHeader(statsAsync),
-
-          // ── Tabs (luôn scroll vì nhiều tab) ──────────────────────
-          Container(
-            color: _kNavy,
-            child: TabBar(
-              controller: _tabCtrl,
-              indicatorColor: _kOrange,
-              indicatorWeight: 3,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white54,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              labelStyle: const TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 13),
-              labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-              tabs: [
-                // Tất cả chỉ hiện khi bật Phiếu nhập hàng
-                if (_phieuNhapEnabled)
-                  Tab(text: 'Tất cả ($allCount)'),
-                const Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.shopping_bag_rounded, size: 14),
-                  SizedBox(width: 4),
-                  Text('Hàng hoá & Menu'),
-                ])),
-                // Nguyên liệu chỉ hiện khi bật Phiếu nhập hàng
-                if (_phieuNhapEnabled)
-                  const Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.egg_alt_rounded, size: 14),
-                    SizedBox(width: 4),
-                    Text('Nguyên liệu'),
-                  ])),
-                Tab(child: _TabLabel('Cảnh báo', lowCount + outCount,
-                    color: outCount > 0
-                        ? const Color(0xFFC62828)
-                        : const Color(0xFFFF6F00))),
-                if (_phieuNhapEnabled)
-                  const Tab(
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.receipt_long_rounded, size: 14),
-                      SizedBox(width: 4),
-                      Text('Phiếu nhập'),
-                    ]),
-                  ),
-              ],
+          // Thanh trạng thái trong suốt: đầu trang thu gọn thì thanh tìm chui dưới đồng hồ/pin →
+          // dải navy cao đúng thanh trạng thái, lớn dần theo nhịp thu gọn (mở rộng hết thì cao 0).
+          AnimatedBuilder(
+            animation: _headerHeightFactor,
+            builder: (context, _) => Container(
+              color: _kNavy,
+              height: MediaQuery.paddingOf(context).top * (1 - _headerHeightFactor.value),
             ),
           ),
+          // ── Collapsible Header + Tabs ─────────────────────────────
+          ClipRect(
+            child: SizeTransition(
+              sizeFactor: _headerHeightFactor,
+              axisAlignment: -1.0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildHeader(statsAsync),
+                  _buildTabBar(allCount, lowCount, outCount),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Mini Header Bar on Tab 4 (khi search bar ẩn & header thu gọn)
+          if (_isHeaderCollapsed && _phieuNhapEnabled && _tabIndex == 4)
+            _buildMiniHeaderTab4(),
 
           // ── Search bar (ẩn khi tab phiếu nhập) ───────────────────
           // ‼️ FIX: search bar ẩn khi tab Phiếu nhập (index 4 khi enabled, không phải 5)
@@ -176,11 +627,24 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             child: TabBarView(
               controller: _tabCtrl,
               children: [
-               // Tab 0 (enabled): Tất cả
+                // Tab 0 (enabled): Tất cả
                 if (_phieuNhapEnabled)
                   _StockList(
                     watchItems: (ref) => ref.watch(allStockProvider),
                     filterQuery: _searchCtrl.text,
+                    selectedCategory: _selectedCategory,
+                    onSelectCategory: (c) => setState(() => _selectedCategory = c),
+                    isMultiSelect: _isMultiSelect,
+                    selectedIds: _selectedIds,
+                    onToggleSelect: _toggleSelect,
+                    onSelectAll: _selectAll,
+                    onClearSelect: _clearSelect,
+                    canManageBulk: _canManageBulk,
+                    canDeleteItems: _canDeleteItems,
+                    onBatchDelete: _confirmBatchDelete,
+                    onBatchAvailability: _batchUpdateAvailability,
+                    onBatchCategory: _openBatchCategoryDialog,
+                    onSingleDelete: _confirmSingleDelete,
                     onReceive: _openReceiveSheet,
                     onAdjust: _openAdjustDialog,
                     onHistory: _openHistorySheet,
@@ -192,9 +656,23 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                 _StockList(
                   watchItems: (ref) => ref.watch(allStockProvider).whenData(
                     (list) => list.where((i) =>
+                        !_phieuNhapEnabled ||
                         i.productType == 'purchased' ||
                         i.productType == 'finished').toList()),
                   filterQuery: _searchCtrl.text,
+                  selectedCategory: _selectedCategory,
+                  onSelectCategory: (c) => setState(() => _selectedCategory = c),
+                  isMultiSelect: _isMultiSelect,
+                  selectedIds: _selectedIds,
+                  onToggleSelect: _toggleSelect,
+                  onSelectAll: _selectAll,
+                  onClearSelect: _clearSelect,
+                  canManageBulk: _canManageBulk,
+                  canDeleteItems: _canDeleteItems,
+                  onBatchDelete: _confirmBatchDelete,
+                  onBatchAvailability: _batchUpdateAvailability,
+                  onBatchCategory: _openBatchCategoryDialog,
+                  onSingleDelete: _confirmSingleDelete,
                   onReceive: _openReceiveSheet,
                   onAdjust: _openAdjustDialog,
                   onHistory: _openHistorySheet,
@@ -215,6 +693,20 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                           i.productType == 'ingredient' ||
                           i.productType == 'semi_finished').toList()),
                     filterQuery: _searchCtrl.text,
+                    selectedCategory: _selectedCategory,
+                    onSelectCategory: (c) => setState(() => _selectedCategory = c),
+                    isMultiSelect: _isMultiSelect,
+                    selectedIds: _selectedIds,
+                    onToggleSelect: _toggleSelect,
+                    onSelectAll: _selectAll,
+                    onClearSelect: _clearSelect,
+                    canManageBulk: _canManageBulk,
+                    canDeleteItems: _canDeleteItems,
+                    onBatchDelete: _confirmBatchDelete,
+                    onBatchAvailability: _batchUpdateAvailability,
+                    onBatchCategory: _openBatchCategoryDialog,
+                    onSingleDelete: _confirmSingleDelete,
+                    showCategoryFilter: false,
                     onReceive: _openReceiveSheet,
                     onAdjust: _openAdjustDialog,
                     onHistory: _openHistorySheet,
@@ -237,6 +729,20 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                         return a.name.compareTo(b.name);
                       })),
                   filterQuery: _searchCtrl.text,
+                  selectedCategory: _selectedCategory,
+                  onSelectCategory: (c) => setState(() => _selectedCategory = c),
+                  isMultiSelect: _isMultiSelect,
+                  selectedIds: _selectedIds,
+                  onToggleSelect: _toggleSelect,
+                  onSelectAll: _selectAll,
+                  onClearSelect: _clearSelect,
+                  canManageBulk: _canManageBulk,
+                  canDeleteItems: _canDeleteItems,
+                  onBatchDelete: _confirmBatchDelete,
+                  onBatchAvailability: _batchUpdateAvailability,
+                  onBatchCategory: _openBatchCategoryDialog,
+                  onSingleDelete: _confirmSingleDelete,
+                  showCategoryFilter: false,
                   onReceive: _openReceiveSheet,
                   onAdjust: _openAdjustDialog,
                   onHistory: _openHistorySheet,
@@ -253,53 +759,106 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
               ],
             ),
           ),
-        ], // end Column children
-          ), // end Column
-
-          // ── FAB lịch sử — Stack child, tránh bị mascot che ────────
-          Positioned(
-            right: 16,
-            bottom: 80,
-            child: Tooltip(
-              message: 'Biến động kho gần đây',
-              child: FloatingActionButton(
-                heroTag: 'kho_fab_history',
-                onPressed: _openRecentMovements,
-                backgroundColor: _kNavy,
-                foregroundColor: Colors.white,
-                mini: true,
-                elevation: 4,
-                child: const Icon(Icons.history_rounded, size: 20),
-              ),
-            ),
-          ),
-        ], // end Stack children
-      );
+        ],
+      ),
+    );
 
     return Scaffold(
       backgroundColor: _kBg,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth > 700) {
-            return Row(children: [
-              Expanded(flex: 3, child: mainBody),
-              SizedBox(
-                width: 280,
-                child: _InventoryRightPanel(statsAsync: statsAsync),
+      body: mainBody,
+    );
+  }
+
+  Widget _buildTabBar(int allCount, int lowCount, int outCount) {
+    return Container(
+      color: _kNavy,
+      child: TabBar(
+        controller: _tabCtrl,
+        indicatorColor: _kOrange,
+        indicatorWeight: 3,
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white54,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
+        labelStyle: const TextStyle(
+            fontWeight: FontWeight.w700, fontSize: 13),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+        tabs: [
+          // Tất cả chỉ hiện khi bật Phiếu nhập hàng
+          if (_phieuNhapEnabled)
+            Tab(text: 'Tất cả ($allCount)'),
+          const Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.shopping_bag_rounded, size: 14),
+            SizedBox(width: 4),
+            Text('Hàng hoá & Menu'),
+          ])),
+          // Nguyên liệu chỉ hiện khi bật Phiếu nhập hàng
+          if (_phieuNhapEnabled)
+            const Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.egg_alt_rounded, size: 14),
+              SizedBox(width: 4),
+              Text('Nguyên liệu'),
+            ])),
+              // Danh sách Cảnh báo = sắp hết ∪ hết hàng, mà "sắp hết" (tồn ≤ tối thiểu) đã gồm cả
+              // hết hàng → đếm lowCount, không cộng outCount (trước đây đếm trùng).
+              Tab(
+                  child: _TabLabel('Cảnh báo', lowCount,
+              color: outCount > 0
+                  ? const Color(0xFFC62828)
+                  : const Color(0xFFFF6F00))),
+          if (_phieuNhapEnabled)
+            const Tab(
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.receipt_long_rounded, size: 14),
+                SizedBox(width: 4),
+                Text('Phiếu nhập'),
+              ]),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniHeaderTab4() {
+    return Container(
+      color: _kNavy,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      child: Row(
+        children: [
+          const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 16),
+          const SizedBox(width: 6),
+          const Text(
+            'Phiếu nhập hàng',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          const Spacer(),
+          InkWell(
+            onTap: _expandHeader,
+            borderRadius: BorderRadius.circular(8),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                children: [
+                  Text('Hiện thanh Tab', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  SizedBox(width: 4),
+                  Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 18),
+                ],
               ),
-            ]);
-          }
-          return mainBody;
-        },
+            ),
+          ),
+        ],
       ),
     );
   }
 
   // ── Feature Toggle Card ─────────────────────────────────────────────────────
-  Widget _buildFeatureCard() => _FeatureToggleCard(
-    enabled: _phieuNhapEnabled,
-    onToggle: _togglePhieuNhap,
-  );
+  Widget? _buildFeatureCard() => _hideFeatureBanner
+      ? null
+      : _FeatureToggleCard(
+          enabled: _phieuNhapEnabled,
+          onToggle: _togglePhieuNhap,
+          onDismiss: () => setState(() => _hideFeatureBanner = true),
+        );
 
   // ─────────────────────────────────────────────────────────────────────────
   // HEADER — Thống kê + title
@@ -316,63 +875,106 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Title row
               Row(
                 children: [
-                  const Text('Kho hàng',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24, fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    )),
-                  const Spacer(),
+                  // Co lại thay vì đẩy 5 nút tràn khi chữ máy để cỡ lớn trên màn 360dp.
+                  const Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text('Kho hàng',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20, fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        )),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.history_rounded,
+                        color: Colors.white, size: 22),
+                    onPressed: _openRecentMovements,
+                    tooltip: 'Biến động kho gần đây',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.sticky_note_2_outlined,
+                        color: Colors.white, size: 22),
+                    onPressed: () => showQuickNoteManager(context),
+                    tooltip: 'Ghi chú nhanh',
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      _phieuNhapEnabled ? Icons.receipt_long_rounded : Icons.receipt_long_outlined,
+                      color: _phieuNhapEnabled ? _kOrange : Colors.white70,
+                      size: 22,
+                    ),
+                    onPressed: () => _togglePhieuNhap(!_phieuNhapEnabled),
+                    tooltip: _phieuNhapEnabled ? 'Tắt phiếu nhập nâng cao' : 'Bật phiếu nhập nâng cao',
+                  ),
                   IconButton(
                     icon: const Icon(Icons.add_circle_rounded,
-                        color: Colors.white, size: 28),
+                        color: Colors.white, size: 26),
                     onPressed: _openAddProduct,
                     tooltip: 'Thêm sản phẩm',
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.keyboard_arrow_up_rounded,
+                        color: Colors.white70, size: 24),
+                    onPressed: _collapseHeader,
+                    tooltip: 'Thu gọn thanh Tab & Thống kê',
+                  ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // Stat cards
               statsAsync.when(
-                loading: () => const SizedBox(height: 72,
+                loading: () => const SizedBox(height: 38,
                   child: Center(child: CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2))),
                 error: (_, __) => const SizedBox.shrink(),
-                data: (stats) => Row(
-                  children: [
-                    _HeaderStat(
-                      value: '${stats.totalItems}',
-                      label: 'Sản phẩm',
-                      icon: Icons.category_rounded,
-                    ),
-                    _HeaderStat(
-                      value: '${stats.lowStockItems}',
-                      label: 'Sắp hết',
-                      icon: Icons.warning_amber_rounded,
-                      highlight: stats.lowStockItems > 0,
-                    ),
-                    _HeaderStat(
-                      value: '${stats.outOfStockItems}',
-                      label: 'Hết hàng',
-                      icon: Icons.remove_shopping_cart_rounded,
-                      highlight: stats.outOfStockItems > 0,
-                      highlightColor: _kRed,
-                    ),
-                    _HeaderStat(
-                      value: _fmtShort(stats.totalValue),
-                      label: 'Giá trị kho',
-                      icon: Icons.account_balance_wallet_rounded,
-                    ),
-                  ],
-                ),
+                data: (stats) {
+                  // Màn < 600dp: bỏ icon, ô "Giá trị kho" rộng gấp đôi → 4 ô vẫn 1 hàng, không cắt chữ.
+                  final compact = MediaQuery.sizeOf(context).width < 600;
+                  return Row(
+                    spacing: compact ? 6 : 8,
+                    children: [
+                      _HeaderStat(
+                        value: '${stats.totalItems}',
+                        label: 'Sản phẩm',
+                        icon: Icons.category_rounded,
+                        compact: compact,
+                      ),
+                      _HeaderStat(
+                        value: '${stats.lowStockItems}',
+                        label: 'Sắp hết',
+                        icon: Icons.warning_amber_rounded,
+                        highlight: stats.lowStockItems > 0,
+                        compact: compact,
+                      ),
+                      _HeaderStat(
+                        value: '${stats.outOfStockItems}',
+                        label: 'Hết hàng',
+                        icon: Icons.remove_shopping_cart_rounded,
+                        highlight: stats.outOfStockItems > 0,
+                        highlightColor: _kRed,
+                        compact: compact,
+                      ),
+                      _HeaderStat(
+                        value: _fmtShort(stats.totalValue),
+                        label: 'Giá trị kho',
+                        icon: Icons.account_balance_wallet_rounded,
+                        compact: compact,
+                        flex: compact ? 2 : 1,
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -385,41 +987,125 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      child: TextField(
-        controller: _searchCtrl,
-        onChanged: (_) => setState(() {}),
-        decoration: InputDecoration(
-          hintText: 'Tìm sản phẩm, SKU...',
-          hintStyle: const TextStyle(color: _kMuted, fontSize: 14),
-          prefixIcon: const Icon(Icons.search_rounded,
-              color: _kMuted, size: 20),
-          suffixIcon: _searchCtrl.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.close_rounded,
-                      color: _kMuted, size: 18),
-                  onPressed: () {
-                    _searchCtrl.clear();
-                    setState(() {});
+      child: Row(
+        children: [
+          if (_isHeaderCollapsed) ...[
+            Tooltip(
+              message: 'Mở rộng thanh Tab & Thống kê',
+              child: Material(
+                color: _kNavy.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: _expandHeader,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.tab_unselected_rounded, size: 16, color: _kNavy),
+                        // Màn < 600dp: bỏ tên tab — "Hàng hoá & Menu" bóp ô tìm chỉ còn icon.
+                        if (MediaQuery.sizeOf(context).width >= 600) ...[
+                          const SizedBox(width: 5),
+                          Text(
+                            _currentTabName,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: _kNavy,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(width: 3),
+                        const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: _kNavy),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: 'Tìm sản phẩm, SKU...',
+                hintStyle: const TextStyle(color: _kMuted, fontSize: 14),
+                prefixIcon: const Icon(Icons.search_rounded,
+                    color: _kMuted, size: 20),
+                suffixIcon: _searchCtrl.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close_rounded,
+                            color: _kMuted, size: 18),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() {});
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: _kBg,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: _kBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: _kBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: _kNavy, width: 2),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+            ),
+          ),
+          if (_canDeleteItems) ...[
+            const SizedBox(width: 8),
+            Tooltip(
+              message: _isMultiSelect ? 'Hủy chế độ chọn nhiều' : 'Chọn nhiều món để xóa',
+              child: Material(
+                color: _isMultiSelect ? _kRed : _kNavy.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _isMultiSelect = !_isMultiSelect;
+                      if (!_isMultiSelect) _selectedIds.clear();
+                    });
                   },
-                )
-              : null,
-          filled: true,
-          fillColor: _kBg,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: _kBorder),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: _kBorder),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: _kNavy, width: 2),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _isMultiSelect ? Icons.close_rounded : Icons.checklist_rounded,
+                          size: 18,
+                          color: _isMultiSelect ? Colors.white : _kNavy,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _isMultiSelect ? 'Hủy' : 'Chọn',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: _isMultiSelect ? Colors.white : _kNavy,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -473,30 +1159,50 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   }
 
   void _openAddProduct() {
+    final allItems = ref.read(allStockProvider).value ?? [];
+    final storeCustomCats = allItems
+        .map((i) => (i.category ?? '').trim())
+        .where((c) => c.isNotEmpty && !const ['Đồ ăn', 'Đồ uống', 'Tráng miệng', 'Combo', 'Nguyên liệu', 'Topping', 'Khác'].contains(c))
+        .toSet()
+        .toList();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _EditProductSheet(
         product: null,
-        onSaved: (name, price, cost, cat, unit, minStock, {String? imageUrl, bool isTopping = false, String toppingUnit = 'phần', String stationCode = 'bep_nong'}) async {
+        initialCustomCategories: storeCustomCats,
+        onSaved: (name, price, cost, cat, unit, minStock, {String? imageUrl, bool isTopping = false, String toppingUnit = 'phần', String stationCode = 'bep_nong', double conversionRate = 0, String conversionUnit = ''}) async {
           final productType = cat == 'Nguyên liệu' ? 'ingredient' : 'finished';
-          await ref.read(productRepositoryProvider).create(
-            name: name, sellPrice: price, costPrice: cost,
-            category: cat.isEmpty ? null : cat,
-            unit: unit.isEmpty ? 'phần' : unit,
-            productType: productType,
-            minStock: minStock, isAvailable: true,
-            imageUrl: imageUrl,
-            isTopping: isTopping,
-            toppingUnit: isTopping ? toppingUnit : null,
-            stationCode: stationCode,
-          );
-          if (ctx.mounted) {
-            Navigator.pop(ctx);
-            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-              content: Text('✅ Đã thêm "$name"${isTopping ? ' (Topping)' : ''}'),
-              behavior: SnackBarBehavior.floating));
+          try {
+            await ref.read(productRepositoryProvider).create(
+              name: name, sellPrice: price, costPrice: cost,
+              category: cat.isEmpty ? null : cat,
+              unit: unit.isEmpty ? 'phần' : unit,
+              productType: productType,
+              minStock: minStock, isAvailable: true,
+              imageUrl: imageUrl,
+              isTopping: isTopping,
+              toppingUnit: isTopping ? toppingUnit : null,
+              stationCode: stationCode,
+              conversionRate: conversionRate,
+              conversionUnit: conversionUnit,
+            );
+            if (ctx.mounted) {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text('✅ Đã thêm "$name"${isTopping ? ' (Topping)' : ''}'),
+                behavior: SnackBarBehavior.floating));
+            }
+          } catch (e, st) {
+            AppLogger.error('inventory', 'Lỗi khi tạo món: $name', e, st);
+            if (ctx.mounted) {
+              ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                content: Text('Tạo món thất bại. Hãy chụp lại báo chủ app.'),
+                backgroundColor: _kRed,
+                behavior: SnackBarBehavior.floating));
+            }
           }
         },
       ),
@@ -543,13 +1249,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   }
 
   void _openEditProduct(StockItem item) {
+    final allItems = ref.read(allStockProvider).value ?? [];
+    final storeCustomCats = allItems
+        .map((i) => (i.category ?? '').trim())
+        .where((c) => c.isNotEmpty && !const ['Đồ ăn', 'Đồ uống', 'Tráng miệng', 'Combo', 'Nguyên liệu', 'Topping', 'Khác'].contains(c))
+        .toSet()
+        .toList();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _EditProductSheet(
         product: item,
-        onSaved: (name, price, cost, cat, unit, minStock, {String? imageUrl, bool isTopping = false, String toppingUnit = 'phần', String stationCode = 'bep_nong'}) async {
+        initialCustomCategories: storeCustomCats,
+        onSaved: (name, price, cost, cat, unit, minStock, {String? imageUrl, bool isTopping = false, String toppingUnit = 'phần', String stationCode = 'bep_nong', double conversionRate = 0, String conversionUnit = ''}) async {
           final productType = cat == 'Nguyên liệu' ? 'ingredient' : 'finished';
           final sellPriceInt = price.isNaN || price.isInfinite ? 0 : price.truncate();
           final costPriceInt  = cost.isNaN  || cost.isInfinite  ? 0 : cost.truncate();
@@ -565,25 +1279,48 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
             'is_topping': isTopping,
             'topping_unit': isTopping ? toppingUnit : null,
             'station_code': stationCode,
+            'conversion_rate': conversionRate,
+            'conversion_unit': conversionUnit,
             if (imageUrl != null) 'image_url': imageUrl,
           };
-          await ref.read(productRepositoryProvider).update(item.id, updateMap);
-          if (ctx.mounted) {
-            Navigator.pop(ctx);
-            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-              content: Text('✅ Cập nhật "$name" thành công'),
-              behavior: SnackBarBehavior.floating));
+          try {
+            await ref.read(productRepositoryProvider).update(item.id, updateMap);
+            if (ctx.mounted) {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text('✅ Cập nhật "$name" thành công'),
+                behavior: SnackBarBehavior.floating));
+            }
+          } catch (e, st) {
+            AppLogger.error('inventory', 'Lỗi khi cập nhật món: $name (${item.id})', e, st);
+            if (ctx.mounted) {
+              ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                content: Text('Cập nhật món thất bại. Hãy chụp lại báo chủ app.'),
+                backgroundColor: _kRed,
+                behavior: SnackBarBehavior.floating));
+            }
           }
         },
-        onDelete: () async {
-          await ref.read(productRepositoryProvider).softDelete(item.id);
-          if (ctx.mounted) {
-            Navigator.pop(ctx);
-            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-              content: Text('Ẩn "${item.name}" thành công'),
-              behavior: SnackBarBehavior.floating));
+        onDelete: _canDeleteItems ? () async {
+          try {
+            await ref.read(productRepositoryProvider).softDelete(item.id);
+            if (ctx.mounted) {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text('Ẩn "${item.name}" thành công'),
+                behavior: SnackBarBehavior.floating));
+            }
+          } catch (e, st) {
+            AppLogger.error('inventory', 'Lỗi khi xóa món: ${item.name} (${item.id})', e, st);
+            if (ctx.mounted) {
+              final userMsg = _sanitizeErrorMessage(e, 'Lỗi khi xóa món');
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text(userMsg),
+                backgroundColor: _kRed,
+                behavior: SnackBarBehavior.floating));
+            }
           }
-        },
+        } : null,
       ),
     );
   }
@@ -594,9 +1331,22 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
 // ─────────────────────────────────────────────────────────────────────────────
 // STOCK LIST — Generic list widget tái sử dụng cho 3 tab
 // ─────────────────────────────────────────────────────────────────────────────
-class _StockList extends ConsumerWidget {
+class _StockList extends ConsumerStatefulWidget {
   final AsyncValue<List<StockItem>> Function(WidgetRef ref) watchItems;
   final String filterQuery;
+  final String selectedCategory;
+  final void Function(String) onSelectCategory;
+  final bool isMultiSelect;
+  final Set<String> selectedIds;
+  final void Function(String) onToggleSelect;
+  final void Function(List<String>) onSelectAll;
+  final VoidCallback onClearSelect;
+  final bool canManageBulk;
+  final bool canDeleteItems;
+  final VoidCallback onBatchDelete;
+  final void Function(bool) onBatchAvailability;
+  final void Function(List<String>) onBatchCategory;
+  final void Function(StockItem) onSingleDelete;
   final void Function(StockItem) onReceive;
   final void Function(StockItem) onAdjust;
   final void Function(StockItem) onHistory;
@@ -607,10 +1357,24 @@ class _StockList extends ConsumerWidget {
   final IconData emptyIcon;
   final Color emptyColor;
   final Widget? featureCard;  // Optional Feature Toggle Card
+  final bool showCategoryFilter;
 
   const _StockList({
     required this.watchItems,
     required this.filterQuery,
+    this.selectedCategory = 'Tất cả',
+    this.onSelectCategory = _defaultSelectCat,
+    this.isMultiSelect = false,
+    this.selectedIds = const {},
+    this.onToggleSelect = _defaultToggle,
+    this.onSelectAll = _defaultSelectAll,
+    this.onClearSelect = _defaultClear,
+    this.canManageBulk = false,
+    this.canDeleteItems = false,
+    this.onBatchDelete = _defaultVoid,
+    this.onBatchAvailability = _defaultBool,
+    this.onBatchCategory = _defaultListStr,
+    this.onSingleDelete = _defaultStockItem,
     required this.onReceive,
     required this.onAdjust,
     required this.onHistory,
@@ -621,64 +1385,718 @@ class _StockList extends ConsumerWidget {
     this.emptyIcon = Icons.inventory_2_rounded,
     this.emptyColor = _kMuted,
     this.featureCard,
+    this.showCategoryFilter = true,
   });
 
+  static void _defaultSelectCat(String _) {}
+  static void _defaultToggle(String _) {}
+  static void _defaultSelectAll(List<String> _) {}
+  static void _defaultClear() {}
+  static void _defaultVoid() {}
+  static void _defaultBool(bool _) {}
+  static void _defaultListStr(List<String> _) {}
+  static void _defaultStockItem(StockItem _) {}
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = watchItems(ref);
+  ConsumerState<_StockList> createState() => _StockListState();
+}
+
+class _StockListState extends ConsumerState<_StockList> {
+  late final ScrollController _verticalScrollCtrl;
+  bool _showScrollToTop = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _verticalScrollCtrl = ScrollController();
+    _verticalScrollCtrl.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    final show = _verticalScrollCtrl.hasClients && _verticalScrollCtrl.offset > 180;
+    if (show != _showScrollToTop) {
+      setState(() => _showScrollToTop = show);
+    }
+  }
+
+  @override
+  void dispose() {
+    _verticalScrollCtrl.removeListener(_onScroll);
+    _verticalScrollCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = widget.watchItems(ref);
 
     return async.when(
       loading: () => const Center(
         child: CircularProgressIndicator(color: _kNavy)),
-      error: (e, _) => Center(child: Text('Lỗi: $e')),
+      error: (e, st) {
+        AppLogger.error('inventory', 'Tải danh mục/món thất bại: $e', e, st);
+        return const Center(child: Text('Tải dữ liệu thất bại. Hãy chụp lại báo chủ app.'));
+      },
       data: (items) {
-        final filtered = filterQuery.isEmpty
-            ? items
-            : items
-                .where((i) =>
-                    i.name.toLowerCase().contains(filterQuery.toLowerCase()) ||
-                    (i.sku?.toLowerCase()
-                            .contains(filterQuery.toLowerCase()) ??
-                        false))
-                .toList();
+        final selectedIds = widget.selectedIds;
+        final canManageBulk = widget.canManageBulk;
+        // 1. Trích xuất danh sách danh mục
+        final categories = [
+          'Tất cả',
+          ...items
+              .map((i) => i.category ?? 'Khác')
+              .where((c) => c.isNotEmpty)
+              .toSet()
+              .toList()
+            ..sort(),
+        ];
 
-        if (filtered.isEmpty && featureCard == null) {
-          return _buildEmpty(emptyMsg, emptyIcon, emptyColor);
-        }
+        // 2. Lọc theo search + category
+        final filtered = items.where((i) {
+          final matchQuery = widget.filterQuery.isEmpty ||
+              i.name.toLowerCase().contains(widget.filterQuery.toLowerCase()) ||
+              (i.sku?.toLowerCase().contains(widget.filterQuery.toLowerCase()) ?? false);
+          final matchCategory = widget.selectedCategory == 'Tất cả' ||
+              (i.category ?? 'Khác') == widget.selectedCategory;
+          return matchQuery && matchCategory;
+        }).toList();
 
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-          itemCount: filtered.isEmpty ? 1 : filtered.length + (featureCard != null ? 1 : 0),
-          itemBuilder: (_, i) {
-            // Nếu list rỗng chỉ hiện feature card
-            if (filtered.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: featureCard!,
-              );
-            }
-            // Item cuối → feature card
-            if (featureCard != null && i == filtered.length) {
-              return Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 16),
-                child: featureCard!,
-              );
-            }
-            return _StockCard(
-              item: filtered[i],
-              onReceive: onReceive,
-              onAdjust: onAdjust,
-              onHistory: onHistory,
-              onEdit: onEdit,
-              onTopping: onTopping,
-              onOption: onOption,
-            )
-                .animate(delay: (i * 40).ms)
-                .fadeIn(duration: 200.ms)
-                .slideX(begin: 0.05, end: 0, duration: 200.ms);
-          },
+        final allFilteredIds = filtered.map((i) => i.id).toList();
+        final isAllSelected = filtered.isNotEmpty &&
+            allFilteredIds.every((id) => widget.selectedIds.contains(id));
+
+        return Column(
+          children: [
+            // Thanh chip Danh Mục (nếu có từ 2 danh mục trở lên)
+            if (widget.showCategoryFilter && categories.length > 2)
+              Container(
+                height: 42,
+                color: Colors.white,
+                padding: const EdgeInsets.only(bottom: 6),
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: categories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (_, idx) {
+                    final cat = categories[idx];
+                    final isCatActive = cat == widget.selectedCategory;
+                    final count = cat == 'Tất cả'
+                        ? items.length
+                        : items.where((i) => (i.category ?? 'Khác') == cat).length;
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        widget.onSelectCategory(cat);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isCatActive ? _kNavy : _kBg,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isCatActive ? _kNavy : _kBorder,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              cat,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: isCatActive ? FontWeight.w700 : FontWeight.w500,
+                                color: isCatActive ? Colors.white : _kInk,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: isCatActive
+                                    ? Colors.white.withValues(alpha: 0.2)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$count',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: isCatActive ? Colors.white : _kMuted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+            // Feature Toggle Card (nếu có) — thẻ tự có lề 12/4, không bọc thêm lề.
+            if (widget.featureCard != null) widget.featureCard!,
+
+            // ── Sticky Top Bar (Thanh Tác Vụ Ghim Đầu Bảng) ────────
+            if (selectedIds.isNotEmpty && canManageBulk)
+              _buildStickyTopBar(context, categories),
+
+            // ── Danh sách thẻ (< 600dp) / Dense Data Table (≥ 600dp) ──
+            // Đo bề rộng thật của vùng danh sách (máy tính bảng còn thanh bên 89dp).
+            Expanded(
+              child: filtered.isEmpty
+                  ? _buildEmpty(widget.emptyMsg, widget.emptyIcon, widget.emptyColor)
+                  : LayoutBuilder(
+                      builder: (context, constraints) => constraints.maxWidth < 600
+                          ? _buildCardList(filtered, isAllSelected, allFilteredIds, items.length)
+                          : _buildDenseDataTable(
+                              context, filtered, isAllSelected, allFilteredIds, items.length),
+                    ),
+            ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildStickyTopBar(BuildContext context, List<String> categories) {
+    final count = widget.selectedIds.length;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: _kNavy,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // "Hủy chọn" button with label/badge: "Đã chọn: ${_selectedIds.length} món" -> clears _selectedIds
+            Material(
+              color: Colors.white.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(10),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: widget.onClearSelect,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.close_rounded, size: 16, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Đã chọn: $count món',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+
+            // "Bật bán" button
+            ElevatedButton.icon(
+              onPressed: () => widget.onBatchAvailability(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2E7D32),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.check_circle_outline_rounded, size: 15),
+              label: const Text('Bật bán',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(width: 8),
+
+            // "Tắt bán" button
+            ElevatedButton.icon(
+              onPressed: () => widget.onBatchAvailability(false),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE65100),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.pause_circle_outline_rounded, size: 15),
+              label: const Text('Tắt bán',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(width: 8),
+
+            // "Đổi danh mục" button
+            ElevatedButton.icon(
+              onPressed: () => widget.onBatchCategory(categories),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF5B21B6),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.drive_file_move_outlined, size: 15),
+              label: const Text('Đổi danh mục',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            ),
+
+            if (widget.canDeleteItems) ...[
+              const SizedBox(width: 8),
+              // "Xóa (X) món" button in red (_kRed)
+              ElevatedButton.icon(
+                onPressed: widget.onBatchDelete,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kRed,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.delete_sweep_rounded, size: 15),
+                label: Text('Xóa ($count) món',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableHeader(bool isAllSelected, List<String> allFilteredIds) {
+    return Container(
+      height: 42,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF1F5F9),
+        border: Border(
+          top: BorderSide(color: _kBorder, width: 0.8),
+          bottom: BorderSide(color: _kBorder, width: 1.0),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Column 1: [Checkbox] (44px) - Master "Chọn tất cả" checkbox
+          SizedBox(
+            width: 44,
+            child: Center(
+              child: widget.canManageBulk
+                  ? InkWell(
+                      borderRadius: BorderRadius.circular(4),
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        if (isAllSelected) {
+                          widget.onClearSelect();
+                        } else {
+                          widget.onSelectAll(allFilteredIds);
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Checkbox(
+                          value: isAllSelected,
+                          tristate: widget.selectedIds.isNotEmpty && !isAllSelected,
+                          onChanged: (val) {
+                            HapticFeedback.selectionClick();
+                            if (isAllSelected) {
+                              widget.onClearSelect();
+                            } else {
+                              widget.onSelectAll(allFilteredIds);
+                            }
+                          },
+                          activeColor: _kNavy,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
+
+          // Column 2: [Ảnh/Icon] (48px)
+          const SizedBox(
+            width: 48,
+            child: Center(
+              child: Text(
+                'Ảnh',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: _kMuted,
+                ),
+              ),
+            ),
+          ),
+
+          // Column 3: [Tên món & SKU] (flex 3)
+          const Expanded(
+            flex: 3,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Text('Tên món & SKU', style: _kHeadStyle),
+            ),
+          ),
+
+          // Column 4-7: [Danh mục] [Tồn kho & Min stock] [Giá bán] [Trạng thái kinh doanh] (flex 2)
+          _flexCell(const Text('Danh mục', style: _kHeadStyle)),
+          _flexCell(const Text('Tồn kho & Min', style: _kHeadStyle)),
+          _flexCell(const Text('Giá bán', style: _kHeadStyle)),
+          _flexCell(const Text('Trạng thái', style: _kHeadStyle)),
+
+          // Column 8: [Thao tác ⋮] (46px)
+          const SizedBox(
+            width: 46,
+            child: Center(
+              child: Icon(Icons.more_horiz_rounded, size: 18, color: _kMuted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDenseDataTable(
+    BuildContext context,
+    List<StockItem> filtered,
+    bool isAllSelected,
+    List<String> allFilteredIds,
+    int totalItemsCount,
+  ) {
+    // Chỉ dựng khi rộng ≥ 600dp và cột co giãn theo tỉ lệ → không còn cố định 820dp phải vuốt ngang.
+    return Column(
+      children: [
+        _buildTableHeader(isAllSelected, allFilteredIds),
+        Expanded(
+          child: Scrollbar(
+            controller: _verticalScrollCtrl,
+            thumbVisibility: true,
+            trackVisibility: true,
+            interactive: true,
+            thickness: 8.0,
+            radius: const Radius.circular(4),
+            child: ListView.builder(
+              controller: _verticalScrollCtrl,
+              // Ghi rõ 0: bỏ trống thì ListView tự cộng lề thanh trạng thái → 1 hàng trống dưới tiêu đề.
+              padding: EdgeInsets.zero,
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: ClampingScrollPhysics(),
+              ),
+              itemExtent: 50.0,
+              itemCount: filtered.length,
+              itemBuilder: (context, index) {
+                final item = filtered[index];
+                final isSelected = widget.selectedIds.contains(item.id);
+                final isSelectMode = widget.isMultiSelect || widget.selectedIds.isNotEmpty;
+                return _InventoryTableRow(
+                  item: item,
+                  isSelected: isSelected,
+                  isMultiSelect: isSelectMode,
+                  canManageBulk: widget.canManageBulk,
+                  onToggleSelect: () => widget.onToggleSelect(item.id),
+                  onRowTap: isSelectMode
+                      ? () => widget.onToggleSelect(item.id)
+                      : () => widget.onEdit(item),
+                  menu: _buildItemMenu(item),
+                );
+              },
+            ),
+          ),
+        ),
+        // Footer status bar
+        Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF9FAFB),
+            border: Border(
+              top: BorderSide(color: Color(0xFFE5E7EB), width: 1.0),
+            ),
+          ),
+          child: Row(
+            children: [
+              Text(
+                'Hiển thị ${filtered.length} / $totalItemsCount món',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _kMuted,
+                ),
+              ),
+              const Spacer(),
+              if (_showScrollToTop)
+                InkWell(
+                  onTap: _scrollToTop,
+                  borderRadius: BorderRadius.circular(6),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.arrow_upward_rounded, size: 14, color: _kNavy),
+                        SizedBox(width: 4),
+                        Text(
+                          'Lên đầu trang',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: _kNavy,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _scrollToTop() => _verticalScrollCtrl.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      );
+
+  /// Màn < 600dp (máy POS Sunmi V3 360dp): thẻ gọn thay bảng 8 cột — thấy ngay tên, tồn, giá.
+  Widget _buildCardList(
+    List<StockItem> filtered,
+    bool isAllSelected,
+    List<String> allFilteredIds,
+    int totalItemsCount,
+  ) {
+    final isSelectMode = widget.isMultiSelect || widget.selectedIds.isNotEmpty;
+    final showCheckbox = isSelectMode && widget.canManageBulk;
+    final head = showCheckbox ? 1 : 0; // dòng "Chọn tất cả" (thay ô tích ở tiêu đề bảng)
+    return Stack(
+      children: [
+        ListView.builder(
+          controller: _verticalScrollCtrl,
+          // Đáy chừa 56dp: nút voi Boom nhô lên giữa thanh dưới (main.dart, centerDocked) không che món cuối.
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 56),
+          itemCount: head + filtered.length + 1,
+          itemBuilder: (context, i) {
+            if (i < head) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => isAllSelected
+                        ? widget.onClearSelect()
+                        : widget.onSelectAll(allFilteredIds),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isAllSelected
+                                ? Icons.check_box_rounded
+                                : Icons.check_box_outline_blank_rounded,
+                            size: 22,
+                            color: isAllSelected ? _kNavy : _kMuted,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Chọn tất cả (${filtered.length} món)',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: _kNavy,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+            final index = i - head;
+            if (index == filtered.length) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Hiển thị ${filtered.length} / $totalItemsCount món',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _kMuted,
+                  ),
+                ),
+              );
+            }
+            final item = filtered[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: _StockCard(
+                item: item,
+                isSelected: widget.selectedIds.contains(item.id),
+                showCheckbox: showCheckbox,
+                onTap: isSelectMode
+                    ? () => widget.onToggleSelect(item.id)
+                    : () => widget.onEdit(item),
+                // Thẻ không hiện ô tích sẵn như bảng → nhấn giữ để bắt đầu chọn nhiều.
+                onLongPress: widget.canManageBulk
+                    ? () => widget.onToggleSelect(item.id)
+                    : null,
+                menu: _buildItemMenu(item),
+              ),
+            );
+          },
+        ),
+        if (_showScrollToTop)
+          Positioned(
+            right: 12,
+            bottom: 12,
+            child: Material(
+              color: _kNavy,
+              shape: const CircleBorder(),
+              elevation: 3,
+              child: IconButton(
+                onPressed: _scrollToTop,
+                tooltip: 'Lên đầu trang',
+                icon: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Nút ⋮ thao tác 1 món — dùng chung cho hàng bảng và thẻ.
+  Widget _buildItemMenu(StockItem item) {
+    final canDeleteItems = widget.canDeleteItems;
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert_rounded, size: 20, color: _kInk),
+      padding: EdgeInsets.zero,
+      tooltip: 'Thao tác',
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      onSelected: (action) {
+        switch (action) {
+          case 'edit':
+            widget.onEdit(item);
+            break;
+          case 'receive':
+            widget.onReceive(item);
+            break;
+          case 'adjust':
+            widget.onAdjust(item);
+            break;
+          case 'history':
+            widget.onHistory(item);
+            break;
+          case 'topping':
+            widget.onTopping?.call(item);
+            break;
+          case 'option':
+            widget.onOption?.call(item);
+            break;
+          case 'delete':
+            widget.onSingleDelete(item);
+            break;
+        }
+      },
+      itemBuilder: (ctx) => [
+        const PopupMenuItem(
+          value: 'edit',
+          child: _PopupMenuItemRow(
+            icon: Icons.edit_outlined,
+            label: 'Sửa thông tin món',
+            color: _kNavy,
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'receive',
+          child: _PopupMenuItemRow(
+            icon: Icons.add_circle_outline_rounded,
+            label: 'Nhập kho',
+            color: _kGreen,
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'adjust',
+          child: _PopupMenuItemRow(
+            icon: Icons.tune_rounded,
+            label: 'Điều chỉnh tồn kho',
+            color: _kOrange,
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'history',
+          child: _PopupMenuItemRow(
+            icon: Icons.history_rounded,
+            label: 'Lịch sử xuất nhập',
+            color: _kMuted,
+          ),
+        ),
+        if (widget.onTopping != null && !item.isTopping)
+          const PopupMenuItem(
+            value: 'topping',
+            child: _PopupMenuItemRow(
+              icon: Icons.bubble_chart_outlined,
+              label: 'Cấu hình Topping',
+              color: Color(0xFFE85D20),
+            ),
+          ),
+        if (widget.onOption != null && !item.isTopping)
+          const PopupMenuItem(
+            value: 'option',
+            child: _PopupMenuItemRow(
+              icon: Icons.tune_rounded,
+              label: 'Tùy chọn món (Modifiers)',
+              color: Color(0xFF7C3AED),
+            ),
+          ),
+        if (canDeleteItems) ...[
+          const PopupMenuDivider(height: 8),
+          const PopupMenuItem(
+            value: 'delete',
+            child: _PopupMenuItemRow(
+              icon: Icons.delete_outline_rounded,
+              label: 'Xóa món',
+              color: _kRed,
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -704,231 +2122,416 @@ class _StockList extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// DENSE DATA TABLE ROW — 1 dòng món trong bảng dữ liệu
+// ─────────────────────────────────────────────────────────────────────────────
+class _InventoryTableRow extends StatelessWidget {
+  final StockItem item;
+  final bool isSelected;
+  final bool isMultiSelect;
+  final bool canManageBulk;
+  final VoidCallback onToggleSelect;
+  final VoidCallback onRowTap;
+  final Widget menu; // nút ⋮ (_StockListState._buildItemMenu)
+
+  const _InventoryTableRow({
+    required this.item,
+    required this.isSelected,
+    this.isMultiSelect = false,
+    required this.canManageBulk,
+    required this.onToggleSelect,
+    required this.onRowTap,
+    required this.menu,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelling = item.isAvailable && item.isActive;
+    return Material(
+      color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+      child: InkWell(
+        onTap: onRowTap,
+        hoverColor: const Color(0xFFF8FAFC),
+        child: Container(
+          height: 50.0,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isSelected ? _kNavy.withValues(alpha: 0.25) : _kBorder.withValues(alpha: 0.6),
+                width: 0.7,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              // Column 1: [Checkbox] (44px)
+              SizedBox(
+                width: 44,
+                child: Center(
+                  child: canManageBulk
+                      ? InkWell(
+                          borderRadius: BorderRadius.circular(4),
+                          onTap: onToggleSelect,
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Checkbox(
+                              value: isSelected,
+                              onChanged: (_) {
+                                HapticFeedback.selectionClick();
+                                onToggleSelect();
+                              },
+                              activeColor: _kNavy,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+
+              // Column 2: [Ảnh/Icon] (48px) - 32x32 thumbnail
+              SizedBox(
+                width: 48,
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      color: _kBg,
+                      child: item.imageUrl != null && item.imageUrl!.isNotEmpty
+                          ? Image.network(
+                              item.imageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  _catIcon(item.category, 18),
+                            )
+                          : _catIcon(item.category, 18),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Column 3: [Tên món & SKU] (flex 3 — cùng tỉ lệ với tiêu đề)
+              Expanded(
+                flex: 3,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.name,
+                        // Không có SKU thì tên được 2 dòng (hàng cao 50dp đủ chỗ) thay vì "…".
+                        maxLines: (item.sku?.isNotEmpty ?? false) ? 1 : 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _kInk,
+                          height: 1.2,
+                        ),
+                      ),
+                      if (item.sku != null && item.sku!.isNotEmpty)
+                        Text(
+                          item.sku!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: _kMuted,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Column 4: [Danh mục] (flex 2) — tên dài xuống 2 dòng (hàng cao 50) thay vì "…"
+              _flexCell(Align(
+                alignment: Alignment.centerLeft,
+                child: _CategoryChip(item.category, maxLines: 2),
+              )),
+
+              // Column 5: [Tồn kho & Min stock] (flex 2)
+              _flexCell(
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.stockLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                        color: item.status == StockStatus.untracked
+                            ? _kMuted
+                            : item.stockQty <= 0
+                            ? _kRed
+                            : (item.stockQty <= item.minStock ? _kOrange : _kGreen),
+                      ),
+                    ),
+                    Text(
+                      'min ${item.minStock % 1 == 0 ? item.minStock.toInt() : item.minStock}',
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        color: _kMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Column 6: [Giá bán] (flex 2) — đủ số "25.000 đ"
+              _flexCell(Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  fmtVnd(item.sellPrice),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: _kInk,
+                  ),
+                ),
+              )),
+
+              // Column 7: [Trạng thái kinh doanh] (flex 2) — không lề phải (cột ⋮ kế bên đã trống);
+              // cột hẹp thì thu nhỏ nhãn, không xuống dòng
+              _flexCell(
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: _SellingBadge(isSelling),
+                  ),
+                ),
+                gap: 0,
+              ),
+
+              // Column 8: [Thao tác ⋮] (46px)
+              SizedBox(
+                width: 46,
+                child: Center(child: menu),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phần dùng chung cho hàng bảng (≥ 600dp) và thẻ (< 600dp)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Bảng: tên flex 3, 4 cột còn lại flex 2 — tiêu đề và hàng cùng tỉ lệ nên thẳng cột,
+// giãn đều theo bề rộng (iPad dọc ~680dp tới máy tính ~1190dp sau thanh bên).
+const _kHeadStyle = TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _kInk);
+
+Widget _flexCell(Widget child, {double gap = 8}) => Expanded(
+      flex: 2,
+      child: Padding(padding: EdgeInsets.only(right: gap), child: child),
+    );
+
+/// Icon theo danh mục khi món chưa có ảnh (đồng bộ màn Bán hàng).
+Widget _catIcon(String? category, double size) {
+  final (icon, color) = switch (category) {
+    'Đồ uống' => (Icons.local_cafe_rounded, const Color(0xFF1565C0)),
+    'Đồ ăn' => (Icons.restaurant_rounded, const Color(0xFFE65100)),
+    'Tráng miệng' => (Icons.cake_rounded, const Color(0xFF880E4F)),
+    _ => (Icons.fastfood_rounded, _kNavy),
+  };
+  return Icon(icon, size: size, color: color);
+}
+
+class _CategoryChip extends StatelessWidget {
+  final String? category;
+  final int maxLines;
+  const _CategoryChip(this.category, {this.maxLines = 1});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+    decoration: BoxDecoration(
+      color: _kNavy.withValues(alpha: 0.07),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      category ?? 'Chung',
+      maxLines: maxLines,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        fontSize: 11.5,
+        fontWeight: FontWeight.w600,
+        color: _kNavy,
+        height: 1.2,
+      ),
+    ),
+  );
+}
+
+class _SellingBadge extends StatelessWidget {
+  final bool isSelling;
+  const _SellingBadge(this.isSelling);
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: isSelling ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),
+      borderRadius: BorderRadius.circular(6),
+      border: Border.all(
+        color: isSelling ? const Color(0xFFA5D6A7) : const Color(0xFFEF9A9A),
+        width: 0.8,
+      ),
+    ),
+    child: Text(
+      isSelling ? 'Đang bán' : 'Tạm ngưng bán',
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: isSelling ? const Color(0xFF2E7D32) : _kRed,
+        height: 1.2,
+      ),
+    ),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POPUP MENU ITEM ROW — Item trong PopupMenuButton
+// ─────────────────────────────────────────────────────────────────────────────
+class _PopupMenuItemRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _PopupMenuItemRow({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: color == _kRed ? _kRed : _kInk,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // FEATURE TOGGLE CARD — Bật/tắt tính năng Phiếu nhập
 // ─────────────────────────────────────────────────────────────────────────────
 class _FeatureToggleCard extends StatelessWidget {
   final bool enabled;
   final ValueChanged<bool> onToggle;
+  final VoidCallback? onDismiss;
 
-  const _FeatureToggleCard({required this.enabled, required this.onToggle});
+  const _FeatureToggleCard({
+    required this.enabled,
+    required this.onToggle,
+    this.onDismiss,
+  });
 
   static const _kViolet   = Color(0xFF5B21B6);
   static const _kVioletL  = Color(0xFF7C3AED);
   static const _kVioletBg = Color(0xFFF5F3FF);
-  static const _kInk      = Color(0xFF1A1207);
-  static const _kMuted    = Color(0xFF6B7280);
-  static const _kBorder   = Color(0xFFE5E7EB);
-
-  // Danh sách tính năng
-  static const _features = [
-    (icon: Icons.history_edu_rounded,   label: 'Lưu lịch sử nhập hàng từ nhà cung cấp'),
-    (icon: Icons.inventory_2_rounded,   label: 'Tự động cập nhật tồn kho sau mỗi lần nhập'),
-    (icon: Icons.account_balance_wallet_rounded, label: 'Ghi chi phí nhập vào sổ tài chính'),
-    (icon: Icons.manage_search_rounded, label: 'Tra cứu & đối soát phiếu nhập theo ngày'),
-  ];
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeInOut,
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        color: _kVioletBg,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: enabled
-              ? _kVioletL.withValues(alpha: 0.35)
-              : _kBorder,
-          width: 1.5,
+          color: enabled ? _kVioletL.withValues(alpha: 0.35) : const Color(0xFFE5E7EB),
+          width: 1.0,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: enabled
-                ? _kViolet.withValues(alpha: 0.10)
-                : Colors.black.withValues(alpha: 0.04),
-            blurRadius: 16,
-            spreadRadius: 0,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          // ── Header ──────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
-            child: Row(
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: enabled ? _kVioletL : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.receipt_long_rounded,
+              size: 16,
+              color: enabled ? Colors.white : _kVioletL,
+            ),
+          ),
+          const SizedBox(width: 10),
+          // 2 dòng ngắn, cho xuống dòng: 1 dòng dài cũ bị cắt "Quản lý kho nâng cao (P…" trên màn 360dp.
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Icon box
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(
-                    gradient: enabled
-                        ? const LinearGradient(
-                            colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
-                        : null,
-                    color: enabled ? null : _kVioletBg,
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Icon(
-                    Icons.receipt_long_rounded,
-                    size: 22,
-                    color: enabled ? Colors.white : _kVioletL,
+                Text(
+                  'Quản lý kho nâng cao',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: _kViolet,
                   ),
                 ),
-                const SizedBox(width: 13),
-
-                // Title + subtitle
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Phiếu nhập hàng',
-                        style: GoogleFonts.outfit(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: _kInk,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: Text(
-                          enabled
-                              ? 'Đang hoạt động · Tab Phiếu nhập hiển thị'
-                              : 'Tắt · Tính năng quản lý kho nâng cao',
-                          key: ValueKey(enabled),
-                          style: GoogleFonts.outfit(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                            color: enabled ? _kVioletL : _kMuted,
-                          ),
-                        ),
-                      ),
-                    ],
+                Text(
+                  'Phiếu nhập hàng từ nhà cung cấp',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: _kViolet.withValues(alpha: 0.75),
                   ),
-                ),
-
-                // Toggle
-                Switch.adaptive(
-                  value: enabled,
-                  onChanged: onToggle,
-                  activeColor: Colors.white,
-                  activeTrackColor: _kVioletL,
-                  inactiveThumbColor: Colors.white,
-                  inactiveTrackColor: const Color(0xFFD1D5DB),
-                  trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
                 ),
               ],
             ),
           ),
-
-          // ── Phần mô tả (khi tắt) ─────────────────────────────────
-          AnimatedCrossFade(
-            firstChild: const SizedBox(width: double.infinity, height: 0),
-            secondChild: _buildDescription(),
-            crossFadeState: enabled
-                ? CrossFadeState.showFirst
-                : CrossFadeState.showSecond,
-            duration: const Duration(milliseconds: 280),
+          Switch.adaptive(
+            value: enabled,
+            onChanged: onToggle,
+            activeColor: Colors.white,
+            activeTrackColor: _kVioletL,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: const Color(0xFFD1D5DB),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
+          if (onDismiss != null) ...[
+            const SizedBox(width: 6),
+            InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: onDismiss,
+              child: const Padding(
+                padding: EdgeInsets.all(4.0),
+                child: Icon(Icons.close_rounded, size: 16, color: Color(0xFF9CA3AF)),
+              ),
+            ),
+          ],
         ],
       ),
-    );
-  }
-
-  Widget _buildDescription() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Divider
-        Container(
-          height: 1,
-          color: const Color(0xFFF3F4F6),
-        ),
-
-        // Feature list
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-          child: Text(
-            'Tính năng bao gồm',
-            style: GoogleFonts.outfit(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: _kMuted,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        ..._features.map((f) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Row(
-            children: [
-              Container(
-                width: 30, height: 30,
-                decoration: BoxDecoration(
-                  color: _kVioletBg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(f.icon, size: 15, color: _kVioletL),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  f.label,
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    color: const Color(0xFF374151),
-                    fontWeight: FontWeight.w500,
-                    height: 1.3,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        )),
-
-        // Tag phù hợp
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFBBF7D0)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.check_circle_rounded,
-                    size: 14, color: Color(0xFF16A34A)),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'Phù hợp cho nhà hàng & quán cần quản lý kho chuyên nghiệp',
-                    style: GoogleFonts.outfit(
-                      fontSize: 11.5,
-                      color: const Color(0xFF15803D),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -991,7 +2594,10 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
 
     return posAsync.when(
       loading: () => const Center(child: CircularProgressIndicator(color: _kNavy)),
-      error: (e, _) => Center(child: Text('Lỗi: $e')),
+      error: (e, st) {
+        AppLogger.error('inventory', 'Tải đơn nhập hàng thất bại: $e', e, st);
+        return const Center(child: Text('Tải đơn nhập hàng thất bại. Hãy chụp lại báo chủ app.'));
+      },
       data: (allOrders) {
         // Lấy danh sách NCC duy nhất
         final suppliers = allOrders
@@ -1011,7 +2617,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                   // ── Header row ───────────────────────────────────────────
                   Row(children: [
                     Text('Lịch sử nhập hàng',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 16, fontWeight: FontWeight.w800,
                             color: const Color(0xFF1A1207))),
                     const Spacer(),
@@ -1034,7 +2640,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                                   ? Colors.white : const Color(0xFFDC2626)),
                           const SizedBox(width: 4),
                           Text('Đã huỷ',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11, fontWeight: FontWeight.w700,
                                   color: _filterPeriod == 'cancelled'
                                       ? Colors.white : const Color(0xFFDC2626))),
@@ -1046,7 +2652,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                       onPressed: widget.onCreateNew,
                       icon: const Icon(Icons.add_rounded, size: 16),
                       label: Text('Tạo phiếu',
-                          style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
                       style: FilledButton.styleFrom(
                         backgroundColor: _kViolet,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1105,7 +2711,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                         ),
                         const SizedBox(width: 10),
                         Expanded(child: Text('Quản lý nhà cung cấp',
-                            style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600,
+                            style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600,
                                 color: const Color(0xFF1A1207)))),
                         const Icon(Icons.chevron_right_rounded, size: 16,
                             color: Color(0xFF9E9085)),
@@ -1133,13 +2739,13 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                           : allOrders.isEmpty
                               ? 'Chưa có phiếu nhập nào'
                               : 'Không có phiếu trong kỳ này',
-                      style: GoogleFonts.outfit(fontSize: 15,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 15,
                           color: const Color(0xFF9E9085),
                           fontWeight: FontWeight.w600)),
                     if (_filterPeriod != 'cancelled' && allOrders.isEmpty) ...[
                       const SizedBox(height: 8),
                       Text('Nhấn "Tạo phiếu" để bắt đầu',
-                          style: GoogleFonts.outfit(fontSize: 13,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 13,
                               color: const Color(0xFF9E9085))),
                     ],
                   ]),
@@ -1151,7 +2757,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (_, i) => _PoCard(order: filtered[i])
-                        .animate(delay: (i * 50).ms)
+                        .animate(delay: staggerDelay(i, 50))
                         .fadeIn(duration: 250.ms)
                         .slideY(begin: 0.05, end: 0),
                     childCount: filtered.length,
@@ -1183,7 +2789,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
           ),
           child: Text(label,
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                   color: active ? _kViolet : const Color(0xFF8B80A8))),
@@ -1207,7 +2813,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
           border: Border.all(color: active ? color : const Color(0xFFE5E0F5)),
         ),
         child: Text(label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 fontSize: 12, fontWeight: FontWeight.w600,
                 color: active ? Colors.white : const Color(0xFF6B7280))),
       ),
@@ -1232,7 +2838,7 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
             Icon(Icons.store_rounded, size: 11,
                 color: const Color(0xFF8B80A8)),
             const SizedBox(width: 3),
-            Text('NCC', style: GoogleFonts.outfit(
+            Text('NCC', style: GoogleFonts.plusJakartaSans(
                 fontSize: 11.5, color: const Color(0xFF8B80A8),
                 fontWeight: FontWeight.w500)),
           ]),
@@ -1240,11 +2846,11 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
             DropdownMenuItem<String?>(
               value: null,
               child: Text('Tất cả NCC',
-                  style: GoogleFonts.outfit(fontSize: 12)),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12)),
             ),
             ...suppliers.map((s) => DropdownMenuItem<String?>(
               value: s,
-              child: Text(s, style: GoogleFonts.outfit(fontSize: 12)),
+              child: Text(s, style: GoogleFonts.plusJakartaSans(fontSize: 12)),
             )),
           ],
           onChanged: (v) => setState(() => _filterSupplier = v),
@@ -1252,13 +2858,13 @@ class _PhieuNhapListTabState extends ConsumerState<_PhieuNhapListTab> {
             Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.store_rounded, size: 11, color: _kViolet),
               const SizedBox(width: 3),
-              Text('NCC', style: GoogleFonts.outfit(
+              Text('NCC', style: GoogleFonts.plusJakartaSans(
                   fontSize: 11.5, color: _kViolet,
                   fontWeight: FontWeight.w700)),
             ]),
             ...suppliers.map((s) => Text(s,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.plusJakartaSans(
                     fontSize: 11, color: _kViolet,
                     fontWeight: FontWeight.w700))),
           ],
@@ -1285,7 +2891,7 @@ class _PoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final date = DateTime.tryParse(order.createdAt)?.toLocal();
     final dateStr = date != null
-        ? '${date.day.toString().padLeft(2,'0')}/${date.month.toString().padLeft(2,'0')}/${date.year}  ${date.hour.toString().padLeft(2,'0')}:${date.minute.toString().padLeft(2,'0')}'
+        ? '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}  ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}'
         : '—';
 
     final hasSupplier = order.supplierName?.isNotEmpty == true;
@@ -1345,16 +2951,16 @@ class _PoCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(dateStr, style: GoogleFonts.outfit(
+                Text(dateStr, style: GoogleFonts.plusJakartaSans(
                     fontSize: 12, color: _kMuted, fontWeight: FontWeight.w500)),
                 Text('$itemCount sản phẩm nhập',
-                    style: GoogleFonts.outfit(fontSize: 13,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: isCancelled ? Colors.grey : _kNavy)),
               ])),
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Text(fmtMoney(order.totalAmount),
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 16, fontWeight: FontWeight.w900,
                         color: isCancelled ? Colors.grey : _kViolet,
                         decoration: isCancelled
@@ -1369,7 +2975,7 @@ class _PoCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(isCancelled ? 'Đã huỷ' : 'Đã nhập',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 10.5,
                           color: isCancelled ? Colors.grey.shade600 : _kGreen,
                           fontWeight: FontWeight.w700)),
@@ -1388,7 +2994,7 @@ class _PoCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   hasSupplier ? order.supplierName! : 'Không có nhà cung cấp',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5,
                     fontWeight: hasSupplier ? FontWeight.w700 : FontWeight.w500,
                     color: hasSupplier ? _kNavy : _kMuted,
@@ -1402,7 +3008,7 @@ class _PoCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(child: Text(
                     hasMore ? '$itemSummary  +${order.items.length - 3} thêm' : itemSummary,
-                    style: GoogleFonts.outfit(fontSize: 12, color: _kMuted,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted,
                         fontWeight: FontWeight.w500),
                     maxLines: 2, overflow: TextOverflow.ellipsis,
                   )),
@@ -1414,7 +3020,7 @@ class _PoCard extends StatelessWidget {
                   const Icon(Icons.notes_rounded, size: 13, color: _kMuted),
                   const SizedBox(width: 6),
                   Expanded(child: Text(order.note!,
-                      style: GoogleFonts.outfit(fontSize: 12, color: _kMuted,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted,
                           fontStyle: FontStyle.italic),
                       maxLines: 1, overflow: TextOverflow.ellipsis)),
                 ]),
@@ -1423,7 +3029,7 @@ class _PoCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                 Text('Xem chi tiết',
-                    style: GoogleFonts.outfit(fontSize: 11, color: _kViolet,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kViolet,
                         fontWeight: FontWeight.w600)),
                 const Icon(Icons.chevron_right_rounded, size: 14, color: _kViolet),
               ]),
@@ -1435,320 +3041,155 @@ class _PoCard extends StatelessWidget {
   }
 }
 // ─────────────────────────────────────────────────────────────────────────────
-// STOCK CARD — 1 item trong danh sách
+// STOCK CARD — 1 món trong danh sách thẻ (màn < 600dp, vd máy POS Sunmi V3)
 // ─────────────────────────────────────────────────────────────────────────────
 class _StockCard extends StatelessWidget {
   final StockItem item;
-  final void Function(StockItem) onReceive;
-  final void Function(StockItem) onAdjust;
-  final void Function(StockItem) onHistory;
-  final void Function(StockItem) onEdit;
-  final void Function(StockItem)? onTopping;
-  final void Function(StockItem)? onOption;
+  final bool isSelected;
+  final bool showCheckbox;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+  final Widget menu; // nút ⋮ (_StockListState._buildItemMenu)
 
   const _StockCard({
     required this.item,
-    required this.onReceive,
-    required this.onAdjust,
-    required this.onHistory,
-    required this.onEdit,
-    this.onTopping,
-    this.onOption,
+    required this.isSelected,
+    required this.showCheckbox,
+    required this.onTap,
+    this.onLongPress,
+    required this.menu,
   });
-
-  // Map danh mục → icon + màu (đồng bộ với Modules Bán hàng)
-  static const Map<String, ({IconData icon, Color color})> _catStyle = {
-    'Đồ uống':    (icon: Icons.local_cafe_rounded,  color: Color(0xFF1565C0)),
-    'Đồ ăn':      (icon: Icons.restaurant_rounded,  color: Color(0xFFE65100)),
-    'Tráng miệng':(icon: Icons.cake_rounded,         color: Color(0xFF880E4F)),
-  };
 
   @override
   Widget build(BuildContext context) {
-    final statusInfo = _statusInfo(item.status);
-    // Chọn icon + màu theo danh mục, fallback fastfood
-    final style    = _catStyle[item.category ?? ''];
-    final catIcon  = style?.icon  ?? Icons.fastfood_rounded;
-    final catColor = style?.color ?? _kNavy;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: statusInfo.borderColor,
-          width: item.status == StockStatus.ok ? 1 : 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+    final stockColor = switch (item.status) {
+      StockStatus.outOfStock => _kRed,
+      StockStatus.low => _kOrange,
+      StockStatus.ok => _kGreen,
+      StockStatus.untracked => _kMuted,
+    };
+    final fallback = _catIcon(item.category, 22);
+    return Semantics(
+      selected: showCheckbox ? isSelected : null, // ô tích là icon → báo trạng thái cho trình đọc màn hình
+      child: Material(
+        color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(
+            color: isSelected ? _kNavy.withValues(alpha: 0.45) : _kBorder,
+            width: isSelected ? 1.4 : 0.8,
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Main row
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 0, 8),
             child: Row(
               children: [
-                // Ảnh hoặc icon danh mục
+                // Đang chọn nhiều: ô tích thế chỗ ảnh (cùng 44dp) → chữ không bị đẩy hẹp lại.
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: SizedBox(
-                    width: 52, height: 52,
-                    child: item.imageUrl != null && item.imageUrl!.isNotEmpty
-                      ? Image.network(item.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: catColor.withValues(alpha: 0.10),
-                            child: Icon(catIcon, color: catColor, size: 26)))
-                      : Container(
-                          color: catColor.withValues(alpha: 0.10),
-                          child: Icon(catIcon, color: catColor, size: 26)),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    color: _kBg,
+                    child: showCheckbox
+                        ? Icon(
+                            isSelected
+                                ? Icons.check_box_rounded
+                                : Icons.check_box_outline_blank_rounded,
+                            size: 26,
+                            color: isSelected ? _kNavy : _kMuted,
+                          )
+                        : item.imageUrl != null && item.imageUrl!.isNotEmpty
+                        ? Image.network(
+                            item.imageUrl!,
+                            fit: BoxFit.cover,
+                            cacheWidth: 132, // ~44dp × 3: giải mã ảnh nhỏ, đỡ RAM máy POS khi cuộn dài
+                            errorBuilder: (_, _, _) => fallback,
+                          )
+                        : fallback,
                   ),
                 ),
-                const SizedBox(width: 12),
-
-                // Info
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(
+                        item.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: _kInk,
+                          height: 1.25,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
                       Row(
                         children: [
                           Expanded(
-                            child: Text(item.name,
-                              style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w700,
-                                color: _kInk),
+                            child: Text.rich(
+                              TextSpan(children: [
+                                const TextSpan(
+                                  text: 'Tồn: ',
+                                  style: TextStyle(fontSize: 11.5, color: _kMuted),
+                                ),
+                                TextSpan(
+                                  text: item.stockLabel,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: stockColor,
+                                  ),
+                                ),
+                                // min 0 = không theo dõi tồn (đã hiện bằng màu/nhãn) → bỏ cho đủ chỗ.
+                                if (item.minStock > 0)
+                                  TextSpan(
+                                    text: '  ·  min ${fmtQty(item.minStock)}',
+                                    style: const TextStyle(fontSize: 11.5, color: _kMuted),
+                                  ),
+                              ]),
+                              style: const TextStyle(height: 1.2),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          // Status badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: statusInfo.badgeBg,
-                              borderRadius: BorderRadius.circular(12),
+                          const SizedBox(width: 8),
+                          Text(
+                            fmtVnd(item.sellPrice),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: _kInk,
+                              height: 1.2,
                             ),
-                            child: Text(statusInfo.label,
-                              style: TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w700,
-                                color: statusInfo.badgeColor,
-                              )),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Text(
-                            'Tồn: ',
-                            style: const TextStyle(
-                              fontSize: 12, color: _kMuted),
-                          ),
-                          Text(
-                            '${item.stockQty.toStringAsFixed(0)} ${item.unit}',
-                            style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w800,
-                              color: statusInfo.stockColor,
-                            ),
-                          ),
-                          if (item.minStock > 0) ...[
-                            const Text(' / ',
-                              style: TextStyle(fontSize: 12, color: _kMuted)),
-                            Text(
-                              'min ${item.minStock.toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                fontSize: 12, color: _kMuted),
-                            ),
-                          ],
-                          const Spacer(),
-                          if (item.costPrice > 0)
-                            Text(
-                              _fmtMoney(item.stockValue.toInt()),
-                              style: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w700,
-                                color: _kNavy),
-                            ),
+                          Flexible(child: _CategoryChip(item.category)),
+                          const SizedBox(width: 6),
+                          _SellingBadge(item.isAvailable && item.isActive),
                         ],
                       ),
                     ],
                   ),
                 ),
+                menu,
               ],
             ),
           ),
-
-          // Action row
-          Container(
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: _kBorder, width: 0.5)),
-            ),
-            child: Row(
-              children: [
-                _ActionBtn(
-                  icon: Icons.add_circle_outline_rounded,
-                  label: 'Nhập',
-                  color: _kGreen,
-                  onTap: () => onReceive(item),
-                ),
-                Container(width: 0.5, height: 36, color: _kBorder),
-                _ActionBtn(
-                  icon: Icons.tune_rounded,
-                  label: 'Điều chỉnh',
-                  color: _kNavy,
-                  onTap: () => onAdjust(item),
-                ),
-                Container(width: 0.5, height: 36, color: _kBorder),
-                _ActionBtn(
-                  icon: Icons.history_rounded,
-                  label: 'Lịch sử',
-                  color: _kMuted,
-                  onTap: () => onHistory(item),
-                ),
-                Container(width: 0.5, height: 36, color: _kBorder),
-                // Nút Topping — chỉ hiện cho món chính (không phải topping)
-                if (onTopping != null && !item.isTopping) ...[
-                  _ActionBtn(
-                    icon: Icons.bubble_chart_rounded,
-                    label: 'Topping',
-                    color: const Color(0xFFE85D20),
-                    onTap: () => onTopping!(item),
-                  ),
-                  Container(width: 0.5, height: 36, color: _kBorder),
-                ],
-                // Nút Tùy Chọn (Modifiers) — chỉ hiện cho món chính
-                if (onOption != null && !item.isTopping) ...[
-                  _ActionBtn(
-                    icon: Icons.tune_rounded,
-                    label: 'Tùy chọn',
-                    color: const Color(0xFF7C3AED),
-                    onTap: () => onOption!(item),
-                  ),
-                  Container(width: 0.5, height: 36, color: _kBorder),
-                ],
-                _ActionBtn(
-                  icon: Icons.edit_rounded,
-                  label: 'Sửa',
-                  color: _kOrange,
-                  onTap: () => onEdit(item),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
-
-  _StatusInfo _statusInfo(StockStatus status) {
-    switch (status) {
-      case StockStatus.outOfStock:
-        return _StatusInfo(
-          label: 'Hết hàng',
-          badgeBg: const Color(0xFFFFEBEE),
-          badgeColor: _kRed,
-          borderColor: const Color(0xFFEF9A9A),
-          iconBg: const Color(0xFFFFEBEE),
-          iconColor: _kRed,
-          stockColor: _kRed,
-        );
-      case StockStatus.low:
-        return _StatusInfo(
-          label: 'Sắp hết',
-          badgeBg: const Color(0xFFFFF3E0),
-          badgeColor: const Color(0xFFE65100),
-          borderColor: const Color(0xFFFFCC80),
-          iconBg: const Color(0xFFFFF3E0),
-          iconColor: const Color(0xFFE65100),
-          stockColor: const Color(0xFFE65100),
-        );
-      case StockStatus.ok:
-        return _StatusInfo(
-          label: 'Còn hàng',
-          badgeBg: const Color(0xFFE8F5E9),
-          badgeColor: _kGreen,
-          borderColor: _kBorder,
-          iconBg: _kBg,
-          iconColor: _kNavy,
-          stockColor: _kGreen,
-        );
-      case StockStatus.untracked:
-        return _StatusInfo(
-          label: 'Không theo dõi',
-          badgeBg: const Color(0xFFF5F5F5),
-          badgeColor: _kMuted,
-          borderColor: _kBorder,
-          iconBg: _kBg,
-          iconColor: _kMuted,
-          stockColor: _kMuted,
-        );
-      default:
-        return _StatusInfo(
-          label: 'Còn hàng',
-          badgeBg: const Color(0xFFE8F5E9),
-          badgeColor: _kGreen,
-          borderColor: _kBorder,
-          iconBg: _kBg,
-          iconColor: _kNavy,
-          stockColor: _kGreen,
-        );
-    }
-  }
-
-  String _fmtMoney(int v) => fmtMoney(v.toDouble());
-}
-
-class _StatusInfo {
-  final String label;
-  final Color badgeBg, badgeColor, borderColor, iconBg, iconColor, stockColor;
-  const _StatusInfo({
-    required this.label,
-    required this.badgeBg,
-    required this.badgeColor,
-    required this.borderColor,
-    required this.iconBg,
-    required this.iconColor,
-    required this.stockColor,
-  });
-}
-
-class _ActionBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  const _ActionBtn({required this.icon, required this.label,
-    required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(height: 4),
-            Text(label, style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w600, color: color)),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1965,7 +3406,10 @@ class _HistorySheet extends ConsumerWidget {
             child: movementsAsync.when(
               loading: () => const Center(
                 child: CircularProgressIndicator(color: _kNavy)),
-              error: (e, _) => Center(child: Text('Lỗi: $e')),
+              error: (e, st) {
+                AppLogger.error('inventory', 'Tải biến động kho thất bại: $e', e, st);
+                return const Center(child: Text('Tải biến động thất bại. Hãy chụp lại báo chủ app.'));
+              },
               data: (movements) => movements.isEmpty
                   ? const Center(
                       child: Text('Chưa có biến động nào',
@@ -1978,8 +3422,7 @@ class _HistorySheet extends ConsumerWidget {
                       itemBuilder: (_, i) {
                         final m = movements[i];
                         final isIn = m.delta > 0;
-                        final dt = DateTime.parse(
-                            m.createdAt.isEmpty ? DateTime.now().toIso8601String() : m.createdAt);
+                        final dt = parseServerTime(m.createdAt) ?? DateTime.now();
 
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -2007,7 +3450,7 @@ class _HistorySheet extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '${isIn ? '+' : '-'}${m.delta.abs().toStringAsFixed(0)} ${item.unit}',
+                                      fmtDelta(m.delta, item.unit),
                                       style: TextStyle(
                                         fontSize: 14, fontWeight: FontWeight.w800,
                                         color: isIn ? _kGreen : _kRed,
@@ -2025,7 +3468,7 @@ class _HistorySheet extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}',
+                                            '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
                                     style: const TextStyle(
                                       fontSize: 11, color: _kMuted),
                                   ),
@@ -2058,10 +3501,14 @@ class _RecentMovementsSheet extends ConsumerWidget {
     final movAsync = ref.watch(recentMovementsProvider);
     final stockAsync = ref.watch(allStockProvider);
 
-    // Build lookup map: productId → name
+    // Build lookup maps: productId → name, productId → unit
     final nameMap = <String, String>{};
+    final unitMap = <String, String>{};
     stockAsync.whenData((list) {
-      for (final s in list) nameMap[s.id] = s.name;
+      for (final s in list) {
+        nameMap[s.id] = s.name;
+        unitMap[s.id] = s.unit;
+      }
     });
 
     return Container(
@@ -2109,7 +3556,10 @@ class _RecentMovementsSheet extends ConsumerWidget {
           Expanded(
             child: movAsync.when(
               loading: () => const Center(child: CircularProgressIndicator(color: _kNavy)),
-              error: (e, _) => Center(child: Text('Lỗi: $e')),
+              error: (e, st) {
+                AppLogger.error('inventory', 'Tải biến động món thất bại: $e', e, st);
+                return const Center(child: Text('Tải biến động thất bại. Hãy chụp lại báo chủ app.'));
+              },
               data: (movements) => movements.isEmpty
                   ? const Center(child: Text('Chưa có biến động nào',
                     style: TextStyle(color: _kMuted)))
@@ -2121,8 +3571,7 @@ class _RecentMovementsSheet extends ConsumerWidget {
                       itemBuilder: (_, i) {
                         final m = movements[i];
                         final isIn = m.delta > 0;
-                        final dt = DateTime.parse(m.createdAt.isEmpty
-                            ? DateTime.now().toIso8601String() : m.createdAt);
+                        final dt = parseServerTime(m.createdAt) ?? DateTime.now();
                         // Lấy tên SP từ map, fallback 'Không rõ'
                         final productName =
                             nameMap[m.productId] ?? 'Không rõ';
@@ -2164,7 +3613,7 @@ class _RecentMovementsSheet extends ConsumerWidget {
                                         const SizedBox(width: 6),
                                       ],
                                       Text(
-                                        '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}',
+                                              '${dt.day}/${dt.month} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
                                         style: const TextStyle(
                                           fontSize: 11, color: _kMuted)),
                                     ]),
@@ -2172,7 +3621,7 @@ class _RecentMovementsSheet extends ConsumerWidget {
                                 ),
                               ),
                               Text(
-                                '${isIn ? '+' : ''}${m.delta.toStringAsFixed(0)}',
+                                fmtDelta(m.delta, unitMap[m.productId] ?? ''),
                                 style: TextStyle(
                                   fontSize: 15, fontWeight: FontWeight.w800,
                                   color: isIn ? _kGreen : _kRed)),
@@ -2188,17 +3637,7 @@ class _RecentMovementsSheet extends ConsumerWidget {
     );
   }
 
-  String _reasonLabel(String reason) {
-    switch (reason) {
-      case 'receive':     return 'Nhập kho';
-      case 'adjust':      return 'Hiệu chỉnh';
-      case 'sale':        return 'Bán hàng';
-      case 'production':  return 'Sản xuất';
-      case 'return':      return 'Hoàn trả';
-      case 'waste':       return 'Hư hỏng';
-      default:            return reason;
-    }
-  }
+  String _reasonLabel(String reason) => reasonLabel(reason);
 
   String _fmt(int v) => v.toString().replaceAllMapped(
     RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
@@ -2242,6 +3681,8 @@ class _HeaderStat extends StatelessWidget {
   final IconData icon;
   final bool highlight;
   final Color highlightColor;
+  final bool compact; // màn hẹp: không icon, nhường chỗ cho chữ
+  final int flex;
 
   const _HeaderStat({
     required this.value,
@@ -2249,41 +3690,66 @@ class _HeaderStat extends StatelessWidget {
     required this.icon,
     this.highlight = false,
     this.highlightColor = const Color(0xFFFF6F00),
+    this.compact = false,
+    this.flex = 1,
   });
 
   @override
   Widget build(BuildContext context) => Expanded(
+    flex: flex,
     child: Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      padding: EdgeInsets.symmetric(vertical: 6, horizontal: compact ? 6 : 8),
       decoration: BoxDecoration(
         color: highlight
             ? highlightColor.withValues(alpha: 0.15)
             : const Color(0x1AFFFFFF),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: highlight
             ? Border.all(color: highlightColor.withValues(alpha: 0.4))
             : null,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16,
-            color: highlight ? highlightColor : Colors.white54),
-          const SizedBox(height: 4),
-          Text(value,
-            style: TextStyle(
-              fontSize: 16, fontWeight: FontWeight.w900,
-              color: highlight ? highlightColor : Colors.white,
-              letterSpacing: -0.5,
-            )),
-          Text(label,
-            style: TextStyle(
-              fontSize: 10, fontWeight: FontWeight.w500,
-              color: highlight
-                  ? highlightColor.withValues(alpha: 0.8)
-                  : Colors.white54,
-            )),
+          if (!compact) ...[
+            Icon(icon, size: 16,
+              color: highlight ? highlightColor : Colors.white70),
+            const SizedBox(width: 6),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // FittedBox: số/nhãn dài hơn ô thì thu nhỏ chữ, không cắt thành "Sản p…".
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(value,
+                    style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w900,
+                      color: highlight ? highlightColor : Colors.white,
+                      letterSpacing: -0.3,
+                    ),
+                    maxLines: 1,
+                  ),
+                ),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(label,
+                    style: TextStyle(
+                      fontSize: 9.5, fontWeight: FontWeight.w500,
+                      color: highlight
+                          ? highlightColor.withValues(alpha: 0.9)
+                          : Colors.white70,
+                    ),
+                    maxLines: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     ),
@@ -2295,14 +3761,17 @@ class _HeaderStat extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _EditProductSheet extends StatefulWidget {
   final StockItem? product;
+  final List<String>? initialCustomCategories;
   final Future<void> Function(
     String name, double price, double cost,
     String cat, String unit, double minStock,
-    {String? imageUrl, bool isTopping, String toppingUnit, String stationCode}) onSaved;
+    {String? imageUrl, bool isTopping, String toppingUnit, String stationCode,
+     double conversionRate, String conversionUnit}) onSaved;
   final Future<void> Function()? onDelete;
 
   const _EditProductSheet({
     required this.product,
+    this.initialCustomCategories,
     required this.onSaved,
     this.onDelete,
   });
@@ -2320,6 +3789,9 @@ class _EditProductSheetState extends State<_EditProductSheet>
   late final TextEditingController _catCtrl;
   late final TextEditingController _minStockCtrl;
   late String _selectedUnit;
+  late bool _hasConversion;
+  late final TextEditingController _conversionRateCtrl;
+  late String _conversionUnit;
   List<String> _customCats = [];
   bool _saving = false;
 
@@ -2354,7 +3826,7 @@ class _EditProductSheetState extends State<_EditProductSheet>
   static const _kGreen  = Color(0xFF2E7D32);
 
   static const _cats  = ['Đồ ăn','Đồ uống','Tráng miệng','Combo','Nguyên liệu','Khác'];
-  static const _units = ['phần','ly','tô','cái','hộp','kg','g','lít'];
+  static const _units = ['phần','ly','tô','cái','hộp','lon','chai','gói','kg','g','ml','lít'];
   static const _toppingUnits = ['viên','phần','ml','g','muỗng','thìa'];
 
   bool get _isEdit => widget.product != null;
@@ -2378,11 +3850,26 @@ class _EditProductSheetState extends State<_EditProductSheet>
     _isTopping     = p?.isTopping ?? false;
     _toppingUnit   = p?.toppingUnit ?? 'viên';
     _selectedStationCode = p?.stationCode ?? 'bep_nong';
+
+    _hasConversion = (p != null && p.conversionRate > 0);
+    _conversionRateCtrl = TextEditingController(
+        text: p != null && p.conversionRate > 0
+            ? (p.conversionRate % 1 == 0 ? p.conversionRate.toInt().toString() : p.conversionRate.toString())
+            : '385');
+    _conversionUnit = (p != null && p.conversionUnit.isNotEmpty) ? p.conversionUnit : 'ml';
+
+    final initialCats = <String>{};
+    if (widget.initialCustomCategories != null) {
+      initialCats.addAll(widget.initialCustomCategories!);
+    }
     final existingCat = p?.category ?? '';
     if (existingCat.isNotEmpty &&
-        !const ['Đồ ăn','Đồ uống','Tráng miệng','Combo','Nguyên liệu','Topping'].contains(existingCat)) {
-      _customCats = [existingCat];
+        !const ['Đồ ăn','Đồ uống','Tráng miệng','Combo','Nguyên liệu','Topping','Khác'].contains(existingCat)) {
+      initialCats.add(existingCat);
     }
+    _customCats = initialCats.toList();
+    _loadPersistedCustomCategories();
+
     _existingImageUrl = p?.imageUrl;
     if (_isEdit && !(p?.isTopping ?? false)) {
       _tabCtrl = TabController(length: 2, vsync: this);
@@ -2391,6 +3878,32 @@ class _EditProductSheetState extends State<_EditProductSheet>
     // Nếu sản phẩm là topping → load danh sách món chính để gắn
     if (_isEdit && (p?.isTopping ?? false)) {
       _loadMainProductsForTopping();
+    }
+  }
+
+  Future<void> _loadPersistedCustomCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storeId = prefs.getString('auth_store_id') ?? 'default';
+      final saved = prefs.getStringList('custom_categories_$storeId') ?? [];
+      if (saved.isNotEmpty && mounted) {
+        setState(() {
+          final set = _customCats.toSet()..addAll(saved);
+          _customCats = set.toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('[EditProduct] _loadPersistedCustomCategories error: $e');
+    }
+  }
+
+  Future<void> _persistCustomCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storeId = prefs.getString('auth_store_id') ?? 'default';
+      await prefs.setStringList('custom_categories_$storeId', _customCats);
+    } catch (e) {
+      debugPrint('[EditProduct] _persistCustomCategories error: $e');
     }
   }
 
@@ -2485,12 +3998,12 @@ class _EditProductSheetState extends State<_EditProductSheet>
         if (mounted) setState(() => _linkedProductIds.add(productId));
       }
       HapticFeedback.lightImpact();
-    } catch (e) {
-      debugPrint('[EditProduct] _toggleProductLink error: $e');
+    } catch (e, st) {
+      AppLogger.error('inventory', 'Lỗi gắn topping: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Lỗi gắn topping: $e',
-            style: const TextStyle(color: Colors.white, fontSize: 12)),
+          content: const Text('Gắn topping thất bại. Hãy chụp lại báo chủ app.',
+            style: TextStyle(color: Colors.white, fontSize: 12)),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 5),
@@ -2530,6 +4043,7 @@ class _EditProductSheetState extends State<_EditProductSheet>
   void dispose() {
     _nameCtrl.dispose(); _priceCtrl.dispose(); _costCtrl.dispose();
     _catCtrl.dispose(); _minStockCtrl.dispose();
+    _conversionRateCtrl.dispose();
     _tabCtrl?.dispose();
     super.dispose();
   }
@@ -2847,10 +4361,13 @@ class _EditProductSheetState extends State<_EditProductSheet>
                                   color: sel ? Colors.white : _kMuted)),
                                 const SizedBox(width: 4),
                                 GestureDetector(
-                                  onTap: () => setState(() {
-                                    _customCats.remove(c);
-                                    if (_catCtrl.text == c) _catCtrl.text = '';
-                                  }),
+                                  onTap: () {
+                                    setState(() {
+                                      _customCats.remove(c);
+                                      if (_catCtrl.text == c) _catCtrl.text = '';
+                                    });
+                                    _persistCustomCategories();
+                                  },
                                   child: Icon(Icons.close_rounded,
                                       size: 14,
                                       color: sel
@@ -2918,7 +4435,100 @@ class _EditProductSheetState extends State<_EditProductSheet>
                             ),
                           );
                         }).toList()),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
+
+                      // ── Quy cách pha chế (Dung tích / Khối lượng) ──────────
+                      if (!_isTopping) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _hasConversion ? _kNavy.withValues(alpha: 0.04) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: _hasConversion ? _kNavy.withValues(alpha: 0.3) : _kBorder.withValues(alpha: 0.6)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.scale_rounded, size: 16, color: _hasConversion ? _kNavy : _kMuted),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Quy cách pha chế (Dung tích / Khối lượng)',
+                                          style: TextStyle(
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: _hasConversion ? _kNavy : Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Dùng khi nguyên liệu bán theo lon/hộp nhưng công thức trừ theo ml/g',
+                                          style: TextStyle(fontSize: 11, color: _kMuted),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: _hasConversion,
+                                    activeColor: _kOrange,
+                                    onChanged: (val) => setState(() => _hasConversion = val),
+                                  ),
+                                ],
+                              ),
+                              if (_hasConversion) ...[
+                                const Divider(height: 16),
+                                Row(
+                                  children: [
+                                    Text('1 $_selectedUnit =',
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _kNavy)),
+                                    const SizedBox(width: 10),
+                                    SizedBox(
+                                      width: 90,
+                                      child: TextField(
+                                        controller: _conversionRateCtrl,
+                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                          hintText: '385',
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: _kBorder),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: DropdownButton<String>(
+                                        value: _conversionUnit,
+                                        underline: const SizedBox(),
+                                        isDense: true,
+                                        items: const [
+                                          DropdownMenuItem(value: 'ml', child: Text('ml (mililit)', style: TextStyle(fontSize: 12.5))),
+                                          DropdownMenuItem(value: 'g', child: Text('g (gram)', style: TextStyle(fontSize: 12.5))),
+                                        ],
+                                        onChanged: (v) {
+                                          if (v != null) setState(() => _conversionUnit = v);
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
 
                       // ── Gắn vào món (chỉ hiện khi là Topping) ──────────────
                       if (_isTopping && _isEdit) ...[ 
@@ -3178,6 +4788,7 @@ class _EditProductSheetState extends State<_EditProductSheet>
         if (!_customCats.contains(newCat)) _customCats.add(newCat);
         _catCtrl.text = newCat; // auto-select
       });
+      _persistCustomCategories();
     }
   }
 
@@ -3209,13 +4820,25 @@ class _EditProductSheetState extends State<_EditProductSheet>
       final price = double.tryParse(_priceCtrl.text.replaceAll(',','')) ?? 0;
       final cost  = double.tryParse(_costCtrl.text.replaceAll(',','')) ?? 0;
       final min   = double.tryParse(_minStockCtrl.text) ?? 0;
+      final selectedCat = _catCtrl.text.trim();
+      if (selectedCat.isNotEmpty &&
+          !const ['Đồ ăn','Đồ uống','Tráng miệng','Combo','Nguyên liệu','Topping','Khác'].contains(selectedCat)) {
+        if (!_customCats.contains(selectedCat)) {
+          _customCats.add(selectedCat);
+        }
+        await _persistCustomCategories();
+      }
+      final convRate = _hasConversion ? (double.tryParse(_conversionRateCtrl.text.trim()) ?? 0) : 0.0;
+      final convUnit = _hasConversion ? _conversionUnit : '';
       await widget.onSaved(
         _nameCtrl.text.trim(), price, cost,
-        _catCtrl.text.trim(), _selectedUnit, min,
+        selectedCat, _selectedUnit, min,
         imageUrl: imageUrl,
         isTopping: _isTopping,
         toppingUnit: _toppingUnit,
-        stationCode: _selectedStationCode);
+        stationCode: _selectedStationCode,
+        conversionRate: convRate,
+        conversionUnit: convUnit);
       if (mounted) setState(() => _saving = false);
     } catch (e) {
       setState(() { _saving = false; _imageError = 'Lỗi lưu: $e'; }); // FIX: message rõ ràng hơn
@@ -3594,11 +5217,11 @@ class _ToppingLinkSheetState extends State<_ToppingLinkSheet> {
         setState(() => _linkedIds.add(toppingId));
       }
       HapticFeedback.lightImpact();
-    } catch (e) {
-      debugPrint('[ToppingLinkSheet] _toggleLink error: $e');
+    } catch (e, st) {
+      AppLogger.error('inventory', 'Lỗi liên kết topping: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e'), behavior: SnackBarBehavior.floating));
+          const SnackBar(content: Text('Liên kết topping thất bại. Hãy chụp lại báo chủ app.'), behavior: SnackBarBehavior.floating));
       }
     }
   }
@@ -3927,7 +5550,10 @@ class _ToppingGroupTabState extends ConsumerState<_ToppingGroupTab> {
       ),
       body: groupsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Lỗi: $e')),
+        error: (e, st) {
+          AppLogger.error('inventory', 'Tải nhóm topping thất bại: $e', e, st);
+          return const Center(child: Text('Tải nhóm topping thất bại. Hãy chụp lại báo chủ app.'));
+        },
         data: (groups) {
           if (groups.isEmpty) {
             return Center(
@@ -3935,10 +5561,10 @@ class _ToppingGroupTabState extends ConsumerState<_ToppingGroupTab> {
                 Icon(Icons.restaurant_menu_rounded, size: 56, color: _kNavy.withValues(alpha: 0.12)),
                 const SizedBox(height: 16),
                 Text('Chưa có nhóm topping nào',
-                  style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: _kNavy)),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700, color: _kNavy)),
                 const SizedBox(height: 8),
                 Text('Tạo nhóm để gắn vào nhiều món cùng lúc',
-                  style: GoogleFonts.outfit(fontSize: 13, color: _kMuted)),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _kMuted)),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: () => _openEditGroupSheet(context, null),
@@ -3948,7 +5574,7 @@ class _ToppingGroupTabState extends ConsumerState<_ToppingGroupTab> {
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
                   icon: const Icon(Icons.add_rounded),
                   label: Text('Tạo nhóm đầu tiên',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
                 ),
               ]),
             );
@@ -4018,10 +5644,10 @@ class _ToppingGroupCard extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(group.name, style: GoogleFonts.outfit(
+              Text(group.name, style: GoogleFonts.plusJakartaSans(
                 fontSize: 15, fontWeight: FontWeight.w800, color: _kNavy)),
               if (group.description?.isNotEmpty == true)
-                Text(group.description!, style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+                Text(group.description!, style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted)),
             ])),
             Icon(Icons.chevron_right_rounded, color: _kMuted),
           ]),
@@ -4057,9 +5683,9 @@ class _ToppingGroupCard extends StatelessWidget {
                   border: Border.all(color: _kOrange.withValues(alpha: 0.3))),
                 child: Text(
                   item.sellPrice > 0
-                      ? '${item.productName} +${(item.sellPrice/1000).toStringAsFixed(0)}k'
-                      : item.productName,
-                  style: GoogleFonts.outfit(fontSize: 11, color: _kOrange, fontWeight: FontWeight.w600)),
+                      ? '${item.productName} +${(item.sellPrice / 1000).toStringAsFixed(0)}k'
+                                    : item.productName,
+                                style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kOrange, fontWeight: FontWeight.w600)),
               )).toList()
               ..addAll(group.items.length > 5 ? [
                 Container(
@@ -4067,7 +5693,7 @@ class _ToppingGroupCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: _kBorder, borderRadius: BorderRadius.circular(20)),
                   child: Text('+${group.items.length - 5} nữa',
-                    style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted)),
                 )
               ] : []),
             ),
@@ -4087,7 +5713,7 @@ class _InfoChip extends StatelessWidget {
   Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
     Icon(icon, size: 12, color: color),
     const SizedBox(width: 4),
-    Text(label, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+    Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
   ]);
 }
 
@@ -4210,9 +5836,10 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
       await repo.syncGroupProducts(groupId, _linkedProductIds.toList());
       widget.onSaved();
       if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Lỗi: $e'), backgroundColor: _kRed));
+    } catch (e, st) {
+      AppLogger.error('inventory', 'Lỗi đồng bộ nhóm topping: $e', e, st);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Lưu nhóm thất bại. Hãy chụp lại báo chủ app.'), backgroundColor: _kRed));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -4278,7 +5905,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                 const SizedBox(width: 12),
                 Expanded(child: Text(
                   _isEdit ? 'Sửa nhóm topping' : 'Tạo nhóm topping mới',
-                  style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white))),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white))),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded, color: Colors.white54)),
@@ -4334,7 +5961,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                     // Min/Max select
                     Row(children: [
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Chọn tối thiểu', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                        Text('Chọn tối thiểu', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         Row(children: [
                           GestureDetector(
@@ -4344,7 +5971,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                               child: const Icon(Icons.remove_rounded, size: 16, color: _kNavy))),
                           SizedBox(width: 40, child: Text('$_minSelect',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy))),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy))),
                           GestureDetector(
                             onTap: () => setState(() { if (_minSelect < _maxSelect) _minSelect++; }),
                             child: Container(width: 34, height: 34,
@@ -4354,7 +5981,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                       ])),
                       const SizedBox(width: 20),
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Chọn tối đa', style: GoogleFonts.outfit(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
+                        Text('Chọn tối đa', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         Row(children: [
                           GestureDetector(
@@ -4364,7 +5991,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                               child: const Icon(Icons.remove_rounded, size: 16, color: _kNavy))),
                           SizedBox(width: 40, child: Text(_maxSelect >= 10 ? '∞' : '$_maxSelect',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy))),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: _kNavy))),
                           GestureDetector(
                             onTap: () => setState(() { if (_maxSelect < 20) _maxSelect++; }),
                             child: Container(width: 34, height: 34,
@@ -4377,10 +6004,10 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                     // Topping items trong nhóm
                     Row(children: [
                       Text('Topping trong nhóm',
-                        style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: _kNavy)),
                       const Spacer(),
                       Text('${_selectedItemIds.length} đã chọn',
-                        style: GoogleFonts.outfit(fontSize: 12, color: _kMuted)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted)),
                     ]),
                     const SizedBox(height: 10),
                     if (_allToppingProducts.isEmpty)
@@ -4394,7 +6021,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                           const SizedBox(width: 10),
                           Expanded(child: Text(
                             'Chưa có topping nào trong kho.\nVào tab "Hàng hoá" → bật "Là Topping".',
-                            style: GoogleFonts.outfit(fontSize: 12, color: _kMuted))),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kMuted))),
                         ]),
                       )
                     else
@@ -4431,12 +6058,14 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                               const SizedBox(width: 12),
                               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 Text(t['name'] as String? ?? '',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 13, fontWeight: FontWeight.w700,
                                     color: isSelected ? _kOrange : _kNavy)),
                                 if (price > 0)
-                                  Text('+${(price/1000).toStringAsFixed(0)}k/$unit',
-                                    style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                                  Text(
+                                                        '+${(price / 1000).toStringAsFixed(0)}k/$unit',
+                                                        style: GoogleFonts
+                                                            .plusJakartaSans(fontSize: 11, color: _kMuted)),
                               ])),
                             ]),
                           ),
@@ -4462,14 +6091,14 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                           const SizedBox(width: 8),
                           Expanded(child: Text(
                             'Tick các món sẽ hiện nhóm topping này khi gọi món',
-                            style: GoogleFonts.outfit(fontSize: 12, color: _kNavyL))),
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: _kNavyL))),
                         ]),
                       ),
                     ),
                     Expanded(
                       child: _allMenuProducts.isEmpty
                         ? Center(child: Text('Chưa có sản phẩm nào',
-                            style: GoogleFonts.outfit(color: _kMuted)))
+                            style: GoogleFonts.plusJakartaSans(color: _kMuted)))
                         : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: _allMenuProducts.length,
@@ -4506,12 +6135,12 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                                   const SizedBox(width: 12),
                                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                     Text(p['name'] as String? ?? '',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 13, fontWeight: FontWeight.w700,
                                         color: isLinked ? _kNavy : _kNavy)),
                                     if ((p['category'] as String?)?.isNotEmpty == true)
                                       Text(p['category'] as String,
-                                        style: GoogleFonts.outfit(fontSize: 11, color: _kMuted)),
+                                        style: GoogleFonts.plusJakartaSans(fontSize: 11, color: _kMuted)),
                                   ])),
                                   if (isLinked)
                                     Container(
@@ -4519,7 +6148,7 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
                                       decoration: BoxDecoration(
                                         color: _kNavy, borderRadius: BorderRadius.circular(8)),
                                       child: Text('Đã gắn',
-                                        style: GoogleFonts.outfit(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700))),
+                                        style: GoogleFonts.plusJakartaSans(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700))),
                                 ]),
                               ),
                             );
@@ -4570,88 +6199,4 @@ class _EditToppingGroupSheetState extends ConsumerState<_EditToppingGroupSheet>
       ),
     );
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TABLET RIGHT PANEL — Kho Stats Sidebar
-// ─────────────────────────────────────────────────────────────────────────────
-class _InventoryRightPanel extends StatelessWidget {
-  final AsyncValue<KhoStats> statsAsync;
-  const _InventoryRightPanel({required this.statsAsync});
-
-  @override
-  Widget build(BuildContext context) {
-    final stats = statsAsync.value;
-
-    return Container(
-      color: const Color(0xFFF5F0EA),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 16, 12, 80),
-        children: [
-          _IRCard(
-            title: 'Tổng quan kho',
-            icon: Icons.inventory_2_rounded,
-            child: Column(children: [
-              _IRRow(label: 'Sản phẩm', value: '${stats?.totalItems ?? 0}', color: _kNavy),
-              const Divider(height: 1),
-              _IRRow(label: 'Sắp hết', value: '${stats?.lowStockItems ?? 0}',
-                color: (stats?.lowStockItems ?? 0) > 0 ? _kOrange : _kGreen),
-              const Divider(height: 1),
-              _IRRow(label: 'Hết hàng', value: '${stats?.outOfStockItems ?? 0}',
-                color: (stats?.outOfStockItems ?? 0) > 0 ? _kRed : _kGreen),
-              const Divider(height: 1),
-              _IRRow(label: 'Giá trị kho', value: fmtMoney(stats?.totalValue ?? 0), color: _kNavy),
-            ]),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _IRCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Widget child;
-  const _IRCard({required this.title, required this.icon, required this.child});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      boxShadow: [BoxShadow(
-        color: _kNavy.withValues(alpha: 0.07), blurRadius: 8, offset: const Offset(0, 2))],
-    ),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-        child: Row(children: [
-          Icon(icon, size: 16, color: _kNavy),
-          const SizedBox(width: 6),
-          Text(title, style: GoogleFonts.outfit(
-            fontSize: 13, fontWeight: FontWeight.w800, color: _kNavy)),
-        ]),
-      ),
-      const Divider(height: 1),
-      Padding(padding: const EdgeInsets.all(14), child: child),
-    ]),
-  );
-}
-
-class _IRRow extends StatelessWidget {
-  final String label, value;
-  final Color color;
-  const _IRRow({required this.label, required this.value, required this.color});
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Row(children: [
-      Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 8),
-      Expanded(child: Text(label, style: GoogleFonts.outfit(fontSize: 13, color: _kInk))),
-      Text(value, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
-    ]),
-  );
 }

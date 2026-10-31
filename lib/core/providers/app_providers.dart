@@ -19,7 +19,7 @@ import '../../modules/loyalty/repository/loyalty_repository.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 final productRepositoryProvider = Provider<CoreProductRepository>((ref) {
-  return CoreProductRepository();
+  return CoreProductRepository.instance;
 });
 
 final customerRepositoryProvider = Provider<CoreCustomerRepository>((ref) {
@@ -44,17 +44,15 @@ final moduleRepositoryProvider = Provider<ModuleRepository>((ref) {
 });
 
 final posRepositoryProvider = Provider<PosRepository>((ref) {
-  final productRepo  = ref.watch(productRepositoryProvider);
+  final productRepo = ref.watch(productRepositoryProvider);
   final customerRepo = ref.watch(customerRepositoryProvider);
-  final khoProRepo   = ref.watch(khoProRepositoryProvider);
+  final khoProRepo = ref.watch(khoProRepositoryProvider);
   return PosRepository(productRepo, customerRepo, khoProRepo);
 });
 
 final financeRepositoryProvider = Provider<FinanceRepository>((ref) {
   return FinanceRepository();
 });
-
-
 
 final loyaltyRepositoryProvider = Provider<LoyaltyRepository>((ref) {
   return LoyaltyRepository();
@@ -69,24 +67,30 @@ final banRepositoryProvider = Provider<BanRepository>((ref) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Tất cả sản phẩm (reactive)
-final allProductsProvider = StreamProvider<List<ProductModel>>((ref) {
+final allProductsProvider = StreamProvider.autoDispose<List<ProductModel>>((ref) {
   ref.watch(sessionProvider); // bắt buộc refresh khi chuyển quán
   return ref.watch(productRepositoryProvider).watchAll();
 });
 
-/// Sản phẩm cho POS (chỉ active + available)
-final posProductsProvider = Provider<AsyncValue<List<ProductModel>>>((ref) {
-  return ref.watch(allProductsProvider).whenData((products) => products
-      .where((p) =>
-          p.isActive &&
-          p.isAvailable &&
-          p.category != 'Nguyên liệu' &&
-          p.productType != 'ingredient')
-      .toList());
+/// Sản phẩm cho POS & Bàn (chỉ active, loại bỏ nguyên liệu thuần không bán lẻ)
+final posProductsProvider = Provider.autoDispose<AsyncValue<List<ProductModel>>>((ref) {
+  return ref
+      .watch(allProductsProvider)
+      .whenData(
+        (products) => products
+            .where(
+              (p) =>
+                  p.isActive &&
+                  (p.sellPrice > 0 ||
+                      (p.category != 'Nguyên liệu' &&
+                          p.productType != 'ingredient')),
+            )
+            .toList(),
+      );
 });
 
 /// Tất cả khách hàng (reactive)
-final allCustomersProvider = StreamProvider<List<CustomerModel>>((ref) {
+final allCustomersProvider = StreamProvider.autoDispose<List<CustomerModel>>((ref) {
   ref.watch(sessionProvider); // bắt buộc refresh khi chuyển quán
   return ref.watch(customerRepositoryProvider).watchAll();
 });
@@ -136,64 +140,98 @@ class _NavTabNotifier extends Notifier<int> {
 }
 
 final navTabProvider = NotifierProvider<_NavTabNotifier, int>(
-  _NavTabNotifier.new);
+  _NavTabNotifier.new,
+);
 
 class NavTab {
-  static const home      = 0;
-  static const pos       = 1;
+  static const home = 0;
+  static const pos = 1;
   static const inventory = 2;
-  static const finance   = 3;
-  static const loyalty   = 4;
-  static const report    = 5;
-  static const settings  = 6;
-  static const table     = 7;
-  static const kitchen   = 8;
-  static const staff     = 9;
-  static const chamcong  = 10;
-  static const khoPro    = 11;
+  static const finance = 3;
+  static const loyalty = 4;
+  static const report = 5;
+  static const settings = 6;
+  static const table = 7;
+  static const kitchen = 8;
+  static const staff = 9;
+  static const chamcong = 10;
+  static const khoPro = 11;
   static const tinhLuong = 12;
-  static const kayOps    = 13; // Module Vận Hành (KAY Ops)
+  static const kayOps = 13; // Module Vận Hành (KAY Ops)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAV SLOTS PROVIDER — 4 slot tuỳ chỉnh, lưu SharedPreferences
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Máy chưa tự chọn thanh dưới: ghim 4 mục đầu tiên trong danh sách này mà vai trò được dùng
+/// (Trang chủ, Bán hàng, Bàn, Kho, Bếp, Thu Chi, Báo cáo…) — quán có Bàn thì có Bàn.
+const kAutoNavPriority = [0, 1, 7, 2, 8, 3, 5, 11, 4, 9, 10, 12, 13, 14, 6];
+
+/// Mục thanh dưới → mã module ở Trang chủ ([activeModulesProvider]); Trang chủ (0) và Cài đặt (6)
+/// luôn có. Tự ghim chỉ lấy mục mà module đang bật (quán không bật Kho thì không ghim Kho).
+const kTabModuleIds = {
+  1: 'pos', 2: 'kho', 3: 'finance', 4: 'loyalty', 5: 'report', 7: 'table',
+  8: 'kitchen', 9: 'staff', 10: 'chamcong', 11: 'kho_pro', 12: 'tinhluong',
+  13: 'kay_ops', 14: 'log_viewer',
+};
+
 class NavSlotsNotifier extends AsyncNotifier<List<int>> {
-  static const _prefKey  = 'nav_slots_v2'; // v2 → reset khi thêm Kho Pro
+  static const _prefKey = 'nav_slots_v2'; // v2 → reset khi thêm Kho Pro
   static const _defaults = [0, 1, 2, 11]; // Home, Bán hàng, Kho, Kho Pro
+
+  /// false = chưa giữ-để-đổi lần nào → khung chính tự ghim theo [kAutoNavPriority].
+  bool isCustom = false;
 
   @override
   Future<List<int>> build() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_prefKey);
     if (saved != null) {
-      final parsed = saved.split(',').map(int.tryParse).whereType<int>().toList();
-      if (parsed.length == 4) return parsed;
+      final parsed = saved
+          .split(',')
+          .map(int.tryParse)
+          .whereType<int>()
+          .toList();
+      if (parsed.length == 4) {
+        isCustom = true;
+        return parsed;
+      }
     }
     return List<int>.from(_defaults);
   }
 
-  Future<void> updateSlot(int slotIndex, int tabIndex) async {
-    final current = state.value ?? List<int>.from(_defaults);
+  /// [shown] = 4 mục đang hiện; lần đổi đầu tiên lấy chúng làm gốc thay cho mặc định cũ.
+  Future<void> updateSlot(int slotIndex, int tabIndex, {List<int>? shown}) async {
+    final current = (isCustom ? null : shown) ??
+        state.value ??
+        List<int>.from(_defaults);
     final updated = List<int>.from(current);
     updated[slotIndex] = tabIndex;
+    isCustom = true;
     state = AsyncData(updated);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefKey, updated.join(','));
   }
 }
 
-final navSlotsProvider =
-    AsyncNotifierProvider<NavSlotsNotifier, List<int>>(NavSlotsNotifier.new);
+final navSlotsProvider = AsyncNotifierProvider<NavSlotsNotifier, List<int>>(
+  NavSlotsNotifier.new,
+);
 
-final openShiftCCProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
+final openShiftCCProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((
+  ref,
+) async {
   final s = ref.watch(sessionProvider);
-  if (s == null) return null;
-  try {
-    return await Supabase.instance.client
-        .from('staff_shifts').select('id,clock_in')
-        .eq('user_id', s.userId).eq('store_id', s.storeId ?? '')
-        .isFilter('clock_out', null).maybeSingle();
-  } catch (_) { return null; }
+  if (s == null || s.userId.isEmpty) return null;
+  final res = await Supabase.instance.client
+      .from('staff_shifts')
+      .select('id,clock_in')
+      .eq('user_id', s.userId)
+      .eq('store_id', s.storeId ?? '')
+      .isFilter('clock_out', null)
+      .order('clock_in', ascending: false)
+      .limit(1)
+      .maybeSingle();
+  return res;
 });

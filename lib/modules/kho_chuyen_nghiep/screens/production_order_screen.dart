@@ -1,3 +1,4 @@
+import '../../../core/utils/quantity_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../providers/kho_chuyen_nghiep_providers.dart';
 import '../repository/kho_chuyen_nghiep_repository.dart';
+import '../../../core/utils/stagger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRODUCTION ORDER SCREEN — Lệnh sản xuất hằng ngày
@@ -33,7 +35,7 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
       backgroundColor: KhoTheme.bg,
       appBar: canPop
           ? AppBar(
-              title: Text('Lệnh sản xuất', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: KhoTheme.navy)),
+              title: Text('Lệnh sản xuất', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: KhoTheme.navy)),
               backgroundColor: Colors.white,
               elevation: 0,
               leading: IconButton(
@@ -55,7 +57,7 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
                 const SizedBox(width: 6),
                 Text(
                   _formatDate(_selectedDate),
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 15, fontWeight: FontWeight.w800,
                       color: KhoTheme.navy),
                 ),
@@ -70,7 +72,7 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text('Đổi ngày',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 11, color: KhoTheme.violet,
                             fontWeight: FontWeight.w700)),
                   ),
@@ -120,7 +122,7 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
                           _filterStatus == null
                             ? 'Không có lệnh SX ngày ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}'
                             : 'Không có lệnh "${_filterStatus == 'pending' ? 'Chờ' : _filterStatus == 'done' ? 'Hoàn thành' : _filterStatus == 'in_progress' ? 'Đang làm' : 'Đã hủy'}" hôm nay',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 15, color: KhoTheme.muted,
                               fontWeight: FontWeight.w600)),
                     ],
@@ -144,7 +146,7 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
                               _updateStatus(filtered[i], recipe, newStatus),
                           onCancel: () => _cancelOrder(filtered[i]),
                         )
-                            .animate(delay: (i * 50).ms)
+                            .animate(delay: staggerDelay(i, 50))
                             .fadeIn(duration: 250.ms)
                             .slideY(begin: 0.04, end: 0);
                       },
@@ -166,7 +168,7 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
         backgroundColor: KhoTheme.violet,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text('Tạo lệnh SX',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.plusJakartaSans(
                 color: Colors.white, fontWeight: FontWeight.w700)),
       ),
     );
@@ -196,6 +198,14 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
 
   Future<void> _updateStatus(
       ProductionOrderModel order, RecipeModel? recipe, String newStatus) async {
+    if (newStatus == 'done' && recipe == null) {
+      // Công thức đã bị xóa: không thể trừ nguyên liệu / nhập thành phẩm → không đánh dấu done giả
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Công thức của lệnh này không còn tồn tại, không thể hoàn thành.')));
+      }
+      return;
+    }
     if (newStatus == 'done' && recipe != null) {
       // Check stock trước
       final warnings = await ref.read(khoProRepositoryProvider)
@@ -204,8 +214,16 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
         final ok = await _showWarningDialog(warnings);
         if (!ok) return;
       }
-      await ref.read(khoProRepositoryProvider)
+      final msg = await ref.read(khoProRepositoryProvider)
           .completeProductionOrder(order, recipe);
+      if (msg != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(msg),
+          backgroundColor: KhoTheme.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ));
+      }
     } else {
       await ref.read(khoProRepositoryProvider)
           .updateProductionStatus(order.id, newStatus);
@@ -219,16 +237,16 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Hủy lệnh sản xuất?', style: GoogleFonts.outfit(fontWeight: FontWeight.w800)),
+        title: Text('Hủy lệnh sản xuất?', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
         content: Text('Lệnh "${order.recipeName}" sẽ được đánh dấu Đã hủy.\nKho không bị thay đổi.',
-            style: GoogleFonts.outfit(fontSize: 13, color: KhoTheme.muted)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 13, color: KhoTheme.muted)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false),
               child: const Text('Không')),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: KhoTheme.red),
-            child: Text('Hủy lệnh', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+            child: Text('Hủy lệnh', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -251,25 +269,25 @@ class _ProductionOrderScreenState extends ConsumerState<ProductionOrderScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text('⚠️ Thiếu nguyên liệu',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w800)),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Kho không đủ nguyên liệu:',
-                style: GoogleFonts.outfit(color: KhoTheme.muted)),
+                style: GoogleFonts.plusJakartaSans(color: KhoTheme.muted)),
             const SizedBox(height: 8),
             ...warnings.map((w) => Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
                 '• ${w.ingredientName}: cần ${w.required.toStringAsFixed(0)} ${w.unit}, có ${w.available.toStringAsFixed(0)}',
-                style: GoogleFonts.outfit(fontSize: 13, color: KhoTheme.red,
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: KhoTheme.red,
                     fontWeight: FontWeight.w600),
               ),
             )),
             const SizedBox(height: 8),
             Text('Vẫn muốn hoàn thành?',
-                style: GoogleFonts.outfit(color: KhoTheme.muted)),
+                style: GoogleFonts.plusJakartaSans(color: KhoTheme.muted)),
           ],
         ),
         actions: [
@@ -333,7 +351,7 @@ class _FilterChip extends StatelessWidget {
             width: isSelected ? 1.5 : 1,
           ),
         ),
-        child: Text(label, style: GoogleFonts.outfit(
+        child: Text(label, style: GoogleFonts.plusJakartaSans(
             fontSize: 12.5,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             color: isSelected ? Colors.white : KhoTheme.muted)),
@@ -403,12 +421,12 @@ class _ProductionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(order.recipeName,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 15, fontWeight: FontWeight.w800,
                             color: isCancelled ? KhoTheme.muted : KhoTheme.ink,
                             decoration: isCancelled ? TextDecoration.lineThrough : null)),
-                    Text('${order.quantity.toStringAsFixed(0)} ${recipe?.servingUnit ?? 'phần'}  ·  Giá vốn: ${recipe != null ? fmtMoney(recipe!.costPerServing * order.quantity) : "—"}',
-                        style: GoogleFonts.outfit(
+                    Text('${fmtQty(order.quantity)} ${_batchUnit(recipe)}  ·  Giá vốn: ${recipe != null ? fmtMoney(recipe!.costPerServing * order.quantity) : "—"}',
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 12, color: KhoTheme.muted)),
                   ])),
               Container(
@@ -417,7 +435,7 @@ class _ProductionCard extends StatelessWidget {
                   color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(statusLabel, style: GoogleFonts.outfit(
+                child: Text(statusLabel, style: GoogleFonts.plusJakartaSans(
                     fontSize: 11.5, fontWeight: FontWeight.w700,
                     color: statusColor)),
               ),
@@ -433,7 +451,7 @@ class _ProductionCard extends StatelessWidget {
                     Expanded(child: OutlinedButton.icon(
                       onPressed: () => onStatusChanged('in_progress'),
                       icon: const Icon(Icons.play_arrow_rounded, size: 16),
-                      label: Text('Bắt đầu', style: GoogleFonts.outfit(
+                      label: Text('Bắt đầu', style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.w700)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: KhoTheme.violet,
@@ -447,7 +465,7 @@ class _ProductionCard extends StatelessWidget {
                   Expanded(child: FilledButton.icon(
                     onPressed: () => onStatusChanged('done'),
                     icon: const Icon(Icons.check_rounded, size: 16),
-                    label: Text('Hoàn thành', style: GoogleFonts.outfit(
+                    label: Text('Hoàn thành', style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w700)),
                     style: FilledButton.styleFrom(
                       backgroundColor: KhoTheme.green,
@@ -463,7 +481,7 @@ class _ProductionCard extends StatelessWidget {
                   child: TextButton.icon(
                     onPressed: onCancel,
                     icon: const Icon(Icons.cancel_outlined, size: 15),
-                    label: Text('Hủy lệnh', style: GoogleFonts.outfit(
+                    label: Text('Hủy lệnh', style: GoogleFonts.plusJakartaSans(
                         fontSize: 13, fontWeight: FontWeight.w600)),
                     style: TextButton.styleFrom(
                       foregroundColor: KhoTheme.red,
@@ -537,7 +555,7 @@ class _CreateProductionSheetState
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
           child: Row(children: [
-            Text('Tạo lệnh sản xuất', style: GoogleFonts.outfit(
+            Text('Tạo lệnh sản xuất', style: GoogleFonts.plusJakartaSans(
                 fontSize: 18, fontWeight: FontWeight.w800, color: KhoTheme.ink)),
             const Spacer(),
             IconButton(icon: const Icon(Icons.close_rounded, color: KhoTheme.muted),
@@ -551,15 +569,15 @@ class _CreateProductionSheetState
               // Chọn công thức
               DropdownButtonFormField<RecipeModel>(
                 value: _selected,
-                hint: Text('Chọn công thức...', style: GoogleFonts.outfit(
+                hint: Text('Chọn công thức...', style: GoogleFonts.plusJakartaSans(
                     fontSize: 13, color: KhoTheme.muted)),
                 decoration: KhoTheme.inputDecoration(hint: '').copyWith(
                     labelText: 'Công thức *',
-                    labelStyle: GoogleFonts.outfit(fontSize: 12, color: KhoTheme.muted)),
+                    labelStyle: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted)),
                 isExpanded: true,
                 items: widget.recipes.map((r) => DropdownMenuItem(
                     value: r,
-                    child: Text(r.name, style: GoogleFonts.outfit(fontSize: 13)))).toList(),
+                    child: Text(r.name, style: GoogleFonts.plusJakartaSans(fontSize: 13)))).toList(),
                 onChanged: (v) async {
                   setState(() { _selected = v; _warnings = []; });
                   if (v != null) await _checkStock(v);
@@ -570,20 +588,20 @@ class _CreateProductionSheetState
               TextField(
                 controller: _qtyCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: GoogleFonts.outfit(fontSize: 14, color: KhoTheme.ink),
+                style: GoogleFonts.plusJakartaSans(fontSize: 14, color: KhoTheme.ink),
                 onChanged: (_) async {
                   if (_selected != null) await _checkStock(_selected!);
                 },
                 decoration: KhoTheme.inputDecoration(
                     hint: 'Số phần',
-                    suffix: Text(_selected?.servingUnit ?? 'phần',
-                        style: GoogleFonts.outfit(color: KhoTheme.muted))),
+                    suffix: Text(_batchUnit(_selected),
+                        style: GoogleFonts.plusJakartaSans(color: KhoTheme.muted))),
               ),
               const SizedBox(height: 10),
               // Ghi chú
               TextField(
                 controller: _noteCtrl,
-                style: GoogleFonts.outfit(fontSize: 14, color: KhoTheme.ink),
+                style: GoogleFonts.plusJakartaSans(fontSize: 14, color: KhoTheme.ink),
                 decoration: KhoTheme.inputDecoration(hint: 'Ghi chú (tuỳ chọn)'),
               ),
               // Cảnh báo
@@ -597,13 +615,13 @@ class _CreateProductionSheetState
                     border: Border.all(color: KhoTheme.amber.withOpacity(0.3)),
                   ),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('⚠️ Thiếu nguyên liệu', style: GoogleFonts.outfit(
+                    Text('⚠️ Thiếu nguyên liệu', style: GoogleFonts.plusJakartaSans(
                         fontSize: 13, fontWeight: FontWeight.w700,
                         color: KhoTheme.amber)),
                     const SizedBox(height: 6),
                     ..._warnings.map((w) => Text(
                       '• ${w.ingredientName}: thiếu ${w.shortage.toStringAsFixed(0)} ${w.unit}',
-                      style: GoogleFonts.outfit(fontSize: 12, color: KhoTheme.amber),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.amber),
                     )),
                   ]),
                 ),
@@ -619,13 +637,13 @@ class _CreateProductionSheetState
                     border: Border.all(color: KhoTheme.violet.withOpacity(0.2)),
                   ),
                   child: Row(children: [
-                    Text('Tổng giá vốn ước tính:', style: GoogleFonts.outfit(
+                    Text('Tổng giá vốn ước tính:', style: GoogleFonts.plusJakartaSans(
                         fontSize: 13, color: KhoTheme.navy)),
                     const Spacer(),
                     Text(
                       fmtMoney(_selected!.costPerServing *
                           (double.tryParse(_qtyCtrl.text) ?? 1)),
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.plusJakartaSans(
                           fontSize: 16, fontWeight: FontWeight.w900,
                           color: KhoTheme.violet),
                     ),
@@ -653,7 +671,7 @@ class _CreateProductionSheetState
                   ? const SizedBox(width: 22, height: 22,
                       child: CircularProgressIndicator(
                           color: Colors.white, strokeWidth: 2.5))
-                  : Text('Tạo lệnh sản xuất', style: GoogleFonts.outfit(
+                  : Text('Tạo lệnh sản xuất', style: GoogleFonts.plusJakartaSans(
                       fontSize: 15, fontWeight: FontWeight.w800)),
             ),
           ),
@@ -698,4 +716,13 @@ class _CreateProductionSheetState
       if (mounted) setState(() => _loading = false);
     }
   }
+}
+
+
+/// Đơn vị hiển thị cho "số lượng" của lệnh sản xuất: 1 phần/ly → giữ nguyên;
+/// công thức ra nhiều đơn vị mỗi mẻ (vd 16 lít) → "mẻ (16 lít)" để không hiểu nhầm là 1 lít.
+String _batchUnit(RecipeModel? r) {
+  if (r == null) return 'phần';
+  if (r.servingSize == 1) return r.servingUnit;
+  return 'mẻ (${fmtQty(r.servingSize)} ${r.servingUnit})';
 }

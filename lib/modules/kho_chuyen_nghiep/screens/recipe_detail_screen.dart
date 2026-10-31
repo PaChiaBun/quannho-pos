@@ -5,6 +5,7 @@ import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../providers/kho_chuyen_nghiep_providers.dart';
 import '../repository/kho_chuyen_nghiep_repository.dart';
+import '../../../core/utils/chain_compare.dart' show fmtPct;
 
 class RecipeDetailScreen extends ConsumerWidget {
   final RecipeModel recipe;
@@ -26,7 +27,7 @@ class RecipeDetailScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(recipe.name, style: GoogleFonts.outfit(
+        title: Text(recipe.name, style: GoogleFonts.plusJakartaSans(
             color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
       ),
       body: FutureBuilder<double>(
@@ -70,7 +71,7 @@ class RecipeDetailScreen extends ConsumerWidget {
                         ),
                       ),
                     ],
-                    Expanded(child: Text(recipe.name, style: GoogleFonts.outfit(
+                    Expanded(child: Text(recipe.name, style: GoogleFonts.plusJakartaSans(
                         color: Colors.white, fontSize: 22,
                         fontWeight: FontWeight.w900))),
                     Container(
@@ -81,14 +82,14 @@ class RecipeDetailScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(recipe.category ?? 'Món ăn',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               color: Colors.white70, fontSize: 12,
                               fontWeight: FontWeight.w600)),
                     ),
                   ]),
                   if (recipe.description?.isNotEmpty == true) ...[
                     const SizedBox(height: 6),
-                    Text(recipe.description!, style: GoogleFonts.outfit(
+                    Text(recipe.description!, style: GoogleFonts.plusJakartaSans(
                         color: Colors.white60, fontSize: 13)),
                   ],
                   const SizedBox(height: 16),
@@ -100,10 +101,10 @@ class RecipeDetailScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Giá vốn/phần', style: GoogleFonts.outfit(
+                        Text('Giá vốn/phần', style: GoogleFonts.plusJakartaSans(
                             fontSize: 10, color: Colors.white60, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 3),
-                        Text(fmtMoney(recipe.costPerServing), style: GoogleFonts.outfit(
+                        Text(fmtMoney(recipe.costPerServing), style: GoogleFonts.plusJakartaSans(
                             fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
                       ]),
                     )),
@@ -115,14 +116,14 @@ class RecipeDetailScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Tồn kho đủ nấu', style: GoogleFonts.outfit(
+                        Text('Tồn kho đủ nấu', style: GoogleFonts.plusJakartaSans(
                             fontSize: 10, color: Colors.white60, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 3),
                         Text(
                           snap.connectionState == ConnectionState.waiting
                               ? '...'
                               : '${maxServings.toStringAsFixed(0)} ${recipe.servingUnit}',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.plusJakartaSans(
                               fontSize: 16, fontWeight: FontWeight.w900,
                               color: maxServings > 5 ? KhoTheme.green : KhoTheme.amber),
                         ),
@@ -157,14 +158,14 @@ class RecipeDetailScreen extends ConsumerWidget {
                       ),
                       child: Row(children: [
                         Expanded(flex: 3, child: Text('Nguyên liệu',
-                            style: GoogleFonts.outfit(fontSize: 11,
+                            style: GoogleFonts.plusJakartaSans(fontSize: 11,
                                 fontWeight: FontWeight.w700, color: KhoTheme.muted))),
                         Expanded(flex: 2, child: Text('Số lượng',
-                            style: GoogleFonts.outfit(fontSize: 11,
+                            style: GoogleFonts.plusJakartaSans(fontSize: 11,
                                 fontWeight: FontWeight.w700, color: KhoTheme.muted),
                             textAlign: TextAlign.center)),
                         Expanded(flex: 2, child: Text('Chi phí',
-                            style: GoogleFonts.outfit(fontSize: 11,
+                            style: GoogleFonts.plusJakartaSans(fontSize: 11,
                                 fontWeight: FontWeight.w700, color: KhoTheme.muted),
                             textAlign: TextAlign.right)),
                       ]),
@@ -182,17 +183,17 @@ class RecipeDetailScreen extends ConsumerWidget {
                         child: Row(children: [
                           Expanded(flex: 3, child: Text(
                               i.ingredientName ?? '—',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13, fontWeight: FontWeight.w700,
                                   color: KhoTheme.ink))),
                           Expanded(flex: 2, child: Text(
                               '${i.quantity % 1 == 0 ? i.quantity.toInt() : i.quantity.toStringAsFixed(1)} ${i.unit}',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13, color: KhoTheme.muted),
                               textAlign: TextAlign.center)),
                           Expanded(flex: 2, child: Text(
                               i.lineCost > 0 ? fmtMoney(i.lineCost) : '—',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13, fontWeight: FontWeight.w700,
                                   color: KhoTheme.violet),
                               textAlign: TextAlign.right)),
@@ -212,12 +213,12 @@ class RecipeDetailScreen extends ConsumerWidget {
                       ),
                       child: Row(children: [
                         Text('Tổng giá vốn / ${recipe.servingSize.toStringAsFixed(0)} ${recipe.servingUnit}',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13, fontWeight: FontWeight.w700,
                                 color: KhoTheme.navy)),
                         const Spacer(),
                         Text(fmtMoney(recipe.costPerServing),
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontSize: 16, fontWeight: FontWeight.w900,
                                 color: KhoTheme.violet)),
                       ]),
@@ -240,7 +241,7 @@ class RecipeDetailScreen extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(child: Text(
                         'Khi POS bán món này → tự động trừ nguyên liệu theo định lượng',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 12.5, color: KhoTheme.green,
                             fontWeight: FontWeight.w600))),
                   ]),
@@ -266,7 +267,7 @@ class RecipeDetailScreen extends ConsumerWidget {
   Widget _sectionHeader(String label, IconData icon) => Row(children: [
     Icon(icon, size: 15, color: KhoTheme.violet),
     const SizedBox(width: 6),
-    Text(label, style: GoogleFonts.outfit(
+    Text(label, style: GoogleFonts.plusJakartaSans(
         fontSize: 13.5, fontWeight: FontWeight.w800, color: KhoTheme.navy)),
   ]);
 }
@@ -338,11 +339,11 @@ class _ProfitCard extends StatelessWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
-                Text('Food Cost Ratio', style: GoogleFonts.outfit(
+                Text('Food Cost Ratio', style: GoogleFonts.plusJakartaSans(
                     fontSize: 12, fontWeight: FontWeight.w700, color: KhoTheme.muted)),
                 const Spacer(),
-                Text('${(foodCostPct * 100).toStringAsFixed(1)}%',
-                    style: GoogleFonts.outfit(
+                Text('${fmtPct((foodCostPct * 100))}',
+                    style: GoogleFonts.plusJakartaSans(
                         fontSize: 13, fontWeight: FontWeight.w800,
                         color: marginColor)),
                 const SizedBox(width: 8),
@@ -352,7 +353,7 @@ class _ProfitCard extends StatelessWidget {
                     color: marginColor.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(grade, style: GoogleFonts.outfit(
+                  child: Text(grade, style: GoogleFonts.plusJakartaSans(
                       fontSize: 10.5, fontWeight: FontWeight.w800,
                       color: marginColor)),
                 ),
@@ -381,8 +382,8 @@ class _ProfitCard extends StatelessWidget {
                 _BarLegend(color: KhoTheme.green, label: 'Lãi gộp'),
                 const Spacer(),
                 Text(
-                  'Margin: ${(margin * 100).toStringAsFixed(1)}%',
-                  style: GoogleFonts.outfit(
+                  'Biên lãi: ${fmtPct(margin * 100, signed: margin < 0)}',
+                  style: GoogleFonts.plusJakartaSans(
                       fontSize: 11, fontWeight: FontWeight.w700,
                       color: marginColor),
                 ),
@@ -404,12 +405,12 @@ class _ProfitStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Expanded(child: Column(
     children: [
-      Text(label, style: GoogleFonts.outfit(
+      Text(label, style: GoogleFonts.plusJakartaSans(
           fontSize: 11, color: KhoTheme.muted, fontWeight: FontWeight.w600)),
       const SizedBox(height: 4),
       FittedBox(
         fit: BoxFit.scaleDown,
-        child: Text(value, style: GoogleFonts.outfit(
+        child: Text(value, style: GoogleFonts.plusJakartaSans(
             fontSize: 16, fontWeight: FontWeight.w900, color: color)),
       ),
     ],
@@ -425,8 +426,7 @@ class _BarLegend extends StatelessWidget {
     Container(width: 10, height: 10,
         decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
     const SizedBox(width: 4),
-    Text(label, style: GoogleFonts.outfit(
+    Text(label, style: GoogleFonts.plusJakartaSans(
         fontSize: 10, color: KhoTheme.muted, fontWeight: FontWeight.w600)),
   ]);
 }
-

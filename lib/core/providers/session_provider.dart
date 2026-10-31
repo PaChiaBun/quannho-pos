@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,6 +7,12 @@ import '../utils/app_logger.dart';
 
 import '../services/staff_sync_service.dart';
 import 'permission_provider.dart';
+import '../../modules/bill_printer/providers/printer_settings_provider.dart';
+
+bool shouldRouteToStorePickerOnSessionChange(
+  SessionData? previous,
+  SessionData? next,
+) => previous?.storeId != null && next != null && next.storeId == null;
 
 // ── Session state ─────────────────────────────────────────────────────────────
 class _SessionNotifier extends Notifier<SessionData?> {
@@ -43,11 +50,19 @@ class _SessionNotifier extends Notifier<SessionData?> {
           ref.invalidate(userActionPermsProvider);
         },
         onRemoved: () {
-          clear();
+          if (state?.storeId != null) {
+            unawaited(_handleRemoved());
+          }
         },
       );
       _syncService?.start();
     }
+  }
+
+  Future<void> _handleRemoved() async {
+    if (state?.storeId == null) return;
+    AppLogger.info('auth', 'Realtime trigger: thu hoi store context.');
+    await clearStoreContext();
   }
 
   void setSession(SessionData? session) {
@@ -58,11 +73,9 @@ class _SessionNotifier extends Notifier<SessionData?> {
     );
     try {
       final client = Supabase.instance.client;
-      if (session != null) {
-        client.rest.headers['x-user-id'] = session.userId;
-      } else {
-        client.rest.headers.remove('x-user-id');
-      }
+      // Danh tính lấy từ POS JWT (sub). Không gửi header x-user-id tự khai nữa
+      // (kế hoạch JWT Pha 2) — máy chủ sẽ tắt nhánh tin header ở Pha 3.
+      client.rest.headers.remove('x-user-id');
       if (session != null && session.storeId != null) {
         client.rest.headers['x-store-id'] = session.storeId!;
       } else {
@@ -71,6 +84,30 @@ class _SessionNotifier extends Notifier<SessionData?> {
     } catch (_) {}
 
     _setupSyncService(session);
+    if (session != null &&
+        session.storeId != null &&
+        session.storeId!.isNotEmpty) {
+      try {
+        ref.read(printerSettingsProvider);
+      } catch (_) {}
+    }
+  }
+
+  /// Cập nhật tên hiển thị trong phiên hiện tại (sau khi đã lưu lên server).
+  void updateDisplayName(String name) {
+    final s = state;
+    if (s == null) return;
+    state = SessionData(
+      userId: s.userId,
+      phone: s.phone,
+      displayName: name,
+      storeId: s.storeId,
+      storeName: s.storeName,
+      storeCode: s.storeCode,
+      role: s.role,
+      isOwner: s.isOwner,
+    );
+    AppLogger.updateSession(storeId: s.storeId, staffName: name);
   }
 
   void updateStore(StoreMembership membership) async {
@@ -103,22 +140,67 @@ class _SessionNotifier extends Notifier<SessionData?> {
     );
     try {
       Supabase.instance.client.rest.headers['x-store-id'] = membership.storeId;
-      if (state != null) {
-        Supabase.instance.client.rest.headers['x-user-id'] = state!.userId;
-      }
     } catch (_) {}
 
     _setupSyncService(state);
   }
 
-  void clear() {
+  Future<void> clearStoreContext() async {
     _syncService?.stop();
     _syncService = null;
+
+    final storeIdBeforeClear = state?.storeId ?? '';
+
+    // Release active print-server ownership before auth prefs are cleared.
+    try {
+      final notifier = ref.read(printerSettingsProvider.notifier);
+      await notifier.prepareForStoreLogout(storeIdBeforeClear);
+    } catch (_) {}
+
+    // Persistent clear in SharedPreferences
+    await UserAuthService.clearStoreContext();
+
+    if (state != null) {
+      state = SessionData(
+        userId: state!.userId,
+        phone: state!.phone,
+        displayName: state!.displayName,
+        storeId: null,
+        storeName: null,
+        storeCode: null,
+        role: '',
+        isOwner: false,
+      );
+    } else {
+      state = null;
+    }
+
+    AppLogger.updateSession(storeId: null, staffName: state?.displayName);
+    try {
+      Supabase.instance.client.rest.headers.remove('x-store-id');
+    } catch (_) {}
+  }
+
+  Future<void> clear() async {
+    _syncService?.stop();
+    _syncService = null;
+
+    final storeIdBeforeClear = state?.storeId ?? '';
+    try {
+      final notifier = ref.read(printerSettingsProvider.notifier);
+      await notifier.prepareForStoreLogout(storeIdBeforeClear);
+    } catch (_) {}
+
+    // Gửi nốt log đang gom TRƯỚC khi mất phiên đăng nhập (RLS cần JWT còn hiệu lực).
+    try {
+      await AppLogger.flushNow().timeout(const Duration(seconds: 5));
+    } catch (_) {}
+    await UserAuthService.logout();
     state = null;
     AppLogger.updateSession(storeId: null, staffName: null);
     try {
-      Supabase.instance.client.rest.headers.remove('x-store-id');
       Supabase.instance.client.rest.headers.remove('x-user-id');
+      Supabase.instance.client.rest.headers.remove('x-store-id');
     } catch (_) {}
   }
 }

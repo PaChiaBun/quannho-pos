@@ -1,0 +1,163 @@
+{
+  "catalog_query_pack_version": "20260827.03",
+  "execution_target": "Self-hosted Supabase Studio https://quannho-db.lpm.vn/project/default; project endpoint https://quannho.lpm.vn",
+  "data_hygiene_attestation": {
+    "zero_customer_rows": true,
+    "zero_phone_numbers": true,
+    "zero_password_hash_values": true,
+    "zero_pin_hash_values": true,
+    "zero_api_keys_or_secrets": true,
+    "metadata_only": true
+  },
+  "status": "EXECUTED_SANITIZED_WITH_QUERY_ERROR",
+  "operator_attestation": {
+    "executed_at_utc": "2026-08-26T21:40:07Z",
+    "project_reference_sanitized": "default / https://quannho.lpm.vn",
+    "query_pack_sha256": "d7da89e8a0d5b66bc727e9d04401c4136621e230cac3c7e015c896f75b7531a2",
+    "raw_expression_bodies_not_committed": true,
+    "application_rows_not_queried": true,
+    "result_sets_recorded_as_sanitized_summaries_and_sha256": true
+  },
+  "query_results": {
+    "query_1_schema_migrations": {
+      "status": "ERROR",
+      "sqlstate": "42P01",
+      "message": "relation supabase_migrations.schema_migrations does not exist",
+      "rows": []
+    },
+    "query_2_pg_class_relations_and_rls_state": {
+      "status": "PASS",
+      "row_count": 15,
+      "result_sha256": "27ef45330b89b0a1185e7b3fa410c085db75e60b36dc3866058b69124a2d3716",
+      "tables": [
+        "app_settings",
+        "ban_dining_tables",
+        "ban_session_items",
+        "ban_sessions",
+        "finance_records",
+        "kitchen_ticket_items",
+        "kitchen_tickets",
+        "order_items",
+        "orders",
+        "products",
+        "staff_members",
+        "stock_movements",
+        "store_members",
+        "stores",
+        "user_accounts"
+      ],
+      "missing_qr_v3_v4_and_settlement_tables": [
+        "qr_channels",
+        "qr_requests",
+        "qr_request_items",
+        "qr_audit_logs",
+        "qr_handoff_tokens",
+        "pos_device_sessions",
+        "pos_store_bootstrap_state",
+        "store_pairing_codes",
+        "pos_auth_attempts",
+        "product_topping_links",
+        "ban_session_orders",
+        "payment_settlements",
+        "payment_settlement_orders"
+      ],
+      "rls_disabled": [
+        {"schema_name": "public", "table_name": "store_members", "rls_enabled": false, "rls_forced": false},
+        {"schema_name": "public", "table_name": "user_accounts", "rls_enabled": false, "rls_forced": false}
+      ],
+      "rls_enabled_not_forced": [
+        "app_settings",
+        "ban_dining_tables",
+        "ban_session_items",
+        "ban_sessions",
+        "finance_records",
+        "kitchen_ticket_items",
+        "kitchen_tickets",
+        "order_items",
+        "orders",
+        "products",
+        "staff_members",
+        "stock_movements",
+        "stores"
+      ],
+      "rls_state_result_sha256": "a7cd81608729edf06c1d50abbca32fe249fcb3d72ac854ba6b164ce7966bd5f1"
+    },
+    "query_3_pg_proc_routines": {
+      "status": "EMPTY",
+      "row_count": 0,
+      "finding": "No matching QR V3/V4 or verify/register/change-password V4 routines exist."
+    },
+    "query_4_information_schema_columns": {
+      "status": "PASS",
+      "row_count": 193,
+      "result_sha256": "f84c362f39906c1a8e1d049dc40f855fbe00c6737e3448a17315daaba2d559a4",
+      "column_counts_by_table": {
+        "app_settings": 4,
+        "ban_dining_tables": 17,
+        "ban_session_items": 14,
+        "ban_sessions": 10,
+        "finance_records": 10,
+        "kitchen_ticket_items": 18,
+        "kitchen_tickets": 16,
+        "order_items": 14,
+        "orders": 25,
+        "products": 26,
+        "staff_members": 11,
+        "stock_movements": 8,
+        "store_members": 6,
+        "stores": 9,
+        "user_accounts": 5
+      }
+    },
+    "query_5_pg_constraint_definitions": {
+      "status": "PASS",
+      "row_count": 45,
+      "result_sha256": "cb8b028a4c124561af42d6bb65c12a0badcd01feb918a85df6f959a40d2292e1",
+      "check_expressions_committed": false
+    },
+    "query_6_pg_policies_rls": {
+      "status": "PASS_WITH_P0_FINDING",
+      "row_count": 31,
+      "result_sha256": "34a6ee10a14c8f2c407d6a1459dc32e238502fc7bb1f9b21de652c6bf18503df",
+      "finding": "Policies may exist but cannot protect tables whose relrowsecurity is false; user_accounts and store_members are affected."
+    },
+    "query_7_role_table_and_column_grants": {
+      "status": "FAIL_P0",
+      "table_grant_group_count": 12,
+      "column_privilege_group_count": 20,
+      "result_sha256": "39f83cd18f67ab9cf10a1e0243de3a945372f5835b667f24a1818337a48e6163",
+      "anon_table_privileges": {
+        "staff_members": ["DELETE", "INSERT", "REFERENCES", "SELECT", "TRIGGER", "TRUNCATE", "UPDATE"],
+        "store_members": ["DELETE", "INSERT", "REFERENCES", "SELECT", "TRIGGER", "TRUNCATE", "UPDATE"],
+        "user_accounts": ["DELETE", "INSERT", "REFERENCES", "SELECT", "TRIGGER", "TRUNCATE", "UPDATE"]
+      },
+      "critical_column_privilege": {
+        "table_name": "user_accounts",
+        "column_name": "password_hash",
+        "grantee": "anon",
+        "privileges": ["INSERT", "REFERENCES", "SELECT", "UPDATE"]
+      },
+      "sensitive_values_committed": false
+    },
+    "query_8_indexes_and_triggers": {
+      "status": "PASS",
+      "index_count": 30,
+      "trigger_count": 0,
+      "result_sha256": "c777c44a9dc1ecef2244f24352cb9861fc57c745ddc0631816ba466f1d239442",
+      "index_and_trigger_bodies_committed": false
+    },
+    "query_9_routine_execute_acls": {
+      "status": "EMPTY",
+      "row_count": 0,
+      "finding": "No matching routines, therefore no matching routine ACL rows."
+    }
+  },
+  "migration_strategy_verdict": "COMPATIBILITY_CONTAINMENT_FIRST",
+  "phase_1_status": "BLOCKED",
+  "blocking_reasons": [
+    "P0: RLS is disabled on public.user_accounts and public.store_members.",
+    "P0: anon has broad table privileges on staff_members, store_members and user_accounts, including SELECT/UPDATE privileges on user_accounts.password_hash.",
+    "Migration history query failed because supabase_migrations.schema_migrations does not exist.",
+    "Containment migration and QR V4 schema have not been applied and verified on disposable staging."
+  ]
+}

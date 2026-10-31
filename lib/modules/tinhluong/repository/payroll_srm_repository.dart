@@ -282,9 +282,10 @@ class PayrollSrmRepository {
     if (headers == null) {
       throw PayrollSrmContextException('Headers are missing');
     }
-    if (headers['x-store-id'] != storeId || headers['x-user-id'] != userId) {
+    // Người gọi do JWT (sub) quyết định ở máy chủ; app không gửi x-user-id nữa.
+    if (headers['x-store-id'] != storeId) {
       throw PayrollSrmContextException(
-        'Context mismatch: Headers do not match initialized storeId and userId',
+        'Context mismatch: x-store-id does not match initialized storeId',
       );
     }
   }
