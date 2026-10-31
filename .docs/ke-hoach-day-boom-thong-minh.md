@@ -368,6 +368,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Được: hết khuyên tặng topping ở quán không bán (D33, D51).
 - Hỏng: GPT chép "nâng size / x2 điểm" vào mọi câu, kể cả món chính quán bún cơm và combo không có → đúng quán 1,60 → 1,32, thận trọng 1,46 → 1,33. Bài học: dòng hồ sơ không gợi ý việc cụ thể; nếu thử lại chỉ ghi "không bán topping".
 
+### Lần 45 / 45b (01/11, Claude chấm 2 lượt, đã áp 45b): nói rõ số còn thiếu thay vì bịa số chi tiết
+
+- Gốc lỗi: bước tự kiểm bắt được số bịa, nhưng khi hỏi lại GPT bịa số khác (D32 "Bạc xỉu tháng trước 710 phần" → 715; D59 "rau 15 triệu, bún 10 triệu") vì khối số liệu không nói số đó không có.
+- Lần 45: khối bán hàng luôn ghi "CHƯA có số từng món kỳ trước"; khối thu chi ghi "Chi chỉ có TỔNG từng khoản, CHƯA có số riêng từng mặt hàng". 86 câu bị ảnh hưởng 11,28 → 11,12: D32 / D59 hết bịa nhưng việc làm 0,95 → 0,79 (dòng "chưa có" ở mọi câu làm GPT dè dặt).
+- Lần 45b (áp): dòng số món kỳ trước chỉ ghi khi câu hỏi có "món" và "trước"; dòng thu chi giữ. 8 câu có dòng mới 9,94 → **11,12** (D32 5–6 → 13; D59 6 → 10–11); 22 câu bị hỏi lại (mã không đổi) 10,41 → 9,64 là dao động.
+- Còn yếu: D59 nói thiếu số rồi bảo xem app, không nêu chi nguyên liệu +28% và đối chiếu phiếu nhập; D42 lấy dự báo tháng này cho tháng sau; D18 lấy số 1 giờ làm cả ca; so tỉ lệ trên tổng chi với mốc trên doanh thu (D09).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

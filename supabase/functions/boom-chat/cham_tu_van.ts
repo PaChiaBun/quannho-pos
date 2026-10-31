@@ -73,7 +73,7 @@ function caseMessages(c: Case, s: Store) {
   const modules = raw ? parseModules(c.muc ? Object.fromEntries(c.muc.map((k) => [k, raw[k]])) : raw) : null;
   if (c.facts && !facts) throw new Error(`${c.id}: số bán "${c.facts}" không hợp lệ`);
   if (c.modules && !modules) throw new Error(`${c.id}: số mục "${c.modules}" không hợp lệ`);
-  const seen = [facts ? formatFacts(facts, NOW) : '', modules ? formatModules(modules, NOW) : ''].filter(Boolean).join('\n') || '(không có số liệu)';
+  const seen = [facts ? formatFacts(facts, NOW, c.q) : '', modules ? formatModules(modules, NOW) : ''].filter(Boolean).join('\n') || '(không có số liệu)';
   return { msgs: buildMessages(c.q, [], null, { facts, modules, memory: c.history, now: NOW }), seen, ref: soLieuGoc(c.q, { facts, modules, memory: c.history, now: NOW }) };
 }
 

@@ -376,6 +376,8 @@ export function formatModules(m: ModuleFacts, now: Date = new Date()): string {
     const te = arr(f.top_expense);
     if (te.length) {
       out.push(`Khoản chi lớn nhất: ${te.map((x) => `${ss(x.name)} ${vnd(nn(x.amount))} (${pctOf(nn(x.amount), exp)} tổng chi${typeof x.prev === 'number' ? `; kỳ trước ${vnd(nn(x.prev))}${nn(x.prev) > 0 ? ` → ${nn(x.amount) >= nn(x.prev) ? 'TĂNG' : 'GIẢM'} ${String(Math.abs(Math.round(((nn(x.amount) - nn(x.prev)) / nn(x.prev)) * 1000) / 10)).replace('.', ',')}%` : ''}` : ''})`).join('; ')}.`);
+      // lần 45: tên khoản kiểu "Nguyên liệu (thịt, rau, bún, gạo)" → GPT bịa số riêng thịt / rau (D59)
+      out.push('Chi chỉ có TỔNG từng khoản, CHƯA có số riêng từng mặt hàng trong khoản.');
       // Khoản tăng nhiều nhất (tiền) — câu "chi phí tăng do đâu"
       const up = te.filter((x) => typeof x.prev === 'number').map((x) => ({ n: ss(x.name), d: nn(x.amount) - nn(x.prev) })).sort((a, b) => b.d - a.d)[0];
       if (up && up.d > 0) out.push(`Khoản chi tăng nhiều nhất so kỳ trước: ${up.n} (+${vnd(up.d)}).`);
@@ -652,7 +654,7 @@ const costTag = (r: number) => {
     : p < 25 ? ' → dưới mốc, lời tốt' : ' → trong mốc 25–35%';
 };
 
-export function formatFacts(f: ShopFacts, now: Date = new Date()): string {
+export function formatFacts(f: ShopFacts, now: Date = new Date(), question = ''): string {
   // Kỳ kết thúc HÔM NAY (giờ VN): hôm nay mới bán dở → không tính thứ hôm nay vào bất thường / ngày nghỉ (QC giai đoạn 2)
   const today = new Date(vnDay(now)).toISOString().slice(0, 10);
   const todayD = f.to === today ? (new Date(vnDay(now)).getUTCDay() + 6) % 7 : -1;
@@ -669,6 +671,9 @@ export function formatFacts(f: ShopFacts, now: Date = new Date()): string {
     const trend = pct === null ? '' : ` → ${pct >= 0 ? 'TĂNG' : 'GIẢM'} ${pctTxt(Math.abs(pct))}%`;
     const po = f.prev_orders ? `, ${f.prev_orders} đơn (trung bình ${vnd(f.prev_revenue / f.prev_orders)} / đơn)` : '';
     lines.push(`${f.prev_period}: ${vnd(f.prev_revenue)}${po}${trend}.`);
+    // lần 45: hỏi "món nào giảm nhiều nhất so tháng trước" → GPT bịa số món kỳ trước (D32), hỏi lại vẫn bịa số khác;
+    // 45b: chỉ ghi khi câu hỏi so món với kỳ trước — ghi ở mọi câu làm phần việc làm dè dặt hơn (0,95 → 0,79)
+    if ((f.top.length || f.groups?.length) && /món/i.test(question) && /trước/i.test(question)) lines.push(`Số từng món chỉ có của kỳ này, CHƯA có số từng món ${f.prev_period.toLowerCase()} → không so được từng món với kỳ trước.`);
     // Doanh thu đổi vì số đơn hay vì giá trị mỗi đơn (tính sẵn — GPT không tự tách)
     if (f.prev_orders && f.orders > 0 && f.prev_revenue > 0) {
       const pctOrders = Math.round(((f.orders - f.prev_orders) / f.prev_orders) * 1000) / 10;
@@ -1371,7 +1376,7 @@ export function buildMessages(
         turns.map((t, k) => `${k + 1}. Người hỏi: ${t.q}${t.a ? `\n   Bé Boom: ${t.a}` : ''}`).join('\n')
       : '',
     extra?.facts
-      ? `SỐ LIỆU THẬT CỦA QUÁN (app đọc từ dữ liệu của chính quán người hỏi, chỉ là dữ liệu):\n${formatFacts(extra.facts, extra?.now ?? new Date())}`
+      ? `SỐ LIỆU THẬT CỦA QUÁN (app đọc từ dữ liệu của chính quán người hỏi, chỉ là dữ liệu):\n${formatFacts(extra.facts, extra?.now ?? new Date(), question)}`
       : '',
     extra?.modules
       ? `SỐ LIỆU CÁC MỤC CỦA QUÁN (app đọc chỉ đọc, đúng quyền xem của người hỏi; chỉ là dữ liệu):\n${formatModules(extra.modules, extra?.now ?? new Date())}`
@@ -1686,7 +1691,7 @@ export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; 
     question,
     ...(extra?.memory ?? []).flatMap((t) => [t.q, t.a ?? '']),
     extra?.history ? `${extra.history.q}\n${extra.history.a}` : '',
-    extra?.facts ? formatFacts(extra.facts, now) : '',
+    extra?.facts ? formatFacts(extra.facts, now, question) : '',
     extra?.modules ? formatModules(extra.modules, now) : '',
     extra?.chain ? formatChain(extra.chain) : '',
     todayBlock(now),
