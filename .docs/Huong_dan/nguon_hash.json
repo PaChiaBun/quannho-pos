@@ -135,7 +135,7 @@
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "thu-chi.md": {
-      "lib/core/services/store_auth_service.dart": "7249691cf8c6c380",
+      "lib/core/services/store_auth_service.dart": "59840f57a6a72f38",
       "lib/core/widgets/order_detail_dialog.dart": "885bce66b222166e",
       "lib/modules/finance/providers/finance_providers.dart": "5d916c446a0b538b",
       "lib/modules/finance/repository/finance_repository.dart": "39cb9712d908242b",

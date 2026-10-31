@@ -63,8 +63,9 @@ class SupabaseService {
         'address':     address ?? '',
         'city':        city ?? '',
         'app_version': appVersion ?? '1.0.0',
-        'installed_at': DateTime.now().toIso8601String(),
-        'last_seen_at': DateTime.now().toIso8601String(),
+        // Cột timestamptz hiểu chuỗi không múi giờ là giờ quốc tế: gửi kèm "Z" để không lệch 7 tiếng.
+        'installed_at': DateTime.now().toUtc().toIso8601String(),
+        'last_seen_at': DateTime.now().toUtc().toIso8601String(),
       },
       onConflict: 'email',  // Nếu email đã tồn tại → update thay vì insert
       );
@@ -80,7 +81,7 @@ class SupabaseService {
     if (client == null || email.isEmpty) return;
     try {
       await client.from('shop_registrations').update({
-        'last_seen_at': DateTime.now().toIso8601String(),
+        'last_seen_at': DateTime.now().toUtc().toIso8601String(),
       }).eq('email', email.toLowerCase().trim());
     } catch (_) {}
   }

@@ -256,12 +256,13 @@ class StoreAuthService {
     try {
       await client
           .from('stores')
-          .update({'last_active_at': DateTime.now().toIso8601String()})
+          // Giờ quốc tế (kèm "Z"): chuỗi không múi giờ bị máy chủ lưu lệch 7 tiếng.
+          .update({'last_active_at': DateTime.now().toUtc().toIso8601String()})
           .eq('id', storeId);
       if (deviceId != null) {
         await client
             .from('devices')
-            .update({'last_seen': DateTime.now().toIso8601String()})
+            .update({'last_seen': DateTime.now().toUtc().toIso8601String()})
             .eq('id', deviceId);
       }
     } catch (_) {}
