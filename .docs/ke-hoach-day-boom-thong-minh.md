@@ -421,6 +421,14 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Còn yếu: D37 lượt 2 vẫn "GIAM15 hiệu quả hơn vì bớt nhiều"; chưa gợi ý thu hẹp mã (giảm mức bớt, chỉ giờ vắng, để hết hạn 30/11).
 - Bài học (khớp lần 45b–46): sửa cách VIẾT số để GPT không đọc ngược hiệu quả hơn lời dặn; tính sẵn hướng đúng của phép tính.
 
+### Lần 50 (01/11, Claude chấm kín, đã áp): món chưa bán → ẩn / bớt nhập; nhóm nào lời hơn → chưa so được khi thiếu giá vốn
+
+- Gốc lỗi: dòng "món chưa bán phần nào" trong Điểm cần chú ý không ghi hướng, còn lời nhắc dặn "đưa món chưa bán lên đầu menu" → GPT khuyên giảm giá / quảng bá món không ai gọi (lặp ở nhiều câu chấm l46, l48). D35 "trà sữa với trà trái cây nhóm nào lời hơn": GPT kết luận theo doanh thu dù trà sữa chưa có giá vốn.
+- Sửa: alert món chưa bán ghi "→ hướng đúng là ẨN khỏi menu / bớt nhập nguyên liệu riêng (món mới thêm thì chờ thêm 2 tuần); KHÔNG giảm giá / quảng bá"; 2 chỗ lời nhắc đổi theo (món bán chậm mới đưa lên đầu menu). Câu hỏi có "lời / lãi" và có ≥ 2 nhóm: thêm dòng "Tính sẵn lời theo nhóm" (nhóm nào có giá vốn mấy món, % từng món) → chưa so được nhóm nào lời hơn.
+- Kết quả: chấm kín 68 cặp (34 câu khối đổi × 2 lượt) cạnh bản lần 49b: 10,41 → **11,28/16** (mới hơn 36, kém 18, bằng 14); đúng quán 1,21 → 1,56; D35 5 → 16; D56 10–11 → 15; D10, D32 +3–4. Chẩn đoán 11,10 → 10,40 (10 cặp, lỗi riêng lẻ: bịa thứ, gọi món lời khi không có giá vốn).
+- Còn yếu: vẫn nhắc món chưa bán ở câu không liên quan (dự báo D47); tự ghép combo đắt hơn mua lẻ (D02, D08); D22 "tuần sau" trả kế hoạch 4 tuần.
+- Bài học (khớp 43b, 49b): ghi hướng đúng ngay trong dòng cảnh báo hiệu quả hơn lời dặn chung.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

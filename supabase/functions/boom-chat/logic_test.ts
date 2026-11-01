@@ -501,6 +501,13 @@ Deno.test('Cố vấn: số tính sẵn (nguyên nhân đổi doanh thu, giờ, 
   // lần 45: nói rõ chưa có số từng món kỳ trước
   assert(!t.includes('CHƯA có số từng món'), t);
   assert(formatFacts(parseFacts(base)!, new Date(), 'so tháng trước món nào giảm nhiều nhất').includes('CHƯA có số từng món cùng kỳ tháng trước'));
+  // lần 50: món chưa bán → hướng ẩn / bớt nhập; câu hỏi lời theo nhóm → chưa so được khi nhóm thiếu giá vốn
+  assert(t.includes('nhóm "Bánh": 2 món cả kỳ chưa bán phần nào → hướng đúng là ẨN khỏi menu'), t);
+  assert(!t.includes('Tính sẵn lời theo nhóm'));
+  const gv = { ...base, groups: [base.groups[0], { ...base.groups[1], top: [{ ...it('Bánh mì que', 150, 15000), cost: 6000 }] }] };
+  const lo = formatFacts(parseFacts(gv)!, new Date(), 'cà phê với bánh nhóm nào lời hơn');
+  assert(lo.includes('nhóm "Cà phê" CHƯA có giá vốn món nào; nhóm "Bánh" có giá vốn 1/6 món (Bánh mì que 40%) → CHƯA so được nhóm nào lời hơn'), lo);
+  assert(!formatFacts(parseFacts(gv)!, new Date(), 'tháng này bán sao').includes('Tính sẵn lời theo nhóm'));
   const today = formatFacts(parseFacts({ ...base, period: 'Hôm nay (24/10)' })!);
   assert(!today.includes('chưa bán') && today.includes('Menu đang bán 15 món.'), today);
   // Quán đồ uống: không ghép 2 đồ uống thành combo
