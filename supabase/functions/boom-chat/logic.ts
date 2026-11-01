@@ -1697,13 +1697,36 @@ export function khuyenNguoc(answer: string, ref: string): string[] {
   return out;
 }
 
-/** Mọi lỗi cần hỏi lại (rỗng = câu trả lời qua): số lạ, khuyên ngược món giá vốn cao, lộ chữ nội bộ. */
+// Lần 54 (01/11): Claude chấm — GPT tự ghép combo đắt hơn mua lẻ (D02, D08) và gợi ý topping ở quán không bán topping
+/** Combo đề xuất có giá cao hơn tổng giá lẻ của 2 món (giá lấy từ khối). */
+export function comboDat(answer: string, ref: string): string[] {
+  const price = new Map<string, number>();
+  for (const m of ref.normalize('NFC').matchAll(/([^();:,"\n]{2,40}?) \(\d+ phần, giá ([\d.]+)đ/g)) price.set(m[1].trim().toLowerCase(), +m[2].replace(/\./g, ''));
+  const out: string[] = [];
+  for (const clause of answer.normalize('NFC').split(/\n|;|\.\s/)) {
+    if (!/combo/i.test(clause)) continue;
+    const low = clause.toLowerCase();
+    const hit = [...price.keys()].filter((n) => low.includes(n));
+    // bỏ tên nằm trong tên dài hơn ("cà phê" trong "cà phê sữa đá"; món lẻ trong tên combo có sẵn)
+    const ns = hit.filter((n) => !hit.some((o) => o !== n && o.includes(n)));
+    if (ns.length !== 2) continue;
+    const sum = price.get(ns[0])! + price.get(ns[1])!;
+    const ps = [...clause.matchAll(/(\d{1,3}(?:\.\d{3})+)đ/g)].map((m) => +m[1].replace(/\./g, ''));
+    if (ps.length && Math.min(...ps) > sum) out.push(`${ns.join(' + ')} ${vnd(Math.min(...ps))}, mua lẻ chỉ ${vnd(sum)}`);
+  }
+  return out;
+}
+
+/** Mọi lỗi cần hỏi lại (rỗng = câu trả lời qua): số lạ, khuyên ngược món giá vốn cao, lộ chữ nội bộ, combo đắt hơn lẻ, topping quán không bán. */
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const bad = soLa(answer, ref);
   const nguoc = khuyenNguoc(answer, ref);
+  const dat = comboDat(answer, ref);
   return [
     ...(bad.length ? [`các số sau KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')} → bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới`] : []),
     ...(nguoc.length ? [`khuyên giảm giá / tặng / đẩy mạnh món có giá vốn CAO HƠN MỐC (${nguoc.join(', ')}) là khuyên ngược, càng bán càng mỏng lời → với món đó chỉ khuyên tăng giá nhẹ, giảm định lượng / đổi nguyên liệu, hoặc đẩy món lời tốt hơn thay thế`] : []),
+    ...(dat.length ? [`đề xuất combo ĐẮT HƠN mua lẻ (${dat.join('; ')}) → giá combo phải rẻ hơn tổng giá lẻ 5–10% (dùng đúng combo tính sẵn nếu có) hoặc bỏ đề xuất đó`] : []),
+    ...(/topping/i.test(answer) && /Các nhóm quán đang bán:/.test(ref) && !/topping/i.test(ref) ? ['quán này KHÔNG bán topping (không có trong các nhóm quán đang bán) → bỏ mọi gợi ý tặng / bán topping, thay bằng món rẻ quán đang có'] : []),
     ...(NOI_BO.test(answer) ? ['câu trả lời lộ tên dòng / khối nội bộ (vd "dòng ĐIỂM CẦN CHÚ Ý", "khối ...", "tính sẵn") → nói lý do bằng lời thường cho chủ quán, không nhắc tên dòng'] : []),
   ];
 }

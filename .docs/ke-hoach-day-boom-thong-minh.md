@@ -455,6 +455,14 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Còn yếu: D48 chỉ nói "chưa ước được", không nêu mốc ca tối 16–20h (khối hôm nay chưa có số đó — cần app gửi số ca tối cùng thứ tuần trước); D47 lượt 1 vẫn gán +4,2%.
 - Bài học: dòng mới chỉ thêm cho đúng loại câu (khớp 45b); kiểm khối các câu khác không đổi trước khi chấm.
 
+### Lần 54 (01/11, Claude chấm kín, đã áp): tự kiểm combo đắt hơn mua lẻ, topping ở quán không bán topping
+
+- Gốc lỗi: GPT tự ghép combo ngoài "Combo tính sẵn" với giá cao hơn tổng giá lẻ (D02 Trà tắc + Bánh mì thịt 45.000đ khi lẻ 43.000đ; D08 Cơm sườn + Trà đá 45.000đ); gợi ý tặng topping ở quán cà phê / quán bún (D22, D33, D51). Mỗi lỗi ~3/120 câu.
+- Sửa: `comboDat` (câu có "combo" + đúng 2 tên món có giá trong khối, bỏ tên nằm trong tên dài hơn; giá nhỏ nhất trong câu > tổng lẻ → lỗi) và lỗi topping (câu có "topping", khối có "Các nhóm quán đang bán" mà không có chữ topping) thêm vào `kiemTraLoi` → hỏi lại 1 lần. Thử trên 240 câu cũ: bắt 6, không bắt nhầm.
+- Kết quả: sinh lại D02, D08, D22, D33, D51 × 3 lượt; chấm kín 7 câu bị bắt (trước / sau hỏi lại): 7,71 → **10,43/16**, 7/7 tốt hơn; dùng số 0,29 → 1,86.
+- Còn yếu: D02 sau hỏi lại dùng combo sáng (Cà phê sữa đá + Bánh mì thịt) cho khung chiều thay vì món bán chạy chiều.
+- Bài học: lỗi hiếm nhưng rõ ràng → bắt bằng tự kiểm (chỉ tốn khi sai) thay vì thêm dòng vào mọi khối.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

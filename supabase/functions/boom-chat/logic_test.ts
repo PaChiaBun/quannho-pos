@@ -19,6 +19,7 @@ import {
   khuyenNguoc,
   MAU_LOAI,
   MAU_KE_HOACH_TUAN,
+  comboDat,
   kiemTraLoi,
   noteKiem,
   soLa,
@@ -928,4 +929,14 @@ Deno.test('Lần 42: khuyên ngược món giá vốn cao + lộ chữ nội b�
 Deno.test('Lần 45: khoản chi chỉ có tổng — ghi rõ chưa có số từng mặt hàng', () => {
   const t = formatModules(parseModules({ finance: { period: 'Tháng này', income: 100000000, expense: 60000000, auto_income: 100000000, top_expense: [{ name: 'Nguyên liệu (thịt, rau)', amount: 30000000 }] } })!, new Date('2026-10-28T10:00:00+07:00'));
   assertStringIncludes(t, 'CHƯA có số riêng từng mặt hàng trong khoản');
+});
+
+Deno.test('Lần 54: combo đắt hơn mua lẻ, topping ở quán không bán topping → hỏi lại', () => {
+  const ref = 'NHÓM "Món chính": Cơm sườn (15 phần, giá 40.000đ, 600.000đ); Cơm sườn trứng (5 phần, giá 48.000đ, 240.000đ). NHÓM "Đồ uống": Trà đá (18 phần, giá 3.000đ, 54.000đ).\nCác nhóm quán đang bán: Món chính, Đồ uống (ngoài các nhóm này quán KHÔNG có).';
+  assertEquals(comboDat('Việc tuần này: thử combo cơm sườn + trà đá 45.000đ, đo số combo.', ref), ['cơm sườn + trà đá 45.000đ, mua lẻ chỉ 43.000đ']);
+  assertEquals(comboDat('Việc tuần này: combo Cơm sườn + Trà đá: lẻ 43.000đ → 39.000đ.', ref), []);
+  // "cơm sườn" nằm trong "cơm sườn trứng" → chỉ tính tên dài
+  assertEquals(comboDat('Combo Cơm sườn trứng + Trà đá 50.000đ.', ref), []);
+  assert(kiemTraLoi('Dạ Anh, tặng topping cho khách quen.', ref).some((x) => x.includes('KHÔNG bán topping')));
+  assertEquals(kiemTraLoi('Dạ Anh, tặng topping cho khách quen.', ref + ' NHÓM "Topping": Trân châu (40 phần, giá 6.000đ).').filter((x) => x.includes('topping')), []);
 });
