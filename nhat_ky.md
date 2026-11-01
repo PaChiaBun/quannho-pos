@@ -3,6 +3,18 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-11-01 — Phát hành 1.0.6 (build 22): APK + web /pos + Windows lên web (Chủ Quán "Bỏ qua, phát hành")
+
+- ✅ Commit `f32a586` (nhánh `feature/ai-bum-ui`, đã push): `pubspec.yaml` 1.0.5+21 → **1.0.6+22**; `windows/installer.iss` ghi đúng 1.0.6 (trước còn "1.0.1"). Gồm 53 commit từ 1.0.5+21: Boom lần 40–49b, giao diện Sunmi 360dp, gửi/huỷ phiếu bếp ở quầy (một phiên mỗi giỏ qua `send_kitchen_ticket_v2`, số "Mang đi N"), in bill Sunmi (máy in liền thân, báo lỗi ngay), lệch giờ 7 tiếng, Kho, QC 01/11. Build từ worktree sạch `quan_nho_ux` (thư mục chính còn việc dở của phiên khác: Lương, Thu chi, Vận hành).
+- ⚠️ Chưa thử luồng **thu ngân** (huỷ phiếu bếp có PIN quản lý) trên máy thật — Chủ Quán chọn bỏ qua để phát hành; đã kiểm theo luật máy chủ (một giỏ một phiên → một lượt PIN).
+- ✅ **APK** `QuanNhoPOS-latest.apk` (124.641.359 B, SHA-256 `3b45e85ac447d4f0…`, versionCode 22 / 1.0.6, ký LPM Digital) thay nguyên tử ở `/var/www/lpm-web/public/` + `public/download/`; HTTP công khai 200, mã băm khớp. Bản cũ (22/10) sao lưu `/root/quannho-backups/web-download/apk_{root,download}_truoc_106b22_20261101_070947.apk`.
+- ✅ **Web /pos**: `main.dart.js` `759b44a9af60` (bản trước `c7bc6789eabc`), `version.json` 1.0.6/22; sao lưu `/var/www/quannho/pos_backup_20261101_071022`; trang đăng nhập 0 lỗi console.
+- ✅ **Windows**: workflow `Windows Release Builder` run 41255272201 thành công đúng `f32a586`; msix 1.0.6.0, `app.so` có `pos_mang_di_so_`, `kho_an_dai_kho_nang_cao`, `send_kitchen_ticket_v2`. `QuanNhoPOS-latest.exe` (62.951.608 B, SHA-256 `8bc23deb738f04fe…`) thay nguyên tử 2 chỗ; HTTP công khai 200, khớp. Bản +21 sao lưu `/root/quannho-backups/web-download/exe_{root,download}_truoc_106b22_20261101_074008.exe`.
+- 📦 Bản cài lưu ở `Quan Nho/release-builds/1.0.6-22/` (APK, AAB cho Google Play, Setup.exe).
+- 🔲 **`app_versions` CHƯA ghi** (lệnh đọc/ghi DB production qua SSH bị hệ thống quyền chặn): tệp sẵn `db-fix/phat_hanh_106b22_app_versions.sql` (Android 1.0.6/22 không bắt buộc; dòng Windows để chú thích — chỉ chạy khi Chủ Quán muốn; iOS chỉ sau khi Apple duyệt). Chưa ghi thì máy cũ không tự báo cập nhật; tải tay từ web vẫn ra 1.0.6.
+- 🔲 Google Play: tải `QuanNhoPOS-1.0.6-build22.aab` lên Play Console. App Store: chưa archive iOS (cần Xcode + ký) — làm khi Chủ Quán muốn.
+- Hoàn tác: chép các tệp sao lưu trên về đúng chỗ; web `/pos`: `rsync -a --delete /var/www/quannho/pos_backup_20261101_071022/ /var/www/quannho/pos/`.
+
 ## 2026-10-29 — Bò Đen (Sunmi V3): hết lag + chỉnh giao diện màn 360dp (8 commit, CHƯA push; chỉ mục DB ĐÃ ÁP production)
 
 - ⚠️ Chủ Quán báo tối 28/10 xem thu chi, bill cũ, thêm món bàn rất lag. Đo trên máy + nhật ký nginx/pg_stat_statements: 5 nguyên nhân cộng dồn.
