@@ -3,6 +3,17 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-11-02 — Phát hành 1.0.6 (build 23): APK + web /pos + Windows lên web (Chủ Quán "Oke duyệt thực hiện đi")
+
+- ✅ Commit `4fcade8` (nhánh `feature/ai-bum-ui`, đã push): `pubspec.yaml` 1.0.6+22 → **1.0.6+23**. Gồm Boom lần 54–59, chính là app gửi số kỳ trước chia nhỏ cho Boom (doanh thu kỳ trước theo giờ / thứ / nhóm món + món đổi nhiều nhất; `boom_read_only_data_service.dart`, `boom_chat_provider.dart`). Máy chủ boom-chat đã áp lần 59 từ trước (`db-fix/boom_l59_ap_dung.sh`, TS 20261102_013340). Build từ worktree sạch `quan_nho_ux` (detached ở `4fcade8`).
+- ✅ **APK** `QuanNhoPOS-latest.apk` (124.657.747 B, SHA-256 `e537b0783b0d5231…`, versionCode 23 / 1.0.6, ký LPM Digital) thay nguyên tử ở `/var/www/lpm-web/public/` + `public/download/`; HTTP công khai khớp mã băm. Bản 22 sao lưu `/root/quannho-backups/web-download/apk_{root,download}_truoc_106b23_20261102_020034.apk`.
+- ✅ **Web /pos**: `main.dart.js` `e1b44609b977d3f3` (có `prev_by_hour`), `version.json` 1.0.6/23; sao lưu `/var/www/quannho/pos_backup_20261102_020109`; trang đăng nhập mở được, console 0 lỗi. Hoàn tác: `rsync -a --delete /var/www/quannho/pos_backup_20261102_020109/ /var/www/quannho/pos/`.
+- ✅ **Windows**: workflow `Windows Release Builder` run 41339227159 thành công đúng `4fcade8`; msix 1.0.6.0, `app.so` có `prev_by_hour`. `QuanNhoPOS-latest.exe` (62.949.249 B, SHA-256 `ea1346756acfa0bf…`) thay nguyên tử 2 chỗ; HTTP công khai khớp. Bản 22 sao lưu `/root/quannho-backups/web-download/exe_{root,download}_truoc_106b23_20261102_025640.exe`.
+- 📦 Bản cài lưu ở `Quan Nho/release-builds/1.0.6-23/` (APK, AAB cho Google Play, Setup.exe).
+- 🔲 **`app_versions` CHƯA ghi**: tệp sẵn `db-fix/phat_hanh_106b23_app_versions.sql` (Android 1.0.6/23 không bắt buộc; dòng Windows để chú thích; iOS chỉ sau khi Apple duyệt). Chưa ghi thì máy cũ không tự báo cập nhật; tải tay từ web vẫn ra build 23.
+- 🔲 Google Play: tải `QuanNhoPOS-1.0.6-build23.aab` lên Play Console. App Store: chưa archive iOS.
+- ⚠️ Chưa thử Boom bằng tài khoản quán thật trên bản mới (số kỳ trước chỉ có khi app mới gửi; app cũ vẫn chạy như trước).
+
 ## 2026-11-01 — Phát hành 1.0.6 (build 22): APK + web /pos + Windows lên web (Chủ Quán "Bỏ qua, phát hành")
 
 - ✅ Commit `f32a586` (nhánh `feature/ai-bum-ui`, đã push): `pubspec.yaml` 1.0.5+21 → **1.0.6+22**; `windows/installer.iss` ghi đúng 1.0.6 (trước còn "1.0.1"). Gồm 53 commit từ 1.0.5+21: Boom lần 40–49b, giao diện Sunmi 360dp, gửi/huỷ phiếu bếp ở quầy (một phiên mỗi giỏ qua `send_kitchen_ticket_v2`, số "Mang đi N"), in bill Sunmi (máy in liền thân, báo lỗi ngay), lệch giờ 7 tiếng, Kho, QC 01/11. Build từ worktree sạch `quan_nho_ux` (thư mục chính còn việc dở của phiên khác: Lương, Thu chi, Vận hành).
