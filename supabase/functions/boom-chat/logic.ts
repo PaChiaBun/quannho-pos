@@ -790,6 +790,17 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
   }
   if (f.by_band) {
     const bn = ['Sáng (5–11h)', 'Trưa (11–14h)', 'Chiều (14–17h)', 'Tối (từ 17h)'];
+    // lần 56: quán nghỉ giữa ngày (vd 14–16h) — nhãn cố định "Chiều (14–17h)" làm GPT đẩy ưu đãi vào giờ quán đóng (D18, D28)
+    const hrs = (f.by_hour ?? []).map((v, h) => (v > 0 ? h : -1)).filter((h) => h >= 0);
+    const gaps = hrs.slice(1).map((h, i) => [hrs[i] + 1, h]).filter(([a, b]) => b > a);
+    if (gaps.length) {
+      const rng = [[5, 11], [11, 14], [14, 17], [17, 24]];
+      rng.forEach(([lo, hi], k) => {
+        const open = hrs.filter((h) => h >= lo && h < hi);
+        const off = gaps.filter(([a, b]) => a < hi && b > lo).map(([a, b]) => `quán nghỉ ${a}–${b}h`);
+        if (open.length) bn[k] = `${bn[k].split(' (')[0]} (${open[0]}–${open[open.length - 1] + 1}h${off.length ? `, ${off.join(', ')}` : ''})`;
+      });
+    }
     const parts = f.by_band.map((b, k) => (b.length ? `${bn[k]}: ${b.map((x) => `${x.name} ${x.qty}`).join(', ')}` : '')).filter(Boolean);
     if (parts.length) lines.push(`Món bán chạy theo khung giờ (số phần): ${parts.join('; ')}.`);
   }

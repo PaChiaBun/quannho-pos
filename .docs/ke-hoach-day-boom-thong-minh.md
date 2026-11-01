@@ -463,6 +463,23 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Còn yếu: D02 sau hỏi lại dùng combo sáng (Cà phê sữa đá + Bánh mì thịt) cho khung chiều thay vì món bán chạy chiều.
 - Bài học: lỗi hiếm nhưng rõ ràng → bắt bằng tự kiểm (chỉ tốn khi sai) thay vì thêm dòng vào mọi khối.
 
+### Mốc lần 54 (01/11, Claude chấm 60 câu lượt 1): khoảng 11,2/16
+
+- Hai gói 11,9 / 10,53. Yếu nhất: việc làm 0,93, lý lẽ 1,13, tìm vấn đề 1,2. Nhóm lỗi: việc chung chung 34/60, bỏ sót vấn đề 15, lạc đề 6, trái hồ sơ 4 (giờ nghỉ, ngày nghỉ), bịa "mỗi đơn chỉ 1 món" (chép mẫu) 2.
+
+### Lần 55 (01/11, bỏ): tự kiểm việc chung chung + đổi "mỗi đơn chỉ 1 món" trong mẫu kế hoạch
+
+- Tự kiểm bắt "theo dõi doanh thu", "tăng cường quảng bá"… (12/60 câu bị hỏi lại); mẫu kế hoạch đổi thành "đồ uống chỉ 0,3 phần / đơn".
+- Chấm kín 21 câu cạnh mốc 54: 10,76 → 10,67. Câu bị hỏi lại 10,83 → 11,00 (việc làm 0,83 → 1,08) — lợi nhỏ, tốn thêm 1 lần gọi GPT cho 1/5 câu; câu kế hoạch 10,67 → 10,22 → bỏ cả hai.
+- Bài học: bỏ cụm chung chung không làm việc làm cụ thể hơn bao nhiêu; GPT thay bằng việc khác cũng chung.
+
+### Lần 56 (01/11, Claude chấm kín, CHỜ ÁP): quán nghỉ giữa ngày → nhãn khung giờ theo giờ có bán
+
+- Gốc lỗi: nhãn khung cố định "Chiều (14–17h)" → quán C nghỉ 14–16h bị đề xuất giảm giá khung 14–17h (D28), khuyên "đóng ca từ 20h" (D18).
+- Sửa: quán có giờ nghỉ giữa ngày (khoảng trống trong giờ có bán) → nhãn ghi giờ thật có bán + "quán nghỉ a–bh" (vd "Chiều (16–17h, quán nghỉ 14–16h)", "Tối (17–20h)"); quán khác giữ nhãn cũ. Chỉ khối 10 câu quán C đổi.
+- Kết quả: chấm kín 10 câu × 2 lượt cạnh mốc 54: 9,6 → **10,3/16**; đúng quán 1,50 → 1,80; thận trọng 1,20 → 1,45; D18 2 / 4 → 11 / 8; D28 5 → 8. Nói tiếp (D57, D58) 10,5 → 9,0: ghi ca tối 17–20h thay vì 16–20h.
+- Áp: `db-fix/boom_l56_ap_dung.sh` — lần chạy đầu bị chặn ở bước triển khai, chờ Chủ Quán duyệt.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

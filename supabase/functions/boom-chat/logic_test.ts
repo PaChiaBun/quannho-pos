@@ -940,3 +940,15 @@ Deno.test('Lần 54: combo đắt hơn mua lẻ, topping ở quán không bán t
   assert(kiemTraLoi('Dạ Anh, tặng topping cho khách quen.', ref).some((x) => x.includes('KHÔNG bán topping')));
   assertEquals(kiemTraLoi('Dạ Anh, tặng topping cho khách quen.', ref + ' NHÓM "Topping": Trân châu (40 phần, giá 6.000đ).').filter((x) => x.includes('topping')), []);
 });
+
+Deno.test('Lần 56: quán nghỉ giữa ngày → nhãn khung giờ theo giờ có bán', () => {
+  const h = Array(24).fill(0);
+  for (const x of [6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19]) h[x] = 100;
+  const band = [[{ name: 'Bún bò', qty: 8 }], [{ name: 'Cơm sườn', qty: 10 }], [{ name: 'Cơm sườn', qty: 1 }], [{ name: 'Bún thịt nướng', qty: 5 }]];
+  const base = { period: 'Tháng này', revenue: 1200, orders: 12, top: [], slow: [], by_hour: h, by_band: band };
+  const t = formatFacts(parseFacts(base)!);
+  assert(t.includes('Sáng (6–11h): Bún bò 8; Trưa (11–14h): Cơm sườn 10; Chiều (16–17h, quán nghỉ 14–16h): Cơm sườn 1; Tối (17–20h): Bún thịt nướng 5'), t);
+  // không nghỉ giữa ngày → giữ nhãn cũ
+  const h2 = h.map((v, i) => (i >= 6 && i <= 19 ? 100 : 0));
+  assert(formatFacts(parseFacts({ ...base, by_hour: h2 })!).includes('Sáng (5–11h): Bún bò 8'));
+});
