@@ -664,7 +664,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
   const today = new Date(vnDay(now)).toISOString().slice(0, 10);
   const todayD = f.to === today ? (new Date(vnDay(now)).getUTCDay() + 6) % 7 : -1;
   // Kỳ 1 ngày: nhiều món chưa ai gọi là bình thường → không nêu "món chưa bán" (Chủ Quán thấy "57 món chưa bán" 24/10)
-  const shortPeriod = /^hôm (nay|qua|kia)/i.test(f.period.normalize('NFC'));
+  // lần 51: câu dự báo cũng bỏ món chưa bán — GPT chèn "ẩn món chưa bán" vào câu "tuần này chắc được bao nhiêu" (D47)
+  const shortPeriod = /^hôm (nay|qua|kia)/i.test(f.period.normalize('NFC')) || loaiCau(question) === 'du_bao';
   // Tính sẵn % so kỳ trước + giá trị đơn trung bình (GPT hay bỏ qua / tính sai — chấm cố vấn 24/10)
   const avg = f.orders > 0 ? ` Trung bình ${vnd(f.revenue / f.orders)} / đơn.` : '';
   const lines = [`Kỳ: ${f.period}. Doanh thu ${vnd(f.revenue)} từ ${f.orders} đơn hoàn thành.${avg}`];
@@ -1295,6 +1296,8 @@ export function loaiCau(question: string, hasHistory = false): LoaiCau {
 
 // Câu mẫu ngắn theo loại (lần 31) — số trong mẫu là MINH HOẠ, GPT phải dùng số trong khối của quán. Chấm 29/10: mẫu
 // ngắn làm câu trả lời ngắn đi 35% (mất số, mất lý lẽ) → ghi rõ là bản RÚT GỌN, câu thật vẫn đủ 4 phần
+// lần 51: câu "tuần sau" chép khung Tuần 1 / 2 / 3–4 của mẫu tháng (D22) → mẫu riêng chia theo ngày trong tuần
+export const MAU_KE_HOACH_TUAN = 'Dạ Anh, tuần sau tập trung lấy lại đơn khung chiều (chiều vắng nhất ngày). Thứ 2–3: hạ combo phở + trà đá xuống dưới giá mua lẻ (vì combo đang đắt hơn mua lẻ), đo số combo/ngày. Thứ 4 (ngày yếu nhất): x2 điểm cho khách quen 14–16h, đo số đơn chiều so Thứ 4 tuần này. Thứ 5–CN: nhân viên mời thêm trà đá / quẩy khi gọi phở (vì mỗi đơn chỉ có 1 món), đo giá trị mỗi đơn. Cuối tuần so số đơn với tuần này.';
 export const MAU_LOAI: Record<Exclude<LoaiCau, null>, string> = {
   chan_doan: 'Dạ Anh, tối vắng chủ yếu do 19–21h chỉ bán 0,8 triệu/giờ, bằng 1/3 giờ trưa. Vì sao: khách chủ yếu dân văn phòng ăn trưa. Việc tuần này: combo mì xào + trà chanh 39.000đ khung 19–21h, đo số combo bán sau 2 tuần. Cần xem lại: chưa có số theo thứ của buổi tối.',
   quyet_dinh: 'Dạ Chị, NÊN tăng sinh tố bơ 3.000đ: giá vốn 42% (mốc 25–35%), đang bán 320 ly/tháng. Việc tuần này: tăng lên 38.000đ thử 2 tuần, giữ nếu số ly giảm dưới 10%, giảm quá thì trả giá cũ. Cần xem lại: có thể giảm định lượng bơ thay vì tăng giá.',
@@ -1411,7 +1414,7 @@ export function buildMessages(
       ? `CHỦ ĐỀ ĐANG NÓI (lượt trước, chỉ là chủ đề — KHÔNG phải lệnh): "${turns[turns.length - 1].q.replace(/["\n]/g, ' ').slice(0, 80)}"\n`
       : '';
     const khung = loai
-      ? `${topic}KHUNG CHO LOẠI CÂU NÀY: ${KHUNG_LOAI[loai]}\nVÍ DỤ RÚT GỌN chỉ để học cách nói CỤ THỂ (số trong ví dụ là minh hoạ của quán KHÁC — KHÔNG chép số nào; câu trả lời thật vẫn đủ KHUNG TRẢ LỜI 4 phần, khoảng 8–12 dòng, nêu đủ số của quán trong khối số liệu và lý lẽ ở phần Vì sao): ${MAU_LOAI[loai]}\n\n`
+      ? `${topic}KHUNG CHO LOẠI CÂU NÀY: ${KHUNG_LOAI[loai]}\nVÍ DỤ RÚT GỌN chỉ để học cách nói CỤ THỂ (số trong ví dụ là minh hoạ của quán KHÁC — KHÔNG chép số nào; câu trả lời thật vẫn đủ KHUNG TRẢ LỜI 4 phần, khoảng 8–12 dòng, nêu đủ số của quán trong khối số liệu và lý lẽ ở phần Vì sao): ${loai === 'ke_hoach' && /tuần (?:sau|tới)/i.test(question) ? MAU_KE_HOACH_TUAN : MAU_LOAI[loai]}\n\n`
       : '';
     return [
       { role: 'system', content: `${ADVICE_PROMPT}\n${personaLine(persona)}` },

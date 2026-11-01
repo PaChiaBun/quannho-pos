@@ -18,6 +18,7 @@ import {
   loaiCau,
   khuyenNguoc,
   MAU_LOAI,
+  MAU_KE_HOACH_TUAN,
   kiemTraLoi,
   noteKiem,
   soLa,
@@ -508,6 +509,9 @@ Deno.test('Cố vấn: số tính sẵn (nguyên nhân đổi doanh thu, giờ, 
   const lo = formatFacts(parseFacts(gv)!, new Date(), 'cà phê với bánh nhóm nào lời hơn');
   assert(lo.includes('nhóm "Cà phê" CHƯA có giá vốn món nào; nhóm "Bánh" có giá vốn 1/6 món (Bánh mì que 40%) → CHƯA so được nhóm nào lời hơn'), lo);
   assert(!formatFacts(parseFacts(gv)!, new Date(), 'tháng này bán sao').includes('Tính sẵn lời theo nhóm'));
+  // lần 51: câu dự báo không nêu món chưa bán
+  const db = formatFacts(parseFacts(base)!, new Date(), 'tháng này chắc được bao nhiêu');
+  assert(!db.includes('chưa bán') && db.includes('Menu đang bán 15 món.'), db);
   const today = formatFacts(parseFacts({ ...base, period: 'Hôm nay (24/10)' })!);
   assert(!today.includes('chưa bán') && today.includes('Menu đang bán 15 món.'), today);
   // Quán đồ uống: không ghép 2 đồ uống thành combo
@@ -904,6 +908,9 @@ Deno.test('Lần 42: khuyên ngược món giá vốn cao + lộ chữ nội b�
   assert(kiemTraLoi('Dạ Anh, hạ giá combo (vì dòng ĐIỂM CẦN CHÚ Ý ghi combo đắt hơn mua lẻ).', ref).some((x) => x.includes('nội bộ')));
   assertEquals(kiemTraLoi('Dạ Anh, NÊN tăng giá Bạc xỉu: giá vốn 45%, bán 610 phần. Việc tuần này: tăng 2.000đ thử 2 tuần.', ref), []);
   assert(!/dòng [A-ZĐ]|khối [A-ZĐ]/.test(MAU_LOAI.ke_hoach));
+  assert(!/Tuần [1-4]|dòng [A-ZĐ]|khối [A-ZĐ]/.test(MAU_KE_HOACH_TUAN));
+  assert(JSON.stringify(buildMessages('tuần sau nên làm gì cho quán', [])).includes('Thứ 4 (ngày yếu nhất)'));
+  assert(JSON.stringify(buildMessages('lên kế hoạch tháng 11 giúp em', [])).includes('Tuần 3–4'));
 });
 
 Deno.test('Lần 45: khoản chi chỉ có tổng — ghi rõ chưa có số từng mặt hàng', () => {

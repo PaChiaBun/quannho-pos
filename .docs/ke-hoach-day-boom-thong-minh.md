@@ -429,6 +429,15 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Còn yếu: vẫn nhắc món chưa bán ở câu không liên quan (dự báo D47); tự ghép combo đắt hơn mua lẻ (D02, D08); D22 "tuần sau" trả kế hoạch 4 tuần.
 - Bài học (khớp 43b, 49b): ghi hướng đúng ngay trong dòng cảnh báo hiệu quả hơn lời dặn chung.
 
+### Lần 51 / 51b / 51c (01/11, Claude chấm kín, đã áp 51): hỏi "tuần sau" chia theo ngày; câu dự báo bỏ món chưa bán
+
+- Gốc lỗi: câu mẫu kế hoạch là mẫu tháng (Tuần 1 / 2 / 3–4) → D22 "tuần sau nên làm gì" trả kế hoạch 4 tuần dù khung đã dặn chia theo đúng khoảng thời gian. Câu dự báo (D47) chèn "ẩn món chưa bán".
+- Lần 51 (áp): câu kế hoạch có "tuần sau / tuần tới" dùng `MAU_KE_HOACH_TUAN` (Thứ 2–3 / Thứ 4 / Thứ 5–CN); câu loại dự báo bỏ món chưa bán khỏi khối (dùng chung cờ của kỳ 1 ngày).
+- Kết quả: chấm kín 12 cặp (D22 + 5 câu dự báo có khối × 2 lượt) cạnh bản lần 50: 9,42 → **10,33/16**; D22 8 / 6 → 12 / 12; dự báo 9,9 → 10,0 (hết nhắc món chưa bán nhưng vẫn chèn tăng giá / quảng bá lạc đề).
+- Lần 51b (bỏ): mẫu tuần khác (quán mì, tối vắng, cuối tuần đông) → GPT chép "cuối tuần đông hơn" cho quán văn phòng. Lần 51c (bỏ): mẫu chỉ có chỗ trống <…> → câu chung chung, mất điểm yếu chính.
+- Còn yếu: D22 chép 2 ý của mẫu ("mỗi đơn chỉ 1 món", "x2 điểm"); câu dự báo gán % của số so cùng kỳ cho cả tháng / tuần, không nói ngày còn lại yếu / mạnh.
+- Bài học: GPT chép nội dung câu mẫu → mẫu cần sát loại câu nhưng ý trong mẫu không được trái dữ liệu phổ biến; mẫu rỗng thì mất cụ thể.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D22_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bịa 'mỗi đơn chỉ 1 món' (thực ~1,2 phần) và chương trình x2 điểm quán chưa chắc có; không nêu giảm 4,7% do số đơn."
+  },
+  {
+   "id": "D22_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bịa 'mỗi đơn chỉ 1 món' và chương trình x2 điểm; không nêu doanh thu giảm 4,7% do số đơn."
+  },
+  {
+   "id": "D41_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Gán mức giảm 14,2% (số 1–28) cho cả tháng và không chỉ ra Thứ 7 chỉ ~40% ngày thường, Chủ nhật nghỉ."
+  },
+  {
+   "id": "D41_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Gán giảm 14,2% cho cả tháng, chèn việc combo/quảng bá lạc đề và bỏ sót Thứ 7 thấp."
+  },
+  {
+   "id": "D42_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khẳng định tháng 11 có khả năng tăng mà không nói chưa có dự báo, lại khuyên quảng bá combo đang đắt hơn mua lẻ."
+  },
+  {
+   "id": "D42_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khẳng định tháng 11 có khả năng tăng không kèm cảnh báo thiếu số, việc khuyến mãi lễ chung chung."
+  },
+  {
+   "id": "D45_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Dùng mức +2,2% (số 1–28) như ước cả tháng 10, lý lẽ lạc sang tháng 10 và không nêu 24–25/12 rơi Thứ 5–6, tối/cuối tuần đông."
+  },
+  {
+   "id": "D45_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Lý lẽ chung chung kiểu 'tháng 11–12 nhiều sự kiện', không gắn với số liệu quán hay việc chuẩn bị cụ thể."
+  },
+  {
+   "id": "D47_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gán +4,2% cho cả tuần, không nói cuối tuần đông nên nhân 7 là mức thấp, chèn việc tăng giá Trà dâu tây lạc đề."
+  },
+  {
+   "id": "D47_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gán +4,2% cho cả tuần, chèn tăng giá Trà dâu tây và quảng bá Topping lạc đề với câu dự báo."
+  },
+  {
+   "id": "D48_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Ước ~3 triệu/61 đơn không có cơ sở, bỏ qua ca tối 16–20h còn chưa bán."
+  },
+  {
+   "id": "D48_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gọi ~3 triệu là 'dự báo' không có căn cứ và bỏ qua ca tối 16–20h."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D22_1",
+   "diem": {
+    "thang": 0,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Hỏi tuần sau mà trả kế hoạch 4 tuần, bỏ sót khung 14–16h vắng nhất và không nêu doanh thu giảm 4,7%."
+  },
+  {
+   "id": "D22_2",
+   "diem": {
+    "thang": 0,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Hỏi tuần sau mà trả kế hoạch 4 tuần, lại tặng topping trong khi quán không bán topping."
+  },
+  {
+   "id": "D41_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Số ước đúng nhưng không giải thích phần 3 ngày còn lại gồm Thứ 7 thấp và không có việc cụ thể."
+  },
+  {
+   "id": "D41_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Số ước đúng nhưng không nêu Thứ 7 thấp kéo phần ước xuống, không có việc cụ thể."
+  },
+  {
+   "id": "D42_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Việc làm chung chung và chỉ sai hướng (chú ý giờ đông thay vì lấy lại số đơn giờ vắng)."
+  },
+  {
+   "id": "D42_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Câu đầu nói vòng 'còn phụ thuộc', lý lẽ hiển nhiên và không có việc làm cụ thể."
+  },
+  {
+   "id": "D45_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Không chỉ ra 24/12 Thứ 5, 25/12 Thứ 6 và giờ tối đông; việc 'khuyến mãi, menu đặc biệt' chung chung."
+  },
+  {
+   "id": "D45_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Dài, lặp, so tháng 12 với tháng 11 không có số; không chỉ ngày Noel rơi thứ mấy và giờ tối đông."
+  },
+  {
+   "id": "D47_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gán +4,2% cho cả tuần và không nói cuối tuần đông hơn nên ước nhân 7 còn thấp."
+  },
+  {
+   "id": "D47_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Chèn việc tăng giá Trà dâu tây lạc đề và bịa có món chưa bán để ẩn khỏi menu."
+  },
+  {
+   "id": "D48_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Ước 3 triệu không có căn cứ, nói 'buổi chiều' mà không nhắc ca tối 16–20h và không nêu giảm 4,6%."
+  },
+  {
+   "id": "D48_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không trả lời phần ước cả ngày, lặp số và không nhắc ca tối 16–20h hay mức giảm 4,6%."
+  }
+ ]
+}
