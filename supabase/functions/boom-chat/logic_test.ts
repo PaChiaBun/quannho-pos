@@ -754,7 +754,9 @@ Deno.test('Giai đoạn 2: tuần chưa trọn / hôm nay dở không gọi là 
   assert(t.includes('Chủ nhật: quán NGHỈ'), t);
   assert(t.includes('Thứ 5 250đ (4 ngày'), t);
   assert(t.includes('Thứ 7 trung bình 13đ/ngày, chỉ bằng 25% một ngày bình thường'), t);
-  assert(t.includes('Dự báo cả tháng (tính sẵn theo trung bình từng thứ, còn 3 ngày)'), t);
+  // lần 52: ghi thứ của ngày còn lại; % so kỳ trước chỉ của phần đã có; câu dự báo không có điểm cần chú ý
+  assert(t.includes('Dự báo cả tháng (tính sẵn theo trung bình từng thứ, còn 3 ngày: Thứ 5 (trung bình 63đ/ngày), Thứ 6 (trung bình 25đ/ngày), Thứ 7 (trung bình 13đ/ngày))'), t);
+  assert(t.includes('ĐIỂM CẦN CHÚ Ý') && !formatFacts(f, NOW, 'cuối tháng 10 được bao nhiêu').includes('ĐIỂM CẦN CHÚ Ý'));
   // lần 46: hỏi tháng khác → không đưa số dự báo tháng này
   for (const q of ['Tháng 11 có khả năng tăng lại không', 'tháng sau bán được bao nhiêu']) {
     const t2 = formatFacts(f, NOW, q);

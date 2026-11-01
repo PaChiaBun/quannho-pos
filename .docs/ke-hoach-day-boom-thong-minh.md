@@ -438,6 +438,14 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Còn yếu: D22 chép 2 ý của mẫu ("mỗi đơn chỉ 1 món", "x2 điểm"); câu dự báo gán % của số so cùng kỳ cho cả tháng / tuần, không nói ngày còn lại yếu / mạnh.
 - Bài học: GPT chép nội dung câu mẫu → mẫu cần sát loại câu nhưng ý trong mẫu không được trái dữ liệu phổ biến; mẫu rỗng thì mất cụ thể.
 
+### Lần 52 (01/11, Claude chấm kín, đã áp): câu dự báo — ngày còn lại theo thứ, % kỳ trước chỉ của phần đã có, bỏ điểm cần chú ý
+
+- Gốc lỗi: câu dự báo gán −14,2% (so cùng kỳ 28 ngày) cho cả tháng, không nói 3 ngày còn lại gồm Thứ 7 yếu (D41); chép Điểm cần chú ý thành việc lạc đề (tăng giá trà dâu, quảng bá topping — D47).
+- Sửa: dòng "Dự báo cả tháng" ghi từng ngày còn lại kèm trung bình / ngày của thứ đó và "% so kỳ trước chỉ là của N ngày đã có, KHÔNG phải % cả tháng" (khi có số kỳ trước); câu loại dự báo không nhận ĐIỂM CẦN CHÚ Ý; khung dự báo dặn việc làm chỉ nhắm ngày / giờ còn lại.
+- Kết quả: chấm kín 20 cặp (10 câu dự báo × 2 lượt) cạnh bản đang chạy: 10,0 → **11,1/16** (mới hơn 9, kém 6, bằng 5); D41 10 / 7 → 15 / 13; D46_2 8 → 13; D50_2 7 → 11; lý lẽ 0,65 → 1,00, việc làm 0,65 → 1,05. Tụt: D49_2 15 → 12, D48 9 → 7 / 8.
+- Còn yếu: D47 vẫn gán +4,2% của 3 ngày cho cả tuần (dòng ước tuần chưa có trung bình theo thứ); D48 tự đặt ~3 triệu cả ngày; D45 chung chung (chưa nói 24–25/12 rơi thứ mấy); D44 tự đặt lượng nhập.
+- Bài học (khớp 49b, 50): bỏ khỏi khối thứ GPT hay chép lạc đề hiệu quả hơn dặn "không chèn".
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

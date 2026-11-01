@@ -665,7 +665,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
   const todayD = f.to === today ? (new Date(vnDay(now)).getUTCDay() + 6) % 7 : -1;
   // Kỳ 1 ngày: nhiều món chưa ai gọi là bình thường → không nêu "món chưa bán" (Chủ Quán thấy "57 món chưa bán" 24/10)
   // lần 51: câu dự báo cũng bỏ món chưa bán — GPT chèn "ẩn món chưa bán" vào câu "tuần này chắc được bao nhiêu" (D47)
-  const shortPeriod = /^hôm (nay|qua|kia)/i.test(f.period.normalize('NFC')) || loaiCau(question) === 'du_bao';
+  const duBao = loaiCau(question) === 'du_bao';
+  const shortPeriod = /^hôm (nay|qua|kia)/i.test(f.period.normalize('NFC')) || duBao;
   // Tính sẵn % so kỳ trước + giá trị đơn trung bình (GPT hay bỏ qua / tính sai — chấm cố vấn 24/10)
   const avg = f.orders > 0 ? ` Trung bình ${vnd(f.revenue / f.orders)} / đơn.` : '';
   const lines = [`Kỳ: ${f.period}. Doanh thu ${vnd(f.revenue)} từ ${f.orders} đơn hoàn thành.${avg}`];
@@ -737,16 +738,19 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
       if (/tháng/i.test(f.period) && fd.endsWith('-01') && td.slice(0, 7) === fd.slice(0, 7) && td < end) {
         const avgDay = per.reduce((s2, x) => s2 + x.a, 0) / Math.max(1, per.length);
         let add = 0, n = 0;
+        const con = [0, 0, 0, 0, 0, 0, 0];
         for (let t = Date.parse(`${td}T00:00:00Z`) + 86_400_000; t <= Date.parse(`${end}T00:00:00Z`); t += 86_400_000) {
           const d = (new Date(t).getUTCDay() + 6) % 7;
-          n++;
+          n++; con[d]++;
           if (cnt[d] > 0) add += f.by_weekday[d] / cnt[d]; // thứ quán nghỉ (có ngày mà 0đ) → 0
           else add += avgDay;
         }
+        // lần 52: GPT gán % so kỳ trước cho cả tháng, không nói ngày còn lại là thứ yếu / mạnh (D41)
+        const conTxt = con.map((c2, d) => (c2 ? `${c2 > 1 ? `${c2} ` : ''}${names[d]}${cnt[d] > 0 ? ` (trung bình ${vnd(f.by_weekday![d] / cnt[d])}/ngày)` : ''}` : '')).filter(Boolean).join(', ');
         // lần 46: hỏi tháng sau / tháng N khác → GPT chép dự báo tháng này làm số tháng đó dù đã dặn (D42) — không đưa số đó
         const hoi = /tháng (?:sau|tới|tiếp|kế)/i.test(question) ? 0 : +(question.match(/tháng\s*(\d{1,2})\b/i)?.[1] ?? +fd.slice(5, 7));
         if (hoi !== +fd.slice(5, 7)) lines.push(`Câu hỏi về tháng khác tháng này: CHƯA có dự báo cho tháng đó; mốc là tháng này đã có ${vnd(f.revenue)}, còn ${n} ngày. Nêu mốc + kinh nghiệm mùa vụ, KHÔNG tự đặt con số / % cho tháng đó.`);
-        else lines.push(`Dự báo cả tháng (tính sẵn theo trung bình từng thứ, còn ${n} ngày): khoảng ${vnd(f.revenue + add)} (đã có ${vnd(f.revenue)} + ước ${vnd(add)})${todayD >= 0 ? '; hôm nay chưa hết ngày nên ước có thể hơi thấp' : ''}. Chỉ là ước, nói rõ với người hỏi. Đây là dự báo CỦA THÁNG NÀY — câu hỏi tháng sau / tháng khác: KHÔNG dùng con số này làm dự báo tháng đó; chưa có dự báo tháng khác → nêu tháng này làm mốc + kinh nghiệm mùa vụ, KHÔNG tự đặt % tăng / giảm.`);
+        else lines.push(`Dự báo cả tháng (tính sẵn theo trung bình từng thứ, còn ${n} ngày: ${conTxt}): khoảng ${vnd(f.revenue + add)} (đã có ${vnd(f.revenue)} + ước ${vnd(add)})${todayD >= 0 ? '; hôm nay chưa hết ngày nên ước có thể hơi thấp' : ''}. Chỉ là ước, nói rõ với người hỏi; nêu các ngày còn lại là thứ mấy và mạnh / yếu thế nào.${f.prev_revenue !== null ? ` % so kỳ trước ở trên chỉ là của ${cnt.reduce((a, b) => a + b, 0)} ngày đã có, KHÔNG phải % cả tháng.` : ''} Đây là dự báo CỦA THÁNG NÀY — câu hỏi tháng sau / tháng khác: KHÔNG dùng con số này làm dự báo tháng đó; chưa có dự báo tháng khác → nêu tháng này làm mốc + kinh nghiệm mùa vụ, KHÔNG tự đặt % tăng / giảm.`);
       }
     }
   }
@@ -855,7 +859,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
   // ưu tiên: combo đắt → giá vốn cao → nhóm nhỏ → món chưa bán
   const rank = (x: string) => (x.startsWith('combo') ? 0 : x.includes('giá vốn') ? 1 : x.includes('% doanh thu') ? 2 : 3);
   alerts.sort((x, y) => rank(x) - rank(y));
-  if (alerts.length) lines.push(`ĐIỂM CẦN CHÚ Ý (tính sẵn — nêu những điểm liên quan câu hỏi ở "Vì sao" / "Cần xem lại"): ${alerts.slice(0, 8).map((x, k) => `${k + 1}) ${x}`).join('; ')}.`);
+  // lần 52: câu dự báo chép điểm cần chú ý thành việc lạc đề (tăng giá trà dâu, quảng bá topping — D47, D41)
+  if (alerts.length && !duBao) lines.push(`ĐIỂM CẦN CHÚ Ý (tính sẵn — nêu những điểm liên quan câu hỏi ở "Vì sao" / "Cần xem lại"): ${alerts.slice(0, 8).map((x, k) => `${k + 1}) ${x}`).join('; ')}.`);
   return lines.join('\n');
 }
 
@@ -1314,7 +1319,7 @@ const KHUNG_LOAI: Record<Exclude<LoaiCau, null>, string> = {
   quyet_dinh: 'Quyết định NHỎ, đảo lại được (tăng / giảm giá 1 món, đổi combo, ẩn món): dòng đầu NÊN / KHÔNG NÊN / NÊN THỬ, nêu 1–2 số quyết định, cách thử và ngưỡng để quyết tiếp. Quyết định LỚN (cắt người, đóng ca / ngày bán, đổi nhà cung cấp, mở thêm ngày, chạy tiếp hay tắt khuyến mãi): KHÔNG phán thay chủ — dòng đầu "Số đang nghiêng về … nhưng còn thiếu …", nêu số ủng hộ và số phản đối, điều kiện để quyết, và số cần xem thêm. Có điểm cần chú ý ngược hướng (vd giảm giá đang ăn quá 8%) thì KHÔNG khuyên làm tiếp như cũ.',
   // chấm 29/10: khung cứng Tuần 1/2/3–4 cho cả câu "tuần sau", "20/11", "lên lịch nhập hàng"; việc thiếu lý do
   ke_hoach: 'Chia theo ĐÚNG khoảng thời gian được hỏi (tuần sau → các ngày trong tuần; dịp lễ → trước / trong / sau dịp; tháng → Tuần 1 / 2 / 3–4; lịch nhập hàng → từng mặt hàng + số lượng + ngày). Mục tiêu con số chỉ khi suy được từ số liệu. MỖI việc ghi "vì: <số lấy đúng từ khối của quán này>" và chỉ số đo. Chỉ dùng ưu đãi nhỏ hơn món chính (không "mua topping tặng ly trà sữa"), hợp loại quán.',
-  du_bao: 'Dùng ĐÚNG dòng "Dự báo … tính sẵn" nếu có, nói rõ là ước; KHÔNG tự nhân trung bình. Không có dòng dự báo / không đủ số (vd không có lượng dùng mỗi ngày) → nói rõ thiếu gì, không bịa số.',
+  du_bao: 'Dùng ĐÚNG dòng "Dự báo … tính sẵn" nếu có, nói rõ là ước; KHÔNG tự nhân trung bình. Không có dòng dự báo / không đủ số (vd không có lượng dùng mỗi ngày) → nói rõ thiếu gì, không bịa số. Việc làm (nếu có): 1–2 việc giúp những ngày / giờ CÒN LẠI đạt số ước (vd ngày yếu nhất còn lại), không chèn việc khác (tăng giá món, ẩn món, combo không liên quan).',
   // chấm GPT 29/10: so sánh thiếu việc làm (11,2 → 10,4) → bắt buộc kèm việc cho điểm yếu
   so_sanh: 'Nêu chênh lệch % đã tính sẵn và vì số đơn hay giá trị đơn; chỉ ra 1 khác biệt lớn nhất (món / nhóm / giờ / khoản chi); rồi "Việc tuần này:" 1–2 việc cụ thể nhắm đúng điểm yếu đó (kèm cách đo); thu chi: "thu − chi" là chênh lệch sổ quỹ, KHÔNG gọi là lãi; không so khi khối không có số kỳ kia.',
   noi_tiep: 'Câu nói tiếp: trả lời tiếp ĐÚNG chủ đề lượt mới nhất (ghi ở dòng CHỦ ĐỀ ĐANG NÓI), chỉ dùng số liên quan chủ đề đó (vd topping → nhóm Topping, ca tối → giờ / khung tối), KHÔNG nhắc lại tổng doanh thu tháng; đi sâu một tầng (nhóm → món → giờ / thứ), không lặp ý đã nói; "sao vậy" = giải thích nguyên nhân của điều vừa nói. Dòng đầu MỞ BẰNG đúng chủ đề (vd "Về topping: …", "Về ca tối: …").',
