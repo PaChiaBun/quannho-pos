@@ -639,7 +639,8 @@ export function shopProfile(f: ShopFacts): string {
     if (v > 0 && st < 0) st = h;
     if (v <= 0 && st >= 0) { spans.push(`${st}h–${h}h`); st = -1; }
   });
-  if (spans.length) out.push(`có bán ${spans.join(', ')}`);
+  // lần 53: kỳ hôm nay chưa hết ngày → giờ cuối chỉ là "tới giờ này", không phải giờ đóng cửa (D48: GPT bỏ qua ca tối)
+  if (spans.length) out.push(`có bán ${spans.join(', ')}${/^hôm nay/i.test(f.period.normalize('NFC')) ? ' (hôm nay tới giờ này, CHƯA phải giờ đóng cửa)' : ''}`);
   const cnt = weekdayCounts(f.from, f.to);
   if (cnt && f.by_weekday) {
     const names = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
@@ -718,7 +719,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
     const nDays = cnt ? cnt.reduce((a, b) => a + b, 0) : 0;
     if (cnt && /tuần/i.test(f.period) && nDays < 7) {
       const open = days.filter((x) => x.v > 0 && x.n).length || nDays;
-      lines.push(`Kỳ tuần mới có ${nDays}/7 ngày: ${vnd(f.revenue)} là số ${nDays} ngày, KHÔNG phải cả tuần. Ước thô cả tuần (trung bình ${vnd(f.revenue / open)}/ngày × 7): khoảng ${vnd((f.revenue / open) * 7)}, chưa tính cuối tuần khác ngày thường — nói rõ là ước thô.`);
+      // lần 53: câu dự báo gán % so cùng kỳ của 3 ngày cho cả tuần (D47) — chỉ thêm cho câu dự báo, câu khác tụt nhẹ
+      lines.push(`Kỳ tuần mới có ${nDays}/7 ngày: ${vnd(f.revenue)} là số ${nDays} ngày, KHÔNG phải cả tuần. Ước thô cả tuần (trung bình ${vnd(f.revenue / open)}/ngày × 7): khoảng ${vnd((f.revenue / open) * 7)}, chưa tính cuối tuần khác ngày thường — nói rõ là ước thô${duBao && notYet.length ? `; ${notYet.map((x) => x.d).join(', ')} chưa có số, nếu cuối tuần quán đông / vắng hơn ngày thường thì cả tuần lệch theo` : ''}.${duBao && f.prev_revenue !== null ? ` % so kỳ trước ở trên chỉ là của ${nDays} ngày đã có, KHÔNG phải % cả tuần.` : ''}`);
     }
     // Thứ bán yếu bất thường: trung bình/ngày < 60% trung vị các thứ có bán (tính sẵn). Kỳ < 14 ngày: hôm nay chưa hết
     // ngày, mỗi thứ chỉ 1 ngày → không kết luận
@@ -768,6 +770,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
     const p = f.yoy.revenue > 0 ? ((f.revenue - f.yoy.revenue) / f.yoy.revenue) * 100 : null;
     lines.push(`Cùng kỳ năm trước (${f.yoy.period}): ${vnd(f.yoy.revenue)}, ${f.yoy.orders} đơn${p === null ? '' : ` → năm nay ${p >= 0 ? 'TĂNG' : 'GIẢM'} ${pctTxt(Math.abs(p))}%`}.`);
   }
+  // lần 53: "hôm nay chắc cả ngày được bao nhiêu" — GPT tự đặt ~3 triệu (D48); khối không có số cả ngày của ngày so sánh
+  if (duBao && /^hôm nay/i.test(f.period.normalize('NFC'))) lines.push(`Hôm nay CHƯA hết ngày; khối KHÔNG có số cả ngày của ngày so sánh (chỉ có cùng giờ) → KHÔNG tự đặt con số cả ngày. Trả lời: tới giờ được ${vnd(f.revenue)}${f.prev_revenue !== null ? `, so cùng giờ ${f.prev_period} ${f.prev_revenue >= f.revenue ? 'thấp hơn' : 'cao hơn'} ${pctTxt(Math.abs(((f.revenue - f.prev_revenue) / Math.max(1, f.prev_revenue)) * 100))}%` : ''}; cả ngày tuỳ các giờ còn lại quán còn mở (ca chiều / tối) → hỏi lại quán còn bán tới mấy giờ, hoặc xem Báo cáo cuối ngày.`);
   if (!f.by_hour) lines.push('KHÔNG có số liệu theo giờ (đừng đoán khung giờ đông / vắng).');
   if (!f.by_weekday) lines.push('KHÔNG có số liệu theo thứ trong tuần (đừng đoán ngày đông / vắng).');
   const anyCost = (f.groups ?? []).some((g) => [...g.top, ...g.slow].some((t) => t.cost));

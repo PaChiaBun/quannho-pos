@@ -846,6 +846,16 @@ Deno.test('Claude chấm 29/10: tuần chưa trọn, dự báo chỉ tháng này
   const w = formatFacts(parseFacts({ period: 'Tuần này', revenue: 300, orders: 3, top: [], slow: [], from: '2026-10-26', to: '2026-10-28',
     by_weekday: [100, 100, 100, 0, 0, 0, 0] })!, NOW);
   assert(w.includes('Kỳ tuần mới có 3/7 ngày') && w.includes('khoảng 700đ'), w);
+  // lần 53: tuần chưa trọn — nêu ngày chưa có số, % kỳ trước chỉ của phần đã có; hôm nay dở — không tự đặt số cả ngày
+  const w2 = formatFacts(parseFacts({ period: 'Tuần này', revenue: 300, orders: 3, top: [], slow: [], from: '2026-10-26', to: '2026-10-28',
+    prev_period: 'Cùng kỳ tuần trước', prev_revenue: 280, by_weekday: [100, 100, 100, 0, 0, 0, 0] })!, NOW, 'tuần này chắc được bao nhiêu');
+  assert(w2.includes('Thứ 5, Thứ 6, Thứ 7, Chủ nhật chưa có số') && w2.includes('% so kỳ trước ở trên chỉ là của 3 ngày đã có, KHÔNG phải % cả tuần.'), w2);
+  const hn = parseFacts({ period: 'Hôm nay (28/10, tới 14h)', revenue: 2638000, orders: 54, top: [], slow: [], from: '2026-10-28', to: '2026-10-28',
+    prev_period: 'Thứ 4 tuần trước', prev_revenue: 2764000, by_hour: [0, 0, 0, 0, 0, 0, 100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] })!;
+  const h1 = formatFacts(hn, NOW, 'hôm nay tới giờ được nhiêu rồi, chắc cả ngày được bao nhiêu');
+  assert(h1.includes('KHÔNG tự đặt con số cả ngày') && h1.includes('so cùng giờ Thứ 4 tuần trước thấp hơn 4,6%'), h1);
+  assert(h1.includes('có bán 6h–8h (hôm nay tới giờ này, CHƯA phải giờ đóng cửa)'), h1);
+  assert(!formatFacts(hn, NOW, 'hôm nay bán món nào chạy').includes('KHÔNG tự đặt con số cả ngày'));
   const m = formatFacts(parseFacts({ period: 'Tháng này', revenue: 1000, orders: 10, top: [], slow: [], from: '2026-10-01', to: '2026-10-28',
     by_weekday: [200, 200, 200, 200, 100, 100, 0] })!, NOW);
   assert(m.includes('Đây là dự báo CỦA THÁNG NÀY'), m);

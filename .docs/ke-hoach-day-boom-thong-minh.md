@@ -446,6 +446,15 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Còn yếu: D47 vẫn gán +4,2% của 3 ngày cho cả tuần (dòng ước tuần chưa có trung bình theo thứ); D48 tự đặt ~3 triệu cả ngày; D45 chung chung (chưa nói 24–25/12 rơi thứ mấy); D44 tự đặt lượng nhập.
 - Bài học (khớp 49b, 50): bỏ khỏi khối thứ GPT hay chép lạc đề hiệu quả hơn dặn "không chèn".
 
+### Lần 53 (01/11, Claude chấm kín, đã áp): ước cả tuần / cả ngày — % kỳ trước chỉ của phần đã có, không tự đặt số cả ngày
+
+- Gốc lỗi: D47 "tuần này chắc được bao nhiêu" gán +4,2% (3 ngày so cùng kỳ) cho cả tuần; D48 "chắc cả ngày được bao nhiêu" tự đặt ~3 triệu dù khối chỉ có số tới 14h; hồ sơ quán kỳ hôm nay ghi "có bán 6h–14h" như giờ đóng cửa.
+- Sửa (chỉ câu dự báo): dòng ước tuần ghi ngày chưa có số + "% so kỳ trước chỉ là của N ngày đã có, KHÔNG phải % cả tuần"; kỳ hôm nay + dự báo: dòng "KHÔNG tự đặt con số cả ngày", nêu số tới giờ + % so cùng giờ, hỏi quán còn bán tới mấy giờ; hồ sơ kỳ hôm nay ghi "(hôm nay tới giờ này, CHƯA phải giờ đóng cửa)".
+- Bản đầu thêm phần ước tuần cho MỌI câu kỳ tuần → 8 cặp câu khác tụt nhẹ (13 → 10 … 10 → 9) → giới hạn cho câu dự báo; so khối 60 câu với bản đang chạy: chỉ D47, D48 đổi.
+- Kết quả: chấm kín D47, D48 × 2 lượt: 7,5 → **11,25/16** (D48 7 / 5 → 10 / 11; D47 9 / 9 → 10 / 14).
+- Còn yếu: D48 chỉ nói "chưa ước được", không nêu mốc ca tối 16–20h (khối hôm nay chưa có số đó — cần app gửi số ca tối cùng thứ tuần trước); D47 lượt 1 vẫn gán +4,2%.
+- Bài học: dòng mới chỉ thêm cho đúng loại câu (khớp 45b); kiểm khối các câu khác không đổi trước khi chấm.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
