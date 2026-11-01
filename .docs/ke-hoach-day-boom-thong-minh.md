@@ -480,6 +480,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Kết quả: chấm kín 10 câu × 2 lượt cạnh mốc 54: 9,6 → **10,3/16**; đúng quán 1,50 → 1,80; thận trọng 1,20 → 1,45; D18 2 / 4 → 11 / 8; D28 5 → 8. Nói tiếp (D57, D58) 10,5 → 9,0: ghi ca tối 17–20h thay vì 16–20h.
 - Áp: `db-fix/boom_l56_ap_dung.sh` (TS 20261101_220542) — lần chạy đầu bị chặn ở bước triển khai, chạy lại sau khi Chủ Quán duyệt.
 
+### Lần 57 (01/11, bỏ): hồ sơ quán tính sẵn từng ca (quán nghỉ giữa ngày)
+
+- Sửa thử: hồ sơ quán C ghi "có bán 2 ca: ca sáng 6h–14h (110.927.000đ = 83,5%…), ca tối 16h–20h (21.873.000đ = 16,5%…)".
+- Đúng mục tiêu: D18, D57 dùng đúng 21,9 triệu / 16–20h, hết "17–20h".
+- Chấm kín 10 câu quán C × 2 lượt cạnh bản lần 56: 9,75 → 9,3 (dùng số 1,50 → 1,70 nhưng thận trọng 0,95 → 0,70, đúng quán 1,75 → 1,45): số ca tối nhỏ (16,5%) đặt ngay trong hồ sơ làm GPT nghiêng hẳn về "đóng ca tối", khuyên ẩn món đang bán → bỏ.
+- Bài học: số đặt ở HỒ SƠ QUÁN (đầu khối) được GPT coi là kết luận; % nhỏ dễ thành "nên bỏ". Số ca nên chỉ đưa khi câu hỏi về ca (theo loại câu, như 45b).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
