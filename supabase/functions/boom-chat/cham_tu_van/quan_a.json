@@ -94,7 +94,8 @@
      ],
      "unsold_names": [
       "Cà phê cốt dừa"
-     ]
+     ],
+     "prev_revenue": 77945000.0
     },
     {
      "name": "Trà",
@@ -132,7 +133,8 @@
      ],
      "unsold_names": [
       "Trà ô long sữa"
-     ]
+     ],
+     "prev_revenue": 20796000.0
     },
     {
      "name": "Bánh mì",
@@ -161,7 +163,8 @@
       }
      ],
      "slow": [],
-     "unsold_names": []
+     "unsold_names": [],
+     "prev_revenue": 19934000.0
     },
     {
      "name": "Combo sáng",
@@ -188,7 +191,8 @@
      "slow": [],
      "unsold_names": [
       "Combo trà tắc + bánh mì chả"
-     ]
+     ],
+     "prev_revenue": 6465000.0
     }
    ],
    "items_revenue": 128301000,
@@ -286,7 +290,88 @@
     ]
    ],
    "from": "2026-09-01",
-   "to": "2026-09-30"
+   "to": "2026-09-30",
+   "prev_from": "2026-08-01",
+   "prev_to": "2026-08-31",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    12051000.0,
+    24102000.0,
+    21090000.0,
+    13558000.0,
+    9039000.0,
+    9039000.0,
+    9039000.0,
+    7533000.0,
+    2410000.0,
+    2260000.0,
+    3616000.0,
+    4520000.0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "prev_by_weekday": [
+    26934000.0,
+    20522000.0,
+    20521000.0,
+    20522000.0,
+    19495000.0,
+    10261000.0,
+    0.0
+   ],
+   "moves": [
+    {
+     "name": "Cà phê sữa đá",
+     "qty": 1446,
+     "prev_qty": 1410,
+     "revenue": 36150000,
+     "prev_revenue": 35250000
+    },
+    {
+     "name": "Bạc xỉu",
+     "qty": 767,
+     "prev_qty": 748,
+     "revenue": 22243000,
+     "prev_revenue": 21692000
+    },
+    {
+     "name": "Bánh mì thịt",
+     "qty": 528,
+     "prev_qty": 515,
+     "revenue": 13200000,
+     "prev_revenue": 12875000
+    },
+    {
+     "name": "Cà phê đen đá",
+     "qty": 654,
+     "prev_qty": 638,
+     "revenue": 13080000,
+     "prev_revenue": 12760000
+    },
+    {
+     "name": "Trà đào",
+     "qty": 377,
+     "prev_qty": 368,
+     "revenue": 11310000,
+     "prev_revenue": 11040000
+    },
+    {
+     "name": "Cà phê muối",
+     "qty": 226,
+     "prev_qty": 220,
+     "revenue": 7232000,
+     "prev_revenue": 7040000
+    }
+   ]
   },
   "thang_nay": {
    "period": "Tháng này (1–28/10/2026)",
@@ -380,7 +465,8 @@
      ],
      "unsold_names": [
       "Cà phê cốt dừa"
-     ]
+     ],
+     "prev_revenue": 75947000.0
     },
     {
      "name": "Trà",
@@ -418,7 +504,8 @@
      ],
      "unsold_names": [
       "Trà ô long sữa"
-     ]
+     ],
+     "prev_revenue": 17580000.0
     },
     {
      "name": "Bánh mì",
@@ -447,7 +534,8 @@
       }
      ],
      "slow": [],
-     "unsold_names": []
+     "unsold_names": [],
+     "prev_revenue": 19748000.0
     },
     {
      "name": "Combo sáng",
@@ -474,7 +562,8 @@
      "slow": [],
      "unsold_names": [
       "Combo trà tắc + bánh mì chả"
-     ]
+     ],
+     "prev_revenue": 5760000.0
     }
    ],
    "items_revenue": 102075000,
@@ -572,7 +661,88 @@
     ]
    ],
    "from": "2026-10-01",
-   "to": "2026-10-28"
+   "to": "2026-10-28",
+   "prev_from": "2026-09-01",
+   "prev_to": "2026-09-28",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    12255000.0,
+    24509000.0,
+    21446000.0,
+    11930000.0,
+    7953000.0,
+    7953000.0,
+    7953000.0,
+    6628000.0,
+    2121000.0,
+    1988000.0,
+    3182000.0,
+    3977000.0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "prev_by_weekday": [
+    22167000.0,
+    21111000.0,
+    21111000.0,
+    21111000.0,
+    20055000.0,
+    6338000.0,
+    0.0
+   ],
+   "moves": [
+    {
+     "name": "Cà phê sữa đá",
+     "qty": 1150,
+     "prev_qty": 1374,
+     "revenue": 28750000,
+     "prev_revenue": 34350000
+    },
+    {
+     "name": "Bạc xỉu",
+     "qty": 610,
+     "prev_qty": 729,
+     "revenue": 17690000,
+     "prev_revenue": 21141000
+    },
+    {
+     "name": "Bánh mì thịt",
+     "qty": 420,
+     "prev_qty": 510,
+     "revenue": 10500000,
+     "prev_revenue": 12750000
+    },
+    {
+     "name": "Cà phê đen đá",
+     "qty": 520,
+     "prev_qty": 621,
+     "revenue": 10400000,
+     "prev_revenue": 12420000
+    },
+    {
+     "name": "Cà phê muối",
+     "qty": 180,
+     "prev_qty": 215,
+     "revenue": 5760000,
+     "prev_revenue": 6880000
+    },
+    {
+     "name": "Bánh mì trứng",
+     "qty": 210,
+     "prev_qty": 255,
+     "revenue": 3780000,
+     "prev_revenue": 4590000
+    }
+   ]
   },
   "tuan_nay": {
    "period": "Tuần này (26–28/10/2026)",
@@ -666,7 +836,8 @@
      ],
      "unsold_names": [
       "Cà phê cốt dừa"
-     ]
+     ],
+     "prev_revenue": 9529000.0
     },
     {
      "name": "Trà",
@@ -704,7 +875,8 @@
      ],
      "unsold_names": [
       "Trà ô long sữa"
-     ]
+     ],
+     "prev_revenue": 2394000.0
     },
     {
      "name": "Bánh mì",
@@ -733,7 +905,8 @@
       }
      ],
      "slow": [],
-     "unsold_names": []
+     "unsold_names": [],
+     "prev_revenue": 2424000.0
     },
     {
      "name": "Combo sáng",
@@ -760,7 +933,8 @@
      "slow": [],
      "unsold_names": [
       "Combo trà tắc + bánh mì chả"
-     ]
+     ],
+     "prev_revenue": 738000.0
     }
    ],
    "items_revenue": 14383000,
@@ -858,7 +1032,88 @@
     ]
    ],
    "from": "2026-10-26",
-   "to": "2026-10-28"
+   "to": "2026-10-28",
+   "prev_from": "2026-10-19",
+   "prev_to": "2026-10-21",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1416000.0,
+    2986000.0,
+    2611000.0,
+    1593000.0,
+    1062000.0,
+    1062000.0,
+    1062000.0,
+    885000.0,
+    284000.0,
+    265000.0,
+    424000.0,
+    531000.0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "prev_by_weekday": [
+    4881000.0,
+    4649000.0,
+    4649000.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "moves": [
+    {
+     "name": "Cà phê sữa đá",
+     "qty": 162,
+     "prev_qty": 172,
+     "revenue": 4050000,
+     "prev_revenue": 4300000
+    },
+    {
+     "name": "Bạc xỉu",
+     "qty": 86,
+     "prev_qty": 91,
+     "revenue": 2494000,
+     "prev_revenue": 2639000
+    },
+    {
+     "name": "Cà phê đen đá",
+     "qty": 73,
+     "prev_qty": 78,
+     "revenue": 1460000,
+     "prev_revenue": 1560000
+    },
+    {
+     "name": "Bánh mì thịt",
+     "qty": 59,
+     "prev_qty": 62,
+     "revenue": 1475000,
+     "prev_revenue": 1550000
+    },
+    {
+     "name": "Cà phê muối",
+     "qty": 25,
+     "prev_qty": 27,
+     "revenue": 800000,
+     "prev_revenue": 864000
+    },
+    {
+     "name": "Bánh mì trứng",
+     "qty": 30,
+     "prev_qty": 32,
+     "revenue": 540000,
+     "prev_revenue": 576000
+    }
+   ]
   },
   "hom_nay": {
    "period": "Hôm nay (28/10/2026, tới 15h)",
@@ -952,7 +1207,8 @@
      ],
      "unsold_names": [
       "Cà phê cốt dừa"
-     ]
+     ],
+     "prev_revenue": 2416000.0
     },
     {
      "name": "Trà",
@@ -990,7 +1246,8 @@
      ],
      "unsold_names": [
       "Trà ô long sữa"
-     ]
+     ],
+     "prev_revenue": 629000.0
     },
     {
      "name": "Bánh mì",
@@ -1019,7 +1276,8 @@
       }
      ],
      "slow": [],
-     "unsold_names": []
+     "unsold_names": [],
+     "prev_revenue": 622000.0
     },
     {
      "name": "Combo sáng",
@@ -1046,7 +1304,8 @@
      "slow": [],
      "unsold_names": [
       "Combo trà tắc + bánh mì chả"
-     ]
+     ],
+     "prev_revenue": 242000.0
     }
    ],
    "items_revenue": 3679000,
@@ -1122,7 +1381,79 @@
     []
    ],
    "from": "2026-10-28",
-   "to": "2026-10-28"
+   "to": "2026-10-28",
+   "prev_from": "2026-10-21",
+   "prev_to": "2026-10-21",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    402000.0,
+    803000.0,
+    703000.0,
+    453000.0,
+    302000.0,
+    302000.0,
+    302000.0,
+    252000.0,
+    81000.0,
+    75000.0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "moves": [
+    {
+     "name": "Cà phê sữa đá",
+     "qty": 41,
+     "prev_qty": 44,
+     "revenue": 1025000,
+     "prev_revenue": 1100000
+    },
+    {
+     "name": "Trà đào",
+     "qty": 11,
+     "prev_qty": 12,
+     "revenue": 330000,
+     "prev_revenue": 360000
+    },
+    {
+     "name": "Bạc xỉu",
+     "qty": 22,
+     "prev_qty": 23,
+     "revenue": 638000,
+     "prev_revenue": 667000
+    },
+    {
+     "name": "Bánh mì thịt",
+     "qty": 15,
+     "prev_qty": 16,
+     "revenue": 375000,
+     "prev_revenue": 400000
+    },
+    {
+     "name": "Cà phê đen đá",
+     "qty": 19,
+     "prev_qty": 20,
+     "revenue": 380000,
+     "prev_revenue": 400000
+    },
+    {
+     "name": "Trà tắc",
+     "qty": 9,
+     "prev_qty": 10,
+     "revenue": 162000,
+     "prev_revenue": 180000
+    }
+   ]
   }
  },
  "modules": {

@@ -36,24 +36,39 @@ class BoomReadOnlyDataService {
         r.end,
         'total_amount,total,created_at',
       ),
-      _completedOrders(storeId, r.prevStart, r.prevEnd, 'total_amount,total'),
+      _completedOrders(
+        storeId,
+        r.prevStart,
+        r.prevEnd,
+        'total_amount,total,created_at',
+      ),
     ]);
     final current = both[0];
     final previous = both[1];
     // Doanh thu theo giờ / thứ (giờ máy) — tư vấn "buổi chiều đẩy món nào", "thứ 2 vắng" (chấm cố vấn 24/10)
-    final byHour = List<double>.filled(24, 0);
-    final byWeekday = List<double>.filled(7, 0);
-    for (final row in current) {
-      final at = DateTime.tryParse(
-        '${row['created_at']}',
-      )?.toUtc().add(const Duration(hours: 7));
-      if (at == null) continue;
-      byHour[at.hour] += _amount(row);
-      byWeekday[at.weekday - 1] += _amount(row);
+    // Kỳ trước chia theo giờ / thứ như kỳ này — Boom chỉ ra giảm ở giờ / thứ nào (lần 59; trước chỉ có tổng)
+    ({List<double> hour, List<double> weekday}) split(
+      List<Map<String, dynamic>> rows,
+    ) {
+      final byHour = List<double>.filled(24, 0);
+      final byWeekday = List<double>.filled(7, 0);
+      for (final row in rows) {
+        final at = DateTime.tryParse(
+          '${row['created_at']}',
+        )?.toUtc().add(const Duration(hours: 7));
+        if (at == null) continue;
+        byHour[at.hour] += _amount(row);
+        byWeekday[at.weekday - 1] += _amount(row);
+      }
+      return (hour: byHour, weekday: byWeekday);
     }
+
+    final now0 = split(current), prev0 = split(previous);
     return BoomRevenueSummary(
-      byHour: byHour,
-      byWeekday: byWeekday,
+      byHour: now0.hour,
+      byWeekday: now0.weekday,
+      previousByHour: prev0.hour,
+      previousByWeekday: prev0.weekday,
       range: r,
       revenue: current.fold(0.0, (sum, row) => sum + _amount(row)),
       orderCount: current.length,
@@ -556,6 +571,8 @@ class BoomRevenueSummary {
     required this.previousOrderCount,
     this.byHour = const [],
     this.byWeekday = const [],
+    this.previousByHour = const [],
+    this.previousByWeekday = const [],
   });
 
   final BoomPeriodRange range;
@@ -563,6 +580,10 @@ class BoomRevenueSummary {
   /// Doanh thu kỳ này theo giờ (0–23) và theo thứ (Thứ 2 … Chủ nhật).
   final List<double> byHour;
   final List<double> byWeekday;
+
+  /// Như trên, của kỳ trước.
+  final List<double> previousByHour;
+  final List<double> previousByWeekday;
   final double revenue;
   final int orderCount;
   final double previousRevenue;

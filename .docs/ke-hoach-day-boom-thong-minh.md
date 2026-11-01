@@ -487,6 +487,25 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Chấm kín 10 câu quán C × 2 lượt cạnh bản lần 56: 9,75 → 9,3 (dùng số 1,50 → 1,70 nhưng thận trọng 0,95 → 0,70, đúng quán 1,75 → 1,45): số ca tối nhỏ (16,5%) đặt ngay trong hồ sơ làm GPT nghiêng hẳn về "đóng ca tối", khuyên ẩn món đang bán → bỏ.
 - Bài học: số đặt ở HỒ SƠ QUÁN (đầu khối) được GPT coi là kết luận; % nhỏ dễ thành "nên bỏ". Số ca nên chỉ đưa khi câu hỏi về ca (theo loại câu, như 45b).
 
+### Tìm nguyên nhân (02/11): vì sao việc làm chung chung, lý lẽ yếu
+
+- Lời nhắc câu tư vấn ~21.500 ký tự, 37 luật; câu phân tích có số liệu chỉ cần ~1/3. Giả thuyết "mini loãng chú ý" → lần 58 thử.
+- Khối số liệu chỉ có kỳ trước dạng TỔNG (doanh thu, số đơn) → hỏi "sao giảm" thì không có số giảm ở giờ / thứ / món nào → GPT đoán, việc làm chung chung.
+- Giới hạn suy luận của gpt-4o-mini (gpt-4o +0,8 cùng khối): đọc ngược tăng / giảm, so tổng tháng với trung bình ngày, gán % 3 ngày cho cả tuần.
+
+### Lần 58 (02/11, bỏ): lời nhắc gọn cho câu phân tích có số liệu
+
+- Bỏ luật không liên quan (phạm vi, từ chối, lao động, Excel, Tết, viết bài, khối không có…): lời nhắc 21.400 → 10.800 ký tự, token vào −29%.
+- Chấm kín 55 câu: 12,40 → 12,22 (ngang) → độ dài lời nhắc KHÔNG phải nguyên nhân; bỏ (chỉ lợi chi phí).
+
+### Lần 59 (02/11, Claude chấm kín, đã áp máy chủ; app CHƯA phát hành): số kỳ trước chia nhỏ
+
+- App (`boom_read_only_data_service.dart`, `boom_chat_provider.dart`): kỳ trước đọc thêm `created_at` → `prev_by_hour`, `prev_by_weekday`; đọc món kỳ trước song song → `groups[].prev_revenue`, `moves` (≤ 6 món đổi doanh thu nhiều nhất), `prev_from` / `prev_to`.
+- Máy chủ: `changeLine` — dòng "SO … — GIẢM / TĂNG Ở ĐÂU (tính sẵn)": 3 giờ đổi nhiều nhất theo chiều tổng, thứ giảm / tăng nhiều nhất (trung bình / ngày), từng nhóm, món đổi nhiều nhất. Chỉ câu chẩn đoán / so sánh / hỏi giảm, tụt, vì sao (đưa mọi câu: kế hoạch 11,83 → 10,17). Có `moves` thì bỏ câu "CHƯA có số từng món". App cũ không gửi → như trước.
+- Bộ đề: dựng số kỳ trước cho quán A / B / C khớp vấn đề (A mất khách sáng 6–8h; B topping −30%; C tuần món thêm −52%, tháng Thứ 4 −40%); cập nhật ý chính D01, D05, D08, D32, D33, D38.
+- Kết quả: chấm kín 14 câu nhận dòng (1 lượt): 11,43 → **11,71/16**; lý lẽ 0,79 → 1,14; tìm vấn đề 1,07 → 1,21; D01 10 → 15, D32 8 → 12. Còn yếu: đọc nhầm số kỳ trước (dùng số 1,79 → 1,64, D38), việc làm vẫn chung.
+- Áp: `db-fix/boom_l59_ap_dung.sh` (TS 20261102_013340). Cần bản app mới để quán thật gửi số kỳ trước.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

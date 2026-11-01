@@ -100,6 +100,13 @@ export interface ShopFacts {
   series?: { label: string; revenue: number; orders: number }[] | null;
   /** Cùng kỳ năm trước — app PHẢI cắt cùng độ dài kỳ (1–28/10/2025 khi kỳ này 1–28/10/2026). */
   yoy?: { period: string; revenue: number; orders: number } | null;
+  /** Lần 59: số kỳ trước chia nhỏ — biết doanh thu tăng / giảm ở giờ, thứ, nhóm, món nào (trước chỉ có tổng). */
+  prev_from?: string | null;
+  prev_to?: string | null;
+  prev_by_hour?: number[] | null;
+  prev_by_weekday?: number[] | null;
+  /** Món đổi nhiều nhất so kỳ trước (app chọn ≤ 8 theo chênh lệch doanh thu). */
+  moves?: { name: string; qty: number; prev_qty: number; revenue: number; prev_revenue: number }[] | null;
 }
 
 export interface FactItem {
@@ -122,6 +129,8 @@ export interface FactGroup {
   top: FactItem[];
   slow: FactItem[];
   unsold_names: string[];
+  /** Doanh thu nhóm kỳ trước (lần 59). */
+  prev_revenue?: number | null;
 }
 
 function parseItem(v: unknown): FactItem | null {
@@ -143,7 +152,8 @@ function parseGroup(v: unknown): FactGroup | null {
   const top = (lists[0] as unknown[]).map(parseItem), slow = (lists[1] as unknown[]).map(parseItem);
   const unsoldNames = (lists[2] as unknown[]).map((x) => cleanText(x, 60));
   if (top.includes(null) || slow.includes(null) || unsoldNames.includes('')) return null;
-  return { name, revenue, qty, items, unsold, top: top as FactItem[], slow: slow as FactItem[], unsold_names: unsoldNames };
+  const prevRevenue = g.prev_revenue === undefined || g.prev_revenue === null ? null : num(g.prev_revenue, 1e13);
+  return { name, revenue, qty, items, unsold, top: top as FactItem[], slow: slow as FactItem[], unsold_names: unsoldNames, prev_revenue: prevRevenue };
 }
 
 // Chữ do app gửi kèm (tên món, câu trước): bỏ ký tự điều khiển + rào ba dấu nháy (không phá khung câu hỏi), cắt độ dài.
@@ -551,7 +561,55 @@ export function parseFacts(v: unknown): ShopFacts | null {
     to: ymd(f.to),
     series: parseSeries(f.series),
     yoy: parseYoy(f.yoy),
+    prev_from: prevPeriod ? ymd(f.prev_from) : null,
+    prev_to: prevPeriod ? ymd(f.prev_to) : null,
+    prev_by_hour: prevPeriod ? numList(f.prev_by_hour, 24) : null,
+    prev_by_weekday: prevPeriod ? numList(f.prev_by_weekday, 7) : null,
+    moves: prevPeriod ? parseMoves(f.moves) : null,
   };
+}
+
+// Món đổi nhiều nhất so kỳ trước; sai kiểu → bỏ riêng phần này (không làm hỏng cả khối)
+function parseMoves(v: unknown): ShopFacts['moves'] {
+  if (!Array.isArray(v) || v.length > 8) return null;
+  const out: NonNullable<ShopFacts['moves']> = [];
+  for (const x of v) {
+    const r = (x ?? {}) as Record<string, unknown>;
+    const name = cleanText(r.name, 60), qty = num(r.qty, 1e8), pq = num(r.prev_qty, 1e8), rev = num(r.revenue, 1e13), pr = num(r.prev_revenue, 1e13);
+    if (!name || qty === null || pq === null || rev === null || pr === null) return null;
+    out.push({ name, qty, prev_qty: pq, revenue: rev, prev_revenue: pr });
+  }
+  return out;
+}
+
+/** Lần 59: tăng / giảm ở đâu so kỳ trước (tính sẵn) — giờ, thứ (trung bình / ngày), nhóm, món đổi nhiều nhất. */
+export function changeLine(f: ShopFacts): string {
+  if (f.prev_revenue === null) return '';
+  const tang = f.revenue >= f.prev_revenue;
+  const sign = (d: number) => `${d >= 0 ? '+' : '−'}${vnd(Math.abs(d))}`;
+  const pc = (a: number, b: number) => (b > 0 ? ` (${a >= b ? '+' : '−'}${pctTxt(Math.abs(((a - b) / b) * 100))}%)` : '');
+  const parts: string[] = [];
+  // giờ: 3 giờ đổi nhiều nhất theo chiều của tổng (giảm → giờ giảm nhiều nhất)
+  if (f.by_hour && f.prev_by_hour) {
+    const hs = f.by_hour.map((v, h) => ({ h, v, p: f.prev_by_hour![h], d: v - f.prev_by_hour![h] })).filter((x) => x.v > 0 || x.p > 0)
+      .sort((a, b) => (tang ? b.d - a.d : a.d - b.d)).filter((x) => (tang ? x.d > 0 : x.d < 0)).slice(0, 3);
+    if (hs.length) parts.push(`theo giờ ${tang ? 'tăng' : 'giảm'} nhiều nhất: ${hs.map((x) => `${x.h}h ${vnd(x.v)} (kỳ trước ${vnd(x.p)}, ${sign(x.d)})`).join('; ')}`);
+  }
+  // thứ: trung bình / ngày (hai kỳ có thể khác số ngày mỗi thứ)
+  const c1 = weekdayCounts(f.from, f.to), c0 = weekdayCounts(f.prev_from, f.prev_to);
+  if (f.by_weekday && f.prev_by_weekday && c1 && c0) {
+    const names = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+    const ds = names.map((d, k) => ({ d, a: c1[k] ? f.by_weekday![k] / c1[k] : 0, b: c0[k] ? f.prev_by_weekday![k] / c0[k] : 0 }))
+      .filter((x) => x.a > 0 && x.b > 0).map((x) => ({ ...x, r: (x.a - x.b) / x.b })).sort((a, b) => a.r - b.r);
+    if (ds.length >= 2) {
+      const lo = ds[0], hi = ds[ds.length - 1];
+      parts.push(`theo thứ (trung bình / ngày): ${lo.r < 0 ? 'giảm nhiều nhất' : 'tăng ít nhất'} ${lo.d} ${vnd(lo.a)} so ${vnd(lo.b)}${pc(lo.a, lo.b)}; ${hi.r > 0 ? 'tăng nhiều nhất' : 'giảm ít nhất'} ${hi.d} ${vnd(hi.a)} so ${vnd(hi.b)}${pc(hi.a, hi.b)}`);
+    }
+  }
+  const gs = (f.groups ?? []).filter((g) => g.prev_revenue !== null && g.prev_revenue !== undefined);
+  if (gs.length) parts.push(`theo nhóm: ${gs.map((g) => `${g.name} ${vnd(g.revenue)} so ${vnd(g.prev_revenue!)}${pc(g.revenue, g.prev_revenue!)}`).join('; ')}`);
+  if (f.moves?.length) parts.push(`món đổi nhiều nhất: ${f.moves.map((m) => `${m.name} ${m.qty} phần so ${m.prev_qty} (${sign(m.revenue - m.prev_revenue)})`).join('; ')}`);
+  return parts.length ? `SO ${f.prev_period!.toUpperCase()} — ${tang ? 'TĂNG' : 'GIẢM'} Ở ĐÂU (tính sẵn, số cùng độ dài kỳ): ${parts.join('. ')}. Dùng dòng này để nêu nguyên nhân có số (giờ / thứ / nhóm / món nào kéo ${tang ? 'tăng' : 'giảm'}); số không cho biết LÝ DO khách đổi.` : '';
 }
 
 const ymd = (v: unknown) =>
@@ -681,7 +739,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
     lines.push(`${f.prev_period}: ${vnd(f.prev_revenue)}${po}${trend}.`);
     // lần 45: hỏi "món nào giảm nhiều nhất so tháng trước" → GPT bịa số món kỳ trước (D32), hỏi lại vẫn bịa số khác;
     // 45b: chỉ ghi khi câu hỏi so món với kỳ trước — ghi ở mọi câu làm phần việc làm dè dặt hơn (0,95 → 0,79)
-    if ((f.top.length || f.groups?.length) && /món/i.test(question) && /trước/i.test(question)) lines.push(`Số từng món chỉ có của kỳ này, CHƯA có số từng món ${f.prev_period.toLowerCase()} → không so được từng món với kỳ trước.`);
+    if (!f.moves?.length && (f.top.length || f.groups?.length) && /món/i.test(question) && /trước/i.test(question)) lines.push(`Số từng món chỉ có của kỳ này, CHƯA có số từng món ${f.prev_period.toLowerCase()} → không so được từng món với kỳ trước.`);
     // Doanh thu đổi vì số đơn hay vì giá trị mỗi đơn (tính sẵn — GPT không tự tách)
     if (f.prev_orders && f.orders > 0 && f.prev_revenue > 0) {
       const pctOrders = Math.round(((f.orders - f.prev_orders) / f.prev_orders) * 1000) / 10;
@@ -690,6 +748,9 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
       const main = Math.abs(pctOrders) >= Math.abs(pctAvg) ? 'chủ yếu do SỐ ĐƠN (lượng khách)' : 'chủ yếu do GIÁ TRỊ MỖI ĐƠN';
       lines.push(`Phân tích tính sẵn: số đơn ${sign(pctOrders)}, giá trị trung bình mỗi đơn ${sign(pctAvg)} → doanh thu đổi ${main}.`);
     }
+    // chỉ câu cần "vì sao / ở đâu" — đưa vào mọi câu làm câu kế hoạch / nói tiếp tụt (chấm l59: 11,83 → 10,17)
+    const ch = ['chan_doan', 'so_sanh'].includes(loaiCau(question) ?? '') || /giảm(?! giá)|tụt|so (?:với|tháng|tuần|kỳ)|vì sao|tại sao|sao vậy/i.test(question) ? changeLine(f) : '';
+    if (ch) lines.push(ch);
   }
   if (f.by_hour) {
     const hours = f.by_hour.map((v, h) => ({ h, v })).filter((x) => x.v > 0);
@@ -1263,7 +1324,7 @@ export const ADVICE_PROMPT = [
   '- KHO VIỆC CỤ THỂ cho quán nhỏ (chọn việc HỢP với điểm yếu trong số liệu, ghi rõ món / giờ / giá / số và cách đo): combo giờ vắng dùng đúng "Combo tính sẵn" (vd 14–17h, đo số combo bán / tuần); nhân viên mời 1 câu bán kèm món đang chạy (đo giá trị mỗi đơn); món bán chậm: đưa lên đầu menu + ảnh 2 tuần rồi mới quyết bỏ; món cả kỳ chưa bán phần nào: ẩn khỏi menu, bớt nhập nguyên liệu riêng (không giảm giá / quảng bá); tăng giá 2.000–3.000đ món giá vốn cao, thử 2 tuần, giữ nếu số ly giảm dưới 10%; giảm định lượng / đổi nguyên liệu món giá vốn cao; thẻ tích ly (mua 8 tặng 1) hoặc x2 điểm ngày yếu cho khách quen (đo số khách quay lại); nhắn tin khách cũ lâu chưa ghé; ưu đãi có điều kiện thay giảm giá toàn menu (tặng topping, nâng size); bớt nhập món ế / hao hụt nhiều; xếp người theo giờ đông / vắng; đổi mã giảm giá ăn nhiều % thành ưu đãi có đơn tối thiểu. KHÔNG đưa việc không đo được ("tăng cường quảng bá", "tổ chức sự kiện", "nâng cao chất lượng", "khảo sát khách") trừ khi kèm cách làm và con số.',
   // Claude chấm 29/10: bịa số khi khối không có (số từng món kỳ trước, chi tiết trong 1 khoản chi, tỉ lệ khách quay lại)
   '- Có dòng "ĐIỂM CẦN CHÚ Ý (tính sẵn)": đọc từng điểm, điểm nào liên quan câu hỏi PHẢI nêu ở "Vì sao" hoặc "Cần xem lại" (vd hỏi kế hoạch / tăng doanh thu mà có combo đắt hơn mua lẻ → nêu và đề xuất sửa giá combo); KHÔNG khuyên ngược điểm đó (vd giảm giá đang ăn quá 8% thì không khuyên đẩy thêm mã).',
-  '- CẤM SỐ GIẢ: mọi con số phải CHÉP từ khối số liệu / dòng tính sẵn, hoặc tính từ đó (ghi rõ phép tính). Số khối KHÔNG có (số từng món của kỳ trước, chi tiết bên trong một khoản chi, tỉ lệ khách quay lại khi không có khối khách, % tăng / giảm của tháng sau) → nói "chưa có số đó" và chỉ chỗ xem trong app; KHÔNG ước, KHÔNG đặt số minh hoạ như số thật.',
+  '- CẤM SỐ GIẢ: mọi con số phải CHÉP từ khối số liệu / dòng tính sẵn, hoặc tính từ đó (ghi rõ phép tính). Số khối KHÔNG có (số từng món của kỳ trước khi khối không có dòng món đổi nhiều nhất, chi tiết bên trong một khoản chi, tỉ lệ khách quay lại khi không có khối khách, % tăng / giảm của tháng sau) → nói "chưa có số đó" và chỉ chỗ xem trong app; KHÔNG ước, KHÔNG đặt số minh hoạ như số thật.',
   // lần 40 (Claude chấm: lý lẽ 0,72/2; khuyên ưu đãi giờ quán đóng; "thử 2 tuần" lặp máy móc)
   '- VÌ SAO phải có ÍT NHẤT 1 phép so có số (so kỳ trước, so mốc, so trung bình, so nhóm / giờ khác) lấy từ khối; KHÔNG đoán nguyên nhân khối không có ("khách có thói quen", "có thể do bảo quản", "giá nguyên liệu tăng") — không biết lý do thì nói "số chưa cho biết lý do" và nêu cách kiểm.',
   '- Việc làm chỉ trong GIỜ / NGÀY QUÁN CÓ BÁN (theo HỒ SƠ QUÁN: khung giờ có bán, ngày nghỉ) và món quán đang có; cách đo chọn theo đúng việc (số combo / ngày, giá trị mỗi đơn, số ly món đó, số khách quay lại…) — "thử 2 tuần" chỉ dùng cho việc đổi giá / combo, không gắn máy móc vào mọi việc.',

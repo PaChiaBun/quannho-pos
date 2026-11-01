@@ -10,7 +10,7 @@
   "van_de": [
    "A1"
   ],
-  "y_chinh": "Doanh thu 1–28/10 giảm 14,2% (95.951.000đ so 111.894.000đ) chủ yếu do SỐ ĐƠN giảm 14,8% (3.046 so 3.575), giá trị mỗi đơn giữ ~31.500đ → mất lượt khách; việc: hỏi lại khách quen / văn phòng quanh quán, kéo khách buổi sáng quay lại (thẻ tích ly, đặt trước cho văn phòng).",
+  "y_chinh": "Doanh thu 1–28/10 giảm 14,2% (95.951.000đ so 111.894.000đ) chủ yếu do SỐ ĐƠN giảm 14,8% (3.046 so 3.575), giá trị mỗi đơn giữ ~31.500đ → mất lượt khách; việc: hỏi lại khách quen / văn phòng quanh quán, kéo khách buổi sáng quay lại (thẻ tích ly, đặt trước cho văn phòng). Giảm ở đâu (số kỳ trước chia nhỏ): giờ sáng 6–8h mất nhiều nhất (7h −4.953.000đ, 8h −4.334.000đ, 6h −2.477.000đ); nhóm Cà phê −16,3%, Bánh mì −17,7%; Cà phê sữa đá 1150 so 1374 phần → mất khách văn phòng buổi sáng.",
   "can_tranh": "Nói do khách mua ít món hơn / do giá; khẳng định chắc một nguyên nhân bên ngoài (quán mới, thời tiết); khuyên giảm giá toàn menu; bịa số không có trong khối số liệu.",
   "thieu_so": "Số đơn theo ngày / tuần trong tháng để biết giảm từ lúc nào; doanh thu theo giờ kỳ trước để so."
  },
@@ -78,7 +78,7 @@
    "B2",
    "B1"
   ],
-  "y_chinh": "Doanh thu chỉ +2,2% vì số đơn +11,1% nhưng giá trị mỗi đơn −8% (54.000đ so 58.700đ); topping chỉ 4,2% doanh thu (~0,35 phần / đơn) → mời thêm topping / size, xem lại mức giảm giá.",
+  "y_chinh": "Doanh thu chỉ +2,2% vì số đơn +11,1% nhưng giá trị mỗi đơn −8% (54.000đ so 58.700đ); topping chỉ 4,2% doanh thu (~0,35 phần / đơn) → mời thêm topping / size, xem lại mức giảm giá. Giảm ở đâu: nhóm Topping 6.354.000đ so 9.086.000đ (−30,1%), Trân châu đen tụt mạnh; Ăn vặt −6,1%; trà sữa, trà trái cây tăng → đơn nhỏ đi vì ít gọi topping / ăn vặt.",
   "can_tranh": "Nói doanh thu giảm; khuyên giảm giá thêm để kéo đơn; khẳng định mã giảm giá là nguyên nhân với con số (khối số bán không có số mã).",
   "thieu_so": "Số giảm giá theo mã (khuyến mãi) cùng lúc với số bán — app không gửi cả hai."
  },
@@ -129,7 +129,7 @@
   "van_de": [
    "C2"
   ],
-  "y_chinh": "Thứ 4 cả tháng 11.502.000đ, chỉ ~55% các ngày Thứ 2, 3, 5, 6 (~20,9 triệu); số liệu không cho biết lý do → hỏi chủ quán (chợ nghỉ, công trình nghỉ?), giảm nhập bún / rau ngày Thứ 4, thử món riêng Thứ 4.",
+  "y_chinh": "Thứ 4 cả tháng 11.502.000đ, chỉ ~55% các ngày Thứ 2, 3, 5, 6 (~20,9 triệu); số liệu không cho biết lý do → hỏi chủ quán (chợ nghỉ, công trình nghỉ?), giảm nhập bún / rau ngày Thứ 4, thử món riêng Thứ 4. So tháng trước: Thứ 4 trung bình 2.875.500đ / ngày so 4.785.750đ (−39,9%) — Thứ 4 mới tụt tháng này, các thứ khác giữ / tăng.",
   "can_tranh": "Khẳng định nguyên nhân (mưa, chợ nghỉ) như sự thật; nói quán nghỉ Thứ 4; bịa số không có trong khối số liệu.",
   "thieu_so": "Số đơn theo thứ và doanh thu theo thứ của tháng trước để biết Thứ 4 vắng từ bao giờ."
  },
@@ -499,9 +499,9 @@
   "van_de": [
    "A1"
   ],
-  "y_chinh": "Nói rõ chưa có số từng món tháng trước; chỉ biết tổng giảm 14,2% do số đơn giảm 14,8%; nêu món bán chạy / chậm hiện tại để theo dõi.",
+  "y_chinh": "Món giảm nhiều nhất: Cà phê sữa đá 1150 so 1374 phần (−5.600.000đ), Bạc xỉu 610 so 729 (−3.451.000đ), Bánh mì thịt 420 so 510 (−2.250.000đ); nhóm Cà phê −16,3%, Bánh mì −17,7%, tập trung giờ sáng 6–8h; tổng giảm 14,2% do số đơn −14,8%.",
   "can_tranh": "Bịa món giảm nhiều nhất hoặc % giảm từng món.",
-  "thieu_so": "Số phần từng món kỳ trước."
+  "thieu_so": "Lý do khách giảm (số không cho biết)."
  },
  {
   "id": "D33",
@@ -512,7 +512,7 @@
   "facts": "tuan_nay",
   "modules": null,
   "van_de": [],
-  "y_chinh": "Tuần này (26–28/10) 13.520.000đ, giảm 4,7% so cùng kỳ tuần trước 14.180.000đ; số đơn −4,0% (431 so 449), giá trị mỗi đơn gần như giữ → do ít đơn hơn.",
+  "y_chinh": "Tuần này (26–28/10) 13.520.000đ, giảm 4,7% so cùng kỳ tuần trước 14.180.000đ; số đơn −4,0% (431 so 449), giá trị mỗi đơn gần như giữ → do ít đơn hơn. Giảm ở đâu: giờ sáng 7h −229.000đ, 8h −200.000đ; Cà phê −6%, Bánh mì −5,1%.",
   "can_tranh": "Nói Thứ 5–CN quán nghỉ / doanh thu 0; so 3 ngày với cả tuần trước.",
   "thieu_so": "Số theo thứ của tuần chưa hết bị gửi 0 cho ngày chưa tới."
  },
@@ -591,7 +591,7 @@
   "van_de": [
    "C7"
   ],
-  "y_chinh": "Giảm 21,5% (12.314.000đ so 15.689.000đ); số đơn −10,9% nhưng giá trị mỗi đơn −11,9% → chủ yếu do đơn nhỏ đi; món thêm chỉ ~4% doanh thu tuần này → mời trứng / chả / thịt thêm và đồ uống.",
+  "y_chinh": "Giảm 21,5% (12.314.000đ so 15.689.000đ); số đơn −10,9% nhưng giá trị mỗi đơn −11,9% → chủ yếu do đơn nhỏ đi; món thêm chỉ ~4% doanh thu tuần này → mời trứng / chả / thịt thêm và đồ uống. Giảm ở đâu: nhóm Món thêm 473.000đ so 992.000đ (−52,3%), Đồ uống −23%, Món chính −19,2%; giờ trưa 11–12h mất nhiều nhất (12h −1.118.000đ, 11h −977.000đ).",
   "can_tranh": "Nói Thứ 5–CN quán nghỉ; chỉ nói do ít khách; bịa số không có trong khối số liệu.",
   "thieu_so": "Cơ cấu món của tuần trước để so (app chỉ gửi tổng tuần trước)."
  },

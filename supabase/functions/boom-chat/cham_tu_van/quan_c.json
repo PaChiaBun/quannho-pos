@@ -100,7 +100,8 @@
      ],
      "unsold_names": [
       "Cơm cá kho"
-     ]
+     ],
+     "prev_revenue": 126824000.0
     },
     {
      "name": "Đồ uống",
@@ -139,7 +140,8 @@
      "unsold_names": [
       "Nước cam",
       "Sữa đậu nành"
-     ]
+     ],
+     "prev_revenue": 9856000.0
     },
     {
      "name": "Món thêm",
@@ -177,7 +179,8 @@
      ],
      "unsold_names": [
       "Giò heo thêm"
-     ]
+     ],
+     "prev_revenue": 9710000.0
     }
    ],
    "items_revenue": 142276000,
@@ -275,7 +278,88 @@
     ]
    ],
    "from": "2026-09-01",
-   "to": "2026-09-30"
+   "to": "2026-09-30",
+   "prev_from": "2026-08-01",
+   "prev_to": "2026-08-31",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    10127000.0,
+    16878000.0,
+    11814000.0,
+    6751000.0,
+    10127000.0,
+    23629000.0,
+    27005000.0,
+    13502000.0,
+    0,
+    0,
+    3376000.0,
+    6751000.0,
+    8439000.0,
+    5063000.0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "prev_by_weekday": [
+    25437000.0,
+    20348000.0,
+    11192000.0,
+    20349000.0,
+    20349000.0,
+    24165000.0,
+    21620000.0
+   ],
+   "moves": [
+    {
+     "name": "Bún bò Huế",
+     "qty": 861,
+     "prev_qty": 886,
+     "revenue": 38745000,
+     "prev_revenue": 39870000
+    },
+    {
+     "name": "Cơm sườn",
+     "qty": 798,
+     "prev_qty": 821,
+     "revenue": 31920000,
+     "prev_revenue": 32840000
+    },
+    {
+     "name": "Bún thịt nướng",
+     "qty": 546,
+     "prev_qty": 562,
+     "revenue": 21840000,
+     "prev_revenue": 22480000
+    },
+    {
+     "name": "Cơm gà xối mỡ",
+     "qty": 399,
+     "prev_qty": 411,
+     "revenue": 17955000,
+     "prev_revenue": 18495000
+    },
+    {
+     "name": "Bún riêu",
+     "qty": 220,
+     "prev_qty": 226,
+     "revenue": 8800000,
+     "prev_revenue": 9040000
+    },
+    {
+     "name": "Cơm chiên dương châu",
+     "qty": 100,
+     "prev_qty": 103,
+     "revenue": 4000000,
+     "prev_revenue": 4120000
+    }
+   ]
   },
   "thang_nay": {
    "period": "Tháng này (1–28/10/2026)",
@@ -375,7 +459,8 @@
      ],
      "unsold_names": [
       "Cơm cá kho"
-     ]
+     ],
+     "prev_revenue": 115068000.0
     },
     {
      "name": "Đồ uống",
@@ -414,7 +499,8 @@
      "unsold_names": [
       "Nước cam",
       "Sữa đậu nành"
-     ]
+     ],
+     "prev_revenue": 8939000.0
     },
     {
      "name": "Món thêm",
@@ -452,7 +538,8 @@
      ],
      "unsold_names": [
       "Giò heo thêm"
-     ]
+     ],
+     "prev_revenue": 8811000.0
     }
    ],
    "items_revenue": 135510000,
@@ -550,7 +637,88 @@
     ]
    ],
    "from": "2026-10-01",
-   "to": "2026-10-28"
+   "to": "2026-10-28",
+   "prev_from": "2026-09-01",
+   "prev_to": "2026-09-28",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9188000.0,
+    15314000.0,
+    10719000.0,
+    6125000.0,
+    9188000.0,
+    21439000.0,
+    24501000.0,
+    12251000.0,
+    0,
+    0,
+    3063000.0,
+    6125000.0,
+    7657000.0,
+    4594000.0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "prev_by_weekday": [
+    19143000.0,
+    19141000.0,
+    19143000.0,
+    19141000.0,
+    19141000.0,
+    18184000.0,
+    16270000.0
+   ],
+   "moves": [
+    {
+     "name": "Bún bò Huế",
+     "qty": 820,
+     "prev_qty": 804,
+     "revenue": 36900000,
+     "prev_revenue": 36180000
+    },
+    {
+     "name": "Cơm sườn",
+     "qty": 760,
+     "prev_qty": 745,
+     "revenue": 30400000,
+     "prev_revenue": 29800000
+    },
+    {
+     "name": "Bún thịt nướng",
+     "qty": 520,
+     "prev_qty": 510,
+     "revenue": 20800000,
+     "prev_revenue": 20400000
+    },
+    {
+     "name": "Cơm gà xối mỡ",
+     "qty": 380,
+     "prev_qty": 372,
+     "revenue": 17100000,
+     "prev_revenue": 16740000
+    },
+    {
+     "name": "Bún riêu",
+     "qty": 210,
+     "prev_qty": 206,
+     "revenue": 8400000,
+     "prev_revenue": 8240000
+    },
+    {
+     "name": "Cơm chiên dương châu",
+     "qty": 95,
+     "prev_qty": 93,
+     "revenue": 3800000,
+     "prev_revenue": 3720000
+    }
+   ]
   },
   "tuan_nay": {
    "period": "Tuần này (26–28/10/2026)",
@@ -650,7 +818,8 @@
      ],
      "unsold_names": [
       "Cơm cá kho"
-     ]
+     ],
+     "prev_revenue": 14086000.0
     },
     {
      "name": "Đồ uống",
@@ -689,7 +858,8 @@
      "unsold_names": [
       "Nước cam",
       "Sữa đậu nành"
-     ]
+     ],
+     "prev_revenue": 931000.0
     },
     {
      "name": "Món thêm",
@@ -727,7 +897,8 @@
      ],
      "unsold_names": [
       "Giò heo thêm"
-     ]
+     ],
+     "prev_revenue": 992000.0
     }
    ],
    "items_revenue": 12565000,
@@ -825,7 +996,88 @@
     ]
    ],
    "from": "2026-10-26",
-   "to": "2026-10-28"
+   "to": "2026-10-28",
+   "prev_from": "2026-10-19",
+   "prev_to": "2026-10-21",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1009000.0,
+    1682000.0,
+    1177000.0,
+    672000.0,
+    1009000.0,
+    3005000.0,
+    3437000.0,
+    1345000.0,
+    0,
+    0,
+    337000.0,
+    672000.0,
+    840000.0,
+    505000.0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "prev_by_weekday": [
+    6153000.0,
+    6153000.0,
+    3384000.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "moves": [
+    {
+     "name": "Cơm sườn",
+     "qty": 78,
+     "prev_qty": 97,
+     "revenue": 3120000,
+     "prev_revenue": 3880000
+    },
+    {
+     "name": "Bún bò Huế",
+     "qty": 68,
+     "prev_qty": 84,
+     "revenue": 3060000,
+     "prev_revenue": 3780000
+    },
+    {
+     "name": "Bún thịt nướng",
+     "qty": 54,
+     "prev_qty": 67,
+     "revenue": 2160000,
+     "prev_revenue": 2680000
+    },
+    {
+     "name": "Cơm gà xối mỡ",
+     "qty": 39,
+     "prev_qty": 48,
+     "revenue": 1755000,
+     "prev_revenue": 2160000
+    },
+    {
+     "name": "Bún riêu",
+     "qty": 22,
+     "prev_qty": 27,
+     "revenue": 880000,
+     "prev_revenue": 1080000
+    },
+    {
+     "name": "Trứng ốp la",
+     "qty": 19,
+     "prev_qty": 40,
+     "revenue": 152000,
+     "prev_revenue": 320000
+    }
+   ]
   },
   "hom_nay": {
    "period": "Hôm nay (28/10/2026, tới 14h)",
@@ -925,7 +1177,8 @@
      ],
      "unsold_names": [
       "Cơm cá kho"
-     ]
+     ],
+     "prev_revenue": 2431000.0
     },
     {
      "name": "Món thêm",
@@ -963,7 +1216,8 @@
      ],
      "unsold_names": [
       "Giò heo thêm"
-     ]
+     ],
+     "prev_revenue": 195000.0
     },
     {
      "name": "Đồ uống",
@@ -1002,7 +1256,8 @@
      "unsold_names": [
       "Nước cam",
       "Sữa đậu nành"
-     ]
+     ],
+     "prev_revenue": 195000.0
     }
    ],
    "items_revenue": 2692000,
@@ -1078,7 +1333,58 @@
     []
    ],
    "from": "2026-10-28",
-   "to": "2026-10-28"
+   "to": "2026-10-28",
+   "prev_from": "2026-10-21",
+   "prev_to": "2026-10-21",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    234000.0,
+    390000.0,
+    272000.0,
+    156000.0,
+    234000.0,
+    545000.0,
+    622000.0,
+    311000.0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "moves": [
+    {
+     "name": "Bún bò Huế",
+     "qty": 16,
+     "prev_qty": 17,
+     "revenue": 720000,
+     "prev_revenue": 765000
+    },
+    {
+     "name": "Cơm sườn",
+     "qty": 15,
+     "prev_qty": 16,
+     "revenue": 600000,
+     "prev_revenue": 640000
+    },
+    {
+     "name": "Trà đá",
+     "qty": 18,
+     "prev_qty": 19,
+     "revenue": 54000,
+     "prev_revenue": 57000
+    }
+   ]
   }
  },
  "modules": {

@@ -2609,12 +2609,33 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         period,
         range: range,
       );
-      final perf = await data.getProductPerformance(
-        storeId,
-        period: period,
-        limit: 10,
-        range: range,
+      // Lần 59: món kỳ trước (song song) — Boom chỉ ra nhóm / món nào kéo tăng / giảm (trước chỉ có tổng kỳ trước)
+      final r0 = summary.range;
+      final prevRange = BoomPeriodRange(
+        start: r0.prevStart,
+        end: r0.prevEnd,
+        prevStart: r0.prevStart,
+        prevEnd: r0.prevStart,
+        label: r0.prevLabel,
+        prevLabel: '',
       );
+      final perfs = await Future.wait([
+        data.getProductPerformance(
+          storeId,
+          period: period,
+          limit: 10,
+          range: range,
+        ),
+        if (summary.previousOrderCount > 0)
+          data.getProductPerformance(
+            storeId,
+            period: period,
+            limit: 10,
+            range: prevRange,
+          ),
+      ]);
+      final perf = perfs.first;
+      final prevPerf = perfs.length > 1 ? perfs[1] : null;
       final sold = perf.top.where((t) => t.quantity > 0).take(5).toList();
       String clip(String s, int n) => s.length > n ? s.substring(0, n) : s;
       // Combo: tách tên ("Combo mì cay + trà đào") → khớp món đang bán → tổng giá mua lẻ (chưa có bảng thành phần
@@ -2677,6 +2698,14 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
             return {
               'name': clip(items.first.category, 40),
               'revenue': items.fold<double>(0, (s, t) => s + t.revenue),
+              if (prevPerf != null)
+                'prev_revenue': prevPerf.all
+                    .where(
+                      (t) =>
+                          t.category.trim().toLowerCase() ==
+                          items.first.category.trim().toLowerCase(),
+                    )
+                    .fold<double>(0, (s, t) => s + t.revenue),
               'qty': items.fold<double>(0, (s, t) => s + t.quantity),
               'items': items.length,
               'unsold': unsold.length,
@@ -2690,7 +2719,30 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
             (a, b) =>
                 (b['revenue'] as double).compareTo(a['revenue'] as double),
           );
+      // Món đổi doanh thu nhiều nhất so kỳ trước (≤ 6, cả món kỳ này không bán)
+      final moves = <({Map<String, dynamic> m, double d})>[];
+      if (prevPerf != null) {
+        final cur = {for (final t in perf.all) fold(t.name): t};
+        final old = {for (final t in prevPerf.all) fold(t.name): t};
+        for (final n in {...cur.keys, ...old.keys}) {
+          final a = cur[n], b = old[n];
+          final d = (a?.revenue ?? 0) - (b?.revenue ?? 0);
+          if (d == 0) continue;
+          moves.add((
+            m: {
+              'name': clip((a ?? b)!.name, 60),
+              'qty': a?.quantity ?? 0,
+              'prev_qty': b?.quantity ?? 0,
+              'revenue': a?.revenue ?? 0,
+              'prev_revenue': b?.revenue ?? 0,
+            },
+            d: d.abs(),
+          ));
+        }
+        moves.sort((x, y) => y.d.compareTo(x.d));
+      }
       final (from, to) = boomFactsDates(summary.range);
+      final (prevFrom, prevTo) = boomFactsDates(prevRange);
       final facts = <String, dynamic>{
         'period': clip(summary.range.label, 40),
         // ngày đầu / cuối có số: máy chủ đếm mỗi thứ mấy ngày (thứ chưa tới ≠ ngày nghỉ), dự báo cả tháng (giai đoạn 2)
@@ -2702,6 +2754,13 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
           'prev_period': clip(summary.range.prevLabel, 40),
           'prev_revenue': summary.previousRevenue,
           'prev_orders': summary.previousOrderCount,
+          'prev_from': prevFrom,
+          'prev_to': prevTo,
+          if (summary.previousByHour.any((v) => v > 0))
+            'prev_by_hour': summary.previousByHour,
+          if (summary.previousByWeekday.any((v) => v > 0))
+            'prev_by_weekday': summary.previousByWeekday,
+          if (moves.isNotEmpty) 'moves': [for (final x in moves.take(6)) x.m],
         },
         'top': [
           for (final t in sold)

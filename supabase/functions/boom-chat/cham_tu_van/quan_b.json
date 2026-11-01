@@ -93,7 +93,8 @@
      ],
      "unsold_names": [
       "Trà sữa bạc hà"
-     ]
+     ],
+     "prev_revenue": 89816000.0
     },
     {
      "name": "Trà trái cây",
@@ -137,7 +138,8 @@
        "price": 28000
       }
      ],
-     "unsold_names": []
+     "unsold_names": [],
+     "prev_revenue": 47261000.0
     },
     {
      "name": "Ăn vặt",
@@ -177,7 +179,8 @@
       "Phô mai que",
       "Nem chua rán",
       "Gà lắc phô mai"
-     ]
+     ],
+     "prev_revenue": 11088000.0
     },
     {
      "name": "Topping",
@@ -221,7 +224,8 @@
      ],
      "unsold_names": [
       "Trân châu trắng"
-     ]
+     ],
+     "prev_revenue": 6431000.0
     }
    ],
    "items_revenue": 150025000,
@@ -319,7 +323,88 @@
     ]
    ],
    "from": "2026-09-01",
-   "to": "2026-09-30"
+   "to": "2026-09-30",
+   "prev_from": "2026-08-01",
+   "prev_to": "2026-08-31",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2343000.0,
+    3515000.0,
+    7029000.0,
+    9372000.0,
+    8200000.0,
+    7029000.0,
+    9372000.0,
+    11715000.0,
+    14059000.0,
+    16402000.0,
+    21088000.0,
+    23432000.0,
+    16402000.0,
+    0,
+    0
+   ],
+   "prev_by_weekday": [
+    17590000.0,
+    14072000.0,
+    14951000.0,
+    15832000.0,
+    19350000.0,
+    32982000.0,
+    35181000.0
+   ],
+   "moves": [
+    {
+     "name": "Trà sữa trân châu đường đen",
+     "qty": 1044,
+     "prev_qty": 1076,
+     "revenue": 36540000,
+     "prev_revenue": 37660000
+    },
+    {
+     "name": "Trà sữa truyền thống",
+     "qty": 818,
+     "prev_qty": 843,
+     "revenue": 22904000,
+     "prev_revenue": 23604000
+    },
+    {
+     "name": "Trà đào cam sả",
+     "qty": 509,
+     "prev_qty": 525,
+     "revenue": 16288000,
+     "prev_revenue": 16800000
+    },
+    {
+     "name": "Trà dâu tây",
+     "qty": 434,
+     "prev_qty": 447,
+     "revenue": 15190000,
+     "prev_revenue": 15645000
+    },
+    {
+     "name": "Trà sữa matcha",
+     "qty": 351,
+     "prev_qty": 362,
+     "revenue": 13338000,
+     "prev_revenue": 13756000
+    },
+    {
+     "name": "Trà vải",
+     "qty": 317,
+     "prev_qty": 327,
+     "revenue": 9510000,
+     "prev_revenue": 9810000
+    }
+   ]
   },
   "thang_nay": {
    "period": "Tháng này (1–28/10/2026)",
@@ -412,7 +497,8 @@
      ],
      "unsold_names": [
       "Trà sữa bạc hà"
-     ]
+     ],
+     "prev_revenue": 83972000.0
     },
     {
      "name": "Trà trái cây",
@@ -456,7 +542,8 @@
        "price": 28000
       }
      ],
-     "unsold_names": []
+     "unsold_names": [],
+     "prev_revenue": 44673000.0
     },
     {
      "name": "Ăn vặt",
@@ -496,7 +583,8 @@
       "Phô mai que",
       "Nem chua rán",
       "Gà lắc phô mai"
-     ]
+     ],
+     "prev_revenue": 11710000.0
     },
     {
      "name": "Topping",
@@ -540,7 +628,8 @@
      ],
      "unsold_names": [
       "Trân châu trắng"
-     ]
+     ],
+     "prev_revenue": 9086000.0
     }
    ],
    "items_revenue": 152746000,
@@ -638,7 +727,88 @@
     ]
    ],
    "from": "2026-10-01",
-   "to": "2026-10-28"
+   "to": "2026-10-28",
+   "prev_from": "2026-09-01",
+   "prev_to": "2026-09-28",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2146000.0,
+    3219000.0,
+    6438000.0,
+    8583000.0,
+    7511000.0,
+    6438000.0,
+    8583000.0,
+    10729000.0,
+    12875000.0,
+    14658000.0,
+    18847000.0,
+    20940000.0,
+    15021000.0,
+    0,
+    0
+   ],
+   "prev_by_weekday": [
+    14670000.0,
+    14670000.0,
+    15587000.0,
+    16504000.0,
+    20172000.0,
+    26317000.0,
+    28071000.0
+   ],
+   "moves": [
+    {
+     "name": "Trà sữa trân châu đường đen",
+     "qty": 1062,
+     "prev_qty": 1005,
+     "revenue": 37170000,
+     "prev_revenue": 35175000
+    },
+    {
+     "name": "Trà sữa truyền thống",
+     "qty": 833,
+     "prev_qty": 789,
+     "revenue": 23324000,
+     "prev_revenue": 22092000
+    },
+    {
+     "name": "Trân châu đen",
+     "qty": 442,
+     "prev_qty": 632,
+     "revenue": 2652000,
+     "prev_revenue": 3792000
+    },
+    {
+     "name": "Trà sữa matcha",
+     "qty": 357,
+     "prev_qty": 338,
+     "revenue": 13566000,
+     "prev_revenue": 12844000
+    },
+    {
+     "name": "Trà đào cam sả",
+     "qty": 518,
+     "prev_qty": 496,
+     "revenue": 16576000,
+     "prev_revenue": 15872000
+    },
+    {
+     "name": "Trà dâu tây",
+     "qty": 442,
+     "prev_qty": 423,
+     "revenue": 15470000,
+     "prev_revenue": 14805000
+    }
+   ]
   },
   "tuan_nay": {
    "period": "Tuần này (26–28/10/2026)",
@@ -731,7 +901,8 @@
      ],
      "unsold_names": [
       "Trà sữa bạc hà"
-     ]
+     ],
+     "prev_revenue": 7666000.0
     },
     {
      "name": "Trà trái cây",
@@ -775,7 +946,8 @@
        "price": 28000
       }
      ],
-     "unsold_names": []
+     "unsold_names": [],
+     "prev_revenue": 4073000.0
     },
     {
      "name": "Ăn vặt",
@@ -815,7 +987,8 @@
       "Phô mai que",
       "Nem chua rán",
       "Gà lắc phô mai"
-     ]
+     ],
+     "prev_revenue": 946000.0
     },
     {
      "name": "Topping",
@@ -859,7 +1032,8 @@
      ],
      "unsold_names": [
       "Trân châu trắng"
-     ]
+     ],
+     "prev_revenue": 546000.0
     }
    ],
    "items_revenue": 13781000,
@@ -957,7 +1131,88 @@
     ]
    ],
    "from": "2026-10-26",
-   "to": "2026-10-28"
+   "to": "2026-10-28",
+   "prev_from": "2026-10-19",
+   "prev_to": "2026-10-21",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    191000.0,
+    287000.0,
+    573000.0,
+    764000.0,
+    669000.0,
+    573000.0,
+    764000.0,
+    955000.0,
+    1147000.0,
+    1338000.0,
+    1631000.0,
+    1810000.0,
+    1338000.0,
+    0,
+    0
+   ],
+   "prev_by_weekday": [
+    3931000.0,
+    3931000.0,
+    4177000.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "moves": [
+    {
+     "name": "Trà sữa trân châu đường đen",
+     "qty": 96,
+     "prev_qty": 92,
+     "revenue": 3360000,
+     "prev_revenue": 3220000
+    },
+    {
+     "name": "Trà sữa truyền thống",
+     "qty": 75,
+     "prev_qty": 72,
+     "revenue": 2100000,
+     "prev_revenue": 2016000
+    },
+    {
+     "name": "Trà dâu tây",
+     "qty": 40,
+     "prev_qty": 38,
+     "revenue": 1400000,
+     "prev_revenue": 1330000
+    },
+    {
+     "name": "Trà đào cam sả",
+     "qty": 47,
+     "prev_qty": 45,
+     "revenue": 1504000,
+     "prev_revenue": 1440000
+    },
+    {
+     "name": "Trà sữa matcha",
+     "qty": 32,
+     "prev_qty": 31,
+     "revenue": 1216000,
+     "prev_revenue": 1178000
+    },
+    {
+     "name": "Trà sữa khoai môn",
+     "qty": 23,
+     "prev_qty": 22,
+     "revenue": 805000,
+     "prev_revenue": 770000
+    }
+   ]
   },
   "hom_nay": {
    "period": "Hôm nay (28/10/2026, tới 15h)",
@@ -1050,7 +1305,8 @@
      ],
      "unsold_names": [
       "Trà sữa bạc hà"
-     ]
+     ],
+     "prev_revenue": 881000.0
     },
     {
      "name": "Trà trái cây",
@@ -1090,7 +1346,8 @@
      ],
      "unsold_names": [
       "Trà ổi hồng"
-     ]
+     ],
+     "prev_revenue": 460000.0
     },
     {
      "name": "Ăn vặt",
@@ -1123,7 +1380,8 @@
       "Phô mai que",
       "Nem chua rán",
       "Gà lắc phô mai"
-     ]
+     ],
+     "prev_revenue": 116000.0
     },
     {
      "name": "Topping",
@@ -1162,7 +1420,8 @@
      "unsold_names": [
       "Trân châu trắng",
       "Thạch dừa"
-     ]
+     ],
+     "prev_revenue": 64000.0
     }
    ],
    "items_revenue": 1381000,
@@ -1238,7 +1497,58 @@
     []
    ],
    "from": "2026-10-28",
-   "to": "2026-10-28"
+   "to": "2026-10-28",
+   "prev_from": "2026-10-21",
+   "prev_to": "2026-10-21",
+   "prev_by_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    69000.0,
+    103000.0,
+    208000.0,
+    276000.0,
+    242000.0,
+    208000.0,
+    276000.0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "moves": [
+    {
+     "name": "Trà sữa trân châu đường đen",
+     "qty": 10,
+     "prev_qty": 11,
+     "revenue": 350000,
+     "prev_revenue": 385000
+    },
+    {
+     "name": "Trà đào cam sả",
+     "qty": 5,
+     "prev_qty": 6,
+     "revenue": 160000,
+     "prev_revenue": 192000
+    },
+    {
+     "name": "Trà sữa truyền thống",
+     "qty": 8,
+     "prev_qty": 9,
+     "revenue": 224000,
+     "prev_revenue": 252000
+    }
+   ]
   }
  },
  "modules": {
