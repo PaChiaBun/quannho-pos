@@ -547,6 +547,12 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Bài học (so lần 63): tính sẵn chính VIỆC (giờ / nhóm + mốc đo) thì việc làm cụ thể hơn; chỉ nói "đừng làm X" thì không. Còn yếu: GPT chép nguyên "ưu đãi khách quen / món chủ lực", chưa nêu món / mức ưu đãi.
 - Áp: `db-fix/boom_l65_ap_dung.sh` (TS 20261102_161310). Không cần bản app mới.
 
+### Lần 66 (02/11, bỏ): việc nên nhắm ghi tên 2 món chủ lực của khung giờ mất khách
+
+- Sửa thử: thay "món chủ lực của chính khung đó" bằng tên 2 món bán chạy nhất của khung chứa giờ mất nhiều nhất (quán A: "Cà phê sữa đá, Bánh mì thịt"). Chỉ 3 câu đổi (D01, D32, D33).
+- Chấm kín 3 câu × 2 lượt cạnh bản 65b: 13,33 → 13,33; việc làm 1,0 → 1,0. Người chấm: việc vẫn thiếu MỨC ưu đãi; có bản đẩy combo cà phê + bánh mì đang đắt hơn mua lẻ (rủi ro đã lường) → bỏ.
+- Bài học: việc làm còn thiếu mức ưu đãi / con số chứ không thiếu tên món; lần sau thử ghi sẵn mức (vd giảm 3.000đ / ly cho khách quen 7–8h, thử 2 tuần) — chú ý không đè lên món giá vốn cao / combo đắt.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
