@@ -1,5 +1,7 @@
 # Kế hoạch dạy Boom thông minh hơn khi tư vấn chủ quán (lập 28/10/2026)
 
+> **Từ 03/11/2026 đổi hướng** (sau hỏi thật trên web): dừng dạy kiểu thêm dòng tính sẵn theo từ khoá; làm theo `.docs/lo-trinh-boom-co-van.md` (đường số liệu ở máy chủ → lời nhắc gọn → hồ sơ / trí nhớ → khuyên–đo–học → chủ động). Thiết kế chặng 1: `.docs/thiet-ke-boom-may-chu-lay-so.md`.
+
 Kế hoạch này **thay** `ke-hoach-day-boom-50-lan.md`. Các lần dạy về chọn đường trong kế hoạch cũ được gộp vào Giai đoạn 1.
 Kế hoạch được lập sau **một lần kiểm** các phần sau:
 - Hàm máy chủ `boom-chat`: lời nhắc tư vấn `ADVICE_PROMPT`, cách ghép tin nhắn `buildMessages`, mô hình, trí nhớ.
