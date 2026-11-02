@@ -2032,6 +2032,39 @@ export function tuanChuaTron(answer: string, ref: string): number {
   return /mới có|chưa (?:trọn|hết|đủ|qua hết)|\d ?\/ ?7|\b\d (?:ngày|hôm) (?:đầu|đã có|qua)|(?:ba|hai|bốn|năm|\d) ngày đầu/i.test(answer) ? 0 : n;
 }
 
+/** Chặng 2.2 (03/11): lỗi lập luận chấm kín 60 câu vẫn thấy dù lời nhắc đã cấm (đo 2.1: bớt luật không giảm lỗi này) → kiểm bằng
+ *  code rồi bắt viết lại. Mỗi kiểm chỉ bật khi khối số có đúng căn cứ, để không hỏi lại oan. */
+export function loiLapLuan(answer: string, ref: string): string[] {
+  const out: string[] = [];
+  const cau = answer.split(/(?<=[.!?])\s+|\n+/);
+  // việc làm chung chung không gắn số (KHO VIỆC cấm) — "đẩy mạnh quảng bá qua các kênh truyền thông", "tổ chức sự kiện"
+  const chung = cau.filter((c) => /(?:đẩy mạnh|tăng cường) (?:quảng bá|quảng cáo|truyền thông|marketing)|kênh truyền thông|mạng xã hội|tổ chức (?:sự kiện|minigame|mini game)|nâng cao chất lượng|khảo sát (?:ý kiến )?khách|cải thiện trải nghiệm/i.test(c) && !/\d/.test(c));
+  if (chung.length) out.push(`việc làm chung chung, không gắn số (${chung.map((c) => `"${c.trim().slice(0, 60)}"`).join('; ')}) → thay bằng việc cụ thể từ số của quán: món / giờ / giá / mốc đo`);
+  // kết luận ngược dòng tính sẵn: số ghi CHƯA nên mà câu trả lời "nghiêng về" / "nên" làm
+  const chua = /CHƯA nên (cắt|đóng|đổi)/.exec(ref);
+  if (chua && new RegExp(`nghiêng về (?:việc )?${chua[1]}|(?<!chưa |không )nên ${chua[1]}`, 'i').test(answer.split('\n')[0])) {
+    out.push(`dòng đầu kết luận ngược số tính sẵn (số ghi "CHƯA nên ${chua[1]}") → dòng đầu nói "chưa nên ${chua[1]} ngay" và lý do bằng số`);
+  }
+  // tiền bớt của mã giảm giá là CHI PHÍ — bớt nhiều không có nghĩa hiệu quả hơn
+  if (/tiền bớt là CHI PHÍ/.test(ref) && cau.some((c) => /(?:GIAM|HSSV|mã)\w*[^.]{0,60}hiệu quả hơn|hiệu quả hơn[^.]{0,40}(?:giảm|bớt) (?:được )?nhiều/i.test(c))) {
+    out.push('gọi mã giảm giá "hiệu quả hơn" vì bớt cho khách nhiều tiền hơn — tiền bớt là CHI PHÍ của quán, chưa có số khách mã kéo thêm → nói mã nào TỐN hơn, muốn biết hiệu quả thì tắt thử 1–2 tuần rồi so số đơn');
+  }
+  // thu − chi là chênh lệch sổ quỹ, không phải lãi
+  if (/CHÊNH LỆCH SỔ QUỸ/.test(ref) && cau.some((c) => /(?:thu|chi)/i.test(c) && /lãi ròng|lợi nhuận ròng|lời ròng/i.test(c) && !/không phải|chưa phải/i.test(c))) {
+    out.push('gọi thu − chi là lãi ròng / lợi nhuận → đó là chênh lệch sổ quỹ (còn hàng tồn, khoản chưa ghi), nói "thu nhiều hơn chi X"');
+  }
+  // % trên TỔNG CHI đem so mốc tính trên DOANH THU
+  if (cau.some((c) => /tổng chi/i.test(c) && /2[05]\s*[–-]\s*3[05]\s*%/.test(c))) {
+    out.push('đem % trên TỔNG CHI so với mốc 25–35% (mốc tính trên DOANH THU) → dùng đúng dòng "Tỉ lệ trên doanh thu bán hàng" của khối');
+  }
+  // "N khách có điểm" ≠ N khách lâu chưa ghé
+  const diem = /(\d[\d.]*) khách có điểm/.exec(ref);
+  if (diem && cau.some((c) => c.includes(`${diem[1]} khách`) && /lâu (?:chưa|không) (?:ghé|quay)/i.test(c))) {
+    out.push(`gọi cả ${diem[1]} khách có điểm là khách lâu chưa ghé — khối không có số khách lâu chưa ghé → nói "trong số khách có điểm, nhắn những người lâu chưa ghé (xem danh sách ở mục Khách hàng)"`);
+  }
+  return out;
+}
+
 /** Mọi lỗi cần hỏi lại (rỗng = câu trả lời qua): số lạ, khuyên ngược món giá vốn cao, lộ chữ nội bộ, combo đắt hơn lẻ, topping quán không bán, món có bán bị gọi là chưa bán, so tuần chưa trọn không nói số ngày. */
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const bad = soLa(answer, ref);
@@ -2050,6 +2083,7 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
     ...(pd.length ? [`gọi số PHẦN MÓN là số ĐƠN (${pd.map((x) => `${x} là số phần, không phải đơn`).join('; ')}) → khối không có số đơn theo ca / khung giờ: nói "phần món" hoặc nói chưa có số đơn theo ca`] : []),
     ...(gk.length ? [`gán số của từng giờ cho cả khung giờ (${gk.join('; ')}) → nói đúng: số khung giờ là tổng các giờ, hoặc ghi rõ "riêng 14h …"`] : []),
     ...(tct ? [`đang so ${tct} ngày đầu tuần này với ${tct} ngày cùng kỳ tuần trước mà chưa nói → thêm ngay câu đầu "tuần này mới có ${tct}/7 ngày, so với ${tct} ngày cùng kỳ tuần trước", giữ nguyên các số`] : []),
+    ...loiLapLuan(answer, ref),
     ...(NOI_BO.test(answer) ? ['câu trả lời lộ tên dòng / khối nội bộ (vd "dòng ĐIỂM CẦN CHÚ Ý", "khối ...", "tính sẵn") → nói lý do bằng lời thường cho chủ quán, không nhắc tên dòng'] : []),
   ];
 }

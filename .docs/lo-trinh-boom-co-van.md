@@ -42,6 +42,15 @@ Thiết kế chi tiết: `.docs/thiet-ke-boom-may-chu-lay-so.md`.
 
 **Xong chặng khi**: điểm chấm kín không tụt, token giảm, câu cấm không lọt khi hỏi thật. · **duyệt áp máy chủ**
 
+**Kết quả 03/11:**
+- **2.1 bỏ.** Lời nhắc gọn (lõi cố định + dòng theo chủ đề / khối số) bớt 29% token nhưng chấm kín 60 câu 12,38 → 12,27 (so sánh 13,6 → 12,5).
+  Giả thuyết "bớt luật thì mini khôn hơn" không đúng — lỗi nằm ở lập luận, không ở độ dài lời nhắc (`ket_qua/c21_loi_nhac_gon_claude_20261103.json`).
+- **2.2 áp.** `loiLapLuan()` trong bước tự kiểm: việc chung chung không gắn số, dòng đầu ngược số tính sẵn ("nghiêng về cắt / đóng"),
+  mã giảm giá "hiệu quả hơn" vì bớt nhiều, thu − chi gọi là lãi ròng, % tổng chi so mốc doanh thu, gọi mọi khách có điểm là "lâu chưa ghé"
+  → bắt viết lại 1 lần. Chấm kín 12 câu hay lỗi × 3: 11,53 → 11,78 (D37 10,3 → 12,3; D18 10,3 → 12,3; D03 10,7 → 12,0; D58 11,7 → 10,0);
+  câu còn lỗi 10/36 → 6/36 (`ket_qua/c22_kiem_lap_luan_claude_20261103.json`). Còn: số cộng dồn gọi là "tháng này", bỏ sót vấn đề trong khối → 2.3.
+  Đã áp 03/11 `db-fix/boom_c22_ap_dung.sh` (TS 20261103_054631).
+
 ## Chặng 3 — Hiểu quán và nhớ lâu · ~2 tuần
 
 | # | Việc | Đầu ra | Đo / duyệt |

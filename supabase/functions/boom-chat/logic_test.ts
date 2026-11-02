@@ -22,6 +22,7 @@ import {
   changeLine,
   comboDat,
   kiemTraLoi,
+  loiLapLuan,
   chuaBanSai,
   tuanChuaTron,
   soGioChoKhung,
@@ -1152,4 +1153,17 @@ Deno.test('kiểm thật 03/11 (2): hao hụt món chưa có giá vốn → khô
   const t = formatModules(m, new Date(), 'tháng trước kho hao hụt nhiều không');
   assertStringIncludes(t, 'Cơm sườn cọng 49 phần (chưa có giá vốn → chưa tính được tiền, KHÔNG phải 0đ)');
   assertStringIncludes(t, 'Kho tính sẵn: hao hụt cả kỳ (1 món chưa có giá vốn → tiền thật CAO hơn số này, KHÔNG nói "không mất tiền"): Cơm sườn cọng 49 phần (~1,6 phần / ngày)');
+});
+
+Deno.test('chặng 2.2: kiểm lỗi lập luận bằng code — chỉ bật khi khối có căn cứ', () => {
+  assertEquals(loiLapLuan('Việc tuần này: đẩy mạnh quảng bá qua các kênh truyền thông.', 'x').length, 1);
+  assertEquals(loiLapLuan('Việc tuần này: đăng 1 bài mạng xã hội giới thiệu combo 45.000đ lúc 14h.', 'x').length, 0);
+  assert(loiLapLuan('Dạ, số đang nghiêng về cắt bớt 1 người.\nVì sao…', 'KẾT LUẬN: CHƯA nên cắt ngay')[0].includes('chưa nên cắt'));
+  assertEquals(loiLapLuan('Dạ, chưa nên cắt ngay.', 'KẾT LUẬN: CHƯA nên cắt ngay').length, 0);
+  assertEquals(loiLapLuan('Mã GIAM15 hiệu quả hơn vì giảm nhiều tiền hơn.', 'Tính sẵn: tiền bớt là CHI PHÍ quán bỏ ra').length, 1);
+  assertEquals(loiLapLuan('Mã GIAM15 hiệu quả hơn.', 'không có dòng tính sẵn').length, 0);
+  assertEquals(loiLapLuan('Thu − chi là 37 triệu, đây là lãi ròng của quán.', 'Thu − chi là CHÊNH LỆCH SỔ QUỸ').length, 1);
+  assertEquals(loiLapLuan('Thu − chi 37 triệu, chưa phải lãi ròng.', 'Thu − chi là CHÊNH LỆCH SỔ QUỸ').length, 0);
+  assertEquals(loiLapLuan('Nguyên liệu chiếm 60,5% tổng chi, cao hơn mốc 25–35%.', 'x').length, 1);
+  assertEquals(loiLapLuan('Nhắn 1320 khách lâu chưa ghé.', '1320 khách có điểm;').length, 1);
 });
