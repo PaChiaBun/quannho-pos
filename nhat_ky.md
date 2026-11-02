@@ -3,6 +3,19 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-11-03 — Kiểm Sunmi Bò Đen đợt 2 (chỉ xem): 11 lỗi → sửa hết theo ⭐ (commit `2823ed3`)
+
+- ✅ Kiểm trên máy thật lúc quán đóng cửa, không ghi dữ liệu: Báo cáo 8 thẻ, Thu Chi, Kho hàng, Kho CN, In hoá đơn, Khách hàng, Nhân viên, Cài đặt. Cuộn mượt (0–1% khung giật), nhật ký app không lỗi.
+- ✅ A1 Thu Chi kẹt ngày cũ: Báo cáo › Tài chính dùng chung "ngày đang xem" (`periodProvider`, toàn cục) → mở Thu Chi vẫn hiện ngày đã lùi, khoản vừa ghi (luôn ghi giờ hiện tại) không hiện → dễ ghi trùng. `FinanceScreen.initState`: mở là về "Hôm nay" tính lại theo giờ.
+- ✅ A2 nút ◀ Android ở mọi phân hệ hỏi "thoát app": `main.dart _exitGuard` — đang ở phân hệ khác thì về Trang chủ; chỉ Trang chủ mới hỏi thoát (giỏ Bán hàng giữ nguyên — `cartProvider` toàn cục).
+- ✅ A3 tồn kho 3 kiểu: Kho CN › Nguyên liệu làm tròn lên ("89 hộp" khi có 88 hộp + 666 ml), Kiểm kê/Ghi hao hụt ghi "99.329 lon" (đọc nhầm 99 nghìn). Hàm chung `fmtStock` (`quantity_formatter.dart`) + `StockItem.formatQty`: "99 lon + 448 g"; không quy cách → dấu phẩy "78,889 gói".
+- ✅ A4 "Giá trị kho 194,3 triệu" đội lên: món có công thức gắn bán hàng chỉ trừ nguyên liệu khi bán (`complete_pos_sale_v1`, `v_has_recipe`) nên tồn của món (để sẵn "1000 ly") đứng yên mà vẫn cộng vào giá trị kho. `recipe_product_ids.dart` (mới, chỉ đọc, cùng điều kiện máy chủ) → Kho ghi "Theo công thức", bỏ min, không cộng giá trị kho; Boom (`boomKhoFacts`) tính y như vậy; test chặn ghi của Boom quét thêm file này.
+- ✅ A5 sáng nào cũng "Đang sụt giảm 100%": `previousComparablePeriod` — kỳ chưa hết thì so cùng khoảng giờ của kỳ trước (Báo cáo › Tài chính và ô ↓% Thu Chi dùng chung `getStats`).
+- ✅ B1 nhãn trục biểu đồ bị cắt ("0 0 1 2 3"): nhãn tràn ra hai bên cột (`OverflowBox`), tháng ghi số ngày, bỏ nhãn sát nhãn cuối (22h cạnh 23h). B2 thanh màu top món theo doanh thu (trước theo số phần). B3 "huỷ hôm nay"/"tháng này" theo đúng kỳ đang xem (`reportPeriodPhrase`). B4 bảng Tài chính: cột "%", tiền/phần trăm một dòng, mọi % kiểu "56,2%", chưa có thu ghi "—"; ô tóm tắt không rớt chữ "đ". B5 Thiết kế mẫu in màn hẹp: chế độ chưa chọn chỉ hiện biểu tượng (trước "Mẫu dựng sẵ" bị cắt, "Xem trước" khuất). B6 "Thanh toán bàn bàn 13" → `tidyFinanceDescription` lúc đọc (Thu Chi + tra cứu bill), không đụng máy chủ.
+- ✅ Test: `test/core/kiem_sunmi_03_11_test.dart` (11), `test/screens/kiem_sunmi_03_11_layout_test.dart` (6, khổ 360×800 phông thật — chạy trên mã cũ hỏng cả 6), thêm 1 ca "Theo công thức" ở `inventory_screen_layout_test.dart`. Bài hướng dẫn rà + đóng dấu: ban-hang, bao-cao, in-hoa-don, kho-chuyen-nghiep, kho-hang, luong, thu-chi; xuất lại `assets/boom_help/huong_dan.json`.
+- ⚠️ Chưa thử trên máy thật (Bò Đen là máy quán; máy ảo không có tài khoản quán): nút ◀ (A2) và Thu Chi khi app để qua đêm. Không làm: C1 ca của quản lý Dương chưa đóng lúc 1 giờ sáng, C2 bốn món nước ép để tồn ~1000 ly không công thức, C3 lợi nhuận chưa trừ giá vốn — chờ quán xác nhận.
+- ➡️ Tới tay quán ở bản phát hành 1.0.6+24; khi cài bản đó lên Bò Đen thì thử nút ◀ ở vài phân hệ và Thu Chi sau một đêm để máy chạy.
+
 ## 2026-11-02 — Android: nút "Cập nhật ngay" chưa từng cài được → sửa (commit `690abe6`), gỡ tạm dòng Android 23
 
 - ⚠️ Bò Đen (Sunmi V3, Android 13) bấm "Cập nhật ngay" 1.0.5+21 → 1.0.6+23: tải 100% rồi đứng, không nút, không quay lại được → phải tắt hẳn app. Nhật ký máy: `InstallStart: ... needs to declare permission android.permission.REQUEST_INSTALL_PACKAGES`. Quyền này chưa từng có trong manifest → mọi bản Android tới 1.0.6+23 không tự cập nhật được; từ khi có dòng Android 23 trong `app_versions` (02/11), máy nào bấm "Cập nhật ngay" cũng đứng.
