@@ -897,6 +897,20 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
     }
     const parts = f.by_band.map((b, k) => (b.length ? `${bn[k]}: ${b.map((x) => `${x.name} ${x.qty}`).join(', ')}` : '')).filter(Boolean);
     if (parts.length) lines.push(`Món bán chạy theo khung giờ (số phần): ${parts.join('; ')}.`);
+    // lần 74: hỏi về MỘT buổi (D02 "buổi chiều vắng") — GPT lấy "Combo tính sẵn" (món chạy nhất cả ngày = món sáng) cho buổi chiều
+    // → tính sẵn việc cho đúng buổi: món bán chạy của khung đó (bỏ món giá vốn cao), ưu đãi chỉ trong khung, mốc doanh thu / ngày
+    const bq = /s[aá]ng/i.test(question) ? 0 : /tr[uư]a/i.test(question) ? 1 : /chi[eề]u/i.test(question) ? 2 : /t[oố]i(?! ưu)/i.test(question) && !/\btoi\b/i.test(question) ? 3 : -1;
+    const ngayB = (weekdayCounts(f.from, f.to) ?? []).reduce((a, b) => a + b, 0);
+    if (bq >= 0 && /v[aắ]ng|[ií]t (?:kh[aá]ch|qu[aá])|ch[aậ]m|ế|c[aá]ch n[aà]o|l[aà]m (?:sao|g[iì])|k[eé]o kh[aá]ch/i.test(question) && f.by_band[bq]?.length && f.by_hour && ngayB) {
+      const [lo, hi] = [[5, 11], [11, 14], [14, 17], [17, 24]][bq];
+      const dt = f.by_hour.slice(lo, hi).reduce((a, b) => a + b, 0) / ngayB, all = f.by_hour.reduce((a, b) => a + b, 0) / ngayB;
+      const giaVon = (n: string) => (f.groups ?? []).some((g) => [...g.top, ...g.slow].some((t) => t.name === n && t.cost && t.price && t.cost / t.price > 0.35));
+      const mon = f.by_band[bq].map((x) => x.name).filter((n) => !giaVon(n)).slice(0, 2);
+      const sang = bq ? f.by_band[0].slice(0, 2).map((x) => x.name).filter((n) => !mon.includes(n)) : [];
+      if (mon.length && dt > 0) {
+        lines.push(`Việc nên nhắm cho buổi ${['sáng', 'trưa', 'chiều', 'tối'][bq]} (tính sẵn): khung ${lo}–${hi}h trung bình ${vnd(Math.round(dt / 1000) * 1000)} / ngày (${pctTxt((dt / all) * 100)}% doanh thu ngày); món bán chạy ĐÚNG khung này: ${mon.join(', ')} → ưu đãi chỉ trong ${lo}–${hi}h cho các món đó (vd mua 2 ly bớt 5.000đ, hoặc thẻ tích ly giờ này), chạy 2 tuần; mốc đo: giữ nếu doanh thu ${lo}–${hi}h lên ≥ ${vnd(Math.round((dt * 1.2) / 1000) * 1000)} / ngày (+20%).${sang.length ? ` KHÔNG dùng món / combo bán chạy buổi sáng (${sang.join(', ')}) cho buổi này.` : ''}`);
+      }
+    }
   }
   if (f.groups?.length && f.orders > 0) {
     const items = f.groups.reduce((s, g) => s + g.items, 0), unsold = f.groups.reduce((s, g) => s + g.unsold, 0);

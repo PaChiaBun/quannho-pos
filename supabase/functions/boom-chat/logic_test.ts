@@ -1000,7 +1000,14 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('Việc nên nhắm (tính sẵn): kéo khách lại đúng 7h và 8h (giờ mất nhiều nhất)') && formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('mốc đo: doanh thu 7h + 8h nay 900đ, kỳ trước 1.220đ'), formatFacts(f, new Date(), 'tháng này sao giảm vậy'));
   assert(formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('Việc nên nhắm (tính sẵn): mời thêm Món thêm trong mỗi đơn') && formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('nay 0,42 phần Món thêm / đơn'));
   assert(!formatFacts(f, new Date(), 'lên kế hoạch tháng 11').includes('Việc nên nhắm'));
-  assert(!formatFacts(f, new Date(), 'sao buoi chieu quan vang qua, co cach nao ko').includes('Việc nên nhắm'));
+  assert(!formatFacts(f, new Date(), 'sao buoi chieu quan vang qua, co cach nao ko').includes('Việc nên nhắm (tính sẵn)'));
+  // lần 74: hỏi một buổi → việc cho đúng buổi đó (món của khung, bỏ món giá vốn cao, không dùng món sáng)
+  const fc = parseFacts({ ...JSON.parse(JSON.stringify(f)), by_hour: h.map((v, i) => (i === 15 ? 280 : v)), by_band: [[{ name: 'Cà phê sữa đá', qty: 20 }, { name: 'Bánh mì', qty: 10 }], [], [{ name: 'Trà tắc', qty: 7 }, { name: 'Bạc xỉu', qty: 6 }, { name: 'Trà đào', qty: 5 }], []],
+    groups: [{ name: 'Cà phê', revenue: 800, prev_revenue: 1100, qty: 30, items: 3, unsold: 0, top: [{ name: 'Bạc xỉu', qty: 6, revenue: 180, price: 30, cost: 15 }], slow: [], unsold_names: [] }] })!;
+  const tc = formatFacts(fc, new Date(), 'sao buoi chieu quan vang qua, co cach nao ko');
+  assert(tc.includes('Việc nên nhắm cho buổi chiều (tính sẵn): khung 14–17h') && tc.includes('món bán chạy ĐÚNG khung này: Trà tắc, Trà đào') && tc.includes('KHÔNG dùng món / combo bán chạy buổi sáng (Cà phê sữa đá, Bánh mì)'), tc);
+  assert(!formatFacts(fc, new Date(), 'tháng này sao giảm vậy').includes('Việc nên nhắm cho buổi'));
+  assert(!formatFacts(fc, new Date(), 'Có nên bỏ combo sáng không Boom?').includes('Việc nên nhắm cho buổi'));
   // lần 70: hỏi món giảm → việc cho chính món giảm nhiều nhất (giữ giá, khung bán chạy, mốc phần / tuần), thay việc theo giờ
   const fm = parseFacts({ ...JSON.parse(JSON.stringify(f)), by_band: [[{ name: 'Cà phê sữa đá', qty: 20 }], [], [], []] })!;
   const tm = formatFacts(fm, new Date(), 'so với tháng trước thì món nào giảm nhiều nhất');

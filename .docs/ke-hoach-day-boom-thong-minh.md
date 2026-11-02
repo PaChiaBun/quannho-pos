@@ -600,6 +600,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Còn lại cho lần sau: D02 đẩy món buổi sáng cho buổi chiều dù đã có dòng "Món bán chạy theo khung giờ".
 - Áp: `db-fix/boom_l73_ap_dung.sh` (TS 20261102_170408). Không cần bản app mới.
 
+### Lần 74 (02/11, Claude chấm kín, đã áp): hỏi một buổi vắng → tính sẵn việc dùng đúng món của buổi đó
+
+- Gốc lỗi: lời nhắc dặn "combo giờ vắng dùng đúng Combo tính sẵn", mà "Combo tính sẵn" ghép món chạy nhất CẢ NGÀY (quán A: Cà phê sữa đá + Bánh mì thịt = món sáng) → D02 ("buổi chiều vắng") đẩy combo sáng cho 14–17h (5/8 câu l72–73).
+- Sửa (`formatFacts`, sau dòng "Món bán chạy theo khung giờ"): câu hỏi nhắc 1 buổi + vắng / ít khách / chậm / ế / cách nào / làm sao / kéo khách → "Việc nên nhắm cho buổi chiều (tính sẵn): khung 14–17h trung bình 240.000đ / ngày (7% doanh thu ngày); món bán chạy ĐÚNG khung này: Trà tắc, Cà phê sữa đá → ưu đãi chỉ trong 14–17h (vd mua 2 ly bớt 5.000đ, hoặc thẻ tích ly giờ này), chạy 2 tuần; mốc đo: giữ nếu ≥ 288.000đ / ngày (+20%). KHÔNG dùng món / combo bán chạy buổi sáng (Bánh mì thịt)". Bỏ món giá vốn > 35% (Bạc xỉu). "Có nên bỏ combo sáng" không nhận dòng; "toi" không dấu không tính là tối.
+- Kết quả: chấm kín D02 4 cặp cạnh bản lần 73: 8,25 → **10,0/16**; đúng quán 0,25 → 2,0; việc làm 0,25 → 1,0. Còn yếu: chỉ 1 việc, không chép mốc giữ, câu đầu nói vòng.
+- Áp: `db-fix/boom_l74_ap_dung.sh` (TS 20261102_170841). Không cần bản app mới.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
