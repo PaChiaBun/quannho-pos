@@ -3,7 +3,8 @@
 // AppUpdateManager — Dịch vụ cập nhật ứng dụng hợp nhất (Unified Updater)
 // Hỗ trợ tự động kiểm tra và cập nhật đa nền tảng:
 //   - Windows: Tải .exe về %TEMP%, hiển thị progress bar, chạy detached installer (/SILENT /NORESTART)
-//   - Android: Tải .apk về cache, hiển thị progress bar, kích hoạt Intent cài đặt qua FileProvider
+//   - Android: Tải .apk về cache, hiển thị progress bar, mở trình cài qua MainActivity (FileProvider);
+//     bản cài từ CH Play thì không hỏi, để CH Play cập nhật
 //   - iOS: Thông báo trung tính, điều hướng mở Apple App Store (tuân thủ Apple Guideline 3.1.1)
 //
 // Single Source of Truth: Supabase (public.app_versions) -> Fallback VPS (quannho.lpm.vn/api/versions)
@@ -37,6 +38,9 @@ class AppUpdateManager {
       'https://apps.apple.com/app/id6795376140';
   static const String fallbackVpsApiBase =
       'https://quannho.lpm.vn/api/versions';
+
+  /// Kênh tới MainActivity.kt: mở trình cài của Android cho tệp APK đã tải.
+  static const MethodChannel _kCaiApk = MethodChannel('vn.lpm.quannho_pos/cap_nhat');
 
   /// Cờ khóa chống trùng lặp: Ngăn việc mở nhiều hộp thoại cập nhật cùng lúc
   /// khi main.dart và dashboard_screen.dart cùng kích hoạt lúc khởi động.
@@ -129,6 +133,8 @@ class AppUpdateManager {
       if (platform == null) return;
 
       final packageInfo = await PackageInfo.fromPlatform();
+      // Cài từ CH Play: để CH Play cập nhật (Google cấm app tự cập nhật ngoài CH Play).
+      if (platform == 'android' && packageInfo.installerStore == 'com.android.vending') return;
       final currentBuild = int.tryParse(packageInfo.buildNumber) ?? 0;
       final currentVersion = packageInfo.version;
 
@@ -171,7 +177,6 @@ class AppUpdateManager {
           currentVersion: currentVersion,
           currentBuild: currentBuild,
           versionInfo: latestInfo,
-          packageName: packageInfo.packageName,
         );
       }
     } catch (e) {
@@ -187,7 +192,6 @@ class AppUpdateManager {
     required String currentVersion,
     required int currentBuild,
     required AppVersionInfo versionInfo,
-    required String packageName,
   }) async {
     final isIos = Platform.isIOS;
     final isWindows = Platform.isWindows;
@@ -438,7 +442,6 @@ class AppUpdateManager {
                               try {
                                 await _handleAndroidUpdate(
                                   versionInfo,
-                                  packageName: packageName,
                                   onProgress: (p) {
                                     setState(() {
                                       downloadProgress = p;
@@ -450,6 +453,13 @@ class AppUpdateManager {
                                     setState(() => statusText = s);
                                   },
                                 );
+                                // Đã mở trình cài của Android: đóng hộp (huỷ cài thì lần mở app sau hỏi lại);
+                                // bắt buộc cập nhật thì hiện lại nút để bấm lại.
+                                if (!isForce) {
+                                  if (context.mounted) Navigator.pop(dialogCtx);
+                                } else {
+                                  setState(() => isDownloading = false);
+                                }
                               } catch (err) {
                                 setState(() {
                                   isDownloading = false;
@@ -566,11 +576,10 @@ class AppUpdateManager {
 
   /// Xử lý cập nhật cho Android / Sunmi:
   /// 1. Tải APK QuanNhoPOS-latest.apk vào thư mục cache
-  /// 2. Kích hoạt Android install Intent với FileProvider Content URI
-  /// 3. Fallback mở trực tiếp downloadUrl nếu Content URI bị chặn
+  /// 2. Mở trình cài của Android qua MainActivity (cấp quyền đọc tệp cho trình cài)
+  /// 3. Không mở được thì mở link tải bằng trình duyệt; cả hai đều hỏng thì báo lỗi
   static Future<void> _handleAndroidUpdate(
     AppVersionInfo versionInfo, {
-    required String packageName,
     required void Function(double progress) onProgress,
     required void Function(String status) onStatus,
   }) async {
@@ -591,27 +600,15 @@ class AppUpdateManager {
     onStatus('Đang kích hoạt cài đặt...');
     onProgress(1.0);
 
-    // Chuẩn bị Content URI trỏ tới FileProvider đã cấu hình trong AndroidManifest.xml
-    final authority = '$packageName.fileprovider';
-    final contentUri = Uri.parse('content://$authority/internal_cache/QuanNhoPOS-latest.apk');
-
-    bool launched = false;
     try {
-      if (await canLaunchUrl(contentUri)) {
-        await launchUrl(contentUri, mode: LaunchMode.externalApplication);
-        launched = true;
-      }
+      if (await _kCaiApk.invokeMethod<bool>('caiApk', {'path': apkPath}) == true) return;
     } catch (e) {
-      debugPrint('[AppUpdateManager] Launch content URI failed: $e');
+      debugPrint('[AppUpdateManager] Mở trình cài APK lỗi: $e');
     }
 
-    // Fallback: Nếu hệ thống không hỗ trợ mở Content URI qua url_launcher trực tiếp,
-    // mở link tải APK trên trình duyệt/trình cài đặt mặc định
-    if (!launched) {
-      final directUri = Uri.parse(downloadUrl);
-      if (await canLaunchUrl(directUri)) {
-        await launchUrl(directUri, mode: LaunchMode.externalApplication);
-      }
+    // Dự phòng: mở link tải APK bằng trình duyệt
+    if (!await launchUrl(Uri.parse(downloadUrl), mode: LaunchMode.externalApplication)) {
+      throw Exception('Không mở được trình cài đặt. Tải bản mới ở quannho.lpm.vn/download');
     }
   }
 

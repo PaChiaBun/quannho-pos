@@ -57,6 +57,12 @@ android {
             }
         }
     }
+
+    // Gói AAB lên CH Play: bỏ quyền tự cài APK (Google cấm app tự cập nhật ngoài CH Play).
+    // APK tải từ web (flutter build apk) giữ quyền này để nút "Cập nhật ngay" cài được.
+    if (gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }) {
+        sourceSets.getByName("release").manifest.srcFile("src/play/AndroidManifest.xml")
+    }
 }
 
 flutter {

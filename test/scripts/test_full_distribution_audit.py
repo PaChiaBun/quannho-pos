@@ -291,9 +291,20 @@ class TestR3AppUpdateManagerArchitecture(unittest.TestCase):
             xml_content = f.read()
         self.assertIn('name="internal_cache"', xml_content)
 
-        # Verify updater references FileProvider authority
-        self.assertIn("fileprovider", self.content)
-        self.assertIn("content://$authority/internal_cache/QuanNhoPOS-latest.apk", self.content)
+        # Updater mở trình cài qua MainActivity; Kotlin cấp quyền đọc tệp (FileProvider) cho trình cài
+        self.assertIn("MethodChannel('vn.lpm.quannho_pos/cap_nhat')", self.content)
+        kotlin_file = os.path.join(PROJECT_ROOT, "android", "app", "src", "main", "kotlin", "vn", "lpm", "quannho_pos", "MainActivity.kt")
+        with open(kotlin_file, "r", encoding="utf-8") as f:
+            kotlin = f.read()
+        self.assertIn('"vn.lpm.quannho_pos/cap_nhat"', kotlin)
+        self.assertIn('"$packageName.fileprovider"', kotlin)
+        self.assertIn("FLAG_GRANT_READ_URI_PERMISSION", kotlin)
+
+        # Gói AAB lên CH Play bỏ quyền tự cài (Google cấm app tự cập nhật ngoài CH Play)
+        with open(os.path.join(PROJECT_ROOT, "android", "app", "src", "play", "AndroidManifest.xml"), "r", encoding="utf-8") as f:
+            self.assertIn('android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove"', f.read())
+        with open(os.path.join(PROJECT_ROOT, "android", "app", "build.gradle.kts"), "r", encoding="utf-8") as f:
+            self.assertIn("src/play/AndroidManifest.xml", f.read())
 
 
 if __name__ == "__main__":
