@@ -1,0 +1,174 @@
+{
+ "moi": [
+  {
+   "id": "D18_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nhắc tính chi phí người + gas + điện ca tối, lại so doanh thu với chính 670.000đ nên ngưỡng quyết định lệch."
+  },
+  {
+   "id": "D18_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Mở đầu 'nghiêng về đóng ca tối' trái với số (chưa nên đóng) và không nêu cần tính chi phí ca tối."
+  },
+  {
+   "id": "D18_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ nêu 17–20h, bỏ sót giờ 16h và chưa nói rõ ca tối yếu so với trưa."
+  },
+  {
+   "id": "D18_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Cần xem lại số khách thay vì chi phí người + gas + điện, nên chưa đủ căn cứ quyết định."
+  },
+  {
+   "id": "D18_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Mở đầu 'nghiêng về đóng ca tối' trái với số liệu tính sẵn (chưa nên đóng)."
+  },
+  {
+   "id": "D18_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ nêu 17–20h, bỏ sót giờ 16h và chưa nói rõ ca tối yếu so với trưa."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D18_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói sai 'số đơn đang giảm nhẹ' (thực tế +2,6%), không dùng số ca tối, ngưỡng theo dõi mơ hồ."
+  },
+  {
+   "id": "D18_6",
+   "diem": {
+    "thang": 0,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Khuyên thử đóng cả ca 16h–20h (điều cần tránh), nói sai số đơn giảm và ngưỡng 'giữ nếu giảm dưới 10%' vô nghĩa."
+  },
+  {
+   "id": "D18_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói sai số đơn giảm, ngưỡng 'dưới 40% so với buổi trưa' bịa và ca tối vốn đã thấp hơn mức đó."
+  },
+  {
+   "id": "D18_2",
+   "diem": {
+    "thang": 0,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Khuyên thử đóng ca từ 16h (điều cần tránh) với ngưỡng 3.000.000đ tự đặt, nói sai số đơn giảm."
+  },
+  {
+   "id": "D18_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói sai số đơn giảm, ngưỡng 70 đơn/ngày là của cả ngày, không liên quan ca tối."
+  },
+  {
+   "id": "D18_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói sai số đơn giảm, ngưỡng 70 đơn/ngày cả ngày không đo được ca tối."
+  }
+ ]
+}

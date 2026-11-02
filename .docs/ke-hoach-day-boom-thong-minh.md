@@ -687,6 +687,37 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Chấm kín D29, D44 × 6: 10,5 → 10,33/16 (3 hơn, 6 kém); gọn 1,67 → 0,92 (lặp số). Bỏ.
 - Áp 82–85: `db-fix/boom_l85_ap_dung.sh` (TS 20261102_213043).
 
+### Lần 87 (02/11, đã áp): câu quyết định không kèm số liệu → "Chưa có số để quyết"
+
+- Lỗi: D13 "quán gần văn phòng, chủ nhật có nên mở bán" 4–5/16 — khung quyết định LỚN bắt dòng đầu "Số đang nghiêng về …" nên GPT nói số nghiêng khi không có số, đòi số Chủ nhật quán chưa từng mở.
+- Bản đầu (thêm nhánh vào khung chung): 30 câu quyết định 11,8 → 13,1 nhưng D11 "bỏ combo sáng" 12,3 → 10 (né kết luận dù có số).
+- Sửa: `QUYET_KHONG_SO` chỉ nối vào khung khi câu quyết định KHÔNG có facts lẫn modules. Câu có số giữ nguyên lời nhắc.
+- Chấm kín D13 × 3 cạnh lần 85: 4 → 15/16 (`ket_qua/l87_claude_20261102.json` 30 câu bản đầu, `l87d_…` bản cuối).
+
+### Lần 88 (02/11, đã áp): hỏi có nên đóng một buổi; "ca toi" không dấu
+
+- Lỗi: D18 "ca toi co nen dong luon ko, ban it qua" — "toi" không dấu bị loại (sợ là "tôi") nên không có việc tính sẵn cho buổi; GPT bịa "số đơn đang giảm", lấy 12h làm doanh thu tối.
+- Sửa: "ca toi" / "buoi toi" là buổi tối; khung tối cắt theo giờ bán cuối (17–20h, không 17–24h); hỏi đóng / nghỉ → "Quyết định đóng buổi (tính sẵn)": mức / ngày, %, món chạy, CHƯA đóng ngay, so tiền người + gas + điện / ngày, thử rút giờ vắng nhất. Ví dụ ưu đãi theo loại quán (ly / phần).
+- Chấm kín D18 × 6 cạnh lần 85: 3,7 → 12,5/16 (`ket_qua/l88_claude_20261102.json`).
+
+### Lần 89 (02/11, đã áp): hỏi đổi mối vì hao hụt
+
+- Lỗi: D20 "bún tươi hao hụt nhiều, có nên đổi mối" — "số nghiêng về đổi mối" khi khối chỉ có số hao hụt.
+- Sửa: `formatModules(m, now, question)`; câu đổi mối / nhà cung cấp + có hao hụt → "Quyết định đổi mối (tính sẵn)": chưa đủ số để đổi, hao hụt hàng tươi thường do nhập dư → đặt theo ngày 2 tuần rồi mới so mối. `buildMessages`, `soLieuGoc`, `cham_tu_van.ts` truyền câu hỏi.
+- Chấm kín D20 × 6 cạnh lần 85: 7,7 → 12,8/16 (`ket_qua/l89_claude_20261102.json`).
+
+### Lần 90 (02/11, đã áp): hỏi dự báo chi tháng sau
+
+- Lỗi: D50 "tháng sau tiền chi nguyên liệu chắc tăng bao nhiêu" — GPT tự đặt 68–70 triệu từ 2 kỳ.
+- Sửa: câu tháng sau / dự báo + chi / nhập / nguyên liệu → "Dự báo chi tháng sau (tính sẵn)": khoản đó chỉ có 2 kỳ, không tự đặt số; mốc "giá nhập giữ thì như tháng này"; việc đối chiếu hoá đơn nhập theo tuần.
+- Chấm kín D50 × 6 cạnh lần 85: 7,3 → 13,0/16 (`ket_qua/l90_claude_20261102.json`).
+
+### Lần 91 (02/11, bỏ): ghi thứ cho ngày lễ, thêm lễ được hỏi ngoài 45 ngày
+
+- Sửa thử: `todayBlock(now, question)` ghi "(Thứ Năm)" sau mỗi ngày lễ; câu nhắc noel / tết / tháng N lấy thêm lễ trong 120 ngày.
+- Chấm kín D45 × 6: 9,0 → 9,5/16 — GPT vẫn không nêu thứ của 24–25/12, câu vẫn chung chung; đổi dòng HÔM NAY của mọi câu → bỏ.
+- Áp 87–90: `db-fix/boom_l90_ap_dung.sh` (TS 20261102_222401).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

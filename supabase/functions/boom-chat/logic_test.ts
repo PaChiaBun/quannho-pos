@@ -693,6 +693,13 @@ Deno.test('Số module: làm sạch + tính sẵn (thu chi, kho, chấm công, k
   assertStringIncludes(t, 'Chi 60.000.000đ (TĂNG 100% so kỳ trước 30.000.000đ)');
   assertStringIncludes(t, 'Thu − chi = -10.000.000đ (ÂM: chi nhiều hơn thu)');
   assertStringIncludes(t, 'Nguyên liệu 30.000.000đ (50% tổng chi)');
+  // lần 90: hỏi dự báo chi tháng sau → mốc "giá giữ thì như tháng này", không tự đặt số
+  assertStringIncludes(formatModules(m, new Date(), 'tháng sau tiền chi nguyên liệu chắc tăng bao nhiêu'), 'Dự báo chi tháng sau (tính sẵn): khoản Nguyên liệu chỉ có 2 kỳ');
+  assert(!t.includes('Dự báo chi tháng sau'));
+  // lần 89: hỏi đổi mối vì hao hụt → chưa đủ số để đổi, thử đặt theo ngày
+  const mh = parseModules({ kho: { period: 'Tháng này', items: 40, low_count: 0, out_count: 0, low: [], imports: 3, losses: [{ name: 'Bún tươi', qty: 26, unit: 'kg', value: 312000 }] } })!;
+  assertStringIncludes(formatModules(mh, new Date(), 'bún hao hụt nhiều quá, có nên đổi mối bún không'), 'Quyết định đổi mối (tính sẵn): hao hụt ghi trong kỳ Bún tươi 26 kg ≈ 312.000đ');
+  assert(!formatModules(mh).includes('Quyết định đổi mối'));
   assertStringIncludes(t, 'Sữa còn 2 hộp (tối thiểu 5)');
   assertStringIncludes(t, 'không được xem giá vốn');
   assertStringIncludes(t, 'CHỈ của chính người hỏi');
@@ -934,6 +941,9 @@ Deno.test('Lần 42: khuyên ngược món giá vốn cao + lộ chữ nội b�
   assert(!/Tuần [1-4]|dòng [A-ZĐ]|khối [A-ZĐ]/.test(MAU_KE_HOACH_TUAN));
   // lần 82: mẫu có "(vì mỗi đơn chỉ có 1 món)", "Thứ 5–CN" → GPT chép vào quán thật (bịa số món / đơn, việc vào ngày quán nghỉ)
   assert(!/1 món|–CN/.test(MAU_KE_HOACH_TUAN) && !/1 món/.test(MAU_LOAI.ke_hoach));
+  // lần 87: câu quyết định lớn chưa có số (D13 mở Chủ nhật quán đang nghỉ) — khung có nhánh "Chưa có số để quyết", không nói số nghiêng
+  assert(buildMessages('quán em gần văn phòng, chủ nhật có nên mở bán không?', [], null).some((m) => m.content.includes('"Chưa có số để quyết …"')));
+  assert(!buildMessages('Có nên bỏ combo sáng không Boom?', [], null, { facts: parseFacts({ period: 'Tháng này', revenue: 1000, orders: 10, top: [], slow: [] }) }).some((m) => m.content.includes('Chưa có số để quyết')));
   assert(JSON.stringify(buildMessages('tuần sau nên làm gì cho quán', [])).includes('Thứ 4 (ngày yếu nhất)'));
   assert(JSON.stringify(buildMessages('lên kế hoạch tháng 11 giúp em', [])).includes('Tuần 3–4'));
 });
@@ -1044,6 +1054,9 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   assert(tc.includes('Việc nên nhắm cho buổi chiều (tính sẵn): khung 14–17h') && tc.includes('món bán chạy ĐÚNG khung này: Trà tắc, Trà đào') && tc.includes('KHÔNG dùng món / combo bán chạy buổi sáng (Cà phê sữa đá, Bánh mì)'), tc);
   assert(!formatFacts(fc, new Date(), 'tháng này sao giảm vậy').includes('Việc nên nhắm cho buổi'));
   assert(!formatFacts(fc, new Date(), 'Có nên bỏ combo sáng không Boom?').includes('Việc nên nhắm cho buổi'));
+  // lần 88: hỏi có nên đóng một buổi → tính sẵn cách quyết (không phải ưu đãi); quán không bán đồ uống → ví dụ theo phần
+  const td = formatFacts(fc, new Date(), 'ca chieu co nen dong luon ko, ban it qua');
+  assert(td.includes('Quyết định đóng buổi chiều (tính sẵn): khung 14–17h') && td.includes('CHƯA nên đóng ngay') && !td.includes('Việc nên nhắm cho buổi'), td);
   // lần 70: hỏi món giảm → việc cho chính món giảm nhiều nhất (giữ giá, khung bán chạy, mốc phần / tuần), thay việc theo giờ
   const fm = parseFacts({ ...JSON.parse(JSON.stringify(f)), by_band: [[{ name: 'Cà phê sữa đá', qty: 20 }], [], [], []] })!;
   const tm = formatFacts(fm, new Date(), 'so với tháng trước thì món nào giảm nhiều nhất');
