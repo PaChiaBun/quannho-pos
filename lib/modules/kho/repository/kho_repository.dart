@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/paged_query.dart';
 import '../../../core/utils/quantity_formatter.dart';
+import '../../kho_chuyen_nghiep/repository/recipe_product_ids.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // KHO REPOSITORY — 100% Supabase
@@ -706,7 +707,22 @@ class KhoRepository {
 
   // ── Stats ─────────────────────────────────────────────────────────────────
 
-  Future<KhoStats> getStats() async {
+  /// Món có công thức gắn máy bán hàng (xem [fetchRecipeProductIds]). Lỗi đọc → rỗng: màn Kho vẫn
+  /// chạy, chỉ là chưa tách được món theo công thức.
+  Future<Set<String>> recipeProductIds() async {
+    final storeId = await _storeId();
+    if (storeId == null) return {};
+    try {
+      return await fetchRecipeProductIds(_sb, storeId);
+    } catch (e, st) {
+      AppLogger.error('kho', 'Đọc món có công thức thất bại: $e', e, st);
+      return {};
+    }
+  }
+
+  /// [recipeProductIds]: món có công thức — bán chỉ trừ nguyên liệu nên tồn của chính món
+  /// (thường để sẵn "1000 ly") không cộng vào giá trị kho.
+  Future<KhoStats> getStats({Set<String> recipeProductIds = const {}}) async {
     final storeId = await _storeId();
     if (storeId == null) return KhoStats.empty;
 
@@ -722,6 +738,7 @@ class KhoRepository {
     final outOfStock =
         products.where((p) => p.minStock > 0 && p.stockQty <= 0).length;
     final totalValue = products.fold<double>(0, (s, p) {
+      if (recipeProductIds.contains(p.id)) return s;
       // ‼️ FIX: dùng costPriceLatest nếu > 0, fallback về costPrice
       final effectiveCost = p.costPriceLatest > 0 ? p.costPriceLatest : p.costPrice;
       return s + (p.stockQty > 0 ? p.stockQty : 0) * effectiveCost; // tồn âm không kéo giảm giá trị kho
@@ -869,29 +886,11 @@ class StockItem {
       : formattedStockDisplay;
 
   /// Hiển thị tồn kho thông minh (ví dụ: '9 lon + 355 ml')
-  String get formattedStockDisplay {
-    if (conversionRate > 0 && conversionUnit.isNotEmpty) {
-      if (stockQty == 0) return '0 $unit';
-      final isNegative = stockQty < 0;
-      final absQty = stockQty.abs();
-      final whole = absQty.floor();
-      final frac = absQty - whole;
-      final convertedFrac = (frac * conversionRate).round();
+  String get formattedStockDisplay => formatQty(stockQty);
 
-      final parts = <String>[];
-      if (whole > 0 || convertedFrac == 0) {
-        parts.add('$whole $unit');
-      }
-      if (convertedFrac > 0) {
-        parts.add('$convertedFrac $conversionUnit');
-      }
-      final res = parts.join(' + ');
-      return isNegative ? '-$res' : res;
-    }
-    return stockQty % 1 == 0
-        ? '${stockQty.toInt()} $unit'
-        : '${fmtQty(stockQty)} $unit';
-  }
+  /// Một số lượng bất kỳ theo đơn vị kho của món này, cùng kiểu với tồn (sổ sách kiểm kê, hao hụt…).
+  String formatQty(num qty) => fmtStock(qty, unit,
+      conversionRate: conversionRate, conversionUnit: conversionUnit);
 }
 
 enum StockStatus { ok, low, outOfStock, untracked }

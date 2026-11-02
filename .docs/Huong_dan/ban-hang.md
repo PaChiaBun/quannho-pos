@@ -141,7 +141,7 @@ Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — kh
 | "Lỗi: … Đơn hàng chưa đạt giá trị tối thiểu để áp dụng voucher" | Voucher có mức đơn tối thiểu | Gỡ mã hoặc thêm món |
 | "Lỗi: … Số dư ví không đủ; chưa ghi nhận thanh toán" | Ví khách thay đổi trong lúc thanh toán | Chọn phương thức khác |
 | "Lỗi: … Phiên bếp đã đóng hoặc đã thanh toán…" / "Giỏ hàng thiếu món đã gửi bếp; chưa thu tiền." | Đơn đã gửi bếp bị thay đổi hoặc đã được thu ở nơi khác | Kiểm tra "Đơn gần đây" xem đã thu chưa; chưa thu thì báo quản lý |
-| "Bấm quay lại lần nữa để thoát app" (máy Android) | Bấm nút quay lại của máy ở màn chính | Bấm tiếp trong 2 giây nếu muốn thoát; không thì cứ dùng tiếp |
+| "Bấm quay lại lần nữa để thoát app" (máy Android) | Bấm nút quay lại của máy ở **Trang chủ** (ở phân hệ khác, nút quay lại đưa về Trang chủ; giỏ hàng đang bán vẫn giữ) | Bấm tiếp trong 2 giây nếu muốn thoát; không thì cứ dùng tiếp |
 | "Gửi bếp thất bại, bếp chưa nhận phiếu. Kiểm tra mạng rồi bấm "Bếp" gửi lại." | Lỗi mạng hoặc dữ liệu khi gửi bếp | Bấm "Bếp" gửi lại; còn lỗi thì chụp màn gửi chủ app |
 | "Món này đã gửi bếp — muốn bớt hãy mở giỏ, bấm "Huỷ phiếu bếp"." | Bấm − trên món chỉ còn phần đã gửi bếp | Mở giỏ → "Huỷ phiếu bếp" → bớt món → gửi bếp lại |
 | "Chưa huỷ được phiếu bếp: …" / "Chưa huỷ xong phiếu bếp, bấm "Huỷ phiếu bếp" lại: …" | Mất mạng, hoặc PIN quản lý không còn hiệu lực | Kiểm tra mạng rồi làm lại; nhờ Quản lý nhập PIN lại |

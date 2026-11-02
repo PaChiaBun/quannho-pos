@@ -43,9 +43,15 @@ final purchaseOrdersProvider = StreamProvider.autoDispose<List<PurchaseOrderMode
   return ref.watch(khoRepositoryProvider).watchPurchaseOrders();
 });
 
+/// Món có công thức gắn máy bán hàng: Kho hiện "Theo công thức" và không cộng vào giá trị kho.
+final recipeProductIdsProvider = FutureProvider.autoDispose<Set<String>>((ref) {
+  return ref.read(khoRepositoryProvider).recipeProductIds();
+});
+
 final khoStatsProvider = FutureProvider.autoDispose<KhoStats>((ref) async {
   ref.watch(allStockProvider); // depend để auto-refresh
-  return ref.read(khoRepositoryProvider).getStats();
+  final recipeIds = await ref.watch(recipeProductIdsProvider.future);
+  return ref.read(khoRepositoryProvider).getStats(recipeProductIds: recipeIds);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

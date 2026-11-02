@@ -22,7 +22,7 @@ Dùng **cùng danh sách hàng** với module Kho hàng: nguyên liệu và món
 ## Màn hình gồm những gì
 Tiêu đề **"Kho Chuyên Nghiệp"**, hai nút trên đầu: **"Kiểm kê kho"** và **"Ghi hao hụt"**. Năm tab:
 - **"Tổng quan"** — số công thức, "SX hôm nay", số nguyên liệu, "Sắp hết kho" (số nguyên liệu / bán thành phẩm có đặt tồn tối thiểu và đã chạm mức, khớp danh sách "Cần nhập hàng"); **"Lệnh sản xuất hôm nay"** (+ "Tạo lệnh sản xuất hôm nay"), **"Cần nhập hàng"**, **"Công thức gần đây"**.
-- **"Nguyên liệu"** — nguyên liệu và bán thành phẩm, kèm tồn và nhãn **"Còn" / "Sắp hết" / "Hết"**; món không đặt tồn tối thiểu ghi **"Không theo dõi"** (xám), không bị gắn "Hết" đỏ khi trừ âm.
+- **"Nguyên liệu"** — nguyên liệu và bán thành phẩm, kèm tồn (ghi như Kho hàng, vd "88 hộp + 666 ml", không làm tròn) và nhãn **"Còn" / "Sắp hết" / "Hết"**; món không đặt tồn tối thiểu ghi **"Không theo dõi"** (xám), không bị gắn "Hết" đỏ khi trừ âm.
 - **"Công thức"** — mỗi công thức hiện số nguyên liệu, khẩu phần, **Giá vốn**, **Giá bán**, **Lãi gộp**, **Tỉ lệ giá vốn** (food cost, %), và nhãn **"Đã gắn menu POS — Tự trừ kho khi bán"** nếu đã gắn.
 - **"Sản xuất"** — lệnh sản xuất theo ngày, lọc Tất cả / Chờ / Đang làm / Hoàn thành / Đã hủy.
 - **"Báo cáo"** — chọn **Từ → Đến**: tổng giá vốn, trung bình/ngày, chi phí theo ngày, nguyên liệu tiêu thụ nhiều, thống kê lệnh sản xuất.
@@ -58,7 +58,7 @@ Ví dụ minh hoạ: nguyên liệu **Trà đen khô** (gói, 1 gói = 500 g) �
 
 ### 4. Kiểm kê kho
 1. Nút **"Kiểm kê kho"** → màn **"Kiểm kê kho"**. Lọc **Tất cả / Nguyên liệu / Hàng bán**, ô **"Tìm mặt hàng..."**.
-2. Mỗi mặt hàng hiện **"Sổ sách: <số>"**; nhập số đếm được vào ô **"Thực tế"**. Không cần đếm hết, mặt hàng bỏ trống được giữ nguyên.
+2. Mỗi mặt hàng hiện **"Sổ sách: …"** (ghi như Kho hàng, vd "Sổ sách: 99 lon + 448 g"); nhập số đếm được vào ô **"Thực tế"** theo đơn vị kho (số lẻ được, vd 99,5). Không cần đếm hết, mặt hàng bỏ trống được giữ nguyên.
 3. Bấm **"Hoàn tất kiểm kê (N đã đếm)"** → xem danh sách lệch → **"Xác nhận"**.
 4. Hệ thống áp **phần chênh lệch** lên tồn hiện tại — bán hàng xen giữa lúc đếm không bị ghi đè.
 

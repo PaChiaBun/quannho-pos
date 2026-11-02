@@ -72,3 +72,8 @@ extension StringDiacriticsExtension on String {
     return false;
   }
 }
+
+/// Máy chủ ghi "Thanh toán bàn " + tên bàn; tên bàn đã có chữ "Bàn" ("Bàn 1", "bàn 13") nên thành
+/// "Thanh toán bàn bàn 13" → bỏ chữ lặp khi đọc (dòng cũ cũng gọn, không đụng hàm thanh toán).
+String? tidyFinanceDescription(String? s) =>
+    s?.replaceFirst(RegExp(r'^Thanh toán bàn (?=bàn\s)', caseSensitive: false), 'Thanh toán ');

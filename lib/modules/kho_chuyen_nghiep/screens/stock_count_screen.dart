@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/kho_theme.dart';
-import '../../../core/utils/quantity_formatter.dart';
 import '../../kho/providers/kho_providers.dart';
 import '../../kho/repository/kho_repository.dart';
 import '../providers/kho_chuyen_nghiep_providers.dart';
@@ -75,8 +74,8 @@ class _StockCountScreenState extends ConsumerState<StockCountScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 3),
                         child: Text(
-                          '${c.item.name}: sổ ${fmtQty(c.system)} → đếm ${fmtQty(c.actual)} '
-                          '(${fmtDelta(c.actual - c.system, c.item.unit)})',
+                          '${c.item.name}: sổ ${c.item.formatQty(c.system)} → đếm ${c.item.formatQty(c.actual)} '
+                          '(${c.actual > c.system ? '+' : '-'}${c.item.formatQty((c.actual - c.system).abs())})',
                           style: GoogleFonts.plusJakartaSans(fontSize: 13),
                         ),
                       ),
@@ -211,10 +210,10 @@ class _StockCountScreenState extends ConsumerState<StockCountScreen> {
                           Text(i.name,
                               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
                           const SizedBox(height: 2),
-                          Text('Sổ sách: ${fmtQty(system)} ${i.unit}',
+                          Text('Sổ sách: ${i.formatQty(system)}',
                               style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted)),
                           if (diff != null && diff.abs() > 0.0005)
-                            Text(fmtDelta(diff, i.unit),
+                            Text('${diff > 0 ? '+' : '-'}${i.formatQty(diff.abs())}',
                                 style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w800,

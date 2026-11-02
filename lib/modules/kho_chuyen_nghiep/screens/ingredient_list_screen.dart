@@ -157,7 +157,8 @@ class _IngredientCard extends StatelessWidget {
                   fontSize: 10, fontWeight: FontWeight.w700, color: ts.color)),
             ),
             const SizedBox(width: 6),
-            Text('Tồn: ${qty.toStringAsFixed(0)} ${item.unit}',
+            // Cùng kiểu Kho hàng ("88 hộp + 666 ml"); làm tròn số cũ từng báo dư 1 hộp không có thật.
+            Text('Tồn: ${item.stockLabel}',
                 style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted)),
           ]),
         ])),

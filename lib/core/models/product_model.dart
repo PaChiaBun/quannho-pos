@@ -110,29 +110,8 @@ class ProductModel {
       };
 
   /// Hiển thị tồn kho thông minh (ví dụ: '9 lon + 355 ml')
-  String get formattedStockDisplay {
-    if (conversionRate > 0 && conversionUnit.isNotEmpty) {
-      if (stockQty == 0) return '0 $unit';
-      final isNegative = stockQty < 0;
-      final absQty = stockQty.abs();
-      final whole = absQty.floor();
-      final frac = absQty - whole;
-      final convertedFrac = (frac * conversionRate).round();
-
-      final parts = <String>[];
-      if (whole > 0 || convertedFrac == 0) {
-        parts.add('$whole $unit');
-      }
-      if (convertedFrac > 0) {
-        parts.add('$convertedFrac $conversionUnit');
-      }
-      final res = parts.join(' + ');
-      return isNegative ? '-$res' : res;
-    }
-    return stockQty % 1 == 0
-        ? '${stockQty.toInt()} $unit'
-        : '${fmtQty(stockQty)} $unit';
-  }
+  String get formattedStockDisplay => fmtStock(stockQty, unit,
+      conversionRate: conversionRate, conversionUnit: conversionUnit);
 
   ProductModel copyWith({
     String? id,

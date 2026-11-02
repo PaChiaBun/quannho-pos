@@ -8,6 +8,8 @@ void main() {
     final source = [
       'lib/features/ai_assistant/services/boom_read_only_data_service.dart',
       'lib/features/ai_assistant/services/boom_module_data_service.dart',
+      // Boom gọi hàm đọc món có công thức ở file riêng (dùng chung với màn Kho) — quét luôn.
+      'lib/modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart',
     ].map((f) => File(f).readAsStringSync()).join('\n');
 
     expect(source, contains('.select('));

@@ -28,8 +28,8 @@ nguon:
 ## Từng tab
 
 ### Doanh thu
-- Thẻ **"Tổng doanh thu …"**: số đơn, TB/đơn.
-- Biểu đồ **"Doanh thu theo giờ"** (hôm nay) hoặc **"Doanh thu theo ngày"** (tuần/tháng).
+- Thẻ **"Tổng doanh thu …"** (ghi đúng kỳ đang xem: "tháng này", "tháng 10/2026", "tuần 26/10–01/11"): số đơn, TB/đơn.
+- Biểu đồ **"Doanh thu theo giờ"** (hôm nay) hoặc **"Doanh thu theo ngày"** (tuần/tháng; biểu đồ tháng ghi số ngày dưới cột: 1, 9, 17, 25, 30).
 - **"Tóm tắt kỳ này"**: Doanh thu, Số đơn, TB/đơn.
 - **"Theo phương thức thanh toán"** (tiền mặt, chuyển khoản, thẻ, tỷ trọng).
 - **"Doanh thu theo thu ngân"** (mỗi người: tiền mặt / chuyển khoản / thẻ).
@@ -40,12 +40,12 @@ nguon:
 > Doanh thu tính trên **đơn đã thanh toán** (bán quầy, thanh toán bàn, QR mang đi).
 
 ### Sản phẩm
-- Lọc theo danh mục; **"Top sản phẩm bán chạy"**: số phần, giá trung bình/phần, doanh thu.
+- Lọc theo danh mục; **"Top sản phẩm bán chạy"**: số phần, giá trung bình/phần, doanh thu; xếp theo doanh thu, thanh màu dưới mỗi món dài theo doanh thu.
 
 ### Tài chính
 - Xem quán lời hay lỗ theo kỳ: thẻ **"LỢI NHUẬN"** / **"ĐANG LỖ"**: Thu nhập, Chi phí, Biên LN.
-- **"Kết quả kinh doanh"**: I. Doanh thu từ bán hàng (Tiền hàng; dòng "Tiền thuế GTGT (app chưa tính)" hiện "—" vì app không tính thuế) – II. Chi phí (theo danh mục) – III. Lợi nhuận (I − II), kèm tỷ trọng.
-- Nhận xét tăng/giảm so với kỳ trước ("Thu nhập tăng X% so với kỳ trước").
+- **"Kết quả kinh doanh"**: I. Doanh thu từ bán hàng (Tiền hàng; dòng "Tiền thuế GTGT (app chưa tính)" hiện "—" vì app không tính thuế) – II. Chi phí (theo danh mục) – III. Lợi nhuận (I − II), kèm cột **"%"** (tỷ trọng so với doanh thu, ghi kiểu "56,2%"; chưa có thu ghi "—").
+- Nhận xét tăng/giảm so với kỳ trước ("Thu nhập tăng X% so với kỳ trước"); kỳ chưa hết thì so cùng khoảng giờ của kỳ trước (1 giờ sáng so với 0:00–1:00 hôm qua), không báo "giảm 100%" mỗi sáng.
 
 > Số liệu lấy từ **Thu Chi** — mọi lưu ý của Thu Chi áp dụng ở đây (ví dụ lương phải ghi tay mới vào chi phí; đơn trả bằng ví không tính vào sổ Thu Chi vì tiền đã ghi thu lúc nạp ví).
 
@@ -54,7 +54,7 @@ nguon:
 - **"Nhập hàng <kỳ>"**: số phiếu nhập; **"Sản phẩm nhập nhiều nhất"**.
 
 ### Huỷ/Duyệt
-- Xem lịch sử huỷ món / huỷ bàn / huỷ hoá đơn và ai duyệt. **"Nhật ký hủy / duyệt"**: tổng tiền thất thoát do huỷ trong kỳ, số lượt huỷ "được kiểm toán".
+- Xem lịch sử huỷ món / huỷ bàn / huỷ hoá đơn và ai duyệt. **"Nhật ký hủy / duyệt"**: tổng tiền thất thoát do huỷ trong kỳ (ghi đúng kỳ đang xem: "hôm nay", "hôm qua" hoặc ngày cụ thể), số lượt huỷ "được kiểm toán".
 - Mỗi dòng: **Huỷ bàn / Huỷ hoá đơn / Huỷ món**, người **yêu cầu**, người **duyệt**, **lý do**, số tiền.
 - Chạm **"Nhấn để xem chi tiết món huỷ (N)"**: từng món, số lượng, đơn giá, **"Đã trừ hao hụt"** / **"Không trừ kho"**, **"Tổng tiền huỷ"**.
 

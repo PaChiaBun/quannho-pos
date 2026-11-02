@@ -41,7 +41,7 @@ class BillHistoryEntry {
   factory BillHistoryEntry.fromRow(Map<String, dynamic> r) => BillHistoryEntry(
     financeId: r['id'] as String,
     referenceId: r['checkout_reference_id'] as String,
-    description: (r['description'] as String?)?.trim() ?? '',
+    description: tidyFinanceDescription((r['description'] as String?)?.trim()) ?? '',
     amount: (r['amount'] as num?)?.toDouble() ?? 0,
     recordedAt: DateTime.parse(r['recorded_at'] as String).toLocal(),
   );

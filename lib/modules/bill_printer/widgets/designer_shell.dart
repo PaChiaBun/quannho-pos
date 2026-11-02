@@ -50,6 +50,10 @@ class DesignerShellState extends State<DesignerShell> {
       if (!isWide) (_preview, Icons.preview_rounded, 'Xem trước'),
     ];
 
+    // Màn hẹp (Sunmi 360dp): 3 chế độ + nút Lưu không đủ chỗ — "Mẫu dựng sẵn" bị cắt, "Xem trước"
+    // khuất hẳn → chế độ chưa chọn chỉ hiện biểu tượng (giữ tên ở chú thích khi giữ ngón tay).
+    final compact = MediaQuery.of(context).size.width < 420;
+
     final toolbar = Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
@@ -63,6 +67,7 @@ class DesignerShellState extends State<DesignerShell> {
                   icon: m.$2,
                   label: m.$3,
                   selected: mode == m.$1,
+                  compact: compact,
                   accent: widget.accent,
                   onTap: () => setState(() => _mode = m.$1),
                 ),
@@ -105,35 +110,45 @@ class _ModeChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
+  final bool compact; // màn hẹp: chưa chọn thì chỉ hiện biểu tượng
   final Color accent;
   final VoidCallback onTap;
   const _ModeChip({
     required this.icon,
     required this.label,
     required this.selected,
+    this.compact = false,
     required this.accent,
     required this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? accent : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 16, color: selected ? Colors.white : Colors.grey.shade600),
+  Widget build(BuildContext context) {
+    final iconOnly = compact && !selected;
+    final chip = GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? accent : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 16, color: selected ? Colors.white : Colors.grey.shade600),
+          if (!iconOnly) ...[
             const SizedBox(width: 6),
             Text(label,
                 style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: selected ? Colors.white : Colors.grey.shade700)),
-          ]),
-        ),
-      );
+          ],
+        ]),
+      ),
+    );
+    return iconOnly
+        ? Tooltip(message: label, child: Semantics(label: label, button: true, child: chip))
+        : chip;
+  }
 }

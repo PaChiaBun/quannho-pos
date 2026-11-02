@@ -85,7 +85,7 @@ class _StockWasteScreenState extends ConsumerState<StockWasteScreen> {
                   itemCount: list.length,
                   itemBuilder: (_, k) => ListTile(
                     title: Text(list[k].name),
-                    subtitle: Text('Tồn: ${fmtQty(list[k].stockQty)} ${list[k].unit}'),
+                    subtitle: Text('Tồn: ${list[k].stockLabel}'),
                     onTap: () => Navigator.pop(ctx, list[k]),
                   ),
                 ),
@@ -118,7 +118,7 @@ class _StockWasteScreenState extends ConsumerState<StockWasteScreen> {
           );
       HapticFeedback.mediumImpact();
       if (!mounted) return;
-      _toast('Đã ghi hao hụt ${fmtQty(q)} ${item.unit} — tồn còn ${fmtQty(left)} ${item.unit}');
+      _toast('Đã ghi hao hụt ${item.formatQty(q)} — tồn còn ${item.formatQty(left)}');
       setState(() {
         _qty.clear();
         _note.clear();
@@ -158,7 +158,7 @@ class _StockWasteScreenState extends ConsumerState<StockWasteScreen> {
                 labelText: 'Mặt hàng', border: OutlineInputBorder(), suffixIcon: Icon(Icons.arrow_drop_down)),
             child: Text(_item == null
                 ? 'Chọn nguyên liệu / hàng hóa...'
-                : '${_item!.name}  (tồn ${fmtQty(_item!.stockQty)} ${_item!.unit})'),
+                : '${_item!.name}  (tồn ${_item!.stockLabel})'),
           ),
         ),
         const SizedBox(height: 12),

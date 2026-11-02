@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/paged_query.dart';
+import '../../../core/utils/string_utils.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FINANCE REPOSITORY — 100% Supabase
@@ -208,8 +209,7 @@ class FinanceRepository {
       return query.order('id').range(offset, end);
     });
     final categoriesF = getCategories();
-    final periodLen = range.to.difference(range.from);
-    final prevFrom = range.from.subtract(periodLen);
+    final (prevFrom, prevTo) = previousComparablePeriod(range, DateTime.now());
     final prevRowsF = fetchAllPages((offset, end) {
     var prevQuery = _sb
         .from('finance_records')
@@ -217,7 +217,7 @@ class FinanceRepository {
         .select('id, type, amount')
         .eq('store_id', storeId)
         .gte('recorded_at', prevFrom.toUtc().toIso8601String())
-        .lt('recorded_at', range.from.toUtc().toIso8601String());
+        .lt('recorded_at', prevTo.toUtc().toIso8601String());
       prevQuery = fundType != null
           ? prevQuery.eq('fund_type', fundType)
           : prevQuery.or(kCashBookAllFundsFilter);
@@ -391,6 +391,16 @@ class DateRange {
   }
 }
 
+/// Kỳ trước để so "tăng/giảm": cùng độ dài; kỳ này chưa hết thì chỉ lấy đúng khoảng đã trôi qua
+/// (1 giờ sáng: hôm qua 0:00–1:00, không phải cả ngày hôm qua — trước đây sáng nào cũng báo "giảm 100%").
+(DateTime, DateTime) previousComparablePeriod(DateRange range, DateTime now) {
+  final len = range.to.difference(range.from);
+  final from = range.from.subtract(len);
+  var elapsed = now.isBefore(range.to) ? now.difference(range.from) : len;
+  if (elapsed.isNegative) elapsed = Duration.zero;
+  return (from, from.add(elapsed));
+}
+
 class FinanceCategoryModel {
   final String id;
   final String name;
@@ -450,7 +460,7 @@ class FinanceRecordModel {
     type: m['type'] as String,
     amount: (m['amount'] as num).toDouble(),
     categoryId: m['category_id'] as String?,
-    description: m['description'] as String?,
+    description: tidyFinanceDescription(m['description'] as String?),
     isAuto: m['is_auto'] as bool? ?? false,
     // Parse UTC rồi giữ UTC — UI dùng .toLocal() khi hiển thị (finance_screen.dart line 278, 369)
     recordedAt:

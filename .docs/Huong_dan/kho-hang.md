@@ -7,6 +7,7 @@ nguon:
   - lib/screens/inventory_screen.dart (danh sách, form món, topping, điều chỉnh, lịch sử)
   - lib/modules/kho/screens/receive_stock_sheet.dart, phieu_nhap_hang_screen.dart, po_detail_screen.dart, supplier_list_screen.dart, supplier_form_screen.dart
   - lib/modules/kho/repository/kho_repository.dart (trạng thái tồn, nhập, huỷ phiếu, giá vốn)
+  - lib/modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart (món "Theo công thức"); lib/core/utils/quantity_formatter.dart (cách ghi tồn)
   - lib/modules/quick_notes/quick_notes.dart; ModifierManagerSheet trong lib/screens/ban_screen.dart
   - lib/core/providers/app_providers.dart (posProductsProvider); supabase/migrations/20261013_qr_order_simple_v4.sql (QR lọc is_available)
 ---
@@ -21,7 +22,7 @@ nguon:
 - Các thao tác khác (thêm/sửa món, nhập kho, điều chỉnh tồn): ai vào được module đều làm được (xem Ghi chú cho Chủ Quán).
 
 ## Màn hình gồm những gì
-- **Đầu trang "Kho hàng"**: thống kê **"Sản phẩm"**, **"Sắp hết"**, **"Hết hàng"**, **"Giá trị kho"** (tồn × giá nhập gần nhất; Boom nói giá trị kho theo đúng cách tính này). Các nút:
+- **Đầu trang "Kho hàng"**: thống kê **"Sản phẩm"**, **"Sắp hết"**, **"Hết hàng"**, **"Giá trị kho"** (tồn × giá nhập gần nhất, **không** tính món ghi "Theo công thức"; Boom nói giá trị kho theo đúng cách tính này). Các nút:
   - **"Biến động kho gần đây"** — xem nhập/xuất mới nhất.
   - **"Ghi chú nhanh"** — cài chip ghi chú (Ít cay, Ít đá…) hiện khi gọi món ở **Quản lý Bàn**.
   - **Bật/tắt phiếu nhập nâng cao** — hiện thêm tab "Phiếu nhập". Dải giới thiệu "Quản lý kho nâng cao" bấm tắt thì máy này nhớ, không hiện lại.
@@ -35,6 +36,8 @@ nguon:
   - **"Sắp hết"** — tồn ≤ mức tối thiểu.
   - **"Còn hàng"**.
   - **"Không theo dõi"** — món không đặt tồn tối thiểu (dù tồn âm vẫn bán được). Món loại này bị trừ âm thì ô tồn ghi **"Không theo dõi"** thay cho số âm, và phần âm **không** trừ vào "Giá trị kho".
+  - **"Theo công thức"** — món có công thức ở Kho Chuyên Nghiệp đã gắn bán hàng: bán chỉ trừ nguyên liệu, tồn của chính món không đổi (thường là số để sẵn như "1000 ly"), nên ô tồn ghi "Theo công thức" thay cho số, không hiện "min", và món này **không** tính vào "Giá trị kho".
+- Cách ghi tồn (giống ở Kho Chuyên Nghiệp, Kiểm kê, Ghi hao hụt): món có quy cách ghi **"99 lon + 448 g"**; không có quy cách thì số lẻ dùng dấu phẩy, vd **"78,889 gói"**.
 - Menu **"Thao tác"** của từng món: **"Sửa thông tin món"**, **"Nhập kho"**, **"Điều chỉnh tồn kho"**, **"Lịch sử xuất nhập"**, **"Cấu hình Topping"**, **"Tùy chọn món (Modifiers)"**, **"Xóa món"**.
 
 ## Các việc thường làm

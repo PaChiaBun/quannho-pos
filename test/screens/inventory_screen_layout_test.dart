@@ -66,6 +66,7 @@ Future<void> _pump(
   bool sidebar = false,
   bool owner = false,
   double totalValue = 196e6,
+  Set<String> recipeIds = const {},
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -78,6 +79,7 @@ Future<void> _pump(
   final container = ProviderContainer(
     overrides: [
       allStockProvider.overrideWith((ref) => Stream.value(_items)),
+      recipeProductIdsProvider.overrideWith((ref) async => recipeIds),
       khoStatsProvider.overrideWith(
         (ref) async => KhoStats(
           totalItems: 128,
@@ -215,6 +217,15 @@ void main() {
       await _pump(tester, const Size(360, 800), totalValue: 9876000);
       expect(tester.takeException(), isNull);
       expect(_scale(tester, find.text('9.876.000 đ')), greaterThan(0.95));
+    });
+
+    // Kiểm Sunmi 03/11: món có công thức bán chỉ trừ nguyên liệu, tồn của món (để sẵn 1000 ly) không dùng.
+    testWidgets('món có công thức: ghi "Theo công thức", bỏ min', (tester) async {
+      await _pump(tester, const Size(360, 800), recipeIds: {'1'});
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Tồn: Theo công thức', findRichText: true), findsOneWidget);
+      expect(find.textContaining('Tồn: 40 phần', findRichText: true), findsNothing);
+      expect(find.textContaining('min 10', findRichText: true), findsNothing);
     });
 
     testWidgets('cuộn hết: nút voi Boom không che món cuối; nút lên đầu trang', (tester) async {

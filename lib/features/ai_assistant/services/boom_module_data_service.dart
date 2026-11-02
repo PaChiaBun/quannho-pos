@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/staff_service.dart'
     show StaffService, kDefaultPerms;
 import '../../../core/utils/paged_query.dart';
+import '../../../modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart';
 import 'boom_read_only_data_service.dart' show BoomPeriodRange;
 
 /// Cổng CHỈ ĐỌC số liệu các module cho AI Boom (Chủ Quán 25/10: "cho Boom đọc và không cho thêm số liệu vào").
@@ -252,6 +253,10 @@ class BoomModuleDataService {
     BoomPeriodRange r, {
     required bool withCost,
   }) async {
+    final recipeIdsF = fetchRecipeProductIds(
+      _db,
+      storeId,
+    ).catchError((Object _) => <String>{});
     final res = await Future.wait([
       fetchAllPages(
         (o, e) => _db
@@ -290,6 +295,7 @@ class BoomModuleDataService {
       products: res[0],
       purchases: res[1],
       waste: res[2],
+      recipeProductIds: await recipeIdsF,
       period: r.label,
       withCost: withCost,
     );
@@ -515,6 +521,7 @@ Map<String, dynamic> boomKhoFacts({
   required List<Map<String, dynamic>> products,
   required List<Map<String, dynamic>> purchases,
   required List<Map<String, dynamic>> waste,
+  Set<String> recipeProductIds = const {},
   required String period,
   required bool withCost,
 }) {
@@ -523,10 +530,12 @@ Map<String, dynamic> boomKhoFacts({
     for (final p in products)
       if (p['product_type'] != 'combo' && p['is_active'] != false) p,
   ];
-  // Giá trị kho tính như màn Kho (mọi món chưa xoá, tồn âm không trừ) để Boom nói khớp số chủ quán
-  // thấy; trước đây bỏ combo / món ngừng bán nên lệch. Danh sách sắp hết vẫn chỉ hàng đang theo dõi.
+  // Giá trị kho tính như màn Kho (mọi món chưa xoá, tồn âm không trừ, bỏ món có công thức — bán chỉ
+  // trừ nguyên liệu nên tồn của món là số để sẵn) để Boom nói khớp số chủ quán thấy; trước đây bỏ
+  // combo / món ngừng bán nên lệch. Danh sách sắp hết vẫn chỉ hàng đang theo dõi.
   double value = 0;
   for (final p in products) {
+    if (recipeProductIds.contains('${p['id']}')) continue;
     final q = _n(p['stock_qty']);
     final cost = _n(p['cost_price_latest']) > 0
         ? _n(p['cost_price_latest'])

@@ -1,6 +1,6 @@
 {
- "version": 202611020803,
- "hash": "07f64c923006d0f61aafc70615784b37db902a8ae4e8b0f65934fcc5dcaeb0c4",
+ "version": 202611021840,
+ "hash": "5c34166d9b023316127fc7545ab9fad2a07bb80f735bbabb165e139dae458b4f",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -192,7 +192,7 @@
    "module_name": "Bán hàng",
    "section": "Lỗi thường gặp",
    "title": "\"Bấm quay lại lần nữa để thoát app\" (máy Android)",
-   "text": "Vì sao: Bấm nút quay lại của máy ở màn chính\nLàm gì: Bấm tiếp trong 2 giây nếu muốn thoát; không thì cứ dùng tiếp"
+   "text": "Vì sao: Bấm nút quay lại của máy ở Trang chủ (ở phân hệ khác, nút quay lại đưa về Trang chủ; giỏ hàng đang bán vẫn giữ)\nLàm gì: Bấm tiếp trong 2 giây nếu muốn thoát; không thì cứ dùng tiếp"
   },
   {
    "id": "ban-hang#loi-gui-bep-that-bai-bep-chua-nhan-phieu-kiem-tra-mang-roi-bam-b",
@@ -400,7 +400,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Doanh thu",
-   "text": "• Thẻ \"Tổng doanh thu …\": số đơn, TB/đơn.\n• Biểu đồ \"Doanh thu theo giờ\" (hôm nay) hoặc \"Doanh thu theo ngày\" (tuần/tháng).\n• \"Tóm tắt kỳ này\": Doanh thu, Số đơn, TB/đơn.\n• \"Theo phương thức thanh toán\" (tiền mặt, chuyển khoản, thẻ, tỷ trọng).\n• \"Doanh thu theo thu ngân\" (mỗi người: tiền mặt / chuyển khoản / thẻ).\n• \"Số bàn phục vụ theo nhân viên\".\n• \"Tổng hợp bán hàng theo ngày\": bảng Ngày, Số đơn, Doanh thu, Tiền mặt, Chuyển khoản, Khuyến mại.\n• Nút \"In báo cáo\": in/lưu PDF \"BÁO CÁO DOANH THU …\" (tóm tắt, phương thức thanh toán, theo thu ngân, chi tiết từng ngày).\n\nDoanh thu tính trên đơn đã thanh toán (bán quầy, thanh toán bàn, QR mang đi)."
+   "text": "• Thẻ \"Tổng doanh thu …\" (ghi đúng kỳ đang xem: \"tháng này\", \"tháng 10/2026\", \"tuần 26/10–01/11\"): số đơn, TB/đơn.\n• Biểu đồ \"Doanh thu theo giờ\" (hôm nay) hoặc \"Doanh thu theo ngày\" (tuần/tháng; biểu đồ tháng ghi số ngày dưới cột: 1, 9, 17, 25, 30).\n• \"Tóm tắt kỳ này\": Doanh thu, Số đơn, TB/đơn.\n• \"Theo phương thức thanh toán\" (tiền mặt, chuyển khoản, thẻ, tỷ trọng).\n• \"Doanh thu theo thu ngân\" (mỗi người: tiền mặt / chuyển khoản / thẻ).\n• \"Số bàn phục vụ theo nhân viên\".\n• \"Tổng hợp bán hàng theo ngày\": bảng Ngày, Số đơn, Doanh thu, Tiền mặt, Chuyển khoản, Khuyến mại.\n• Nút \"In báo cáo\": in/lưu PDF \"BÁO CÁO DOANH THU …\" (tóm tắt, phương thức thanh toán, theo thu ngân, chi tiết từng ngày).\n\nDoanh thu tính trên đơn đã thanh toán (bán quầy, thanh toán bàn, QR mang đi)."
   },
   {
    "id": "bao-cao#tung-tab-san-pham",
@@ -408,7 +408,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Sản phẩm",
-   "text": "• Lọc theo danh mục; \"Top sản phẩm bán chạy\": số phần, giá trung bình/phần, doanh thu."
+   "text": "• Lọc theo danh mục; \"Top sản phẩm bán chạy\": số phần, giá trung bình/phần, doanh thu; xếp theo doanh thu, thanh màu dưới mỗi món dài theo doanh thu."
   },
   {
    "id": "bao-cao#tung-tab-tai-chinh",
@@ -416,7 +416,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Tài chính",
-   "text": "• Xem quán lời hay lỗ theo kỳ: thẻ \"LỢI NHUẬN\" / \"ĐANG LỖ\": Thu nhập, Chi phí, Biên LN.\n• \"Kết quả kinh doanh\": I. Doanh thu từ bán hàng (Tiền hàng; dòng \"Tiền thuế GTGT (app chưa tính)\" hiện \"—\" vì app không tính thuế) – II. Chi phí (theo danh mục) – III. Lợi nhuận (I − II), kèm tỷ trọng.\n• Nhận xét tăng/giảm so với kỳ trước (\"Thu nhập tăng X% so với kỳ trước\").\n\nSố liệu lấy từ Thu Chi — mọi lưu ý của Thu Chi áp dụng ở đây (ví dụ lương phải ghi tay mới vào chi phí; đơn trả bằng ví không tính vào sổ Thu Chi vì tiền đã ghi thu lúc nạp ví)."
+   "text": "• Xem quán lời hay lỗ theo kỳ: thẻ \"LỢI NHUẬN\" / \"ĐANG LỖ\": Thu nhập, Chi phí, Biên LN.\n• \"Kết quả kinh doanh\": I. Doanh thu từ bán hàng (Tiền hàng; dòng \"Tiền thuế GTGT (app chưa tính)\" hiện \"—\" vì app không tính thuế) – II. Chi phí (theo danh mục) – III. Lợi nhuận (I − II), kèm cột \"%\" (tỷ trọng so với doanh thu, ghi kiểu \"56,2%\"; chưa có thu ghi \"—\").\n• Nhận xét tăng/giảm so với kỳ trước (\"Thu nhập tăng X% so với kỳ trước\"); kỳ chưa hết thì so cùng khoảng giờ của kỳ trước (1 giờ sáng so với 0:00–1:00 hôm qua), không báo \"giảm 100%\" mỗi sáng.\n\nSố liệu lấy từ Thu Chi — mọi lưu ý của Thu Chi áp dụng ở đây (ví dụ lương phải ghi tay mới vào chi phí; đơn trả bằng ví không tính vào sổ Thu Chi vì tiền đã ghi thu lúc nạp ví)."
   },
   {
    "id": "bao-cao#tung-tab-kho",
@@ -432,7 +432,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Huỷ/Duyệt",
-   "text": "• Xem lịch sử huỷ món / huỷ bàn / huỷ hoá đơn và ai duyệt. \"Nhật ký hủy / duyệt\": tổng tiền thất thoát do huỷ trong kỳ, số lượt huỷ \"được kiểm toán\".\n• Mỗi dòng: Huỷ bàn / Huỷ hoá đơn / Huỷ món, người yêu cầu, người duyệt, lý do, số tiền.\n• Chạm \"Nhấn để xem chi tiết món huỷ (N)\": từng món, số lượng, đơn giá, \"Đã trừ hao hụt\" / \"Không trừ kho\", \"Tổng tiền huỷ\"."
+   "text": "• Xem lịch sử huỷ món / huỷ bàn / huỷ hoá đơn và ai duyệt. \"Nhật ký hủy / duyệt\": tổng tiền thất thoát do huỷ trong kỳ (ghi đúng kỳ đang xem: \"hôm nay\", \"hôm qua\" hoặc ngày cụ thể), số lượt huỷ \"được kiểm toán\".\n• Mỗi dòng: Huỷ bàn / Huỷ hoá đơn / Huỷ món, người yêu cầu, người duyệt, lý do, số tiền.\n• Chạm \"Nhấn để xem chi tiết món huỷ (N)\": từng món, số lượng, đơn giá, \"Đã trừ hao hụt\" / \"Không trừ kho\", \"Tổng tiền huỷ\"."
   },
   {
    "id": "bao-cao#tung-tab-nhan-vien",
@@ -912,7 +912,7 @@
    "module_name": "In Hoá Đơn",
    "section": "Các việc thường làm",
    "title": "8. Thiết kế mẫu in",
-   "text": "Thiết Kế Mẫu In có 4 tab: Hoá Đơn, Bếp Nóng, Bếp Bar, Tem Dán Ly.\n• Hoá Đơn: chọn \"Khổ giấy\", bật/tắt và sắp xếp các khối (Tên quán, Logo, Địa chỉ, SĐT, Thông tin đơn, Tên bàn, Danh sách món, Tổng tiền, Phương thức TT, Điểm thưởng, QR Code, Văn bản tự do, Lời cảm ơn…). Khối \"Danh sách món\", \"Tổng tiền\" là bắt buộc. Thêm khối: \"Thêm block\". Xem lại các thiết kế trước đây: nút \"Lịch sử thiết kế\".\n• Bếp Nóng / Bếp Bar: \"Khổ Giấy\", \"Tiêu Đề Phiếu\" (vd PHIẾU BẾP, BAR NƯỚC), \"Hiển Thị Trên Phiếu\" (Tên bàn / Mang đi, Số thứ tự đơn, Thời gian gọi món, Ghi chú đặc biệt, Đường kẻ phân cách, In đậm tên món, Tên nhân viên order), \"Cỡ Chữ\".\n• Tem Dán Ly: \"Khổ Tem\", \"Hiển Thị Trên Tem\" (Số đơn, Tên bàn / Mang đi, Thứ tự ly (1/2), Ghi chú / topping, Giờ gọi món…), \"Cỡ Chữ\".\n• Có sẵn mẫu dựng sẵn: chọn mẫu → \"Dùng mẫu này\". Mọi thay đổi phải bấm \"Lưu\"."
+   "text": "Thiết Kế Mẫu In có 4 tab: Hoá Đơn, Bếp Nóng, Bếp Bar, Tem Dán Ly. Thanh trên cùng chọn chế độ \"Thiết kế\", \"Mẫu dựng sẵn\", \"Xem trước\" (màn hẹp như máy cầm tay: chế độ chưa chọn chỉ hiện biểu tượng — giữ ngón tay để xem tên).\n• Hoá Đơn: chọn \"Khổ giấy\", bật/tắt và sắp xếp các khối (Tên quán, Logo, Địa chỉ, SĐT, Thông tin đơn, Tên bàn, Danh sách món, Tổng tiền, Phương thức TT, Điểm thưởng, QR Code, Văn bản tự do, Lời cảm ơn…). Khối \"Danh sách món\", \"Tổng tiền\" là bắt buộc. Thêm khối: \"Thêm block\". Xem lại các thiết kế trước đây: nút \"Lịch sử thiết kế\".\n• Bếp Nóng / Bếp Bar: \"Khổ Giấy\", \"Tiêu Đề Phiếu\" (vd PHIẾU BẾP, BAR NƯỚC), \"Hiển Thị Trên Phiếu\" (Tên bàn / Mang đi, Số thứ tự đơn, Thời gian gọi món, Ghi chú đặc biệt, Đường kẻ phân cách, In đậm tên món, Tên nhân viên order), \"Cỡ Chữ\".\n• Tem Dán Ly: \"Khổ Tem\", \"Hiển Thị Trên Tem\" (Số đơn, Tên bàn / Mang đi, Thứ tự ly (1/2), Ghi chú / topping, Giờ gọi món…), \"Cỡ Chữ\".\n• Có sẵn mẫu dựng sẵn: chọn mẫu → \"Dùng mẫu này\". Mọi thay đổi phải bấm \"Lưu\"."
   },
   {
    "id": "in-hoa-don#cac-viec-thuong-lam-9-ket-tien",
@@ -1232,7 +1232,7 @@
    "module_name": "Kho Chuyên Nghiệp",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "Tiêu đề \"Kho Chuyên Nghiệp\", hai nút trên đầu: \"Kiểm kê kho\" và \"Ghi hao hụt\". Năm tab:\n• \"Tổng quan\" — số công thức, \"SX hôm nay\", số nguyên liệu, \"Sắp hết kho\" (số nguyên liệu / bán thành phẩm có đặt tồn tối thiểu và đã chạm mức, khớp danh sách \"Cần nhập hàng\"); \"Lệnh sản xuất hôm nay\" (+ \"Tạo lệnh sản xuất hôm nay\"), \"Cần nhập hàng\", \"Công thức gần đây\".\n• \"Nguyên liệu\" — nguyên liệu và bán thành phẩm, kèm tồn và nhãn \"Còn\" / \"Sắp hết\" / \"Hết\"; món không đặt tồn tối thiểu ghi \"Không theo dõi\" (xám), không bị gắn \"Hết\" đỏ khi trừ âm.\n• \"Công thức\" — mỗi công thức hiện số nguyên liệu, khẩu phần, Giá vốn, Giá bán, Lãi gộp, Tỉ lệ giá vốn (food cost, %), và nhãn \"Đã gắn menu POS — Tự trừ kho khi bán\" nếu đã gắn.\n• \"Sản xuất\" — lệnh sản xuất theo ngày, lọc Tất cả / Chờ / Đang làm / Hoàn thành / Đã hủy.\n• \"Báo cáo\" — chọn Từ → Đến: tổng giá vốn, trung bình/ngày, chi phí theo ngày, nguyên liệu tiêu thụ nhiều, thống kê lệnh sản xuất."
+   "text": "Tiêu đề \"Kho Chuyên Nghiệp\", hai nút trên đầu: \"Kiểm kê kho\" và \"Ghi hao hụt\". Năm tab:\n• \"Tổng quan\" — số công thức, \"SX hôm nay\", số nguyên liệu, \"Sắp hết kho\" (số nguyên liệu / bán thành phẩm có đặt tồn tối thiểu và đã chạm mức, khớp danh sách \"Cần nhập hàng\"); \"Lệnh sản xuất hôm nay\" (+ \"Tạo lệnh sản xuất hôm nay\"), \"Cần nhập hàng\", \"Công thức gần đây\".\n• \"Nguyên liệu\" — nguyên liệu và bán thành phẩm, kèm tồn (ghi như Kho hàng, vd \"88 hộp + 666 ml\", không làm tròn) và nhãn \"Còn\" / \"Sắp hết\" / \"Hết\"; món không đặt tồn tối thiểu ghi \"Không theo dõi\" (xám), không bị gắn \"Hết\" đỏ khi trừ âm.\n• \"Công thức\" — mỗi công thức hiện số nguyên liệu, khẩu phần, Giá vốn, Giá bán, Lãi gộp, Tỉ lệ giá vốn (food cost, %), và nhãn \"Đã gắn menu POS — Tự trừ kho khi bán\" nếu đã gắn.\n• \"Sản xuất\" — lệnh sản xuất theo ngày, lọc Tất cả / Chờ / Đang làm / Hoàn thành / Đã hủy.\n• \"Báo cáo\" — chọn Từ → Đến: tổng giá vốn, trung bình/ngày, chi phí theo ngày, nguyên liệu tiêu thụ nhiều, thống kê lệnh sản xuất."
   },
   {
    "id": "kho-chuyen-nghiep#cac-viec-thuong-lam-1-chuan-bi-nguyen-lieu-o-kho-hang",
@@ -1264,7 +1264,7 @@
    "module_name": "Kho Chuyên Nghiệp",
    "section": "Các việc thường làm",
    "title": "4. Kiểm kê kho",
-   "text": "1. Nút \"Kiểm kê kho\" → màn \"Kiểm kê kho\". Lọc Tất cả / Nguyên liệu / Hàng bán, ô \"Tìm mặt hàng...\".\n2. Mỗi mặt hàng hiện \"Sổ sách: <số>\"; nhập số đếm được vào ô \"Thực tế\". Không cần đếm hết, mặt hàng bỏ trống được giữ nguyên.\n3. Bấm \"Hoàn tất kiểm kê (N đã đếm)\" → xem danh sách lệch → \"Xác nhận\".\n4. Hệ thống áp phần chênh lệch lên tồn hiện tại — bán hàng xen giữa lúc đếm không bị ghi đè."
+   "text": "1. Nút \"Kiểm kê kho\" → màn \"Kiểm kê kho\". Lọc Tất cả / Nguyên liệu / Hàng bán, ô \"Tìm mặt hàng...\".\n2. Mỗi mặt hàng hiện \"Sổ sách: …\" (ghi như Kho hàng, vd \"Sổ sách: 99 lon + 448 g\"); nhập số đếm được vào ô \"Thực tế\" theo đơn vị kho (số lẻ được, vd 99,5). Không cần đếm hết, mặt hàng bỏ trống được giữ nguyên.\n3. Bấm \"Hoàn tất kiểm kê (N đã đếm)\" → xem danh sách lệch → \"Xác nhận\".\n4. Hệ thống áp phần chênh lệch lên tồn hiện tại — bán hàng xen giữa lúc đếm không bị ghi đè."
   },
   {
    "id": "kho-chuyen-nghiep#cac-viec-thuong-lam-5-ghi-hao-hut",
@@ -1368,7 +1368,7 @@
    "module_name": "Kho hàng",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Đầu trang \"Kho hàng\": thống kê \"Sản phẩm\", \"Sắp hết\", \"Hết hàng\", \"Giá trị kho\" (tồn × giá nhập gần nhất; Boom nói giá trị kho theo đúng cách tính này). Các nút:\n  • \"Biến động kho gần đây\" — xem nhập/xuất mới nhất.\n  • \"Ghi chú nhanh\" — cài chip ghi chú (Ít cay, Ít đá…) hiện khi gọi món ở Quản lý Bàn.\n  • Bật/tắt phiếu nhập nâng cao — hiện thêm tab \"Phiếu nhập\". Dải giới thiệu \"Quản lý kho nâng cao\" bấm tắt thì máy này nhớ, không hiện lại.\n  • \"Thêm sản phẩm\".\n• Các tab: \"Hàng hoá & Menu\" và \"Cảnh báo\" (sắp hết + hết hàng). Khi bật phiếu nhập nâng cao có thêm \"Tất cả\", \"Nguyên liệu\", \"Phiếu nhập\"; lúc đó \"Hàng hoá & Menu\" chỉ còn món bán (chưa bật thì tab này hiện mọi mặt hàng).\n• Ô tìm \"Tìm sản phẩm, SKU...\", lọc theo danh mục, nút \"Chọn\" để chọn nhiều món.\n• Điện thoại / máy POS cầm tay (màn hẹp): mỗi món là một thẻ — tên (tối đa 2 dòng), mã SKU (nếu có), dòng \"Tồn: … · min …\", giá bán bên phải, nhãn danh mục, trạng thái, nút ⋮ (menu thao tác). Nhấn giữ một thẻ (hoặc nút \"Chọn\" cạnh ô tìm, hiện cho ai được thao tác nhiều món) để bắt đầu chọn nhiều món (có dòng \"Chọn tất cả\"); cuối danh sách ghi \"Hiển thị N / N món\"; cuộn xa có nút tròn \"Lên đầu trang\".\n• Máy tính bảng / PC (màn rộng): bảng đủ cột (Ảnh, Tên món & SKU, Danh mục, Tồn kho & Min, Giá bán, Trạng thái) vừa khít màn, không phải vuốt ngang; ô tích để chọn nhiều luôn hiện.\n• Mỗi món hiện: tên, danh mục, tồn / min, giá bán (đủ số, vd \"25.000 đ\"), trạng thái \"Đang bán\" / \"Tạm ngưng bán\", nhãn tồn:\n  • \"Hết hàng\" — có đặt tồn tối thiểu và tồn ≤ 0 (màn Bán hàng khoá món này).\n  • \"Sắp hết\" — tồn ≤ mức tối thiểu.\n  • \"Còn hàng\".\n  • \"Không theo dõi\" — món không đặt tồn tối thiểu (dù tồn âm vẫn bán được). Món loại này bị trừ âm thì ô tồn ghi \"Không theo dõi\" thay cho số âm, và phần âm không trừ vào \"Giá trị kho\".\n• Menu \"Thao tác\" của từng món: \"Sửa thông tin món\", \"Nhập kho\", \"Điều chỉnh tồn kho\", \"Lịch sử xuất nhập\", \"Cấu hình Topping\", \"Tùy chọn món (Modifiers)\", \"Xóa món\"."
+   "text": "• Đầu trang \"Kho hàng\": thống kê \"Sản phẩm\", \"Sắp hết\", \"Hết hàng\", \"Giá trị kho\" (tồn × giá nhập gần nhất, không tính món ghi \"Theo công thức\"; Boom nói giá trị kho theo đúng cách tính này). Các nút:\n  • \"Biến động kho gần đây\" — xem nhập/xuất mới nhất.\n  • \"Ghi chú nhanh\" — cài chip ghi chú (Ít cay, Ít đá…) hiện khi gọi món ở Quản lý Bàn.\n  • Bật/tắt phiếu nhập nâng cao — hiện thêm tab \"Phiếu nhập\". Dải giới thiệu \"Quản lý kho nâng cao\" bấm tắt thì máy này nhớ, không hiện lại.\n  • \"Thêm sản phẩm\".\n• Các tab: \"Hàng hoá & Menu\" và \"Cảnh báo\" (sắp hết + hết hàng). Khi bật phiếu nhập nâng cao có thêm \"Tất cả\", \"Nguyên liệu\", \"Phiếu nhập\"; lúc đó \"Hàng hoá & Menu\" chỉ còn món bán (chưa bật thì tab này hiện mọi mặt hàng).\n• Ô tìm \"Tìm sản phẩm, SKU...\", lọc theo danh mục, nút \"Chọn\" để chọn nhiều món.\n• Điện thoại / máy POS cầm tay (màn hẹp): mỗi món là một thẻ — tên (tối đa 2 dòng), mã SKU (nếu có), dòng \"Tồn: … · min …\", giá bán bên phải, nhãn danh mục, trạng thái, nút ⋮ (menu thao tác). Nhấn giữ một thẻ (hoặc nút \"Chọn\" cạnh ô tìm, hiện cho ai được thao tác nhiều món) để bắt đầu chọn nhiều món (có dòng \"Chọn tất cả\"); cuối danh sách ghi \"Hiển thị N / N món\"; cuộn xa có nút tròn \"Lên đầu trang\".\n• Máy tính bảng / PC (màn rộng): bảng đủ cột (Ảnh, Tên món & SKU, Danh mục, Tồn kho & Min, Giá bán, Trạng thái) vừa khít màn, không phải vuốt ngang; ô tích để chọn nhiều luôn hiện.\n• Mỗi món hiện: tên, danh mục, tồn / min, giá bán (đủ số, vd \"25.000 đ\"), trạng thái \"Đang bán\" / \"Tạm ngưng bán\", nhãn tồn:\n  • \"Hết hàng\" — có đặt tồn tối thiểu và tồn ≤ 0 (màn Bán hàng khoá món này).\n  • \"Sắp hết\" — tồn ≤ mức tối thiểu.\n  • \"Còn hàng\".\n  • \"Không theo dõi\" — món không đặt tồn tối thiểu (dù tồn âm vẫn bán được). Món loại này bị trừ âm thì ô tồn ghi \"Không theo dõi\" thay cho số âm, và phần âm không trừ vào \"Giá trị kho\".\n  • \"Theo công thức\" — món có công thức ở Kho Chuyên Nghiệp đã gắn bán hàng: bán chỉ trừ nguyên liệu, tồn của chính món không đổi (thường là số để sẵn như \"1000 ly\"), nên ô tồn ghi \"Theo công thức\" thay cho số, không hiện \"min\", và món này không tính vào \"Giá trị kho\".\n• Cách ghi tồn (giống ở Kho Chuyên Nghiệp, Kiểm kê, Ghi hao hụt): món có quy cách ghi \"99 lon + 448 g\"; không có quy cách thì số lẻ dùng dấu phẩy, vd \"78,889 gói\".\n• Menu \"Thao tác\" của từng món: \"Sửa thông tin món\", \"Nhập kho\", \"Điều chỉnh tồn kho\", \"Lịch sử xuất nhập\", \"Cấu hình Topping\", \"Tùy chọn món (Modifiers)\", \"Xóa món\"."
   },
   {
    "id": "kho-hang#cac-viec-thuong-lam-1-them-mon-nguyen-lieu",
@@ -2488,7 +2488,7 @@
    "module_name": "Thu Chi",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Đầu trang: \"Thu Chi\", \"LỢI NHUẬN\" (thu − chi), \"Biên lợi nhuận\" (%), ô \"Tổng thu\" và \"Tổng chi\" kèm % tăng/giảm so với kỳ trước.\n• Hai nút \"+ Ghi thu\" và \"− Ghi chi\".\n• Dòng \"Đang xem: <kỳ> (<ngày>)\" và nút \"Đổi ngày\".\n• \"Giao dịch\": lọc \"Tất cả\" / \"↓ Thu\" / \"↑ Chi\"; lọc quỹ \"Tất cả\" / \"Tiền mặt\" / \"Tiền gửi\"; nút xuất CSV (gợi ý \"Xuất tệp CSV cho kế toán\").\n• Danh sách giao dịch nhóm theo ngày (\"Hôm nay\", \"Hôm qua\", \"T2, 20/10\"…). Khoản tự động có nhãn \"Tự động\"."
+   "text": "• Đầu trang: \"Thu Chi\", \"LỢI NHUẬN\" (thu − chi), \"Biên lợi nhuận\" (%), ô \"Tổng thu\" và \"Tổng chi\" kèm % tăng/giảm so với kỳ trước (kỳ chưa hết thì so cùng khoảng giờ của kỳ trước, vd 9 giờ sáng so với 0:00–9:00 hôm qua).\n• Hai nút \"+ Ghi thu\" và \"− Ghi chi\".\n• Dòng \"Đang xem: <kỳ> (<ngày>)\" và nút \"Đổi ngày\". Mỗi lần mở Thu Chi luôn về \"Hôm nay\" (kể cả vừa xem ngày khác ở Báo cáo → Tài chính) — khoản vừa ghi luôn hiện ngay.\n• \"Giao dịch\": lọc \"Tất cả\" / \"↓ Thu\" / \"↑ Chi\"; lọc quỹ \"Tất cả\" / \"Tiền mặt\" / \"Tiền gửi\"; nút xuất CSV (gợi ý \"Xuất tệp CSV cho kế toán\").\n• Danh sách giao dịch nhóm theo ngày (\"Hôm nay\", \"Hôm qua\", \"T2, 20/10\"…). Khoản tự động có nhãn \"Tự động\"."
   },
   {
    "id": "thu-chi#khoan-thu-chi-tu-dong-khong-can-ghi-tay",

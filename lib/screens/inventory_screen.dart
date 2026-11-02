@@ -1437,8 +1437,12 @@ class _StockListState extends ConsumerState<_StockList> {
     super.dispose();
   }
 
+  /// Món có công thức — đọc trong build, dùng ở itemBuilder (chạy lúc dàn trang, không gọi ref.watch được).
+  Set<String> _recipeIds = const {};
+
   @override
   Widget build(BuildContext context) {
+    _recipeIds = ref.watch(recipeProductIdsProvider).value ?? const {};
     final async = widget.watchItems(ref);
 
     return async.when(
@@ -1830,6 +1834,7 @@ class _StockListState extends ConsumerState<_StockList> {
                 final isSelectMode = widget.isMultiSelect || widget.selectedIds.isNotEmpty;
                 return _InventoryTableRow(
                   item: item,
+                  byRecipe: _recipeIds.contains(item.id),
                   isSelected: isSelected,
                   isMultiSelect: isSelectMode,
                   canManageBulk: widget.canManageBulk,
@@ -1978,6 +1983,7 @@ class _StockListState extends ConsumerState<_StockList> {
               padding: const EdgeInsets.only(bottom: 6),
               child: _StockCard(
                 item: item,
+                byRecipe: _recipeIds.contains(item.id),
                 isSelected: widget.selectedIds.contains(item.id),
                 showCheckbox: showCheckbox,
                 onTap: isSelectMode
@@ -2138,6 +2144,7 @@ class _StockListState extends ConsumerState<_StockList> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _InventoryTableRow extends StatelessWidget {
   final StockItem item;
+  final bool byRecipe; // món có công thức: bán chỉ trừ nguyên liệu, số tồn của món không dùng
   final bool isSelected;
   final bool isMultiSelect;
   final bool canManageBulk;
@@ -2147,6 +2154,7 @@ class _InventoryTableRow extends StatelessWidget {
 
   const _InventoryTableRow({
     required this.item,
+    this.byRecipe = false,
     required this.isSelected,
     this.isMultiSelect = false,
     required this.canManageBulk,
@@ -2275,26 +2283,27 @@ class _InventoryTableRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.stockLabel,
+                      byRecipe ? 'Theo công thức' : item.stockLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w800,
-                        color: item.status == StockStatus.untracked
+                        color: byRecipe || item.status == StockStatus.untracked
                             ? _kMuted
                             : item.stockQty <= 0
                             ? _kRed
                             : (item.stockQty <= item.minStock ? _kOrange : _kGreen),
                       ),
                     ),
-                    Text(
-                      'min ${item.minStock % 1 == 0 ? item.minStock.toInt() : item.minStock}',
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        color: _kMuted,
+                    if (!byRecipe)
+                      Text(
+                        'min ${item.minStock % 1 == 0 ? item.minStock.toInt() : item.minStock}',
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: _kMuted,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -3057,6 +3066,7 @@ class _PoCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _StockCard extends StatelessWidget {
   final StockItem item;
+  final bool byRecipe; // món có công thức: bán chỉ trừ nguyên liệu, số tồn của món không dùng
   final bool isSelected;
   final bool showCheckbox;
   final VoidCallback onTap;
@@ -3065,6 +3075,7 @@ class _StockCard extends StatelessWidget {
 
   const _StockCard({
     required this.item,
+    this.byRecipe = false,
     required this.isSelected,
     required this.showCheckbox,
     required this.onTap,
@@ -3074,12 +3085,14 @@ class _StockCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stockColor = switch (item.status) {
-      StockStatus.outOfStock => _kRed,
-      StockStatus.low => _kOrange,
-      StockStatus.ok => _kGreen,
-      StockStatus.untracked => _kMuted,
-    };
+    final stockColor = byRecipe
+        ? _kMuted
+        : switch (item.status) {
+            StockStatus.outOfStock => _kRed,
+            StockStatus.low => _kOrange,
+            StockStatus.ok => _kGreen,
+            StockStatus.untracked => _kMuted,
+          };
     final fallback = _catIcon(item.category, 22);
     return Semantics(
       selected: showCheckbox ? isSelected : null, // ô tích là icon → báo trạng thái cho trình đọc màn hình
@@ -3160,7 +3173,7 @@ class _StockCard extends StatelessWidget {
                                   style: TextStyle(fontSize: 11.5, color: _kMuted),
                                 ),
                                 TextSpan(
-                                  text: item.stockLabel,
+                                  text: byRecipe ? 'Theo công thức' : item.stockLabel,
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w800,
@@ -3168,7 +3181,7 @@ class _StockCard extends StatelessWidget {
                                   ),
                                 ),
                                 // min 0 = không theo dõi tồn (đã hiện bằng màu/nhãn) → bỏ cho đủ chỗ.
-                                if (item.minStock > 0)
+                                if (item.minStock > 0 && !byRecipe)
                                   TextSpan(
                                     text: '  ·  min ${fmtQty(item.minStock)}',
                                     style: const TextStyle(fontSize: 11.5, color: _kMuted),

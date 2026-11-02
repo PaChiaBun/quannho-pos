@@ -21,6 +21,28 @@ String fmtQty(num v, {int maxDecimals = 3}) {
   return s;
 }
 
+/// Tồn kho dễ đọc, dùng chung mọi màn kho: có quy cách → "99 lon + 448 g"; không có thì số lẻ
+/// dùng dấu phẩy "78,889 gói" (dấu chấm người Việt đọc là hàng nghìn: "99.329 lon" tưởng 99 nghìn lon).
+String fmtStock(num qty, String unit, {num conversionRate = 0, String conversionUnit = ''}) {
+  final d = qty.toDouble();
+  if (conversionRate > 0 && conversionUnit.isNotEmpty) {
+    if (d.abs() <= 1e-6) return '0 $unit';
+    final absQty = d.abs();
+    var whole = absQty.floor();
+    var sub = ((absQty - whole) * conversionRate).round();
+    if (sub >= conversionRate) {
+      whole += 1; // 88,9996 hộp làm tròn ra "89 hộp", không phải "88 hộp + 1000 ml"
+      sub = 0;
+    }
+    final res = [
+      if (whole > 0 || sub == 0) '$whole $unit',
+      if (sub > 0) '$sub $conversionUnit',
+    ].join(' + ');
+    return d < 0 ? '-$res' : res;
+  }
+  return '${fmtQty(d).replaceAll('.', ',')} $unit';
+}
+
 /// Định dạng biến động kho (delta) kèm dấu (+ / -) và đơn vị tính:
 /// - fmtDelta(0.02, 'kg')   -> "+0.02 kg"
 /// - fmtDelta(-0.015, 'kg') -> "-0.015 kg"

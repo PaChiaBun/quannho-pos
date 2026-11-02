@@ -83,6 +83,29 @@ extension ReportPeriodX on ReportPeriod {
   (int, int) get range => rangeFor();
 }
 
+/// Cụm chữ chỉ kỳ đang xem ("Tổng doanh thu …", "thất thoát do huỷ …") theo đúng ngày/tuần/tháng đang
+/// chọn — trước đây luôn ghi "hôm nay"/"tháng này" kể cả khi đã lùi về hôm qua, tháng trước.
+String reportPeriodPhrase(ReportPeriod p,
+    {required DateTime day, required DateTime weekStart, required int year, required int month, DateTime? now}) {
+  final n = now ?? DateTime.now();
+  final today = DateTime(n.year, n.month, n.day);
+  switch (p) {
+    case ReportPeriod.today:
+      final d = DateTime(day.year, day.month, day.day);
+      if (d == today) return 'hôm nay';
+      if (d == DateTime(n.year, n.month, n.day - 1)) return 'hôm qua';
+      return 'ngày ${DateFormat('dd/MM').format(d)}';
+    case ReportPeriod.week:
+      final start = DateTime(weekStart.year, weekStart.month, weekStart.day);
+      final end = DateTime(start.year, start.month, start.day + 6);
+      if (!today.isBefore(start) && !today.isAfter(end)) return 'tuần này';
+      return 'tuần ${DateFormat('dd/MM').format(start)}–${DateFormat('dd/MM').format(end)}';
+    case ReportPeriod.month:
+      if (year == n.year && month == n.month) return 'tháng này';
+      return 'tháng $month/$year';
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // REPORT SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -884,7 +907,7 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
         child: const Icon(Icons.payments_rounded, color: Colors.white, size: 20)),
       const SizedBox(width: 14),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Tổng doanh thu ${_period.label.toLowerCase()}',
+        Text('Tổng doanh thu ${reportPeriodPhrase(_period, day: _selectedDay, weekStart: _weekStart, year: _navYear, month: _navMonth)}',
           style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
         Text(_fmtShort(_stats.todayRevenue),
           style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1)),
@@ -903,7 +926,8 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
     if (index == 0 || index == total - 1) return true; // Luôn hiện đầu + cuối
     if (index == _selectedBar) return true;         // Luôn hiện cột đang chọn
     final step = (total / 4).ceil();                // Chia đều ~5 nhãn
-    return index % step == 0;
+    // Nhãn đều quá sát nhãn cuối (22h ngay cạnh 23h) thì bỏ, không hai nhãn dính nhau.
+    return index % step == 0 && total - 1 - index > step ~/ 2;
   }
 
   // ── Tính 5 mốc tiền đẹp cho trục Y ────────────────────────────────────────
@@ -919,7 +943,8 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
 
   Widget _buildChart() {
     // Chuẩn bị data bars kèm số đơn
-    final List<({String label, double value, int orders})> bars;
+    // label: hiện ở ô bấm vào cột; axis: nhãn trục X (tháng chỉ ghi số ngày — đầu biểu đồ đã ghi tháng).
+    final List<({String label, String axis, double value, int orders})> bars;
     if (_period == ReportPeriod.today) {
       final isToday = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day)
           == DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
@@ -927,15 +952,16 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
       bars = _hours
           .where((h) => h.hour <= maxH)
           .where((h) => !(h.hour < 7 && h.revenue == 0)) // Ẩn 0h-6h sáng khi không có doanh thu
-          .map((h) => (label: '${h.hour}h', value: h.revenue, orders: h.orders))
+          .map((h) => (label: '${h.hour}h', axis: '${h.hour}h', value: h.revenue, orders: h.orders))
           .toList();
     } else if (_period == ReportPeriod.week) {
-      bars = _days.map((d) => (
-        label: DateFormat('E', 'vi').format(d.date),
-        value: d.revenue, orders: d.orders)).toList();
+      bars = _days.map((d) {
+        final l = DateFormat('E', 'vi').format(d.date);
+        return (label: l, axis: l, value: d.revenue, orders: d.orders);
+      }).toList();
     } else {
       bars = _days.map((d) => (
-        label: DateFormat('dd/M').format(d.date),
+        label: DateFormat('dd/M').format(d.date), axis: '${d.date.day}',
         value: d.revenue, orders: d.orders)).toList();
     }
 
@@ -1045,7 +1071,8 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
         ]),
         const SizedBox(height: 6),
         // ── Trục X: Smart Anchor labels ────────────────────────────────────────
-        Row(children: [
+        // Cột hẹp (tháng ~30 cột ≈ 8dp trên màn 360dp): nhãn tràn ra hai bên cột thay vì bị cắt còn "0".
+        SizedBox(height: 14, child: Row(children: [
           const SizedBox(width: yAxisW),
           ...bars.asMap().entries.map((e) {
             final i      = e.key;
@@ -1053,9 +1080,9 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
             final isSel  = _selectedBar == i;
             final isLast = i == total - 1;
             final show   = _shouldShowLabel(i, total);
-            return Expanded(child: Text(
-              show ? e.value.label : '',
-              textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.clip,
+            return Expanded(child: OverflowBox(maxWidth: 44, child: Text(
+              show ? e.value.axis : '',
+              textAlign: TextAlign.center, maxLines: 1, softWrap: false,
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: (isLast || isSel) ? FontWeight.w800 : FontWeight.w500,
@@ -1063,9 +1090,9 @@ class _RevenueTabState extends ConsumerState<_RevenueTab> {
                   ? Colors.transparent          // ẩn nhưng giữ layout
                   : isSel ? _kOrange
                   : isLast ? _kNavy
-                  : _kMuted)));
+                  : _kMuted))));
           }),
-        ]),
+        ])),
       ]),
     );
   }
@@ -1498,7 +1525,9 @@ class _ProductTabState extends ConsumerState<_ProductTab> {
 
   @override
   Widget build(BuildContext context) {
-    final maxQ = _products.fold<double>(1, (m, p) => p.totalQty > m ? p.totalQty : m);
+    // Thanh màu đo theo doanh thu — khớp thứ hạng và số tiền bên phải (trước đây theo số phần nên
+    // món #2 725.000 đ có thanh ngắn hơn món #4 317.000 đ).
+    final maxRev = _products.fold<double>(1, (m, p) => p.totalRevenue > m ? p.totalRevenue : m);
     return ListView(padding: const EdgeInsets.fromLTRB(16, 20, 16, 80), children: [
       _PeriodPills(current: _period, onChanged: (p) { setState(() { _period = p; _category = null; }); _load(); }),
       // ── Nav ngày / tuần / tháng
@@ -1551,7 +1580,7 @@ class _ProductTabState extends ConsumerState<_ProductTab> {
         _EmptyState(icon: Icons.inventory_2_rounded, message: 'Chưa có đơn hàng nào kỳ này')
       else ..._products.asMap().entries.map((e) {
         final p = e.value; final rank = e.key + 1;
-        final barRatio = maxQ > 0 ? p.totalQty / maxQ : 0.0;
+        final barRatio = (p.totalRevenue / maxRev).clamp(0.0, 1.0);
 
         // Màu theo rank
         final rankGradients = [
@@ -1794,6 +1823,10 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
 
     final moneyFormatter = NumberFormat('#,###', 'vi_VN');
     String formatVnd(double v) => '${moneyFormatter.format(v)} đ';
+    // Mọi phần trăm một kiểu "56,2%" như thẻ Doanh thu (trước lẫn "0.0%" với "7,6%"); lỗ có dấu "-";
+    // chưa có thu thì "—" (không ghi "100%" cạnh 0 đ).
+    String pctOfIncome(double part, double income) =>
+        income > 0 ? '${part < 0 ? '-' : ''}${fmtPct(part / income * 100)}' : '—';
 
     TableRow buildTableRow({
       required String name,
@@ -1815,13 +1848,16 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
             padding: EdgeInsets.only(left: indent ? 28.0 : 16.0, right: 16.0, top: 12.0, bottom: 12.0),
             child: Text(name, style: style),
           ),
+          // Màn 360dp: số tiền / phần trăm từng gãy dòng ("3.481.000 / đ", "100 / %") → một dòng, thu nhỏ khi chật.
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Text(value, style: style.copyWith(color: isBold ? _kNavy : null), textAlign: TextAlign.right),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight,
+              child: Text(value, maxLines: 1, style: style.copyWith(color: isBold ? _kNavy : null))),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Text(pct, style: style, textAlign: TextAlign.right),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight,
+              child: Text(pct, maxLines: 1, style: style)),
           ),
         ],
       );
@@ -1833,20 +1869,19 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
           buildTableRow(
             name: '  1. Chi phí khác',
             value: formatVnd(0),
-            pct: '0%',
+            pct: pctOfIncome(0, totalIncome),
             indent: true,
           )
         ];
       }
       int index = 1;
       return categories.entries.map((e) {
-        final pct = totalIncome > 0 ? (e.value / totalIncome * 100) : 0.0;
         final name = '  $index. ${e.key}';
         index++;
         return buildTableRow(
           name: name,
           value: formatVnd(e.value),
-          pct: '${fmtPct(pct)}',
+          pct: pctOfIncome(e.value, totalIncome),
           indent: true,
         );
       }).toList();
@@ -1973,7 +2008,7 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
               _FinStat(label: 'Chi phí', value: _fmtShort(stats.expense)),
               Container(width: 1, height: 30, color: Colors.white.withValues(alpha: 0.3), margin: const EdgeInsets.symmetric(horizontal: 16)),
               _FinStat(label: 'Biên LN',
-                value: '${stats.income > 0 ? (stats.profit / stats.income * 100).toStringAsFixed(1) : 0}%'),
+                value: pctOfIncome(stats.profit, stats.income)),
             ]),
           ])).animate().fadeIn(duration: 350.ms).slideY(begin: 0.08, end: 0, curve: Curves.easeOut),
         
@@ -2015,12 +2050,12 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
                     child: Text('Khoản mục', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kNavy)),
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                     child: Text('Giá trị', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kNavy), textAlign: TextAlign.right),
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Text('Tỷ trọng', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kNavy), textAlign: TextAlign.right),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    child: Text('%', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _kNavy), textAlign: TextAlign.right),
                   ),
                 ],
               ),
@@ -2028,13 +2063,13 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
               buildTableRow(
                 name: 'I. Doanh thu từ bán hàng',
                 value: formatVnd(stats.income),
-                pct: '100%',
+                pct: pctOfIncome(stats.income, stats.income),
                 isBold: true,
               ),
               buildTableRow(
                 name: '  1. Tiền hàng',
                 value: formatVnd(stats.income),
-                pct: '100%',
+                pct: pctOfIncome(stats.income, stats.income),
                 indent: true,
               ),
               buildTableRow(
@@ -2049,7 +2084,7 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
               buildTableRow(
                 name: 'II. Chi phí',
                 value: formatVnd(stats.expense),
-                pct: '${stats.income > 0 ? (stats.expense / stats.income * 100).toStringAsFixed(1) : 0}%',
+                pct: pctOfIncome(stats.expense, stats.income),
                 isBold: true,
                 color: _kRed.withValues(alpha: 0.05),
               ),
@@ -2058,7 +2093,7 @@ class _FinanceTabState extends ConsumerState<_FinanceTab> {
               buildTableRow(
                 name: 'III. Lợi nhuận từ bán hàng (I - II)',
                 value: formatVnd(stats.profit),
-                pct: '${stats.income > 0 ? (stats.profit / stats.income * 100).toStringAsFixed(1) : 0}%',
+                pct: pctOfIncome(stats.profit, stats.income),
                 isBold: true,
                 color: _kGreen.withValues(alpha: 0.05),
               ),
@@ -2136,7 +2171,9 @@ class _SummaryCard extends StatelessWidget {
         child: Icon(icon, color: color, size: 22)),
       const SizedBox(width: 10),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-        Text(value, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: color, letterSpacing: -0.3)),
+        // Màn 360dp: "3.481.000 đ" từng rớt chữ "đ" xuống dòng → thu nhỏ cho vừa một dòng.
+        FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft,
+          child: Text(value, maxLines: 1, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: color, letterSpacing: -0.3))),
         Text(label, style: const TextStyle(fontSize: 11, color: _kMuted, fontWeight: FontWeight.w500)),
       ])),
     ]),
@@ -3180,7 +3217,7 @@ class _VoidAuditTabState extends ConsumerState<_VoidAuditTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tổng thất thoát do huỷ ${_period.label.toLowerCase()}',
+                  'Tổng thất thoát do huỷ ${reportPeriodPhrase(_period, day: _selectedDay, weekStart: _weekStart, year: _navYear, month: _navMonth)}',
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 11,

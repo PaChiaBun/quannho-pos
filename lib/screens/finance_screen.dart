@@ -43,6 +43,22 @@ class FinanceScreen extends ConsumerStatefulWidget {
 }
 
 class _FinanceScreenState extends ConsumerState<FinanceScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Mở Thu Chi luôn về "Hôm nay" tính theo giờ lúc mở: kỳ đang xem có thể do Báo cáo › Tài chính đổi
+    // giùm hoặc là "hôm nay" của hôm trước (app chạy qua đêm). Ghi thu/chi luôn ghi giờ hiện tại, nên
+    // xem ngày cũ thì khoản vừa ghi không hiện → nhân viên ghi lại lần nữa (kiểm Sunmi 03/11/2026).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final cur = ref.read(periodProvider);
+      final today = DateRange.today();
+      if (cur.from != today.from || cur.to != today.to) {
+        ref.read(periodProvider.notifier).setToday();
+      }
+    });
+  }
+
   Future<void> _selectCustomDateRange(
     BuildContext context,
     WidgetRef ref,

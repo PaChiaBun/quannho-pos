@@ -556,14 +556,19 @@ class _MainShellState extends ConsumerState<MainShell>
   @override
   Widget build(BuildContext context) => _exitGuard(_buildShell(context));
 
-  /// Android, nút quay lại ở màn gốc: bấm lần nữa trong 2 giây mới thoát app (trước đây thoát ngay,
-  /// máy POS bấm nhầm là mất màn đang bán).
+  /// Android, nút quay lại ở màn gốc: đang ở phân hệ khác thì về Trang chủ (như nút "<" đầu phân hệ);
+  /// ở Trang chủ bấm lần nữa trong 2 giây mới thoát app (trước đây thoát ngay, máy POS bấm nhầm là
+  /// mất màn đang bán).
   Widget _exitGuard(Widget child) {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return child;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
+        if (ref.read(navTabProvider) != NavTab.home) {
+          _setTab(NavTab.home);
+          return;
+        }
         final now = DateTime.now();
         if (_lastBackAt != null &&
             now.difference(_lastBackAt!) < const Duration(seconds: 2)) {

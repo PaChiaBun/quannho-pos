@@ -21,9 +21,9 @@ nguon:
 - Ai vào được module đều xem được toàn bộ thu chi và ghi thu/chi (công tắc "Xem toàn bộ thu chi" trong Hành động nhạy cảm hiện **chưa có tác dụng**). **Xoá** khoản ghi tay: chỉ Chủ quán/Quản lý.
 
 ## Màn hình gồm những gì
-- **Đầu trang**: "Thu Chi", **"LỢI NHUẬN"** (thu − chi), **"Biên lợi nhuận"** (%), ô **"Tổng thu"** và **"Tổng chi"** kèm % tăng/giảm so với kỳ trước.
+- **Đầu trang**: "Thu Chi", **"LỢI NHUẬN"** (thu − chi), **"Biên lợi nhuận"** (%), ô **"Tổng thu"** và **"Tổng chi"** kèm % tăng/giảm so với kỳ trước (kỳ chưa hết thì so cùng khoảng giờ của kỳ trước, vd 9 giờ sáng so với 0:00–9:00 hôm qua).
 - Hai nút **"+ Ghi thu"** và **"− Ghi chi"**.
-- Dòng **"Đang xem: <kỳ> (<ngày>)"** và nút **"Đổi ngày"**.
+- Dòng **"Đang xem: <kỳ> (<ngày>)"** và nút **"Đổi ngày"**. Mỗi lần mở Thu Chi luôn về **"Hôm nay"** (kể cả vừa xem ngày khác ở Báo cáo → Tài chính) — khoản vừa ghi luôn hiện ngay.
 - **"Giao dịch"**: lọc **"Tất cả" / "↓ Thu" / "↑ Chi"**; lọc quỹ **"Tất cả" / "Tiền mặt" / "Tiền gửi"**; nút **xuất CSV** (gợi ý "Xuất tệp CSV cho kế toán").
 - Danh sách giao dịch nhóm theo ngày ("Hôm nay", "Hôm qua", "T2, 20/10"…). Khoản **tự động** có nhãn **"Tự động"**.
 
