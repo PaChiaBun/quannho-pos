@@ -762,10 +762,13 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
       if (hoiVi && f.revenue < f.prev_revenue) {
         // 65b: câu hỏi đã nói buổi / giờ (vd "buổi chiều vắng" — D02) → không kéo sang giờ khác
         if (Math.abs(pctOrders) >= Math.abs(pctAvg) && pctOrders < 0 && f.by_hour && f.prev_by_hour && !/s[aá]ng|tr[uư]a|chi[eề]u|t[oố]i|khuya|\d+ ?h\b|gi[oờ]/i.test(question)) {
+          // ngưỡng giữ tính theo NGÀY — số khung giờ là của cả kỳ, thử chỉ 2 tuần
+          const ngay = (weekdayCounts(f.from, f.to) ?? []).reduce((a, b) => a + b, 0);
           const hs = f.by_hour.map((v, h) => ({ h, v, p: f.prev_by_hour![h] })).filter((x) => x.v < x.p).sort((a, b) => (a.v - a.p) - (b.v - b.p)).slice(0, 2).sort((a, b) => a.h - b.h);
-          if (hs.length) viec = ` Việc nên nhắm (tính sẵn): kéo khách lại đúng ${hs.map((x) => `${x.h}h`).join(' và ')} (giờ mất nhiều nhất) bằng ưu đãi khách quen / món chủ lực của chính khung đó; mốc đo: doanh thu ${hs.map((x) => `${x.h}h`).join(' + ')} nay ${vnd(hs.reduce((t, x) => t + x.v, 0))}, kỳ trước ${vnd(hs.reduce((t, x) => t + x.p, 0))}.`;
+          // lần 67: việc chép thiếu MỨC ưu đãi / mục tiêu (l66) → ghi sẵn mức làm thử và ngưỡng giữ
+          if (hs.length) viec = ` Việc nên nhắm (tính sẵn): kéo khách lại đúng ${hs.map((x) => `${x.h}h`).join(' và ')} (giờ mất nhiều nhất) bằng ưu đãi khách quen / món chủ lực của chính khung đó; mốc đo: doanh thu ${hs.map((x) => `${x.h}h`).join(' + ')} nay ${vnd(hs.reduce((t, x) => t + x.v, 0))}, kỳ trước ${vnd(hs.reduce((t, x) => t + x.p, 0))}. Mức làm thử: thẻ tích ly mua 8 tặng 1 hoặc bớt 2.000đ / đơn cho đơn trong ${hs.map((x) => `${x.h}h`).join(', ')}, chạy 2 tuần${ngay ? `; giữ nếu doanh thu các giờ đó lên lại ≥ ${vnd(Math.round(hs.reduce((t, x) => t + x.v + x.p, 0) / 2 / ngay / 1000) * 1000)} / ngày (nửa đường về mức cũ)` : ''}.`;
         } else if (pctAvg < 0 && nhom && (f.groups?.length ?? 0) >= 2) {
-          viec = ` Việc nên nhắm (tính sẵn): mời thêm ${nhom.name} trong mỗi đơn (nhân viên mời 1 câu, ghép sẵn với món đang bán chạy); mốc đo: nay ${String(Math.round((nhom.qty / f.orders) * 100) / 100).replace('.', ',')} phần ${nhom.name} / đơn.`;
+          viec = ` Việc nên nhắm (tính sẵn): mời thêm ${nhom.name} trong mỗi đơn (nhân viên mời 1 câu, ghép sẵn với món đang bán chạy); mốc đo: nay ${String(Math.round((nhom.qty / f.orders) * 100) / 100).replace('.', ',')} phần ${nhom.name} / đơn; mục tiêu sau 2 tuần ${String(Math.round((nhom.qty / f.orders) * 130) / 100).replace('.', ',')} phần / đơn (+30%), không giảm giá ${nhom.name}.`;
         }
       }
       lines.push(`Phân tích tính sẵn: số đơn ${sign(pctOrders)}, giá trị trung bình mỗi đơn ${sign(pctAvg)} → doanh thu đổi ${main}.${vi}${viec}`);

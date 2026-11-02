@@ -989,6 +989,9 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   assert(formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('Việc nên nhắm (tính sẵn): mời thêm Món thêm trong mỗi đơn') && formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('nay 0,42 phần Món thêm / đơn'));
   assert(!formatFacts(f, new Date(), 'lên kế hoạch tháng 11').includes('Việc nên nhắm'));
   assert(!formatFacts(f, new Date(), 'sao buoi chieu quan vang qua, co cach nao ko').includes('Việc nên nhắm'));
+  // lần 67: ghi sẵn mức làm thử và mục tiêu số
+  assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('thẻ tích ly mua 8 tặng 1 hoặc bớt 2.000đ / đơn cho đơn trong 7h, 8h, chạy 2 tuần; giữ nếu doanh thu các giờ đó lên lại ≥ 0đ / ngày'));
+  assert(formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('mục tiêu sau 2 tuần 0,54 phần / đơn (+30%), không giảm giá Món thêm'));
   assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes(t) && !formatFacts(f, new Date(), 'lên kế hoạch tháng 11').includes('GIẢM Ở ĐÂU'));
   // app cũ (không có số kỳ trước chia nhỏ) → không có dòng
   assertEquals(changeLine(parseFacts({ period: 'Tháng này', revenue: 1, orders: 1, prev_period: 'x', prev_revenue: 2, top: [], slow: [] })!), '');

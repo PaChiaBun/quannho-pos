@@ -553,6 +553,14 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Chấm kín 3 câu × 2 lượt cạnh bản 65b: 13,33 → 13,33; việc làm 1,0 → 1,0. Người chấm: việc vẫn thiếu MỨC ưu đãi; có bản đẩy combo cà phê + bánh mì đang đắt hơn mua lẻ (rủi ro đã lường) → bỏ.
 - Bài học: việc làm còn thiếu mức ưu đãi / con số chứ không thiếu tên món; lần sau thử ghi sẵn mức (vd giảm 3.000đ / ly cho khách quen 7–8h, thử 2 tuần) — chú ý không đè lên món giá vốn cao / combo đắt.
 
+### Lần 67 (02/11, Claude chấm kín, đã áp): việc nên nhắm có sẵn mức làm thử và mục tiêu số
+
+- Sửa (nối vào "Việc nên nhắm" của lần 65b): mất khách → "Mức làm thử: thẻ tích ly mua 8 tặng 1 hoặc bớt 2.000đ / đơn cho đơn trong 7h, 8h, chạy 2 tuần; giữ nếu doanh thu các giờ đó lên lại ≥ 1.475.000đ / ngày (nửa đường về mức cũ)" (ngưỡng tính theo NGÀY vì số giờ là của cả kỳ; thiếu ngày kỳ thì bỏ ngưỡng); đơn nhỏ đi → "mục tiêu sau 2 tuần 0,25 phần / đơn (+30%), không giảm giá Món thêm".
+- Kết quả: chấm kín 4 câu × 2 lượt cạnh bản 65b: 12,88 → **13,75/16**; việc làm 0,88 → **1,62**; 7/8 bài khá hơn (D01 14 / 13 → 16 / 16, D38 15 → 16 cả 2 lượt). D32 lượt 1 13 → 10: khuyên tăng giá Cà phê sữa đá đang mất khách (lỗi có sẵn).
+- Bài học (so lần 66): thứ GPT thiếu là MỨC và MỤC TIÊU bằng số, không phải tên món; ghi sẵn thì GPT chép đúng vào việc làm.
+- Còn lại: khuyên tăng giá món đang mất khách (D32); lấy số phần một khung giờ làm số cả kỳ (D32 lượt 2: 620 phần sáng); câu so tuần không nói mới có 3 ngày (D33).
+- Áp: `db-fix/boom_l67_ap_dung.sh` (TS 20261102_163311). Không cần bản app mới.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

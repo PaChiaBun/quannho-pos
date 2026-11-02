@@ -1,0 +1,230 @@
+{
+ "moi": [
+  {
+   "id": "D01_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc đủ mức, giờ, thời hạn nhưng thiếu mục tiêu số (≥1.475.000đ/ngày) để quyết giữ hay bỏ."
+  },
+  {
+   "id": "D32_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên tăng giá Cà phê sữa đá khi món này đang mất khách là đi ngược chẩn đoán, lại không nói vì sao giảm."
+  },
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nói rõ tuần mới 3 ngày (so cùng kỳ 19–21/10); chưa nêu giờ 7h–8h giảm khi giải thích."
+  },
+  {
+   "id": "D38_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chưa nêu món thêm cụ thể (trứng, chả) để mời; bỏ qua Đồ uống −23%."
+  },
+  {
+   "id": "D01_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc thiếu mục tiêu số để giữ hay bỏ; mục 'Cần xem lại' chỉ lặp lại cách đo."
+  },
+  {
+   "id": "D32_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bịa số: 620 phần là số buổi sáng, đúng ra 1374 → 1150; giảm giá 2.000đ món bán chạy nhất cả ngày làm mỏng lời, combo không có giá."
+  },
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nói rõ tuần này mới 3 ngày, so cùng kỳ 3 ngày tuần trước."
+  },
+  {
+   "id": "D38_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chưa nêu món thêm cụ thể (trứng, chả) và chưa nhắc Đồ uống −23%."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D01_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc chỉ có combo 45.000đ đo bằng số combo, không đo doanh thu 7h–8h nên không bám chỗ đang giảm."
+  },
+  {
+   "id": "D32_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Dòng đầu nói tổng doanh thu chứ không trả lời món nào; việc 'đẩy mạnh quảng bá' chưa có mức ưu đãi hay giờ."
+  },
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Việc thiếu mức ưu đãi cụ thể; không nói rõ tuần này mới có 3 ngày, so cùng kỳ 3 ngày."
+  },
+  {
+   "id": "D38_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc mời Món thêm thiếu mục tiêu số (0,25 phần/đơn) và món cụ thể."
+  },
+  {
+   "id": "D01_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Việc 'ưu đãi khách quen' không có mức cụ thể; cả câu dồn một đoạn, khó đọc trên điện thoại."
+  },
+  {
+   "id": "D32_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bịa số: 620 phần là số buổi sáng, đúng ra 1374 → 1150; khuyên tăng giá/giảm định lượng món đang mất khách là sai hướng."
+  },
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Việc 'ưu đãi khách quen hoặc món chủ lực' chưa có mức ưu đãi cụ thể; không nói kỳ mới 3 ngày."
+  },
+  {
+   "id": "D38_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Việc 'khuyến khích mời Món thêm' thiếu mục tiêu số và món cụ thể."
+  }
+ ]
+}
