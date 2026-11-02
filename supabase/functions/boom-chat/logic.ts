@@ -368,6 +368,8 @@ const arr = (x: unknown) => (Array.isArray(x) ? (x as Row[]).filter((y) => y && 
 const pctOf = (a: number, b: number) => (b > 0 ? `${String(Math.round((a / b) * 1000) / 10).replace('.', ',')}%` : '');
 const chg = (a: number, b: number) => (b > 0 ? ` (${a >= b ? 'TĂNG' : 'GIẢM'} ${String(Math.abs(Math.round(((a - b) / b) * 1000) / 10)).replace('.', ',')}% so kỳ trước ${vnd(b)})` : '');
 const qty = (x: unknown) => String(Math.round(nn(x) * 100) / 100).replace('.', ',');
+// "Tháng này (1–28/10/2026)" → 28; không có khoảng ngày → 0
+const soNgay = (p: unknown) => { const r = /\((\d+)[–-](\d+)\//.exec(ss(p)); return r ? Number(r[2]) - Number(r[1]) + 1 : 0; };
 
 /** Số module → chữ cho GPT; tính sẵn tỷ lệ, so kỳ trước, xếp hạng (GPT nhỏ hay tính sai). */
 export function formatModules(m: ModuleFacts, now: Date = new Date(), question = ''): string {
@@ -391,6 +393,12 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
       // Khoản tăng nhiều nhất (tiền) — câu "chi phí tăng do đâu"
       const up = te.filter((x) => typeof x.prev === 'number').map((x) => ({ n: ss(x.name), d: nn(x.amount) - nn(x.prev) })).sort((a, b) => b.d - a.d)[0];
       if (up && up.d > 0) out.push(`Khoản chi tăng nhiều nhất so kỳ trước: ${up.n} (+${vnd(up.d)}).`);
+      // lần 93: D03 "thu chi sao dư ít hơn tháng trước" — GPT tự trừ sai (16,3 triệu), bỏ sót tiền điện +82% (khoản nhỏ, tăng mạnh theo %)
+      const upP = te.filter((x) => typeof x.prev === 'number' && nn(x.prev) > 0).map((x) => ({ n: ss(x.name), p: (nn(x.amount) - nn(x.prev)) / nn(x.prev) })).sort((a, b) => b.p - a.p)[0];
+      if (typeof f.prev_income === 'number' && typeof f.prev_expense === 'number' && /thu|chi|d[uư]\b|l[oờ]i|l[aã]i/i.test(question) && !/th[aá]ng (?:sau|t[oớ]i)|n[eế]u/i.test(question) && /sao|so (?:v[oớ]i|th[aá]ng|k[yỳ])|[ií]t h[oơ]n|gi[aả]m(?!\d)|t[aă]ng/i.test(question)) {
+        const dThu = inc - nn(f.prev_income), dChi = exp - nn(f.prev_expense);
+        out.push(`Phân tích tính sẵn: thu − chi đổi ${dThu - dChi >= 0 ? '+' : '−'}${vnd(Math.abs(dThu - dChi))} = thu ${dThu >= 0 ? 'tăng' : 'giảm'} ${vnd(Math.abs(dThu))}, chi ${dChi >= 0 ? 'tăng' : 'giảm'} ${vnd(Math.abs(dChi))} → nguyên nhân chính là ${Math.abs(dThu) >= Math.abs(dChi) ? 'THU' : 'CHI'}${upP && upP.p >= 0.3 && upP.n !== up?.n ? `; khoản tăng mạnh nhất theo %: ${upP.n} +${pctTxt(upP.p * 100)}% (cần xem lý do)` : ''}.`);
+      }
       // lần 90: hỏi dự báo chi tháng sau (D50 "tiền chi nguyên liệu chắc tăng bao nhiêu") — GPT tự đặt 70 triệu từ 2 kỳ
       const kc = /th[aá]ng (?:sau|t[oớ]i)|s[aắ]p t[oớ]i|d[uự] (?:b[aá]o|ki[eế]n)|ch[aắ]c (?:t[aă]ng|bao nhi[eê]u)/i.test(question) && /chi|nh[aậ]p|nguy[eê]n li[eệ]u|ti[eề]n/i.test(question)
         ? te.find((x) => typeof x.prev === 'number' && question.toLowerCase().split(/\s+/).some((w) => w.length > 3 && ss(x.name).toLowerCase().includes(w))) ?? te[0]
@@ -454,6 +462,14 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     if (/đ[oổ]i (?:m[oố]i|nh[aà] cung c[aấ]p|ch[oỗ] (?:l[aấ]y|nh[aậ]p))/i.test(question) && hh.length) {
       out.push(`Quyết định đổi mối (tính sẵn): hao hụt ghi trong kỳ ${hh.map((x) => `${ss(x.name)} ${qty(x.qty)} ${ss(x.unit)}`).join(', ')} ≈ ${vnd(hh.reduce((t, x) => t + nn(x.value), 0))} — khối CHỈ có số hao hụt, KHÔNG có số về chất lượng / giá của mối → CHƯA đủ để đổi mối; hao hụt hàng tươi thường do nhập dư → thử đặt theo ngày, ít hơn vào ngày vắng 2 tuần; hao hụt vẫn cao hoặc hàng hư khi mới nhận thì mới so mối khác.`);
     }
+    // lần 96: D04 / D44 / D53 hỏi kho, hao hụt, nhập — GPT tự đặt mốc "cao so với bình thường", cộng sai số thiếu, quên hao hụt "nấu dư"
+    else if (/(?<!\p{L})kho(?!\p{L})|hao h[uụ]t|h[uư] h[oỏ]ng|nh[aậ]p|s[aắ]p h[eế]t|t[oồ]n(?!\p{L})/iu.test(question) && (hh.length || low.length)) {
+      const nd = soNgay(k.period);
+      const tuoi = (x: Row) => /nấu dư|bánh mì|sữa tươi|rau|trái cây|thịt|bún|kem/i.test(ss(x.name));
+      const hhTxt = hh.map((x) => `${ss(x.name)} ${qty(x.qty)} ${ss(x.unit)}${nd > 1 ? ` (~${qty(Math.round((nn(x.qty) / nd) * 10) / 10)} ${ss(x.unit)} / ngày)` : ''} → ${/nấu dư/i.test(ss(x.name)) ? 'nấu mẻ nhỏ nhiều lần theo giờ đông, không nấu một lần cho cả ngày' : tuoi(x) ? 'đặt theo lượng bán từng ngày, ít hơn vào ngày vắng' : 'xem lại cách bảo quản'}`);
+      const lowTxt = (/(?<!\p{L})kho(?!\p{L})|nh[aậ]p|s[aắ]p h[eế]t|t[oồ]n(?!\p{L})/iu.test(question) ? [...low] : []).sort((a, b) => nn(a.qty) / Math.max(1, nn(a.min)) - nn(b.qty) / Math.max(1, nn(b.min))).map((x) => `${ss(x.name)} ${nn(x.qty) <= 0 ? 'đã HẾT' : `còn ${qty(x.qty)}`} / tối thiểu ${qty(x.min)} → nhập ít nhất ${qty(nn(x.min) - nn(x.qty))} ${ss(x.unit)} để lên mức tối thiểu`);
+      out.push(`Kho tính sẵn: ${hh.length ? `hao hụt cả kỳ ≈ ${vnd(hh.reduce((t, x) => t + nn(x.value), 0))}: ${hhTxt.join('; ')}. Khối KHÔNG có số bán → không tính được tỉ lệ hao hụt so số bán, KHÔNG tự nói "cao / thấp so với bình thường"; nêu số mỗi ngày bỏ đi. ` : ''}${lowTxt.length ? `Cần nhập (hết trước): ${lowTxt.join('; ')}.` : ''}${/bao nhi[eê]u|m[aấ]y/i.test(question) && /nh[aậ]p/i.test(question) ? ' Hỏi nhập bao nhiêu cho tháng sau: KHÔNG tự đặt số kg / lít; nêu cách tính = lượng dùng tháng (số ly bán × định lượng mỗi ly) − số còn + mức tối thiểu, trừ phần đang hao hụt; xem số ly bán trong Báo cáo.' : ''}`);
+    }
     if (k.stock_value === undefined) out.push('Người hỏi không được xem giá vốn / tiền nhập hàng → không nêu số tiền kho.');
     out.push('KHÔNG có lượng dùng mỗi ngày → KHÔNG tự tính "đủ dùng mấy ngày"; chỉ so số còn với mức tối thiểu và khuyên nhập.');
   }
@@ -470,6 +486,14 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     const stName: Record<string, string> = { draft: 'nháp', pending_review: 'chờ duyệt', approved: 'đã duyệt', paid: 'đã trả' };
     if (pr.length) out.push(`Kỳ lương gần nhất: ${pr.map((x) => `${ss(x.name)} (${ss(x.from)} → ${ss(x.to)}) ${stName[ss(x.status)] ?? ss(x.status)}, tổng ${vnd(nn(x.total))}`).join('; ')}.`);
     out.push('Không có lịch ca / giờ vào quy định → KHÔNG kết luận ai đi trễ; không nêu lương từng người.');
+    // lần 97: D17 "ca nhiều quá, có nên cắt 1 người" — GPT tự đặt ngưỡng ca / tuần, không thấy ca lệch giữa người, không tính giờ dồn cho người còn lại
+    const tuan = soNgay(n.period) / 7, sc = nn(n.staff_count);
+    if (/c[aắ]t|b[oớ]t|gi[aả]m|cho ngh[iỉ]|th[uừ]a/i.test(question) && /ng[uư][oờ]i|nh[aâ]n vi[eê]n|\bnv\b|ca/i.test(question) && st.length >= 2 && sc >= 2 && tuan >= 1) {
+      const gt = (x: Row) => qty(Math.round(nn(x.hours) / tuan));
+      const hi = st.reduce((a, x) => (nn(x.hours) > nn(a.hours) ? x : a)), lo = st.reduce((a, x) => (nn(x.hours) < nn(a.hours) ? x : a));
+      const sau = nn(n.total_hours) / (sc - 1) / tuan;
+      out.push(`Quyết định cắt người (tính sẵn): ${sau > 48 ? 'KẾT LUẬN: CHƯA nên cắt ngay (dòng đầu nói đúng ý này, KHÔNG nói "nghiêng về cắt")' : 'CHƯA đủ số để quyết'} — ${sc} người, ${qty(n.total_hours)} giờ / ${qty(Math.round(tuan * 10) / 10)} tuần ≈ ${qty(Math.round(nn(n.total_hours) / sc / tuan))} giờ / người / tuần; ca lệch: nhiều nhất ${ss(hi.name)} ~${gt(hi)} giờ / tuần, ít nhất ${ss(lo.name)} ~${gt(lo)} giờ / tuần. Bớt 1 người mà giữ đủ giờ mở quán → ${sc - 1} người còn lại mỗi người ~${qty(Math.round(sau))} giờ / tuần${sau > 48 ? ' (QUÁ 48 giờ / tuần — dễ kiệt sức, phải trả làm thêm)' : ''}. Khối KHÔNG có số khách theo giờ → CHƯA đủ để nói thừa người; KHÔNG chỉ đích danh ai nghỉ, KHÔNG tự đặt ngưỡng "X ca / tuần". Việc: (1) chia lại ca cho đều (bớt người nhiều nhất)${nn(n.forgot_clock_out) ? `, sửa ${nn(n.forgot_clock_out)} ca quá 16 giờ chưa chấm ra (giờ đang bị tính sai)` : ''}; (2) xem doanh thu theo giờ trong Báo cáo, rút 1 người ở giờ vắng 2 tuần, đo số đơn và thời gian chờ${m.finance ? '; (3) xem dòng tỉ lệ lương / doanh thu ở trên trước khi quyết' : ''}.`);
+    }
   }
   const c = m.khach;
   if (c) {
@@ -916,6 +940,17 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     });
     lines.push(`Tính sẵn lời theo nhóm: ${gc.join('; ')} → CHƯA so được nhóm nào lời hơn (thiếu giá vốn phần lớn món); doanh thu nhiều hơn KHÔNG có nghĩa là lời hơn — chỉ nêu % doanh thu từng nhóm và xin nhập giá vốn các món còn thiếu.`);
   }
+  // lần 92: so HAI MÓN (D39 "bún bò với cơm sườn món nào ngon ăn hơn") — GPT né câu hỏi, không nói chỉ một món có giá vốn
+  const monQ = [...new Map((f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).map((t) => [t.name, t])).values()].filter((t) => {
+    const w = t.name.toLowerCase().split(/\s+/), key = w.slice(0, Math.min(2, w.length)).join(' ');
+    return key.length >= 5 && question.toLowerCase().includes(key);
+  });
+  if (monQ.length === 2 && /v[oớ]i|hay|so|n[aà]o/i.test(question)) {
+    const [x, y] = monQ;
+    const von = (t: FactItem) => (t.cost && t.price ? `giá vốn ${Math.round((t.cost / t.price) * 100)}%, lãi gộp ~${vnd(t.price - t.cost)} / phần` : 'CHƯA có giá vốn');
+    const ca = x.cost && y.cost;
+    lines.push(`So 2 món (tính sẵn): ${[x, y].map((t) => `${t.name} ${t.qty} phần, ${vnd(t.revenue)} (${von(t)})`).join('; ')} → bán nhiều hơn: ${x.revenue >= y.revenue ? x.name : y.name}; ${ca ? `lãi gộp / phần cao hơn: ${x.price! - x.cost! >= y.price! - y.cost! ? x.name : y.name}` : 'CHƯA so được món nào lời hơn (thiếu giá vốn) — xin nhập giá vốn món còn thiếu'}. "Ngon hơn" app không đo được → nói theo số bán, khách chọn nhiều hơn.`);
+  }
   if (f.by_band) {
     const bn = ['Sáng (5–11h)', 'Trưa (11–14h)', 'Chiều (14–17h)', 'Tối (từ 17h)'];
     // lần 56: quán nghỉ giữa ngày (vd 14–16h) — nhãn cố định "Chiều (14–17h)" làm GPT đẩy ưu đãi vào giờ quán đóng (D18, D28)
@@ -984,8 +1019,10 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     }
     // lần 85: hỏi bán thêm MỘT nhóm (D27 "muốn bán thêm nước uống") — GPT quảng bá chung, bỏ sót nhóm chỉ ~7%, đẩy món chưa bán
     // → tính sẵn: tỉ trọng + phần / đơn, món nên mời (giá khá, bán được, không giá vốn cao), ghép với món chủ lực, mốc +30%
-    const gq = /b[aá]n th[eê]m|t[aă]ng|đ[aẩ]y|k[eế] ho[aạ]ch|c[aá]ch|l[aà]m sao/i.test(question)
-      ? f.groups.find((g) => question.toLowerCase().includes(g.name.toLowerCase()) || (/n[uư][oớ]c|u[oố]ng/i.test(question) && /u[oố]ng|n[uư][oớ]c/i.test(g.name)))
+    // lần 95: thêm "bán ít" / "gọi thêm" (D10 "do uong ban it qua", D54 "lam sao de khach goi them"); tên nhóm lấy từ lượt trước nếu câu không có
+    const nhomQ = (q: string) => f.groups!.find((g) => q.toLowerCase().includes(g.name.toLowerCase()) || (/n[uư][oớ]c|u[oố]ng/i.test(q) && /u[oố]ng|n[uư][oớ]c/i.test(g.name)));
+    const gq = /b[aá]n th[eê]m|t[aă]ng|đ[aẩ]y|k[eế] ho[aạ]ch|c[aá]ch|l[aà]m sao|b[aá]n [ií]t|g[oọ]i th[eê]m/i.test(question)
+      ? nhomQ(question) ?? nhomQ(truoc.split(/\s+/).slice(0, 12).join(' '))
       : undefined;
     const base = f.items_revenue && f.items_revenue > 0 ? f.items_revenue : f.revenue;
     if (gq && gq !== f.groups[0] && base > 0 && lead?.price) {

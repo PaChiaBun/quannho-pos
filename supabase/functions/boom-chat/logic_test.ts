@@ -700,6 +700,25 @@ Deno.test('Số module: làm sạch + tính sẵn (thu chi, kho, chấm công, k
   const mh = parseModules({ kho: { period: 'Tháng này', items: 40, low_count: 0, out_count: 0, low: [], imports: 3, losses: [{ name: 'Bún tươi', qty: 26, unit: 'kg', value: 312000 }] } })!;
   assertStringIncludes(formatModules(mh, new Date(), 'bún hao hụt nhiều quá, có nên đổi mối bún không'), 'Quyết định đổi mối (tính sẵn): hao hụt ghi trong kỳ Bún tươi 26 kg ≈ 312.000đ');
   assert(!formatModules(mh).includes('Quyết định đổi mối'));
+  // lần 96: hỏi kho / hao hụt / nhập → tổng hao hụt, số mỗi ngày, việc theo loại hàng; hàng thiếu xếp theo tỉ lệ còn / tối thiểu
+  const mk = parseModules({ kho: { period: 'Tháng này (1–28/10/2026)', items: 40, low_count: 2, out_count: 1, imports: 3,
+    low: [{ name: 'Trân châu', qty: 1.5, unit: 'kg', min: 5 }, { name: 'Ly 700ml', qty: 0, unit: 'cái', min: 200 }],
+    losses: [{ name: 'Trân châu (nấu dư)', qty: 7, unit: 'kg', value: 315000 }] } })!;
+  const tk = formatModules(mk, new Date(), 'kho còn gì sắp hết, tháng 11 nên nhập trân châu bao nhiêu');
+  assertStringIncludes(tk, 'Kho tính sẵn: hao hụt cả kỳ ≈ 315.000đ: Trân châu (nấu dư) 7 kg (~0,3 kg / ngày) → nấu mẻ nhỏ');
+  assertStringIncludes(tk, 'Cần nhập (hết trước): Ly 700ml đã HẾT / tối thiểu 200 → nhập ít nhất 200 cái để lên mức tối thiểu; Trân châu còn 1,5 / tối thiểu 5 → nhập ít nhất 3,5 kg');
+  assertStringIncludes(tk, 'KHÔNG tự đặt số kg / lít');
+  assert(!formatModules(mk, new Date(), 'thế hao hụt tháng này bao nhiêu').includes('Cần nhập'));
+  assert(!formatModules(mk, new Date(), 'khoản chi nguyên liệu chi tiết hơn đi').includes('Kho tính sẵn'));
+  assert(!formatModules(mk).includes('Kho tính sẵn') && !formatModules(mh, new Date(), 'bún hao hụt nhiều quá, có nên đổi mối bún không').includes('Kho tính sẵn'));
+  // lần 97: hỏi cắt người → giờ / người / tuần, ca lệch, giờ dồn cho người còn lại; câu khác thì không
+  const mn = parseModules({ nhan_su: { period: 'Tháng này (1–28/10/2026)', shifts: 60, total_hours: 400, staff_count: 3, staff: [{ name: 'An', hours: 200, shifts: 30 }, { name: 'Bình', hours: 120, shifts: 20 }, { name: 'Chi', hours: 80, shifts: 10 }] } })!;
+  assertStringIncludes(formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko'), 'Quyết định cắt người (tính sẵn): KẾT LUẬN: CHƯA nên cắt ngay (dòng đầu nói đúng ý này, KHÔNG nói "nghiêng về cắt") — 3 người, 400 giờ / 4 tuần ≈ 33 giờ / người / tuần; ca lệch: nhiều nhất An ~50 giờ / tuần, ít nhất Chi ~20 giờ / tuần. Bớt 1 người mà giữ đủ giờ mở quán → 2 người còn lại mỗi người ~50 giờ / tuần (QUÁ 48');
+  assert(!formatModules(mn, new Date(), 'tháng này ai làm nhiều nhất').includes('Quyết định cắt người'));
+  // lần 93: hỏi thu chi vì sao / so kỳ trước → tách thu − chi đổi do thu hay chi; câu dự báo / câu khác thì không
+  assertStringIncludes(formatModules(m, new Date(), 'tháng này thu chi sao dư ít hơn tháng trước'), 'Phân tích tính sẵn: thu − chi đổi −20.000.000đ = thu tăng 10.000.000đ, chi tăng 30.000.000đ → nguyên nhân chính là CHI');
+  assert(!formatModules(m, new Date(), 'mã GIAM15 có nên chạy tiếp').includes('Phân tích tính sẵn: thu − chi'));
+  assert(!formatModules(m, new Date(), 'tháng sau tiền chi tăng bao nhiêu').includes('Phân tích tính sẵn: thu − chi'));
   assertStringIncludes(t, 'Sữa còn 2 hộp (tối thiểu 5)');
   assertStringIncludes(t, 'không được xem giá vốn');
   assertStringIncludes(t, 'CHỈ của chính người hỏi');
@@ -1044,6 +1063,16 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   const t7 = formatFacts(f7, new Date(), 'muốn bán thêm nước uống');
   assert(t7.includes('Việc nên nhắm cho nhóm Đồ uống (tính sẵn)') && t7.includes('nhân viên mời Nước sâm (12.000đ') && t7.includes('Bún bò + Nước sâm lẻ 57.000đ → 54.000đ') && t7.includes('(Nước cam)'), t7);
   assert(!formatFacts(f7, new Date(), 'doanh thu tháng này').includes('Việc nên nhắm cho nhóm'));
+  // lần 95: "bán ít" không dấu; "gọi thêm" lấy nhóm từ lượt trước
+  assert(formatFacts(f7, new Date(), 'do uong ban it qua phai ko').includes('Việc nên nhắm cho nhóm Đồ uống'));
+  assert(formatFacts(f7, new Date(), 'lam sao de khach goi them', 'đồ uống bán sao Đồ uống 7% doanh thu').includes('Việc nên nhắm cho nhóm Đồ uống'));
+  assert(!formatFacts(f7, new Date(), 'lam sao de khach goi them').includes('Việc nên nhắm cho nhóm'));
+  // lần 92: so hai món được hỏi → số bán + chỉ món có giá vốn mới nói lãi gộp; thiếu giá vốn thì chưa so được lời
+  const f8 = parseFacts({ period: 'Tháng này', revenue: 100000, orders: 100, top: [], slow: [], groups: [{ name: 'Món chính', revenue: 90000, qty: 180, items: 2, unsold: 0, unsold_names: [], slow: [], top: [
+    { name: 'Bún bò Huế', qty: 100, revenue: 50000, price: 45000 }, { name: 'Cơm sườn', qty: 80, revenue: 40000, price: 40000, cost: 19200 }] }] })!;
+  const t8 = formatFacts(f8, new Date(), 'bún bò với cơm sườn món nào ngon ăn hơn');
+  assert(t8.includes('So 2 món (tính sẵn): Bún bò Huế 100 phần') && t8.includes('lãi gộp ~20.800đ / phần') && t8.includes('CHƯA so được món nào lời hơn'), t8);
+  assert(!formatFacts(f8, new Date(), 'bún bò bán sao').includes('So 2 món'));
   // lần 80: mốc / ngày chỉ chia cho ngày có mở bán (f nghỉ Chủ nhật: 28 ngày − 4 = 24) → (900 + 1.220) / 2 / 24 ≈ 44đ, làm tròn nghìn = 0đ nên dùng số lớn
   const f6 = parseFacts({ ...JSON.parse(JSON.stringify(f)), by_hour: h.map((x: number) => x * 1000), prev_by_hour: ph.map((x: number) => x * 1000) })!;
   assert(formatFacts(f6, new Date(), 'tháng này sao giảm vậy').includes('≥ 44.000đ / ngày'), formatFacts(f6, new Date(), 'tháng này sao giảm vậy'));
