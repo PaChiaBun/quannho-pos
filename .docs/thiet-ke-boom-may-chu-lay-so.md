@@ -76,10 +76,18 @@ Bẫy đã biết: `user_accounts`, `pos_coupon_redemptions` có thể bị RLS 
 
 ## Các bước làm (mỗi bước dừng hỏi Chủ Quán trước khi áp)
 
-0. **Đo "gửi đủ mục" có làm Boom kém đi không** (trước khi viết code, chỉ tốn gpt-4o-mini): chấm kín bộ đề — bản gửi mục liên quan
-   vs bản gửi đủ 5 mục. Kém hơn → lọc mục bằng luật từ khoá ở máy chủ (vẫn sửa được không cần ra app).
-1. **Máy chủ — đọc kỳ bằng luật + quyền + đọc 5 mục + đệm** (không đụng DB): `mode 'ask'` chạy song song đường cũ, app cũ không ảnh hưởng.
-2. **DB — RPC `boom_sales_facts_v1`** (migration mới + ROLLBACK): so số RPC với số app tính cho cùng quán / kỳ (lệch = 0), đo thời gian.
+0. **Đã đo 03/11 — "gửi đủ mục" không làm Boom kém đi.** Chấm kín 60 câu bộ đề (1 lượt / bản, 3 người chấm Claude):
+   - Chung: mục liên quan 12,50 → đủ mục 12,45 /16 (19 câu hơn, 21 kém, 20 bằng — trong mức dao động).
+   - Câu app hiện **không gửi số** (5 câu: D13, D23, D30, D55, D60): 9,2 → **11,6** — đúng loại lỗi thấy khi hỏi thật.
+   - Câu chỉ hỏi bán hàng (35): 12,80 → 12,66. Câu chỉ hỏi mục (thu chi, kho…, 20): 12,80 → 12,30 — đôi khi lẫn số
+     (D15 gán 9% tổng giảm cho riêng GIAM15). Theo dõi; nếu hỏi thật thấy lẫn → câu hỏi rõ một mục thì gửi bán hàng dạng rút gọn.
+   - Token vào +20% (~2.100 token / câu). Kết quả: `cham_tu_van/ket_qua/b10_du_muc_claude_20261103.json`.
+1. **Máy chủ — đọc kỳ bằng luật + quyền + đọc 5 mục + đệm** — **đã áp 03/11** (cùng 1.2, `db-fix/boom_ask_ap_dung.sh`, TS 20261103_032245):
+   `ky.ts` (30 câu thật đúng hết), `lay_so.ts` (quyền 10 vai trò + 5 mục, đọc bằng vé người hỏi), `hoi.ts` (đệm), `index.ts` mode `'ask'`.
+   Script áp kiểm `index.ts` trên máy chủ = bản commit chặng 1 (lần sau đổi mốc 168db4d → commit này).
+2. **DB — `boom_sales_raw_v1`** (migration `20261103_boom_sales_raw_v1.sql` + ROLLBACK) — **đã áp 03/11**. Hàm trả số thô
+   (doanh thu, đơn, theo giờ / thứ / món / khung giờ); `ban_hang.ts` dựng gói facts y như app. Đối chiếu quán KAY-Rạch Giá tháng 10:
+   487.883.810đ / 3.366 đơn, tháng 9 436.064.400đ, cơm sườn miếng 849 phần — khớp app; ~1 giây lần đầu, ~0,1 giây sau.
 3. **Web — bật cờ, build, đưa lên `quannho.lpm.vn/pos`**. Hỏi thật lại các câu 03/11 trên Chrome; so với kết quả cũ.
 4. Ổn 1–2 tuần trên web → bật cho app (bản app sau), rồi mới xoá dần phần chọn đường trong Dart.
 

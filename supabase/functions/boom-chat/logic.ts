@@ -21,7 +21,8 @@ export interface HelpChunk {
 export interface ChatRequest {
   store_id: string;
   question: string;
-  mode: 'answer' | 'advice' | 'log_only' | 'feedback' | 'transcript';
+  /** 'ask' (03/11): app chỉ gửi câu hỏi + lượt trước; máy chủ tự đọc kỳ, tự lấy số (ky.ts, lay_so.ts) rồi đi đường tư vấn */
+  mode: 'answer' | 'advice' | 'ask' | 'log_only' | 'feedback' | 'transcript';
   chunk_ids: string[];
   /** Phiên bản bản hướng dẫn app đang dùng — máy chủ lấy đúng bản này (không lệch nội dung). */
   pack_version: number | null;
@@ -1151,6 +1152,8 @@ export function parseRequest(body: unknown): { ok: true; req: ChatRequest } | { 
     ? 'log_only'
     : b.mode === 'advice'
     ? 'advice'
+    : b.mode === 'ask'
+    ? 'ask'
     : b.mode === 'feedback'
     ? 'feedback'
     : b.mode === 'transcript'
@@ -1189,7 +1192,7 @@ export function parseRequest(body: unknown): { ok: true; req: ChatRequest } | { 
   // Lượt trước chỉ dùng ở chế độ tư vấn; câu trước thuộc nhóm bị chặn → bỏ (không nói tiếp chuyện ngoài phạm vi).
   // Câu trả lời trước có thể rỗng (lượt số liệu: app không gửi lại số — đã có trong facts).
   let history: ChatRequest['history'] = null;
-  if (mode === 'advice' && b.history && typeof b.history === 'object' && !Array.isArray(b.history)) {
+  if ((mode === 'advice' || mode === 'ask') && b.history && typeof b.history === 'object' && !Array.isArray(b.history)) {
     const h = b.history as Record<string, unknown>;
     const hq = cleanText(h.q, LIMITS.questionMax), ha = cleanText(h.a, 800);
     if (hq && !blockReason(hq)) history = { q: redact(hq), a: redact(ha) };

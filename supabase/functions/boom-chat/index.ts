@@ -18,6 +18,7 @@
 //   BOOM_OPENAI_BASE_URL + BOOM_ALLOW_TEST_BASE=true — CHỈ khi test (không thì luôn là api.openai.com)
 //   JWT_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (có sẵn trong dịch vụ hàm của Supabase tự host)
 import * as jose from 'jsr:@panva/jose@6';
+import { laySoChoCau } from './hoi.ts';
 import {
   ADVICE_PROMPT,
   SYSTEM_PROMPT,
@@ -81,6 +82,7 @@ const PRICES = { inPerM: num('BOOM_PRICE_IN_PER_M', 0.15), outPerM: num('BOOM_PR
 const UPSTREAM_TIMEOUT_MS = 12_000; // app chờ 20 giây — máy chủ bỏ trước để không trả tiền cho câu không ai thấy
 const SB_URL = env('SUPABASE_URL', 'http://kong:8000');
 const SERVICE_KEY = env('SUPABASE_SERVICE_ROLE_KEY');
+const ANON_KEY = env('SUPABASE_ANON_KEY');
 const JWT_SECRET = env('JWT_SECRET');
 
 const CORS = {
@@ -355,6 +357,20 @@ Deno.serve(async (req) => {
     return json(503, { error: 'SERVER_BUSY' });
   }
 
+  // 'ask' (03/11): app chỉ gửi câu hỏi → máy chủ đọc kỳ, lấy số bằng vé của chính người hỏi (RLS) rồi đi đường tư vấn
+  let kyHoi: string | undefined, askTag = '';
+  if (r.mode === 'ask') {
+    const jwt = (req.headers.get('authorization') ?? '').slice(7).trim();
+    try {
+      const so = await laySoChoCau({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId: r.store_id, userId: user }, r.question);
+      Object.assign(r, { mode: 'advice', facts: so.facts, modules: so.modules });
+      kyHoi = so.ky.nhan;
+      askTag = `+ask${so.dem ? '+dem' : ''}${so.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;
+    } catch {
+      return json(503, { error: 'SERVER_BUSY' });
+    }
+  }
+
   // 👍/👎 cho câu trả lời không gọi GPT → một dòng 'feedback' trong sổ (không tốn tiền; hạn mức "không tốn tiền").
   if (r.mode === 'feedback' && r.feedback) {
     try {
@@ -444,7 +460,7 @@ Deno.serve(async (req) => {
   }
   const logId = res.id;
   // Sổ ghi rõ lượt có số liệu quán / lượt trước: câu trả lời riêng của một quán, không duyệt vào bộ nhớ dùng chung.
-  let kind = `${MODEL}${r.facts || r.chain || r.modules ? '+so_lieu' : ''}${r.chain ? '+chuoi' : ''}${r.modules ? '+module' : ''}${r.history ? '+ngu_canh' : ''}`;
+  let kind = `${MODEL}${r.facts || r.chain || r.modules ? '+so_lieu' : ''}${r.chain ? '+chuoi' : ''}${r.modules ? '+module' : ''}${r.history ? '+ngu_canh' : ''}${askTag}`;
 
   // Trí nhớ cho câu tư vấn và câu hướng dẫn; lấy TRƯỚC khi gọi GPT —
   // dòng của lượt này đang 'pending' nên không tự nhắc lại chính mình.
@@ -555,7 +571,7 @@ Deno.serve(async (req) => {
       tool: refused ? 'boom_tu_choi:model' : `${r.mode}:${kind}`,
       question: r.question, answer: refused ? refusalFor('programming') : answer, chunk_ids: r.chunk_ids });
     if (refused) return json(200, { answer: refusalFor('programming'), blocked: 'model', log_id: logId });
-    return json(200, { answer, log_id: logId, model: MODEL });
+    return json(200, { answer, log_id: logId, model: MODEL, ky: kyHoi });
   } catch (e) {
     const timeout = e instanceof DOMException && e.name === 'AbortError';
     // OpenAI có thể vẫn tính tiền lượt quá giờ → ghi chi phí ước lượng (≈ 1 lượt)
