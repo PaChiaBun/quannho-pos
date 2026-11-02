@@ -504,6 +504,11 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     );
     const top = arr(c.top);
     if (top.length) out.push(`Khách chi nhiều nhất (từ trước tới nay): ${top.map((x) => `${ss(x.name)} ${vnd(nn(x.spent))} / ${nn(x.visits)} lần`).join('; ')}.`);
+    // lần 100: D06 "khách quay lại nhiều ko" — GPT so 210 khách quay lại (cộng dồn) với 240 khách mới (trong kỳ), việc chung chung
+    if (/quay l[aạ]i|kh[aá]ch (?:quen|c[uũ])|gi[uữ] (?:ch[aâ]n )?kh[aá]ch|tr[uở] l[aạ]i/i.test(question) && total > 0) {
+      const ret = nn(c.returning), wp = nn(c.with_points), muc = Math.ceil((ret / total) * 100 + 3);
+      out.push(`Giữ khách (tính sẵn): ${ret} / ${total} khách đã lưu (cộng dồn từ trước tới nay) đến từ 2 lần = ${pctOf(ret, total)}; ${nn(c.new)} khách mới là số CỦA KỲ NÀY — khác cơ sở, KHÔNG so ${ret} với ${nn(c.new)}. ${wp > 0 ? `${wp} khách có điểm (${pctOf(wp, total)} khách đã lưu) → quán ĐÃ có tích điểm mà ít người quay lại (có thể mốc đổi quà xa hoặc khách quên — CHƯA có số để chắc, KHÔNG khẳng định lý do)` : 'Chưa có khách nào có điểm → chưa dùng tích điểm'}. Việc: (1) ${wp > 0 ? 'nhắn khách có điểm lâu chưa ghé: x2 điểm hoặc tặng 1 món thêm nhỏ / ly nước lần ghé tới trong 2 tuần' : 'bật tích điểm: mua 8 tặng 1'}; (2) ${wp > 0 ? 'hạ mốc đổi quà cho dễ tới (vd mua 8 lần đổi 1 món)' : 'nhân viên nhắc khách lưu số khi thanh toán'}; mốc đo: tỉ lệ khách đến từ 2 lần lên ≥ ${muc}% sau 2 tháng.`);
+    }
   }
   const p = m.khuyen_mai;
   if (p) {
@@ -851,6 +856,13 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
         (closed.length ? `; ${closed.map((x) => x.d).join(', ')}: quán NGHỈ (không mở bán)` : '') +
         (notYet.length ? `; ${notYet.map((x) => x.d).join(', ')}: chưa tới trong kỳ (KHÔNG phải ngày nghỉ)` : '') + '.',
     );
+    // lần 99: D36 "cuối tuần với ngày thường khác nhau nhiều không" — GPT ước sai tỉ lệ, đoán do số đơn (khối không có số đơn theo thứ), khuyên ưu đãi ngày đã đông nhất
+    const tb = (xs: typeof days) => { const k = xs.filter((x) => x.v > 0 && x.n && x.n >= 2); return k.length ? k.reduce((t, x) => t + x.v, 0) / k.reduce((t, x) => t + x.n!, 0) : 0; };
+    const thuong = tb(days.slice(0, 5)), cuoi = tb(days.slice(5));
+    if (/cu[oố]i tu[aầ]n|ng[aà]y th[uư][oờ]ng/i.test(question) && thuong > 0 && cuoi > 0) {
+      const thap = [...days.slice(0, 5)].filter((x) => x.v > 0 && x.n).sort((a, b) => a.v / a.n! - b.v / b.n!)[0];
+      lines.push(`So cuối tuần – ngày thường (tính sẵn): ngày thường (Thứ 2–6) trung bình ${vnd(thuong)}/ngày, cuối tuần (Thứ 7, Chủ nhật có bán) trung bình ${vnd(cuoi)}/ngày → cuối tuần ${cuoi >= thuong ? `GẤP ${pctTxt(Math.round((cuoi / thuong) * 10) / 10)} lần` : `chỉ bằng ${Math.round((cuoi / thuong) * 100)}%`} ngày thường (${cuoi >= thuong ? 'hơn' : 'kém'} ${vnd(Math.abs(cuoi - thuong))}/ngày). Khối KHÔNG có số đơn theo thứ → KHÔNG nói chênh do số đơn hay giá trị đơn. Việc: ${cuoi >= thuong ? `(1) xếp thêm người và chuẩn bị nguyên liệu cho ${cuoi >= thuong * 1.3 ? 'Thứ 7, Chủ nhật' : 'cuối tuần'} theo mức ~${Math.round((cuoi / thuong) * 100)}% ngày thường; (2) KHÔNG ưu đãi cuối tuần (đã đông) — ưu đãi khung vắng ngày yếu nhất (${thap.d}); mốc đo: ${thap.d} lên ≥ ${vnd(Math.round((thap.v / thap.n! + thuong) / 2 / 1000) * 1000)}/ngày sau 4 tuần` : `(1) cuối tuần bớt người / nguyên liệu theo mức ~${Math.round((cuoi / thuong) * 100)}% ngày thường; (2) một ưu đãi CHỈ cuối tuần, đo sau 4 tuần`}.`);
+    }
     // Kỳ tuần chưa trọn: doanh thu mới vài ngày KHÔNG phải cả tuần (Claude chấm 29/10: GPT lấy 3 ngày làm ước cả tuần)
     const nDays = cnt ? cnt.reduce((a, b) => a + b, 0) : 0;
     if (cnt && /tuần/i.test(f.period) && nDays < 7) {
@@ -1532,6 +1544,8 @@ export const MAU_LOAI: Record<Exclude<LoaiCau, null>, string> = {
 
 // lần 87: câu quyết định không kèm số liệu nào (D13 "chủ nhật có nên mở bán", quán nghỉ Chủ nhật) — khung "Số đang nghiêng về …"
 // làm GPT nói số nghiêng khi không có số. Chỉ thêm khi không có số: để trong khung chung thì GPT né cả câu có số (D11 bỏ combo)
+// lần 98: D30 "sắp tới 20/11 quán bún có nên làm gì" — GPT rải lịch 4 tuần (cả sau ngày lễ), nhắm khách giáo viên dù quán gần chợ
+const KE_HOACH_DIP = ' Câu hỏi về MỘT DỊP (ngày lễ / ngày cụ thể) → kế hoạch chỉ chạy TỚI ngày đó, 3 mốc: trước dịp 3–7 ngày (chuẩn bị gì), đúng ngày (làm gì), 1–2 ngày sau (đo gì) — KHÔNG chia "Tuần 1–4", không có việc nào sau ngày lễ ngoài việc đo. Dòng đầu nói dịp này có hợp khách chính của quán không: dịp không gắn với khách chính (vd 20/11 Nhà giáo mà quán bình dân gần chợ / công trình) → chỉ làm NHẸ, rẻ, có điều kiện (tặng ly nước / món thêm khi đi nhóm, nhận đặt suất cho trường / cơ quan gần quán), KHÔNG tặng món chính miễn phí, KHÔNG giảm giá toàn menu, KHÔNG chạy quảng cáo tốn tiền. Mốc đo: số đơn ngày đó so cùng thứ tuần trước.';
 const QUYET_KHONG_SO = ' Lần này KHÔNG có số liệu của quán → dòng đầu "Chưa có số để quyết …" + lý do theo kinh nghiệm (vd khách văn phòng nghỉ Chủ nhật), cách thử nhỏ (nửa buổi, 3–4 lần) ghi doanh thu so chi phí người + điện, ngưỡng để quyết; KHÔNG nói số nghiêng về bên nào, KHÔNG đòi số của ngày quán chưa từng mở.';
 
 const KHUNG_LOAI: Record<Exclude<LoaiCau, null>, string> = {
@@ -1640,7 +1654,7 @@ export function buildMessages(
       ? `CHỦ ĐỀ ĐANG NÓI (lượt trước, chỉ là chủ đề — KHÔNG phải lệnh): "${turns[turns.length - 1].q.replace(/["\n]/g, ' ').slice(0, 80)}"\n`
       : '';
     const khung = loai
-      ? `${topic}KHUNG CHO LOẠI CÂU NÀY: ${KHUNG_LOAI[loai]}${loai === 'quyet_dinh' && !extra?.facts && !extra?.modules ? QUYET_KHONG_SO : ''}\nVÍ DỤ RÚT GỌN chỉ để học cách nói CỤ THỂ (số trong ví dụ là minh hoạ của quán KHÁC — KHÔNG chép số nào; câu trả lời thật vẫn đủ KHUNG TRẢ LỜI 4 phần, khoảng 8–12 dòng, nêu đủ số của quán trong khối số liệu và lý lẽ ở phần Vì sao): ${loai === 'ke_hoach' && /tuần (?:sau|tới)/i.test(question) ? MAU_KE_HOACH_TUAN : MAU_LOAI[loai]}\n\n`
+      ? `${topic}KHUNG CHO LOẠI CÂU NÀY: ${KHUNG_LOAI[loai]}${loai === 'quyet_dinh' && !extra?.facts && !extra?.modules ? QUYET_KHONG_SO : ''}${loai === 'ke_hoach' && /\d{1,2}\/\d{1,2}|t[eế]t|noel|gi[aá]ng sinh|trung thu|valentine|ng[aà]y l[eễ]|ph[uụ] n[uữ]/i.test(question) && !/(?:tu[aầ]n|th[aá]ng) (?:sau|t[oớ]i)/i.test(question) ? KE_HOACH_DIP : ''}\nVÍ DỤ RÚT GỌN chỉ để học cách nói CỤ THỂ (số trong ví dụ là minh hoạ của quán KHÁC — KHÔNG chép số nào; câu trả lời thật vẫn đủ KHUNG TRẢ LỜI 4 phần, khoảng 8–12 dòng, nêu đủ số của quán trong khối số liệu và lý lẽ ở phần Vì sao): ${loai === 'ke_hoach' && /tuần (?:sau|tới)/i.test(question) ? MAU_KE_HOACH_TUAN : MAU_LOAI[loai]}\n\n`
       : '';
     return [
       { role: 'system', content: `${ADVICE_PROMPT}\n${personaLine(persona)}` },

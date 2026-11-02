@@ -753,6 +753,26 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Bản đầu: 6/6 câu mở "nghiêng về cắt" (9,6 → 11,6 gồm D29). Ghi rõ kết luận trong dòng → chấm kín D17 × 6: 7,3 → 14,2/16, 6/6 khá hơn (`ket_qua/l97b_claude_20261103.json`).
 - Áp 92–97: `db-fix/boom_l97_ap_dung.sh` (TS 20261103_003836).
 
+### Lần 98 (03/11, đã áp): kế hoạch cho một dịp
+
+- Bỏ thử trước đó: D59 "khoản chi nguyên liệu chi tiết hơn" (nối phiếu nhập theo nhà cung cấp) — app chỉ gửi phần thu chi cho câu này, dòng không tới Boom; D48 "cả ngày được bao nhiêu" — khối hôm nay không có giờ mở ca tối. Cả hai cần sửa app, chưa làm.
+- Lỗi: D30 "sắp tới 20/11 quán bún có nên làm gì" — GPT rải "Tuần 1–3" (cả sau ngày lễ), nhắm khách giáo viên dù quán gần chợ, giảm giá toàn menu, mời ăn miễn phí.
+- Sửa: câu kế hoạch nhắc ngày / dịp (dd/mm, tết, noel, trung thu…), không phải tuần / tháng sau → thêm `KE_HOACH_DIP`: chỉ tới ngày đó (trước 3–7 ngày, đúng ngày, 1–2 ngày sau đo); dịp không hợp khách chính → làm nhẹ, có điều kiện, không tặng món chính, không quảng cáo tốn tiền.
+- Chấm kín D30 × 6: 4,8 → 11,3/16, 6/6 khá hơn (`ket_qua/l98_claude_20261103.json`). Còn lỗi: nói sai thứ của 20/11 (Thứ Sáu).
+
+### Lần 99 (03/11, đã áp): so cuối tuần – ngày thường
+
+- Lỗi: D36 "cuối tuần với ngày thường khác nhau nhiều không" — GPT gọi tổng tháng là trung bình ngày, so tổng Chủ nhật với Thứ 2, đoán do số đơn, khuyên ưu đãi cuối tuần (đã đông nhất).
+- Sửa: câu nhắc cuối tuần / ngày thường → "So cuối tuần – ngày thường (tính sẵn)": trung bình / ngày Thứ 2–6 và Thứ 7–CN (chỉ thứ có ≥ 2 ngày), gấp mấy lần; không nói do số đơn; việc: thêm người / nguyên liệu cuối tuần, ưu đãi ngày yếu nhất với mốc đo.
+- Chấm kín D36 × 6: 8,2 → 13,3/16, 6/6 khá hơn (`ket_qua/l99_claude_20261103.json`).
+
+### Lần 100 (03/11, đã áp): khách quay lại
+
+- Lỗi: D06 "khách quay lại nhiều ko" — GPT so 210 khách quay lại (cộng dồn) với 240 khách mới (trong kỳ); việc chung chung; D25 đề xuất làm thẻ tích điểm dù quán đã có.
+- Sửa: câu quay lại / khách quen / giữ khách → "Giữ khách (tính sẵn)": tỉ lệ cộng dồn, không so với khách mới; quán đã có tích điểm hay chưa (không khẳng định lý do); việc theo đó; mốc đo tỉ lệ +3 điểm sau 2 tháng.
+- Chấm kín D06, D25 × 5: 9,0 → 13,8/16, 10/10 khá hơn (`ket_qua/l100_claude_20261103.json`). Còn lỗi: gọi cả 1.320 khách có điểm là "lâu chưa ghé".
+- Áp 98–100: `db-fix/boom_l100_ap_dung.sh` (TS 20261103_010342).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

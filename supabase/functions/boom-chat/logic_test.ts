@@ -1099,3 +1099,26 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   // có số từng món kỳ trước → không còn câu "CHƯA có số từng món"
   assert(!formatFacts(f, new Date(), 'món nào giảm so tháng trước').includes('CHƯA có số từng món'));
 });
+
+Deno.test('lần 98: kế hoạch cho một dịp → chỉ tới ngày đó, làm nhẹ khi dịp không hợp khách', () => {
+  const txt = (q: string) => buildMessages(q, []).map((x) => x.content).join('\n');
+  assert(txt('Sắp tới 20/11 quán bún có nên làm gì không').includes('Câu hỏi về MỘT DỊP'));
+  assert(!txt('lên kế hoạch tuần sau giúp em').includes('Câu hỏi về MỘT DỊP'));
+  assert(!txt('tháng 12 noel doanh thu có tăng ko').includes('Câu hỏi về MỘT DỊP'));
+});
+
+Deno.test('lần 99: hỏi cuối tuần với ngày thường → tỉ lệ tính sẵn, việc cho cuối tuần đông', () => {
+  const f = parseFacts({ period: 'Tháng này (1–28/10/2026)', revenue: 1, orders: 1, from: '2026-10-01', to: '2026-10-28',
+    by_weekday: [4e6, 4e6, 4e6, 4e6, 4e6, 8e6, 8e6], top: [], slow: [] })!;
+  const t = formatFacts(f, new Date('2026-10-28T09:00:00+07:00'), 'cuối tuần với ngày thường khác nhau nhiều không');
+  assert(t.includes('So cuối tuần – ngày thường (tính sẵn): ngày thường (Thứ 2–6) trung bình 1.000.000đ/ngày, cuối tuần (Thứ 7, Chủ nhật có bán) trung bình 2.000.000đ/ngày → cuối tuần GẤP 2 lần') && t.includes('KHÔNG ưu đãi cuối tuần'), t);
+  assert(!formatFacts(f, new Date('2026-10-28T09:00:00+07:00'), 'tháng này bán sao').includes('So cuối tuần'));
+});
+
+Deno.test('lần 100: hỏi khách quay lại → tỉ lệ cộng dồn, không so với khách mới trong kỳ; việc theo tích điểm', () => {
+  const m = parseModules({ khach: { period: 'Tháng này', total: 1000, new: 200, returning: 100, with_points: 500, wallet_customers: 0, wallet_real: 0, wallet_bonus: 0 } })!;
+  const t = formatModules(m, new Date(), 'khách quay lại quán em nhiều ko');
+  assertStringIncludes(t, 'Giữ khách (tính sẵn): 100 / 1000 khách đã lưu (cộng dồn từ trước tới nay) đến từ 2 lần = 10%; 200 khách mới là số CỦA KỲ NÀY — khác cơ sở, KHÔNG so 100 với 200.');
+  assertStringIncludes(t, 'mốc đo: tỉ lệ khách đến từ 2 lần lên ≥ 13% sau 2 tháng');
+  assert(!formatModules(m, new Date(), 'tháng này bao nhiêu khách mới').includes('Giữ khách'));
+});
