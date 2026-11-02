@@ -567,6 +567,12 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - D32 × 4 lượt: bản cũ sai 1/4; bản mới hết tăng giá nhưng chuyển sang GIẢM GIÁ 2.000đ / tặng kèm. Chấm kín 4 cặp: 10,0 → 9,5; việc làm 0,50 → 0,25 → bỏ.
 - Bài học (giống lần 63): hỏi lại kiểu "đừng tăng giá" làm GPT lật sang giảm giá. Lời hỏi lại phải đưa VIỆC ĐÚNG có sẵn (vd chép "Việc nên nhắm" của khối), không chỉ cấm. D32 ("món nào giảm nhiều nhất") vẫn yếu: chỉ nêu 1 món, không nhắm 7–8h.
 
+### Lần 69 (02/11, bỏ, không chấm): hỏi lại kèm "Việc nên nhắm" khi tăng giá món mất khách
+
+- Sửa thử: như lần 68 nhưng chỉ bắt khi khối có "Việc nên nhắm (tính sẵn)" và lời hỏi lại đưa đúng việc đó ("cũng KHÔNG đổi sang giảm giá / tặng").
+- D32 × 4 lượt: cả 4 khuyên "giảm giá 2.000đ Cà phê sữa đá" cả ngày (bản lần 67: 0/4 giảm giá, 1/4 tăng giá) → rõ kém, bỏ không cần chấm.
+- Gốc thật của D32 ("món nào giảm nhiều nhất"): câu hỏi về MÓN nhưng việc tính sẵn là về GIỜ → GPT không dùng, tự nghĩ việc cho món (tăng / giảm giá). Hướng sau: câu hỏi món giảm → tính sẵn việc cho chính món giảm nhiều nhất (giờ món đó bán chạy, mời kèm, không đổi giá).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
