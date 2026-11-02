@@ -3,6 +3,26 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-11-03 — Kiểm Sunmi Bò Đen đợt 4 (bản 24, chỉ xem): 4 lỗi nhỏ E1–E4 → sửa hết theo ⭐ (commit `893c07f`)
+
+- ✅ E1 Kho CN › Nguyên liệu: món không theo dõi mà tồn âm (vd "Cot Tra Den") ghi "Tồn: Không theo dõi" ngay cạnh nhãn "Không theo dõi" → `_IngredientCard` bỏ dòng "Tồn:" khi nó trùng nhãn; món không theo dõi còn tồn dương vẫn hiện số.
+- ✅ E2 Báo cáo Kho CN ghi ngày "2026-11-02" (Food Cost: giá vốn và lệnh sản xuất theo ngày; Sản lượng: ngày của lệnh) → `khoReportDayLabel`: "Thứ Hai, 02/11", cùng `DateFormat('EEEE, dd/MM', 'vi')` của đầu trang Báo cáo.
+- ✅ E3 Kiểm kê liệt kê món bán theo công thức (Bạc Xỉu "Sổ sách: 100 ly" — tồn đứng yên vì bán chỉ trừ nguyên liệu) → `StockCountScreen` bỏ các món trong `recipeProductIdsProvider` (cùng danh sách màn Kho dùng); dòng hướng dẫn ghi "Ẩn N món bán theo công thức (bán là trừ nguyên liệu, không cần đếm)".
+- ✅ E4 Khách hàng: ô thống kê "Điểm đang có" bị cắt "Điểm đang …" ở màn 360 → "Điểm còn" (thẻ "Tổng quan" rộng giữ chữ cũ).
+- ✅ Test: `test/screens/kiem_sunmi_dot4_test.dart` (2 ca: E2, E3 — E3 chạy trên mã cũ thì hỏng), thêm kiểm "Thứ Hai, 02/11" vào ca D2 của `kiem_sunmi_dot3_widget_test.dart` (nạp dữ liệu ngày tiếng Việt). Toàn bộ test/core, features/ai_assistant, modules, screens, docs: 1076 ca đạt. Bài hướng dẫn rà + đóng dấu: kho-chuyen-nghiep, khach-hang; xuất lại `assets/boom_help/huong_dan.json`.
+- ⚠️ E1, E4 không có test riêng (đổi hiển thị nhỏ; số liệu Khách hàng đọc qua provider riêng của màn, test không thay được). Chưa thử trên máy thật — tới tay quán ở bản phát hành sau.
+
+## 2026-11-03 — Phát hành 1.0.6 (build 24): APK + web /pos + Windows lên web (Chủ Quán "Phát hành 1.0.6+24")
+
+- ✅ Commit `3ff31bc` (đã push `feature/ai-bum-ui`): `pubspec.yaml` 1.0.6+23 → **1.0.6+24**. Gồm: nút "Cập nhật ngay" Android cài được (`690abe6`), kiểm Sunmi đợt 2 (`2823ed3`) và đợt 3 (`40a03d6`), Boom lần 98–103. Build từ worktree sạch `quan_nho_ux`, `--dart-define=POS_JWT_AUTH_URL=https://quannho.lpm.vn`.
+- ✅ APK (versionCode 24, có `REQUEST_INSTALL_PACKAGES`, cùng chữ ký bản 23) lên `/var/www/lpm-web/public/` và `public/download/`, SHA-256 `3a1258aacc06e545…`, kiểm qua HTTP công khai; sao lưu bản 23: `/root/quannho-backups/web-download/apk_{root,download}_truoc_106b24_20261103_030449.apk`. AAB (không có quyền tự cài) ở `Quan Nho/release-builds/1.0.6-24/`.
+- ✅ Web `/pos`: `version.json` build 24, `main.dart.js` `65856e7f6067…` khớp; sao lưu `/var/www/quannho/pos_backup_20261103_030518`.
+- ✅ Windows: GitHub run 41515334077 (commit `3ff31bc`) thành công; `QuanNhoPOS-Setup.exe` 62.962.523 byte, ProductVersion 1.0.6, SHA-256 `f72ce75edd217bf3…`, có mã mới (chuỗi `loyalty_fab_reward` trong `app.so` của gói msix 1.0.6.0). Lên `/var/www/lpm-web/public/` và `public/download/`, khớp qua HTTP công khai; sao lưu bản 23: `/root/quannho-backups/web-download/exe_{root,download}_truoc_106b24_20261103_052348.exe`. Bản lưu: `Quan Nho/release-builds/1.0.6-24/`. Chưa chạy thử trên Windows thật.
+- ⚠️ `app_versions` CHƯA ghi. Đang công bố: Android 1.0.6 (23) — tệp gỡ tạm `db-fix/go_tam_android_106b23.sql` chưa chạy; Windows 1.0.5 (21); iOS 1.0.2 (7). Tệp sẵn `Quan Nho/db-fix/phat_hanh_106b24_app_versions.sql`: dòng Windows 24; Android 24 để chú thích (máy ≤23 không tự cài được → cập nhật tay một lần trước); iOS 1.0.6 (23) để chú thích (Apple đã duyệt, App Store bán 1.0.6 từ 03/11 01:35).
+- ✅ Sunmi Bò Đen đã lên 24 (cài đè, vẫn đăng nhập; mở lần đầu ~2,1 giây). Kiểm lại trên máy thật, chỉ xem: đạt A1–A5, B1–B6, D1–D7 — Thu Chi mở ở Hôm nay dù Tài chính đang xem hôm qua; nút ◀ từ Thu Chi, Kho về Trang chủ; Tài chính hôm nay hết "giảm 100%"; Kho CN "Giá vốn NL đã bán" 2.749.392 đ / 5 ngày; Hóa đơn ‹ › 30 bill hôm qua, "Thanh toán bàn 13"; Máy In & Luật In "Dùng máy POS cầm tay ✓ đang dùng"; Thưởng có nút "Thêm phần thưởng". Cuộn Kho 60 khung/giây, 0 khung giật.
+- ⚠️ Lỗi nhỏ mới E1–E4 → đã sửa ở mục "đợt 4" bên trên (chưa phát hành).
+- ➡️ CH Play: Chủ Quán tự kéo thả AAB 24 (88 MB). App Store: 1.0.6 đã duyệt nên bản iOS kế tiếp phải là 1.0.7. Máy Android quán khác cập nhật tay lên 24.
+
 ## 2026-11-03 — Kiểm Sunmi Bò Đen đợt 3 (chỉ xem, rạng sáng): 7 lỗi D1–D7 → sửa hết theo ⭐ (commit `40a03d6`)
 
 - ✅ Máy: mở app từ lúc tắt hẳn ~1 giây tới khung đầu, <2 giây vào Trang chủ, vẫn đăng nhập; cuộn Trang chủ 1%, Bàn 1–3%, Công thức Kho CN 2% khung giật; nhật ký app không lỗi.
