@@ -23,6 +23,7 @@ import {
   comboDat,
   kiemTraLoi,
   chuaBanSai,
+  tuanChuaTron,
   noteKiem,
   soLa,
   clipAnswer,
@@ -945,6 +946,11 @@ Deno.test('Lần 54: combo đắt hơn mua lẻ, topping ở quán không bán t
   assert(kiemTraLoi('Dạ Anh, Nước chanh và Sữa đậu nành chưa bán phần nào.', r10).some((x) => x.includes('Nước chanh (bán 80 phần)')));
   assertEquals(chuaBanSai('Dạ Anh, Nước chanh bán 80 phần, còn Nước cam chưa bán phần nào.', r10), []);
   assertEquals(chuaBanSai('Trà đá bán chạy; Sữa đậu nành chưa có ai gọi.', r10), []);
+  // lần 72: so tuần chưa trọn mà không nói số ngày → hỏi lại; đã nói "mới có 3/7 ngày" → qua
+  const rw = 'Kỳ: Tuần này (26–28/10/2026). Doanh thu 13.520.000đ.\nCùng kỳ tuần trước (19–21/10): 14.180.000đ → GIẢM 4,7%.';
+  assert(kiemTraLoi('Dạ Anh, tuần này giảm 4,7% so tuần trước.', rw).some((x) => x.includes('tuần này mới có 3/7 ngày')));
+  assertEquals(tuanChuaTron('Dạ Anh, tuần này mới có 3/7 ngày, giảm 4,7% so 3 ngày cùng kỳ tuần trước.', rw), 0);
+  assertEquals(tuanChuaTron('Dạ Anh, tháng này giảm 4,7%.', rw), 0);
   assertEquals(kiemTraLoi('Dạ Anh, tặng topping cho khách quen.', ref + ' NHÓM "Topping": Trân châu (40 phần, giá 6.000đ).').filter((x) => x.includes('topping')), []);
 });
 

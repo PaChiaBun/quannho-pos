@@ -1835,18 +1835,30 @@ export function chuaBanSai(answer: string, ref: string): string[] {
   return [...out];
 }
 
-/** Mọi lỗi cần hỏi lại (rỗng = câu trả lời qua): số lạ, khuyên ngược món giá vốn cao, lộ chữ nội bộ, combo đắt hơn lẻ, topping quán không bán, món có bán bị gọi là chưa bán. */
+/** Lần 72: so "Tuần này" (mới vài ngày) với tuần trước mà câu trả lời không nói tuần chưa trọn (D33, D38 — lần 71 dặn trong
+ *  dòng số thì GPT không chép). Trả số ngày đã có (0 = không lỗi). */
+export function tuanChuaTron(answer: string, ref: string): number {
+  const m = /Kỳ: Tuần này \((\d{1,2})–(\d{1,2})\/\d{1,2}\/\d{4}\)/.exec(ref);
+  if (!m || !/Cùng kỳ tuần trước/i.test(ref) || !/tuần trước/i.test(answer)) return 0;
+  const n = +m[2] - +m[1] + 1;
+  if (n < 1 || n > 5) return 0;
+  return /mới có|chưa (?:trọn|hết|đủ|qua hết)|\d ?\/ ?7|\b\d (?:ngày|hôm) (?:đầu|đã có|qua)|(?:ba|hai|bốn|năm|\d) ngày đầu/i.test(answer) ? 0 : n;
+}
+
+/** Mọi lỗi cần hỏi lại (rỗng = câu trả lời qua): số lạ, khuyên ngược món giá vốn cao, lộ chữ nội bộ, combo đắt hơn lẻ, topping quán không bán, món có bán bị gọi là chưa bán, so tuần chưa trọn không nói số ngày. */
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const bad = soLa(answer, ref);
   const nguoc = khuyenNguoc(answer, ref);
   const dat = comboDat(answer, ref);
   const cb = chuaBanSai(answer, ref);
+  const tct = tuanChuaTron(answer, ref);
   return [
     ...(bad.length ? [`các số sau KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')} → bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới`] : []),
     ...(nguoc.length ? [`khuyên giảm giá / tặng / đẩy mạnh món có giá vốn CAO HƠN MỐC (${nguoc.join(', ')}) là khuyên ngược, càng bán càng mỏng lời → với món đó chỉ khuyên tăng giá nhẹ, giảm định lượng / đổi nguyên liệu, hoặc đẩy món lời tốt hơn thay thế`] : []),
     ...(dat.length ? [`đề xuất combo ĐẮT HƠN mua lẻ (${dat.join('; ')}) → giá combo phải rẻ hơn tổng giá lẻ 5–10% (dùng đúng combo tính sẵn nếu có) hoặc bỏ đề xuất đó`] : []),
     ...(/topping/i.test(answer) && /Các nhóm quán đang bán:/.test(ref) && !/topping/i.test(ref) ? ['quán này KHÔNG bán topping (không có trong các nhóm quán đang bán) → bỏ mọi gợi ý tặng / bán topping, thay bằng món rẻ quán đang có'] : []),
     ...(cb.length ? [`gọi là chưa bán nhưng khối số liệu ghi CÓ bán: ${cb.join('; ')} → sửa lại, chỉ món ghi ở "Chưa bán phần nào" mới là chưa bán`] : []),
+    ...(tct ? [`đang so ${tct} ngày đầu tuần này với ${tct} ngày cùng kỳ tuần trước mà chưa nói → thêm ngay câu đầu "tuần này mới có ${tct}/7 ngày, so với ${tct} ngày cùng kỳ tuần trước", giữ nguyên các số`] : []),
     ...(NOI_BO.test(answer) ? ['câu trả lời lộ tên dòng / khối nội bộ (vd "dòng ĐIỂM CẦN CHÚ Ý", "khối ...", "tính sẵn") → nói lý do bằng lời thường cho chủ quán, không nhắc tên dòng'] : []),
   ];
 }

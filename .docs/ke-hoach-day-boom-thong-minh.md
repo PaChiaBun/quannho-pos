@@ -586,6 +586,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Chấm kín 13 câu × 2 lượt cạnh bản lần 70: 10,77 → 10,35; thận trọng 0,85 → 0,73 (mục tiêu tụt); nói tiếp 9,75 → 7,75. Người chấm: cả 4 bài so tuần, cả 6 bài so tháng (D01, D05) hai bản đều KHÔNG nói kỳ chưa trọn → bỏ.
 - Bài học: lời dặn "nói rõ khi so" đặt trong dòng số không được GPT chép (khác số / việc tính sẵn). Hướng còn lại: đưa vào bước tự kiểm (câu so kỳ chưa trọn mà câu trả lời không có "mới có / chưa trọn / N ngày" → hỏi lại), hoặc chấp nhận.
 
+### Lần 72 (02/11, Claude chấm kín, đã áp): tự kiểm câu so tuần chưa trọn không nói số ngày
+
+- Sửa: `tuanChuaTron` trong `kiemTraLoi` — khối có "Kỳ: Tuần này (a–b/…)" (1–5 ngày) + "Cùng kỳ tuần trước", câu trả lời nhắc "tuần trước" mà không có "mới có / chưa trọn / N/7 / N ngày đầu…" → hỏi lại: thêm ngay câu đầu "tuần này mới có N/7 ngày, so với N ngày cùng kỳ tuần trước".
+- Đo 275 câu cũ: bắt 22 (D33 × 10, D38 × 10, D22, D47). D33, D38 × 2 lượt bản mới đều mở đầu "tuần này mới có 3/7 ngày…". Chấm kín 4 cặp cạnh bản lần 70: 13,0 → **14,0/16**; thận trọng 1,0 → 2,0; tiêu chí khác giữ nguyên.
+- Bài học (so lần 71): lời dặn trong dòng số không được chép; tự kiểm + hỏi lại thì được (như lần 64).
+- Áp: `db-fix/boom_l72_ap_dung.sh` (TS 20261102_165757). Không cần bản app mới.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
