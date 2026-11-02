@@ -1925,7 +1925,8 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
     }
 
     // 2b. Chỉ đọc dữ liệu thật qua cổng chuyên dụng của AI Boom.
-    if (usesData) {
+    // chặng 1.3: máy chủ đã trả lời (mode 'ask') → không ghi đè bằng câu số mẫu
+    if (usesData && asked == null) {
       try {
         if (storeId == null || storeId.isEmpty) {
           throw StateError('MISSING_STORE_CONTEXT');
