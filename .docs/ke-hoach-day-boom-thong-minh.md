@@ -607,6 +607,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Kết quả: chấm kín D02 4 cặp cạnh bản lần 73: 8,25 → **10,0/16**; đúng quán 0,25 → 2,0; việc làm 0,25 → 1,0. Còn yếu: chỉ 1 việc, không chép mốc giữ, câu đầu nói vòng.
 - Áp: `db-fix/boom_l74_ap_dung.sh` (TS 20261102_170841). Không cần bản app mới.
 
+### Mốc lần 74 (02/11, Claude chấm kín A/B đủ 60 câu cạnh bản lần 59): 11,4 → 11,8/16
+
+- Cách đo: sinh 60 câu × 1 lượt bằng bản lần 74 (máy chủ hiện tại) và bản lần 59 (`de42ee6`), 4 người chấm kín song song.
+- Tổng 11,4 → **11,8**; khá hơn 26, kém 17, bằng 17. So sánh 10,6 → **12,8**; kế hoạch 11,2 → 11,8; quyết định 12,3 → 12,6; dự báo 11,1 → 11,2; chẩn đoán 12,0 → 11,8; nói tiếp 11,2 → 10,6.
+- Tiêu chí: việc làm 0,90 → 0,98; đúng quán 1,75 → 1,83; tìm vấn đề 1,22 → 1,28; lý lẽ 0,90 → 0,95 — vẫn là 2 tiêu chí thấp nhất.
+- Lỗi lặp lại (4 người chấm): việc làm chung / chỉ 1 việc / thiếu mốc; bỏ sót vấn đề thứ hai có sẵn trong khối; "Vì sao" đoán mò; bịa "mỗi đơn chỉ 1 món" (D22, D27); hiểu "tiền giảm của mã" là hiệu quả (D37, D46); D57 ca tối 17–20h.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
