@@ -835,6 +835,22 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
       if (weak.length) {
         lines.push(`Bất thường (tính sẵn): ${weak.map((x) => `${x.d} trung bình ${vnd(x.a)}/ngày, chỉ bằng ${Math.round((x.a / med) * 100)}% một ngày bình thường (${vnd(med)})`).join('; ')}.`);
       }
+      // lần 83: hỏi kế hoạch / cách cho MỘT thứ (D28 "kế hoạch cho ngày thứ 4 để bớt ế") — GPT đưa việc chung cả tuần
+      // → tính sẵn việc riêng cho thứ đó: bớt nhập / người theo mức bán, ưu đãi chỉ ngày đó, mốc nửa đường về ngày bình thường
+      const tq = /th[uứ] ?([2-7])\b/i.exec(question)?.[1] ?? (/ch[uủ] nh[aậ]t/i.test(question) ? '8' : '');
+      // tính cả thứ của hôm nay (D28: hôm nay đúng Thứ 4 — 4 ngày, 1 ngày chưa hết nên mức hơi thấp)
+      const thu = tq ? per.find((x) => x.d === names[+tq - 2]) : undefined;
+      if (thu && med > 0 && thu.a < med * 0.85 && /k[eế] ho[aạ]ch|l[aà]m g[iì]|c[aá]ch|[eế]|v[aắ]ng|ch[aậ]m|t[aă]ng/i.test(question)) {
+        const p = Math.round((thu.a / med) * 100);
+        // lần 84: GPT nói "Thứ 4 thường vắng" dù mới tụt kỳ này, không hỏi lý do (chấm l83) → so kỳ trước + hỏi chủ quán
+        const c0 = weekdayCounts(f.prev_from, f.prev_to), k = +tq - 2;
+        const truocThu = f.prev_by_weekday && c0?.[k] ? f.prev_by_weekday[k] / c0[k] : 0;
+        const moiTut = truocThu > thu.a * 1.15
+          ? ` Kỳ trước ${thu.d} trung bình ${vnd(truocThu)}/ngày → ${thu.d} MỚI tụt kỳ này (${Math.round(((thu.a - truocThu) / truocThu) * 100)}%), không phải vốn vắng; số liệu không có lý do → hỏi chủ quán ${thu.d} vừa qua có gì khác (chợ / trường / công trình gần quán, đổi người, hết món).`
+          : '';
+        const caoVon = (f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).filter((t) => t.cost && t.price && t.cost / t.price > 0.35).map((t) => t.name);
+        lines.push(`Việc nên nhắm cho ${thu.d} (tính sẵn): ${thu.d} trung bình ${vnd(thu.a)}/ngày, chỉ bằng ${p}% một ngày bình thường (${vnd(med)}) → (1) nhập nguyên liệu tươi và xếp người ca ${thu.d} theo mức ~${p}% ngày thường để bớt hao hụt; (2) một món / ưu đãi CHỈ ${thu.d} (không áp ngày đông), nhắn khách quen trước 1 ngày${caoVon.length ? `, KHÔNG dùng món giá vốn cao (${caoVon.join(', ')})` : ''}; mốc đo: sau 4 tuần ${thu.d} lên ≥ ${vnd(Math.round((thu.a + med) / 2 / 1000) * 1000)}/ngày (nửa đường về ngày bình thường).${moiTut}`);
+      }
       // Dự báo cả tháng: kỳ bắt đầu ngày 1, chưa hết tháng → cộng trung bình từng thứ cho các ngày còn lại
       const fd = f.from!, td = f.to!;
       const end = new Date(Date.UTC(+fd.slice(0, 4), +fd.slice(5, 7), 0)).toISOString().slice(0, 10);
@@ -947,6 +963,21 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
             return `${lead.name} + ${t.name}: lẻ ${vnd(sum)} → ${k(sum * 0.9)}–${k(sum * 0.95)}`;
           }).join('; ') + '.',
       );
+    }
+    // lần 85: hỏi bán thêm MỘT nhóm (D27 "muốn bán thêm nước uống") — GPT quảng bá chung, bỏ sót nhóm chỉ ~7%, đẩy món chưa bán
+    // → tính sẵn: tỉ trọng + phần / đơn, món nên mời (giá khá, bán được, không giá vốn cao), ghép với món chủ lực, mốc +30%
+    const gq = /b[aá]n th[eê]m|t[aă]ng|đ[aẩ]y|k[eế] ho[aạ]ch|c[aá]ch|l[aà]m sao/i.test(question)
+      ? f.groups.find((g) => question.toLowerCase().includes(g.name.toLowerCase()) || (/n[uư][oớ]c|u[oố]ng/i.test(question) && /u[oố]ng|n[uư][oớ]c/i.test(g.name)))
+      : undefined;
+    const base = f.items_revenue && f.items_revenue > 0 ? f.items_revenue : f.revenue;
+    if (gq && gq !== f.groups[0] && base > 0 && lead?.price) {
+      const gia = gq.top.map((t) => t.price ?? 0).sort((a, b) => a - b)[Math.floor(gq.top.length / 2)] ?? 0;
+      const moi = gq.top.filter((t) => (t.price ?? 0) >= gia && !(t.cost && t.price && t.cost / t.price > 0.35)).sort((a, b) => b.qty - a.qty)[0];
+      const pd = (q: number) => String(Math.round((q / f.orders) * 100) / 100).replace('.', ',');
+      if (moi?.price) {
+        const sum = lead.price + moi.price;
+        lines.push(`Việc nên nhắm cho nhóm ${gq.name} (tính sẵn): ${gq.name} chỉ ${pctTxt((gq.revenue / base) * 100)}% doanh thu, nay ${pd(gq.qty)} phần / đơn → nhân viên mời ${moi.name} (${vnd(moi.price)}, đang bán ${moi.qty} phần) kèm mỗi phần ${lead.name}; phần ${lead.name} + ${moi.name} lẻ ${vnd(sum)} → ${k(sum * 0.95)}${gq.unsold_names.length ? `; KHÔNG giảm giá / quảng bá món cả kỳ chưa bán (${gq.unsold_names.join(', ')}) — ẩn khỏi menu` : ''}; mốc đo: sau 2 tuần ${pd(gq.qty * 1.3)} phần ${gq.name} / đơn (+30%).`);
+      }
     }
   }
   if (f.groups?.length) lines.push(`Các nhóm quán đang bán: ${f.groups.map((g) => g.name).join(', ')} (ngoài các nhóm này quán KHÔNG có).`);
@@ -1433,12 +1464,12 @@ export function loaiCau(question: string, hasHistory = false): LoaiCau {
 // Câu mẫu ngắn theo loại (lần 31) — số trong mẫu là MINH HOẠ, GPT phải dùng số trong khối của quán. Chấm 29/10: mẫu
 // ngắn làm câu trả lời ngắn đi 35% (mất số, mất lý lẽ) → ghi rõ là bản RÚT GỌN, câu thật vẫn đủ 4 phần
 // lần 51: câu "tuần sau" chép khung Tuần 1 / 2 / 3–4 của mẫu tháng (D22) → mẫu riêng chia theo ngày trong tuần
-export const MAU_KE_HOACH_TUAN = 'Dạ Anh, tuần sau tập trung lấy lại đơn khung chiều (chiều vắng nhất ngày). Thứ 2–3: hạ combo phở + trà đá xuống dưới giá mua lẻ (vì combo đang đắt hơn mua lẻ), đo số combo/ngày. Thứ 4 (ngày yếu nhất): x2 điểm cho khách quen 14–16h, đo số đơn chiều so Thứ 4 tuần này. Thứ 5–CN: nhân viên mời thêm trà đá / quẩy khi gọi phở (vì mỗi đơn chỉ có 1 món), đo giá trị mỗi đơn. Cuối tuần so số đơn với tuần này.';
+export const MAU_KE_HOACH_TUAN = 'Dạ Anh, tuần sau tập trung lấy lại đơn khung chiều (chiều vắng nhất ngày). Thứ 2–3: hạ combo phở + trà đá xuống dưới giá mua lẻ (vì combo đang đắt hơn mua lẻ), đo số combo/ngày. Thứ 4 (ngày yếu nhất): x2 điểm cho khách quen 14–16h, đo số đơn chiều so Thứ 4 tuần này. Thứ 5–6: nhân viên mời thêm trà đá / quẩy khi gọi phở (để tăng giá trị mỗi đơn), đo giá trị mỗi đơn. Cuối tuần so số đơn với tuần này.';
 export const MAU_LOAI: Record<Exclude<LoaiCau, null>, string> = {
   chan_doan: 'Dạ Anh, tối vắng chủ yếu do 19–21h chỉ bán 0,8 triệu/giờ, bằng 1/3 giờ trưa. Vì sao: khách chủ yếu dân văn phòng ăn trưa. Việc tuần này: combo mì xào + trà chanh 39.000đ khung 19–21h, đo số combo bán sau 2 tuần. Cần xem lại: chưa có số theo thứ của buổi tối.',
   quyet_dinh: 'Dạ Chị, NÊN tăng sinh tố bơ 3.000đ: giá vốn 42% (mốc 25–35%), đang bán 320 ly/tháng. Việc tuần này: tăng lên 38.000đ thử 2 tuần, giữ nếu số ly giảm dưới 10%, giảm quá thì trả giá cũ. Cần xem lại: có thể giảm định lượng bơ thay vì tăng giá.',
   // Claude chấm 31/10: GPT vẫn chép "khách quay lại 9%", "chiều bằng 1/3 buổi sáng" từ mẫu → mẫu trỏ tới DÒNG số, không có số
-  ke_hoach: 'Dạ Anh, mục tiêu tháng sau: lấy lại số đơn đã mất (doanh thu giảm chủ yếu do ít đơn hơn). Tuần 1: hạ combo phở + trà đá xuống dưới giá mua lẻ (vì combo đang đắt hơn mua lẻ), đo số combo/ngày. Tuần 2: ưu đãi khung chiều quán có bán (vì chiều vắng nhất trong ngày), đo số đơn chiều. Tuần 3–4: nhân viên mời thêm trà đá / quẩy khi gọi phở (vì mỗi đơn chỉ có 1 món), đo giá trị mỗi đơn.',
+  ke_hoach: 'Dạ Anh, mục tiêu tháng sau: lấy lại số đơn đã mất (doanh thu giảm chủ yếu do ít đơn hơn). Tuần 1: hạ combo phở + trà đá xuống dưới giá mua lẻ (vì combo đang đắt hơn mua lẻ), đo số combo/ngày. Tuần 2: ưu đãi khung chiều quán có bán (vì chiều vắng nhất trong ngày), đo số đơn chiều. Tuần 3–4: nhân viên mời thêm trà đá / quẩy khi gọi phở (để tăng giá trị mỗi đơn), đo giá trị mỗi đơn.',
   du_bao: 'Dạ Chị, ước cả tháng khoảng 72 triệu (đã có 61 triệu + ước 11 triệu cho 5 ngày còn lại, theo trung bình từng thứ). Đây chỉ là ước, cao hơn tháng trước khoảng 3%.',
   so_sanh: 'Dạ Anh, tháng này giảm 9% so tháng trước, chủ yếu do số đơn giảm 11%. Khác lớn nhất: Chủ nhật bán ít hẳn. Việc tuần này: x2 điểm tích cho khách quen ngày Chủ nhật, đo số đơn Chủ nhật sau 2 tuần.',
   noi_tiep: 'Dạ Chị, đi sâu hơn: trong nhóm Bánh, bánh flan chỉ 25 cái (0,9% doanh thu) và bán chủ yếu buổi chiều. Việc tuần này: đưa bánh flan lên đầu menu chiều kèm ảnh, đo số cái sau 2 tuần.',

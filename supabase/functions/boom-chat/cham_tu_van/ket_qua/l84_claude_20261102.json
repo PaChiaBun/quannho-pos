@@ -1,0 +1,342 @@
+{
+ "moi": [
+  {
+   "id": "D28_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Mục 'Nhập nguyên liệu' lại nói xếp người, không nhắc Thứ 4 mới tụt và cần hỏi lý do."
+  },
+  {
+   "id": "D28_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Ưu đãi 'một món nào đó' mơ hồ, thêm việc mời khách giờ cao điểm 11–13h lạc đề Thứ 4."
+  },
+  {
+   "id": "D28_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nhắc Thứ 4 mới tụt so kỳ trước và cần hỏi chủ quán lý do."
+  },
+  {
+   "id": "D08_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Gán −39,9% (doanh thu/ngày) thành 'số đơn giảm mạnh', câu 'hỏi chủ quán' nói với chính chủ quán."
+  },
+  {
+   "id": "D08_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Gán −39,9% thành số đơn giảm, thiếu mốc đo kết quả và chưa loại món giá vốn cao."
+  },
+  {
+   "id": "D08_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Nói nguyên nhân là 'số đơn giảm' trong khi −39,9% là doanh thu; thiếu mốc đo 4 tuần."
+  },
+  {
+   "id": "D08_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Gán −39,9% thành số đơn giảm; câu 'hỏi chủ quán' nói với chính chủ quán."
+  },
+  {
+   "id": "D08_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Gán −39,9% thành số đơn giảm và thiếu mốc đo kết quả."
+  },
+  {
+   "id": "D28_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nhắc Thứ 4 mới tụt so kỳ trước và chưa rõ lý do vắng."
+  },
+  {
+   "id": "D28_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Nói sai 'thấp hơn 55%' (thực là bằng 55% ngày thường); bài hơi dài."
+  },
+  {
+   "id": "D28_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Món ưu đãi chưa nêu tên cụ thể; câu 'hỏi chủ quán' nói với chính chủ quán."
+  },
+  {
+   "id": "D08_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Gán −39,9% thành số đơn giảm và thiếu mốc đo kết quả."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D28_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nói Thứ 4 mới tụt so kỳ trước và chưa rõ lý do; bước 4 lặp mốc đo, kết sáo."
+  },
+  {
+   "id": "D28_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Thêm mục ẩn Cơm cá kho lạc đề, không nhắc Thứ 4 mới tụt và cần hỏi lý do."
+  },
+  {
+   "id": "D28_6",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Bịa Bún riêu 'giá vốn thấp hơn' trong khi khối số liệu không có giá vốn món này."
+  },
+  {
+   "id": "D08_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói Thứ 4 'thường là ngày vắng' trái số liệu (Thứ 4 mới tụt, kỳ trước 4.785.750đ/ngày)."
+  },
+  {
+   "id": "D08_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đoán lý do 'thói quen ăn uống' trái số liệu Thứ 4 mới tụt từ 4.785.750đ/ngày."
+  },
+  {
+   "id": "D08_5",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lý giải 'khách ít nhu cầu ăn vào ngày này' trái số liệu Thứ 4 mới tụt kỳ này."
+  },
+  {
+   "id": "D08_6",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đoán 'thói quen / lịch làm việc' trái số liệu Thứ 4 mới tụt từ 4.785.750đ/ngày."
+  },
+  {
+   "id": "D08_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nói số liệu chưa rõ lý do, không đề nghị hỏi điều gì đổi ở Thứ 4; thiếu mốc đo."
+  },
+  {
+   "id": "D28_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Bịa Cơm gà xối mỡ 'giá vốn thấp hơn' và nói sai 'thấp hơn 55%' (thực là bằng 55%)."
+  },
+  {
+   "id": "D28_5",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Mục 'Cần xem lại' chỉ lặp số 2.875.500đ, không nhắc Thứ 4 mới tụt và cần tìm lý do."
+  },
+  {
+   "id": "D28_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nhắc Thứ 4 mới tụt so kỳ trước và cần hỏi lý do."
+  },
+  {
+   "id": "D08_4",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lý do 'do ít khách đến' là lặp lại câu hỏi, không đề nghị tìm điều đổi ở Thứ 4."
+  }
+ ]
+}

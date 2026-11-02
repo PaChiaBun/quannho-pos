@@ -652,6 +652,41 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - D01 1.475.000đ → 1.721.000đ / ngày; D02 288.000đ → 336.000đ / ngày. Sửa số, không chấm A/B.
 - Áp 78 + 80: `db-fix/boom_l80_ap_dung.sh` (TS 20261102_193303). Lần áp đầu tự trả bản cũ vì hàm khởi động chậm hơn 8 giây → script hỏi lại tối đa 4 lần.
 
+### Lần 81 (02/11, bỏ): tự kiểm khen món có lời / giá vốn hợp lý khi không có giá vốn
+
+- Sửa thử: `loiKhongVon` trong `kiemTraLoi` (bắt 46/3.416 câu cũ, đều đúng) + đổi lời hỏi lại khuyên ngược ("đẩy món lời tốt hơn thay thế" — chính cụm này làm GPT gán "lời tốt" cho món không có giá vốn).
+- Chấm kín D21, D22, D28, D51, D58 × 4: 11,0 → 10,55/16 (6 hơn, 9 kém); câu kế hoạch D21, D22 kém rõ. Hỏi lại một lần sửa không hết. Bỏ (`ket_qua/l81_claude_20261102.json`).
+
+### Lần 82 (02/11, đã áp): ví dụ mẫu câu kế hoạch bỏ "(vì mỗi đơn chỉ có 1 món)", "Thứ 5–CN"
+
+- Lỗi: 90/3.476 câu cũ (D22, D21, D28…) chép nguyên "(vì mỗi đơn chỉ có 1 món)" từ `MAU_KE_HOACH_TUAN` / `MAU_LOAI.ke_hoach` dù quán ~1,2–2 phần / đơn; mẫu "Thứ 5–CN" làm GPT xếp việc vào Chủ nhật quán nghỉ.
+- Sửa: "(để tăng giá trị mỗi đơn)", "Thứ 5–6"; test giữ mẫu không có lại.
+- Chấm kín 10 câu kế hoạch × 3 cạnh lần 80: 10,8 → 10,77/16 (ngang); "mỗi đơn 1 món" 4/30 → 0/30. Giữ như sửa lỗi (`ket_qua/l82_claude_20261102.json`).
+
+### Lần 83 (02/11, đã áp): việc tính sẵn cho đúng thứ được hỏi
+
+- Lỗi: D28 "kế hoạch cho ngày thứ 4 để bớt ế", D08 "thứ 4 sao bán ế" — việc chung cả tuần, tặng kèm Cơm sườn (giá vốn 48%).
+- Sửa: câu hỏi nhắc một thứ < 85% ngày thường (trung vị) + từ kế hoạch / làm gì / ế / vắng… → "Việc nên nhắm cho Thứ X (tính sẵn)": mức / ngày, % ngày thường, nhập nguyên liệu + xếp người theo mức đó, ưu đãi chỉ ngày đó, không dùng món giá vốn cao, mốc nửa đường sau 4 tuần. Tính cả thứ của hôm nay (bộ đề: hôm nay là Thứ 4).
+- Chấm kín D08, D28 × 6 cạnh lần 82: 7,6 → 12,75/16, 12/12 khá hơn; tìm vấn đề 0,75 → 2,0; việc làm 0,5 → 1,83 (`ket_qua/l83_claude_20261102.json`).
+
+### Lần 84 (02/11, đã áp): thứ yếu so kỳ trước — "mới tụt", hỏi lý do
+
+- Lỗi (chấm l83): GPT nói "Thứ 4 thường vắng" dù kỳ trước 4.785.750đ / ngày; không hỏi lý do.
+- Sửa: dòng việc cho thứ yếu thêm "Kỳ trước Thứ X trung bình … → MỚI tụt kỳ này (−%), không phải vốn vắng; … hỏi chủ quán Thứ X vừa qua có gì khác" khi kỳ trước cao hơn > 15%.
+- Chấm kín D08, D28 × 6 cạnh lần 83: 10,4 → 12,5/16 (10 hơn, 1 kém); thận trọng 0,83 → 1,67 (`ket_qua/l84_claude_20261102.json`).
+
+### Lần 85 (02/11, đã áp): việc tính sẵn cho nhóm món được hỏi bán thêm
+
+- Lỗi: D27 "muốn bán thêm nước uống", D24 "tăng bán topping" — quảng bá chung, không nêu nhóm chỉ ~7% / 4% doanh thu, có lượt đẩy món cả kỳ chưa bán.
+- Sửa: câu bán thêm / tăng / kế hoạch nhắc tên nhóm (hoặc nước / uống) không phải nhóm lớn nhất → "Việc nên nhắm cho nhóm X (tính sẵn)": % doanh thu, phần / đơn, món nên mời (giá ≥ trung vị nhóm, bán nhiều nhất, không giá vốn cao) kèm món chủ lực, phần ghép −5%, không đẩy món chưa bán, mốc +30% phần / đơn.
+- Chấm kín D24, D27 × 6 cạnh lần 84: 8,1 → 11,2/16 (10 hơn, 0 kém); lý lẽ 0,5 → 1,5 (`ket_qua/l85_claude_20261102.json`).
+
+### Lần 86 (02/11, bỏ): lịch nhập tính sẵn cho câu nhập hàng
+
+- Sửa thử: `formatModules(m, now, question)` — hỏi "nhập" + có hao hụt → "Lịch nhập tính sẵn: (1) nhập ngay hàng dưới tối thiểu; (2) hàng hao hụt đặt theo ngày; mốc hao hụt giảm nửa".
+- Chấm kín D29, D44 × 6: 10,5 → 10,33/16 (3 hơn, 6 kém); gọn 1,67 → 0,92 (lặp số). Bỏ.
+- Áp 82–85: `db-fix/boom_l85_ap_dung.sh` (TS 20261102_213043).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

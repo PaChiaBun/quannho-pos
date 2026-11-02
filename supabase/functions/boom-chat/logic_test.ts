@@ -760,6 +760,11 @@ Deno.test('Giai đoạn 2: tuần chưa trọn / hôm nay dở không gọi là 
   assert(t.includes('Chủ nhật: quán NGHỈ'), t);
   assert(t.includes('Thứ 5 250đ (4 ngày'), t);
   assert(t.includes('Thứ 7 trung bình 13đ/ngày, chỉ bằng 25% một ngày bình thường'), t);
+  // lần 83: hỏi kế hoạch cho một thứ yếu → việc riêng thứ đó (bớt nhập / người, ưu đãi chỉ ngày đó, tránh món giá vốn cao); thứ bình thường thì không
+  const t7 = formatFacts(f, NOW, 'kế hoạch cho thứ 7 để bớt ế');
+  assert(t7.includes('Việc nên nhắm cho Thứ 7 (tính sẵn): Thứ 7 trung bình 13đ/ngày, chỉ bằng 25% một ngày bình thường') && t7.includes('KHÔNG dùng món giá vốn cao (Bạc xỉu)'), t7);
+  assert(!formatFacts(f, NOW, 'kế hoạch cho thứ 2').includes('Việc nên nhắm cho Thứ'));
+  assert(!t.includes('Việc nên nhắm cho Thứ'));
   // lần 52: ghi thứ của ngày còn lại; % so kỳ trước chỉ của phần đã có; câu dự báo không có điểm cần chú ý
   assert(t.includes('Dự báo cả tháng (tính sẵn theo trung bình từng thứ, còn 3 ngày: Thứ 5 (trung bình 63đ/ngày), Thứ 6 (trung bình 25đ/ngày), Thứ 7 (trung bình 13đ/ngày))'), t);
   assert(t.includes('ĐIỂM CẦN CHÚ Ý') && !formatFacts(f, NOW, 'cuối tháng 10 được bao nhiêu').includes('ĐIỂM CẦN CHÚ Ý'));
@@ -927,6 +932,8 @@ Deno.test('Lần 42: khuyên ngược món giá vốn cao + lộ chữ nội b�
   assertEquals(kiemTraLoi('Dạ Anh, NÊN tăng giá Bạc xỉu: giá vốn 45%, bán 610 phần. Việc tuần này: tăng 2.000đ thử 2 tuần.', ref), []);
   assert(!/dòng [A-ZĐ]|khối [A-ZĐ]/.test(MAU_LOAI.ke_hoach));
   assert(!/Tuần [1-4]|dòng [A-ZĐ]|khối [A-ZĐ]/.test(MAU_KE_HOACH_TUAN));
+  // lần 82: mẫu có "(vì mỗi đơn chỉ có 1 món)", "Thứ 5–CN" → GPT chép vào quán thật (bịa số món / đơn, việc vào ngày quán nghỉ)
+  assert(!/1 món|–CN/.test(MAU_KE_HOACH_TUAN) && !/1 món/.test(MAU_LOAI.ke_hoach));
   assert(JSON.stringify(buildMessages('tuần sau nên làm gì cho quán', [])).includes('Thứ 4 (ngày yếu nhất)'));
   assert(JSON.stringify(buildMessages('lên kế hoạch tháng 11 giúp em', [])).includes('Tuần 3–4'));
 });
@@ -1015,6 +1022,18 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   const f4 = parseFacts({ ...JSON.parse(JSON.stringify(f)), groups: [{ name: 'Combo', revenue: 800, prev_revenue: 1100, qty: 30, items: 1, unsold: 0, top: [{ name: 'Combo sáng', qty: 7, revenue: 364, price: 52, retail: 50 }], slow: [], unsold_names: [] }] })!;
   assert(formatFacts(f4, new Date(), 'tháng này sao giảm vậy').includes('Việc thứ hai (tính sẵn): hạ giá "Combo sáng" từ 52đ xuống ≤ 50đ'), formatFacts(f4, new Date(), 'tháng này sao giảm vậy'));
   assert(!formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('Việc thứ hai'));
+  // lần 84: thứ yếu mà kỳ trước bán khá → ghi "MỚI tụt kỳ này" + hỏi lý do
+  const t6 = formatFacts(f, new Date('2026-10-29T09:00:00+07:00'), 'kế hoạch cho thứ 6 để bớt ế');
+  assert(t6.includes('Việc nên nhắm cho Thứ 6 (tính sẵn)') && t6.includes('Thứ 6 MỚI tụt kỳ này') && t6.includes('hỏi chủ quán Thứ 6 vừa qua có gì khác'), t6);
+  // lần 85: hỏi bán thêm một nhóm nhỏ → việc tính sẵn: món nên mời (giá khá), ghép món chủ lực, không đẩy món chưa bán
+  const f7 = parseFacts({ period: 'Tháng này', revenue: 100000, orders: 100, top: [], slow: [], groups: [
+    { name: 'Món chính', revenue: 90000, qty: 100, items: 1, unsold: 0, unsold_names: [], slow: [], top: [{ name: 'Bún bò', qty: 100, revenue: 90000, price: 45000 }] },
+    { name: 'Đồ uống', revenue: 7000, qty: 125, items: 4, unsold: 1, unsold_names: ['Nước cam'], slow: [], top: [
+      { name: 'Trà đá', qty: 90, revenue: 2700, price: 3000 }, { name: 'Nước sâm', qty: 20, revenue: 2400, price: 12000 }, { name: 'Cà phê', qty: 15, revenue: 2700, price: 18000 }] },
+  ] })!;
+  const t7 = formatFacts(f7, new Date(), 'muốn bán thêm nước uống');
+  assert(t7.includes('Việc nên nhắm cho nhóm Đồ uống (tính sẵn)') && t7.includes('nhân viên mời Nước sâm (12.000đ') && t7.includes('Bún bò + Nước sâm lẻ 57.000đ → 54.000đ') && t7.includes('(Nước cam)'), t7);
+  assert(!formatFacts(f7, new Date(), 'doanh thu tháng này').includes('Việc nên nhắm cho nhóm'));
   // lần 80: mốc / ngày chỉ chia cho ngày có mở bán (f nghỉ Chủ nhật: 28 ngày − 4 = 24) → (900 + 1.220) / 2 / 24 ≈ 44đ, làm tròn nghìn = 0đ nên dùng số lớn
   const f6 = parseFacts({ ...JSON.parse(JSON.stringify(f)), by_hour: h.map((x: number) => x * 1000), prev_by_hour: ph.map((x: number) => x * 1000) })!;
   assert(formatFacts(f6, new Date(), 'tháng này sao giảm vậy').includes('≥ 44.000đ / ngày'), formatFacts(f6, new Date(), 'tháng này sao giảm vậy'));
