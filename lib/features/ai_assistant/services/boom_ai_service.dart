@@ -63,13 +63,16 @@ class BoomAiService {
   /// Máy đang đăng nhập bằng vé thật (gửi được tới hàm boom-chat).
   bool get canSend => _authHeader != null;
 
-  Future<Map<String, dynamic>?> _invoke(Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>?> _invoke(
+    Map<String, dynamic> body, {
+    Duration? wait,
+  }) async {
     final auth = _authHeader;
     if (auth == null) return null;
     try {
       final res = await client.functions
           .invoke(kFunction, body: body, headers: {'Authorization': auth})
-          .timeout(timeout);
+          .timeout(wait ?? timeout);
       final data = res.data;
       return data is Map<String, dynamic> ? data : null;
     } catch (e) {
@@ -131,6 +134,29 @@ class BoomAiService {
       'mode': 'advice',
       'chunk_ids': const <String>[],
     });
+    return _reply(data);
+  }
+
+  /// Chặng 1.3 (03/11, .docs/thiet-ke-boom-may-chu-lay-so.md): chỉ gửi câu hỏi + lượt trước; máy chủ tự đọc kỳ, kiểm
+  /// quyền, lấy đủ số người hỏi được xem rồi tư vấn. null = lỗi / chưa có → app đi đường cũ.
+  Future<BoomAiReply?> askServer({
+    required String storeId,
+    required String question,
+    BoomTurn? history,
+    DateTime? memorySince,
+  }) async {
+    final data = await _invoke({
+      if (memorySince != null)
+        'memory_age_s': DateTime.now()
+            .difference(memorySince)
+            .inSeconds
+            .clamp(0, 86400),
+      'history': ?history?.toJson(),
+      'store_id': storeId,
+      'question': question.length > 500 ? question.substring(0, 500) : question,
+      'mode': 'ask',
+      'chunk_ids': const <String>[],
+    }, wait: const Duration(seconds: 30));
     return _reply(data);
   }
 

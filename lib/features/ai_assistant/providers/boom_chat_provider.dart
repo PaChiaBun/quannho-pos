@@ -5,6 +5,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -1016,6 +1017,9 @@ bool boomAsksChain(String query) {
       !r(_chainRival).hasMatch(s.replaceAll(r(_chainOwnOther), ' '));
 }
 
+/// Chặng 1.3 (03/11): bản web hỏi máy chủ tự lấy số (mode 'ask'); ổn 1–2 tuần trên web mới bật cho app.
+const kBoomServerRoute = kIsWeb;
+
 // ── Số liệu các module (Chủ Quán 25/10: "cho Boom đọc và không cho thêm số liệu vào") ─────────────────────
 // Từ chủ đề CHẶT (QC 25/10: "lãi suất ngân hàng", "nguyên liệu cà phê muối", "lương phục vụ thường bao nhiêu",
 // "giảm giá món thế nào", "có lời khuyên" bị nhận nhầm là hỏi số của quán)
@@ -1607,7 +1611,28 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
             followUp.turn.answer,
           )
         : null;
+    // Chặng 1.3: mọi câu không phải chào hỏi / quán khác / chuỗi / bấm gợi ý / hỏi cách làm → máy chủ tự đọc kỳ và lấy
+    // đủ số (hỏi thật 03/11: app chọn sai đường làm gần nửa câu thiếu số). Lỗi → đường cũ bên dưới.
+    final asked =
+        kBoomServerRoute &&
+            chainFacts == null &&
+            !otherStore &&
+            !picked &&
+            classification.intent != 'smalltalk' &&
+            !(helpWins && (_helpAction(query) || boomAsksHowTo(query))) &&
+            aiForAdvice != null &&
+            storeId != null &&
+            storeId.isNotEmpty
+        ? await aiForAdvice.askServer(
+            storeId: storeId,
+            question: rawQuery,
+            history: history,
+            memorySince: _chatStartedAt,
+          )
+        : null;
+    if (!_mounted || generation != _generation) return;
     final dataAdvice =
+        asked == null &&
         !usesData &&
         !otherStore &&
         !picked &&
@@ -1626,7 +1651,8 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
     // Câu xin số các module (thu chi, kho, nhân sự, khách, khuyến mãi) → đọc CHỈ ĐỌC theo quyền của người hỏi
     final moduleFollow = followUsed && followUp!.modules && !helpFollowOnly;
     final topics =
-        chainFacts == null &&
+        asked == null &&
+            chainFacts == null &&
             !usesData &&
             !otherStore &&
             !picked &&
@@ -1651,7 +1677,17 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
           );
     if (!_mounted || generation != _generation) return;
     final modFacts = mod == null || mod.facts.isEmpty ? null : mod.facts;
-    if (chainFacts != null) {
+    if (asked != null) {
+      fullReply = asked.answer;
+      serverWrote = true;
+      if (asked.blocked) {
+        helpTool = 'boom_tu_choi';
+      } else {
+        aiLogId = asked.logId;
+        helpTool = 'boom_tu_van_hoi_may_chu';
+      }
+      suggestions = ['Món nào bán ế?', 'Doanh thu tháng này?'];
+    } else if (chainFacts != null) {
       final reply = await aiForAdvice!.advise(
         storeId: storeId!,
         question: rawQuery,
@@ -2144,7 +2180,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
                   ? ''
                   : fullReply,
             ),
-            salesData || dataAdvice,
+            salesData || dataAdvice || helpTool == 'boom_tu_van_hoi_may_chu',
             DateTime.now(),
             advice: helpTool.startsWith('boom_tu_van'),
             chain: helpTool == 'boom_tu_van_so_lieu_chuoi',
