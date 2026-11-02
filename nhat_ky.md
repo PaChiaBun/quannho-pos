@@ -3,6 +3,19 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-11-03 — Kiểm Sunmi Bò Đen đợt 3 (chỉ xem, rạng sáng): 7 lỗi D1–D7 → sửa hết theo ⭐ (commit `40a03d6`)
+
+- ✅ Máy: mở app từ lúc tắt hẳn ~1 giây tới khung đầu, <2 giây vào Trang chủ, vẫn đăng nhập; cuộn Trang chủ 1%, Bàn 1–3%, Công thức Kho CN 2% khung giật; nhật ký app không lỗi.
+- ✅ D1 (lỗi của bản A4 `2823ed3`, chưa phát hành): "Theo công thức" áp cả nguyên liệu / bán thành phẩm gắn công thức (vd "Cot Tra Den" −57.898 ml — tồn thật: ly trà trừ dần, `complete_production_order` cộng vào cho đúng 2 loại này). `recipe_product_ids.dart`: thêm `soldByRecipe` + đọc `product_type`, chỉ món bán mới "Theo công thức".
+- ✅ D2 Báo cáo Kho CN "Tổng giá vốn 0 đ": chỉ đọc `production_logs`. Thêm `getSalesIngredientUsage` / `aggregateSalesUsage` (phiếu kho `recipe_usage` × giá vốn hiện tại): Food Cost = "Giá vốn NL đã bán" + theo ngày, lệnh sản xuất ghi riêng không cộng (tránh tính trùng); Tiêu thụ chia "Dùng khi bán" / "Dùng cho lệnh sản xuất". Giới hạn: gom ở máy (`shortcut:` trong mã) — quán rất đông chọn 30 ngày sẽ chậm.
+- ✅ D3 Biến động kho / Lịch sử xuất nhập / Hao hụt gần đây "−611.111 ml": `fmtStockDelta` + `StockItem.formatDelta` ("−29 ml", "−611,1 ml"); `fmtStock` thêm `maxDecimals`.
+- ✅ D4 7 ô tìm kho (Kho hàng, Phiếu nhập, Kho CN Nguyên liệu/Công thức/Kiểm kê/Ghi hao hụt) phải gõ đúng dấu → dùng `containsSearch` như Bán hàng; Kho hàng tìm không ra ghi "Không tìm thấy món khớp …" (trước "Chưa có hàng hoá/menu nào").
+- ✅ D5 Máy In & Luật In: Thiết lập nhanh ghi "Dùng máy Win ✓ đang dùng — Máy này không tự in" dù 2 luật làm tay đưa bill ra "may in sumi" → `quickBillMode` xét mọi luật hoá đơn áp cho máy này; luật riêng kiểu khác thì ghi "Máy này đang in hoá đơn theo luật riêng". Dải "Đang dùng luật in" cuộn theo nội dung; màn hẹp đưa bật/sửa/xoá của thẻ máy in, thẻ luật xuống dưới tên.
+- ✅ D6 Khách hàng › Thưởng: "Nhấn + để thêm" mà nút + là "Thêm khách" → nút nổi "Thêm phần thưởng"; nút hộp quà có chú thích. D7 Báo cáo › Hóa đơn: thêm thanh ‹ › (`ReportDayNavBar`, dùng chung giao diện các thẻ khác) để lùi về hôm qua.
+- ✅ Test: `test/core/kiem_sunmi_dot3_test.dart` (9), `test/screens/kiem_sunmi_dot3_widget_test.dart` (4: D2, D5 360×800 phông thật với đúng cấu hình máy in Bò Đen, D6, D7), +1 ca tìm không dấu ở `inventory_screen_layout_test.dart`. Toàn bộ test/core, features/ai_assistant, modules, screens, docs đạt. Bài hướng dẫn rà + đóng dấu: bao-cao, in-hoa-don, khach-hang, kho-chuyen-nghiep, kho-hang, thu-chi; xuất lại `assets/boom_help/huong_dan.json`.
+- ⚠️ Chưa thử trên máy thật (máy quán, bản 23). Không làm C4 (cốt trà âm ~58 lít vì quán không tạo lệnh sản xuất; mỗi ly trừ 611 ml — chờ quán xem lại định lượng).
+- ➡️ Tới tay quán ở bản 1.0.6+24; khi cài bản đó lên Bò Đen thì xem lại trên máy thật: Kho CN › Báo cáo, Máy In & Luật In, ô tìm Kho, thẻ Hóa đơn.
+
 ## 2026-11-03 — Kiểm Sunmi Bò Đen đợt 2 (chỉ xem): 11 lỗi → sửa hết theo ⭐ (commit `2823ed3`)
 
 - ✅ Kiểm trên máy thật lúc quán đóng cửa, không ghi dữ liệu: Báo cáo 8 thẻ, Thu Chi, Kho hàng, Kho CN, In hoá đơn, Khách hàng, Nhân viên, Cài đặt. Cuộn mượt (0–1% khung giật), nhật ký app không lỗi.
