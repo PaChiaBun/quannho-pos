@@ -984,6 +984,11 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   assert(formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('Giá trị mỗi đơn giảm đi cùng nhóm Món thêm giảm mạnh nhất (kỳ trước 300đ → nay 100đ, -66,7%) → mỗi đơn có ít Món thêm hơn'));
   assert(!formatFacts(f2, new Date(), 'lên kế hoạch tháng 11').includes('giảm đi cùng nhóm'));
   assert(!formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('giảm đi cùng nhóm'));
+  // lần 65: câu vì sao giảm → tính sẵn việc nhắm chỗ giảm + mốc đo (mất khách → giờ mất nhiều nhất; đơn nhỏ đi → mời thêm nhóm)
+  assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('Việc nên nhắm (tính sẵn): kéo khách lại đúng 7h và 8h (giờ mất nhiều nhất)') && formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('mốc đo: doanh thu 7h + 8h nay 900đ, kỳ trước 1.220đ'), formatFacts(f, new Date(), 'tháng này sao giảm vậy'));
+  assert(formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('Việc nên nhắm (tính sẵn): mời thêm Món thêm trong mỗi đơn') && formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('nay 0,42 phần Món thêm / đơn'));
+  assert(!formatFacts(f, new Date(), 'lên kế hoạch tháng 11').includes('Việc nên nhắm'));
+  assert(!formatFacts(f, new Date(), 'sao buoi chieu quan vang qua, co cach nao ko').includes('Việc nên nhắm'));
   assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes(t) && !formatFacts(f, new Date(), 'lên kế hoạch tháng 11').includes('GIẢM Ở ĐÂU'));
   // app cũ (không có số kỳ trước chia nhỏ) → không có dòng
   assertEquals(changeLine(parseFacts({ period: 'Tháng này', revenue: 1, orders: 1, prev_period: 'x', prev_revenue: 2, top: [], slow: [] })!), '');

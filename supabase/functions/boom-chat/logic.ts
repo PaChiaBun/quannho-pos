@@ -757,7 +757,18 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
       const vi = hoiVi && pctAvg < 0 && nhom && (f.groups?.length ?? 0) >= 2
         ? ` Giá trị mỗi đơn giảm đi cùng nhóm ${nhom.name} giảm mạnh nhất (kỳ trước ${vnd(nhom.prev_revenue!)} → nay ${vnd(nhom.revenue)}, ${sign(Math.round(((nhom.revenue - nhom.prev_revenue!) / nhom.prev_revenue!) * 1000) / 10)}) → mỗi đơn có ít ${nhom.name} hơn; nêu nhóm này khi giải thích.`
         : '';
-      lines.push(`Phân tích tính sẵn: số đơn ${sign(pctOrders)}, giá trị trung bình mỗi đơn ${sign(pctAvg)} → doanh thu đổi ${main}.${vi}`);
+      // lần 65: việc làm hay chung chung / lạc sang điểm cần chú ý (l63: bảo "đừng" không giúp) → tính sẵn VIỆC nhắm đúng chỗ giảm + mốc đo
+      let viec = '';
+      if (hoiVi && f.revenue < f.prev_revenue) {
+        // 65b: câu hỏi đã nói buổi / giờ (vd "buổi chiều vắng" — D02) → không kéo sang giờ khác
+        if (Math.abs(pctOrders) >= Math.abs(pctAvg) && pctOrders < 0 && f.by_hour && f.prev_by_hour && !/s[aá]ng|tr[uư]a|chi[eề]u|t[oố]i|khuya|\d+ ?h\b|gi[oờ]/i.test(question)) {
+          const hs = f.by_hour.map((v, h) => ({ h, v, p: f.prev_by_hour![h] })).filter((x) => x.v < x.p).sort((a, b) => (a.v - a.p) - (b.v - b.p)).slice(0, 2).sort((a, b) => a.h - b.h);
+          if (hs.length) viec = ` Việc nên nhắm (tính sẵn): kéo khách lại đúng ${hs.map((x) => `${x.h}h`).join(' và ')} (giờ mất nhiều nhất) bằng ưu đãi khách quen / món chủ lực của chính khung đó; mốc đo: doanh thu ${hs.map((x) => `${x.h}h`).join(' + ')} nay ${vnd(hs.reduce((t, x) => t + x.v, 0))}, kỳ trước ${vnd(hs.reduce((t, x) => t + x.p, 0))}.`;
+        } else if (pctAvg < 0 && nhom && (f.groups?.length ?? 0) >= 2) {
+          viec = ` Việc nên nhắm (tính sẵn): mời thêm ${nhom.name} trong mỗi đơn (nhân viên mời 1 câu, ghép sẵn với món đang bán chạy); mốc đo: nay ${String(Math.round((nhom.qty / f.orders) * 100) / 100).replace('.', ',')} phần ${nhom.name} / đơn.`;
+        }
+      }
+      lines.push(`Phân tích tính sẵn: số đơn ${sign(pctOrders)}, giá trị trung bình mỗi đơn ${sign(pctAvg)} → doanh thu đổi ${main}.${vi}${viec}`);
     }
     const ch = hoiVi ? changeLine(f) : '';
     if (ch) lines.push(ch);

@@ -540,6 +540,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Đo trên 214 câu trả lời cũ: bắt 4, cả 4 đúng lỗi (đều D10), không bắt nhầm. D10 × 4 lượt: bản cũ sai 4/4, bản mới đúng 4/4. Chấm kín 4 cặp: 8,25 → **10,5/16**; dùng số 0 → 1,75; lý lẽ 0,5 → 1,0.
 - Áp: `db-fix/boom_l64_ap_dung.sh` (TS 20261102_160149). Không cần bản app mới.
 
+### Lần 65 / 65b (02/11, Claude chấm kín, đã áp 65b): câu vì sao giảm → tính sẵn VIỆC nên nhắm + mốc đo
+
+- Sửa (`formatFacts`, nối vào "Phân tích tính sẵn", chỉ câu vì sao / so sánh khi doanh thu giảm): mất khách (số đơn là chính) → "Việc nên nhắm (tính sẵn): kéo khách lại đúng 7h và 8h (giờ mất nhiều nhất) bằng ưu đãi khách quen / món chủ lực của chính khung đó; mốc đo: doanh thu 7h + 8h nay X, kỳ trước Y"; đơn nhỏ đi → "mời thêm Món thêm trong mỗi đơn …; mốc đo: nay 0,19 phần Món thêm / đơn". 65b: câu hỏi đã nói buổi / giờ (sáng, trưa, chiều, tối, giờ…) thì không đưa việc theo giờ.
+- Kết quả: chấm kín 5 câu × 2 lượt cạnh bản lần 64: 11,7 → 12,2; D02 ("buổi chiều vắng") bị kéo sang 7–8h 9 → 6, 8 → 6 → thêm 65b (D02 về như cũ); 8 bài còn lại 12,5 → **13,75**, việc làm 0,75 → 1,0, lý lẽ 0,9 → 1,2. Chưa chấm lại bản 65b.
+- Bài học (so lần 63): tính sẵn chính VIỆC (giờ / nhóm + mốc đo) thì việc làm cụ thể hơn; chỉ nói "đừng làm X" thì không. Còn yếu: GPT chép nguyên "ưu đãi khách quen / món chủ lực", chưa nêu món / mức ưu đãi.
+- Áp: `db-fix/boom_l65_ap_dung.sh` (TS 20261102_161310). Không cần bản app mới.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
