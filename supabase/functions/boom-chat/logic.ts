@@ -587,13 +587,15 @@ export function changeLine(f: ShopFacts): string {
   if (f.prev_revenue === null) return '';
   const tang = f.revenue >= f.prev_revenue;
   const sign = (d: number) => `${d >= 0 ? '+' : '−'}${vnd(Math.abs(d))}`;
-  const pc = (a: number, b: number) => (b > 0 ? ` (${a >= b ? '+' : '−'}${pctTxt(Math.abs(((a - b) / b) * 100))}%)` : '');
+  const pct = (a: number, b: number) => (b > 0 ? `, ${a >= b ? '+' : '−'}${pctTxt(Math.abs(((a - b) / b) * 100))}%` : '');
+  // ghi theo chiều thời gian "kỳ trước → nay" để GPT không đọc ngược hay lấy nay trừ tiếp phần chênh (lần 60)
+  const doi = (a: number, b: number) => `kỳ trước ${vnd(b)} → nay ${vnd(a)} (${sign(a - b)}${pct(a, b)})`;
   const parts: string[] = [];
   // giờ: 3 giờ đổi nhiều nhất theo chiều của tổng (giảm → giờ giảm nhiều nhất)
   if (f.by_hour && f.prev_by_hour) {
     const hs = f.by_hour.map((v, h) => ({ h, v, p: f.prev_by_hour![h], d: v - f.prev_by_hour![h] })).filter((x) => x.v > 0 || x.p > 0)
       .sort((a, b) => (tang ? b.d - a.d : a.d - b.d)).filter((x) => (tang ? x.d > 0 : x.d < 0)).slice(0, 3);
-    if (hs.length) parts.push(`theo giờ ${tang ? 'tăng' : 'giảm'} nhiều nhất: ${hs.map((x) => `${x.h}h ${vnd(x.v)} (kỳ trước ${vnd(x.p)}, ${sign(x.d)})`).join('; ')}`);
+    if (hs.length) parts.push(`theo giờ, ${tang ? 'tăng' : 'giảm'} nhiều nhất: ${hs.map((x) => `${x.h}h ${doi(x.v, x.p)}`).join('; ')}`);
   }
   // thứ: trung bình / ngày (hai kỳ có thể khác số ngày mỗi thứ)
   const c1 = weekdayCounts(f.from, f.to), c0 = weekdayCounts(f.prev_from, f.prev_to);
@@ -603,12 +605,12 @@ export function changeLine(f: ShopFacts): string {
       .filter((x) => x.a > 0 && x.b > 0).map((x) => ({ ...x, r: (x.a - x.b) / x.b })).sort((a, b) => a.r - b.r);
     if (ds.length >= 2) {
       const lo = ds[0], hi = ds[ds.length - 1];
-      parts.push(`theo thứ (trung bình / ngày): ${lo.r < 0 ? 'giảm nhiều nhất' : 'tăng ít nhất'} ${lo.d} ${vnd(lo.a)} so ${vnd(lo.b)}${pc(lo.a, lo.b)}; ${hi.r > 0 ? 'tăng nhiều nhất' : 'giảm ít nhất'} ${hi.d} ${vnd(hi.a)} so ${vnd(hi.b)}${pc(hi.a, hi.b)}`);
+      parts.push(`theo thứ (trung bình / ngày; đây là mức ĐỔI so kỳ trước, không phải thứ bán cao / thấp nhất): ${lo.r < 0 ? 'giảm mạnh nhất' : 'tăng ít nhất'} ${lo.d} ${doi(lo.a, lo.b)}; ${hi.r > 0 ? 'tăng mạnh nhất' : 'giảm ít nhất'} ${hi.d} ${doi(hi.a, hi.b)}`);
     }
   }
   const gs = (f.groups ?? []).filter((g) => g.prev_revenue !== null && g.prev_revenue !== undefined);
-  if (gs.length) parts.push(`theo nhóm: ${gs.map((g) => `${g.name} ${vnd(g.revenue)} so ${vnd(g.prev_revenue!)}${pc(g.revenue, g.prev_revenue!)}`).join('; ')}`);
-  if (f.moves?.length) parts.push(`món đổi nhiều nhất: ${f.moves.map((m) => `${m.name} ${m.qty} phần so ${m.prev_qty} (${sign(m.revenue - m.prev_revenue)})`).join('; ')}`);
+  if (gs.length) parts.push(`theo nhóm: ${gs.map((g) => `${g.name} ${doi(g.revenue, g.prev_revenue!)}`).join('; ')}`);
+  if (f.moves?.length) parts.push(`món đổi nhiều nhất: ${f.moves.map((m) => `${m.name} kỳ trước ${m.prev_qty} phần → nay ${m.qty} phần (doanh thu ${sign(m.revenue - m.prev_revenue)})`).join('; ')}`);
   return parts.length ? `SO ${f.prev_period!.toUpperCase()} — ${tang ? 'TĂNG' : 'GIẢM'} Ở ĐÂU (tính sẵn, số cùng độ dài kỳ): ${parts.join('. ')}. Dùng dòng này để nêu nguyên nhân có số (giờ / thứ / nhóm / món nào kéo ${tang ? 'tăng' : 'giảm'}); số không cho biết LÝ DO khách đổi.` : '';
 }
 

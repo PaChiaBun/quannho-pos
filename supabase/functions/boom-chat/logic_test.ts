@@ -966,9 +966,10 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   })!;
   const t = changeLine(f);
   assert(t.startsWith('SO CÙNG KỲ THÁNG TRƯỚC — GIẢM Ở ĐÂU'), t);
-  assert(t.includes('theo giờ giảm nhiều nhất: 7h 600đ (kỳ trước 900đ, −300đ); 8h 300đ (kỳ trước 320đ, −20đ)') && !t.includes('15h'), t);
-  assert(t.includes('giảm nhiều nhất Thứ 4 50đ so 75đ (−33,3%)'), t);
-  assert(t.includes('Cà phê 800đ so 1.100đ (−27,3%)') && t.includes('Cà phê sữa đá 20 phần so 30 (−250đ)'), t);
+  // lần 60: ghi "kỳ trước → nay" (GPT từng lấy số nay trừ tiếp phần chênh, gọi thứ giảm mạnh nhất là thứ thấp nhất)
+  assert(t.includes('theo giờ, giảm nhiều nhất: 7h kỳ trước 900đ → nay 600đ (−300đ, −33,3%); 8h kỳ trước 320đ → nay 300đ (−20đ, −6,3%)') && !t.includes('15h'), t);
+  assert(t.includes('không phải thứ bán cao / thấp nhất): giảm mạnh nhất Thứ 4 kỳ trước 75đ → nay 50đ (−25đ, −33,3%)'), t);
+  assert(t.includes('Cà phê kỳ trước 1.100đ → nay 800đ (−300đ, −27,3%)') && t.includes('Cà phê sữa đá kỳ trước 30 phần → nay 20 phần (doanh thu −250đ)'), t);
   assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes(t) && !formatFacts(f, new Date(), 'lên kế hoạch tháng 11').includes('GIẢM Ở ĐÂU'));
   // app cũ (không có số kỳ trước chia nhỏ) → không có dòng
   assertEquals(changeLine(parseFacts({ period: 'Tháng này', revenue: 1, orders: 1, prev_period: 'x', prev_revenue: 2, top: [], slow: [] })!), '');

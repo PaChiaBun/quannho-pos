@@ -498,13 +498,20 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Bỏ luật không liên quan (phạm vi, từ chối, lao động, Excel, Tết, viết bài, khối không có…): lời nhắc 21.400 → 10.800 ký tự, token vào −29%.
 - Chấm kín 55 câu: 12,40 → 12,22 (ngang) → độ dài lời nhắc KHÔNG phải nguyên nhân; bỏ (chỉ lợi chi phí).
 
-### Lần 59 (02/11, Claude chấm kín, đã áp máy chủ; app CHƯA phát hành): số kỳ trước chia nhỏ
+### Lần 59 (02/11, Claude chấm kín, đã áp máy chủ; app 1.0.6 build 23 đã phát hành): số kỳ trước chia nhỏ
 
 - App (`boom_read_only_data_service.dart`, `boom_chat_provider.dart`): kỳ trước đọc thêm `created_at` → `prev_by_hour`, `prev_by_weekday`; đọc món kỳ trước song song → `groups[].prev_revenue`, `moves` (≤ 6 món đổi doanh thu nhiều nhất), `prev_from` / `prev_to`.
 - Máy chủ: `changeLine` — dòng "SO … — GIẢM / TĂNG Ở ĐÂU (tính sẵn)": 3 giờ đổi nhiều nhất theo chiều tổng, thứ giảm / tăng nhiều nhất (trung bình / ngày), từng nhóm, món đổi nhiều nhất. Chỉ câu chẩn đoán / so sánh / hỏi giảm, tụt, vì sao (đưa mọi câu: kế hoạch 11,83 → 10,17). Có `moves` thì bỏ câu "CHƯA có số từng món". App cũ không gửi → như trước.
 - Bộ đề: dựng số kỳ trước cho quán A / B / C khớp vấn đề (A mất khách sáng 6–8h; B topping −30%; C tuần món thêm −52%, tháng Thứ 4 −40%); cập nhật ý chính D01, D05, D08, D32, D33, D38.
 - Kết quả: chấm kín 14 câu nhận dòng (1 lượt): 11,43 → **11,71/16**; lý lẽ 0,79 → 1,14; tìm vấn đề 1,07 → 1,21; D01 10 → 15, D32 8 → 12. Còn yếu: đọc nhầm số kỳ trước (dùng số 1,79 → 1,64, D38), việc làm vẫn chung.
 - Áp: `db-fix/boom_l59_ap_dung.sh` (TS 20261102_013340). Cần bản app mới để quán thật gửi số kỳ trước.
+
+### Lần 60 (02/11, Claude chấm kín, đã áp): dòng tăng / giảm ghi theo chiều "kỳ trước → nay"
+
+- Gốc lỗi: dạng "12h 2.319.000đ (kỳ trước 3.437.000đ, −1.118.000đ)" → GPT lấy số nay trừ tiếp phần chênh ("2.319.000đ xuống 1.201.000đ", D38); "giảm nhiều nhất Thứ 2" bị đọc thành "Thứ 2 thấp nhất" (D21).
+- Sửa (`changeLine`): giờ / thứ / nhóm / món đều ghi "kỳ trước X → nay Y (chênh, %)"; dòng theo thứ ghi "đây là mức ĐỔI so kỳ trước, không phải thứ bán cao / thấp nhất", nhãn "giảm / tăng mạnh nhất".
+- Kết quả: chấm kín 35 câu (1 lượt) cạnh bản lần 59: 11,57 → **11,66/16**; dùng số 1,63 → 1,77; việc làm 0,97 → 1,09; D21 6 → 11; chẩn đoán (5 câu) 12,0 → 11,0, kế hoạch (6 câu) 9,17 → 10,83. Còn yếu: bỏ sót nhóm giảm mạnh (Món thêm −52%), việc làm chung.
+- Áp: `db-fix/boom_l60_ap_dung.sh` (TS 20261102_151258). Không cần bản app mới.
 
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
