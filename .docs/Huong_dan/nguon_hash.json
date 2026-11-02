@@ -29,7 +29,7 @@
     },
     "bep.md": {
       "lib/core/repositories/kitchen_repository.dart": "6d24bef325dde24b",
-      "lib/screens/kitchen_screen.dart": "7341f7405a91ca6e",
+      "lib/screens/kitchen_screen.dart": "f6d2fe543f55c42f",
       "supabase/migrations/20260912_atomic_send_kitchen_ticket_v2.sql": "3242f0573a0ef36a",
       "test/screens/kitchen_sound_policy_test.dart": "52ab1b02b8994af5"
     },

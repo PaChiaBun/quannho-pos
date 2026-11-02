@@ -16,7 +16,6 @@ import '../core/repositories/kitchen_repository.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
-import '../core/utils/responsive.dart';
 import '../modules/bill_printer/screens/bill_preview_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,6 +37,9 @@ void clearSeenCancelledTickets() => _seenCancelledIds.clear();
 const _kBg     = Color(0xFF0D1117);
 const _kCard   = Color(0xFF1A2233);
 const _kCardBorder = Color(0xFF2D3748);
+
+// Kanban 3 cột cần ~905dp nội dung mới không tràn thẻ phiếu (đo bằng test) — hẹp hơn dùng dạng tab.
+const _kKanbanMinWidth = 920.0;
 
 // Alias cho backward compat với code cũ còn dùng _TicketWithItems
 typedef _TicketWithItems = TicketWithItems;
@@ -552,51 +554,147 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
             );
           }
 
-          // ── Tablet/Desktop: Kanban 3 cột ──────────────────────────────
-          if (Responsive.isLargeScreen(context)) {
+          // Chọn bố cục theo bề rộng THẬT của vùng nội dung (đã trừ thanh bên), không theo màn hình:
+          // iPad dọc 820 trừ thanh bên còn ~730 → 3 cột bị bóp nhỏ và tràn; dùng dạng tab như điện thoại.
+          return LayoutBuilder(builder: (context, box) {
+            // ── Tablet/Desktop: Kanban 3 cột ──────────────────────────────
+            if (box.maxWidth >= _kKanbanMinWidth) {
+              return Column(
+                children: [
+                  alerts,
+                  _StationFilterBar(
+                    selected: stationFilter,
+                    onChanged: (s) =>
+                        ref.read(stationFilterProvider.notifier).setStation(s),
+                  ),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _KanbanColumn(
+                          label: 'Chờ xử lý',
+                          icon: Icons.hourglass_bottom_rounded,
+                          color: _kRed,
+                          bgColor: const Color(0x15EF4444),
+                          tickets: waitTickets,
+                          isBlinking: _newTicketBlink,
+                          onAction: (tw, act) => _handleAction(
+                              context, kitchenRepo, tw, act, stationFilter),
+                          getStatus: effectiveStatus,
+                          overdueIds: _overdueCardIds,
+                        ),
+                        _KanbanColumn(
+                          label: 'Đang làm',
+                          icon: Icons.local_fire_department_rounded,
+                          color: _kAmber,
+                          bgColor: const Color(0x15F59E0B),
+                          tickets: doingTickets,
+                          onAction: (tw, act) => _handleAction(
+                              context, kitchenRepo, tw, act, stationFilter),
+                          getStatus: effectiveStatus,
+                          overdueIds: _overdueCardIds,
+                        ),
+                        _KanbanColumn(
+                          label: 'Hoàn thành',
+                          icon: Icons.check_circle_rounded,
+                          color: _kGreen,
+                          bgColor: const Color(0x1522C55E),
+                          tickets: doneTickets,
+                          onAction: (tw, act) => _handleAction(
+                              context, kitchenRepo, tw, act, stationFilter),
+                          getStatus: effectiveStatus,
+                          overdueIds: _overdueCardIds,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            // ── Mobile: Tab layout ─────────────────────────────────────────
             return Column(
               children: [
+                // ── Thông báo huỷ/giảm món + thẻ ĐÃ HUỶ ──
                 alerts,
+
+                // ── Station filter bar ──
+
                 _StationFilterBar(
                   selected: stationFilter,
-                  onChanged: (s) =>
-                      ref.read(stationFilterProvider.notifier).setStation(s),
+                  onChanged: (s) => ref.read(stationFilterProvider.notifier).setStation(s),
                 ),
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _KanbanColumn(
-                        label: 'Chờ xử lý',
+                // ── Tab bar ──
+                Container(
+                  decoration: BoxDecoration(
+                    color: _kCard,
+                    border: Border(
+                      bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                    ),
+                  ),
+                  child: TabBar(
+                    controller: _tabCtrl,
+                    indicatorColor: _kOrange,
+                    indicatorWeight: 3,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white38,
+                    labelStyle: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    tabs: [
+                      _TabWithBadge(
                         icon: Icons.hourglass_bottom_rounded,
+                        label: 'Chờ',
+                        count: waitTickets.length,
                         color: _kRed,
-                        bgColor: const Color(0x15EF4444),
-                        tickets: waitTickets,
-                        isBlinking: _newTicketBlink,
-                        onAction: (tw, act) => _handleAction(
-                            context, kitchenRepo, tw, act, stationFilter),
-                        getStatus: effectiveStatus,
-                        overdueIds: _overdueCardIds,
+                        isBlinking: _newTicketBlink && waitTickets.isNotEmpty,
                       ),
-                      _KanbanColumn(
-                        label: 'Đang làm',
+                      _TabWithBadge(
                         icon: Icons.local_fire_department_rounded,
+                        label: 'Đang làm',
+                        count: doingTickets.length,
                         color: _kAmber,
-                        bgColor: const Color(0x15F59E0B),
-                        tickets: doingTickets,
-                        onAction: (tw, act) => _handleAction(
-                            context, kitchenRepo, tw, act, stationFilter),
+                      ),
+                      _TabWithBadge(
+                        icon: Icons.check_circle_rounded,
+                        label: 'Xong',
+                        count: doneTickets.length,
+                        color: _kGreen,
+                      ),
+                    ],
+                  ),
+                ),
+                // ── Tab views ──
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabCtrl,
+                    children: [
+                      _TicketList(
+                        tickets: waitTickets,
+                        emptyIcon: Icons.hourglass_empty_rounded,
+                        emptyLabel: 'Không có phiếu chờ',
+                        onAction: (tw, act) => _handleAction(context, kitchenRepo, tw, act, stationFilter),
                         getStatus: effectiveStatus,
                         overdueIds: _overdueCardIds,
                       ),
-                      _KanbanColumn(
-                        label: 'Hoàn thành',
-                        icon: Icons.check_circle_rounded,
-                        color: _kGreen,
-                        bgColor: const Color(0x1522C55E),
+                      _TicketList(
+                        tickets: doingTickets,
+                        emptyIcon: Icons.local_fire_department_rounded,
+                        emptyLabel: 'Chưa có phiếu đang làm',
+                        onAction: (tw, act) => _handleAction(context, kitchenRepo, tw, act, stationFilter),
+                        getStatus: effectiveStatus,
+                        overdueIds: _overdueCardIds,
+                      ),
+                      _TicketList(
                         tickets: doneTickets,
-                        onAction: (tw, act) => _handleAction(
-                            context, kitchenRepo, tw, act, stationFilter),
+                        emptyIcon: Icons.check_circle_outline_rounded,
+                        emptyLabel: 'Chưa có phiếu hoàn thành',
+                        onAction: (tw, act) => _handleAction(context, kitchenRepo, tw, act, stationFilter),
                         getStatus: effectiveStatus,
                         overdueIds: _overdueCardIds,
                       ),
@@ -605,99 +703,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen>
                 ),
               ],
             );
-          }
-
-          // ── Mobile: Tab layout ─────────────────────────────────────────
-          return Column(
-            children: [
-              // ── Thông báo huỷ/giảm món + thẻ ĐÃ HUỶ ──
-              alerts,
-
-              // ── Station filter bar ──
-
-              _StationFilterBar(
-                selected: stationFilter,
-                onChanged: (s) => ref.read(stationFilterProvider.notifier).setStation(s),
-              ),
-              // ── Tab bar ──
-              Container(
-                decoration: BoxDecoration(
-                  color: _kCard,
-                  border: Border(
-                    bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
-                  ),
-                ),
-                child: TabBar(
-                  controller: _tabCtrl,
-                  indicatorColor: _kOrange,
-                  indicatorWeight: 3,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white38,
-                  labelStyle: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                  unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  tabs: [
-                    _TabWithBadge(
-                      icon: Icons.hourglass_bottom_rounded,
-                      label: 'Chờ',
-                      count: waitTickets.length,
-                      color: _kRed,
-                      isBlinking: _newTicketBlink && waitTickets.isNotEmpty,
-                    ),
-                    _TabWithBadge(
-                      icon: Icons.local_fire_department_rounded,
-                      label: 'Đang làm',
-                      count: doingTickets.length,
-                      color: _kAmber,
-                    ),
-                    _TabWithBadge(
-                      icon: Icons.check_circle_rounded,
-                      label: 'Xong',
-                      count: doneTickets.length,
-                      color: _kGreen,
-                    ),
-                  ],
-                ),
-              ),
-              // ── Tab views ──
-              Expanded(
-                child: TabBarView(
-                  controller: _tabCtrl,
-                  children: [
-                    _TicketList(
-                      tickets: waitTickets,
-                      emptyIcon: Icons.hourglass_empty_rounded,
-                      emptyLabel: 'Không có phiếu chờ',
-                      onAction: (tw, act) => _handleAction(context, kitchenRepo, tw, act, stationFilter),
-                      getStatus: effectiveStatus,
-                      overdueIds: _overdueCardIds,
-                    ),
-                    _TicketList(
-                      tickets: doingTickets,
-                      emptyIcon: Icons.local_fire_department_rounded,
-                      emptyLabel: 'Chưa có phiếu đang làm',
-                      onAction: (tw, act) => _handleAction(context, kitchenRepo, tw, act, stationFilter),
-                      getStatus: effectiveStatus,
-                      overdueIds: _overdueCardIds,
-                    ),
-                    _TicketList(
-                      tickets: doneTickets,
-                      emptyIcon: Icons.check_circle_outline_rounded,
-                      emptyLabel: 'Chưa có phiếu hoàn thành',
-                      onAction: (tw, act) => _handleAction(context, kitchenRepo, tw, act, stationFilter),
-                      getStatus: effectiveStatus,
-                      overdueIds: _overdueCardIds,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
+          });
         },
       ),
     );
