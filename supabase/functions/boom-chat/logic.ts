@@ -742,16 +742,24 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
     // lần 45: hỏi "món nào giảm nhiều nhất so tháng trước" → GPT bịa số món kỳ trước (D32), hỏi lại vẫn bịa số khác;
     // 45b: chỉ ghi khi câu hỏi so món với kỳ trước — ghi ở mọi câu làm phần việc làm dè dặt hơn (0,95 → 0,79)
     if (!f.moves?.length && (f.top.length || f.groups?.length) && /món/i.test(question) && /trước/i.test(question)) lines.push(`Số từng món chỉ có của kỳ này, CHƯA có số từng món ${f.prev_period.toLowerCase()} → không so được từng món với kỳ trước.`);
+    // chỉ câu cần "vì sao / ở đâu" — đưa vào mọi câu làm câu kế hoạch / nói tiếp tụt (chấm l59: 11,83 → 10,17)
+    const hoiVi = ['chan_doan', 'so_sanh'].includes(loaiCau(question) ?? '') || /giảm(?! giá)|tụt|so (?:với|tháng|tuần|kỳ)|vì sao|tại sao|sao vậy/i.test(question);
     // Doanh thu đổi vì số đơn hay vì giá trị mỗi đơn (tính sẵn — GPT không tự tách)
     if (f.prev_orders && f.orders > 0 && f.prev_revenue > 0) {
       const pctOrders = Math.round(((f.orders - f.prev_orders) / f.prev_orders) * 1000) / 10;
       const pctAvg = Math.round(((f.revenue / f.orders - f.prev_revenue / f.prev_orders) / (f.prev_revenue / f.prev_orders)) * 1000) / 10;
       const sign = (x: number) => `${x >= 0 ? '+' : ''}${pctTxt(x)}%`;
       const main = Math.abs(pctOrders) >= Math.abs(pctAvg) ? 'chủ yếu do SỐ ĐƠN (lượng khách)' : 'chủ yếu do GIÁ TRỊ MỖI ĐƠN';
-      lines.push(`Phân tích tính sẵn: số đơn ${sign(pctOrders)}, giá trị trung bình mỗi đơn ${sign(pctAvg)} → doanh thu đổi ${main}.`);
+      // lần 62: mỗi đơn nhỏ đi → nêu ngay trong kết luận nhóm giảm mạnh nhất (nhóm nhỏ như Topping, Món thêm hay bị bỏ sót;
+      // để cuối dòng "GIẢM Ở ĐÂU" thì GPT không nhắc — lần 61)
+      const nhom = (f.groups ?? []).filter((g) => g.prev_revenue && g.revenue < g.prev_revenue)
+        .sort((a, b) => a.revenue / a.prev_revenue! - b.revenue / b.prev_revenue!)[0];
+      const vi = hoiVi && pctAvg < 0 && nhom && (f.groups?.length ?? 0) >= 2
+        ? ` Giá trị mỗi đơn giảm đi cùng nhóm ${nhom.name} giảm mạnh nhất (kỳ trước ${vnd(nhom.prev_revenue!)} → nay ${vnd(nhom.revenue)}, ${sign(Math.round(((nhom.revenue - nhom.prev_revenue!) / nhom.prev_revenue!) * 1000) / 10)}) → mỗi đơn có ít ${nhom.name} hơn; nêu nhóm này khi giải thích.`
+        : '';
+      lines.push(`Phân tích tính sẵn: số đơn ${sign(pctOrders)}, giá trị trung bình mỗi đơn ${sign(pctAvg)} → doanh thu đổi ${main}.${vi}`);
     }
-    // chỉ câu cần "vì sao / ở đâu" — đưa vào mọi câu làm câu kế hoạch / nói tiếp tụt (chấm l59: 11,83 → 10,17)
-    const ch = ['chan_doan', 'so_sanh'].includes(loaiCau(question) ?? '') || /giảm(?! giá)|tụt|so (?:với|tháng|tuần|kỳ)|vì sao|tại sao|sao vậy/i.test(question) ? changeLine(f) : '';
+    const ch = hoiVi ? changeLine(f) : '';
     if (ch) lines.push(ch);
   }
   if (f.by_hour) {

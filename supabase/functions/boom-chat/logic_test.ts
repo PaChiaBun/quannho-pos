@@ -970,6 +970,14 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   assert(t.includes('theo giờ, giảm nhiều nhất: 7h kỳ trước 900đ → nay 600đ (−300đ, −33,3%); 8h kỳ trước 320đ → nay 300đ (−20đ, −6,3%)') && !t.includes('15h'), t);
   assert(t.includes('không phải thứ bán cao / thấp nhất): giảm mạnh nhất Thứ 4 kỳ trước 75đ → nay 50đ (−25đ, −33,3%)'), t);
   assert(t.includes('Cà phê kỳ trước 1.100đ → nay 800đ (−300đ, −27,3%)') && t.includes('Cà phê sữa đá kỳ trước 30 phần → nay 20 phần (doanh thu −250đ)'), t);
+  // lần 62: mỗi đơn nhỏ đi + ≥ 2 nhóm → câu Phân tích tính sẵn nêu nhóm giảm mạnh nhất; câu kế hoạch không có
+  const f2 = parseFacts({ ...JSON.parse(JSON.stringify(f)), revenue: 1000, orders: 12, prev_revenue: 1300, prev_orders: 13, groups: [
+    { name: 'Món chính', revenue: 900, prev_revenue: 1000, qty: 30, items: 3, unsold: 0, top: [], slow: [], unsold_names: [] },
+    { name: 'Món thêm', revenue: 100, prev_revenue: 300, qty: 5, items: 2, unsold: 0, top: [], slow: [], unsold_names: [] },
+  ] })!;
+  assert(formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('Giá trị mỗi đơn giảm đi cùng nhóm Món thêm giảm mạnh nhất (kỳ trước 300đ → nay 100đ, -66,7%) → mỗi đơn có ít Món thêm hơn'));
+  assert(!formatFacts(f2, new Date(), 'lên kế hoạch tháng 11').includes('giảm đi cùng nhóm'));
+  assert(!formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('giảm đi cùng nhóm'));
   assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes(t) && !formatFacts(f, new Date(), 'lên kế hoạch tháng 11').includes('GIẢM Ở ĐÂU'));
   // app cũ (không có số kỳ trước chia nhỏ) → không có dòng
   assertEquals(changeLine(parseFacts({ period: 'Tháng này', revenue: 1, orders: 1, prev_period: 'x', prev_revenue: 2, top: [], slow: [] })!), '');

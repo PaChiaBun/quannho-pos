@@ -519,6 +519,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Chấm kín 9 câu × 2 lượt cạnh bản lần 60: 12,17 → 11,83; lý lẽ 0,89 → 0,67; tìm vấn đề 1,39 → 1,33. Người chấm: cả hai bản vẫn bỏ sót Topping −30,1% (D05), Món thêm −52,3% (D38) → bỏ.
 - Bài học: thêm một câu "điểm chính" vào cuối dòng dài không làm GPT nhắc tới; nhóm nhỏ (3–4% doanh thu) bị coi là không đáng kể. Muốn GPT dùng thì phải nằm trong kết luận "Phân tích tính sẵn" (đầu khối) — nhưng lần 57 cho thấy số đặt ở đầu khối dễ thành kết luận cứng → cần thử có kiểm soát.
 
+### Lần 62 (02/11, Claude chấm kín, đã áp): mỗi đơn nhỏ đi → câu "Phân tích tính sẵn" nêu nhóm giảm mạnh nhất
+
+- Sửa (`formatFacts`): câu chẩn đoán / so sánh / hỏi vì sao giảm, giá trị mỗi đơn giảm, có ≥ 2 nhóm → nối vào "Phân tích tính sẵn": "Giá trị mỗi đơn giảm đi cùng nhóm Topping giảm mạnh nhất (kỳ trước 9.086.000đ → nay 6.354.000đ, -30,1%) → mỗi đơn có ít Topping hơn; nêu nhóm này khi giải thích." Câu kế hoạch không có. 6/35 câu đề nhận dòng.
+- Kết quả: chấm kín 6 câu × 2 lượt cạnh bản lần 60: 12,83 → **13,42/16**; tìm vấn đề 1,33 → 1,67; lý lẽ 1,17 → 1,50; D38 13 → 15 (2 lượt), D05 13 → 15 / 14. Còn yếu: việc làm chép "điểm cần chú ý" (tăng giá món) vào câu vì sao giảm; D54 vẫn khuyên tặng topping.
+- Bài học (so lần 61): cùng một số, đặt ở câu KẾT LUẬN đầu khối thì GPT dùng, đặt cuối dòng dài thì bỏ qua.
+- Áp: `db-fix/boom_l62_ap_dung.sh` (TS 20261102_155136). Không cần bản app mới.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
