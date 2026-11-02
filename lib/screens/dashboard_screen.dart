@@ -44,6 +44,7 @@ const _kNavyLight = Color(0xFF2D2B8A);
 const _kOrange = Color(0xFFE85D20);
 const _kInk = Color(0xFF1A1207);
 const _kMuted = Color(0xFF9E9085);
+const _kTileHeight = 176.0; // ô chức năng 3 cột: lề 36 + biểu tượng 62 + tên 2 dòng 48 + phụ đề 18 + đệm
 const _kBg = Color(0xFFFAF7F2);
 const _kGreen = Color(0xFF2E7D32);
 const _kGreenBg = Color(0xFFE8F5E9);
@@ -491,7 +492,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
           return LayoutBuilder(
             builder: (context, constraints) {
-              if (constraints.maxWidth > 700) {
+              // Cột phải 280dp chỉ lặp số liệu "Hôm nay" đã có dưới lưới — chỉ ghim khi còn ≥620dp cho
+              // lưới ô chức năng. iPad dọc (~731dp) mà ghim thì ô bị bóp còn biểu tượng, tràn chữ.
+              if (constraints.maxWidth >= 900) {
                 return Row(
                   children: [
                     Expanded(flex: 3, child: mainContent),
@@ -1404,11 +1407,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         crossAxisCount: cols,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: cols >= 4
-            ? 1.75
-            : cols >= 3
-            ? 1.55
-            : 1.15,
+        // 3+ cột: cao cố định đủ tên 2 dòng ("Khách hàng & Khuyến mãi") — theo tỉ lệ thì ô hẹp (iPad dọc,
+        // máy 1024) thấp đi và tràn chữ.
+        mainAxisExtent: cols >= 3 ? _kTileHeight : null,
+        childAspectRatio: 1.15,
       ),
       itemCount: tiles.length,
       itemBuilder: (_, i) => tiles[i],
@@ -1428,11 +1430,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         crossAxisCount: cols,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: cols >= 4
-            ? 1.75
-            : cols >= 3
-            ? 1.55
-            : 1.15,
+        // 3+ cột: cao cố định đủ tên 2 dòng ("Khách hàng & Khuyến mãi") — theo tỉ lệ thì ô hẹp (iPad dọc,
+        // máy 1024) thấp đi và tràn chữ.
+        mainAxisExtent: cols >= 3 ? _kTileHeight : null,
+        childAspectRatio: 1.15,
       ),
       itemCount: tiles.length,
       itemBuilder: (_, i) => tiles[i],

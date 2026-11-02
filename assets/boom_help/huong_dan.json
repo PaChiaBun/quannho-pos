@@ -1,6 +1,6 @@
 {
- "version": 202610312347,
- "hash": "4dc5a533a802253169d04bc6dfb5f07029573cc127f03c399b141d121e98a3fb",
+ "version": 202611020803,
+ "hash": "07f64c923006d0f61aafc70615784b37db902a8ae4e8b0f65934fcc5dcaeb0c4",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -544,7 +544,7 @@
    "module_name": "Bếp",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Tiêu đề \"🔥 BẾP\" / \"Phiếu bếp\", nút \"Thống kê hôm nay\" và nút \"Tắt tiếng\" / \"Bật tiếng\" chuông.\n• Lọc trạm: \"Tất cả\", \"Bếp nóng\", \"Bếp nước\".\n• Máy tính bảng / PC: ba cột \"Chờ xử lý\", \"Đang làm\", \"Hoàn thành\".\n• Điện thoại: ba tab \"Chờ\", \"Đang làm\", \"Xong\".\n• Thẻ phiếu: tên bàn (hoặc \"Mang đi N\" với đơn gửi từ Bán hàng — số trong ngày của giỏ, để gọi đúng khách), \"Đợt N\", số món còn lại, đồng hồ chờ, nhãn \"MỚI\" / \"LÀM\" / \"TRỄ 30P!\", danh sách món kèm số lượng, topping, ghi chú (📌), và nút \"In phiếu\"."
+   "text": "• Tiêu đề \"🔥 BẾP\" / \"Phiếu bếp\", nút \"Thống kê hôm nay\" và nút \"Tắt tiếng\" / \"Bật tiếng\" chuông.\n• Lọc trạm: \"Tất cả\", \"Bếp nóng\", \"Bếp nước\".\n• Máy tính bảng nằm ngang / PC: ba cột \"Chờ xử lý\", \"Đang làm\", \"Hoàn thành\".\n• Điện thoại, máy tính bảng dựng dọc (iPad dọc): ba tab \"Chờ\", \"Đang làm\", \"Xong\" — màn hẹp chia ba cột sẽ quá nhỏ.\n• Thẻ phiếu: tên bàn (hoặc \"Mang đi N\" với đơn gửi từ Bán hàng — số trong ngày của giỏ, để gọi đúng khách), \"Đợt N\", số món còn lại, đồng hồ chờ, nhãn \"MỚI\" / \"LÀM\" / \"TRỄ 30P!\", danh sách món kèm số lượng, topping, ghi chú (📌), và nút \"In phiếu\"."
   },
   {
    "id": "bep#cac-viec-thuong-lam-1-nhan-va-lam-phieu",

@@ -30,8 +30,8 @@ nguon:
 ## Màn hình gồm những gì
 - Tiêu đề **"🔥 BẾP" / "Phiếu bếp"**, nút **"Thống kê hôm nay"** và nút **"Tắt tiếng" / "Bật tiếng"** chuông.
 - **Lọc trạm**: **"Tất cả"**, **"Bếp nóng"**, **"Bếp nước"**.
-- **Máy tính bảng / PC**: ba cột **"Chờ xử lý"**, **"Đang làm"**, **"Hoàn thành"**.
-- **Điện thoại**: ba tab **"Chờ"**, **"Đang làm"**, **"Xong"**.
+- **Máy tính bảng nằm ngang / PC**: ba cột **"Chờ xử lý"**, **"Đang làm"**, **"Hoàn thành"**.
+- **Điện thoại, máy tính bảng dựng dọc (iPad dọc)**: ba tab **"Chờ"**, **"Đang làm"**, **"Xong"** — màn hẹp chia ba cột sẽ quá nhỏ.
 - **Thẻ phiếu**: tên bàn (hoặc "Mang đi N" với đơn gửi từ Bán hàng — số trong ngày của giỏ, để gọi đúng khách), **"Đợt N"**, số món còn lại, đồng hồ chờ, nhãn **"MỚI"** / **"LÀM"** / **"TRỄ 30P!"**, danh sách món kèm số lượng, topping, ghi chú (📌), và nút **"In phiếu"**.
 
 ## Các việc thường làm
