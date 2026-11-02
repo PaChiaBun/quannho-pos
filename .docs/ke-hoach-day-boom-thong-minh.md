@@ -573,6 +573,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - D32 × 4 lượt: cả 4 khuyên "giảm giá 2.000đ Cà phê sữa đá" cả ngày (bản lần 67: 0/4 giảm giá, 1/4 tăng giá) → rõ kém, bỏ không cần chấm.
 - Gốc thật của D32 ("món nào giảm nhiều nhất"): câu hỏi về MÓN nhưng việc tính sẵn là về GIỜ → GPT không dùng, tự nghĩ việc cho món (tăng / giảm giá). Hướng sau: câu hỏi món giảm → tính sẵn việc cho chính món giảm nhiều nhất (giờ món đó bán chạy, mời kèm, không đổi giá).
 
+### Lần 70 (02/11, Claude chấm kín, đã áp): hỏi món giảm → tính sẵn việc cho chính món giảm nhiều nhất
+
+- Sửa (`formatFacts`, thay việc theo giờ khi câu hỏi có "món"): "Việc nên nhắm cho món giảm nhiều nhất (tính sẵn): Cà phê sữa đá kỳ trước 1374 → nay 1150 phần — GIỮ GIÁ (tăng giá làm mất thêm khách, giảm giá làm mỏng lời); nhân viên mời Cà phê sữa đá kèm món đang bán chạy ở khung sáng (khung món này bán chạy), đưa lên đầu menu 2 tuần; mốc đo: nay ~288 phần / tuần, mục tiêu ~316 phần / tuần (nửa đường về mức cũ)". Món giảm nhiều nhất theo doanh thu trong `moves`; khung lấy từ `by_band`.
+- Kết quả: chấm kín D32 4 cặp cạnh bản lần 67: 11,75 → **13,5/16**; việc làm 0,50 → 1,25; trả lời thẳng 1,25 → 2,0; tìm vấn đề 1,75 → 1,25 (không nhắc khung 6–8h, Bạc xỉu, Bánh mì thịt). Chỉ D32 trong đề nhận dòng.
+- Bài học (so lần 68–69): việc tính sẵn phải KHỚP chủ đề câu hỏi (món ↔ món, giờ ↔ giờ) thì GPT mới dùng.
+- Áp: `db-fix/boom_l70_ap_dung.sh` (TS 20261102_164150). Không cần bản app mới.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

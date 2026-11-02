@@ -989,6 +989,10 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   assert(formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('Việc nên nhắm (tính sẵn): mời thêm Món thêm trong mỗi đơn') && formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('nay 0,42 phần Món thêm / đơn'));
   assert(!formatFacts(f, new Date(), 'lên kế hoạch tháng 11').includes('Việc nên nhắm'));
   assert(!formatFacts(f, new Date(), 'sao buoi chieu quan vang qua, co cach nao ko').includes('Việc nên nhắm'));
+  // lần 70: hỏi món giảm → việc cho chính món giảm nhiều nhất (giữ giá, khung bán chạy, mốc phần / tuần), thay việc theo giờ
+  const fm = parseFacts({ ...JSON.parse(JSON.stringify(f)), by_band: [[{ name: 'Cà phê sữa đá', qty: 20 }], [], [], []] })!;
+  const tm = formatFacts(fm, new Date(), 'so với tháng trước thì món nào giảm nhiều nhất');
+  assert(tm.includes('Việc nên nhắm cho món giảm nhiều nhất (tính sẵn): Cà phê sữa đá kỳ trước 30 → nay 20 phần — GIỮ GIÁ') && tm.includes('ở khung sáng (khung món này bán chạy)') && tm.includes('mốc đo: nay ~5 phần / tuần, mục tiêu ~6 phần / tuần') && !tm.includes('kéo khách lại đúng'), tm);
   // lần 67: ghi sẵn mức làm thử và mục tiêu số
   assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('thẻ tích ly mua 8 tặng 1 hoặc bớt 2.000đ / đơn cho đơn trong 7h, 8h, chạy 2 tuần; giữ nếu doanh thu các giờ đó lên lại ≥ 0đ / ngày'));
   assert(formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('mục tiêu sau 2 tuần 0,54 phần / đơn (+30%), không giảm giá Món thêm'));

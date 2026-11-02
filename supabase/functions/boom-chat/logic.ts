@@ -759,7 +759,16 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
         : '';
       // lần 65: việc làm hay chung chung / lạc sang điểm cần chú ý (l63: bảo "đừng" không giúp) → tính sẵn VIỆC nhắm đúng chỗ giảm + mốc đo
       let viec = '';
-      if (hoiVi && f.revenue < f.prev_revenue) {
+      // lần 70: câu hỏi về MÓN giảm (D32) — việc tính sẵn theo giờ không khớp, GPT tự nghĩ việc cho món (tăng / giảm giá, l68–69)
+      // → tính sẵn việc cho chính món giảm nhiều nhất: giữ giá, mời kèm đúng khung món đó bán chạy, mốc phần / tuần
+      const monGiam = /món/i.test(question) ? (f.moves ?? []).filter((m) => m.qty < m.prev_qty).sort((a, b) => (a.revenue - a.prev_revenue) - (b.revenue - b.prev_revenue))[0] : undefined;
+      const ngayKy = (weekdayCounts(f.from, f.to) ?? []).reduce((a, b) => a + b, 0);
+      if (hoiVi && f.revenue < f.prev_revenue && monGiam) {
+        const bk = (f.by_band ?? []).findIndex((b) => b.some((x) => x.name === monGiam.name));
+        const khung = bk >= 0 ? ` ở khung ${['sáng', 'trưa', 'chiều', 'tối'][bk]} (khung món này bán chạy)` : '';
+        const tuan = (q: number) => Math.round((q / ngayKy) * 7);
+        viec = ` Việc nên nhắm cho món giảm nhiều nhất (tính sẵn): ${monGiam.name} kỳ trước ${monGiam.prev_qty} → nay ${monGiam.qty} phần — GIỮ GIÁ (tăng giá làm mất thêm khách, giảm giá làm mỏng lời); nhân viên mời ${monGiam.name} kèm món đang bán chạy${khung}, đưa lên đầu menu 2 tuần${ngayKy ? `; mốc đo: nay ~${tuan(monGiam.qty)} phần / tuần, mục tiêu ~${tuan((monGiam.qty + monGiam.prev_qty) / 2)} phần / tuần (nửa đường về mức cũ)` : ''}.`;
+      } else if (hoiVi && f.revenue < f.prev_revenue) {
         // 65b: câu hỏi đã nói buổi / giờ (vd "buổi chiều vắng" — D02) → không kéo sang giờ khác
         if (Math.abs(pctOrders) >= Math.abs(pctAvg) && pctOrders < 0 && f.by_hour && f.prev_by_hour && !/s[aá]ng|tr[uư]a|chi[eề]u|t[oố]i|khuya|\d+ ?h\b|gi[oờ]/i.test(question)) {
           // ngưỡng giữ tính theo NGÀY — số khung giờ là của cả kỳ, thử chỉ 2 tuần
