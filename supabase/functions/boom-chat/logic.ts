@@ -1799,16 +1799,31 @@ export function comboDat(answer: string, ref: string): string[] {
   return out;
 }
 
-/** Mọi lỗi cần hỏi lại (rỗng = câu trả lời qua): số lạ, khuyên ngược món giá vốn cao, lộ chữ nội bộ, combo đắt hơn lẻ, topping quán không bán. */
+/** Lần 64: món khối số liệu ghi CÓ bán ("Nước chanh (80 phần") mà câu trả lời gọi là chưa bán — GPT đọc lẫn với dòng
+ *  "Chưa bán phần nào" ngay sau (D10, cả 4 bản l62 / l63). Xét từng vế (tách . ; , xuống dòng) chứa tên món + "chưa bán". */
+export function chuaBanSai(answer: string, ref: string): string[] {
+  const sold = new Map<string, number>();
+  for (const m of ref.matchAll(/(?:^|[:;,] ?)([^:;,()\n]{2,40}?) \((\d+) phần/gm)) if (+m[2] > 0) sold.set(m[1].trim(), +m[2]);
+  const out = new Set<string>();
+  for (const clause of answer.split(/[.;,\n]/)) {
+    if (!/chưa (?:bán|có ai gọi|ai gọi|ai mua)|không bán được/i.test(clause)) continue;
+    for (const [name, qty] of sold) if (clause.includes(name)) out.add(`${name} (bán ${qty} phần)`);
+  }
+  return [...out];
+}
+
+/** Mọi lỗi cần hỏi lại (rỗng = câu trả lời qua): số lạ, khuyên ngược món giá vốn cao, lộ chữ nội bộ, combo đắt hơn lẻ, topping quán không bán, món có bán bị gọi là chưa bán. */
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const bad = soLa(answer, ref);
   const nguoc = khuyenNguoc(answer, ref);
   const dat = comboDat(answer, ref);
+  const cb = chuaBanSai(answer, ref);
   return [
     ...(bad.length ? [`các số sau KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')} → bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới`] : []),
     ...(nguoc.length ? [`khuyên giảm giá / tặng / đẩy mạnh món có giá vốn CAO HƠN MỐC (${nguoc.join(', ')}) là khuyên ngược, càng bán càng mỏng lời → với món đó chỉ khuyên tăng giá nhẹ, giảm định lượng / đổi nguyên liệu, hoặc đẩy món lời tốt hơn thay thế`] : []),
     ...(dat.length ? [`đề xuất combo ĐẮT HƠN mua lẻ (${dat.join('; ')}) → giá combo phải rẻ hơn tổng giá lẻ 5–10% (dùng đúng combo tính sẵn nếu có) hoặc bỏ đề xuất đó`] : []),
     ...(/topping/i.test(answer) && /Các nhóm quán đang bán:/.test(ref) && !/topping/i.test(ref) ? ['quán này KHÔNG bán topping (không có trong các nhóm quán đang bán) → bỏ mọi gợi ý tặng / bán topping, thay bằng món rẻ quán đang có'] : []),
+    ...(cb.length ? [`gọi là chưa bán nhưng khối số liệu ghi CÓ bán: ${cb.join('; ')} → sửa lại, chỉ món ghi ở "Chưa bán phần nào" mới là chưa bán`] : []),
     ...(NOI_BO.test(answer) ? ['câu trả lời lộ tên dòng / khối nội bộ (vd "dòng ĐIỂM CẦN CHÚ Ý", "khối ...", "tính sẵn") → nói lý do bằng lời thường cho chủ quán, không nhắc tên dòng'] : []),
   ];
 }

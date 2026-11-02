@@ -533,6 +533,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Bài học: bảo GPT "đừng dùng X" không làm nó nghĩ ra việc đúng; muốn việc làm cụ thể phải tính sẵn VIỆC (giờ / nhóm / con số) như các lần 49–53, không chỉ nói hướng.
 - Lỗi khác thấy khi chấm: D10 cả 4 bản nói "Nước chanh chưa bán" (thực bán 80 phần; chưa bán là Nước cam, Sữa đậu nành); D02 gán số riêng 14h, 15h cho cả khung 14–17h; D39 bỏ sót giá vốn Cơm sườn 48%.
 
+### Lần 64 (02/11, Claude chấm kín, đã áp): tự kiểm món có bán bị gọi là "chưa bán"
+
+- Gốc lỗi: D10 cả 4 bản (l60, l62, l63 × 2) nói "Nước chanh … chưa bán phần nào" — khối ghi "Bán ít nhất nhóm (có bán): Nước chanh (80 phần…). Chưa bán phần nào trong kỳ: 2 món: Nước cam, Sữa đậu nành"; GPT đọc lẫn hai vế liền nhau, có bản còn khuyên ẩn món đang bán.
+- Sửa: `chuaBanSai` trong `kiemTraLoi` — vế câu (tách . ; , xuống dòng) có "chưa bán / chưa ai gọi / không bán được" và tên món mà khối ghi "(N phần" với N > 0 → hỏi lại 1 lần.
+- Đo trên 214 câu trả lời cũ: bắt 4, cả 4 đúng lỗi (đều D10), không bắt nhầm. D10 × 4 lượt: bản cũ sai 4/4, bản mới đúng 4/4. Chấm kín 4 cặp: 8,25 → **10,5/16**; dùng số 0 → 1,75; lý lẽ 0,5 → 1,0.
+- Áp: `db-fix/boom_l64_ap_dung.sh` (TS 20261102_160149). Không cần bản app mới.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

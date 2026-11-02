@@ -22,6 +22,7 @@ import {
   changeLine,
   comboDat,
   kiemTraLoi,
+  chuaBanSai,
   noteKiem,
   soLa,
   clipAnswer,
@@ -939,6 +940,11 @@ Deno.test('Lần 54: combo đắt hơn mua lẻ, topping ở quán không bán t
   // "cơm sườn" nằm trong "cơm sườn trứng" → chỉ tính tên dài
   assertEquals(comboDat('Combo Cơm sườn trứng + Trà đá 50.000đ.', ref), []);
   assert(kiemTraLoi('Dạ Anh, tặng topping cho khách quen.', ref).some((x) => x.includes('KHÔNG bán topping')));
+  // lần 64: món có bán bị gọi là chưa bán (D10: đọc lẫn dòng "Chưa bán phần nào" ngay sau)
+  const r10 = 'NHÓM "Đồ uống": Bán chạy nhất nhóm: Trà đá (900 phần, giá 3.000đ). Bán ít nhất nhóm (có bán): Nước chanh (80 phần, giá 15.000đ). Chưa bán phần nào trong kỳ: 2 món: Nước cam, Sữa đậu nành.';
+  assert(kiemTraLoi('Dạ Anh, Nước chanh và Sữa đậu nành chưa bán phần nào.', r10).some((x) => x.includes('Nước chanh (bán 80 phần)')));
+  assertEquals(chuaBanSai('Dạ Anh, Nước chanh bán 80 phần, còn Nước cam chưa bán phần nào.', r10), []);
+  assertEquals(chuaBanSai('Trà đá bán chạy; Sữa đậu nành chưa có ai gọi.', r10), []);
   assertEquals(kiemTraLoi('Dạ Anh, tặng topping cho khách quen.', ref + ' NHÓM "Topping": Trân châu (40 phần, giá 6.000đ).').filter((x) => x.includes('topping')), []);
 });
 
