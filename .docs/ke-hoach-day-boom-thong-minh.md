@@ -580,6 +580,12 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Bài học (so lần 68–69): việc tính sẵn phải KHỚP chủ đề câu hỏi (món ↔ món, giờ ↔ giờ) thì GPT mới dùng.
 - Áp: `db-fix/boom_l70_ap_dung.sh` (TS 20261102_164150). Không cần bản app mới.
 
+### Lần 71 (02/11, bỏ): kỳ chưa trọn — ghi "so 3 ngày với 3 ngày, tuần mới có 3/7 ngày" ngay trên dòng so kỳ trước
+
+- Sửa thử: câu vì sao / so sánh, kỳ "Tuần này" / "Tháng này" so "Cùng kỳ" → nối "(so N ngày với N ngày cùng kỳ — tuần này mới có N/7 ngày, chưa phải cả tuần: nói rõ điều này khi so)" vào dòng kỳ trước. 13 câu đổi.
+- Chấm kín 13 câu × 2 lượt cạnh bản lần 70: 10,77 → 10,35; thận trọng 0,85 → 0,73 (mục tiêu tụt); nói tiếp 9,75 → 7,75. Người chấm: cả 4 bài so tuần, cả 6 bài so tháng (D01, D05) hai bản đều KHÔNG nói kỳ chưa trọn → bỏ.
+- Bài học: lời dặn "nói rõ khi so" đặt trong dòng số không được GPT chép (khác số / việc tính sẵn). Hướng còn lại: đưa vào bước tự kiểm (câu so kỳ chưa trọn mà câu trả lời không có "mới có / chưa trọn / N ngày" → hỏi lại), hoặc chấp nhận.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

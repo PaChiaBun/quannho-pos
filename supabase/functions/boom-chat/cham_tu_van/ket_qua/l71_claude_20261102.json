@@ -1,0 +1,734 @@
+{
+ "moi": [
+  {
+   "id": "D01_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Không nói rõ kỳ mới 28/31 ngày; phần vì sao chỉ nhắc giá trị đơn, không chỉ ra giờ 6–8h giảm ở đâu."
+  },
+  {
+   "id": "D01_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Không nói kỳ mới 28/31 ngày; phần vì sao không nêu giờ hay nhóm món giảm."
+  },
+  {
+   "id": "D02_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gán hai số của 14h và 15h cho cả khung 14h–17h, lý do đoán chung chung, combo giảm giá kéo cả Bạc xỉu vốn đã lời mỏng."
+  },
+  {
+   "id": "D02_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đẩy combo cà phê sữa + bánh mì thịt cho buổi chiều, trái số bán theo khung giờ."
+  },
+  {
+   "id": "D05_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Dòng đầu thiếu con số doanh thu chỉ +2,2%, không nói kỳ mới 28/31 ngày, việc làm là combo giảm giá chứ không mời topping."
+  },
+  {
+   "id": "D36_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Khẳng định do số đơn cuối tuần tăng dù khối không có số đơn theo thứ, bỏ qua Thứ 7."
+  },
+  {
+   "id": "D54_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gọi Trà sữa trân châu đường đen và Khoai tây chiên là topping, việc làm chung chung, không có mục tiêu đo."
+  },
+  {
+   "id": "D05_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Không nói kỳ mới 28/31 ngày; việc mời topping chưa có câu mời, món cụ thể hay mục tiêu."
+  },
+  {
+   "id": "D36_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Khuyên ưu đãi vào Chủ nhật vốn đã là ngày cao nhất, và đoán do số đơn tăng mà không có số."
+  },
+  {
+   "id": "D54_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lạc sang quảng bá món mới qua mạng xã hội, việc chính là combo giảm giá chứ không phải mời topping."
+  },
+  {
+   "id": "D08_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Khẳng định Thứ 4 thường vắng vì người đi làm, trái số tháng trước, và giảm giá cơm sườn vốn đã lời mỏng 48%."
+  },
+  {
+   "id": "D10_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Cho rằng Sữa đậu nành chưa bán là nguyên nhân chính, bỏ qua 900 ly trà đá 3.000đ và Nước cam chưa bán."
+  },
+  {
+   "id": "D39_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nêu Cơm sườn giá vốn 48% và thiếu giá vốn Bún bò, gọi Bún bò bán chạy nhất dù Trà đá nhiều phần hơn, khuyên chủ tự nếm."
+  },
+  {
+   "id": "D57_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Nói ca tối 17–20h và lấy 24,998 triệu (chỉ giờ 12h) làm ca trưa 11–14h, gán 88 đơn/ngày cho ca tối — sai số."
+  },
+  {
+   "id": "D08_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lý giải vòng vo (ế vì ít khách), không so Thứ 4 với ~20,9 triệu các thứ khác, giảm giá 10% thiếu căn cứ."
+  },
+  {
+   "id": "D10_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Quy nguyên nhân chính cho Sữa đậu nành chưa bán là sai, bỏ sót trà đá giá rẻ chiếm phần lớn."
+  },
+  {
+   "id": "D39_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Hiểu 'ngon ăn' là khẩu vị, khuyên chủ tự nếm; bỏ sót Cơm sườn giá vốn 48% lời mỏng."
+  },
+  {
+   "id": "D57_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lấy 24,998 triệu (giờ 12h) làm doanh thu ca trưa 11–14h và gán 88 đơn/ngày cho ca tối — sai số."
+  },
+  {
+   "id": "D32_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nêu tổng giảm 14,2% do số đơn −14,8%, không nói đây là so 28 ngày, thiếu mức mục tiêu."
+  },
+  {
+   "id": "D32_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nêu nguyên nhân số đơn −14,8%, chỉ một việc không mục tiêu, không nói so 28 ngày."
+  },
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Không nói tuần này mới có 3/7 ngày (so 3 ngày với 3 ngày), dễ hiểu nhầm là cả tuần."
+  },
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Không nói tuần này mới có 3/7 ngày, chưa nối giờ 7h–8h giảm với việc đề xuất."
+  },
+  {
+   "id": "D35_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Nêu Trà dâu tây 46% nhưng không chỉ ra là lời mỏng cần chỉnh giá; việc 'đo doanh thu' mơ hồ."
+  },
+  {
+   "id": "D35_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không chỉ ra Trà dâu tây 46% vượt mốc lời mỏng; việc làm chỉ có nhập giá vốn."
+  },
+  {
+   "id": "D38_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Không nói tuần này mới có 3/7 ngày, so 3 ngày với 3 ngày mà nghe như cả tuần."
+  },
+  {
+   "id": "D38_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Không nói tuần này mới có 3/7 ngày, so 3 ngày với 3 ngày mà nghe như cả tuần."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D01_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Không nói rõ đây mới là 28/31 ngày so cùng kỳ và thiếu con số giảm 14,2% ở dòng đầu."
+  },
+  {
+   "id": "D01_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Có nhắc cần tìm lý do khách bỏ nhưng không nói kỳ mới 28/31 ngày."
+  },
+  {
+   "id": "D02_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 0,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Đẩy combo cà phê sữa + bánh mì thịt (món sáng) cho buổi chiều, trái số bán theo khung giờ."
+  },
+  {
+   "id": "D02_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Gán số 14h, 15h cho khung 14h–17h, lý do đoán chung, combo 39.000đ giảm sâu cả Bạc xỉu lời mỏng."
+  },
+  {
+   "id": "D05_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 1
+   },
+   "loi": "Không có số topping để chứng minh, không nói kỳ mới 28/31 ngày, việc làm là combo giảm giá chứ không mời topping."
+  },
+  {
+   "id": "D36_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 0,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Tổng ngày thường ghi khoảng 90 triệu trong khi đúng là 81.926.000đ, lại so tổng 2 ngày với 5 ngày không quy về mỗi ngày."
+  },
+  {
+   "id": "D54_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Việc làm chung chung (khuyến mãi topping), lạc sang quảng bá trà sữa bán chạy, không có câu mời hay mục tiêu phần topping mỗi đơn."
+  },
+  {
+   "id": "D05_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Khuyên tăng giá, giảm định lượng topping để tăng lợi nhuận dù không có giá vốn topping, và việc này làm khách gọi topping còn ít hơn."
+  },
+  {
+   "id": "D36_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Nói khác biệt nằm ở 17h–21h dù khối không có số giờ theo thứ, chỉ có một việc cho ngày thường."
+  },
+  {
+   "id": "D54_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Đúng hướng (câu mời topping, combo) nhưng dài, không nêu mục tiêu nâng 0,35 phần topping mỗi đơn."
+  },
+  {
+   "id": "D08_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lý do lặp lại (ít khách nên ế), không so với các ngày khác khoảng 20,9 triệu và không gợi ý hỏi chủ về chợ hay công trình."
+  },
+  {
+   "id": "D10_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Cho Sữa đậu nành chưa bán là nguyên nhân chính, bỏ qua trà đá giá rẻ chiếm phần lớn ly và Nước cam."
+  },
+  {
+   "id": "D39_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nêu Cơm sườn giá vốn 48% và thiếu giá vốn Bún bò, gọi Bún bò bán chạy nhất quán dù Trà đá 900 phần, khuyên chủ tự nếm."
+  },
+  {
+   "id": "D57_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Lý do chỉ đoán chung chung, không nói số liệu không cho biết lý do; việc làm giảm giá mơ hồ."
+  },
+  {
+   "id": "D08_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gọi 2.875.500đ/ngày là 'số đơn thấp nhất' (số liệu là doanh thu), lý do vòng vo, khuyến mãi chung chung."
+  },
+  {
+   "id": "D10_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Quy nguyên nhân chính cho Sữa đậu nành chưa bán là sai, bỏ sót trà đá 3.000đ chiếm 900/1.340 phần."
+  },
+  {
+   "id": "D39_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 0,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Hiểu 'ngon ăn' là khẩu vị, khuyên chủ tự nếm; bỏ sót Cơm sườn giá vốn 48% lời mỏng."
+  },
+  {
+   "id": "D57_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 1,
+    "tim_van_de": 1,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Gán ca tối yếu cho Thứ 4 giảm 39,9% là sai logic, và nói 'không cao như kỳ trước' không có số."
+  },
+  {
+   "id": "D32_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Chỉ một việc, không mục tiêu số; không nêu số đơn −14,8% và không nói so 28 ngày."
+  },
+  {
+   "id": "D32_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Không nêu nguyên nhân số đơn −14,8%, chỉ một việc không mục tiêu, không nói so 28 ngày."
+  },
+  {
+   "id": "D33_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Không nói tuần này mới có 3/7 ngày (so 3 ngày với 3 ngày), dễ hiểu nhầm là cả tuần."
+  },
+  {
+   "id": "D33_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Không nói tuần này mới có 3/7 ngày, chưa nối giờ 7h–8h giảm với việc đề xuất."
+  },
+  {
+   "id": "D35_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Khuyên chỉnh giá Trà dâu tây nhưng không đưa mức cụ thể; thiếu tỷ trọng doanh thu 58%/31%."
+  },
+  {
+   "id": "D35_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Câu 'cần xem lại giá vốn' lặp ý, không đề xuất tăng giá Trà dâu tây dù đã thấy lời mỏng."
+  },
+  {
+   "id": "D38_1",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Không nói tuần mới 3/7 ngày; gọi Món thêm là nguyên nhân chính dù chỉ −519.000đ trên −3.375.000đ."
+  },
+  {
+   "id": "D38_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 0,
+    "gon": 2
+   },
+   "loi": "Không nói tuần mới 3/7 ngày; gọi Món thêm là khác biệt lớn nhất dù Món chính mất −2.711.000đ."
+  }
+ ]
+}
