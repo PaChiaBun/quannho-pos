@@ -25,6 +25,7 @@ import {
   chuaBanSai,
   tuanChuaTron,
   soGioChoKhung,
+  phanThanhDon,
   noteKiem,
   soLa,
   clipAnswer,
@@ -957,6 +958,11 @@ Deno.test('Lần 54: combo đắt hơn mua lẻ, topping ở quán không bán t
   assert(kiemTraLoi('Dạ Anh, doanh thu từ 14h đến 17h chỉ đạt 1.956.000đ và 1.833.000đ.', rh).some((x) => x.includes('1.956.000đ là riêng 14h, 1.833.000đ là riêng 15h; cả khung 14h–17h là 6.723.000đ')));
   assertEquals(soGioChoKhung('Dạ Anh, khung 14h–17h được 6.723.000đ.', rh), []);
   assertEquals(soGioChoKhung('Dạ Anh, 14h chỉ 1.956.000đ, 15h 1.833.000đ.', rh), []);
+  // lần 75: số phần món bị gọi là số đơn → hỏi lại; số đơn có thật trong khối → qua
+  const rp = 'Kỳ: Tháng này. Doanh thu 1đ từ 2400 đơn hoàn thành.\nMón bán chạy theo khung giờ (số phần): Trưa (11–14h): Cơm sườn 520, Trà đá 450; Tối (17–20h): Bún thịt nướng 210, Cơm sườn 150.';
+  assert(kiemTraLoi('Ca tối chỉ có khoảng 210 đơn, trong khi ca trưa có khoảng 520 đơn.', rp).some((x) => x.includes('210 là số phần, không phải đơn') && x.includes('520 là số phần')));
+  assertEquals(phanThanhDon('Tháng này có 2400 đơn.', rp), []);
+  assertEquals(phanThanhDon('Bún thịt nướng bán 210 phần buổi tối.', rp), []);
   assertEquals(kiemTraLoi('Dạ Anh, tặng topping cho khách quen.', ref + ' NHÓM "Topping": Trân châu (40 phần, giá 6.000đ).').filter((x) => x.includes('topping')), []);
 });
 

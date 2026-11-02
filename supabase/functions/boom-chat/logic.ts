@@ -1849,6 +1849,19 @@ export function chuaBanSai(answer: string, ref: string): string[] {
   return [...out];
 }
 
+/** Lần 75: gọi số PHẦN món là số ĐƠN (D57: "ca tối khoảng 210 đơn, ca trưa 520 đơn" — 210, 520 là số phần trong "Món bán
+ *  chạy theo khung giờ"). Bắt khi N đơn không có ở dạng "N đơn" trong khối nhưng có dạng phần ("N phần", "Tên N" của dòng khung giờ). */
+export function phanThanhDon(answer: string, ref: string): number[] {
+  const band = /Món bán chạy theo khung giờ[^:]*: ([^\n]+)/.exec(ref)?.[1] ?? '';
+  const out = new Set<number>();
+  for (const m of answer.matchAll(/(\d{2,6}) đơn/g)) {
+    const n = m[1];
+    if (new RegExp(`(?<![\\d.,])${n} đơn`).test(ref)) continue;
+    if (new RegExp(`(?<![\\d.,])${n} phần`).test(ref) || new RegExp(`[^\\d.,]${n}(?=[,;.]|$)`).test(band)) out.add(+n);
+  }
+  return [...out];
+}
+
 /** Lần 73: nói về một KHUNG giờ ("từ 14h đến 17h", "14h–17h") nhưng dùng số tiền của riêng 1 giờ trong khung (D02: "14h đến 17h chỉ
  *  1.956.000đ và 1.833.000đ" là số riêng 14h, 15h). Trả mô tả sửa (rỗng = không lỗi). Khung a–b tính các giờ a … b−1 như nhãn khung. */
 export function soGioChoKhung(answer: string, ref: string): string[] {
@@ -1890,12 +1903,14 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const cb = chuaBanSai(answer, ref);
   const tct = tuanChuaTron(answer, ref);
   const gk = soGioChoKhung(answer, ref);
+  const pd = phanThanhDon(answer, ref);
   return [
     ...(bad.length ? [`các số sau KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')} → bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới`] : []),
     ...(nguoc.length ? [`khuyên giảm giá / tặng / đẩy mạnh món có giá vốn CAO HƠN MỐC (${nguoc.join(', ')}) là khuyên ngược, càng bán càng mỏng lời → với món đó chỉ khuyên tăng giá nhẹ, giảm định lượng / đổi nguyên liệu, hoặc đẩy món lời tốt hơn thay thế`] : []),
     ...(dat.length ? [`đề xuất combo ĐẮT HƠN mua lẻ (${dat.join('; ')}) → giá combo phải rẻ hơn tổng giá lẻ 5–10% (dùng đúng combo tính sẵn nếu có) hoặc bỏ đề xuất đó`] : []),
     ...(/topping/i.test(answer) && /Các nhóm quán đang bán:/.test(ref) && !/topping/i.test(ref) ? ['quán này KHÔNG bán topping (không có trong các nhóm quán đang bán) → bỏ mọi gợi ý tặng / bán topping, thay bằng món rẻ quán đang có'] : []),
     ...(cb.length ? [`gọi là chưa bán nhưng khối số liệu ghi CÓ bán: ${cb.join('; ')} → sửa lại, chỉ món ghi ở "Chưa bán phần nào" mới là chưa bán`] : []),
+    ...(pd.length ? [`gọi số PHẦN MÓN là số ĐƠN (${pd.map((x) => `${x} là số phần, không phải đơn`).join('; ')}) → khối không có số đơn theo ca / khung giờ: nói "phần món" hoặc nói chưa có số đơn theo ca`] : []),
     ...(gk.length ? [`gán số của từng giờ cho cả khung giờ (${gk.join('; ')}) → nói đúng: số khung giờ là tổng các giờ, hoặc ghi rõ "riêng 14h …"`] : []),
     ...(tct ? [`đang so ${tct} ngày đầu tuần này với ${tct} ngày cùng kỳ tuần trước mà chưa nói → thêm ngay câu đầu "tuần này mới có ${tct}/7 ngày, so với ${tct} ngày cùng kỳ tuần trước", giữ nguyên các số`] : []),
     ...(NOI_BO.test(answer) ? ['câu trả lời lộ tên dòng / khối nội bộ (vd "dòng ĐIỂM CẦN CHÚ Ý", "khối ...", "tính sẵn") → nói lý do bằng lời thường cho chủ quán, không nhắc tên dòng'] : []),

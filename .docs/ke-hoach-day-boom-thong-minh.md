@@ -614,6 +614,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Tiêu chí: việc làm 0,90 → 0,98; đúng quán 1,75 → 1,83; tìm vấn đề 1,22 → 1,28; lý lẽ 0,90 → 0,95 — vẫn là 2 tiêu chí thấp nhất.
 - Lỗi lặp lại (4 người chấm): việc làm chung / chỉ 1 việc / thiếu mốc; bỏ sót vấn đề thứ hai có sẵn trong khối; "Vì sao" đoán mò; bịa "mỗi đơn chỉ 1 món" (D22, D27); hiểu "tiền giảm của mã" là hiệu quả (D37, D46); D57 ca tối 17–20h.
 
+### Lần 75 (02/11, đã áp làm lưới an toàn, không chấm điểm): tự kiểm số phần món bị gọi là số đơn
+
+- Sửa: `phanThanhDon` trong `kiemTraLoi` — "N đơn" trong câu trả lời mà khối không có "N đơn" nhưng có N là số phần ("N phần" hoặc "Tên N" của dòng "Món bán chạy theo khung giờ") → hỏi lại.
+- Đo 395 câu cũ: bắt 2 (D57 "ca tối 210 đơn, ca trưa 520 đơn"; D18 "210 đơn"), đều đúng, không bắt nhầm. D57 × 4 lượt mỗi bản: cả hai không mắc → không chấm được; Chủ Quán duyệt áp vì chỉ chạy khi sai thật.
+- Còn lại (câu nói tiếp D57): câu trước ghi ca tối 16–20h nhưng 2/4 lượt viết "17h đến 20h" (nhãn khung "Tối (17–20h)").
+- Áp: `db-fix/boom_l75_ap_dung.sh` (TS 20261102_172212).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
