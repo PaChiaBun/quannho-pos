@@ -3,6 +3,14 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-11-02 — Android: nút "Cập nhật ngay" chưa từng cài được → sửa (commit `690abe6`), gỡ tạm dòng Android 23
+
+- ⚠️ Bò Đen (Sunmi V3, Android 13) bấm "Cập nhật ngay" 1.0.5+21 → 1.0.6+23: tải 100% rồi đứng, không nút, không quay lại được → phải tắt hẳn app. Nhật ký máy: `InstallStart: ... needs to declare permission android.permission.REQUEST_INSTALL_PACKAGES`. Quyền này chưa từng có trong manifest → mọi bản Android tới 1.0.6+23 không tự cập nhật được; từ khi có dòng Android 23 trong `app_versions` (02/11), máy nào bấm "Cập nhật ngay" cũng đứng.
+- ✅ `690abe6`: khai báo quyền; `MainActivity.kt` mở trình cài (FileProvider + quyền đọc tệp); hộp cập nhật đóng sau khi mở trình cài; gói AAB lên CH Play tự bỏ quyền (Google cấm tự cập nhật ngoài CH Play); máy cài từ CH Play không bị hỏi (bản CH Play khác chữ ký với APK web). Thử máy ảo Android 14: tới bảng "cho phép cài từ nguồn này", huỷ thì app không đứng.
+- ✅ Bò Đen: cài 1.0.6+23 chính thức qua cáp (giữ dữ liệu, còn đăng nhập).
+- 🔲 Chủ Quán chạy `db-fix/go_tam_android_106b23.sql` (gỡ tạm dòng Android 23; trong tệp có lệnh hoàn tác).
+- ➡️ Phát hành 1.0.6+24 có bản sửa; máy Android bản ≤23 cập nhật tay một lần (tải ở quannho.lpm.vn/download; máy cài từ CH Play thì qua CH Play). Chỉ ghi lại dòng Android khi máy quán đã lên ≥24. Chưa thử bước cài sau khi bật "Cho phép từ nguồn này", máy cài từ CH Play, và trường hợp bắt buộc cập nhật.
+
 ## 2026-11-02 — Phát hành 1.0.6 (build 23): APK + web /pos + Windows lên web (Chủ Quán "Oke duyệt thực hiện đi")
 
 - ✅ Commit `4fcade8` (nhánh `feature/ai-bum-ui`, đã push): `pubspec.yaml` 1.0.6+22 → **1.0.6+23**. Gồm Boom lần 54–59, chính là app gửi số kỳ trước chia nhỏ cho Boom (doanh thu kỳ trước theo giờ / thứ / nhóm món + món đổi nhiều nhất; `boom_read_only_data_service.dart`, `boom_chat_provider.dart`). Máy chủ boom-chat đã áp lần 59 từ trước (`db-fix/boom_l59_ap_dung.sh`, TS 20261102_013340). Build từ worktree sạch `quan_nho_ux` (detached ở `4fcade8`).
