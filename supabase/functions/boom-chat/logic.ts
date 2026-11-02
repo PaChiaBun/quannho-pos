@@ -1835,6 +1835,29 @@ export function chuaBanSai(answer: string, ref: string): string[] {
   return [...out];
 }
 
+/** Lần 73: nói về một KHUNG giờ ("từ 14h đến 17h", "14h–17h") nhưng dùng số tiền của riêng 1 giờ trong khung (D02: "14h đến 17h chỉ
+ *  1.956.000đ và 1.833.000đ" là số riêng 14h, 15h). Trả mô tả sửa (rỗng = không lỗi). Khung a–b tính các giờ a … b−1 như nhãn khung. */
+export function soGioChoKhung(answer: string, ref: string): string[] {
+  const line = /Doanh thu theo giờ trong kỳ[^:]*: ([^\n]+)/.exec(ref)?.[1] ?? '';
+  const hr = new Map<number, number>();
+  for (const m of line.matchAll(/(\d{1,2})h (\d{1,3}(?:\.\d{3})+)đ/g)) hr.set(+m[1], +m[2].replace(/\./g, ''));
+  if (!hr.size) return [];
+  const out = new Set<string>();
+  for (const clause of answer.split(/(?<!\d)\.(?!\d)|[;\n]/)) {
+    const r = /(?:từ )?(\d{1,2}) ?h? ?(?:–|-|đến|tới) ?(\d{1,2}) ?h/.exec(clause);
+    if (!r) continue;
+    const a = +r[1], b = +r[2];
+    if (!(b - a >= 2 && b <= 24)) continue;
+    const ps = [...clause.matchAll(/(\d{1,3}(?:\.\d{3})+)đ/g)].map((m) => +m[1].replace(/\./g, ''));
+    const le = [...hr].filter(([h, v]) => h >= a && h < b && ps.includes(v));
+    if (!le.length) continue;
+    const sum = [...hr].filter(([h]) => h >= a && h < b).reduce((t, [, v]) => t + v, 0);
+    if (ps.includes(sum)) continue;
+    out.add(`${le.map(([h, v]) => `${vnd(v)} là riêng ${h}h`).join(', ')}; cả khung ${a}h–${b}h là ${vnd(sum)}`);
+  }
+  return [...out];
+}
+
 /** Lần 72: so "Tuần này" (mới vài ngày) với tuần trước mà câu trả lời không nói tuần chưa trọn (D33, D38 — lần 71 dặn trong
  *  dòng số thì GPT không chép). Trả số ngày đã có (0 = không lỗi). */
 export function tuanChuaTron(answer: string, ref: string): number {
@@ -1852,12 +1875,14 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const dat = comboDat(answer, ref);
   const cb = chuaBanSai(answer, ref);
   const tct = tuanChuaTron(answer, ref);
+  const gk = soGioChoKhung(answer, ref);
   return [
     ...(bad.length ? [`các số sau KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')} → bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới`] : []),
     ...(nguoc.length ? [`khuyên giảm giá / tặng / đẩy mạnh món có giá vốn CAO HƠN MỐC (${nguoc.join(', ')}) là khuyên ngược, càng bán càng mỏng lời → với món đó chỉ khuyên tăng giá nhẹ, giảm định lượng / đổi nguyên liệu, hoặc đẩy món lời tốt hơn thay thế`] : []),
     ...(dat.length ? [`đề xuất combo ĐẮT HƠN mua lẻ (${dat.join('; ')}) → giá combo phải rẻ hơn tổng giá lẻ 5–10% (dùng đúng combo tính sẵn nếu có) hoặc bỏ đề xuất đó`] : []),
     ...(/topping/i.test(answer) && /Các nhóm quán đang bán:/.test(ref) && !/topping/i.test(ref) ? ['quán này KHÔNG bán topping (không có trong các nhóm quán đang bán) → bỏ mọi gợi ý tặng / bán topping, thay bằng món rẻ quán đang có'] : []),
     ...(cb.length ? [`gọi là chưa bán nhưng khối số liệu ghi CÓ bán: ${cb.join('; ')} → sửa lại, chỉ món ghi ở "Chưa bán phần nào" mới là chưa bán`] : []),
+    ...(gk.length ? [`gán số của từng giờ cho cả khung giờ (${gk.join('; ')}) → nói đúng: số khung giờ là tổng các giờ, hoặc ghi rõ "riêng 14h …"`] : []),
     ...(tct ? [`đang so ${tct} ngày đầu tuần này với ${tct} ngày cùng kỳ tuần trước mà chưa nói → thêm ngay câu đầu "tuần này mới có ${tct}/7 ngày, so với ${tct} ngày cùng kỳ tuần trước", giữ nguyên các số`] : []),
     ...(NOI_BO.test(answer) ? ['câu trả lời lộ tên dòng / khối nội bộ (vd "dòng ĐIỂM CẦN CHÚ Ý", "khối ...", "tính sẵn") → nói lý do bằng lời thường cho chủ quán, không nhắc tên dòng'] : []),
   ];

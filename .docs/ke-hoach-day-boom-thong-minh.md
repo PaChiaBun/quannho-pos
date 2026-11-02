@@ -593,6 +593,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Bài học (so lần 71): lời dặn trong dòng số không được chép; tự kiểm + hỏi lại thì được (như lần 64).
 - Áp: `db-fix/boom_l72_ap_dung.sh` (TS 20261102_165757). Không cần bản app mới.
 
+### Lần 73 (02/11, Claude chấm kín, đã áp): tự kiểm gán số một giờ cho cả khung giờ
+
+- Sửa: `soGioChoKhung` trong `kiemTraLoi` — vế câu có khung "a–b h" / "từ a h đến b h" (≥ 2 giờ) và số tiền đúng bằng doanh thu riêng 1 giờ trong khung (đọc dòng "Doanh thu theo giờ trong kỳ"), không có tổng khung → hỏi lại kèm "1.956.000đ là riêng 14h …; cả khung 14h–17h là 6.723.000đ". Khung a–b tính giờ a … b−1. Tách vế câu không cắt ở dấu chấm giữa hai chữ số (số tiền).
+- Đo 275 câu cũ: bắt 9 (đều D02, đều đúng). D02 × 4 lượt: bản cũ sai 4/4, bản mới ghi đúng tổng 4/4. Chấm kín 4 cặp cạnh bản lần 72: 7,75 → **8,5/16**; dùng số 1,0 → 2,0; tìm vấn đề 1,0 → 2,0; đúng quán 1,0 → 0,5, việc làm 0,5 → 0,25 (combo cà phê + bánh mì sáng cho buổi chiều — lỗi có sẵn, 5/8 câu cả hai bản).
+- Còn lại cho lần sau: D02 đẩy món buổi sáng cho buổi chiều dù đã có dòng "Món bán chạy theo khung giờ".
+- Áp: `db-fix/boom_l73_ap_dung.sh` (TS 20261102_170408). Không cần bản app mới.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

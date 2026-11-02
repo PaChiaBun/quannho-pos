@@ -24,6 +24,7 @@ import {
   kiemTraLoi,
   chuaBanSai,
   tuanChuaTron,
+  soGioChoKhung,
   noteKiem,
   soLa,
   clipAnswer,
@@ -951,6 +952,11 @@ Deno.test('Lần 54: combo đắt hơn mua lẻ, topping ở quán không bán t
   assert(kiemTraLoi('Dạ Anh, tuần này giảm 4,7% so tuần trước.', rw).some((x) => x.includes('tuần này mới có 3/7 ngày')));
   assertEquals(tuanChuaTron('Dạ Anh, tuần này mới có 3/7 ngày, giảm 4,7% so 3 ngày cùng kỳ tuần trước.', rw), 0);
   assertEquals(tuanChuaTron('Dạ Anh, tháng này giảm 4,7%.', rw), 0);
+  // lần 73: số 1 giờ gán cho cả khung giờ → hỏi lại kèm tổng đúng; nói đúng tổng / riêng từng giờ → qua
+  const rh = 'Doanh thu theo giờ trong kỳ (chỉ giờ có bán): 13h 6.112.000đ; 14h 1.956.000đ; 15h 1.833.000đ; 16h 2.934.000đ; 17h 3.667.000đ. Đông nhất: 7h';
+  assert(kiemTraLoi('Dạ Anh, doanh thu từ 14h đến 17h chỉ đạt 1.956.000đ và 1.833.000đ.', rh).some((x) => x.includes('1.956.000đ là riêng 14h, 1.833.000đ là riêng 15h; cả khung 14h–17h là 6.723.000đ')));
+  assertEquals(soGioChoKhung('Dạ Anh, khung 14h–17h được 6.723.000đ.', rh), []);
+  assertEquals(soGioChoKhung('Dạ Anh, 14h chỉ 1.956.000đ, 15h 1.833.000đ.', rh), []);
   assertEquals(kiemTraLoi('Dạ Anh, tặng topping cho khách quen.', ref + ' NHÓM "Topping": Trân châu (40 phần, giá 6.000đ).').filter((x) => x.includes('topping')), []);
 });
 
