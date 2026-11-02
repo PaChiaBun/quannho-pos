@@ -3,6 +3,15 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-11-03 — Kiểm Sunmi Bò Đen đợt 5 (bản 24, chỉ xem): Bán hàng, Bàn, Phiếu bếp, Nhân viên, Cài đặt, Boom — 3 lỗi F1–F3 → sửa hết theo ⭐ (commit `8c16f55`)
+
+- ✅ Máy: Bán hàng và Bàn cuộn 2% khung giật, hàng cuối không bị nút Boom che; nhật ký app không lỗi; app ~195 MB / máy 2,7 GB. Mã kết nối nhân viên: người vào bằng mã nhận vai trò `unassigned` tới khi chủ quán gán (`join_store_by_code_v4`, fix08) — không lỗ hổng.
+- ✅ F1 Bán hàng: tên món dài cắt mất cỡ món ("Cá Viên Chiên Sốt Tiêu Đen [ …" — phần nhỏ / phần lớn chỉ khác giá; "Trà Sữa Hong Kong Truyền T…") → `splitNameVariant` (`string_utils.dart`) tách phần trong ngoặc cuối tên thành nhãn `_VariantTag` cạnh giá; tên chính vẫn 2 dòng. Màn gọi món ở Bàn hiện tên đủ dòng nên không đổi.
+- ✅ F2 Phiếu bếp: đang mở ngăn kéo "Bếp hôm nay", bấm Quay lại là văng về Trang chủ (bếp mất màn phiếu). Gốc: `PopScope(canPop: false)` của `MainShell` (sửa A2) được Flutter xét trước ngăn kéo → `_exitGuard` chuyển tab. `closeInnerPopup` (main.dart): route còn lịch sử nội bộ (`willHandlePopInternally`) thì `Navigator.pop` đóng ngăn kéo, lần sau mới về Trang chủ. Ngăn kéo duy nhất trong app là thống kê bếp.
+- ✅ F3 Bán hàng › "Đơn gần đây" chỉ có đơn hôm nay — sáng sớm trống dù bill tối qua cách 6 giờ → hôm nay chưa có đơn thì chủ / quản lý có nút "Xem bill hôm qua (Báo cáo › Hóa đơn)": `reportBillsDayProvider` (report_screen.dart) mở Báo cáo ở thẻ Hóa đơn, `EinvoiceReportTab(initialDay:)` ở ngày hôm qua.
+- ✅ Test: `test/screens/kiem_sunmi_dot5_test.dart` (3 ca: F1 tách tên, F2 Quay lại với ngăn kéo — giả mã cũ thì hỏng, F3 thẻ Hóa đơn mở ở hôm qua). Toàn bộ test/core, features/ai_assistant, modules, screens, docs, widget_test: 1080 ca đạt. Bài hướng dẫn rà + đóng dấu: ban-hang, bao-cao, bep, luong (main.dart đổi, nội dung lương không đổi); xuất lại `assets/boom_help/huong_dan.json`.
+- ⚠️ Không làm (số liệu quán): ca quản lý Dương vẫn "Đang làm ca" lúc 6 giờ 15 (C1 đợt 2); tên bàn lệch kiểu ("bàn 13", "Mang Về 4" so với "Bàn 1", "MV 1"). Không kiểm được trên máy quán: giỏ hàng, thanh toán, gửi bếp, hỏi Boom (cần quán thử). Chưa thử bản sửa trên máy thật.
+
 ## 2026-11-03 — Kiểm Sunmi Bò Đen đợt 4 (bản 24, chỉ xem): 4 lỗi nhỏ E1–E4 → sửa hết theo ⭐ (commit `893c07f`)
 
 - ✅ E1 Kho CN › Nguyên liệu: món không theo dõi mà tồn âm (vd "Cot Tra Den") ghi "Tồn: Không theo dõi" ngay cạnh nhãn "Không theo dõi" → `_IngredientCard` bỏ dòng "Tồn:" khi nó trùng nhãn; món không theo dõi còn tồn dương vẫn hiện số.
