@@ -58,6 +58,9 @@ Thiết kế chi tiết: `.docs/thiet-ke-boom-may-chu-lay-so.md`.
 
 ## Chặng 3 — Hiểu quán và nhớ lâu · ~2 tuần
 
+> **03/11 — bước đo 3.1.0 không đạt** (`.docs/thiet-ke-boom-ho-so-quan.md`): dòng hồ sơ quán 12,50 → 12,34 (−0,16 ± 0,14, 180 cặp). Chưa làm DB.
+> Ba lần thêm nội dung vào lời nhắc (2.1, 2.3, 3.1.0) đều không có lợi đo được với gpt-4o-mini; chỉ đổi cấu trúc (chặng 1, 2.2) có lợi.
+
 | # | Việc | Đầu ra | Đo / duyệt |
 |---|---|---|---|
 | 3.1 | **Hồ sơ quán**: tự suy (loại quán, giờ mở thật, ngày nghỉ, giá trung bình, mùa vụ riêng) + chủ quán khai một lần (mục tiêu: tăng khách / tăng lãi / đỡ việc; khu vực: chợ / văn phòng / trường / dân cư; khách chính) — Boom hỏi khi phù hợp, không hỏi dồn | Bảng `boom_store_profile` + 2–3 dòng đầu khối số | Câu "20/11 nên làm gì" ở quán gần chợ không còn nhắm giáo viên · **duyệt migration** |
