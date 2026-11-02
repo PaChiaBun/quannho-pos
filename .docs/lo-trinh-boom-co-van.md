@@ -56,6 +56,23 @@ Thiết kế chi tiết: `.docs/thiet-ke-boom-may-chu-lay-so.md`.
   chấm 2 lần: 12,28 và 12,38) → thay đổi nhỏ không đo ra được; cần nhiều lượt hơn hoặc thay đổi lớn hơn
   (`ket_qua/c23_*.json`, `c23b_*.json`).
 
+## Thử mô hình mới (03/11) — LỢI LỚN NHẤT TỪ TRƯỚC TỚI NAY
+
+Sau 3 lần thêm nội dung không ăn thua, thử thay mô hình (bộ đề 60 câu, chấm kín Claude, so gpt-4o-mini cùng code):
+
+| Mô hình | Chênh / 16 (± sai số) | Câu hơn / kém | Giá vào / ra (USD / 1M token) | Thời gian / câu |
+|---|---|---|---|---|
+| gpt-4o-mini (đang dùng) | — | — | 0,15 / 0,60 | ~3 giây |
+| gpt-6-luna (mặc định) | +3,23 ± 0,24 | 58 / 0 | 0,10 / 0,50 | ~8,4 giây (có câu 13,9 > mức chờ 12 giây) |
+| gpt-6-luna, `reasoning_effort: low` | +3,40 ± 0,30 | 54 / 2 | như trên | ~5,7 giây |
+| **gpt-6-luna, `reasoning_effort: none`** | **+3,33 ± 0,26** | **56 / 1** | **như trên** | **~3,4 giây** |
+| gpt-5.6-luna | +3,12 ± 0,25 | 56 / 3 | 0,20 / 1,20 | ~9 giây |
+| gpt-6.1-terra | +3,10 ± 0,26 | 55 / 1 | 1,00 / 5,00 | ~7 giây |
+
+→ **gpt-6-luna, reasoning none**: điểm ~11,6 → ~14,9 / 16, RẺ hơn gpt-4o-mini, nhanh ngang. Mức tăng gấp ~10 lần cả 100 lần dạy cộng lại.
+Áp: đổi `BOOM_OPENAI_MODEL` trên máy chủ + gọi API bằng `max_completion_tokens`, `reasoning_effort` (mô hình mới không nhận
+`max_tokens`, `temperature`) + giá trong `PRICES`. Kết quả: `cham_tu_van/ket_qua/mo_hinh_moi_claude_20261103.json`.
+
 ## Chặng 3 — Hiểu quán và nhớ lâu · ~2 tuần
 
 > **03/11 — bước đo 3.1.0 không đạt** (`.docs/thiet-ke-boom-ho-so-quan.md`): dòng hồ sơ quán 12,50 → 12,34 (−0,16 ± 0,14, 180 cặp). Chưa làm DB.

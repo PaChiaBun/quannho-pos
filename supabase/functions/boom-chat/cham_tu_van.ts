@@ -3,7 +3,7 @@
 // theo thang 8 tiêu chí × 0–2 điểm và đối chiếu vấn đề cài sẵn trong số liệu quán mẫu. Không ghi gì vào database.
 // Khoá OpenAI CHỈ đọc từ biến môi trường của lần chạy (người chạy tự dán) — không in, không lưu.
 //   OPENAI_API_KEY=… deno run --allow-read --allow-write --allow-net=api.openai.com \
-//     --allow-env=OPENAI_API_KEY,BOOM_OPENAI_MODEL,CHAM_MODEL,CHAM_MAX,CHAM_DRY cham_tu_van.ts [de.json] [ket_qua.json]
+//     --allow-env=OPENAI_API_KEY,BOOM_OPENAI_MODEL,BOOM_REASONING,CHAM_MODEL,CHAM_MAX,CHAM_DRY cham_tu_van.ts [de.json] [ket_qua.json]
 // Chạy thử không gọi GPT (không cần khoá): CHAM_DRY=1 … — in tin nhắn của 2 câu đầu và ước lượng token / chi phí.
 // NGƯỜI CHẤM (29/10, Chủ Quán): mặc định CLAUDE chấm — script chỉ gọi gpt-4o-mini sinh câu trả lời của Boom (đúng mô hình
 // Boom thật) rồi ghi kèm số liệu / vấn đề / ý chính để Claude chấm theo thang 8 tiêu chí; tổng hợp: cham_tu_van/tong_hop.py.
@@ -55,7 +55,8 @@ async function chat(model: string, messages: { role: string; content: string }[]
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, temperature: model === MODEL ? 0.2 : 0, max_tokens: maxTokens, messages,
+    // mô hình đời mới (gpt-5.x, gpt-6.x, o…) không nhận max_tokens / temperature; số token ra gồm cả phần suy nghĩ (03/11)
+    body: JSON.stringify({ model, ...(/^gpt-(?:3|4)/.test(model) ? { temperature: model === MODEL ? 0.2 : 0, max_tokens: maxTokens } : { max_completion_tokens: Math.max(4000, maxTokens * 4), ...(Deno.env.get('BOOM_REASONING') ? { reasoning_effort: Deno.env.get('BOOM_REASONING') } : {}) }), messages,
       ...(json ? { response_format: { type: 'json_object' } } : {}) }),
   });
   if (r.status === 401 || r.status === 429) { console.error(`❌ OpenAI ${r.status} (khoá sai / hết hạn mức) — dừng`); Deno.exit(1); }
