@@ -284,6 +284,15 @@ final _kSidebarFooterStyle = GoogleFonts.plusJakartaSans(
   color: const Color(0xFF9E9E9E),
 );
 
+/// Đang mở ngăn kéo trong màn gốc (vd "Bếp hôm nay" ở Phiếu bếp) thì đóng nó, trả true. PopScope chặn
+/// quay lại của màn gốc làm Flutter không tự đóng ngăn kéo → trước bấm Quay lại là văng về Trang chủ.
+bool closeInnerPopup(BuildContext context) {
+  final route = ModalRoute.of(context);
+  if (route == null || !route.willHandlePopInternally) return false;
+  Navigator.of(context).pop();
+  return true;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN SHELL — 4 slot tuỳ chỉnh + Boom AI ở giữa
 // ─────────────────────────────────────────────────────────────────────────────
@@ -564,7 +573,7 @@ class _MainShellState extends ConsumerState<MainShell>
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
+        if (didPop || closeInnerPopup(context)) return;
         if (ref.read(navTabProvider) != NavTab.home) {
           _setTab(NavTab.home);
           return;

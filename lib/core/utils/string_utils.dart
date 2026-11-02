@@ -77,3 +77,15 @@ extension StringDiacriticsExtension on String {
 /// "Thanh toán bàn bàn 13" → bỏ chữ lặp khi đọc (dòng cũ cũng gọn, không đụng hàm thanh toán).
 String? tidyFinanceDescription(String? s) =>
     s?.replaceFirst(RegExp(r'^Thanh toán bàn (?=bàn\s)', caseSensitive: false), 'Thanh toán ');
+
+final _nameVariantRe = RegExp(r'^(.*\S)\s*(?:\[\s*([^\[\]]*?)\s*\]|\(\s*([^()]*?)\s*\))$');
+
+/// Thẻ món Bán hàng chỉ đủ 2 dòng tên: tách phần trong ngoặc ở cuối ("Cá Viên Chiên Sốt Me [ phần nhỏ ]",
+/// "Trà Sữa … (Đá/Nóng)") để hiện riêng cạnh giá — trước bị cắt mất, hai cỡ món chỉ còn khác nhau ở giá.
+({String base, String? variant}) splitNameVariant(String name) {
+  final m = _nameVariantRe.firstMatch(name.trim());
+  final variant = m == null ? null : (m[2] ?? m[3]);
+  return variant == null || variant.isEmpty
+      ? (base: name, variant: null)
+      : (base: m![1]!, variant: variant);
+}

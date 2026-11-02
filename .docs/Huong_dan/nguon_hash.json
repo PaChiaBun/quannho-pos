@@ -8,7 +8,7 @@
       "lib/modules/pos/repository/pos_repository.dart": "e5127ad3b08bbc88",
       "lib/modules/pos/screens/checkout_sheet.dart": "84634ace48b77e53",
       "lib/screens/finance_screen.dart": "d246d10c8abd6126",
-      "lib/screens/pos_screen.dart": "53a801a06ddfcea0",
+      "lib/screens/pos_screen.dart": "43d195aab6a0eace",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "bao-cao-chuoi.md": {
@@ -24,8 +24,8 @@
     "bao-cao.md": {
       "lib/core/repositories/dashboard_repository.dart": "c9a9e7a726ff2c63",
       "lib/screens/bill_lookup_section.dart": "138788fb15169c20",
-      "lib/screens/einvoice_report_tab.dart": "747df77118feb5ef",
-      "lib/screens/report_screen.dart": "5617b83588b10c8b"
+      "lib/screens/einvoice_report_tab.dart": "edfadf318db1980b",
+      "lib/screens/report_screen.dart": "b20b3d88806deae7"
     },
     "bep.md": {
       "lib/core/repositories/kitchen_repository.dart": "6d24bef325dde24b",
@@ -86,7 +86,7 @@
     },
     "luong.md": {
       ".docs/Ai_Boom/cac-module/quy-chuan-cham-cong-tinh-luong-chuan.md": "ac64501ae10b6158",
-      "lib/main.dart": "0ef3e1043c3282b0",
+      "lib/main.dart": "ae65d1d09d18279b",
       "lib/modules/tinhluong/repository/tinhluong_repository.dart": "e4ce4880dea03d47",
       "lib/modules/tinhluong/screens/dispute_sheet.dart": "8f7e1c48fec1a30a",
       "lib/modules/tinhluong/screens/my_payslip_screen.dart": "3391a374782da5cd",

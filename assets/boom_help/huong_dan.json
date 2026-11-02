@@ -1,6 +1,6 @@
 {
- "version": 202611022255,
- "hash": "14e930f44d644b3ea57c2a22a1865cd0914aa23a40f8e4ca8171903a809b8ad0",
+ "version": 202611022333,
+ "hash": "1f82827f877d60a3bb7503bd06c00f16b783f277807a1e89eb01380dacc62ec4",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -24,7 +24,7 @@
    "module_name": "Bán hàng",
    "section": "",
    "title": "Màn hình gồm những gì",
-   "text": "• Thanh trên cùng: chữ \"Bán hàng\" + giờ, ngày. Bên phải lần lượt:\n  • Nút đồng hồ quay ngược có chấm đỏ (gợi ý khi giữ: \"Đối soát thanh toán bị gián đoạn\") — chỉ hiện khi máy có thanh toán dang dở cần đối soát; xem mục Đối soát.\n  • Nhãn \"Đơn QR (n)\" — chỉ hiện khi có đơn khách tự gọi qua QR. Màu cam: có đơn mới chờ; xanh: đang xử lý; xám kèm biểu tượng mất sóng: mất kết nối hàng đợi QR.\n  • Nút dấu +: thêm nhanh món mới vào thực đơn — chỉ Chủ quán và Quản lý thấy.\n  • Nút giỏ hàng (hiện số món).\n  • Nút thùng rác: xoá giỏ (ẩn khi giỏ trống; vị trí các nút không đổi khi thêm món).\n• Dải đỏ khoá QR (chỉ khi mã QR của quán bị khoá do bị quét phá) — xem hướng dẫn QR Gọi Món.\n• Ô tìm kiếm (chữ mờ \"Tìm món, mã SKU...\"): tìm theo tên món hoặc mã SKU, không cần gõ dấu. Cuộn xuống danh sách món thì ô tìm kiếm và nút \"Đơn gần đây\" tự gập lại cho rộng chỗ; cuộn lên thì hiện lại.\n• Nút \"Đơn gần đây\"; bên phải có nhãn \"Bếp sẵn sàng\" khi quán bật module Bếp.\n• Hàng danh mục: \"Tất cả\" và các danh mục của quán. Ở \"Tất cả\", món được nhóm theo danh mục.\n• Lưới món: mỗi thẻ có tên, giá, số tồn (nếu có theo dõi tồn)."
+   "text": "• Thanh trên cùng: chữ \"Bán hàng\" + giờ, ngày. Bên phải lần lượt:\n  • Nút đồng hồ quay ngược có chấm đỏ (gợi ý khi giữ: \"Đối soát thanh toán bị gián đoạn\") — chỉ hiện khi máy có thanh toán dang dở cần đối soát; xem mục Đối soát.\n  • Nhãn \"Đơn QR (n)\" — chỉ hiện khi có đơn khách tự gọi qua QR. Màu cam: có đơn mới chờ; xanh: đang xử lý; xám kèm biểu tượng mất sóng: mất kết nối hàng đợi QR.\n  • Nút dấu +: thêm nhanh món mới vào thực đơn — chỉ Chủ quán và Quản lý thấy.\n  • Nút giỏ hàng (hiện số món).\n  • Nút thùng rác: xoá giỏ (ẩn khi giỏ trống; vị trí các nút không đổi khi thêm món).\n• Dải đỏ khoá QR (chỉ khi mã QR của quán bị khoá do bị quét phá) — xem hướng dẫn QR Gọi Món.\n• Ô tìm kiếm (chữ mờ \"Tìm món, mã SKU...\"): tìm theo tên món hoặc mã SKU, không cần gõ dấu. Cuộn xuống danh sách món thì ô tìm kiếm và nút \"Đơn gần đây\" tự gập lại cho rộng chỗ; cuộn lên thì hiện lại.\n• Nút \"Đơn gần đây\"; bên phải có nhãn \"Bếp sẵn sàng\" khi quán bật module Bếp.\n• Hàng danh mục: \"Tất cả\" và các danh mục của quán. Ở \"Tất cả\", món được nhóm theo danh mục.\n• Lưới món: mỗi thẻ có tên, giá, số tồn (nếu có theo dõi tồn). Phần trong ngoặc ở cuối tên (vd \"[ phần nhỏ ]\", \"(Đá/Nóng)\") hiện thành nhãn nhỏ cạnh giá, để tên dài không che mất cỡ món."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-goi-mon",
@@ -80,7 +80,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Xem đơn gần đây",
-   "text": "1. Bấm \"Đơn gần đây\" dưới ô tìm kiếm.\n2. Danh sách đơn trong hôm nay của quán: giờ, số đơn, phương thức (\"💵 Tiền mặt\", \"🏦 Chuyển khoản\", \"💳 Thẻ\"), tổng tiền. Chạm một đơn để xem món.\n3. Chủ quán / Quản lý thấy thêm \"tổng hôm nay\" ở đầu danh sách.\n\nChỉ xem được, không in lại ở đây. Đơn đã thanh toán hiện không huỷ / hoàn tiền được ở bất kỳ đâu trong app — nếu thu nhầm, báo Chủ quán xử lý.\nMuốn tìm hoặc in lại bill cũ: vào Báo cáo → tab \"Hóa đơn\" → \"Tra cứu & in lại bill\". Cần module Báo cáo (Phục vụ mặc định không có nên không vào được) và quyền \"Xem lịch sử đơn\". Ai có module Bán hàng thì có sẵn quyền này; Chủ quán muốn chặn thì tắt \"Xem lịch sử đơn\" trong Hành động nhạy cảm (khi đó người bấm in lại thấy \"Bạn không có quyền in lại bill\"). Màn này tải đủ bill của kỳ đang chọn (tối đa 20.000 bill). Bill in lại không còn in các món QR đã bị huỷ.\nNgay sau khi thanh toán thì in lại bằng nút \"In hoá đơn\" trên màn \"Thanh toán thành công!\"."
+   "text": "1. Bấm \"Đơn gần đây\" dưới ô tìm kiếm.\n2. Danh sách đơn trong hôm nay của quán: giờ, số đơn, phương thức (\"💵 Tiền mặt\", \"🏦 Chuyển khoản\", \"💳 Thẻ\"), tổng tiền. Chạm một đơn để xem món.\n3. Chủ quán / Quản lý thấy thêm \"tổng hôm nay\" ở đầu danh sách.\n4. Hôm nay chưa có đơn (vd sáng sớm, khách hỏi bill tối qua): Chủ quán / Quản lý có nút \"Xem bill hôm qua (Báo cáo › Hóa đơn)\" — mở thẳng tab Hóa đơn ở ngày hôm qua.\n\nChỉ xem được, không in lại ở đây. Đơn đã thanh toán hiện không huỷ / hoàn tiền được ở bất kỳ đâu trong app — nếu thu nhầm, báo Chủ quán xử lý.\nMuốn tìm hoặc in lại bill cũ: vào Báo cáo → tab \"Hóa đơn\" → \"Tra cứu & in lại bill\". Cần module Báo cáo (Phục vụ mặc định không có nên không vào được) và quyền \"Xem lịch sử đơn\". Ai có module Bán hàng thì có sẵn quyền này; Chủ quán muốn chặn thì tắt \"Xem lịch sử đơn\" trong Hành động nhạy cảm (khi đó người bấm in lại thấy \"Bạn không có quyền in lại bill\"). Màn này tải đủ bill của kỳ đang chọn (tối đa 20.000 bill). Bill in lại không còn in các món QR đã bị huỷ.\nNgay sau khi thanh toán thì in lại bằng nút \"In hoá đơn\" trên màn \"Thanh toán thành công!\"."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-them-nhanh-mon-moi-vao-thuc-don",
@@ -456,7 +456,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Hóa đơn",
-   "text": "• Kỳ \"Hôm nay\" có thanh ‹ › để lùi về hôm qua hoặc chạm vào ngày để chọn (sau 0 giờ vẫn in lại được bill tối qua).\n• \"Tra cứu & in lại bill\": tìm bill đã thanh toán theo số đơn, tên bàn (không cần dấu) hoặc số tiền; chạm để xem chi tiết; nút máy in để in lại (bill có dòng \"BẢN IN LẠI\", ghi nhật ký người in). Màn này tải đủ bill trong kỳ đang chọn (tối đa 20.000 bill); không thấy bill thì chọn đúng ngày của bill."
+   "text": "• Kỳ \"Hôm nay\" có thanh ‹ › để lùi về hôm qua hoặc chạm vào ngày để chọn (sau 0 giờ vẫn in lại được bill tối qua). Từ Bán hàng › \"Đơn gần đây\" (hôm nay chưa có đơn), nút \"Xem bill hôm qua\" mở thẳng tab này ở ngày hôm qua.\n• \"Tra cứu & in lại bill\": tìm bill đã thanh toán theo số đơn, tên bàn (không cần dấu) hoặc số tiền; chạm để xem chi tiết; nút máy in để in lại (bill có dòng \"BẢN IN LẠI\", ghi nhật ký người in). Màn này tải đủ bill trong kỳ đang chọn (tối đa 20.000 bill); không thấy bill thì chọn đúng ngày của bill."
   },
   {
    "id": "bao-cao#loi-chua-co-giao-dich-hom-nay-chua-co-doanh-thu-ky-nay",
@@ -608,7 +608,7 @@
    "module_name": "Bếp",
    "section": "Các việc thường làm",
    "title": "8. Thống kê hôm nay",
-   "text": "• Nút \"Thống kê hôm nay\" → \"Bếp hôm nay\": Phiếu hôm nay, Đang xử lý, Đã hoàn thành, Huỷ bàn/bill, TB thời gian chờ, Nhanh nhất, Chậm nhất, Tỷ lệ hoàn thành."
+   "text": "• Nút \"Thống kê hôm nay\" → \"Bếp hôm nay\": Phiếu hôm nay, Đang xử lý, Đã hoàn thành, Huỷ bàn/bill, TB thời gian chờ, Nhanh nhất, Chậm nhất, Tỷ lệ hoàn thành. Bấm nút quay lại của máy Android để đóng bảng này — vẫn ở lại màn Phiếu bếp."
   },
   {
    "id": "bep#loi-gian-doan-ket-noi-may-chu-bep",

@@ -33,6 +33,7 @@ import '../modules/qr_order/widgets/qr_order_review_sheet.dart';
 import '../modules/qr_order/widgets/qr_counter_queue_sheet.dart';
 import '../core/utils/stagger.dart';
 import '../core/utils/server_time.dart';
+import 'report_screen.dart' show reportBillsDayProvider;
 
 // Màu local
 const _kNavy = Color(0xFF1E1C5E);
@@ -1734,6 +1735,7 @@ class _ProductCard extends ConsumerWidget {
     final catIcon = style?.icon ?? Icons.fastfood_rounded;
 
     final isInCart = inCartQty > 0;
+    final nameParts = splitNameVariant(product.name);
 
     return Opacity(
       // Mờ 50% khi hết hàng — vẫn hiện để biết món tồn tại nhưng disable
@@ -1875,7 +1877,7 @@ class _ProductCard extends ConsumerWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                product.name,
+                                nameParts.base,
                                 style: TextStyle(
                                   fontSize: nameSize + 4,
                                   fontWeight: FontWeight.w900,
@@ -1889,14 +1891,27 @@ class _ProductCard extends ConsumerWidget {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: Text(
-                                      fmtVnd(product.sellPrice.toInt()),
-                                      style: TextStyle(
-                                        fontSize: priceSize + 3,
-                                        fontWeight: FontWeight.w900,
-                                        color: const Color(0xFFFFD54F),
-                                        letterSpacing: -0.3,
-                                      ),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          fmtVnd(product.sellPrice.toInt()),
+                                          style: TextStyle(
+                                            fontSize: priceSize + 3,
+                                            fontWeight: FontWeight.w900,
+                                            color: const Color(0xFFFFD54F),
+                                            letterSpacing: -0.3,
+                                          ),
+                                        ),
+                                        if (nameParts.variant != null) ...[
+                                          const SizedBox(width: 6),
+                                          Flexible(
+                                            child: _VariantTag(
+                                              nameParts.variant!,
+                                              fontSize: priceSize - 2,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ),
                                   if (isPaused)
@@ -1973,7 +1988,7 @@ class _ProductCard extends ConsumerWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                product.name,
+                                nameParts.base,
                                 style: TextStyle(
                                   fontSize: nameSize + 2,
                                   fontWeight: FontWeight.w900,
@@ -1987,16 +2002,29 @@ class _ProductCard extends ConsumerWidget {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: Text(
-                                      fmtVnd(product.sellPrice.toInt()),
-                                      style: TextStyle(
-                                        fontSize: priceSize + 1,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.92,
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          fmtVnd(product.sellPrice.toInt()),
+                                          style: TextStyle(
+                                            fontSize: priceSize + 1,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.92,
+                                            ),
+                                            letterSpacing: -0.3,
+                                          ),
                                         ),
-                                        letterSpacing: -0.3,
-                                      ),
+                                        if (nameParts.variant != null) ...[
+                                          const SizedBox(width: 6),
+                                          Flexible(
+                                            child: _VariantTag(
+                                              nameParts.variant!,
+                                              fontSize: priceSize - 2,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ),
                                       if (isPaused)
@@ -2147,6 +2175,32 @@ class _StockBadge extends StatelessWidget {
         fontSize: 10,
         fontWeight: FontWeight.w700,
         color: textColor,
+      ),
+    ),
+  );
+}
+
+/// Phần trong ngoặc cuối tên món ("phần nhỏ", "Đá/Nóng"), nằm cạnh giá trên thẻ món.
+class _VariantTag extends StatelessWidget {
+  final String text;
+  final double fontSize;
+  const _VariantTag(this.text, {required this.fontSize});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.22),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w800,
+        color: Colors.white,
       ),
     ),
   );
@@ -5950,6 +6004,23 @@ class _RecentOrdersSheetState extends ConsumerState<_RecentOrdersSheet> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
+                            // Sáng sớm chưa có đơn mà khách hỏi bill tối qua: mở thẳng Báo cáo › Hóa đơn ngày
+                            // hôm qua (chủ / quản lý — vai trò khác có thể không được xem Báo cáo).
+                            if (isOwner) ...[
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: () {
+                                  final now = DateTime.now();
+                                  ref
+                                      .read(reportBillsDayProvider.notifier)
+                                      .open(DateTime(now.year, now.month, now.day - 1));
+                                  Navigator.of(context).pop();
+                                  ref.read(navTabProvider.notifier).goTo(NavTab.report);
+                                },
+                                icon: const Icon(Icons.receipt_long_rounded, size: 18),
+                                label: const Text('Xem bill hôm qua (Báo cáo › Hóa đơn)'),
+                              ),
+                            ],
                           ],
                         ),
                       )

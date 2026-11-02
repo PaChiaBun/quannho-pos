@@ -68,7 +68,7 @@ Chỉ món **đã gửi bếp** mới báo bếp; huỷ trước khi gửi thì 
 - Phiếu chờ/đang làm quá **30 phút**: nhãn **"TRỄ 30P!"** và chuông báo động (máy vai trò Bếp).
 
 ### 8. Thống kê hôm nay
-- Nút **"Thống kê hôm nay"** → **"Bếp hôm nay"**: Phiếu hôm nay, Đang xử lý, Đã hoàn thành, Huỷ bàn/bill, **TB thời gian chờ**, **Nhanh nhất**, **Chậm nhất**, **Tỷ lệ hoàn thành**.
+- Nút **"Thống kê hôm nay"** → **"Bếp hôm nay"**: Phiếu hôm nay, Đang xử lý, Đã hoàn thành, Huỷ bàn/bill, **TB thời gian chờ**, **Nhanh nhất**, **Chậm nhất**, **Tỷ lệ hoàn thành**. Bấm nút quay lại của máy Android để đóng bảng này — vẫn ở lại màn Phiếu bếp.
 
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |

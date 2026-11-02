@@ -115,12 +115,31 @@ class ReportScreen extends ConsumerStatefulWidget {
   ConsumerState<ReportScreen> createState() => _ReportScreenState();
 }
 
+class _ReportBillsDay extends Notifier<DateTime?> {
+  @override
+  DateTime? build() => null;
+  void open(DateTime? day) => state = day;
+}
+
+/// Bán hàng › Đơn gần đây (hôm nay chưa có đơn) mở thẳng thẻ Hóa đơn ở ngày này; Báo cáo đọc khi mở rồi xoá.
+final reportBillsDayProvider = NotifierProvider<_ReportBillsDay, DateTime?>(_ReportBillsDay.new);
+
 class _ReportScreenState extends ConsumerState<ReportScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
+  DateTime? _billsDay;
 
   @override
-  void initState() { super.initState(); _tab = TabController(length: 8, vsync: this); }
+  void initState() {
+    super.initState();
+    _billsDay = ref.read(reportBillsDayProvider);
+    _tab = TabController(length: 8, vsync: this, initialIndex: _billsDay == null ? 0 : 7); // 7 = Hóa đơn
+    if (_billsDay != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(reportBillsDayProvider.notifier).open(null);
+      });
+    }
+  }
   @override
   void dispose() { _tab.dispose(); super.dispose(); }
 
@@ -171,15 +190,15 @@ class _ReportScreenState extends ConsumerState<ReportScreen>
         ],
         body: TabBarView(
           controller: _tab,
-          children: const [
-            _RevenueTab(),
-            _ProductTab(),
-            _FinanceTab(),
-            _KhoTab(),
-            _VoidAuditTab(),
-            _StaffAttendanceTab(),
-            _VoucherTab(),
-            EinvoiceReportTab(),
+          children: [
+            const _RevenueTab(),
+            const _ProductTab(),
+            const _FinanceTab(),
+            const _KhoTab(),
+            const _VoidAuditTab(),
+            const _StaffAttendanceTab(),
+            const _VoucherTab(),
+            EinvoiceReportTab(initialDay: _billsDay),
           ],
         ),
       ))),

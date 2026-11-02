@@ -58,7 +58,9 @@ extension on _Period {
 /// Tab "Hóa đơn": tra cứu + in lại bill đã thanh toán ([BillLookupSection]), rồi báo cáo
 /// hóa đơn điện tử (đã xuất, đối chiếu doanh thu, chờ/lỗi). Phần điện tử chỉ hiển thị.
 class EinvoiceReportTab extends ConsumerStatefulWidget {
-  const EinvoiceReportTab({super.key});
+  /// Ngày mở sẵn (Bán hàng › Đơn gần đây → bill hôm qua); bỏ trống = hôm nay.
+  final DateTime? initialDay;
+  const EinvoiceReportTab({super.key, this.initialDay});
 
   @override
   ConsumerState<EinvoiceReportTab> createState() => _EinvoiceReportTabState();
@@ -69,7 +71,7 @@ class _EinvoiceReportTabState extends ConsumerState<EinvoiceReportTab> {
   _Period _period = _Period.today;
   // Ngày đang xem của kỳ "Hôm nay": quá 0 giờ vẫn lùi được về hôm qua để in lại bill tối qua
   // (các thẻ Báo cáo khác đều có thanh ‹ › — kiểm Sunmi 03/11/2026).
-  DateTime _day = DateTime.now();
+  late DateTime _day = widget.initialDay ?? DateTime.now();
   EinvoiceReport _report = EinvoiceReport.empty;
   List<EinvoiceProblemDoc> _problems = const [];
   double _revenue = 0;
