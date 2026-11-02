@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/utils/quantity_formatter.dart';
@@ -418,7 +419,7 @@ class _ProductionTab extends ConsumerWidget {
                             fontSize: 13, fontWeight: FontWeight.w800,
                             color: o.status == 'cancelled' ? KhoTheme.muted : KhoTheme.ink,
                             decoration: o.status == 'cancelled' ? TextDecoration.lineThrough : null)),
-                        Text('${o.quantity.toStringAsFixed(0)} phần  ·  ${o.scheduledDate}',
+                        Text('${o.quantity.toStringAsFixed(0)} phần  ·  ${khoReportDayLabel(o.scheduledDate)}',
                             style: GoogleFonts.plusJakartaSans(fontSize: 11, color: KhoTheme.muted)),
                       ])),
                   Container(
@@ -459,6 +460,12 @@ class _StatItem extends StatelessWidget {
   );
 }
 
+/// "2026-11-02" → "Thứ Hai, 02/11", cùng kiểu đầu trang Báo cáo (trước ghi nguyên "2026-11-02").
+String khoReportDayLabel(String day) {
+  final d = DateTime.tryParse(day);
+  return d == null ? day : DateFormat('EEEE, dd/MM', 'vi').format(d);
+}
+
 class _DayCostRow extends StatelessWidget {
   final String date;
   final double cost;
@@ -472,7 +479,7 @@ class _DayCostRow extends StatelessWidget {
       color: KhoTheme.card, borderRadius: BorderRadius.circular(10),
       border: Border.all(color: KhoTheme.border)),
     child: Row(children: [
-      Text(date, style: GoogleFonts.plusJakartaSans(
+      Text(khoReportDayLabel(date), style: GoogleFonts.plusJakartaSans(
           fontSize: 13, color: KhoTheme.muted)),
       const Spacer(),
       Text(fmtMoney(cost), style: GoogleFonts.plusJakartaSans(

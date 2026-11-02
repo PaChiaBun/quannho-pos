@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:quannho_pos/core/repositories/core_product_repository.dart';
 import 'package:quannho_pos/core/utils/money_formatter.dart';
 import 'package:quannho_pos/modules/bill_printer/providers/printer_settings_provider.dart';
@@ -122,6 +123,7 @@ class _NoReprint implements BillReprintService {
 void main() {
   setUpAll(() async {
     GoogleFonts.config.allowRuntimeFetching = false;
+    await initializeDateFormatting('vi'); // Báo cáo Kho CN ghi ngày có thứ (đợt 4, E2)
     final root = Platform.environment['FLUTTER_ROOT'] ??
         File(Platform.resolvedExecutable).parent.parent.parent.parent.parent.parent.path;
     final dir = '$root/bin/cache/artifacts/material_fonts';
@@ -192,6 +194,7 @@ void main() {
     expect(find.text('Giá vốn NL đã bán'), findsOneWidget);
     expect(find.text(fmtMoney(2 * 611.111 * 8.5)), findsWidgets);
     expect(find.text('Chưa có dữ liệu sản xuất trong kỳ này'), findsNothing);
+    expect(find.text('Thứ Hai, 02/11'), findsOneWidget); // E2 (đợt 4): trước ghi "2026-11-02"
 
     await tester.tap(find.text('Tiêu thụ'));
     for (var i = 0; i < 4; i++) {

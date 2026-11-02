@@ -157,10 +157,13 @@ class _IngredientCard extends StatelessWidget {
               child: Text(ts.label, style: GoogleFonts.plusJakartaSans(
                   fontSize: 10, fontWeight: FontWeight.w700, color: ts.color)),
             ),
-            const SizedBox(width: 6),
             // Cùng kiểu Kho hàng ("88 hộp + 666 ml"); làm tròn số cũ từng báo dư 1 hộp không có thật.
-            Text('Tồn: ${item.stockLabel}',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted)),
+            // Không theo dõi mà tồn âm thì stockLabel cũng là "Không theo dõi" — nhãn bên phải đã ghi, không lặp.
+            if (!(untracked && qty < 0)) ...[
+              const SizedBox(width: 6),
+              Text('Tồn: ${item.stockLabel}',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: KhoTheme.muted)),
+            ],
           ]),
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [

@@ -22,10 +22,10 @@ Dùng **cùng danh sách hàng** với module Kho hàng: nguyên liệu và món
 ## Màn hình gồm những gì
 Tiêu đề **"Kho Chuyên Nghiệp"**, hai nút trên đầu: **"Kiểm kê kho"** và **"Ghi hao hụt"**. Năm tab:
 - **"Tổng quan"** — số công thức, "SX hôm nay", số nguyên liệu, "Sắp hết kho" (số nguyên liệu / bán thành phẩm có đặt tồn tối thiểu và đã chạm mức, khớp danh sách "Cần nhập hàng"); **"Lệnh sản xuất hôm nay"** (+ "Tạo lệnh sản xuất hôm nay"), **"Cần nhập hàng"**, **"Công thức gần đây"**.
-- **"Nguyên liệu"** — nguyên liệu và bán thành phẩm, kèm tồn (ghi như Kho hàng, vd "88 hộp + 666 ml", không làm tròn) và nhãn **"Còn" / "Sắp hết" / "Hết"**; món không đặt tồn tối thiểu ghi **"Không theo dõi"** (xám), không bị gắn "Hết" đỏ khi trừ âm.
+- **"Nguyên liệu"** — nguyên liệu và bán thành phẩm, kèm tồn (ghi như Kho hàng, vd "88 hộp + 666 ml", không làm tròn) và nhãn **"Còn" / "Sắp hết" / "Hết"**; món không đặt tồn tối thiểu ghi **"Không theo dõi"** (xám), không bị gắn "Hết" đỏ khi trừ âm; tồn đã âm thì chỉ còn nhãn này, không hiện số tồn.
 - **"Công thức"** — mỗi công thức hiện số nguyên liệu, khẩu phần, **Giá vốn**, **Giá bán**, **Lãi gộp**, **Tỉ lệ giá vốn** (food cost, %), và nhãn **"Đã gắn menu POS — Tự trừ kho khi bán"** nếu đã gắn.
 - **"Sản xuất"** — lệnh sản xuất theo ngày, lọc Tất cả / Chờ / Đang làm / Hoàn thành / Đã hủy.
-- **"Báo cáo"** — chọn **Từ → Đến**. **"Food Cost"**: **"Giá vốn NL đã bán"** (nguyên liệu bị trừ khi bán × giá vốn hiện tại của nguyên liệu — gần đúng nếu giá nhập đã đổi), TB/ngày, giá vốn theo ngày; lệnh sản xuất ghi riêng bên dưới, không cộng vào. **"Tiêu thụ"**: hai mục **"Dùng khi bán"** và **"Dùng cho lệnh sản xuất"**. **"Sản lượng"**: thống kê lệnh sản xuất. Ô tìm nguyên liệu / công thức / mặt hàng (Kiểm kê, Ghi hao hụt) không cần dấu.
+- **"Báo cáo"** — chọn **Từ → Đến**. **"Food Cost"**: **"Giá vốn NL đã bán"** (nguyên liệu bị trừ khi bán × giá vốn hiện tại của nguyên liệu — gần đúng nếu giá nhập đã đổi), TB/ngày, giá vốn theo ngày (ghi thứ và ngày/tháng như đầu trang Báo cáo); lệnh sản xuất ghi riêng bên dưới, không cộng vào. **"Tiêu thụ"**: hai mục **"Dùng khi bán"** và **"Dùng cho lệnh sản xuất"**. **"Sản lượng"**: thống kê lệnh sản xuất. Ô tìm nguyên liệu / công thức / mặt hàng (Kiểm kê, Ghi hao hụt) không cần dấu.
 
 ## Các việc thường làm
 
@@ -57,7 +57,7 @@ Ví dụ minh hoạ: nguyên liệu **Trà đen khô** (gói, 1 gói = 500 g) �
 > Bấm "Hoàn thành" nhiều lần không trừ/cộng thêm. Mọi bước chạy trong một giao dịch ở máy chủ: lỗi giữa chừng thì không thay đổi gì.
 
 ### 4. Kiểm kê kho
-1. Nút **"Kiểm kê kho"** → màn **"Kiểm kê kho"**. Lọc **Tất cả / Nguyên liệu / Hàng bán**, ô **"Tìm mặt hàng..."**.
+1. Nút **"Kiểm kê kho"** → màn **"Kiểm kê kho"**. Lọc **Tất cả / Nguyên liệu / Hàng bán**, ô **"Tìm mặt hàng..."**. Món bán theo công thức không có trong danh sách (màn ghi "Ẩn N món bán theo công thức"): bán là trừ nguyên liệu nên tồn của món không phải hàng thật — đếm nguyên liệu của món là đủ.
 2. Mỗi mặt hàng hiện **"Sổ sách: …"** (ghi như Kho hàng, vd "Sổ sách: 99 lon + 448 g"); nhập số đếm được vào ô **"Thực tế"** theo đơn vị kho (số lẻ được, vd 99,5). Không cần đếm hết, mặt hàng bỏ trống được giữ nguyên.
 3. Bấm **"Hoàn tất kiểm kê (N đã đếm)"** → xem danh sách lệch → **"Xác nhận"**.
 4. Hệ thống áp **phần chênh lệch** lên tồn hiện tại — bán hàng xen giữa lúc đếm không bị ghi đè.

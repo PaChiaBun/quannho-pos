@@ -22,7 +22,7 @@ nguon:
 - **Nạp ví**: cần quyền **"Thanh toán hoá đơn"** (Chủ quán, Quản lý và vai trò có quyền thu tiền); thiếu quyền sẽ thấy "Bạn không có quyền thu tiền (pos.checkout)".
 
 ## Màn hình gồm những gì
-- Đầu trang **"Khách hàng thân thiết"** – "Tích điểm & Ví điện tử": số **Khách**, **Có điểm**, **Điểm đang có**, **Đã đổi**.
+- Đầu trang **"Khách hàng thân thiết"** – "Tích điểm & Ví điện tử": số **Khách**, **Có điểm**, **Điểm còn** (điểm khách đang giữ, chưa đổi), **Đã đổi**.
 - 5 tab:
   - **"Khách"** — danh sách khách (tìm "Tìm khách hàng..."), hạng, điểm, tổng chi. Nút **"Thêm khách"**.
   - **"Ví"** — "Tổng ví thật" (tiền thật đã nạp), "Tổng bonus"; từng khách có nút **"Nạp"**.

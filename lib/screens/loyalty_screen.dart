@@ -269,7 +269,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
                     label: 'Có điểm', icon: Icons.stars_rounded, highlight: true),
                   const SizedBox(width: 8),
                   _StatPill(value: _fmtPts(stats.totalActivePts),
-                    label: 'Điểm đang có', icon: Icons.loyalty_rounded),
+                    label: 'Điểm còn', icon: Icons.loyalty_rounded), // "Điểm đang có" bị cắt ở màn 360
                   const SizedBox(width: 8),
                   _StatPill(value: _fmtPts(stats.totalPtsRedeemed),
                     label: 'Đã đổi', icon: Icons.redeem_rounded),

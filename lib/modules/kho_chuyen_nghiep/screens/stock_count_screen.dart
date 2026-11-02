@@ -123,6 +123,8 @@ class _StockCountScreenState extends ConsumerState<StockCountScreen> {
   @override
   Widget build(BuildContext context) {
     final stockAsync = ref.watch(allStockProvider);
+    // Món bán gắn công thức: bán chỉ trừ nguyên liệu, tồn của món không phải hàng thật → không đếm.
+    final recipeIds = ref.watch(recipeProductIdsProvider).value ?? const <String>{};
     return Scaffold(
       backgroundColor: KhoTheme.bg,
       appBar: AppBar(
@@ -135,8 +137,10 @@ class _StockCountScreenState extends ConsumerState<StockCountScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Lỗi: $e')),
         data: (all) {
-          final items = all.where((i) => i.isActive && !i.isTopping).toList()
+          final active = all.where((i) => i.isActive && !i.isTopping).toList();
+          final items = active.where((i) => !recipeIds.contains(i.id)).toList()
             ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+          final byRecipe = active.length - items.length;
           for (final i in items) {
             _snapshot.putIfAbsent(i.id, () => i.stockQty);
             _ctrls.putIfAbsent(i.id, () => TextEditingController());
@@ -183,7 +187,8 @@ class _StockCountScreenState extends ConsumerState<StockCountScreen> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Nhập số lượng ĐẾM THỰC TẾ (theo đơn vị kho). Để trống = không kiểm mặt hàng đó.',
+                  'Nhập số lượng ĐẾM THỰC TẾ (theo đơn vị kho). Để trống = không kiểm mặt hàng đó.'
+                  '${byRecipe > 0 ? ' Ẩn $byRecipe món bán theo công thức (bán là trừ nguyên liệu, không cần đếm).' : ''}',
                   style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: KhoTheme.muted),
                 ),
               ),
