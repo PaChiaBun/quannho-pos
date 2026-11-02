@@ -7,6 +7,7 @@ import '../../../core/utils/quantity_formatter.dart';
 import '../../kho/providers/kho_providers.dart';
 import '../../kho/repository/kho_repository.dart';
 import '../providers/kho_chuyen_nghiep_providers.dart';
+import '../../../core/utils/string_utils.dart';
 
 /// Ghi hao hụt: đổ bỏ, hết hạn, hư hỏng, đổ vỡ, mất. Trừ kho nguyên tử ở server.
 class StockWasteScreen extends ConsumerStatefulWidget {
@@ -64,7 +65,7 @@ class _StockWasteScreenState extends ConsumerState<StockWasteScreen> {
         String q = '';
         return StatefulBuilder(builder: (ctx, setM) {
           final list = all
-              .where((i) => i.isActive && !i.isTopping && i.name.toLowerCase().contains(q))
+              .where((i) => i.isActive && !i.isTopping && i.name.containsSearch(q))
               .toList();
           return SizedBox(
             height: MediaQuery.of(ctx).size.height * 0.75,
@@ -246,7 +247,8 @@ class _StockWasteScreenState extends ConsumerState<StockWasteScreen> {
                   subtitle: Text(
                       '${reasonLabel('${r['reason']}')}${(r['note'] ?? '').toString().isEmpty ? '' : ' • ${r['note']}'}'),
                   trailing: Text(
-                      fmtDelta((r['delta'] as num).toDouble(), nameById[r['product_id']]?.unit ?? ''),
+                      nameById[r['product_id']]?.formatDelta(r['delta'] as num) ??
+                          fmtDelta((r['delta'] as num).toDouble(), ''),
                       style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: KhoTheme.red)),
                 ),
             ]);

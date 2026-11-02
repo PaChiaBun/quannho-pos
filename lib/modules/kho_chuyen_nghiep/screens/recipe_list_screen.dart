@@ -9,6 +9,7 @@ import '../repository/kho_chuyen_nghiep_repository.dart';
 import 'recipe_form_screen.dart';
 import 'recipe_detail_screen.dart';
 import '../../../core/utils/stagger.dart';
+import '../../../core/utils/string_utils.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RECIPE LIST SCREEN — Danh sách công thức món ăn
@@ -48,7 +49,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         data: (all) {
           final filtered = all.where((r) {
             final matchQ  = _query.isEmpty ||
-                r.name.toLowerCase().contains(_query.toLowerCase());
+                r.name.containsSearch(_query);
             final matchCat = _categoryFilter == null ||
                 _categoryFilter == 'Tất cả' ||
                 r.category == _categoryFilter;

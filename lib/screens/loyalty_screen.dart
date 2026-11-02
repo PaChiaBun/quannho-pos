@@ -163,6 +163,17 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
         // Tab Khuyến mãi (4) có nút "Thêm mã mới" riêng của DiscountManagementScreen.
         child: _tabIndex == 4
           ? const SizedBox.shrink(key: ValueKey('fab_none'))
+          // Tab Thưởng: màn trống ghi "Nhấn + để thêm" — nút + phải thêm phần thưởng, không phải thêm khách.
+          : _tabIndex == 2
+          ? FloatingActionButton.extended(
+              key: const ValueKey('fab_reward'),
+              heroTag: 'loyalty_fab_reward',
+              onPressed: _openAddReward,
+              backgroundColor: _kPurple,
+              icon: const Icon(Icons.add_rounded, color: Colors.white),
+              label: const Text('Thêm phần thưởng',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            )
           : _tabIndex == 3
           ? FloatingActionButton.extended(
               key: const ValueKey('fab_pkg'),
@@ -240,7 +251,7 @@ class _LoyaltyScreenState extends ConsumerState<LoyaltyScreen>
                 ]),
                 const Spacer(),
                 _CircleIconBtn(icon: Icons.card_giftcard_rounded,
-                  onTap: _openAddReward),
+                  tooltip: 'Thêm phần thưởng', onTap: _openAddReward),
               ]),
               const SizedBox(height: 14),
 
@@ -2131,18 +2142,26 @@ class _StatPill extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _CircleIconBtn extends StatelessWidget {
   final IconData icon;
+  final String tooltip; // nút chỉ có biểu tượng: giữ ngón tay / trình đọc màn hình biết nút làm gì
   final VoidCallback onTap;
-  const _CircleIconBtn({required this.icon, required this.onTap});
+  const _CircleIconBtn({required this.icon, required this.tooltip, required this.onTap});
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 38, height: 38,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12)),
-      child: Icon(icon, color: Colors.white, size: 20),
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: Semantics(
+      label: tooltip,
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 38, height: 38,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12)),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+      ),
     ),
   );
 }

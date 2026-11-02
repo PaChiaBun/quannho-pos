@@ -82,6 +82,8 @@ Trong Máy In & Luật In, phần **"Thiết lập nhanh"** chọn cách in **ho
 - **"Dùng máy POS cầm tay làm máy in"** — bill ra máy in gắn trong máy này; máy Windows tự nhường, không in trùng.
 - **"Dùng song song 2 máy"** — mỗi bill ra 2 bản: một ở máy này, một ở máy in quầy.
 
+Dấu **"✓ đang dùng"** đi theo luật đang chạy: luật (kể cả luật tạo tay) đưa hoá đơn của máy này ra máy in gắn trong máy thì đánh dấu "Dùng máy POS cầm tay làm máy in"; máy in theo luật riêng kiểu khác thì không đánh dấu và ghi "Máy này đang in hoá đơn theo luật riêng — xem thẻ Luật in".
+
 Trước đó cần khai báo **máy in tích hợp**: bấm **"Thêm máy in tích hợp của máy này"** (chỉ hiện trên Android), rồi **"In thử máy in tích hợp"** để kiểm giấy và tiếng Việt. Chọn xong bấm **"Lưu"**.
 
 > Gợi ý cho Sunmi V3: độ đậm "Vừa" (3) và hạ "Mật độ in" trong Cài đặt máy in của máy xuống 80%. Chữ mờ → kéo sang Đậm; chữ bết → kéo về Mảnh.

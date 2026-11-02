@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../modules/kho/providers/kho_providers.dart';
 import '../../../core/utils/stagger.dart';
+import '../../../core/utils/string_utils.dart';
 
 class IngredientListScreen extends ConsumerStatefulWidget {
   const IngredientListScreen({super.key});
@@ -32,7 +33,7 @@ class _IngredientListScreenState extends ConsumerState<IngredientListScreen> {
             final isKhoType = i.productType == 'ingredient' ||
                               i.productType == 'semi_finished';
             final matchQ = _query.isEmpty ||
-                i.name.toLowerCase().contains(_query.toLowerCase());
+                i.name.containsSearch(_query);
             return isKhoType && matchQ;
           }).toList();
 

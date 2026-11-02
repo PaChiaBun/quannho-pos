@@ -25,7 +25,7 @@ Tiêu đề **"Kho Chuyên Nghiệp"**, hai nút trên đầu: **"Kiểm kê kho
 - **"Nguyên liệu"** — nguyên liệu và bán thành phẩm, kèm tồn (ghi như Kho hàng, vd "88 hộp + 666 ml", không làm tròn) và nhãn **"Còn" / "Sắp hết" / "Hết"**; món không đặt tồn tối thiểu ghi **"Không theo dõi"** (xám), không bị gắn "Hết" đỏ khi trừ âm.
 - **"Công thức"** — mỗi công thức hiện số nguyên liệu, khẩu phần, **Giá vốn**, **Giá bán**, **Lãi gộp**, **Tỉ lệ giá vốn** (food cost, %), và nhãn **"Đã gắn menu POS — Tự trừ kho khi bán"** nếu đã gắn.
 - **"Sản xuất"** — lệnh sản xuất theo ngày, lọc Tất cả / Chờ / Đang làm / Hoàn thành / Đã hủy.
-- **"Báo cáo"** — chọn **Từ → Đến**: tổng giá vốn, trung bình/ngày, chi phí theo ngày, nguyên liệu tiêu thụ nhiều, thống kê lệnh sản xuất.
+- **"Báo cáo"** — chọn **Từ → Đến**. **"Food Cost"**: **"Giá vốn NL đã bán"** (nguyên liệu bị trừ khi bán × giá vốn hiện tại của nguyên liệu — gần đúng nếu giá nhập đã đổi), TB/ngày, giá vốn theo ngày; lệnh sản xuất ghi riêng bên dưới, không cộng vào. **"Tiêu thụ"**: hai mục **"Dùng khi bán"** và **"Dùng cho lệnh sản xuất"**. **"Sản lượng"**: thống kê lệnh sản xuất. Ô tìm nguyên liệu / công thức / mặt hàng (Kiểm kê, Ghi hao hụt) không cần dấu.
 
 ## Các việc thường làm
 

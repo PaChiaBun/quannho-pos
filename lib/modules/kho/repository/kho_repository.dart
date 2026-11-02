@@ -891,6 +891,10 @@ class StockItem {
   /// Một số lượng bất kỳ theo đơn vị kho của món này, cùng kiểu với tồn (sổ sách kiểm kê, hao hụt…).
   String formatQty(num qty) => fmtStock(qty, unit,
       conversionRate: conversionRate, conversionUnit: conversionUnit);
+
+  /// Số biến động (+/−) của món này, cùng kiểu với tồn (Biến động kho, Lịch sử xuất nhập, Hao hụt).
+  String formatDelta(num delta) => fmtStockDelta(delta, unit,
+      conversionRate: conversionRate, conversionUnit: conversionUnit);
 }
 
 enum StockStatus { ok, low, outOfStock, untracked }

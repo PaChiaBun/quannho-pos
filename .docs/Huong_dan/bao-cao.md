@@ -66,6 +66,7 @@ nguon:
 - Xem voucher / mã giảm giá đã dùng: số lần dùng là **Tổng đơn áp mã**, **Tổng tiền giảm**; danh sách theo mã: Mã đơn / Bàn, Nhân viên, Thời gian, Giảm giá.
 
 ### Hóa đơn
+- Kỳ **"Hôm nay"** có thanh ‹ › để lùi về hôm qua hoặc chạm vào ngày để chọn (sau 0 giờ vẫn in lại được bill tối qua).
 - **"Tra cứu & in lại bill"**: tìm bill đã thanh toán theo số đơn, tên bàn (không cần dấu) hoặc số tiền; chạm để xem chi tiết; nút máy in để **in lại** (bill có dòng "BẢN IN LẠI", ghi nhật ký người in). Màn này tải đủ bill trong kỳ đang chọn (tối đa 20.000 bill); không thấy bill thì chọn đúng ngày của bill.
 
 ## Lỗi thường gặp

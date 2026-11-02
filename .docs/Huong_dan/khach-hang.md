@@ -26,7 +26,7 @@ nguon:
 - 5 tab:
   - **"Khách"** — danh sách khách (tìm "Tìm khách hàng..."), hạng, điểm, tổng chi. Nút **"Thêm khách"**.
   - **"Ví"** — "Tổng ví thật" (tiền thật đã nạp), "Tổng bonus"; từng khách có nút **"Nạp"**.
-  - **"Thưởng"** — danh sách phần thưởng đổi bằng điểm.
+  - **"Thưởng"** — danh sách phần thưởng đổi bằng điểm. Nút **"Thêm phần thưởng"** (hoặc nút hộp quà trên đầu màn).
   - **"Gói nạp"** — các mức nạp được tặng thêm %. Nút **"Thêm gói"**.
   - **"Khuyến mãi"** — mã giảm giá.
 

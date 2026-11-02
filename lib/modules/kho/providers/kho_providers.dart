@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/app_providers.dart';
 import '../repository/kho_repository.dart';
+import '../../../core/utils/string_utils.dart';
 
 // khoRepositoryProvider đã khai báo trong app_providers.dart
 export '../../../core/providers/app_providers.dart' show khoRepositoryProvider;
@@ -82,8 +83,8 @@ class StockFilterState {
   List<StockItem> apply(List<StockItem> items) {
     return items.where((item) {
       final matchQ = query.isEmpty ||
-          item.name.toLowerCase().contains(query.toLowerCase()) ||
-          (item.sku?.toLowerCase().contains(query.toLowerCase()) ?? false);
+          item.name.containsSearch(query) ||
+          (item.sku?.containsSearch(query) ?? false);
       final matchCat    = category == null || (item.category ?? '') == category;
       final matchStatus = statusFilter == null || item.status == statusFilter;
       return matchQ && matchCat && matchStatus;

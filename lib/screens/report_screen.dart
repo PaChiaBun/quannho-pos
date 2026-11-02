@@ -2227,6 +2227,19 @@ class _BarTooltip extends StatelessWidget {
   );
 }
 
+/// Thanh ‹ ngày › của Báo cáo cho thẻ nằm ở file khác (Hóa đơn — einvoice_report_tab.dart), để mọi
+/// thẻ lùi/tiến ngày giống nhau.
+class ReportDayNavBar extends StatelessWidget {
+  final DateTime date;
+  final bool canGoNext;
+  final VoidCallback onPrev, onNext, onPick;
+  const ReportDayNavBar({super.key, required this.date, required this.canGoNext,
+    required this.onPrev, required this.onNext, required this.onPick});
+  @override
+  Widget build(BuildContext context) => _ReportNavBar.day(
+      date: date, canGoNext: canGoNext, onPrev: onPrev, onNext: onNext, onPick: onPick);
+}
+
 // ─── Report Nav Bar (← Tuần/Tháng →) ────────────────────────────────────────
 class _ReportNavBar extends StatefulWidget {
   final String label;

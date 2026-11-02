@@ -28,7 +28,7 @@ nguon:
   - **Bật/tắt phiếu nhập nâng cao** — hiện thêm tab "Phiếu nhập". Dải giới thiệu "Quản lý kho nâng cao" bấm tắt thì máy này nhớ, không hiện lại.
   - **"Thêm sản phẩm"**.
 - **Các tab**: **"Hàng hoá & Menu"** và **"Cảnh báo"** (sắp hết + hết hàng). Khi **bật phiếu nhập nâng cao** có thêm **"Tất cả"**, **"Nguyên liệu"**, **"Phiếu nhập"**; lúc đó "Hàng hoá & Menu" chỉ còn món bán (chưa bật thì tab này hiện mọi mặt hàng).
-- **Ô tìm "Tìm sản phẩm, SKU..."**, lọc theo danh mục, nút **"Chọn"** để chọn nhiều món.
+- **Ô tìm "Tìm sản phẩm, SKU..."** (không cần dấu, gõ tắt chữ cái đầu cũng ra — như Bán hàng; tìm không ra thì ghi "Không tìm thấy món khớp …"), lọc theo danh mục, nút **"Chọn"** để chọn nhiều món.
 - **Điện thoại / máy POS cầm tay** (màn hẹp): mỗi món là **một thẻ** — tên (tối đa 2 dòng), mã SKU (nếu có), dòng **"Tồn: … · min …"**, giá bán bên phải, nhãn danh mục, trạng thái, nút **⋮** (menu thao tác). **Nhấn giữ một thẻ** (hoặc nút **"Chọn"** cạnh ô tìm, hiện cho ai được thao tác nhiều món) để bắt đầu chọn nhiều món (có dòng **"Chọn tất cả"**); cuối danh sách ghi "Hiển thị N / N món"; cuộn xa có nút tròn **"Lên đầu trang"**.
 - **Máy tính bảng / PC** (màn rộng): **bảng** đủ cột (Ảnh, Tên món & SKU, Danh mục, Tồn kho & Min, Giá bán, Trạng thái) vừa khít màn, không phải vuốt ngang; ô tích để chọn nhiều luôn hiện.
 - Mỗi món hiện: tên, danh mục, **tồn / min**, giá bán (đủ số, vd "25.000 đ"), trạng thái **"Đang bán" / "Tạm ngưng bán"**, nhãn tồn:
@@ -36,8 +36,8 @@ nguon:
   - **"Sắp hết"** — tồn ≤ mức tối thiểu.
   - **"Còn hàng"**.
   - **"Không theo dõi"** — món không đặt tồn tối thiểu (dù tồn âm vẫn bán được). Món loại này bị trừ âm thì ô tồn ghi **"Không theo dõi"** thay cho số âm, và phần âm **không** trừ vào "Giá trị kho".
-  - **"Theo công thức"** — món có công thức ở Kho Chuyên Nghiệp đã gắn bán hàng: bán chỉ trừ nguyên liệu, tồn của chính món không đổi (thường là số để sẵn như "1000 ly"), nên ô tồn ghi "Theo công thức" thay cho số, không hiện "min", và món này **không** tính vào "Giá trị kho".
-- Cách ghi tồn (giống ở Kho Chuyên Nghiệp, Kiểm kê, Ghi hao hụt): món có quy cách ghi **"99 lon + 448 g"**; không có quy cách thì số lẻ dùng dấu phẩy, vd **"78,889 gói"**.
+  - **"Theo công thức"** — món bán có công thức ở Kho Chuyên Nghiệp đã gắn bán hàng (nguyên liệu / bán thành phẩm gắn công thức như cốt trà thì vẫn ghi tồn thật — món khác trừ dần, lệnh sản xuất cộng vào): bán chỉ trừ nguyên liệu, tồn của chính món không đổi (thường là số để sẵn như "1000 ly"), nên ô tồn ghi "Theo công thức" thay cho số, không hiện "min", và món này **không** tính vào "Giá trị kho".
+- Cách ghi tồn (giống ở Kho Chuyên Nghiệp, Kiểm kê, Ghi hao hụt): món có quy cách ghi **"99 lon + 448 g"**; không có quy cách thì số lẻ dùng dấu phẩy, vd **"78,889 gói"**. Số nhập/xuất ở "Biến động kho gần đây", "Lịch sử xuất nhập", "Hao hụt gần đây" ghi cùng kiểu: **"−29 ml"**, **"−611,1 ml"**.
 - Menu **"Thao tác"** của từng món: **"Sửa thông tin món"**, **"Nhập kho"**, **"Điều chỉnh tồn kho"**, **"Lịch sử xuất nhập"**, **"Cấu hình Topping"**, **"Tùy chọn món (Modifiers)"**, **"Xóa món"**.
 
 ## Các việc thường làm

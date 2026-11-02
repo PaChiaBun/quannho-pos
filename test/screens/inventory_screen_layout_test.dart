@@ -228,6 +228,19 @@ void main() {
       expect(find.textContaining('min 10', findRichText: true), findsNothing);
     });
 
+    // Kiểm Sunmi 03/11 đợt 3: ô tìm Kho phải gõ đúng dấu, tìm không ra lại báo "Chưa có hàng hoá".
+    testWidgets('tìm không dấu như Bán hàng; tìm không ra thì nói không tìm thấy', (tester) async {
+      await _pump(tester, const Size(360, 800));
+      await tester.enterText(find.widgetWithText(TextField, 'Tìm sản phẩm, SKU...'), 'ca phe');
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Cà phê sữa đá'), findsOneWidget);
+      expect(find.text('Mì xào bò'), findsNothing);
+
+      await tester.enterText(find.byType(TextField).first, 'xyz');
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Không tìm thấy món khớp "xyz"'), findsOneWidget);
+    });
+
     testWidgets('cuộn hết: nút voi Boom không che món cuối; nút lên đầu trang', (tester) async {
       await _pump(tester, const Size(360, 800));
       for (var i = 0; i < 3; i++) {

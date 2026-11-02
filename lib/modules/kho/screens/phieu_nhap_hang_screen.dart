@@ -13,6 +13,7 @@ import '../providers/kho_providers.dart';
 import 'receive_stock_sheet.dart' show buildPurchaseFundPicker;
 import '../repository/kho_repository.dart';
 import 'supplier_list_screen.dart';
+import '../../../core/utils/string_utils.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PHIẾU NHẬP HÀNG SCREEN
@@ -953,7 +954,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
     final filtered = widget.products
         .where((p) =>
             !widget.alreadyAdded.contains(p.id) &&
-            p.name.toLowerCase().contains(_query.toLowerCase()))
+            p.name.containsSearch(_query))
         .toList();
 
     return Container(

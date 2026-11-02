@@ -23,7 +23,8 @@ String fmtQty(num v, {int maxDecimals = 3}) {
 
 /// Tồn kho dễ đọc, dùng chung mọi màn kho: có quy cách → "99 lon + 448 g"; không có thì số lẻ
 /// dùng dấu phẩy "78,889 gói" (dấu chấm người Việt đọc là hàng nghìn: "99.329 lon" tưởng 99 nghìn lon).
-String fmtStock(num qty, String unit, {num conversionRate = 0, String conversionUnit = ''}) {
+String fmtStock(num qty, String unit,
+    {num conversionRate = 0, String conversionUnit = '', int maxDecimals = 3}) {
   final d = qty.toDouble();
   if (conversionRate > 0 && conversionUnit.isNotEmpty) {
     if (d.abs() <= 1e-6) return '0 $unit';
@@ -40,7 +41,19 @@ String fmtStock(num qty, String unit, {num conversionRate = 0, String conversion
     ].join(' + ');
     return d < 0 ? '-$res' : res;
   }
-  return '${fmtQty(d).replaceAll('.', ',')} $unit';
+  return '${fmtQty(d, maxDecimals: maxDecimals).replaceAll('.', ',')} $unit';
+}
+
+/// Biến động kho (+/−) cùng kiểu với tồn ([fmtStock]): có quy cách → "−29 ml"; không thì dấu phẩy, từ 1
+/// trở lên bớt còn 1 số lẻ ("−611,1 ml" — trước ghi "−611.111 ml", đọc nhầm thành 611 nghìn).
+String fmtStockDelta(num delta, String unit, {num conversionRate = 0, String conversionUnit = ''}) {
+  final d = delta.toDouble();
+  if (d.abs() <= 1e-6) return '0 $unit';
+  final sign = d > 0 ? '+' : '-';
+  final abs = d.abs();
+  final s = fmtStock(abs, unit,
+      conversionRate: conversionRate, conversionUnit: conversionUnit, maxDecimals: abs >= 1 ? 1 : 3);
+  return s.startsWith('0 ') ? s : '$sign$s';
 }
 
 /// Định dạng biến động kho (delta) kèm dấu (+ / -) và đơn vị tính:

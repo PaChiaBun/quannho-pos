@@ -6,6 +6,7 @@ import '../../../core/theme/kho_theme.dart';
 import '../../kho/providers/kho_providers.dart';
 import '../../kho/repository/kho_repository.dart';
 import '../providers/kho_chuyen_nghiep_providers.dart';
+import '../../../core/utils/string_utils.dart';
 
 /// Kiểm kê kho: đếm thực tế → so sánh sổ sách → xác nhận để điều chỉnh tồn.
 /// Sổ sách được chụp lại ngay khi mở màn hình; server chỉ áp chênh lệch nên
@@ -144,7 +145,7 @@ class _StockCountScreenState extends ConsumerState<StockCountScreen> {
           final shown = items.where((i) {
             if (_filter == 'ingredient' && !_isIngredient(i)) return false;
             if (_filter == 'retail' && _isIngredient(i)) return false;
-            return q.isEmpty || i.name.toLowerCase().contains(q);
+            return i.name.containsSearch(q);
           }).toList();
           final counted = items.where((i) => _entered(i.id) != null).length;
 

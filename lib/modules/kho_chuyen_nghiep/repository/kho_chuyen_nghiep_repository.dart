@@ -6,6 +6,7 @@ import '../../../core/repositories/core_product_repository.dart';
 import '../../../core/utils/quantity_formatter.dart';
 import '../../../core/utils/server_time.dart';
 import '../../../core/utils/chain_compare.dart' show ymd;
+import '../../../core/utils/paged_query.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODELS & REPOSITORY — Kho Hàng Chuyên Nghiệp
@@ -829,6 +830,35 @@ class KhoProRepository {
     return result;
   }
 
+  /// Nguyên liệu bị trừ khi bán trong [from, to) — xem [aggregateSalesUsage]. Báo cáo cũ chỉ đọc lệnh sản
+  /// xuất nên quán không dùng lệnh sản xuất luôn thấy "Tổng giá vốn 0 đ" (Bò Đen 03/11/2026).
+  // shortcut: tải hết phiếu 'recipe_usage' của kỳ rồi gom ở máy — quán rất đông chọn 30 ngày sẽ chậm vài
+  // giây; khi cần thì chuyển sang hàm máy chủ GROUP BY.
+  Future<SalesUsage> getSalesIngredientUsage({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final storeId = await _storeId();
+    if (storeId == null) return aggregateSalesUsage(const [], const {});
+    final moves = await fetchAllPages((o, e) => _sb
+        .from('stock_movements')
+        .select('id, product_id, delta, created_at')
+        .eq('store_id', storeId)
+        .eq('reason', 'recipe_usage')
+        .gte('created_at', from.toUtc().toIso8601String())
+        .lt('created_at', to.toUtc().toIso8601String())
+        .order('id')
+        .range(o, e));
+    if (moves.isEmpty) return aggregateSalesUsage(const [], const {});
+    final products = await fetchAllPages((o, e) => _sb
+        .from('products')
+        .select('id, name, unit, cost_price_latest, cost_price, conversion_rate, conversion_unit')
+        .eq('store_id', storeId)
+        .order('id')
+        .range(o, e));
+    return aggregateSalesUsage(moves, {for (final p in products) '${p['id']}': p});
+  }
+
   /// Nguyên liệu tiêu thụ trong khoảng thời gian
   Future<List<Map<String, dynamic>>> getIngredientConsumption({
     required DateTime from,
@@ -1087,3 +1117,41 @@ class KhoProRepository {
     return List<Map<String, dynamic>>.from(rows);
   }
 }
+
+/// Nguyên liệu bị trừ khi bán: giá vốn theo ngày (yyyy-mm-dd) và từng nguyên liệu (cùng khoá với
+/// getIngredientConsumption, thêm quy cách để ghi số như kho), xếp theo tiền giảm dần.
+typedef SalesUsage = ({Map<String, double> costByDate, List<Map<String, dynamic>> ingredients});
+
+/// Gom phiếu kho 'recipe_usage' ([moves]: product_id, delta âm, created_at). [products]: id → name, unit,
+/// cost_price_latest, cost_price, conversion_rate, conversion_unit. Giá vốn = số lượng × giá vốn HIỆN TẠI
+/// (phiếu kho không lưu giá lúc bán) nên chỉ gần đúng khi giá nhập đã đổi.
+SalesUsage aggregateSalesUsage(
+    List<Map<String, dynamic>> moves, Map<String, Map<String, dynamic>> products) {
+  final costByDate = <String, double>{};
+  final agg = <String, Map<String, dynamic>>{};
+  for (final m in moves) {
+    final qty = -((m['delta'] as num?)?.toDouble() ?? 0); // phiếu trừ kho ghi số âm
+    if (qty <= 0) continue;
+    final id = '${m['product_id']}';
+    final p = products[id];
+    final cost = qty *
+        effectiveUnitCost((p?['cost_price_latest'] as num?) ?? 0, (p?['cost_price'] as num?) ?? 0);
+    final date = ymd(parseServerTime(m['created_at'] as String?) ?? DateTime.now());
+    costByDate[date] = (costByDate[date] ?? 0) + cost;
+    final a = agg.putIfAbsent(id, () => {
+          'ingredient_id': id,
+          'ingredient_name': p?['name'] as String? ?? '(nguyên liệu đã xoá)',
+          'unit': p?['unit'] as String? ?? '',
+          'conversion_rate': (p?['conversion_rate'] as num?)?.toDouble() ?? 0.0,
+          'conversion_unit': p?['conversion_unit'] as String? ?? '',
+          'total_qty': 0.0,
+          'total_cost': 0.0,
+        });
+    a['total_qty'] = (a['total_qty'] as double) + qty;
+    a['total_cost'] = (a['total_cost'] as double) + cost;
+  }
+  final ingredients = agg.values.toList()
+    ..sort((a, b) => (b['total_cost'] as double).compareTo(a['total_cost'] as double));
+  return (costByDate: costByDate, ingredients: ingredients);
+}
+

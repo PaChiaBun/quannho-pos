@@ -32,6 +32,7 @@ import '../core/services/store_auth_service.dart';
 import '../modules/topping/topping_group_repository.dart';
 import '../core/utils/stagger.dart';
 import '../core/utils/server_time.dart';
+import '../core/utils/string_utils.dart';
 
 // ─ Màu local ─────────────────────────────────────────────────────────────────
 const _kNavy   = Color(0xFF1E1C5E);
@@ -1469,8 +1470,9 @@ class _StockListState extends ConsumerState<_StockList> {
         // 2. Lọc theo search + category
         final filtered = items.where((i) {
           final matchQuery = widget.filterQuery.isEmpty ||
-              i.name.toLowerCase().contains(widget.filterQuery.toLowerCase()) ||
-              (i.sku?.toLowerCase().contains(widget.filterQuery.toLowerCase()) ?? false);
+              // Tìm không dấu như Bán hàng ("thom" ra "Nước ép Thơm", "tsbdp" ra "Trà Sữa Bơ Đậu Phộng").
+              i.name.containsSearch(widget.filterQuery) ||
+              (i.sku?.containsSearch(widget.filterQuery) ?? false);
           final matchCategory = widget.selectedCategory == 'Tất cả' ||
               (i.category ?? 'Khác') == widget.selectedCategory;
           return matchQuery && matchCategory;
@@ -1564,7 +1566,13 @@ class _StockListState extends ConsumerState<_StockList> {
             // cắt "Không theo dõi" và giá từ 10 triệu thành "…" nên vẫn dùng thẻ.
             Expanded(
               child: filtered.isEmpty
-                  ? _buildEmpty(widget.emptyMsg, widget.emptyIcon, widget.emptyColor)
+                  ? _buildEmpty(
+                      // Có hàng mà tìm không ra: nói đúng là không tìm thấy, không phải "chưa có hàng".
+                      items.isNotEmpty && widget.filterQuery.trim().isNotEmpty
+                          ? 'Không tìm thấy món khớp "${widget.filterQuery.trim()}"'
+                          : widget.emptyMsg,
+                      widget.emptyIcon,
+                      widget.emptyColor)
                   : LayoutBuilder(
                       builder: (context, constraints) => constraints.maxWidth < 660
                           ? _buildCardList(filtered, isAllSelected, allFilteredIds, items.length)
@@ -3484,7 +3492,7 @@ class _HistorySheet extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      fmtDelta(m.delta, item.unit),
+                                      item.formatDelta(m.delta),
                                       style: TextStyle(
                                         fontSize: 14, fontWeight: FontWeight.w800,
                                         color: isIn ? _kGreen : _kRed,
@@ -3535,13 +3543,13 @@ class _RecentMovementsSheet extends ConsumerWidget {
     final movAsync = ref.watch(recentMovementsProvider);
     final stockAsync = ref.watch(allStockProvider);
 
-    // Build lookup maps: productId → name, productId → unit
+    // Build lookup maps: productId → name, productId → món (đơn vị + quy cách để ghi số như tồn)
     final nameMap = <String, String>{};
-    final unitMap = <String, String>{};
+    final itemMap = <String, StockItem>{};
     stockAsync.whenData((list) {
       for (final s in list) {
         nameMap[s.id] = s.name;
-        unitMap[s.id] = s.unit;
+        itemMap[s.id] = s;
       }
     });
 
@@ -3656,7 +3664,7 @@ class _RecentMovementsSheet extends ConsumerWidget {
                                 ),
                               ),
                               Text(
-                                fmtDelta(m.delta, unitMap[m.productId] ?? ''),
+                                itemMap[m.productId]?.formatDelta(m.delta) ?? fmtDelta(m.delta, ''),
                                 style: TextStyle(
                                   fontSize: 15, fontWeight: FontWeight.w800,
                                   color: isIn ? _kGreen : _kRed)),

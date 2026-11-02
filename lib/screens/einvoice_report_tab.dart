@@ -6,6 +6,7 @@ import '../core/repositories/dashboard_repository.dart';
 import '../core/repositories/einvoice_repository.dart';
 import '../core/utils/money_formatter.dart';
 import 'bill_lookup_section.dart';
+import 'report_screen.dart' show ReportDayNavBar;
 
 const _kNavy = Color(0xFF1C2151);
 const _kOrange = Color(0xFFFF6B35);
@@ -26,15 +27,17 @@ extension on _Period {
     _Period.month => 'Tháng này',
   };
 
-  /// [from, to) theo epoch millis, cùng quy ước với ReportPeriod.rangeFor.
-  (int, int) range() {
+  /// [from, to) theo epoch millis, cùng quy ước với ReportPeriod.rangeFor. [day]: ngày đang xem của kỳ
+  /// "Hôm nay" (lùi bằng thanh ‹ ›).
+  (int, int) range({DateTime? day}) {
     final now = DateTime.now();
     switch (this) {
       case _Period.today:
-        final s = DateTime(now.year, now.month, now.day);
+        final d = day ?? now;
+        final s = DateTime(d.year, d.month, d.day);
         return (
           s.millisecondsSinceEpoch,
-          DateTime(now.year, now.month, now.day + 1).millisecondsSinceEpoch,
+          DateTime(d.year, d.month, d.day + 1).millisecondsSinceEpoch,
         );
       case _Period.week:
         final m = now.subtract(Duration(days: now.weekday - 1));
@@ -64,6 +67,9 @@ class EinvoiceReportTab extends ConsumerStatefulWidget {
 class _EinvoiceReportTabState extends ConsumerState<EinvoiceReportTab> {
   final _repo = EinvoiceRepository();
   _Period _period = _Period.today;
+  // Ngày đang xem của kỳ "Hôm nay": quá 0 giờ vẫn lùi được về hôm qua để in lại bill tối qua
+  // (các thẻ Báo cáo khác đều có thanh ‹ › — kiểm Sunmi 03/11/2026).
+  DateTime _day = DateTime.now();
   EinvoiceReport _report = EinvoiceReport.empty;
   List<EinvoiceProblemDoc> _problems = const [];
   double _revenue = 0;
@@ -91,7 +97,7 @@ class _EinvoiceReportTabState extends ConsumerState<EinvoiceReportTab> {
       _error = null;
     });
     try {
-      final (from, to) = _period.range();
+      final (from, to) = _period.range(day: _day);
       final results = await Future.wait([
         _repo.getReport(from, to),
         _repo.getProblemDocs(from, to),
@@ -116,13 +122,26 @@ class _EinvoiceReportTabState extends ConsumerState<EinvoiceReportTab> {
 
   @override
   Widget build(BuildContext context) {
-    final (from, to) = _period.range();
+    final (from, to) = _period.range(day: _day);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(_day.year, _day.month, _day.day);
     return RefreshIndicator(
         onRefresh: _refreshAll,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _periodPills(),
+          if (_period == _Period.today) ...[
+            const SizedBox(height: 8),
+            ReportDayNavBar(
+              date: _day,
+              canGoNext: day.isBefore(today),
+              onPrev: () { setState(() => _day = DateTime(day.year, day.month, day.day - 1)); _load(); },
+              onNext: () { setState(() => _day = DateTime(day.year, day.month, day.day + 1)); _load(); },
+              onPick: _pickDay,
+            ),
+          ],
           const SizedBox(height: 12),
           BillLookupSection(
               fromMs: from, toMs: to, refreshToken: _refreshToken),
@@ -165,6 +184,21 @@ class _EinvoiceReportTabState extends ConsumerState<EinvoiceReportTab> {
         ],
       ),
     );
+  }
+
+  Future<void> _pickDay() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _day,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      helpText: 'Chọn ngày muốn xem',
+    );
+    if (picked != null && mounted) {
+      setState(() => _day = picked);
+      _load();
+    }
   }
 
   Widget _periodPills() => Container(

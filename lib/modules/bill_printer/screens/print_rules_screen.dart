@@ -111,6 +111,17 @@ class _PrintRulesScreenState extends ConsumerState<PrintRulesScreen>
 
   void _seedFromLegacy() => _update(_legacySeed());
 
+  Widget _banner(StationPrintersState st, PrintSetup setup) => ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: _StatusBanner(
+          setup: setup,
+          dirty: _dirty,
+          canSeed: _canSeed(st),
+          onSeed: _seedFromLegacy,
+          onReset: () => _update(const PrintSetup()),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final st = ref.watch(printerSettingsProvider);
@@ -145,24 +156,21 @@ class _PrintRulesScreenState extends ConsumerState<PrintRulesScreen>
           ],
         ),
       ),
-      body: Column(children: [
-        _StatusBanner(
+      // Dải trạng thái là dòng đầu của mỗi thẻ, cuộn theo nội dung — đứng yên trên đầu thì máy 360dp
+      // mất gần 1/4 màn (kiểm Sunmi 03/11/2026).
+      body: TabBarView(controller: _tabs, children: [
+        _PrintersTab(
           setup: setup,
-          dirty: _dirty,
-          canSeed: _canSeed(st),
-          onSeed: _seedFromLegacy,
-          onReset: () => _update(const PrintSetup()),
+          state: st,
+          onChanged: _update,
+          seedFromLegacy: _canSeed(st) ? _legacySeed : null,
+          banner: _banner(st, setup),
         ),
-        Expanded(
-          child: TabBarView(controller: _tabs, children: [
-            _PrintersTab(
-              setup: setup,
-              state: st,
-              onChanged: _update,
-              seedFromLegacy: _canSeed(st) ? _legacySeed : null,
-            ),
-            _RulesTab(setup: setup, deviceId: st.currentDeviceId, onChanged: _update),
-          ]),
+        _RulesTab(
+          setup: setup,
+          deviceId: st.currentDeviceId,
+          onChanged: _update,
+          banner: _banner(st, setup),
         ),
       ]),
     );
@@ -237,11 +245,13 @@ class _PrintersTab extends StatelessWidget {
   final StationPrintersState state;
   final ValueChanged<PrintSetup> onChanged;
   final PrintSetup Function()? seedFromLegacy;
+  final Widget banner;
   const _PrintersTab({
     required this.setup,
     required this.state,
     required this.onChanged,
     required this.seedFromLegacy,
+    required this.banner,
   });
 
   void _replace(PrinterEntry p) {
@@ -338,10 +348,14 @@ class _PrintersTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Màn hẹp: nút bật/sửa/xoá chiếm ~150dp bên phải làm tên + mô tả máy in gãy 5–6 dòng → xuống hàng dưới.
+    final narrow = MediaQuery.sizeOf(context).width < 480;
     return Stack(children: [
       ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
         children: [
+          banner,
+          const SizedBox(height: 16),
           _ThisDeviceSection(
             setup: setup,
             state: state,
@@ -357,7 +371,23 @@ class _PrintersTab extends StatelessWidget {
               text: 'Chưa có máy in nào. Bấm "Thêm máy in" để khai báo máy in thu ngân, bếp, bar...',
             ),
           for (final p in setup.printers)
-            Card(
+            Builder(builder: (context) {
+              final actions = [
+                Switch(value: p.enabled, onChanged: (v) => _replace(_copy(p, enabled: v))),
+                IconButton(
+                  icon: const Icon(Icons.edit_rounded),
+                  onPressed: () async {
+                    final r = await showDialog<PrinterEntry>(
+                        context: context, builder: (_) => _PrinterDialog(initial: p));
+                    if (r != null) _replace(r);
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                  onPressed: () => _remove(context, p),
+                ),
+              ];
+              return Card(
               margin: const EdgeInsets.only(bottom: 12),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 ListTile(
@@ -381,28 +411,19 @@ class _PrintersTab extends StatelessWidget {
                     style: GoogleFonts.plusJakartaSans(fontSize: 12.5),
                   ),
                   isThreeLine: p.kind == PrinterKind.sunmiBuiltin && !SunmiBuiltinDriver.isSupportedPlatform,
-                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Switch(value: p.enabled, onChanged: (v) => _replace(_copy(p, enabled: v))),
-                    IconButton(
-                      icon: const Icon(Icons.edit_rounded),
-                      onPressed: () async {
-                        final r = await showDialog<PrinterEntry>(
-                            context: context, builder: (_) => _PrinterDialog(initial: p));
-                        if (r != null) _replace(r);
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                      onPressed: () => _remove(context, p),
-                    ),
-                  ]),
+                  trailing: narrow ? null : Row(mainAxisSize: MainAxisSize.min, children: actions),
                 ),
                 // Nút riêng một hàng: hàng trên đã chật trên điện thoại 360dp.
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
-                    child: Wrap(alignment: WrapAlignment.end, children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                    alignment: narrow ? WrapAlignment.spaceBetween : WrapAlignment.end,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                    if (narrow) Row(mainAxisSize: MainAxisSize.min, children: actions),
+                    Wrap(alignment: WrapAlignment.end, children: [
                       if (p.hasCashDrawer && p.kind != PrinterKind.sunmiBuiltin)
                         TextButton.icon(
                           onPressed: () => _testDrawer(context, p),
@@ -415,10 +436,12 @@ class _PrintersTab extends StatelessWidget {
                         label: const Text('In thử'),
                       ),
                     ]),
+                  ]),
                   ),
                 ),
               ]),
-            ),
+            );
+            }),
         ],
       ),
       Positioned(
@@ -658,7 +681,13 @@ class _RulesTab extends StatelessWidget {
   final PrintSetup setup;
   final String deviceId;
   final ValueChanged<PrintSetup> onChanged;
-  const _RulesTab({required this.setup, required this.deviceId, required this.onChanged});
+  final Widget banner;
+  const _RulesTab({
+    required this.setup,
+    required this.deviceId,
+    required this.onChanged,
+    required this.banner,
+  });
 
   void _replace(PrintRule r) {
     final list = [...setup.rules];
@@ -688,25 +717,21 @@ class _RulesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sorted = [...setup.rules]..sort((a, b) => a.priority.compareTo(b.priority));
+    final narrow = MediaQuery.sizeOf(context).width < 480; // như thẻ Máy in
     return Stack(children: [
       ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
         children: [
+          banner,
+          const SizedBox(height: 16),
           if (setup.rules.isEmpty)
             const _EmptyHint(
               icon: Icons.rule_rounded,
               text: 'Chưa có luật nào. Luật cho biết mỗi loại phiếu in ra máy nào, mấy bản.',
             ),
           for (final r in sorted)
-            Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                title: Text(r.name.isEmpty ? jobTypeLabel(r.jobType) : r.name,
-                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                subtitle: Text('${_sentence(r)}\nƯu tiên ${r.priority} (số nhỏ chạy trước)',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5)),
-                isThreeLine: true,
-                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+            Builder(builder: (context) {
+              final actions = Row(mainAxisSize: MainAxisSize.min, children: [
                   Switch(
                     value: r.enabled,
                     onChanged: (v) => _replace(PrintRule(
@@ -732,9 +757,28 @@ class _RulesTab extends StatelessWidget {
                       rules: setup.rules.where((e) => e.id != r.id).toList(),
                     )),
                   ),
-                ]),
-              ),
-            ),
+                ]);
+              final tile = ListTile(
+                title: Text(r.name.isEmpty ? jobTypeLabel(r.jobType) : r.name,
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+                subtitle: Text('${_sentence(r)}\nƯu tiên ${r.priority} (số nhỏ chạy trước)',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5)),
+                isThreeLine: true,
+                trailing: narrow ? null : actions,
+              );
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: narrow
+                    ? Column(mainAxisSize: MainAxisSize.min, children: [
+                        tile,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+                          child: Align(alignment: Alignment.centerLeft, child: actions),
+                        ),
+                      ])
+                    : tile,
+              );
+            }),
         ],
       ),
       Positioned(
@@ -1131,7 +1175,7 @@ class _ThisDeviceSection extends StatelessWidget {
 
     final deviceRules = setup.rules.where(_isDeviceRule).toList();
     final isDual = deviceRules.any((r) => r.id.contains(kDeviceBillDualMarker));
-    final activeMode = deviceRules.isEmpty ? 'win' : (isDual ? 'dual' : 'pos');
+    final activeMode = quickBillMode(setup, _deviceId, deviceRules: deviceRules, isDual: isDual);
 
     Widget quickOption({
       required String mode,
@@ -1208,6 +1252,11 @@ class _ThisDeviceSection extends StatelessWidget {
               desc: 'Mỗi bill ra 2 bản: một ở máy này, một ở máy in quầy.',
               needAndroid: true,
             ),
+            if (activeMode == null)
+              Text(
+                'Máy này đang in hoá đơn theo luật riêng — xem thẻ Luật in.',
+                style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFFB45309)),
+              ),
           ]),
         ),
       ),
@@ -1413,4 +1462,25 @@ class _LabelSection extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Cách in bill đang dùng trên máy [deviceId] cho phần "Thiết lập nhanh": 'win' / 'pos' / 'dual', hoặc
+/// null khi máy in theo luật riêng không khớp kiểu nào. Trước chỉ nhìn luật do chính phần này tạo
+/// ([deviceRules]) nên Bò Đen (luật làm tay đưa hoá đơn ra máy in gắn trong Sunmi) bị ghi
+/// "Dùng máy Win làm máy in ✓ đang dùng — Máy này không tự in" (kiểm Sunmi 03/11/2026).
+String? quickBillMode(PrintSetup setup, String deviceId,
+    {required List<PrintRule> deviceRules, required bool isDual}) {
+  if (deviceRules.isNotEmpty) return isDual ? 'dual' : 'pos';
+  // Luật hoá đơn áp cho máy này: luật chung của quán hoặc luật chỉ cho máy này.
+  final rules = [
+    for (final r in setup.rules)
+      if (r.enabled &&
+          r.jobType == PrintJobType.receipt &&
+          (r.sourceDeviceIds.isEmpty || r.sourceDeviceIds.contains(deviceId)))
+        r,
+  ];
+  bool builtin(PrintTarget t) => setup.printerById(t.printerId)?.kind == PrinterKind.sunmiBuiltin;
+  if (rules.every((r) => !r.targets.any(builtin))) return 'win'; // không luật nào in ở máy này
+  if (rules.every((r) => r.targets.isNotEmpty && r.targets.every(builtin))) return 'pos';
+  return null;
 }
