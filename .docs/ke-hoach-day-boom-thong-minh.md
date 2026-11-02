@@ -526,6 +526,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Bài học (so lần 61): cùng một số, đặt ở câu KẾT LUẬN đầu khối thì GPT dùng, đặt cuối dòng dài thì bỏ qua.
 - Áp: `db-fix/boom_l62_ap_dung.sh` (TS 20261102_155136). Không cần bản app mới.
 
+### Lần 63 (02/11, bỏ): câu vì sao đổi → "điểm cần chú ý" ghi là chuyện riêng, việc chính nhắm chỗ đổi
+
+- Sửa thử: khi có dòng "GIẢM / TĂNG Ở ĐÂU", đầu dòng điểm cần chú ý đổi thành "chuyện RIÊNG có từ trước, KHÔNG phải lý do doanh thu đổi … việc làm chính phải nhắm đúng giờ / nhóm / món đang đổi". 14/35 câu đổi.
+- Chấm kín 14 câu × 2 lượt cạnh bản lần 62: 11,25 → 11,11; việc làm 0,75 → 0,64 (mục tiêu tụt); lý lẽ 0,96 → 0,86. GPT bớt chép "tăng giá Bạc xỉu" nhưng thay bằng việc chung / tặng kèm, không tự nghĩ ra việc nhắm đúng giờ / nhóm đang giảm → bỏ.
+- Bài học: bảo GPT "đừng dùng X" không làm nó nghĩ ra việc đúng; muốn việc làm cụ thể phải tính sẵn VIỆC (giờ / nhóm / con số) như các lần 49–53, không chỉ nói hướng.
+- Lỗi khác thấy khi chấm: D10 cả 4 bản nói "Nước chanh chưa bán" (thực bán 80 phần; chưa bán là Nước cam, Sữa đậu nành); D02 gán số riêng 14h, 15h cho cả khung 14–17h; D39 bỏ sót giá vốn Cơm sườn 48%.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
