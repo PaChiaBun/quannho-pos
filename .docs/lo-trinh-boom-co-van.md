@@ -50,6 +50,11 @@ Thiết kế chi tiết: `.docs/thiet-ke-boom-may-chu-lay-so.md`.
   → bắt viết lại 1 lần. Chấm kín 12 câu hay lỗi × 3: 11,53 → 11,78 (D37 10,3 → 12,3; D18 10,3 → 12,3; D03 10,7 → 12,0; D58 11,7 → 10,0);
   câu còn lỗi 10/36 → 6/36 (`ket_qua/c22_kiem_lap_luan_claude_20261103.json`). Còn: số cộng dồn gọi là "tháng này", bỏ sót vấn đề trong khối → 2.3.
   Đã áp 03/11 `db-fix/boom_c22_ap_dung.sh` (TS 20261103_054631).
+- **2.3 bỏ.** Dòng "ĐIỂM CẦN CHÚ Ý VỀ BÁN HÀNG" (khung giờ vắng, combo đắt hơn lẻ, giá vốn cao, món rẻ chiếm phần lớn nhóm, nhóm / món giảm,
+  món chưa bán) + kho "dưới mức tối thiểu". Chấm kín 60 câu: gửi mọi câu 12,28 → 12,22 (dự báo 12,4 → 10,8); bỏ ở câu dự báo 12,38 → 12,40.
+  Mini vẫn bỏ sót các điểm dù đã đưa sẵn. Bài học đo: 1 lượt sinh + 1 người chấm dao động ~±0,5 điểm mỗi loại câu (cùng 60 câu bản cũ
+  chấm 2 lần: 12,28 và 12,38) → thay đổi nhỏ không đo ra được; cần nhiều lượt hơn hoặc thay đổi lớn hơn
+  (`ket_qua/c23_*.json`, `c23b_*.json`).
 
 ## Chặng 3 — Hiểu quán và nhớ lâu · ~2 tuần
 
