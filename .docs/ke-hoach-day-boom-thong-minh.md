@@ -629,6 +629,29 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Còn lại: vẫn có lượt chép tăng giá Bạc xỉu / Cơm sườn từ điểm cần chú ý; D58 có lượt tặng nước chanh / trứng; D51 bỏ sót khung chiều vắng.
 - Áp: `db-fix/boom_l76_ap_dung.sh` (TS 20261102_191549).
 
+### Lần 77 (02/11, bỏ): bỏ gợi ý TĂNG GIÁ ở điểm cần chú ý khi quán mất khách
+
+- Sửa thử: số đơn giảm + có việc kéo khách lại → lọc bỏ cảnh báo giá vốn "TĂNG GIÁ" (D51 chép thành việc ở l76).
+- Chấm kín D01, D33, D51 × 4: 12,4 → 12,5/16, 10/12 cặp bằng; tăng giá 2/12 → 0/12 nhưng việc làm 1,17 → 1,00, tìm vấn đề 0,83 → 0,75 (mất điểm Bạc xỉu lời mỏng). Bỏ (`ket_qua/l77_claude_20261102.json`).
+
+### Lần 78 (02/11, đã áp): quán mất khách → việc thứ hai hạ giá combo đắt hơn mua lẻ
+
+- Lỗi (chấm l77): câu "làm gì cho tăng" chỉ 1 việc (thẻ tích ly 7–8h), bỏ sót combo cà phê sữa + bánh mì đắt hơn lẻ 2.000đ; có lượt khuyên "tạo combo" đã có.
+- Sửa: nhánh mất khách của "Việc nên nhắm" thêm "Việc thứ hai (tính sẵn): hạ giá combo từ P xuống ≤ giá lẻ; mốc đo: N phần combo trong kỳ" khi có combo `price > retail`.
+- Chấm kín D01, D33, D51 × 4 cạnh lần 76: 12,9 → 13,7/16; D51 10,5 → 12,75 (4/4 khá hơn); việc làm 1,00 → 1,42; tìm vấn đề 1,33 → 1,67; gọn 1,92 → 1,58 (`ket_qua/l78_claude_20261102.json`).
+
+### Lần 79 (02/11, bỏ): việc thêm cho giờ chiều vắng ở câu "làm gì cho tăng"
+
+- Sửa thử: 3 giờ vắng nhất đều 13–17h → "Việc thêm cho giờ vắng (tính sẵn)": tổng cả kỳ, % doanh thu, món chiều chạy, giờ vàng 2 tuần.
+- Chấm kín D51 × 8 cạnh lần 78: 11,6 → 10,6/16 (1 hơn, 5 kém); câu dài hơn, bịa "giá vốn hợp lý" cho món không có giá vốn nhiều hơn. Bỏ — việc thứ ba làm loãng (giống l71: thêm dòng làm câu kém).
+
+### Lần 80 (02/11, đã áp cùng 78): mốc doanh thu / ngày chỉ chia cho ngày có mở bán
+
+- Lỗi (người chấm l79 nêu): mốc "giữ nếu ≥ X / ngày" chia cho mọi ngày trong kỳ; quán A nghỉ Chủ nhật → mốc thấp hơn thật ~14%.
+- Sửa: `ngayMoBan(f)` bỏ thứ có `by_weekday` = 0; dùng cho mốc kéo khách (l67) và mốc một buổi (l74). Số phần / tuần của món (l70) vẫn theo tuần lịch.
+- D01 1.475.000đ → 1.721.000đ / ngày; D02 288.000đ → 336.000đ / ngày. Sửa số, không chấm A/B.
+- Áp 78 + 80: `db-fix/boom_l80_ap_dung.sh` (TS 20261102_193303). Lần áp đầu tự trả bản cũ vì hàm khởi động chậm hơn 8 giây → script hỏi lại tối đa 4 lần.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

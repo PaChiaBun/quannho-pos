@@ -646,6 +646,9 @@ export function weekdayCounts(from?: string | null, to?: string | null): number[
   return out;
 }
 
+// lần 80: số ngày có mở bán trong kỳ (bỏ thứ không bán, vd nghỉ Chủ nhật) — mốc doanh thu / ngày chia cho số này
+const ngayMoBan = (f: ShopFacts) => (weekdayCounts(f.from, f.to) ?? []).reduce((t, c, k) => t + (f.by_weekday && !f.by_weekday[k] ? 0 : c), 0);
+
 const pctTxt = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
 
 function parseBands(v: unknown): { name: string; qty: number }[][] | null {
@@ -774,10 +777,13 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
         // 65b: câu hỏi đã nói buổi / giờ (vd "buổi chiều vắng" — D02) → không kéo sang giờ khác
         if (Math.abs(pctOrders) >= Math.abs(pctAvg) && pctOrders < 0 && f.by_hour && f.prev_by_hour && !/s[aá]ng|tr[uư]a|chi[eề]u|t[oố]i|khuya|\d+ ?h\b|gi[oờ]/i.test(question)) {
           // ngưỡng giữ tính theo NGÀY — số khung giờ là của cả kỳ, thử chỉ 2 tuần
-          const ngay = (weekdayCounts(f.from, f.to) ?? []).reduce((a, b) => a + b, 0);
+          const ngay = ngayMoBan(f);
           const hs = f.by_hour.map((v, h) => ({ h, v, p: f.prev_by_hour![h] })).filter((x) => x.v < x.p).sort((a, b) => (a.v - a.p) - (b.v - b.p)).slice(0, 2).sort((a, b) => a.h - b.h);
           // lần 67: việc chép thiếu MỨC ưu đãi / mục tiêu (l66) → ghi sẵn mức làm thử và ngưỡng giữ
           if (hs.length) viec = ` Việc nên nhắm (tính sẵn): kéo khách lại đúng ${hs.map((x) => `${x.h}h`).join(' và ')} (giờ mất nhiều nhất) bằng ưu đãi khách quen / món chủ lực của chính khung đó; mốc đo: doanh thu ${hs.map((x) => `${x.h}h`).join(' + ')} nay ${vnd(hs.reduce((t, x) => t + x.v, 0))}, kỳ trước ${vnd(hs.reduce((t, x) => t + x.p, 0))}. Mức làm thử: thẻ tích ly mua 8 tặng 1 hoặc bớt 2.000đ / đơn cho đơn trong ${hs.map((x) => `${x.h}h`).join(', ')}, chạy 2 tuần${ngay ? `; giữ nếu doanh thu các giờ đó lên lại ≥ ${vnd(Math.round(hs.reduce((t, x) => t + x.v + x.p, 0) / 2 / ngay / 1000) * 1000)} / ngày (nửa đường về mức cũ)` : ''}.`;
+          // lần 78: câu "làm gì cho tăng" chỉ ra 1 việc (thẻ tích ly), bỏ sót combo đắt hơn mua lẻ (chấm l77) → việc thứ hai tính sẵn
+          const cb = (f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]).find((t) => t.retail && t.price && t.price > t.retail);
+          if (hs.length && cb) viec += ` Việc thứ hai (tính sẵn): hạ giá "${cb.name}" từ ${vnd(cb.price!)} xuống ≤ ${vnd(cb.retail!)} (bằng hoặc dưới mua lẻ) — combo đang đắt hơn mua lẻ thì khách bỏ combo; mốc đo: nay ${cb.qty} phần combo trong kỳ.`;
         } else if (pctAvg < 0 && nhom && (f.groups?.length ?? 0) >= 2) {
           viec = ` Việc nên nhắm (tính sẵn): mời thêm ${nhom.name} trong mỗi đơn (nhân viên mời 1 câu, ghép sẵn với món đang bán chạy); mốc đo: nay ${String(Math.round((nhom.qty / f.orders) * 100) / 100).replace('.', ',')} phần ${nhom.name} / đơn; mục tiêu sau 2 tuần ${String(Math.round((nhom.qty / f.orders) * 130) / 100).replace('.', ',')} phần / đơn (+30%), không giảm giá ${nhom.name}.`;
         }
@@ -902,7 +908,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     // lần 74: hỏi về MỘT buổi (D02 "buổi chiều vắng") — GPT lấy "Combo tính sẵn" (món chạy nhất cả ngày = món sáng) cho buổi chiều
     // → tính sẵn việc cho đúng buổi: món bán chạy của khung đó (bỏ món giá vốn cao), ưu đãi chỉ trong khung, mốc doanh thu / ngày
     const bq = /s[aá]ng/i.test(question) ? 0 : /tr[uư]a/i.test(question) ? 1 : /chi[eề]u/i.test(question) ? 2 : /t[oố]i(?! ưu)/i.test(question) && !/\btoi\b/i.test(question) ? 3 : -1;
-    const ngayB = (weekdayCounts(f.from, f.to) ?? []).reduce((a, b) => a + b, 0);
+    const ngayB = ngayMoBan(f);
     if (bq >= 0 && /v[aắ]ng|[ií]t (?:kh[aá]ch|qu[aá])|ch[aậ]m|ế|c[aá]ch n[aà]o|l[aà]m (?:sao|g[iì])|k[eé]o kh[aá]ch/i.test(question) && f.by_band[bq]?.length && f.by_hour && ngayB) {
       const [lo, hi] = [[5, 11], [11, 14], [14, 17], [17, 24]][bq];
       const dt = f.by_hour.slice(lo, hi).reduce((a, b) => a + b, 0) / ngayB, all = f.by_hour.reduce((a, b) => a + b, 0) / ngayB;

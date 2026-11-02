@@ -1011,6 +1011,13 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   assert(!formatFacts(f, new Date(), 'vậy làm gì cho tăng', 'món nào bán chạy Cà phê sữa đá 1.150 ly').includes('Việc nên nhắm (tính sẵn)'));
   assert(buildMessages('vậy làm gì cho tăng', [], null, { facts: f, memory: [{ q: 'doanh thu sao', a: 'Tháng này giảm 23%.' }] })[1].content.includes('Việc nên nhắm (tính sẵn)'));
   assert(!formatFacts(f, new Date(), 'sao buoi chieu quan vang qua, co cach nao ko').includes('Việc nên nhắm (tính sẵn)'));
+  // lần 78: mất khách + combo đắt hơn mua lẻ → việc thứ hai hạ giá combo; không có combo đắt thì không
+  const f4 = parseFacts({ ...JSON.parse(JSON.stringify(f)), groups: [{ name: 'Combo', revenue: 800, prev_revenue: 1100, qty: 30, items: 1, unsold: 0, top: [{ name: 'Combo sáng', qty: 7, revenue: 364, price: 52, retail: 50 }], slow: [], unsold_names: [] }] })!;
+  assert(formatFacts(f4, new Date(), 'tháng này sao giảm vậy').includes('Việc thứ hai (tính sẵn): hạ giá "Combo sáng" từ 52đ xuống ≤ 50đ'), formatFacts(f4, new Date(), 'tháng này sao giảm vậy'));
+  assert(!formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('Việc thứ hai'));
+  // lần 80: mốc / ngày chỉ chia cho ngày có mở bán (f nghỉ Chủ nhật: 28 ngày − 4 = 24) → (900 + 1.220) / 2 / 24 ≈ 44đ, làm tròn nghìn = 0đ nên dùng số lớn
+  const f6 = parseFacts({ ...JSON.parse(JSON.stringify(f)), by_hour: h.map((x: number) => x * 1000), prev_by_hour: ph.map((x: number) => x * 1000) })!;
+  assert(formatFacts(f6, new Date(), 'tháng này sao giảm vậy').includes('≥ 44.000đ / ngày'), formatFacts(f6, new Date(), 'tháng này sao giảm vậy'));
   // lần 74: hỏi một buổi → việc cho đúng buổi đó (món của khung, bỏ món giá vốn cao, không dùng món sáng)
   const fc = parseFacts({ ...JSON.parse(JSON.stringify(f)), by_hour: h.map((v, i) => (i === 15 ? 280 : v)), by_band: [[{ name: 'Cà phê sữa đá', qty: 20 }, { name: 'Bánh mì', qty: 10 }], [], [{ name: 'Trà tắc', qty: 7 }, { name: 'Bạc xỉu', qty: 6 }, { name: 'Trà đào', qty: 5 }], []],
     groups: [{ name: 'Cà phê', revenue: 800, prev_revenue: 1100, qty: 30, items: 3, unsold: 0, top: [{ name: 'Bạc xỉu', qty: 6, revenue: 180, price: 30, cost: 15 }], slow: [], unsold_names: [] }] })!;
