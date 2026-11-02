@@ -88,7 +88,15 @@ Bẫy đã biết: `user_accounts`, `pos_coupon_redemptions` có thể bị RLS 
 2. **DB — `boom_sales_raw_v1`** (migration `20261103_boom_sales_raw_v1.sql` + ROLLBACK) — **đã áp 03/11**. Hàm trả số thô
    (doanh thu, đơn, theo giờ / thứ / món / khung giờ); `ban_hang.ts` dựng gói facts y như app. Đối chiếu quán KAY-Rạch Giá tháng 10:
    487.883.810đ / 3.366 đơn, tháng 9 436.064.400đ, cơm sườn miếng 849 phần — khớp app; ~1 giây lần đầu, ~0,1 giây sau.
-3. **Web — bật cờ, build, đưa lên `quannho.lpm.vn/pos`**. Hỏi thật lại các câu 03/11 trên Chrome; so với kết quả cũ.
+3. **Web — đã đưa 03/11** (`db-fix/boom_ask_web_ap_dung.sh`, build từ worktree sạch đúng HEAD; TS 20261103_033003, sửa ghi đè
+   TS 20261103_051348). `kBoomServerRoute = kIsWeb`. Hỏi thật lại (quán KAY-Rạch Giá) — cả 4 câu từng hỏng ở app nay có số:
+   - "tháng trước cuối tuần với ngày thường": trước chỉ cách bấm "Đổi ngày" → nay 24,8 triệu / ngày vs 12,0 triệu (gấp 2,1), việc theo lần 99.
+   - "tháng trước so với tháng 9 món nào giảm nhiều nhất": trước câu mẫu tổng doanh thu → nay phân tích (còn yếu: nêu nhóm Combo thay vì món).
+   - "tháng trước buổi chiều vắng, có cách nào": trước danh sách chung chung → nay khung 14–17h 992.000đ / ngày (6,3%), món chạy khung đó.
+   - "tháng trước … dư ít hơn tháng 9": trước so nhầm tháng 9 / 8 → nay tháng 10 / 9, đúng chiều, nhắc chưa ghi phiếu chi.
+   - Lỗi bắt được khi hỏi thật: nhánh số mẫu (usesData) ghi đè câu trả lời máy chủ → sửa (commit 29f6ce7).
+   - Thời gian: 2,4–3,3 giây / câu (máy chủ). Nhật ký hàm có cảnh báo "wall clock … early termination" sau mỗi lượt nhưng mọi lượt ok
+     (bộ chạy thu hồi tiến trình) — theo dõi.
 4. Ổn 1–2 tuần trên web → bật cho app (bản app sau), rồi mới xoá dần phần chọn đường trong Dart.
 
 ## Rủi ro
