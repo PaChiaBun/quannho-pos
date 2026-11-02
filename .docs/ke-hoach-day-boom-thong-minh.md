@@ -561,6 +561,12 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Còn lại: khuyên tăng giá món đang mất khách (D32); lấy số phần một khung giờ làm số cả kỳ (D32 lượt 2: 620 phần sáng); câu so tuần không nói mới có 3 ngày (D33).
 - Áp: `db-fix/boom_l67_ap_dung.sh` (TS 20261102_163311). Không cần bản app mới.
 
+### Lần 68 (02/11, bỏ): tự kiểm khuyên tăng giá món đang mất khách
+
+- Sửa thử: `tangGiaMatKhach` trong `kiemTraLoi` — vế câu có "tăng / nâng giá" + tên món mà dòng "món đổi nhiều nhất" ghi kỳ trước A phần → nay B phần (B < A), bỏ qua món có ghi giá vốn cao → hỏi lại. Đo 250 câu cũ: bắt 3, đều đúng (D32).
+- D32 × 4 lượt: bản cũ sai 1/4; bản mới hết tăng giá nhưng chuyển sang GIẢM GIÁ 2.000đ / tặng kèm. Chấm kín 4 cặp: 10,0 → 9,5; việc làm 0,50 → 0,25 → bỏ.
+- Bài học (giống lần 63): hỏi lại kiểu "đừng tăng giá" làm GPT lật sang giảm giá. Lời hỏi lại phải đưa VIỆC ĐÚNG có sẵn (vd chép "Việc nên nhắm" của khối), không chỉ cấm. D32 ("món nào giảm nhiều nhất") vẫn yếu: chỉ nêu 1 món, không nhắm 7–8h.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
