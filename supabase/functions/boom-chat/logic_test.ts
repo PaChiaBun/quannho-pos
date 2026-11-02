@@ -1137,3 +1137,12 @@ Deno.test('kiểm thật 03/11: tồn âm, kỳ ít ngày, chi 0đ, quán chưa 
   const mc = parseModules({ khach: { period: 'Tháng này', total: 0, new: 0, returning: 0, with_points: 0, wallet_customers: 0, wallet_real: 0, wallet_bonus: 0 } })!;
   assertStringIncludes(formatModules(mc, new Date(), 'khách quay lại quán em nhiều ko'), 'quán CHƯA lưu khách nào');
 });
+
+Deno.test('kiểm thật 03/11: nhãn kỳ của app → số ngày (dòng cắt người, hao hụt mỗi ngày)', () => {
+  const mn = (period: string) => parseModules({ nhan_su: { period, shifts: 60, total_hours: 400, staff_count: 3, staff: [{ name: 'An', hours: 200, shifts: 30 }, { name: 'Bình', hours: 120, shifts: 20 }, { name: 'Chi', hours: 80, shifts: 10 }] } })!;
+  for (const [p, w] of [['Tháng trước (tháng 10)', '4,4 tuần'], ['Tháng 9 (1/9/2026–30/9/2026)', '4,3 tuần'], ['Tuần trước (27/10–2/11)', '1 tuần'], ['Tháng này (1–28/10/2026)', '4 tuần']]) {
+    const t = formatModules(mn(p), new Date(), 'có nên cắt bớt 1 người ko');
+    assert(t.includes('Quyết định cắt người') && t.includes(`400 giờ / ${w}`), p + ' → ' + t);
+  }
+  assert(!formatModules(mn('Tháng này (1/11–3/11)'), new Date(), 'có nên cắt bớt 1 người ko').includes('Quyết định cắt người'));
+});

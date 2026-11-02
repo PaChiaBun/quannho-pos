@@ -784,6 +784,15 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Chấm kín lại 4 câu thu chi lần 93 (D03, D09, D34, D40) × 3: 10,8 → 11,8/16 (`ket_qua/l101_claude_20261103.json`). Còn: việc làm câu thu chi chung chung; D40 "có lời hơn ko" chưa trả lời thẳng "không".
 - Áp: `db-fix/boom_l101_ap_dung.sh` (TS 20261103_012720).
 
+### Lần 102 (03/11, đã áp): đếm số ngày theo nhãn kỳ app thật
+
+- Hỏi thật lần 2 (7 câu, quán KAY-Rạch Giá): doanh thu giảm / thu chi / so 2 món đúng bài; "có nên cắt bớt 1 người" KHÔNG có dòng lần 97 → Boom nói "số đang nghiêng", "không có ai đi trễ" (đều đã cấm).
+- Nguyên nhân: `soNgay` (lần 96) chỉ đọc nhãn bộ đề "(1–28/10/2026)"; app thật gửi "Tháng trước (tháng 10)", "Tháng này (1/11–3/11)", "Tháng 9 (1/9/2026–30/9/2026)", "Tuần trước (27/10–2/11)" → 0 ngày → dòng "Quyết định cắt người" (lần 97) và "~x / ngày" hao hụt (lần 96) chưa từng chạy trên app thật.
+- Sửa: `soNgay` đọc khoảng "d/m–d/m", "d/m/y–d/m/y", "d–d/m/y" và "tháng N" (số ngày của tháng). Test theo đúng 4 kiểu nhãn app.
+- Lỗi phía app (chưa sửa, cần bản app sau): "tháng trước cuối tuần với ngày thường khác nhau nhiều không" bị hiểu là hỏi cách dùng app; "tháng trước … dư ít hơn tháng 9 không" lấy nhầm kỳ tháng 9 so tháng 8. Quán Rạch Giá tắt mục Khách hàng → câu khách quay lại báo đúng.
+- Bài học: kiểm dòng tính sẵn bằng nhãn kỳ / dữ liệu đúng như app thật gửi, không chỉ bằng bộ đề mẫu.
+- Áp: `db-fix/boom_l102_ap_dung.sh` (TS 20261103_014819).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

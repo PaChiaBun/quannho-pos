@@ -368,8 +368,20 @@ const arr = (x: unknown) => (Array.isArray(x) ? (x as Row[]).filter((y) => y && 
 const pctOf = (a: number, b: number) => (b > 0 ? `${String(Math.round((a / b) * 1000) / 10).replace('.', ',')}%` : '');
 const chg = (a: number, b: number) => (b > 0 ? ` (${a >= b ? 'TĂNG' : 'GIẢM'} ${String(Math.abs(Math.round(((a - b) / b) * 1000) / 10)).replace('.', ',')}% so kỳ trước ${vnd(b)})` : '');
 const qty = (x: unknown) => String(Math.round(nn(x) * 100) / 100).replace('.', ',');
-// "Tháng này (1–28/10/2026)" → 28; không có khoảng ngày → 0
-const soNgay = (p: unknown) => { const r = /\((\d+)[–-](\d+)\//.exec(ss(p)); return r ? Number(r[2]) - Number(r[1]) + 1 : 0; };
+// Số ngày của nhãn kỳ app gửi: "Tháng này (1/11–3/11)" → 3, "Tháng 9 (1/9/2026–30/9/2026)" → 30, "Tháng trước (tháng 10)" → 31,
+// bộ đề "Tháng này (1–28/10/2026)" → 28; không đọc được → 0. Năm không ghi → coi năm thường (tháng 2 = 28 ngày)
+const soNgay = (p: unknown) => {
+  const t = ss(p);
+  const r = /(\d{1,2})(?:\/(\d{1,2})(?:\/(\d{4}))?)?\s*[–-]\s*(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/.exec(t);
+  if (r) {
+    const y2 = Number(r[6] ?? 2001), y1 = Number(r[3] ?? r[6] ?? 2001);
+    let a = Date.UTC(y1, Number(r[2] ?? r[5]) - 1, Number(r[1])), b = Date.UTC(y2, Number(r[5]) - 1, Number(r[4]));
+    if (b < a && !r[3]) a = Date.UTC(y2 - 1, Number(r[2] ?? r[5]) - 1, Number(r[1]));
+    return b >= a ? Math.round((b - a) / 864e5) + 1 : 0;
+  }
+  const m = /th[aá]ng (\d{1,2})\b/i.exec(t);
+  return m && Number(m[1]) >= 1 && Number(m[1]) <= 12 ? new Date(Date.UTC(2001, Number(m[1]), 0)).getUTCDate() : 0;
+};
 
 /** Số module → chữ cho GPT; tính sẵn tỷ lệ, so kỳ trước, xếp hạng (GPT nhỏ hay tính sai). */
 export function formatModules(m: ModuleFacts, now: Date = new Date(), question = ''): string {
