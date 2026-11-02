@@ -718,6 +718,41 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Chấm kín D45 × 6: 9,0 → 9,5/16 — GPT vẫn không nêu thứ của 24–25/12, câu vẫn chung chung; đổi dòng HÔM NAY của mọi câu → bỏ.
 - Áp 87–90: `db-fix/boom_l90_ap_dung.sh` (TS 20261102_222401).
 
+### Lần 92 (02/11, đã áp): so hai món được hỏi
+
+- Lỗi: D39 "cơm sườn với bún bò món nào lời hơn" — GPT không nêu giá vốn cơm sườn 48%, không nói chưa so được vì thiếu giá vốn bún bò, khuyên chủ tự nếm.
+- Sửa: câu nhắc đúng 2 món (khớp 2 chữ đầu tên) + "với / hay / so / nào" → "So 2 món (tính sẵn)": số phần, món bán nhiều hơn; đủ giá vốn thì lãi gộp / phần, thiếu thì "CHƯA so được món nào lời hơn — xin nhập giá vốn"; "ngon hơn" app không đo.
+- Chấm kín D39 × 6: 5,5 → 9,7/16 (`ket_qua/l92_claude_20261102.json`).
+
+### Lần 93 (02/11, đã áp): thu − chi đổi do thu hay do chi
+
+- Lỗi: D03 "thu chi sao dư ít hơn tháng trước" — GPT tự trừ sai (16.343.000đ), bỏ sót tiền điện tăng mạnh theo %.
+- Sửa: câu thu / chi / dư / lời + so / sao / giảm / tăng (không phải tháng sau, "nếu") → "Phân tích tính sẵn: thu − chi đổi ±X = thu …, chi … → nguyên nhân chính là THU / CHI; khoản tăng mạnh nhất theo %".
+- Chấm kín D03, D09, D34, D40: 10,83 → 11,0/16; lỗi trừ sai 16,3 triệu 3 → 0 (`ket_qua/l93_claude_20261102.json`).
+
+### Lần 94 (02/11, bỏ): doanh thu theo ca khi hỏi một ca
+
+- Sửa thử: D57 nhận ca được hỏi (lấy ca nhắc sớm nhất). Chấm kín 7,5 → 8,5/16, GPT vẫn lấy ca trưa → bỏ.
+
+### Lần 95 (02/11, đã áp): nhóm món — "bán ít", "gọi thêm", tên nhóm từ lượt trước
+
+- Lỗi: D10 "do uong ban it qua phai ko" (không dấu, "bán ít") và D54 "lam sao de khach goi them" (nhóm topping ở lượt trước) không nhận dòng việc cho nhóm (lần 85).
+- Sửa: thêm "bán ít / gọi thêm"; câu không nhắc nhóm thì lấy tên nhóm trong 12 chữ đầu lượt trước.
+- Chấm kín D10, D54 × 6: 9,3 → 13,75/16; D54 6,8 → 14,8 (`ket_qua/l95_claude_20261102.json`).
+
+### Lần 96 (03/11, đã áp): kho, hao hụt, nhập hàng tính sẵn
+
+- Lỗi: D44 bịa "nhập 5 kg trân châu đủ dùng tháng 11"; D04 tự phán hao hụt "khá cao so với bình thường"; quên hao hụt nấu dư và hàng sắp hết.
+- Sửa: câu kho / hao hụt / nhập / sắp hết / tồn (chữ "kho" đứng riêng, không bắt "khoản") → "Kho tính sẵn": tổng hao hụt, số bỏ đi mỗi ngày, việc theo loại hàng (nấu dư → mẻ nhỏ theo giờ đông; hàng tươi → đặt theo ngày); hàng cần nhập xếp theo còn / tối thiểu, số ít nhất để lên mức tối thiểu; hỏi nhập bao nhiêu tháng sau → nêu cách tính, không đặt số. Chỉ hỏi hao hụt thì không nhắc hàng cần nhập. Hàm `soNgay(period)`.
+- Chấm kín D04, D44, D53 × 4: 8,8 → 11,6/16; đúng số 1,33 → 2,0 (`ket_qua/l96_claude_20261103.json`). Kiểm D29 (lịch nhập gas, gạo) × 4: 11,75 → 10,75, chênh ở "gọn", trong dao động (`l97_claude_20261103.json`).
+
+### Lần 97 (03/11, đã áp): hỏi cắt bớt người
+
+- Lỗi: D17 "ca nhiều quá, có nên cắt bớt 1 người" — GPT tự đặt ngưỡng "trên 30 / dưới 20 ca", nói "không ai làm quá nhiều" dù Ngọc ~58 giờ / tuần.
+- Sửa: câu cắt / bớt / giảm / cho nghỉ + người / nhân viên / ca → "Quyết định cắt người (tính sẵn)": kết luận CHƯA nên cắt ngay khi bớt 1 người làm người còn lại quá 48 giờ / tuần; giờ / người / tuần, ca lệch nhiều nhất – ít nhất, giờ dồn khi bớt 1 người; việc: chia lại ca, sửa ca quên chấm ra, rút 1 người ở giờ vắng 2 tuần.
+- Bản đầu: 6/6 câu mở "nghiêng về cắt" (9,6 → 11,6 gồm D29). Ghi rõ kết luận trong dòng → chấm kín D17 × 6: 7,3 → 14,2/16, 6/6 khá hơn (`ket_qua/l97b_claude_20261103.json`).
+- Áp 92–97: `db-fix/boom_l97_ap_dung.sh` (TS 20261103_003836).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
