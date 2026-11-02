@@ -469,7 +469,7 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     );
     const ls = arr(k.losses);
     out.push(ls.length
-      ? `Hao hụt / hư hỏng ghi trong kỳ: ${ls.map((x) => `${ss(x.name)} ${qty(x.qty)} ${ss(x.unit)}${x.value !== undefined ? ` ≈ ${vnd(nn(x.value))}` : ''}`).join('; ')}.`
+      ? `Hao hụt / hư hỏng ghi trong kỳ: ${ls.map((x) => `${ss(x.name)} ${qty(x.qty)} ${ss(x.unit)}${x.value !== undefined && nn(x.value) > 0 ? ` ≈ ${vnd(nn(x.value))}` : ' (chưa có giá vốn → chưa tính được tiền, KHÔNG phải 0đ)'}`).join('; ')}.`
       : 'Không có phiếu hao hụt / hư hỏng nào trong kỳ (có thể quán chưa ghi).');
     // lần 89: hỏi có nên đổi mối vì hao hụt (D20) — GPT "số nghiêng về đổi mối" dù khối chỉ có số hao hụt, không có số chất lượng
     const hh = ls.filter((x) => x.value !== undefined && nn(x.value) > 0);
@@ -477,12 +477,13 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
       out.push(`Quyết định đổi mối (tính sẵn): hao hụt ghi trong kỳ ${hh.map((x) => `${ss(x.name)} ${qty(x.qty)} ${ss(x.unit)}`).join(', ')} ≈ ${vnd(hh.reduce((t, x) => t + nn(x.value), 0))} — khối CHỈ có số hao hụt, KHÔNG có số về chất lượng / giá của mối → CHƯA đủ để đổi mối; hao hụt hàng tươi thường do nhập dư → thử đặt theo ngày, ít hơn vào ngày vắng 2 tuần; hao hụt vẫn cao hoặc hàng hư khi mới nhận thì mới so mối khác.`);
     }
     // lần 96: D04 / D44 / D53 hỏi kho, hao hụt, nhập — GPT tự đặt mốc "cao so với bình thường", cộng sai số thiếu, quên hao hụt "nấu dư"
-    else if (/(?<!\p{L})kho(?!\p{L})|hao h[uụ]t|h[uư] h[oỏ]ng|nh[aậ]p|s[aắ]p h[eế]t|t[oồ]n(?!\p{L})/iu.test(question) && (hh.length || low.length)) {
+    else if (/(?<!\p{L})kho(?!\p{L})|hao h[uụ]t|h[uư] h[oỏ]ng|nh[aậ]p|s[aắ]p h[eế]t|t[oồ]n(?!\p{L})/iu.test(question) && (ls.length || low.length)) {
       const nd = soNgay(k.period);
       const tuoi = (x: Row) => /nấu dư|bánh mì|sữa tươi|rau|trái cây|thịt|bún|kem/i.test(ss(x.name));
-      const hhTxt = hh.map((x) => `${ss(x.name)} ${qty(x.qty)} ${ss(x.unit)}${nd > 1 ? ` (~${qty(Math.round((nn(x.qty) / nd) * 10) / 10)} ${ss(x.unit)} / ngày)` : ''} → ${/nấu dư/i.test(ss(x.name)) ? 'nấu mẻ nhỏ nhiều lần theo giờ đông, không nấu một lần cho cả ngày' : tuoi(x) ? 'đặt theo lượng bán từng ngày, ít hơn vào ngày vắng' : 'xem lại cách bảo quản'}`);
+      const hl = ls.filter((x) => nn(x.qty) > 0), tien = hh.reduce((t, x) => t + nn(x.value), 0);
+      const hhTxt = hl.map((x) => `${ss(x.name)} ${qty(x.qty)} ${ss(x.unit)}${nd > 1 ? ` (~${qty(Math.round((nn(x.qty) / nd) * 10) / 10)} ${ss(x.unit)} / ngày)` : ''} → ${/nấu dư/i.test(ss(x.name)) ? 'nấu mẻ nhỏ nhiều lần theo giờ đông, không nấu một lần cho cả ngày' : tuoi(x) ? 'đặt theo lượng bán từng ngày, ít hơn vào ngày vắng' : 'xem lại cách bảo quản'}`);
       const lowTxt = (/(?<!\p{L})kho(?!\p{L})|nh[aậ]p|s[aắ]p h[eế]t|t[oồ]n(?!\p{L})/iu.test(question) ? [...low] : []).sort((a, b) => nn(a.qty) / Math.max(1, nn(a.min)) - nn(b.qty) / Math.max(1, nn(b.min))).map((x) => `${ss(x.name)} ${nn(x.qty) < 0 ? `tồn ÂM ${qty(x.qty)} (số kho sai — kiểm lại, coi như đã HẾT)` : nn(x.qty) === 0 ? 'đã HẾT' : `còn ${qty(x.qty)}`} / tối thiểu ${qty(x.min)} → nhập ít nhất ${qty(nn(x.min) - Math.max(0, nn(x.qty)))} ${ss(x.unit)} để lên mức tối thiểu`);
-      out.push(`Kho tính sẵn: ${hh.length ? `hao hụt cả kỳ ≈ ${vnd(hh.reduce((t, x) => t + nn(x.value), 0))}: ${hhTxt.join('; ')}. Khối KHÔNG có số bán → không tính được tỉ lệ hao hụt so số bán, KHÔNG tự nói "cao / thấp so với bình thường"; nêu số mỗi ngày bỏ đi. ` : ''}${lowTxt.length ? `Cần nhập (hết trước): ${lowTxt.join('; ')}.` : ''}${/bao nhi[eê]u|m[aấ]y/i.test(question) && /nh[aậ]p/i.test(question) ? ' Hỏi nhập bao nhiêu cho tháng sau: KHÔNG tự đặt số kg / lít; nêu cách tính = lượng dùng tháng (số ly bán × định lượng mỗi ly) − số còn + mức tối thiểu, trừ phần đang hao hụt; xem số ly bán trong Báo cáo.' : ''}`);
+      out.push(`Kho tính sẵn: ${hl.length ? `hao hụt cả kỳ${tien > 0 ? ` ≈ ${vnd(tien)}` : ''}${hl.length > hh.length ? ` (${hl.length - hh.length} món chưa có giá vốn → tiền thật CAO hơn số này, KHÔNG nói "không mất tiền")` : ''}: ${hhTxt.join('; ')}. Khối KHÔNG có số bán → không tính được tỉ lệ hao hụt so số bán, KHÔNG tự nói "cao / thấp so với bình thường"; nêu số mỗi ngày bỏ đi. ` : ''}${lowTxt.length ? `Cần nhập (hết trước): ${lowTxt.join('; ')}.` : ''}${/bao nhi[eê]u|m[aấ]y/i.test(question) && /nh[aậ]p/i.test(question) ? ' Hỏi nhập bao nhiêu cho tháng sau: KHÔNG tự đặt số kg / lít; nêu cách tính = lượng dùng tháng (số ly bán × định lượng mỗi ly) − số còn + mức tối thiểu, trừ phần đang hao hụt; xem số ly bán trong Báo cáo.' : ''}`);
     }
     if (k.stock_value === undefined) out.push('Người hỏi không được xem giá vốn / tiền nhập hàng → không nêu số tiền kho.');
     out.push('KHÔNG có lượng dùng mỗi ngày → KHÔNG tự tính "đủ dùng mấy ngày"; chỉ so số còn với mức tối thiểu và khuyên nhập.');

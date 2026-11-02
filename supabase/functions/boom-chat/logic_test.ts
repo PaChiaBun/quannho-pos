@@ -1146,3 +1146,10 @@ Deno.test('kiểm thật 03/11: nhãn kỳ của app → số ngày (dòng cắt
   }
   assert(!formatModules(mn('Tháng này (1/11–3/11)'), new Date(), 'có nên cắt bớt 1 người ko').includes('Quyết định cắt người'));
 });
+
+Deno.test('kiểm thật 03/11 (2): hao hụt món chưa có giá vốn → không phải 0đ, vẫn tính mỗi ngày', () => {
+  const m = parseModules({ kho: { period: 'Tháng trước (tháng 10)', items: 5, low_count: 0, out_count: 0, imports: 0, low: [], losses: [{ name: 'Cơm sườn cọng', qty: 49, unit: 'phần', value: 0 }] } })!;
+  const t = formatModules(m, new Date(), 'tháng trước kho hao hụt nhiều không');
+  assertStringIncludes(t, 'Cơm sườn cọng 49 phần (chưa có giá vốn → chưa tính được tiền, KHÔNG phải 0đ)');
+  assertStringIncludes(t, 'Kho tính sẵn: hao hụt cả kỳ (1 món chưa có giá vốn → tiền thật CAO hơn số này, KHÔNG nói "không mất tiền"): Cơm sườn cọng 49 phần (~1,6 phần / ngày)');
+});

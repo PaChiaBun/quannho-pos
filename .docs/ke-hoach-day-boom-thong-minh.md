@@ -793,6 +793,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Bài học: kiểm dòng tính sẵn bằng nhãn kỳ / dữ liệu đúng như app thật gửi, không chỉ bằng bộ đề mẫu.
 - Áp: `db-fix/boom_l102_ap_dung.sh` (TS 20261103_014819).
 
+### Lần 103 (03/11, đã áp): hao hụt món chưa có giá vốn không phải 0đ
+
+- Hỏi thật (quán KAY-Rạch Giá) sau lần 102: "Quyết định cắt người" đã hiện (19 người, ~22 giờ / người / tuần, bớt 1 người còn ~23 giờ). Câu "tháng trước kho hao hụt nhiều không": các món hao hụt (cơm sườn cọng 49 phần…) ghi giá trị 0đ vì chưa nhập giá vốn → Boom kết luận "không hao hụt nhiều về giá trị"; dòng "Kho tính sẵn" (lần 96) bỏ qua vì chỉ lấy món có giá trị > 0.
+- Sửa: dòng hao hụt ghi "(chưa có giá vốn → chưa tính được tiền, KHÔNG phải 0đ)"; "Kho tính sẵn" dùng mọi phiếu hao hụt có số lượng (tính ~x / ngày), có món chưa giá vốn thì nhắc tiền thật cao hơn, không nói "không mất tiền".
+- Hỏi thật thêm: "món ế, có nên bỏ" và "món nào lời nhất" đúng bài. 4 lỗi phía app (chưa sửa): câu cuối tuần / ngày thường bị hiểu là hỏi cách dùng app; câu có "tháng trước" và "tháng 9" lấy nhầm kỳ; "món nào giảm nhiều nhất" app tự trả mẫu tổng doanh thu; "buổi chiều vắng, có cách nào" app không gửi số liệu.
+- Áp: `db-fix/boom_l103_ap_dung.sh` (TS 20261103_023718).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
