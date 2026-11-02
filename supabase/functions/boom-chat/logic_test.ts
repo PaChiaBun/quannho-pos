@@ -1006,6 +1006,10 @@ Deno.test('Lần 59: số kỳ trước chia nhỏ → tính sẵn tăng / giả
   assert(formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('Việc nên nhắm (tính sẵn): kéo khách lại đúng 7h và 8h (giờ mất nhiều nhất)') && formatFacts(f, new Date(), 'tháng này sao giảm vậy').includes('mốc đo: doanh thu 7h + 8h nay 900đ, kỳ trước 1.220đ'), formatFacts(f, new Date(), 'tháng này sao giảm vậy'));
   assert(formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('Việc nên nhắm (tính sẵn): mời thêm Món thêm trong mỗi đơn') && formatFacts(f2, new Date(), 'tháng này sao giảm vậy').includes('nay 0,42 phần Món thêm / đơn'));
   assert(!formatFacts(f, new Date(), 'lên kế hoạch tháng 11').includes('Việc nên nhắm'));
+  // lần 76: câu nói tiếp "làm gì cho tăng" sau lượt nói doanh thu giảm → có việc tính sẵn; không có lượt trước giảm → không
+  assert(formatFacts(f, new Date(), 'vậy làm gì cho tăng', 'doanh thu thang nay sao roi Tháng này giảm 14,2%').includes('Việc nên nhắm (tính sẵn)'));
+  assert(!formatFacts(f, new Date(), 'vậy làm gì cho tăng', 'món nào bán chạy Cà phê sữa đá 1.150 ly').includes('Việc nên nhắm (tính sẵn)'));
+  assert(buildMessages('vậy làm gì cho tăng', [], null, { facts: f, memory: [{ q: 'doanh thu sao', a: 'Tháng này giảm 23%.' }] })[1].content.includes('Việc nên nhắm (tính sẵn)'));
   assert(!formatFacts(f, new Date(), 'sao buoi chieu quan vang qua, co cach nao ko').includes('Việc nên nhắm (tính sẵn)'));
   // lần 74: hỏi một buổi → việc cho đúng buổi đó (món của khung, bỏ món giá vốn cao, không dùng món sáng)
   const fc = parseFacts({ ...JSON.parse(JSON.stringify(f)), by_hour: h.map((v, i) => (i === 15 ? 280 : v)), by_band: [[{ name: 'Cà phê sữa đá', qty: 20 }, { name: 'Bánh mì', qty: 10 }], [], [{ name: 'Trà tắc', qty: 7 }, { name: 'Bạc xỉu', qty: 6 }, { name: 'Trà đào', qty: 5 }], []],

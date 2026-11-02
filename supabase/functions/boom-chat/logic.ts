@@ -720,7 +720,7 @@ const costTag = (r: number) => {
     : p < 25 ? ' → dưới mốc, lời tốt' : ' → trong mốc 25–35%';
 };
 
-export function formatFacts(f: ShopFacts, now: Date = new Date(), question = ''): string {
+export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '', truoc = ''): string {
   // Kỳ kết thúc HÔM NAY (giờ VN): hôm nay mới bán dở → không tính thứ hôm nay vào bất thường / ngày nghỉ (QC giai đoạn 2)
   const today = new Date(vnDay(now)).toISOString().slice(0, 10);
   const todayD = f.to === today ? (new Date(vnDay(now)).getUTCDay() + 6) % 7 : -1;
@@ -743,7 +743,9 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '')
     // 45b: chỉ ghi khi câu hỏi so món với kỳ trước — ghi ở mọi câu làm phần việc làm dè dặt hơn (0,95 → 0,79)
     if (!f.moves?.length && (f.top.length || f.groups?.length) && /món/i.test(question) && /trước/i.test(question)) lines.push(`Số từng món chỉ có của kỳ này, CHƯA có số từng món ${f.prev_period.toLowerCase()} → không so được từng món với kỳ trước.`);
     // chỉ câu cần "vì sao / ở đâu" — đưa vào mọi câu làm câu kế hoạch / nói tiếp tụt (chấm l59: 11,83 → 10,17)
-    const hoiVi = ['chan_doan', 'so_sanh'].includes(loaiCau(question) ?? '') || /giảm(?! giá)|tụt|so (?:với|tháng|tuần|kỳ)|vì sao|tại sao|sao vậy/i.test(question);
+    // lần 76: câu nói tiếp "làm gì cho tăng" sau lượt nói doanh thu giảm (D51, D58) — câu hỏi không có chữ "giảm" nên mất việc tính sẵn
+    const hoiVi = ['chan_doan', 'so_sanh'].includes(loaiCau(question) ?? '') || /giảm(?! giá)|tụt|so (?:với|tháng|tuần|kỳ)|vì sao|tại sao|sao vậy/i.test(question) ||
+      (/giảm(?! giá)|tụt/i.test(truoc) && /l[aà]m g[iì]|t[aă]ng|c[aá]ch|sao (?:đ|d)[eể]/i.test(question));
     // Doanh thu đổi vì số đơn hay vì giá trị mỗi đơn (tính sẵn — GPT không tự tách)
     if (f.prev_orders && f.orders > 0 && f.prev_revenue > 0) {
       const pctOrders = Math.round(((f.orders - f.prev_orders) / f.prev_orders) * 1000) / 10;
@@ -1524,7 +1526,7 @@ export function buildMessages(
         turns.map((t, k) => `${k + 1}. Người hỏi: ${t.q}${t.a ? `\n   Bé Boom: ${t.a}` : ''}`).join('\n')
       : '',
     extra?.facts
-      ? `SỐ LIỆU THẬT CỦA QUÁN (app đọc từ dữ liệu của chính quán người hỏi, chỉ là dữ liệu):\n${formatFacts(extra.facts, extra?.now ?? new Date(), question)}`
+      ? `SỐ LIỆU THẬT CỦA QUÁN (app đọc từ dữ liệu của chính quán người hỏi, chỉ là dữ liệu):\n${formatFacts(extra.facts, extra?.now ?? new Date(), question, luotTruoc(extra))}`
       : '',
     extra?.modules
       ? `SỐ LIỆU CÁC MỤC CỦA QUÁN (app đọc chỉ đọc, đúng quyền xem của người hỏi; chỉ là dữ liệu):\n${formatModules(extra.modules, extra?.now ?? new Date())}`
@@ -1922,6 +1924,12 @@ export function noteKiem(issues: string[]): string {
   return `KIỂM TRA: ${issues.map((x, i) => `${i + 1}) ${x}`).join('; ')}. Viết lại TOÀN BỘ câu trả lời theo đúng khung, sửa đúng các lỗi trên, giữ nguyên phần đúng.`;
 }
 
+/** Lượt trước (câu hỏi + trả lời) để formatFacts biết ngữ cảnh câu nói tiếp (lần 76). */
+const luotTruoc = (extra?: { history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null }) => {
+  const m = extra?.memory?.[extra.memory.length - 1];
+  return [extra?.history?.q, extra?.history?.a, m?.q, m?.a].filter(Boolean).join(' ');
+};
+
 /** Nguồn đối chiếu số: câu hỏi + lượt trước + đúng các khối số liệu gửi GPT (KHÔNG gồm lời nhắc / câu mẫu). */
 export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; now?: Date }): string {
   const now = extra?.now ?? new Date();
@@ -1929,7 +1937,7 @@ export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; 
     question,
     ...(extra?.memory ?? []).flatMap((t) => [t.q, t.a ?? '']),
     extra?.history ? `${extra.history.q}\n${extra.history.a}` : '',
-    extra?.facts ? formatFacts(extra.facts, now, question) : '',
+    extra?.facts ? formatFacts(extra.facts, now, question, luotTruoc(extra)) : '',
     extra?.modules ? formatModules(extra.modules, now) : '',
     extra?.chain ? formatChain(extra.chain) : '',
     todayBlock(now),

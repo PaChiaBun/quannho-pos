@@ -1,0 +1,230 @@
+{
+ "moi": [
+  {
+   "id": "D51_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ có một việc thật (7h–8h) không kèm số giảm, bỏ sót combo đắt hơn lẻ và khung chiều vắng."
+  },
+  {
+   "id": "D58_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Có mời Món thêm với mốc 0,19→0,25 nhưng không nối với giá trị đơn giảm 11,9%, lại gợi ý tặng nước chanh làm mỏng tiền đồ uống."
+  },
+  {
+   "id": "D51_2",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Nói 7h–8h đang ở mức thấp là sai (đó là giờ đông nhất), không đưa số giảm và bỏ sót combo, khung chiều."
+  },
+  {
+   "id": "D58_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Có mời Món thêm với mốc đo nhưng lại gợi ý khuyến mãi Trà đá, Nước sâm, đi ngược mục tiêu tăng giá trị đơn."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 2,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 2,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Chỉ một việc chính (7h–8h) thiếu mốc đo cụ thể, bỏ sót combo đắt hơn lẻ và khung chiều vắng."
+  },
+  {
+   "id": "D58_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Có mời Món thêm 0,19→0,25 nhưng không nối với mức giảm 11,9% giá trị đơn và bỏ qua đồ uống."
+  },
+  {
+   "id": "D51_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 2,
+    "ly_le": 2,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Mở đầu bằng lời chào chung, chưa nhắc khung chiều 14–16h vắng."
+  },
+  {
+   "id": "D58_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Có mời Món thêm với mốc đo nhưng gợi ý tặng nước chanh làm mỏng tiền đồ uống, câu dài."
+  }
+ ],
+ "cu": [
+  {
+   "id": "D51_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 2,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 1
+   },
+   "loi": "Có combo và khung chiều 14–16h đúng số nhưng không nối với nguyên nhân số đơn giảm ở câu trước, mở bằng Bạc xỉu (chuyện lời chứ không phải doanh thu)."
+  },
+  {
+   "id": "D58_1",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Ý mời món thêm (bám câu trước) bị đẩy xuống thứ ba, không có mốc đo, mở đầu bằng tăng giá Cơm sườn lạc chủ đề."
+  },
+  {
+   "id": "D51_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Lạc khỏi câu trước: đề nghị tăng giá Cà phê sữa đá (món chủ lực) khi quán đang mất khách, gọi Bạc xỉu là nhóm."
+  },
+  {
+   "id": "D58_2",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 1,
+    "viec_lam": 0,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Bỏ hẳn nguyên nhân giá trị đơn giảm của câu trước, kết luận ẩn món để tăng doanh thu là sai, việc làm chỉ là theo dõi."
+  },
+  {
+   "id": "D51_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 1
+   },
+   "loi": "Không nối với số đơn giảm; tặng bánh mì cho đơn từ 50.000đ là bớt quá nặng khi đơn trung bình 31.501đ."
+  },
+  {
+   "id": "D58_3",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 0,
+    "ly_le": 0,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 1,
+    "gon": 2
+   },
+   "loi": "Đề nghị TẶNG trứng ốp la, chả thêm để tăng giá trị đơn là sai logic, không bám nguyên nhân khách ít gọi món thêm."
+  },
+  {
+   "id": "D51_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 1,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Không nối với số đơn giảm, gọi Bạc xỉu là nhóm, việc Bạc xỉu chỉ là xem xét."
+  },
+  {
+   "id": "D58_4",
+   "diem": {
+    "thang": 1,
+    "dung_so": 2,
+    "tim_van_de": 1,
+    "ly_le": 1,
+    "viec_lam": 1,
+    "dung_quan": 2,
+    "than_trong": 2,
+    "gon": 2
+   },
+   "loi": "Ý mời món thêm nằm cuối và không có mốc đo, mở bằng tăng giá Cơm sườn không bám nguyên nhân giá trị đơn giảm."
+  }
+ ]
+}

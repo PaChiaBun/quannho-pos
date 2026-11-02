@@ -621,6 +621,14 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Còn lại (câu nói tiếp D57): câu trước ghi ca tối 16–20h nhưng 2/4 lượt viết "17h đến 20h" (nhãn khung "Tối (17–20h)").
 - Áp: `db-fix/boom_l75_ap_dung.sh` (TS 20261102_172212).
 
+### Lần 76 (02/11, đã áp): câu nói tiếp "làm gì cho tăng" kế thừa ngữ cảnh giảm
+
+- Lỗi: D51, D58 — lượt trước Boom vừa nói doanh thu giảm, Chủ Quán hỏi tiếp "vậy làm gì cho tăng" → câu mới không phải loại chẩn đoán nên khối không có "Việc nên nhắm (tính sẵn)"; GPT chép "điểm cần chú ý" (tăng giá Bạc xỉu, giấu món) hoặc tặng nước / trứng.
+- Sửa: `formatFacts(f, now, question, truoc)`; `hoiVi` cũng bật khi lượt trước (`luotTruoc`: history + memory cuối) có "giảm / tụt" và câu mới hỏi làm gì / tăng / cách / sao để. `buildMessages`, `soLieuGoc`, `cham_tu_van.ts` truyền lượt trước.
+- Chấm kín D51, D58 × 4 lượt cạnh lần 75: 10,4 → 12,6/16; việc làm 1,0 → 1,75; tìm vấn đề 0,6 → 1,1; 5 cặp khá hơn, 1 bằng, 2 kém 1 điểm (`cham_tu_van/ket_qua/l76_claude_20261102.json`).
+- Còn lại: vẫn có lượt chép tăng giá Bạc xỉu / Cơm sườn từ điểm cần chú ý; D58 có lượt tặng nước chanh / trứng; D51 bỏ sót khung chiều vắng.
+- Áp: `db-fix/boom_l76_ap_dung.sh` (TS 20261102_191549).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
