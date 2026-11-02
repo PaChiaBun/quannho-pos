@@ -773,6 +773,17 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Chấm kín D06, D25 × 5: 9,0 → 13,8/16, 10/10 khá hơn (`ket_qua/l100_claude_20261103.json`). Còn lỗi: gọi cả 1.320 khách có điểm là "lâu chưa ghé".
 - Áp 98–100: `db-fix/boom_l100_ap_dung.sh` (TS 20261103_010342).
 
+### Lần 101 (03/11, đã áp): sửa 4 lỗi khi hỏi Boom thật (quán KAY-Rạch Giá, web)
+
+- Hỏi thật 5 câu trên Chrome sau khi áp 98–100. Câu 20/11 đã theo khung 3 mốc (lần 98). Lỗi lộ ra:
+  1. Kho: tồn −1 phần, tối thiểu 1000 → "nhập ít nhất 1001 phần" (dòng lần 96 trừ số âm).
+  2. "Tháng này cuối tuần với ngày thường" ngày 03/11: kỳ mới 3 ngày, dòng lần 99 không bật (đúng) nhưng GPT so 1 Chủ nhật với 1 Thứ 2, khuyên khuyến mãi Thứ 2.
+  3. "Khách quay lại": app không gửi số khách cho quán này (chưa rõ do chưa bật mục Khách hàng / quyền hay chưa lưu khách — không đọc được database thật).
+  4. "Tháng trước thu chi sao": chi 0đ (chưa ghi phiếu chi) không được nhắc; dòng lần 93 nằm trong điều kiện "có khoản chi" nên mất → GPT nói ngược chiều ("tháng 9 thu tăng 76%").
+- Sửa: tồn âm ghi "tồn ÂM (số kho sai — kiểm lại)", số cần nhập tính từ 0; câu cuối tuần / ngày thường mà mỗi thứ < 2 ngày → "CHƯA đủ số để so", không so 1 ngày với 1 ngày; dòng lần 93 dời ra ngoài, ghi rõ kỳ nào so kỳ nào và "THU GIẢM / CHI TĂNG" (không nói ngược chiều); chi 0đ → "quán CHƯA ghi phiếu chi, thu − chi không phải tiền dư"; quán có mục khách mà 0 khách → "chưa lưu khách, chưa đo được".
+- Chấm kín lại 4 câu thu chi lần 93 (D03, D09, D34, D40) × 3: 10,8 → 11,8/16 (`ket_qua/l101_claude_20261103.json`). Còn: việc làm câu thu chi chung chung; D40 "có lời hơn ko" chưa trả lời thẳng "không".
+- Áp: `db-fix/boom_l101_ap_dung.sh` (TS 20261103_012720).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

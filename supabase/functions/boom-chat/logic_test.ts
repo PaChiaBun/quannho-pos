@@ -716,7 +716,7 @@ Deno.test('Số module: làm sạch + tính sẵn (thu chi, kho, chấm công, k
   assertStringIncludes(formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko'), 'Quyết định cắt người (tính sẵn): KẾT LUẬN: CHƯA nên cắt ngay (dòng đầu nói đúng ý này, KHÔNG nói "nghiêng về cắt") — 3 người, 400 giờ / 4 tuần ≈ 33 giờ / người / tuần; ca lệch: nhiều nhất An ~50 giờ / tuần, ít nhất Chi ~20 giờ / tuần. Bớt 1 người mà giữ đủ giờ mở quán → 2 người còn lại mỗi người ~50 giờ / tuần (QUÁ 48');
   assert(!formatModules(mn, new Date(), 'tháng này ai làm nhiều nhất').includes('Quyết định cắt người'));
   // lần 93: hỏi thu chi vì sao / so kỳ trước → tách thu − chi đổi do thu hay chi; câu dự báo / câu khác thì không
-  assertStringIncludes(formatModules(m, new Date(), 'tháng này thu chi sao dư ít hơn tháng trước'), 'Phân tích tính sẵn: thu − chi đổi −20.000.000đ = thu tăng 10.000.000đ, chi tăng 30.000.000đ → nguyên nhân chính là CHI');
+  assertStringIncludes(formatModules(m, new Date(), 'tháng này thu chi sao dư ít hơn tháng trước'), 'Phân tích tính sẵn (Tháng này so kỳ trước): thu − chi đổi −20.000.000đ = thu tăng 10.000.000đ, chi tăng 30.000.000đ → nguyên nhân chính là Tháng này CHI TĂNG');
   assert(!formatModules(m, new Date(), 'mã GIAM15 có nên chạy tiếp').includes('Phân tích tính sẵn: thu − chi'));
   assert(!formatModules(m, new Date(), 'tháng sau tiền chi tăng bao nhiêu').includes('Phân tích tính sẵn: thu − chi'));
   assertStringIncludes(t, 'Sữa còn 2 hộp (tối thiểu 5)');
@@ -1121,4 +1121,19 @@ Deno.test('lần 100: hỏi khách quay lại → tỉ lệ cộng dồn, không
   assertStringIncludes(t, 'Giữ khách (tính sẵn): 100 / 1000 khách đã lưu (cộng dồn từ trước tới nay) đến từ 2 lần = 10%; 200 khách mới là số CỦA KỲ NÀY — khác cơ sở, KHÔNG so 100 với 200.');
   assertStringIncludes(t, 'mốc đo: tỉ lệ khách đến từ 2 lần lên ≥ 13% sau 2 tháng');
   assert(!formatModules(m, new Date(), 'tháng này bao nhiêu khách mới').includes('Giữ khách'));
+});
+
+Deno.test('kiểm thật 03/11: tồn âm, kỳ ít ngày, chi 0đ, quán chưa lưu khách', () => {
+  const mk = parseModules({ kho: { period: 'Tháng này', items: 5, low_count: 1, out_count: 1, imports: 0, low: [{ name: 'Bánh cay', qty: -1, unit: 'phần', min: 1000 }], losses: [] } })!;
+  assertStringIncludes(formatModules(mk, new Date(), 'kho có gì bất thường ko'), 'Bánh cay tồn ÂM -1 (số kho sai — kiểm lại, coi như đã HẾT) / tối thiểu 1000 → nhập ít nhất 1000 phần');
+  const f = parseFacts({ period: 'Tháng này (1–3/11/2026)', revenue: 1, orders: 1, from: '2026-11-01', to: '2026-11-03', by_weekday: [6e6, 5e6, 0, 0, 0, 0, 18e6], top: [], slow: [] })!;
+  const t = formatFacts(f, new Date('2026-11-03T09:00:00+07:00'), 'tháng này cuối tuần với ngày thường khác nhau nhiều không');
+  assert(t.includes('mỗi thứ chưa đủ 2 ngày → CHƯA đủ số để so') && !t.includes('So cuối tuần – ngày thường (tính sẵn)'), t);
+  const mf = parseModules({ finance: { period: 'Tháng 10/2026', prev_period: 'Tháng 9/2026', income: 247000000, prev_income: 436000000, expense: 0, prev_expense: 0, count: 10, top_expense: [] } })!;
+  const tf = formatModules(mf, new Date(), 'tháng trước thu chi sao, dư ít hơn tháng 9 không');
+  assertStringIncludes(tf, 'Phân tích tính sẵn (Tháng 10/2026 so Tháng 9/2026): thu − chi đổi −189.000.000đ');
+  assertStringIncludes(tf, 'nguyên nhân chính là Tháng 10/2026 THU GIẢM');
+  assertStringIncludes(tf, 'Chi Tháng 10/2026 = 0đ: quán CHƯA ghi phiếu chi nào');
+  const mc = parseModules({ khach: { period: 'Tháng này', total: 0, new: 0, returning: 0, with_points: 0, wallet_customers: 0, wallet_real: 0, wallet_bonus: 0 } })!;
+  assertStringIncludes(formatModules(mc, new Date(), 'khách quay lại quán em nhiều ko'), 'quán CHƯA lưu khách nào');
 });

@@ -393,12 +393,6 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
       // Khoản tăng nhiều nhất (tiền) — câu "chi phí tăng do đâu"
       const up = te.filter((x) => typeof x.prev === 'number').map((x) => ({ n: ss(x.name), d: nn(x.amount) - nn(x.prev) })).sort((a, b) => b.d - a.d)[0];
       if (up && up.d > 0) out.push(`Khoản chi tăng nhiều nhất so kỳ trước: ${up.n} (+${vnd(up.d)}).`);
-      // lần 93: D03 "thu chi sao dư ít hơn tháng trước" — GPT tự trừ sai (16,3 triệu), bỏ sót tiền điện +82% (khoản nhỏ, tăng mạnh theo %)
-      const upP = te.filter((x) => typeof x.prev === 'number' && nn(x.prev) > 0).map((x) => ({ n: ss(x.name), p: (nn(x.amount) - nn(x.prev)) / nn(x.prev) })).sort((a, b) => b.p - a.p)[0];
-      if (typeof f.prev_income === 'number' && typeof f.prev_expense === 'number' && /thu|chi|d[uư]\b|l[oờ]i|l[aã]i/i.test(question) && !/th[aá]ng (?:sau|t[oớ]i)|n[eế]u/i.test(question) && /sao|so (?:v[oớ]i|th[aá]ng|k[yỳ])|[ií]t h[oơ]n|gi[aả]m(?!\d)|t[aă]ng/i.test(question)) {
-        const dThu = inc - nn(f.prev_income), dChi = exp - nn(f.prev_expense);
-        out.push(`Phân tích tính sẵn: thu − chi đổi ${dThu - dChi >= 0 ? '+' : '−'}${vnd(Math.abs(dThu - dChi))} = thu ${dThu >= 0 ? 'tăng' : 'giảm'} ${vnd(Math.abs(dThu))}, chi ${dChi >= 0 ? 'tăng' : 'giảm'} ${vnd(Math.abs(dChi))} → nguyên nhân chính là ${Math.abs(dThu) >= Math.abs(dChi) ? 'THU' : 'CHI'}${upP && upP.p >= 0.3 && upP.n !== up?.n ? `; khoản tăng mạnh nhất theo %: ${upP.n} +${pctTxt(upP.p * 100)}% (cần xem lý do)` : ''}.`);
-      }
       // lần 90: hỏi dự báo chi tháng sau (D50 "tiền chi nguyên liệu chắc tăng bao nhiêu") — GPT tự đặt 70 triệu từ 2 kỳ
       const kc = /th[aá]ng (?:sau|t[oớ]i)|s[aắ]p t[oớ]i|d[uự] (?:b[aá]o|ki[eế]n)|ch[aắ]c (?:t[aă]ng|bao nhi[eê]u)/i.test(question) && /chi|nh[aậ]p|nguy[eê]n li[eệ]u|ti[eề]n/i.test(question)
         ? te.find((x) => typeof x.prev === 'number' && question.toLowerCase().split(/\s+/).some((w) => w.length > 3 && ss(x.name).toLowerCase().includes(w))) ?? te[0]
@@ -435,6 +429,14 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
         if (r.length) out.push(`Tỉ lệ trên doanh thu bán hàng (${vnd(base)}), mốc là kinh nghiệm chung của quán nhỏ (chỉ tính 6 khoản chi lớn nhất): ${r.join('; ')}.`);
       }
     }
+    // lần 93: D03 "thu chi sao dư ít hơn tháng trước" — GPT tự trừ sai (16,3 triệu), bỏ sót tiền điện +82% (khoản nhỏ, tăng mạnh theo %)
+    const upP = arr(f.top_expense).filter((x) => typeof x.prev === 'number' && nn(x.prev) > 0).map((x) => ({ n: ss(x.name), p: (nn(x.amount) - nn(x.prev)) / nn(x.prev) })).sort((a, b) => b.p - a.p)[0];
+    if (typeof f.prev_income === 'number' && typeof f.prev_expense === 'number' && /thu|chi|d[uư]\b|l[oờ]i|l[aã]i/i.test(question) && !/th[aá]ng (?:sau|t[oớ]i)|n[eế]u/i.test(question) && /sao|so (?:v[oớ]i|th[aá]ng|k[yỳ])|[ií]t h[oơ]n|gi[aả]m(?!\d)|t[aă]ng/i.test(question)) {
+      const dThu = inc - nn(f.prev_income), dChi = exp - nn(f.prev_expense);
+      out.push(`Phân tích tính sẵn (${ss(f.period)} so ${ss(f.prev_period) || 'kỳ trước'}): thu − chi đổi ${dThu - dChi >= 0 ? '+' : '−'}${vnd(Math.abs(dThu - dChi))} = thu ${dThu >= 0 ? 'tăng' : 'giảm'} ${vnd(Math.abs(dThu))}, chi ${dChi >= 0 ? 'tăng' : 'giảm'} ${vnd(Math.abs(dChi))} → nguyên nhân chính là ${ss(f.period)} ${Math.abs(dThu) >= Math.abs(dChi) ? (dThu >= 0 ? 'THU TĂNG' : 'THU GIẢM') : (dChi >= 0 ? 'CHI TĂNG' : 'CHI GIẢM')} (KHÔNG nói ngược chiều)${upP && upP.p >= 0.3 ? `; khoản tăng mạnh nhất theo %: ${upP.n} +${pctTxt(upP.p * 100)}% (cần xem lý do)` : ''}.`);
+    }
+    // live 03/11: quán chưa ghi phiếu chi → "chi 0đ", GPT coi thu − chi là tiền dư
+    if (exp === 0 && inc > 0) out.push(`Chi ${ss(f.period)} = 0đ: quán CHƯA ghi phiếu chi nào → thu − chi chỉ là tiền thu, KHÔNG phải tiền dư / lời; nói rõ và nhắc ghi phiếu chi (nguyên liệu, lương, mặt bằng) trong Thu Chi.`);
     const ti = arr(f.top_income);
     if (ti.length) out.push(`Nguồn thu: ${ti.map((x) => `${ss(x.name)} ${vnd(nn(x.amount))}`).join('; ')}.`);
     if (exp > 0) out.push(`Chi bằng tiền mặt ${vnd(nn(f.expense_cash))}, chuyển khoản ${vnd(nn(f.expense_bank))}.`);
@@ -467,7 +469,7 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
       const nd = soNgay(k.period);
       const tuoi = (x: Row) => /nấu dư|bánh mì|sữa tươi|rau|trái cây|thịt|bún|kem/i.test(ss(x.name));
       const hhTxt = hh.map((x) => `${ss(x.name)} ${qty(x.qty)} ${ss(x.unit)}${nd > 1 ? ` (~${qty(Math.round((nn(x.qty) / nd) * 10) / 10)} ${ss(x.unit)} / ngày)` : ''} → ${/nấu dư/i.test(ss(x.name)) ? 'nấu mẻ nhỏ nhiều lần theo giờ đông, không nấu một lần cho cả ngày' : tuoi(x) ? 'đặt theo lượng bán từng ngày, ít hơn vào ngày vắng' : 'xem lại cách bảo quản'}`);
-      const lowTxt = (/(?<!\p{L})kho(?!\p{L})|nh[aậ]p|s[aắ]p h[eế]t|t[oồ]n(?!\p{L})/iu.test(question) ? [...low] : []).sort((a, b) => nn(a.qty) / Math.max(1, nn(a.min)) - nn(b.qty) / Math.max(1, nn(b.min))).map((x) => `${ss(x.name)} ${nn(x.qty) <= 0 ? 'đã HẾT' : `còn ${qty(x.qty)}`} / tối thiểu ${qty(x.min)} → nhập ít nhất ${qty(nn(x.min) - nn(x.qty))} ${ss(x.unit)} để lên mức tối thiểu`);
+      const lowTxt = (/(?<!\p{L})kho(?!\p{L})|nh[aậ]p|s[aắ]p h[eế]t|t[oồ]n(?!\p{L})/iu.test(question) ? [...low] : []).sort((a, b) => nn(a.qty) / Math.max(1, nn(a.min)) - nn(b.qty) / Math.max(1, nn(b.min))).map((x) => `${ss(x.name)} ${nn(x.qty) < 0 ? `tồn ÂM ${qty(x.qty)} (số kho sai — kiểm lại, coi như đã HẾT)` : nn(x.qty) === 0 ? 'đã HẾT' : `còn ${qty(x.qty)}`} / tối thiểu ${qty(x.min)} → nhập ít nhất ${qty(nn(x.min) - Math.max(0, nn(x.qty)))} ${ss(x.unit)} để lên mức tối thiểu`);
       out.push(`Kho tính sẵn: ${hh.length ? `hao hụt cả kỳ ≈ ${vnd(hh.reduce((t, x) => t + nn(x.value), 0))}: ${hhTxt.join('; ')}. Khối KHÔNG có số bán → không tính được tỉ lệ hao hụt so số bán, KHÔNG tự nói "cao / thấp so với bình thường"; nêu số mỗi ngày bỏ đi. ` : ''}${lowTxt.length ? `Cần nhập (hết trước): ${lowTxt.join('; ')}.` : ''}${/bao nhi[eê]u|m[aấ]y/i.test(question) && /nh[aậ]p/i.test(question) ? ' Hỏi nhập bao nhiêu cho tháng sau: KHÔNG tự đặt số kg / lít; nêu cách tính = lượng dùng tháng (số ly bán × định lượng mỗi ly) − số còn + mức tối thiểu, trừ phần đang hao hụt; xem số ly bán trong Báo cáo.' : ''}`);
     }
     if (k.stock_value === undefined) out.push('Người hỏi không được xem giá vốn / tiền nhập hàng → không nêu số tiền kho.');
@@ -505,6 +507,9 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     const top = arr(c.top);
     if (top.length) out.push(`Khách chi nhiều nhất (từ trước tới nay): ${top.map((x) => `${ss(x.name)} ${vnd(nn(x.spent))} / ${nn(x.visits)} lần`).join('; ')}.`);
     // lần 100: D06 "khách quay lại nhiều ko" — GPT so 210 khách quay lại (cộng dồn) với 240 khách mới (trong kỳ), việc chung chung
+    if (/quay l[aạ]i|kh[aá]ch (?:quen|c[uũ])|gi[uữ] (?:ch[aâ]n )?kh[aá]ch|tr[uở] l[aạ]i/i.test(question) && total === 0) {
+      out.push('Giữ khách (tính sẵn): quán CHƯA lưu khách nào (0 khách) → chưa đo được khách quay lại. Việc: nhân viên xin tên + số điện thoại khi thanh toán, bật tích điểm trong mục Khách hàng; sau 1 tháng xem số khách đến từ 2 lần.');
+    }
     if (/quay l[aạ]i|kh[aá]ch (?:quen|c[uũ])|gi[uữ] (?:ch[aâ]n )?kh[aá]ch|tr[uở] l[aạ]i/i.test(question) && total > 0) {
       const ret = nn(c.returning), wp = nn(c.with_points), muc = Math.ceil((ret / total) * 100 + 3);
       out.push(`Giữ khách (tính sẵn): ${ret} / ${total} khách đã lưu (cộng dồn từ trước tới nay) đến từ 2 lần = ${pctOf(ret, total)}; ${nn(c.new)} khách mới là số CỦA KỲ NÀY — khác cơ sở, KHÔNG so ${ret} với ${nn(c.new)}. ${wp > 0 ? `${wp} khách có điểm (${pctOf(wp, total)} khách đã lưu) → quán ĐÃ có tích điểm mà ít người quay lại (có thể mốc đổi quà xa hoặc khách quên — CHƯA có số để chắc, KHÔNG khẳng định lý do)` : 'Chưa có khách nào có điểm → chưa dùng tích điểm'}. Việc: (1) ${wp > 0 ? 'nhắn khách có điểm lâu chưa ghé: x2 điểm hoặc tặng 1 món thêm nhỏ / ly nước lần ghé tới trong 2 tuần' : 'bật tích điểm: mua 8 tặng 1'}; (2) ${wp > 0 ? 'hạ mốc đổi quà cho dễ tới (vd mua 8 lần đổi 1 món)' : 'nhân viên nhắc khách lưu số khi thanh toán'}; mốc đo: tỉ lệ khách đến từ 2 lần lên ≥ ${muc}% sau 2 tháng.`);
@@ -859,6 +864,10 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     // lần 99: D36 "cuối tuần với ngày thường khác nhau nhiều không" — GPT ước sai tỉ lệ, đoán do số đơn (khối không có số đơn theo thứ), khuyên ưu đãi ngày đã đông nhất
     const tb = (xs: typeof days) => { const k = xs.filter((x) => x.v > 0 && x.n && x.n >= 2); return k.length ? k.reduce((t, x) => t + x.v, 0) / k.reduce((t, x) => t + x.n!, 0) : 0; };
     const thuong = tb(days.slice(0, 5)), cuoi = tb(days.slice(5));
+    // live 03/11: "tháng này" mới 3 ngày (mỗi thứ 1 ngày) → GPT so 1 Chủ nhật với 1 Thứ 2 rồi khuyên khuyến mãi
+    if (/cu[oố]i tu[aầ]n|ng[aà]y th[uư][oờ]ng/i.test(question) && (thuong === 0 || cuoi === 0)) {
+      lines.push(`So cuối tuần – ngày thường: kỳ này mới có ${cnt ? cnt.reduce((a, b) => a + b, 0) : 'vài'} ngày, mỗi thứ chưa đủ 2 ngày → CHƯA đủ số để so; KHÔNG so 1 ngày với 1 ngày, KHÔNG đưa việc / khuyến mãi theo thứ. Trả lời: nêu số từng ngày đã có, nói cần thêm vài tuần, hoặc hỏi lại "tháng trước cuối tuần với ngày thường khác nhau nhiều không".`);
+    }
     if (/cu[oố]i tu[aầ]n|ng[aà]y th[uư][oờ]ng/i.test(question) && thuong > 0 && cuoi > 0) {
       const thap = [...days.slice(0, 5)].filter((x) => x.v > 0 && x.n).sort((a, b) => a.v / a.n! - b.v / b.n!)[0];
       lines.push(`So cuối tuần – ngày thường (tính sẵn): ngày thường (Thứ 2–6) trung bình ${vnd(thuong)}/ngày, cuối tuần (Thứ 7, Chủ nhật có bán) trung bình ${vnd(cuoi)}/ngày → cuối tuần ${cuoi >= thuong ? `GẤP ${pctTxt(Math.round((cuoi / thuong) * 10) / 10)} lần` : `chỉ bằng ${Math.round((cuoi / thuong) * 100)}%`} ngày thường (${cuoi >= thuong ? 'hơn' : 'kém'} ${vnd(Math.abs(cuoi - thuong))}/ngày). Khối KHÔNG có số đơn theo thứ → KHÔNG nói chênh do số đơn hay giá trị đơn. Việc: ${cuoi >= thuong ? `(1) xếp thêm người và chuẩn bị nguyên liệu cho ${cuoi >= thuong * 1.3 ? 'Thứ 7, Chủ nhật' : 'cuối tuần'} theo mức ~${Math.round((cuoi / thuong) * 100)}% ngày thường; (2) KHÔNG ưu đãi cuối tuần (đã đông) — ưu đãi khung vắng ngày yếu nhất (${thap.d}); mốc đo: ${thap.d} lên ≥ ${vnd(Math.round((thap.v / thap.n! + thuong) / 2 / 1000) * 1000)}/ngày sau 4 tuần` : `(1) cuối tuần bớt người / nguyên liệu theo mức ~${Math.round((cuoi / thuong) * 100)}% ngày thường; (2) một ưu đãi CHỈ cuối tuần, đo sau 4 tuần`}.`);
