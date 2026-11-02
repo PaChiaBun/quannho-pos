@@ -513,6 +513,12 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Kết quả: chấm kín 35 câu (1 lượt) cạnh bản lần 59: 11,57 → **11,66/16**; dùng số 1,63 → 1,77; việc làm 0,97 → 1,09; D21 6 → 11; chẩn đoán (5 câu) 12,0 → 11,0, kế hoạch (6 câu) 9,17 → 10,83. Còn yếu: bỏ sót nhóm giảm mạnh (Món thêm −52%), việc làm chung.
 - Áp: `db-fix/boom_l60_ap_dung.sh` (TS 20261102_151258). Không cần bản app mới.
 
+### Lần 61 (02/11, bỏ): nêu thẳng nhóm giảm mạnh nhất theo % kèm tiền / đơn
+
+- Sửa thử (`changeLine`): sau dòng theo nhóm thêm "→ nhóm giảm mạnh nhất theo %: Món thêm −52,3%, tính trên mỗi đơn kỳ trước 3.481đ → nay 1.862đ" (cả khi tổng tăng, vd Topping −30,1% ở D05). Chỉ 9 câu có ≥ 2 nhóm và có nhóm giảm.
+- Chấm kín 9 câu × 2 lượt cạnh bản lần 60: 12,17 → 11,83; lý lẽ 0,89 → 0,67; tìm vấn đề 1,39 → 1,33. Người chấm: cả hai bản vẫn bỏ sót Topping −30,1% (D05), Món thêm −52,3% (D38) → bỏ.
+- Bài học: thêm một câu "điểm chính" vào cuối dòng dài không làm GPT nhắc tới; nhóm nhỏ (3–4% doanh thu) bị coi là không đáng kể. Muốn GPT dùng thì phải nằm trong kết luận "Phân tích tính sẵn" (đầu khối) — nhưng lần 57 cho thấy số đặt ở đầu khối dễ thành kết luận cứng → cần thử có kiểm soát.
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |
