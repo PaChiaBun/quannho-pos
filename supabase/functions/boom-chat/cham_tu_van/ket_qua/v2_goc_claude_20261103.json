@@ -1,0 +1,1385 @@
+[
+ {
+  "id": "V03_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "B1",
+   "B2",
+   "B3"
+  ],
+  "loi_chinh": "Đặt Topping −2,7 triệu làm nguyên nhân chính trong khi mã giảm giá 13,7 triệu (GIAM15 610 lần) mới là nguyên nhân lớn; việc làm thiếu mốc số."
+ },
+ {
+  "id": "V27_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "B7"
+  ],
+  "loi_chinh": "Phần 'Vì sao' và 2/3 việc lạc sang doanh thu, topping, GIAM15; việc giữ khách không có mục tiêu (vd ≥13% sau 2 tháng)."
+ },
+ {
+  "id": "V02_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A7",
+   "A8"
+  ],
+  "loi_chinh": "Nói chưa có số bán nên bỏ tỉ lệ hao hụt bánh mì ~12% (96/720 ổ) và không nối với lượng khách giảm; không nêu sữa đặc ảnh hưởng món chủ lực."
+ },
+ {
+  "id": "V23_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Đúng là chưa tính được nhưng có câu rối ('nếu chỉ tính theo mức nhập gạo...'), không gợi ý ghi riêng phiếu chi gạo, không nhắc nguyên liệu +28%."
+ },
+ {
+  "id": "V12_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C7"
+  ],
+  "loi_chinh": "Câu 'giảm từ 0,19 phần/đơn tuần trước xuống 0,19' tự mâu thuẫn, gán số 0,19 cho tuần trước không có trong số liệu."
+ },
+ {
+  "id": "V05_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C6"
+  ],
+  "loi_chinh": "Giảm đặt bún/rau Thứ 4 nhưng không có mức giảm cụ thể và mốc đo hao hụt sau bao lâu."
+ },
+ {
+  "id": "V19_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D4"
+  ],
+  "loi_chinh": "Nêu Thứ 7 mạnh nhất nhưng không khuyên chuẩn bị thêm người/hàng cho Thứ 7; việc làm chủ yếu là theo dõi."
+ },
+ {
+  "id": "V11_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "B2",
+   "B6"
+  ],
+  "loi_chinh": "Bỏ sót khách quay lại chỉ 11,4% và lương +12,6% so doanh thu +2,2%; việc làm không có mục tiêu số."
+ },
+ {
+  "id": "V09_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D4"
+  ],
+  "loi_chinh": "Bỏ sót Út Hiền ~75 giờ/tuần (quá tải) — điểm then chốt khi mở thêm Chủ nhật; thử 1 Chủ nhật không có ngưỡng giữ/bỏ bằng số."
+ },
+ {
+  "id": "V14_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "A1",
+   "A5"
+  ],
+  "loi_chinh": "Trả lời đúng 'không nên giảm' nhưng không đưa cách kéo khách lại (combo đắt hơn lẻ, giờ 7–8h); lan sang tiền điện."
+ },
+ {
+  "id": "V12_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C7"
+  ],
+  "loi_chinh": "Phần 'Cần xem lại' lạc sang giá vốn cơm sườn, không liên quan câu hỏi."
+ },
+ {
+  "id": "V27_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "B7"
+  ],
+  "loi_chinh": "Nhắn 210 khách ĐÃ quay lại là nhắm sai đối tượng (cần kéo ~1.640 khách chưa quay lại); không có mục tiêu tỉ lệ quay lại."
+ },
+ {
+  "id": "V23_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Đúng hướng chưa tính được, nhưng không gợi ý ghi riêng phiếu chi gạo và không nhắc nguyên liệu đã +28%."
+ },
+ {
+  "id": "V01_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "A1",
+   "A3",
+   "A4",
+   "A5",
+   "A6",
+   "A7",
+   "A8"
+  ],
+  "loi_chinh": "Kể đủ vấn đề nhưng không xếp theo tiền, chiều 14–16h không số, hao hụt bánh mì không tỉ lệ; việc làm thiếu mốc đo và không có việc cho vấn đề lớn nhất (mất đơn)."
+ },
+ {
+  "id": "V07_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D1",
+   "D2",
+   "D5",
+   "D7"
+  ],
+  "loi_chinh": "Than đã hết (quán nướng sườn bằng than) chỉ để ở cuối, bỏ sót Út Hiền ~75 giờ/tuần; việc làm thiếu mục tiêu số."
+ },
+ {
+  "id": "V24_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1",
+   "A2"
+  ],
+  "loi_chinh": "Dòng đầu lặp lại câu trước ('khách ít vì số đơn giảm') thay vì nói thẳng số liệu không có lý do; bỏ sót chiều 14–16h, không gợi ý hỏi khách."
+ },
+ {
+  "id": "V17_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "B8"
+  ],
+  "loi_chinh": "Không nêu 24/12 là Thứ 5, 25/12 Thứ 6; nhập bù không có số lượng/hạn trước Noel; bỏ sót mời topping."
+ },
+ {
+  "id": "V29_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không dùng số ca tối 21,9 triệu (16,5%) đã nêu ở câu trước; lạc sang thu − chi; thử 2 người không có thời hạn và ngưỡng đo."
+ },
+ {
+  "id": "V02_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A7",
+   "A8"
+  ],
+  "loi_chinh": "Bỏ tỉ lệ hao hụt bánh mì ~12% (96/720 ổ) và lý do nhập dư khi khách giảm; không nêu sữa đặc ảnh hưởng món chủ lực."
+ },
+ {
+  "id": "V10_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D2"
+  ],
+  "loi_chinh": "Không tính giá vốn sau tăng (21.600/45.000 = 48%) và không nhấn rủi ro món chủ lực 37% doanh thu."
+ },
+ {
+  "id": "V17_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "B8"
+  ],
+  "loi_chinh": "Không nêu 24/12 là Thứ 5, 25/12 Thứ 6 và bỏ sót mời topping; phần 'Vì sao' và việc ca 16 giờ, GIAM15 lạc đề Noel."
+ },
+ {
+  "id": "V22_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D5"
+  ],
+  "loi_chinh": "Nói không tính được trứng dù có số phần sườn trứng 480 + trứng ốp 304 để ước ~33 quả/ngày; không bảo nhập than ngay hôm nay dù quán nướng sườn bằng than."
+ },
+ {
+  "id": "V21_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Có phép tính 2.643 × 3.000đ = 7.929.000đ nhưng không có cách thử (2 tuần, ngưỡng số ly giảm), bỏ sót giá trị đơn −8%, lại gọi nhầm 'Trà sữa dâu tây'."
+ },
+ {
+  "id": "V07_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D1",
+   "D2",
+   "D5",
+   "D7"
+  ],
+  "loi_chinh": "Bỏ sót Út Hiền ~75 giờ/tuần và chưa nói số liệu không tách doanh thu đơn giao; việc làm thiếu mốc đo cụ thể."
+ },
+ {
+  "id": "V15_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C3"
+  ],
+  "loi_chinh": "Tính ca tối chỉ 17–20h (18,7 triệu) thay vì 16–20h (21,9 triệu ≈ 16,5%, ≈ 1 giờ 12h trưa); chỉ 1 việc, không đề xuất rút giờ / bớt người thử 2 tuần."
+ },
+ {
+  "id": "V34_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D2",
+   "D6"
+  ],
+  "loi_chinh": "Bỏ sót chiết khấu sàn 10,6 triệu (+34%) và mã GIAOHANG10; ca tối chỉ nói 'thấp hơn' không có số; mục tiêu tuần không có con số."
+ },
+ {
+  "id": "V31_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D1",
+   "D2",
+   "D5"
+  ],
+  "loi_chinh": "Mở đầu lặp lại dòng tiền; chiết khấu sàn chỉ nêu số, không nói chưa tách doanh thu đơn giao; việc làm thiếu mục tiêu số."
+ },
+ {
+  "id": "V04_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "B3",
+   "B8"
+  ],
+  "loi_chinh": "Bỏ sót 4 món ăn vặt chưa bán và chưa phân tích lương +12,6% so doanh thu +2,2% (sáng 9–11h vắng)."
+ },
+ {
+  "id": "V37_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "B1",
+   "B2",
+   "B3"
+  ],
+  "loi_chinh": "Kế hoạch tốt nhưng không đặt mục tiêu số (vd topping 0,35 → 0,45 phần/đơn, giá trị đơn về ~58.000đ)."
+ },
+ {
+  "id": "V31_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D2",
+   "D5"
+  ],
+  "loi_chinh": "Lặp lại câu trước về dòng tiền, không đi sâu cơm tấm sườn giá vốn 54%, hao hụt bì 4 kg, chiết khấu sàn chưa tách đơn giao."
+ },
+ {
+  "id": "V16_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D5"
+  ],
+  "loi_chinh": "Đúng 20/11 là Thứ 6 nhưng không gắn với quán gần trường THCS; phần 'Vì sao' lạc đề (giờ 11h tăng), việc chuẩn bị thiếu số lượng."
+ },
+ {
+  "id": "V14_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1",
+   "A5"
+  ],
+  "loi_chinh": "Đúng hướng tăng giá bạc xỉu, nhưng không có việc kéo lại khách (số đơn −14,8%) như combo rẻ hơn lẻ / thẻ tích ly."
+ },
+ {
+  "id": "V28_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C2",
+   "C6"
+  ],
+  "loi_chinh": "Không quy đổi Thứ 4 ≈ 55% ngày thường thành mức nhập ~55–60%; việc làm chung chung, bỏ sót sườn heo và tổng hao hụt ~912.000đ."
+ },
+ {
+  "id": "V33_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A8"
+  ],
+  "loi_chinh": "Bỏ sót hao hụt bánh mì 96 ổ (~12% so 720 ổ bán) → nên giảm nhập bánh mì."
+ },
+ {
+  "id": "V03_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "B1",
+   "B2",
+   "B3"
+  ],
+  "loi_chinh": "Đủ nguyên nhân có số nhưng dài, thêm đoạn thu−chi lạc đề; việc mời topping không có mục tiêu số."
+ },
+ {
+  "id": "V39_1",
+  "diem": {
+   "thang": 0,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Kết luận sai trọng tâm: chỉ ra Lan/Ngọc/Khoa theo số ca, bỏ qua Út Hiền 300 giờ ≈ 75 giờ/tuần là người quá tải; không quy đổi giờ/tuần."
+ },
+ {
+  "id": "V19_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D4"
+  ],
+  "loi_chinh": "Dự báo đúng 133,85 triệu nhưng việc làm chung chung, không nhắc chuẩn bị thêm người/hàng cho Thứ 7."
+ },
+ {
+  "id": "V26_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "B1",
+   "B3",
+   "B7"
+  ],
+  "loi_chinh": "Dòng đầu nói về rủi ro thay vì trả lời 'làm gì'; ưu đãi tích điểm, mời topping không có mức cụ thể hay mục tiêu số."
+ },
+ {
+  "id": "V20_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không nêu 1/1/2027 là Thứ 6 và công trình/chợ có thể nghỉ lễ; phần 'Vì sao' dùng thu−chi, nguyên liệu không liên quan câu hỏi."
+ },
+ {
+  "id": "V36_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1",
+   "A4"
+  ],
+  "loi_chinh": "Bỏ sót Thứ 7 chỉ ~40% ngày thường (văn phòng nghỉ) để tập trung Thứ 2–6; dùng 410/640 khách quay lại nhưng không giải thích vì sao mất đơn."
+ },
+ {
+  "id": "V13_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Gọi 58.352.000đ là 'sáng 6–11h' (thực ra 6–10h), bỏ 11h–12h, nói thiếu số 21h; không ra tỉ trọng ca tối 16,5% và không nêu Út Hiền quá tải."
+ },
+ {
+  "id": "V06_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C4",
+   "C5",
+   "C6"
+  ],
+  "loi_chinh": "Việc làm không có mốc đo / thời hạn (đối chiếu, rà soát chung chung); không nối hao hụt với Thứ 4 vắng."
+ },
+ {
+  "id": "V04_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "B3",
+   "B4"
+  ],
+  "loi_chinh": "Bỏ sót ly 700ml đã hết và lương +12,6% so doanh thu +2,2% khi sáng 9–11h vắng; gọi sai tên 'trà sữa dâu tây'."
+ },
+ {
+  "id": "V28_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C2",
+   "C6"
+  ],
+  "loi_chinh": "Đưa mức giảm ~45% nhưng thiếu thời hạn thử và cách đo hao hụt (vd 2 tuần)."
+ },
+ {
+  "id": "V21_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Nói sai là chưa tách số theo món trong khi nhóm Trà sữa có 2.643 phần (≈ 7,9 triệu nếu khách không giảm); không đề xuất thử 2 tuần."
+ },
+ {
+  "id": "V18_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không nêu số đơn giảm 14,8% và Thứ 7 chỉ ~40% ngày thường; gợi ý 20/11 cho khách nhóm không hợp ki-ốt văn phòng."
+ },
+ {
+  "id": "V06_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C4",
+   "C5",
+   "C6"
+  ],
+  "loi_chinh": "Việc làm thiếu mốc đo / thời hạn cụ thể (theo dõi bao lâu, giảm bao nhiêu)."
+ },
+ {
+  "id": "V39_2",
+  "diem": {
+   "thang": 0,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Né kết luận dù đủ số: không tính Út Hiền 300 giờ / 4 tuần ≈ 75 giờ / tuần là quá tải."
+ },
+ {
+  "id": "V30_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D7"
+  ],
+  "loi_chinh": "Chưa nối mã bớt 6,3 triệu với chiết khấu sàn 10,6 triệu thành chi phí chồng lên đơn giao."
+ },
+ {
+  "id": "V37_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "B1",
+   "B2",
+   "B3"
+  ],
+  "loi_chinh": "Chưa đặt mục tiêu số cho giá trị đơn / số topping mỗi đơn (vd 0,35 → 0,45)."
+ },
+ {
+  "id": "V13_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 1,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D3"
+  ],
+  "loi_chinh": "So ca tối với 'sáng 6–11h' 80,4 triệu bỏ giờ 12h (sai cơ sở, đúng ra ~98,6 triệu); không nêu Út Hiền quá tải; việc làm thiếu thời hạn."
+ },
+ {
+  "id": "V40_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "B4"
+  ],
+  "loi_chinh": "Thêm câu thừa về doanh thu tăng và thu − chi không liên quan câu hỏi."
+ },
+ {
+  "id": "V34_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "D2"
+  ],
+  "loi_chinh": "Tuần 1 chỉ nhập hàng, tuần 3 lại giảm giá trên món lời mỏng; bỏ sót khách quay lại 8,1% và tỉ trọng ca tối."
+ },
+ {
+  "id": "V11_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "B2"
+  ],
+  "loi_chinh": "Bỏ sót lương +12,6% và khách quay lại chỉ 11,4%; việc làm thiếu mục tiêu và thời hạn."
+ },
+ {
+  "id": "V29_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Hiểu lệch câu hỏi (rút người ca tối), không nêu ca tối 21,9 triệu ≈ 16,5%; nói sai 'chi nhiều hơn thu 10,212 triệu'."
+ },
+ {
+  "id": "V08_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D1",
+   "D7"
+  ],
+  "loi_chinh": "Chưa nói rõ mã bớt và chiết khấu sàn cộng lại có thể làm đơn giao lỗ."
+ },
+ {
+  "id": "V25_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A4"
+  ],
+  "loi_chinh": "Chỉ một việc, thiếu thời hạn thử và ngưỡng quyết định chuyển sang 45.000đ."
+ },
+ {
+  "id": "V32_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 1,
+   "viec_lam": 0,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Chỉ khuyên ứng xử chung, bỏ kế hoạch tăng từng bước 3.000đ / đo số phần 2 tuần; không nêu nguyên liệu +18%."
+ },
+ {
+  "id": "V09_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D4"
+  ],
+  "loi_chinh": "Bỏ qua Út Hiền ~75 giờ / tuần đã quá tải khi tính mở thêm Chủ nhật; dẫn thu − chi không liên quan."
+ },
+ {
+  "id": "V35_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "C2",
+   "C6"
+  ],
+  "loi_chinh": "Chưa đặt mục tiêu giảm hao hụt (vd −30%); câu cuối về gas lạc đề."
+ },
+ {
+  "id": "V08_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D1",
+   "D7"
+  ],
+  "loi_chinh": "Việc tách doanh thu đơn app và so giá app chưa có thời hạn / mốc đo cụ thể."
+ },
+ {
+  "id": "V10_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D2"
+  ],
+  "loi_chinh": "Bỏ sót nguyên liệu tăng 18% trong khi doanh thu chỉ +3,1% — lý do mạnh nhất để tăng giá."
+ },
+ {
+  "id": "V20_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không nêu 1/1/2027 là Thứ 6 và khách chợ/công trình nghỉ lễ; lý lẽ lạc sang thu chi, nguyên liệu, so CN với Thứ 2."
+ },
+ {
+  "id": "V26_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "B3",
+   "B7"
+  ],
+  "loi_chinh": "Gợi ý tặng topping nhưng không nêu topping chỉ 4,2% doanh thu; ưu đãi thay thế thiếu mức đơn tối thiểu cụ thể."
+ },
+ {
+  "id": "V24_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1"
+  ],
+  "loi_chinh": "Chỉ ra đúng chỗ giảm 7h–8h nhưng bỏ qua Thứ 7 thấp và chiều 14–16h vắng."
+ },
+ {
+  "id": "V25_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A4"
+  ],
+  "loi_chinh": "Diễn giải 'đắt hơn mà vẫn bán được 70 phần' làm yếu lý do phải hạ giá combo."
+ },
+ {
+  "id": "V01_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "A1",
+   "A3",
+   "A4",
+   "A5",
+   "A6",
+   "A7",
+   "A8"
+  ],
+  "loi_chinh": "Kể đủ vấn đề nhưng không xếp theo tiền, quá dài; gợi ý ưu đãi Thứ 7 và bạc xỉu (lời mỏng) trái hồ sơ quán văn phòng."
+ },
+ {
+  "id": "V36_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A1",
+   "A4"
+  ],
+  "loi_chinh": "Dồn ưu đãi vào 14–16h thay vì giờ sáng 7–8h của dân văn phòng; không nêu Thứ 7 thấp do văn phòng nghỉ."
+ },
+ {
+  "id": "V05_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C6"
+  ],
+  "loi_chinh": "Giảm đặt bún/rau Thứ 4 nhưng không đặt mục tiêu kg hao hụt giảm và mốc đo."
+ },
+ {
+  "id": "V38_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D6"
+  ],
+  "loi_chinh": "Phần 'Vì sao' lạc sang doanh thu và mã GIAOHANG10 thay vì giải thích vì sao có điểm mà ít quay lại."
+ },
+ {
+  "id": "V33_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "A8"
+  ],
+  "loi_chinh": "Bỏ sót hao hụt bánh mì 96 ổ (nên giảm nhập bánh) và không đưa công thức tính lượng nhập tháng."
+ },
+ {
+  "id": "V16_1",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "D5"
+  ],
+  "loi_chinh": "Không nêu 20/11 là Thứ 6 và yếu tố gần trường THCS; lạc sang tăng giá cơm tấm sườn, việc chuẩn bị thiếu số lượng."
+ },
+ {
+  "id": "V30_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D1",
+   "D7"
+  ],
+  "loi_chinh": "Không cộng chiết khấu sàn + mã thành chi phí chồng của đơn giao; 'đơn giảm rõ' chưa có ngưỡng số."
+ },
+ {
+  "id": "V38_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 2,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 1
+  },
+  "van_de_tim_ra": [
+   "D6"
+  ],
+  "loi_chinh": "Ý thứ ba về tăng giá cơm tấm sườn lạc đề so câu hỏi giữ khách."
+ },
+ {
+  "id": "V18_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 0,
+   "dung_quan": 1,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Không dùng xu hướng số đơn −14,8%, Thứ 7 yếu hay dự báo tháng 10 làm mốc; gợi ý 20/11 chung chung, ít hợp quán văn phòng."
+ },
+ {
+  "id": "V40_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 2,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "B4"
+  ],
+  "loi_chinh": "Không nhắc Cá viên chiên chỉ 26 phần cần xem lại cùng các món chưa bán."
+ },
+ {
+  "id": "V22_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 1,
+   "than_trong": 1,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D5"
+  ],
+  "loi_chinh": "Than đã hết mà vẫn nói 'chưa xác định được có đủ'; không ước lượng trứng từ số phần bán, việc nhập không có số lượng."
+ },
+ {
+  "id": "V15_2",
+  "diem": {
+   "thang": 1,
+   "dung_so": 1,
+   "tim_van_de": 0,
+   "ly_le": 0,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 1,
+   "gon": 1
+  },
+  "van_de_tim_ra": [],
+  "loi_chinh": "Nói sai là chưa có doanh thu 17–20h trong khi khối có số từng giờ (ca tối 16–20h ≈ 21,9 triệu, 16,5%); lạc sang Thứ Tư."
+ },
+ {
+  "id": "V35_2",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 1,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "C6"
+  ],
+  "loi_chinh": "Không gắn Thứ 4 vắng (~55%) với nhập dư và không đặt mục tiêu giảm hao hụt có số."
+ },
+ {
+  "id": "V32_1",
+  "diem": {
+   "thang": 2,
+   "dung_so": 2,
+   "tim_van_de": 1,
+   "ly_le": 1,
+   "viec_lam": 2,
+   "dung_quan": 2,
+   "than_trong": 2,
+   "gon": 2
+  },
+  "van_de_tim_ra": [
+   "D2"
+  ],
+  "loi_chinh": "Không nêu nguyên liệu +18% làm lý do giải thích với khách; mở đầu 'chưa nên giảm giá' lệch trọng tâm câu hỏi."
+ }
+]

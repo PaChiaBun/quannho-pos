@@ -28,7 +28,7 @@ type Case = {
   facts: string | null; modules: string | null; muc?: string[]; van_de: string[]; y_chinh: string; can_tranh: string; thieu_so: string | null;
 };
 const stores: Record<string, Store> = {};
-for (const k of ['a', 'b', 'c']) stores[k.toUpperCase()] = JSON.parse(await Deno.readTextFile(new URL(`quan_${k}.json`, DIR)));
+for (const k of ['a', 'b', 'c', 'd']) stores[k.toUpperCase()] = JSON.parse(await Deno.readTextFile(new URL(`quan_${k}.json`, DIR)));
 let cases = JSON.parse(await Deno.readTextFile(inFile)) as Case[];
 const max = Number(Deno.env.get('CHAM_MAX') ?? 0);
 if (max > 0) cases = cases.slice(0, max);

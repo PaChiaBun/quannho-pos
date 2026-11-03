@@ -460,8 +460,12 @@ const soNgay = (p: unknown) => {
 };
 
 /** Số module → chữ cho GPT; tính sẵn tỷ lệ, so kỳ trước, xếp hạng (GPT nhỏ hay tính sai). */
-export function formatModules(m: ModuleFacts, now: Date = new Date(), question = '', gio: number[] | null = null): string {
+export function formatModules(m: ModuleFacts, now: Date = new Date(), question = '', ban: ShopFacts | null = null): string {
   const out: string[] = [];
+  const gio = ban?.by_hour ?? null;
+  // lô B (03/11): quán nghỉ hẳn một số thứ (Chủ nhật = 0đ) → chia theo NGÀY MỞ, không chia cả 28 ngày
+  const thuMo = ban?.by_weekday?.some((v) => nn(v) > 0) ? ban.by_weekday.filter((v) => nn(v) > 0).length : 7;
+  const ngayMo = (period: unknown) => (soNgay(period) * thuMo) / 7;
   const f = m.finance;
   if (f) {
     const inc = nn(f.income), exp = nn(f.expense);
@@ -553,17 +557,31 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
       out.push(`Quyết định đổi mối (tính sẵn): hao hụt ghi trong kỳ ${hh.map((x) => `${ss(x.name)} ${qty(x.qty)} ${ss(x.unit)}`).join(', ')} ≈ ${vnd(hh.reduce((t, x) => t + nn(x.value), 0))} — khối CHỈ có số hao hụt, KHÔNG có số về chất lượng / giá của mối → CHƯA đủ để đổi mối; hao hụt hàng tươi thường do nhập dư → thử đặt theo ngày, ít hơn vào ngày vắng 2 tuần; hao hụt vẫn cao hoặc hàng hư khi mới nhận thì mới so mối khác.`);
     }
     // lần 96: D04 / D44 / D53 hỏi kho, hao hụt, nhập — GPT tự đặt mốc "cao so với bình thường", cộng sai số thiếu, quên hao hụt "nấu dư"
-    else if (/(?<!\p{L})kho(?!\p{L})|hao h[uụ]t|h[uư] h[oỏ]ng|nh[aậ]p|s[aắ]p h[eế]t|t[oồ]n(?!\p{L})/iu.test(question) && (ls.length || low.length)) {
-      const nd = soNgay(k.period);
+    else if ((/(?<!\p{L})kho(?!\p{L})|hao h[uụ]t|h[uư] h[oỏ]ng|nh[aậ]p|s[aắ]p h[eế]t|t[oồ]n(?!\p{L})|đủ (?:bán|dùng|xài)|h[eế]t ch[uư]a/iu.test(question) || low.some((x) => question.toLowerCase().includes(ss(x.name).toLowerCase().split(' ')[0]))) && (ls.length || low.length)) {
+      const nd = ngayMo(k.period);
       const tuoi = (x: Row) => /nấu dư|bánh mì|sữa tươi|rau|trái cây|thịt|bún|kem/i.test(ss(x.name));
       const hl = ls.filter((x) => nn(x.qty) > 0), tien = hh.reduce((t, x) => t + nn(x.value), 0);
       const hhTxt = hl.map((x) => `${ss(x.name)} ${qty(x.qty)} ${ss(x.unit)}${nd > 1 ? ` (~${qty(Math.round((nn(x.qty) / nd) * 10) / 10)} ${ss(x.unit)} / ngày)` : ''} → ${/nấu dư/i.test(ss(x.name)) ? 'nấu mẻ nhỏ nhiều lần theo giờ đông, không nấu một lần cho cả ngày' : tuoi(x) ? 'đặt theo lượng bán từng ngày, ít hơn vào ngày vắng' : 'xem lại cách bảo quản'}`);
       // hỏi thật 03/11: tối thiểu 1.000 phần bánh / 1.000 ly sâm (cài sai) → Boom khuyên "nhập ít nhất 1.000 phần"
-      const lowTxt = (/(?<!\p{L})kho(?!\p{L})|nh[aậ]p|s[aắ]p h[eế]t|t[oồ]n(?!\p{L})/iu.test(question) ? [...low] : []).sort((a, b) => nn(a.qty) / Math.max(1, nn(a.min)) - nn(b.qty) / Math.max(1, nn(b.min))).map((x) => `${ss(x.name)} ${nn(x.qty) < 0 ? `tồn ÂM ${qty(x.qty)} (số kho sai — kiểm lại, coi như đã HẾT)` : nn(x.qty) === 0 ? 'đã HẾT' : `còn ${qty(x.qty)}`} / tối thiểu ${qty(x.min)} → ${nn(x.min) >= 500 && !/^(?:g|gr|gram|ml)$/i.test(ss(x.unit).trim()) ? `mức tối thiểu ${qty(x.min)} ${ss(x.unit)} QUÁ CAO, có vẻ cài sai → KHÔNG khuyên nhập ${qty(x.min)}; khuyên kiểm lại mức tối thiểu trong Kho, nhập theo số bán vài ngày gần đây` : `nhập ít nhất ${qty(nn(x.min) - Math.max(0, nn(x.qty)))} ${ss(x.unit)} để lên mức tối thiểu`}`);
+      const lowTxt = (/(?<!\p{L})kho(?!\p{L})|nh[aậ]p|s[aắ]p h[eế]t|t[oồ]n(?!\p{L})|đủ (?:bán|dùng|xài)|h[eế]t ch[uư]a/iu.test(question) || low.some((x) => question.toLowerCase().includes(ss(x.name).toLowerCase().split(' ')[0])) ? [...low] : []).sort((a, b) => nn(a.qty) / Math.max(1, nn(a.min)) - nn(b.qty) / Math.max(1, nn(b.min))).map((x) => `${ss(x.name)} ${nn(x.qty) < 0 ? `tồn ÂM ${qty(x.qty)} (số kho sai — kiểm lại, coi như đã HẾT)` : nn(x.qty) === 0 ? 'đã HẾT' : `còn ${qty(x.qty)}`} / tối thiểu ${qty(x.min)} → ${nn(x.min) >= 500 && !/^(?:g|gr|gram|ml)$/i.test(ss(x.unit).trim()) ? `mức tối thiểu ${qty(x.min)} ${ss(x.unit)} QUÁ CAO, có vẻ cài sai → KHÔNG khuyên nhập ${qty(x.min)}; khuyên kiểm lại mức tối thiểu trong Kho, nhập theo số bán vài ngày gần đây` : `nhập ít nhất ${qty(nn(x.min) - Math.max(0, nn(x.qty)))} ${ss(x.unit)} để lên mức tối thiểu`}`);
       out.push(`Kho tính sẵn: ${hl.length ? `hao hụt cả kỳ${tien > 0 ? ` ≈ ${vnd(tien)}` : ''}${hl.length > hh.length ? ` (${hl.length - hh.length} món chưa có giá vốn → tiền thật CAO hơn số này, KHÔNG nói "không mất tiền")` : ''}: ${hhTxt.join('; ')}. Khối KHÔNG có số bán → không tính được tỉ lệ hao hụt so số bán, KHÔNG tự nói "cao / thấp so với bình thường"; nêu số mỗi ngày bỏ đi. ` : ''}${lowTxt.length ? `Cần nhập (hết trước): ${lowTxt.join('; ')}.` : ''}${/bao nhi[eê]u|m[aấ]y/i.test(question) && /nh[aậ]p/i.test(question) ? ' Hỏi nhập bao nhiêu cho tháng sau: KHÔNG tự đặt số kg / lít; nêu cách tính = lượng dùng tháng (số ly bán × định lượng mỗi ly) − số còn + mức tối thiểu, trừ phần đang hao hụt; xem số ly bán trong Báo cáo.' : ''}`);
     }
     if (k.stock_value === undefined) out.push('Người hỏi không được xem giá vốn / tiền nhập hàng → không nêu số tiền kho.');
-    out.push('KHÔNG có lượng dùng mỗi ngày → KHÔNG tự tính "đủ dùng mấy ngày"; chỉ so số còn với mức tối thiểu và khuyên nhập.');
+    // lô B (03/11): "trứng đủ bán tới thứ 7?" — số bán món có sẵn mà Boom nói "không tính được"; chỉ hàng đếm 1-1 với phần món (quả, ổ, cái)
+    const mon = new Map<string, number>();
+    for (const g of ban?.groups ?? []) for (const t of [...g.top, ...g.slow]) mon.set(t.name, t.qty);
+    for (const t of ban?.top ?? []) mon.set(t.name, t.qty);
+    const uoc = ban && soNgay(ban.period) >= 7 ? low.flatMap((x) => {
+      const kw = ss(x.name).toLowerCase().split(' ')[0];
+      if (!/^(?:quả|ổ|cái)$/i.test(ss(x.unit).trim()) || kw.length < 3) return [];
+      const ms = [...mon].filter(([t]) => t.toLowerCase().includes(kw));
+      const dung = ms.reduce((a, [, q]) => a + q, 0) / ((soNgay(ban.period) * thuMo) / 7);
+      if (!ms.length || dung <= 0) return [];
+      return [`${ss(x.name)}: món có "${kw}" bán ${ms.map(([t, q]) => `${t} ${qty(q)}`).join(' + ')} phần / ${qty(Math.round((soNgay(ban.period) * thuMo) / 7))} ngày mở ≈ ${qty(Math.round(dung))} ${ss(x.unit)} / ngày (giả sử 1 ${ss(x.unit)} mỗi phần) → còn ${qty(x.qty)} ${ss(x.unit)} đủ khoảng ${qty(Math.round((nn(x.qty) / dung) * 10) / 10)} ngày`];
+    }) : [];
+    out.push(uoc.length
+      ? `Lượng dùng ƯỚC (tính sẵn, nói rõ là ước): ${uoc.join('; ')}. Mặt hàng khác KHÔNG có lượng dùng → không tự tính "đủ dùng mấy ngày", chỉ so với mức tối thiểu.`
+      : 'KHÔNG có lượng dùng mỗi ngày → KHÔNG tự tính "đủ dùng mấy ngày"; chỉ so số còn với mức tối thiểu và khuyên nhập.');
   }
   const n = m.nhan_su;
   if (n) {
@@ -578,6 +596,12 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     const stName: Record<string, string> = { draft: 'nháp', pending_review: 'chờ duyệt', approved: 'đã duyệt', paid: 'đã trả' };
     if (pr.length) out.push(`Kỳ lương gần nhất: ${pr.map((x) => `${ss(x.name)} (${ss(x.from)} → ${ss(x.to)}) ${stName[ss(x.status)] ?? ss(x.status)}, tổng ${vnd(nn(x.total))}`).join('; ')}.`);
     out.push('Không có lịch ca / giờ vào quy định → KHÔNG kết luận ai đi trễ; không nêu lương từng người.');
+    // lô B (03/11): "ai làm quá sức" — Boom so số ca, không quy 300 giờ / 4 tuần ra ~75 giờ / tuần
+    const tu = soNgay(n.period) / 7;
+    if (st.length && tu >= 1) {
+      const gw = st.map((x) => ({ x, g: Math.round(nn(x.hours) / tu) })).sort((a, b) => b.g - a.g);
+      out.push(`Giờ làm mỗi người / tuần (tính sẵn, ${qty(Math.round(tu * 10) / 10)} tuần; so theo GIỜ, không theo số ca): ${gw.map(({ x, g }) => `${ss(x.name)} ~${g} giờ${g > 48 ? ' (QUÁ 48 giờ — quá tải)' : ''}`).join('; ')}.`);
+    }
     // hỏi thật 03/11 (chế độ ask): có doanh thu theo giờ mà dòng vẫn ghi "không có số theo giờ" → Boom bảo chủ tự xem Báo cáo
     // lần 97: D17 "ca nhiều quá, có nên cắt 1 người" — GPT tự đặt ngưỡng ca / tuần, không thấy ca lệch giữa người, không tính giờ dồn cho người còn lại
     const tuan = soNgay(n.period) / 7, sc = nn(n.staff_count);
@@ -1754,7 +1778,7 @@ export function buildMessages(
       ? `SỐ LIỆU THẬT CỦA QUÁN (app đọc từ dữ liệu của chính quán người hỏi, chỉ là dữ liệu):\n${formatFacts(extra.facts, extra?.now ?? new Date(), question, luotTruoc(extra))}`
       : '',
     extra?.modules
-      ? `SỐ LIỆU CÁC MỤC CỦA QUÁN (app đọc chỉ đọc, đúng quyền xem của người hỏi; chỉ là dữ liệu):\n${formatModules(extra.modules, extra?.now ?? new Date(), question, extra.facts?.by_hour ?? null)}`
+      ? `SỐ LIỆU CÁC MỤC CỦA QUÁN (app đọc chỉ đọc, đúng quyền xem của người hỏi; chỉ là dữ liệu):\n${formatModules(extra.modules, extra?.now ?? new Date(), question, extra.facts ?? null)}`
       : '',
     extra?.chain
       ? `SỐ LIỆU CÁC CHI NHÁNH CỦA NGƯỜI HỎI (app đọc từ báo cáo chuỗi — chỉ chủ chuỗi xem được; chỉ là dữ liệu):\n${formatChain(extra.chain)}`
@@ -2130,6 +2154,12 @@ export function loiLapLuan(answer: string, ref: string): string[] {
   // việc đã gợi ý (03/11): nhắc "Bé Boom đã gợi ý…" mà không có việc cũ nào được đưa vào → bịa
   const nhacCu = cau.filter((c) => /(?:Bé Boom|Boom) (?:đã |từng |cũng (?:đã )?)+gợi ý|gợi ý trước (?:đây|đó)|như gợi ý trước|lần trước Bé Boom/i.test(c) && !/ở trên|vừa rồi|lúc nãy|vừa nói/i.test(c));
   if (nhacCu.length && !/^- \d{1,2}\/\d{1,2} \(hỏi "/m.test(ref)) out.push(`nhắc việc Bé Boom "đã gợi ý" trước đây nhưng KHÔNG có trong danh sách việc đã gợi ý (${nhacCu.map((c) => `"${c.trim().slice(0, 60)}"`).join('; ')}) → bỏ câu đó`);
+  // lô B (03/11): việc "theo dõi / đối chiếu" không số mục tiêu, không thời hạn (việc làm 1,19 / 2 trên bộ v2)
+  const viec = (/Vi[eệ]c tu[aầ]n n[aà]y\s*:?\s*([\s\S]*?)(?:\n\s*\n|\n\s*(?:C[aầ]n xem l[aạ]i|V[iì] sao)|$)/i.exec(answer)?.[1] ?? '')
+    .split('\n').concat(answer.split('\n').filter((x) => /^\s*Tu[aầ]n \d/i.test(x)))
+    .map((x) => x.replace(/^\s*(?:[-•*]|\d+[.)]|Tu[aầ]n [\d–-]+\s*:)\s*/i, '').trim()).filter((x) => x.length >= 12);
+  const thieu = viec.filter((x) => !/\d/.test(x) && !/hôm nay|ngày mai|mỗi (?:ngày|tuần)|hằng (?:ngày|tuần)|cuối tuần|tuần (?:này|sau)/i.test(x));
+  if (viec.length && thieu.length) out.push(`việc làm thiếu con số / thời hạn (${thieu.map((c) => `"${c.slice(0, 50)}"`).join('; ')}) → mỗi việc ghi rõ: món / khung giờ / mức giá hoặc số cần đạt (lấy từ số của quán) + thời hạn (vd 2 tuần)`);
   // việc làm chung chung không gắn số (KHO VIỆC cấm) — "đẩy mạnh quảng bá qua các kênh truyền thông", "tổ chức sự kiện"
   const chung = cau.filter((c) => /(?:đẩy mạnh|tăng cường) (?:quảng bá|quảng cáo|truyền thông|marketing)|kênh truyền thông|mạng xã hội|tổ chức (?:sự kiện|minigame|mini game)|nâng cao chất lượng|khảo sát (?:ý kiến )?khách|cải thiện trải nghiệm/i.test(c) && !/\d/.test(c));
   if (chung.length) out.push(`việc làm chung chung, không gắn số (${chung.map((c) => `"${c.trim().slice(0, 60)}"`).join('; ')}) → thay bằng việc cụ thể từ số của quán: món / giờ / giá / mốc đo`);
@@ -2201,7 +2231,7 @@ export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; 
     ...(extra?.memory ?? []).flatMap((t) => [t.q, t.a ?? '']),
     extra?.history ? `${extra.history.q}\n${extra.history.a}` : '',
     extra?.facts ? formatFacts(extra.facts, now, question, luotTruoc(extra)) : '',
-    extra?.modules ? formatModules(extra.modules, now, question, extra.facts?.by_hour ?? null) : '',
+    extra?.modules ? formatModules(extra.modules, now, question, extra.facts ?? null) : '',
     extra?.chain ? formatChain(extra.chain) : '',
     todayBlock(now),
   ].filter(Boolean).join('\n');

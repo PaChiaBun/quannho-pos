@@ -879,3 +879,93 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - **Thêm số → tăng dữ liệu gửi OpenAI.** Lần 27 rà riêng tư trước khi áp.
 - **gpt-4o đắt hơn gpt-4o-mini nhiều lần.** Chỉ dùng cho câu khó, và Chủ Quán quyết sau khi xem điểm và chi phí.
 - **Hồ sơ / trí nhớ dài hạn** (38–41) cần bảng mới trên database. Làm theo quy trình migration, hỏi trước khi áp.
+
+---
+
+## 7. Đợt 2 — lần 107–130, trên gpt-6-luna (lập 03/11/2026)
+
+### 7.1 Rút ra từ 106 lần dạy
+
+- **Có lợi đo được:** đổi mô hình (+3,3/16), đường số liệu ở máy chủ (chặng 1), số TÍNH SẴN bằng code (dòng "… (tính sẵn)"),
+  kiểm bằng code rồi bắt viết lại (`loiLapLuan`, `kiemTraLoi`), để CODE quyết thay GPT (`locViecCu`, kỳ mặc định).
+- **Không đo ra lợi:** thêm chữ dặn vào lời nhắc (2.1, 2.3, hồ sơ quán 3.1.0 — cả trên mini lẫn luna).
+  → Đợt 2 mỗi lần dạy phải là **số tính sẵn mới** hoặc **luật kiểm bằng code mới**, không chỉ thêm câu dặn.
+- **Bộ đề 60 câu đã gần trần** (luna ~14,6–14,8/16, nhiều câu hai bản cùng 16) → tiến bộ thật không còn hiện ra.
+  → Phải có bộ đề khó hơn TRƯỚC khi dạy tiếp.
+
+### 7.2 Điểm yếu hiện tại (luna, 180 cặp chấm kín 03/11)
+
+| Tiêu chí | Điểm /2 | Lỗi người chấm gặp nhiều |
+|---|---|---|
+| việc làm | 1,63–1,71 (thấp nhất) | việc "theo dõi", "tập trung" không mốc đo / thời hạn; câu nối tiếp ngắn không có việc |
+| lý lẽ | 1,68–1,77 | so khác cơ sở (doanh thu / ngày so tổng tháng; % chia sai mẫu số); "vắng vì doanh thu thấp" (vòng vo) |
+| tìm vấn đề | 1,72–1,78 | bỏ sót vấn đề phụ: hỏi gas / gạo bỏ hao hụt bún 26 kg; sữa đặc bỏ hạt cà phê + ly dưới mức; 900 ly trà đá 3.000đ |
+| gọn | 1,75–1,83 | chen ý lạc đề cuối câu (giá vốn Bạc xỉu, trà dâu tây, tiền nạp ví) |
+| đúng quán | 1,87–1,90 | Thứ 7 vắng ở ki-ốt văn phòng coi là bất thường; gợi ý ngày quán nghỉ; hỏi lại giờ mở đã có trong số |
+
+Theo loại câu: **dự báo** thấp nhất (13,9–14,6), rồi kế hoạch, nối tiếp.
+
+### 7.3 Sáu lô (mỗi lô 5 lần dạy, đo gộp cuối lô)
+
+| Lô | Lần | Việc | Cách làm (code, không chỉ lời nhắc) | Đích đo |
+|---|---|---|---|---|
+| **A. Bộ đề khó** | 107–108 | Bộ đề v2: 40 câu mới + bộ kín 20 câu Claude không xem | 15 câu nhiều vấn đề cùng lúc; 10 chuỗi nối tiếp 2–3 lượt; 8 câu dự báo / dịp lễ; 7 câu ở **quán mẫu D** loại mới (cơm tấm / bánh mì — có ngày nghỉ, giờ mở lệch). Khi Chủ Quán cho phép: thêm câu hỏi thật từ sổ (che tên, số điện thoại) | Mốc gốc luna trên v2 (dự kiến ~12–13/16 → còn chỗ tăng) |
+| **B. Việc làm sắc** | 109–113 | Mỗi câu tư vấn có 2–3 việc đo được | Dòng "VIỆC GỢI Ý (tính sẵn)": code chọn việc từ KHO VIỆC theo điểm yếu đã tính (giờ vắng, món giá vốn cao, combo đắt hơn lẻ, khách quay lại thấp…) kèm **mốc đo + thời hạn** sẵn số; `loiLapLuan` bắt việc không có số / thời hạn, câu nối tiếp thiếu việc → viết lại | việc làm ≥ 1,85 |
+| **C. Tìm đủ vấn đề** | 114–118 | Không bỏ sót vấn đề phụ cùng chủ đề | Dòng "VẤN ĐỀ CHÍNH (tính sẵn)" xếp theo **tiền ảnh hưởng** (hao hụt × giá vốn, món rẻ chiếm phần lớn số ly, mặt hàng dưới mức tối thiểu); câu kho / nhập: code kiểm câu trả lời nhắc đủ mọi mặt hàng hết / dưới mức + hao hụt lớn nhất | tìm vấn đề ≥ 1,85 |
+| **D. Lý lẽ đúng cơ sở** | 119–123 | Không so táo với cam | Code bắt câu so "/ ngày" với tổng kỳ, % lệch mẫu số so với số tính sẵn, câu "vì sao" lặp lại kết luận; dịp lễ: tính sẵn **thứ trong tuần** của ngày lễ + quán có mở ngày đó không | lý lẽ ≥ 1,85; dự báo ≥ 14,5 |
+| **E. Gọn, đúng quán** | 124–128 | Hết ý lạc, hết khuyên trái lịch quán | Dòng "LỊCH QUÁN (tính sẵn)" từ số theo thứ / giờ: ngày nghỉ, giờ mở thật, ngày thấp tự nhiên (quán văn phòng Thứ 7); code bắt việc rơi vào ngày nghỉ / ngoài giờ mở, đoạn cuối nhắc món không có trong câu hỏi và không có trong vấn đề chính | gọn ≥ 1,9; đúng quán ≥ 1,95 |
+| **F. Hỏi thật + bộ kín** | 129–130 | Kiểm tổng | Hỏi thật web 20 câu (lộ trình 6.4), chấm bộ kín 20 câu, tổng kết; quyết đợt 3 | Bộ v2 tăng ≥ +1,5/16 so mốc gốc lô A |
+
+Song song mỗi tuần: **duyệt Boom** (câu 👎, câu không có số) theo quy trình đã có.
+
+### 7.3a Kết quả lô A (03/11) — mốc gốc gpt-6-luna
+
+- Quán mẫu D `cham_tu_van/quan_d.json` (cơm tấm khu dân cư gần trường THCS, nghỉ Chủ nhật, mở 6–13h + 17–21h, bán qua sàn, nướng than; 8 vấn đề D1–D8).
+- Bộ mở `de_v2.json` 40 câu (V01–V40: 9 chẩn đoán, 8 dự báo / lễ, 10 nối tiếp, 5 quyết định, 5 kế hoạch, 3 so sánh; A 8, B 9, C 9, D 14).
+  Khác bộ cũ: gửi CẢ số bán hàng lẫn đủ 5 mục như chế độ máy chủ 'ask'. Bộ kín `de_kin_v2.json` 20 câu (K01–K20, 5 câu / quán) do agent riêng soạn, người dạy không đọc.
+- `cham_tu_van.ts` đọc thêm quán D.
+
+| | Bộ mở v2 (80 câu trả lời) | Bộ kín (40) | Bộ cũ 60 câu (so sánh) |
+|---|---|---|---|
+| Chung /16 | **12,80** | **12,25** | ~14,7 |
+| thẳng | 1,74 | 1,58 | 1,93 |
+| đúng số | 1,89 | 1,73 | 1,96 |
+| tìm vấn đề | **1,24** | **1,18** | 1,72 |
+| lý lẽ | **1,30** | **1,13** | 1,68 |
+| việc làm | **1,19** | **1,18** | 1,69 |
+| đúng quán | 1,82 | 1,75 | 1,87 |
+| thận trọng | 1,90 | 1,93 | 1,97 |
+| gọn | 1,73 | 1,80 | 1,83 |
+
+Theo loại (bộ mở): **dự báo 10,56** (thấp hẳn), so sánh 13,0, nối tiếp 13,25, chẩn đoán 13,28, quyết định 13,3, kế hoạch 14,0.
+Lỗi người chấm gặp nhiều: không tính ra số khi đủ dữ liệu (Út Hiền 300 giờ / 4 tuần ≈ 75 giờ / tuần; trứng ≈ 33 quả / ngày; tăng giá × số ly);
+nói "chưa đủ số" rồi lạc sang thu chi / giá vốn; không nêu ngày lễ rơi vào thứ mấy; việc làm thiếu số mục tiêu; so sai cơ sở; khung giờ quán đóng (13–17h) bị gọi là "vắng";
+chia hao hụt cho 28 ngày khi quán nghỉ Chủ nhật; một câu hiểu câu cửa miệng "làm muốn chết" thành nguy cơ tự hại.
+→ Bộ v2 còn ~3 điểm / 16 để tăng; đích lô B–E đo trên bộ này. Lưu ý: tóm tắt của người chấm bộ kín có lộ vài ví dụ lỗi (không lộ câu hỏi).
+Kết quả: `cham_tu_van/ket_qua/v2_goc_claude_20261103.json`, `kin_v2_goc_claude_20261103.json`.
+
+### 7.3b Kết quả lô B (03/11) — lần 107
+
+- `loiLapLuan`: việc trong "Việc tuần này" / "Tuần N" không có số và không có thời hạn → viết lại.
+- `formatModules(…, ban)` nhận cả số bán hàng: giờ làm mỗi người / tuần (quá 48 → quá tải); hao hụt / ngày chia theo NGÀY MỞ (quán nghỉ Chủ nhật: 24 / 28 ngày);
+  lượng dùng ƯỚC cho hàng đếm 1–1 với phần món (quả, ổ, cái: trứng ~33 quả / ngày → 40 quả đủ ~1,2 ngày); câu "đủ bán / hết chưa" / tên mặt hàng cũng bật dòng kho.
+- Chấm kín 80 cặp bộ v2: **13,30 → 13,72 (+0,43 ± 0,18)**; 32 câu hơn, 18 kém. Việc làm 1,11 → 1,27, lý lẽ 1,52 → 1,68, thẳng 1,79 → 1,89;
+  chẩn đoán +0,9, quyết định +0,9, dự báo +0,56. Rõ nhất: "ai làm quá sức" 9–10 → 15–16; "trứng đủ tới Thứ 7" 12 → 15.
+- Chưa trúng đích việc làm ≥ 1,85: việc có số nhưng thiếu **mục tiêu** ("đo doanh thu 14–17h" mà không nói cần đạt bao nhiêu). Câu viết lại ~22% → ~46% (thêm ~3–4 giây cho các câu đó).
+- Còn lại cho lô sau: mục tiêu số cho việc; 20/11, 1/1 là Thứ 6 (lô D); quên than đã hết khi hỏi dịp lễ; so sai cơ sở (2 tuần thử so tổng 28 ngày; ca tối bỏ giờ 16h).
+- Áp: `db-fix/boom_l107_ap_dung.sh` (TS 20261103_221551). Kết quả: `cham_tu_van/ket_qua/lo_b_viec_lam_claude_20261103.json`.
+
+### 7.4 Cách đo
+
+- Mỗi lô: sinh 2 lượt × bộ v2 bằng gpt-6-luna (~0,3 USD), chấm kín A/B bằng Claude, 4 người chấm.
+- Lô nào chênh < +0,3 và không trúng đích tiêu chí → không áp, ghi lại vì sao, sang lô sau (không làm lại vòng chẩn đoán).
+- Lời nhắc lõi (`ADVICE_PROMPT`) giữ nguyên phần đầu để OpenAI vẫn tính nửa giá.
+
+### 7.5 Cần Chủ Quán duyệt
+
+| Việc | Khi |
+|---|---|
+| Quán mẫu D + bộ đề v2 (chỉ trên máy, không đụng production) | Lô A |
+| Đọc câu hỏi thật trong sổ hỏi đáp (đã che tên / số điện thoại) để làm bộ đề | Lô A, tuỳ chọn |
+| Áp lên máy chủ (hàm boom-chat) | Cuối mỗi lô B–E |
+| Đưa web / bản app (nếu có sửa app) | Khi cần |

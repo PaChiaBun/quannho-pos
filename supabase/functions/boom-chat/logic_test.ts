@@ -2,6 +2,7 @@ import { assert, assertEquals, assertStringIncludes } from 'jsr:@std/assert@1';
 import {
   todayBlock,
   chonViecCu,
+  type ShopFacts,
   locViecCu,
   soLieuGoc,
   upcomingHolidays,
@@ -722,7 +723,7 @@ Deno.test('Số module: làm sạch + tính sẵn (thu chi, kho, chấm công, k
   // hỏi thật 03/11: chế độ ask có doanh thu theo giờ → không nói "không có số theo giờ"
   // giờ mở 7–22h: đông sáng, chiều 14–17h vắng, 22h lẻ sát đóng cửa → chọn 14–17h, không chọn 22h
   const gio = Array.from({ length: 24 }, (_, h) => (h < 7 || h > 22 ? 0 : h === 22 ? 1e5 : h >= 14 && h < 17 ? 2e5 : h < 11 ? 3e6 : 1e6));
-  const coGio = formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko', gio);
+  const coGio = formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko', { by_hour: gio } as ShopFacts);
   assert(coGio.includes('Khung 3 tiếng vắng nhất trong giờ mở (bỏ giờ mở / đóng cửa): 14–17h') && coGio.includes('rút 1 người ở 14–17h 2 tuần') && !coGio.includes('KHÔNG có số khách theo giờ'), coGio);
   assert(formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko').includes('KHÔNG có số khách theo giờ'));
   // lần 93: hỏi thu chi vì sao / so kỳ trước → tách thu − chi đổi do thu hay chi; câu dự báo / câu khác thì không
@@ -1165,7 +1166,7 @@ Deno.test('kiểm thật 03/11 (2): hao hụt món chưa có giá vốn → khô
 });
 
 Deno.test('chặng 2.2: kiểm lỗi lập luận bằng code — chỉ bật khi khối có căn cứ', () => {
-  assertEquals(loiLapLuan('Việc tuần này: đẩy mạnh quảng bá qua các kênh truyền thông.', 'x').length, 1);
+  assert(loiLapLuan('Việc tuần này: đẩy mạnh quảng bá qua các kênh truyền thông.', 'x').some((x) => x.includes('chung chung')));
   assertEquals(loiLapLuan('Việc tuần này: đăng 1 bài mạng xã hội giới thiệu combo 45.000đ lúc 14h.', 'x').length, 0);
   assert(loiLapLuan('Dạ, số đang nghiêng về cắt bớt 1 người.\nVì sao…', 'KẾT LUẬN: CHƯA nên cắt ngay')[0].includes('chưa nên cắt'));
   assertEquals(loiLapLuan('Dạ, chưa nên cắt ngay.', 'KẾT LUẬN: CHƯA nên cắt ngay').length, 0);
@@ -1209,4 +1210,17 @@ Deno.test('việc đã gợi ý (3.2 + 4.3 gọn): rút "Việc tuần này" t�
   assertEquals(loiLapLuan('Dạ.\nBé Boom từng gợi ý thử bớt 5.000đ chiều.', soLieuGoc('chiều vắng', { viecCu: v })).filter((x) => x.includes('danh sách việc')), []);
   // số trong việc cũ là nguồn hợp lệ khi kiểm số
   assert(soLieuGoc('chiều vắng', { viecCu: v }).includes('5.000đ/phần'));
+});
+
+Deno.test('lô B: việc thiếu số / thời hạn, giờ / tuần mỗi người, chia theo ngày mở, ước lượng dùng', () => {
+  const thieu = loiLapLuan('Dạ.\n\nViệc tuần này:\n- Theo dõi doanh thu và đối chiếu chi phí.\n- Thử bớt 5.000đ khung 14–17h trong 2 tuần.', 'x');
+  assert(thieu.some((x) => x.includes('việc làm thiếu con số') && x.includes('Theo dõi doanh thu')) && !thieu.some((x) => x.includes('Thử bớt')), thieu.join('|'));
+  assertEquals(loiLapLuan('Dạ.\n\nViệc tuần này:\n- Kiểm đếm than ngay hôm nay.\nTuần 1: Hạ combo xuống 45.000đ.', 'x'), []);
+  const d = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_d.json', import.meta.url)));
+  const ban = parseFacts(d.facts.thang_nay)!, mk = parseModules(d.modules.thang_nay)!;
+  const t = formatModules(mk, new Date('2026-10-28T09:00:00+07:00'), 'than với trứng đủ bán tới thứ 7 không', ban);
+  assertStringIncludes(t, 'Út Hiền ~75 giờ (QUÁ 48 giờ — quá tải)');
+  assertStringIncludes(t, 'Cơm tấm (nấu dư) 22 kg (~0,9 kg / ngày)'); // 22 kg / 24 ngày mở (nghỉ Chủ nhật), không / 28
+  assert(/Trứng gà: món có "trứng" bán .*≈ 33 quả \/ ngày .* đủ khoảng 1,2 ngày/.test(t), t);
+  assert(!t.includes('KHÔNG có lượng dùng mỗi ngày → KHÔNG tự tính'), 'có ước thì bỏ câu cấm tính');
 });
