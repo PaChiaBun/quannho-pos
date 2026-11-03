@@ -7,6 +7,7 @@ nguon:
   - lib/screens/ban_screen.dart (13.278 dòng: sơ đồ bàn, mở bàn, phiên bàn, gọi món, topping/tùy chọn, gửi bếp, huỷ món/huỷ bàn, chuyển/gộp, thanh toán, PIN quản lý)
   - lib/core/repositories/ban_repository.dart
   - supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql (settle_ban_session_v5), 20260902_atomic_settlement_v5.sql (guard_ban_item_financial_change_v5)
+  - supabase/migrations/20261103_topping_ban_tru_kho_v1.sql (vá settle_ban_session_v5: số topping món bàn, bỏ qua tuỳ chọn khi trừ kho)
 ---
 
 # Quản lý Bàn
@@ -44,7 +45,7 @@ nguon:
 1. Trong bàn bấm **"Gọi món ngay"** (bàn chưa có món) hoặc **"Thêm món"**.
 2. Tìm **"Tìm sản phẩm, thức uống..."** hoặc chọn danh mục; chạm món để thêm.
 3. Món có thêm lựa chọn: bấm **"Tùy chọn"** trên thẻ món (máy màn hẹp như Sunmi: nút nhỏ nằm cạnh giá — món có ảnh chỉ còn biểu tượng, giá hiện số cuối cùng; chạm tên món cũng mở; thêm món không làm thẻ giãn ra nên các món bên dưới không dời chỗ):
-   - **"🥗 Topping tùy chọn"** — tăng/giảm số lượng từng topping.
+   - **"🥗 Topping tùy chọn"** — tăng/giảm số lượng từng topping. Số này là **tổng của cả dòng**: 2 ly + 1 trân châu là 1 phần (thu 5.000 đ), bill và phiếu bếp ghi "Trân châu x1"; mỗi ly 1 phần thì chỉ ghi tên topping. Topping vừa gắn ở Kho hàng (máy nào cũng được) hiện ngay lần mở "Tùy chọn" kế tiếp.
    - **"✨ Tùy chọn hương vị"** — các tùy chọn món (mức cay, thêm món…) và chip ghi chú nhanh.
    - **"Ghi chú"** — ghi chú riêng ("vd: ít rau, không cay...").
 4. Món **"TẠM HẾT"** (đã tắt bán hoặc hết tồn): app hỏi **"Món tạm hết"** → **"Vẫn thêm"** nếu chắc còn. Món bán theo công thức chỉ "TẠM HẾT" khi tắt bán — không xét tồn của chính món.
@@ -86,9 +87,9 @@ nguon:
    - **"Khuyến mãi / Voucher"** → **"Chọn mã"** → **"Áp dụng"** (bỏ: **"Gỡ mã"**).
    - Chưa có ô giảm giá tay — muốn bớt tiền cho khách: dùng mã giảm giá (voucher).
 3. **"Hình thức thanh toán"**: **"Tiền mặt"**, **"Chuyển khoản"**, **"Thẻ"** (không có ví).
-   - Tiền mặt: nhập **"Tiền mặt của khách"** → app tính **"TIỀN THỐI LẠI:"** hoặc **"Còn thiếu:"**.
+   - Tiền mặt: nhập **"Tiền mặt của khách"** hoặc chạm nút tiền nhanh (nút vừa chọn sáng màu cam) → app tính **"TIỀN THỐI LẠI:"** hoặc **"Còn thiếu:"**.
    - Chuyển khoản: hiện **"QUÉT MÃ QR ĐỂ CHUYỂN KHOẢN"** theo tài khoản ngân hàng khai trong mẫu hoá đơn (In Hoá Đơn → Thiết kế → khối QR Code).
-4. **"Xác nhận"** → **"Thanh toán thành công!"**. Hệ thống ghi thu, trừ kho theo công thức, cộng/trừ điểm, đóng bàn — tất cả trong một lần.
+4. **"Xác nhận"** (hai nút **"Hủy bỏ"** / **"Xác nhận"** luôn nằm ở đáy bảng, phần trên cuộn được) → **"Thanh toán thành công!"**. Hệ thống ghi thu, trừ kho theo công thức, cộng/trừ điểm, đóng bàn — tất cả trong một lần.
 5. Nếu máy chủ tính lại giảm giá/phụ phí khác màn hình: hộp **"Báo giá hóa đơn thay đổi"** → **"Xác nhận & Thanh toán"** hoặc **"Hủy bỏ"**.
 6. Bill tự in nếu đã cài (máy Sunmi mà quán chưa chọn máy in bill thì tự in ra máy in liền thân, xem `in-hoa-don.md`).
    - In lỗi: màn thành công báo **ngay** "Bill CHƯA in. Kiểm tra máy in bill." → **"IN LẠI BILL"**. Máy in không trả lời sau 30 giây cũng báo như vậy.
@@ -139,6 +140,7 @@ nguon:
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
 
 ### Khác biệt với bản app cũ (cho Chủ Quán)
+- App cũ (tới bản 1.0.6): gắn topping xong, món đã mở "Tùy chọn" trước đó phải tắt hẳn app mới thấy topping; bill ghi "+ Trân châu" cho 2 ly dù chỉ 1 phần; nút tiền nhanh luôn sáng ô "đúng tiền"; ô "Tiền thối lại" hiện ra đẩy nút "Xác nhận" khỏi màn hình máy hẹp.
 - Trước bản 22/10/2026: huỷ món mới gửi (bếp chưa làm) vẫn có thể trừ kho. App cũ còn ghi khoản chi "Giá vốn NL" vào Thu Chi khi huỷ món có công thức; bản mới chỉ trừ kho.
 
 1. **ĐÃ VÁ trong code (22/10, chưa phát hành):** nút "X" ở cột "Đang phục vụ" từng đóng phiên bàn mà KHÔNG thanh toán, không lý do, không duyệt, không audit (`ban_repository.closeSession`). Nay nút đổi thành **"Mở bàn"** (mở bảng phiên), hàm `closeSession` đã xoá; test `test/screens/ban_close_session_guard_test.dart` chặn tái phát. **Lớp máy chủ: ĐÃ áp production 22/10 20:27** (`20261022_chan_dong_phien_ban_v1.sql`, 15/15 PASS trên production, tự ROLLBACK). App cũ bấm nút "X" trên bàn còn món nay bị máy chủ từ chối (hiện lỗi chung). Còn mở: siết "Huỷ bàn" bắt buộc có audit khi mọi máy đã lên ≥ 1.0.5+16.
@@ -151,3 +153,5 @@ nguon:
 8. ~~Chữ "session" trên giao diện ("Đóng session …?")~~ — chuỗi này không còn trong code từ khi bỏ nút "X" (22/10).
 9. **[ĐÃ SỬA trong app 22/10 — chưa phát hành]** Lỗi cũ: huỷ món "đã gửi" (bếp chưa làm) vẫn trừ kho hao hụt — `deductAsLoss` mặc định `true` trong khi công tắc chỉ hiện với `dang_lam`/`xong`, nên `_deductStockForWastage` trừ kho và (món có công thức) ghi chi "Giá vốn NL" dù chưa nấu. Nay `deductAsLoss = showWastageOption` (cả `_removeItem` và `_updateItemQty`): món chỉ mới gửi thì không trừ; đang làm/đã xong thì công tắc hiện, bật sẵn.
 10. Quyền: module `ban` tự cấp `ban.manage_structure` và `pos.checkout` (`deriveActionPermsFromModules`) → Phục vụ mặc định thêm/xoá bàn và thanh toán được; tắt `pos.checkout` chỉ chặn trong app ở Bàn và QR mang đi, Thu ngân/Quản lý/Chủ quán luôn được ở Bàn (`isPrivileged`). Công tắc ở Hành động nhạy cảm chỉ hiện khi vai trò có module `pos` (`nhan_vien_screen.dart` ~3886–3893 lọc theo tiền tố) → vai trò chỉ có `ban` (vd "Nhân viên" `["ban"]` tạo sẵn ở `seedDefaults`) không có cách tắt thanh toán.
+11. **[ĐÃ SỬA 03/11 — CHỜ ÁP DB] Trừ kho topping món bàn sai số.** Màn Bàn ghi topping `{"qty": N}` = tổng cả dòng; `settle_ban_session_v5` (fix09) chỉ đọc `quantity` (kiểu đơn QR = mỗi phần) nên luôn trừ 1 topping cho mỗi món: 2 ly + 1 trân châu bị trừ 2, 1 ly + 3 trân châu chỉ trừ 1 (thấy thật ở quán demo: "Tran chau thu −2 phần"). Tiền thu đúng, chỉ tồn topping (và nguyên liệu nếu topping có công thức) lệch. Migration `20261103_topping_ban_tru_kho_v1.sql` vá đúng 3 biểu thức trong bản đang chạy (có `qty` thì trừ đúng `qty`, đơn QR giữ nguyên); hoàn tác `_ROLLBACK.sql`; test `supabase/tests/topping_ban_tru_kho_v1_test.sql` (bản sao cấu trúc cục bộ: bản cũ FAIL 5/6, bản vá PASS). Áp: Chủ Quán chạy `db-fix/topping_ban_tru_kho_ap_dung.sh` (chạy thử không đổi gì: `DRYRUN=1`).
+12. **[ĐÃ SỬA 03/11 — CHỜ ÁP DB, cùng migration mục 11] Món bàn có chọn "✨ Tùy chọn hương vị" thì không thanh toán được.** App ghi cả dòng `product_modifiers` (có `id` của tùy chọn) vào `modifiers_json`; `settle_ban_session_v5` coi mọi phần tử có `id` là món để trừ kho → ghi `stock_movements.product_id` = id tùy chọn → lỗi khoá ngoại `stock_movements_product_id_fkey`, cả lần thu tiền bị huỷ (thấy trên bản sao cấu trúc cục bộ 03/11, chưa thử trên app thật). Migration `20261103_topping_ban_tru_kho_v1.sql` vá thêm điều kiện vòng trừ kho: chỉ trừ khi `id` là món của quán (`EXISTS products … store_id = p_store_id`), tùy chọn bỏ qua; test có dòng "Ít đá" + 1 trân châu (bản cũ lỗi khoá ngoại, bản vá thu tiền được).

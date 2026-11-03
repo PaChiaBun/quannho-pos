@@ -1107,7 +1107,10 @@ class OrderItemModel {
     unitPrice: (m['unit_price'] as num?)?.toDouble() ?? 0,
     costPrice: (m['cost_price'] as num?)?.toDouble() ?? 0,
     subtotal: (m['subtotal'] as num?)?.toDouble() ?? 0,
-    extras: billItemExtras(m['modifiers_json']),
+    extras: billItemExtras(
+      m['modifiers_json'],
+      lineQty: (m['quantity'] as num?) ?? (m['qty'] as num?) ?? 1,
+    ),
   );
 }
 

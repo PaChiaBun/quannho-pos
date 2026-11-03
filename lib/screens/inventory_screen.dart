@@ -5425,7 +5425,7 @@ class _ToppingLinkSheetState extends State<_ToppingLinkSheet> {
                                 const SizedBox(height: 2),
                                 Text(
                                   price > 0
-                                    ? '+${price.round()}đ / $unit'
+                                    ? '+${fmtVnd(price)} / $unit'
                                     : 'Miễn phí / $unit',
                                   style: TextStyle(
                                     fontSize: 12, color: _kMuted)),

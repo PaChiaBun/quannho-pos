@@ -84,9 +84,19 @@ String? tidyFinanceDescription(String? s) =>
 String tidyRepeatedTableWord(String s) =>
     s.replaceAll(RegExp(r'\bbàn\s+(?=bàn\s)', caseSensitive: false), '');
 
-/// Topping / tuỳ chọn từ `modifiers_json` (chuỗi JSON hoặc danh sách), ghi như phiếu in bếp: "Trân châu x2".
+/// Tổng số phần một topping của cả dòng món: món gọi ở bàn ghi `qty` = tổng cả dòng ("2 ly + 1 trân
+/// châu" → 1); đơn QR ghi `quantity` = số mỗi phần → nhân số món. Máy chủ trừ kho theo cùng cách.
+num toppingTotal(Map m, num lineQty) =>
+    _num(m['qty']) ?? (_num(m['quantity']) ?? 1) * lineQty;
+
+num? _num(Object? v) => v is num ? v : num.tryParse('${v ?? ''}');
+
+String qtyText(num n) => n % 1 == 0 ? '${n.toInt()}' : '$n';
+
+/// Topping / tuỳ chọn từ `modifiers_json` (chuỗi JSON hoặc danh sách) để in dưới tên món: topping ghi
+/// tổng của dòng "Trân châu x3"; đúng 1 mỗi phần thì chỉ ghi tên ("Trà x2 / + Trân châu" = mỗi ly 1).
 /// Dùng cho chi tiết bill, hoá đơn in (giá dòng đã gồm topping) và phiếu bếp in giấy ở màn Bàn.
-List<String> billItemExtras(Object? modifiersJson) {
+List<String> billItemExtras(Object? modifiersJson, {num lineQty = 1}) {
   Object? raw = modifiersJson;
   if (raw is String) {
     if (raw.trim().isEmpty) return const [];
@@ -100,15 +110,21 @@ List<String> billItemExtras(Object? modifiersJson) {
   return [
     for (final e in raw)
       if (e is Map && '${e['name'] ?? ''}'.trim().isNotEmpty)
-        e['type'] == 'topping' && e['qty'] != null && e['qty'] != 1
-            ? '${e['name']} x${e['qty']}'
+        e['type'] == 'topping' && toppingTotal(e, lineQty) != lineQty
+            ? '${e['name']} x${qtyText(toppingTotal(e, lineQty))}'
             : '${e['name']}',
   ];
 }
 
+/// Dòng có topping ghi số tổng ("Trân châu x2") không gộp với dòng giống hệt: cộng số món mà giữ
+/// "x2" sẽ đọc sai tổng topping.
+bool extrasHaveCount(List<String> extras) => extras.any(_extraCountRe.hasMatch);
+
+final _extraCountRe = RegExp(r' x\d+(?:\.\d+)?$');
+
 /// Ghi chú món kèm dòng topping "+ Trân châu" ở đầu — mẫu phiếu bếp in dòng "+ …" thành topping.
-String? noteWithExtras(String? note, Object? modifiersJson) {
-  final extras = billItemExtras(modifiersJson);
+String? noteWithExtras(String? note, Object? modifiersJson, {num lineQty = 1}) {
+  final extras = billItemExtras(modifiersJson, lineQty: lineQty);
   final parts = [
     if (extras.isNotEmpty) '+ ${extras.join(', ')}',
     if (note != null && note.trim().isNotEmpty) note.trim(),

@@ -3174,7 +3174,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
             price: price,
             note: note,
             stationCode: 'cashier',
-            extras: billItemExtras(item['modifiers_json']),
+            extras: billItemExtras(item['modifiers_json'], lineQty: qty),
           ),
         );
       }

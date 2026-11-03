@@ -3,10 +3,10 @@
   "bai": {
     "ban-hang.md": {
       "lib/core/providers/app_providers.dart": "9891a503651b27b6",
-      "lib/core/widgets/order_detail_dialog.dart": "3e80fbda896f17b8",
+      "lib/core/widgets/order_detail_dialog.dart": "8db86c481689733d",
       "lib/modules/pos/providers/pos_providers.dart": "8756e0d16daa75de",
-      "lib/modules/pos/repository/pos_repository.dart": "e125a52133cf893c",
-      "lib/modules/pos/screens/checkout_sheet.dart": "84634ace48b77e53",
+      "lib/modules/pos/repository/pos_repository.dart": "3b092c1a3f94f53a",
+      "lib/modules/pos/screens/checkout_sheet.dart": "dac437fa2b2a0ea7",
       "lib/screens/finance_screen.dart": "6217534a4480b8a3",
       "lib/screens/pos_screen.dart": "862c5b44d14d2eb4",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
@@ -29,7 +29,7 @@
     },
     "bep.md": {
       "lib/core/repositories/kitchen_repository.dart": "6d24bef325dde24b",
-      "lib/screens/kitchen_screen.dart": "f6d2fe543f55c42f",
+      "lib/screens/kitchen_screen.dart": "3f0a9adee4eb22f4",
       "supabase/migrations/20260912_atomic_send_kitchen_ticket_v2.sql": "3242f0573a0ef36a",
       "test/screens/kitchen_sound_policy_test.dart": "52ab1b02b8994af5"
     },
@@ -38,7 +38,7 @@
       "lib/screens/chamcong_screen.dart": "b15a772a76e8392b"
     },
     "in-hoa-don.md": {
-      "lib/modules/bill_printer/providers/printer_settings_provider.dart": "8cfc7a7cc09d7545",
+      "lib/modules/bill_printer/providers/printer_settings_provider.dart": "03b7287e6d90d60c",
       "lib/modules/bill_printer/screens/bill_preview_screen.dart": "36c4df3ff2510491",
       "lib/modules/bill_printer/screens/bill_printer_hub.dart": "9c49d815d7b82821",
       "lib/modules/bill_printer/screens/print_design_screen.dart": "cdca414c5cae7abf",
@@ -80,8 +80,8 @@
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart": "431e48dc40bf6d00",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "c39ac02e913280f9",
-      "lib/screens/inventory_screen.dart": "b5e53098acdea901",
+      "lib/screens/ban_screen.dart": "4cc744466e0ce1d3",
+      "lib/screens/inventory_screen.dart": "bbb610d11670a3f9",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
     "luong.md": {
@@ -132,13 +132,14 @@
     },
     "quan-ly-ban.md": {
       "lib/core/repositories/ban_repository.dart": "012502e6267bc744",
-      "lib/screens/ban_screen.dart": "c39ac02e913280f9",
+      "lib/screens/ban_screen.dart": "4cc744466e0ce1d3",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
-      "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
+      "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3",
+      "supabase/migrations/20261103_topping_ban_tru_kho_v1.sql": "034ed7bad892c377"
     },
     "thu-chi.md": {
       "lib/core/services/store_auth_service.dart": "59840f57a6a72f38",
-      "lib/core/widgets/order_detail_dialog.dart": "3e80fbda896f17b8",
+      "lib/core/widgets/order_detail_dialog.dart": "8db86c481689733d",
       "lib/modules/finance/providers/finance_providers.dart": "5d916c446a0b538b",
       "lib/modules/finance/repository/finance_repository.dart": "9b5726a39c415368",
       "lib/modules/finance/screens/add_transaction_sheet.dart": "6ceb6e6a19698c4a",
@@ -157,6 +158,32 @@
       "lib/modules/ops/screens/ops_report_screen.dart": "3968203b6d3de5f2",
       "lib/modules/ops/screens/ops_screen.dart": "1b6a1f3365b27a59",
       "lib/modules/ops/screens/ops_staff_screen.dart": "17a2d77a88e18c9d"
+    },
+    "bat-dau.md": {
+      ".docs/Huong_dan/MUC-LUC.md": "a86d08ad27d68ce2",
+      ".docs/Huong_dan/TEMPLATE.md": "7210a126d1beea2a",
+      ".docs/Huong_dan/ban-hang.md": "2a5fcfe906df0003",
+      ".docs/Huong_dan/bao-cao-chuoi.md": "b4aca472e78f97a0",
+      ".docs/Huong_dan/bao-cao.md": "cadbd11e05322a91",
+      ".docs/Huong_dan/bat-dau.md": "ee96f88e01377bca",
+      ".docs/Huong_dan/bep.md": "eb60f40048452544",
+      ".docs/Huong_dan/boom-quy-trinh-duyet.md": "58693b94c578ea5b",
+      ".docs/Huong_dan/cham-cong.md": "76a6bda6d6ebcd5e",
+      ".docs/Huong_dan/goi-tra-sua-mang-di.md": "096e67c933ead4b5",
+      ".docs/Huong_dan/in-hoa-don.md": "77e628bed8407d7e",
+      ".docs/Huong_dan/ke-hoach-trien-khai-boom.md": "043a9685983a269b",
+      ".docs/Huong_dan/khach-hang.md": "b1d6cccfaf8f2780",
+      ".docs/Huong_dan/kho-chuyen-nghiep.md": "e7181ad9a104b08a",
+      ".docs/Huong_dan/kho-hang.md": "271a6b2cc59daa55",
+      ".docs/Huong_dan/luong.md": "ce8e89b63374d9e0",
+      ".docs/Huong_dan/nhan-vien.md": "6bed8117f27c3ec5",
+      ".docs/Huong_dan/nhat-ky-log.md": "746d3244b4fc151e",
+      ".docs/Huong_dan/qr-goi-mon.md": "5aeaa501c8cc800d",
+      ".docs/Huong_dan/quan-ly-ban.md": "c607dd45f4791e3d",
+      ".docs/Huong_dan/thu-chi.md": "ed397db932aaeb25",
+      ".docs/Huong_dan/van-hanh.md": "da54c9826716febc",
+      ".docs/Huong_dan/viec-can-sua.md": "ff0664f23895b389",
+      "lib/screens/dashboard_screen.dart": "ee8c3da0d0934fad"
     }
   }
 }

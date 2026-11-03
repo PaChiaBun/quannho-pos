@@ -10,6 +10,7 @@ import '../core/utils/app_logger.dart';
 import '../core/utils/string_utils.dart';
 import '../core/utils/cart_animation_helper.dart';
 import '../core/utils/money_formatter.dart';
+import '../core/widgets/cash_received_panel.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -250,8 +251,10 @@ final toppingCatalogProvider = StreamProvider.autoDispose
     });
 
 // ── Topping products gắn với 1 sản phẩm (flat list, bảng mới) ────────────────
+// autoDispose: mỗi lần mở "Tùy chọn" tải lại — gắn/bỏ topping ở Kho (máy này hay máy khác) thấy
+// ngay; trước nhớ cả phiên, món đã mở trước khi gắn phải tắt hẳn app mới thấy topping.
 final productToppingLinksProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>((
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((
       ref,
       productId,
     ) async {
@@ -2709,7 +2712,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 qty: i.quantity.toInt(),
                 price: i.price,
                 note: i.note,
-                extras: billItemExtras(i.modifiersJson),
+                extras: billItemExtras(i.modifiersJson, lineQty: i.quantity),
               ),
             )
             .toList(),
@@ -3813,7 +3816,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   qty: item.quantity.toInt(),
                   price: item.price,
                   note: item.note,
-                  extras: billItemExtras(item.modifiersJson),
+                  extras: billItemExtras(item.modifiersJson, lineQty: item.quantity),
                 ),
               if (surcharge > 0)
                 BillItem(name: 'Phí dịch vụ / Ship', qty: 1, price: surcharge),
@@ -4767,7 +4770,11 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               qty: item.quantity.toInt(),
               price: 0, // In bếp không hiển thị giá
               // Trước chỉ in ghi chú: bếp không biết món có topping.
-              note: noteWithExtras(item.note, item.modifiersJson),
+              note: noteWithExtras(
+                item.note,
+                item.modifiersJson,
+                lineQty: item.quantity,
+              ),
               stationCode: stationCode,
             ),
           );
@@ -6795,7 +6802,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
               qty: i.quantity.toInt(),
               price: i.price,
               note: i.note,
-              extras: billItemExtras(i.modifiersJson),
+              extras: billItemExtras(i.modifiersJson, lineQty: i.quantity),
             ),
           ),
           if (_shippingFee > 0)
@@ -7323,215 +7330,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
       children: [
         if (_payMethod == 'cash') ...[
           const SizedBox(height: 16),
-          Text(
-            'Tiền mặt của khách',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: _kNavy.withOpacity(0.7),
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 44,
-            child: TextField(
-              controller: _cashReceivedCtrl,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: _kNavy,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Nhập tiền khách đưa...',
-                hintStyle: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  color: Colors.grey.shade400,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                prefixIcon: Icon(
-                  Icons.attach_money_rounded,
-                  color: _kNavy.withOpacity(0.4),
-                  size: 20,
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: _kNavy.withOpacity(0.12)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: _kOrange, width: 1.5),
-                ),
-              ),
-              onChanged: (val) {
-                setState(() {});
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
-          (() {
-            final List<int> suggestions = [];
-            if (finalTotal > 0) {
-              suggestions.add(finalTotal.toInt());
-              final roundedValues = [
-                10000,
-                20000,
-                50000,
-                100000,
-                200000,
-                500000,
-              ];
-              for (final val in roundedValues) {
-                if (val > finalTotal &&
-                    suggestions.length < 5 &&
-                    !suggestions.contains(val)) {
-                  suggestions.add(val);
-                }
-              }
-            }
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: suggestions.map((sug) {
-                final isExact = sug == finalTotal.toInt();
-                return InkWell(
-                  onTap: () {
-                    setState(() {
-                      _cashReceivedCtrl.text = sug.toString();
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  child: Ink(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isExact ? _kOrange : Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isExact ? _kOrange : _kNavy.withOpacity(0.12),
-                        width: 1,
-                      ),
-                      boxShadow: isExact
-                          ? [
-                              BoxShadow(
-                                color: _kOrange.withOpacity(0.2),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Text(
-                      fmtVnd(sug.toDouble()),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: isExact ? Colors.white : _kNavy,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            );
-          })(),
-          const SizedBox(height: 14),
-          (() {
-            final entered = double.tryParse(_cashReceivedCtrl.text) ?? 0;
-            final change = entered - finalTotal;
-            if (entered <= 0) return const SizedBox.shrink();
-            if (change >= 0) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFA5D6A7)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.change_circle_rounded,
-                          color: Color(0xFF2E7D32),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'TIỀN THỐI LẠI:',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF2E7D32),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      fmtVnd(change),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF2E7D32),
-                        fontSize: 18,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E0),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFFB74D)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.warning_amber_rounded,
-                          color: Color(0xFFE65100),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Còn thiếu:',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFFE65100),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      fmtVnd(-change),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFFE65100),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-          })(),
+          CashReceivedPanel(controller: _cashReceivedCtrl, total: finalTotal),
         ],
         if (_payMethod == 'transfer') ...[
           const SizedBox(height: 16),
@@ -7773,133 +7572,142 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
         child: Container(
           constraints: BoxConstraints(maxWidth: isWide ? 850 : 500),
           padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    Icon(
-                      Icons.receipt_long_rounded,
-                      color: zoneColor,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+          // Chỉ phần giữa cuộn, hai nút Hủy bỏ / Xác nhận luôn ở đáy: trước cả bảng cuộn, ô "Tiền thối
+          // lại" hiện ra là đẩy hai nút khỏi màn hình (máy hẹp phải cuộn mới bấm được Xác nhận).
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
                         children: [
-                          Text(
-                            'Thu tiền',
-                            maxLines: 1,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: _kNavy,
+                          Icon(
+                            Icons.receipt_long_rounded,
+                            color: zoneColor,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Thu tiền',
+                                  maxLines: 1,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: _kNavy,
+                                  ),
+                                ),
+                                Text(
+                                  widget.tableName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: _kNavy.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          Text(
-                            widget.tableName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: _kNavy.withValues(alpha: 0.6),
+                          const SizedBox(width: 8),
+                          OutlinedButton.icon(
+                            onPressed: _isSubmitting ? null : _printInterimBill,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: _kOrange,
+                              side: const BorderSide(color: _kOrange, width: 1.5),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
+                            icon: const Icon(Icons.print_rounded, size: 14),
+                            label: Text(
+                              'In tạm tính',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: _isSubmitting
+                                ? null
+                                : () => Navigator.pop(context),
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              color: Colors.grey,
+                              size: 20,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: _isSubmitting ? null : _printInterimBill,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _kOrange,
-                        side: const BorderSide(color: _kOrange, width: 1.5),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      icon: const Icon(Icons.print_rounded, size: 14),
-                      label: Text(
-                        'In tạm tính',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: _isSubmitting
-                          ? null
-                          : () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        color: Colors.grey,
-                        size: 20,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-                const Divider(height: 20),
+                      const Divider(height: 20),
 
-                if (isWide) ...[
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
+                      if (isWide) ...[
+                        Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildTotalDue(finalTotal),
-                            const SizedBox(height: 16),
-                            _buildSurchargeField(),
-                            const SizedBox(height: 16),
-                            _buildLoyaltyField(),
-                            const SizedBox(height: 16),
-                            _buildVoucherField(),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildTotalDue(finalTotal),
+                                  const SizedBox(height: 16),
+                                  _buildSurchargeField(),
+                                  const SizedBox(height: 16),
+                                  _buildLoyaltyField(),
+                                  const SizedBox(height: 16),
+                                  _buildVoucherField(),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildPayMethodPicker(),
+                                  _buildPaymentDetailsPanel(finalTotal),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildPayMethodPicker(),
-                            _buildPaymentDetailsPanel(finalTotal),
-                          ],
-                        ),
-                      ),
+                      ] else ...[
+                        _buildTotalDue(finalTotal),
+                        const SizedBox(height: 16),
+                        _buildSurchargeField(),
+                        const SizedBox(height: 16),
+                        _buildLoyaltyField(),
+                        const SizedBox(height: 16),
+                        _buildVoucherField(),
+                        const SizedBox(height: 16),
+                        _buildPayMethodPicker(),
+                        _buildPaymentDetailsPanel(finalTotal),
+                      ],
+
                     ],
                   ),
-                ] else ...[
-                  _buildTotalDue(finalTotal),
-                  const SizedBox(height: 16),
-                  _buildSurchargeField(),
-                  const SizedBox(height: 16),
-                  _buildLoyaltyField(),
-                  const SizedBox(height: 16),
-                  _buildVoucherField(),
-                  const SizedBox(height: 16),
-                  _buildPayMethodPicker(),
-                  _buildPaymentDetailsPanel(finalTotal),
-                ],
-
-                const SizedBox(height: 24),
-                _buildActionButtons(zoneColor),
-              ],
-            ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildActionButtons(zoneColor),
+            ],
           ),
         ),
       ),

@@ -81,6 +81,7 @@ Khách bỏ đơn hoặc đổi ý sau khi thu ngân đã bấm "Bếp" ở màn
 Khách trả tiền tại quầy (thu ngân tính tiền ở màn Bán hàng):
 1. Bấm **"Thanh toán"** (trong giỏ) hoặc ô **tổng tiền màu cam** trên thanh giỏ (điện thoại).
 2. Bảng **"Thanh toán"** hiện tóm tắt món. Chọn **"Phương thức"**: "Tiền mặt", "Chuyển khoản", "Thẻ". Nếu khách có ví, có thêm **"Thanh toán bằng Ví"**.
+   - Chọn "Tiền mặt" thì có ô **"Tiền mặt của khách"** (không bắt buộc): gõ số tiền nhận được hoặc chạm nút tiền nhanh (đúng tiền, 200.000 đ, 500.000 đ…) — nút vừa chọn sáng màu cam; bên dưới hiện **"TIỀN THỐI LẠI"** hoặc **"Còn thiếu"**. Giống bảng Thu tiền ở Quản lý Bàn.
 3. Tuỳ chọn giảm giá:
    - **"Điểm thưởng"** — chỉ hiện khi đã gắn khách có điểm và **không** trả bằng ví.
    - **"Khuyến mãi / Voucher"** → **"Chọn mã"** → chọn mã → **"Áp dụng"**. Bỏ mã: **"Gỡ mã"**.
@@ -115,7 +116,7 @@ Thanh toán xong, hệ thống tự: ghi **một** khoản thu vào Thu Chi, tr�
 > Riêng phiếu hiện trên **màn Bếp** khi bấm "Bếp" ở điện thoại: món danh mục "Đồ uống" vào "Bếp nước", món khác vào "Bếp nóng".
 
 ### Xoá giỏ hàng
-Xoá hết giỏ hàng khi khách đổi ý bỏ hết món:
+Xoá hết giỏ hàng (xoá sạch) khi khách đổi ý, không lấy nữa:
 - Nút **thùng rác** trên thanh trên cùng → hỏi "Xóa giỏ hàng?" → **"Xóa"**.
 - Hoặc **"Xóa hết"** trong giỏ — chỉ người có quyền **"Huỷ đơn hàng"** mới bấm được (mặc định Chủ quán, Quản lý, Thu ngân; **Phục vụ không có**); người khác thấy "Bạn không có quyền huỷ đơn hàng". Quyền này chỉ chặn nút "Xóa hết" của giỏ chưa thanh toán, không liên quan đơn đã thu.
 - Giỏ có món **đã gửi bếp**: cả hai nút đều mở bảng **"Huỷ phiếu đã gửi bếp?"** trước (lý do + duyệt, xem [Huỷ phiếu bếp ở quầy](#huỷ-phiếu-bếp-ở-quầy-chưa-thu-tiền)); huỷ phiếu xong giỏ mới được xoá, để bếp không làm món khách đã bỏ.
@@ -136,7 +137,7 @@ Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — kh
 | "Tải danh sách món thất bại. Hãy chụp lại báo chủ app." | Mất mạng hoặc lỗi tải dữ liệu | Kiểm tra mạng, mở lại màn; còn lỗi thì chụp màn gửi chủ app |
 | "Không tìm thấy khách hàng" | SĐT chưa có hoặc gõ khác cách đã lưu | Kiểm tra số, hoặc tạo khách ở module Khách hàng |
 | "Máy này chưa cài máy in hoá đơn nên không in bill." (tự tắt sau 4 giây) | Máy chưa có máy in / luật in | Cài máy in theo hướng dẫn In Hoá Đơn; đơn vẫn đã thanh toán |
-| "In hóa đơn thất bại. Kiểm tra máy in rồi bấm "In hoá đơn"." | Máy in tắt, hết giấy, mất kết nối | Kiểm tra máy in rồi bấm "In hoá đơn" |
+| "In hóa đơn thất bại. Kiểm tra máy in rồi bấm "In lại"." (đứng yên tới khi xử lý, không che nút của đơn kế tiếp) | Máy in tắt, hết giấy, mất kết nối | Kiểm tra máy in rồi bấm **"In lại"** ngay trên thông báo (in lại bill vừa thu; lỗi tiếp thì báo lại); không in nữa thì bấm dấu **X**. Đơn vẫn đã thanh toán |
 | "Kết nối mạng chậm hoặc không ổn định…" | Mạng yếu khi thanh toán | **Không** bấm thanh toán lại ngay; bấm nút đồng hồ để đối soát trước |
 | "Lỗi: … Giá món đã đổi. Cập nhật giỏ hàng trước khi thanh toán." | Giá món vừa được sửa trong lúc đang bán | Xoá món đó khỏi giỏ, chọn lại rồi thanh toán |
 | "Lỗi: … Đơn hàng chưa đạt giá trị tối thiểu để áp dụng voucher" | Voucher có mức đơn tối thiểu | Gỡ mã hoặc thêm món |
@@ -165,6 +166,7 @@ Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — kh
 - Chữ không dấu: app cũ hiện "Tim mon, ma SKU...", "Bep san sang", thông báo/phiếu bếp ghi "Mang di".
 - App cũ trên máy tính bảng / PC / web không có nút "Gửi bếp" (phiếu bếp chỉ in khi thanh toán), không khoá nút "Thanh toán" trong lúc đang gửi bếp, và chưa chặn món "Tạm ngưng" — cập nhật app, hoặc gọi món qua Quản lý Bàn.
 - "Tra cứu & in lại bill" chỉ có từ bản 22/10/2026; app cũ chỉ tải tối đa 500 bill mới nhất của kỳ (bản mới tải tối đa 20.000).
+- App cũ (tới bản 1.0.6) thu tiền mặt ở quầy không có ô "Tiền mặt của khách" / tiền thối; in bill lỗi thì thông báo bảo bấm "In hoá đơn" (nút chỉ có trên màn "Thanh toán thành công!" khi bật module In hoá đơn) và che thanh giỏ hàng của đơn sau. Bản mới có nút "In lại" ngay trên thông báo.
 
 Mình phát hiện các điểm sau khi đọc code. Tài liệu trên mô tả **đúng như app đang chạy**; mục có nhãn "ĐÃ SỬA" là đã sửa trong code (chưa phát hành trừ khi ghi khác), phần hướng dẫn ghi rõ "app bản mới, sau 23/10/2026":
 1. **Khoá món hết tồn — ĐÚNG THIẾT KẾ (Chủ Quán xác nhận 23/10):** món có đặt tồn tối thiểu mà tồn ≤ 0 thì khoá ("Hết"); món không đặt tồn tối thiểu thì không khoá. `qn.md` ghi khác ("thiếu tồn chỉ cảnh báo") → cần sửa `qn.md` cho khớp. **[ĐÃ SỬA trong app 23/10 — chưa phát hành]** món tạm ngưng bán (`is_available=false`) nay mờ, nhãn "Tạm ngưng", không thêm vào giỏ được — kể cả qua bảng nhấn giữ ("thêm nhiều món", trước đây lọt cả món hết tồn) và nút + của món đã có trong giỏ (`posProductSellable`); máy chủ chưa chặn.

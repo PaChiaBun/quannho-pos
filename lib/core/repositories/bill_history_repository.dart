@@ -285,8 +285,9 @@ List<ReprintLine> mergeReprintLines(List<Map<String, dynamic>> rows) {
     // Món QR bị huỷ lúc thanh toán còn dòng số lượng 0 — không in.
     if (qty <= 0) continue;
     final price = (r['unit_price'] as num?)?.toDouble() ?? 0;
-    final extras = billItemExtras(r['modifiers_json']);
-    final key = '$name¦$price¦${extras.join('|')}';
+    final extras = billItemExtras(r['modifiers_json'], lineQty: qty);
+    // Topping ghi số tổng của riêng dòng ("Trân châu x2"): để dòng riêng, gộp sẽ sai tổng topping.
+    final key = extrasHaveCount(extras) ? '#${merged.length}' : '$name¦$price¦${extras.join('|')}';
     final prev = merged[key];
     merged[key] = ReprintLine(name, (prev?.qty ?? 0) + qty, price, extras: extras);
   }

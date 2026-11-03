@@ -16,6 +16,7 @@ import '../core/repositories/kitchen_repository.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
+import '../core/utils/string_utils.dart' show qtyText, toppingTotal;
 import '../modules/bill_printer/screens/bill_preview_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1729,6 +1730,9 @@ class _TicketCard extends ConsumerWidget {
     final isDone  = status == 'xong';
     final isNew   = status == 'cho';
     final accent  = _urgencyColor(status, ticket.sentAt);
+    // Phiếu xong không còn món chờ: đếm cả phiếu (trước tab "Xong" ghi "0 món" cho phiếu 2 món).
+    final waiting = items.where((i) => !i.done).length;
+    final itemCount = waiting > 0 ? waiting : items.where((i) => !i.cancelled).length;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -1837,7 +1841,7 @@ class _TicketCard extends ConsumerWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                '${items.where((i) => !i.done).length} món',
+                                '$itemCount món',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
                                   color: Colors.white38,
@@ -2057,7 +2061,7 @@ class _TicketCard extends ConsumerWidget {
                                                  final isMap = m is Map;
                                                  final isTopping = isMap && (m['type'] as String? ?? '') == 'topping';
                                                  final label = isTopping
-                                                     ? '${m['name']} x${m['qty']}'
+                                                     ? '${m['name']} x${qtyText(toppingTotal(m, item.quantity))}'
                                                      : isMap
                                                          ? (m['name'] as String? ?? '$m')
                                                          : '$m';
@@ -2350,10 +2354,11 @@ class _TicketCard extends ConsumerWidget {
               noteText = decoded.map<String>((m) {
                 if (m is Map) {
                   final name = m['name'] as String? ?? '';
-                  final qty  = (m['qty'] as num?)?.toInt() ?? 1;
+                  // Bàn ghi qty = tổng dòng, QR ghi quantity = mỗi phần — quy về tổng như bill.
+                  final total = toppingTotal(m, i.quantity);
                   final type = m['type'] as String? ?? '';
                   if (type == 'topping') {
-                    return qty > 1 ? '+$name ×$qty' : '+$name';
+                    return total != i.quantity ? '+$name ×${qtyText(total)}' : '+$name';
                   }
                   // on/off modifier (e.g. "Nhiều hành")
                   return name;

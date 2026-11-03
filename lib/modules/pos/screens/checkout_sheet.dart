@@ -14,6 +14,7 @@ import '../../../modules/bill_printer/screens/bill_preview_screen.dart';
 import '../../../modules/bill_printer/providers/printer_settings_provider.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../core/widgets/cash_received_panel.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../../../screens/pos_screen.dart' show billPrinterModuleActiveProvider;
 import '../models/coupon_model.dart';
@@ -189,6 +190,13 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   DateTime? _lastBillPrintAt; // lần in bill gần nhất (tự động hoặc in lại) của giao dịch này
   bool _redeemRateReady = false;
   PosSaleResult? _saleResult;
+  final _cashReceivedCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _cashReceivedCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -299,6 +307,14 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                       ),
                       const SizedBox(height: 10),
                       _buildPaymentMethods(),
+                      // Tiền khách đưa → tiền thối như thu tiền ở bàn (không bắt nhập).
+                      if (_selectedPayment == 'cash') ...[
+                        const SizedBox(height: 16),
+                        CashReceivedPanel(
+                          controller: _cashReceivedCtrl,
+                          total: cart.total,
+                        ),
+                      ],
                       const SizedBox(height: 20),
 
                       // ── Loyalty section ────────────────────────────────────
@@ -1106,15 +1122,15 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               )) {
             if (settings.autoPrintCheckout) {
               _lastBillPrintAt = DateTime.now();
-              final printRes = await ref
-                  .read(printerSettingsProvider.notifier)
-                  .printCheckoutReceipt(
-                    storeId:
-                        (await StoreAuthService.getStoreInfo())['store_id']
-                            as String,
-                    settlementId: orderId,
-                    billData: _billData!,
-                  );
+              final printer = ref.read(printerSettingsProvider.notifier);
+              final storeId =
+                  (await StoreAuthService.getStoreInfo())['store_id'] as String;
+              final bill = _billData!;
+              final printRes = await printer.printCheckoutReceipt(
+                storeId: storeId,
+                settlementId: orderId,
+                billData: bill,
+              );
               final cashierSt = printRes.stationResults['cashier']?.status;
               if (cashierSt == StationPrintStatus.notConfigured ||
                   cashierSt == StationPrintStatus.failed) {
@@ -1125,14 +1141,12 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                 );
               }
               if (mounted && cashierSt == StationPrintStatus.failed) {
-                // Đứng yên tới khi thu ngân bấm Đóng: bill không ra là chuyện phải thấy.
-                ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                  SnackBar(
-                    content: const Text(
-                      'In hóa đơn thất bại. Kiểm tra máy in rồi bấm "In hoá đơn".',
-                    ),
-                    duration: const Duration(days: 1),
-                    action: SnackBarAction(label: 'Đóng', onPressed: () {}),
+                warnBillNotPrinted(
+                  ScaffoldMessenger.maybeOf(context),
+                  () => printer.printCheckoutReceipt(
+                    storeId: storeId,
+                    settlementId: orderId,
+                    billData: bill,
                   ),
                 );
               } else if (mounted &&
@@ -1491,4 +1505,44 @@ class _TotalRow extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Bill quầy không in được: báo đứng yên tới khi thu ngân xử lý (bill không ra là chuyện phải thấy),
+/// nút "In lại" in ngay bill vừa thu — trước bảo bấm nút "In hoá đơn" không có ở đâu. Nổi phía trên
+/// thanh giỏ hàng màn Bán hàng (đáy 58 + cao ~70) để không che nút của đơn kế tiếp.
+void warnBillNotPrinted(
+  ScaffoldMessengerState? messenger,
+  Future<PrintDispatchResult> Function() reprint,
+) {
+  if (messenger == null) return;
+  const margin = EdgeInsets.fromLTRB(12, 0, 12, 140);
+  messenger.showSnackBar(
+    SnackBar(
+      content: const Text('In hóa đơn thất bại. Kiểm tra máy in rồi bấm "In lại".'),
+      duration: const Duration(days: 1),
+      behavior: SnackBarBehavior.floating,
+      margin: margin,
+      showCloseIcon: true,
+      action: SnackBarAction(
+        label: 'In lại',
+        onPressed: () async {
+          StationPrintStatus? st;
+          try {
+            st = (await reprint()).stationResults['cashier']?.status;
+          } catch (_) {}
+          if (st == StationPrintStatus.success) {
+            messenger.showSnackBar(
+              const SnackBar(
+                content: Text('Đã in lại bill.'),
+                behavior: SnackBarBehavior.floating,
+                margin: margin,
+              ),
+            );
+          } else {
+            warnBillNotPrinted(messenger, reprint);
+          }
+        },
+      ),
+    ),
+  );
 }

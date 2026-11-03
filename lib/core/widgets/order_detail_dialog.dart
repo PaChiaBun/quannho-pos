@@ -70,10 +70,13 @@ List<BillLine> mergeBillLines(List<Map<String, dynamic>> items) {
     final unit = (it['unit_price'] as num?)?.toDouble() ?? 0;
     // Dòng QR cũ không ghi subtotal: tính lại thay vì hiện 0 đ.
     final sub = (it['subtotal'] as num?)?.toDouble() ?? unit * qty;
-    final extras = billItemExtras(it['modifiers_json']);
+    final extras = billItemExtras(it['modifiers_json'], lineQty: qty);
     final rawNote = (it['note'] as String?)?.trim();
     final note = rawNote == null || rawNote.isEmpty ? null : rawNote;
-    final key = '$name¦$unit¦${extras.join('|')}¦${note ?? ''}';
+    // Topping ghi số tổng của riêng dòng ("Trân châu x2"): để dòng riêng, gộp sẽ sai tổng topping.
+    final key = extrasHaveCount(extras)
+        ? '#${merged.length}'
+        : '$name¦$unit¦${extras.join('|')}¦${note ?? ''}';
     final prev = merged[key];
     merged[key] = prev == null
         ? BillLine(name, qty, sub, extras, note)

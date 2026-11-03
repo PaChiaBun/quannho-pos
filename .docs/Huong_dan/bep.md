@@ -32,7 +32,7 @@ nguon:
 - **Lọc trạm**: **"Tất cả"**, **"Bếp nóng"**, **"Bếp nước"**.
 - **Máy tính bảng nằm ngang / PC**: ba cột **"Chờ xử lý"**, **"Đang làm"**, **"Hoàn thành"**.
 - **Điện thoại, máy tính bảng dựng dọc (iPad dọc)**: ba tab **"Chờ"**, **"Đang làm"**, **"Xong"** — màn hẹp chia ba cột sẽ quá nhỏ.
-- **Thẻ phiếu**: tên bàn (hoặc "Mang đi N" với đơn gửi từ Bán hàng — số trong ngày của giỏ, để gọi đúng khách), **"Đợt N"**, số món còn lại, đồng hồ chờ, nhãn **"MỚI"** / **"LÀM"** / **"TRỄ 30P!"**, danh sách món kèm số lượng, topping, ghi chú (📌), và nút **"In phiếu"**.
+- **Thẻ phiếu**: tên bàn (hoặc "Mang đi N" với đơn gửi từ Bán hàng — số trong ngày của giỏ, để gọi đúng khách), **"Đợt N"**, số món còn lại (phiếu đã xong ghi số món của cả phiếu), đồng hồ chờ, nhãn **"MỚI"** / **"LÀM"** / **"TRỄ 30P!"**, danh sách món kèm số lượng, topping (ghi tổng của dòng, vd "x2 Trà đào" + "Trân châu x1" = cả 2 ly chỉ 1 phần trân châu; đơn QR cũng ghi đủ số), ghi chú (📌), và nút **"In phiếu"**.
 
 ## Các việc thường làm
 
@@ -88,6 +88,7 @@ Chỉ món **đã gửi bếp** mới báo bếp; huỷ trước khi gửi thì 
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
 
 ### Khác biệt với bản app cũ (cho Chủ Quán)
+- App cũ (tới bản 1.0.6): tab "Xong" ghi "0 món" cho mọi phiếu; topping của đơn QR hiện "Trân châu xnull", phiếu in mất số lượng topping QR.
 - App cũ không dùng "Bộ phận chế biến" = Bếp Bar để xếp món vào Bếp nước — mọi món đều đoán theo tên.
 
 1. **[ĐÃ SỬA trong app 23/10 — chưa phát hành]** Lỗi cũ — **Lọc trạm không dùng "Bộ phận chế biến" của món**: phiếu lưu `station_code` từ `products` (`bep_nong`, `bep_bar`, `thu_ngan`), nhưng `_classifyStation` ở `kitchen_screen.dart` chỉ nhận `nong` / `nuoc` → mọi món (trừ món lưu `nong`, xem ghi chú 8) đều rơi vào đoán theo tên (từ khoá "kem", "cam", "nước"…). Món "Bánh flan kem" vào Bếp nước, "Cơm cam" cũng vậy. Nay `_classifyStation`: mã chuẩn hoá = bar (bep_bar/bar/nuoc) → Bếp nước; `nong` (POS gán theo danh mục) → Bếp nóng; còn lại (gồm `bep_nong` — mặc định của món mới) vẫn đoán theo tên, để quán chưa cài bộ phận cho đồ uống không bị dồn sang Bếp nóng (QC 23/10). Muốn theo hẳn "Bộ phận chế biến" thì quán phải cài Bar cho đồ uống trước. Production 23/10: phiếu bếp lưu bep_nong 17.055, bep_bar 10.729, nong 62.
