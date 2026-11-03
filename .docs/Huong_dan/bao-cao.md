@@ -7,6 +7,7 @@ nguon:
   - lib/screens/report_screen.dart (8 tab: Doanh thu, Sản phẩm, Tài chính, Kho, Huỷ/Duyệt, Nhân viên, Voucher, Hóa đơn)
   - lib/core/repositories/dashboard_repository.dart (get_report_stats/daily_revenue/top_products_for_range_v1)
   - lib/screens/einvoice_report_tab.dart, lib/screens/bill_lookup_section.dart (tab Hóa đơn)
+  - supabase/migrations/20261104_topping_bao_cao_v1.sql (Top sản phẩm / danh mục đã bán tách topping chọn kèm món)
 ---
 
 # Báo cáo
@@ -41,6 +42,7 @@ nguon:
 
 ### Sản phẩm
 - Lọc theo danh mục; **"Top sản phẩm bán chạy"**: số phần, giá trung bình/phần, doanh thu; xếp theo doanh thu, thanh màu dưới mỗi món dài theo doanh thu.
+- Topping chọn kèm món cũng có dòng riêng; lọc **"Topping"** để xem riêng.
 
 ### Tài chính
 - Xem quán lời hay lỗ theo kỳ: thẻ **"LỢI NHUẬN"** / **"ĐANG LỖ"**: Thu nhập, Chi phí, Biên LN.
@@ -101,3 +103,4 @@ nguon:
 4. Quyền `report.view` không chặn tab nào trong màn Báo cáo — ai vào được là xem được mọi tab (kể cả doanh thu theo thu ngân, lợi nhuận). Nhưng nó **mở thêm** tab Báo cáo ở thanh điều hướng (`main.dart:1244,1275`) cho vai trò có quyền này dù không được giao module Báo cáo; Thu ngân luôn có tab này (fail-safe).
 5. Tab Voucher tra cứu tên nhân viên bằng nhiều truy vấn nối tiếp; kỳ dài có thể chậm.
 6. **[ĐÃ SỬA 23/10 — chưa phát hành]** Tra cứu bill trước giới hạn 500/kỳ; nay tải theo trang 1.000 tới `kBillLookupLimit = 20000`, bỏ dòng trùng nếu có bill mới vào giữa lúc tải. "Kết quả kinh doanh" trước chỉ cộng 1.000 phiếu Thu Chi (quán đông thiếu số) — đã sửa, xem `thu-chi.md` mục 2b.
+7. **[ĐÃ SỬA 04/11 — CHỜ ÁP DB] Topping chọn kèm món không được đếm.** Topping chọn ở "Tùy chọn" (Bàn, QR) nằm trong `order_items.modifiers_json` của dòng món, không thành dòng đơn riêng; `get_top_products_for_range_v1`, `get_sold_categories_for_range_v1` và `boom_sales_raw_v1` chỉ cộng dòng đơn → trân châu chỉ được đếm khi bán lẻ ở quầy (báo thiếu), tiền topping cộng vào món chính (quán demo 03/11: Trà đào 6 phần 215.000 đ, TB 35.833 đ/phần; đúng là 210.000 đ + trân châu 1 phần 5.000 đ), bộ lọc không có "Topping". Migration `20261104_topping_bao_cao_v1.sql` tách mỗi topping thành dòng riêng (bàn: `qty` = tổng dòng; QR: `quantity` × số món — cùng cách trừ kho), tiền = giá × số phần, trừ khỏi món chính (tổng không đổi); đơn cũ còn lưu topping nên số các kỳ trước cũng đúng lại. App (đường dự phòng khi gọi máy chủ lỗi, bộ lọc danh mục, Boom trên máy) tính cùng cách (`toppingSales` trong `string_utils.dart`). Bản sao cục bộ: bản cũ test FAIL (Trà 235.000), bản mới PASS; 50.000 dòng món chạy ~0,13 giây (cũ ~0,05). Áp: Chủ Quán chạy `db-fix/topping_bao_cao_ap_dung.sh` (`DRYRUN=1` để thử).

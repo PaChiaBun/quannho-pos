@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/store_auth_service.dart';
+import '../utils/string_utils.dart' show toppingSales;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD REPOSITORY — 100% Supabase
@@ -196,7 +197,7 @@ class DashboardRepository {
       futures.add(
         _sb
             .from('order_items')
-            .select('product_id, product_name, name, quantity, qty, subtotal')
+            .select('product_id, product_name, name, quantity, qty, subtotal, modifiers_json')
             .inFilter('order_id', chunk),
       );
     }
@@ -207,17 +208,26 @@ class DashboardRepository {
 
     final map = <String, _ProductAgg>{};
     for (final item in items) {
+      // Fallback: quantity (extended col) → qty (legacy col)
+      final qty =
+          (item['quantity'] as num?)?.toDouble() ??
+          (item['qty'] as num?)?.toDouble() ??
+          0;
+      // Topping chọn kèm món (modifiers_json) thành món riêng, tiền trừ khỏi món chính — như máy chủ
+      final tops = toppingSales(item['modifiers_json'], qty);
+      for (final t in tops) {
+        final agg = map[t.id] ??= _ProductAgg(t.name);
+        agg.qty += t.qty;
+        agg.revenue += t.revenue;
+      }
       final productId = (item['product_id'] ?? '').toString();
       if (productId.isEmpty) continue;
       final agg = map[productId] ??= _ProductAgg(
         item['product_name'] as String? ?? item['name'] as String? ?? '',
       );
-      // Fallback: quantity (extended col) → qty (legacy col)
-      agg.qty +=
-          (item['quantity'] as num?)?.toDouble() ??
-          (item['qty'] as num?)?.toDouble() ??
-          0;
-      agg.revenue += (item['subtotal'] as num?)?.toDouble() ?? 0;
+      agg.qty += qty;
+      agg.revenue += ((item['subtotal'] as num?)?.toDouble() ?? 0) -
+          tops.fold(0.0, (sum, t) => sum + t.revenue);
     }
 
     // ‼️ FIX: filter theo category nếu được chỉ định
@@ -843,7 +853,7 @@ class DashboardRepository {
       futures.add(
         _sb
             .from('order_items')
-            .select('product_id')
+            .select('product_id, modifiers_json')
             .inFilter('order_id', chunk),
       );
     }
@@ -852,11 +862,13 @@ class DashboardRepository {
       items.addAll(res);
     }
 
-    final productIds = items
-        .map((i) => (i['product_id'] ?? '').toString())
-        .where((id) => id.isNotEmpty)
-        .toSet()
-        .toList();
+    final productIds = {
+      for (final i in items) ...[
+        (i['product_id'] ?? '').toString(),
+        // Topping chọn kèm món (modifiers_json) → bộ lọc có danh mục của topping
+        for (final t in toppingSales(i['modifiers_json'], 1)) t.id,
+      ],
+    }.where((id) => id.isNotEmpty).toList();
     if (productIds.isEmpty) return [];
     final products = await _sb
         .from('products')

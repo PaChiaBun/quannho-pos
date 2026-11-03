@@ -1,6 +1,6 @@
 {
- "version": 202611032148,
- "hash": "f41654345c692b74d2f0f1fc88a77124e7297c5dd607dc75deb42d62f0636333",
+ "version": 202611032217,
+ "hash": "979f49865500f2eb75221a1088e963a366fb4de0ba2fdcf224f73a8f30bfea9e",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -408,7 +408,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Sản phẩm",
-   "text": "• Lọc theo danh mục; \"Top sản phẩm bán chạy\": số phần, giá trung bình/phần, doanh thu; xếp theo doanh thu, thanh màu dưới mỗi món dài theo doanh thu."
+   "text": "• Lọc theo danh mục; \"Top sản phẩm bán chạy\": số phần, giá trung bình/phần, doanh thu; xếp theo doanh thu, thanh màu dưới mỗi món dài theo doanh thu.\n• Topping chọn kèm món cũng có dòng riêng; lọc \"Topping\" để xem riêng."
   },
   {
    "id": "bao-cao#tung-tab-tai-chinh",

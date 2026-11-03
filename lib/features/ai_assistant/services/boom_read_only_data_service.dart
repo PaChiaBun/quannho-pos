@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/string_utils.dart' show toppingSales;
+
 /// Cổng dữ liệu kinh doanh dành riêng cho AI Boom.
 ///
 /// File này cố ý chỉ sử dụng `select()`. AI Boom không có API ghi, không gọi
@@ -83,7 +85,7 @@ class BoomReadOnlyDataService {
       final page = await _db
           .from('order_items')
           .select(
-            'id,order_id,product_id,product_name,name,quantity,qty,subtotal,unit_price,cost_price',
+            'id,order_id,product_id,product_name,name,quantity,qty,subtotal,unit_price,cost_price,modifiers_json',
           )
           .inFilter('order_id', ids)
           .order('id')
@@ -209,15 +211,26 @@ class BoomReadOnlyDataService {
     {
       final items = allItems;
       for (final item in items) {
-        final id = item['product_id'] as String?;
-        if (id == null || id.isEmpty) continue;
         final quantity =
             (item['quantity'] as num?)?.toDouble() ??
             (item['qty'] as num?)?.toDouble() ??
             0;
+        final band = bandOf[item['order_id']];
+        // Topping chọn kèm món (modifiers_json) thành món riêng (giá vốn 0), tiền trừ khỏi món chính — như
+        // máy chủ (boom_sales_raw_v1); trước trân châu bán kèm không được đếm.
+        final tops = toppingSales(item['modifiers_json'], quantity);
+        for (final t in tops) {
+          final acc = sold[t.id] ??= _ProductAccumulator(t.name.isEmpty ? 'Sản phẩm' : t.name);
+          acc.quantity += t.qty;
+          acc.revenue += t.revenue;
+          if (band != null) bandQty[band][t.id] = (bandQty[band][t.id] ?? 0) + t.qty;
+        }
+        final id = item['product_id'] as String?;
+        if (id == null || id.isEmpty) continue;
         final revenue =
-            (item['subtotal'] as num?)?.toDouble() ??
-            quantity * ((item['unit_price'] as num?)?.toDouble() ?? 0);
+            ((item['subtotal'] as num?)?.toDouble() ??
+                quantity * ((item['unit_price'] as num?)?.toDouble() ?? 0)) -
+            tops.fold(0.0, (sum, t) => sum + t.revenue);
         final accumulator = sold[id] ??= _ProductAccumulator(
           (item['product_name'] as String?) ??
               (item['name'] as String?) ??
@@ -230,7 +243,6 @@ class BoomReadOnlyDataService {
           accumulator.cost += unitCost * quantity;
           accumulator.costQty += quantity;
         }
-        final band = bandOf[item['order_id']];
         if (band != null) {
           bandQty[band][id] = (bandQty[band][id] ?? 0) + quantity;
         }

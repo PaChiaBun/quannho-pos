@@ -86,6 +86,7 @@ Bẫy đã biết: `user_accounts`, `pos_coupon_redemptions` có thể bị RLS 
    `ky.ts` (30 câu thật đúng hết), `lay_so.ts` (quyền 10 vai trò + 5 mục, đọc bằng vé người hỏi), `hoi.ts` (đệm), `index.ts` mode `'ask'`.
    Script áp kiểm `index.ts` trên máy chủ = bản commit chặng 1 (lần sau đổi mốc 168db4d → commit này).
 2. **DB — `boom_sales_raw_v1`** (migration `20261103_boom_sales_raw_v1.sql` + ROLLBACK) — **đã áp 03/11**. Hàm trả số thô
+   - **04/11 (CHỜ ÁP DB):** `20261104_topping_bao_cao_v1.sql` thay thân hàm: topping chọn kèm món (trong `order_items.modifiers_json`) thành món riêng (giá vốn 0), tiền trừ khỏi món chính — trước trân châu bán kèm không vào `items`. Dạng JSON trả về không đổi; app (`boom_read_only_data_service.dart`) tính cùng cách.
    (doanh thu, đơn, theo giờ / thứ / món / khung giờ); `ban_hang.ts` dựng gói facts y như app. Đối chiếu quán KAY-Rạch Giá tháng 10:
    487.883.810đ / 3.366 đơn, tháng 9 436.064.400đ, cơm sườn miếng 849 phần — khớp app; ~1 giây lần đầu, ~0,1 giây sau.
 3. **Web — đã đưa 03/11** (`db-fix/boom_ask_web_ap_dung.sh`, build từ worktree sạch đúng HEAD; TS 20261103_033003, sửa ghi đè

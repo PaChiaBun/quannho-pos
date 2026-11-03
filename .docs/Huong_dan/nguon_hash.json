@@ -22,10 +22,11 @@
       "lib/screens/chain_report_screen.dart": "ca45468ac16e8e2d"
     },
     "bao-cao.md": {
-      "lib/core/repositories/dashboard_repository.dart": "c9a9e7a726ff2c63",
+      "lib/core/repositories/dashboard_repository.dart": "325e830cb11c5fd9",
       "lib/screens/bill_lookup_section.dart": "5ffa6b912dcf7002",
       "lib/screens/einvoice_report_tab.dart": "edfadf318db1980b",
-      "lib/screens/report_screen.dart": "b20b3d88806deae7"
+      "lib/screens/report_screen.dart": "b20b3d88806deae7",
+      "supabase/migrations/20261104_topping_bao_cao_v1.sql": "567c41336e07b19f"
     },
     "bep.md": {
       "lib/core/repositories/kitchen_repository.dart": "6d24bef325dde24b",
@@ -164,7 +165,7 @@
       ".docs/Huong_dan/TEMPLATE.md": "7210a126d1beea2a",
       ".docs/Huong_dan/ban-hang.md": "2a5fcfe906df0003",
       ".docs/Huong_dan/bao-cao-chuoi.md": "b4aca472e78f97a0",
-      ".docs/Huong_dan/bao-cao.md": "cadbd11e05322a91",
+      ".docs/Huong_dan/bao-cao.md": "caab0596c6b3a52f",
       ".docs/Huong_dan/bat-dau.md": "ee96f88e01377bca",
       ".docs/Huong_dan/bep.md": "eb60f40048452544",
       ".docs/Huong_dan/boom-quy-trinh-duyet.md": "58693b94c578ea5b",

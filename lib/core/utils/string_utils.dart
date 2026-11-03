@@ -97,7 +97,16 @@ String qtyText(num n) => n % 1 == 0 ? '${n.toInt()}' : '$n';
 /// tổng của dòng "Trân châu x3"; đúng 1 mỗi phần thì chỉ ghi tên ("Trà x2 / + Trân châu" = mỗi ly 1).
 /// Dùng cho chi tiết bill, hoá đơn in (giá dòng đã gồm topping) và phiếu bếp in giấy ở màn Bàn.
 List<String> billItemExtras(Object? modifiersJson, {num lineQty = 1}) {
-  Object? raw = modifiersJson;
+  return [
+    for (final e in _jsonList(modifiersJson))
+      if (e is Map && '${e['name'] ?? ''}'.trim().isNotEmpty)
+        e['type'] == 'topping' && toppingTotal(e, lineQty) != lineQty
+            ? '${e['name']} x${qtyText(toppingTotal(e, lineQty))}'
+            : '${e['name']}',
+  ];
+}
+
+List _jsonList(Object? raw) {
   if (raw is String) {
     if (raw.trim().isEmpty) return const [];
     try {
@@ -106,14 +115,31 @@ List<String> billItemExtras(Object? modifiersJson, {num lineQty = 1}) {
       return const [];
     }
   }
-  if (raw is! List) return const [];
-  return [
-    for (final e in raw)
-      if (e is Map && '${e['name'] ?? ''}'.trim().isNotEmpty)
-        e['type'] == 'topping' && toppingTotal(e, lineQty) != lineQty
-            ? '${e['name']} x${qtyText(toppingTotal(e, lineQty))}'
-            : '${e['name']}',
-  ];
+  return raw is List ? raw : const [];
+}
+
+/// Topping chọn ở "Tùy chọn" nằm trong `modifiers_json` của dòng món, không thành dòng đơn riêng — báo cáo
+/// tách ra món riêng: số phần theo [toppingTotal], tiền = giá × số phần (trừ khỏi tiền món chính).
+/// Máy chủ tính cùng cách (20261104_topping_bao_cao_v1).
+List<({String id, String name, double qty, double revenue})> toppingSales(
+  Object? modifiersJson,
+  num lineQty,
+) {
+  final out = <({String id, String name, double qty, double revenue})>[];
+  if (lineQty <= 0) return out;
+  for (final e in _jsonList(modifiersJson)) {
+    if (e is! Map || e['type'] != 'topping') continue;
+    final id = '${e['id'] ?? ''}'.trim();
+    if (id.isEmpty) continue;
+    final qty = toppingTotal(e, lineQty).toDouble();
+    out.add((
+      id: id,
+      name: '${e['name'] ?? ''}'.trim(),
+      qty: qty,
+      revenue: qty * (_num(e['price']) ?? 0),
+    ));
+  }
+  return out;
 }
 
 /// Dòng có topping ghi số tổng ("Trân châu x2") không gộp với dòng giống hệt: cộng số món mà giữ
