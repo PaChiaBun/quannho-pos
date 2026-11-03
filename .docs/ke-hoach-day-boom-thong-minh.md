@@ -1007,6 +1007,15 @@ Kết quả: `cham_tu_van/ket_qua/v2_goc_claude_20261103.json`, `kin_v2_goc_clau
 - Sửa giữ lại: bộ chia chủ đề không còn nhầm "lại" (quay lại, ít lại) với "lãi", "giá trị" với "giá".
 - Ghi nhận lỗi lặp lại cho lô sau: trứng ước "đủ ~1,2 ngày" mà dòng đầu kết luận "đủ tới Thứ 7" (cả hai bản) → kiểm bằng code được.
 
+### 7.3g Kiểm thật lần 108 + lô G (04/11) — lần 109
+
+- Hỏi thật web (KAY) sau lần 108: "20/11 sắp tới quán có đông hơn không" → câu đầu "ngày này là Thứ Sáu", lấy trung bình Thứ Sáu làm mốc, không đoán %.
+- `kichBanGia`: câu "tăng giá X nghìn (thêm / lên)" có tên món / nhóm → tính sẵn thu thêm nếu giữ số phần, nếu giảm 10%, ngưỡng hoà.
+- `loiLapLuan`: lượng dùng ước < 2 ngày mà câu trả lời nói "đủ tới …" → viết lại.
+- Đo có trọng tâm (6 câu bị ảnh hưởng × 3 lượt, 18 cặp chấm kín, so lần 108): **12,78 → 13,61 (+0,83 ± 0,54)**;
+  trứng đủ tới Thứ 7: sai 2/3 → 0/3 (+3,7 / câu); tăng giá trà sữa tính ra số 2/3 → 3/3 (+1,7). Hai câu không bị ảnh hưởng (V07, V34) −1 = dao động.
+- Áp: `db-fix/boom_l109_ap_dung.sh` (TS 20261104_023006). Kết quả: `cham_tu_van/ket_qua/lo_g_claude_20261104.json`.
+
 ### 7.4 Cách đo
 
 - Mỗi lô: sinh 2 lượt × bộ v2 bằng gpt-6-luna (~0,3 USD), chấm kín A/B bằng Claude, 4 người chấm.

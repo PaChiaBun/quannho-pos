@@ -1809,6 +1809,32 @@ export function caBan(f: ShopFacts | null | undefined, question: string): string
 // 16 câu có dòng gắn −1,19 (người chấm: lặp ý / lạc câu hỏi). Đã gỡ — gợi ý cài đặt nên đi bằng bài hướng dẫn "Bắt đầu dùng app"
 // và thẻ nhắc trong app (lộ trình 5.3), không chèn vào câu tư vấn. Xem .docs/ke-hoach-day-boom-thong-minh.md mục 7.3f.
 
+// Lô G (04/11): "tăng giá X nghìn thì thu thêm bao nhiêu" — bộ v2: Boom né ("số liệu chưa tách theo món") dù có số phần; điểm 8–10 / 16.
+// Tính sẵn kịch bản: thu thêm nếu giữ số phần, số phần được giảm tối đa để không thiệt (hoà), và nếu giảm 10%.
+export function kichBanGia(f: ShopFacts | null | undefined, question: string): string {
+  const m = /t[aă]ng(?: gi[aá])?[^\d]{0,40}?(\d+(?:[.,]\d+)?)\s*(ngh[iì]n|ng[aà]n|k\b|đ|000)/i.exec(question);
+  if (!f || !m) return '';
+  const x = /đ/.test(m[2]) && +m[1].replace(/[.,]/g, '') >= 500 ? +m[1].replace(/[.,]/g, '') : Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
+  if (!(x > 0 && x <= 100_000)) return '';
+  const q = ` ${boDauVc(question)} `;
+  const mon = (f.groups ?? []).flatMap((g) => [...g.top, ...g.slow]);
+  const nhom = (f.groups ?? []).find((g) => q.includes(` ${boDauVc(g.name).trim()} `));
+  const it = mon.filter((t) => q.includes(` ${boDauVc(t.name).trim()} `)).sort((a, b) => b.name.length - a.name.length)[0];
+  const ten = it?.name ?? nhom?.name, sl = it?.qty ?? nhom?.qty ?? 0, dt = it?.revenue ?? nhom?.revenue ?? 0;
+  if (!ten || !(sl > 0) || !(dt > 0)) return '';
+  // "tăng LÊN 45 nghìn" = giá mới, không phải tăng thêm 45 nghìn
+  const gia = dt / sl;
+  if (/l[eê]n\s*$/i.test(question.slice(0, m.index + m[0].length - m[1].length - m[2].length).trimEnd().replace(/\d+[.,]?$/, '')) || /l[eê]n\s*\d/i.test(m[0])) {
+    if (x <= gia) return '';
+    return kichBanGiaX(ten, it ? 'món' : 'nhóm', sl, dt, gia, x - gia);
+  }
+  return kichBanGiaX(ten, it ? 'món' : 'nhóm', sl, dt, gia, x);
+}
+function kichBanGiaX(ten: string, loai: string, sl: number, dt: number, gia: number, x: number): string {
+  const hoa = (x / (gia + x)) * 100, giam10 = (gia + x) * sl * 0.9 - dt;
+  return `KỊCH BẢN TĂNG GIÁ (tính sẵn — dùng ở câu đầu, nói rõ là ước): ${loai} "${ten}" bán ${qty(sl)} phần trong kỳ, giá trung bình ${vnd(gia)}; tăng ${vnd(x)} → nếu giữ số phần: thu thêm ${vnd(sl * x)} / kỳ; nếu số phần giảm 10%: ${giam10 >= 0 ? `vẫn thu thêm ${vnd(giam10)}` : `thu ÍT hơn ${vnd(-giam10)}`}; số phần được giảm tối đa ${pctTxt(hoa)}% thì doanh thu vẫn bằng cũ (hoà). Việc: thử 2 tuần, giữ giá mới nếu số phần giảm dưới ${pctTxt(Math.floor(hoa))}%.`;
+}
+
 /** Dòng "HÔM NAY" đưa vào tin nhắn người dùng (câu dặn giữ nguyên để vẫn được giảm giá phần lặp lại). */
 export function todayBlock(now: Date): string {
   const today = vnDay(now);
@@ -1857,6 +1883,7 @@ export function buildMessages(
       : '',
     caBan(extra?.facts, question),
     ngayHoi(question, extra?.now ?? new Date(), extra?.facts),
+    kichBanGia(extra?.facts, question),
     // lô E: bộ kín — "làm muốn chết" bị hiểu thành nguy cơ tự hại, mở đầu bằng lời khuyên khủng hoảng
     /mu[oố]n ch[eế]t|ch[eế]t m[aấ]t|m[eệ]t ch[eế]t|ch[eế]t lu[oô]n|ch[eế]t đi đ[uư][oợ]c|ch[eế]t (?:v[oớ]i|ng[aạ]t)/i.test(question) && /l[aà]m|m[eệ]t|b[aậ]n|đ[oô]ng|qu[aá]n|ca\b|nh[aâ]n vi[eê]n/i.test(question)
       ? 'CÂU CỬA MIỆNG: "… muốn chết / mệt chết / chết mất" ở đây là cách nói than MỆT / QUÁ TẢI trong công việc, KHÔNG phải ý tự hại → trả lời bình thường về công việc, giờ làm, người làm.'
@@ -2238,6 +2265,10 @@ export function loiLapLuan(answer: string, ref: string): string[] {
     .map((x) => x.replace(/^\s*(?:[-•*]|\d+[.)]|Tu[aầ]n [\d–-]+\s*:)\s*/i, '').trim()).filter((x) => x.length >= 12);
   const thieu = viec.filter((x) => !/\d/.test(x) && !/hôm nay|ngày mai|mỗi (?:ngày|tuần)|hằng (?:ngày|tuần)|cuối tuần|tuần (?:này|sau)/i.test(x));
   if (viec.length && thieu.length) out.push(`việc làm thiếu con số / thời hạn (${thieu.map((c) => `"${c.slice(0, 50)}"`).join('; ')}) → mỗi việc ghi rõ: món / khung giờ / mức giá hoặc số cần đạt (lấy từ số của quán) + thời hạn (vd 2 tuần)`);
+  // lô G: ước "đủ khoảng 1,2 ngày" mà câu trả lời kết luận "đủ tới Thứ 7" (bộ v2 V22, cả hai bản, nhiều lần)
+  const it = [...ref.matchAll(/([^;:]+?): món có "[^"]+" bán [^;]*?đủ khoảng (\d+(?:,\d+)?) ngày/g)].filter((x) => parseFloat(x[2].replace(',', '.')) < 2);
+  const duSai = it.filter((x) => cau.some((c) => c.toLowerCase().includes(x[1].trim().toLowerCase().split(' ')[0]) && /(?<!không |chưa |chẳng |ko |k )(?:có thể |vẫn |sẽ )?đủ (?:bán |dùng |xài )?(?:tới|đến|cho tới|cho đến|qua)/i.test(c)));
+  if (duSai.length) out.push(`kết luận "đủ tới …" trái số ước: ${duSai.map((x) => `${x[1].trim()} chỉ đủ khoảng ${x[2]} ngày`).join('; ')} → nói KHÔNG đủ, nhập ngay`);
   // lô E: việc xếp vào ngày quán NGHỈ / khung giờ quán ĐÓNG; gọi giờ đóng là "vắng" (bộ v2: rút người 13–16h khi quán đóng 13–17h)
   const hs = /HỒ SƠ QUÁN \(tự suy[^\n]*/.exec(ref)?.[0] ?? '';
   const nghi = /nghỉ ((?:Thứ \d|Chủ nhật)(?:,? (?:và )?(?:Thứ \d|Chủ nhật))*)/.exec(hs)?.[1]?.split(/,\s*|\s+và\s+/).filter(Boolean) ?? [];
@@ -2326,6 +2357,7 @@ export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; 
     extra?.chain ? formatChain(extra.chain) : '',
     caBan(extra?.facts, question),
     ngayHoi(question, now, extra?.facts),
+    kichBanGia(extra?.facts, question),
     todayBlock(now),
   ].filter(Boolean).join('\n');
 }

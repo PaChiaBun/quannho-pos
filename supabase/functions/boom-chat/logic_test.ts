@@ -2,6 +2,7 @@ import { assert, assertEquals, assertStringIncludes } from 'jsr:@std/assert@1';
 import {
   todayBlock,
   chonViecCu,
+  kichBanGia,
   hopChuDe,
   caBan,
   ngayHoi,
@@ -1267,3 +1268,15 @@ Deno.test('lần 105 sửa: khung 3 tiếng vắng nhất không rơi vào giờ
   assert(m && !(+m[1] < 17 && +m[2] > 13), t);
 });
 
+
+Deno.test('lô G: kịch bản tăng giá tính sẵn; bắt kết luận "đủ tới" trái số ước', () => {
+  const L = (q: string) => JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${q}.json`, import.meta.url)));
+  const b = parseFacts(L('b').facts.thang_nay), d = L('d');
+  const k = kichBanGia(b, 'nếu tăng giá trà sữa thêm 3 nghìn thì tháng sau thu thêm bao nhiêu');
+  assert(/nhóm "Trà sữa" bán 2643 phần .* thu thêm 7\.929\.000đ \/ kỳ/.test(k), k);
+  assertStringIncludes(kichBanGia(parseFacts(d.facts.thang_nay), 'có nên tăng giá cơm tấm sườn lên 45 nghìn không'), 'món "Cơm tấm sườn" bán 1147 phần trong kỳ, giá trung bình 40.000đ; tăng 5.000đ');
+  assertEquals(kichBanGia(b, 'doanh thu tăng bao nhiêu'), '');
+  const ref = soLieuGoc('than với trứng đủ bán tới thứ 7 không', { facts: parseFacts(d.facts.thang_nay), modules: parseModules(d.modules.thang_nay) });
+  assert(loiLapLuan('Dạ, trứng có thể đủ tới Thứ 7 nếu bán như thường.', ref).some((x) => x.includes('trái số ước') && x.includes('Trứng gà')));
+  assertEquals(loiLapLuan('Dạ, trứng KHÔNG đủ tới Thứ 7, chỉ đủ khoảng 1,2 ngày — nhập ngay.', ref).filter((x) => x.includes('trái số ước')), []);
+});
