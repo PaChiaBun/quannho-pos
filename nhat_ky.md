@@ -3,6 +3,18 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-11-03 — Kiểm Sunmi Bò Đen đợt 6 (bản 24, chỉ xem): chuông, Kho hàng, Kho CN, Thu Chi, In Hoá Đơn — 6 lỗi G1–G6 → sửa hết theo ⭐ (commit `675881f`)
+
+- ✅ Máy: chuông Trang chủ báo "Kho ổn định"; Kho hàng 34 món đúng nhãn tồn; form Sửa sản phẩm mở / đóng không lưu; Thu Chi hôm qua 3.481.000 đ, cuộn 0% khung giật; nhật ký app không lỗi.
+- ✅ G6 (xung đột Kho ↔ Bán hàng): Kho ghi "Theo công thức" và giấu tồn, nhưng Bán hàng / Bàn vẫn khoá "Hết" / báo sắp hết theo tồn của chính món (không bao giờ đổi khi bán) — vd Trà Tắc Cửu Long đặt tồn tối thiểu 10. `locksOnOwnStock` (`recipe_product_ids.dart`): chỉ khoá theo tồn khi có tồn tối thiểu và món không nằm trong `recipeProductIdsProvider`; dùng ở thẻ món, `_addToCart`, `posProductSellable(p, recipeIds)` (giỏ, bảng giữ lâu) và 2 chỗ `isOutOfStock` ở Bàn (giữ nguyên văn công thức cũ cho 2 bộ test Python M5). Chưa xảy ra ở Bò Đen.
+- ✅ G1 Kho CN › Công thức "Cot Tra Den" ghi "Chưa gắn giá" + "Đã gắn menu POS — Tự trừ kho khi bán" (sai: cốt không bán, lệnh sản xuất cộng vào kho) → `recipeMakesStock`: công thức của nguyên liệu / bán thành phẩm ghi "Bán thành phẩm" + "Gắn kho — hoàn thành lệnh sản xuất cộng vào kho"; chi tiết công thức cũng đổi câu.
+- ✅ G2 Kho hàng › Cảnh báo "Tất cả sản phẩm đang đủ hàng 🎉" dù 8 món âm kho (không đặt tồn tối thiểu) → "Không có món nào dưới tồn tối thiểu" + "N món không đặt tồn tối thiểu đang âm kho".
+- ✅ G3 Ghi hao hụt › "Hao hụt gần đây" không có giờ ngày (đã tải `created_at` mà không hiện) → `wasteTimeLabel` "22:15 02/11 · ".
+- ✅ G4 Thu Chi: dòng giao dịch "23:32 • Hô…" → chỉ ghi giờ (đầu nhóm đã ghi ngày), bỏ `_dayLabel`. G5 cuộn Thu Chi chạy lấn dưới thanh trạng thái → dải gradient xanh cố định cao bằng thanh trạng thái.
+- ✅ Test: `test/screens/kiem_sunmi_dot6_test.dart` (3 ca: G6, G1, G3) + ca món theo công thức trong `kho_ban_bep_batch2_test.dart` (cập nhật 3 chuỗi đọc nguyên văn lời gọi `posProductSellable`). Bài hướng dẫn rà + đóng dấu: ban-hang, quan-ly-ban, kho-hang, kho-chuyen-nghiep, thu-chi; xuất lại `assets/boom_help/huong_dan.json`.
+- ✅ Toàn bộ test/core, features/ai_assistant, modules, screens, docs, repositories, widget_test đạt (1108 ca) + 2 bộ Python M5 đạt. Lần chạy đầu hỏng 1 ca đo Boom (bộ 26/10: trả lời thẳng sai bài 12/112 > 10%): chữ "giờ" thêm vào bài thu-chi / kho-chuyen-nghiep, bỏ dấu thành "gio" = "giỏ" → câu "xoá sạch mấy món trong giỏ" nhích tỉ lệ điểm 1,149 → 1,151 qua ngưỡng 1,15, Boom trả lời thẳng bài Quản lý bàn. Đổi thành "thời điểm" → 11/112 như cũ.
+- ⚠️ G2, G4, G5 không có test riêng (đổi chữ / hiển thị). Chưa thử trên máy thật.
+
 ## 2026-11-03 — Kiểm Sunmi Bò Đen đợt 5 (bản 24, chỉ xem): Bán hàng, Bàn, Phiếu bếp, Nhân viên, Cài đặt, Boom — 3 lỗi F1–F3 → sửa hết theo ⭐ (commit `8c16f55`)
 
 - ✅ Máy: Bán hàng và Bàn cuộn 2% khung giật, hàng cuối không bị nút Boom che; nhật ký app không lỗi; app ~195 MB / máy 2,7 GB. Mã kết nối nhân viên: người vào bằng mã nhận vai trò `unassigned` tới khi chủ quán gán (`join_store_by_code_v4`, fix08) — không lỗ hổng.
