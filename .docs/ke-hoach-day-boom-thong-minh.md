@@ -811,6 +811,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Thẻ Chrome chạy nền bị trình duyệt làm chậm (~3 phút / câu) — không phải lỗi app; lần sau hỏi khi thẻ đang hiện.
 - Áp: `db-fix/boom_l104_ap_dung.sh` (TS 20261103_145513).
 
+### Lần 105 (03/11, đã áp): cắt người — khung 3 tiếng vắng nhất
+
+- Hỏi lại 3 câu lỗi lần 104 trên web: đều đúng (món nên bỏ: 30 ngày, 7 món, nhận ra món bán 0 vì hết hàng; kho: báo mức tối thiểu cài sai; cắt người: dùng số theo giờ).
+- Còn lại: câu cắt người chọn rút người lúc 22h (giờ đóng cửa, vốn ít người) dù 14–17h chỉ 6% doanh thu.
+- Sửa: `formatModules(…, gio)` nhận doanh thu theo giờ, tính khung 3 tiếng vắng nhất trong giờ mở (bỏ giờ mở / đóng cửa) kèm % doanh thu; việc làm "rút 1 người ở khung đó 2 tuần".
+- Áp: `db-fix/boom_l105_ap_dung.sh` (TS 20261103_152137).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

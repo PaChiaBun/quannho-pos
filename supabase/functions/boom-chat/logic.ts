@@ -385,7 +385,7 @@ const soNgay = (p: unknown) => {
 };
 
 /** Số module → chữ cho GPT; tính sẵn tỷ lệ, so kỳ trước, xếp hạng (GPT nhỏ hay tính sai). */
-export function formatModules(m: ModuleFacts, now: Date = new Date(), question = '', coGio = false): string {
+export function formatModules(m: ModuleFacts, now: Date = new Date(), question = '', gio: number[] | null = null): string {
   const out: string[] = [];
   const f = m.finance;
   if (f) {
@@ -510,7 +510,15 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
       const gt = (x: Row) => qty(Math.round(nn(x.hours) / tuan));
       const hi = st.reduce((a, x) => (nn(x.hours) > nn(a.hours) ? x : a)), lo = st.reduce((a, x) => (nn(x.hours) < nn(a.hours) ? x : a));
       const sau = nn(n.total_hours) / (sc - 1) / tuan;
-      out.push(`Quyết định cắt người (tính sẵn): ${sau > 48 ? 'KẾT LUẬN: CHƯA nên cắt ngay (dòng đầu nói đúng ý này, KHÔNG nói "nghiêng về cắt")' : 'CHƯA đủ số để quyết'} — ${sc} người, ${qty(n.total_hours)} giờ / ${qty(Math.round(tuan * 10) / 10)} tuần ≈ ${qty(Math.round(nn(n.total_hours) / sc / tuan))} giờ / người / tuần; ca lệch: nhiều nhất ${ss(hi.name)} ~${gt(hi)} giờ / tuần, ít nhất ${ss(lo.name)} ~${gt(lo)} giờ / tuần. Bớt 1 người mà giữ đủ giờ mở quán → ${sc - 1} người còn lại mỗi người ~${qty(Math.round(sau))} giờ / tuần${sau > 48 ? ' (QUÁ 48 giờ / tuần — dễ kiệt sức, phải trả làm thêm)' : ''}. ${coGio ? 'Doanh thu theo giờ CÓ trong khối bán hàng ở trên → chỉ ra khung giờ vắng cụ thể để rút người, KHÔNG nói "chưa có số theo giờ";' : 'Khối KHÔNG có số khách theo giờ → CHƯA đủ để nói thừa người;'} KHÔNG chỉ đích danh ai nghỉ, KHÔNG tự đặt ngưỡng "X ca / tuần". Việc: (1) chia lại ca cho đều (bớt người nhiều nhất)${nn(n.forgot_clock_out) ? `, sửa ${nn(n.forgot_clock_out)} ca quá 16 giờ chưa chấm ra (giờ đang bị tính sai)` : ''}; (2) ${coGio ? 'rút 1 người ở khung giờ vắng nhất (theo doanh thu theo giờ ở trên) 2 tuần' : 'xem doanh thu theo giờ trong Báo cáo, rút 1 người ở giờ vắng 2 tuần'}, đo số đơn và thời gian chờ${m.finance ? '; (3) xem dòng tỉ lệ lương / doanh thu ở trên trước khi quyết' : ''}.`);
+      // hỏi lại 03/11: Boom chọn rút người lúc 22h (giờ đóng cửa) → tính sẵn khung 3 tiếng vắng nhất, bỏ giờ mở / đóng cửa
+      const co = (gio ?? []).flatMap((v, h) => (nn(v) > 0 ? [h] : [])), tongGio = (gio ?? []).reduce((a, v) => a + nn(v), 0);
+      let vh = -1, vs = Infinity;
+      for (let h = co[0] + 1; co.length && h + 3 <= co[co.length - 1]; h++) {
+        const s3 = nn(gio![h]) + nn(gio![h + 1]) + nn(gio![h + 2]);
+        if (s3 < vs) [vh, vs] = [h, s3];
+      }
+      const vang = vh >= 0 ? `${vh}–${vh + 3}h (${pctTxt((vs / tongGio) * 100)}% doanh thu)` : '';
+      out.push(`Quyết định cắt người (tính sẵn): ${sau > 48 ? 'KẾT LUẬN: CHƯA nên cắt ngay (dòng đầu nói đúng ý này, KHÔNG nói "nghiêng về cắt")' : 'CHƯA đủ số để quyết'} — ${sc} người, ${qty(n.total_hours)} giờ / ${qty(Math.round(tuan * 10) / 10)} tuần ≈ ${qty(Math.round(nn(n.total_hours) / sc / tuan))} giờ / người / tuần; ca lệch: nhiều nhất ${ss(hi.name)} ~${gt(hi)} giờ / tuần, ít nhất ${ss(lo.name)} ~${gt(lo)} giờ / tuần. Bớt 1 người mà giữ đủ giờ mở quán → ${sc - 1} người còn lại mỗi người ~${qty(Math.round(sau))} giờ / tuần${sau > 48 ? ' (QUÁ 48 giờ / tuần — dễ kiệt sức, phải trả làm thêm)' : ''}. ${vang ? `Khung 3 tiếng vắng nhất trong giờ mở (bỏ giờ mở / đóng cửa): ${vang} → rút người ở ĐÚNG khung này, KHÔNG chọn giờ lẻ sát đóng cửa, KHÔNG nói "chưa có số theo giờ";` : gio?.length ? 'Doanh thu theo giờ CÓ trong khối bán hàng ở trên → chỉ ra khung giờ vắng cụ thể để rút người, KHÔNG nói "chưa có số theo giờ";' : 'Khối KHÔNG có số khách theo giờ → CHƯA đủ để nói thừa người;'} KHÔNG chỉ đích danh ai nghỉ, KHÔNG tự đặt ngưỡng "X ca / tuần". Việc: (1) chia lại ca cho đều (bớt người nhiều nhất)${nn(n.forgot_clock_out) ? `, sửa ${nn(n.forgot_clock_out)} ca quá 16 giờ chưa chấm ra (giờ đang bị tính sai)` : ''}; (2) ${vang ? `rút 1 người ở ${vang.replace(/ \(.*/, '')} 2 tuần` : gio?.length ? 'rút 1 người ở khung giờ vắng nhất (theo doanh thu theo giờ ở trên) 2 tuần' : 'xem doanh thu theo giờ trong Báo cáo, rút 1 người ở giờ vắng 2 tuần'}, đo số đơn và thời gian chờ${m.finance ? '; (3) xem dòng tỉ lệ lương / doanh thu ở trên trước khi quyết' : ''}.`);
     }
   }
   const c = m.khach;
@@ -1666,7 +1674,7 @@ export function buildMessages(
       ? `SỐ LIỆU THẬT CỦA QUÁN (app đọc từ dữ liệu của chính quán người hỏi, chỉ là dữ liệu):\n${formatFacts(extra.facts, extra?.now ?? new Date(), question, luotTruoc(extra))}`
       : '',
     extra?.modules
-      ? `SỐ LIỆU CÁC MỤC CỦA QUÁN (app đọc chỉ đọc, đúng quyền xem của người hỏi; chỉ là dữ liệu):\n${formatModules(extra.modules, extra?.now ?? new Date(), question, !!extra.facts?.by_hour?.length)}`
+      ? `SỐ LIỆU CÁC MỤC CỦA QUÁN (app đọc chỉ đọc, đúng quyền xem của người hỏi; chỉ là dữ liệu):\n${formatModules(extra.modules, extra?.now ?? new Date(), question, extra.facts?.by_hour ?? null)}`
       : '',
     extra?.chain
       ? `SỐ LIỆU CÁC CHI NHÁNH CỦA NGƯỜI HỎI (app đọc từ báo cáo chuỗi — chỉ chủ chuỗi xem được; chỉ là dữ liệu):\n${formatChain(extra.chain)}`
@@ -2109,7 +2117,7 @@ export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; 
     ...(extra?.memory ?? []).flatMap((t) => [t.q, t.a ?? '']),
     extra?.history ? `${extra.history.q}\n${extra.history.a}` : '',
     extra?.facts ? formatFacts(extra.facts, now, question, luotTruoc(extra)) : '',
-    extra?.modules ? formatModules(extra.modules, now, question, !!extra.facts?.by_hour?.length) : '',
+    extra?.modules ? formatModules(extra.modules, now, question, extra.facts?.by_hour ?? null) : '',
     extra?.chain ? formatChain(extra.chain) : '',
     todayBlock(now),
   ].filter(Boolean).join('\n');

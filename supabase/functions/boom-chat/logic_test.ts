@@ -717,8 +717,10 @@ Deno.test('Số module: làm sạch + tính sẵn (thu chi, kho, chấm công, k
   assertStringIncludes(formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko'), 'Quyết định cắt người (tính sẵn): KẾT LUẬN: CHƯA nên cắt ngay (dòng đầu nói đúng ý này, KHÔNG nói "nghiêng về cắt") — 3 người, 400 giờ / 4 tuần ≈ 33 giờ / người / tuần; ca lệch: nhiều nhất An ~50 giờ / tuần, ít nhất Chi ~20 giờ / tuần. Bớt 1 người mà giữ đủ giờ mở quán → 2 người còn lại mỗi người ~50 giờ / tuần (QUÁ 48');
   assert(!formatModules(mn, new Date(), 'tháng này ai làm nhiều nhất').includes('Quyết định cắt người'));
   // hỏi thật 03/11: chế độ ask có doanh thu theo giờ → không nói "không có số theo giờ"
-  const coGio = formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko', true);
-  assert(coGio.includes('Doanh thu theo giờ CÓ trong khối bán hàng') && !coGio.includes('KHÔNG có số khách theo giờ'), coGio);
+  // giờ mở 7–22h: đông sáng, chiều 14–17h vắng, 22h lẻ sát đóng cửa → chọn 14–17h, không chọn 22h
+  const gio = Array.from({ length: 24 }, (_, h) => (h < 7 || h > 22 ? 0 : h === 22 ? 1e5 : h >= 14 && h < 17 ? 2e5 : h < 11 ? 3e6 : 1e6));
+  const coGio = formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko', gio);
+  assert(coGio.includes('Khung 3 tiếng vắng nhất trong giờ mở (bỏ giờ mở / đóng cửa): 14–17h') && coGio.includes('rút 1 người ở 14–17h 2 tuần') && !coGio.includes('KHÔNG có số khách theo giờ'), coGio);
   assert(formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko').includes('KHÔNG có số khách theo giờ'));
   // lần 93: hỏi thu chi vì sao / so kỳ trước → tách thu − chi đổi do thu hay chi; câu dự báo / câu khác thì không
   assertStringIncludes(formatModules(m, new Date(), 'tháng này thu chi sao dư ít hơn tháng trước'), 'Phân tích tính sẵn (Tháng này so kỳ trước): thu − chi đổi −20.000.000đ = thu tăng 10.000.000đ, chi tăng 30.000.000đ → nguyên nhân chính là Tháng này CHI TĂNG');
