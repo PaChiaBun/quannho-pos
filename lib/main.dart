@@ -539,7 +539,7 @@ class _MainShellState extends ConsumerState<MainShell>
     final session = ref.read(sessionProvider);
     final storeRoles = ref.read(storeRolesProvider).value ?? [];
     final actionPerms = ref.read(userActionPermsProvider).value ?? {};
-    final allowed = _navBarTabsForRole(
+    final allowed = navTabsForRole(
       session?.role,
       storeRoles,
       session?.isOwner ?? false,
@@ -635,7 +635,7 @@ class _MainShellState extends ConsumerState<MainShell>
     final storeRolesAsync = ref.watch(storeRolesProvider);
     final storeRoles = storeRolesAsync.value ?? [];
     final actionPerms = ref.watch(userActionPermsProvider).value ?? {};
-    final navBarTabs = _navBarTabsForRole(
+    final navBarTabs = navTabsForRole(
       role,
       storeRoles,
       isOwner,
@@ -1271,90 +1271,6 @@ class _MainShellState extends ConsumerState<MainShell>
         ],
       ),
     );
-  }
-
-  /// Các tab hiển thị trên Bottom Nav Bar — tính từ store_roles.modules hoặc phân quyền nhân viên
-  Set<int> _navBarTabsForRole(
-    String? role,
-    List<dynamic> storeRoles,
-    bool isOwner, [
-    Set<String>? actionPerms,
-  ]) {
-    final canonical = StaffService.canonicalRole(role ?? '');
-    if (isOwner || canonical == 'owner' || canonical == 'manager') {
-      return {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
-    }
-
-    // Map module ID → tab index
-    const moduleToTab = {
-      'pos': 1,
-      'kho': 2,
-      'finance': 3,
-      'loyalty': 4,
-      'report': 5,
-      'ban': 7,
-      'table': 7,
-      'kitchen': 8,
-      'staff': 9,
-      'chamcong': 10,
-      'kho_pro': 11,
-      'tinhluong': 12,
-      'kay_ops': 13,
-      'log_viewer': 14,
-    };
-
-    // Luôn có tab Home + Cài đặt
-    final tabs = <int>{0, 6};
-
-    // Tìm role trong store_roles (khớp trực tiếp tên hoặc qua canonicalRole)
-    debugPrint(
-      '[NavTabs] role=$role storeRoles=${storeRoles.map((r) => r.name).toList()} isOwner=$isOwner',
-    );
-    if (role != null && storeRoles.isNotEmpty) {
-      for (final r in storeRoles) {
-        final rName = r.name.toString();
-        if (rName == role || StaffService.canonicalRole(rName) == canonical) {
-          for (final mod in r.modules) {
-            final tab = moduleToTab[mod.toString()];
-            if (tab != null) tabs.add(tab);
-          }
-          tabs.add(13); // ⭐ Vận Hành — mọi nhân viên đều có quyền truy cập
-          if (actionPerms != null && actionPerms.contains('report.view')) {
-            tabs.add(5);
-          }
-          if (canonical == 'cashier') {
-            tabs.add(5); // Fail-safe: Thu ngân luôn có quyền xem báo cáo
-          }
-          debugPrint('[NavTabs] matched role=$role ($rName) → tabs=$tabs');
-          return tabs;
-        }
-      }
-      debugPrint('[NavTabs] no match for role=$role in storeRoles');
-    }
-
-    // Fallback: role cũ hardcoded
-    switch (canonical) {
-      case 'kitchen':
-        tabs.addAll({0, 8, 6, 1, 13});
-        break;
-      case 'cashier':
-        tabs.addAll({0, 1, 5, 7, 6, 13, 14});
-        break;
-      case 'waiter':
-        tabs.addAll({0, 7, 8, 6, 13});
-        break;
-      case 'stock':
-        tabs.addAll({0, 2, 1, 6, 13});
-        break;
-      default:
-        tabs.addAll({0, 1, 2, 6, 13});
-        break;
-    }
-    if (actionPerms != null && actionPerms.contains('report.view')) {
-      tabs.add(5);
-    }
-    tabs.add(13);
-    return tabs;
   }
 
   /// Đảm bảo luôn có đủ 4 slot cho bottom bar (padding với các allowed tabs khác nhau)

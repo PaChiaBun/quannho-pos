@@ -70,7 +70,7 @@ Ví dụ minh hoạ: nguyên liệu **Trà đen khô** (gói, 1 gói = 500 g) �
 5. Hao hụt chỉ trừ tồn, **không** ghi thu chi.
 
 ### 6. Xem giá vốn và lợi nhuận món
-- Chạm một công thức: **"Giá vốn/phần"**, **"Tồn kho đủ nấu"** (bao nhiêu phần), bảng nguyên liệu – số lượng – chi phí, **"Food Cost Ratio"** và thanh so sánh **Giá vốn / Lãi gộp**.
+- Chạm một công thức: **"Giá vốn/phần"** (công thức nấu theo mẻ ghi theo mẻ, vd cốt trà "Giá vốn/16 lít"), **"Tồn kho đủ nấu"** (bao nhiêu phần, hoặc bao nhiêu lít cốt), bảng nguyên liệu – số lượng – chi phí, **"Food Cost Ratio"** và thanh so sánh **Giá vốn / Lãi gộp**.
 - Food cost quán F&B thường nhắm 25–35% [tham khảo ngành, tuỳ mô hình quán].
 
 ## Lỗi thường gặp

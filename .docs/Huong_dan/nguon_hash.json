@@ -2,13 +2,13 @@
   "_ghi_chu": "Mã băm file nguồn lúc bài được rà lại lần cuối. Ghi bằng tool/dong_dau_huong_dan.dart.",
   "bai": {
     "ban-hang.md": {
-      "lib/core/providers/app_providers.dart": "52f086b4bb2ae164",
+      "lib/core/providers/app_providers.dart": "9891a503651b27b6",
       "lib/core/widgets/order_detail_dialog.dart": "885bce66b222166e",
       "lib/modules/pos/providers/pos_providers.dart": "8756e0d16daa75de",
       "lib/modules/pos/repository/pos_repository.dart": "e5127ad3b08bbc88",
       "lib/modules/pos/screens/checkout_sheet.dart": "84634ace48b77e53",
       "lib/screens/finance_screen.dart": "0351021a30db9867",
-      "lib/screens/pos_screen.dart": "cb341dda4a3b1e92",
+      "lib/screens/pos_screen.dart": "bc6ae8a173370842",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "bao-cao-chuoi.md": {
@@ -54,13 +54,13 @@
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "kho-chuyen-nghiep.md": {
-      "lib/modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart": "58670e0ac15adbf4",
+      "lib/modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart": "19477936b86a4fec",
       "lib/modules/kho_chuyen_nghiep/screens/ingredient_list_screen.dart": "2f29efbbe6841f87",
-      "lib/modules/kho_chuyen_nghiep/screens/kho_chuyen_nghiep_dashboard_screen.dart": "1d8c84d68a02a4e4",
+      "lib/modules/kho_chuyen_nghiep/screens/kho_chuyen_nghiep_dashboard_screen.dart": "0b9566e5259dbf34",
       "lib/modules/kho_chuyen_nghiep/screens/kho_chuyen_nghiep_report_screen.dart": "6c4c93e03131b59e",
       "lib/modules/kho_chuyen_nghiep/screens/kho_chuyen_nghiep_screen.dart": "ad4f66fcb3fd4f63",
       "lib/modules/kho_chuyen_nghiep/screens/production_order_screen.dart": "47dd066bb8bb6a6b",
-      "lib/modules/kho_chuyen_nghiep/screens/recipe_detail_screen.dart": "f60452ab36435c15",
+      "lib/modules/kho_chuyen_nghiep/screens/recipe_detail_screen.dart": "340268cd3e2f7174",
       "lib/modules/kho_chuyen_nghiep/screens/recipe_form_screen.dart": "a40561242821a73c",
       "lib/modules/kho_chuyen_nghiep/screens/recipe_list_screen.dart": "7459deec4d0fc4fe",
       "lib/modules/kho_chuyen_nghiep/screens/stock_count_screen.dart": "a871778381141c92",
@@ -70,7 +70,7 @@
       "supabase/migrations/20261010_fix11_lenh_san_xuat_cong_thanh_pham.sql": "42320042798c5546"
     },
     "kho-hang.md": {
-      "lib/core/providers/app_providers.dart": "52f086b4bb2ae164",
+      "lib/core/providers/app_providers.dart": "9891a503651b27b6",
       "lib/core/utils/quantity_formatter.dart": "2d36b37e9622aee8",
       "lib/modules/kho/repository/kho_repository.dart": "50e45fe6b23d3c9c",
       "lib/modules/kho/screens/phieu_nhap_hang_screen.dart": "c14d5138282e39ff",
@@ -86,7 +86,7 @@
     },
     "luong.md": {
       ".docs/Ai_Boom/cac-module/quy-chuan-cham-cong-tinh-luong-chuan.md": "ac64501ae10b6158",
-      "lib/main.dart": "ae65d1d09d18279b",
+      "lib/main.dart": "ea95739e1a7ef375",
       "lib/modules/tinhluong/repository/tinhluong_repository.dart": "e4ce4880dea03d47",
       "lib/modules/tinhluong/screens/dispute_sheet.dart": "8f7e1c48fec1a30a",
       "lib/modules/tinhluong/screens/my_payslip_screen.dart": "3391a374782da5cd",
@@ -143,7 +143,7 @@
       "lib/modules/finance/repository/finance_repository.dart": "9b5726a39c415368",
       "lib/modules/finance/screens/add_transaction_sheet.dart": "6ceb6e6a19698c4a",
       "lib/modules/kho/repository/kho_repository.dart": "50e45fe6b23d3c9c",
-      "lib/modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart": "58670e0ac15adbf4",
+      "lib/modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart": "19477936b86a4fec",
       "lib/modules/loyalty/repository/loyalty_repository.dart": "bcaecfe01367e189",
       "lib/modules/tinhluong/repository/tinhluong_repository.dart": "e4ce4880dea03d47",
       "lib/screens/finance_screen.dart": "0351021a30db9867",

@@ -100,7 +100,7 @@ Thanh toán xong, hệ thống tự: ghi **một** khoản thu vào Thu Chi, tr�
 1. Bấm **"Đơn gần đây"** dưới ô tìm kiếm.
 2. Danh sách đơn **trong hôm nay** của quán: giờ, số đơn, phương thức ("💵 Tiền mặt", "🏦 Chuyển khoản", "💳 Thẻ"), tổng tiền. Chạm một đơn để xem món.
 3. Chủ quán / Quản lý thấy thêm **"tổng hôm nay"** ở đầu danh sách.
-4. Hôm nay chưa có đơn (vd sáng sớm, khách hỏi bill tối qua): Chủ quán / Quản lý có nút **"Xem bill hôm qua (Báo cáo › Hóa đơn)"** — mở thẳng tab Hóa đơn ở ngày hôm qua.
+4. Hôm nay chưa có đơn (vd sáng sớm, khách hỏi bill tối qua): ai được xem Báo cáo (chủ quán, quản lý, thu ngân…) có nút **"Xem bill hôm qua (Báo cáo › Hóa đơn)"** — mở thẳng tab Hóa đơn ở ngày hôm qua.
 
 > Chỉ xem được, không in lại ở đây. **Đơn đã thanh toán hiện không huỷ / hoàn tiền được ở bất kỳ đâu trong app** — nếu thu nhầm, báo Chủ quán xử lý.
 > Muốn tìm hoặc **in lại bill cũ**: vào **Báo cáo → tab "Hóa đơn" → "Tra cứu & in lại bill"**. Cần module **Báo cáo** (Phục vụ mặc định không có nên không vào được) và quyền **"Xem lịch sử đơn"**. Ai có module Bán hàng thì có sẵn quyền này; Chủ quán muốn chặn thì tắt "Xem lịch sử đơn" trong Hành động nhạy cảm (khi đó người bấm in lại thấy "Bạn không có quyền in lại bill"). Màn này tải đủ bill của kỳ đang chọn (tối đa 20.000 bill). Bill in lại không còn in các món QR đã bị huỷ.

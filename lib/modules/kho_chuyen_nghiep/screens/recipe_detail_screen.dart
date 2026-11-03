@@ -108,7 +108,7 @@ class RecipeDetailScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Giá vốn/phần', style: GoogleFonts.plusJakartaSans(
+                        Text('Giá vốn/${recipe.yieldLabel}', style: GoogleFonts.plusJakartaSans(
                             fontSize: 10, color: Colors.white60, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 3),
                         Text(fmtMoney(recipe.costPerServing), style: GoogleFonts.plusJakartaSans(
@@ -129,7 +129,8 @@ class RecipeDetailScreen extends ConsumerWidget {
                         Text(
                           snap.connectionState == ConnectionState.waiting
                               ? '...'
-                              : '${maxServings.toStringAsFixed(0)} ${recipe.servingUnit}',
+                              // maxServings là số mẻ: cốt 16 lít/mẻ thì đủ nấu = số mẻ × 16 lít
+                              : '${(maxServings * recipe.servingSize).toStringAsFixed(0)} ${recipe.servingUnit}',
                           style: GoogleFonts.plusJakartaSans(
                               fontSize: 16, fontWeight: FontWeight.w900,
                               color: maxServings > 5 ? KhoTheme.green : KhoTheme.amber),

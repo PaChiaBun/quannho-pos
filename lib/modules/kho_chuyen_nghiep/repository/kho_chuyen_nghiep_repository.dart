@@ -130,6 +130,11 @@ class RecipeModel {
   double get costPerServing =>
       ingredients.fold(0.0, (sum, i) => sum + i.lineCost);
 
+  /// Một mẻ công thức: "phần" (món 1 phần) hoặc "16 lít" (cốt nấu theo mẻ). [costPerServing] là giá của cả
+  /// mẻ — trước ghi "/phần" cho cả cốt trà 16 lít.
+  String get yieldLabel =>
+      servingSize == 1 ? servingUnit : fmtStock(servingSize, servingUnit);
+
   factory RecipeModel.fromMap(Map<String, dynamic> m) => RecipeModel(
     id:           m['id'] as String,
     storeId:      m['store_id'] as String,

@@ -34,6 +34,7 @@ import '../modules/qr_order/widgets/qr_counter_queue_sheet.dart';
 import '../core/utils/stagger.dart';
 import '../core/utils/server_time.dart';
 import 'report_screen.dart' show reportBillsDayProvider;
+import 'role_manager_screen.dart' show storeRolesProvider;
 import '../modules/kho/providers/kho_providers.dart' show recipeProductIdsProvider;
 import '../modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart' show locksOnOwnStock;
 
@@ -5900,6 +5901,13 @@ class _RecentOrdersSheetState extends ConsumerState<_RecentOrdersSheet> {
         session?.role == 'owner' ||
         session?.role == 'manager' ||
         session?.role.toLowerCase() == 'quản lý';
+    // Nút "Xem bill hôm qua": ai mở được Báo cáo (cùng quy tắc thanh dưới) — kể cả "Quản lý nhà hàng", "Thu ngân".
+    final canOpenReport = navTabsForRole(
+      session?.role,
+      ref.watch(storeRolesProvider).value ?? const [],
+      session?.isOwner ?? false,
+      ref.watch(userActionPermsProvider).value,
+    ).contains(NavTab.report);
     final ordersStream = _ordersStream;
 
     return Container(
@@ -6019,8 +6027,8 @@ class _RecentOrdersSheetState extends ConsumerState<_RecentOrdersSheet> {
                               ),
                             ),
                             // Sáng sớm chưa có đơn mà khách hỏi bill tối qua: mở thẳng Báo cáo › Hóa đơn ngày
-                            // hôm qua (chủ / quản lý — vai trò khác có thể không được xem Báo cáo).
-                            if (isOwner) ...[
+                            // hôm qua (chỉ ai được xem Báo cáo).
+                            if (canOpenReport) ...[
                               const SizedBox(height: 12),
                               TextButton.icon(
                                 onPressed: () {

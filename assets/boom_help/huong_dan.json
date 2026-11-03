@@ -1,6 +1,6 @@
 {
- "version": 202611030739,
- "hash": "caf6b9d888a5ee4c9fb1b7f843fd7f11c31b0ed7f83bd89946557783d33bd835",
+ "version": 202611030759,
+ "hash": "199c1eff180977d3d90b0f2cd3f6747af62eabc2e271951441477267125ea3f4",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -80,7 +80,7 @@
    "module_name": "Bán hàng",
    "section": "Các việc thường làm",
    "title": "Xem đơn gần đây",
-   "text": "1. Bấm \"Đơn gần đây\" dưới ô tìm kiếm.\n2. Danh sách đơn trong hôm nay của quán: giờ, số đơn, phương thức (\"💵 Tiền mặt\", \"🏦 Chuyển khoản\", \"💳 Thẻ\"), tổng tiền. Chạm một đơn để xem món.\n3. Chủ quán / Quản lý thấy thêm \"tổng hôm nay\" ở đầu danh sách.\n4. Hôm nay chưa có đơn (vd sáng sớm, khách hỏi bill tối qua): Chủ quán / Quản lý có nút \"Xem bill hôm qua (Báo cáo › Hóa đơn)\" — mở thẳng tab Hóa đơn ở ngày hôm qua.\n\nChỉ xem được, không in lại ở đây. Đơn đã thanh toán hiện không huỷ / hoàn tiền được ở bất kỳ đâu trong app — nếu thu nhầm, báo Chủ quán xử lý.\nMuốn tìm hoặc in lại bill cũ: vào Báo cáo → tab \"Hóa đơn\" → \"Tra cứu & in lại bill\". Cần module Báo cáo (Phục vụ mặc định không có nên không vào được) và quyền \"Xem lịch sử đơn\". Ai có module Bán hàng thì có sẵn quyền này; Chủ quán muốn chặn thì tắt \"Xem lịch sử đơn\" trong Hành động nhạy cảm (khi đó người bấm in lại thấy \"Bạn không có quyền in lại bill\"). Màn này tải đủ bill của kỳ đang chọn (tối đa 20.000 bill). Bill in lại không còn in các món QR đã bị huỷ.\nNgay sau khi thanh toán thì in lại bằng nút \"In hoá đơn\" trên màn \"Thanh toán thành công!\"."
+   "text": "1. Bấm \"Đơn gần đây\" dưới ô tìm kiếm.\n2. Danh sách đơn trong hôm nay của quán: giờ, số đơn, phương thức (\"💵 Tiền mặt\", \"🏦 Chuyển khoản\", \"💳 Thẻ\"), tổng tiền. Chạm một đơn để xem món.\n3. Chủ quán / Quản lý thấy thêm \"tổng hôm nay\" ở đầu danh sách.\n4. Hôm nay chưa có đơn (vd sáng sớm, khách hỏi bill tối qua): ai được xem Báo cáo (chủ quán, quản lý, thu ngân…) có nút \"Xem bill hôm qua (Báo cáo › Hóa đơn)\" — mở thẳng tab Hóa đơn ở ngày hôm qua.\n\nChỉ xem được, không in lại ở đây. Đơn đã thanh toán hiện không huỷ / hoàn tiền được ở bất kỳ đâu trong app — nếu thu nhầm, báo Chủ quán xử lý.\nMuốn tìm hoặc in lại bill cũ: vào Báo cáo → tab \"Hóa đơn\" → \"Tra cứu & in lại bill\". Cần module Báo cáo (Phục vụ mặc định không có nên không vào được) và quyền \"Xem lịch sử đơn\". Ai có module Bán hàng thì có sẵn quyền này; Chủ quán muốn chặn thì tắt \"Xem lịch sử đơn\" trong Hành động nhạy cảm (khi đó người bấm in lại thấy \"Bạn không có quyền in lại bill\"). Màn này tải đủ bill của kỳ đang chọn (tối đa 20.000 bill). Bill in lại không còn in các món QR đã bị huỷ.\nNgay sau khi thanh toán thì in lại bằng nút \"In hoá đơn\" trên màn \"Thanh toán thành công!\"."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-them-nhanh-mon-moi-vao-thuc-don",
@@ -1280,7 +1280,7 @@
    "module_name": "Kho Chuyên Nghiệp",
    "section": "Các việc thường làm",
    "title": "6. Xem giá vốn và lợi nhuận món",
-   "text": "• Chạm một công thức: \"Giá vốn/phần\", \"Tồn kho đủ nấu\" (bao nhiêu phần), bảng nguyên liệu – số lượng – chi phí, \"Food Cost Ratio\" và thanh so sánh Giá vốn / Lãi gộp.\n• Food cost quán F&B thường nhắm 25–35% [tham khảo ngành, tuỳ mô hình quán]."
+   "text": "• Chạm một công thức: \"Giá vốn/phần\" (công thức nấu theo mẻ ghi theo mẻ, vd cốt trà \"Giá vốn/16 lít\"), \"Tồn kho đủ nấu\" (bao nhiêu phần, hoặc bao nhiêu lít cốt), bảng nguyên liệu – số lượng – chi phí, \"Food Cost Ratio\" và thanh so sánh Giá vốn / Lãi gộp.\n• Food cost quán F&B thường nhắm 25–35% [tham khảo ngành, tuỳ mô hình quán]."
   },
   {
    "id": "kho-chuyen-nghiep#loi-canh-bao-vang-lech-don-vi-trong-form-cong-thuc",

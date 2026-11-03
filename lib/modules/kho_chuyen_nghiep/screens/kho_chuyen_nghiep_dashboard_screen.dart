@@ -547,7 +547,7 @@ class _RecipeTile extends StatelessWidget {
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
               Text(fmtMoney(recipe.costPerServing), style: GoogleFonts.plusJakartaSans(
                 fontSize: 14, fontWeight: FontWeight.w900, color: _kViolet)),
-              Text('/phần', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kMuted)),
+              Text('/${recipe.yieldLabel}', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: _kMuted)),
             ]),
           ]),
         ),

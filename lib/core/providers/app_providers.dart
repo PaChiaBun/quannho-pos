@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'session_provider.dart';
+import '../services/staff_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../repositories/core_product_repository.dart';
 import '../repositories/core_customer_repository.dart';
@@ -158,6 +160,91 @@ class NavTab {
   static const khoPro = 11;
   static const tinhLuong = 12;
   static const kayOps = 13; // Module Vận Hành (KAY Ops)
+}
+
+/// Các tab vai trò được mở — tính từ store_roles.modules hoặc phân quyền nhân viên. Thanh dưới (MainShell) và
+/// nút mở Báo cáo ở Bán hàng › Đơn gần đây dùng chung (trước nút chỉ hiện cho chủ / vai trò tên đúng "Quản lý").
+Set<int> navTabsForRole(
+  String? role,
+  List<dynamic> storeRoles,
+  bool isOwner, [
+  Set<String>? actionPerms,
+]) {
+  final canonical = StaffService.canonicalRole(role ?? '');
+  if (isOwner || canonical == 'owner' || canonical == 'manager') {
+    return {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+  }
+
+  // Map module ID → tab index
+  const moduleToTab = {
+    'pos': 1,
+    'kho': 2,
+    'finance': 3,
+    'loyalty': 4,
+    'report': 5,
+    'ban': 7,
+    'table': 7,
+    'kitchen': 8,
+    'staff': 9,
+    'chamcong': 10,
+    'kho_pro': 11,
+    'tinhluong': 12,
+    'kay_ops': 13,
+    'log_viewer': 14,
+  };
+
+  // Luôn có tab Home + Cài đặt
+  final tabs = <int>{0, 6};
+
+  // Tìm role trong store_roles (khớp trực tiếp tên hoặc qua canonicalRole)
+  debugPrint(
+    '[NavTabs] role=$role storeRoles=${storeRoles.map((r) => r.name).toList()} isOwner=$isOwner',
+  );
+  if (role != null && storeRoles.isNotEmpty) {
+    for (final r in storeRoles) {
+      final rName = r.name.toString();
+      if (rName == role || StaffService.canonicalRole(rName) == canonical) {
+        for (final mod in r.modules) {
+          final tab = moduleToTab[mod.toString()];
+          if (tab != null) tabs.add(tab);
+        }
+        tabs.add(13); // ⭐ Vận Hành — mọi nhân viên đều có quyền truy cập
+        if (actionPerms != null && actionPerms.contains('report.view')) {
+          tabs.add(5);
+        }
+        if (canonical == 'cashier') {
+          tabs.add(5); // Fail-safe: Thu ngân luôn có quyền xem báo cáo
+        }
+        debugPrint('[NavTabs] matched role=$role ($rName) → tabs=$tabs');
+        return tabs;
+      }
+    }
+    debugPrint('[NavTabs] no match for role=$role in storeRoles');
+  }
+
+  // Fallback: role cũ hardcoded
+  switch (canonical) {
+    case 'kitchen':
+      tabs.addAll({0, 8, 6, 1, 13});
+      break;
+    case 'cashier':
+      tabs.addAll({0, 1, 5, 7, 6, 13, 14});
+      break;
+    case 'waiter':
+      tabs.addAll({0, 7, 8, 6, 13});
+      break;
+    case 'stock':
+      tabs.addAll({0, 2, 1, 6, 13});
+      break;
+    default:
+      tabs.addAll({0, 1, 2, 6, 13});
+      break;
+  }
+  if (actionPerms != null && actionPerms.contains('report.view')) {
+    tabs.add(5);
+  }
+  tabs.add(13);
+  return tabs;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
