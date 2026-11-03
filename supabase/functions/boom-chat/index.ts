@@ -78,7 +78,14 @@ const QUOTA = {
   p_store_usd_month: num('BOOM_STORE_USD_PER_MONTH', 3),
   p_global_usd_month: num('BOOM_MONTH_USD_CAP', 10),
 };
-const PRICES = { inPerM: num('BOOM_PRICE_IN_PER_M', 0.15), outPerM: num('BOOM_PRICE_OUT_PER_M', 0.6) };
+// mô hình đời mới (gpt-5.x, gpt-6.x…): không nhận max_tokens / temperature, có mức suy nghĩ (03/11: gpt-6-luna + 'none'
+// chấm kín +3,3 / 16 so gpt-4o-mini, rẻ hơn, ~3,4 giây — .docs/lo-trinh-boom-co-van.md)
+const DOI_MOI = !/^gpt-(?:3|4)/.test(MODEL);
+const REASONING = env('BOOM_REASONING', 'none');
+const PRICES = {
+  inPerM: num('BOOM_PRICE_IN_PER_M', MODEL === 'gpt-6-luna' ? 0.1 : 0.15),
+  outPerM: num('BOOM_PRICE_OUT_PER_M', MODEL === 'gpt-6-luna' ? 0.5 : 0.6),
+};
 const UPSTREAM_TIMEOUT_MS = 12_000; // app chờ 20 giây — máy chủ bỏ trước để không trả tiền cho câu không ai thấy
 const SB_URL = env('SUPABASE_URL', 'http://kong:8000');
 const SERVICE_KEY = env('SUPABASE_SERVICE_ROLE_KEY');
@@ -482,7 +489,14 @@ Deno.serve(async (req) => {
       method: 'POST',
       signal,
       headers: { Authorization: `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, temperature: 0.2, max_tokens: r.mode === 'advice' ? (loaiCau(r.question, !!r.history || (memory?.length ?? 0) > 0) === 'ke_hoach' ? 900 : 600) : 650, messages: msgs }), // hướng dẫn 450 → 650: chép đủ bước (26/10)
+      body: JSON.stringify({
+        model: MODEL,
+        // hướng dẫn 450 → 650: chép đủ bước (26/10)
+        ...((n: number) => DOI_MOI ? { max_completion_tokens: n * 2, reasoning_effort: REASONING } : { temperature: 0.2, max_tokens: n })(
+          r.mode === 'advice' ? (loaiCau(r.question, !!r.history || (memory?.length ?? 0) > 0) === 'ke_hoach' ? 900 : 600) : 650,
+        ),
+        messages: msgs,
+      }),
     });
   try {
     const up = await callGpt(messages);

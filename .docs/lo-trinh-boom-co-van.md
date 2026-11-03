@@ -69,6 +69,7 @@ Sau 3 lần thêm nội dung không ăn thua, thử thay mô hình (bộ đề 6
 | gpt-5.6-luna | +3,12 ± 0,25 | 56 / 3 | 0,20 / 1,20 | ~9 giây |
 | gpt-6.1-terra | +3,10 ± 0,26 | 55 / 1 | 1,00 / 5,00 | ~7 giây |
 
+→ **ĐÃ ÁP 03/11 (`db-fix/boom_mo_hinh_ap_dung.sh`, TS 20261103_065907)** — hỏi thật trên web: 5,8 giây, 0,0014 USD / câu.
 → **gpt-6-luna, reasoning none**: điểm ~11,6 → ~14,9 / 16, RẺ hơn gpt-4o-mini, nhanh ngang. Mức tăng gấp ~10 lần cả 100 lần dạy cộng lại.
 Áp: đổi `BOOM_OPENAI_MODEL` trên máy chủ + gọi API bằng `max_completion_tokens`, `reasoning_effort` (mô hình mới không nhận
 `max_tokens`, `temperature`) + giá trong `PRICES`. Kết quả: `cham_tu_van/ket_qua/mo_hinh_moi_claude_20261103.json`.
