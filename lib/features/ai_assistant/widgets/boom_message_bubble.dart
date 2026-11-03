@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/boom_message.dart';
+import 'boom_answer_text.dart';
 import 'boom_suggestion_chips.dart';
 import 'boom_typing_indicator.dart';
 import 'feedback_dialog.dart';
@@ -107,17 +108,28 @@ class BoomMessageBubble extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              message.content,
-                              style: GoogleFonts.plusJakartaSans(
-                                color: isUser
-                                    ? Colors.white
-                                    : (message.isError ? kRed : kNavy),
-                                fontSize: 15,
-                                fontWeight: FontWeight.w400,
-                                height: 1.4,
+                            if (isUser || message.isError)
+                              Text(
+                                message.content,
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: isUser
+                                      ? Colors.white
+                                      : (message.isError ? kRed : kNavy),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.4,
+                                ),
+                              )
+                            else
+                              BoomAnswerText(
+                                text: message.content,
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: kNavy,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.4,
+                                ),
                               ),
-                            ),
 
                             // Phase C: Feedback Bar for Boom completed responses (Owner/Manager only)
                             if (!isUser &&

@@ -2025,14 +2025,13 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
               .where((item) => item.quantity > 0)
               .toList();
           if (soldItems.isNotEmpty) {
-            final details = soldItems
-                .map(
-                  (item) =>
-                      '${item.name} (${_formatQuantity(item.quantity)} món, ${_formatCurrency(item.revenue)})',
-                )
-                .join('; ');
+            // mỗi món một dòng (Sunmi 03/11: nối "; " thành một đoạn dài khó đọc)
+            final details = [
+              for (var i = 0; i < soldItems.length; i++)
+                '${i + 1}. ${soldItems[i].name} — ${_formatQuantity(soldItems[i].quantity)} món · ${_formatCurrency(soldItems[i].revenue)}',
+            ].join('\n');
             fullReply =
-                'Món bán chạy — $label của $storeName: $details. Tổng hợp từ ${performance.completedOrderCount} đơn hoàn thành.';
+                'Món bán chạy — $label:\n$details\n\nTổng hợp từ ${performance.completedOrderCount} đơn hoàn thành của $storeName.';
           } else {
             fullReply =
                 '$label chưa có món nào trong đơn hoàn thành nên Bé Boom chưa xếp hạng món bán chạy.';
@@ -2054,14 +2053,12 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
             range: range,
           );
           if (performance.slow.isNotEmpty) {
-            final details = performance.slow
-                .map(
-                  (item) =>
-                      '${item.name} (${_formatQuantity(item.quantity)} món)',
-                )
-                .join('; ');
+            final details = [
+              for (var i = 0; i < performance.slow.length; i++)
+                '${i + 1}. ${performance.slow[i].name} — ${_formatQuantity(performance.slow[i].quantity)} món',
+            ].join('\n');
             fullReply =
-                'Các món bán chậm nhất — $label: $details. Gợi ý: ưu tiên kiểm tra vị trí hiển thị hoặc tạo combo, nhưng Bé Boom sẽ không tự thay đổi menu hay giá.';
+                'Các món bán chậm nhất — $label:\n$details\n\nGợi ý: ưu tiên kiểm tra vị trí hiển thị hoặc tạo combo, nhưng Bé Boom sẽ không tự thay đổi menu hay giá.';
           } else {
             fullReply =
                 'Chưa có sản phẩm đang hoạt động để phân tích bán chậm.';
