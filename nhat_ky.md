@@ -3,6 +3,14 @@
 > Ghi lại công việc mỗi ngày để dễ theo dõi tiến độ.
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
+## 2026-11-03 — Kiểm Sunmi Bò Đen đợt 7 (bản 24, chỉ xem, 14:50 quán chưa có đơn): 3 lỗi H1–H3 → sửa H2, H3; H1 để nguyên (commit `2ee6fff`)
+
+- ✅ Máy: Kho CN Tổng quan, form Ghi thu (đóng không lưu), Nhân viên › Phân quyền (4 vai trò); nhật ký app không lỗi. 13:47 Android tự đóng app lúc tắt màn (SIGKILL, thiếu bộ nhớ — `dumpsys activity exit-info`, không phải lỗi văng); 14:24 app mở lại, vẫn đăng nhập.
+- ⚠️ H1 giỏ Bán hàng chỉ nằm trong bộ nhớ (`CartNotifier`, không lưu máy): app bị đóng là mất giỏ; giỏ đã bấm "Bếp" thì phiên bếp nằm trên bàn "Mang đi" ẩn (khu `is_active=false`) — không hiện ở màn Bàn, app không còn đường thu tiền. Chủ Quán: giỏ không quan trọng, để như hiện nay.
+- ✅ H2 công thức nấu theo mẻ ghi "/phần": Kho CN Tổng quan "Cot Tra Den 136.000 đ /phần", chi tiết "Giá vốn/phần" (giá cả mẻ 16 lít); "Tồn kho đủ nấu" ghi số mẻ kèm đơn vị lít (sai 16 lần) → `RecipeModel.yieldLabel` ("phần" / "16 lít"); đủ nấu = số mẻ × khẩu phần.
+- ✅ H3 nút "Xem bill hôm qua" (đợt 5) chỉ hiện cho chủ / vai trò tên đúng "Quản lý" → `navTabsForRole` (chuyển từ `_navBarTabsForRole` của `main.dart` sang `app_providers.dart`, thanh dưới dùng chung): ai mở được Báo cáo thì thấy nút (Quản lý nhà hàng, Thu ngân…).
+- ✅ Test: `test/screens/kiem_sunmi_dot7_test.dart` (2 ca: H2, H3); toàn bộ test Flutter 1111 ca + 2 bộ Python M5 đạt. Bài hướng dẫn rà + đóng dấu: ban-hang, kho-chuyen-nghiep, kho-hang, luong, thu-chi (3 bài cuối chỉ do tệp nguồn đổi); xuất lại `assets/boom_help/huong_dan.json`, bộ đo Boom 26/10 vẫn 98 / 11.
+
 ## 2026-11-03 — Kiểm Sunmi Bò Đen đợt 6 (bản 24, chỉ xem): chuông, Kho hàng, Kho CN, Thu Chi, In Hoá Đơn — 6 lỗi G1–G6 → sửa hết theo ⭐ (commit `675881f`)
 
 - ✅ Máy: chuông Trang chủ báo "Kho ổn định"; Kho hàng 34 món đúng nhãn tồn; form Sửa sản phẩm mở / đóng không lưu; Thu Chi hôm qua 3.481.000 đ, cuộn 0% khung giật; nhật ký app không lỗi.
