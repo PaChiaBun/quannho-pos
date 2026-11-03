@@ -30,7 +30,7 @@ Mở module **In Hoá Đơn** từ Trang chủ:
 - Dòng **"Đang in theo: …"** ở đầu trang cho biết quán in theo cách nào: "4 trạm (Cấu Hình Trạm In)" hoặc "Máy In & Luật In – X máy in, Y luật". Nếu hiện **khung đỏ** "Chưa có luật nào in ra máy in đang bật, nên KHÔNG phiếu nào được in…" thì vào "Máy In & Luật In" thêm luật hoặc bật máy in.
 - **"Cấu Hình Trạm In"** — cách cũ (4 trạm: Thu ngân, Bếp nóng, Quầy bar (đồ uống), Tem dán ly) + các công tắc tự động + **Máy chủ in**. Quán đã dùng luật in thì màn này chỉ còn **tự động in, tự mở két và máy chủ in** (tiêu đề "Tự Động In & Máy Chủ In").
 - **"Máy In & Luật In"** — phần nâng cao: khai báo máy in và luật in theo loại phiếu, số bản, máy dự phòng.
-- **"Thiết Kế Mẫu In"** — mẫu Hoá Đơn, Bếp Nóng, Bếp Bar, Tem Dán Ly và mẫu dựng sẵn.
+- **"Thiết Kế Mẫu In"** — mẫu Hoá Đơn, Bếp Nóng, Bếp Bar, Tem Dán Ly và mẫu dựng sẵn. Hoá đơn in topping của món dưới tên món ("+ Trân châu"), kể cả bill in lại ở Báo cáo.
 - **"Xem Trước Nhanh"** hoá đơn thu ngân và nút **"Đặt lại mẫu hoá đơn"** (chỉ đưa mẫu hoá đơn thu ngân về mặc định; máy in, phiếu bếp, tem không đổi).
 
 ### Hai cách cấu hình — dùng cách nào?

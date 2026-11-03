@@ -98,7 +98,7 @@ Thanh toán xong, hệ thống tự: ghi **một** khoản thu vào Thu Chi, tr�
 
 ### Xem đơn gần đây
 1. Bấm **"Đơn gần đây"** dưới ô tìm kiếm.
-2. Danh sách đơn **trong hôm nay** của quán: giờ, số đơn, phương thức ("💵 Tiền mặt", "🏦 Chuyển khoản", "💳 Thẻ"), tổng tiền. Chạm một đơn để xem món.
+2. Danh sách đơn **trong hôm nay** của quán: giờ, số đơn, phương thức ("💵 Tiền mặt", "🏦 Chuyển khoản", "💳 Thẻ"), tổng tiền. Chạm một đơn để xem món (đơn bàn / QR có thêm dòng topping dưới tên món).
 3. Chủ quán / Quản lý thấy thêm **"tổng hôm nay"** ở đầu danh sách.
 4. Hôm nay chưa có đơn (vd sáng sớm, khách hỏi bill tối qua): ai được xem Báo cáo (chủ quán, quản lý, thu ngân…) có nút **"Xem bill hôm qua (Báo cáo › Hóa đơn)"** — mở thẳng tab Hóa đơn ở ngày hôm qua.
 

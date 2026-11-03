@@ -40,7 +40,7 @@ nguon:
 
 - Bán bằng **tiền mặt** → quỹ Tiền mặt; **chuyển khoản / thẻ** → quỹ Tiền gửi; bán quầy trả bằng **ví** → quỹ riêng "ví" — **không** tính vào sổ Thu Chi (tiền đã ghi thu lúc nạp ví); xem đơn trả bằng ví ở Báo cáo → Hóa đơn.
 - **Huỷ món** ở Quản lý Bàn **không** ghi khoản nào vào Thu Chi — chỉ trừ kho nguyên liệu (hao hụt) khi bếp đang làm hoặc đã xong.
-- Khoản tự động **không xoá tay được**. Chạm vào để xem: khoản bán hàng mở **chi tiết đơn** (món, phương thức, người bán); khoản khác hiện "Tự động từ: … Không thể xóa thủ công."
+- Khoản tự động **không xoá tay được**. Chạm vào để xem: khoản bán hàng mở **chi tiết đơn** (món — món giống nhau gộp một dòng, kèm topping —, phương thức, người bán); khoản khác hiện "Tự động từ: … Không thể xóa thủ công."
 
 ## Các việc thường làm
 

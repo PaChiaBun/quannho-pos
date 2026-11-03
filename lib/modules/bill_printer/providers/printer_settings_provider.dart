@@ -11,6 +11,7 @@ import '../../../core/providers/permission_provider.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../../../core/services/user_auth_service.dart';
 import '../../../core/utils/app_logger.dart';
+import '../../../core/utils/string_utils.dart' show billItemExtras;
 import '../screens/bill_preview_screen.dart';
 import '../utils/station_normalizer.dart';
 import '../routing/print_setup.dart';
@@ -3173,6 +3174,7 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
             price: price,
             note: note,
             stationCode: 'cashier',
+            extras: billItemExtras(item['modifiers_json']),
           ),
         );
       }

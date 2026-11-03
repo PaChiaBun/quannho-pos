@@ -71,7 +71,7 @@ nguon:
   5. "❌ Đã huỷ "<món>" — bếp đã được thông báo". Có ghi nhật ký huỷ.
 
 ### 6. In tạm tính
-- Trong bàn bấm **"In tạm tính"** → "Đã gửi lệnh in tạm tính"; trong màn thu tiền → "Đã gửi lệnh in tạm tính (<số tiền>đ)". Phiếu ghi "TẠM TÍNH - CHƯA THANH TOÁN".
+- Trong bàn bấm **"In tạm tính"** → "Đã gửi lệnh in tạm tính"; trong màn thu tiền → "Đã gửi lệnh in tạm tính (<số tiền>đ)". Phiếu ghi "TẠM TÍNH - CHƯA THANH TOÁN". Phiếu tạm tính, bill thanh toán và phiếu bếp in giấy đều in topping dưới tên món ("+ Trân châu").
 - Bấm liên tục bị chặn vài giây: "Đang in tạm tính, vui lòng chờ vài giây rồi mới bấm lại."
 
 ### 7. Chuyển bàn / gộp bàn

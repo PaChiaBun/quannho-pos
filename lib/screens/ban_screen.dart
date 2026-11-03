@@ -2709,6 +2709,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                 qty: i.quantity.toInt(),
                 price: i.price,
                 note: i.note,
+                extras: billItemExtras(i.modifiersJson),
               ),
             )
             .toList(),
@@ -3812,6 +3813,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                   qty: item.quantity.toInt(),
                   price: item.price,
                   note: item.note,
+                  extras: billItemExtras(item.modifiersJson),
                 ),
               if (surcharge > 0)
                 BillItem(name: 'Phí dịch vụ / Ship', qty: 1, price: surcharge),
@@ -4764,7 +4766,8 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
               name: item.productName,
               qty: item.quantity.toInt(),
               price: 0, // In bếp không hiển thị giá
-              note: item.note,
+              // Trước chỉ in ghi chú: bếp không biết món có topping.
+              note: noteWithExtras(item.note, item.modifiersJson),
               stationCode: stationCode,
             ),
           );
@@ -6792,6 +6795,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
               qty: i.quantity.toInt(),
               price: i.price,
               note: i.note,
+              extras: billItemExtras(i.modifiersJson),
             ),
           ),
           if (_shippingFee > 0)

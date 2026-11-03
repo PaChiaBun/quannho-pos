@@ -57,6 +57,15 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         ref.read(periodProvider.notifier).setToday();
       }
     });
+    // Nạp sẵn chi tiết các khoản bán hàng đang hiện: chạm vào là mở bill ngay (trước chờ 1–2 giây).
+    ref.listenManual(filteredRecordsProvider, (_, next) {
+      final records = next.value;
+      if (records == null) return;
+      prefetchOrderDetails([
+        for (final r in records.take(60))
+          if (r.isAuto && r.referenceId != null) r.referenceId!,
+      ]);
+    }, fireImmediately: true);
   }
 
   Future<void> _selectCustomDateRange(
@@ -1064,6 +1073,9 @@ class _TransactionCard extends StatelessWidget {
                 context,
                 orderNum ?? record.referenceId!,
                 orderId: record.referenceId,
+                previewTitle: record.description,
+                previewTime: record.recordedAt,
+                previewTotal: record.amount.abs(),
               );
             } else if (record.isAuto) {
               final desc = record.description ?? 'giao dịch';

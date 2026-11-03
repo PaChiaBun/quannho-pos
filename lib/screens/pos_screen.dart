@@ -6257,13 +6257,24 @@ class _PosOrderCard extends ConsumerWidget {
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
-                                      child: Text(
-                                        item.productName,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: _kInk,
-                                        ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.productName,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: _kInk,
+                                            ),
+                                          ),
+                                          // Topping của đơn bàn / QR (giá dòng đã gồm topping).
+                                          if (item.extras.isNotEmpty)
+                                            Text(
+                                              '+ ${item.extras.join(', ')}',
+                                              style: const TextStyle(fontSize: 11, color: _kMuted),
+                                            ),
+                                        ],
                                       ),
                                     ),
                                     Text(

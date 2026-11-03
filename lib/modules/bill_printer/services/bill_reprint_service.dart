@@ -31,7 +31,7 @@ BillData buildReprintBill(
   tableName: src.tableName,
   items: [
     for (final l in src.lines)
-      BillItem(name: l.name, qty: l.qty, price: l.unitPrice),
+      BillItem(name: l.name, qty: l.qty, price: l.unitPrice, extras: l.extras),
     if (src.surcharge > 0)
       BillItem(name: 'Phí dịch vụ / Ship', qty: 1, price: src.surcharge),
   ],

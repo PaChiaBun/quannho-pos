@@ -73,7 +73,8 @@ class ReprintLine {
   final String name;
   final int qty;
   final double unitPrice;
-  const ReprintLine(this.name, this.qty, this.unitPrice);
+  final List<String> extras; // topping / tuỳ chọn
+  const ReprintLine(this.name, this.qty, this.unitPrice, {this.extras = const []});
 }
 
 /// Dữ liệu gốc của một bill đã thanh toán (đọc từ DB).
@@ -263,24 +264,33 @@ class BillHistoryRepository {
   ) async {
     final rows = await _sb
         .from('order_items')
-        .select('name, product_name, qty, quantity, unit_price')
+        .select('name, product_name, qty, quantity, unit_price, modifiers_json')
         .eq('store_id', storeId)
         .inFilter('order_id', orderIds);
-    return rows
-        .map((r) {
-          final name =
-              (r['product_name'] as String?) ?? (r['name'] as String?) ?? 'Món';
-          final qty = (_num(r['quantity']) ?? _num(r['qty']) ?? 1).round();
-          return ReprintLine(name, qty, _num(r['unit_price']) ?? 0);
-        })
-        // Món QR bị huỷ lúc thanh toán còn dòng số lượng 0 — không in.
-        .where((l) => l.qty > 0)
-        .toList();
+    return mergeReprintLines(rows);
   }
 
   static double? _num(Object? v) => (v as num?)?.toDouble();
+
   static double _sumLines(List<ReprintLine> l) =>
       l.fold(0, (s, x) => s + x.qty * x.unitPrice);
+}
+
+/// Dòng món in lại từ `order_items`: kèm topping, gộp dòng giống hệt (bàn gọi từng ly → 4 dòng "x1").
+List<ReprintLine> mergeReprintLines(List<Map<String, dynamic>> rows) {
+  final merged = <String, ReprintLine>{}; // giữ thứ tự gọi món
+  for (final r in rows) {
+    final name = (r['product_name'] as String?) ?? (r['name'] as String?) ?? 'Món';
+    final qty = ((r['quantity'] as num?) ?? (r['qty'] as num?) ?? 1).round();
+    // Món QR bị huỷ lúc thanh toán còn dòng số lượng 0 — không in.
+    if (qty <= 0) continue;
+    final price = (r['unit_price'] as num?)?.toDouble() ?? 0;
+    final extras = billItemExtras(r['modifiers_json']);
+    final key = '$name¦$price¦${extras.join('|')}';
+    final prev = merged[key];
+    merged[key] = ReprintLine(name, (prev?.qty ?? 0) + qty, price, extras: extras);
+  }
+  return merged.values.toList();
 }
 
 final billHistoryRepositoryProvider = Provider<BillHistoryRepository>(

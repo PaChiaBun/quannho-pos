@@ -78,12 +78,16 @@ class BillItem {
   final String? note;
   final String stationCode;
 
+  /// Topping / tuỳ chọn in dưới tên món trên hoá đơn khách (giá dòng đã gồm topping).
+  final List<String> extras;
+
   const BillItem({
     required this.name,
     required this.qty,
     required this.price,
     this.note,
     this.stationCode = 'bep_nong',
+    this.extras = const [],
   });
 
   double get total => qty * price;
@@ -523,9 +527,20 @@ class BillPdfGenerator {
                     children: [
                       pw.Expanded(
                         flex: 4,
-                        child: pw.Text(
-                          item.name,
-                          style: pw.TextStyle(font: font, fontSize: fs - 1),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              item.name,
+                              style: pw.TextStyle(font: font, fontSize: fs - 1),
+                            ),
+                            // Trước không in topping: dòng "Trà Tắc 30.000" không rõ vì sao đắt hơn.
+                            if (item.extras.isNotEmpty)
+                              pw.Text(
+                                '+ ${item.extras.join(', ')}',
+                                style: pw.TextStyle(font: font, fontSize: fs - 2),
+                              ),
+                          ],
                         ),
                       ),
                       pw.SizedBox(width: 6),

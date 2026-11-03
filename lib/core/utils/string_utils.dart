@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 String removeDiacritics(String str) {
   const map = {
     'à': 'a', 'á': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
@@ -77,6 +79,42 @@ extension StringDiacriticsExtension on String {
 /// "Thanh toán bàn bàn 13" → bỏ chữ lặp khi đọc (dòng cũ cũng gọn, không đụng hàm thanh toán).
 String? tidyFinanceDescription(String? s) =>
     s?.replaceFirst(RegExp(r'^Thanh toán bàn (?=bàn\s)', caseSensitive: false), 'Thanh toán ');
+
+/// Cùng lỗi ở chỗ khác trong câu: ghi chú đơn "Món thanh toán tại bàn bàn 13" → "… tại bàn 13".
+String tidyRepeatedTableWord(String s) =>
+    s.replaceAll(RegExp(r'\bbàn\s+(?=bàn\s)', caseSensitive: false), '');
+
+/// Topping / tuỳ chọn từ `modifiers_json` (chuỗi JSON hoặc danh sách), ghi như phiếu in bếp: "Trân châu x2".
+/// Dùng cho chi tiết bill, hoá đơn in (giá dòng đã gồm topping) và phiếu bếp in giấy ở màn Bàn.
+List<String> billItemExtras(Object? modifiersJson) {
+  Object? raw = modifiersJson;
+  if (raw is String) {
+    if (raw.trim().isEmpty) return const [];
+    try {
+      raw = jsonDecode(raw);
+    } catch (_) {
+      return const [];
+    }
+  }
+  if (raw is! List) return const [];
+  return [
+    for (final e in raw)
+      if (e is Map && '${e['name'] ?? ''}'.trim().isNotEmpty)
+        e['type'] == 'topping' && e['qty'] != null && e['qty'] != 1
+            ? '${e['name']} x${e['qty']}'
+            : '${e['name']}',
+  ];
+}
+
+/// Ghi chú món kèm dòng topping "+ Trân châu" ở đầu — mẫu phiếu bếp in dòng "+ …" thành topping.
+String? noteWithExtras(String? note, Object? modifiersJson) {
+  final extras = billItemExtras(modifiersJson);
+  final parts = [
+    if (extras.isNotEmpty) '+ ${extras.join(', ')}',
+    if (note != null && note.trim().isNotEmpty) note.trim(),
+  ];
+  return parts.isEmpty ? null : parts.join('\n');
+}
 
 final _nameVariantRe = RegExp(r'^(.*\S)\s*(?:\[\s*([^\[\]]*?)\s*\]|\(\s*([^()]*?)\s*\))$');
 

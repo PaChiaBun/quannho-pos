@@ -3,12 +3,12 @@
   "bai": {
     "ban-hang.md": {
       "lib/core/providers/app_providers.dart": "9891a503651b27b6",
-      "lib/core/widgets/order_detail_dialog.dart": "885bce66b222166e",
+      "lib/core/widgets/order_detail_dialog.dart": "3e80fbda896f17b8",
       "lib/modules/pos/providers/pos_providers.dart": "8756e0d16daa75de",
-      "lib/modules/pos/repository/pos_repository.dart": "e5127ad3b08bbc88",
+      "lib/modules/pos/repository/pos_repository.dart": "e125a52133cf893c",
       "lib/modules/pos/screens/checkout_sheet.dart": "84634ace48b77e53",
-      "lib/screens/finance_screen.dart": "0351021a30db9867",
-      "lib/screens/pos_screen.dart": "bc6ae8a173370842",
+      "lib/screens/finance_screen.dart": "6217534a4480b8a3",
+      "lib/screens/pos_screen.dart": "862c5b44d14d2eb4",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "bao-cao-chuoi.md": {
@@ -23,7 +23,7 @@
     },
     "bao-cao.md": {
       "lib/core/repositories/dashboard_repository.dart": "c9a9e7a726ff2c63",
-      "lib/screens/bill_lookup_section.dart": "138788fb15169c20",
+      "lib/screens/bill_lookup_section.dart": "5ffa6b912dcf7002",
       "lib/screens/einvoice_report_tab.dart": "edfadf318db1980b",
       "lib/screens/report_screen.dart": "b20b3d88806deae7"
     },
@@ -38,8 +38,8 @@
       "lib/screens/chamcong_screen.dart": "b15a772a76e8392b"
     },
     "in-hoa-don.md": {
-      "lib/modules/bill_printer/providers/printer_settings_provider.dart": "fc71acb96a0fa5c2",
-      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "d7edf7fb03217e7c",
+      "lib/modules/bill_printer/providers/printer_settings_provider.dart": "8cfc7a7cc09d7545",
+      "lib/modules/bill_printer/screens/bill_preview_screen.dart": "36c4df3ff2510491",
       "lib/modules/bill_printer/screens/bill_printer_hub.dart": "9c49d815d7b82821",
       "lib/modules/bill_printer/screens/print_design_screen.dart": "cdca414c5cae7abf",
       "lib/modules/bill_printer/screens/print_rules_screen.dart": "ab8bdd344e611481",
@@ -80,7 +80,7 @@
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart": "431e48dc40bf6d00",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "b8e345658c540593",
+      "lib/screens/ban_screen.dart": "c39ac02e913280f9",
       "lib/screens/inventory_screen.dart": "b5e53098acdea901",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
@@ -132,13 +132,13 @@
     },
     "quan-ly-ban.md": {
       "lib/core/repositories/ban_repository.dart": "012502e6267bc744",
-      "lib/screens/ban_screen.dart": "b8e345658c540593",
+      "lib/screens/ban_screen.dart": "c39ac02e913280f9",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "thu-chi.md": {
       "lib/core/services/store_auth_service.dart": "59840f57a6a72f38",
-      "lib/core/widgets/order_detail_dialog.dart": "885bce66b222166e",
+      "lib/core/widgets/order_detail_dialog.dart": "3e80fbda896f17b8",
       "lib/modules/finance/providers/finance_providers.dart": "5d916c446a0b538b",
       "lib/modules/finance/repository/finance_repository.dart": "9b5726a39c415368",
       "lib/modules/finance/screens/add_transaction_sheet.dart": "6ceb6e6a19698c4a",
@@ -146,7 +146,7 @@
       "lib/modules/kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart": "19477936b86a4fec",
       "lib/modules/loyalty/repository/loyalty_repository.dart": "bcaecfe01367e189",
       "lib/modules/tinhluong/repository/tinhluong_repository.dart": "e4ce4880dea03d47",
-      "lib/screens/finance_screen.dart": "0351021a30db9867",
+      "lib/screens/finance_screen.dart": "6217534a4480b8a3",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
     },
     "van-hanh.md": {

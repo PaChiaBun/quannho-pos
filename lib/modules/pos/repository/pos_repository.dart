@@ -7,6 +7,7 @@ import '../../../core/repositories/core_product_repository.dart';
 import '../../../core/repositories/core_customer_repository.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/paged_query.dart';
+import '../../../core/utils/string_utils.dart' show billItemExtras;
 import '../../kho_chuyen_nghiep/repository/kho_chuyen_nghiep_repository.dart';
 import '../models/coupon_model.dart';
 import '../services/pos_sale_operation_manager.dart';
@@ -1078,6 +1079,7 @@ class OrderItemModel {
   final double unitPrice;
   final double costPrice;
   final double subtotal;
+  final List<String> extras; // topping / tuỳ chọn (đơn bàn, QR)
 
   const OrderItemModel({
     required this.id,
@@ -1088,6 +1090,7 @@ class OrderItemModel {
     required this.unitPrice,
     required this.costPrice,
     required this.subtotal,
+    this.extras = const [],
   });
 
   factory OrderItemModel.fromMap(Map<String, dynamic> m) => OrderItemModel(
@@ -1104,6 +1107,7 @@ class OrderItemModel {
     unitPrice: (m['unit_price'] as num?)?.toDouble() ?? 0,
     costPrice: (m['cost_price'] as num?)?.toDouble() ?? 0,
     subtotal: (m['subtotal'] as num?)?.toDouble() ?? 0,
+    extras: billItemExtras(m['modifiers_json']),
   );
 }
 

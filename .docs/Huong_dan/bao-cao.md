@@ -67,7 +67,7 @@ nguon:
 
 ### Hóa đơn
 - Kỳ **"Hôm nay"** có thanh ‹ › để lùi về hôm qua hoặc chạm vào ngày để chọn (sau 0 giờ vẫn in lại được bill tối qua). Từ Bán hàng › "Đơn gần đây" (hôm nay chưa có đơn), nút "Xem bill hôm qua" mở thẳng tab này ở ngày hôm qua.
-- **"Tra cứu & in lại bill"**: tìm bill đã thanh toán theo số đơn, tên bàn (không cần dấu) hoặc số tiền; chạm để xem chi tiết; nút máy in để **in lại** (bill có dòng "BẢN IN LẠI", ghi nhật ký người in). Màn này tải đủ bill trong kỳ đang chọn (tối đa 20.000 bill); không thấy bill thì chọn đúng ngày của bill.
+- **"Tra cứu & in lại bill"**: tìm bill đã thanh toán theo số đơn, tên bàn (không cần dấu) hoặc số tiền; chạm để xem chi tiết (bảng mở ngay, món giống nhau gộp một dòng, có topping); nút máy in để **in lại** (bill có dòng "BẢN IN LẠI", có topping, món giống nhau gộp một dòng, ghi nhật ký người in). Màn này tải đủ bill trong kỳ đang chọn (tối đa 20.000 bill); không thấy bill thì chọn đúng ngày của bill.
 
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |

@@ -102,6 +102,8 @@ class _BillLookupSectionState extends ConsumerState<BillLookupSection> {
         _bills = bills;
         _loading = false;
       });
+      // Nạp sẵn chi tiết trang đầu: chạm bill là hiện ngay (trước mỗi lần chạm chờ 1–2 giây).
+      prefetchOrderDetails(bills.take(_kPageSize).map((b) => b.referenceId));
     } catch (_) {
       if (!mounted || id != _requestId) return;
       setState(() {
@@ -285,7 +287,12 @@ class _BillLookupSectionState extends ConsumerState<BillLookupSection> {
             if (filtered.length > visible.length)
               Center(
                 child: TextButton(
-                  onPressed: () => setState(() => _shown += _kPageSize),
+                  onPressed: () {
+                    prefetchOrderDetails(
+                      filtered.skip(_shown).take(_kPageSize).map((b) => b.referenceId),
+                    );
+                    setState(() => _shown += _kPageSize);
+                  },
                   child: Text('Xem thêm (${filtered.length - visible.length})'),
                 ),
               ),
@@ -306,6 +313,9 @@ class _BillLookupSectionState extends ConsumerState<BillLookupSection> {
         context,
         b.orderNumber ?? b.referenceId,
         orderId: b.referenceId,
+        previewTitle: b.description,
+        previewTime: b.recordedAt,
+        previewTotal: b.amount,
       ),
       borderRadius: BorderRadius.circular(8),
       child: Padding(
