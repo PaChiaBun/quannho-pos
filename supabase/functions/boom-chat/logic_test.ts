@@ -716,6 +716,10 @@ Deno.test('Số module: làm sạch + tính sẵn (thu chi, kho, chấm công, k
   const mn = parseModules({ nhan_su: { period: 'Tháng này (1–28/10/2026)', shifts: 60, total_hours: 400, staff_count: 3, staff: [{ name: 'An', hours: 200, shifts: 30 }, { name: 'Bình', hours: 120, shifts: 20 }, { name: 'Chi', hours: 80, shifts: 10 }] } })!;
   assertStringIncludes(formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko'), 'Quyết định cắt người (tính sẵn): KẾT LUẬN: CHƯA nên cắt ngay (dòng đầu nói đúng ý này, KHÔNG nói "nghiêng về cắt") — 3 người, 400 giờ / 4 tuần ≈ 33 giờ / người / tuần; ca lệch: nhiều nhất An ~50 giờ / tuần, ít nhất Chi ~20 giờ / tuần. Bớt 1 người mà giữ đủ giờ mở quán → 2 người còn lại mỗi người ~50 giờ / tuần (QUÁ 48');
   assert(!formatModules(mn, new Date(), 'tháng này ai làm nhiều nhất').includes('Quyết định cắt người'));
+  // hỏi thật 03/11: chế độ ask có doanh thu theo giờ → không nói "không có số theo giờ"
+  const coGio = formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko', true);
+  assert(coGio.includes('Doanh thu theo giờ CÓ trong khối bán hàng') && !coGio.includes('KHÔNG có số khách theo giờ'), coGio);
+  assert(formatModules(mn, new Date(), 'ca làm nhiều quá, có nên cắt bớt 1 người ko').includes('KHÔNG có số khách theo giờ'));
   // lần 93: hỏi thu chi vì sao / so kỳ trước → tách thu − chi đổi do thu hay chi; câu dự báo / câu khác thì không
   assertStringIncludes(formatModules(m, new Date(), 'tháng này thu chi sao dư ít hơn tháng trước'), 'Phân tích tính sẵn (Tháng này so kỳ trước): thu − chi đổi −20.000.000đ = thu tăng 10.000.000đ, chi tăng 30.000.000đ → nguyên nhân chính là Tháng này CHI TĂNG');
   assert(!formatModules(m, new Date(), 'mã GIAM15 có nên chạy tiếp').includes('Phân tích tính sẵn: thu − chi'));
@@ -1126,7 +1130,7 @@ Deno.test('lần 100: hỏi khách quay lại → tỉ lệ cộng dồn, không
 
 Deno.test('kiểm thật 03/11: tồn âm, kỳ ít ngày, chi 0đ, quán chưa lưu khách', () => {
   const mk = parseModules({ kho: { period: 'Tháng này', items: 5, low_count: 1, out_count: 1, imports: 0, low: [{ name: 'Bánh cay', qty: -1, unit: 'phần', min: 1000 }], losses: [] } })!;
-  assertStringIncludes(formatModules(mk, new Date(), 'kho có gì bất thường ko'), 'Bánh cay tồn ÂM -1 (số kho sai — kiểm lại, coi như đã HẾT) / tối thiểu 1000 → nhập ít nhất 1000 phần');
+  assertStringIncludes(formatModules(mk, new Date(), 'kho có gì bất thường ko'), 'Bánh cay tồn ÂM -1 (số kho sai — kiểm lại, coi như đã HẾT) / tối thiểu 1000 → mức tối thiểu 1000 phần QUÁ CAO, có vẻ cài sai → KHÔNG khuyên nhập 1000');
   const f = parseFacts({ period: 'Tháng này (1–3/11/2026)', revenue: 1, orders: 1, from: '2026-11-01', to: '2026-11-03', by_weekday: [6e6, 5e6, 0, 0, 0, 0, 18e6], top: [], slow: [] })!;
   const t = formatFacts(f, new Date('2026-11-03T09:00:00+07:00'), 'tháng này cuối tuần với ngày thường khác nhau nhiều không');
   assert(t.includes('mỗi thứ chưa đủ 2 ngày → CHƯA đủ số để so') && !t.includes('So cuối tuần – ngày thường (tính sẵn)'), t);

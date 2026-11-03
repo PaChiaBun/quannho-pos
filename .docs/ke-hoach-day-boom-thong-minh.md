@@ -802,6 +802,15 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Hỏi thật thêm: "món ế, có nên bỏ" và "món nào lời nhất" đúng bài. 4 lỗi phía app (chưa sửa): câu cuối tuần / ngày thường bị hiểu là hỏi cách dùng app; câu có "tháng trước" và "tháng 9" lấy nhầm kỳ; "món nào giảm nhiều nhất" app tự trả mẫu tổng doanh thu; "buổi chiều vắng, có cách nào" app không gửi số liệu.
 - Áp: `db-fix/boom_l103_ap_dung.sh` (TS 20261103_023718).
 
+### Lần 104 (03/11, đã áp): kỳ mặc định đầu tháng, mức tối thiểu cài sai, cắt người có số theo giờ
+
+- Hỏi thật 6 câu trên web sau khi đổi gpt-6-luna (bước 6.4 lộ trình). Tốt: so tháng 10–9, chiều vắng (14–17h, có ngưỡng đo), tăng giá cơm sườn (không phán khi thiếu giá vốn).
+- Lỗi 1: câu không nêu kỳ ngày 3/11 → "Tháng này (1/11–3/11)" chỉ 3 ngày số → khuyên ẩn 65 món "chưa bán". Sửa `ky.ts` `macDinh`: ngày 1–7 lấy 30 ngày qua.
+- Lỗi 2: mức tồn tối thiểu cài sai (1.000 phần Hotteok, 1.000 ly sâm) → "nhập ít nhất 1.000 phần". Sửa: tối thiểu ≥ 500 (trừ g / ml) → "QUÁ CAO, có vẻ cài sai", khuyên kiểm lại.
+- Lỗi 3: chế độ ask có doanh thu theo giờ nhưng dòng "Quyết định cắt người" ghi "KHÔNG có số khách theo giờ" → Boom bảo tự xem Báo cáo. Sửa: `formatModules(…, coGio)` chỉ khung giờ vắng.
+- Thẻ Chrome chạy nền bị trình duyệt làm chậm (~3 phút / câu) — không phải lỗi app; lần sau hỏi khi thẻ đang hiện.
+- Áp: `db-fix/boom_l104_ap_dung.sh` (TS 20261103_145513).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

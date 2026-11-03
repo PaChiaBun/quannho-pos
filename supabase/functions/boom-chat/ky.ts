@@ -157,7 +157,14 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
   return out.sort((a, b) => a.at - b.at);
 }
 
-/** Kỳ chính + kỳ so. Không nhắc kỳ → tháng này (như app). Một kỳ đứng sau "so với / hơn / kém" mà không có kỳ nào trước → kỳ đó là kỳ SO. */
+/** Không nhắc kỳ: tháng này; ngày 1–7 thì 30 ngày qua — hỏi thật 03/11: "món nào nên bỏ" chỉ có 3 ngày số → khuyên ẩn 65 món. */
+function macDinh(vn: Date): Doan {
+  if (vn.getUTCDate() > 7) return kyCo('thang_nay', vn);
+  const hn = ngay(vn.getUTCFullYear(), vn.getUTCMonth() + 1, vn.getUTCDate()), s = cong(hn, -29 * D);
+  return khoang(vn, s, cong(hn, D), cong(s, -30 * D), '30 ngày qua', '30 ngày trước đó');
+}
+
+/** Kỳ chính + kỳ so. Không nhắc kỳ → macDinh. Một kỳ đứng sau "so với / hơn / kém" mà không có kỳ nào trước → kỳ đó là kỳ SO. */
 export function docKy(question: string, now: Date = new Date()): Ky {
   const vn = cong(now, VN);
   const f = boDau(question);
@@ -171,7 +178,7 @@ export function docKy(question: string, now: Date = new Date()): Ky {
     chinh = kyCo(tenNay, vn);
     so = { tu: k.tu, den: k.den, nhan: k.nhan.replace(/^./, (c) => c.toLowerCase()) };
   } else {
-    chinh = ds[0]?.doan ?? kyCo('thang_nay', vn);
+    chinh = ds[0]?.doan ?? macDinh(vn);
     const k2 = ds.find((d) => d.doan.nhan !== chinh.nhan)?.doan;
     so = k2 ? { tu: k2.tu, den: k2.den, nhan: k2.nhan.replace(/^./, (c) => c.toLowerCase()) } : chinh.truoc();
   }

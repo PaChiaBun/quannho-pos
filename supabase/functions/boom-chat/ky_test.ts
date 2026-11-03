@@ -9,7 +9,8 @@ const k = (q: string) => {
 };
 
 Deno.test('đọc kỳ: câu hỏi thật 03/11', () => {
-  assertEquals(k('kho có gì bất thường ko, cần nhập gì'), ['Tháng này (1/11–3/11)', '2026-11-01', '2026-11-03', 'cùng kỳ tháng trước (1/10–3/10)', '2026-10-01', '2026-10-03']);
+  // ngày 3 trong tháng, câu không nêu kỳ → 30 ngày qua (tháng này mới 3 ngày số)
+  assertEquals(k('kho có gì bất thường ko, cần nhập gì'), ['30 ngày qua (5/10/2026–3/11/2026)', '2026-10-05', '2026-11-03', 'cùng kỳ 30 ngày trước đó', '2026-09-05', '2026-10-04']);
   assertEquals(k('tháng trước cuối tuần với ngày thường khác nhau nhiều không').slice(0, 3), ['Tháng trước (tháng 10)', '2026-10-01', '2026-11-01']);
   // app lấy nhầm kỳ chính = tháng 9; đúng: tháng 10 so tháng 9
   assertEquals(k('tháng trước thu chi sao, dư ít hơn tháng 9 không'), ['Tháng trước (tháng 10)', '2026-10-01', '2026-11-01', 'tháng 9/2026 (1/9/2026–30/9/2026)', '2026-09-01', '2026-10-01']);
@@ -32,9 +33,11 @@ Deno.test('đọc kỳ: các kiểu khác', () => {
   assertEquals(k('ngày 20/10 bán được bao nhiêu').slice(0, 2), ['Thứ 3 20/10', '2026-10-20']);
   assertEquals(k('tháng 12 năm ngoái doanh thu')[0], 'Tháng 12/2025 (1/12/2025–31/12/2025)');
   assertEquals(k('quý 3 doanh thu ra sao')[0], 'Quý 3/2026 (1/7/2026–30/9/2026)');
-  // không nhắc kỳ → tháng này; "20/11" chưa tới → không phải kỳ
+  // không nhắc kỳ (đầu tháng) → 30 ngày qua; "20/11" chưa tới → không phải kỳ
   for (const q of ['lam sao de khach goi them', 'do uong ban it qua phai ko', 'mã GIAM15 có hiệu quả không', 'Sắp tới 20/11 quán có nên làm gì không',
-    'trà sữa trân châu 3 ly giá bao nhiêu', 'doanh thu 2 tuần']) assertEquals(k(q)[0], 'Tháng này (1/11–3/11)', q);
+    'trà sữa trân châu 3 ly giá bao nhiêu', 'doanh thu 2 tuần']) assertEquals(k(q)[0], '30 ngày qua (5/10/2026–3/11/2026)', q);
+  // từ ngày 8 → tháng này như app
+  assertEquals(docKy('món nào nên bỏ', new Date('2026-11-08T09:00:00+07:00')).nhan, 'Tháng này (1/11–8/11)');
   // không dấu, viết tắt
   assertEquals(k('thang truoc doanh thu sao')[0], 'Tháng trước (tháng 10)');
   assertEquals(k('hqua ban dc bn')[0], 'Hôm qua (2/11)');

@@ -1,5 +1,12 @@
 # Thiết kế: Hồ sơ quán cho Boom (lộ trình chặng 3.1) — 03/11/2026
 
+## ĐO LẠI TRÊN gpt-6-luna (03/11) — vẫn DỪNG, Chủ Quán chọn bỏ 3.1
+
+60 câu × 2 lượt = 120 cặp (4 người chấm Claude): bản có hồ sơ 14,82 vs không 14,63 / 16; chênh +0,19 ± 0,09 (sai số chuẩn) — dưới
+ngưỡng +0,5. "Đúng quán" 1,87 → 1,90, "việc làm" 1,69 → 1,71; 42 câu hơn, 27 kém, 51 bằng. Rõ nhất D30_1 (13 → 16: bản không hồ sơ
+hỏi "nếu gần trường"). gpt-6-luna đã tự đoán đúng quán từ số (đúng quán 1,87 khi KHÔNG có hồ sơ) nên hồ sơ còn ít chỗ để thêm.
+Kết quả: `cham_tu_van/ket_qua/l6_ho_so_quan_claude_20261103.json`.
+
 ## KẾT QUẢ BƯỚC 0 (03/11) — DỪNG, chưa làm database
 
 Chấm kín 60 câu × 3 lượt = 180 cặp (6 người chấm Claude), bản có dòng "HỒ SƠ QUÁN (chủ quán tự khai…)" lấy từ mô tả quán mẫu vs bản đang chạy:

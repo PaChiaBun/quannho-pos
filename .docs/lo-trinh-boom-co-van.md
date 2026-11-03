@@ -78,6 +78,7 @@ Sau 3 lần thêm nội dung không ăn thua, thử thay mô hình (bộ đề 6
 
 > **03/11 — bước đo 3.1.0 không đạt** (`.docs/thiet-ke-boom-ho-so-quan.md`): dòng hồ sơ quán 12,50 → 12,34 (−0,16 ± 0,14, 180 cặp). Chưa làm DB.
 > Ba lần thêm nội dung vào lời nhắc (2.1, 2.3, 3.1.0) đều không có lợi đo được với gpt-4o-mini; chỉ đổi cấu trúc (chặng 1, 2.2) có lợi.
+> **03/11 — đo lại trên gpt-6-luna**: +0,19 ± 0,09 (120 cặp), dưới ngưỡng +0,5 → **BỎ 3.1**. Bước 6.4 (hỏi thật) → lần 104.
 
 | # | Việc | Đầu ra | Đo / duyệt |
 |---|---|---|---|
