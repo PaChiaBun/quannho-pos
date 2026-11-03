@@ -11,7 +11,7 @@ import '../../../core/providers/permission_provider.dart';
 import '../../../core/services/store_auth_service.dart';
 import '../../../core/services/user_auth_service.dart';
 import '../../../core/utils/app_logger.dart';
-import '../../../core/utils/string_utils.dart' show billItemExtras;
+import '../../../core/utils/string_utils.dart' show billItemExtras, kitchenToppingLabel;
 import '../screens/bill_preview_screen.dart';
 import '../utils/station_normalizer.dart';
 import '../routing/print_setup.dart';
@@ -3022,13 +3022,9 @@ class PrinterSettingsNotifier extends Notifier<StationPrintersState> {
               final modsText = decoded
                   .map<String>((m) {
                     if (m is Map) {
-                      final nameVal = m['name'] as String? ?? '';
-                      final qtyVal = (m['qty'] as num?)?.toInt() ?? 1;
-                      final typeVal = m['type'] as String? ?? '';
-                      if (typeVal == 'topping') {
-                        return qtyVal > 1 ? '+$nameVal ×$qtyVal' : '+$nameVal';
-                      }
-                      return nameVal;
+                      // Cùng quy tắc với màn Phiếu bếp: topping ghi tổng của dòng khi không đúng 1 mỗi
+                      // phần (trước "2 ly + 1 trân châu" in "+Trân châu" — bếp hiểu mỗi ly 1); nhận cả topping QR.
+                      return kitchenToppingLabel(m, qty) ?? (m['name'] as String? ?? '');
                     }
                     return '$m';
                   })

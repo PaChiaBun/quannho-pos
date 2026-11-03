@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../services/store_auth_service.dart';
 import '../utils/app_logger.dart';
+import '../utils/string_utils.dart' show hasLineTotalToppings;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -784,7 +785,9 @@ class BanRepository {
               0.0;
           final samePrice = (extPrice - price).abs() < 0.01;
 
-          if (sameProduct && samePrice && sameNote && sameMods) {
+          // Món có topping ghi số tổng cả dòng: gộp thì số ly tăng mà số topping giữ nguyên → dòng mới.
+          if (sameProduct && samePrice && sameNote && sameMods &&
+              !hasLineTotalToppings(modifiersJson)) {
             match = ext as Map<String, dynamic>;
             break;
           }

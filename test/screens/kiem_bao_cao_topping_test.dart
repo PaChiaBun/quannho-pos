@@ -6,8 +6,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quannho_pos/core/utils/string_utils.dart';
 
-Map<String, Object> _top(String key, int n) =>
-    {'type': 'topping', 'id': 'tc', 'name': 'Trân châu', 'price': 5000, key: n};
+// Món bàn ghi "type":"topping" + "qty" (tổng dòng); đơn QR (qr_price_items_v4) KHÔNG có "type", có "quantity".
+Map<String, Object> _top(String key, int n) => key == 'qty'
+    ? {'type': 'topping', 'id': 'tc', 'name': 'Trân châu', 'price': 5000, 'qty': n}
+    : {'id': 'tc', 'name': 'Trân châu', 'price': 5000, 'quantity': n};
 
 void main() {
   test('tách topping: bàn ghi tổng dòng, QR ghi mỗi phần × số món, tiền = giá × số', () {
@@ -17,7 +19,7 @@ void main() {
     expect(ban.single.qty, 1);
     expect(ban.single.revenue, 5000);
 
-    final qr = toppingSales('[{"id":"tc","type":"topping","name":"Trân châu","price":5000,"quantity":1}]', 2);
+    final qr = toppingSales('[{"id":"tc","name":"Trân châu","price":5000,"quantity":1}]', 2); // dạng QR thật
     expect(qr.single.qty, 2); // mỗi ly 1
     expect(qr.single.revenue, 10000);
 
@@ -60,7 +62,7 @@ void main() {
 
   test('báo cáo tự tính, bộ lọc danh mục và Boom trên máy đều đọc topping', () {
     final repo = File('lib/core/repositories/dashboard_repository.dart').readAsStringSync();
-    expect(repo, contains("subtotal, modifiers_json')"));
+    expect(repo, contains("unit_price, subtotal, modifiers_json')"));
     expect(repo, contains("select('product_id, modifiers_json')"));
     expect(RegExp(r'toppingSales\(').allMatches(repo).length, 2);
     final boom = File('lib/features/ai_assistant/services/boom_read_only_data_service.dart').readAsStringSync();

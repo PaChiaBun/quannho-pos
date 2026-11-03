@@ -1,7 +1,7 @@
 -- Test 20261104_topping_bao_cao_v1.sql: báo cáo đếm topping chọn kèm món thành dòng riêng.
 -- Mọi dữ liệu dựng đều ROLLBACK. Ngày 1 (bán kèm món):
 --   A bàn: Trà x2 + 1 trân châu cả dòng ({"qty":1})  75.000 → Trà 70.000, trân châu 1 = 5.000
---   B QR:  Trà x2, mỗi ly 1 trân châu ({"quantity":1}) 80.000 → Trà 70.000, trân châu 2 = 10.000
+--   B QR:  Trà x2, mỗi ly 1 trân châu ({"quantity":1}, KHÔNG có "type" như dữ liệu QR thật) 80.000 → Trà 70.000, trân châu 2 = 10.000
 --   D bàn: Trà x1 + tuỳ chọn "Ít đá" + 2 trân châu      45.000 → Trà 35.000, trân châu 2 = 10.000
 --   E:     Trà x1, modifiers_json hỏng (có chữ topping)  35.000 → Trà 35.000 (bỏ qua JSON hỏng)
 -- Ngày 2: C quầy: trân châu bán lẻ x3 15.000.
@@ -50,7 +50,8 @@ BEGIN
     (gen_random_uuid(), v_store, o_a, 'Trà test', v_dish, 'Trà test', 2, 37500, 75000,
      jsonb_build_array(jsonb_build_object('type', 'topping', 'id', v_top, 'name', 'Trân châu test', 'price', 5000, 'qty', 1, 'unit', 'phần'))::text),
     (gen_random_uuid(), v_store, o_b, 'Trà test', v_dish, 'Trà test', 2, 40000, 80000,
-     jsonb_build_array(jsonb_build_object('id', v_top, 'type', 'topping', 'name', 'Trân châu test', 'price', 5000, 'quantity', 1))::text),
+     -- dạng QR thật (qr_price_items_v4): không có "type"; kèm 1 phần tử lạ dạng chữ
+     jsonb_build_array('lạ'::text, jsonb_build_object('id', v_top, 'name', 'Trân châu test', 'price', 5000, 'quantity', 1))::text),
     (gen_random_uuid(), v_store, o_d, 'Trà test', v_dish, 'Trà test', 1, 45000, 45000,
      jsonb_build_array(
        jsonb_build_object('id', v_opt, 'name', 'Ít đá', 'price_adjust', 0),

@@ -4,6 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/store_auth_service.dart';
 import '../utils/string_utils.dart' show toppingSales;
 
+final _uuidRe = RegExp(
+  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD REPOSITORY — 100% Supabase
 // ─────────────────────────────────────────────────────────────────────────────
@@ -197,7 +201,7 @@ class DashboardRepository {
       futures.add(
         _sb
             .from('order_items')
-            .select('product_id, product_name, name, quantity, qty, subtotal, modifiers_json')
+            .select('product_id, product_name, name, quantity, qty, unit_price, subtotal, modifiers_json')
             .inFilter('order_id', chunk),
       );
     }
@@ -226,7 +230,9 @@ class DashboardRepository {
         item['product_name'] as String? ?? item['name'] as String? ?? '',
       );
       agg.qty += qty;
-      agg.revenue += ((item['subtotal'] as num?)?.toDouble() ?? 0) -
+      // Dòng QR cũ không ghi subtotal: tính lại như máy chủ (trước 0 − tiền topping → doanh thu âm)
+      agg.revenue += ((item['subtotal'] as num?)?.toDouble() ??
+              qty * ((item['unit_price'] as num?)?.toDouble() ?? 0)) -
           tops.fold(0.0, (sum, t) => sum + t.revenue);
     }
 
@@ -234,7 +240,7 @@ class DashboardRepository {
     // Fetch category map 1 lần (tránh N+1 query)
     Map<String, String> catMap = {};
     if (category != null && map.isNotEmpty) {
-      final productIds = map.keys.toList();
+      final productIds = map.keys.where(_uuidRe.hasMatch).toList(); // mã lạ trong JSON làm lỗi cả truy vấn
       final prodRows = await _sb
           .from('products')
           .select('id, category')
@@ -868,7 +874,7 @@ class DashboardRepository {
         // Topping chọn kèm món (modifiers_json) → bộ lọc có danh mục của topping
         for (final t in toppingSales(i['modifiers_json'], 1)) t.id,
       ],
-    }.where((id) => id.isNotEmpty).toList();
+    }.where(_uuidRe.hasMatch).toList(); // mã lạ trong JSON làm lỗi cả truy vấn cột uuid
     if (productIds.isEmpty) return [];
     final products = await _sb
         .from('products')

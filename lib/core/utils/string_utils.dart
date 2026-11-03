@@ -84,6 +84,24 @@ String? tidyFinanceDescription(String? s) =>
 String tidyRepeatedTableWord(String s) =>
     s.replaceAll(RegExp(r'\bbàn\s+(?=bàn\s)', caseSensitive: false), '');
 
+/// Phần tử topping trong `modifiers_json`: món bàn ghi `"type":"topping"`; đơn QR (máy chủ `qr_price_items_v4`
+/// dựng lại) KHÔNG có "type" mà có "quantity". Tuỳ chọn hương vị (dòng product_modifiers) không có cả hai.
+bool isToppingModifier(Map m) => m['type'] == 'topping' || m.containsKey('quantity');
+
+/// Dòng món bàn có topping ghi số TỔNG cả dòng ("qty"): đổi số ly của dòng (+/−, gộp lượt gọi, gộp dòng
+/// in bill) làm số topping lệch với tiền → không gộp, không cho +/−. Topping QR ghi mỗi phần nên không bị.
+bool hasLineTotalToppings(Object? modifiersJson) => _jsonList(modifiersJson)
+    .any((e) => e is Map && e['type'] == 'topping' && e.containsKey('qty'));
+
+/// Dòng topping trên phiếu bếp in giấy (màn Phiếu bếp, máy chủ in): "+Trân châu" khi đúng 1 mỗi phần,
+/// "+Trân châu ×3" (tổng của dòng) khi khác. Không phải topping → null.
+String? kitchenToppingLabel(Object? m, num lineQty) {
+  if (m is! Map || !isToppingModifier(m)) return null;
+  final total = toppingTotal(m, lineQty);
+  final name = '${m['name'] ?? ''}';
+  return total != lineQty ? '+$name ×${qtyText(total)}' : '+$name';
+}
+
 /// Tổng số phần một topping của cả dòng món: món gọi ở bàn ghi `qty` = tổng cả dòng ("2 ly + 1 trân
 /// châu" → 1); đơn QR ghi `quantity` = số mỗi phần → nhân số món. Máy chủ trừ kho theo cùng cách.
 num toppingTotal(Map m, num lineQty) =>
@@ -100,7 +118,7 @@ List<String> billItemExtras(Object? modifiersJson, {num lineQty = 1}) {
   return [
     for (final e in _jsonList(modifiersJson))
       if (e is Map && '${e['name'] ?? ''}'.trim().isNotEmpty)
-        e['type'] == 'topping' && toppingTotal(e, lineQty) != lineQty
+        isToppingModifier(e) && toppingTotal(e, lineQty) != lineQty
             ? '${e['name']} x${qtyText(toppingTotal(e, lineQty))}'
             : '${e['name']}',
   ];
@@ -128,7 +146,7 @@ List<({String id, String name, double qty, double revenue})> toppingSales(
   final out = <({String id, String name, double qty, double revenue})>[];
   if (lineQty <= 0) return out;
   for (final e in _jsonList(modifiersJson)) {
-    if (e is! Map || e['type'] != 'topping') continue;
+    if (e is! Map || !isToppingModifier(e)) continue;
     final id = '${e['id'] ?? ''}'.trim();
     if (id.isEmpty) continue;
     final qty = toppingTotal(e, lineQty).toDouble();

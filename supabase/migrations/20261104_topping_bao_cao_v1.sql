@@ -8,10 +8,12 @@
 --   • get_top_products_for_range_v1 (Báo cáo › Sản phẩm, Trang chủ)
 --   • get_sold_categories_for_range_v1 (bộ lọc danh mục — thêm danh mục của topping)
 --   • boom_sales_raw_v1 (số bán hàng cho Boom)
--- Mỗi topping (phần tử "type":"topping" có "id") thành một dòng riêng: số phần — món bàn ghi "qty" =
--- tổng cả dòng, đơn QR ghi "quantity" = mỗi phần × số món (cùng cách trừ kho của 20261103_topping_ban_tru_kho_v1);
+-- Mỗi topping thành một dòng riêng: món bàn ghi {"type":"topping","id","qty"} với qty = tổng cả dòng;
+-- đơn QR (qr_price_items_v4 dựng lại, KHÔNG có "type") ghi {"id","price","quantity"} = mỗi phần × số món
+-- (cùng cách trừ kho của 20261103_topping_ban_tru_kho_v1); tuỳ chọn hương vị (dòng product_modifiers, không
+-- có "type" lẫn "quantity") không phải topping;
 -- tiền = "price" × số phần, trừ khỏi tiền món chính → tổng doanh thu không đổi. Đơn cũ vẫn lưu topping
--- nên số các kỳ trước cũng đúng lại. modifiers_json là text: chỉ đọc dòng có chữ "topping" và JSON hợp lệ
+-- nên số các kỳ trước cũng đúng lại. modifiers_json là text: chỉ đọc dòng có khoá "id" và JSON hợp lệ
 -- (pg_input_is_valid), số không hợp lệ coi như thiếu — dữ liệu hỏng không làm báo cáo lỗi.
 --
 -- PREFLIGHT: thân hàm đang chạy phải đúng bản đã biết (md5 prosrc: fix05a / 20261103) hoặc đã là bản này
@@ -67,7 +69,7 @@ BEGIN
            NULLIF(TRIM(oi.name), '') AS name2,
            COALESCE(oi.quantity, oi.qty, 1)::numeric AS q,
            COALESCE(oi.subtotal, COALESCE(oi.quantity, oi.qty, 1) * COALESCE(oi.unit_price, 0))::numeric AS rev,
-           CASE WHEN oi.modifiers_json LIKE '%topping%' THEN
+           CASE WHEN oi.modifiers_json LIKE '%"id"%' THEN
              CASE WHEN pg_input_is_valid(oi.modifiers_json, 'jsonb') THEN
                CASE WHEN jsonb_typeof(oi.modifiers_json::jsonb) = 'array' THEN oi.modifiers_json::jsonb END
              END
@@ -95,7 +97,7 @@ BEGIN
              COALESCE(CASE WHEN pg_input_is_valid(m->>'price', 'numeric') THEN (m->>'price')::numeric END, 0) AS price
     ) AS x
     WHERE it.q > 0
-      AND m->>'type' = 'topping'
+      AND jsonb_typeof(m) = 'object' AND (m->>'type' = 'topping' OR m ? 'quantity')
       AND NULLIF(TRIM(m->>'id'), '') IS NOT NULL
   ),
   tpl AS (
@@ -145,7 +147,7 @@ BEGIN
   RETURN QUERY
   WITH it AS (
     SELECT oi.product_id::text AS pid,
-           CASE WHEN oi.modifiers_json LIKE '%topping%' THEN
+           CASE WHEN oi.modifiers_json LIKE '%"id"%' THEN
              CASE WHEN pg_input_is_valid(oi.modifiers_json, 'jsonb') THEN
                CASE WHEN jsonb_typeof(oi.modifiers_json::jsonb) = 'array' THEN oi.modifiers_json::jsonb END
              END
@@ -162,7 +164,7 @@ BEGIN
     UNION
     SELECT TRIM(m->>'id')
     FROM it CROSS JOIN LATERAL jsonb_array_elements(it.mods) AS m
-    WHERE m->>'type' = 'topping' AND NULLIF(TRIM(m->>'id'), '') IS NOT NULL
+    WHERE jsonb_typeof(m) = 'object' AND (m->>'type' = 'topping' OR m ? 'quantity') AND NULLIF(TRIM(m->>'id'), '') IS NOT NULL
   )
   SELECT DISTINCT TRIM(p.category) AS category
   FROM ids
@@ -198,7 +200,7 @@ AS $$
            COALESCE(oi.quantity, oi.qty, 0)::numeric AS q,
            COALESCE(oi.subtotal, COALESCE(oi.quantity, oi.qty, 0) * COALESCE(oi.unit_price, 0))::numeric AS rev,
            COALESCE(oi.cost_price, 0)::numeric AS c,
-           CASE WHEN oi.modifiers_json LIKE '%topping%' THEN
+           CASE WHEN oi.modifiers_json LIKE '%"id"%' THEN
              CASE WHEN pg_input_is_valid(oi.modifiers_json, 'jsonb') THEN
                CASE WHEN jsonb_typeof(oi.modifiers_json::jsonb) = 'array' THEN oi.modifiers_json::jsonb END
              END
@@ -216,7 +218,7 @@ AS $$
              ) AS tq,
              COALESCE(CASE WHEN pg_input_is_valid(m->>'price', 'numeric') THEN (m->>'price')::numeric END, 0) AS price
     ) AS x
-    WHERE i0.q > 0 AND m->>'type' = 'topping' AND NULLIF(TRIM(m->>'id'), '') IS NOT NULL
+    WHERE i0.q > 0 AND jsonb_typeof(m) = 'object' AND (m->>'type' = 'topping' OR m ? 'quantity') AND NULLIF(TRIM(m->>'id'), '') IS NOT NULL
   ),
   tpl AS (SELECT lid, sum(rev) AS rev FROM tp GROUP BY lid),
   i AS (

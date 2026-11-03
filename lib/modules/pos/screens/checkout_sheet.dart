@@ -1143,11 +1143,9 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               if (mounted && cashierSt == StationPrintStatus.failed) {
                 warnBillNotPrinted(
                   ScaffoldMessenger.maybeOf(context),
-                  () => printer.printCheckoutReceipt(
-                    storeId: storeId,
-                    settlementId: orderId,
-                    billData: bill,
-                  ),
+                  // In thẳng như nút "In hoá đơn": lần in tự động đã giành quyền in bill (receipt_printed)
+                  // nên gọi lại printCheckoutReceipt luôn bị bỏ qua là "máy khác đã in".
+                  () => StationPrinterDispatcher.printBill(bill, settings, onlyReceipt: true),
                 );
               } else if (mounted &&
                   cashierSt == StationPrintStatus.notConfigured) {
@@ -1530,10 +1528,16 @@ void warnBillNotPrinted(
           try {
             st = (await reprint()).stationResults['cashier']?.status;
           } catch (_) {}
-          if (st == StationPrintStatus.success) {
+          if (st == StationPrintStatus.skippedNoItems) return; // không có gì để in, không phải lỗi
+          if (st == StationPrintStatus.success || st == StationPrintStatus.notConfigured) {
             messenger.showSnackBar(
-              const SnackBar(
-                content: Text('Đã in lại bill.'),
+              SnackBar(
+                content: Text(
+                  st == StationPrintStatus.success
+                      ? 'Đã in lại bill.'
+                      : 'Máy này chưa được cài máy in hóa đơn nên chưa in. '
+                          'Vào In Hoá Đơn → Máy In & Luật In để chọn máy in.',
+                ),
                 behavior: SnackBarBehavior.floating,
                 margin: margin,
               ),

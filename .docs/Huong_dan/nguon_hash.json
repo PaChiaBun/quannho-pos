@@ -3,10 +3,10 @@
   "bai": {
     "ban-hang.md": {
       "lib/core/providers/app_providers.dart": "9891a503651b27b6",
-      "lib/core/widgets/order_detail_dialog.dart": "8db86c481689733d",
+      "lib/core/widgets/order_detail_dialog.dart": "64516eb78d08e0de",
       "lib/modules/pos/providers/pos_providers.dart": "8756e0d16daa75de",
       "lib/modules/pos/repository/pos_repository.dart": "3b092c1a3f94f53a",
-      "lib/modules/pos/screens/checkout_sheet.dart": "dac437fa2b2a0ea7",
+      "lib/modules/pos/screens/checkout_sheet.dart": "81fe7673c84958e2",
       "lib/screens/finance_screen.dart": "6217534a4480b8a3",
       "lib/screens/pos_screen.dart": "862c5b44d14d2eb4",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3"
@@ -22,15 +22,15 @@
       "lib/screens/chain_report_screen.dart": "ca45468ac16e8e2d"
     },
     "bao-cao.md": {
-      "lib/core/repositories/dashboard_repository.dart": "325e830cb11c5fd9",
+      "lib/core/repositories/dashboard_repository.dart": "cfc27d53ecb1ed97",
       "lib/screens/bill_lookup_section.dart": "5ffa6b912dcf7002",
       "lib/screens/einvoice_report_tab.dart": "edfadf318db1980b",
       "lib/screens/report_screen.dart": "b20b3d88806deae7",
-      "supabase/migrations/20261104_topping_bao_cao_v1.sql": "567c41336e07b19f"
+      "supabase/migrations/20261104_topping_bao_cao_v1.sql": "90417bacd6051a33"
     },
     "bep.md": {
       "lib/core/repositories/kitchen_repository.dart": "6d24bef325dde24b",
-      "lib/screens/kitchen_screen.dart": "3f0a9adee4eb22f4",
+      "lib/screens/kitchen_screen.dart": "d788ded3865f290d",
       "supabase/migrations/20260912_atomic_send_kitchen_ticket_v2.sql": "3242f0573a0ef36a",
       "test/screens/kitchen_sound_policy_test.dart": "52ab1b02b8994af5"
     },
@@ -39,7 +39,7 @@
       "lib/screens/chamcong_screen.dart": "b15a772a76e8392b"
     },
     "in-hoa-don.md": {
-      "lib/modules/bill_printer/providers/printer_settings_provider.dart": "03b7287e6d90d60c",
+      "lib/modules/bill_printer/providers/printer_settings_provider.dart": "aec1e69fd2d84a4e",
       "lib/modules/bill_printer/screens/bill_preview_screen.dart": "36c4df3ff2510491",
       "lib/modules/bill_printer/screens/bill_printer_hub.dart": "9c49d815d7b82821",
       "lib/modules/bill_printer/screens/print_design_screen.dart": "cdca414c5cae7abf",
@@ -81,7 +81,7 @@
       "lib/modules/kho/screens/supplier_list_screen.dart": "ea7d9862df1ab5cd",
       "lib/modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart": "431e48dc40bf6d00",
       "lib/modules/quick_notes/quick_notes.dart": "b21a054b9dc00adc",
-      "lib/screens/ban_screen.dart": "4cc744466e0ce1d3",
+      "lib/screens/ban_screen.dart": "b50aebf4aa3f836a",
       "lib/screens/inventory_screen.dart": "bbb610d11670a3f9",
       "supabase/migrations/20261013_qr_order_simple_v4.sql": "5ecbd2344ebfa46b"
     },
@@ -132,15 +132,15 @@
       "supabase/migrations/20261014_qr_chong_pha_v4.sql": "51c552567bbb2691"
     },
     "quan-ly-ban.md": {
-      "lib/core/repositories/ban_repository.dart": "012502e6267bc744",
-      "lib/screens/ban_screen.dart": "4cc744466e0ce1d3",
+      "lib/core/repositories/ban_repository.dart": "23e888b138f83bb4",
+      "lib/screens/ban_screen.dart": "b50aebf4aa3f836a",
       "supabase/migrations/20260902_atomic_settlement_v5.sql": "3eefc4e1007573d1",
       "supabase/migrations/20261008_fix09_quy_doi_don_vi_cong_thuc.sql": "8959985b014d8ba3",
-      "supabase/migrations/20261103_topping_ban_tru_kho_v1.sql": "034ed7bad892c377"
+      "supabase/migrations/20261103_topping_ban_tru_kho_v1.sql": "1654e210fc64cfc2"
     },
     "thu-chi.md": {
       "lib/core/services/store_auth_service.dart": "59840f57a6a72f38",
-      "lib/core/widgets/order_detail_dialog.dart": "8db86c481689733d",
+      "lib/core/widgets/order_detail_dialog.dart": "64516eb78d08e0de",
       "lib/modules/finance/providers/finance_providers.dart": "5d916c446a0b538b",
       "lib/modules/finance/repository/finance_repository.dart": "9b5726a39c415368",
       "lib/modules/finance/screens/add_transaction_sheet.dart": "6ceb6e6a19698c4a",
@@ -163,11 +163,11 @@
     "bat-dau.md": {
       ".docs/Huong_dan/MUC-LUC.md": "a86d08ad27d68ce2",
       ".docs/Huong_dan/TEMPLATE.md": "7210a126d1beea2a",
-      ".docs/Huong_dan/ban-hang.md": "2a5fcfe906df0003",
+      ".docs/Huong_dan/ban-hang.md": "8e0274731313bf2e",
       ".docs/Huong_dan/bao-cao-chuoi.md": "b4aca472e78f97a0",
-      ".docs/Huong_dan/bao-cao.md": "caab0596c6b3a52f",
+      ".docs/Huong_dan/bao-cao.md": "6d97e8448e2da6cb",
       ".docs/Huong_dan/bat-dau.md": "ee96f88e01377bca",
-      ".docs/Huong_dan/bep.md": "eb60f40048452544",
+      ".docs/Huong_dan/bep.md": "fe993ead5b7d2cb9",
       ".docs/Huong_dan/boom-quy-trinh-duyet.md": "58693b94c578ea5b",
       ".docs/Huong_dan/cham-cong.md": "76a6bda6d6ebcd5e",
       ".docs/Huong_dan/goi-tra-sua-mang-di.md": "096e67c933ead4b5",
@@ -180,7 +180,7 @@
       ".docs/Huong_dan/nhan-vien.md": "6bed8117f27c3ec5",
       ".docs/Huong_dan/nhat-ky-log.md": "746d3244b4fc151e",
       ".docs/Huong_dan/qr-goi-mon.md": "5aeaa501c8cc800d",
-      ".docs/Huong_dan/quan-ly-ban.md": "c607dd45f4791e3d",
+      ".docs/Huong_dan/quan-ly-ban.md": "c55db5166c9dc5b7",
       ".docs/Huong_dan/thu-chi.md": "ed397db932aaeb25",
       ".docs/Huong_dan/van-hanh.md": "da54c9826716febc",
       ".docs/Huong_dan/viec-can-sua.md": "ff0664f23895b389",

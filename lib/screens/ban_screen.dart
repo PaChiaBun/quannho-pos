@@ -3151,6 +3151,24 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
     debugPrint(
       '[BAN-TEST] _updateItemQty: ${item.productName} newQty=$newQty status=${item.kitchenStatus}',
     );
+    // Món có topping ghi số tổng cả dòng ("2 ly + 1 trân châu"): đổi số ly thì tiền nhân theo đơn giá chia
+    // đều còn số topping giữ nguyên (3 ly ra 112.500 thay vì 110.000) → không cho đổi, xoá rồi gọi lại.
+    if (newQty > 0 && hasLineTotalToppings(item.modifiersJson)) {
+      // Hộp thoại: bảng phiên bàn là bảng trượt nên thông báo dưới đáy (SnackBar) bị nó che mất.
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Món có topping'),
+          content: const Text(
+            'Không đổi được số ly của món có topping. Xoá dòng này rồi gọi lại đúng số ly và topping.',
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đã hiểu')),
+          ],
+        ),
+      );
+      return;
+    }
     // Màn hình có thể chưa kịp cập nhật: món vừa được gửi bếp ở máy khác thì không được
     // sửa/xoá tự do như món chưa gửi.
     final fresh = await _freshKitchenStatus(item);
@@ -5774,12 +5792,13 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                             .toList();
                         final Map<String, BanSessionItemModel>
                         groupedActiveMap = {};
+                        // Gộp theo key = product_id + price + note + modifiers + kitchenStatus; món có topping ghi số
+                        // tổng cả dòng không gộp — cộng số ly mà giữ topping dòng đầu thì bill in sai số topping.
+                        String groupKey(BanSessionItemModel i) =>
+                            '${i.productId}_${i.price.toStringAsFixed(2)}_${i.note?.trim() ?? ''}_${i.modifiersJson?.trim() ?? ''}_${i.kitchenStatus}'
+                            '${hasLineTotalToppings(i.modifiersJson) ? '_${i.id}' : ''}';
                         for (final item in rawActiveItems) {
-                          final cleanNote = item.note?.trim() ?? '';
-                          final cleanMods = item.modifiersJson?.trim() ?? '';
-                          // Gộp theo key = product_id + price + note + modifiers + kitchenStatus
-                          final key =
-                              '${item.productId}_${item.price.toStringAsFixed(2)}_${cleanNote}_${cleanMods}_${item.kitchenStatus}';
+                          final key = groupKey(item);
                           if (groupedActiveMap.containsKey(key)) {
                             final prev = groupedActiveMap[key]!;
                             groupedActiveMap[key] = BanSessionItemModel(
@@ -5801,8 +5820,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
                         _noteGroupIds.clear();
                         _noteRepOf.clear();
                         for (final item in rawActiveItems) {
-                          final rep =
-                              groupedActiveMap['${item.productId}_${item.price.toStringAsFixed(2)}_${item.note?.trim() ?? ''}_${item.modifiersJson?.trim() ?? ''}_${item.kitchenStatus}']!;
+                          final rep = groupedActiveMap[groupKey(item)]!;
                           _noteRepOf[item.id] = rep.id;
                           (_noteGroupIds[rep.id] ??= []).add(item.id);
                         }

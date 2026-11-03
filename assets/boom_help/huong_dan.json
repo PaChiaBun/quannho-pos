@@ -1,6 +1,6 @@
 {
- "version": 202611032217,
- "hash": "979f49865500f2eb75221a1088e963a366fb4de0ba2fdcf224f73a8f30bfea9e",
+ "version": 202611032325,
+ "hash": "cc4c1110793b886e52c306e8e8e3eb80ea1948e507a0574d7dacf7776c5c5af2",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -632,7 +632,7 @@
    "module_name": "Bếp",
    "section": "Các việc thường làm",
    "title": "4. In phiếu",
-   "text": "• Bấm \"In phiếu\" / \"In\" trên thẻ để in phiếu bếp ra máy in bếp (theo cài đặt In Hoá Đơn)."
+   "text": "• Bấm \"In phiếu\" / \"In\" trên thẻ để in phiếu bếp ra máy in bếp (theo cài đặt In Hoá Đơn). Phiếu in (kể cả qua máy chủ in) ghi giống thẻ phiếu."
   },
   {
    "id": "bep#cac-viec-thuong-lam-5-loc-theo-tram",
@@ -2368,7 +2368,7 @@
    "module_name": "Quản lý Bàn",
    "section": "Các việc thường làm",
    "title": "3. Gọi món",
-   "text": "1. Trong bàn bấm \"Gọi món ngay\" (bàn chưa có món) hoặc \"Thêm món\".\n2. Tìm \"Tìm sản phẩm, thức uống...\" hoặc chọn danh mục; chạm món để thêm.\n3. Món có thêm lựa chọn: bấm \"Tùy chọn\" trên thẻ món (máy màn hẹp như Sunmi: nút nhỏ nằm cạnh giá — món có ảnh chỉ còn biểu tượng, giá hiện số cuối cùng; chạm tên món cũng mở; thêm món không làm thẻ giãn ra nên các món bên dưới không dời chỗ):\n   • \"🥗 Topping tùy chọn\" — tăng/giảm số lượng từng topping. Số này là tổng của cả dòng: 2 ly + 1 trân châu là 1 phần (thu 5.000 đ), bill và phiếu bếp ghi \"Trân châu x1\"; mỗi ly 1 phần thì chỉ ghi tên topping. Topping vừa gắn ở Kho hàng (máy nào cũng được) hiện ngay lần mở \"Tùy chọn\" kế tiếp.\n   • \"✨ Tùy chọn hương vị\" — các tùy chọn món (mức cay, thêm món…) và chip ghi chú nhanh.\n   • \"Ghi chú\" — ghi chú riêng (\"vd: ít rau, không cay...\").\n4. Món \"TẠM HẾT\" (đã tắt bán hoặc hết tồn): app hỏi \"Món tạm hết\" → \"Vẫn thêm\" nếu chắc còn. Món bán theo công thức chỉ \"TẠM HẾT\" khi tắt bán — không xét tồn của chính món.\n5. \"Xem chi tiết\" để kiểm lại → \"Xác nhận • Thêm N món\".\n\nNhiều nhân viên gọi cùng một bàn được; mỗi món ghi tên người thêm. Gọi món chưa gửi bếp."
+   "text": "1. Trong bàn bấm \"Gọi món ngay\" (bàn chưa có món) hoặc \"Thêm món\".\n2. Tìm \"Tìm sản phẩm, thức uống...\" hoặc chọn danh mục; chạm món để thêm.\n3. Món có thêm lựa chọn: bấm \"Tùy chọn\" trên thẻ món (máy màn hẹp như Sunmi: nút nhỏ nằm cạnh giá — món có ảnh chỉ còn biểu tượng, giá hiện số cuối cùng; chạm tên món cũng mở; thêm món không làm thẻ giãn ra nên các món bên dưới không dời chỗ):\n   • \"🥗 Topping tùy chọn\" — tăng/giảm số lượng từng topping. Số này là tổng của cả dòng: 2 ly + 1 trân châu là 1 phần (thu 5.000 đ), bill và phiếu bếp ghi \"Trân châu x1\"; mỗi ly 1 phần thì chỉ ghi tên topping. Topping vừa gắn ở Kho hàng (máy nào cũng được) hiện ngay lần mở \"Tùy chọn\" kế tiếp. Gọi thêm đúng món đó kèm topping khi dòng cũ chưa gửi bếp: thành dòng riêng (món không topping vẫn cộng vào dòng cũ).\n   • \"✨ Tùy chọn hương vị\" — các tùy chọn món (mức cay, thêm món…) và chip ghi chú nhanh.\n   • \"Ghi chú\" — ghi chú riêng (\"vd: ít rau, không cay...\").\n4. Món \"TẠM HẾT\" (đã tắt bán hoặc hết tồn): app hỏi \"Món tạm hết\" → \"Vẫn thêm\" nếu chắc còn. Món bán theo công thức chỉ \"TẠM HẾT\" khi tắt bán — không xét tồn của chính món.\n5. \"Xem chi tiết\" để kiểm lại → \"Xác nhận • Thêm N món\".\n\nNhiều nhân viên gọi cùng một bàn được; mỗi món ghi tên người thêm. Gọi món chưa gửi bếp."
   },
   {
    "id": "quan-ly-ban#cac-viec-thuong-lam-4-gui-bep",
@@ -2384,7 +2384,7 @@
    "module_name": "Quản lý Bàn",
    "section": "Các việc thường làm",
    "title": "5. Sửa, giảm, huỷ món",
-   "text": "• Món chưa gửi bếp: dùng nút − / + để sửa số lượng, hoặc nút thùng rác để xoá — không cần duyệt.\n• Món đã gửi bếp: không có nút − / +, nên không giảm số lượng được. Muốn bớt (vd gửi 3 ly, khách chỉ lấy 2): huỷ cả món theo các bước dưới (cần Quản lý duyệt), rồi gọi lại đúng số lượng và gửi bếp lại.\n• Huỷ món đã gửi bếp (bấm nút thùng rác ở dòng món):\n  1. App cảnh báo theo trạng thái (\"📋 Món đã gửi bếp\", \"⚠️ Bếp đang làm món này!\", \"⚠️ Món này bếp đã làm xong!\").\n  2. Chọn \"Lý do huỷ *\": Khách đổi ý, Nhân viên nhập nhầm, Hết món…\n  3. Món đang làm/đã xong: công tắc \"Trừ kho nguyên liệu (hao hụt)\" bật sẵn — tắt đi nếu nguyên liệu chưa bị dùng. Món mới gửi, bếp chưa làm: không có công tắc và không trừ kho.\n  4. \"Huỷ món\" → Quản lý duyệt: Chủ quán/Quản lý tự duyệt; người khác (kể cả Thu ngân) phải nhờ Quản lý nhập mã PIN.\n  5. \"❌ Đã huỷ \"<món>\" — bếp đã được thông báo\". Có ghi nhật ký huỷ."
+   "text": "• Món chưa gửi bếp: dùng nút − / + để sửa số lượng, hoặc nút thùng rác để xoá — không cần duyệt. Món có topping thì − / + không đổi số ly (app báo \"Món có topping\" → \"Đã hiểu\"): xoá dòng rồi gọi lại đúng số ly và topping.\n• Món đã gửi bếp: không có nút − / +, nên không giảm số lượng được. Muốn bớt (vd gửi 3 ly, khách chỉ lấy 2): huỷ cả món theo các bước dưới (cần Quản lý duyệt), rồi gọi lại đúng số lượng và gửi bếp lại.\n• Huỷ món đã gửi bếp (bấm nút thùng rác ở dòng món):\n  1. App cảnh báo theo trạng thái (\"📋 Món đã gửi bếp\", \"⚠️ Bếp đang làm món này!\", \"⚠️ Món này bếp đã làm xong!\").\n  2. Chọn \"Lý do huỷ *\": Khách đổi ý, Nhân viên nhập nhầm, Hết món…\n  3. Món đang làm/đã xong: công tắc \"Trừ kho nguyên liệu (hao hụt)\" bật sẵn — tắt đi nếu nguyên liệu chưa bị dùng. Món mới gửi, bếp chưa làm: không có công tắc và không trừ kho.\n  4. \"Huỷ món\" → Quản lý duyệt: Chủ quán/Quản lý tự duyệt; người khác (kể cả Thu ngân) phải nhờ Quản lý nhập mã PIN.\n  5. \"❌ Đã huỷ \"<món>\" — bếp đã được thông báo\". Có ghi nhật ký huỷ."
   },
   {
    "id": "quan-ly-ban#cac-viec-thuong-lam-6-in-tam-tinh",

@@ -51,7 +51,7 @@ nguon:
 - Chạm vào món → **"Ghi chú nội bộ bếp (không hiển thị cho khách)"** → nhập (vd "làm chín kỹ, không cay") → **"Lưu ghi chú"**.
 
 ### 4. In phiếu
-- Bấm **"In phiếu"** / **"In"** trên thẻ để in phiếu bếp ra máy in bếp (theo cài đặt In Hoá Đơn).
+- Bấm **"In phiếu"** / **"In"** trên thẻ để in phiếu bếp ra máy in bếp (theo cài đặt In Hoá Đơn). Phiếu in (kể cả qua máy chủ in) ghi giống thẻ phiếu.
 
 ### 5. Lọc theo trạm
 - Chọn **"Bếp nóng"** hoặc **"Bếp nước"** để mỗi màn hình chỉ thấy món của trạm mình; trạng thái phiếu tính theo món của trạm đó.

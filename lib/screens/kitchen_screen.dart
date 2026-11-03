@@ -16,7 +16,7 @@ import '../core/repositories/kitchen_repository.dart';
 import '../core/services/staff_service.dart';
 import '../core/services/thermal_printer_service.dart';
 import '../core/services/printer_settings_service.dart';
-import '../core/utils/string_utils.dart' show qtyText, toppingTotal;
+import '../core/utils/string_utils.dart' show isToppingModifier, kitchenToppingLabel, qtyText, toppingTotal;
 import '../modules/bill_printer/screens/bill_preview_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2059,7 +2059,8 @@ class _TicketCard extends ConsumerWidget {
                                                runSpacing: 3,
                                                children: modifiers.map<Widget>((m) {
                                                  final isMap = m is Map;
-                                                 final isTopping = isMap && (m['type'] as String? ?? '') == 'topping';
+                                                 // Topping bàn có "type"; topping QR chỉ có "quantity" (mỗi phần)
+                                                 final isTopping = isMap && isToppingModifier(m);
                                                  final label = isTopping
                                                      ? '${m['name']} x${qtyText(toppingTotal(m, item.quantity))}'
                                                      : isMap
@@ -2353,15 +2354,9 @@ class _TicketCard extends ConsumerWidget {
               // Format từng modifier/topping entry thành text readable
               noteText = decoded.map<String>((m) {
                 if (m is Map) {
-                  final name = m['name'] as String? ?? '';
-                  // Bàn ghi qty = tổng dòng, QR ghi quantity = mỗi phần — quy về tổng như bill.
-                  final total = toppingTotal(m, i.quantity);
-                  final type = m['type'] as String? ?? '';
-                  if (type == 'topping') {
-                    return total != i.quantity ? '+$name ×${qtyText(total)}' : '+$name';
-                  }
-                  // on/off modifier (e.g. "Nhiều hành")
-                  return name;
+                  // Topping: bàn ghi qty = tổng dòng, QR ghi quantity = mỗi phần — quy về tổng như bill;
+                  // còn lại là tuỳ chọn bật/tắt (e.g. "Nhiều hành")
+                  return kitchenToppingLabel(m, i.quantity) ?? (m['name'] as String? ?? '');
                 }
                 return '$m';
               }).where((s) => s.isNotEmpty).join(', ');

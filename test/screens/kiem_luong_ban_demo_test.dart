@@ -17,7 +17,8 @@ import 'package:quannho_pos/modules/pos/screens/checkout_sheet.dart';
 import 'package:quannho_pos/screens/ban_screen.dart' show productToppingLinksProvider;
 
 Map<String, Object> _ban(int qty) => {'type': 'topping', 'name': 'Trân châu', 'qty': qty};
-Map<String, Object> _qr(int each) => {'type': 'topping', 'name': 'Trân châu', 'quantity': each};
+// Dạng QR thật (qr_price_items_v4 dựng lại): không có "type"
+Map<String, Object> _qr(int each) => {'id': 'tc', 'name': 'Trân châu', 'price': 5000, 'quantity': each};
 
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
@@ -62,7 +63,7 @@ void main() {
       final src = File('lib/screens/kitchen_screen.dart').readAsStringSync();
       expect(src, isNot(contains(r"x${m['qty']}")));
       expect(src, contains('toppingTotal(m, item.quantity)'));
-      expect(src, contains('toppingTotal(m, i.quantity)'));
+      expect(src, contains('kitchenToppingLabel(m, i.quantity)'));
     });
   });
 

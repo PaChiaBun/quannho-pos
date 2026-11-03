@@ -67,6 +67,8 @@ List<BillLine> mergeBillLines(List<Map<String, dynamic>> items) {
     final name = '${it['name'] ?? it['product_name'] ?? ''}';
     final qty =
         (it['quantity'] as num?)?.toDouble() ?? (it['qty'] as num?)?.toDouble() ?? 1;
+    // Món QR huỷ lúc thanh toán còn dòng 0 ly — không hiện (như bill in lại)
+    if (qty <= 0) continue;
     final unit = (it['unit_price'] as num?)?.toDouble() ?? 0;
     // Dòng QR cũ không ghi subtotal: tính lại thay vì hiện 0 đ.
     final sub = (it['subtotal'] as num?)?.toDouble() ?? unit * qty;
