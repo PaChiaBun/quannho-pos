@@ -2,6 +2,9 @@ import { assert, assertEquals, assertStringIncludes } from 'jsr:@std/assert@1';
 import {
   todayBlock,
   chonViecCu,
+  hopChuDe,
+  caBan,
+  ngayHoi,
   type ShopFacts,
   locViecCu,
   soLieuGoc,
@@ -749,7 +752,7 @@ Deno.test('Hôm nay: GPT biết thứ / ngày giờ Việt Nam và ngày lễ 45
   // 24/10 (ngày câu hỏi thật): trong 45 ngày chỉ có 20/11, KHÔNG có Giáng sinh
   const b = todayBlock(new Date('2026-10-24T01:00:00Z'));
   assertStringIncludes(b, 'Thứ Bảy, 24/10/2026');
-  assertStringIncludes(b, '20/11 Nhà giáo Việt Nam (còn 27 ngày)');
+  assertStringIncludes(b, '20/11 (Thứ Sáu) Nhà giáo Việt Nam (còn 27 ngày)');
   assert(!b.includes('Giáng sinh'), b);
   // 17:30 UTC = 00:30 hôm sau giờ Việt Nam
   assertStringIncludes(todayBlock(new Date('2026-10-25T17:30:00Z')), 'Thứ Hai, 26/10/2026');
@@ -758,7 +761,7 @@ Deno.test('Hôm nay: GPT biết thứ / ngày giờ Việt Nam và ngày lễ 45
   assertEquals(tet, [
     '2027-01-30 Ông Công ông Táo (23 tháng Chạp)', '2027-02-06 Tết Nguyên đán (mùng 1)', '2027-02-14 Valentine', '2027-02-20 Rằm tháng Giêng',
   ]);
-  assertStringIncludes(todayBlock(new Date('2026-12-20T03:00:00Z')), '24/12 Đêm Giáng sinh (còn 4 ngày); 25/12 Giáng sinh (còn 5 ngày); 1/1 Tết Dương lịch (còn 12 ngày)');
+  assertStringIncludes(todayBlock(new Date('2026-12-20T03:00:00Z')), '24/12 (Thứ Năm) Đêm Giáng sinh (còn 4 ngày); 25/12 (Thứ Sáu) Giáng sinh (còn 5 ngày); 1/1 (Thứ Sáu) Tết Dương lịch (còn 12 ngày)');
   assertStringIncludes(todayBlock(new Date('2026-09-25T03:00:00Z')), 'Trung thu (15/8 âm lịch) (hôm nay)');
   // Bảng âm lịch (Tết / Trung thu) chỉ tới 2028 — test này báo đỏ để nhắc thêm năm mới (shortcut ở logic.ts)
   assert(new Date().getUTCFullYear() < 2028, 'Thêm Tết / Trung thu năm mới vào bảng TET / TRUNG_THU trong logic.ts');
@@ -1224,3 +1227,43 @@ Deno.test('lô B: việc thiếu số / thời hạn, giờ / tuần mỗi ngư�
   assert(/Trứng gà: món có "trứng" bán .*≈ 33 quả \/ ngày .* đủ khoảng 1,2 ngày/.test(t), t);
   assert(!t.includes('KHÔNG có lượng dùng mỗi ngày → KHÔNG tự tính'), 'có ước thì bỏ câu cấm tính');
 });
+
+Deno.test('lô D: ngày được hỏi là thứ mấy, quán nghỉ ngày đó; doanh thu theo ca đúng khối giờ mở', () => {
+  const NOW = new Date('2026-10-28T09:00:00+07:00');
+  const L = (q: string) => parseFacts(JSON.parse(Deno.readTextFileSync(new URL(`./cham_tu_van/quan_${q}.json`, import.meta.url))).facts.thang_nay);
+  const d = L('d'), b = L('b');
+  assertStringIncludes(ngayHoi('20/11 sắp tới quán em có đông hơn không', NOW, d), '20/11/2026 là Thứ Sáu (còn 23 ngày) — Thứ Sáu trong kỳ trung bình 4.825.000đ/ngày');
+  assert(/24\/12\/2026 là Thứ Năm.*25\/12\/2026 là Thứ Sáu/.test(ngayHoi('Noel năm nay quán có đông không', NOW, b)));
+  assertStringIncludes(ngayHoi('tết dương lịch có nên nghỉ không', NOW, b), '1/1/2027 là Thứ Sáu');
+  assertStringIncludes(ngayHoi('1/11 có nên mở không', NOW, d), 'Chủ nhật quán KHÔNG bán (nghỉ)');
+  assertEquals(ngayHoi('doanh thu 1–28/10 sao rồi', NOW, d), '');
+  assertEquals(ngayHoi('món nào bán chạy', NOW, d), '');
+  assertStringIncludes(todayBlock(NOW), '20/11 (Thứ Sáu) Nhà giáo');
+  assertStringIncludes(caBan(d, 'ca tối có đáng mở không'), '6–13h 98.550.000đ = 83,5%; 17–21h 19.451.000đ = 16,5%');
+  assertEquals(caBan(d, 'món nào lời nhất'), '');
+});
+
+Deno.test('lô E: điểm cần chú ý theo chủ đề, việc vào ngày nghỉ / giờ đóng, câu cửa miệng', () => {
+  assert(hopChuDe('"Bạc xỉu" giá vốn 45% giá bán', 'có nên tăng giá bạc xỉu không'));
+  assert(!hopChuDe('hao hụt "Bánh mì" 96 ổ ≈ 384.000đ', 'có nên tăng giá bạc xỉu không'));
+  assert(hopChuDe('hao hụt "Bánh mì" 96 ổ ≈ 384.000đ', 'tháng này quán có vấn đề gì'));
+  assert(!hopChuDe('3 ca quá 16 giờ chưa chấm ra', 'mã GIAM15 có nên chạy tiếp'));
+  const d = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_d.json', import.meta.url)));
+  const f = parseFacts(d.facts.thang_nay)!;
+  const ref = soLieuGoc('ca tối có đáng mở không', { facts: f });
+  const l = loiLapLuan('Dạ.\n\nViệc tuần này:\n- Rút 1 người khung 14–16h trong 2 tuần, giữ nếu doanh thu không giảm.\n- Thử ưu đãi Chủ nhật 2 tuần.', ref);
+  assert(l.some((x) => x.includes('quán ĐÓNG cửa giờ đó') && x.includes('14–16h')), l.join('|'));
+  assert(l.some((x) => x.includes('Chủ nhật trong khi quán NGHỈ')), l.join('|'));
+  assertEquals(loiLapLuan('Dạ.\n\nViệc tuần này:\n- Thử ưu đãi 17–19h trong 2 tuần, giữ nếu đạt ≥ 6.000.000đ.', ref).filter((x) => /NGHỈ|ĐÓNG/.test(x)), []);
+  assert(loiLapLuan('Dạ, nếu muốn thử mở Chủ nhật thì thử 2 tuần.', soLieuGoc('có nên mở chủ nhật', { facts: f })).every((x) => !x.includes('NGHỈ')));
+  assertStringIncludes(buildMessages('làm muốn chết mà lời không bao nhiêu', [], null, { facts: f })[1].content, 'CÂU CỬA MIỆNG');
+  assert(!buildMessages('doanh thu tháng này sao', [], null, { facts: f })[1].content.includes('CÂU CỬA MIỆNG'));
+});
+
+Deno.test('lần 105 sửa: khung 3 tiếng vắng nhất không rơi vào giờ quán đóng', () => {
+  const d = JSON.parse(Deno.readTextFileSync(new URL('./cham_tu_van/quan_d.json', import.meta.url)));
+  const t = formatModules(parseModules(d.modules.thang_nay)!, new Date('2026-10-28T09:00:00+07:00'), 'ca làm nhiều quá có nên cắt bớt 1 người', parseFacts(d.facts.thang_nay));
+  const m = /Khung 3 tiếng vắng nhất trong giờ mở[^:]*: (\d+)–(\d+)h/.exec(t);
+  assert(m && !(+m[1] < 17 && +m[2] > 13), t);
+});
+

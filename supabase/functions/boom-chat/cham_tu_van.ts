@@ -75,14 +75,18 @@ function caseMessages(c: Case, s: Store) {
   if (c.facts && !facts) throw new Error(`${c.id}: số bán "${c.facts}" không hợp lệ`);
   if (c.modules && !modules) throw new Error(`${c.id}: số mục "${c.modules}" không hợp lệ`);
   const seen = [facts ? formatFacts(facts, NOW, c.q, (c.history ?? []).slice(-1).map((t: { q: string; a: string | null }) => `${t.q} ${t.a ?? ''}`).join(' ')) : '', modules ? formatModules(modules, NOW, c.q) : ''].filter(Boolean).join('\n') || '(không có số liệu)';
-  return { msgs: buildMessages(c.q, [], null, { facts, modules, memory: c.history, now: NOW }), seen, ref: soLieuGoc(c.q, { facts, modules, memory: c.history, now: NOW }) };
+  // 03/11 (lô E): khối cho người chấm = ĐÚNG số Boom thấy (cả dòng cần số bán hàng: ngày mở, lượng dùng ước, ngày được hỏi, ca);
+  // trước đây formatModules không nhận số bán hàng → người chấm trừ oan "số bịa" ở lô B, D
+  const ref = soLieuGoc(c.q, { facts, modules, memory: c.history, now: NOW });
+  return { msgs: buildMessages(c.q, [], null, { facts, modules, memory: c.history, now: NOW }), seen: ref.split('\n').slice(1).join('\n') || seen, ref, facts, modules };
 }
 
 const rows: Record<string, unknown>[] = [];
 let chars = 0;
 for (const [i, c] of cases.entries()) {
   const s = stores[c.quan];
-  const { msgs, seen, ref } = caseMessages(c, s);
+  const cm = caseMessages(c, s);
+  const { msgs, seen, ref } = cm;
   if (DRY) {
     chars += msgs.reduce((n, m) => n + m.content.length, 0);
     if (i < 2) console.log(`── ${c.id} (${c.loai}, quán ${c.quan})\n${msgs.map((m) => `[${m.role}] ${m.role === 'system' ? `${m.content.length} ký tự lời nhắc` : m.content}`).join('\n')}\n`);

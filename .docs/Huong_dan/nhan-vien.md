@@ -41,7 +41,7 @@ Có nhân viên mới (phục vụ, thu ngân, bếp…), muốn cho vào app c�
 2. Mục **"Vai trò & Quyền hạn"** → **"Chọn vai trò cho nhân viên..."** → **"Lưu vai trò"** → "✅ Đã cập nhật vai trò".
 3. Nhân viên đang dùng app thấy ngay "🔄 Vai trò của bạn đã đổi sang: …" / "⚡ Quyền truy cập của bạn vừa được cập nhật".
 
-Ví dụ: đổi nhân viên từ Nhân viên (hoặc Phục vụ) sang Thu ngân, hoặc gán vai trò Thu ngân cho nhân viên mới vào.
+Ví dụ: cho bạn phục vụ lên làm thu ngân (đổi vai trò Phục vụ / Nhân viên sang Thu ngân), hoặc gán vai trò Thu ngân cho nhân viên mới vào.
 
 ### 2. Hồ sơ nhân viên
 - Trong chi tiết: **"Mô tả công việc"**, **"Ngày bắt đầu"** → **"Lưu hồ sơ"**.

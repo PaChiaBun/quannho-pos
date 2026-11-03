@@ -114,12 +114,14 @@ const SO_THU_VC: Record<string, string> = { hai: '2', ba: '3', tu: '4', nam: '5'
 function chuDe(x: string, mon: string[]): Set<string> {
   const f = ` ${boDauVc(x)} `, out = new Set<string>();
   const nhom: [string, RegExp][] = [
-    ['khach', /\bkhach (?:quen|quay|cu)|quay lai|tich diem|the tich/], ['ma', /\bma (?:giam|khuyen)|\b[a-z]{3,}\d{2}\b|khuyen mai|uu dai/],
-    ['gia', /tang gia|giam gia|gia von|\bloi\b|\blai\b|loi nhuan/], ['thu_chi', /thu chi|chi phi|\bchi\b|tien dien|mat bang|\bluong\b/],
- ['nhan_su', /nhan vien|\bnv\b|ca lam|cat bot|xep ca/],
+    ['khach', /\bkhach (?:quen|quay|cu)|quay lai|tich diem|the tich/], ['ma', /\bma (?:giam|khuyen)|\b[a-z]{3,}\d{2}\b|khuyen mai|uu dai|giam gia|voucher/],
+    ['gia', /tang gia(?! tri)|giam gia(?! tri)|gia von|loi nhuan/], ['thu_chi', /thu chi|chi phi|\bchi\b|tien dien|mat bang|\bluong\b/],
+ ['nhan_su', /nhan vien|\bnv\b|ca lam|cat bot|xep ca|cham cong|quen chot/],
     ['topping', /topping|tran chau|\bthach\b/], ['do_uong', /do uong|nuoc uong|ban nuoc|\bnuoc\b/], ['combo', /\bcombo\b/],
   ];
   for (const [k, re] of nhom) if (re.test(f)) out.add(k);
+  // lãi / lời xét trên chữ CÓ dấu: bỏ dấu thì "lại" = "lãi", "lỗi" = "lời" (đo 04/11: "nhập ít lại" bị hiểu là hỏi lãi)
+  if (/(?<!\p{L})(?:lãi|lời)(?!\p{L})/iu.test(x)) out.add('gia');
   // kho: phải trùng đúng mặt hàng — đo 03/11 "bún hao hụt" nhận việc "nhập gas, gạo" rồi bịa "đã gợi ý nhập ít bún"
   if (/\bkho\b|\bnhap\b|\bton\b|hao hut|sap het|\bhet\b/.test(f)) {
     for (const m of f.matchAll(/\b(gas|gao|bun|thit|rau|sua dac|sua|tran chau|ca phe|hat|ly|duong|trung|banh mi|da|suon|mi)\b/g)) out.add(`kho:${m[1]}`);
@@ -146,6 +148,20 @@ export function locViecCu(question: string, v: ViecCu[] | null | undefined, fact
   const mon = tenMon(facts), cd = chuDe(question, mon);
   if (!cd.size) return []; // đo 03/11: câu chung ("làm gì cho tăng") nhận việc nhập gas → sai chủ đề
   return v.filter((x) => [...chuDe(x.cau, mon)].some((k) => cd.has(k)));
+}
+
+// Lô E (03/11): "ĐIỂM CẦN CHÚ Ý" đưa cho MỌI câu → Boom chen ý lạc (giá vốn Bạc xỉu, gas / gạo, chấm ra trong câu không hỏi tới; gọn 1,6–1,7 / 2).
+// Câu hỏi chung giữ hết; câu có chủ đề chỉ giữ điểm cùng chủ đề hoặc nhắc đúng tên món / mặt hàng có trong câu hỏi.
+const CAU_CHUNG = /v[aấ]n đ[eề]|c[oó] g[iì] (?:ph[aả]i )?lo|lo g[iì]|l[aà]m [aă]n|t[iì]nh h[iì]nh|k[eể] h[eế]t|ch[iỉ] ra h[eế]t|t[aạ]i sao|v[iì] sao|\bsao\b|chi ti[eế]t h[oơ]n|b[aấ]t th[uư][oờ]ng|t[oố]t hay x[aấ]u|k[eế] ho[aạ]ch|th[aá]ng (?:t[oớ]i|sau)|tu[aầ]n (?:t[oớ]i|sau)|l[aà]m g[iì]|n[eê]n l[aà]m/i;
+export function hopChuDe(diem: string, question: string): boolean {
+  const cq = chuDe(question, []);
+  if (CAU_CHUNG.test(question)) return true;
+  // câu hỏi kho chung ("kho có gì cần lo") không nêu mặt hàng → chỉ giữ điểm về tồn / nhập / hao hụt
+  if (!cq.size && /(?<!\p{L})kho(?!\p{L})|nh[aậ]p|t[oồ]n(?!\p{L})|hao h[uụ]t|s[aắ]p h[eế]t/iu.test(question)) return /tồn|nhập|hao hụt|tối thiểu|HẾT|hết/i.test(diem);
+  if (!cq.size) return true;
+  const q = ` ${boDauVc(question)} `;
+  if ([...diem.matchAll(/"([^"]{3,})"/g)].some((m) => q.includes(` ${boDauVc(m[1]).trim()} `))) return true;
+  return [...chuDe(diem, [])].some((k) => cq.has(k));
 }
 
 const viecCuTxt = (v: ViecCu[]) => v.map((x) => `- ${x.ngay} (hỏi "${x.cau.replace(/["\n]/g, ' ')}"): ${x.viec.join(' | ')}`).join('\n');
@@ -613,6 +629,8 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
       const co = (gio ?? []).flatMap((v, h) => (nn(v) > 0 ? [h] : [])), tongGio = (gio ?? []).reduce((a, v) => a + nn(v), 0);
       let vh = -1, vs = Infinity;
       for (let h = co[0] + 1; co.length && h + 3 <= co[co.length - 1]; h++) {
+        // bộ kín 03/11: quán nghỉ trưa 13–17h → khung 13–16h doanh thu 0 bị chọn "vắng nhất" → chỉ xét khung mà cả 3 giờ đều có bán
+        if (!(nn(gio![h]) > 0 && nn(gio![h + 1]) > 0 && nn(gio![h + 2]) > 0)) continue;
         const s3 = nn(gio![h]) + nn(gio![h + 1]) + nn(gio![h + 2]);
         if (s3 < vs) [vh, vs] = [h, s3];
       }
@@ -677,7 +695,8 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
     if (nn(k.out_count) > 0) al.push(`${nn(k.out_count)} mặt hàng đã HẾT`);
   }
   if (n && nn(n.forgot_clock_out)) al.push(`${nn(n.forgot_clock_out)} ca quá 16 giờ chưa chấm ra`);
-  if (al.length) out.push(`ĐIỂM CẦN CHÚ Ý (tính sẵn — nêu những điểm liên quan câu hỏi): ${al.slice(0, 8).map((x, z) => `${z + 1}) ${x}`).join('; ')}.`);
+  const alq = al.filter((x) => hopChuDe(x, question));
+  if (alq.length) out.push(`ĐIỂM CẦN CHÚ Ý (tính sẵn — nêu những điểm liên quan câu hỏi): ${alq.slice(0, 8).map((x, z) => `${z + 1}) ${x}`).join('; ')}.`);
   return out.join('\n');
 }
 
@@ -1221,7 +1240,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   const rank = (x: string) => (x.startsWith('combo') ? 0 : x.includes('giá vốn') ? 1 : x.includes('% doanh thu') ? 2 : 3);
   alerts.sort((x, y) => rank(x) - rank(y));
   // lần 52: câu dự báo chép điểm cần chú ý thành việc lạc đề (tăng giá trà dâu, quảng bá topping — D47, D41)
-  if (alerts.length && !duBao) lines.push(`ĐIỂM CẦN CHÚ Ý (tính sẵn — nêu những điểm liên quan câu hỏi ở "Vì sao" / "Cần xem lại"): ${alerts.slice(0, 8).map((x, k) => `${k + 1}) ${x}`).join('; ')}.`);
+  const alq = alerts.filter((x) => hopChuDe(x, question));
+  if (alq.length && !duBao) lines.push(`ĐIỂM CẦN CHÚ Ý (tính sẵn — nêu những điểm liên quan câu hỏi ở "Vì sao" / "Cần xem lại"): ${alq.slice(0, 8).map((x, k) => `${k + 1}) ${x}`).join('; ')}.`);
   return lines.join('\n');
 }
 
@@ -1737,13 +1757,65 @@ export function upcomingHolidays(now: Date, days = 45): [number, string][] {
   return out.filter(([t]) => t >= today && t <= end).sort((a, b) => a[0] - b[0]);
 }
 
+// Lô D (03/11): bộ v2 — dự báo 10,6 / 16: không câu nào nói 20/11, 1/1 là Thứ Sáu, Noel 24/12 Thứ Năm; có câu nói "nếu Noel rơi vào cuối tuần".
+// Câu hỏi nhắc NGÀY / ngày lễ → tính sẵn thứ mấy, quán mở hay nghỉ thứ đó, trung bình thứ đó. Chỉ bật khi câu hỏi có ngày (lô C: dòng không đúng chủ đề = nhiễu).
+const LE_HOI: [RegExp, number, number][] = [
+  [/noel|gi[aá]ng sinh/i, 12, 24], [/t[eế]t d[uư][oơ]ng|n[aă]m m[oớ]i d[uư][oơ]ng/i, 1, 1], [/nh[aà] gi[aá]o/i, 11, 20], [/valentine|t[iì]nh nh[aâ]n/i, 2, 14],
+  [/qu[oố]c t[eế] ph[uụ] n[uữ]/i, 3, 8], [/ph[uụ] n[uữ] vi[eệ]t nam/i, 10, 20], [/thi[eế]u nhi/i, 6, 1], [/qu[oố]c kh[aá]nh/i, 9, 2], [/gi[aả]i ph[oó]ng/i, 4, 30],
+];
+export function ngayHoi(question: string, now: Date, f?: ShopFacts | null): string {
+  const today = vnDay(now), y0 = new Date(today).getUTCFullYear();
+  const ke = (m: number, d: number) => { let t = Date.UTC(y0, m - 1, d); if (t < today) t = Date.UTC(y0 + 1, m - 1, d); return t; };
+  const ts = new Set<number>();
+  for (const [re, m, d] of LE_HOI) if (re.test(question)) { ts.add(ke(m, d)); if (m === 12 && d === 24) ts.add(ke(12, 25)); }
+  for (const x of question.matchAll(/(?<![\d/]|[–-]\s*)(\d{1,2})\s*\/\s*(\d{1,2})(?![\d/])/g)) {
+    const d = +x[1], m = +x[2];
+    if (m >= 1 && m <= 12 && d >= 1 && d <= 31 && ke(m, d) - today <= 120 * DAY_MS) ts.add(ke(m, d));
+  }
+  if (/t[eế]t(?! d[uư][oơ]ng)/i.test(question) && !/t[eế]t d[uư][oơ]ng/i.test(question)) for (const y of [y0, y0 + 1]) if (TET[y] && Date.parse(TET[y]) >= today) { ts.add(Date.parse(TET[y])); break; }
+  if (/trung thu/i.test(question)) for (const y of [y0, y0 + 1]) if (TRUNG_THU[y] && Date.parse(TRUNG_THU[y]) >= today) { ts.add(Date.parse(TRUNG_THU[y])); break; }
+  if (!ts.size) return '';
+  // thứ đó trong kỳ số liệu: tổng / số lần thứ đó xuất hiện từ from → to
+  const bw = f?.by_weekday, from = f?.from ? Date.parse(f.from) : NaN, to = f?.to ? Date.parse(f.to) : NaN;
+  const dem = (wd: number) => { let c = 0; if (Number.isFinite(from) && Number.isFinite(to)) for (let t = from; t <= to; t += DAY_MS) if (new Date(t).getUTCDay() === wd) c++; return c; };
+  const mo = bw?.some((v) => v > 0);
+  const out = [...ts].sort((a, b) => a - b).map((t) => {
+    const wd = new Date(t).getUTCDay(), i = (wd + 6) % 7, n = Math.round((t - today) / DAY_MS);
+    const ngay = `${dm(t)}/${new Date(t).getUTCFullYear()} là ${THU[wd]} (${n === 0 ? 'hôm nay' : n > 0 ? `còn ${n} ngày` : `đã qua ${-n} ngày`})`;
+    if (!bw || !mo) return ngay;
+    if (!(bw[i] > 0)) return `${ngay} — ${THU[wd]} quán KHÔNG bán (nghỉ) theo số theo thứ → nếu muốn mở ngày đó là mở THÊM, chưa có số`;
+    const c = dem(wd);
+    return `${ngay} — ${THU[wd]} trong kỳ ${c ? `trung bình ${vnd(bw[i] / c)}/ngày (${c} ngày)` : `tổng ${vnd(bw[i])}`}`;
+  });
+  return `NGÀY ĐƯỢC HỎI (tính sẵn — nêu đúng thứ mấy ở câu đầu; chưa có số ngày đó năm trước → KHÔNG đoán % tăng / giảm, chỉ dùng số thứ đó làm mốc): ${out.join('; ')}.`;
+}
+
+// Lô D: so ca sai cơ sở (bộ v2: "ca sáng 6–11h" bỏ 11–13h, ca tối bỏ giờ 16h) → tính sẵn doanh thu theo KHỐI GIỜ MỞ thật; chỉ khi câu hỏi nói ca / buổi.
+export function caBan(f: ShopFacts | null | undefined, question: string): string {
+  const h = f?.by_hour;
+  if (!h || !/(?<!\p{L})ca(?!\p{L})|bu[oổ]i|s[aá]ng|tr[uư]a|chi[eề]u|t[oố]i|khung gi[oờ]/iu.test(question)) return '';
+  const tong = h.reduce((a, v) => a + v, 0);
+  if (tong <= 0) return '';
+  const khoi: [number, number, number][] = [];
+  for (let i = 0; i < 24; i++) if (h[i] > 0) { const k = khoi[khoi.length - 1]; if (k && k[1] === i) { k[1] = i + 1; k[2] += h[i]; } else khoi.push([i, i + 1, h[i]]); }
+  const p = (v: number) => `${pctTxt((v / tong) * 100)}%`;
+  if (khoi.length >= 2) return `DOANH THU THEO CA (tính sẵn theo khối giờ có bán liền nhau; so ca thì dùng ĐÚNG các khung này, không cắt bớt giờ): ${khoi.map(([a, b, v]) => `${a}–${b}h ${vnd(v)} = ${p(v)}`).join('; ')}${khoi.length === 2 ? ` → ca ${khoi[0][0]}–${khoi[0][1]}h gấp ${pctTxt(khoi[0][2] / khoi[1][2])} lần ca ${khoi[1][0]}–${khoi[1][1]}h` : ''}; giờ giữa các khung quán KHÔNG bán (đóng) — không gọi là "vắng".`;
+  const bq: [string, number, number][] = [['sáng', 0, 11], ['trưa', 11, 14], ['chiều', 14, 17], ['tối', 17, 24]];
+  const ds = bq.map(([t, a, b]) => [t, a, b, h.slice(a, b).reduce((x, v) => x + v, 0)] as const).filter((x) => x[3] > 0);
+  return ds.length >= 2 ? `DOANH THU THEO BUỔI (tính sẵn, trong giờ có bán ${khoi[0][0]}–${khoi[0][1]}h): ${ds.map(([t, a, b, v]) => `${t} ${Math.max(a, khoi[0][0])}–${Math.min(b, khoi[0][1])}h ${vnd(v)} = ${p(v)}`).join('; ')}.` : '';
+}
+
+// Cố vấn app (04/11) — thử dòng "CÀI ĐẶT NÊN LÀM TRONG APP" + code gắn "Trong app: …" vào câu tư vấn: chấm kín 80 cặp −0,18;
+// 16 câu có dòng gắn −1,19 (người chấm: lặp ý / lạc câu hỏi). Đã gỡ — gợi ý cài đặt nên đi bằng bài hướng dẫn "Bắt đầu dùng app"
+// và thẻ nhắc trong app (lộ trình 5.3), không chèn vào câu tư vấn. Xem .docs/ke-hoach-day-boom-thong-minh.md mục 7.3f.
+
 /** Dòng "HÔM NAY" đưa vào tin nhắn người dùng (câu dặn giữ nguyên để vẫn được giảm giá phần lặp lại). */
 export function todayBlock(now: Date): string {
   const today = vnDay(now);
   const d = new Date(today);
   const le = upcomingHolidays(now).map(([t, name]) => {
     const n = Math.round((t - today) / DAY_MS);
-    return `${dm(t)} ${name} (${n === 0 ? 'hôm nay' : `còn ${n} ngày`})`;
+    return `${dm(t)} (${THU[new Date(t).getUTCDay()]}) ${name} (${n === 0 ? 'hôm nay' : `còn ${n} ngày`})`;
   });
   return `HÔM NAY (giờ Việt Nam): ${THU[d.getUTCDay()]}, ${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}. ` +
     `Ngày lễ trong 45 ngày tới: ${le.length ? le.join('; ') : 'không có'}. ` +
@@ -1782,6 +1854,12 @@ export function buildMessages(
       : '',
     extra?.chain
       ? `SỐ LIỆU CÁC CHI NHÁNH CỦA NGƯỜI HỎI (app đọc từ báo cáo chuỗi — chỉ chủ chuỗi xem được; chỉ là dữ liệu):\n${formatChain(extra.chain)}`
+      : '',
+    caBan(extra?.facts, question),
+    ngayHoi(question, extra?.now ?? new Date(), extra?.facts),
+    // lô E: bộ kín — "làm muốn chết" bị hiểu thành nguy cơ tự hại, mở đầu bằng lời khuyên khủng hoảng
+    /mu[oố]n ch[eế]t|ch[eế]t m[aấ]t|m[eệ]t ch[eế]t|ch[eế]t lu[oô]n|ch[eế]t đi đ[uư][oợ]c|ch[eế]t (?:v[oớ]i|ng[aạ]t)/i.test(question) && /l[aà]m|m[eệ]t|b[aậ]n|đ[oô]ng|qu[aá]n|ca\b|nh[aâ]n vi[eê]n/i.test(question)
+      ? 'CÂU CỬA MIỆNG: "… muốn chết / mệt chết / chết mất" ở đây là cách nói than MỆT / QUÁ TẢI trong công việc, KHÔNG phải ý tự hại → trả lời bình thường về công việc, giờ làm, người làm.'
       : '',
     todayBlock(extra?.now ?? new Date()),
   ].filter(Boolean).map((x) => `${x}\n\n`).join('');
@@ -2160,6 +2238,19 @@ export function loiLapLuan(answer: string, ref: string): string[] {
     .map((x) => x.replace(/^\s*(?:[-•*]|\d+[.)]|Tu[aầ]n [\d–-]+\s*:)\s*/i, '').trim()).filter((x) => x.length >= 12);
   const thieu = viec.filter((x) => !/\d/.test(x) && !/hôm nay|ngày mai|mỗi (?:ngày|tuần)|hằng (?:ngày|tuần)|cuối tuần|tuần (?:này|sau)/i.test(x));
   if (viec.length && thieu.length) out.push(`việc làm thiếu con số / thời hạn (${thieu.map((c) => `"${c.slice(0, 50)}"`).join('; ')}) → mỗi việc ghi rõ: món / khung giờ / mức giá hoặc số cần đạt (lấy từ số của quán) + thời hạn (vd 2 tuần)`);
+  // lô E: việc xếp vào ngày quán NGHỈ / khung giờ quán ĐÓNG; gọi giờ đóng là "vắng" (bộ v2: rút người 13–16h khi quán đóng 13–17h)
+  const hs = /HỒ SƠ QUÁN \(tự suy[^\n]*/.exec(ref)?.[0] ?? '';
+  const nghi = /nghỉ ((?:Thứ \d|Chủ nhật)(?:,? (?:và )?(?:Thứ \d|Chủ nhật))*)/.exec(hs)?.[1]?.split(/,\s*|\s+và\s+/).filter(Boolean) ?? [];
+  const mo = [...(/có bán ([^;]+)/.exec(hs)?.[1] ?? '').matchAll(/(\d{1,2})h–(\d{1,2})h/g)].map((m) => [+m[1], +m[2]] as const);
+  const hoi = (ref.split('\n')[0] ?? '').toLowerCase();
+  const cauViec = cau.filter((c) => /thử|mở|ưu đãi|rút|bớt|thêm người|xếp|chạy|bán|combo|khung/i.test(c));
+  const ngayNghi = nghi.filter((d) => !hoi.includes(d.toLowerCase()) && cauViec.some((c) => c.includes(d) && !/nghỉ|không mở|đóng|mở thêm|thử mở/i.test(c)));
+  if (ngayNghi.length) out.push(`xếp việc vào ${ngayNghi.join(', ')} trong khi quán NGHỈ ngày đó → chuyển sang ngày quán mở`);
+  if (mo.length >= 2) {
+    const dong = (a: number, b: number) => !mo.some(([x, y]) => a < y && b > x);
+    const sai = [...answer.matchAll(/(\d{1,2})\s*[–-]\s*(\d{1,2})\s*h/g)].map((m) => [+m[1], +m[2], m.index ?? 0] as const).filter(([a, b]) => a < b && dong(a, b));
+    if (sai.length) out.push(`nhắc khung ${sai.map(([a, b]) => `${a}–${b}h`).join(', ')} nhưng quán ĐÓNG cửa giờ đó (chỉ bán ${mo.map(([a, b]) => `${a}–${b}h`).join(', ')}) → không gọi là "vắng", không xếp việc / rút người vào giờ đóng`);
+  }
   // việc làm chung chung không gắn số (KHO VIỆC cấm) — "đẩy mạnh quảng bá qua các kênh truyền thông", "tổ chức sự kiện"
   const chung = cau.filter((c) => /(?:đẩy mạnh|tăng cường) (?:quảng bá|quảng cáo|truyền thông|marketing)|kênh truyền thông|mạng xã hội|tổ chức (?:sự kiện|minigame|mini game)|nâng cao chất lượng|khảo sát (?:ý kiến )?khách|cải thiện trải nghiệm/i.test(c) && !/\d/.test(c));
   if (chung.length) out.push(`việc làm chung chung, không gắn số (${chung.map((c) => `"${c.trim().slice(0, 60)}"`).join('; ')}) → thay bằng việc cụ thể từ số của quán: món / giờ / giá / mốc đo`);
@@ -2233,6 +2324,8 @@ export function soLieuGoc(question: string, extra?: { facts?: ShopFacts | null; 
     extra?.facts ? formatFacts(extra.facts, now, question, luotTruoc(extra)) : '',
     extra?.modules ? formatModules(extra.modules, now, question, extra.facts ?? null) : '',
     extra?.chain ? formatChain(extra.chain) : '',
+    caBan(extra?.facts, question),
+    ngayHoi(question, now, extra?.facts),
     todayBlock(now),
   ].filter(Boolean).join('\n');
 }

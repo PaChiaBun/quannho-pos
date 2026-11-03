@@ -1,6 +1,6 @@
 {
- "version": 202611030852,
- "hash": "b27aa26a6f0d2873e7c4ed756bd0049b8b0002634744d1eb9171ed384894453d",
+ "version": 202611031750,
+ "hash": "23b3ef372488a4eb280d1c7612df820a195131ece41a46c242288c188e9182b1",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -513,6 +513,62 @@
    "section": "Lỗi thường gặp",
    "title": "Không tìm thấy bill cũ ở tab Hóa đơn",
    "text": "Vì sao: Kỳ đang chọn không chứa ngày của bill\nLàm gì: Chọn đúng ngày của bill"
+  },
+  {
+   "id": "bat-dau#bat-dau-dung-app-la-gi",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "",
+   "title": "Bắt đầu dùng app là gì",
+   "text": "Quán mới bắt đầu dùng app nên cài những gì trước, và nên bật module nào theo kiểu quán (mang đi, có bàn, có nhân viên chia ca). Mỗi việc ghi tên bài chi tiết để làm theo từng bước."
+  },
+  {
+   "id": "bat-dau#ai-dung-duoc",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "",
+   "title": "Ai dùng được",
+   "text": "• Chủ quán: cài được mọi thứ, bật / tắt module của quán.\n• Quản lý: làm được phần lớn việc cài (món, máy in, khách hàng, voucher) tuỳ vai trò được cấp; không bật / tắt module."
+  },
+  {
+   "id": "bat-dau#man-hinh-gom-nhung-gi",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "",
+   "title": "Màn hình gồm những gì",
+   "text": "Trang chủ có phần \"Chức năng\": các ô module đang bật của quán (\"… đang bật • Giữ ô để sắp xếp\"). Chủ quán thấy nút \"Sửa\" để bật / tắt module. Mỗi module có bài hướng dẫn riêng; bài này chỉ chỉ ra nên làm việc nào trước."
+  },
+  {
+   "id": "bat-dau#cac-viec-thuong-lam-1-cai-theo-kieu-quan-quan-moi-nen-lam-gi",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "Các việc thường làm",
+   "title": "1. Cài theo kiểu quán (quán mới nên làm gì trước)",
+   "text": "Việc cần làm trước (mọi quán):\n1. Thêm món và giá bán: bài Kho hàng, việc \"Thêm món / nguyên liệu\". Nhập luôn giá vốn mỗi món nếu biết để Báo cáo tính được lời.\n2. Cài máy in bill: máy cầm tay Sunmi dùng \"Thiết lập nhanh cho máy cầm tay (Sunmi)\" (bài In Hoá Đơn); máy Windows dùng \"Cài máy in trên máy Windows (lần đầu)\".\n3. Thêm nhân viên và gán vai trò: bài Nhân viên & Phân quyền, việc \"Gán / đổi vai trò cho nhân viên\".\n4. Bán thử 1 đơn ở Bán hàng, in thử bill, rồi xem lại ở Báo cáo.\n\nLưu ý: Thu Chi tự ghi tiền bán hàng; tiền chi (nguyên liệu, mặt bằng, điện nước, lương) phải ghi phiếu chi thì Báo cáo và Bé Boom mới tính đúng thu − chi.\n\nQuán cà phê / trà sữa bán mang đi:\n1. Topping (trân châu, thạch…): bài Kho hàng, việc \"Topping (trà sữa, cơm thêm…)\".\n2. Size, đường, đá: bài Kho hàng, việc \"Tùy chọn món (Modifiers) và Ghi chú nhanh\".\n3. Tem dán ly cho đơn mang đi: bài In Hoá Đơn, việc \"In tem dán ly\".\n4. Hết nguyên liệu tạm thời: bài Kho hàng, việc \"Bật / tắt bán (hết món tạm thời)\".\n5. Quán chỉ bán mang đi thì KHÔNG cần Quản lý Bàn; có thể tắt module này (xem việc 7).\n\nQuán ăn / quán có bàn phục vụ tại chỗ:\n1. Khu vực và bàn: bài Quản lý Bàn, việc \"Thiết lập khu vực và bàn (lần đầu)\".\n2. Khách tự gọi món bằng mã QR dán ở bàn: bài QR Gọi Món, việc \"Bật QR và dán mã ở quán\".\n3. Có bếp / quầy pha riêng: dùng module Bếp; muốn đồ ăn in ra bếp, đồ uống in ra quầy bar thì bài In Hoá Đơn, việc \"Thêm máy in\" rồi \"Tạo luật in\".\n\nQuán có nhân viên chia ca:\n1. Chấm công bằng điện thoại: bài Chấm công, việc \"Cài vị trí quán\" (Chủ quán / Quản lý làm một lần), rồi nhân viên \"Vào ca\".\n2. Trả lương theo giờ hoặc theo tháng: bài Lương, việc \"Cấu hình lương (làm trước khi tạo kỳ)\".\n3. Việc mở cửa / đóng cửa mỗi ngày: bài Vận Hành, việc \"Quản lý: tạo checklist\" hoặc \"Quản lý: nạp checklist mẫu\".\n\nMuốn biết lời lỗ thật từng món:\n1. Ghi giá vốn khi thêm món (bài Kho hàng) — cách nhanh nhất.\n2. Món pha chế / nấu từ nhiều nguyên liệu, muốn bán xong tự trừ kho: bài Kho Chuyên Nghiệp, việc \"Chuẩn bị nguyên liệu (ở Kho hàng)\" rồi \"Tạo công thức món\"; nồi nước dùng, cốt pha sẵn dùng \"Bán thành phẩm\".\n3. Nhập hàng từ mối quen: bài Kho hàng, việc \"Phiếu nhập hàng (nhiều món, có nhà cung cấp)\"; cài mức tồn tối thiểu cho từng nguyên liệu để app báo sắp hết.\n\nGiữ khách quen:\n1. Lưu khách khi thanh toán để tích điểm: bài Khách hàng – Giảm giá – Khuyến mãi, việc \"Thêm khách\".\n2. Đổi điểm lấy quà: việc \"Phần thưởng đổi điểm\".\n3. Mã giảm giá: việc \"Tạo mã giảm giá (voucher)\". Khách nạp tiền trước vào ví: việc \"Tạo gói nạp\"."
+  },
+  {
+   "id": "bat-dau#cac-viec-thuong-lam-2-bat-tat-module-tren-trang-chu-chu-quan",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "Các việc thường làm",
+   "title": "2. Bật / tắt module trên Trang chủ (Chủ quán)",
+   "text": "1. Ở Trang chủ, phần \"Chức năng\", bấm \"Sửa\".\n2. Muốn tắt module không dùng: nhấn dấu \"–\" trên ô module → \"Tắt module\". Dữ liệu được giữ nguyên, bật lại lúc nào cũng được.\n3. Muốn bật thêm: bấm \"+ Thêm module\" và chọn module.\n4. Bấm \"Xong\" để lưu.\n\nLưu ý: tắt module là tắt cho cả quán — nhân viên cũng không thấy module đó nữa. Nhân viên không có nút \"Sửa\" (thấy \"Nhân viên không có quyền chỉnh sửa\")."
+  },
+  {
+   "id": "bat-dau#loi-khong-thay-nut-sua-o-phan-chuc-nang",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "Lỗi thường gặp",
+   "title": "Không thấy nút \"Sửa\" ở phần \"Chức năng\"",
+   "text": "Vì sao: Chỉ Chủ quán bật / tắt được module\nLàm gì: Nhờ Chủ quán làm"
+  },
+  {
+   "id": "bat-dau#loi-module-kho-dang-tat-o-bao-cao",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "Lỗi thường gặp",
+   "title": "\"Module Kho đang tắt\" ở Báo cáo",
+   "text": "Vì sao: Module Kho hàng đã bị tắt\nLàm gì: Chủ quán bật lại bằng \"Sửa\" → \"+ Thêm module\""
   },
   {
    "id": "bep#bep-la-gi",
@@ -1744,7 +1800,7 @@
    "module_name": "Nhân viên & Phân quyền",
    "section": "Các việc thường làm",
    "title": "1. Gán / đổi vai trò cho nhân viên",
-   "text": "1. Chạm nhân viên (hoặc \"Cấp quyền\" với người mới).\n2. Mục \"Vai trò & Quyền hạn\" → \"Chọn vai trò cho nhân viên...\" → \"Lưu vai trò\" → \"✅ Đã cập nhật vai trò\".\n3. Nhân viên đang dùng app thấy ngay \"🔄 Vai trò của bạn đã đổi sang: …\" / \"⚡ Quyền truy cập của bạn vừa được cập nhật\".\n\nVí dụ: đổi nhân viên từ Nhân viên (hoặc Phục vụ) sang Thu ngân, hoặc gán vai trò Thu ngân cho nhân viên mới vào."
+   "text": "1. Chạm nhân viên (hoặc \"Cấp quyền\" với người mới).\n2. Mục \"Vai trò & Quyền hạn\" → \"Chọn vai trò cho nhân viên...\" → \"Lưu vai trò\" → \"✅ Đã cập nhật vai trò\".\n3. Nhân viên đang dùng app thấy ngay \"🔄 Vai trò của bạn đã đổi sang: …\" / \"⚡ Quyền truy cập của bạn vừa được cập nhật\".\n\nVí dụ: cho bạn phục vụ lên làm thu ngân (đổi vai trò Phục vụ / Nhân viên sang Thu ngân), hoặc gán vai trò Thu ngân cho nhân viên mới vào."
   },
   {
    "id": "nhan-vien#cac-viec-thuong-lam-2-ho-so-nhan-vien",

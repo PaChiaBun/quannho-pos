@@ -955,6 +955,58 @@ Kết quả: `cham_tu_van/ket_qua/v2_goc_claude_20261103.json`, `kin_v2_goc_clau
 - Còn lại cho lô sau: mục tiêu số cho việc; 20/11, 1/1 là Thứ 6 (lô D); quên than đã hết khi hỏi dịp lễ; so sai cơ sở (2 tuần thử so tổng 28 ngày; ca tối bỏ giờ 16h).
 - Áp: `db-fix/boom_l107_ap_dung.sh` (TS 20261103_221551). Kết quả: `cham_tu_van/ket_qua/lo_b_viec_lam_claude_20261103.json`.
 
+### 7.3c Kết quả lô C (03/11) — KHÔNG áp
+
+- Thử: khối "VẤN ĐỀ CHÍNH" gộp số bán hàng + 5 mục, xếp theo tiền (hàng hết / người quá tải / khách quay lại thấp lên đầu) cho câu hỏi chung;
+  code bắt câu chung bỏ sót 3 vấn đề đầu, câu kho bỏ sót mặt hàng hết / dưới mức, việc không có MỨC CẦN ĐẠT.
+- Chấm kín 80 cặp so bản lô B: **13,46 → 13,34 (−0,13 ± 0,18)**; 33 hơn, 29 kém. Việc làm 1,25 → 1,39 (luật mức cần đạt có tác dụng) nhưng lý lẽ 1,65 → 1,54,
+  kế hoạch −1,2: khối vấn đề chính làm Boom CHEN ý không đúng câu hỏi ("chỗ nào phí" lại kể ly hết, khách quay lại). Câu viết lại ~46% → ~71% (chậm).
+- Bài học: danh sách vấn đề KHÔNG lọc theo chủ đề câu hỏi = thêm nhiễu (giống 2.3 trên mini); luật "mức cần đạt" có ích nhưng tăng câu viết lại → nếu dùng lại,
+  đưa mốc cần đạt vào dòng tính sẵn (code tính sẵn số mục tiêu) thay vì bắt viết lại.
+- GPT có lúc tự viết câu mẫu chừa chỗ trống ("Món <tên món> giá <giá>" → sau khi lọc còn "Món tên món giá giá") — hiếm, ghi lại cho lô E.
+- Kết quả: `cham_tu_van/ket_qua/lo_c_van_de_claude_20261103.json`. Mã đã trả về bản lô B.
+
+### 7.3d Kết quả lô D (03/11) — lần 108
+
+- `ngayHoi`: câu nhắc ngày / ngày lễ → "NGÀY ĐƯỢC HỎI (tính sẵn)": thứ mấy, quán mở hay nghỉ thứ đó, trung bình thứ đó; `todayBlock` ghi thứ cho ngày lễ.
+  `caBan`: câu nói ca / buổi → doanh thu theo khối giờ mở thật. Chỉ bật khi câu hỏi đúng chủ đề (bài học lô C).
+- Chấm kín 80 cặp so bản lô B: **chung 13,60 → 13,66 (+0,06 ± 0,18)** — phần lớn câu không đụng ngày / ca nên không đổi.
+  **16 cặp câu ngày lễ / ca: 11,81 → 13,12 (+1,3)**; đúng quán 1,88 → 1,98; câu 20/11, Noel, 1/1 nói đúng thứ: bản cũ 0/6, bản mới 6/6. Việc làm 1,36 → 1,26 (nhiễu?).
+- Kết quả: `cham_tu_van/ket_qua/lo_d_ngay_ca_claude_20261103.json`. Áp chung với lô E (lần 108).
+
+### 7.3e Kết quả lô E + kiểm bộ kín (03/11) — lần 108 (gộp D + E)
+
+- `hopChuDe`: 2 khối "ĐIỂM CẦN CHÚ Ý" chỉ giữ điểm cùng chủ đề câu hỏi (câu chung / kế hoạch / "sao" giữ hết) — BỚT chữ, không thêm.
+  `loiLapLuan`: việc xếp vào ngày quán nghỉ, khung giờ quán đóng (theo HỒ SƠ QUÁN) → viết lại. Câu có "muốn chết / mệt chết…" + chuyện làm → dòng CÂU CỬA MIỆNG (không phải ý tự hại).
+- Bộ v2 (80 cặp, E so D): 13,35 → 13,56 (+0,21 ± 0,18); gọn 1,55 → 1,64, tìm vấn đề 1,50 → 1,41 (đánh đổi khi lọc).
+- **Bộ KÍN (40 cặp, D+E so bản đang chạy lô B, chưa dùng để chỉnh): 13,12 → 13,50 (+0,38 ± 0,31)**; không tiêu chí nào tụt; đúng quán 1,82 → 1,93, gọn 1,65 → 1,73,
+  đúng số 1,80 → 1,88. Bản đang chạy hiểu "làm muốn chết" thành nguy cơ tự hại ở 2 câu; bản mới trả lời bình thường.
+- **Lỗi thật tìm ra khi chấm**: dòng "khung 3 tiếng vắng nhất" (lần 105) xét cả giờ quán ĐÓNG → quán nghỉ trưa 13–17h bị chọn 13–16h → Boom khuyên rút người lúc đóng cửa. Sửa: chỉ xét khung cả 3 giờ đều có bán (quán D nay 17–20h).
+- **Lỗi công cụ đo**: khối số đưa người chấm dựng thiếu số bán hàng (không có ngày mở, lượng dùng ước, ngày được hỏi, ca) → người chấm trừ oan "số bịa" ở lô B, D, E
+  (2 bản cùng bị nên chênh lệch ít lệch). Đã sửa `cham_tu_van.ts`: khối người chấm = đúng `soLieuGoc` Boom thấy.
+- Kết quả: `lo_e_gon_claude_20261103.json`, `kin_DE_so_B_claude_20261103.json`. Áp: `db-fix/boom_l108_ap_dung.sh` (TS 20261104_021211).
+
+### 7.3f Cố vấn app (04/11) — Chủ Quán: "biến Boom thành cố vấn cấp cao, tư vấn chủ quán dùng app"
+
+**Phần hướng dẫn cài đặt (ĐÃ ĐĂNG 04/11, bản 202611031750, `db-fix/dang_huong_dan_boom.sh`):**
+- Bộ đo mới `tool/boom_do/bo_cai_dat` (26 câu cài đặt theo kiểu quán, có câu không dấu): tìm bài 22/26, chọn đường 24/26.
+  Thiếu bài "quán mới cài gì trước / theo kiểu quán" và "bật / tắt module trên Trang chủ".
+- Bài mới `.docs/Huong_dan/bat-dau.md` "Bắt đầu dùng app": 1 đoạn danh sách cài theo kiểu quán (chia 6 đoạn thì chen chỗ câu cụ thể: 19/26),
+  1 đoạn bật / tắt module ("Sửa" → "–" → "Tắt module" / "+ Thêm module" → "Xong", đối chiếu `dashboard_screen.dart`).
+  Thêm ví dụ "cho bạn phục vụ lên làm thu ngân" vào bài Nhân viên. Kết quả: bộ cài đặt **22 → 24/26**, bộ H 45/51 giữ nguyên,
+  bộ kiểm khi đăng `boom_help_eval_test` qua (nhận đúng 98 → 99, sai thẳng 11).
+- Còn lại (sửa app): "muốn app tự trừ nguyên liệu" đi nhầm đường số liệu; "2 chi nhánh xem báo cáo chung được không" đi nhầm đường chuỗi;
+  "10 bàn + QR", "mang đi có cần cài bàn" tìm chưa đúng bài.
+
+**Phần gợi ý app trong câu tư vấn (thử, KHÔNG áp):**
+- Dòng "CÀI ĐẶT NÊN LÀM TRONG APP (tính sẵn)" (giá vốn món bán chạy, phiếu chi, tồn âm, mức tối thiểu sai, khách chưa có điểm, ca quên chốt…):
+  có ở 27/40 câu nhưng GPT chỉ nêu mục app ở 2–4 câu (lại đúng bài học: thêm chữ dặn ít tác dụng).
+- Code gắn "Trong app: …" sau câu trả lời (lọc chủ đề chặt, 8/40 câu): chấm kín 80 cặp **−0,18 ± 0,19**; 16 câu có dòng gắn **−1,19** (gọn −0,62,
+  việc làm không tăng) — người chấm thấy lặp ý / lạc câu hỏi. Đã gỡ.
+- Hướng đúng cho "cố vấn app": bài hướng dẫn (đã có "Bắt đầu") + thẻ nhắc cài đặt trong app ngoài câu tư vấn (lộ trình 5.3).
+- Sửa giữ lại: bộ chia chủ đề không còn nhầm "lại" (quay lại, ít lại) với "lãi", "giá trị" với "giá".
+- Ghi nhận lỗi lặp lại cho lô sau: trứng ước "đủ ~1,2 ngày" mà dòng đầu kết luận "đủ tới Thứ 7" (cả hai bản) → kiểm bằng code được.
+
 ### 7.4 Cách đo
 
 - Mỗi lô: sinh 2 lượt × bộ v2 bằng gpt-6-luna (~0,3 USD), chấm kín A/B bằng Claude, 4 người chấm.
