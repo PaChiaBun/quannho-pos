@@ -25,7 +25,7 @@ nguon:
 - Hai nút **"+ Ghi thu"** và **"− Ghi chi"**.
 - Dòng **"Đang xem: <kỳ> (<ngày>)"** và nút **"Đổi ngày"**. Mỗi lần mở Thu Chi luôn về **"Hôm nay"** (kể cả vừa xem ngày khác ở Báo cáo → Tài chính) — khoản vừa ghi luôn hiện ngay.
 - **"Giao dịch"**: lọc **"Tất cả" / "↓ Thu" / "↑ Chi"**; lọc quỹ **"Tất cả" / "Tiền mặt" / "Tiền gửi"**; nút **xuất CSV** (gợi ý "Xuất tệp CSV cho kế toán").
-- Danh sách giao dịch nhóm theo ngày ("Hôm nay", "Hôm qua", "T2, 20/10"…). Khoản **tự động** có nhãn **"Tự động"**.
+- Danh sách giao dịch nhóm theo ngày ("Hôm nay", "Hôm qua", "T2, 20/10"…); mỗi dòng chỉ ghi thời điểm trong ngày. Khoản **tự động** có nhãn **"Tự động"**.
 
 ## Khoản thu/chi tự động (không cần ghi tay)
 | Khi nào | Ghi | Mô tả trên sổ |

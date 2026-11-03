@@ -567,6 +567,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     final allCount = allAsync.value?.length ?? 0;
     final lowCount = lowAsync.value?.length ?? 0;
     final outCount = outAsync.value?.length ?? 0;
+    // Thẻ Cảnh báo chỉ tính món có đặt tồn tối thiểu: món không đặt mà đang âm kho thì nói rõ số món (trước ghi
+    // "Tất cả sản phẩm đang đủ hàng 🎉" dù có món âm). Món bán theo công thức: tồn không phải hàng thật.
+    final recipeIds = ref.watch(recipeProductIdsProvider).value ?? const <String>{};
+    final negUntracked = (allAsync.value ?? const <StockItem>[])
+        .where((i) =>
+            i.status == StockStatus.untracked && i.stockQty < 0 && !recipeIds.contains(i.id))
+        .length;
 
     final mainBody = NotificationListener<ScrollNotification>(
       onNotification: (notification) {
@@ -755,7 +762,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                   onEdit: _openEditProduct,
                   onTopping: _openToppingSheet,
                   onOption: _openOptionSheet, // ✅ thêm nút Tùy chọn (Modifiers)
-                  emptyMsg: 'Tất cả sản phẩm đang đủ hàng 🎉',
+                  emptyMsg: negUntracked > 0
+                      ? 'Không có món nào dưới tồn tối thiểu\n'
+                          '$negUntracked món không đặt tồn tối thiểu đang âm kho'
+                      : 'Không có món nào dưới tồn tối thiểu',
                   emptyIcon: Icons.check_circle_rounded,
                   emptyColor: _kGreen,
                 ),

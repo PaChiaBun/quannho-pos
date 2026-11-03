@@ -47,7 +47,7 @@ nguon:
 3. Muốn tìm nhanh: gõ tên vào ô tìm kiếm, hoặc chọn danh mục.
 4. **Giữ lâu** một thẻ món để mở bảng thêm **nhiều món cùng lúc kèm ghi chú bếp**; chọn số lượng rồi bấm **"Thêm N món vào giỏ"**.
 
-> Món mờ có nhãn **"Hết"** thì không bấm được: món đó đang theo dõi tồn kho, có đặt tồn tối thiểu, và tồn đã về 0. Món không đặt tồn tối thiểu thì vẫn bán bình thường dù tồn âm. Món mờ có nhãn **"Tạm ngưng"** là món đã "Tắt bán" ở Kho hàng: bấm vào báo "<món> đang tạm ngưng bán" — bật bán lại ở Kho hàng.
+> Món mờ có nhãn **"Hết"** thì không bấm được: món đó đang theo dõi tồn kho, có đặt tồn tối thiểu, và tồn đã về 0. Món không đặt tồn tối thiểu thì vẫn bán bình thường dù tồn âm. Món bán theo công thức (Kho hàng ghi "Theo công thức") không bị khoá theo tồn của chính món, vì bán là trừ nguyên liệu. Món mờ có nhãn **"Tạm ngưng"** là món đã "Tắt bán" ở Kho hàng: bấm vào báo "<món> đang tạm ngưng bán" — bật bán lại ở Kho hàng.
 
 ### Ghi chú món và ghi chú đơn
 - **Ghi chú từng món**: trong giỏ, bấm **"Ghi chú"** ở dòng món. Có sẵn các nút chọn nhanh: "Không hành", "Ít đường", "Ít đá", "Không đá", "Thêm sauce", "Chín kỹ", "Không cay", "Thêm phần". Có thể gõ thêm rồi bấm **"Lưu ghi chú"**.

@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../kho/providers/kho_providers.dart' show allStockProvider;
 import '../providers/kho_chuyen_nghiep_providers.dart';
 import '../repository/kho_chuyen_nghiep_repository.dart';
+import '../repository/recipe_product_ids.dart' show recipeMakesStock;
 import '../../../core/utils/chain_compare.dart' show fmtPct;
 
 class RecipeDetailScreen extends ConsumerWidget {
@@ -18,6 +20,11 @@ class RecipeDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Cốt / bán thành phẩm: lệnh sản xuất cộng vào kho, không phải "POS bán món này".
+    final makesStock = recipeMakesStock((ref.watch(allStockProvider).value ?? const [])
+        .where((s) => s.id == recipe.posProductId)
+        .firstOrNull
+        ?.productType);
     return Scaffold(
       backgroundColor: KhoTheme.bg,
       appBar: AppBar(
@@ -240,7 +247,9 @@ class RecipeDetailScreen extends ConsumerWidget {
                     const Icon(Icons.link_rounded, color: KhoTheme.green, size: 18),
                     const SizedBox(width: 8),
                     Expanded(child: Text(
-                        'Khi POS bán món này → tự động trừ nguyên liệu theo định lượng',
+                        makesStock
+                            ? 'Hoàn thành lệnh sản xuất → trừ nguyên liệu, cộng thành phẩm vào kho (không bán ở quầy)'
+                            : 'Khi POS bán món này → tự động trừ nguyên liệu theo định lượng',
                         style: GoogleFonts.plusJakartaSans(
                             fontSize: 12.5, color: KhoTheme.green,
                             fontWeight: FontWeight.w600))),

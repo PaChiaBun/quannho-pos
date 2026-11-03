@@ -57,6 +57,7 @@ import '../modules/qr_order/widgets/qr_counter_queue_sheet.dart';
 import '../modules/qr_order/services/settlement_operation_manager.dart';
 import '../modules/qr_order/models/qr_order_model.dart'
     show QrErrorCode, AuthoritativeQuote, QrRequestModel;
+import '../modules/kho/providers/kho_providers.dart' show recipeProductIdsProvider;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BRAND COLORS
@@ -8546,7 +8547,9 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
   }
 
   Future<void> _addItemWithCheck(ProductModel p, Offset? flyStartOffset) async {
-    final isOutOfStock = !p.isAvailable || (p.minStock > 0 && p.stockQty <= 0);
+    // Món bán theo công thức chỉ "tạm hết" khi tắt bán: tồn của chính món không đổi khi bán (&& gắn trước ||).
+    final byRecipe = (ref.read(recipeProductIdsProvider).value ?? const {}).contains(p.id);
+    final isOutOfStock = !p.isAvailable || (p.minStock > 0 && p.stockQty <= 0) && !byRecipe;
     final currentQty = _selected[p.id] ?? 0;
     if (isOutOfStock && currentQty == 0) {
       final confirmed = await showDialog<bool>(
@@ -8637,6 +8640,7 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
 
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(posProductsProvider);
+    final recipeIds = ref.watch(recipeProductIdsProvider).value ?? const <String>{};
     final storeId = ref.read(sessionProvider)?.storeId ?? '';
 
     return PopScope(
@@ -8868,7 +8872,9 @@ class _AddItemsSheetState extends ConsumerState<_AddItemsSheet> {
                         final qty = _selected[p.id] ?? 0;
                         final isOutOfStock =
                             !p.isAvailable ||
-                            (p.minStock > 0 && p.stockQty <= 0);
+                            (p.minStock > 0 &&
+                                p.stockQty <= 0 &&
+                                !recipeIds.contains(p.id));
 
                         final modifiersAsync = ref.watch(
                           productModifiersProvider(p.id),

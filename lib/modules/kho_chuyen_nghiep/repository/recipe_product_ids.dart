@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/models/product_model.dart';
 import '../../../core/utils/paged_query.dart';
 
 /// Món bán gắn công thức thì khi bán máy chủ chỉ trừ nguyên liệu (complete_pos_sale_v1), tồn của chính
@@ -7,6 +8,15 @@ import '../../../core/utils/paged_query.dart';
 /// trừ dần, lệnh sản xuất cộng vào (complete_production_order chỉ cộng cho 2 loại này) → không tính.
 bool soldByRecipe(String? productType) =>
     productType != 'ingredient' && productType != 'semi_finished';
+
+/// Công thức gắn với nguyên liệu / bán thành phẩm (vd cốt trà): không bán ở quầy, hoàn thành lệnh sản xuất
+/// thì cộng thành phẩm vào kho. Chưa biết loại món (đang tải) thì coi như món bán.
+bool recipeMakesStock(String? productType) => productType != null && !soldByRecipe(productType);
+
+/// Bán hàng khoá "Hết" / báo sắp hết theo tồn của chính món chỉ khi món có đặt tồn tối thiểu và KHÔNG bán
+/// theo công thức ([recipeIds]) — tồn của món theo công thức không đổi khi bán, khoá theo nó là khoá mãi.
+bool locksOnOwnStock(ProductModel p, Set<String> recipeIds) =>
+    p.minStock > 0 && !recipeIds.contains(p.id);
 
 /// Id món bán có công thức gắn máy bán hàng (công thức chưa xoá, có ít nhất một dòng nguyên liệu, món
 /// không phải nguyên liệu / bán thành phẩm) — tồn của các món này không phải hàng thật. Màn Kho và Boom

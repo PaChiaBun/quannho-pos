@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/quantity_formatter.dart';
 import '../../kho/providers/kho_providers.dart';
 import '../../kho/repository/kho_repository.dart';
 import '../providers/kho_chuyen_nghiep_providers.dart';
 import '../../../core/utils/string_utils.dart';
+
+/// "22:15 02/11 · " (giờ máy) cho dòng Hao hụt gần đây; thiếu / lạ thì bỏ trống.
+String wasteTimeLabel(Object? createdAt) {
+  final d = DateTime.tryParse('${createdAt ?? ''}');
+  return d == null ? '' : '${DateFormat('HH:mm dd/MM').format(d.toLocal())} · ';
+}
 
 /// Ghi hao hụt: đổ bỏ, hết hạn, hư hỏng, đổ vỡ, mất. Trừ kho nguyên tử ở server.
 class StockWasteScreen extends ConsumerStatefulWidget {
@@ -244,8 +251,9 @@ class _StockWasteScreenState extends ConsumerState<StockWasteScreen> {
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   title: Text(nameById[r['product_id']]?.name ?? 'Sản phẩm'),
+                  // Giờ ngày ghi nhận: trước không ghi, không biết hao hụt xảy ra lúc nào.
                   subtitle: Text(
-                      '${reasonLabel('${r['reason']}')}${(r['note'] ?? '').toString().isEmpty ? '' : ' • ${r['note']}'}'),
+                      '${wasteTimeLabel(r['created_at'])}${reasonLabel('${r['reason']}')}${(r['note'] ?? '').toString().isEmpty ? '' : ' • ${r['note']}'}'),
                   trailing: Text(
                       nameById[r['product_id']]?.formatDelta(r['delta'] as num) ??
                           fmtDelta((r['delta'] as num).toDouble(), ''),

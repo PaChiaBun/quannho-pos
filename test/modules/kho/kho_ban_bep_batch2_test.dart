@@ -102,16 +102,19 @@ void main() {
       expect(posProductSellable(p(avail: false)), isFalse);
       expect(posProductSellable(p(stock: 0, min: 3)), isFalse);
       expect(posProductSellable(p(stock: -2, min: 0)), isTrue);
+      // Món bán theo công thức: tồn của chính món không đổi khi bán → không khoá theo nó (kiểm Sunmi đợt 6).
+      expect(posProductSellable(p(stock: 0, min: 3), {'p'}), isTrue);
+      expect(posProductSellable(p(avail: false), {'p'}), isFalse);
     },
   );
 
   test('Bảng nhấn giữ và nút + trong giỏ dùng posProductSellable', () {
     final src = File('lib/screens/pos_screen.dart').readAsStringSync();
-    expect(src, contains('.where(posProductSellable)'));
-    expect(src, contains('if (!posProductSellable(product)) continue;'));
+    expect(src, contains('.where((p) => posProductSellable(p, recipeIds))'));
+    expect(src, contains('if (!posProductSellable(product, recipeIds)) continue;'));
     expect(
       src,
-      contains('if (product != null && !posProductSellable(product)) {'),
+      contains('if (product != null && !posProductSellable(product, recipeIds)) {'),
     );
   });
 

@@ -23,7 +23,7 @@ Dùng **cùng danh sách hàng** với module Kho hàng: nguyên liệu và món
 Tiêu đề **"Kho Chuyên Nghiệp"**, hai nút trên đầu: **"Kiểm kê kho"** và **"Ghi hao hụt"**. Năm tab:
 - **"Tổng quan"** — số công thức, "SX hôm nay", số nguyên liệu, "Sắp hết kho" (số nguyên liệu / bán thành phẩm có đặt tồn tối thiểu và đã chạm mức, khớp danh sách "Cần nhập hàng"); **"Lệnh sản xuất hôm nay"** (+ "Tạo lệnh sản xuất hôm nay"), **"Cần nhập hàng"**, **"Công thức gần đây"**.
 - **"Nguyên liệu"** — nguyên liệu và bán thành phẩm, kèm tồn (ghi như Kho hàng, vd "88 hộp + 666 ml", không làm tròn) và nhãn **"Còn" / "Sắp hết" / "Hết"**; món không đặt tồn tối thiểu ghi **"Không theo dõi"** (xám), không bị gắn "Hết" đỏ khi trừ âm; tồn đã âm thì chỉ còn nhãn này, không hiện số tồn.
-- **"Công thức"** — mỗi công thức hiện số nguyên liệu, khẩu phần, **Giá vốn**, **Giá bán**, **Lãi gộp**, **Tỉ lệ giá vốn** (food cost, %), và nhãn **"Đã gắn menu POS — Tự trừ kho khi bán"** nếu đã gắn.
+- **"Công thức"** — mỗi công thức hiện số nguyên liệu, khẩu phần, **Giá vốn**, **Giá bán**, **Lãi gộp**, **Tỉ lệ giá vốn** (food cost, %), và nhãn **"Đã gắn menu POS — Tự trừ kho khi bán"** nếu đã gắn món bán. Công thức của nguyên liệu / bán thành phẩm (vd cốt trà) không bán ở quầy: ghi **"Bán thành phẩm"** và **"Gắn kho — hoàn thành lệnh sản xuất cộng vào kho"**.
 - **"Sản xuất"** — lệnh sản xuất theo ngày, lọc Tất cả / Chờ / Đang làm / Hoàn thành / Đã hủy.
 - **"Báo cáo"** — chọn **Từ → Đến**. **"Food Cost"**: **"Giá vốn NL đã bán"** (nguyên liệu bị trừ khi bán × giá vốn hiện tại của nguyên liệu — gần đúng nếu giá nhập đã đổi), TB/ngày, giá vốn theo ngày (ghi thứ và ngày/tháng như đầu trang Báo cáo); lệnh sản xuất ghi riêng bên dưới, không cộng vào. **"Tiêu thụ"**: hai mục **"Dùng khi bán"** và **"Dùng cho lệnh sản xuất"**. **"Sản lượng"**: thống kê lệnh sản xuất. Ô tìm nguyên liệu / công thức / mặt hàng (Kiểm kê, Ghi hao hụt) không cần dấu.
 
@@ -66,7 +66,7 @@ Ví dụ minh hoạ: nguyên liệu **Trà đen khô** (gói, 1 gói = 500 g) �
 1. Nút **"Ghi hao hụt"** → chọn **"Mặt hàng"**.
 2. Lý do: **"Đổ bỏ / hao hụt"**, **"Hết hạn"**, **"Hư hỏng"**, **"Đổ vỡ"**, **"Mất / thất thoát"**.
 3. **"Số lượng hao hụt"** — chọn đơn vị kho hoặc đơn vị quy cách (vd ml cho lon sữa).
-4. **"Ghi chú (tuỳ chọn)"** → **"Ghi hao hụt"**. Xem lại ở **"Hao hụt gần đây"**.
+4. **"Ghi chú (tuỳ chọn)"** → **"Ghi hao hụt"**. Xem lại ở **"Hao hụt gần đây"** (mỗi dòng có thời điểm ghi nhận).
 5. Hao hụt chỉ trừ tồn, **không** ghi thu chi.
 
 ### 6. Xem giá vốn và lợi nhuận món

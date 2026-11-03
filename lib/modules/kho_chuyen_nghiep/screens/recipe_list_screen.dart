@@ -4,8 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kho_theme.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../kho/providers/kho_providers.dart' show allStockProvider;
 import '../providers/kho_chuyen_nghiep_providers.dart';
 import '../repository/kho_chuyen_nghiep_repository.dart';
+import '../repository/recipe_product_ids.dart' show recipeMakesStock;
 import 'recipe_form_screen.dart';
 import 'recipe_detail_screen.dart';
 import '../../../core/utils/stagger.dart';
@@ -40,6 +42,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
       loading: () => <String, double>{},
       error: (_, __) => <String, double>{},
     );
+    // Loại món gắn với công thức: cốt / bán thành phẩm ghi theo lệnh sản xuất, không theo "menu POS".
+    final typeById = {
+      for (final s in ref.watch(allStockProvider).value ?? const []) s.id: s.productType,
+    };
 
     return Scaffold(
       backgroundColor: KhoTheme.bg,
@@ -150,6 +156,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                         return _RecipeCard(
                           recipe: r,
                           sellPrice: sellPrice,
+                          makesStock: recipeMakesStock(typeById[r.posProductId]),
                           onTap: () => Navigator.push(context,
                               MaterialPageRoute(
                                   builder: (_) => RecipeDetailScreen(
@@ -230,6 +237,8 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
 class _RecipeCard extends StatelessWidget {
   final RecipeModel recipe;
   final double sellPrice;
+  /// Công thức của nguyên liệu / bán thành phẩm (vd cốt trà): không bán ở quầy, lệnh sản xuất cộng vào kho.
+  final bool makesStock;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -237,6 +246,7 @@ class _RecipeCard extends StatelessWidget {
   const _RecipeCard({
     required this.recipe,
     required this.sellPrice,
+    this.makesStock = false,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -256,7 +266,8 @@ class _RecipeCard extends StatelessWidget {
     String marginLabel;
     if (!hasSell) {
       marginColor = KhoTheme.muted;
-      marginLabel = 'Chưa gắn giá';
+      // Cốt / bán thành phẩm không có giá bán là đúng — trước ghi "Chưa gắn giá" như thiếu cài đặt.
+      marginLabel = makesStock ? 'Bán thành phẩm' : 'Chưa gắn giá';
     } else if (margin >= 0.6) {
       marginColor = KhoTheme.green;
       marginLabel = '${(margin * 100).toStringAsFixed(0)}% lãi';
@@ -449,10 +460,15 @@ class _RecipeCard extends StatelessWidget {
                 child: Row(children: [
                   Icon(Icons.link_rounded, size: 13, color: KhoTheme.green),
                   const SizedBox(width: 4),
-                  Text('Đã gắn menu POS — Tự trừ kho khi bán',
-                      style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11.5, color: KhoTheme.green,
-                          fontWeight: FontWeight.w700)),
+                  Expanded(
+                    child: Text(
+                        makesStock
+                            ? 'Gắn kho — hoàn thành lệnh sản xuất cộng vào kho'
+                            : 'Đã gắn menu POS — Tự trừ kho khi bán',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.5, color: KhoTheme.green,
+                            fontWeight: FontWeight.w700)),
+                  ),
                 ]),
               ),
           ],

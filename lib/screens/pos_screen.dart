@@ -34,6 +34,8 @@ import '../modules/qr_order/widgets/qr_counter_queue_sheet.dart';
 import '../core/utils/stagger.dart';
 import '../core/utils/server_time.dart';
 import 'report_screen.dart' show reportBillsDayProvider;
+import '../modules/kho/providers/kho_providers.dart' show recipeProductIdsProvider;
+import '../modules/kho_chuyen_nghiep/repository/recipe_product_ids.dart' show locksOnOwnStock;
 
 // Màu local
 const _kNavy = Color(0xFF1E1C5E);
@@ -1607,8 +1609,9 @@ class _PosScreenState extends ConsumerState<PosScreen>
           duration: const Duration(seconds: 2)));
       return;
     }
-    // Block sản phẩm hết hàng — không cho thêm vào giỏ
-    if (product.stockQty <= 0 && product.minStock > 0) {
+    // Block sản phẩm hết hàng — không cho thêm vào giỏ (món bán theo công thức: không xét tồn của chính món)
+    if (product.stockQty <= 0 &&
+        locksOnOwnStock(product, ref.read(recipeProductIdsProvider).value ?? const {})) {
       HapticFeedback.heavyImpact();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1719,13 +1722,18 @@ class _ProductCard extends ConsumerWidget {
             .fold<int>(0, (sum, line) => sum + line.quantity.toInt()),
       ),
     );
-    final isOutOfStock = product.stockQty <= 0 && product.minStock > 0;
+    // Món bán theo công thức: tồn của chính món không đổi khi bán → không khoá / báo sắp hết theo nó.
+    final tracked = locksOnOwnStock(
+      product,
+      ref.watch(recipeProductIdsProvider).value ?? const {},
+    );
+    final isOutOfStock = tracked && product.stockQty <= 0;
     // Tạm ngưng bán (tắt bán ở Kho hàng) → khoá giống hết tồn.
     final isPaused = !product.isAvailable;
     final isLocked = isOutOfStock || isPaused;
     final isLowStock =
         !isOutOfStock &&
-        product.minStock > 0 &&
+        tracked &&
         product.stockQty <= product.minStock;
 
     // Determine visual style based on category
@@ -3123,7 +3131,9 @@ class _CartLineRow extends ConsumerWidget {
                             .value
                             ?.where((p) => p.id == line.productId)
                             .firstOrNull;
-                        if (product != null && !posProductSellable(product)) {
+                        final recipeIds =
+                            ref.read(recipeProductIdsProvider).value ?? const <String>{};
+                        if (product != null && !posProductSellable(product, recipeIds)) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                               content: Text(product.isAvailable
                                   ? '${product.name} đã hết hàng'
@@ -5094,9 +5104,10 @@ class _PosKitchenSendHint extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // POS ADD ITEMS SHEET — Long press → thêm mon + ghi chu (giống Modules Bàn)
 // ─────────────────────────────────────────────────────────────────────────────
-/// Món bán được ở quầy: không tạm ngưng bán, và nếu có đặt tồn tối thiểu thì còn tồn.
-bool posProductSellable(ProductModel p) =>
-    p.isAvailable && !(p.stockQty <= 0 && p.minStock > 0);
+/// Món bán được ở quầy: không tạm ngưng bán, và nếu có đặt tồn tối thiểu thì còn tồn (món bán theo công
+/// thức trong [recipeIds] không xét tồn của chính món).
+bool posProductSellable(ProductModel p, [Set<String> recipeIds = const {}]) =>
+    p.isAvailable && !(p.stockQty <= 0 && locksOnOwnStock(p, recipeIds));
 
 class _PosAddItemsSheet extends ConsumerStatefulWidget {
   final String? focusProductId; // scroll tới món này khi mở (từ long press)
@@ -5130,9 +5141,10 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
       return;
     }
     final notifier = ref.read(cartProvider.notifier);
+    final recipeIds = ref.read(recipeProductIdsProvider).value ?? const <String>{};
     for (final entry in _selected.entries) {
       final product = products.firstWhere((p) => p.id == entry.key);
-      if (!posProductSellable(product)) continue; // vừa bị tắt bán / hết tồn khi đang chọn
+      if (!posProductSellable(product, recipeIds)) continue; // vừa bị tắt bán / hết tồn khi đang chọn
       final qty = entry.value.toDouble();
       final note = _noteCtrls[entry.key]?.text.trim();
       if (note != null && note.isNotEmpty) {
@@ -5242,8 +5254,10 @@ class _PosAddItemsSheetState extends ConsumerState<_PosAddItemsSheet> {
                 },
                 data: (products) {
                         // Chỉ món bán được: bỏ món tạm ngưng bán / hết tồn (cùng quy tắc với lưới món).
+                  final recipeIds =
+                      ref.watch(recipeProductIdsProvider).value ?? const <String>{};
                   final prodList = (products as List).cast<ProductModel>()
-                            .where(posProductSellable)
+                            .where((p) => posProductSellable(p, recipeIds))
                             .toList();
                   final filtered = _search.isEmpty
                       ? prodList

@@ -254,24 +254,44 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
     return Scaffold(
       backgroundColor: _kBg,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth > 700) {
-            return Row(
-              children: [
-                Expanded(flex: 3, child: mainContent),
-                SizedBox(
-                  width: 280,
-                  child: _FinanceRightPanel(
-                    todayStatsAsync: ref.watch(todayFinanceStatsProvider),
-                    recordsAsync: recordsAsync,
-                  ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth > 700) {
+                return Row(
+                  children: [
+                    Expanded(flex: 3, child: mainContent),
+                    SizedBox(
+                      width: 280,
+                      child: _FinanceRightPanel(
+                        todayStatsAsync: ref.watch(todayFinanceStatsProvider),
+                        recordsAsync: recordsAsync,
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return mainContent;
+            },
+          ),
+          // Dải xanh dưới thanh trạng thái: cuộn xuống, giao dịch không còn chạy lấn dưới giờ / pin. Màu nối
+          // liền mép trên đầu trang (gradient chéo _kNavy → _kNavyL, mép trên chỉ tới khoảng giữa).
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.paddingOf(context).top,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [_kNavy, Color.lerp(_kNavy, _kNavyL, 0.55)!],
                 ),
-              ],
-            );
-          }
-          return mainContent;
-        },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1018,9 +1038,10 @@ class _TransactionCard extends StatelessWidget {
                   ),
                 ),
               // Co lại được: nhãn "Tự động" + số tiền có " đ" từng làm dòng này tràn trên màn 360dp.
+              // Chỉ ghi giờ: đầu nhóm đã ghi ngày ("Hôm qua"), chữ ngày ở đây bị cắt thành "Hô…".
               Flexible(
                 child: Text(
-                  '$timeStr  •  ${_dayLabel(dt)}',
+                  timeStr,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 12, color: _kMuted),
@@ -1080,16 +1101,6 @@ class _TransactionCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _dayLabel(DateTime dt) {
-    final now = DateTime.now();
-    if (dt.day == now.day && dt.month == now.month) return 'Hôm nay';
-    final yesterday = now.subtract(const Duration(days: 1));
-    if (dt.day == yesterday.day && dt.month == yesterday.month) {
-      return 'Hôm qua';
-    }
-    return '${dt.day}/${dt.month}';
   }
 }
 

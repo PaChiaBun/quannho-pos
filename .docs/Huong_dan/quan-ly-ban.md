@@ -47,7 +47,7 @@ nguon:
    - **"🥗 Topping tùy chọn"** — tăng/giảm số lượng từng topping.
    - **"✨ Tùy chọn hương vị"** — các tùy chọn món (mức cay, thêm món…) và chip ghi chú nhanh.
    - **"Ghi chú"** — ghi chú riêng ("vd: ít rau, không cay...").
-4. Món **"TẠM HẾT"** (đã tắt bán hoặc hết tồn): app hỏi **"Món tạm hết"** → **"Vẫn thêm"** nếu chắc còn.
+4. Món **"TẠM HẾT"** (đã tắt bán hoặc hết tồn): app hỏi **"Món tạm hết"** → **"Vẫn thêm"** nếu chắc còn. Món bán theo công thức chỉ "TẠM HẾT" khi tắt bán — không xét tồn của chính món.
 5. **"Xem chi tiết"** để kiểm lại → **"Xác nhận • Thêm N món"**.
 
 > Nhiều nhân viên gọi cùng một bàn được; mỗi món ghi tên người thêm. Gọi món **chưa** gửi bếp.
