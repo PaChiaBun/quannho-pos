@@ -51,7 +51,11 @@ import {
   isScopeRefusal,
   guessesAppFeature,
   memorySince,
+  chonViecCu,
+  locViecCu,
+  VIEC_CU_NGAY,
   type MemoryTurn,
+  type ViecCu,
   pickMemory,
   redact,
   refusalFor,
@@ -190,6 +194,22 @@ async function recall(storeId: string, userId: string, since: Date): Promise<{ t
     return { turns: pickMemory(rows), hasData: rows.some((x) => String(x?.model ?? '').includes('so_lieu')) };
   } catch {
     return { turns: [], hasData: false };
+  }
+}
+
+/** Việc đã gợi ý 30 ngày qua (câu tư vấn có số liệu, cũ hơn trí nhớ ngắn) — sổ chậm / lỗi → bỏ qua. */
+async function viecDaGoiY(storeId: string, userId: string, before: Date): Promise<ViecCu[]> {
+  try {
+    const from = new Date(Date.now() - VIEC_CU_NGAY * 86400_000);
+    const rows = await rest(
+      `boom_qa_log?select=question,answer,rating,created_at&user_id=eq.${userId}&store_id=eq.${storeId}&status=eq.ok&model=like.*so_lieu*` +
+        `&answer=not.is.null&created_at=gte.${encodeURIComponent(from.toISOString())}&created_at=lt.${encodeURIComponent(before.toISOString())}` +
+        `&order=created_at.desc&limit=20`,
+      { signal: AbortSignal.timeout(1500) },
+    );
+    return Array.isArray(rows) ? chonViecCu(rows) : [];
+  } catch {
+    return [];
   }
 }
 
@@ -471,19 +491,23 @@ Deno.serve(async (req) => {
 
   // Trí nhớ cho câu tư vấn và câu hướng dẫn; lấy TRƯỚC khi gọi GPT —
   // dòng của lượt này đang 'pending' nên không tự nhắc lại chính mình.
-  const [who, mem] = await Promise.all([
+  const since = memorySince(new Date(), r.memory_age_s);
+  const [who, mem, viecCu] = await Promise.all([
     persona(user),
     // Cả câu hướng dẫn: câu nói tiếp ("dịch luôn mấy món còn lại") hay rơi vào chế độ hướng dẫn (QC 24/10)
     r.mode === 'advice' || r.mode === 'answer'
-      ? recall(r.store_id, user, memorySince(new Date(), r.memory_age_s))
+      ? recall(r.store_id, user, since)
       : Promise.resolve({ turns: [] as MemoryTurn[], hasData: false }),
+    // chỉ câu tư vấn có số liệu: việc cũ đo được bằng số mới
+    r.mode === 'advice' && (r.facts || r.modules) ? viecDaGoiY(r.store_id, user, since) : Promise.resolve([] as ViecCu[]),
   ]);
+  if (locViecCu(r.question, viecCu, r.facts).length) kind += '+viec_cu';
   const memory = mem.turns;
   if (memory.length) kind += `+nho${mem.hasData && !kind.includes('so_lieu') ? '+so_lieu' : ''}`;
   const t0 = Date.now();
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
-  const messages = buildMessages(r.question, chunks, who, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory });
+  const messages = buildMessages(r.question, chunks, who, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu });
   const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',
@@ -545,7 +569,7 @@ Deno.serve(async (req) => {
     // → hỏi lại GPT MỘT lần kèm danh sách lỗi. Còn ≥ 4 giây; lỗi / quá giờ thì giữ câu trả lời lần trước.
     const left2 = UPSTREAM_TIMEOUT_MS - (Date.now() - t0);
     const bad = r.mode === 'advice' && (r.facts || r.modules || r.chain) && left2 >= 4000
-      ? kiemTraLoi(answer, soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory }))
+      ? kiemTraLoi(answer, soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu }))
       : [];
     if (bad.length) {
       const ac3 = new AbortController();

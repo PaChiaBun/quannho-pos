@@ -1,6 +1,9 @@
 import { assert, assertEquals, assertStringIncludes } from 'jsr:@std/assert@1';
 import {
   todayBlock,
+  chonViecCu,
+  locViecCu,
+  soLieuGoc,
   upcomingHolidays,
   type ChainFacts,
   formatModules,
@@ -1172,4 +1175,38 @@ Deno.test('chặng 2.2: kiểm lỗi lập luận bằng code — chỉ bật kh
   assertEquals(loiLapLuan('Thu − chi 37 triệu, chưa phải lãi ròng.', 'Thu − chi là CHÊNH LỆCH SỔ QUỸ').length, 0);
   assertEquals(loiLapLuan('Nguyên liệu chiếm 60,5% tổng chi, cao hơn mốc 25–35%.', 'x').length, 1);
   assertEquals(loiLapLuan('Nhắn 1320 khách lâu chưa ghé.', '1320 khách có điểm;').length, 1);
+});
+
+Deno.test('việc đã gợi ý (3.2 + 4.3 gọn): rút "Việc tuần này" từ sổ, đưa vào lời nhắc', () => {
+  const tl = 'Dạ Anh, chiều vắng.\n\nVì sao: 14–17h chỉ 6% doanh thu.\n\nViệc tuần này:\n- 14–17h, thử bớt 5.000đ/phần Cà phê máy số 2; đo doanh thu khung chiều mỗi ngày.\n- Nhân viên mời thêm Topping.\n\nCần xem lại: tuần mới có 2 ngày.';
+  const rows = [
+    { question: 'Tuần này buổi chiều vắng quá, nên làm gì?', answer: tl, rating: null, created_at: '2026-10-28T03:00:00Z' },
+    { question: 'tăng giá cơm sườn', answer: 'Việc tuần này: kiểm tra giá vốn, thử tăng 2.000đ trong 2 tuần.', rating: null, created_at: '2026-10-27T03:00:00Z' },
+    { question: 'món nào bán chạy', answer: 'Không có mục việc.', rating: null, created_at: '2026-10-26T03:00:00Z' },
+    { question: 'khuyến mãi', answer: 'Việc tuần này:\n- Thử combo chiều 49.000đ.', rating: 'down', created_at: '2026-10-25T03:00:00Z' },
+  ];
+  const v = chonViecCu(rows);
+  assertEquals(v.map((x) => [x.ngay, x.viec.length]), [['28/10', 2], ['27/10', 1]]);
+  assertEquals(v[0].viec[0], '14–17h, thử bớt 5.000đ/phần Cà phê máy số 2; đo doanh thu khung chiều mỗi ngày.');
+  assertEquals(v[1].viec[0], 'kiểm tra giá vốn, thử tăng 2.000đ trong 2 tuần.');
+  const msg = buildMessages('chiều nay vẫn vắng', [], null, { facts: parseFacts({ period: 'Tuần này', revenue: 1, orders: 1, top: [], slow: [] }), viecCu: v })[1].content;
+  assert(msg.includes('VIỆC BÉ BOOM ĐÃ GỢI Ý CHO NGƯỜI HỎI TRƯỚC ĐÂY') && msg.includes('- 28/10 (hỏi "Tuần này buổi chiều vắng quá, nên làm gì?"): 14–17h') && msg.includes('KHÔNG gán cho món'), msg);
+  assert(!buildMessages('chiều nay vẫn vắng', [], null, {})[1].content.includes('VIỆC BÉ BOOM ĐÃ GỢI Ý'));
+  // code chọn việc cùng chủ đề: việc tăng giá cơm sườn không vào câu chiều vắng; câu thứ 4 không nhận việc nhập gas
+  assert(!msg.includes('27/10'), msg);
+  assertEquals(locViecCu('thứ 4 sao bán ế', [{ ngay: '21/10', cau: 'Gas với gạo sắp hết chưa, lên lịch nhập hàng', viec: ['Thứ Tư 28/10: nhập 1 bình gas'] }]), []);
+  assertEquals(locViecCu('thứ tư ế quá', [{ ngay: '21/10', cau: 'kế hoạch cho ngày thứ 4 để bớt ế', viec: ['x'] }]).length, 1);
+  assertEquals(locViecCu('bún bò với cơm sườn món nào ngon ăn hơn', v.slice(1), parseFacts({ period: 'x', revenue: 1, orders: 1, top: [{ name: 'Cơm sườn', qty: 1, revenue: 1 }], slow: [] })).length, 1);
+  assertEquals(locViecCu('tuần sau nên làm gì cho quán', v), []);
+  // câu kế hoạch: "Tuần 1: …"; câu không có việc nào → bỏ
+  const kh = chonViecCu([{ question: 'kế hoạch tháng 11', answer: 'Dạ, kế hoạch.\n\nVì sao: x.\n\nTuần 1: Hạ combo xuống 45.000đ.\nTuần 2: Thứ 7 thử ưu đãi 14–16h.\n\nCần xem lại:\n- thiếu giá vốn món.', created_at: '2026-10-21T03:00:00Z' }]);
+  assertEquals(kh[0].viec, ['Tuần 1: Hạ combo xuống 45.000đ.', 'Tuần 2: Thứ 7 thử ưu đãi 14–16h.']);
+  // kho: trùng đúng mặt hàng
+  assertEquals(locViecCu('tháng này bún tươi hao hụt nhiều quá', [{ ngay: '21/10', cau: 'Gas với gạo sắp hết chưa, lên lịch nhập hàng', viec: ['x'] }]), []);
+  assertEquals(locViecCu('gạo còn 8 ký đủ bán mấy ngày, cần nhập ko', [{ ngay: '21/10', cau: 'Gas với gạo sắp hết chưa, lên lịch nhập hàng', viec: ['x'] }]).length, 1);
+  // nhắc việc cũ khi không có danh sách → bắt; có danh sách → không bắt
+  assert(loiLapLuan('Dạ.\nBé Boom từng gợi ý nhập ít bún hơn vào ngày vắng.', 'số liệu').some((x) => x.includes('KHÔNG có trong danh sách việc đã gợi ý')));
+  assertEquals(loiLapLuan('Dạ.\nBé Boom từng gợi ý thử bớt 5.000đ chiều.', soLieuGoc('chiều vắng', { viecCu: v })).filter((x) => x.includes('danh sách việc')), []);
+  // số trong việc cũ là nguồn hợp lệ khi kiểm số
+  assert(soLieuGoc('chiều vắng', { viecCu: v }).includes('5.000đ/phần'));
 });

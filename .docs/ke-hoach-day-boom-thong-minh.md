@@ -818,6 +818,13 @@ Nguyên tắc: **app tính, GPT diễn giải**. GPT-4o-mini hay tính sai, nên
 - Sửa: `formatModules(…, gio)` nhận doanh thu theo giờ, tính khung 3 tiếng vắng nhất trong giờ mở (bỏ giờ mở / đóng cửa) kèm % doanh thu; việc làm "rút 1 người ở khung đó 2 tuần".
 - Áp: `db-fix/boom_l105_ap_dung.sh` (TS 20261103_152137).
 
+### Lần 106 (03/11, đã áp): việc đã gợi ý (lộ trình 3.2 + 4.3 bản gọn)
+
+- Máy chủ đọc sổ `boom_qa_log` 30 ngày của chính người hỏi (câu tư vấn có số liệu, cũ hơn trí nhớ ngắn 5 giờ) → `chonViecCu` rút ≤ 3 câu × ≤ 3 việc; `locViecCu` (code) chỉ giữ việc cùng chủ đề câu hỏi; khối "VIỆC BÉ BOOM ĐÃ GỢI Ý…" trong lời nhắc; Boom nhắc 1 câu ≤ 25 chữ ở cuối, hỏi đã thử chưa.
+- `loiLapLuan`: câu "Bé Boom đã gợi ý…" mà không có việc cũ → viết lại. Nhãn sổ `+viec_cu`.
+- Đo (chi tiết trong lộ trình): GPT tự xét chủ đề → bịa / nhắc bừa; code chọn → 7 câu nhắc đúng, 0 bịa; chấm kín −0,03 ± 0,12.
+- Áp: `db-fix/boom_l106_ap_dung.sh` (TS 20261103_163516).
+
 ### Giai đoạn 4: Hiểu riêng từng quán (lần 38–44)
 
 | # | Việc | Áp lên đâu |

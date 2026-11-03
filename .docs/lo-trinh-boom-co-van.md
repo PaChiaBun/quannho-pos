@@ -85,6 +85,15 @@ Sau 3 lần thêm nội dung không ăn thua, thử thay mô hình (bộ đề 6
 | 3.1 | **Hồ sơ quán**: tự suy (loại quán, giờ mở thật, ngày nghỉ, giá trung bình, mùa vụ riêng) + chủ quán khai một lần (mục tiêu: tăng khách / tăng lãi / đỡ việc; khu vực: chợ / văn phòng / trường / dân cư; khách chính) — Boom hỏi khi phù hợp, không hỏi dồn | Bảng `boom_store_profile` + 2–3 dòng đầu khối số | Câu "20/11 nên làm gì" ở quán gần chợ không còn nhắm giáo viên · **duyệt migration** |
 | 3.2 | **Trí nhớ dài có chọn lọc**: tóm tắt điều đáng nhớ (mục tiêu, việc đã khuyên, chuyện chủ quán kể: "mới mở chi nhánh", "đang thiếu người"), không lưu số tiền / thông tin cá nhân; chủ quán xem / xoá được | Bảng `boom_memory` + màn xem / xoá | Hỏi lại sau 1 tuần: Boom nhắc đúng chuyện cũ · **duyệt migration + app** |
 
+> **03/11 — 3.2 + 4.3 bản gọn "Việc đã gợi ý"** (không bảng mới, không sửa app): máy chủ đọc sổ `boom_qa_log` 30 ngày của CHÍNH người hỏi
+> (câu tư vấn có số liệu, cũ hơn trí nhớ ngắn 5 giờ), rút ≤ 3 câu × ≤ 3 việc ("Việc tuần này" / "Tuần 1:" / gạch đầu dòng),
+> đưa khối "VIỆC BÉ BOOM ĐÃ GỢI Ý…" vào lời nhắc: chỉ nhắc khi cùng chủ đề, so số hiện nay đo được việc đó, hỏi đã thử chưa,
+> không nói hiệu quả khi chưa biết đã làm. Đo: 60 câu, 14 câu có việc cũ liên quan, 46 câu có việc cũ không liên quan.
+> Để GPT tự xét "cùng chủ đề" → nhắc bừa (gán việc trân châu cho trà dâu, việc nhập gas cho câu thứ 4) hoặc bỏ sót → CODE chọn
+> (`locViecCu`: chung chủ đề / thứ / buổi / tháng / tên món; kho phải trùng mặt hàng) + `loiLapLuan` bắt câu "đã gợi ý" khi không có việc cũ.
+> Bản cuối: 7 câu nhắc, đều đúng, 0 bịa. Chấm kín 60 cặp: −0,03 ± 0,12 (không tụt; 8 câu có nhắc −0,5 vì đoạn nhắc dài → ép 1 câu ≤ 25 chữ).
+> Lợi ích là phần "người bạn" (nhớ và hỏi lại), thang 8 tiêu chí không đo được. Kết quả: `cham_tu_van/ket_qua/l106_viec_cu_claude_20261103.json`.
+
 ## Chặng 4 — Vòng "khuyên → làm → đo → học" (Boom tự khôn lên) · ~2 tuần
 
 | # | Việc | Đầu ra | Đo / duyệt |
