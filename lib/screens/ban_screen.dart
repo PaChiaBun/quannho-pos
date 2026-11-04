@@ -2699,7 +2699,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
       final session = ref.read(sessionProvider);
       final billData = BillData(
-        shopName: info['name'] ?? 'Quán Nhỏ',
+        shopName: info['store_name'] ?? 'Quán Nhỏ',
         shopAddress: info['address'],
         shopPhone: info['phone'],
         orderNumber: 'TẠM TÍNH',
@@ -3821,7 +3821,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
           deviceOwnsBill: printerSettings.deviceHasBillRule,
         )) {
           final billData = BillData(
-            shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
+            shopName: storeInfo['store_name'] ?? 'QUÁN NHỎ POS',
             shopAddress: storeInfo['address'] ?? '',
             shopPhone: storeInfo['phone'] ?? '',
             orderNumber: orderNumber,
@@ -4800,7 +4800,7 @@ class _TableSessionSheetState extends ConsumerState<_TableSessionSheet> {
 
         final session = ref.read(sessionProvider);
         final billData = BillData(
-          shopName: storeInfo['name'] ?? 'QUÁN NHỎ POS',
+          shopName: storeInfo['store_name'] ?? 'QUÁN NHỎ POS',
           shopAddress: storeInfo['address'] ?? '',
           shopPhone: storeInfo['phone'] ?? '',
           orderNumber: 'Bep-$round',
@@ -6807,7 +6807,7 @@ class _CheckoutSheetState extends ConsumerState<_CheckoutSheet> {
 
       final session = ref.read(sessionProvider);
       final billData = BillData(
-        shopName: info['name'] ?? 'Quán Nhỏ',
+        shopName: info['store_name'] ?? 'Quán Nhỏ',
         shopAddress: info['address'],
         shopPhone: info['phone'],
         orderNumber: 'TẠM TÍNH',

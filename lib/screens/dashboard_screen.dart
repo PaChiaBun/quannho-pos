@@ -245,6 +245,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         session.userId,
       );
       if (!mounted || membership == null) return;
+      // Chủ quán đổi tên ở máy khác → máy này nhận tên mới khi mở lại Trang chủ
+      if (membership.storeId == session.storeId &&
+          membership.storeName != session.storeName) {
+        await ref
+            .read(sessionProvider.notifier)
+            .updateStoreName(membership.storeName);
+        if (!mounted) return;
+      }
       // Nếu role đổi (chủ quán thay đổi quyền) → cập nhật session
       if (membership.role != session.role ||
           membership.isOwner != session.isOwner) {

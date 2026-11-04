@@ -410,22 +410,29 @@ class _ShopInfoCard extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: () => _openEditShop(context, ref, shopName),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF3E0),
-                        borderRadius: BorderRadius.circular(12),
+                  // Tên quán đổi cho cả quán và in lên hoá đơn: chỉ Chủ quán.
+                  if (session?.isOwner == true) ...[
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () => _openEditShop(
+                        context,
+                        ref,
+                        session?.storeName ?? shopName,
                       ),
-                      child: const Icon(
-                        Icons.edit_rounded,
-                        color: Color(0xFFE85D20),
-                        size: 18,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3E0),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.edit_rounded,
+                          color: Color(0xFFE85D20),
+                          size: 18,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ],
@@ -1797,7 +1804,9 @@ void _openEditShop(BuildContext context, WidgetRef ref, String currentName) {
     builder: (_) => _EditShopSheet(
       currentName: currentName,
       onSaved: (name) async {
-        await ref.read(settingsRepositoryProvider).set('shop_name', name);
+        await ref.read(settingsRepositoryProvider).renameStore(name);
+        // Đổi session thì Trang chủ (dashboardShopNameProvider theo dõi session) tự đọc lại.
+        await ref.read(sessionProvider.notifier).updateStoreName(name);
         ref.invalidate(shopNameProvider);
       },
     ),
@@ -1982,7 +1991,21 @@ class _EditShopSheetState extends State<_EditShopSheet> {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
     setState(() => _saving = true);
-    await widget.onSaved(name);
+    try {
+      await widget.onSaved(name);
+    } catch (e) {
+      debugPrint('[Settings] Đổi tên quán lỗi: $e');
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Chưa lưu được tên quán. Kiểm tra mạng rồi thử lại.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

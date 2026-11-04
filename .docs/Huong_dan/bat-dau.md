@@ -110,4 +110,4 @@ Quán mới được dùng thử 14 ngày.
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
 - Bài này phần lớn chỉ dẫn sang bài module; khi đổi tên việc trong bài module thì sửa tên ở đây theo.
 - Việc 5 cố ý không ghi giá gói: gói tin này đi cả vào app App Store / CH Play, nơi không được hiện giá hay đường dẫn trả tiền (`billing_platform.dart`).
-- Việc 6: bút chì ở Cài đặt chỉ ghi `settings.shop_name`, còn Trang chủ và hoá đơn bàn đọc `stores.name`, nên đổi tên chưa đồng bộ (lỗi app, chưa sửa).
+- Việc 6 mô tả app đang phát hành: bút chì chưa đổi tên trên Trang chủ. Mã nguồn đã sửa (04/11), chờ bản app kế tiếp. Khi phát hành bản đó: sửa việc 6 thành "bút chì đổi tên ở mọi nơi" rồi đăng lại gói; đăng sớm thì app cũ sẽ nghe sai.

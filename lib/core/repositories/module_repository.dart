@@ -310,6 +310,14 @@ class ModuleRepository {
 // ─────────────────────────────────────────────────────────────────────────────
 // APP SETTINGS REPOSITORY — Supabase app_settings (key-value per store)
 // ─────────────────────────────────────────────────────────────────────────────
+/// Tên in trên hoá đơn: tên đã sửa ở Cài đặt → tên quán → mặc định.
+String chonTenQuan(String? tenCaiDat, String? tenQuan) {
+  final a = tenCaiDat?.trim() ?? '';
+  if (a.isNotEmpty) return a;
+  final b = tenQuan?.trim() ?? '';
+  return b.isNotEmpty ? b : 'Quán Nhỏ';
+}
+
 class AppSettingsRepository {
   static SupabaseClient get _sb => Supabase.instance.client;
   final _uuid = const Uuid();
@@ -356,6 +364,20 @@ class AppSettingsRepository {
     }, onConflict: 'store_id,key');
   }
 
+  /// Đổi tên quán: stores.name (Trang chủ, QR, báo cáo chuỗi, hoá đơn bàn) và shop_name (hoá đơn quầy).
+  Future<void> renameStore(String name) async {
+    final storeId = await _storeId();
+    if (storeId == null) throw StateError('Chưa có quán');
+    // RLS từ chối thì update không báo lỗi mà trả rỗng → phải kiểm có dòng được ghi.
+    final rows = await _sb
+        .from('stores')
+        .update({'name': name})
+        .eq('id', storeId)
+        .select('id');
+    if (rows.isEmpty) throw StateError('Không có quyền đổi tên quán');
+    await set('shop_name', name);
+  }
+
   Future<String>  getOrDefault(String key, String defaultValue) async =>
       (await get(key)) ?? defaultValue;
 
@@ -370,7 +392,11 @@ class AppSettingsRepository {
     return double.tryParse(val.replaceAll(',', '.')) ?? defaultValue;
   }
 
-  Future<String>  get shopName       => getOrDefault('shop_name', 'Quán Nhỏ');
+  // Quán chưa từng sửa tên ở Cài đặt không có dòng shop_name → dùng tên lúc tạo quán, không in "Quán Nhỏ".
+  Future<String>  get shopName async => chonTenQuan(
+    await get('shop_name'),
+    (await StoreAuthService.getStoreInfo())['store_name'],
+  );
   Future<String>  get shopPhone      => getOrDefault('shop_phone', '');
   Future<String>  get shopAddress    => getOrDefault('shop_address', '');
   Future<String>  get billFooter     => getOrDefault('bill_footer', 'Cảm ơn quý khách!');

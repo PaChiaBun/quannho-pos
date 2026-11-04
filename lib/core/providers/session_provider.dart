@@ -110,6 +110,24 @@ class _SessionNotifier extends Notifier<SessionData?> {
     AppLogger.updateSession(storeId: s.storeId, staffName: name);
   }
 
+  /// Đổi tên quán trong phiên và bộ nhớ máy (hoá đơn bàn đọc từ đây); không đổi quán, vai trò.
+  Future<void> updateStoreName(String name) async {
+    final s = state;
+    if (s == null) return;
+    state = SessionData(
+      userId: s.userId,
+      phone: s.phone,
+      displayName: s.displayName,
+      storeId: s.storeId,
+      storeName: name,
+      storeCode: s.storeCode,
+      role: s.role,
+      isOwner: s.isOwner,
+    );
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_store_name', name);
+  }
+
   void updateStore(StoreMembership membership) async {
     if (state == null) return;
     state = SessionData(
