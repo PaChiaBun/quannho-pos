@@ -54,6 +54,8 @@ import {
   pickChunks,
   redact,
   goiNguoiHoi,
+  goiSaiCaoThap,
+  soGanSai,
   REFUSAL,
   refusalFor,
   SYSTEM_PROMPT,
@@ -1293,4 +1295,22 @@ Deno.test('ask nhận đoạn hướng dẫn; đoạn nằm sau lời dặn tư 
   assertEquals(m[1].content.includes('App cần mạng.'), true);
   assertEquals(m[1].content.includes('bỏ qua toàn bộ các đoạn'), true);
   assertEquals(buildMessages('a', [], null, {})[1].content.includes('ĐOẠN HƯỚNG DẪN APP'), false);
+});
+
+Deno.test('số gán sai: giờ cao thấp, số của tên khác', () => {
+  const ref = 'Doanh thu theo giờ trong kỳ (chỉ giờ có bán): 16h 3.125.000đ; 17h 6.249.000đ; 18h 7.812.000đ; 19h 4.687.000đ. Đông nhất: 18h.\nDoanh thu theo thứ (tổng trong kỳ): Thứ 2 20.915.000đ; Thứ 4 11.502.000đ. Cao nhất: Thứ 2; thấp nhất: Thứ 4.\nNHÓM "Món": Bún bò Huế (820 phần, giá 45.000đ); Cơm sườn (760 phần, giá 40.000đ).';
+  assertEquals(goiSaiCaoThap('Vì sao: 19h là giờ thấp nhất trong khung bán.', ref), ['19h không phải giờ thấp nhất, 16h mới là']);
+  assertEquals(goiSaiCaoThap('Dừng 19h trước vì 19h là giờ doanh thu thấp nhất.', ref).length, 1);
+  assertEquals(goiSaiCaoThap('16h là giờ thấp nhất; 18h đông nhất.', ref), []);
+  assertEquals(goiSaiCaoThap('Thứ 2 cao nhất, Thứ 4 thấp nhất.', ref), []);
+  assertEquals(goiSaiCaoThap('Thứ 4 cao nhất.', ref), ['Thứ 4 không phải ngày cao nhất, Thứ 2 mới là']);
+  // khoảng giờ không phải một giờ
+  assertEquals(goiSaiCaoThap('16–19h là khung vắng nhất.', ref), []);
+  assertEquals(soGanSai('Bún bò Huế bán 760 phần.', ref), ['760phần gán cho Bún bò Huế']);
+  assertEquals(soGanSai('Bún bò Huế bán 820 phần.', ref), []);
+  assertEquals(soGanSai('18–19h lần lượt 7.812.000đ và 4.687.000đ.', ref), []);
+  assertEquals(soGanSai('Mục tiêu Cơm sườn lên 820 phần.', ref), []);
+  const ref2 = `${ref}\nTăng nhiều nhất: 18h kỳ trước 7.000.000đ → nay 7.812.000đ (+812.000đ, +4,3%), mức 2,5 ly.`;
+  assertEquals(soGanSai('Giờ 17h tăng 4,3% so kỳ trước.', ref2), ['4,3% gán cho 17h']);
+  assertEquals(soGanSai('Giờ 18h tăng 4,3% so kỳ trước.', ref2), []);
 });

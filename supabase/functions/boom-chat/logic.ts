@@ -2339,6 +2339,67 @@ export function loiLapLuan(answer: string, ref: string): string[] {
 }
 
 /** Mọi lỗi cần hỏi lại (rỗng = câu trả lời qua): số lạ, khuyên ngược món giá vốn cao, lộ chữ nội bộ, combo đắt hơn lẻ, topping quán không bán, món có bán bị gọi là chưa bán, so tuần chưa trọn không nói số ngày. */
+const THU_TEN = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+const soChuan = (x: string) => x.replace(/[.\s]/g, '').replace(/,/g, '.');
+
+/** Giờ, thứ gọi là cao / thấp nhất mà khối số ghi khác ("19h thấp nhất" trong khi 16h thấp nhất, chấm mù 05/11). */
+export function goiSaiCaoThap(answer: string, ref: string): string[] {
+  const out: string[] = [];
+  const dongGio = /Doanh thu theo giờ trong kỳ[^:]*: ([^\n]*?)\. Đông nhất/.exec(ref)?.[1];
+  const gio = new Map([...(dongGio ?? '').matchAll(/(\d{1,2})h ([\d.]+)đ/g)].map((m) => [+m[1], +m[2].replace(/\./g, '')] as const));
+  for (const cau of answer.split(/[.;\n]+/)) {
+    if (/(?:so với|so kỳ|giảm|tăng|lùi|tụt)/i.test(cau)) continue; // "giảm nhiều nhất" là độ đổi, không phải mức bán
+    const m = /(?<![\d–-])(\d{1,2})h(?! ?[–-])(?: là)?(?: giờ| khung)?(?: doanh thu| bán)? (?:(thấp|ít|yếu|vắng)|(cao|nhiều|đông|mạnh)) nhất/i.exec(cau) ??
+      /giờ (?:(thấp|ít|yếu|vắng)|(cao|nhiều|đông|mạnh)) nhất(?: là| rơi vào)? (\d{1,2})h/i.exec(cau);
+    if (m && gio.size >= 3) {
+      const h = +(m[1] && /^\d/.test(m[1]) ? m[1] : m[3]);
+      const thap = m[0].match(/thấp|ít|yếu|vắng/i) !== null;
+      // "tối", "sáng" giới hạn phạm vi so
+      const pv = /tối/i.test(cau) ? ([16, 23] as const) : /sáng/i.test(cau) ? ([5, 10] as const) : /trưa/i.test(cau) ? ([10, 14] as const) : /chiều/i.test(cau) ? ([13, 18] as const) : ([0, 23] as const);
+      const vs = [...gio].filter(([g]) => g >= pv[0] && g <= pv[1]);
+      if (gio.has(h) && vs.length >= 2) {
+        const dung = [...vs].sort((a, b) => (thap ? a[1] - b[1] : b[1] - a[1]))[0];
+        if (dung[0] !== h && dung[1] !== gio.get(h)) out.push(`${h}h không phải giờ ${thap ? 'thấp' : 'cao'} nhất, ${dung[0]}h mới là`);
+      }
+    }
+    const t = /(Thứ [2-7]|Chủ nhật)(?: là)?(?: ngày| thứ)? (?:(thấp|ít|yếu|vắng)|(cao|nhiều|đông|mạnh)) nhất/i.exec(cau);
+    const dongThu = /Doanh thu theo thứ[^:]*:[^\n]*Cao nhất: ([^;]+); thấp nhất: ([^;.]+)/.exec(ref);
+    if (t && dongThu) {
+      const hoi = t[1].replace(/^t/, 'T').replace(/^c/, 'C'), dung = (t[2] ? dongThu[2] : dongThu[1]).trim();
+      if (THU_TEN.includes(hoi) && hoi !== dung) out.push(`${hoi} không phải ngày ${t[2] ? 'thấp' : 'cao'} nhất, ${dung} mới là`);
+    }
+  }
+  return [...new Set(out)];
+}
+
+/** Tên món, giờ, thứ mà số đi kèm không đứng cạnh tên đó trong khối, dù số có thật ở chỗ khác ("Bạc xỉu 620 ly" mà 620 là số của cả buổi sáng). */
+export function soGanSai(answer: string, ref: string): string[] {
+  const ten = new Set<string>();
+  for (const m of ref.matchAll(/(?:^|[:;,] )([A-ZÀ-ỸĐ][\p{L}\p{M}0-9 +]{2,40}?) \((\d[\d.,]*) (?:phần|ly)/gmu)) ten.add(m[1].trim());
+  const tu = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const out: string[] = [];
+  const reSo = /(\d{1,3}(?:\.\d{3})+|\d+(?:,\d+)?)\s?(đ|%|phần|ly)/g;
+  const dsTen = [...ten].sort((a, b) => b.length - a.length).map(tu);
+  const reTen = new RegExp(`(${[...dsTen, '(?<![\\d–-])\\d{1,2}h(?![–-]\\d)', 'Thứ [2-7]', 'Chủ nhật'].join('|')})`, 'gu');
+  for (const cau of answer.split(/[.;\n]\s|\n/)) {
+    const pos = [...cau.matchAll(reTen)];
+    // nhiều tên trong một vế (so sánh, gộp) khó tách đúng: chỉ xét vế có đúng 1 tên
+    for (const ve of cau.split(/, | và | còn | nhưng | trong khi /)) {
+      const p = pos.filter((x) => ve.includes(x[0]));
+      const gioPt = p.length === 1 && /^\d/.test(p[0][0]) && /\d(?:,\d+)?%/.test(ve); // "17h tăng 4,3%" là số đã có, không phải mục tiêu
+      if (p.length !== 1 || /lần lượt|[–-]\d|tổng|cộng|gộp|cả |khoảng|~|mục tiêu|mốc|nên|thử|lên|xuống|≥/i.test(ve) || (!gioPt && /tăng|giảm/i.test(ve))) continue;
+      const name = p[0][0], sau = ve.slice(ve.indexOf(name) + name.length, ve.indexOf(name) + name.length + 28);
+      for (const m of sau.matchAll(reSo)) {
+        const so = soChuan(m[1]);
+        if (so.replace('.', '').length < 2) continue;
+        const quanh = [...ref.matchAll(new RegExp(tu(name), 'gu'))].some((r) => soChuan(ref.slice(r.index!, r.index! + name.length + 90).split(/[;\n]/)[0]).includes(so));
+        if (!quanh && soChuan(ref).includes(so)) out.push(`${m[1]}${m[2]} gán cho ${name}`);
+      }
+    }
+  }
+  return [...new Set(out)];
+}
+
 export function kiemTraLoi(answer: string, ref: string): string[] {
   const bad = soLa(answer, ref);
   const nguoc = khuyenNguoc(answer, ref);
@@ -2347,6 +2408,8 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
   const tct = tuanChuaTron(answer, ref);
   const gk = soGioChoKhung(answer, ref);
   const pd = phanThanhDon(answer, ref);
+  const ct = goiSaiCaoThap(answer, ref);
+  const gs = soGanSai(answer, ref);
   return [
     ...(bad.length ? [`các số sau KHÔNG có trong khối số liệu và không tính ra được từ đó: ${bad.join('; ')} → bỏ các số đó (hoặc nói "chưa có số đó" và chỉ chỗ xem trong app), giữ nguyên các số đúng, không thêm số mới`] : []),
     ...(nguoc.length ? [`khuyên giảm giá / tặng / đẩy mạnh món có giá vốn CAO HƠN MỐC (${nguoc.join(', ')}) là khuyên ngược, càng bán càng mỏng lời → với món đó chỉ khuyên tăng giá nhẹ, giảm định lượng / đổi nguyên liệu, hoặc đẩy món lời tốt hơn thay thế`] : []),
@@ -2356,6 +2419,8 @@ export function kiemTraLoi(answer: string, ref: string): string[] {
     ...(pd.length ? [`gọi số PHẦN MÓN là số ĐƠN (${pd.map((x) => `${x} là số phần, không phải đơn`).join('; ')}) → khối không có số đơn theo ca / khung giờ: nói "phần món" hoặc nói chưa có số đơn theo ca`] : []),
     ...(gk.length ? [`gán số của từng giờ cho cả khung giờ (${gk.join('; ')}) → nói đúng: số khung giờ là tổng các giờ, hoặc ghi rõ "riêng 14h …"`] : []),
     ...(tct ? [`đang so ${tct} ngày đầu tuần này với ${tct} ngày cùng kỳ tuần trước mà chưa nói → thêm ngay câu đầu "tuần này mới có ${tct}/7 ngày, so với ${tct} ngày cùng kỳ tuần trước", giữ nguyên các số`] : []),
+    ...(ct.length ? [`gọi sai giờ / thứ cao thấp: ${ct.join('; ')} → sửa đúng theo dòng doanh thu theo giờ, theo thứ`] : []),
+    ...(gs.length ? [`số gán sai đối tượng: ${gs.join('; ')} → số đó không phải của món / giờ / thứ này; chép đúng số của nó hoặc bỏ`] : []),
     ...loiLapLuan(answer, ref),
     ...(NOI_BO.test(answer) ? ['câu trả lời lộ tên dòng / khối nội bộ (vd "dòng ĐIỂM CẦN CHÚ Ý", "khối ...", "tính sẵn") → nói lý do bằng lời thường cho chủ quán, không nhắc tên dòng'] : []),
   ];
