@@ -115,7 +115,14 @@ String boomGoiNguoiDung(String? xungHo, String? displayName) {
       .split(RegExp(r'\s+'))
       .where((w) => w.isNotEmpty)
       .toList();
-  var ten = words.isEmpty ? '' : words.last;
+  // Tên tài khoản là tên quán ("Quán Nhỏ POS") → không gọi "Anh/Chị POS" (hỏi thật 05/11)
+  final tenQuan = words.any(
+    (w) => RegExp(
+      r'^(?:pos|quán|quan|tiệm|tiem|shop|store|demo|test|admin|cafe|café|coffee)$',
+      caseSensitive: false,
+    ).hasMatch(w),
+  );
+  var ten = words.isEmpty || tenQuan ? '' : words.last;
   if (ten.length > 15) ten = ten.substring(0, 15);
   if (ten.isNotEmpty) {
     // Cả tên viết HOA ("NGUYỄN VĂN AN" → "An") mới viết lại; tên tắt ngắn ("NV") giữ nguyên

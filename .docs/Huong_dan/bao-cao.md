@@ -30,7 +30,8 @@ nguon:
 
 ### Doanh thu
 - Nhân viên nào bán nhiều nhất: xem **"Doanh thu theo thu ngân"** ở tab này.
-- Xem hôm nay, hôm qua, tháng trước bán được bao nhiêu: mở Báo cáo, tab Doanh thu, chọn kỳ. Trang chủ cũng có "DOANH THU HÔM NAY" cho Chủ quán, Quản lý. Ở Bán hàng, "Đơn gần đây" cũng có tổng hôm nay cho Chủ quán và Quản lý.
+- In báo cáo cuối ngày: bấm "In báo cáo" ở tab Doanh thu.
+- Xem hôm nay, hôm qua, tháng trước bán được bao nhiêu, được nhiêu: mở Báo cáo, tab Doanh thu, chọn kỳ. Trang chủ cũng có "DOANH THU HÔM NAY" cho Chủ quán, Quản lý. Ở Bán hàng, "Đơn gần đây" cũng có tổng hôm nay cho Chủ quán và Quản lý.
 - Thẻ **"Tổng doanh thu …"** (ghi đúng kỳ đang xem: "tháng này", "tháng 10/2026", "tuần 26/10–01/11"): số đơn, TB/đơn.
 - Biểu đồ **"Doanh thu theo giờ"** (hôm nay) hoặc **"Doanh thu theo ngày"** (tuần/tháng; biểu đồ tháng ghi số ngày dưới cột: 1, 9, 17, 25, 30).
 - **"Tóm tắt kỳ này"**: Doanh thu, Số đơn, TB/đơn.

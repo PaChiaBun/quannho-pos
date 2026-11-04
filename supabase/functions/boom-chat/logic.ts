@@ -1561,7 +1561,9 @@ export function goiNguoiHoi(p: Persona | null | undefined): string {
   // bỏ phần trong ngoặc ("Lan (thu ngân)"), giữ dấu tổ hợp (tên gõ kiểu Unikey tổ hợp), viết hoa chữ đầu
   const words = (p?.ten ?? '').normalize('NFC').replace(/\([^)]*\)/g, ' ').replace(/[^\p{L}\p{M}\s]/gu, ' ').trim()
     .split(/\s+/).filter(Boolean);
-  const raw = words.length ? words[words.length - 1].slice(0, 15) : '';
+  // Tên tài khoản là tên quán ("Quán Nhỏ POS") → không gọi "Anh/Chị POS" (hỏi thật 05/11)
+  const tenQuan = words.some((w) => /^(?:pos|quán|quan|tiệm|tiem|shop|store|demo|test|admin|cafe|café|coffee)$/iu.test(w));
+  const raw = words.length && !tenQuan ? words[words.length - 1].slice(0, 15) : '';
   // Cả tên viết HOA ("NGUYỄN VĂN AN" → "An") mới viết lại; tên tắt ngắn ("NV") giữ nguyên
   const full = words.join('');
   const allCaps = full.length >= 3 && full === full.toUpperCase() && full !== full.toLowerCase();

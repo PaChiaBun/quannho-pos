@@ -79,19 +79,19 @@ Dùng được, một máy là đủ. Cần bật cái nào: giữ Bán hàng, K
 > Lưu ý: tắt module là tắt cho cả quán — nhân viên cũng không thấy module đó nữa. Nhân viên không có nút "Sửa" (thấy "Nhân viên không có quyền chỉnh sửa").
 
 ### 3. Mất mạng có bán được không
-Không. App cần mạng (wifi hoặc 4G) mới bán được, vì đơn được ghi lên máy chủ; app chưa có chế độ bán không mạng.
+Không. App cần mạng (wifi hoặc 4G) mới bán được, vì đơn được ghi lên máy chủ; app chưa có chế độ bán không mạng. Mất internet, sóng yếu, 4G yếu, mạng lag đều làm app chậm hoặc chưa ghi được đơn.
 1. Cúp wifi: bật 4G trên máy hoặc phát mạng từ điện thoại khác rồi bán tiếp.
 2. Đang thanh toán thì mất mạng: đừng bán lại đơn đó. Có mạng thì làm theo bài Bán hàng, việc "Đối soát thanh toán bị gián đoạn"; app không thu hai lần.
 3. Mất mạng lâu: ghi đơn ra giấy, có mạng thì nhập lại vào app. Đơn nhập lại mang giờ lúc nhập.
 
 ### 4. Đổi máy mới, đổi điện thoại, cài lại app: dữ liệu có mất không, có phải nhập lại món không
-Không mất. Món, đơn, báo cáo, nhân viên nằm trên máy chủ, không nằm trong điện thoại, nên đổi máy, máy hư hay cài lại app đều còn nguyên.
+Không mất, kể cả xoá app rồi cài lại. Dữ liệu lưu trên máy chủ: món, đơn, báo cáo, nhân viên nằm trên máy chủ, không nằm trong điện thoại, nên đổi máy, máy hư hay cài lại app đều còn nguyên.
 1. Cài app trên máy mới, đăng nhập đúng số điện thoại và mật khẩu cũ. Quên mật khẩu: bài Nhân viên & Phân quyền, việc "Quên mật khẩu khi chưa đăng nhập được".
 2. Máy mới có in bill: chọn lại ở "Máy này in bill ra" rồi bấm "Lưu" (bài In Hoá Đơn).
 3. Máy cũ đang làm máy chủ in: trên máy mới bấm "Chuyển máy chủ sang thiết bị này" (bài In Hoá Đơn, việc "Máy chủ in").
 
 ### 5. App có mất phí không, giá bao nhiêu, dùng thử và gia hạn
-Quán mới được dùng thử 14 ngày.
+Xài app có tốn tiền không, bao nhiêu tiền, gói tháng giá sao, có free không, có tính tiền hằng tháng không, dùng lâu dài có phải đóng tiền không: quán mới được dùng thử 14 ngày. Xài thử hết hạn thì làm tiếp như dưới.
 1. Còn 3 ngày hoặc đã hết hạn, Trang chủ hiện dải nhắc cho Chủ quán.
 2. Bấm "Gia hạn thêm 30 ngày" trên dải nhắc để dùng tiếp miễn phí.
 3. Hỏi giá hoặc gói của quán: gọi Hotline 0927 55 8888.
@@ -104,7 +104,8 @@ Quán mới được dùng thử 14 ngày.
 ### 7. Gọi hỗ trợ, số hotline, liên hệ Quán Nhỏ
 1. Gọi Hotline 0927 55 8888.
 2. Hoặc trong app: Cài đặt → "Gửi phản hồi".
-3. Cần người chỉ trực tiếp, nhờ nhập món giùm: gọi Hotline để hỏi.
+3. Cần người hướng dẫn trực tiếp, nhờ nhập món giùm: gọi Hotline để hỏi.
+4. Muốn góp ý cho app: Cài đặt → "Gửi phản hồi".
 
 ### 8. Dùng trên máy tính, dùng nhiều máy cùng lúc
 1. App có trên Android, iPhone, máy tính Windows và trình duyệt web. Bản Windows và web ở trang quannho.lpm.vn.
@@ -182,7 +183,7 @@ App tự báo khi có bản mới. Bấm "Cập nhật ngay"; iPhone bấm "Mở
 
 ### 21. Dữ liệu của quán có bị người khác xem không
 1. Chỉ tài khoản đã vào quán mới xem được, nhân viên thấy theo vai trò.
-2. Không đưa mật khẩu cho người khác; nhân viên nghỉ thì xoá khỏi quán.
+2. Không đưa mật khẩu cho người khác.
 3. Bé Boom đọc số của đúng quán đang đăng nhập để trả lời.
 
 ### 22. Không thấy, không có ô, mục Bàn, Nhân viên, In Hoá Đơn, Khách hàng, Chấm công, Vận Hành trên Trang chủ

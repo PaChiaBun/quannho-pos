@@ -52,6 +52,11 @@ void main() {
     expect(boomHelpNoiTiep(khong, () => rieng), same(rieng));
   });
 
+  test('tên tài khoản là tên quán thì không gọi theo tên', () {
+    expect(boomGoiNguoiDung(null, 'Quán Nhỏ POS'), 'Anh/Chị');
+    expect(boomGoiNguoiDung('anh', 'Trần Quân'), 'Anh Quân');
+  });
+
   test('không có kết quả tìm thì không kèm', () {
     expect(boomHelpChoMayChu(null, 'x', sure: false), isEmpty);
   });

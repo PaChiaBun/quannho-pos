@@ -43,6 +43,7 @@ nguon:
 ## Các việc thường làm
 
 ### 1. Thêm món / nguyên liệu
+Tạo món mới, tạo món bấm ở đâu, nhập menu vào app: làm ở đây.
 1. Bấm **"Thêm sản phẩm"** → **"Thêm sản phẩm mới"**.
 2. Điền:
    - **"Tên sản phẩm *"**.
@@ -55,6 +56,11 @@ nguon:
 3. Bấm **"Thêm sản phẩm"**.
 
 > Chọn danh mục **"Nguyên liệu"** thì món nằm ở tab Nguyên liệu (khi đã bật phiếu nhập nâng cao) và **không hiện** ở màn Bán hàng (trừ khi có giá bán). Danh mục khác nằm ở tab Hàng hoá & Menu.
+
+### 1a. Đổi giá món, sửa giá bán
+Ly này, món này giờ bán giá khác thì sửa ở đây.
+1. Ở Kho hàng, bấm "Thao tác" trên dòng món → "Sửa thông tin món".
+2. Sửa "Giá bán (đ)" rồi lưu.
 
 ### 1b. Tạo combo
 Tạo combo 2 ly, combo cơm nước có giá rẻ hơn mua lẻ: **"Thêm sản phẩm"** → danh mục **"Combo"** → đặt giá combo làm **"Giá bán (đ)"**.

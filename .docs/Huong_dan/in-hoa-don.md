@@ -139,6 +139,7 @@ Dùng khi quán có nhiều máy bán (web, điện thoại) nhưng chỉ **mộ
 | "Máy này chưa cài máy in hoá đơn nên không in bill." (thu tiền ở quầy: dòng tự tắt; ở bàn: dòng chữ xám) | Máy đang thao tác không có máy in hoá đơn / không có luật in hoá đơn | Thêm máy in + luật "Hóa đơn thanh toán", hoặc đặt Máy chủ in |
 | Bán trên **web** mà không ra bill | Trình duyệt không tự in | Đặt một máy Windows/Sunmi làm **Máy chủ in** và giữ app luôn mở |
 | Một loại phiếu (vd phiếu bar) không in | Đang dùng luật in nhưng thiếu luật cho loại phiếu đó | Thêm luật cho loại phiếu đó, bấm Lưu |
+| Bill in ra thiếu chữ, mất chữ | Khổ giấy hoặc cỡ chữ không hợp | Sửa máy in: đúng khổ giấy, giảm tỉ lệ cỡ chữ |
 | Bill bị cụt mép / chữ quá to | Khổ giấy hoặc cỡ chữ không hợp | Sửa máy in: đúng khổ giấy, giảm tỉ lệ cỡ chữ |
 | Chữ mờ hoặc bết (Sunmi) | Độ đậm chưa hợp | Đổi độ đậm; bật "Chữ đậm dạng bán đậm" nếu chữ đậm bị loe |
 | "Bill CHƯA in. Kiểm tra máy in bill." (khi thanh toán bàn) | Lệnh in lỗi ngay, hoặc máy in không trả lời sau 30 giây (chậm, tắt, hết giấy) | Kiểm tra máy in rồi bấm **"IN LẠI BILL"** trên màn thành công hoặc trên dòng đỏ (dòng đỏ tự tắt sau 10 giây hoặc khi chuyển màn) |

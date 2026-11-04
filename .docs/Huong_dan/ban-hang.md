@@ -42,6 +42,7 @@ nguon:
 ## Các việc thường làm
 
 ### Bán 1 đơn cho khách (từ đầu đến cuối)
+Bán hàng cho khách làm như sau:
 1. Mở Bán hàng, chạm các món khách gọi.
 2. Bấm "Thanh toán" trong giỏ (điện thoại: ô tổng tiền màu cam).
 3. Chọn phương thức rồi bấm "Xác nhận".
