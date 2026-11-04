@@ -12,6 +12,7 @@ STORES = [dict(id=f"s{i}", name=f"Quán {n}", store_code=f"Q{i:03}", plan="trial
    for i,n in enumerate(["Bún Nhà Làm","Cà Phê Gió","Trà Sữa Mây","Phở Hà","Cơm Tấm 79","Quán Thử Demo","Bánh Mì Cô Ba"])]
 # Gói (đợt 1): s1 Pro sắp hết, s2 đang khoá, s3 sắp hết dùng thử, còn lại hết dùng thử
 for r in STORES: r.update(plan='free', plan_ends_at=None, owner_phone='+84901234567')
+for i, r in enumerate(STORES): r.update(owner_user_id='own1' if i in (0, 1, 2) else f'own{i}', owner_store_count=3 if i in (0, 1, 2) else 1, owner_name='Chủ <b>nhiều quán</b>' if i in (0, 1, 2) else r['owner_name'])
 STORES[1].update(plan='pro', status='active', plan_ends_at=iso(-5)); STORES[2].update(status='locked'); STORES[3].update(trial_ends_at=iso(-2))
 NOTES = {'s0': [dict(id=1, body='Đã gọi, chủ cần hướng dẫn in bill <script>alert(1)</script>', follow_up_on=now.date().isoformat(), done_at=None, created_at=iso(1), author='Giang')]}
 ACTIONS = {}
@@ -51,6 +52,21 @@ TURNS = [dict(id=f"t{i}", created_at=iso(0,i*3), store_id="s0", source="gpt" if 
 # Tổng quan nâng cấp: doanh thu 30 ngày có 1 ngày đột biến; gợi ý quán thử có tên chứa HTML (phải hiện như chữ)
 SUGG = [dict(id=f"g{i}", name=n, code=f"G{i:03}", created_at=iso(25+i), reason=rs, orders_total=o) for i,(n,rs,o) in enumerate([
   ("aaaaa","name_junk",0),("hghhhh","name_junk",0),("Test","name_test",0),("tao test <b>x</b>","name_test",0),("Quán Nhỏ POS (Demo)","name_test",1869)])]
+def growth():
+    # 12 tháng: tháng cũ đủ mọi bước, gần đây "chưa đủ ngày", tháng 0 quán bị ẩn. Mặc định chưa có tiền (MRR 0).
+    y, m = now.year, now.month
+    months = sorted(((y if m - i > 0 else y - 1), (m - i if m - i > 0 else m - i + 12)) for i in range(12))
+    rows = []
+    for i, (yy, mm) in enumerate(months):
+        age = 11 - i; n = 0 if age == 7 else 8 + age * 3
+        rows.append(dict(month=f"{yy}-{mm:02}-01", created=n, has_menu=n // 2, mature_7d=(n if age else n // 2),
+            first_order_7d=(n // 3 if n else None), mature_30d=(n if age >= 1 else 0), real_use_30d=(n // 5 if n and age >= 1 else None),
+            mature_60d=(n if age >= 2 else 0), retained_60d=(n // 6 if n and age >= 2 else None)))
+    return dict(ok=True, thresholds=dict(real_use_7d=20, real_use_30d=20),
+        money=dict(mrr_vnd=0, paying_stores=0, manual_paid_stores=2, comp_stores=1, lifetime_stores=0, cash_30d_vnd=0, first_paid_30d=0, renewed_30d=0,
+                   pro_lapsed=0, trial_ending_30d=169, self_extend_30d=14),
+        usage=dict(real_use_7d=3, customers=152, multi_store_customers=4), cohorts=rows)
+
 def extra():
     days=[dict(day=(now-datetime.timedelta(days=29-i)).date().isoformat(), n=0, revenue=0) for i in range(30)]
     for i,d in enumerate(days):
@@ -87,9 +103,20 @@ class H(http.server.SimpleHTTPRequestHandler):
             return s.send_json(200, dict(ok=True,total=179,test_stores=1,new_today=3,new_7d=21,new_30d=166,active_7d=8,active_30d=49,sleeping=12,never_sold=118,
                new_by_day=[dict(day=(now-datetime.timedelta(days=59-i)).date().isoformat(), n=random.randint(0,12)) for i in range(60)],
                active_by_week=[dict(week_start=(now-datetime.timedelta(weeks=11-i)).date().isoformat(), n=random.randint(2,30)) for i in range(12)]))
-        if p.endswith('/admin_store_list_v1'):
+        if p.endswith('/admin_store_list_v2'):
             rows=[r for r in STORES if body.get('p_filter')=='test' and r['is_test'] or body.get('p_filter')!='test' and not r['is_test']]
-            return s.send_json(200, dict(ok=True,total=len(rows),rows=rows))
+            if body.get('p_owner'): rows=[r for r in rows if r['owner_user_id']==body['p_owner']]
+            q=(body.get('p_search') or '').lower()
+            if q: rows=[r for r in rows if q in r['name'].lower() or q in r['store_code'].lower() or q in (r['owner_name'] or '').lower()]
+            f=body.get('p_sort') or 'default'
+            if f not in ('default','orders_7d','orders_30d','last_order_at','created_at','menu_items','name') or body.get('p_dir','desc') not in ('asc','desc'):
+                return s.send_json(200, dict(ok=False,error='BAD_SORT'))
+            f='orders_7d' if f=='default' else f
+            rows=sorted(rows, key=lambda r: (r.get(f) is None, r.get(f) or 0), reverse=False)
+            if body.get('p_dir','desc')=='desc': rows=sorted(rows, key=lambda r: (r.get(f) is not None, r.get(f) or 0), reverse=True)
+            off=body.get('p_offset',0); lim=body.get('p_limit',50)
+            return s.send_json(200, dict(ok=True,total=len(rows),rows=rows[off:off+lim]))
+        if p.endswith('/admin_growth_v1'): return s.send_json(200, growth())
         if p.endswith('/admin_overview_extra_v1'): return s.send_json(200, extra())
         if p.endswith('/admin_set_test_store_v1'):
             SUGG[:] = [g for g in SUGG if g['id'] != body.get('p_store')]

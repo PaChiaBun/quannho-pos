@@ -179,7 +179,7 @@ function resetPromptBox() {
 }
 
 // Biến trạng thái bộ nhớ trong phiên (xoá sạch khi thoát)
-const st = { filter: 'all', search: '', offset: 0, limit: 30, sort: 'default', rows: [], total: 0 };
+const st = { filter: 'all', search: '', offset: 0, limit: 30, sort: 'default', owner: null, rows: [], total: 0 };
 const bm = { filter: 'all', search: '', offset: 0, limit: 30, store: null, rows: [], total: 0 };
 let activeTurnShortcut = null;
 let lastFocusEl = null;
@@ -214,6 +214,8 @@ function logout(msg) {
   closeForm();
   profileStoreId = null;
   st.rows = []; st.total = 0; st.offset = 0;
+  st.filter = 'all'; st.search = ''; st.sort = 'default';
+  $('st-search').value = ''; $('st-sort').value = 'default';
   pl.rows = []; pl.total = 0; pl.offset = 0;
   plContactDirty = false;
   bl.filter = 'pending'; bl.search = '';
@@ -224,6 +226,7 @@ function logout(msg) {
   const idsToClear = [
     'ov-error', 'ov-todo', 'ov-k-rev', 'ov-k-ord', 'ov-k-act', 'ov-k-new', 'ov-rev-meta', 'ov-rev-chart',
     'ov-top', 'ov-funnel', 'ov-drop', 'ov-suggest', 'ov-new-meta', 'ov-new-chart', 'ov-week-meta', 'ov-week-chart',
+    'ov-m-mrr', 'ov-m-cash', 'ov-m-lapsed', 'ov-m-trial', 'ov-m-error', 'ov-cohorts', 'st-owner-filter',
     'st-list', 'bm-stats', 'bm-list', 'bm-store-filter',
     'kn-error', 'kn-changelog', 'kn-packs', 'kn-modules', 'kn-cache', 'kn-caps',
     'pl-error', 'pl-kpis', 'pl-list', 'bl-section', 'sp-list', 'sp-filters', 'sp-accounts',
@@ -236,7 +239,8 @@ function logout(msg) {
   $('ov-updated').textContent = 'Đang tải số liệu…';
   $('ov-suggest-card').open = false;
   $('ov-rev-sum').textContent = '';
-  ovRevPts = []; ovSuggest = [];
+  ovRevPts = []; ovSuggest = []; ovGrowth = null; st.owner = null;
+  $('st-owner-filter').hidden = true;
   $('pl-error').hidden = true;
   $('kn-error').hidden = true;
   $('bm-store-filter').hidden = true;
@@ -661,6 +665,7 @@ function renderFunnel(d) {
       text: `${s.link}\u00a0›`,
       onclick: () => {
         st.filter = s.filter;
+        st.owner = null;
         st.offset = 0;
         showTab('stores');
       },
@@ -676,6 +681,7 @@ loaders.overview = async () => {
   try {
     const includeTest = $('ov-include-test').checked;
     loadOverviewExtra(includeTest);  // khối doanh số chạy song song; lỗi riêng không làm hỏng khối này
+    loadGrowth(includeTest);  // khối tiền + lứa quán: cũng vậy
     const d = await rpc('admin_store_overview_v1', { p_include_test: includeTest });
 
     const now = new Date();
@@ -684,12 +690,15 @@ loaders.overview = async () => {
 
     const weeks = d.active_by_week || [];
     fillKpi('ov-k-act', 'Quán đang dùng tích cực', fmtN(d.active_7d),
-      el('span', { class: 'muted', text: `${fmtPct(d.active_7d, d.total)} trên ${fmtN(d.total)} quán · 7 ngày qua` }),
+      el('span', {},
+        el('span', { class: 'muted', text: `${fmtPct(d.active_7d, d.total)} trên ${fmtN(d.total)} quán · 7 ngày qua` }),
+        el('span', { class: 'muted ov-usage', id: 'ov-usage' })),
       sparkline(weeks.slice(0, -1).map((w) => w.n), 'Xu hướng số quán có đơn theo tuần (các tuần đã trọn)'));
     fillKpi('ov-k-new', 'Quán mới 7 ngày', fmtN(d.new_7d),
       el('span', { class: 'muted', text: `+${fmtN(d.new_today)} hôm nay · ${fmtN(d.new_30d)} trong 30 ngày` }),
       sparkline((d.new_by_day || []).slice(-30).map((p) => p.n), 'Xu hướng quán mới theo ngày, 30 ngày qua'));
 
+    paintUsage();
     renderFunnel(d);
 
     renderChart($('ov-new-chart'), $('ov-new-meta'), d.new_by_day || [], {
@@ -742,12 +751,12 @@ function drawRevChart() {
   renderChart($('ov-rev-chart'), $('ov-rev-meta'), ovRevPts.map((p) => ({ ...p, n: byRev ? p.revenue : p.orders })), {
     capOutlier: true,
     axisFmt: byRev ? fmtMoneyShort : fmtN,
-    ariaLabel: `Biểu đồ ${byRev ? 'doanh thu' : 'số đơn'} toàn hệ thống theo ngày trong 30 ngày qua`,
+    ariaLabel: `Biểu đồ ${byRev ? 'doanh số' : 'số đơn'} toàn hệ thống theo ngày trong 30 ngày qua`,
     xAxisLabel: (p, isLast) => (isLast ? 'Hôm nay' : fmtShortDay(p.day)),
     tooltipLabel: (p, isLast) => (isLast ? 'Hôm nay' : `Ngày ${fmtShortDay(p.day)}`),
     valueText: (p) => `${fmtMoney(p.revenue)} · ${fmtN(p.orders)} đơn`,
     summaryText: (sum, last) => (byRev ? `Tổng ${fmtMoneyShort(sum)} · hôm nay ${fmtMoneyShort(last)}` : `Tổng ${fmtN(sum)} đơn · hôm nay ${fmtN(last)}`),
-    emptyNode: () => emptyBox('Chưa có doanh thu', 'Chưa quán nào bán trong 30 ngày qua.'),
+    emptyNode: () => emptyBox('Chưa có doanh số', 'Chưa quán nào bán trong 30 ngày qua.'),
   });
 }
 for (const [id, mode] of [['ov-rev-mode-rev', 'rev'], ['ov-rev-mode-ord', 'ord']]) {
@@ -771,6 +780,85 @@ function todoItem(value, label, cls, onClick) {
 
 let ovSuggest = [];
 let ovExtraGen = 0;
+// Tiền công ty + lứa quán + dùng thật (admin_growth_v1). Lỗi riêng không làm hỏng các khối khác.
+let ovGrowth = null;
+let ovGrowthGen = 0;
+function paintUsage() {
+  const box = $('ov-usage');
+  if (!box || !ovGrowth) return;
+  const u = ovGrowth.usage || {};
+  const lim = (ovGrowth.thresholds || {}).real_use_7d;
+  box.textContent = `${fmtN(u.real_use_7d)} dùng thật (từ ${fmtN(lim)} đơn/7 ngày) · ${fmtN(u.customers)} khách, ${fmtN(u.multi_store_customers)} chủ có từ 2 quán`;
+}
+function renderMoney(m) {
+  const money = (n) => (Number(n) ? fmtMoneyShort(n) : '0 đ');  // rút gọn trang chung in "0", tiền phải có đơn vị
+  fillKpi('ov-m-mrr', 'Doanh thu định kỳ / tháng (MRR)', money(m.mrr_vnd),
+    el('span', { class: 'muted', text: [
+      Number(m.paying_stores) ? `${fmtN(m.paying_stores)} quán trả qua đơn thu phí` : 'Chưa có quán trả qua đơn thu phí',
+      Number(m.manual_paid_stores) ? `${fmtN(m.manual_paid_stores)} quán ghi tay chưa tính` : '',
+    ].filter(Boolean).join(' · ') }));
+  fillKpi('ov-m-cash', 'Thực thu 30 ngày', money(m.cash_30d_vnd),
+    el('span', { class: 'muted', text: `${fmtN(m.first_paid_30d)} quán trả lần đầu · ${fmtN(m.renewed_30d)} trả tiếp` }));
+  fillKpi('ov-m-lapsed', 'Quán từng trả phí đã hết hạn', fmtN(m.pro_lapsed),
+    el('span', { class: 'muted', text: `Ngoài ra ${fmtN(m.comp_stores)} quán được tặng · ${fmtN(m.lifetime_stores)} Pro không thời hạn` }));
+  fillKpi('ov-m-trial', 'Hết dùng thử trong 30 ngày tới', fmtN(m.trial_ending_30d),
+    el('span', { class: 'muted', text: `${fmtN(m.self_extend_30d)} lần tự gia hạn miễn phí trong 30 ngày qua` }));
+}
+function cohortStep(label, n, of) {
+  const box = el('td', { 'data-label': label, class: 'num-col' });
+  if (n === null || n === undefined) box.append(el('span', { class: 'small muted', text: 'chưa đủ ngày' }));
+  else box.append(el('div', { class: 'num', text: fmtPct(n, of) }), el('div', { class: 'small muted num', text: `${fmtN(n)}/${fmtN(of)}` }));
+  return box;
+}
+function renderCohorts(rows, lim) {
+  // shortcut: bỏ tháng không có quán mới; lứa dài hơn 12 tháng không xem được, khi cần thì thêm tham số tháng
+  const list = rows.filter((c) => Number(c.created) > 0).reverse();
+  const box = clear($('ov-cohorts'));
+  if (!list.length) { box.append(emptyBox('Chưa có quán mới', 'Chưa có quán nào tạo trong 12 tháng qua.')); return; }
+  const heads = ['Có món', 'Có đơn trong 7 ngày đầu', `Đạt ${fmtN(lim)} đơn trong 30 ngày đầu`, 'Còn bán ở ngày 31–60'];
+  box.append(el('table', { class: 'ov-coh' },
+    el('thead', {}, el('tr', {},
+      el('th', { scope: 'col', text: 'Tháng tạo' }),
+      el('th', { scope: 'col', class: 'num-col', text: 'Quán tạo' }),
+      ...heads.map((h) => el('th', { scope: 'col', class: 'num-col', text: h })))),
+    el('tbody', {}, ...list.map((c) => {
+      const [y, mo] = String(c.month).split('-');
+      return el('tr', {},
+        el('th', { scope: 'row', class: 'ov-coh-month', text: `${Number(mo)}/${y}` }),
+        el('td', { 'data-label': 'Quán tạo', class: 'num-col num', text: fmtN(c.created) }),
+        cohortStep(heads[0], c.has_menu, c.created),
+        cohortStep(heads[1], c.first_order_7d, c.mature_7d),
+        cohortStep(heads[2], c.real_use_30d, c.mature_30d),
+        cohortStep(heads[3], c.retained_60d, c.mature_60d));
+    })),
+  ));
+}
+async function loadGrowth(includeTest) {
+  const gen = ++ovGrowthGen;
+  clear($('ov-m-error'));
+  if (!$('ov-m-mrr').children.length) {
+    for (const id of ['ov-m-mrr', 'ov-m-cash', 'ov-m-lapsed', 'ov-m-trial']) showSkeletons($(id), 1, 'h-kpi');
+    showSkeletons($('ov-cohorts'), 3, 'h-row');
+  }
+  let g;
+  try {
+    g = await rpc('admin_growth_v1', { p_include_test: includeTest });
+    if (gen !== ovGrowthGen) return;  // đã có lượt tải mới hơn
+    if (!g || g.ok === false) throw new Error((g && g.error) || 'ERR');
+  } catch (err) {
+    if (isAuthErr(err) || gen !== ovGrowthGen) return;
+    ovGrowth = null;
+    for (const id of ['ov-m-mrr', 'ov-m-cash', 'ov-m-lapsed', 'ov-m-trial', 'ov-cohorts']) clear($(id));
+    const usage = $('ov-usage'); if (usage) usage.textContent = '';
+    $('ov-m-error').append(errorBox('Không tải được số tiền / lứa quán.', () => loadGrowth(includeTest)));
+    return;
+  }
+  ovGrowth = g;
+  renderMoney(g.money || {});
+  renderCohorts(g.cohorts || [], (g.thresholds || {}).real_use_30d);
+  paintUsage();
+}
+
 async function loadOverviewExtra(includeTest) {
   const gen = ++ovExtraGen;
   if (!$('ov-todo').children.length) {
@@ -787,7 +875,7 @@ async function loadOverviewExtra(includeTest) {
   } catch (err) {
     if (isAuthErr(err) || gen !== ovExtraGen) return;
     for (const id of ['ov-todo', 'ov-top', 'ov-drop', 'ov-rev-chart', 'ov-rev-meta', 'ov-rev-sum']) clear($(id));
-    fillKpi('ov-k-rev', 'Doanh thu 7 ngày', '—', el('span', { class: 'muted', text: 'Không tải được' }));
+    fillKpi('ov-k-rev', 'Doanh số qua POS 7 ngày', '—', el('span', { class: 'muted', text: 'Không tải được' }));
     fillKpi('ov-k-ord', 'Đơn hoàn thành 7 ngày', '—', el('span', { class: 'muted', text: 'Không tải được' }));
     $('ov-rev-chart').append(emptyBox('Không tải được doanh số', 'Bấm "Thử lại" ở dải việc cần làm.'));
     $('ov-drop-count').textContent = '';
@@ -813,6 +901,10 @@ async function loadOverviewExtra(includeTest) {
       }],
     [t.billing_pending, 'Đơn thu phí chờ xác nhận', 'warn', () => { bl.filter = 'pending'; goPlans('all', true); }],
     [drop.total, 'Quán đang bỏ dùng', 'warn', () => $('ov-drop-panel').scrollIntoView({ behavior: 'smooth', block: 'start' })],
+    [(x.test_suggest || []).length, 'Quán nghi là quán thử', 'warn', () => {
+      $('ov-suggest-card').open = true;
+      $('ov-suggest-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }],
   ].filter((it) => Number(it[0] || 0) > 0);
   clear($('ov-todo')).append(...(items.length
     ? items.map((it) => todoItem(...it))
@@ -820,9 +912,9 @@ async function loadOverviewExtra(includeTest) {
 
   const sa = x.sales || {};
   const byDay = sa.by_day || [];
-  fillKpi('ov-k-rev', 'Doanh thu 7 ngày', fmtMoneyShort(sa.revenue_7d),
+  fillKpi('ov-k-rev', 'Doanh số qua POS 7 ngày', fmtMoneyShort(sa.revenue_7d),
     kpiDelta(sa.revenue_7d, sa.revenue_prev7, 'so với kỳ trước'),
-    sparkline(byDay.map((p) => p.revenue), 'Xu hướng doanh thu theo ngày, 30 ngày qua'));
+    sparkline(byDay.map((p) => p.revenue), 'Xu hướng doanh số theo ngày, 30 ngày qua'));
   fillKpi('ov-k-ord', 'Đơn hoàn thành 7 ngày', fmtN(sa.orders_7d),
     kpiDelta(sa.orders_7d, sa.orders_prev7, 'so với kỳ trước'),
     sparkline(byDay.map((p) => p.n), 'Xu hướng số đơn theo ngày, 30 ngày qua'));
@@ -978,7 +1070,8 @@ $('st-prev').addEventListener('click', () => { st.offset = Math.max(0, st.offset
 $('st-next').addEventListener('click', () => { st.offset += st.limit; loaders.stores(); });
 $('st-sort').addEventListener('change', () => {
   st.sort = $('st-sort').value;
-  renderStoresList();
+  st.offset = 0;
+  loaders.stores();
 });
 
 function storeStatusBadge(s) {
@@ -994,23 +1087,6 @@ function storePlanMini(s) {
   return null;
 }
 
-function sortedStores(rows) {
-  if (!st.sort || st.sort === 'default') return rows.slice();
-  const [field, dir] = st.sort.split(':');
-  const mul = dir === 'asc' ? 1 : -1;
-  return rows.slice().sort((a, b) => {
-    let va, vb;
-    if (field === 'created_at' || field === 'last_order_at') {
-      va = a[field] ? new Date(a[field]).getTime() : 0;
-      vb = b[field] ? new Date(b[field]).getTime() : 0;
-    } else {
-      va = Number(a[field] || 0);
-      vb = Number(b[field] || 0);
-    }
-    return (va - vb) * mul;
-  });
-}
-
 function toggleStoreSort(field) {
   const cur = st.sort || 'default';
   const next = cur === `${field}:desc` ? `${field}:asc` : `${field}:desc`;
@@ -1018,7 +1094,8 @@ function toggleStoreSort(field) {
   if ([...$('st-sort').options].some((o) => o.value === next)) {
     $('st-sort').value = next;
   }
-  renderStoresList();
+  st.offset = 0;
+  loaders.stores();
 }
 
 let confirmAction = null;
@@ -1954,9 +2031,48 @@ function sortableTh(label, field, numeric = false) {
   );
 }
 
+// "Chủ: Lan · 3 quán" — bấm số quán để xem các quán của chủ đó
+function storeOwnerCells(s) {
+  const n = Number(s.owner_store_count || 0);
+  return [
+    el('span', { text: `Chủ: ${s.owner_name || '—'}` }),
+    s.owner_user_id && n >= 2 ? el('button', {
+      type: 'button',
+      class: 'st-owner-link',
+      text: `· ${fmtN(n)} quán`,
+      'aria-label': `Xem ${fmtN(n)} quán của ${s.owner_name || 'chủ này'}`,
+      onclick: () => setStoreOwner({ id: s.owner_user_id, name: s.owner_name }),
+    }) : null,
+  ];
+}
+async function setStoreOwner(owner) {
+  st.owner = owner;
+  st.offset = 0;
+  if (owner) {  // xem ĐỦ quán của chủ: bỏ bộ lọc và ô tìm đang bật, nếu không "3 quán" có thể chỉ ra 1
+    clearTimeout(stTimer);
+    if (st.filter !== 'test') st.filter = 'all';  // đang xem quán thử thì giữ, không để quán vừa bấm biến mất
+    st.search = ''; $('st-search').value = '';
+  }
+  await loaders.stores();
+  // nút vừa bấm đã bị vẽ lại: chỉ trả tiêu điểm khi nó thật sự mất, không kéo tiêu điểm người dùng đang đặt chỗ khác, không bật bàn phím
+  if (document.activeElement !== document.body) return;
+  const next = owner ? $('st-owner-filter').querySelector('button') : $('st-list').querySelector('.st-name-btn');
+  if (next) next.focus();
+}
+function renderStoreOwnerFilter() {
+  const box = clear($('st-owner-filter'));
+  box.hidden = !st.owner;
+  if (st.owner) {
+    box.append(
+      el('span', { text: `Đang xem các quán của ${st.owner.name || 'chủ này'}` }),
+      el('button', { type: 'button', class: 'btn small', text: 'Xem tất cả quán', onclick: () => setStoreOwner(null) }),
+    );
+  }
+}
+
 function renderStoresList() {
   const list = clear($('st-list'));
-  const rows = sortedStores(st.rows);
+  const rows = st.rows;
   if (!rows.length) {
     list.append(emptyBox('Không tìm thấy quán nào', 'Thử đổi bộ lọc trạng thái hoặc từ khoá tìm kiếm.'));
     return;
@@ -1976,7 +2092,7 @@ function renderStoresList() {
         nameBtn,
         el('div', { class: 'st-cell-sub' },
           s.store_code ? el('span', { class: 'badge code', text: s.store_code }) : null,
-          el('span', { text: `Chủ: ${s.owner_name || '—'}` }),
+          ...storeOwnerCells(s),
           el('span', { text: `· Gói ${s.plan || '—'}` }),
         ),
       ),
@@ -2045,7 +2161,7 @@ function renderStoresList() {
           }),
           el('div', { class: 'st-cell-sub' },
             s.store_code ? el('span', { class: 'badge code', text: s.store_code }) : null,
-            el('span', { text: `Chủ: ${s.owner_name || '—'}` }),
+            ...storeOwnerCells(s),
             el('span', { text: `· Tạo ${fmtDay(s.created_at)}` }),
           ),
         ),
@@ -2076,17 +2192,25 @@ function renderStoresList() {
   list.append(tableWrap, cardsWrap);
 }
 
+let stGen = 0;
 loaders.stores = async () => {
+  const gen = ++stGen;
   stMark();
+  renderStoreOwnerFilter();
   if (!st.rows.length) showSkeletons($('st-list'), 4, 'h-row');
   try {
-    const d = await rpc('admin_store_list_v1', {
+    const [sortField, sortDir] = st.sort && st.sort !== 'default' ? st.sort.split(':') : ['default', 'desc'];
+    const d = await rpc('admin_store_list_v2', {
       p_filter: st.filter,
       p_search: st.search || null,
       p_include_test: $('st-include-test').checked,
       p_limit: st.limit,
       p_offset: st.offset,
+      p_sort: sortField,
+      p_dir: sortDir,
+      p_owner: st.owner ? st.owner.id : null,
     });
+    if (gen !== stGen) return;  // bấm sắp xếp liên tiếp: chỉ vẽ kết quả của lần cuối
     st.rows = d.rows || [];
     st.total = Number(d.total || 0);
     $('st-total').textContent = `${fmtN(st.total)} quán`;
@@ -2095,6 +2219,7 @@ loaders.stores = async () => {
     $('st-prev').disabled = st.offset === 0;
     $('st-next').disabled = st.offset + st.limit >= st.total;
   } catch (err) {
+    if (gen !== stGen) return;
     if (err && (err.message === 'NO_TOKEN' || err.message === 'UNAUTHORIZED' || err.message === 'FORBIDDEN')) return;
     clear($('st-list')).append(errorBox('Không tải được danh sách quán.', () => loaders.stores()));
   }

@@ -243,3 +243,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE store_roles;
 - **Thêm module mới**: Bắt buộc đi qua đủ 7 bước trong bảng checklist ở trên
 - Giữ lâu vào ô điều hướng → mở bảng chọn tab để thay đổi
 - `chamcong` mặc định `isActive = false` trong SQLite — chủ bật thủ công
+
+## Trang quản trị: theo dõi tăng trưởng (/admin, không thuộc app)
+
+Tổng quan có khối "Tiền của công ty" (MRR, thực thu 30 ngày, Pro hết hạn, sắp hết dùng thử), bảng "Giữ chân theo lứa quán", số quán dùng thật và số khách; "Doanh số qua POS" là tiền các quán bán, không phải tiền công ty. Tab Quán sắp xếp trên toàn bộ danh sách, tìm được theo tên chủ, bấm "· N quán" để xem các quán của một chủ. Định nghĩa từng chỉ số ở "Cách tính các chỉ số" cuối tab Tổng quan.

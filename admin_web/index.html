@@ -139,6 +139,17 @@
           <div id="ov-todo" class="ov-todo-list"></div>
         </section>
 
+        <section aria-labelledby="ov-money-title">
+          <h3 id="ov-money-title" class="ov-eyebrow">Tiền của công ty</h3>
+          <div class="ov-panel ov-kpis">
+            <div class="ov-kpi" id="ov-m-mrr"></div>
+            <div class="ov-kpi" id="ov-m-cash"></div>
+            <div class="ov-kpi" id="ov-m-lapsed"></div>
+            <div class="ov-kpi" id="ov-m-trial"></div>
+          </div>
+          <div id="ov-m-error"></div>
+        </section>
+
         <section class="ov-panel ov-kpis" aria-label="Chỉ số chính">
           <div class="ov-kpi" id="ov-k-rev"></div>
           <div class="ov-kpi" id="ov-k-ord"></div>
@@ -154,7 +165,7 @@
                 <p class="muted small" id="ov-rev-sum">Đơn hoàn thành 30 ngày qua, không tính đơn huỷ.</p>
               </div>
               <div class="ov-seg" role="group" aria-label="Chọn số liệu biểu đồ">
-                <button type="button" class="ov-seg-btn on" id="ov-rev-mode-rev" aria-pressed="true">Doanh thu</button>
+                <button type="button" class="ov-seg-btn on" id="ov-rev-mode-rev" aria-pressed="true">Doanh số</button>
                 <button type="button" class="ov-seg-btn" id="ov-rev-mode-ord" aria-pressed="false">Số đơn</button>
               </div>
             </div>
@@ -166,7 +177,7 @@
             <div class="ov-panel-head">
               <div>
                 <h3 id="ov-top-title">Quán bán nhiều nhất</h3>
-                <p class="muted small">Doanh thu 30 ngày qua</p>
+                <p class="muted small">Doanh số 30 ngày qua</p>
               </div>
             </div>
             <ol id="ov-top" class="ov-top"></ol>
@@ -181,6 +192,16 @@
             </div>
           </div>
           <div id="ov-funnel" class="ov-funnel"></div>
+        </section>
+
+        <section class="ov-panel" aria-labelledby="ov-coh-title">
+          <div class="ov-panel-head">
+            <div>
+              <h3 id="ov-coh-title">Giữ chân theo lứa quán</h3>
+              <p class="muted small">Mỗi tháng tạo quán đi được bao xa. Mỗi bước chỉ tính quán đã đủ tuổi của bước đó.</p>
+            </div>
+          </div>
+          <div id="ov-cohorts"></div>
         </section>
 
         <section class="ov-panel" id="ov-drop-panel" aria-labelledby="ov-drop-title">
@@ -238,6 +259,12 @@
             <li><strong>Đang bỏ dùng</strong>: có bán trong 30 ngày nhưng 7 ngày nay không có đơn.</li>
             <li>Số "7 ngày / 30 ngày" tính lùi đúng 7×24 / 30×24 giờ; biểu đồ chia theo ngày lịch giờ Việt Nam, nên cộng 7 cột cuối có thể lệch một chút.</li>
             <li>Mức tăng / giảm so với kỳ liền trước cùng độ dài.</li>
+            <li><strong>Doanh số qua POS</strong>: tiền các quán bán được, KHÔNG phải tiền của công ty.</li>
+            <li><strong>Doanh thu định kỳ / tháng (MRR)</strong>: mỗi quán Pro còn hạn, không khoá, trả qua đơn thu phí và phần đã trả chưa hết: đơn gần nhất ÷ số tháng của đơn. Không tính quán được tặng và Pro không thời hạn. Tiền ghi tay qua "Đổi gói" không có số tháng nên KHÔNG đoán: vẫn vào "Thực thu", đếm riêng là "ghi tay chưa tính".</li>
+            <li><strong>Quán từng trả phí đã hết hạn</strong>: đã có ít nhất một khoản tiền, nay hết hạn; không tính quán chỉ được tặng và quán đang khoá.</li>
+            <li><strong>Thực thu 30 ngày</strong>: tiền đã ghi nhận, khớp số "thu 30 ngày" ở tab Gói.</li>
+            <li><strong>Dùng thật</strong>: đạt ngưỡng đơn hoàn thành ghi ở thẻ "Quán đang dùng tích cực". "Tích cực" vẫn là có ít nhất 1 đơn trong 7 ngày.</li>
+            <li><strong>Khách</strong>: số chủ quán khác nhau; một chủ nhiều chi nhánh tính 1 khách.</li>
           </ul>
         </details>
       </section>
@@ -273,20 +300,23 @@
           <div class="toolbar-inputs">
             <div class="search-box">
               <svg class="ico search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
-              <input id="st-search" type="search" placeholder="Tìm tên quán hoặc mã quán…" aria-label="Tìm tên quán hoặc mã quán">
+              <input id="st-search" type="search" placeholder="Tìm tên quán, mã quán hoặc tên chủ…" aria-label="Tìm tên quán, mã quán hoặc tên chủ">
             </div>
             <select id="st-sort" class="sort-select" aria-label="Sắp xếp danh sách quán">
               <option value="default">Mặc định</option>
               <option value="orders_7d:desc">Đơn 7 ngày: cao → thấp</option>
               <option value="orders_7d:asc">Đơn 7 ngày: thấp → cao</option>
               <option value="last_order_at:desc">Đơn gần nhất: mới → cũ</option>
+              <option value="last_order_at:asc">Đơn gần nhất: cũ → mới</option>
               <option value="created_at:desc">Ngày tạo: mới → cũ</option>
               <option value="created_at:asc">Ngày tạo: cũ → mới</option>
               <option value="menu_items:desc">Món menu: nhiều → ít</option>
+              <option value="menu_items:asc">Món menu: ít → nhiều</option>
             </select>
           </div>
         </div>
 
+        <div id="st-owner-filter" class="st-owner-filter" aria-live="polite" hidden></div>
         <div id="st-list" class="store-container"></div>
 
         <div class="pager">

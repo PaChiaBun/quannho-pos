@@ -775,3 +775,12 @@ static const _supabaseAnonKey = 'eyJhbGci...'; // key ở trên
 ---
 
 *Cập nhật file này sau mỗi khi thêm module hoặc thay đổi kiến trúc data.*
+
+## Trang quản trị: theo dõi tăng trưởng (migration `20261105_admin_tang_truong_v1.sql`)
+
+Không có bảng mới. Hai hàm chỉ đọc, chỉ vé `qn_admin`, đọc `stores`, `orders`, `products`, `store_members`, `admin_store_actions`, `billing_orders`, `admin_test_stores`:
+
+- `admin_growth_v1(p_include_test)` → `money` (MRR, quán trả phí, tặng, không thời hạn, thực thu 30 ngày, trả lần đầu / trả tiếp, Pro hết hạn, sắp hết dùng thử, số lần tự gia hạn), `usage` (dùng thật, khách, chủ nhiều quán), `cohorts` (12 tháng; mỗi bước tính trên quán đủ tuổi, chưa đủ thì NULL), `thresholds`.
+- `admin_store_list_v2(p_filter, p_search, p_include_test, p_limit, p_offset, p_sort, p_dir, p_owner)` → như `admin_store_list_v1`, thêm `owner_user_id`, `owner_store_count`.
+
+Một quán một chủ: `stores.owner_user_id`, thiếu thì thành viên `is_owner` sớm nhất.

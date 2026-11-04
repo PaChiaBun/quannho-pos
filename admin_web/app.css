@@ -1985,3 +1985,30 @@ pre.prompt {
 @media (prefers-reduced-motion: reduce) {
   .ov-chart .bar { transition: none; }
 }
+
+/* Tăng trưởng đợt 1: dòng dùng thật, bảng lứa quán, lọc theo chủ */
+.ov-usage { display: block; margin-top: 2px; }
+.ov-usage:empty { display: none; }
+#ov-m-error:not(:empty) { margin-top: 12px; }
+.ov-coh { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ov-coh th { font-size: 12px; font-weight: 600; color: var(--muted); padding: 0 12px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: bottom; }
+.ov-coh td, .ov-coh tbody th { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.ov-coh tbody th { font-size: 14px; color: var(--text); white-space: nowrap; }
+.ov-coh th:first-child { padding-left: 0; }
+.ov-coh th:last-child, .ov-coh td:last-child { padding-right: 0; }
+.ov-coh tbody tr:last-child > * { border-bottom: 0; }
+.ov-coh .num-col { text-align: right; }
+@media (max-width: 720px) {
+  .ov-coh thead { display: none; }
+  .ov-coh, .ov-coh tbody { display: block; }
+  .ov-coh tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .ov-coh tbody tr:last-child { border-bottom: 0; }
+  .ov-coh td, .ov-coh tbody th { display: block; padding: 0; border: 0; }
+  .ov-coh .num-col { text-align: left; }
+  .ov-coh tbody th { font-weight: 600; }
+  .ov-coh td::before { content: attr(data-label); display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+}
+.st-owner-link { background: none; border: 0; padding: 4px 2px; margin: -4px 0; color: var(--accent); font: inherit; cursor: pointer; }
+.st-owner-link:hover { text-decoration: underline; }
+.st-owner-filter { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; }
+.st-owner-filter[hidden] { display: none; }
