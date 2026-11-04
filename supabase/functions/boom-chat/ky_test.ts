@@ -28,8 +28,8 @@ Deno.test('đọc kỳ: các kiểu khác', () => {
   assertEquals(k('lương nhân viên tháng 9 tổng bao nhiêu').slice(0, 4), ['Tháng 9/2026 (1/9/2026–30/9/2026)', '2026-09-01', '2026-10-01', 'tháng 8/2026']);
   assertEquals(k('tháng 9 với tháng 8 tháng nào thu chi tốt hơn').slice(0, 4), ['Tháng 9/2026 (1/9/2026–30/9/2026)', '2026-09-01', '2026-10-01', 'tháng 8/2026 (1/8/2026–31/8/2026)']);
   assertEquals(k('hôm qua bán được nhiêu, so với thứ 2 tuần trước'), ['Hôm qua (2/11)', '2026-11-02', '2026-11-03', 'thứ 2 26/10', '2026-10-26', '2026-10-27']);
-  assertEquals(k('doanh thu so với hôm qua').slice(0, 4), ['Hôm nay', '2026-11-03', '2026-11-03', 'hôm qua (2/11)']);
-  assertEquals(k('tuần này so với tuần trước thế nào')[3], 'tuần trước (26/10–1/11)');
+  assertEquals(k('doanh thu so với hôm qua').slice(0, 4), ['Hôm nay', '2026-11-03', '2026-11-03', 'cùng giờ hôm qua']);
+  assertEquals(k('tuần này so với tuần trước thế nào').slice(3, 5), [docKy('tuần này', NOW).nhanTruoc, '2026-10-26']);
   assertEquals(k('ngày 20/10 bán được bao nhiêu').slice(0, 2), ['Thứ 3 20/10', '2026-10-20']);
   assertEquals(k('tháng 12 năm ngoái doanh thu')[0], 'Tháng 12/2025 (1/12/2025–31/12/2025)');
   assertEquals(k('quý 3 doanh thu ra sao')[0], 'Quý 3/2026 (1/7/2026–30/9/2026)');
@@ -50,4 +50,25 @@ Deno.test('đọc kỳ: đầu năm, 31/3 so tháng 2', () => {
   assertEquals([j.nhan, j.tu.slice(0, 10), j.nhanTruoc], ['Tháng trước (tháng 12)', '2026-12-01', 'tháng 11']);
   // 23h59 ngày 3/11 giờ VN = 16h59 UTC — vẫn là ngày 3/11
   assertEquals(docKy('hôm nay', new Date('2026-11-03T16:59:00Z')).tu.slice(0, 10), '2026-11-03');
+});
+
+Deno.test('kỳ chưa hết so kỳ đã hết: cắt cùng độ dài', () => {
+  const ngay5 = new Date('2026-11-05T10:00:00+07:00');
+  const r = (q: string) => docKy(q, ngay5);
+  // hỏi thật 04/11: 5 ngày so cả tháng 10 ra giảm 98,8%
+  for (const q of ['so với tháng trước thì sao', 'tháng này so với tháng trước thế nào', 'doanh thu kém tháng trước không']) {
+    assertEquals(r(q).truocTu.slice(0, 10), '2026-10-01');
+    assertEquals(r(q).truocDen.slice(0, 13), '2026-10-05T10');
+    assertEquals(r(q).nhanTruoc.startsWith('cùng kỳ tháng trước'), true);
+  }
+  // tháng khác cũng cắt, nhãn vẫn đọc được số ngày
+  assertEquals(r('tháng này so với tháng 9').truocDen.slice(0, 13), '2026-09-05T10');
+  assertEquals(r('tháng này so với tháng 9').nhanTruoc, 'cùng kỳ tháng 9/2026 (1/9/2026–5/9/2026)');
+  // nói rõ cả tháng thì giữ nguyên
+  assertEquals(r('so với cả tháng trước thì sao').truocDen.slice(0, 10), '2026-11-01');
+  // kỳ đã hết, khác loại: giữ nguyên
+  assertEquals(r('tháng trước so với tháng 9').truocDen.slice(0, 10), '2026-10-01');
+  assertEquals(r('tuần này so với tháng trước').truocDen.slice(0, 10), '2026-11-01');
+  // ngày 31 so tháng ngắn hơn: không vượt hết tháng đó
+  assertEquals(docKy('tháng này so với tháng 2', new Date('2026-03-31T10:00:00+07:00')).truocDen.slice(0, 10), '2026-03-01');
 });

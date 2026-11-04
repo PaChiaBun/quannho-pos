@@ -164,6 +164,22 @@ function macDinh(vn: Date): Doan {
   return khoang(vn, s, cong(hn, D), cong(s, -30 * D), '30 ngày qua', '30 ngày trước đó');
 }
 
+const loaiKy = (nhan: string) => /^Tháng/.test(nhan) ? 'thang' : /^Tuần/.test(nhan) ? 'tuan' : /^Quý/.test(nhan) ? 'quy' : /^(Hôm|Thứ|Chủ nhật)/.test(nhan) ? 'ngay' : '';
+
+/** Kỳ so đúng lời hỏi; kỳ chính chưa hết mà so kỳ cùng loại đã hết → cắt cùng độ dài ("so với tháng trước" ngày 5: 5 ngày so cả tháng 10 ra −98,8%, hỏi thật 04/11). "cả tháng trước" giữ nguyên. */
+function kySo(chinh: Doan, k: Doan, f: string): { tu: Date; den: Date; nhan: string } {
+  const nguyen = { tu: k.tu, den: k.den, nhan: k.nhan.replace(/^./, (c) => c.toLowerCase()) };
+  if (!chinh.dangChay || /\b(?:ca|tron) (?:thang|thg|tuan|quy|ngay)\b/.test(f)) return nguyen;
+  if (!loaiKy(chinh.nhan) || loaiKy(chinh.nhan) !== loaiKy(k.nhan)) return nguyen;
+  const truoc = chinh.truoc();
+  if (truoc.tu.getTime() === k.tu.getTime()) return truoc;
+  const den = new Date(Math.min(k.den.getTime(), k.tu.getTime() + chinh.den.getTime() - chinh.tu.getTime()));
+  if (den >= k.den) return nguyen;
+  if (loaiKy(k.nhan) === 'ngay') return { tu: k.tu, den, nhan: `${k.nhan.toLowerCase()} (tới cùng giờ)` };
+  const last = cong(den, -1000);
+  return { tu: k.tu, den, nhan: `cùng kỳ ${nguyen.nhan.replace(/ \(.*$/, '')} (${dm(k.tu)}/${k.tu.getUTCFullYear()}–${dm(last)}/${last.getUTCFullYear()})` };
+}
+
 /** Kỳ chính + kỳ so. Không nhắc kỳ → macDinh. Một kỳ đứng sau "so với / hơn / kém" mà không có kỳ nào trước → kỳ đó là kỳ SO. */
 export function docKy(question: string, now: Date = new Date()): Ky {
   const vn = cong(now, VN);
@@ -176,11 +192,11 @@ export function docKy(question: string, now: Date = new Date()): Ky {
     // "doanh thu so với hôm qua / tuần trước / tháng trước" → kỳ đang chạy tương ứng
     const tenNay = /^Hôm qua|^Thứ|^Chủ nhật/.test(k.nhan) ? 'hom_nay' : /^Tuần/.test(k.nhan) ? 'tuan_nay' : 'thang_nay';
     chinh = kyCo(tenNay, vn);
-    so = { tu: k.tu, den: k.den, nhan: k.nhan.replace(/^./, (c) => c.toLowerCase()) };
+    so = kySo(chinh, k, f);
   } else {
     chinh = ds[0]?.doan ?? macDinh(vn);
     const k2 = ds.find((d) => d.doan.nhan !== chinh.nhan)?.doan;
-    so = k2 ? { tu: k2.tu, den: k2.den, nhan: k2.nhan.replace(/^./, (c) => c.toLowerCase()) } : chinh.truoc();
+    so = k2 ? kySo(chinh, k2, f) : chinh.truoc();
   }
   return { tu: iso(chinh.tu), den: iso(chinh.den), truocTu: iso(so.tu), truocDen: iso(so.den), nhan: chinh.nhan, nhanTruoc: so.nhan };
 }
