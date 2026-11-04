@@ -41,6 +41,17 @@ nguon:
 
 ## Các việc thường làm
 
+### Bán 1 đơn cho khách (từ đầu đến cuối)
+1. Mở Bán hàng, chạm các món khách gọi.
+2. Bấm "Thanh toán" trong giỏ (điện thoại: ô tổng tiền màu cam).
+3. Chọn phương thức rồi bấm "Xác nhận".
+4. Hoá đơn tự in nếu đã cài máy in và bật tự in.
+
+### Khách chuyển khoản hoặc trả thẻ thì bấm gì
+1. Bấm "Thanh toán" như đơn thường.
+2. Ở "Phương thức" chọn "Chuyển khoản" hoặc "Thẻ".
+3. Chuyển khoản: thấy tiền về rồi bấm "Xác nhận". Thẻ: quẹt máy thẻ xong rồi bấm "Xác nhận".
+
 ### Gọi món
 1. Chạm vào thẻ món → món bay vào giỏ. Chạm lại để tăng số lượng. Lướt tay cuộn danh sách đi qua thẻ món thì **không** tính là chạm.
 2. Khi món đã có trong giỏ, trên thẻ hiện **[−] xN**: bấm **−** để giảm. Phần **đã gửi bếp** không bớt bằng nút − được (app nhắc mở giỏ, bấm **"Huỷ phiếu bếp"**); gọi thêm món đó sau khi đã gửi bếp thì app tạo dòng mới để gửi bếp đợt sau.

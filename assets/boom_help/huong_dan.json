@@ -1,6 +1,6 @@
 {
- "version": 202611032325,
- "hash": "cc4c1110793b886e52c306e8e8e3eb80ea1948e507a0574d7dacf7776c5c5af2",
+ "version": 202611040849,
+ "hash": "b3126921c99176d2ed5d7c490a3bd394c408df2cf3c634eafd51cd2dbbbda4ca",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -25,6 +25,22 @@
    "section": "",
    "title": "Màn hình gồm những gì",
    "text": "• Thanh trên cùng: chữ \"Bán hàng\" + giờ, ngày. Bên phải lần lượt:\n  • Nút đồng hồ quay ngược có chấm đỏ (gợi ý khi giữ: \"Đối soát thanh toán bị gián đoạn\") — chỉ hiện khi máy có thanh toán dang dở cần đối soát; xem mục Đối soát.\n  • Nhãn \"Đơn QR (n)\" — chỉ hiện khi có đơn khách tự gọi qua QR. Màu cam: có đơn mới chờ; xanh: đang xử lý; xám kèm biểu tượng mất sóng: mất kết nối hàng đợi QR.\n  • Nút dấu +: thêm nhanh món mới vào thực đơn — chỉ Chủ quán và Quản lý thấy.\n  • Nút giỏ hàng (hiện số món).\n  • Nút thùng rác: xoá giỏ (ẩn khi giỏ trống; vị trí các nút không đổi khi thêm món).\n• Dải đỏ khoá QR (chỉ khi mã QR của quán bị khoá do bị quét phá) — xem hướng dẫn QR Gọi Món.\n• Ô tìm kiếm (chữ mờ \"Tìm món, mã SKU...\"): tìm theo tên món hoặc mã SKU, không cần gõ dấu. Cuộn xuống danh sách món thì ô tìm kiếm và nút \"Đơn gần đây\" tự gập lại cho rộng chỗ; cuộn lên thì hiện lại.\n• Nút \"Đơn gần đây\"; bên phải có nhãn \"Bếp sẵn sàng\" khi quán bật module Bếp.\n• Hàng danh mục: \"Tất cả\" và các danh mục của quán. Ở \"Tất cả\", món được nhóm theo danh mục.\n• Lưới món: mỗi thẻ có tên, giá, số tồn (nếu có theo dõi tồn). Phần trong ngoặc ở cuối tên (vd \"[ phần nhỏ ]\", \"(Đá/Nóng)\") hiện thành nhãn nhỏ cạnh giá, để tên dài không che mất cỡ món."
+  },
+  {
+   "id": "ban-hang#cac-viec-thuong-lam-ban-1-don-cho-khach-tu-dau-den-cuoi",
+   "module": "pos",
+   "module_name": "Bán hàng",
+   "section": "Các việc thường làm",
+   "title": "Bán 1 đơn cho khách (từ đầu đến cuối)",
+   "text": "1. Mở Bán hàng, chạm các món khách gọi.\n2. Bấm \"Thanh toán\" trong giỏ (điện thoại: ô tổng tiền màu cam).\n3. Chọn phương thức rồi bấm \"Xác nhận\".\n4. Hoá đơn tự in nếu đã cài máy in và bật tự in."
+  },
+  {
+   "id": "ban-hang#cac-viec-thuong-lam-khach-chuyen-khoan-hoac-tra-the-thi-bam",
+   "module": "pos",
+   "module_name": "Bán hàng",
+   "section": "Các việc thường làm",
+   "title": "Khách chuyển khoản hoặc trả thẻ thì bấm gì",
+   "text": "1. Bấm \"Thanh toán\" như đơn thường.\n2. Ở \"Phương thức\" chọn \"Chuyển khoản\" hoặc \"Thẻ\".\n3. Chuyển khoản: thấy tiền về rồi bấm \"Xác nhận\". Thẻ: quẹt máy thẻ xong rồi bấm \"Xác nhận\"."
   },
   {
    "id": "ban-hang#cac-viec-thuong-lam-goi-mon",
@@ -539,6 +555,14 @@
    "text": "Trang chủ có phần \"Chức năng\": các ô module đang bật của quán (\"… đang bật • Giữ ô để sắp xếp\"). Chủ quán thấy nút \"Sửa\" để bật / tắt module. Mỗi module có bài hướng dẫn riêng; bài này chỉ chỉ ra nên làm việc nào trước."
   },
   {
+   "id": "bat-dau#cac-viec-thuong-lam-moi-tai-moi-cai-app-xong-bat-dau-tu-dau",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "Các việc thường làm",
+   "title": "Mới tải, mới cài app xong: bắt đầu từ đâu, làm gì đầu tiên",
+   "text": "1. Đăng ký hoặc đăng nhập bằng số điện thoại và mật khẩu (trên iPhone chỉ đăng nhập; tạo tài khoản ở Android, Web hoặc Windows).\n2. Chưa có quán thì tạo quán; nhân viên của quán có sẵn thì nhập mã quán.\n3. Thêm vài món và giá bán: ở Bán hàng, bấm nút dấu + trên thanh trên cùng.\n4. Bán thử 1 đơn: ở Bán hàng, chạm món rồi bấm \"Thanh toán\".\n5. Sau đó cài máy in và thêm nhân viên nếu cần (xem việc 1 ngay dưới)."
+  },
+  {
    "id": "bat-dau#cac-viec-thuong-lam-1-cai-theo-kieu-quan-quan-moi-nen-lam-gi",
    "module": "bat_dau",
    "module_name": "Bắt đầu dùng app",
@@ -553,6 +577,38 @@
    "section": "Các việc thường làm",
    "title": "2. Bật / tắt module trên Trang chủ (Chủ quán)",
    "text": "1. Ở Trang chủ, phần \"Chức năng\", bấm \"Sửa\".\n2. Muốn tắt module không dùng: nhấn dấu \"–\" trên ô module → \"Tắt module\". Dữ liệu được giữ nguyên, bật lại lúc nào cũng được.\n3. Muốn bật thêm: bấm \"+ Thêm module\" và chọn module.\n4. Bấm \"Xong\" để lưu.\n\nLưu ý: tắt module là tắt cho cả quán — nhân viên cũng không thấy module đó nữa. Nhân viên không có nút \"Sửa\" (thấy \"Nhân viên không có quyền chỉnh sửa\")."
+  },
+  {
+   "id": "bat-dau#cac-viec-thuong-lam-3-mat-mang-co-ban-duoc-khong",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "Các việc thường làm",
+   "title": "3. Mất mạng có bán được không",
+   "text": "Không. App cần mạng (wifi hoặc 4G) mới bán được, vì đơn được ghi lên máy chủ; app chưa có chế độ bán không mạng.\n1. Cúp wifi: bật 4G trên máy hoặc phát mạng từ điện thoại khác rồi bán tiếp.\n2. Đang thanh toán thì mất mạng: đừng bán lại đơn đó. Có mạng thì làm theo bài Bán hàng, việc \"Đối soát thanh toán bị gián đoạn\"; app không thu hai lần.\n3. Mất mạng lâu: ghi đơn ra giấy, có mạng thì nhập lại vào app. Đơn nhập lại mang giờ lúc nhập."
+  },
+  {
+   "id": "bat-dau#cac-viec-thuong-lam-4-doi-may-moi-doi-dien-thoai-cai-lai-app",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "Các việc thường làm",
+   "title": "4. Đổi máy mới, đổi điện thoại, cài lại app: dữ liệu có mất không, có phải nhập lại món không",
+   "text": "Không mất. Món, đơn, báo cáo, nhân viên nằm trên máy chủ, không nằm trong điện thoại, nên đổi máy, máy hư hay cài lại app đều còn nguyên.\n1. Cài app trên máy mới, đăng nhập đúng số điện thoại và mật khẩu cũ. Quên mật khẩu: bài Nhân viên & Phân quyền, việc \"Quên mật khẩu khi chưa đăng nhập được\".\n2. Máy mới có in bill: chọn lại ở \"Máy này in bill ra\" rồi bấm \"Lưu\" (bài In Hoá Đơn).\n3. Máy cũ đang làm máy chủ in: trên máy mới bấm \"Chuyển máy chủ sang thiết bị này\" (bài In Hoá Đơn, việc \"Máy chủ in\")."
+  },
+  {
+   "id": "bat-dau#cac-viec-thuong-lam-5-app-co-mat-phi-khong-gia-bao-nhieu-dun",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "Các việc thường làm",
+   "title": "5. App có mất phí không, giá bao nhiêu, dùng thử và gia hạn",
+   "text": "Quán mới được dùng thử 14 ngày.\n1. Còn 3 ngày hoặc đã hết hạn, Trang chủ hiện dải nhắc cho Chủ quán.\n2. Bấm \"Gia hạn thêm 30 ngày\" trên dải nhắc để dùng tiếp miễn phí.\n3. Hỏi giá hoặc gói của quán: gọi Hotline 0927 55 8888."
+  },
+  {
+   "id": "bat-dau#cac-viec-thuong-lam-6-doi-sua-ten-quan-ten-cua-hang-in-tren",
+   "module": "bat_dau",
+   "module_name": "Bắt đầu dùng app",
+   "section": "Các việc thường làm",
+   "title": "6. Đổi, sửa tên quán (tên cửa hàng) in trên hoá đơn, bill",
+   "text": "1. Tên trên hoá đơn: mở In Hoá Đơn → \"Thiết Kế Mẫu In\" → tab \"Hoá Đơn\" → khối \"Tên quán\" → gõ vào ô \"Tên quán\" → \"Lưu\".\n2. Muốn thêm logo: xem bài In Hoá Đơn, việc \"Thiết kế mẫu in\".\n3. Tên ở Cài đặt: Trang chủ → ô tròn góc trên bên phải → \"Cài đặt hệ thống\" → nút bút chì cạnh tên quán → sửa → \"Lưu thay đổi\". Tên trên Trang chủ không đổi theo cách này; cần đổi thì gọi Hotline 0927 55 8888."
   },
   {
    "id": "bat-dau#loi-khong-thay-nut-sua-o-phan-chuc-nang",
@@ -905,6 +961,14 @@
    "section": "Màn hình gồm những gì",
    "title": "Hai cách cấu hình — dùng cách nào?",
    "text": "• Khi quán đã lưu \"Máy In & Luật In\" (chỉ cần đã khai báo một máy in, kể cả chưa có luật nào), app in theo luật; máy in chọn ở 4 trạm cũ không còn tác dụng. Màn Cấu Hình Trạm In khi đó ẩn 4 trạm và báo: \"Máy in của quán đang chọn ở \"Máy In & Luật In\". Ở đây chỉ còn: tự động in, tự mở két và máy chủ in.\" Các công tắc tự động và Máy chủ in vẫn áp dụng.\n• Khi chưa khai báo máy in và chưa có luật ở \"Máy In & Luật In\", app in theo 4 trạm cũ. Đã thêm máy in mà chưa tạo luật thì không phiếu nào in: tạo luật ngay sau khi thêm máy in.\n• Khuyến nghị: dùng Máy In & Luật In. Quán đang dùng trạm cũ có thể bấm \"Dựng từ cấu hình hiện tại\" để chuyển sang mà không phải khai báo lại."
+  },
+  {
+   "id": "in-hoa-don#cac-viec-thuong-lam-ket-noi-cai-may-in-moi-mua-voi-app-chon",
+   "module": "bill_printer",
+   "module_name": "In Hoá Đơn",
+   "section": "Các việc thường làm",
+   "title": "Kết nối, cài máy in mới mua với app: chọn theo máy đang dùng",
+   "text": "• Máy cầm tay Sunmi có sẵn máy in: việc 4 \"Thiết lập nhanh cho máy cầm tay\".\n• Máy tính Windows nối máy in USB hoặc mạng: tải Công cụ Cài máy in ở quannho.lpm.vn/cai-may-in.html, chạy rồi bấm \"CÀI MÁY IN\" (việc 1).\n• Máy in mạng LAN / Wi-Fi dùng từ thiết bị khác: việc 2 \"Thêm máy in\", chọn \"Máy in mạng LAN / Wi-Fi (IP)\", rồi việc 3 \"Tạo luật in\"."
   },
   {
    "id": "in-hoa-don#cac-viec-thuong-lam-1-cai-may-in-tren-may-windows-lan-dau",

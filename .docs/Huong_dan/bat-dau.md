@@ -7,6 +7,9 @@ nguon:
   - lib/screens/dashboard_screen.dart (Trang chủ: "Chức năng", "Sửa" / "Xong", "Tắt module", "+ Thêm module")
   - .docs/Huong_dan/*.md (các bài module đã đối chiếu code — bài này chỉ là danh sách việc, chi tiết từng bước xem bài module)
   - .docs/Huong_dan/goi-tra-sua-mang-di.md (gói module gợi ý cho quán trà sữa mang đi)
+  - lib/core/providers/app_providers.dart (dữ liệu 100% trên máy chủ: không có bán không mạng)
+  - lib/screens/store_plan_notice.dart, supabase/migrations/20261027_quan_tri_dot1_ho_so_goi.sql (dùng thử 14 ngày, tự gia hạn 30 ngày)
+  - lib/screens/settings_screen.dart ("Cài đặt hệ thống", bút chì sửa tên quán), lib/modules/bill_printer/screens/block_config_sheet.dart (ô "Tên quán")
 ---
 
 # Bắt đầu dùng app
@@ -21,6 +24,13 @@ nguon:
 Trang chủ có phần "Chức năng": các ô module đang bật của quán ("… đang bật • Giữ ô để sắp xếp"). Chủ quán thấy nút "Sửa" để bật / tắt module. Mỗi module có bài hướng dẫn riêng; bài này chỉ chỉ ra nên làm việc nào trước.
 
 ## Các việc thường làm
+### Mới tải, mới cài app xong: bắt đầu từ đâu, làm gì đầu tiên
+1. Đăng ký hoặc đăng nhập bằng số điện thoại và mật khẩu (trên iPhone chỉ đăng nhập; tạo tài khoản ở Android, Web hoặc Windows).
+2. Chưa có quán thì tạo quán; nhân viên của quán có sẵn thì nhập mã quán.
+3. Thêm vài món và giá bán: ở Bán hàng, bấm nút dấu + trên thanh trên cùng.
+4. Bán thử 1 đơn: ở Bán hàng, chạm món rồi bấm "Thanh toán".
+5. Sau đó cài máy in và thêm nhân viên nếu cần (xem việc 1 ngay dưới).
+
 ### 1. Cài theo kiểu quán (quán mới nên làm gì trước)
 **Việc cần làm trước (mọi quán):**
 1. Thêm món và giá bán: bài Kho hàng, việc "Thêm món / nguyên liệu". Nhập luôn giá vốn mỗi món nếu biết để Báo cáo tính được lời.
@@ -65,6 +75,29 @@ Lưu ý: Thu Chi tự ghi tiền bán hàng; tiền chi (nguyên liệu, mặt b
 
 > Lưu ý: tắt module là tắt cho cả quán — nhân viên cũng không thấy module đó nữa. Nhân viên không có nút "Sửa" (thấy "Nhân viên không có quyền chỉnh sửa").
 
+### 3. Mất mạng có bán được không
+Không. App cần mạng (wifi hoặc 4G) mới bán được, vì đơn được ghi lên máy chủ; app chưa có chế độ bán không mạng.
+1. Cúp wifi: bật 4G trên máy hoặc phát mạng từ điện thoại khác rồi bán tiếp.
+2. Đang thanh toán thì mất mạng: đừng bán lại đơn đó. Có mạng thì làm theo bài Bán hàng, việc "Đối soát thanh toán bị gián đoạn"; app không thu hai lần.
+3. Mất mạng lâu: ghi đơn ra giấy, có mạng thì nhập lại vào app. Đơn nhập lại mang giờ lúc nhập.
+
+### 4. Đổi máy mới, đổi điện thoại, cài lại app: dữ liệu có mất không, có phải nhập lại món không
+Không mất. Món, đơn, báo cáo, nhân viên nằm trên máy chủ, không nằm trong điện thoại, nên đổi máy, máy hư hay cài lại app đều còn nguyên.
+1. Cài app trên máy mới, đăng nhập đúng số điện thoại và mật khẩu cũ. Quên mật khẩu: bài Nhân viên & Phân quyền, việc "Quên mật khẩu khi chưa đăng nhập được".
+2. Máy mới có in bill: chọn lại ở "Máy này in bill ra" rồi bấm "Lưu" (bài In Hoá Đơn).
+3. Máy cũ đang làm máy chủ in: trên máy mới bấm "Chuyển máy chủ sang thiết bị này" (bài In Hoá Đơn, việc "Máy chủ in").
+
+### 5. App có mất phí không, giá bao nhiêu, dùng thử và gia hạn
+Quán mới được dùng thử 14 ngày.
+1. Còn 3 ngày hoặc đã hết hạn, Trang chủ hiện dải nhắc cho Chủ quán.
+2. Bấm "Gia hạn thêm 30 ngày" trên dải nhắc để dùng tiếp miễn phí.
+3. Hỏi giá hoặc gói của quán: gọi Hotline 0927 55 8888.
+
+### 6. Đổi, sửa tên quán (tên cửa hàng) in trên hoá đơn, bill
+1. Tên trên hoá đơn: mở In Hoá Đơn → "Thiết Kế Mẫu In" → tab "Hoá Đơn" → khối "Tên quán" → gõ vào ô "Tên quán" → "Lưu".
+2. Muốn thêm logo: xem bài In Hoá Đơn, việc "Thiết kế mẫu in".
+3. Tên ở Cài đặt: Trang chủ → ô tròn góc trên bên phải → "Cài đặt hệ thống" → nút bút chì cạnh tên quán → sửa → "Lưu thay đổi". Tên trên Trang chủ không đổi theo cách này; cần đổi thì gọi Hotline 0927 55 8888.
+
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|
@@ -75,4 +108,6 @@ Lưu ý: Thu Chi tự ghi tiền bán hàng; tiền chi (nguyên liệu, mặt b
 - Kho hàng, In Hoá Đơn, Nhân viên & Phân quyền, Quản lý Bàn, QR Gọi Món, Chấm công, Lương, Vận Hành, Kho Chuyên Nghiệp, Khách hàng – Giảm giá – Khuyến mãi, Thu Chi.
 
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
-- Bài này không có bước bấm riêng; từng bước nằm ở bài module. Khi đổi tên việc trong bài module thì sửa tên ở đây theo.
+- Bài này phần lớn chỉ dẫn sang bài module; khi đổi tên việc trong bài module thì sửa tên ở đây theo.
+- Việc 5 cố ý không ghi giá gói: gói tin này đi cả vào app App Store / CH Play, nơi không được hiện giá hay đường dẫn trả tiền (`billing_platform.dart`).
+- Việc 6: bút chì ở Cài đặt chỉ ghi `settings.shop_name`, còn Trang chủ và hoá đơn bàn đọc `stores.name`, nên đổi tên chưa đồng bộ (lỗi app, chưa sửa).
