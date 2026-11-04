@@ -169,15 +169,20 @@ const loaiKy = (nhan: string) => /^Tháng/.test(nhan) ? 'thang' : /^Tuần/.test
 /** Kỳ so đúng lời hỏi; kỳ chính chưa hết mà so kỳ cùng loại đã hết → cắt cùng độ dài ("so với tháng trước" ngày 5: 5 ngày so cả tháng 10 ra −98,8%, hỏi thật 04/11). "cả tháng trước" giữ nguyên. */
 function kySo(chinh: Doan, k: Doan, f: string): { tu: Date; den: Date; nhan: string } {
   const nguyen = { tu: k.tu, den: k.den, nhan: k.nhan.replace(/^./, (c) => c.toLowerCase()) };
-  if (!chinh.dangChay || /\b(?:ca|tron) (?:thang|thg|tuan|quy|ngay)\b/.test(f)) return nguyen;
-  if (!loaiKy(chinh.nhan) || loaiKy(chinh.nhan) !== loaiKy(k.nhan)) return nguyen;
+  if (!chinh.dangChay || !loaiKy(chinh.nhan) || loaiKy(chinh.nhan) !== loaiKy(k.nhan)) return nguyen;
+  const ten = nguyen.nhan.replace(/ \(.*$/, '');
+  // Nói rõ "cả tháng trước": giữ trọn kỳ; nhãn phải nói trọn, không GPT ghi nhầm "so cùng 5 ngày" (hỏi thật 05/11).
+  if (/\b(?:ca|tron) (?:thang|thg|tuan|quy|ngay)\b/.test(f)) {
+    return { ...nguyen, nhan: `trọn ${ten} (${dm(k.tu)}–${dm(cong(k.den, -1000))})` };
+  }
   const truoc = chinh.truoc();
   if (truoc.tu.getTime() === k.tu.getTime()) return truoc;
   const den = new Date(Math.min(k.den.getTime(), k.tu.getTime() + chinh.den.getTime() - chinh.tu.getTime()));
   if (den >= k.den) return nguyen;
   if (loaiKy(k.nhan) === 'ngay') return { tu: k.tu, den, nhan: `${k.nhan.toLowerCase()} (tới cùng giờ)` };
   const last = cong(den, -1000);
-  return { tu: k.tu, den, nhan: `cùng kỳ ${nguyen.nhan.replace(/ \(.*$/, '')} (${dm(k.tu)}/${k.tu.getUTCFullYear()}–${dm(last)}/${last.getUTCFullYear()})` };
+  // parseFacts cắt nhãn kỳ so ở 40 ký tự nên không ghi năm trong ngoặc
+  return { tu: k.tu, den, nhan: `cùng kỳ ${ten} (${dm(k.tu)}–${dm(last)})` };
 }
 
 /** Kỳ chính + kỳ so. Không nhắc kỳ → macDinh. Một kỳ đứng sau "so với / hơn / kém" mà không có kỳ nào trước → kỳ đó là kỳ SO. */

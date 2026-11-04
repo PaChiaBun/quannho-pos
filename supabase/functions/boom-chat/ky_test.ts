@@ -63,7 +63,11 @@ Deno.test('kỳ chưa hết so kỳ đã hết: cắt cùng độ dài', () => {
   }
   // tháng khác cũng cắt, nhãn vẫn đọc được số ngày
   assertEquals(r('tháng này so với tháng 9').truocDen.slice(0, 13), '2026-09-05T10');
-  assertEquals(r('tháng này so với tháng 9').nhanTruoc, 'cùng kỳ tháng 9/2026 (1/9/2026–5/9/2026)');
+  assertEquals(r('tháng này so với tháng 9').nhanTruoc, 'cùng kỳ tháng 9/2026 (1/9–5/9)');
+  assertEquals(r('so với cả tháng trước thì sao').nhanTruoc, 'trọn tháng trước (1/10–31/10)');
+  // nhãn dài nhất vẫn trong 40 ký tự parseFacts giữ lại
+  const cuoi = new Date('2026-12-28T10:00:00+07:00');
+  for (const q of ['tháng này so với tháng 10', 'tháng này so với cả tháng 10', 'tháng này so với tháng 12 năm ngoái']) assertEquals(docKy(q, cuoi).nhanTruoc.length <= 40, true, docKy(q, cuoi).nhanTruoc);
   // nói rõ cả tháng thì giữ nguyên
   assertEquals(r('so với cả tháng trước thì sao').truocDen.slice(0, 10), '2026-11-01');
   // kỳ đã hết, khác loại: giữ nguyên
