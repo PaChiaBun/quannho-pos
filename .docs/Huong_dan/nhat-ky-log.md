@@ -46,7 +46,7 @@ Xem lại lỗi máy in (bill, phiếu bếp không in ra) / lỗi hệ thống 
 
 ### 2. Gửi log cho người hỗ trợ
 - Bấm **"Sao chép Logs"** → "Đã sao chép toàn bộ nhật ký vào Clipboard!" → dán vào tin nhắn.
-- Hoặc **Cài đặt → "Gửi phản hồi"** ("Báo lỗi & tự động đính kèm nhật ký kỹ thuật"): chọn **"Loại phản hồi"**, **"Mô tả chi tiết *"**, thêm **"Ảnh chụp màn hình (tuỳ chọn)"** → gửi.
+- Hoặc **Cài đặt → "Gửi phản hồi"** (dù ghi "tự động đính kèm nhật ký kỹ thuật", thực tế chỉ kèm thông tin máy và phiên bản; muốn gửi log thì dán vào mô tả): chọn **"Loại phản hồi"**, **"Mô tả chi tiết *"**, thêm **"Ảnh chụp màn hình (tuỳ chọn)"** → gửi.
 
 ### 3. Xoá nhật ký
 - Nút **"Xóa log kỹ thuật"** → **"Xóa log kỹ thuật?"** → **"Xóa log kỹ thuật"** → "Đã xóa log kỹ thuật. Nhật ký nghiệp vụ được giữ lại." Chỉ xoá log kỹ thuật (máy in, hệ thống…); **nhật ký nghiệp vụ luôn được giữ** (hành động nghiệp vụ, thanh toán, đặt món, món tại bàn, thu chi, lương, nhân viên, tài khoản, kho, cài đặt) — máy chủ cũng chặn xoá.

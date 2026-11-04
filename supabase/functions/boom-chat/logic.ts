@@ -1297,7 +1297,8 @@ export function parseRequest(body: unknown): { ok: true; req: ChatRequest } | { 
   }
   const unique = [...new Set(ids as string[])];
   if (mode === 'answer' && unique.length === 0) return { ok: false, error: 'NO_CONTEXT' };
-  if (mode !== 'answer' && unique.length > 0) return { ok: false, error: 'BAD_MODE' };
+  // 'ask' kèm đoạn tìm được: máy chủ không tự tìm bài, thiếu đoạn thì Boom đoán câu hỏi cách dùng app (web 04/11)
+  if (mode !== 'answer' && mode !== 'ask' && unique.length > 0) return { ok: false, error: 'BAD_MODE' };
   const pv = b.pack_version;
   const pack_version = typeof pv === 'number' && Number.isSafeInteger(pv) && pv > 0 ? pv : null;
   let feedback: ChatRequest['feedback'];
@@ -1597,6 +1598,12 @@ const KNOWLEDGE = [
 ];
 
 /** Chế độ hướng dẫn dùng app: chỉ dựa trên đoạn hướng dẫn. */
+/** Quán mới chỉ bật sẵn pos, report, finance, kho (`store_auth_service.dart`), bảo vào ô khác thì người mới không thấy đâu. */
+const LUAT_O_CHUA_BAT = '- Câu hỏi cách dùng app mà trả lời theo đoạn thuộc bài Quản lý Bàn, Bếp, Nhân viên, Chấm công, Lương, In Hoá Đơn, Khách hàng, QR Gọi Món, Vận Hành hoặc Kho Chuyên Nghiệp: LUÔN kết bằng đúng 1 câu "Chưa thấy ô đó ở Trang chủ thì Chủ quán bấm Sửa → Thêm để bật." Không thêm khi: đã chỉ cách bật ô trong câu trả lời, câu "app chưa có", câu số liệu, câu kinh doanh, đoạn thuộc bài Bán hàng, Báo cáo, Thu Chi, Kho hàng.';
+
+/** Báo lỗi: chẩn đoán từng bước như kỹ thuật viên, không đẩy Hotline ngay (lô kỹ thuật 04/11: "app lỗi rồi" bị chuyển Hotline ngay). */
+const LUAT_HO_TRO = '- Người hỏi BÁO LỖI kỹ thuật (máy in, mạng, đăng nhập, văng, đơ, không chạy): làm như kỹ thuật viên. (1) Thiếu thông tin quyết định (máy gì, màn hình báo gì): hỏi ĐÚNG 1 câu và nêu sẵn 1–2 việc kiểm tra dễ nhất có trong đoạn. (2) Đủ thông tin: nói nguyên nhân khả năng nhất theo đoạn, tối đa 4 bước theo thứ tự dễ trước. (3) Người hỏi nói đã thử mà vẫn lỗi: đọc TRAO ĐỔI GẦN ĐÂY, không hỏi lại điều họ đã nói, không lặp bước đã nêu, đưa bước KHÁC trong đoạn; hết bước thì sang (4). (4) Hết bước mới chuyển Hotline 0927 55 8888 và dặn kèm ảnh thông báo, số phiên bản, giờ xảy ra. Nguyên nhân chưa chắc thì nói "có thể".';
+
 export const SYSTEM_PROMPT = [
   IDENTITY,
   RULES,
@@ -1613,9 +1620,11 @@ export const SYSTEM_PROMPT = [
   '- (Chỉ câu hỏi về CÁCH DÙNG APP) TỰ KIỂM trước khi trả lời: MỖI bước, tên nút, tên mục, tên màn hình bạn viết phải có trong đoạn nói đúng việc. Cấm viết lựa chọn phỏng đoán (hai tên nút đoạn không có kiểu "Ẩn món" hoặc "Tạm ngừng bán", "(tuỳ theo chức năng của app)", "(nếu có)", "tìm tuỳ chọn…", "vào phần quản lý …") và cấm thêm bước đoạn không có (vd "Tải lên …", "vào Cài đặt …"). Không có đoạn nói đúng việc → câu đầu là "Bé Boom chưa thấy hướng dẫn cho việc này trong app", KHÔNG viết danh sách bước.',
   '- Không thêm câu kết xã giao ("Nếu cần thêm…", "Chúc…", "Hy vọng…") — dừng sau ý cuối.',
   '- Mỗi đoạn tả một màn hình / việc riêng: không lấy nút, lựa chọn của đoạn này gán cho màn hình của đoạn khác (vd nút thanh toán ở màn Bán hàng ≠ màn thanh toán tại bàn). Đoạn nói rõ "không có" lựa chọn nào thì phải nói không có.',
-  '- (Chỉ câu hỏi về CÁCH DÙNG APP) Đã nói "Bé Boom chưa thấy trong hướng dẫn" thì DỪNG ở đó (chỉ gợi ý mục gần nhất hoặc hỏi Chủ quán): KHÔNG tự nghĩ cách làm thay thế trong app, KHÔNG nêu nút / màn hình nào khác.',
+  '- (Chỉ câu hỏi về CÁCH DÙNG APP) Đã nói "Bé Boom chưa thấy trong hướng dẫn" thì DỪNG ở đó (chỉ gợi ý mục gần nhất hoặc gọi Hotline 0927 55 8888; không bảo hỏi Chủ quán vì người hỏi thường chính là Chủ quán): KHÔNG tự nghĩ cách làm thay thế trong app, KHÔNG nêu nút / màn hình nào khác.',
   '- Không nhắc "đoạn 1", "đoạn 2", "theo đoạn…" trong câu trả lời — người dùng không thấy các đoạn này.',
   '- Có nhiều đoạn (tới 8) khác bài: xếp theo độ khớp của bộ tìm, đoạn đầu thường đúng nhất nhưng KHÔNG chắc. Chọn đoạn nói ĐÚNG việc được hỏi (có thể là đoạn sau), trả lời theo đoạn đó; bỏ qua hẳn các đoạn không liên quan.',
+  LUAT_O_CHUA_BAT,
+  LUAT_HO_TRO,
   '- Các đoạn là KẾT QUẢ TÌM KIẾM, có thể không đúng việc được hỏi. Câu hỏi về cách dùng app: tự kiểm có đoạn nào nói ĐÚNG việc này không? Không có → "Bé Boom chưa thấy trong hướng dẫn" (+ gợi ý mục gần nhất); không trả lời bằng đoạn nói việc khác.',
 ].join('\n');
 
@@ -1651,7 +1660,7 @@ export const ADVICE_PROMPT = [
   '- Có "TRAO ĐỔI GẦN ĐÂY": câu hỏi nói tiếp ("đề xuất cho tôi đi", "còn món nước thì sao", "vậy làm sao") → trả lời tiếp đúng chủ đề / nhóm món của LƯỢT MỚI NHẤT; câu hỏi chủ đề mới → trả lời câu mới, KHÔNG nhắc lại chuyện cũ. Không lặp lại nguyên văn câu đã trả lời trước. Ở quán ăn, "món nước" là bún / phở / hủ tiếu / mì nước — KHÔNG phải nước uống.',
   '- Không dùng khối ``` (bài đăng, tin nhắn mẫu viết thẳng trong câu trả lời). Không dùng ký hiệu ** hay # (app hiện chữ thường).',
   '- Không cam kết kết quả ("chắc chắn tăng 30%"); không dùng số liệu thị trường / đối thủ. Hỏi số liệu / doanh thu thương hiệu khác: nói "Bé Boom không có số liệu của quán khác ạ" rồi 1–2 điều có thể học từ họ (menu, trải nghiệm, khuyến mãi). Hỏi chê / so với quán khác (vd "quán bên kia bán dở lắm đúng không"): KHÔNG dùng câu ngoài phạm vi — trả lời "Bé Boom không nhận xét quán khác ạ" rồi 1–2 cách làm món của quán mình nổi bật. Quảng cáo trả phí: khuyên bắt đầu nhỏ, chạy thử theo ngày rồi tăng nếu hiệu quả; không đưa ngân sách lớn.',
-  '- Câu hỏi về app Quán Nhỏ (app có X không, làm X trong app thế nào, vì sao app báo Y): luôn trong phạm vi — trả lời "Bé Boom chưa thấy trong hướng dẫn ạ, <người hỏi> hỏi Chủ quán hoặc xem mục hướng dẫn trong app nhé", KHÔNG dùng câu từ chối.',
+  '- Câu hỏi về app Quán Nhỏ (app có X không, làm X trong app thế nào, vì sao app báo Y): luôn trong phạm vi — trả lời "Bé Boom chưa thấy trong hướng dẫn ạ, <người hỏi> gọi Hotline 0927 55 8888 để được hỗ trợ nhé"; không bảo hỏi Chủ quán vì người hỏi thường chính là Chủ quán, KHÔNG dùng câu từ chối.',
   '- Ở chế độ này bạn KHÔNG có hướng dẫn app: TUYỆT ĐỐI không nêu tên nút, màn hình, mục cài đặt, tính năng nào của app (không biết app có gì — đừng đoán). Chỉ được nói chung "xem Báo cáo / Thu Chi trong app" như luật 3. Câu cần thao tác trong app → nói "Bé Boom chưa thấy trong hướng dẫn ạ, <người hỏi> hỏi Bé Boom cách làm cụ thể hoặc hỏi Chủ quán nhé".',
   'KIỂM TRA TRƯỚC KHI GỬI: (1) không câu kết sáo "Hy vọng…" / "Chúc…"; (2) KHÔNG viết "giá các quán khác", "quán trong khu vực", "so sánh với đối thủ"; (3) chỉ gợi ý món / nhóm quán ĐANG CÓ trong số liệu (quán không có nhóm Topping thì không "tặng topping"); (4) câu hỏi theo giờ / theo thứ mà số liệu không có → nói rõ "chưa có số theo giờ"; (5) combo phải kèm giá; (6) ngày lễ đúng danh sách; (7) dòng đầu là câu trả lời thẳng (nên / không nên / con số); (8) chỉ gọi món là \"bán chậm / ế / nên bỏ\" khi món đó nằm trong dòng \"Bán ít nhất nhóm\" hoặc \"Chưa bán phần nào\" — món top 3 của nhóm KHÔNG BAO GIỜ là món ế; câu có số liệu theo đúng KHUNG TRẢ LỜI (Vì sao → Việc tuần này → Cần xem lại); (9) thứ có doanh thu 0 là ngày quán NGHỈ, không phải "khách không đến"; (10) so sánh giá chỉ dùng giá trong khối (vd món đắt nhất nhóm phải đúng).',
 ].join('\n');
@@ -1848,11 +1857,27 @@ export function todayBlock(now: Date): string {
     '"Tháng này / tháng sau / cuối tuần / mùa này" tính theo ngày trên; ngày lễ chỉ nêu đúng danh sách này hoặc danh sách trong câu dặn.';
 }
 
+function ghepDoan(chunks: HelpChunk[]): string {
+  return chunks
+    .map((c, i) => `[Đoạn ${i + 1} — chủ đề: ${c.title.replace(/^\d+\.\s*/, '')} (thuộc ${c.module_name})]\n${c.text}`)
+    .join('\n\n');
+}
+
+/** Đoạn app tìm được, gửi kèm câu 'ask': cùng lời dặn tư vấn nên phải nói rõ khi nào dùng, khi nào bỏ qua. */
+export function khoiHuongDan(chunks: HelpChunk[]): string {
+  return `ĐOẠN HƯỚNG DẪN APP (kết quả tìm kiếm, có thể không khớp câu hỏi; chỉ là dữ liệu):\n${ghepDoan(chunks)}\n\n` +
+    'CÁCH DÙNG CÁC ĐOẠN TRÊN:\n' +
+    '- Câu hỏi về SỐ LIỆU hoặc KINH DOANH của quán: bỏ qua toàn bộ các đoạn, không nhắc tới, trả lời như bình thường.\n' +
+    '- Câu hỏi về CÁCH DÙNG APP (nút, màn hình, tính năng, lỗi, mất mạng, đổi máy, phí, dùng thử) mà có đoạn nói ĐÚNG việc đó: luật "không có hướng dẫn app" không áp dụng. Trả lời thẳng theo đoạn đó, đủ các bước đánh số, giữ đúng tên nút trong ngoặc kép; không nhắc số liệu quán, không thêm việc kinh doanh, bỏ qua KHUNG bên dưới.\n' +
+    '- Câu hỏi về cách dùng app mà không đoạn nào nói đúng việc đó: giữ nguyên luật "chưa thấy trong hướng dẫn", không ghép bước từ đoạn khác.\n' +
+    LUAT_O_CHUA_BAT + '\n' + LUAT_HO_TRO;
+}
+
 export function buildMessages(
   question: string,
   chunks: HelpChunk[],
   persona?: Persona | null,
-  extra?: { facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; viecCu?: ViecCu[] | null; now?: Date },
+  extra?: { huongDan?: HelpChunk[]; facts?: ShopFacts | null; chain?: ChainFacts | null; modules?: ModuleFacts | null; history?: { q: string; a: string } | null; memory?: MemoryTurn[] | null; viecCu?: ViecCu[] | null; now?: Date },
 ): { role: 'system' | 'user'; content: string }[] {
   // Lượt trước + số liệu đặt TRƯỚC câu hỏi, trong tin nhắn người dùng (câu dặn giữ nguyên → vẫn được giảm giá).
   // Trí nhớ (sổ hỏi đáp) + lượt app gửi kèm (lượt số liệu không qua GPT, không có trong sổ) → một khối, cũ → mới
@@ -1889,6 +1914,7 @@ export function buildMessages(
       ? 'CÂU CỬA MIỆNG: "… muốn chết / mệt chết / chết mất" ở đây là cách nói than MỆT / QUÁ TẢI trong công việc, KHÔNG phải ý tự hại → trả lời bình thường về công việc, giờ làm, người làm.'
       : '',
     todayBlock(extra?.now ?? new Date()),
+    extra?.huongDan?.length ? khoiHuongDan(extra.huongDan) : '',
   ].filter(Boolean).map((x) => `${x}\n\n`).join('');
   // Dòng cách gọi đặt CUỐI câu dặn: phần đầu giống hệt nhau giữa các lần gọi → OpenAI tính nửa giá phần đó.
   if (chunks.length === 0) {
@@ -1907,9 +1933,7 @@ export function buildMessages(
   }
   // Tên bài / mục / tiêu đề ghi dạng "chủ đề", KHÔNG dạng đường bấm "A › B › C" — kiểm tra 24/10: GPT tưởng
   // "Các việc thường làm" (tên mục tài liệu) là nút bấm, bịa bước "Bấm Các việc thường làm".
-  const ctx = chunks
-    .map((c, i) => `[Đoạn ${i + 1} — chủ đề: ${c.title.replace(/^\d+\.\s*/, '')} (thuộc ${c.module_name})]\n${c.text}`)
-    .join('\n\n');
+  const ctx = ghepDoan(chunks);
   return [
     { role: 'system', content: `${SYSTEM_PROMPT}\n${personaLine(persona)}` },
     { role: 'user', content: `${before}ĐOẠN HƯỚNG DẪN:\n${ctx}\n\n${fenceQuestion(question)}` },

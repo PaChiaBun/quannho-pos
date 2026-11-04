@@ -20,6 +20,7 @@ Kế hoạch: [ke-hoach-trien-khai-boom.md](ke-hoach-trien-khai-boom.md) · Khu�
 | Báo cáo chuỗi | `chain` | [bao-cao-chuoi.md](bao-cao-chuoi.md) | Bản nháp — chờ Chủ Quán duyệt |
 | Vận Hành | `kay_ops` | [van-hanh.md](van-hanh.md) | Bản nháp — chờ Chủ Quán duyệt |
 | Nhật Ký Log | `log_viewer` | [nhat-ky-log.md](nhat-ky-log.md) | Bản nháp — chờ Chủ Quán duyệt |
+| Hỗ trợ kỹ thuật | `ho_tro` | [ho-tro-ky-thuat.md](ho-tro-ky-thuat.md) | Bản nháp — chờ Chủ Quán duyệt |
 
 Danh sách lỗi / việc cần sửa gom từ 16 bài: [viec-can-sua.md](viec-can-sua.md)
 

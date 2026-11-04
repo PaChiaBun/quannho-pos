@@ -464,6 +464,9 @@ final _followUpWeakP = _viPair(
   r' (?:nếu (?:không|chỉ|chưa|ko)|(?:sửa|xoá|xóa) sao|bật lại|có hiệu quả|có bất thường|đề xuất giúp|nhận xét|đánh giá giúp|'
   r'chi tiết|từng (?:ngày|khoản|món|giờ|ca)|top \d+|chia theo|giờ nào|ai (?:hủy|huỷ|làm|bán)|nên làm gì|thì sao|ngắn gọn|tóm (?:lại|tắt)|mỗi con số) ',
 );
+final _noiTiepDauCau = RegExp(
+  r'^ (?:rồi|roi) .*(?:thế nào|the nao|làm sao|lam sao|ra sao|bằng gì|bang gi) $|^ (?:còn|con) .*(?:thì sao|thi sao) $',
+);
 // câu hỏi chỗ mới ("còn cái nút in tạm tính nằm đâu") là câu mới, không phải nói tiếp
 // "nên cắt bớt chỗ nào", "hụt ở chỗ nào" là hỏi khoản nào trên số, không phải chỗ trong app (đợt 15)
 final _newPlaceP = _viPair(
@@ -878,6 +881,8 @@ bool boomIsFollowUp(String query, {String? previous}) {
   // dấu hiệu nói tiếp rõ ràng trong câu ngắn ("làm rồi mà vẫn không được", "món đó tháng trước thì sao") — đợt 14
   if (previous != null && !_viHit(_newPlaceP, s)) {
     final n = s.trim().split(' ').length;
+    // "rồi khách dùng thế nào", "còn ảnh món thì sao" (lô 4, 04/11: bị coi là câu mới, lạc sang số của quán)
+    if (n <= 8 && _noiTiepDauCau.hasMatch(s)) return true;
     if (n <= 12 && _viHit(_followUpStrongP, s)) return true;
     if (n <= 6 &&
         _viHit(_followUpWeakP, s) &&
@@ -1017,6 +1022,28 @@ bool boomAsksChain(String query) {
       !r(_chainRival).hasMatch(s.replaceAll(r(_chainOwnOther), ' '));
 }
 
+/// Đoạn hướng dẫn gửi kèm câu hỏi máy chủ, cùng điều kiện đường cũ hỏi GPT kèm đoạn (web 04/11: không kèm thì
+/// 70% câu cách dùng app bị trả lời như không có bài).
+List<HelpChunk> boomHelpChoMayChu(
+  HelpResult? help,
+  String query, {
+  required bool sure,
+}) {
+  if (help == null) return const [];
+  // "dùng thử được bao lâu" trông như câu kiến thức chung nhưng bộ tìm đã chắc đúng bài
+  if (help.decision == HelpDecision.answer) {
+    return helpChunksForGpt(help, sure: sure);
+  }
+  if (boomGeneralKnowledge(query)) return const [];
+  final weak =
+      help.decision == HelpDecision.none &&
+      help.hits.isNotEmpty &&
+      help.hits.first.score >= kHelpWeakScore;
+  return help.decision != HelpDecision.none || weak
+      ? helpChunksForGpt(help, sure: sure)
+      : const [];
+}
+
 /// Chặng 1.3 (03/11): bản web hỏi máy chủ tự lấy số (mode 'ask'); ổn 1–2 tuần trên web mới bật cho app.
 const kBoomServerRoute = kIsWeb;
 
@@ -1139,8 +1166,16 @@ const kBoomModuleKeys = {
   BoomModule.khuyenMai: 'khuyen_mai',
 };
 
+// "xài thử hết hạn", "mã KM hết hạn", "giao việc lau máy pha", "app đổi sang tiếng anh": từ giống kiến thức chung
+// nhưng đang hỏi về app (04/11: "xài thử hết hạn" bị trả lời như đồ ăn quá hạn).
+final _appNotGeneral = RegExp(
+  r' (?:xài thử|dùng thử|gia hạn|mã (?:km|khuyến mãi|giảm)|voucher|mật khẩu|giao việc|checklist|'
+  r'(?:app|ứng dụng|phần mềm)(?: \S+){0,5} tiếng anh) ',
+);
+
 bool boomGeneralKnowledge(String query) {
   final s = _padVi(query);
+  if (_appNotGeneral.hasMatch(s)) return false;
   return _generalKnowledge.hasMatch(s) ||
       (_foldKeep(s) == s && _offTopicPlain.hasMatch(s));
 }
@@ -1626,6 +1661,8 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         ? await aiForAdvice.askServer(
             storeId: storeId,
             question: rawQuery,
+            chunks: boomHelpChoMayChu(help, query, sure: helpWins),
+            packVersion: packVersion,
             history: history,
             memorySince: _chatStartedAt,
           )

@@ -142,6 +142,8 @@ class BoomAiService {
   Future<BoomAiReply?> askServer({
     required String storeId,
     required String question,
+    List<HelpChunk> chunks = const [],
+    int packVersion = 0,
     BoomTurn? history,
     DateTime? memorySince,
   }) async {
@@ -155,7 +157,8 @@ class BoomAiService {
       'store_id': storeId,
       'question': question.length > 500 ? question.substring(0, 500) : question,
       'mode': 'ask',
-      'chunk_ids': const <String>[],
+      'chunk_ids': [for (final c in chunks.take(8)) c.id],
+      if (chunks.isNotEmpty && packVersion > 0) 'pack_version': packVersion,
     }, wait: const Duration(seconds: 30));
     return _reply(data);
   }

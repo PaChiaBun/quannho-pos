@@ -144,6 +144,9 @@ Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — kh
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|
+| Khách quét QR ngân hàng, app không tự báo tiền về | App không tự biết tiền chuyển khoản đã về | Xem tài khoản ngân hàng thấy tiền rồi mới bấm "Xác nhận" |
+| Món hiện mờ chữ "Hết", bấm không cho bán dù tủ còn nguyên hàng | App tính theo số tồn ghi trong app (có tồn tối thiểu và tồn ≤ 0), không biết hàng thực tế | Kho hàng → "Nhập kho" hoặc "Điều chỉnh tồn kho" cho đúng số thật |
+| Không thấy nút "Thanh toán" | Giỏ chưa có món: điện thoại chỉ hiện thanh giỏ ở dưới sau khi chọn món | Chạm một món rồi bấm "Thanh toán" hoặc ô tổng tiền màu cam |
 | "<món> đã hết hàng" khi chạm món | Món theo dõi tồn, có tồn tối thiểu và tồn ≤ 0 | Nhập kho hoặc sửa tồn trong Kho hàng |
 | "Tải danh sách món thất bại. Hãy chụp lại báo chủ app." | Mất mạng hoặc lỗi tải dữ liệu | Kiểm tra mạng, mở lại màn; còn lỗi thì chụp màn gửi chủ app |
 | "Không tìm thấy khách hàng" | SĐT chưa có hoặc gõ khác cách đã lưu | Kiểm tra số, hoặc tạo khách ở module Khách hàng |

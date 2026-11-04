@@ -29,6 +29,8 @@ nguon:
 ## Từng tab
 
 ### Doanh thu
+- Nhân viên nào bán nhiều nhất: xem **"Doanh thu theo thu ngân"** ở tab này.
+- Xem hôm nay, hôm qua, tháng trước bán được bao nhiêu: mở Báo cáo, tab Doanh thu, chọn kỳ. Trang chủ cũng có "DOANH THU HÔM NAY" cho Chủ quán, Quản lý. Ở Bán hàng, "Đơn gần đây" cũng có tổng hôm nay cho Chủ quán và Quản lý.
 - Thẻ **"Tổng doanh thu …"** (ghi đúng kỳ đang xem: "tháng này", "tháng 10/2026", "tuần 26/10–01/11"): số đơn, TB/đơn.
 - Biểu đồ **"Doanh thu theo giờ"** (hôm nay) hoặc **"Doanh thu theo ngày"** (tuần/tháng; biểu đồ tháng ghi số ngày dưới cột: 1, 9, 17, 25, 30).
 - **"Tóm tắt kỳ này"**: Doanh thu, Số đơn, TB/đơn.
@@ -41,6 +43,7 @@ nguon:
 > Doanh thu tính trên **đơn đã thanh toán** (bán quầy, thanh toán bàn, QR mang đi).
 
 ### Sản phẩm
+- Món nào bán chạy, lời nhiều nhất coi ở đây: tab này xếp theo doanh thu, chưa xếp theo tiền lời. Muốn xem % lãi từng món: Kho Chuyên Nghiệp, phần Công thức.
 - Lọc theo danh mục; **"Top sản phẩm bán chạy"**: số phần, giá trung bình/phần, doanh thu; xếp theo doanh thu, thanh màu dưới mỗi món dài theo doanh thu.
 - Topping chọn kèm món cũng có dòng riêng; lọc **"Topping"** để xem riêng.
 
@@ -68,6 +71,7 @@ nguon:
 - Xem voucher / mã giảm giá đã dùng: số lần dùng là **Tổng đơn áp mã**, **Tổng tiền giảm**; danh sách theo mã: Mã đơn / Bàn, Nhân viên, Thời gian, Giảm giá.
 
 ### Hóa đơn
+- Khách nói tính dư, tính thiếu tiền: tra đúng bill ở đây xem từng món và số tiền.
 - Kỳ **"Hôm nay"** có thanh ‹ › để lùi về hôm qua hoặc chạm vào ngày để chọn (sau 0 giờ vẫn in lại được bill tối qua). Từ Bán hàng › "Đơn gần đây" (hôm nay chưa có đơn), nút "Xem bill hôm qua" mở thẳng tab này ở ngày hôm qua.
 - **"Tra cứu & in lại bill"**: tìm bill đã thanh toán theo số đơn, tên bàn (không cần dấu) hoặc số tiền; chạm để xem chi tiết (bảng mở ngay, món giống nhau gộp một dòng, có topping); nút máy in để **in lại** (bill có dòng "BẢN IN LẠI", có topping, món giống nhau gộp một dòng, ghi nhật ký người in). Màn này tải đủ bill trong kỳ đang chọn (tối đa 20.000 bill); không thấy bill thì chọn đúng ngày của bill.
 
@@ -80,6 +84,7 @@ nguon:
 | Lợi nhuận khác Thu Chi | Hai màn đang xem kỳ/quỹ khác nhau | Chọn cùng kỳ; Thu Chi xem "Tất cả" quỹ |
 | "In báo cáo thất bại. Hãy chụp lại báo chủ app." | Lỗi tạo PDF / máy in | Thử lại hoặc lưu PDF |
 | Không thấy nút Báo cáo chuỗi | Không phải Chủ quán | — |
+| Nhân viên không thấy nút, ô Báo cáo | Vai trò chưa có module Báo cáo | Chủ quán thêm module ở "Tạo / sửa vai trò" |
 | Không tìm thấy bill cũ ở tab Hóa đơn | Kỳ đang chọn không chứa ngày của bill | Chọn đúng ngày của bill |
 
 ## Liên quan module khác

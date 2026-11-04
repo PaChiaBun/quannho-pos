@@ -38,7 +38,8 @@ Ca làm việc tạo ở **Nhân viên → Phân quyền → "Ca làm việc"**.
    - **"Chỉ hiện vào ngày"**: T2…CN (bỏ trống = mọi ngày).
    - **"Vai trò"** (để trống = tất cả), **"Ca làm việc"** (để trống = tất cả ca), **"Assign nhân viên cụ thể"**.
 3. Lưu. Thẻ việc hiện giờ mục tiêu, nhãn **"Gắn ca"**, **"N NV"**.
-4. Xoá một việc: **"Xoá công việc?"** (nhật ký cũ giữ nguyên). Xoá hết: **"Xoá tất cả"** (không hoàn tác).
+4. Giao việc cho ca tối, ca sáng: chọn đúng **"Ca làm việc"** khi tạo. App không chặn nhân viên ra về khi chưa tick; lúc bàn giao ca, app ghi lại số việc chưa xong cho quản lý thấy.
+5. Xoá một việc: **"Xoá công việc?"** (nhật ký cũ giữ nguyên). Xoá hết: **"Xoá tất cả"** (không hoàn tác).
 
 ### 2. Quản lý: nạp checklist mẫu
 - Tab **"Bộ Mẫu"** → **"Checklist chuẩn theo từng vai trò"** → chọn nhóm → **"Nạp"** → "Nạp N việc cho "<vai trò>" thành công". Sau đó sửa lại theo quán.

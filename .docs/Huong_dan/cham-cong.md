@@ -68,13 +68,16 @@ nguon:
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
 |---|---|---|
+| "Chưa thiết lập vị trí cho quán này." | Quán chưa cài định vị | Chủ quán / Quản lý bấm "Cài đặt định vị quán", đứng tại quán rồi lưu |
 | **"Yêu cầu chụp ảnh trực tiếp"** | Chưa cho phép camera / huỷ chụp | Cấp quyền Camera cho app rồi bấm lại |
 | **"Tải ảnh thất bại"** | Mạng yếu khi gửi ảnh | Kiểm tra Wi-Fi/4G, bấm **"Thử lại"** |
+| Đứng trong quán mà app báo xa quá, không cho vào làm | GPS trong nhà kém | Ra gần cửa cho GPS bắt rồi thử; hoặc bấm "Tiếp tục" (ca bị gắn cờ lệch vị trí) |
 | **"Định vị lệch phạm vi"** | Đang xa quán hơn bán kính, hoặc GPS trong nhà kém | Ra gần cửa/ngoài trời cho GPS bắt rồi thử; hoặc "Tiếp tục" (bị gắn cờ) |
 | Ca hiện **"⚠️ Không GPS"** | Máy tắt GPS / từ chối quyền vị trí | Bật GPS và cho phép vị trí |
 | "Dịch vụ định vị (GPS) trên thiết bị đang tắt…" (khi cài định vị quán) | GPS tắt | Bật GPS hoặc nhập toạ độ tay |
 | "Quyền truy cập vị trí bị từ chối…" | Chưa cho phép vị trí | Cấp quyền hoặc nhập toạ độ tay |
 | "Vui lòng chọn cửa hàng trước khi thiết lập định vị." | Chưa chọn quán | Chọn quán rồi làm lại |
+| Quên bấm Vào ca, muốn sửa giờ vào ca | App chưa có chỗ thêm ca bù hay sửa giờ ca | Bấm "VÀO CA" ngay khi nhớ, giờ tính từ lúc bấm; báo Quản lý biết |
 | Ca bị trừ 50% | Quên Ra ca > 14 giờ | Quản lý "Xác nhận ca quên chốt" |
 | Quản lý mở Chấm công chỉ thấy ca của mình | Tên vai trò không đúng "Quản lý" (vd "Quản lý nhà hàng") | Đổi vai trò sang "Quản lý" |
 | "Chưa có ảnh chụp selfie ca này" | Ca tạo trước khi bắt buộc chụp ảnh live, hoặc ảnh lỗi | — |

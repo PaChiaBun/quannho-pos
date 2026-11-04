@@ -503,7 +503,8 @@
     {
       "q": "gửi log cho bên hỗ trợ",
       "expect": [
-        "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro"
+        "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro",
+        "ho-tro-ky-thuat#cac-viec-thuong-lam-chuan-bi-gi-khi-goi-hotline-gui-loi-cho"
       ]
     },
     {

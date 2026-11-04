@@ -8,6 +8,7 @@
 // NGƯỜI CHẤM (29/10, Chủ Quán): mặc định CLAUDE chấm — script chỉ gọi gpt-4o-mini sinh câu trả lời của Boom (đúng mô hình
 // Boom thật) rồi ghi kèm số liệu / vấn đề / ý chính để Claude chấm theo thang 8 tiêu chí; tổng hợp: cham_tu_van/tong_hop.py.
 // CHAM_JUDGE=gpt mới gọi gpt-4o chấm như cũ (chỉ để đối chiếu).
+import type { HelpChunk } from './logic.ts';
 import { buildMessages, formatFacts, formatModules, loaiCau, type MemoryTurn, kiemTraLoi, noteKiem, parseFacts, parseModules, plainAnswer, soLieuGoc } from './logic.ts';
 
 const DIR = new URL('./cham_tu_van/', import.meta.url);
@@ -78,8 +79,13 @@ function caseMessages(c: Case, s: Store) {
   // 03/11 (lô E): khối cho người chấm = ĐÚNG số Boom thấy (cả dòng cần số bán hàng: ngày mở, lượng dùng ước, ngày được hỏi, ca);
   // trước đây formatModules không nhận số bán hàng → người chấm trừ oan "số bịa" ở lô B, D
   const ref = soLieuGoc(c.q, { facts, modules, memory: c.history, now: NOW });
-  return { msgs: buildMessages(c.q, [], null, { facts, modules, memory: c.history, now: NOW }), seen: ref.split('\n').slice(1).join('\n') || seen, ref, facts, modules };
+  return { msgs: buildMessages(c.q, [], null, { huongDan: hdMap.get(c.q), facts, modules, memory: c.history, now: NOW }), seen: ref.split('\n').slice(1).join('\n') || seen, ref, facts, modules };
 }
+
+// CHAM_HD=<tệp jsonl {q,sent}>: kèm đoạn hướng dẫn như đường 'ask' của web (đo 04/11)
+const hdFile = Deno.env.get('CHAM_HD');
+const hdPack = hdFile ? JSON.parse(await Deno.readTextFile(new URL('../../../assets/boom_help/huong_dan.json', import.meta.url))).chunks as HelpChunk[] : [];
+const hdMap = new Map<string, HelpChunk[]>(hdFile ? (await Deno.readTextFile(hdFile)).trim().split('\n').map((l) => JSON.parse(l)).map((x) => [x.q, x.sent.map((i: string) => hdPack.find((c) => c.id === i)).filter(Boolean)]) : []);
 
 const rows: Record<string, unknown>[] = [];
 let chars = 0;
@@ -98,7 +104,7 @@ for (const [i, c] of cases.entries()) {
     const maxTok = loaiCau(c.q) === 'ke_hoach' ? 900 : 600;
     let answer = plainAnswer(await chat(MODEL, msgs, maxTok));
     // tự kiểm như index.ts (số lạ, khuyên ngược, chữ nội bộ) → hỏi lại 1 lần
-    const bad = kiemTraLoi(answer, ref);
+    const bad = kiemTraLoi(answer, `${ref}\n${(hdMap.get(c.q) ?? []).map((x) => x.text).join('\n')}`);
     const kiem_so = bad.length ? { loi: bad, truoc: answer } : undefined;
     if (bad.length) answer = plainAnswer(await chat(MODEL, [...msgs, { role: 'assistant', content: answer }, { role: 'user', content: noteKiem(bad) }], maxTok)) || answer;
     const vd = s.van_de.filter((v) => c.van_de.includes(v.id));

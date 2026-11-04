@@ -322,7 +322,8 @@
     {
       "q": "món bị mờ chữ Hết bấm không được",
       "expect": [
-        "kho-hang#loi-mon-mo-het-o-ban-hang-khong-bam-duoc"
+        "kho-hang#loi-mon-mo-het-o-ban-hang-khong-bam-duoc",
+        "ban-hang#loi-mon-hien-mo-chu-het-bam-khong-cho-ban-du-tu-con-nguyen-hang"
       ],
       "nhom": "A"
     },
@@ -621,7 +622,8 @@
     {
       "q": "đứng trong quán mà báo lệch vị trí",
       "expect": [
-        "cham-cong#loi-dinh-vi-lech-pham-vi"
+        "cham-cong#loi-dinh-vi-lech-pham-vi",
+        "cham-cong#loi-dung-trong-quan-ma-app-bao-xa-qua-khong-cho-vao-lam"
       ],
       "nhom": "A"
     },
@@ -685,7 +687,8 @@
     {
       "q": "gửi log lỗi cho bên hỗ trợ",
       "expect": [
-        "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro"
+        "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro",
+        "ho-tro-ky-thuat#cac-viec-thuong-lam-chuan-bi-gi-khi-goi-hotline-gui-loi-cho"
       ],
       "nhom": "B"
     },

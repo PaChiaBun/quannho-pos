@@ -45,6 +45,7 @@ nguon:
 ## Các việc thường làm
 
 ### 1. Ghi một khoản chi (vd tiền điện) hoặc thu khác
+Tiền đi chợ mỗi sáng, mua đá, gas, tiền điện đều ghi ở đây.
 1. Bấm **"− Ghi chi"** (hoặc **"+ Ghi thu"**). Có thể đổi loại ngay trong bảng.
 2. Nhập **"Số tiền"**.
 3. Chọn **"Quỹ giao dịch"**: **"Tiền mặt"** hoặc **"Tiền gửi (NH)"** — chọn đúng nơi tiền thực sự ra/vào.

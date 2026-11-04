@@ -386,13 +386,19 @@ Deno.serve(async (req) => {
 
   // 'ask' (03/11): app chỉ gửi câu hỏi → máy chủ đọc kỳ, lấy số bằng vé của chính người hỏi (RLS) rồi đi đường tư vấn
   let kyHoi: string | undefined, askTag = '';
+  let huongDan: HelpChunk[] = [];
   if (r.mode === 'ask') {
+    if (r.chunk_ids.length) {
+      // lệch bản hướng dẫn hoặc lỗi đọc: vẫn trả lời được, chỉ thiếu đoạn
+      huongDan = await helpPack(r.pack_version).then((p) => pickChunks(p, r.chunk_ids) ?? []).catch(() => []);
+      r.chunk_ids = []; // sổ và hạn mức tính như câu tư vấn
+    }
     const jwt = (req.headers.get('authorization') ?? '').slice(7).trim();
     try {
       const so = await laySoChoCau({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId: r.store_id, userId: user }, r.question);
       Object.assign(r, { mode: 'advice', facts: so.facts, modules: so.modules });
       kyHoi = so.ky.nhan;
-      askTag = `+ask${so.dem ? '+dem' : ''}${so.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;
+      askTag = `+ask${huongDan.length ? '+hd' : ''}${so.dem ? '+dem' : ''}${so.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;
     } catch {
       return json(503, { error: 'SERVER_BUSY' });
     }
@@ -507,7 +513,7 @@ Deno.serve(async (req) => {
   const t0 = Date.now();
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
-  const messages = buildMessages(r.question, chunks, who, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu });
+  const messages = buildMessages(r.question, chunks, who, { huongDan, facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu });
   const callGpt = (msgs: { role: string; content: string }[], signal: AbortSignal = ac.signal) =>
     fetch(`${OPENAI_BASE}/chat/completions`, {
       method: 'POST',
@@ -569,7 +575,8 @@ Deno.serve(async (req) => {
     // → hỏi lại GPT MỘT lần kèm danh sách lỗi. Còn ≥ 4 giây; lỗi / quá giờ thì giữ câu trả lời lần trước.
     const left2 = UPSTREAM_TIMEOUT_MS - (Date.now() - t0);
     const bad = r.mode === 'advice' && (r.facts || r.modules || r.chain) && left2 >= 4000
-      ? kiemTraLoi(answer, soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu }))
+      // số trong đoạn hướng dẫn (14 ngày, Hotline…) không phải số bịa
+      ? kiemTraLoi(answer, `${soLieuGoc(r.question, { facts: r.facts, chain: r.chain, modules: r.modules, history: r.history, memory, viecCu })}\n${huongDan.map((c) => c.text).join('\n')}`)
       : [];
     if (bad.length) {
       const ac3 = new AbortController();
@@ -595,7 +602,7 @@ Deno.serve(async (req) => {
     }
     // Câu hướng dẫn app mà GPT đoán nút / chức năng "(nếu có…)" → không đưa bước bịa ra, nói thẳng chưa có hướng dẫn (QC 24/10)
     if (r.mode === 'answer' && guessesAppFeature(answer)) {
-      answer = `Dạ ${goiNguoiHoi(who)} ơi, Bé Boom chưa thấy hướng dẫn cho việc này trong app ạ. ${goiNguoiHoi(who)} xem thử các mục hướng dẫn gần nhất hoặc hỏi Chủ quán nhé.`;
+      answer = `Dạ ${goiNguoiHoi(who)} ơi, Bé Boom chưa thấy hướng dẫn cho việc này trong app ạ. ${goiNguoiHoi(who)} xem thử các mục hướng dẫn gần nhất hoặc gọi Hotline 0927 55 8888 nhé.`;
       kind += '+doan_nut';
     }
     const cost = costUsd(inTok, outTok, PRICES);

@@ -519,7 +519,9 @@
   },
   {
    "q": "nhân viên xin nghỉ phép trên app được không, mình duyệt ở đâu",
-   "expect": []
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-13-app-chua-co-dat-ban-truoc-doi-ca-nhap"
+   ]
   },
   {
    "q": "tra xem ai hủy bàn lúc 8h tối qua",
@@ -530,7 +532,8 @@
   {
    "q": "gửi log lỗi cho bên hỗ trợ sao",
    "expect": [
-    "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro"
+    "nhat-ky-log#cac-viec-thuong-lam-2-gui-log-cho-nguoi-ho-tro",
+    "ho-tro-ky-thuat#cac-viec-thuong-lam-chuan-bi-gi-khi-goi-hotline-gui-loi-cho"
    ]
   },
   {
@@ -565,7 +568,9 @@
   },
   {
    "q": "đăng xuất tài khoản nhân viên trên máy khác từ xa được không",
-   "expect": []
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-15-mat-dien-thoai-so-nguoi-khac-vao-app"
+   ]
   },
   {
    "q": "làm mã QR cho khách tự gọi món tại bàn",
@@ -663,7 +668,9 @@
   },
   {
    "q": "bàn 4 người muốn tách bill trả riêng từng người được không",
-   "expect": []
+   "expect": [
+    "bat-dau#cac-viec-thuong-lam-9-app-chua-co-tach-bill-ghi-no-grab-shop"
+   ]
   },
   {
    "q": "ghi tiền điện tháng 10 vô sổ",

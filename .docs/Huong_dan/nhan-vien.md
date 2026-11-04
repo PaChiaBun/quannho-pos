@@ -26,8 +26,8 @@ nguon:
 Có nhân viên mới (phục vụ, thu ngân, bếp…), muốn cho vào app của quán: gửi mã quán cho họ, họ vào xong thì bấm "Cấp quyền" gán vai trò.
 1. Chủ quán mở **Cài đặt → "Mã kết nối nhân viên"** ("Chia sẻ mã này để thêm thành viên vào quán") → sao chép mã quán (dạng `QN-…`) gửi nhân viên.
 2. Nhân viên cài app, **đăng ký / đăng nhập** bằng số điện thoại + mật khẩu (trên iPhone chỉ đăng nhập; tạo tài khoản ở Android/Web/Windows).
-3. Chọn **"Nhập mã quán"** → điền **"Mã quán"** → **"Kết nối vào quán"**.
-4. Nhân viên mới hiện trong danh sách với nhãn **"⚡ MỚI"** / nhóm **"Chưa phân vai trò"**. Chủ quán / Quản lý bấm **"Cấp quyền"** để gán vai trò.
+3. Nhập mã quán ở đâu: sau khi đăng nhập, chọn **"Nhập mã quán"** → điền **"Mã quán"** → **"Kết nối vào quán"**.
+4. Chủ quán mở ô **Nhân viên** ở Trang chủ (quán mới chưa bật: "Sửa" → "Thêm" → Nhân viên). Nhân viên mới hiện trong danh sách với nhãn **"⚡ MỚI"** / nhóm **"Chưa phân vai trò"**. Chủ quán / Quản lý bấm **"Cấp quyền"** để gán vai trò.
 
 ## Màn hình gồm những gì
 - **"Nhân Viên"** — "N thành viên • M đang làm ca"; nút **"Quản lý vai trò"**.
@@ -102,6 +102,7 @@ Bật module nào cho vai trò thì vai trò đó **tự có** các quyền đi 
 | Máy in | Quản lý Máy chủ in |
 
 - **Chủ quán và Quản lý** luôn có mọi quyền thao tác.
+- Không muốn nhân viên thấy doanh thu, tiền của quán: ở việc "Tạo / sửa vai trò", bỏ module **Báo cáo** và **Thu chi** khỏi vai trò của họ.
 - Vai trò tên có "thu ngân"/"quầy" luôn có thanh toán, giảm giá, xem lịch sử đơn.
 
 ### 6. Hành động nhạy cảm (tab Phân quyền)
@@ -128,6 +129,10 @@ Bật module nào cho vai trò thì vai trò đó **tự có** các quyền đi 
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
 |---|---|---|
+| "Bạn chưa tham gia quán nào" / "Chưa được thêm vào quán nào" / "Thiết bị này chưa được kết nối vào quán nào" | Tài khoản chưa vào quán nào | Nhân viên: xin mã quán, chọn "Nhập mã quán". Chủ quán: tạo quán mới |
+| "Tính năng này tạm khóa vì bạn chưa vào ca làm việc" | Nhân viên phải vào ca mới mở được module; Chủ quán, Quản lý không bị khoá | Mở Chấm công, bấm "VÀO CA" |
+| "Xác thực đổi quán thất bại. Vui lòng kiểm tra mật khẩu." | Nhập sai mật khẩu lúc đổi quán | Nhập lại đúng mật khẩu đăng nhập |
+| "Không thể xác minh quyền vào quán…. Vui lòng đăng nhập lại." | Phiên đăng nhập hết hạn hoặc mạng yếu | Kiểm tra mạng, đăng nhập lại; vẫn báo thì gọi Hotline 0927 55 8888 |
 | Nhân viên kết nối mã quán mà không thấy module nào | Chưa được gán vai trò | Chủ quán/Quản lý bấm "Cấp quyền" |
 | "Quản lý không được phép gán vai trò Quản lý" | Luật phân cấp | Nhờ Chủ quán |
 | "Quản lý không được phép xóa Quản lý khác" | Luật phân cấp | Nhờ Chủ quán |

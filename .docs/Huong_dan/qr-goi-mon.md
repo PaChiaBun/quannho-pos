@@ -100,6 +100,7 @@ Khách quét QR gọi món xong, nhân viên nhận đơn ở đây rồi duyệ
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
 |---|---|---|
+| Khách: "Chưa rõ đơn đã được gửi hay chưa do mất kết nối…" | Mạng khách chập chờn lúc gửi | Khách bấm gửi lại, không tạo đơn trùng; quán kiểm tra nhãn "Đơn QR (n)" |
 | Khách: "Liên kết gọi món không hợp lệ" | Mã in sai, hoặc mã cũ đã bị thay | In lại mã từ màn Mã QR gọi món |
 | Khách: "Quán tạm ngưng nhận đơn qua QR. Vui lòng gọi nhân viên." | Kênh đang tắt | Bật lại công tắc kênh |
 | Khách: "Quán tạm ngừng nhận đơn qua mã QR này do có lượt quét bất thường…" | Kênh bị khoá | Tạo mã QR mới, in và dán lại |
@@ -107,6 +108,7 @@ Khách quét QR gọi món xong, nhân viên nhận đơn ở đây rồi duyệ
 | Khách: "Quán đang nhận quá nhiều đơn, vui lòng thử lại sau ít phút" | Kênh vượt ~15 đơn/phút hoặc quá nhiều đơn chưa ai nhận / bàn có quá nhiều đơn chờ | Nhân viên mở và xử lý các đơn đang chờ; khách thử lại sau |
 | Khách: "Có món đã hết hoặc ngừng bán…" | Món vừa hết / ngừng bán | Khách bỏ món đó khỏi giỏ |
 | Khách: "Bàn đã chọn không còn hợp lệ…" | Bàn bị xoá/đổi | Khách chọn lại bàn |
+| Đơn QR tới không nghe chuông | Máy tắt tiếng hoặc âm lượng nhỏ | Tăng âm lượng máy; vẫn thấy đơn ở nhãn "Đơn QR (n)" trên Bán hàng |
 | Khách: "Đơn đã hết hạn" | Quá 60 phút chưa ai nhận | Khách đặt đơn mới; nhân viên chú ý chuông |
 | Nhân viên: "Đơn này đã được xử lý ở thiết bị khác." | Người khác đã nhận/duyệt | Đóng đơn, không cần làm gì |
 | Nhân viên: "Đơn vừa được cập nhật ở thiết bị khác. Lưu hoặc tải lại để đồng bộ." | Hai người cùng sửa | Lưu hoặc tải lại rồi duyệt |

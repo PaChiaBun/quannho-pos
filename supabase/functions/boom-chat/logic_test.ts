@@ -1280,3 +1280,14 @@ Deno.test('lô G: kịch bản tăng giá tính sẵn; bắt kết luận "đủ
   assert(loiLapLuan('Dạ, trứng có thể đủ tới Thứ 7 nếu bán như thường.', ref).some((x) => x.includes('trái số ước') && x.includes('Trứng gà')));
   assertEquals(loiLapLuan('Dạ, trứng KHÔNG đủ tới Thứ 7, chỉ đủ khoảng 1,2 ngày — nhập ngay.', ref).filter((x) => x.includes('trái số ước')), []);
 });
+
+Deno.test('ask nhận đoạn hướng dẫn; đoạn nằm sau lời dặn tư vấn, kèm cách dùng', () => {
+  const r = parseRequest({ store_id: STORE, question: 'mất mạng bán được không', mode: 'ask', chunk_ids: ['bat-dau#mat-mang'] });
+  assertEquals(r.ok, true);
+  const c = { id: 'bat-dau#mat-mang', module_name: 'Bắt đầu', section: '', title: 'Mất mạng', text: 'App cần mạng.' };
+  const m = buildMessages('mất mạng bán được không', [], null, { huongDan: [c as never] });
+  assertEquals(m[0].content.includes('KHÔNG có hướng dẫn app'), true);
+  assertEquals(m[1].content.includes('App cần mạng.'), true);
+  assertEquals(m[1].content.includes('bỏ qua toàn bộ các đoạn'), true);
+  assertEquals(buildMessages('a', [], null, {})[1].content.includes('ĐOẠN HƯỚNG DẪN APP'), false);
+});

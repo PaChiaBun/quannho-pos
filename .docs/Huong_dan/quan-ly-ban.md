@@ -35,7 +35,7 @@ nguon:
 1. Bấm **"Bắt đầu thiết lập ngay"** (khi chưa có bàn) hoặc **"Thêm khu vực"**: **"Tên khu vực"** (Trong nhà, Ngoài trời…), **"Biểu tượng"**, **"Màu sắc"** → **"Thêm khu vực"**.
 2. **"Thêm bàn"**: **"Tên bàn (vd: Bàn 1, Bàn VIP)"**, **"Khu vực"**, **"Số chỗ ngồi"**.
 3. Tạo nhiều bàn một lần: tăng **"Số lượng bàn"** — app tạo "Bàn 1", "Bàn 2"… theo tên gốc.
-4. Sửa/xoá: giữ lâu thẻ bàn → **"Sửa thông tin bàn"** (có **"Xoá bàn"**); sửa khu có **"Xoá khu"**.
+4. Sửa tên bàn, xoá bàn: giữ lâu thẻ bàn → **"Sửa thông tin bàn"** (có **"Xoá bàn"**); sửa khu có **"Xoá khu"**.
 
 ### 2. Mở bàn
 1. Chạm bàn trống → bảng mở bàn: chỉnh **"Số khách"** (sức chứa chỉ để tham khảo, có thể thêm ghế).
@@ -76,13 +76,14 @@ nguon:
 - Bấm liên tục bị chặn vài giây: "Đang in tạm tính, vui lòng chờ vài giây rồi mới bấm lại."
 
 ### 7. Chuyển bàn / gộp bàn
+- Khách đổi từ bàn này qua bàn khác: mở bàn đang ngồi, bấm **"Chuyển"**.
 - **"Chuyển"**: chọn bàn **trống** → **"Chuyển sang <bàn>"** → "Chuyển bàn thành công!". Bàn đang có khách không chuyển sang được.
 - **"Gộp bàn"**: chọn bàn **đang có khách** (nhãn "🔗 Gộp món") → **"Gộp <bàn này> vào <bàn kia>"** → "Gộp bàn thành công!".
 
 ### 8. Thanh toán cả bàn
 1. Bấm **"Thanh toán"** → màn **"Thu tiền"** với **"TỔNG TIỀN CẦN THU"**.
 2. Tuỳ chọn:
-   - **"Phí dịch vụ / Ship"** — nhập phí thêm.
+   - **"Phí dịch vụ / Ship"** — nhập số tiền phí thêm cho từng lần thu. App chưa tự cộng phụ thu đêm, phí dịch vụ theo % hay VAT.
    - **"Khách hàng (tích điểm)"** — nhập SĐT; có điểm thì **"Dùng điểm"**.
    - **"Khuyến mãi / Voucher"** → **"Chọn mã"** → **"Áp dụng"** (bỏ: **"Gỡ mã"**).
    - Chưa có ô giảm giá tay — muốn bớt tiền cho khách: dùng mã giảm giá (voucher).

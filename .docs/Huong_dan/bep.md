@@ -28,6 +28,7 @@ nguon:
 > Nếu máy tính bảng / PC không thấy nút "Bếp" ở màn Bán hàng, phiếu bếp chỉ in ra giấy khi thanh toán; muốn phiếu lên màn Bếp hãy gọi món qua Quản lý Bàn.
 
 ## Màn hình gồm những gì
+Bếp coi món trên màn hình: mở ô **"Phiếu bếp"** ở Trang chủ.
 - Tiêu đề **"🔥 BẾP" / "Phiếu bếp"**, nút **"Thống kê hôm nay"** và nút **"Tắt tiếng" / "Bật tiếng"** chuông.
 - **Lọc trạm**: **"Tất cả"**, **"Bếp nóng"**, **"Bếp nước"**.
 - **Máy tính bảng nằm ngang / PC**: ba cột **"Chờ xử lý"**, **"Đang làm"**, **"Hoàn thành"**.

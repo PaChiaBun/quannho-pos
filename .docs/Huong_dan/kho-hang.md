@@ -46,15 +46,18 @@ nguon:
 1. Bấm **"Thêm sản phẩm"** → **"Thêm sản phẩm mới"**.
 2. Điền:
    - **"Tên sản phẩm *"**.
-   - **"Giá bán (đ) *"** (nguyên liệu thì không bắt buộc), **"Giá vốn (đ)"**.
+   - **"Giá bán (đ) *"** (nguyên liệu thì không bắt buộc), **"Giá vốn (đ)"**: nhập giá vốn của món ở ô này; món đã có thì nhập ở "Sửa thông tin món".
    - **"Tồn tối thiểu (cảnh báo)"** — để 0 nếu không cần theo dõi tồn.
    - **"Bộ phận chế biến"**: **Bếp Nóng**, **Bếp Bar** hoặc **Thu Ngân** — quyết định phiếu in ra trạm nào (không phụ thuộc danh mục). Món thêm nhanh từ màn Bán hàng (nút dấu +) mặc định Bếp Nóng — đồ uống nhớ sửa lại thành Bếp Bar.
    - **"Danh mục"**: Đồ ăn, Đồ uống, Tráng miệng, Combo, **Nguyên liệu**, hoặc **"Thêm"** danh mục riêng.
    - **"Đơn vị"**: phần, ly, tô, cái, hộp, lon, chai, gói, kg, g, ml, lít.
-   - **"Ảnh sản phẩm"**: **"Thư viện"**, **"Camera"** hoặc **"Tìm ảnh từ Cook.ai.vn"**.
+   - **"Ảnh sản phẩm"** (ảnh món): **"Thư viện"**, **"Camera"** hoặc **"Tìm ảnh từ Cook.ai.vn"**.
 3. Bấm **"Thêm sản phẩm"**.
 
 > Chọn danh mục **"Nguyên liệu"** thì món nằm ở tab Nguyên liệu (khi đã bật phiếu nhập nâng cao) và **không hiện** ở màn Bán hàng (trừ khi có giá bán). Danh mục khác nằm ở tab Hàng hoá & Menu.
+
+### 1b. Tạo combo
+Tạo combo 2 ly, combo cơm nước có giá rẻ hơn mua lẻ: **"Thêm sản phẩm"** → danh mục **"Combo"** → đặt giá combo làm **"Giá bán (đ)"**.
 
 ### 2. Topping (trà sữa, cơm thêm…)
 1. Tạo topping như một sản phẩm: chọn chip **"Topping"**, đặt giá và **"Đơn vị topping"** (viên, phần, ml, g, muỗng, thìa).
@@ -62,7 +65,7 @@ nguon:
 3. Topping hiện khi gọi món ở **Quản lý Bàn** và khi khách gọi qua **QR**. **Màn Bán hàng (quầy) chưa có topping.**
 
 ### 3. Tùy chọn món (Modifiers) và Ghi chú nhanh
-- **"Tùy chọn món (Modifiers)"** → **"Cài đặt tùy chọn món"**: thêm dòng gồm **Nhóm**, **Tên tùy chọn**, **+Giá**. Ví dụ: Nhóm "Mức cay" → "Cấp độ 2" → 0đ; Nhóm "Thêm món" → "Thêm Mực" → 15.000đ. Nhân viên bấm chọn khi order ở Quản lý Bàn, không cần gõ.
+- **"Tùy chọn món (Modifiers)"** → **"Cài đặt tùy chọn món"**: thêm dòng gồm **Nhóm**, **Tên tùy chọn**, **+Giá**. Ví dụ: Nhóm "Mức cay" → "Cấp độ 2" → 0đ; Nhóm "Thêm món" → "Thêm Mực" → 15.000đ. Size M, L, mức đường, mức đá cũng cài ở đây: Nhóm "Size" → "Size L" → +5.000đ. Nhân viên bấm chọn khi order ở Quản lý Bàn, không cần gõ. Màn Bán hàng (quầy) chưa có tùy chọn này.
 - **"Ghi chú nhanh"** (nút trên đầu trang): bộ chip ghi chú cho món; món chưa gán dùng bộ mặc định theo loại đồ ăn / đồ uống.
 
 ### 4. Quy cách pha chế (mua theo lon/hộp, trừ theo ml/g)
@@ -72,7 +75,7 @@ Với nguyên liệu mua theo đơn vị lớn mà công thức dùng theo ml/g 
 3. Lưu. Công thức ở Kho Chuyên Nghiệp sẽ trừ kho đúng theo quy đổi.
 
 ### 5. Bật / tắt bán (hết món tạm thời)
-Hết món / hết nguyên liệu tạm thời, muốn tạm ẩn món: khách quét QR không thấy món, nhân viên gọi món được báo món tạm hết:
+Hết món / hết nguyên liệu tạm thời (vd hết trân châu thì tắt món đó), muốn tạm ẩn món: khách quét QR không thấy món, nhân viên gọi món được báo món tạm hết:
 1. Bấm **"Chọn"** → chọn các món → **"Tắt bán"** (hoặc **"Bật bán"**).
 2. Món tắt bán hiện **"Tạm ngưng bán"**:
    - **QR**: khách **không thấy** món.
@@ -104,6 +107,7 @@ Hết món / hết nguyên liệu tạm thời, muốn tạm ẩn món: khách q
 - Menu món → **"Lịch sử xuất nhập"** → **"Lịch sử biến động"**: từng lần nhập, bán, điều chỉnh, huỷ, kèm thời gian và ghi chú.
 
 ### 10. Xoá món, đổi danh mục hàng loạt
+- Món không bán nữa thì xoá ở đây; chỉ hết tạm thời thì dùng "Bật / tắt bán".
 - **"Xóa món"** (hoặc chọn nhiều → **"Xóa (N) món"**) → **"Xác nhận xóa"**. Món chuyển sang trạng thái đã xoá; **doanh thu và hoá đơn cũ vẫn giữ**.
 - Chọn nhiều → **"Đổi danh mục"** → chọn danh mục có sẵn hoặc **"Nhập danh mục mới"** → **"Cập nhật"**.
 

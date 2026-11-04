@@ -69,7 +69,7 @@ Mở module **In Hoá Đơn** từ Trang chủ:
 - **Máy chủ in** chỉ tự in bill khi bật **"In khi thanh toán"**; máy được chỉ định làm máy chủ in mà đang có **máy khác giữ quyền máy chủ in (còn hoạt động)** thì nhường máy đó, không in trùng. Máy giữ quyền bị rớt mạng / mất bản ghi quyền thì máy được chỉ định vẫn in như cũ.
 
 ### 3. Tạo luật in (tab "Luật in")
-Luật nói: *loại phiếu nào → in ra máy nào → mấy bản*.
+Luật nói: *loại phiếu nào → in ra máy nào → mấy bản*. Đồ ăn in xuống bếp, đồ uống in ra quầy: tạo một luật "Phiếu bếp nóng" ra máy bếp, một luật "Phiếu bếp bar" ra máy quầy; món nào in về đâu theo "Bộ phận chế biến" của món.
 1. Bấm **"Thêm luật"** (phải có ít nhất một máy in).
 2. **"Loại phiếu"**: Hóa đơn thanh toán, Phiếu tạm tính, Phiếu bếp nóng, Phiếu bếp bar, Tem / nhãn dán ly, Báo cáo.
 3. **"Chỉ áp dụng cho hình thức"** (không chọn = tất cả): Ăn tại bàn, Mang đi, Đặt qua QR, Giao hàng.
@@ -116,6 +116,7 @@ Dùng khi quán có nhiều máy bán (web, điện thoại) nhưng chỉ **mộ
 ### 8. Thiết kế mẫu in
 **Thiết Kế Mẫu In** có 4 tab: **Hoá Đơn**, **Bếp Nóng**, **Bếp Bar**, **Tem Dán Ly**. Thanh trên cùng chọn chế độ **"Thiết kế"**, **"Mẫu dựng sẵn"**, **"Xem trước"** (màn hẹp như máy cầm tay: chế độ chưa chọn chỉ hiện biểu tượng — giữ ngón tay để xem tên).
 - **Hoá Đơn**: chọn **"Khổ giấy"**, bật/tắt và sắp xếp các khối (Tên quán, Logo, Địa chỉ, SĐT, Thông tin đơn, Tên bàn, Danh sách món, Tổng tiền, Phương thức TT, Điểm thưởng, QR Code, Văn bản tự do, Lời cảm ơn…). Khối "Danh sách món", "Tổng tiền" là **bắt buộc**. Thêm khối: **"Thêm block"**. Xem lại các thiết kế trước đây: nút **"Lịch sử thiết kế"**.
+- **Hiện mã QR chuyển khoản của quán trên bill**: tab Hoá Đơn → khối **"QR Code"** → **"Nguồn mã QR"**: "VietQR Tự động" (khai tài khoản ngân hàng của quán) hoặc "Tải ảnh QR lên" → "Lưu".
 - **Bếp Nóng / Bếp Bar**: **"Khổ Giấy"**, **"Tiêu Đề Phiếu"** (vd PHIẾU BẾP, BAR NƯỚC), **"Hiển Thị Trên Phiếu"** (Tên bàn / Mang đi, Số thứ tự đơn, Thời gian gọi món, Ghi chú đặc biệt, Đường kẻ phân cách, In đậm tên món, Tên nhân viên order), **"Cỡ Chữ"**.
 - **Tem Dán Ly**: **"Khổ Tem"**, **"Hiển Thị Trên Tem"** (Số đơn, Tên bàn / Mang đi, Thứ tự ly (1/2), Ghi chú / topping, Giờ gọi món…), **"Cỡ Chữ"**.
 - Có sẵn **mẫu dựng sẵn**: chọn mẫu → **"Dùng mẫu này"**. Mọi thay đổi phải bấm **"Lưu"**.
@@ -134,6 +135,7 @@ Dùng khi quán có nhiều máy bán (web, điện thoại) nhưng chỉ **mộ
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
 |---|---|---|
+| "Chưa nhận diện được thiết bị này nên chưa đặt riêng được." | App chưa đọc được mã của máy | Mở lại app; vẫn báo thì gửi ở Cài đặt → "Gửi phản hồi" |
 | "Máy này chưa cài máy in hoá đơn nên không in bill." (thu tiền ở quầy: dòng tự tắt; ở bàn: dòng chữ xám) | Máy đang thao tác không có máy in hoá đơn / không có luật in hoá đơn | Thêm máy in + luật "Hóa đơn thanh toán", hoặc đặt Máy chủ in |
 | Bán trên **web** mà không ra bill | Trình duyệt không tự in | Đặt một máy Windows/Sunmi làm **Máy chủ in** và giữ app luôn mở |
 | Một loại phiếu (vd phiếu bar) không in | Đang dùng luật in nhưng thiếu luật cho loại phiếu đó | Thêm luật cho loại phiếu đó, bấm Lưu |
