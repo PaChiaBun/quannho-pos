@@ -21,7 +21,7 @@ nguon:
 - Quản lý: làm được phần lớn việc cài (món, máy in, khách hàng, voucher) tuỳ vai trò được cấp; không bật / tắt module.
 
 ## Màn hình gồm những gì
-Trang chủ có phần "Chức năng": các ô module đang bật của quán ("… đang bật • Giữ ô để sắp xếp"). Chủ quán thấy nút "Sửa" để bật / tắt module. Mỗi module có bài hướng dẫn riêng; bài này chỉ chỉ ra nên làm việc nào trước.
+Chuông ở góc trên Trang chủ là cảnh báo hàng sắp hết, chấm đỏ là có món cần nhập; bấm vào để xem danh sách. Trang chủ có phần "Chức năng": các ô module đang bật của quán ("… đang bật • Giữ ô để sắp xếp"). Chủ quán thấy nút "Sửa" để bật / tắt module. Mỗi module có bài hướng dẫn riêng; bài này chỉ chỉ ra nên làm việc nào trước.
 
 ## Các việc thường làm
 ### Mới tải, mới cài app xong: bắt đầu từ đâu, làm gì đầu tiên
@@ -126,6 +126,7 @@ App hiện chưa có các việc sau, trả lời thẳng là chưa có:
 Trong app chưa có nút tự làm các việc này, kể cả chuyển quán cho người khác làm chủ. Gọi Hotline 0927 55 8888 để được hỗ trợ.
 
 ### 11. Nhập lại đơn hôm qua, xoá đơn bán thử cho sạch báo cáo
+Đơn đang làm dở, chưa thanh toán: xoá trong giỏ hàng (bài Bán hàng, "Xoá giỏ hàng").
 1. Đơn quên nhập: nhập lại được nhưng đơn mang giờ lúc nhập, app không chọn được ngày cũ.
 2. Đơn bán thử đã thanh toán: chưa xoá được và vẫn tính vào báo cáo.
 
@@ -192,6 +193,9 @@ Quán mới chỉ bật sẵn 4 ô: Bán hàng, Báo cáo, Thu Chi, Kho hàng. C
 2. Chọn ô cần dùng: Bàn (Quản lý Bàn), Phiếu bếp (Bếp), Nhân viên, Chấm công, Tính Lương, In Hoá Đơn, Khách hàng & Khuyến mãi, QR Gọi Món, Vận Hành, Kho Chuyên Nghiệp.
 3. Bấm "Xong".
 Nhân viên không thấy ô: vai trò của họ chưa có module đó, nhờ Chủ quán gán (bài Nhân viên & Phân quyền).
+
+### 23. Đổi quán, chuyển sang quán khác khi có nhiều quán
+Cài đặt → thẻ quán → "Đổi quán" → chọn quán → nhập mật khẩu đăng nhập.
 
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |

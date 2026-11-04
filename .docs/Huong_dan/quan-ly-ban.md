@@ -83,7 +83,7 @@ nguon:
 ### 8. Thanh toán cả bàn
 1. Bấm **"Thanh toán"** → màn **"Thu tiền"** với **"TỔNG TIỀN CẦN THU"**.
 2. Tuỳ chọn:
-   - **"Phí dịch vụ / Ship"** — nhập số tiền phí thêm cho từng lần thu. App chưa tự cộng phụ thu đêm, phí dịch vụ theo % hay VAT.
+   - **"Phí dịch vụ / Ship"** — thêm phí ship cho đơn giao hàng, phí dịch vụ: nhập số tiền phí thêm cho từng lần thu ở màn Thu tiền của bàn; màn Bán hàng (quầy) chưa có ô này. App chưa tự cộng phụ thu đêm, phí dịch vụ theo % hay VAT.
    - **"Khách hàng (tích điểm)"** — nhập SĐT; có điểm thì **"Dùng điểm"**.
    - **"Khuyến mãi / Voucher"** → **"Chọn mã"** → **"Áp dụng"** (bỏ: **"Gỡ mã"**).
    - Chưa có ô giảm giá tay — muốn bớt tiền cho khách: dùng mã giảm giá (voucher).

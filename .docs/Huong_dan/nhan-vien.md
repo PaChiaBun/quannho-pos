@@ -83,7 +83,7 @@ Ví dụ: cho bạn phục vụ lên làm thu ngân (đổi vai trò Phục vụ
 4. App tự nhận diện tên (có dấu/không dấu/viết tắt/tiếng Anh) ra loại vai trò, hiện trong ngoặc vuông: Thu ngân [cashier], Phục vụ [waiter], Bếp [kitchen] (màn hiện "Bếp / Bar"), Kho [stock], Quản lý [manager]. Tên không nhận ra được (vd "Pha chế", "Bar") hiện "tùy chỉnh [<tên viết thường>]".
    - Trùng tên vai trò đã có: bị chặn ("⚠️ Trùng lặp…").
    - Tên mang nghĩa Chủ quán: **không tạo được** ("⛔ Không thể tạo vai trò "Chủ quán" (owner)").
-5. Sửa module một vai trò: chạm vai trò (hoặc **"Chỉnh"** ở tab Phân quyền) → bật/tắt **"Module được phép truy cập"** → **"Lưu quyền"**.
+5. Cấp thêm module Báo cáo cho thu ngân, sửa module một vai trò: chạm vai trò (hoặc **"Chỉnh"** ở tab Phân quyền) → bật/tắt **"Module được phép truy cập"** → **"Lưu quyền"**.
 6. Xoá vai trò: **"Xoá vai trò?"** → **"Xoá"**. Nhân viên đang mang vai trò đó được chuyển sang **vai trò đầu tiên còn lại trong danh sách mà không phải Chủ quán/Quản lý**; nếu không còn vai trò nào như vậy, app **không cho xoá** và nhắc đổi vai trò cho từng nhân viên trước.
 
 **Module chọn được cho vai trò**: Bán hàng, Kho hàng, Kho CN, Quản lý bàn, Bếp, Thu chi, Báo cáo, Điểm thưởng, Nhân viên, Chấm công, Tính lương, Vận Hành, Nhật Ký Log, Máy in.
@@ -120,7 +120,7 @@ Bật module nào cho vai trò thì vai trò đó **tự có** các quyền đi 
 ### 7. Ca làm việc
 1. Tab Phân quyền → **"Ca làm việc"** ("Nhân viên ca nào thấy việc ca đó") → **"Thêm ca"**.
 2. Chọn nhanh **Ca Sáng 6–14h, Ca Chiều 14–22h, Ca Tối 17–23h, Ca Khuya 22–6h** hoặc nhập **"Tên ca"**, **"Bắt đầu"**, **"Kết thúc"**, **"Màu ca"** → **"✓ Tạo ca"**.
-3. Gán người: trong ca → thêm nhân viên ("Thêm vào <ca>", chọn người chưa có ca). Ca dùng cho việc cần làm theo ca ở module Vận Hành.
+3. Xếp nhân viên vào ca: trong ca → thêm nhân viên ("Thêm vào <ca>", chọn người chưa có ca). Ca dùng cho việc cần làm theo ca ở module Vận Hành.
 
 ### 8. Mã PIN duyệt nhanh (Chủ quán / Quản lý)
 - **Cài đặt → "Mã PIN duyệt nhanh (6 số)"** → nhập **"Mã PIN mới (6 chữ số)"** và xác nhận → **"Lưu mã PIN 6 số"**.
@@ -129,6 +129,7 @@ Bật module nào cho vai trò thì vai trò đó **tự có** các quyền đi 
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
 |---|---|---|
+| Nhập mã quán rồi mà vô không thấy gì hết | Đã vào quán nhưng chưa được gán vai trò | Chủ quán mở ô Nhân viên, bấm "Cấp quyền" cho người đó |
 | "Bạn chưa tham gia quán nào" / "Chưa được thêm vào quán nào" / "Thiết bị này chưa được kết nối vào quán nào" | Tài khoản chưa vào quán nào | Nhân viên: xin mã quán, chọn "Nhập mã quán". Chủ quán: tạo quán mới |
 | "Tính năng này tạm khóa vì bạn chưa vào ca làm việc" | Nhân viên phải vào ca mới mở được module; Chủ quán, Quản lý không bị khoá | Mở Chấm công, bấm "VÀO CA" |
 | "Xác thực đổi quán thất bại. Vui lòng kiểm tra mật khẩu." | Nhập sai mật khẩu lúc đổi quán | Nhập lại đúng mật khẩu đăng nhập |

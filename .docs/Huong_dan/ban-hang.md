@@ -42,11 +42,14 @@ nguon:
 ## Các việc thường làm
 
 ### Bán 1 đơn cho khách (từ đầu đến cuối)
-Bán hàng cho khách làm như sau:
+Bán hàng làm sao, bán cho khách như sau:
 1. Mở Bán hàng, chạm các món khách gọi.
 2. Bấm "Thanh toán" trong giỏ (điện thoại: ô tổng tiền màu cam).
 3. Chọn phương thức rồi bấm "Xác nhận".
 4. Hoá đơn tự in nếu đã cài máy in và bật tự in.
+
+### Tính tiền, thanh toán cho khách sao
+Ở Bán hàng, chạm món rồi bấm "Thanh toán", chọn "Tiền mặt", "Chuyển khoản" hoặc "Thẻ", bấm "Xác nhận".
 
 ### Khách chuyển khoản hoặc trả thẻ thì bấm gì
 1. Bấm "Thanh toán" như đơn thường.
@@ -145,6 +148,7 @@ Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — kh
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|
+| Món không hiện ở Bán hàng | Món thuộc danh mục Nguyên liệu mà chưa có giá bán, đã bị xoá, hoặc đang lọc danh mục khác | Chọn lại danh mục; xem món ở Kho hàng và sửa danh mục hoặc giá bán |
 | Khách quét QR ngân hàng, app không tự báo tiền về | App không tự biết tiền chuyển khoản đã về | Xem tài khoản ngân hàng thấy tiền rồi mới bấm "Xác nhận" |
 | Món hiện mờ chữ "Hết", bấm không cho bán dù tủ còn nguyên hàng | App tính theo số tồn ghi trong app (có tồn tối thiểu và tồn ≤ 0), không biết hàng thực tế | Kho hàng → "Nhập kho" hoặc "Điều chỉnh tồn kho" cho đúng số thật |
 | Không thấy nút "Thanh toán" | Giỏ chưa có món: điện thoại chỉ hiện thanh giỏ ở dưới sau khi chọn món | Chạm một món rồi bấm "Thanh toán" hoặc ô tổng tiền màu cam |

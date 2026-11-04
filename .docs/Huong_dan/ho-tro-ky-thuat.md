@@ -119,7 +119,8 @@ App chưa hỗ trợ máy in Bluetooth. Dùng máy in USB qua máy tính Windows
 3. Vẫn sai: bấm "Quên mật khẩu?". Nhân viên nhờ Chủ quán đặt lại; Chủ quán gọi Hotline.
 4. "Dịch vụ đăng nhập an toàn chưa sẵn sàng": thường là mất mạng, kiểm tra mạng trước.
 
-### Máy này thêm món, thanh toán rồi mà máy kia chưa thấy, không đồng bộ
+### Hai máy không đồng bộ, máy kia chưa thấy thay đổi
+Máy này vừa thêm, vừa thanh toán mà máy kia chưa thấy:
 1. Các máy tự cập nhật sau vài giây, chậm nhất khoảng 15 giây. Đợi rồi xem lại.
 2. Máy kia kiểm tra mạng: mất mạng thì danh sách giữ dữ liệu cũ, đa số màn không báo.
 3. Vẫn cũ: thoát app máy đó rồi mở lại.

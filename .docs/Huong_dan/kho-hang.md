@@ -43,7 +43,7 @@ nguon:
 ## Các việc thường làm
 
 ### 1. Thêm món / nguyên liệu
-Tạo món mới, tạo món bấm ở đâu, nhập menu vào app: làm ở đây.
+Thêm món sao, thêm món mới, tạo món bấm ở đâu, nhập menu vào app, thêm ảnh món, đổi đơn vị ly sang phần: làm ở đây; món đã có thì vào "Sửa thông tin món".
 1. Bấm **"Thêm sản phẩm"** → **"Thêm sản phẩm mới"**.
 2. Điền:
    - **"Tên sản phẩm *"**.
@@ -63,7 +63,7 @@ Ly này, món này giờ bán giá khác thì sửa ở đây.
 2. Sửa "Giá bán (đ)" rồi lưu.
 
 ### 1b. Tạo combo
-Tạo combo 2 ly, combo cơm nước có giá rẻ hơn mua lẻ: **"Thêm sản phẩm"** → danh mục **"Combo"** → đặt giá combo làm **"Giá bán (đ)"**.
+Thêm combo, tạo combo 2 ly, combo cơm nước có giá rẻ hơn mua lẻ: **"Thêm sản phẩm"** → danh mục **"Combo"** → đặt giá combo làm **"Giá bán (đ)"**.
 
 ### 2. Topping (trà sữa, cơm thêm…)
 1. Tạo topping như một sản phẩm: chọn chip **"Topping"**, đặt giá và **"Đơn vị topping"** (viên, phần, ml, g, muỗng, thìa).
@@ -81,7 +81,7 @@ Với nguyên liệu mua theo đơn vị lớn mà công thức dùng theo ml/g 
 3. Lưu. Công thức ở Kho Chuyên Nghiệp sẽ trừ kho đúng theo quy đổi.
 
 ### 5. Bật / tắt bán (hết món tạm thời)
-Hết món / hết nguyên liệu tạm thời (vd hết trân châu thì tắt món đó), muốn tạm ẩn món: khách quét QR không thấy món, nhân viên gọi món được báo món tạm hết:
+Hết món / hết nguyên liệu tạm thời (vd hết trân châu thì tắt món đó), muốn ẩn món đi, tạm ẩn món: khách quét QR không thấy món, nhân viên gọi món được báo món tạm hết:
 1. Bấm **"Chọn"** → chọn các món → **"Tắt bán"** (hoặc **"Bật bán"**).
 2. Món tắt bán hiện **"Tạm ngưng bán"**:
    - **QR**: khách **không thấy** món.
@@ -100,7 +100,8 @@ Hết món / hết nguyên liệu tạm thời (vd hết trân châu thì tắt 
 4. Kết quả: tồn tăng; **giá vốn tính lại theo bình quân**; Thu Chi ghi **một khoản chi** "Nhập hàng <số phiếu> — <NCC>" vào quỹ đã chọn.
 5. Xem lại: tab Phiếu nhập lọc **Tất cả / Hôm nay / Tuần này / Tháng**, theo NCC, hoặc **"Đã huỷ"**. Chạm **"Xem chi tiết"**.
 6. **"Chỉnh sửa phiếu"**: chỉ sửa ghi chú, nhà cung cấp, ảnh hoá đơn — **kho và tài chính không đổi**.
-7. **Huỷ phiếu**: **"Huỷ phiếu nhập?"** → lý do (không bắt buộc) → **"Huỷ phiếu"**. Hệ thống trừ lại tồn và ghi một khoản **thu** "Huỷ nhập hàng …" để hoàn tiền về đúng quỹ. Không huỷ được nếu tồn hiện tại không đủ để trừ lại.
+7. Nhập nhầm số lượng: huỷ phiếu đó rồi tạo phiếu mới đúng số. Ghi nợ nhà cung cấp: app chưa theo dõi công nợ; ô "Điều khoản thanh toán" của nhà cung cấp chỉ là ghi chú.
+8. **Huỷ phiếu**: **"Huỷ phiếu nhập?"** → lý do (không bắt buộc) → **"Huỷ phiếu"**. Hệ thống trừ lại tồn và ghi một khoản **thu** "Huỷ nhập hàng …" để hoàn tiền về đúng quỹ. Không huỷ được nếu tồn hiện tại không đủ để trừ lại.
 8. **Nhà cung cấp**: mục **"Quản lý nhà cung cấp"** → **"Thêm NCC"**, sửa, xoá.
 
 ### 8. Điều chỉnh tồn (kiểm kho, hư hỏng)

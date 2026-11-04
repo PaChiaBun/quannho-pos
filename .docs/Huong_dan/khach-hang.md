@@ -80,8 +80,9 @@ nguon:
 2. **"Mã Voucher (Viết liền không dấu)"**, **"Mô tả ngắn gọn"**.
 3. **"Loại giảm giá"**: **"Phần trăm (%)"** hoặc **"Tiền mặt (đ)"** → **"Mức giảm"**.
 4. **"Đơn tối thiểu (đ)"**, **"Mức giảm tối đa (đ) - Để trống nếu không giới hạn"**, hạn dùng (**"Chọn ngày"**).
-5. **"Lưu Voucher"**. Sửa / tắt / xoá mã trong danh sách (**"Xóa mã giảm giá"**).
-6. Nhân viên áp mã khi thanh toán: **"Khuyến mãi / Voucher"** → **"Chọn mã"** → **"Áp dụng"**. Máy chủ kiểm lại mã còn hiệu lực, hạn dùng và đơn tối thiểu.
+5. Mã chỉ cho đơn trên 100k: điền "Đơn tối thiểu". Mã dùng chung cho mọi đơn, app chưa giới hạn theo từng khách hay số lần dùng.
+6. **"Lưu Voucher"**. Sửa / tắt / xoá mã trong danh sách (**"Xóa mã giảm giá"**).
+7. Nhân viên áp mã khi thanh toán: **"Khuyến mãi / Voucher"** → **"Chọn mã"** → **"Áp dụng"**. Máy chủ kiểm lại mã còn hiệu lực, hạn dùng và đơn tối thiểu.
 
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |

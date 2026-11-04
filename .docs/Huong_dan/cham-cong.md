@@ -37,7 +37,7 @@ nguon:
 ### 1. Cài vị trí quán (Chủ quán / Quản lý, làm một lần)
 1. Đứng tại quán, bấm **"Cài đặt định vị quán"** → **"Định vị của quán"**.
 2. Bấm **"Lấy vị trí hiện tại của quán"** (cần bật GPS và cho phép vị trí), hoặc nhập tay **"Vĩ độ (Latitude)"**, **"Kinh độ (Longitude)"**.
-3. **"Địa chỉ / Ghi chú vị trí quán"**, **"Bán kính cho phép (mét)"** (mặc định **200**).
+3. Đổi bán kính chấm công cũng ở đây: **"Địa chỉ / Ghi chú vị trí quán"**, **"Bán kính cho phép (mét)"** (mặc định **200**).
 4. **"Lưu cài đặt"** → "Đã lưu cấu hình định vị của quán."
 
 ### 2. Vào ca (nhân viên)
@@ -68,6 +68,7 @@ nguon:
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
 |---|---|---|
+| Nhân viên đi làm mà app không ghi giờ | Chưa bấm "VÀO CA" hoặc chưa chụp selfie xong, ca chưa được ghi | Mở Chấm công xem trạng thái ca, bấm "VÀO CA" lại |
 | "Chưa thiết lập vị trí cho quán này." | Quán chưa cài định vị | Chủ quán / Quản lý bấm "Cài đặt định vị quán", đứng tại quán rồi lưu |
 | **"Yêu cầu chụp ảnh trực tiếp"** | Chưa cho phép camera / huỷ chụp | Cấp quyền Camera cho app rồi bấm lại |
 | **"Tải ảnh thất bại"** | Mạng yếu khi gửi ảnh | Kiểm tra Wi-Fi/4G, bấm **"Thử lại"** |

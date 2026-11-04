@@ -36,8 +36,8 @@ nguon:
    - **"1. Phạm vi áp dụng"** — mặc định chỉ bổ sung người **chưa cấu hình**, không đè thiết lập riêng.
    - **"2. Cách tính thu nhập chính"**: **Theo giờ** ("Đơn giá giờ thường (đ/giờ)"), **Cố định** ("Lương cố định mỗi tháng (đ)"), **Cố định + OT**, **Theo ngày** ("Đơn giá ngày (đ/ngày)"), **Tùy chỉnh**; **"Số ngày công chuẩn trong kỳ"** (mặc định 26).
    - **"3. Tăng ca (OT)"**: **"Ngưỡng bắt đầu OT (giờ/ca)"** (mặc định 8), **"Hệ số OT (ví dụ 1.5)"** (mặc định 1.5).
-   - **"4. Thưởng & phụ cấp"**: **"Thưởng cố định mỗi kỳ (đ)"**, **"Thưởng đủ ngày công (đ)"**, **"Phụ cấp cố định mỗi kỳ (đ)"**.
-   - **"5. Khấu trừ"**: **"Khấu trừ đi muộn (đ/lần)"** (mặc định 50.000).
+   - **"4. Thưởng & phụ cấp"** (thưởng thêm cho nhân viên): **"Thưởng cố định mỗi kỳ (đ)"**, **"Thưởng đủ ngày công (đ)"**, **"Phụ cấp cố định mỗi kỳ (đ)"**.
+   - **"5. Khấu trừ"**: đi trễ có bị trừ hay không cài ở **"Khấu trừ đi muộn (đ/lần)"** (mặc định 50.000).
 4. **"Áp dụng cho người chưa cấu hình"** (theo vị trí) hoặc **"Lưu cấu hình"** (từng người).
 
 > Mở nhanh từ hồ sơ nhân viên: Nhân viên → chạm người → **"⚙️ Mở Cấu Hình Lương Nâng Cao"**.
@@ -83,6 +83,7 @@ nguon:
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |
 |---|---|---|
+| Ứng lương ghi ở đâu | App chưa có mục ứng lương | Ghi khoản chi ở Thu Chi, danh mục "Lương nhân viên", ghi rõ tên trong ghi chú |
 | "Không thể gửi duyệt" – "Kỳ lương chưa sẵn sàng do còn các vấn đề sau…" | Thiếu cấu hình / ca chưa chốt / OT chờ duyệt | Xử lý từng mục rồi "Tính lại" |
 | Không vào được màn quản lý lương, chỉ thấy "Lương của tôi" | Không phải Chủ quán / vai trò Quản lý (có module Tính lương vẫn chưa đủ) | Nhờ Chủ quán hoặc Quản lý |
 | Không thấy nút "Duyệt kỳ" / "Trả lương" | Duyệt kỳ chỉ Chủ quán; trả lương chỉ Chủ quán hoặc vai trò tên đúng "Quản lý" (vd "Quản lý nhà hàng" không trả được); hoặc kỳ chưa đúng trạng thái; hoặc phiếu đã trả | Nhờ Chủ quán; trả lương chỉ khi kỳ Đã duyệt |
