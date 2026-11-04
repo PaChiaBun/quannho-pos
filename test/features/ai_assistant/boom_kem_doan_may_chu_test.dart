@@ -44,6 +44,14 @@ void main() {
     expect(boomIsFollowUp('rồi khách dùng thế nào'), isFalse);
   });
 
+  test('câu nối tiếp gửi máy chủ: tự tìm được thì dùng, không thì ghép câu trước', () {
+    final rieng = decideHelp(index, 'app lỗi rồi');
+    expect(rieng.decision, isNot(HelpDecision.none));
+    expect(boomHelpNoiTiep(rieng, () => fail('không được ghép')), same(rieng));
+    const khong = HelpResult(HelpDecision.none, []);
+    expect(boomHelpNoiTiep(khong, () => rieng), same(rieng));
+  });
+
   test('không có kết quả tìm thì không kèm', () {
     expect(boomHelpChoMayChu(null, 'x', sure: false), isEmpty);
   });

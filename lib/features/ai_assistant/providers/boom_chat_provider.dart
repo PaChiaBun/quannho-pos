@@ -1044,6 +1044,10 @@ List<HelpChunk> boomHelpChoMayChu(
       : const [];
 }
 
+/// Câu nối tiếp gửi máy chủ: câu đó tự tìm ra bài thì dùng; không thì ghép câu trước ("kiểm tra rồi vẫn không được").
+HelpResult boomHelpNoiTiep(HelpResult rieng, HelpResult Function() ghep) =>
+    rieng.decision != HelpDecision.none ? rieng : ghep();
+
 /// Chặng 1.3 (03/11): bản web hỏi máy chủ tự lấy số (mode 'ask'); ổn 1–2 tuần trên web mới bật cho app.
 const kBoomServerRoute = kIsWeb;
 
@@ -1514,6 +1518,7 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
 
     // Tra bộ hướng dẫn đã duyệt (trừ câu chào). Bấm mục gợi ý → mở đúng đoạn đó.
     HelpResult? help;
+    HelpResult? helpMayChu;
     var picked = false;
     var packVersion = 0;
     // Câu dài bị đoán là chào hỏi vì có "cảm ơn" ("thêm câu cảm ơn cuối hoá đơn") vẫn tra hướng dẫn.
@@ -1552,6 +1557,14 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
                     !helpFollowOnly
                 ? const HelpResult(HelpDecision.none, [])
                 : decideHelp(index, '${followUp.turn.question} $query');
+            // Đường máy chủ coi mọi lượt trước là tư vấn nên kết quả tìm bị xoá ở trên; máy chủ vẫn cần đoạn cho câu
+            // báo lỗi nối tiếp ("app lỗi rồi", "kiểm tra rồi vẫn không được"), và tự bỏ qua khi câu hỏi về số liệu.
+            if (help.hits.isEmpty) {
+              helpMayChu = boomHelpNoiTiep(
+                decideHelp(index, query),
+                () => decideHelp(index, '${followUp.turn.question} $query'),
+              );
+            }
           }
           // Chào hỏi dài: chỉ nhận khi bộ tìm chắc chắn, còn lại vẫn đáp như câu chào.
           if (longSmalltalk &&
@@ -1661,7 +1674,11 @@ class BoomChatNotifier extends Notifier<List<BoomMessage>> {
         ? await aiForAdvice.askServer(
             storeId: storeId,
             question: rawQuery,
-            chunks: boomHelpChoMayChu(help, query, sure: helpWins),
+            chunks: boomHelpChoMayChu(
+              helpMayChu ?? help,
+              query,
+              sure: (helpMayChu ?? help)?.decision == HelpDecision.answer,
+            ),
             packVersion: packVersion,
             history: history,
             memorySince: _chatStartedAt,
