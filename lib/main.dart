@@ -170,6 +170,22 @@ Widget? _customerLaunchPage(String route) {
       : const CustomerQrInvalidLinkScreen();
 }
 
+/// Web mở tại /pos/#/home (F5, khôi phục tab, dấu trang) thì Flutter dựng cả '/' lẫn '/home':
+/// màn trong đọc dữ liệu bằng khoá công khai trước khi Splash khôi phục xong vé đăng nhập.
+/// Các màn nội bộ vì vậy luôn bắt đầu từ Splash. Link khách có mã không cần phiên, giữ nguyên.
+@visibleForTesting
+bool routeNeedsSessionRestore(String route) {
+  final uri = Uri.tryParse(route);
+  if (uri == null) return false;
+  var path = uri.path;
+  if (path.length > 1 && path.endsWith('/')) path = path.substring(0, path.length - 1);
+  if (path == '/qr_order') {
+    final code = uri.queryParameters['code']?.trim();
+    return !(code != null && code.isNotEmpty && code.length <= 64 && RegExp(r'^[A-Za-z0-9_\-]+$').hasMatch(code));
+  }
+  return const {'/home', '/store_picker', '/auth', '/onboarding'}.contains(path);
+}
+
 class QuanNhoPOSApp extends StatelessWidget {
   const QuanNhoPOSApp({super.key});
 
@@ -194,9 +210,16 @@ class QuanNhoPOSApp extends StatelessWidget {
       initialRoute: '/',
       // Link khách (/goi-mon/?code=...) mở thẳng trang gọi món. Nếu để Flutter dựng '/' (Splash) rồi
       // mới tới /goi-mon thì Splash xong sẽ pushReplacementNamed('/auth') và THAY MẤT trang của khách.
-      onGenerateInitialRoutes: customerPage == null
-          ? null
-          : (_) => [MaterialPageRoute(builder: (_) => customerPage)],
+      onGenerateInitialRoutes: customerPage != null
+          ? (_) => [MaterialPageRoute(builder: (_) => customerPage)]
+          : routeNeedsSessionRestore(WidgetsBinding.instance.platformDispatcher.defaultRouteName)
+              ? (_) => [
+                  MaterialPageRoute(
+                    settings: const RouteSettings(name: '/'),
+                    builder: (_) => const SplashScreen(),
+                  ),
+                ]
+              : null,
       routes: {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
