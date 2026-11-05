@@ -67,6 +67,16 @@ def growth():
                    pro_lapsed=0, trial_ending_30d=169, self_extend_30d=14),
         usage=dict(real_use_7d=3, customers=152, multi_store_customers=4), cohorts=rows)
 
+def care():
+    # Tên chứa HTML để kiểm trang hiện như chữ
+    return dict(ok=True, concentration=dict(stores=19, top1_pct=70, top3_pct=87),
+        declining=dict(total=2, rows=[
+            dict(id='s0', name='Quán <b>Giảm</b>', code='Q000', owner_name='Chủ Lan', owner_phone='+84901234567', orders_7d=40, orders_prev7=120, drop_pct=67, last_order_at=iso(0, 3), locked=False),
+            dict(id='s1', name='Quán Cà Phê Gió', code='Q001', owner_name=None, owner_phone=None, orders_7d=10, orders_prev7=22, drop_pct=55, last_order_at=iso(1), locked=True)]),
+        new_idle=dict(total=2, rows=[
+            dict(id='s3', name='Quán Mới Có Món', code='Q003', owner_name='Chủ Minh', owner_phone='+84912345678', created_at=iso(5), has_menu=True),
+            dict(id='s4', name='Quán Mới Trống', code='Q004', owner_name='Chủ Hà', owner_phone=None, created_at=iso(1), has_menu=False)]))
+
 def health():
     # Có lỗi chứa HTML (phải hiện như chữ), có quán chưa báo nhịp, có bản cũ
     days = [dict(day=(now - datetime.timedelta(days=29 - i)).date().isoformat(), devices=random.randint(3, 14), stores=random.randint(2, 8)) for i in range(30)]
@@ -132,6 +142,7 @@ class H(http.server.SimpleHTTPRequestHandler):
             return s.send_json(200, dict(ok=True,total=len(rows),rows=rows[off:off+lim]))
         if p.endswith('/admin_growth_v1'): return s.send_json(200, growth())
         if p.endswith('/admin_app_health_v1'): return s.send_json(200, health())
+        if p.endswith('/admin_care_v1'): return s.send_json(200, care())
         if p.endswith('/admin_overview_extra_v1'): return s.send_json(200, extra())
         if p.endswith('/admin_set_test_store_v1'):
             SUGG[:] = [g for g in SUGG if g['id'] != body.get('p_store')]

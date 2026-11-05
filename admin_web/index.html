@@ -181,6 +181,7 @@
               </div>
             </div>
             <ol id="ov-top" class="ov-top"></ol>
+            <p id="ov-conc" class="small muted ov-conc"></p>
           </section>
         </div>
 
@@ -225,6 +226,22 @@
           <div class="ov-h-block">
             <h4 class="ov-eyebrow">Quán mới biết Quán Nhỏ từ đâu, 90 ngày</h4>
             <div id="ov-h-sources"></div>
+          </div>
+        </section>
+
+        <section class="ov-panel" id="ov-care-panel" aria-labelledby="ov-care-title">
+          <div class="ov-panel-head">
+            <div>
+              <h3 id="ov-care-title">Quán cần gọi sớm</h3>
+              <p class="muted small">Gọi trước khi quán bỏ hẳn. Quán đã về 0 đơn nằm ở khối "Quán đang bỏ dùng" bên dưới.</p>
+            </div>
+          </div>
+          <div id="ov-care-error"></div>
+          <h4 class="ov-eyebrow">Đơn giảm mạnh <span id="ov-care-down-count" class="ov-count"></span></h4>
+          <div id="ov-care-down"></div>
+          <div class="ov-h-block">
+            <h4 class="ov-eyebrow">Quán mới chưa bán <span id="ov-care-new-count" class="ov-count"></span></h4>
+            <div id="ov-care-new"></div>
           </div>
         </section>
 
@@ -289,6 +306,8 @@
             <li><strong>Thực thu 30 ngày</strong>: tiền đã ghi nhận, khớp số "thu 30 ngày" ở tab Gói.</li>
             <li><strong>Dùng thật</strong>: đạt ngưỡng đơn hoàn thành ghi ở thẻ "Quán đang dùng tích cực". "Tích cực" vẫn là có ít nhất 1 đơn trong 7 ngày.</li>
             <li><strong>Khách</strong>: số chủ quán khác nhau; một chủ nhiều chi nhánh tính 1 khách.</li>
+            <li><strong>Đơn giảm mạnh</strong>: đơn 7 ngày qua còn từ một nửa trở xuống so với 7 ngày trước đó, kỳ trước từ 20 đơn, tuần này vẫn còn đơn.</li>
+            <li><strong>Quán mới chưa bán</strong>: tạo trong 14 ngày, chưa có đơn hoàn thành nào, không khoá.</li>
             <li><strong>Máy mở app</strong>: máy đã báo nhịp trong ngày. Bản app cũ chưa báo nhịp nên số này thấp hơn thực tế tới khi máy cập nhật; xem dòng "chưa báo nhịp".</li>
             <li><strong>Bản mới nhất</strong> trong bảng phiên bản: từ bản đã công bố trong app_versions trở lên; nền tảng chưa công bố (web) thì lấy bản cao nhất đang chạy.</li>
             <li><strong>Lỗi văng</strong>: lỗi không được xử lý trong app, cùng một lỗi tối đa 1 dòng mỗi phút, tổng tối đa 30 dòng mỗi phút trên mỗi máy. Chưa gồm lỗi bất đồng bộ trên web.</li>

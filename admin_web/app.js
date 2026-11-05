@@ -227,6 +227,7 @@ function logout(msg) {
     'ov-error', 'ov-todo', 'ov-k-rev', 'ov-k-ord', 'ov-k-act', 'ov-k-new', 'ov-rev-meta', 'ov-rev-chart',
     'ov-top', 'ov-funnel', 'ov-drop', 'ov-suggest', 'ov-new-meta', 'ov-new-chart', 'ov-week-meta', 'ov-week-chart',
     'ov-m-mrr', 'ov-m-cash', 'ov-m-lapsed', 'ov-m-trial', 'ov-m-error', 'ov-cohorts', 'st-owner-filter',
+    'ov-conc', 'ov-care-error', 'ov-care-down', 'ov-care-new', 'ov-care-down-count', 'ov-care-new-count',
     'ov-h-cover', 'ov-h-meta', 'ov-h-chart', 'ov-h-versions', 'ov-h-err-sum', 'ov-h-errors', 'ov-h-sources',
     'st-list', 'bm-stats', 'bm-list', 'bm-store-filter',
     'kn-error', 'kn-changelog', 'kn-packs', 'kn-modules', 'kn-cache', 'kn-caps',
@@ -684,6 +685,7 @@ loaders.overview = async () => {
     loadOverviewExtra(includeTest);  // khối doanh số chạy song song; lỗi riêng không làm hỏng khối này
     loadGrowth(includeTest);  // khối tiền + lứa quán: cũng vậy
     loadHealth(includeTest);  // khối phiên bản + lỗi: cũng vậy
+    loadCare(includeTest);  // khối quán cần gọi: cũng vậy
     const d = await rpc('admin_store_overview_v1', { p_include_test: includeTest });
 
     const now = new Date();
@@ -859,6 +861,72 @@ async function loadGrowth(includeTest) {
   renderMoney(g.money || {});
   renderCohorts(g.cohorts || [], (g.thresholds || {}).real_use_30d);
   paintUsage();
+}
+
+// Quán cần gọi sớm + mức tập trung doanh số (admin_care_v1). Lỗi riêng không làm hỏng các khối khác.
+let ovCareGen = 0;
+function careActions(r) {
+  return el('td', { 'data-label': '', class: 'ov-td-act' },
+    r.owner_phone ? el('a', { class: 'btn small', href: `tel:${String(r.owner_phone).replace(/[^+\d]/g, '')}`, text: 'Gọi' }) : null,
+    el('button', { type: 'button', class: 'btn small', text: 'Hồ sơ', onclick: (ev) => openStoreDetail(r, ev.currentTarget) }));
+}
+function careOwner(r) {
+  return el('td', { 'data-label': 'Chủ quán' },
+    el('div', { text: r.owner_name || '—' }),
+    r.owner_phone ? el('div', { class: 'small muted num', text: r.owner_phone }) : null);
+}
+function careTable(heads, rows) {
+  return el('table', { class: 'ov-table' },
+    el('thead', {}, el('tr', {}, ...heads.map((h) => el('th', { scope: 'col', text: h })),
+      el('th', { scope: 'col' }, el('span', { class: 'ov-sr', text: 'Thao tác' })))),
+    el('tbody', {}, ...rows));
+}
+function renderCare(c) {
+  const co = c.concentration || {};
+  $('ov-conc').textContent = Number(co.stores)
+    ? `Quán lớn nhất chiếm ${fmtN(co.top1_pct)}% doanh số 30 ngày, 3 quán lớn nhất chiếm ${fmtN(co.top3_pct)}%, trên ${fmtN(co.stores)} quán có doanh số.`
+    : '';
+  const down = c.declining || { total: 0, rows: [] };
+  $('ov-care-down-count').textContent = down.total ? fmtN(down.total) : '';
+  clear($('ov-care-down')).append((down.rows || []).length
+    ? careTable(['Quán', 'Chủ quán', 'Đơn 7 ngày'], down.rows.map((r) => el('tr', {},
+      el('td', { 'data-label': 'Quán', class: 'ov-td-name' },
+        el('b', { text: r.name || r.code || 'Quán' }),
+        r.locked ? el('span', { class: 'ov-tag bad', text: 'Đang khoá' }) : null),
+      careOwner(r),
+      el('td', { 'data-label': 'Đơn 7 ngày' },
+        el('div', { class: 'num', text: `${fmtN(r.orders_prev7)} → ${fmtN(r.orders_7d)}` }),
+        el('div', { class: 'small muted num', text: `giảm ${fmtN(r.drop_pct)}%` })),
+      careActions(r))))
+    : emptyBox('Không có quán giảm mạnh', 'Chưa quán nào có đơn giảm từ một nửa trở lên.'));
+  const idle = c.new_idle || { total: 0, rows: [] };
+  $('ov-care-new-count').textContent = idle.total ? fmtN(idle.total) : '';
+  clear($('ov-care-new')).append((idle.rows || []).length
+    ? careTable(['Quán', 'Chủ quán', 'Tình trạng'], idle.rows.map((r) => el('tr', {},
+      el('td', { 'data-label': 'Quán', class: 'ov-td-name' }, el('b', { text: r.name || r.code || 'Quán' })),
+      careOwner(r),
+      el('td', { 'data-label': 'Tình trạng' },
+        el('div', { text: r.has_menu ? 'Có món, chưa bán' : 'Chưa có món' }),
+        el('div', { class: 'small muted', text: `Tạo ${ago(r.created_at)}` })),
+      careActions(r))))
+    : emptyBox('Không có quán mới chờ', 'Quán tạo trong 14 ngày đều đã bán, hoặc chưa có quán mới.'));
+}
+async function loadCare(includeTest) {
+  const gen = ++ovCareGen;
+  clear($('ov-care-error'));
+  if (!$('ov-care-down').children.length) showSkeletons($('ov-care-down'), 2, 'h-row');
+  let c;
+  try {
+    c = await rpc('admin_care_v1', { p_include_test: includeTest });
+    if (gen !== ovCareGen) return;
+    if (!c || c.ok === false) throw new Error((c && c.error) || 'ERR');
+  } catch (err) {
+    if (isAuthErr(err) || gen !== ovCareGen) return;
+    for (const id of ['ov-conc', 'ov-care-down', 'ov-care-new', 'ov-care-down-count', 'ov-care-new-count']) clear($(id));
+    $('ov-care-error').append(errorBox('Không tải được danh sách quán cần gọi.', () => loadCare(includeTest)));
+    return;
+  }
+  renderCare(c);
 }
 
 // Phiên bản và ổn định (admin_app_health_v1). Lỗi riêng không làm hỏng các khối khác.

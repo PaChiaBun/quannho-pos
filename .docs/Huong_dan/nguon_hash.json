@@ -99,7 +99,7 @@
       "lib/modules/tinhluong/services/payroll_evaluation_service.dart": "3bb92eb847caf606"
     },
     "nhan-vien.md": {
-      ".agents/workflows/qn.md": "93183bfaa9a5b167",
+      ".agents/workflows/qn.md": "011d01cb88eb21ef",
       "lib/core/repositories/staff_password_repository.dart": "81f92c218cd81884",
       "lib/core/services/staff_service.dart": "fa19874c1655c33a",
       "lib/screens/auth_screen.dart": "11c97645e7b4f888",

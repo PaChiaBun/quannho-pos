@@ -1974,6 +1974,7 @@ pre.prompt {
   .ov-table td[data-label="Chủ quán"] { grid-column: 1; grid-row: 2; }
   .ov-table td[data-label="Đơn cuối"] { grid-column: 1; grid-row: 3; }
   .ov-table td[data-label="Đơn cuối"]::before { content: 'Đơn cuối '; }
+  .ov-table td[data-label="Đơn 7 ngày"], .ov-table td[data-label="Tình trạng"] { grid-column: 1; grid-row: 3; }
   .ov-table .ov-td-act { grid-column: 2; grid-row: 2 / span 2; display: flex; gap: 6px; align-items: end; justify-content: flex-end; }
   .ov-td-act .btn { min-height: 40px; }
   .ov-td-act .btn + .btn { margin-left: 0; }
@@ -2021,3 +2022,8 @@ pre.prompt {
 @media (max-width: 720px) {
   .ov-coh tbody th.ov-coh-month { grid-column: 1 / -1; }
 }
+
+/* Quán cần gọi sớm */
+.ov-conc { margin-top: 12px; }
+.ov-conc:empty { display: none; }
+#ov-care-error:not(:empty) { margin-bottom: 12px; }

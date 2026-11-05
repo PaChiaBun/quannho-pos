@@ -5,6 +5,14 @@
 
 
 
+
+## 2026-11-05 — /admin: quán cần gọi sớm (Chủ Quán "Làm tiếp phần quản lý"; ĐÃ ÁP production 05/11, chưa commit)
+
+- Lý do: Tổng quan chỉ báo quán sau khi đã ngừng bán đủ 7 ngày; đo 05/11 có 1 quán chiếm 70% doanh số, 3 quán 87%.
+- ✅ Migration `20261108_admin_viec_cham_soc_v1.sql` (+ `_ROLLBACK`): 1 hàm chỉ đọc `admin_care_v1`, chỉ `qn_admin`: mức tập trung doanh số 30 ngày; quán đơn 7 ngày còn từ một nửa trở xuống so với 7 ngày trước (kỳ trước từ 20 đơn, tuần này còn đơn); quán tạo trong 14 ngày chưa có đơn hoàn thành. /admin: dòng tập trung dưới "Quán bán nhiều nhất", khối "Quán cần gọi sớm" có nút Gọi / Hồ sơ.
+- ✅ Kiểm: test SQL `admin_viec_cham_soc_v1_test.sql` trên Postgres tạm có trigger production, FAIL khi chưa có hàm; 14/14 đột biến bị bắt (lần đầu kết quả đột biến sai vì test lỗi cú pháp, đã sửa và chạy lại); hoàn tác gỡ sạch; 13,8 ms với 200 quán + 50.000 đơn. Trang trên máy chủ giả: 320 / 375 / 650 / 768 / 1440, không tràn ngang, chữ HTML hiện như chữ, lỗi riêng từng khối + Thử lại, Thoát xoá sạch. Chưa có QC độc lập cho phần này; ngưỡng giảm một nửa và 20 đơn là mặc định, chưa đối chiếu số thật.
+- ✅ Áp `db-fix/admin_cham_soc_ap_dung.sh` TS=20261105_090307: sao lưu `quannho_before_cham_soc_20261105_090307.dump` → migration → test production đạt (tự ROLLBACK) → /admin (sao lưu `admin_web_chamsoc_20261105_090307`). Hoàn tác: `ROLLBACK=1 bash db-fix/admin_cham_soc_ap_dung.sh 20261105_090307`. Chưa xem số sau đăng nhập.
+
 ## 2026-11-05 — /admin đợt 2: nhịp app, lỗi văng, nguồn khách (Chủ Quán "Làm tiếp đi"; DB + /admin ĐÃ ÁP 05/11 07:28 VN; web /pos ĐÃ ĐƯA 07:33 VN; app CHƯA phát hành)
 
 - ⚠️ Khảo sát: `pingActive()` không ai gọi (đã xoá); `lib/` không có bộ bắt lỗi toàn cục nên lỗi văng không về máy chủ; không biết phân bổ phiên bản.
