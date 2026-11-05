@@ -62,6 +62,14 @@ Ly này, món này giờ bán giá khác thì sửa ở đây.
 1. Ở Kho hàng, bấm "Thao tác" trên dòng món → "Sửa thông tin món".
 2. Sửa "Giá bán (đ)" rồi lưu.
 
+### 1c. Nhập giá vốn món, sửa giá vốn
+Giá vốn nhập chỗ nào, nhập giá vốn ở đâu, điền giá vốn, món chưa có giá vốn, tiền vốn mỗi món: làm ở đây.
+1. Ở Kho hàng, bấm "Thao tác" trên dòng món → "Sửa thông tin món".
+2. Điền ô "Giá vốn (đ)" là tiền vốn của một phần, rồi lưu. Món mới thì điền ngay khi "Thêm sản phẩm".
+3. Quán nhiều món: làm trước các món bán chạy nhất.
+
+Giá vốn này để Bé Boom tính lời từng món. Lợi nhuận ở Báo cáo lấy từ Thu Chi nên không đổi khi nhập giá vốn.
+
 ### 1b. Tạo combo
 Thêm combo, tạo combo 2 ly, combo cơm nước có giá rẻ hơn mua lẻ: **"Thêm sản phẩm"** → danh mục **"Combo"** → đặt giá combo làm **"Giá bán (đ)"**.
 

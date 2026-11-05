@@ -55,6 +55,11 @@ nguon:
 
 > Số liệu lấy từ **Thu Chi** — mọi lưu ý của Thu Chi áp dụng ở đây (ví dụ lương phải ghi tay mới vào chi phí; đơn trả bằng ví không tính vào sổ Thu Chi vì tiền đã ghi thu lúc nạp ví).
 
+### Xem lãi, xem lời ở đâu
+Xem lãi ở đâu, báo cáo lãi gộp xem ở đâu, nhập giá vốn rồi xem lời ở đâu, đã nhập giá vốn sao báo cáo chưa thấy lời:
+- Lời cả quán: tab **Tài chính**, lấy từ Thu Chi (thu − chi), không dùng giá vốn món; phải ghi đủ khoản chi thì mới sát.
+- Lời từng món: Báo cáo chưa có cột này, kể cả khi đã nhập giá vốn. Hỏi Bé Boom "món nào lời nhất", Bé Boom tính theo giá vốn đã nhập. Món có công thức thì xem "Lãi gộp" ở Kho Chuyên Nghiệp, phần Công thức.
+
 ### Kho
 - Cần bật module Kho ("Module Kho đang tắt — Bật module Kho trong Cài đặt để xem báo cáo nhập hàng").
 - **"Nhập hàng <kỳ>"**: số phiếu nhập; **"Sản phẩm nhập nhiều nhất"**.

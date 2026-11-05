@@ -45,7 +45,7 @@ nguon:
 ## Các việc thường làm
 
 ### 1. Ghi một khoản chi (vd tiền điện) hoặc thu khác
-Tiền đi chợ mỗi sáng, mua đá, gas, tiền điện đều ghi ở đây.
+Tiền đi chợ mỗi sáng, mua đá, gas, tiền điện, tiền mặt bằng, tiền nguyên liệu, trả lương đều ghi ở đây. Ghi khoản chi ở đâu, chi phí ghi chỗ nào, nhập tiền chi: làm ở đây.
 1. Bấm **"− Ghi chi"** (hoặc **"+ Ghi thu"**). Có thể đổi loại ngay trong bảng.
 2. Nhập **"Số tiền"**.
 3. Chọn **"Quỹ giao dịch"**: **"Tiền mặt"** hoặc **"Tiền gửi (NH)"** — chọn đúng nơi tiền thực sự ra/vào.
@@ -56,6 +56,9 @@ Tiền đi chợ mỗi sáng, mua đá, gas, tiền điện đều ghi ở đây
 6. Bấm **"Ghi chi • <số tiền>đ"** để lưu.
 
 > Không ghi tay khoản nhập hàng hay bán hàng đã có ở module khác — sẽ bị **tính hai lần**. **Lương thì phải ghi tay** (danh mục "Lương nhân viên"): trả lương ở module Lương hiện **chưa** tự ghi chi.
+
+### 1a. Ghi khoản chi ở đâu, chi phí ghi chỗ nào
+Ghi khoản chi, ghi tiền chợ hôm nay, ghi chi phí, tiền mặt bằng: mở **Thu Chi** → bấm **"− Ghi chi"** → nhập số tiền, chọn quỹ và danh mục → lưu. Từng bước xem việc "Ghi một khoản chi".
 
 ### 2. Xem theo khoảng thời gian
 1. Bấm **"Đổi ngày"** → **"Chọn thời gian báo cáo"**: Hôm nay, Hôm qua, 7 ngày qua, Tuần này, Tháng này, Tháng trước, hoặc **"📅 Chọn ngày tùy chỉnh..."**.

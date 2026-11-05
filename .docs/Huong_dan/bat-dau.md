@@ -33,7 +33,7 @@ Chuông ở góc trên Trang chủ là cảnh báo hàng sắp hết, chấm đ�
 
 ### 1. Cài theo kiểu quán (quán mới nên làm gì trước)
 **Việc cần làm trước (mọi quán):**
-1. Thêm món và giá bán: bài Kho hàng, việc "Thêm món / nguyên liệu". Nhập luôn giá vốn mỗi món nếu biết để Báo cáo tính được lời.
+1. Thêm món và giá bán: bài Kho hàng, việc "Thêm món / nguyên liệu". Nhập luôn giá vốn mỗi món nếu biết để Bé Boom tính được lời từng món.
 2. Cài máy in bill: máy cầm tay Sunmi dùng "Thiết lập nhanh cho máy cầm tay (Sunmi)" (bài In Hoá Đơn); máy Windows dùng "Cài máy in trên máy Windows (lần đầu)".
 3. Thêm nhân viên và gán vai trò: bài Nhân viên & Phân quyền, việc "Gán / đổi vai trò cho nhân viên".
 4. Bán thử 1 đơn ở Bán hàng, in thử bill, rồi xem lại ở Báo cáo.

@@ -1,6 +1,6 @@
 {
- "version": 202611042231,
- "hash": "6af6d59af8a908c06b6318edd3b2013729b2e7b4395d56cbb7cd9de7b04bb847",
+ "version": 202611050155,
+ "hash": "e6088169b46a6b8879560477d2f5db6a0a22261a308f489d1fca5df840599f66",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -475,6 +475,14 @@
    "text": "• Xem quán lời hay lỗ theo kỳ: thẻ \"LỢI NHUẬN\" / \"ĐANG LỖ\": Thu nhập, Chi phí, Biên LN.\n• \"Kết quả kinh doanh\": I. Doanh thu từ bán hàng (Tiền hàng; dòng \"Tiền thuế GTGT (app chưa tính)\" hiện \"—\" vì app không tính thuế) – II. Chi phí (theo danh mục) – III. Lợi nhuận (I − II), kèm cột \"%\" (tỷ trọng so với doanh thu, ghi kiểu \"56,2%\"; chưa có thu ghi \"—\").\n• Nhận xét tăng/giảm so với kỳ trước (\"Thu nhập tăng X% so với kỳ trước\"); kỳ chưa hết thì so cùng khoảng giờ của kỳ trước (1 giờ sáng so với 0:00–1:00 hôm qua), không báo \"giảm 100%\" mỗi sáng.\n\nSố liệu lấy từ Thu Chi — mọi lưu ý của Thu Chi áp dụng ở đây (ví dụ lương phải ghi tay mới vào chi phí; đơn trả bằng ví không tính vào sổ Thu Chi vì tiền đã ghi thu lúc nạp ví)."
   },
   {
+   "id": "bao-cao#tung-tab-xem-lai-xem-loi-o-dau",
+   "module": "report",
+   "module_name": "Báo cáo",
+   "section": "Từng tab",
+   "title": "Xem lãi, xem lời ở đâu",
+   "text": "Xem lãi ở đâu, báo cáo lãi gộp xem ở đâu, nhập giá vốn rồi xem lời ở đâu, đã nhập giá vốn sao báo cáo chưa thấy lời:\n• Lời cả quán: tab Tài chính, lấy từ Thu Chi (thu − chi), không dùng giá vốn món; phải ghi đủ khoản chi thì mới sát.\n• Lời từng món: Báo cáo chưa có cột này, kể cả khi đã nhập giá vốn. Hỏi Bé Boom \"món nào lời nhất\", Bé Boom tính theo giá vốn đã nhập. Món có công thức thì xem \"Lãi gộp\" ở Kho Chuyên Nghiệp, phần Công thức."
+  },
+  {
    "id": "bao-cao#tung-tab-kho",
    "module": "report",
    "module_name": "Báo cáo",
@@ -616,7 +624,7 @@
    "module_name": "Bắt đầu dùng app",
    "section": "Các việc thường làm",
    "title": "1. Cài theo kiểu quán (quán mới nên làm gì trước)",
-   "text": "Việc cần làm trước (mọi quán):\n1. Thêm món và giá bán: bài Kho hàng, việc \"Thêm món / nguyên liệu\". Nhập luôn giá vốn mỗi món nếu biết để Báo cáo tính được lời.\n2. Cài máy in bill: máy cầm tay Sunmi dùng \"Thiết lập nhanh cho máy cầm tay (Sunmi)\" (bài In Hoá Đơn); máy Windows dùng \"Cài máy in trên máy Windows (lần đầu)\".\n3. Thêm nhân viên và gán vai trò: bài Nhân viên & Phân quyền, việc \"Gán / đổi vai trò cho nhân viên\".\n4. Bán thử 1 đơn ở Bán hàng, in thử bill, rồi xem lại ở Báo cáo.\n\nLưu ý: Thu Chi tự ghi tiền bán hàng; tiền chi (nguyên liệu, mặt bằng, điện nước, lương) phải ghi phiếu chi thì Báo cáo và Bé Boom mới tính đúng thu − chi.\n\nQuán cà phê / trà sữa bán mang đi:\n1. Topping (trân châu, thạch…): bài Kho hàng, việc \"Topping (trà sữa, cơm thêm…)\".\n2. Size, đường, đá: bài Kho hàng, việc \"Tùy chọn món (Modifiers) và Ghi chú nhanh\".\n3. Tem dán ly cho đơn mang đi: bài In Hoá Đơn, việc \"In tem dán ly\".\n4. Hết nguyên liệu tạm thời: bài Kho hàng, việc \"Bật / tắt bán (hết món tạm thời)\".\n5. Quán chỉ bán mang đi thì KHÔNG cần Quản lý Bàn; có thể tắt module này (xem việc 7).\n\nQuán ăn / quán có bàn phục vụ tại chỗ:\n1. Khu vực và bàn: bài Quản lý Bàn, việc \"Thiết lập khu vực và bàn (lần đầu)\".\n2. Khách tự gọi món bằng mã QR dán ở bàn: bài QR Gọi Món, việc \"Bật QR và dán mã ở quán\".\n3. Có bếp / quầy pha riêng: dùng module Bếp; muốn đồ ăn in ra bếp, đồ uống in ra quầy bar thì bài In Hoá Đơn, việc \"Thêm máy in\" rồi \"Tạo luật in\".\n\nTiệm nhỏ một mình làm, xe đẩy, bán vỉa hè:\nDùng được, một máy là đủ. Cần bật cái nào: giữ Bán hàng, Kho hàng, Thu Chi, Báo cáo; chưa cần bật Quản lý Bàn, Bếp, Chấm công, Lương.\n\nQuán có nhân viên chia ca:\n1. Chấm công bằng điện thoại: bài Chấm công, việc \"Cài vị trí quán\" (Chủ quán / Quản lý làm một lần), rồi nhân viên \"Vào ca\".\n2. Trả lương theo giờ hoặc theo tháng: bài Lương, việc \"Cấu hình lương (làm trước khi tạo kỳ)\".\n3. Việc mở cửa / đóng cửa mỗi ngày: bài Vận Hành, việc \"Quản lý: tạo checklist\" hoặc \"Quản lý: nạp checklist mẫu\".\n\nMuốn biết lời lỗ thật từng món:\n1. Ghi giá vốn khi thêm món (bài Kho hàng) — cách nhanh nhất.\n2. Món pha chế / nấu từ nhiều nguyên liệu, muốn bán xong tự trừ kho: bài Kho Chuyên Nghiệp, việc \"Chuẩn bị nguyên liệu (ở Kho hàng)\" rồi \"Tạo công thức món\"; nồi nước dùng, cốt pha sẵn dùng \"Bán thành phẩm\".\n3. Nhập hàng từ mối quen: bài Kho hàng, việc \"Phiếu nhập hàng (nhiều món, có nhà cung cấp)\"; cài mức tồn tối thiểu cho từng nguyên liệu để app báo sắp hết.\n\nGiữ khách quen:\n1. Lưu khách khi thanh toán để tích điểm: bài Khách hàng – Giảm giá – Khuyến mãi, việc \"Thêm khách\".\n2. Đổi điểm lấy quà: việc \"Phần thưởng đổi điểm\".\n3. Mã giảm giá: việc \"Tạo mã giảm giá (voucher)\". Khách nạp tiền trước vào ví: việc \"Tạo gói nạp\"."
+   "text": "Việc cần làm trước (mọi quán):\n1. Thêm món và giá bán: bài Kho hàng, việc \"Thêm món / nguyên liệu\". Nhập luôn giá vốn mỗi món nếu biết để Bé Boom tính được lời từng món.\n2. Cài máy in bill: máy cầm tay Sunmi dùng \"Thiết lập nhanh cho máy cầm tay (Sunmi)\" (bài In Hoá Đơn); máy Windows dùng \"Cài máy in trên máy Windows (lần đầu)\".\n3. Thêm nhân viên và gán vai trò: bài Nhân viên & Phân quyền, việc \"Gán / đổi vai trò cho nhân viên\".\n4. Bán thử 1 đơn ở Bán hàng, in thử bill, rồi xem lại ở Báo cáo.\n\nLưu ý: Thu Chi tự ghi tiền bán hàng; tiền chi (nguyên liệu, mặt bằng, điện nước, lương) phải ghi phiếu chi thì Báo cáo và Bé Boom mới tính đúng thu − chi.\n\nQuán cà phê / trà sữa bán mang đi:\n1. Topping (trân châu, thạch…): bài Kho hàng, việc \"Topping (trà sữa, cơm thêm…)\".\n2. Size, đường, đá: bài Kho hàng, việc \"Tùy chọn món (Modifiers) và Ghi chú nhanh\".\n3. Tem dán ly cho đơn mang đi: bài In Hoá Đơn, việc \"In tem dán ly\".\n4. Hết nguyên liệu tạm thời: bài Kho hàng, việc \"Bật / tắt bán (hết món tạm thời)\".\n5. Quán chỉ bán mang đi thì KHÔNG cần Quản lý Bàn; có thể tắt module này (xem việc 7).\n\nQuán ăn / quán có bàn phục vụ tại chỗ:\n1. Khu vực và bàn: bài Quản lý Bàn, việc \"Thiết lập khu vực và bàn (lần đầu)\".\n2. Khách tự gọi món bằng mã QR dán ở bàn: bài QR Gọi Món, việc \"Bật QR và dán mã ở quán\".\n3. Có bếp / quầy pha riêng: dùng module Bếp; muốn đồ ăn in ra bếp, đồ uống in ra quầy bar thì bài In Hoá Đơn, việc \"Thêm máy in\" rồi \"Tạo luật in\".\n\nTiệm nhỏ một mình làm, xe đẩy, bán vỉa hè:\nDùng được, một máy là đủ. Cần bật cái nào: giữ Bán hàng, Kho hàng, Thu Chi, Báo cáo; chưa cần bật Quản lý Bàn, Bếp, Chấm công, Lương.\n\nQuán có nhân viên chia ca:\n1. Chấm công bằng điện thoại: bài Chấm công, việc \"Cài vị trí quán\" (Chủ quán / Quản lý làm một lần), rồi nhân viên \"Vào ca\".\n2. Trả lương theo giờ hoặc theo tháng: bài Lương, việc \"Cấu hình lương (làm trước khi tạo kỳ)\".\n3. Việc mở cửa / đóng cửa mỗi ngày: bài Vận Hành, việc \"Quản lý: tạo checklist\" hoặc \"Quản lý: nạp checklist mẫu\".\n\nMuốn biết lời lỗ thật từng món:\n1. Ghi giá vốn khi thêm món (bài Kho hàng) — cách nhanh nhất.\n2. Món pha chế / nấu từ nhiều nguyên liệu, muốn bán xong tự trừ kho: bài Kho Chuyên Nghiệp, việc \"Chuẩn bị nguyên liệu (ở Kho hàng)\" rồi \"Tạo công thức món\"; nồi nước dùng, cốt pha sẵn dùng \"Bán thành phẩm\".\n3. Nhập hàng từ mối quen: bài Kho hàng, việc \"Phiếu nhập hàng (nhiều món, có nhà cung cấp)\"; cài mức tồn tối thiểu cho từng nguyên liệu để app báo sắp hết.\n\nGiữ khách quen:\n1. Lưu khách khi thanh toán để tích điểm: bài Khách hàng – Giảm giá – Khuyến mãi, việc \"Thêm khách\".\n2. Đổi điểm lấy quà: việc \"Phần thưởng đổi điểm\".\n3. Mã giảm giá: việc \"Tạo mã giảm giá (voucher)\". Khách nạp tiền trước vào ví: việc \"Tạo gói nạp\"."
   },
   {
    "id": "bat-dau#cac-viec-thuong-lam-2-bat-tat-module-tren-trang-chu-chu-quan",
@@ -1995,6 +2003,14 @@
    "text": "Ly này, món này giờ bán giá khác thì sửa ở đây.\n1. Ở Kho hàng, bấm \"Thao tác\" trên dòng món → \"Sửa thông tin món\".\n2. Sửa \"Giá bán (đ)\" rồi lưu."
   },
   {
+   "id": "kho-hang#cac-viec-thuong-lam-1c-nhap-gia-von-mon-sua-gia-von",
+   "module": "kho",
+   "module_name": "Kho hàng",
+   "section": "Các việc thường làm",
+   "title": "1c. Nhập giá vốn món, sửa giá vốn",
+   "text": "Giá vốn nhập chỗ nào, nhập giá vốn ở đâu, điền giá vốn, món chưa có giá vốn, tiền vốn mỗi món: làm ở đây.\n1. Ở Kho hàng, bấm \"Thao tác\" trên dòng món → \"Sửa thông tin món\".\n2. Điền ô \"Giá vốn (đ)\" là tiền vốn của một phần, rồi lưu. Món mới thì điền ngay khi \"Thêm sản phẩm\".\n3. Quán nhiều món: làm trước các món bán chạy nhất.\n\nGiá vốn này để Bé Boom tính lời từng món. Lợi nhuận ở Báo cáo lấy từ Thu Chi nên không đổi khi nhập giá vốn."
+  },
+  {
    "id": "kho-hang#cac-viec-thuong-lam-1b-tao-combo",
    "module": "kho",
    "module_name": "Kho hàng",
@@ -3192,7 +3208,15 @@
    "module_name": "Thu Chi",
    "section": "Các việc thường làm",
    "title": "1. Ghi một khoản chi (vd tiền điện) hoặc thu khác",
-   "text": "Tiền đi chợ mỗi sáng, mua đá, gas, tiền điện đều ghi ở đây.\n1. Bấm \"− Ghi chi\" (hoặc \"+ Ghi thu\"). Có thể đổi loại ngay trong bảng.\n2. Nhập \"Số tiền\".\n3. Chọn \"Quỹ giao dịch\": \"Tiền mặt\" hoặc \"Tiền gửi (NH)\" — chọn đúng nơi tiền thực sự ra/vào.\n4. Chọn \"Danh mục\". Danh mục có sẵn khi tạo quán:\n   • Thu: Thu khác (và danh mục riêng của quán). \"Doanh thu bán hàng\" không còn trong ô ghi tay — tiền bán hàng đã tự ghi khi thanh toán, ghi tay sẽ trùng doanh thu.\n   • Chi: Nhập hàng, Điện - Nước, Thuê mặt bằng, Lương nhân viên, Marketing, Chi khác.\n5. \"Ghi chú (tuỳ chọn)\" — ghi rõ nội dung (vd \"Tiền điện tháng 10\").\n6. Bấm \"Ghi chi • <số tiền>đ\" để lưu.\n\nKhông ghi tay khoản nhập hàng hay bán hàng đã có ở module khác — sẽ bị tính hai lần. Lương thì phải ghi tay (danh mục \"Lương nhân viên\"): trả lương ở module Lương hiện chưa tự ghi chi."
+   "text": "Tiền đi chợ mỗi sáng, mua đá, gas, tiền điện, tiền mặt bằng, tiền nguyên liệu, trả lương đều ghi ở đây. Ghi khoản chi ở đâu, chi phí ghi chỗ nào, nhập tiền chi: làm ở đây.\n1. Bấm \"− Ghi chi\" (hoặc \"+ Ghi thu\"). Có thể đổi loại ngay trong bảng.\n2. Nhập \"Số tiền\".\n3. Chọn \"Quỹ giao dịch\": \"Tiền mặt\" hoặc \"Tiền gửi (NH)\" — chọn đúng nơi tiền thực sự ra/vào.\n4. Chọn \"Danh mục\". Danh mục có sẵn khi tạo quán:\n   • Thu: Thu khác (và danh mục riêng của quán). \"Doanh thu bán hàng\" không còn trong ô ghi tay — tiền bán hàng đã tự ghi khi thanh toán, ghi tay sẽ trùng doanh thu.\n   • Chi: Nhập hàng, Điện - Nước, Thuê mặt bằng, Lương nhân viên, Marketing, Chi khác.\n5. \"Ghi chú (tuỳ chọn)\" — ghi rõ nội dung (vd \"Tiền điện tháng 10\").\n6. Bấm \"Ghi chi • <số tiền>đ\" để lưu.\n\nKhông ghi tay khoản nhập hàng hay bán hàng đã có ở module khác — sẽ bị tính hai lần. Lương thì phải ghi tay (danh mục \"Lương nhân viên\"): trả lương ở module Lương hiện chưa tự ghi chi."
+  },
+  {
+   "id": "thu-chi#cac-viec-thuong-lam-1a-ghi-khoan-chi-o-dau-chi-phi-ghi-cho-n",
+   "module": "finance",
+   "module_name": "Thu Chi",
+   "section": "Các việc thường làm",
+   "title": "1a. Ghi khoản chi ở đâu, chi phí ghi chỗ nào",
+   "text": "Ghi khoản chi, ghi tiền chợ hôm nay, ghi chi phí, tiền mặt bằng: mở Thu Chi → bấm \"− Ghi chi\" → nhập số tiền, chọn quỹ và danh mục → lưu. Từng bước xem việc \"Ghi một khoản chi\"."
   },
   {
    "id": "thu-chi#cac-viec-thuong-lam-2-xem-theo-khoang-thoi-gian",
