@@ -543,7 +543,7 @@ Deno.test('Cố vấn: số tính sẵn (nguyên nhân đổi doanh thu, giờ, 
   const h = Array(24).fill(0);
   h[7] = 8000000; h[8] = 9000000; h[15] = 1000000;
   const t2 = formatFacts(parseFacts({ ...base, by_hour: h, by_weekday: [1, 2, 3, 4, 5, 6, 7] })!);
-  assert(t2.includes('Đông nhất: 8h, 7h, 15h') && t2.includes('thấp nhất: Thứ 2') && !t2.includes('KHÔNG có số liệu theo giờ'), t2);
+  assert(t2.includes('Đông nhất: 8h, 7h; vắng nhất (trong giờ có bán): 15h') && t2.includes('thấp nhất: Thứ 2') && !t2.includes('KHÔNG có số liệu theo giờ'), t2);
   assertEquals(parseFacts({ ...base, by_hour: [1, 2] })!.by_hour, null); // sai độ dài → bỏ riêng trường đó
   assertEquals(plainAnswer('Ý chính.\n\nHy vọng những gợi ý này giúp ích ạ!'), 'Ý chính.');
   assertEquals(plainAnswer('Ý chính.\n\nBé Boom hy vọng Anh An thành công!'), 'Ý chính.');
@@ -1345,4 +1345,30 @@ Deno.test('thứ cao thấp so theo trung bình mỗi ngày, không theo tổng 
   assertStringIncludes(t, 'Cao nhất: Thứ 7; thấp nhất: Thứ 3');
   assertEquals(goiSaiCaoThap('Thứ 2 thấp nhất trong tuần.', t).length, 1);
   assertEquals(goiSaiCaoThap('Thứ 3 thấp nhất trong tuần.', t), []);
+});
+
+Deno.test('số tính sẵn: khác số ngày, ngày dở, kỳ trước chưa ghi chi, thứ chưa tới', () => {
+  const co = { top: [], slow: [] };
+  // "so với cả tháng trước" ngày 5: 3 triệu mỗi ngày ở cả hai kỳ → không phải giảm 83,9%
+  const f1 = parseFacts({ ...co, period: 'Tháng này', from: '2026-11-01', to: '2026-11-05', revenue: 15000000, orders: 500, prev_period: 'Trọn tháng trước', prev_from: '2026-10-01', prev_to: '2026-10-31', prev_revenue: 93000000, prev_orders: 3100, by_weekday: [3000000, 3000000, 3000000, 3000000, 0, 0, 3000000], prev_by_weekday: [12000000, 12000000, 12000000, 15000000, 15000000, 15000000, 12000000] })!;
+  const t1 = formatFacts(f1, new Date('2026-11-06T09:00:00+07:00'), 'sao giảm so với cả tháng trước', '');
+  assertStringIncludes(t1, '31 ngày mở bán, trung bình 3.000.000đ/ngày. Kỳ này 5 ngày, trung bình 3.000.000đ/ngày → KHÔNG ĐỔI');
+  assert(!t1.includes('GIẢM 83,9%') && !t1.includes('SỐ ĐƠN'), t1);
+  // hôm nay chưa hết ngày: không gọi thứ của hôm nay là thấp nhất
+  const f2 = parseFacts({ ...co, period: 'Tháng này', from: '2026-10-01', to: '2026-10-28', revenue: 27200000, orders: 100, by_weekday: [4000000, 4000000, 3200000, 4000000, 4000000, 4000000, 3900000] })!;
+  assertStringIncludes(formatFacts(f2, new Date('2026-10-28T09:00:00+07:00'), 'x', ''), 'thấp nhất: Chủ nhật');
+  // hôm nay đúng là thứ yếu thật: vẫn phải gọi tên, không được giấu
+  const f2b = parseFacts({ ...co, period: 'Tháng này', from: '2026-10-01', to: '2026-10-28', revenue: 32000000, orders: 100, by_weekday: [5000000, 5000000, 2000000, 5000000, 5000000, 5000000, 5000000] })!;
+  assertStringIncludes(formatFacts(f2b, new Date('2026-10-28T09:00:00+07:00'), 'x', ''), 'thấp nhất: Thứ 4');
+  // kỳ trước chưa ghi phiếu chi: không gọi là chi tăng
+  const m1 = parseModules({ finance: { period: 'Tháng 10', prev_period: 'Tháng 9', income: 90000000, prev_income: 88000000, expense: 60000000, prev_expense: 0, count: 20, top_expense: [{ name: 'Nguyên liệu', amount: 40000000, prev: 0 }] } })!;
+  const t3 = formatModules(m1, new Date('2026-11-05T09:00:00+07:00'), 'sao thu chi giảm so tháng trước');
+  assertStringIncludes(t3, 'Kỳ trước chưa có phiếu chi nào');
+  assert(!t3.includes('CHI TĂNG') && !t3.includes('Khoản chi tăng nhiều nhất'), t3);
+  // một thứ chỉ có một ngày: không dựng so sánh từ riêng Chủ nhật với Thứ 2
+  const f4 = parseFacts({ ...co, period: 'Tháng này', from: '2026-11-01', to: '2026-11-09', revenue: 32000000, orders: 100, by_weekday: [2000000, 3000000, 3000000, 3000000, 3000000, 6000000, 12000000] })!;
+  assertStringIncludes(formatFacts(f4, new Date('2026-11-20T09:00:00+07:00'), 'cuối tuần với ngày thường', ''), 'ngày thường (Thứ 2–6) trung bình 2.333.333đ/ngày');
+  // so 2 món lệch giá: bán nhiều phần khác doanh thu cao
+  const f5 = parseFacts({ ...co, period: 'Tháng này', revenue: 8000000, orders: 100, groups: [{ name: 'Món chính', revenue: 8000000, qty: 300, items: 2, unsold: 0, top: [{ name: 'Bún bò', qty: 100, revenue: 5000000, price: 50000 }, { name: 'Cơm sườn', qty: 200, revenue: 3000000, price: 15000 }], slow: [], unsold_names: [] }] })!;
+  assertStringIncludes(formatFacts(f5, new Date('2026-11-20T09:00:00+07:00'), 'bún bò với cơm sườn món nào hơn', ''), 'bán nhiều phần hơn: Cơm sườn; doanh thu cao hơn: Bún bò');
 });
