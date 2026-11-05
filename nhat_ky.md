@@ -4,6 +4,22 @@
 > Format: ✅ Hoàn thành | 🔲 Cần làm | ⚠️ Vấn đề | ➡️ Tiếp theo
 
 
+
+## 2026-11-05 — /admin đợt 2: nhịp app, lỗi văng, nguồn khách (Chủ Quán "Làm tiếp đi"; DB + /admin ĐÃ ÁP production 05/11 07:28 VN; web /pos và app CHƯA đưa; chưa commit)
+
+- ⚠️ Khảo sát: `pingActive()` không ai gọi (đã xoá); `lib/` không có bộ bắt lỗi toàn cục nên lỗi văng không về máy chủ; không biết phân bổ phiên bản.
+- ✅ Migration `20261107_admin_nhip_app_v1.sql` (+ `_ROLLBACK`): `app_device_days`, `app_heartbeat_v1`, `stores.signup_source`, `store_signup_source_set_v1`, `admin_app_health_v1`. App: `lib/core/services/app_heartbeat_service.dart` (vào quán, trở lại từ nền, mỗi giờ; hỏng thì 10 phút sau thử lại), `AppLogger.uncaught` + `attachUncaughtHandlers`, ô nguồn khách trong `create_store_sheet.dart` (form cuộn được). /admin: khối "Phiên bản và ổn định". Script `db-fix/admin_nhip_app_ap_dung.sh` chưa chạy.
+- ⚠️ QC độc lập tìm: lỗi đổi nội dung vượt bộ chống ngập (5.000 lỗi khác chữ không bị chặn) → gộp theo phần chữ, tổng 30 dòng/phút, gửi theo lô; số điện thoại khách có thể lẫn trong URL lỗi → che; máy dùng 2 quán làm số quán sai; máy để mở nhiều ngày không báo nhịp; nút "Tạo quán" nằm sau bàn phím trên màn nhỏ; `is_latest` bị đánh lừa khi cả nền tảng còn bản cũ → so với `app_versions`; tooltip ghi máy thành quán. Đã sửa hết. Để lại: lỗi bất đồng bộ trên web chưa bắt được (SDK web không gọi `PlatformDispatcher.onError`, bọc zone có rủi ro riêng).
+- ✅ Kiểm: Flutter 1190 ca đạt (ca đỏ duy nhất là test đồng bộ hướng dẫn, 4 bài do tệp của phiên khác); test SQL 48 ca trên Postgres tạm có đủ trigger production và `qn_caller_id` thật; đột biến SQL chỉ còn lọt 2 cái không đổi hành vi; tốc độ `admin_app_health_v1` 67 ms với 1 triệu dòng log; trang 320 / 375 / 768 / 1440, không tràn ngang, chữ HTML hiện như chữ, lỗi riêng từng khối, Thoát xoá sạch. Chưa thử trên máy thật / bản release.
+- ✅ Áp `db-fix/admin_nhip_app_ap_dung.sh` TS=20261105_072717: sao lưu `quannho_before_nhip_app_20261105_072717.dump` → migration → test production 48 PASS, 0 FAIL (tự ROLLBACK) → /admin (sao lưu `admin_web_nhipapp_20261105_072717`). Lần đầu TS=20261105_072622 dừng ở test: production có dòng Windows thật trong `app_versions` mà cụm tạm trống, ca 22 đặt sai kỳ vọng; lỗi ở test, trang chưa đổi; sửa ca đó, cụm tạm thêm dòng giống production. Hoàn tác: `ROLLBACK=1 bash db-fix/admin_nhip_app_ap_dung.sh 20261105_072717` (mất số nhịp đã ghi).
+- ➡️ Đưa web /pos, rồi phát hành 1.0.7. Sau 7 ngày đối chiếu "chưa báo nhịp". Có thể cần cập nhật khai báo App Privacy / Data safety.
+
+## 2026-11-05 — Gia hạn hàng loạt dùng thử tới 31/01/2027 (Chủ Quán: chưa thu phí, hết năm xem lại; ĐÃ ÁP production 06:23 VN)
+
+- ⚠️ Lý do: khoảng 25/11 đa số quán hết hạn đợt gia hạn 26/10; từ 3 ngày trước, chủ quán thấy dải nhắc, ở web / máy tính có nút "Mua gói Pro" dẫn tới câu "Quán Nhỏ chưa mở thanh toán" vì chưa nhập tài khoản nhận tiền. Quán không bị khoá.
+- ✅ `db-fix/gia_han_31_01_ap_dung.sh` TS=20261105_062254: sao lưu `/root/quannho-backups/quannho_before_gia_han_31_01_20261105_062254.dump` → 185 quán free chưa khoá sang `trial_ends_at = 2027-01-31 23:59:59+07`, 185 dòng `admin_store_actions` đứng tên pachiabun; 3 quán Pro không đổi; còn sót 0. Kiểm trước trên cụm tạm với 6 kiểu quán: chỉ đổi đúng quán, chạy lại 0 quán, hoàn tác trả đúng hạn cũ và không đụng quán đã lên Pro. Hoàn tác: `ROLLBACK=1 bash db-fix/gia_han_31_01_ap_dung.sh`.
+- ⚠️ Còn hở: quán tạo sau hôm nay vẫn 14 ngày dùng thử, sẽ thấy dải nhắc và nút gia hạn; chưa đổi vì quán mới ít. Xem lại trước 31/01/2027 (dải nhắc hiện từ 28/01).
+
 ## 2026-11-05 — /admin theo dõi tăng trưởng đợt 1 (Chủ Quán duyệt kế hoạch `ke-hoach-admin-tang-truong-dot1.md`; ĐÃ ÁP production 05/11 06:11 VN — Chủ Quán bảo Claude chạy; chưa commit)
 
 - ✅ Migration `20261105_admin_tang_truong_v1.sql` (+ `_ROLLBACK`): 2 hàm chỉ đọc, chỉ `qn_admin`. `admin_growth_v1`: tiền công ty (MRR, quán trả qua đơn, ghi tay chưa tính, tặng, không thời hạn, thực thu 30 ngày, trả lần đầu / trả tiếp, quán từng trả đã hết hạn, sắp hết dùng thử, số lần tự gia hạn), lứa quán 12 tháng (mỗi bước chỉ tính quán đủ tuổi, chưa đủ thì NULL), dùng thật (20 đơn/7 ngày), số khách. `admin_store_list_v2`: như v1 + sắp xếp trên toàn bộ danh sách (trước chỉ trong 30 quán đang tải), số quán của chủ, lọc theo chủ, tìm theo tên chủ.

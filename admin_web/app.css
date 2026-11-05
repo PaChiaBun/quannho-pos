@@ -2012,3 +2012,12 @@ pre.prompt {
 .st-owner-link:hover { text-decoration: underline; }
 .st-owner-filter { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; }
 .st-owner-filter[hidden] { display: none; }
+
+/* Phiên bản và ổn định (đợt 2) */
+.ov-h-block { margin-top: 20px; }
+.ov-h-block > .small { margin-bottom: 8px; }
+.ov-h-sample { font-weight: 400; overflow-wrap: anywhere; margin-top: 2px; }
+.ov-coh tbody th.ov-coh-month { white-space: normal; font-weight: 500; }
+@media (max-width: 720px) {
+  .ov-coh tbody th.ov-coh-month { grid-column: 1 / -1; }
+}

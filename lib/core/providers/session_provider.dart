@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/app_heartbeat_service.dart';
 import '../services/user_auth_service.dart';
 import '../utils/app_logger.dart';
 
@@ -90,6 +91,7 @@ class _SessionNotifier extends Notifier<SessionData?> {
       try {
         ref.read(printerSettingsProvider);
       } catch (_) {}
+      unawaited(AppHeartbeat.ping(session.storeId));
     }
   }
 
@@ -161,6 +163,7 @@ class _SessionNotifier extends Notifier<SessionData?> {
     } catch (_) {}
 
     _setupSyncService(state);
+    unawaited(AppHeartbeat.ping(membership.storeId));
   }
 
   Future<void> clearStoreContext() async {

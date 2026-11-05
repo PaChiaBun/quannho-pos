@@ -99,7 +99,7 @@
       "lib/modules/tinhluong/services/payroll_evaluation_service.dart": "3bb92eb847caf606"
     },
     "nhan-vien.md": {
-      ".agents/workflows/qn.md": "55222675ad673dcb",
+      ".agents/workflows/qn.md": "3d4c9505e08874d8",
       "lib/core/repositories/staff_password_repository.dart": "81f92c218cd81884",
       "lib/core/services/staff_service.dart": "fa19874c1655c33a",
       "lib/screens/auth_screen.dart": "11c97645e7b4f888",
@@ -112,7 +112,7 @@
       "lib/screens/store_setup_screen.dart": "6db77783c1b44bab"
     },
     "nhat-ky-log.md": {
-      "lib/core/utils/app_logger.dart": "361921ba54844e5f",
+      "lib/core/utils/app_logger.dart": "627ef7ada63800b8",
       "lib/screens/bug_report_screen.dart": "e2489f51f059b7f9",
       "lib/screens/log_viewer_screen.dart": "8ed8afef9cc930ce",
       "supabase/migrations/20261023_app_logs_retention_v2.sql": "8ec8e14674908a60"
@@ -179,7 +179,7 @@
       ".docs/Huong_dan/kho-hang.md": "23bd35f6eb12101c",
       ".docs/Huong_dan/luong.md": "33ee851205cfac9e",
       ".docs/Huong_dan/nhan-vien.md": "f4c06ffd0fcf9d6d",
-      ".docs/Huong_dan/nhat-ky-log.md": "8d78c15e77993fba",
+      ".docs/Huong_dan/nhat-ky-log.md": "3d12f4766370272a",
       ".docs/Huong_dan/qr-goi-mon.md": "cfa10d512eb3c9e3",
       ".docs/Huong_dan/quan-ly-ban.md": "51a9441397d4c58c",
       ".docs/Huong_dan/thu-chi.md": "62f4614f18ad206e",

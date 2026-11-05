@@ -74,6 +74,9 @@ Thời hạn giữ log:
 
 ## Ghi chú cho Chủ Quán (không đưa cho khách)
 
+### Lỗi văng (bản app sau 05/11/2026)
+Lỗi không được xử lý trong app ghi mức ERROR, nhãn `uncaught`, che truy vấn URL và dãy số dài; cùng lỗi tối đa 1 dòng/phút, tổng 30 dòng/phút mỗi máy. Trang /admin gom ở khối "Phiên bản và ổn định". Chưa bắt: lỗi native làm chết app, lỗi trước khi vào quán, lỗi bất đồng bộ trên web.
+
 ### Khác biệt với bản app cũ (cho Chủ Quán)
 - App cũ có nút "Xóa sạch" (→ "Xác nhận xóa" → "Xóa hết") thay cho "Xóa log kỹ thuật". Máy chủ chặn xoá log nghiệp vụ nên trên app cũ thao tác này báo "Xóa nhật ký thất bại" khi có log nghiệp vụ — là đúng; cập nhật app để dùng nút mới.
 - App cũ chưa có nhóm "🧾 Hành động nghiệp vụ" trong "Loại thao tác" — xem ở "Tất cả".

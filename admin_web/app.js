@@ -227,6 +227,7 @@ function logout(msg) {
     'ov-error', 'ov-todo', 'ov-k-rev', 'ov-k-ord', 'ov-k-act', 'ov-k-new', 'ov-rev-meta', 'ov-rev-chart',
     'ov-top', 'ov-funnel', 'ov-drop', 'ov-suggest', 'ov-new-meta', 'ov-new-chart', 'ov-week-meta', 'ov-week-chart',
     'ov-m-mrr', 'ov-m-cash', 'ov-m-lapsed', 'ov-m-trial', 'ov-m-error', 'ov-cohorts', 'st-owner-filter',
+    'ov-h-cover', 'ov-h-meta', 'ov-h-chart', 'ov-h-versions', 'ov-h-err-sum', 'ov-h-errors', 'ov-h-sources',
     'st-list', 'bm-stats', 'bm-list', 'bm-store-filter',
     'kn-error', 'kn-changelog', 'kn-packs', 'kn-modules', 'kn-cache', 'kn-caps',
     'pl-error', 'pl-kpis', 'pl-list', 'bl-section', 'sp-list', 'sp-filters', 'sp-accounts',
@@ -682,6 +683,7 @@ loaders.overview = async () => {
     const includeTest = $('ov-include-test').checked;
     loadOverviewExtra(includeTest);  // khối doanh số chạy song song; lỗi riêng không làm hỏng khối này
     loadGrowth(includeTest);  // khối tiền + lứa quán: cũng vậy
+    loadHealth(includeTest);  // khối phiên bản + lỗi: cũng vậy
     const d = await rpc('admin_store_overview_v1', { p_include_test: includeTest });
 
     const now = new Date();
@@ -857,6 +859,83 @@ async function loadGrowth(includeTest) {
   renderMoney(g.money || {});
   renderCohorts(g.cohorts || [], (g.thresholds || {}).real_use_30d);
   paintUsage();
+}
+
+// Phiên bản và ổn định (admin_app_health_v1). Lỗi riêng không làm hỏng các khối khác.
+let ovHealthGen = 0;
+const HEALTH_BOXES = ['ov-h-cover', 'ov-h-meta', 'ov-h-chart', 'ov-h-versions', 'ov-h-err-sum', 'ov-h-errors', 'ov-h-sources'];
+const SOURCE_LABELS = { friend: 'Bạn bè giới thiệu', facebook: 'Facebook', google: 'Google', sales: 'Nhân viên bán hàng', other: 'Khác', unknown: 'Chưa rõ' };
+const PLATFORM_LABELS = { web: 'Web', android: 'Android', ios: 'iPhone / iPad', windows: 'Windows', macos: 'Mac', linux: 'Linux' };
+function healthTable(heads, rows) {
+  return el('table', { class: 'ov-coh' },
+    el('thead', {}, el('tr', {}, ...heads.map((h, i) => el('th', { scope: 'col', class: i ? 'num-col' : '', text: h })))),
+    el('tbody', {}, ...rows.map((cells) => el('tr', {},
+      el('th', { scope: 'row', class: 'ov-coh-month' }, ...cells[0]),
+      ...cells.slice(1).map((c, i) => el('td', { 'data-label': heads[i + 1], class: 'num-col num', text: c })),
+    ))),
+  );
+}
+function renderHealth(h) {
+  const cv = h.coverage || {};
+  $('ov-h-cover').textContent = !Number(cv.selling_7d)
+    ? 'Chưa quán nào có đơn trong 7 ngày qua.'
+    : Number(cv.silent_7d)
+      ? `${fmtN(cv.silent_7d)}/${fmtN(cv.selling_7d)} quán có đơn 7 ngày chưa báo nhịp, thường do còn bản app cũ. Số dưới đây chưa gồm các quán này.`
+      : `Cả ${fmtN(cv.selling_7d)} quán có đơn 7 ngày đều đã báo nhịp.`;
+
+  renderChart($('ov-h-chart'), $('ov-h-meta'), (h.days || []).map((d) => ({ day: d.day, n: d.devices, stores: d.stores })), {
+    ariaLabel: 'Biểu đồ số máy mở app theo ngày trong 30 ngày qua',
+    xAxisLabel: (p, isLast) => (isLast ? 'Hôm nay' : fmtShortDay(p.day)),
+    tooltipLabel: (p, isLast) => `${isLast ? 'Hôm nay' : `Ngày ${fmtShortDay(p.day)}`} · ${fmtN(p.stores)} quán`,
+    valueText: (p) => `${fmtN(p.n)} máy`,
+    emptyNode: () => emptyBox('Chưa có máy nào báo nhịp', 'Số liệu xuất hiện khi máy cập nhật lên bản app có nhịp.'),
+    summaryText: (sum, last) => `Hôm nay ${fmtN(last)} máy mở app`,
+  });
+
+  const vs = h.versions || [];
+  clear($('ov-h-versions')).append(vs.length
+    ? healthTable(['Nền tảng và phiên bản', 'Số máy', 'Số quán'], vs.map((v) => [
+      [
+        el('span', { text: `${PLATFORM_LABELS[v.platform] || v.platform} ${v.app_version} (${fmtN(v.build)})` }),
+        v.is_latest ? el('span', { class: 'small muted', text: ' · mới nhất' }) : null,
+      ],
+      fmtN(v.devices), fmtN(v.stores),
+    ]))
+    : emptyBox('Chưa có máy nào báo nhịp', 'Số liệu xuất hiện khi máy cập nhật lên bản app có nhịp.'));
+
+  const er = h.errors || {};
+  $('ov-h-err-sum').textContent = `7 ngày qua ${fmtN(er.n_7d)} lỗi ở ${fmtN(er.stores_7d)} quán, 7 ngày trước đó ${fmtN(er.n_prev7)} lỗi. Trong đó ${fmtN(er.uncaught_7d)} lỗi văng.`;
+  const top = er.top || [];
+  clear($('ov-h-errors')).append(top.length
+    ? healthTable(['Loại lỗi', 'Số lỗi', 'Số quán', 'Gần nhất'], top.map((e) => [
+      [
+        el('span', { text: e.tag }),
+        e.sample ? el('div', { class: 'small muted ov-h-sample', text: e.sample }) : null,
+      ],
+      fmtN(e.n), fmtN(e.stores), ago(e.last_at),
+    ]))
+    : emptyBox('Không có lỗi', 'Không có lỗi nào được ghi trong 7 ngày qua.'));
+
+  const src = h.sources || [];
+  clear($('ov-h-sources')).append(src.length
+    ? healthTable(['Nguồn', 'Số quán'], src.map((s) => [[el('span', { text: SOURCE_LABELS[s.source] || s.source })], fmtN(s.n)]))
+    : emptyBox('Chưa có quán mới', 'Không có quán nào tạo trong 90 ngày qua.'));
+}
+async function loadHealth(includeTest) {
+  const gen = ++ovHealthGen;
+  if (!$('ov-h-versions').children.length) showSkeletons($('ov-h-versions'), 2, 'h-row');
+  let h;
+  try {
+    h = await rpc('admin_app_health_v1', { p_include_test: includeTest });
+    if (gen !== ovHealthGen) return;
+    if (!h || h.ok === false) throw new Error((h && h.error) || 'ERR');
+  } catch (err) {
+    if (isAuthErr(err) || gen !== ovHealthGen) return;
+    for (const id of HEALTH_BOXES) clear($(id));
+    $('ov-h-versions').append(errorBox('Không tải được phiên bản và lỗi app.', () => loadHealth(includeTest)));
+    return;
+  }
+  renderHealth(h);
 }
 
 async function loadOverviewExtra(includeTest) {

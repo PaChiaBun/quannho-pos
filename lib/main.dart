@@ -1,4 +1,5 @@
 import 'core/utils/app_logger.dart';
+import 'core/services/app_heartbeat_service.dart';
 import 'dart:io';
 import 'modules/bill_printer/drivers/sunmi_builtin_driver.dart';
 import 'package:flutter/foundation.dart';
@@ -125,6 +126,8 @@ void main() async {
   ); // dò máy in Sunmi tích hợp (luật in tới nó áp cho mọi máy Sunmi)
   await SupabaseService.initialize(); // ⚠️ PHẢI await — Supabase cần sẵn sàng trước khi dùng
   AppLogger.attachLifecycle(); // gửi log gom lô khi app xuống nền/thoát
+  AppLogger.attachUncaughtHandlers(); // lỗi văng về app_logs (tag uncaught)
+  AppHeartbeat.attachLifecycle(); // nhịp app khi trở lại từ nền
   unawaited(
     AppLogger.restorePending(),
   ); // gửi bù log lần chạy trước chưa kịp gửi

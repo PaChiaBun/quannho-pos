@@ -18,6 +18,9 @@ class AppLogger {
     _staffName = staffName;
   }
 
+  /// Quán của phiên đang chạy (dùng cho nhịp app khi trở lại từ nền).
+  static String? get sessionStoreId => _storeId;
+
   /// Thiết lập Device ID để định danh thiết bị ghi log
   static void setDeviceId(String deviceId) {
     _deviceId = deviceId;
@@ -140,6 +143,69 @@ class AppLogger {
     );
   }
 
+  // ── LỖI VĂNG ───────────────────────────────────────────────────────────────
+  // Trước đây lỗi không ai bắt không về máy chủ. Chống ngập: cùng một lỗi (bỏ qua phần số) tối đa 1 dòng/phút,
+  // mọi lỗi tối đa 30 dòng/phút trên mỗi máy; gửi theo lô, không gửi ngay từng dòng.
+  // shortcut: không bắt được lỗi native làm chết app, lỗi trước khi vào quán, và lỗi bất đồng bộ trên web
+  // (SDK web không gọi PlatformDispatcher.onError); cần thì mới bọc runZonedGuarded hoặc thêm dịch vụ ngoài.
+  static const int _uncaughtPerMinute = 30;
+  static final Map<String, DateTime> _uncaughtLast = {};
+  static DateTime? _uncaughtWindow;
+  static int _uncaughtCount = 0;
+  @visibleForTesting
+  static DateTime Function() uncaughtNow = DateTime.now;
+
+  /// Gắn vào FlutterError và PlatformDispatcher; vẫn giữ cách xử lý mặc định.
+  static void attachUncaughtHandlers() {
+    final previous = FlutterError.onError;
+    FlutterError.onError = (details) {
+      uncaught(details.exception, details.stack);
+      previous?.call(details);
+    };
+    WidgetsBinding.instance.platformDispatcher.onError = onPlatformError;
+  }
+
+  /// Trả false để Flutter vẫn xử lý lỗi như khi chưa gắn bộ bắt.
+  @visibleForTesting
+  static bool onPlatformError(Object error, StackTrace stack) {
+    uncaught(error, stack);
+    return false;
+  }
+
+  static void uncaught(Object error, StackTrace? stack) {
+    try {
+      final text = sanitizeErrorText(error.toString());
+      final message = text.length > 300 ? text.substring(0, 300) : text;
+      final now = uncaughtNow();
+      final key = message.replaceAll(RegExp(r'\d+'), '#');
+      final last = _uncaughtLast[key];
+      if (last != null && now.difference(last) < const Duration(minutes: 1)) return;
+      final window = _uncaughtWindow;
+      if (window == null || now.difference(window) >= const Duration(minutes: 1)) {
+        _uncaughtWindow = now;
+        _uncaughtCount = 0;
+      }
+      if (_uncaughtCount >= _uncaughtPerMinute) return;
+      _uncaughtCount++;
+      if (_uncaughtLast.length >= 100) _uncaughtLast.clear();
+      _uncaughtLast[key] = now;
+      final trace = stack?.toString() ?? '';
+      final details = trace.isEmpty ? null : (trace.length > 3000 ? trace.substring(0, 3000) : trace);
+      debugPrint('[ERROR] [uncaught] $message');
+      _writeLocal('ERROR', 'uncaught', message, details);
+      _enqueueCloud('ERROR', 'uncaught', message, details);
+    } catch (_) {
+      // Bộ bắt lỗi tuyệt đối không được tự gây lỗi mới
+    }
+  }
+
+  /// Bỏ dữ liệu khách có thể lẫn trong chữ lỗi: truy vấn của URL, cả dòng dữ liệu của lỗi Postgres, dãy số dài (SĐT).
+  @visibleForTesting
+  static String sanitizeErrorText(String text) => text
+      .replaceAllMapped(RegExp(r'(https?://[^\s?]*)\?\S*'), (m) => '${m[1]}?…')
+      .replaceAll(RegExp(r'Failing row contains \(.*?\)', dotAll: true), 'Failing row contains (…)')
+      .replaceAll(RegExp(r'\d{9,}'), '***');
+
   /// Ghi log ra file cục bộ app_logs.txt (Cơ chế xoay vòng 5MB)
   static Future<void> _writeLocal(
     String level,
@@ -202,6 +268,10 @@ class AppLogger {
 
   @visibleForTesting
   static void resetForTest({bool persist = false, bool timers = true}) {
+    _uncaughtLast.clear();
+    _uncaughtWindow = null;
+    _uncaughtCount = 0;
+    uncaughtNow = DateTime.now;
     _timersEnabled = timers;
     _queue.clear();
     _timer?.cancel();

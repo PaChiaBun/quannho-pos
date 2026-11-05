@@ -244,31 +244,6 @@ class StoreAuthService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // PING — Cập nhật last_active khi app mở
-  // ─────────────────────────────────────────────────────────────────────────
-  static Future<void> pingActive() async {
-    final client = _client;
-    if (client == null) return;
-    final prefs = await SharedPreferences.getInstance();
-    final storeId = prefs.getString(_kStoreId);
-    final deviceId = prefs.getString(_kDeviceId);
-    if (storeId == null) return;
-    try {
-      await client
-          .from('stores')
-          // Giờ quốc tế (kèm "Z"): chuỗi không múi giờ bị máy chủ lưu lệch 7 tiếng.
-          .update({'last_active_at': DateTime.now().toUtc().toIso8601String()})
-          .eq('id', storeId);
-      if (deviceId != null) {
-        await client
-            .from('devices')
-            .update({'last_seen': DateTime.now().toUtc().toIso8601String()})
-            .eq('id', deviceId);
-      }
-    } catch (_) {}
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
   // RESET — Xoá đăng ký thiết bị (reset máy)
   // ─────────────────────────────────────────────────────────────────────────
   static Future<void> resetDevice() async {

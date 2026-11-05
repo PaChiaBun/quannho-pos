@@ -784,3 +784,7 @@ Không có bảng mới. Hai hàm chỉ đọc, chỉ vé `qn_admin`, đọc `st
 - `admin_store_list_v2(p_filter, p_search, p_include_test, p_limit, p_offset, p_sort, p_dir, p_owner)` → như `admin_store_list_v1`, thêm `owner_user_id`, `owner_store_count`.
 
 Một quán một chủ: `stores.owner_user_id`, thiếu thì thành viên `is_owner` sớm nhất.
+
+## Trang quản trị: nhịp app và nguồn khách (migration `20261107_admin_nhip_app_v1.sql`, ĐÃ ÁP 05/11)
+
+`app_device_days (day, store_id, device_id, platform, app_version, build, last_seen)`: mỗi máy mỗi ngày mỗi quán 1 dòng, khoá RLS, không ai đọc thẳng; ghi qua `app_heartbeat_v1`, đọc qua `admin_app_health_v1` (chỉ `qn_admin`). `stores.signup_source`: friend / facebook / google / sales / other, chủ quán ghi 1 lần qua `store_signup_source_set_v1`.

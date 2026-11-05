@@ -247,3 +247,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE store_roles;
 ## Trang quản trị: theo dõi tăng trưởng (/admin, không thuộc app)
 
 Tổng quan có khối "Tiền của công ty" (MRR, thực thu 30 ngày, Pro hết hạn, sắp hết dùng thử), bảng "Giữ chân theo lứa quán", số quán dùng thật và số khách; "Doanh số qua POS" là tiền các quán bán, không phải tiền công ty. Tab Quán sắp xếp trên toàn bộ danh sách, tìm được theo tên chủ, bấm "· N quán" để xem các quán của một chủ. Định nghĩa từng chỉ số ở "Cách tính các chỉ số" cuối tab Tổng quan.
+
+## Trang quản trị: phiên bản và ổn định (/admin ĐÃ ÁP 05/11; có số khi bản app mới lên)
+
+Khối "Phiên bản và ổn định" ở Tổng quan: số máy mở app mỗi ngày, bảng nền tảng × phiên bản, số quán có đơn chưa báo nhịp, lỗi 7 ngày so với 7 ngày trước, nguồn khách. Form tạo quán có ô "Biết Quán Nhỏ từ đâu?" không bắt buộc (không có trên iOS vì iOS không tạo quán).

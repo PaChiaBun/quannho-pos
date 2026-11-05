@@ -2,11 +2,103 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fake_async/fake_async.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quannho_pos/core/utils/app_logger.dart';
 
 void main() {
   late List<(String, List<Map<String, dynamic>>)> sent;
+
+  group('Lỗi văng', () {
+    late List<List<Map<String, dynamic>>> got;
+    setUp(() {
+      AppLogger.resetForTest();
+      got = [];
+      AppLogger.senderOverride = (_, rows) async => got.add(List.of(rows));
+      AppLogger.updateSession(storeId: 's1', staffName: 'Như');
+    });
+    List<Map<String, dynamic>> all() => got.expand((r) => r).toList();
+
+    test('ghi mức ERROR, nhãn uncaught, cắt độ dài', () async {
+      AppLogger.uncaught(Exception('x' * 500), StackTrace.fromString('a' * 5000));
+      await AppLogger.flushNow();
+      final row = all().single;
+      expect(row['level'], 'ERROR');
+      expect(row['tag'], 'uncaught');
+      expect((row['message'] as String).length, 300);
+      expect((row['details'] as String).length, lessThanOrEqualTo(3001));
+    });
+
+    test('cùng lỗi tối đa 1 dòng mỗi phút; lỗi khác vẫn ghi', () async {
+      var now = DateTime(2026, 11, 5, 9);
+      AppLogger.uncaughtNow = () => now;
+      AppLogger.uncaught(Exception('A'), null);
+      AppLogger.uncaught(Exception('A'), null);
+      AppLogger.uncaught(Exception('B'), null);
+      now = now.add(const Duration(seconds: 59));
+      AppLogger.uncaught(Exception('A'), null);
+      await Future<void>.delayed(const Duration(milliseconds: 20));  // lỗi gửi ngay, chờ các lượt gửi xong
+      await AppLogger.flushNow();
+      expect(all(), hasLength(2));
+      now = now.add(const Duration(seconds: 2));
+      AppLogger.uncaught(Exception('A'), null);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await AppLogger.flushNow();
+      expect(all(), hasLength(3));
+    });
+
+    test('lỗi đổi nội dung mỗi lần: gộp theo phần chữ, không ngập', () async {
+      for (var i = 0; i < 500; i++) {
+        AppLogger.uncaught(Exception('ClientException id=$i'), null);
+      }
+      await AppLogger.flushNow();
+      expect(all(), hasLength(1));
+    });
+
+    test('mọi lỗi tối đa 30 dòng mỗi phút', () async {
+      var now = DateTime(2026, 11, 5, 9);
+      AppLogger.uncaughtNow = () => now;
+      const letters = 'abcdefghijklmnopqrstuvwxyz';
+      String name(int i) => '${letters[i % 26]}${letters[(i ~/ 26) % 26]}';
+      for (var i = 0; i < 200; i++) {
+        AppLogger.uncaught(Exception(name(i)), null);
+      }
+      await AppLogger.flushNow();
+      expect(all(), hasLength(30));
+      now = now.add(const Duration(minutes: 1, seconds: 1));
+      AppLogger.uncaught(Exception('lỗi mới'), null);
+      await AppLogger.flushNow();
+      expect(all(), hasLength(31));
+    });
+
+    test('che dữ liệu khách trong chữ lỗi', () {
+      expect(AppLogger.sanitizeErrorText('Failed uri=https://a.vn/rest/customers?phone=eq.0901234567&x=1 end'),
+          'Failed uri=https://a.vn/rest/customers?… end');
+      expect(AppLogger.sanitizeErrorText('khách 0901234567 gọi'), 'khách *** gọi');
+      expect(AppLogger.sanitizeErrorText('Failing row contains (1, Lan, 090)'), 'Failing row contains (…)');
+      expect(AppLogger.sanitizeErrorText('Đơn 12345 lỗi'), 'Đơn 12345 lỗi');
+    });
+
+    test('bộ bắt lỗi giữ xử lý mặc định, không nuốt lỗi', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final original = FlutterError.onError;
+      var previousCalled = 0;
+      FlutterError.onError = (_) => previousCalled++;
+      AppLogger.attachUncaughtHandlers();
+      FlutterError.onError!(FlutterErrorDetails(exception: Exception('vẽ lỗi')));
+      final handled = AppLogger.onPlatformError(Exception('bất đồng bộ'), StackTrace.empty);
+      FlutterError.onError = original;
+      expect(previousCalled, 1);
+      expect(handled, isFalse);
+      await AppLogger.flushNow();
+      expect(all().map((r) => r['tag']).toSet(), {'uncaught'});
+      expect(all(), hasLength(2));
+    });
+
+    test('không ném lỗi dù đối tượng lỗi tự hỏng', () {
+      expect(() => AppLogger.uncaught(_BadError(), null), returnsNormally);
+    });
+  });
 
   setUp(() {
     AppLogger.resetForTest();
@@ -151,4 +243,9 @@ void main() {
       isFalse,
     );
   });
+}
+
+class _BadError {
+  @override
+  String toString() => throw StateError('hỏng');
 }

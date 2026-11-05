@@ -67,6 +67,20 @@ def growth():
                    pro_lapsed=0, trial_ending_30d=169, self_extend_30d=14),
         usage=dict(real_use_7d=3, customers=152, multi_store_customers=4), cohorts=rows)
 
+def health():
+    # Có lỗi chứa HTML (phải hiện như chữ), có quán chưa báo nhịp, có bản cũ
+    days = [dict(day=(now - datetime.timedelta(days=29 - i)).date().isoformat(), devices=random.randint(3, 14), stores=random.randint(2, 8)) for i in range(30)]
+    return dict(ok=True, days=days,
+        versions=[dict(platform='android', app_version='1.0.7', build=25, devices=6, stores=4, is_latest=True),
+                  dict(platform='android', app_version='1.0.6', build=24, devices=3, stores=2, is_latest=False),
+                  dict(platform='web', app_version='1.0.7', build=25, devices=4, stores=3, is_latest=True),
+                  dict(platform='windows', app_version='1.0.5', build=19, devices=1, stores=1, is_latest=True)],
+        coverage=dict(selling_7d=10, silent_7d=3),
+        errors=dict(n_7d=42, n_prev7=30, stores_7d=5, uncaught_7d=7,
+                    top=[dict(tag='uncaught', n=7, stores=3, last_at=iso(0, 1), sample='Lỗi <img src=x onerror=alert(7)> ' + 'dài ' * 30),
+                         dict(tag='printer', n=35, stores=2, last_at=iso(1), sample='Không kết nối được máy in')]),
+        sources=[dict(source='unknown', n=20), dict(source='friend', n=5), dict(source='google', n=2)])
+
 def extra():
     days=[dict(day=(now-datetime.timedelta(days=29-i)).date().isoformat(), n=0, revenue=0) for i in range(30)]
     for i,d in enumerate(days):
@@ -117,6 +131,7 @@ class H(http.server.SimpleHTTPRequestHandler):
             off=body.get('p_offset',0); lim=body.get('p_limit',50)
             return s.send_json(200, dict(ok=True,total=len(rows),rows=rows[off:off+lim]))
         if p.endswith('/admin_growth_v1'): return s.send_json(200, growth())
+        if p.endswith('/admin_app_health_v1'): return s.send_json(200, health())
         if p.endswith('/admin_overview_extra_v1'): return s.send_json(200, extra())
         if p.endswith('/admin_set_test_store_v1'):
             SUGG[:] = [g for g in SUGG if g['id'] != body.get('p_store')]

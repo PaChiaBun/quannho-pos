@@ -2,11 +2,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Create Store Sheet — Dùng chung tại Dashboard, Settings, Auth
 // ─────────────────────────────────────────────────────────────────────────────
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'join_store_sheet.dart';
 import '../providers/session_provider.dart';
+import '../services/app_heartbeat_service.dart';
 import '../services/user_auth_service.dart';
 
 /// Mở bottom sheet tạo quán mới.
@@ -41,6 +44,7 @@ class _CreateStoreSheet extends StatefulWidget {
 
 class _CreateStoreSheetState extends State<_CreateStoreSheet> {
   final _nameCtrl = TextEditingController();
+  String? _source; // không bắt buộc
   bool _loading = false;
   String _error = '';
 
@@ -77,6 +81,12 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
       userId: session.userId,
       storeName: name,
     );
+
+    // Có mã quán là quán đã tạo, kể cả khi bước đổi phiên sau đó bị huỷ
+    final createdId = res.storeId;
+    if (createdId != null && createdId.isNotEmpty) {
+      unawaited(AppHeartbeat.saveSignupSource(createdId, _source));
+    }
 
     if (!mounted) return;
 
@@ -155,7 +165,8 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    // Cuộn được: màn nhỏ có bàn phím thì nút "Tạo quán" không bị che
+    return SingleChildScrollView(child: Padding(
       // Đẩy sheet lên khi bàn phím mở
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -258,6 +269,25 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
               ),
               onSubmitted: (_) => _submit(),
             ),
+            const SizedBox(height: 12),
+
+            // Nguồn khách: không bắt buộc, lỗi ghi không ảnh hưởng việc tạo quán
+            DropdownButtonFormField<String>(
+              initialValue: _source,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: 'Biết Quán Nhỏ từ đâu? (không bắt buộc)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE0D8CC)),
+                ),
+              ),
+              items: [
+                for (final e in kSignupSources.entries)
+                  DropdownMenuItem(value: e.key, child: Text(e.value)),
+              ],
+              onChanged: _loading ? null : (v) => setState(() => _source = v),
+            ),
             const SizedBox(height: 20),
 
             // Nút tạo quán
@@ -303,6 +333,6 @@ class _CreateStoreSheetState extends State<_CreateStoreSheet> {
           ],
         ),
       ),
-    );
+    ));
   }
 }

@@ -204,6 +204,30 @@
           <div id="ov-cohorts"></div>
         </section>
 
+        <section class="ov-panel" aria-labelledby="ov-h-title">
+          <div class="ov-panel-head">
+            <div>
+              <h3 id="ov-h-title">Phiên bản và ổn định</h3>
+              <p class="muted small" id="ov-h-cover"></p>
+            </div>
+          </div>
+          <div id="ov-h-meta" class="ov-readout" aria-live="polite"></div>
+          <div id="ov-h-chart" class="chart ov-chart"></div>
+          <div class="ov-h-block">
+            <h4 class="ov-eyebrow">Phiên bản đang chạy, 7 ngày</h4>
+            <div id="ov-h-versions"></div>
+          </div>
+          <div class="ov-h-block">
+            <h4 class="ov-eyebrow">Lỗi app</h4>
+            <p class="muted small" id="ov-h-err-sum"></p>
+            <div id="ov-h-errors"></div>
+          </div>
+          <div class="ov-h-block">
+            <h4 class="ov-eyebrow">Quán mới biết Quán Nhỏ từ đâu, 90 ngày</h4>
+            <div id="ov-h-sources"></div>
+          </div>
+        </section>
+
         <section class="ov-panel" id="ov-drop-panel" aria-labelledby="ov-drop-title">
           <div class="ov-panel-head">
             <div>
@@ -265,6 +289,9 @@
             <li><strong>Thực thu 30 ngày</strong>: tiền đã ghi nhận, khớp số "thu 30 ngày" ở tab Gói.</li>
             <li><strong>Dùng thật</strong>: đạt ngưỡng đơn hoàn thành ghi ở thẻ "Quán đang dùng tích cực". "Tích cực" vẫn là có ít nhất 1 đơn trong 7 ngày.</li>
             <li><strong>Khách</strong>: số chủ quán khác nhau; một chủ nhiều chi nhánh tính 1 khách.</li>
+            <li><strong>Máy mở app</strong>: máy đã báo nhịp trong ngày. Bản app cũ chưa báo nhịp nên số này thấp hơn thực tế tới khi máy cập nhật; xem dòng "chưa báo nhịp".</li>
+            <li><strong>Bản mới nhất</strong> trong bảng phiên bản: từ bản đã công bố trong app_versions trở lên; nền tảng chưa công bố (web) thì lấy bản cao nhất đang chạy.</li>
+            <li><strong>Lỗi văng</strong>: lỗi không được xử lý trong app, cùng một lỗi tối đa 1 dòng mỗi phút, tổng tối đa 30 dòng mỗi phút trên mỗi máy. Chưa gồm lỗi bất đồng bộ trên web.</li>
           </ul>
         </details>
       </section>
