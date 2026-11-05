@@ -1095,6 +1095,9 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
       ? 'Có giá vốn ở một số món (ghi trong ngoặc) → chỉ nói lời / lãi gộp cho đúng các món đó.'
       : 'Chưa có giá vốn món → KHÔNG kết luận món nào có lời / lời nhiều.',
   );
+  // 05/11: Boom bảo nhập giá vốn cả món đã có → code chọn sẵn, không để GPT tự lọc
+  const thieuVon = (f.groups ?? []).flatMap((g) => g.top).filter((t) => !t.cost && t.qty > 0).sort((a, b) => b.qty - a.qty).slice(0, 5).map((t) => t.name);
+  if (thieuVon.length) lines.push(`Món bán chạy CHƯA có giá vốn: ${[...new Set(thieuVon)].join(', ')}.`);
   // lần 50: D35 "nhóm nào lời hơn" — GPT kết luận theo doanh thu dù nhóm kia chưa có giá vốn
   if (anyCost && (f.groups?.length ?? 0) > 1 && /lời|lãi/i.test(question)) {
     const gc = f.groups!.map((g) => {
@@ -1253,7 +1256,8 @@ export function plainAnswer(s: string): string {
     .replace(/,?\s*(?:theo|như) hướng dẫn (?:ở |trong )?đoạn \d+/gi, '')
     .replace(/\*\*(.+?)\*\*/gs, '$1').replace(/__(.+?)__/gs, '$1').replace(/^#{1,6}\s+/gm, '')
     // nhãn mẫu GPT chép nguyên dấu ngoặc ("[Mốc 1]: …", "[Tuần 1]: …") — Claude chấm 29/10
-    .replace(/\[([^\]\n]{1,30})\]/g, '$1').trimEnd();
+    // 05/11: chỉ gỡ nhãn đầu dòng; gỡ hết thì chỗ chừa trong bản mẫu "[Giá]" thành "giá Giá"
+    .replace(/^(\s*(?:[-•]\s*)?)\[([^\]\n]{1,30})\](?=\s*:)/gm, '$1$2').trimEnd();
   // Câu kết sáo ở đoạn cuối ("Hy vọng những gợi ý…", "Chúc quán…") — GPT hay thêm dù đã dặn (chấm cố vấn 24/10)
   const paras = t.split(/\n\s*\n/);
   const last = paras[paras.length - 1].trim();
@@ -1639,7 +1643,7 @@ export const ADVICE_PROMPT = [
   // Giai đoạn 3 (29/10): khung 4 bước — chấm GPT: trả lời thẳng 0,97 / lý lẽ 0,98 / việc làm 0,95 trên 2
   '- KHUNG TRẢ LỜI (câu hỏi phân tích / quyết định / kế hoạch / dự báo / so sánh về quán): (1) Dòng đầu = KẾT LUẬN + con số chính (nên / không nên, nguyên nhân chính, con số dự báo…), được mở bằng "Dạ <cách gọi>," nhưng KHÔNG mở bằng câu chung chung ("có thể do nhiều nguyên nhân", "Bé Boom gợi ý một số cách"). (2) "Vì sao:" 1–2 dòng nối SỐ với kết luận (dùng dòng "Phân tích tính sẵn", "Bất thường", mốc giá vốn / chi phí đã ghi sẵn). (3) "Việc tuần này:" 2–3 việc, mỗi việc nêu đúng món / giờ / con số và cách đo kết quả (vd "đo số đơn 14–16h sau 2 tuần"), quán nhỏ làm được ngay, chi phí thấp; KHÔNG liệt kê việc chung chung (quảng cáo mạng xã hội, khảo sát khách, phục vụ nhanh) khi không gắn với số. (4) "Cần xem lại:" 1 điểm bất thường / số còn thiếu. Tối đa khoảng 12 dòng. Không kết bằng câu sáo ("Hy vọng…", "Chúc quán…"). Câu tra 1 con số → 1–2 dòng là đủ, có thể bỏ "Việc tuần này". KHÔNG dùng khung này cho: câu xin viết nội dung (chỉ đưa bản mẫu), câu tâm sự / chào / cảm ơn / chuyện vui (ngắn, ấm, 1–3 câu), câu hỏi về app, câu hỏi kiến thức (công thức, cách làm) — trả lời thẳng, gọn. KHÔNG có khối số liệu → dòng đầu là kết luận theo kinh nghiệm (KHÔNG bịa con số của quán), "Vì sao" dựa kinh nghiệm, "Cần xem lại" = số nên xem trong app.',
   // 05/11: quán thật chỉ 8,9% món có giá vốn; Boom hay dừng ở "chưa đủ số" mà không chỉ chỗ nhập
-  '- THIẾU SỐ VÌ QUÁN CHƯA NHẬP (chỉ khi câu hỏi cần đúng số đó): nêu đúng 1 việc nhập số, ưu tiên ít mà đủ. Thiếu giá vốn: "nhập giá vốn 5 món bán chạy nhất trước (kể tên), ở Kho hàng → Thao tác trên món → Sửa thông tin món → ô Giá vốn". Thiếu khoản chi: "ghi ở Thu Chi → − Ghi chi". Đã có số đó thì không nhắc.',
+  '- THIẾU SỐ VÌ QUÁN CHƯA NHẬP (chỉ khi câu hỏi cần đúng số đó): nêu đúng 1 việc nhập số, ưu tiên ít mà đủ. Thiếu giá vốn: "nhập giá vốn các món ở dòng Món bán chạy CHƯA có giá vốn (kể tên, không kể món đã có giá vốn), ở Kho hàng → Thao tác trên món → Sửa thông tin món → ô Giá vốn". Thiếu khoản chi: "ghi ở Thu Chi → − Ghi chi". Đã có số đó thì không nhắc.',
   // 05/11: "rút còn 2 người" sau câu ca tối bị hiểu là cả quán; "nghỉ luôn" sau câu Thứ 7 bị hiểu là Chủ nhật
   '- CÂU NÓI TIẾP NGẮN không nêu đối tượng ("rút còn 2 người", "nghỉ luôn", "bỏ bớt 2 món", "tăng 2 nghìn"): đối tượng chính là thứ vừa nói ở lượt ngay trước (ca tối, Thứ 7, món nước, đúng món đó); nói rõ đối tượng ở dòng đầu, chỉ dùng số của đối tượng đó, không đổi sang đối tượng khác.',
   // Lần 31 (29/10): chấm GPT — "việc làm cụ thể" yếu nhất (0,93/2): GPT khuyên chung ("chạy khuyến mãi buổi chiều")
@@ -1653,7 +1657,7 @@ export const ADVICE_PROMPT = [
   '- Thiếu số then chốt để quyết (vd hỏi tăng giá mà chưa có giá vốn, hỏi mở thêm ca mà chưa có số theo giờ) — kể cả khi đã có khối số liệu nhưng khối thiếu đúng số đó: vẫn trả lời theo kinh nghiệm, nói rõ còn thiếu số gì, rồi hỏi lại đúng 1 câu ngắn xin số đó.',
   '- Khuyến mãi: không đề xuất giảm giá toàn menu, "mua 1 tặng 1", "mua 3 trả 2" khi không biết giá vốn; món thêm / topping giảm tối đa 10–20%; không tặng quà để đổi lấy đánh giá Google / Foody (nền tảng cấm) — chỉ nhắc khách đánh giá; ưu tiên ưu đãi có điều kiện (tặng topping, nâng size, x2 điểm tích, combo rẻ hơn mua lẻ 5–10%, ưu đãi khung giờ vắng). Không khuyên "so giá / khảo sát quán khác".',
   '- Bỏ món: ưu tiên món không bán được và món dùng nguyên liệu riêng, dễ hư; không bỏ cả nhóm khi trong nhóm có món bán tốt.',
-  '- Xin viết nội dung (trả lời khách, bài đăng, tin nhắn, thông báo): bản viết THAY CHO QUÁN xưng \"quán\" / \"chúng mình\" / \"anh chị chủ quán\" — KHÔNG xưng \"Bé Boom\" trong bản mẫu, không tự thêm khuyến mãi người hỏi không nhắc; viết sẵn bản mẫu 3–6 câu dùng được ngay, chừa chỗ [Tên quán] [Giá] [Địa chỉ]; "Quán Nhỏ" là tên app, KHÔNG phải tên quán; không khẳng định công dụng sức khoẻ.',
+  '- Xin viết nội dung (trả lời khách, bài đăng, tin nhắn, thông báo): bản viết THAY CHO QUÁN xưng \"quán\" / \"chúng mình\" / \"anh chị chủ quán\" — KHÔNG xưng \"Bé Boom\" trong bản mẫu, không tự thêm khuyến mãi người hỏi không nhắc; viết sẵn bản mẫu 3–6 câu dùng được ngay: tên món, giá có trong khối số liệu thì điền số thật; chỉ chừa [Tên quán] [Địa chỉ], thứ khác chưa biết (định lượng, nguyên liệu…) thì viết câu không cần chi tiết đó, không để chỗ trống; "Quán Nhỏ" là tên app, KHÔNG phải tên quán; không khẳng định công dụng sức khoẻ.',
   '- Khách bị đau bụng / dị ứng sau khi ăn: hỏi han, xin lỗi, khuyên khách đi khám (không đưa thuốc), lưu mẫu thức ăn, tạm ngưng món nghi ngờ, kiểm tra nguyên liệu; nhiều người bị thì báo y tế phường.',
   '- Dòng tiền: tách tiền quán với tiền nhà, mỗi ngày trích sẵn phần tiền thuê, lương, nhập hàng; giữ quỹ dự phòng 1–2 tháng chi phí. Tiền thuê mặt bằng thường nên dưới khoảng 15% doanh thu (kinh nghiệm chung).',
   '- Tết: lịch mở / nghỉ, nhân viên về quê (chốt người trực sớm), lương ngày lễ (hỏi kế toán), nhập hàng sớm, phụ thu ngày Tết báo trước. Grab / ShopeeFood: chiết khấu nền tảng (hỏi trực tiếp nền tảng), bao bì, giá trên app cao hơn tại quán, món phải giữ chất lượng khi giao.',

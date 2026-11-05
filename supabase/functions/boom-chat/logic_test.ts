@@ -1326,3 +1326,14 @@ Deno.test('câu nối tiếp ngắn nhận đối tượng lượt trước, câ
   assertStringIncludes(nd('sao vậy'), 'CHỦ ĐỀ ĐANG NÓI');
   assert(!buildMessages('nghỉ luôn được không', [])[1].content.includes('ĐỐI TƯỢNG LƯỢT NGAY TRƯỚC'));
 });
+
+Deno.test('bản mẫu giữ chỗ chừa, chỉ gỡ ngoặc nhãn đầu dòng', () => {
+  assertEquals(plainAnswer('Dạ quán [Tên quán] ở [Địa chỉ] ạ.'), 'Dạ quán [Tên quán] ở [Địa chỉ] ạ.');
+  assertEquals(plainAnswer('- [Tuần 1]: đẩy combo'), '- Tuần 1: đẩy combo');
+});
+
+Deno.test('dòng món bán chạy chưa có giá vốn không kể món đã có', () => {
+  const g = (name: string, top: unknown[]) => ({ name, revenue: 100, qty: 100, items: 3, unsold: 0, top, slow: [], unsold_names: [] });
+  const f = parseFacts({ period: 'Tháng này', revenue: 100, orders: 10, top: [], slow: [], groups: [g('A', [{ name: 'Có vốn', qty: 90, revenue: 50, price: 10, cost: 4 }, { name: 'Thiếu 1', qty: 50, revenue: 25, price: 10 }]), g('B', [{ name: 'Thiếu 2', qty: 70, revenue: 25, price: 10 }])] })!;
+  assertStringIncludes(buildMessages('món nào lời nhất', [], null, { facts: f })[1].content, 'Món bán chạy CHƯA có giá vốn: Thiếu 2, Thiếu 1.');
+});
