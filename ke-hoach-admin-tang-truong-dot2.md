@@ -1,6 +1,6 @@
 # Kế hoạch: /admin theo dõi tăng trưởng — Đợt 2
 
-Ngày lập: 05/11/2026. Trạng thái: **DB + /admin ĐÃ ÁP production 05/11 07:28 VN (TS 20261105_072717). Web /pos và app CHƯA đưa nên chưa có số nhịp, lỗi văng, nguồn khách.** Q2, Q3 chưa chốt. Mọi bước đụng production đều hỏi trước.
+Ngày lập: 05/11/2026. Trạng thái: **DB + /admin ĐÃ ÁP production 05/11 07:28 VN (TS 20261105_072717). Web /pos ĐÃ ĐƯA 07:33 VN (TS 20261105_073330). App CHƯA phát hành.** Q2, Q3 chưa chốt. Mọi bước đụng production đều hỏi trước.
 
 ## 1. Mục tiêu
 
