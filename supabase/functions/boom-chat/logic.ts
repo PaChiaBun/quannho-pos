@@ -961,7 +961,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
         viec = ` Việc nên nhắm cho món giảm nhiều nhất (tính sẵn): ${monGiam.name} kỳ trước ${monGiam.prev_qty} → nay ${monGiam.qty} phần — GIỮ GIÁ (tăng giá làm mất thêm khách, giảm giá làm mỏng lời); nhân viên mời ${monGiam.name} kèm món đang bán chạy${khung}, ghi lên bảng ở quầy 2 tuần${ngayKy ? `; mốc đo: nay ~${tuan(monGiam.qty)} phần / tuần, mục tiêu ~${tuan((monGiam.qty + monGiam.prev_qty) / 2)} phần / tuần (nửa đường về mức cũ)` : ''}.`;
       } else if (hoiVi && f.revenue < f.prev_revenue) {
         // 65b: câu hỏi đã nói buổi / giờ (vd "buổi chiều vắng" — D02) → không kéo sang giờ khác
-        if (Math.abs(pctOrders) >= Math.abs(pctAvg) && pctOrders < 0 && f.by_hour && f.prev_by_hour && !/s[aá]ng|tr[uư]a|chi[eề]u|t[oố]i|khuya|\d+ ?h\b|gi[oờ]/i.test(question)) {
+        if (Math.abs(pctOrders) >= Math.abs(pctAvg) && pctOrders < 0 && f.by_hour && f.prev_by_hour && !/s[aá]ng|tr[uư]a|chi[eề]u|t[oố]i|khuya|\d+ ?h\b|gi[oờ]|ng[aà]y (?:v[aắ]ng|y[eế]u|[eế])|th[uứ] (?:\d|m[aấ]y)|(?:đ[aầ]u|cu[oố]i) tu[aầ]n/i.test(question)) {
           // ngưỡng giữ tính theo NGÀY — số khung giờ là của cả kỳ, thử chỉ 2 tuần
           const ngay = ngayMoBan(f);
           const hs = f.by_hour.map((v, h) => ({ h, v, p: f.prev_by_hour![h] })).filter((x) => x.v < x.p).sort((a, b) => (a.v - a.p) - (b.v - b.p)).slice(0, 2).sort((a, b) => a.h - b.h);
@@ -997,9 +997,11 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     const open = days.filter((x) => x.v > 0);
     const closed = days.filter((x, d) => x.v === 0 && x.n !== 0 && !(d === todayD && x.n === 1));
     const notYet = days.filter((x, d) => x.v === 0 && (x.n === 0 || (d === todayD && x.n === 1)));
-    const low = [...open].sort((a, b) => a.v - b.v)[0], high = [...open].sort((a, b) => b.v - a.v)[0];
+    // 05/11: so theo trung bình / ngày — tháng có thứ 4 ngày, có thứ 5 ngày; so tổng gọi sai Thứ 2 (4 ngày) là thấp nhất
+    const tbNgay = (x: { v: number; n: number | null }) => (x.n ? x.v / x.n : x.v);
+    const low = [...open].sort((a, b) => tbNgay(a) - tbNgay(b))[0], high = [...open].sort((a, b) => tbNgay(b) - tbNgay(a))[0];
     lines.push(
-      `Doanh thu theo thứ (tổng trong kỳ): ${open.map((x) => `${x.d} ${vnd(x.v)}${x.n ? ` (${x.n} ngày, trung bình ${vnd(x.v / x.n)}/ngày)` : ''}`).join('; ')}. Cao nhất: ${high.d}; thấp nhất: ${low.d}` +
+      `Doanh thu theo thứ (tổng trong kỳ): ${open.map((x) => `${x.d} ${vnd(x.v)}${x.n ? ` (${x.n} ngày, trung bình ${vnd(x.v / x.n)}/ngày)` : ''}`).join('; ')}. ${cnt ? 'So theo trung bình / ngày — ' : ''}Cao nhất: ${high.d}; thấp nhất: ${low.d}` +
         (closed.length ? `; ${closed.map((x) => x.d).join(', ')}: quán NGHỈ (không mở bán)` : '') +
         (notYet.length ? `; ${notYet.map((x) => x.d).join(', ')}: chưa tới trong kỳ (KHÔNG phải ngày nghỉ)` : '') + '.',
     );

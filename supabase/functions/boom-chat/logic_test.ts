@@ -1337,3 +1337,12 @@ Deno.test('dòng món bán chạy chưa có giá vốn không kể món đã có
   const f = parseFacts({ period: 'Tháng này', revenue: 100, orders: 10, top: [], slow: [], groups: [g('A', [{ name: 'Có vốn', qty: 90, revenue: 50, price: 10, cost: 4 }, { name: 'Thiếu 1', qty: 50, revenue: 25, price: 10 }]), g('B', [{ name: 'Thiếu 2', qty: 70, revenue: 25, price: 10 }])] })!;
   assertStringIncludes(buildMessages('món nào lời nhất', [], null, { facts: f })[1].content, 'Món bán chạy CHƯA có giá vốn: Thiếu 2, Thiếu 1.');
 });
+
+Deno.test('thứ cao thấp so theo trung bình mỗi ngày, không theo tổng kỳ', () => {
+  // 1–30/09/2026: Thứ 3, Thứ 4 có 5 ngày, các thứ khác 4 ngày — Thứ 2 tổng ít nhất nhưng trung bình cao hơn Thứ 3
+  const f = parseFacts({ period: 'Tháng 9', from: '2026-09-01', to: '2026-09-30', revenue: 200, orders: 10, top: [], slow: [], by_weekday: [19007000, 19218000, 19429000, 19112000, 20379000, 27454000, 0] })!;
+  const t = formatFacts(f, new Date('2026-10-28T09:00:00+07:00'), 'ngày vắng nên làm gì', '');
+  assertStringIncludes(t, 'Cao nhất: Thứ 7; thấp nhất: Thứ 3');
+  assertEquals(goiSaiCaoThap('Thứ 2 thấp nhất trong tuần.', t).length, 1);
+  assertEquals(goiSaiCaoThap('Thứ 3 thấp nhất trong tuần.', t), []);
+});
