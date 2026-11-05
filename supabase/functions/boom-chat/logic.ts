@@ -1044,8 +1044,8 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   }
   // 05/11: Báo cáo có tiền mặt / chuyển khoản, Boom báo không có số. Chỉ thêm khi hỏi đúng chuyện này, câu khác khỏi dài
   if (f.by_pay && /ti[eề]n m[aặ]t|chuy[eể]n kho[aả]n|qu[eẹ]t th[eẻ]|(?<!\p{L})(?:k[eé]t|ck|tm)(?!\p{L})|ph[uư][oơ]ng th[uứ]c/iu.test(question)) {
-    const { cash, transfer, card } = f.by_pay, tong = cash + transfer + card;
-    lines.push(`Theo phương thức thanh toán trong kỳ (cùng số với Báo cáo): tiền mặt ${vnd(cash)} (${pctTxt((cash / tong) * 100)}%), chuyển khoản ${vnd(transfer)} (${pctTxt((transfer / tong) * 100)}%), thẻ ${vnd(card)} (${pctTxt((card / tong) * 100)}%). Đây là tiền bán thu vào theo đơn, chưa trừ chi bằng tiền mặt nên chưa phải số tiền trong két. Trong câu hỏi, tm = tiền mặt, ck = chuyển khoản. Hỏi tiền mặt / chuyển khoản mà không nói "chi" thì hiểu là tiền bán thu vào, nêu số này ở dòng đầu.`);
+    const { cash, transfer, card } = f.by_pay, ba = cash + transfer + card, tong = Math.max(f.revenue, ba), khac = tong - ba; // chia trên doanh thu như Báo cáo: còn đơn trả bằng cách khác (ví…)
+    lines.push(`Theo phương thức thanh toán trong kỳ (cùng số với Báo cáo): tiền mặt ${vnd(cash)} (${pctTxt((cash / tong) * 100)}%), chuyển khoản ${vnd(transfer)} (${pctTxt((transfer / tong) * 100)}%), thẻ ${vnd(card)} (${pctTxt((card / tong) * 100)}%)${khac >= 1 ? `, cách khác như ví ${vnd(khac)} (${pctTxt((khac / tong) * 100)}%)` : ''}. Đây là tiền bán thu vào theo đơn, chưa trừ chi bằng tiền mặt nên chưa phải số tiền trong két. Trong câu hỏi, tm = tiền mặt, ck = chuyển khoản. Hỏi tiền mặt / chuyển khoản mà không nói "chi" thì hiểu là tiền bán thu vào, nêu số này ở dòng đầu.`);
   }
   if (f.cashiers?.length && /thu ng[aâ]n|(?:nh[aâ]n vi[eê]n|(?<!\p{L})nv) n[aà]o|(?<!\p{L})ai (?:b[aá]n|thu)|ai .{0,20}nhi[eề]u nh[aấ]t/iu.test(question)) {
     const tong = f.cashiers.reduce((t, x) => t + x.revenue, 0);

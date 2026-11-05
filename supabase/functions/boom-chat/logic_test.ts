@@ -1442,3 +1442,10 @@ Deno.test('hỏi năm mà chỉ đọc được 92 ngày: nói rõ giới hạn'
   assertStringIncludes(formatFacts(parseFacts({ ...co, period: '92 ngày qua (6/8/2026–5/11/2026)' })!, new Date(), 'nửa năm qua sao', ''), 'KỲ BỊ GIỚI HẠN');
   assert(!formatFacts(parseFacts({ ...co, period: '90 ngày qua (8/8/2026–5/11/2026)' })!, new Date(), '3 tháng qua', '').includes('KỲ BỊ GIỚI HẠN'));
 });
+
+Deno.test('tỉ lệ phương thức thanh toán chia trên doanh thu như Báo cáo', () => {
+  const f = parseFacts({ top: [], slow: [], period: 'Tháng 10', revenue: 74188000, orders: 892, by_pay: { cash: 44340000, transfer: 26657000, card: 2333000 } })!;
+  const t = formatFacts(f, new Date(), 'tiền mặt bao nhiêu', '');
+  assertStringIncludes(t, 'tiền mặt 44.340.000đ (59,8%)');
+  assertStringIncludes(t, 'cách khác như ví 858.000đ');
+});
