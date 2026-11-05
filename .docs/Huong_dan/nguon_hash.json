@@ -13,7 +13,7 @@
     },
     "bao-cao-chuoi.md": {
       ".docs/Ai_Boom/cac-module/chuoi-cua-hang.md": "506e653eb997e678",
-      ".docs/tinh-nang.md": "a87afc3897524a42",
+      ".docs/tinh-nang.md": "741d0bd68cbdaa1a",
       "lib/core/repositories/chain_repository.dart": "884179d3c4d9034a",
       "lib/core/utils/chain_compare.dart": "eaa3c172728e61d3",
       "lib/core/utils/chain_insights.dart": "643ba4133c8c144d",
@@ -87,7 +87,7 @@
     },
     "luong.md": {
       ".docs/Ai_Boom/cac-module/quy-chuan-cham-cong-tinh-luong-chuan.md": "ac64501ae10b6158",
-      "lib/main.dart": "ea95739e1a7ef375",
+      "lib/main.dart": "e185199696c93128",
       "lib/modules/tinhluong/repository/tinhluong_repository.dart": "e4ce4880dea03d47",
       "lib/modules/tinhluong/screens/dispute_sheet.dart": "8f7e1c48fec1a30a",
       "lib/modules/tinhluong/screens/my_payslip_screen.dart": "3391a374782da5cd",
@@ -139,7 +139,7 @@
       "supabase/migrations/20261103_topping_ban_tru_kho_v1.sql": "1654e210fc64cfc2"
     },
     "thu-chi.md": {
-      "lib/core/services/store_auth_service.dart": "59840f57a6a72f38",
+      "lib/core/services/store_auth_service.dart": "a9fcea4dc9db59bd",
       "lib/core/widgets/order_detail_dialog.dart": "64516eb78d08e0de",
       "lib/modules/finance/providers/finance_providers.dart": "5d916c446a0b538b",
       "lib/modules/finance/repository/finance_repository.dart": "9b5726a39c415368",
