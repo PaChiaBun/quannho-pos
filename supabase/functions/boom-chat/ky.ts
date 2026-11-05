@@ -222,6 +222,13 @@ function kySo(chinh: Doan, k: Doan, f: string): { tu: Date; den: Date; nhan: str
   return { tu: k.tu, den, nhan: `cùng kỳ ${ten} (${dm(k.tu)}–${dm(last)})` };
 }
 
+/** Câu ngắn, không nêu kỳ, không nói "bây giờ": nên xem câu vừa hỏi để giữ kỳ. App chỉ gửi lượt trước khi có từ nối
+ *  ("còn …"), nên "tiền mặt chiếm bao nhiêu phần trăm" ngay sau câu tháng trước từng rơi về 30 ngày qua (05/11). */
+export function canGiuKy(question: string, now: Date = new Date()): boolean {
+  const f = boDau(question);
+  return f.split(' ').length <= 8 && !timKy(f, cong(now, VN)).length && !/\b(?:hien tai|bay gio|luc nay|hien gio|dang con|con lai|ton kho)\b/.test(f);
+}
+
 /** Kỳ chính + kỳ so. Không nhắc kỳ → macDinh. Một kỳ đứng sau "so với / hơn / kém" mà không có kỳ nào trước → kỳ đó là kỳ SO. */
 export function docKy(question: string, now: Date = new Date(), cauTruoc?: string | null): Ky {
   const vn = cong(now, VN);

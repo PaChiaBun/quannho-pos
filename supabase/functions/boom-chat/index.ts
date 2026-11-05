@@ -19,6 +19,7 @@
 //   JWT_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (có sẵn trong dịch vụ hàm của Supabase tự host)
 import * as jose from 'jsr:@panva/jose@6';
 import { laySoChoCau } from './hoi.ts';
+import { canGiuKy } from './ky.ts';
 import {
   ADVICE_PROMPT,
   SYSTEM_PROMPT,
@@ -182,6 +183,21 @@ async function isMember(storeId: string, userId: string): Promise<boolean> {
 }
 
 /** Trí nhớ 5 giờ: tối đa 4 lượt GPT trả lời gần nhất của người hỏi ở quán này (lỗi → không nhớ). */
+/** Câu người này hỏi trong 10 phút qua (không tính trước lúc bấm làm mới chat); chậm / lỗi → bỏ qua, về kỳ mặc định. */
+async function cauVuaHoi(storeId: string, userId: string, memoryAgeS: number | null | undefined): Promise<string | null> {
+  try {
+    const moc = Math.max(Date.now() - 600_000, memorySince(new Date(), memoryAgeS).getTime());
+    const rows = await rest(
+      `boom_qa_log?select=question&user_id=eq.${userId}&store_id=eq.${storeId}&status=eq.ok&created_at=gte.${encodeURIComponent(new Date(moc).toISOString())}&order=created_at.desc&limit=1`,
+      { signal: AbortSignal.timeout(1000) },
+    );
+    const q = Array.isArray(rows) ? rows[0]?.question : null;
+    return typeof q === 'string' ? q : null;
+  } catch {
+    return null;
+  }
+}
+
 async function recall(storeId: string, userId: string, since: Date): Promise<{ turns: MemoryTurn[]; hasData: boolean }> {
   try {
     const rows = await rest(
@@ -395,7 +411,7 @@ Deno.serve(async (req) => {
     }
     const jwt = (req.headers.get('authorization') ?? '').slice(7).trim();
     try {
-      const so = await laySoChoCau({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId: r.store_id, userId: user }, r.question, new Date(), r.history?.q);
+      const so = await laySoChoCau({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId: r.store_id, userId: user }, r.question, new Date(), r.history?.q ?? (canGiuKy(r.question) ? await cauVuaHoi(r.store_id, user, r.memory_age_s) : null));
       Object.assign(r, { mode: 'advice', facts: so.facts, modules: so.modules });
       kyHoi = so.ky.nhan;
       askTag = `+ask${huongDan.length ? '+hd' : ''}${so.dem ? '+dem' : ''}${so.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;
