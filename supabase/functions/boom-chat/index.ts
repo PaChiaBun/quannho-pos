@@ -395,7 +395,7 @@ Deno.serve(async (req) => {
     }
     const jwt = (req.headers.get('authorization') ?? '').slice(7).trim();
     try {
-      const so = await laySoChoCau({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId: r.store_id, userId: user }, r.question);
+      const so = await laySoChoCau({ sbUrl: SB_URL, anonKey: ANON_KEY, jwt, storeId: r.store_id, userId: user }, r.question, new Date(), r.history?.q);
       Object.assign(r, { mode: 'advice', facts: so.facts, modules: so.modules });
       kyHoi = so.ky.nhan;
       askTag = `+ask${huongDan.length ? '+hd' : ''}${so.dem ? '+dem' : ''}${so.loi.length ? `+loi:${so.loi.join(',')}` : ''}`;

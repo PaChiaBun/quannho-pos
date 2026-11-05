@@ -102,7 +102,48 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
       if (d) out.push({ at, end, doan: d });
     }
   };
-  // thứ cụ thể: "thứ 2 tuần trước", "chủ nhật tuần này"
+  const soChu = (x: string) => ({ hai: 2, ba: 3, bon: 4 } as Record<string, number>)[x] ?? +x;
+  const gan = (n: number) => { const k = Math.min(n, 92), s = cong(hn, -(k - 1) * D); return khoang(now, s, cong(hn, D), cong(s, -k * D), `${k} ngày qua`, `${k} ngày trước đó`); };
+  // 05/11: các luật này phải đứng trước "tháng qua" / "tuần qua": "3 tháng qua" từng bị đọc là tháng trước, "2 tuần qua" là tuần trước
+  // "từ 1/10 đến 15/10", "1/10 - 15/10" (bỏ dấu thì gạch ngang thành khoảng trắng), "từ 1 đến 15/10"
+  them(/\b(\d{1,2})(?:\s*\/\s*(\d{1,2}))?(?:\s*\/\s*(20\d{2}))? (?:(?:den|toi) (?:ngay )?)?(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*\/\s*(20\d{2}))?\b/, (m) => {
+    if (!m[2] && !/(?:den|toi)/.test(m[0])) return null;
+    const moC = +m[5], moD = m[2] ? +m[2] : moC;
+    if (moC < 1 || moC > 12 || moD < 1 || moD > 12) return null;
+    let y = m[3] ? +m[3] : m[6] ? +m[6] : nowY;
+    if (!m[3] && !m[6] && ngay(y, moD, +m[1]) > hn) y--;
+    const s = ngay(y, moD, +m[1]);
+    let e = cong(ngay(m[6] ? +m[6] : moC < moD ? y + 1 : y, moC, +m[4]), D);
+    if (e <= s) return null;
+    if (e.getTime() - s.getTime() > 92 * D) e = cong(s, 92 * D); // đọc số theo dòng quá dài
+    const n = Math.round((e.getTime() - s.getTime()) / D);
+    return khoang(now, s, e, cong(s, -n * D), `${n} ngày từ ${dm(s)}`, `${n} ngày trước đó`);
+  });
+  them(/\b(\d) thang dau nam\b/, (m) => { const s = ngay(nowY, 1), k = Math.min(+m[1] * 30, 92); return khoang(now, s, cong(s, k * D), cong(s, -k * D), `${k} ngày đầu năm ${nowY}`, `${k} ngày trước đó`); });
+  them(/\bnua nam(?: (?:qua|nay|gan day|gan nhat|vua qua|vua roi|roi))?\b/, () => gan(92));
+  // "30 ngày qua", "2 tuần nay", "3 tháng gần đây" (tới 92 ngày)
+  them(/(?<!\bthu )\b(\d{1,3}|hai|ba|bon) (ngay|hom|bua|tuan|thang)(?: (?:qua|nay|gan day|gan nhat|vua qua|vua roi|roi|tro lai day))\b/, (m) => {
+    const c = soChu(m[1]), n = c * ({ tuan: 7, thang: 30 } as Record<string, number>)[m[2]] || c;
+    return n < 1 ? null : gan(n);
+  });
+  them(/\b(?:may|vai) (ngay|hom|bua|tuan|thang) (?:nay|qua|gan day)\b/, (m) => gan(m[1] === 'thang' ? 92 : m[1] === 'tuan' ? 14 : 7));
+  // "2 tháng trước", "3 ngày trước", "tháng trước nữa", "tuần trước nữa"
+  const thangLui = (n: number) => { const t = ngay(nowY, nowM - n); return thang(t.getUTCMonth() + 1, t.getUTCFullYear(), now); };
+  const tuanLui = (n: number) => { const s = cong(t2, -7 * n * D); return khoang(now, s, cong(s, 7 * D), cong(s, -7 * D), `Tuần ${dm(s)}–${dm(cong(s, 6 * D))}`, 'tuần trước đó'); };
+  them(/\b(?:thang|thg) (?:truoc|trc) nua\b/, () => thangLui(2));
+  them(/\btuan (?:truoc|trc) nua\b/, () => tuanLui(2));
+  them(/(?<!\bthu )\b(\d{1,2}|hai|ba|bon) (ngay|hom|bua|tuan|thang) (?:truoc|trc)\b/, (m) => {
+    const n = soChu(m[1]);
+    if (n < 1) return null;
+    return m[2] === 'thang' ? thangLui(n) : m[2] === 'tuan' ? tuanLui(n) : motNgay(cong(hn, -n * D), now);
+  });
+  // "thứ 7 vừa rồi", "chủ nhật vừa rồi", "cuối tuần vừa rồi": ngày đã qua gần nhất
+  them(/\b(?:thu (hai|ba|tu|nam|sau|bay|[2-7])|chu (nhat)|(cn)) (?:vua roi|vua qua|roi|qua)\b/, (m) => {
+    const d = SO_THU[m[1] ?? m[2] ?? m[3]], lui = ((hn.getUTCDay() - d + 7) % 7) || 7;
+    return motNgay(cong(hn, -lui * D), now);
+  });
+  them(/\bcuoi tuan (?:vua roi|vua qua|roi|qua|truoc|trc)\b/, () => { const s = cong(t2, -2 * D); return khoang(now, s, t2, cong(s, -7 * D), `Cuối tuần ${dm(s)}–${dm(cong(t2, -D))}`, 'cuối tuần trước đó'); });
+  // thứ cụ thể: "thứ 2 tuần trước", "chủ nhật tuần này\"
   them(/\b(?:thu (hai|ba|tu|nam|sau|bay|[2-7])|chu (nhat)|(cn)) tuan (nay|truoc|trc|roi|qua)\b/, (m) => {
     const d = SO_THU[m[1] ?? m[2] ?? m[3]];
     const base = m[4] === 'nay' ? t2 : cong(t2, -7 * D);
@@ -125,9 +166,9 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
   // 05/11: "hôm kia bán bao nhiêu" rơi về 30 ngày qua
   them(/\b(?:hom kia|hum kia|bua kia)\b/, () => motNgay(cong(hn, -2 * D), now));
   them(/\b(?:(?:ngay )?hom qua|hqua|hum qua|hom wa|bua qua|toi qua|dem qua|sang qua|trua qua|chieu qua)\b/, () => kyCo('hom_qua', now));
-  them(/\b(?:tuan nay|(?:trong|ca) tuan(?! (?:truoc|trc|roi|qua|nua)))\b/, () => kyCo('tuan_nay', now));
+  them(/\b(?:tuan nay|(?:trong|ca|tu dau) tuan(?! (?:truoc|trc|roi|qua|nua)))\b/, () => kyCo('tuan_nay', now));
   them(/\btuan (?:truoc|trc|roi|qua)\b(?! nua)/, () => kyCo('tuan_truoc', now));
-  them(/\b(?:(?:thang|thg) nay|(?:trong|ca|tu dau|dau) (?:thang|thg)(?! (?:truoc|trc|roi|qua|nua|sau|toi(?! gio| nay)|\d)))\b/, () => kyCo('thang_nay', now));
+  them(/\b(?:(?:thang|thg) nay|(?:trong|ca|tu dau) (?:thang|thg)(?! (?:truoc|trc|roi|qua|nua|sau|toi(?! gio| nay)|\d))|dau (?:thang|thg) (?:toi gio|den nay|toi nay))\b/, () => kyCo('thang_nay', now));
   them(/\b(?:thang|thg) (?:truoc|trc|roi|qua)\b(?! nua)/, () => kyCo('thang_truoc', now));
   // "tháng 9", "tháng 12 năm ngoái"; tháng chưa tới năm nay → năm ngoái
   them(/\b(?:thang|thg|t) ?(\d{1,2})\b(?! (?:lan|trieu|tr|k|nghin|ngan|ly|phan)\b)(?: nam (ngoai|truoc|trc|roi|qua|nay))?/, (m) => {
@@ -136,14 +177,7 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
     const y = m[2] && m[2] !== 'nay' ? nowY - 1 : mo > nowM ? nowY - 1 : nowY;
     return thang(mo, y, now);
   });
-  // "30 ngày qua", "2 tuần nay", "3 tháng gần đây" (tới 92 ngày)
-  them(/\b(\d{1,3}) (ngay|hom|bua|tuan|thang)(?: (?:qua|nay|gan day|gan nhat|vua qua|vua roi|roi|tro lai day))\b/, (m) => {
-    const n = +m[1] * ({ tuan: 7, thang: 30 } as Record<string, number>)[m[2]] || +m[1];
-    if (n < 1) return null;
-    const k = Math.min(n, 92), s = cong(hn, -(k - 1) * D);
-    return khoang(now, s, cong(hn, D), cong(s, -k * D), `${k} ngày qua`, `${k} ngày trước đó`);
-  });
-  them(/\bquy (1|2|3|4|nay|truoc|trc|roi)\b(?! nua)/, (m) => {
+  them(/\bquy (1|2|3|4|nay|truoc|trc|roi)\b(?! nua)(?: nam nay)?/, (m) => {
     const cur = Math.floor((nowM + 2) / 3);
     const w = m[1] === 'nay' ? cur : /tr|roi/.test(m[1]) ? cur - 1 : +m[1];
     const [y, q] = w < 1 ? [nowY - 1, 4] : w > cur ? [nowY - 1, w] : [nowY, w];
@@ -151,8 +185,9 @@ function timKy(f: string, now: Date): { at: number; end: number; doan: Doan }[] 
     return khoang(now, s, ngay(y, q * 3 + 1), ps, `Quý ${q}/${y}`, `quý ${Math.floor((ps.getUTCMonth() + 3) / 3)}/${ps.getUTCFullYear()}`);
   });
   // năm: quá 92 ngày → 92 ngày cuối của năm đó (đọc số theo dòng quá dài)
-  them(/\b(?:(?:tu )?dau nam|nam nay|ca nam|nam (ngoai|truoc|trc|roi|qua))\b(?! nua)/, (m) => {
-    const y = m[1] ? nowY - 1 : nowY;
+  them(/\b(?:(?:tu )?dau nam|nam nay|ca nam|nam (ngoai|truoc|trc|roi|qua)|nam (20\d{2}))\b(?! nua)/, (m) => {
+    const y = m[2] ? +m[2] : m[1] ? nowY - 1 : nowY;
+    if (y > nowY) return null;
     const e = y === nowY ? cong(hn, D) : ngay(y + 1, 1), s = cong(e, -92 * D);
     return khoang(now, s, e, cong(s, -92 * D), `92 ngày cuối năm ${y}`, '92 ngày trước đó');
   });
@@ -188,10 +223,15 @@ function kySo(chinh: Doan, k: Doan, f: string): { tu: Date; den: Date; nhan: str
 }
 
 /** Kỳ chính + kỳ so. Không nhắc kỳ → macDinh. Một kỳ đứng sau "so với / hơn / kém" mà không có kỳ nào trước → kỳ đó là kỳ SO. */
-export function docKy(question: string, now: Date = new Date()): Ky {
+export function docKy(question: string, now: Date = new Date(), cauTruoc?: string | null): Ky {
   const vn = cong(now, VN);
-  const f = boDau(question);
-  const ds = timKy(f, vn);
+  let f = boDau(question);
+  let ds = timKy(f, vn);
+  // 05/11: "tháng trước bán sao" rồi "còn tiền mặt thì sao": câu nối tiếp không nêu kỳ thì giữ kỳ câu trước, không về mặc định
+  if (!ds.length && cauTruoc) {
+    f = boDau(cauTruoc);
+    ds = timKy(f, vn);
+  }
   let chinh: Doan, so: { tu: Date; den: Date; nhan: string };
   const cue = /\b(?:so voi|so sanh|so|hon|kem)\b/.exec(f);
   if (ds.length === 1 && cue && cue.index < ds[0].at) {

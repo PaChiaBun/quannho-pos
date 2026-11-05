@@ -961,6 +961,10 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   // Lần 38 (giai đoạn 4): hồ sơ quán tự suy từ chính số liệu — GPT khuyên đúng loại quán / giờ mở / quy mô
   const prof = shopProfile(f);
   if (prof) lines.unshift(`HỒ SƠ QUÁN (tự suy từ số liệu): ${prof}`);
+  // 05/11: hỏi "năm nay" mà máy chủ chỉ đọc 92 ngày → Boom ghi ngày nhưng không nói đây không phải cả năm
+  if (/^\d+ ngày (?:cuối|đầu) năm/.test(f.period) || (/^92 ngày qua/.test(f.period) && /n[aă]m/i.test(question))) {
+    lines.push(`KỲ BỊ GIỚI HẠN: Bé Boom chỉ đọc được tối đa 92 ngày, đây là ${f.period}, KHÔNG phải cả năm / nửa năm. Dòng đầu phải nói rõ "Bé Boom chỉ đọc được 92 ngày này, chưa phải cả năm" rồi mới nêu số; không kết luận cho cả năm.`);
+  }
   if (f.prev_period && f.prev_revenue !== null) {
     // 05/11: "so với cả tháng trước" ngày 5 báo giảm 83,9% dù mỗi ngày bán như nhau; tháng 30 so 31 ngày báo giảm 3% khi thật ra tăng
     // → hai kỳ khác số ngày mở bán: quy số kỳ trước về cùng số ngày, mọi phép so bên dưới đều đúng; số gốc vẫn ghi ở dòng này

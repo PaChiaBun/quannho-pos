@@ -1435,3 +1435,10 @@ Deno.test('chủ đề số Báo cáo nhận cả viết tắt, không dấu', (
   // không nhận nhầm chữ khác chứa các từ này
   for (const q of ['tmdt có nên làm không', 'ckeo bán sao', 'kết quả tháng này']) assert(!t(q).includes('Theo phương thức thanh toán'), q);
 });
+
+Deno.test('hỏi năm mà chỉ đọc được 92 ngày: nói rõ giới hạn', () => {
+  const co = { top: [], slow: [], revenue: 100, orders: 1 };
+  assertStringIncludes(formatFacts(parseFacts({ ...co, period: '92 ngày cuối năm 2026 (6/8/2026–5/11/2026)' })!, new Date(), 'năm nay bán sao', ''), 'KỲ BỊ GIỚI HẠN');
+  assertStringIncludes(formatFacts(parseFacts({ ...co, period: '92 ngày qua (6/8/2026–5/11/2026)' })!, new Date(), 'nửa năm qua sao', ''), 'KỲ BỊ GIỚI HẠN');
+  assert(!formatFacts(parseFacts({ ...co, period: '90 ngày qua (8/8/2026–5/11/2026)' })!, new Date(), '3 tháng qua', '').includes('KỲ BỊ GIỚI HẠN'));
+});

@@ -16,8 +16,8 @@ function hanDem(ky: Ky, now: number): number {
   return now + (Date.parse(ky.den) < now - 60_000 ? 6 * 3600_000 : 10 * 60_000);
 }
 
-export async function laySoChoCau(ctx: Ctx, question: string, now = new Date()): Promise<SoCuaCau> {
-  const ky = docKy(question, now);
+export async function laySoChoCau(ctx: Ctx, question: string, now = new Date(), cauTruoc?: string | null): Promise<SoCuaCau> {
+  const ky = docKy(question, now, cauTruoc);
   // khoá theo NGÀY của mốc cuối với kỳ đang chạy (now đổi từng giây) để câu hỏi tiếp cùng kỳ trúng đệm
   const khoa = `${ctx.userId}|${ctx.storeId}|${ky.tu}|${ky.den.slice(0, 13)}|${ky.truocTu}|${ky.truocDen.slice(0, 13)}`;
   const t = now.getTime();

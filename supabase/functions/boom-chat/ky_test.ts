@@ -86,4 +86,45 @@ Deno.test('hôm kia, đầu tháng tới giờ', () => {
   // "đầu tháng tới" là tháng sau, không phải kỳ số liệu tháng này
   assert(docKy('dau thang toi lam gi', now).nhan !== docKy('thang nay', now).nhan);
   assertEquals(docKy('dau thang truoc', now).nhan, docKy('thang truoc', now).nhan);
+  // "đầu tháng ế" là nói chung, không phải kỳ tháng này
+  assert(!docKy('dau thang hay e hon', now).nhan.startsWith('Tháng này'));
+});
+
+Deno.test('kỳ nhiều cách nói: số + tháng / tuần, khoảng ngày, thứ vừa rồi', () => {
+  const now = new Date('2026-11-05T15:00:00+07:00');
+  const n = (q: string) => docKy(q, now).nhan;
+  assert(n('3 tháng qua').startsWith('90 ngày qua'));
+  assert(n('ba thang qua').startsWith('90 ngày qua'));
+  assert(n('2 tuần qua').startsWith('14 ngày qua'));
+  assert(n('nửa năm qua').startsWith('92 ngày qua'));
+  assert(n('mấy ngày nay').startsWith('7 ngày qua'));
+  assert(n('may hom nay').startsWith('7 ngày qua'));
+  assert(n('2 tháng trước').startsWith('Tháng 9/2026'));
+  assert(n('thang truoc nua').startsWith('Tháng 9/2026'));
+  assert(n('tuần trước nữa').startsWith('Tuần 19/10–25/10'));
+  assert(n('3 ngày trước').startsWith('Hôm') || n('3 ngày trước').includes('2/11'));
+  assert(n('từ 1/10 đến 15/10').startsWith('15 ngày từ 1/10'));
+  assert(n('1/10 - 15/10').startsWith('15 ngày từ 1/10'));
+  assert(n('từ 1 đến 15/10').startsWith('15 ngày từ 1/10'));
+  assert(n('thứ 7 vừa rồi').includes('31/10'));
+  assert(n('chủ nhật vừa rồi').includes('1/11'));
+  assert(n('cuoi tuan vua roi').startsWith('Cuối tuần 31/10–1/11'));
+  assert(n('năm 2025').startsWith('92 ngày cuối năm 2025'));
+  assert(docKy('quý 3 năm nay', now).nhanTruoc.includes('quý 2'));
+  assert(n('6 tháng đầu năm').startsWith('92 ngày đầu năm 2026'));
+  assert(n('từ đầu tuần').startsWith('Tuần này'));
+  // không đổi: câu nói chung về đầu tuần, một ngày cụ thể, hai ngày để so
+  assert(n('đầu tuần ế quá làm sao').startsWith('30 ngày qua'));
+  assert(n('hôm 3/11 bán sao').includes('3/11'));
+  assert(n('so 1/11 với 3/11').includes('/11'));
+});
+
+Deno.test('câu nối tiếp không nêu kỳ giữ kỳ câu trước', () => {
+  const now = new Date('2026-11-05T15:00:00+07:00');
+  assert(docKy('còn tiền mặt thì sao', now, 'tháng trước bán sao').nhan.startsWith('Tháng trước'));
+  // câu tự nêu kỳ thì theo câu đó
+  assert(docKy('còn hôm qua thì sao', now, 'tháng trước bán sao').nhan.startsWith('Hôm qua'));
+  // câu trước không có kỳ, hoặc không phải câu nối tiếp: như cũ
+  assertEquals(docKy('còn tiền mặt', now, 'bán sao').nhan, docKy('còn tiền mặt', now).nhan);
+  assertEquals(docKy('còn tiền mặt', now, null).nhan, docKy('còn tiền mặt', now).nhan);
 });
