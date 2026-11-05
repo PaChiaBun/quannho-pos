@@ -1,4 +1,4 @@
-import { assertEquals } from 'jsr:@std/assert@1';
+import { assert, assertEquals } from 'jsr:@std/assert@1';
 import { docKy } from './ky.ts';
 
 // Hôm nay Thứ Ba 03/11/2026 09:00 giờ VN — 30 câu đo thử bộ định tuyến GPT ngày 03/11 (GPT đúng 15/30)
@@ -75,4 +75,15 @@ Deno.test('kỳ chưa hết so kỳ đã hết: cắt cùng độ dài', () => {
   assertEquals(r('tuần này so với tháng trước').truocDen.slice(0, 10), '2026-11-01');
   // ngày 31 so tháng ngắn hơn: không vượt hết tháng đó
   assertEquals(docKy('tháng này so với tháng 2', new Date('2026-03-31T10:00:00+07:00')).truocDen.slice(0, 10), '2026-03-01');
+});
+
+Deno.test('hôm kia, đầu tháng tới giờ', () => {
+  const now = new Date('2026-11-05T15:00:00+07:00');
+  assertEquals(docKy('hom kia ban bn', now).nhan, docKy('3/11 ban bn', now).nhan);
+  assertEquals(docKy('hôm kia bán bao nhiêu', now).nhan, docKy('3/11 ban bn', now).nhan);
+  assertEquals(docKy('dau thang toi gio', now).nhan, docKy('thang nay', now).nhan);
+  assertEquals(docKy('từ đầu tháng tới giờ', now).nhan, docKy('thang nay', now).nhan);
+  // "đầu tháng tới" là tháng sau, không phải kỳ số liệu tháng này
+  assert(docKy('dau thang toi lam gi', now).nhan !== docKy('thang nay', now).nhan);
+  assertEquals(docKy('dau thang truoc', now).nhan, docKy('thang truoc', now).nhan);
 });

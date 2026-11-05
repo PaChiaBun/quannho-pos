@@ -1039,11 +1039,11 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
     }
   }
   // 05/11: Báo cáo có tiền mặt / chuyển khoản, Boom báo không có số. Chỉ thêm khi hỏi đúng chuyện này, câu khác khỏi dài
-  if (f.by_pay && /ti[eề]n m[aặ]t|chuy[eể]n kho[aả]n|qu[eẹ]t th[eẻ]|(?<!\p{L})k[eé]t(?!\p{L})|ph[uư][oơ]ng th[uứ]c/iu.test(question)) {
+  if (f.by_pay && /ti[eề]n m[aặ]t|chuy[eể]n kho[aả]n|qu[eẹ]t th[eẻ]|(?<!\p{L})(?:k[eé]t|ck|tm)(?!\p{L})|ph[uư][oơ]ng th[uứ]c/iu.test(question)) {
     const { cash, transfer, card } = f.by_pay, tong = cash + transfer + card;
-    lines.push(`Theo phương thức thanh toán trong kỳ (cùng số với Báo cáo): tiền mặt ${vnd(cash)} (${pctTxt((cash / tong) * 100)}%), chuyển khoản ${vnd(transfer)} (${pctTxt((transfer / tong) * 100)}%), thẻ ${vnd(card)} (${pctTxt((card / tong) * 100)}%). Đây là tiền bán thu vào theo đơn, chưa trừ chi bằng tiền mặt nên chưa phải số tiền trong két. Hỏi tiền mặt / chuyển khoản mà không nói "chi" thì hiểu là tiền bán thu vào, nêu số này ở dòng đầu.`);
+    lines.push(`Theo phương thức thanh toán trong kỳ (cùng số với Báo cáo): tiền mặt ${vnd(cash)} (${pctTxt((cash / tong) * 100)}%), chuyển khoản ${vnd(transfer)} (${pctTxt((transfer / tong) * 100)}%), thẻ ${vnd(card)} (${pctTxt((card / tong) * 100)}%). Đây là tiền bán thu vào theo đơn, chưa trừ chi bằng tiền mặt nên chưa phải số tiền trong két. Trong câu hỏi, tm = tiền mặt, ck = chuyển khoản. Hỏi tiền mặt / chuyển khoản mà không nói "chi" thì hiểu là tiền bán thu vào, nêu số này ở dòng đầu.`);
   }
-  if (f.cashiers?.length && /thu ng[aâ]n|nh[aâ]n vi[eê]n n[aà]o|(?<!\p{L})ai (?:b[aá]n|thu)|ai .{0,20}nhi[eề]u nh[aấ]t/iu.test(question)) {
+  if (f.cashiers?.length && /thu ng[aâ]n|(?:nh[aâ]n vi[eê]n|(?<!\p{L})nv) n[aà]o|(?<!\p{L})ai (?:b[aá]n|thu)|ai .{0,20}nhi[eề]u nh[aấ]t/iu.test(question)) {
     const tong = f.cashiers.reduce((t, x) => t + x.revenue, 0);
     lines.push(`Doanh thu theo thu ngân trong kỳ (cùng số với Báo cáo): ${[...f.cashiers].sort((a, b) => b.revenue - a.revenue).map((x) => `${x.name} ${vnd(x.revenue)} (${pctTxt((x.revenue / tong) * 100)}%)`).join('; ')}. Đây là người bấm thanh toán, phụ thuộc ca làm, KHÔNG dùng để kết luận ai bán giỏi.`);
   }
@@ -1055,7 +1055,7 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
       lines.push(`Theo ngày trong kỳ (cùng số với Báo cáo, ${xd.length} ngày có đơn, chưa tính hôm nay nếu đang dở): cao nhất ${hi.map((x) => `${dm(x.d)} ${vnd(x.revenue)} (${x.orders} đơn)`).join('; ')}${lo.length ? `; thấp nhất trong các ngày có đơn ${dm(lo[0].d)} ${vnd(lo[0].revenue)} (${lo[0].orders} đơn)` : ''}.`);
     }
   }
-  if (f.voids && /(?<!\p{L})(?:h[uủ][yỷ]|hu[yỷ])(?!\p{L})|th[aấ]t tho[aá]t/iu.test(question)) {
+  if (f.voids && /(?<!\p{L})(?:h[uủ][yỷ]|hu[yỷ]|cancel|xo[aá] m[oó]n)(?!\p{L})|th[aấ]t tho[aá]t/iu.test(question)) {
     const v = f.voids, ten: Record<string, string> = { void_item: 'huỷ món', cancel_table: 'huỷ bàn', cancel_order: 'huỷ hoá đơn' };
     lines.push(v.count === 0 ? 'Huỷ trong kỳ (cùng nguồn với Báo cáo): không có lượt huỷ nào được ghi.' : `Huỷ trong kỳ (cùng nguồn với Báo cáo): ${v.count} lượt, tổng ${vnd(v.amount)}${Object.keys(v.by_type).length ? ` (${Object.entries(v.by_type).map(([k, c]) => `${ten[k] ?? k} ${c}`).join(', ')})` : ''}.${v.by_person.length ? ` Theo người yêu cầu: ${v.by_person.map((x) => `${x.name} ${x.count} lượt, ${vnd(x.amount)}`).join('; ')}.` : ''} Không kết luận ai gian lận từ số này; nói kiểm từng lượt ở Báo cáo → tab Huỷ/Duyệt.`);
   }

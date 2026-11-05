@@ -1425,3 +1425,13 @@ Deno.test('số Báo cáo chỉ hiện khi hỏi đúng chủ đề: thu ngân, 
   assertStringIncludes(formatModules(m, now, 'ai đi trễ nhiều'), 'Đi trễ: 2 ca (Lan 2 ca, tổng 25 phút)');
   assert(!formatModules(m, now, 'ai làm nhiều giờ').includes('Đi trễ'));
 });
+
+Deno.test('chủ đề số Báo cáo nhận cả viết tắt, không dấu', () => {
+  const f = parseFacts({ top: [], slow: [], period: 'x', revenue: 870000, orders: 12, by_pay: { cash: 690000, transfer: 180000, card: 0 }, cashiers: [{ name: 'Lan', revenue: 870000 }], voids: { count: 2, amount: 100000, by_type: {}, by_person: [] } })!;
+  const t = (q: string) => formatFacts(f, new Date(), q, '');
+  for (const q of ['hnay ck bn', 'tm bn', 'ck vs tm thang truoc', 'tien mat hom nay bao nhieu']) assertStringIncludes(t(q), 'Theo phương thức thanh toán', q);
+  for (const q of ['nv nao ban nhieu nhat', 'nv nao thu nhieu tien nhat', 'thu ngan nao nhieu nhat']) assertStringIncludes(t(q), 'theo thu ngân', q);
+  for (const q of ['cancel bao nhieu', 'xoa mon bao nhieu lan', 'huy bao nhieu']) assertStringIncludes(t(q), 'Huỷ trong kỳ', q);
+  // không nhận nhầm chữ khác chứa các từ này
+  for (const q of ['tmdt có nên làm không', 'ckeo bán sao', 'kết quả tháng này']) assert(!t(q).includes('Theo phương thức thanh toán'), q);
+});
