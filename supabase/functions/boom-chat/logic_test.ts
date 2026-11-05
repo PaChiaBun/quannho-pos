@@ -1372,3 +1372,26 @@ Deno.test('số tính sẵn: khác số ngày, ngày dở, kỳ trước chưa g
   const f5 = parseFacts({ ...co, period: 'Tháng này', revenue: 8000000, orders: 100, groups: [{ name: 'Món chính', revenue: 8000000, qty: 300, items: 2, unsold: 0, top: [{ name: 'Bún bò', qty: 100, revenue: 5000000, price: 50000 }, { name: 'Cơm sườn', qty: 200, revenue: 3000000, price: 15000 }], slow: [], unsold_names: [] }] })!;
   assertStringIncludes(formatFacts(f5, new Date('2026-11-20T09:00:00+07:00'), 'bún bò với cơm sườn món nào hơn', ''), 'bán nhiều phần hơn: Cơm sườn; doanh thu cao hơn: Bún bò');
 });
+
+Deno.test('kỳ ngắn không gọi là nghỉ; Thu Chi khác số ngày', () => {
+  const f = parseFacts({ top: [], slow: [], period: 'Tháng này (1/11–5/11)', from: '2026-11-01', to: '2026-11-05', revenue: 870000, orders: 20, prev_period: 'Trọn tháng trước', prev_from: '2026-10-01', prev_to: '2026-10-31', prev_revenue: 74000000, prev_orders: 1500, by_weekday: [300000, 0, 300000, 270000, 0, 0, 0] })!;
+  const t = formatFacts(f, new Date('2026-11-06T09:00:00+07:00'), 'so với cả tháng trước', '');
+  assertStringIncludes(t, 'Kỳ này 5 ngày');
+  assertStringIncludes(t, 'Thứ 3, Chủ nhật: không có đơn (kỳ mới có 1 ngày này, chưa chắc nghỉ)');
+  assert(!t.includes('quán NGHỈ'), t);
+  const mk = (period: string, prev_period: string) => parseModules({ finance: { period, prev_period, income: 30000000, prev_income: 31000000, expense: 15000000, prev_expense: 15500000, count: 20, top_expense: [{ name: 'Nguyên liệu', amount: 10000000, prev: 10300000 }] } })!;
+  const now = new Date('2026-11-06T09:00:00+07:00');
+  // lệch nhiều: không so %
+  const xa = formatModules(mk('Tháng này (1/11–5/11)', 'Trọn tháng trước (1/10–31/10)'), now, 'sao thu chi giảm so tháng trước');
+  assertStringIncludes(xa, 'KHÔNG so thu, chi với kỳ trước');
+  assert(!xa.includes('so kỳ trước 31.000.000đ') && !xa.includes('Kỳ trước thu − chi'), xa);
+  // lệch ít: giữ số sổ, kèm trung bình mỗi ngày (31 triệu / 31 ngày = 30 triệu / 30 ngày)
+  const gan = formatModules(mk('Tháng 9/2026', 'Tháng 8/2026'), now, 'sao thu chi giảm so tháng trước');
+  assertStringIncludes(gan, 'thu trung bình 1.000.000đ/ngày so 1.000.000đ/ngày');
+  assertStringIncludes(gan, 'so kỳ trước 31.000.000đ');
+  // cùng số ngày: giữ nguyên
+  const same = formatModules(mk('Tháng này (1/11–5/11)', 'Cùng kỳ tháng trước (1/10–5/10)'), now, 'thu chi');
+  assertStringIncludes(same, 'GIẢM 3,2% so kỳ trước 31.000.000đ');
+  // tháng đang chạy không có khoảng ngày: không quy theo tên tháng
+  assert(!formatModules(mk('Tháng 11/2026', 'Tháng 10/2026'), now, 'thu chi').includes('khác số ngày'));
+});
