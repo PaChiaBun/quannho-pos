@@ -185,6 +185,10 @@ export interface ShopFacts {
   by_weekday?: number[] | null;
   /** Theo phương thức thanh toán, cùng RPC với màn Báo cáo. */
   by_pay?: { cash: number; transfer: number; card: number } | null;
+  /** Theo thu ngân, theo ngày, huỷ: cùng nguồn màn Báo cáo; chỉ đưa vào khối khi câu hỏi đúng chủ đề. */
+  cashiers?: { name: string; revenue: number }[] | null;
+  by_day?: { d: string; revenue: number; orders: number }[] | null;
+  voids?: { count: number; amount: number; by_type: Record<string, number>; by_person: { name: string; count: number; amount: number }[] } | null;
   /** Món bán chạy (≤3) theo khung giờ: sáng 5–11h, trưa 11–14h, chiều 14–17h, tối 17h trở đi. */
   by_band?: { name: string; qty: number }[][] | null;
   /** Ngày đầu / ngày cuối có số của kỳ (YYYY-MM-DD, giờ VN) — tính số lần mỗi thứ, dự báo cuối tháng (giai đoạn 2). */
@@ -626,6 +630,9 @@ export function formatModules(m: ModuleFacts, now: Date = new Date(), question =
       `[CHẤM CÔNG — ${ss(n.period)}${n.self ? ', CHỈ của chính người hỏi' : ''}] ${nn(n.shifts)} ca, tổng ${qty(n.total_hours)} giờ, ${nn(n.staff_count)} người.` +
         (st.length ? ` Theo người (giờ, số ca): ${st.map((x) => `${ss(x.name)} ${qty(x.hours)} giờ / ${nn(x.shifts)} ca`).join('; ')}.` : '') +
         (nn(n.open_now) ? ` Đang trong ca: ${nn(n.open_now)}.` : '') +
+        // cùng cột is_late với Báo cáo → tab Nhân viên; chỉ thêm khi hỏi đi trễ
+        (nn(n.late_total) && /tr[eễ](?!\p{L})|mu[oộ]n/iu.test(question) ? ` Đi trễ: ${nn(n.late_total)} ca (${st.filter((x) => nn(x.late) > 0).map((x) => `${ss(x.name)} ${nn(x.late)} ca, tổng ${nn(x.late_minutes)} phút`).join('; ')}).` : '') +
+        (typeof n.late_total === 'number' && n.late_total === 0 && /tr[eễ](?!\p{L})|mu[oộ]n/iu.test(question) ? ' Không có ca nào ghi đi trễ trong kỳ.' : '') +
         (nn(n.forgot_clock_out) ? ` ${nn(n.forgot_clock_out)} ca quá 16 giờ chưa chấm ra (có thể quên chấm ra — không tính giờ).` : ''),
     );
     const pr = arr(n.payroll);
@@ -763,6 +770,9 @@ export function parseFacts(v: unknown): ShopFacts | null {
     by_hour: numList(f.by_hour, 24),
     by_weekday: numList(f.by_weekday, 7),
     by_pay: f.by_pay && typeof f.by_pay === 'object' ? (([a, b, c]) => (a + b + c > 0 ? { cash: a, transfer: b, card: c } : null))(['cash', 'transfer', 'card'].map((k) => { const v = Number((f.by_pay as Record<string, unknown>)[k]); return Number.isFinite(v) && v > 0 ? v : 0; })) : null,
+    cashiers: Array.isArray(f.cashiers) ? f.cashiers.slice(0, 12).map((x: Record<string, unknown>) => ({ name: cleanText(x?.name, 40), revenue: Number(x?.revenue) })).filter((x: { name: string; revenue: number }) => x.name && x.revenue > 0) : null,
+    by_day: Array.isArray(f.by_day) ? f.by_day.slice(0, 400).map((x: Record<string, unknown>) => ({ d: ymd(x?.d) ?? '', revenue: Number(x?.revenue), orders: Number(x?.orders) || 0 })).filter((x: { d: string; revenue: number }) => x.d && x.revenue > 0) : null,
+    voids: f.voids && typeof f.voids === 'object' ? (() => { const v = f.voids as Record<string, unknown>; const bt = (v.by_type && typeof v.by_type === 'object' ? v.by_type : {}) as Record<string, unknown>; return { count: Number(v.count) || 0, amount: Number(v.amount) || 0, by_type: Object.fromEntries(Object.entries(bt).slice(0, 6).map(([k, x]) => [cleanText(k, 20), Number(x) || 0])), by_person: (Array.isArray(v.by_person) ? v.by_person : []).slice(0, 8).map((x: Record<string, unknown>) => ({ name: cleanText(x?.name, 40), count: Number(x?.count) || 0, amount: Number(x?.amount) || 0 })).filter((x: { name: string }) => x.name) }; })() : null,
     by_band: parseBands(f.by_band),
     from: ymd(f.from),
     to: ymd(f.to),
@@ -1032,6 +1042,22 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
   if (f.by_pay && /ti[eề]n m[aặ]t|chuy[eể]n kho[aả]n|qu[eẹ]t th[eẻ]|(?<!\p{L})k[eé]t(?!\p{L})|ph[uư][oơ]ng th[uứ]c/iu.test(question)) {
     const { cash, transfer, card } = f.by_pay, tong = cash + transfer + card;
     lines.push(`Theo phương thức thanh toán trong kỳ (cùng số với Báo cáo): tiền mặt ${vnd(cash)} (${pctTxt((cash / tong) * 100)}%), chuyển khoản ${vnd(transfer)} (${pctTxt((transfer / tong) * 100)}%), thẻ ${vnd(card)} (${pctTxt((card / tong) * 100)}%). Đây là tiền bán thu vào theo đơn, chưa trừ chi bằng tiền mặt nên chưa phải số tiền trong két. Hỏi tiền mặt / chuyển khoản mà không nói "chi" thì hiểu là tiền bán thu vào, nêu số này ở dòng đầu.`);
+  }
+  if (f.cashiers?.length && /thu ng[aâ]n|nh[aâ]n vi[eê]n n[aà]o|(?<!\p{L})ai (?:b[aá]n|thu)|ai .{0,20}nhi[eề]u nh[aấ]t/iu.test(question)) {
+    const tong = f.cashiers.reduce((t, x) => t + x.revenue, 0);
+    lines.push(`Doanh thu theo thu ngân trong kỳ (cùng số với Báo cáo): ${[...f.cashiers].sort((a, b) => b.revenue - a.revenue).map((x) => `${x.name} ${vnd(x.revenue)} (${pctTxt((x.revenue / tong) * 100)}%)`).join('; ')}. Đây là người bấm thanh toán, phụ thuộc ca làm, KHÔNG dùng để kết luận ai bán giỏi.`);
+  }
+  if (f.by_day?.length && /(?:ng[aà]y|h[oô]m) n[aà]o|ng[aà]y (?:cao|th[aấ]p|đ[oô]ng|v[aắ]ng|nhi[eề]u|[ií]t)/iu.test(question)) {
+    // hôm nay chưa hết ngày → không xếp hạng
+    const xd = f.by_day.filter((x) => x.d !== f.to || todayD < 0);
+    if (xd.length) {
+      const dm = (d: string) => `${+d.slice(8, 10)}/${+d.slice(5, 7)}`, sx = [...xd].sort((a, b) => b.revenue - a.revenue), hi = sx.slice(0, 3), lo = sx.length > 3 ? sx.slice(-1) : [];
+      lines.push(`Theo ngày trong kỳ (cùng số với Báo cáo, ${xd.length} ngày có đơn, chưa tính hôm nay nếu đang dở): cao nhất ${hi.map((x) => `${dm(x.d)} ${vnd(x.revenue)} (${x.orders} đơn)`).join('; ')}${lo.length ? `; thấp nhất trong các ngày có đơn ${dm(lo[0].d)} ${vnd(lo[0].revenue)} (${lo[0].orders} đơn)` : ''}.`);
+    }
+  }
+  if (f.voids && /(?<!\p{L})(?:h[uủ][yỷ]|hu[yỷ])(?!\p{L})|th[aấ]t tho[aá]t/iu.test(question)) {
+    const v = f.voids, ten: Record<string, string> = { void_item: 'huỷ món', cancel_table: 'huỷ bàn', cancel_order: 'huỷ hoá đơn' };
+    lines.push(v.count === 0 ? 'Huỷ trong kỳ (cùng nguồn với Báo cáo): không có lượt huỷ nào được ghi.' : `Huỷ trong kỳ (cùng nguồn với Báo cáo): ${v.count} lượt, tổng ${vnd(v.amount)}${Object.keys(v.by_type).length ? ` (${Object.entries(v.by_type).map(([k, c]) => `${ten[k] ?? k} ${c}`).join(', ')})` : ''}.${v.by_person.length ? ` Theo người yêu cầu: ${v.by_person.map((x) => `${x.name} ${x.count} lượt, ${vnd(x.amount)}`).join('; ')}.` : ''} Không kết luận ai gian lận từ số này; nói kiểm từng lượt ở Báo cáo → tab Huỷ/Duyệt.`);
   }
   const cnt = weekdayCounts(f.from, f.to);
   if (f.by_weekday && f.by_weekday.some((v) => v > 0)) {

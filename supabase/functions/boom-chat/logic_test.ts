@@ -1405,3 +1405,23 @@ Deno.test('phương thức thanh toán: chỉ hiện khi hỏi đúng chuyện, 
   assert(!formatFacts(f, new Date(), 'kết quả tháng này', '').includes('phương thức thanh toán'));
   assertEquals(parseFacts({ ...co, by_pay: { cash: 0, transfer: 0, card: 0 } })!.by_pay, null);
 });
+
+Deno.test('số Báo cáo chỉ hiện khi hỏi đúng chủ đề: thu ngân, ngày, huỷ, đi trễ', () => {
+  const now = new Date('2026-11-20T09:00:00+07:00');
+  const f = parseFacts({ top: [], slow: [], period: 'Tháng này', from: '2026-11-01', to: '2026-11-19', revenue: 870000, orders: 12,
+    cashiers: [{ name: 'Minh', revenue: 370000 }, { name: 'Lan', revenue: 500000 }],
+    by_day: [{ d: '2026-11-01', revenue: 310000, orders: 4 }, { d: '2026-11-03', revenue: 490000, orders: 6 }, { d: '2026-11-04', revenue: 70000, orders: 2 }],
+    voids: { count: 2, amount: 100000, by_type: { void_item: 1, cancel_table: 1 }, by_person: [{ name: 'Lan', count: 2, amount: 100000 }] } })!;
+  const t = (q: string) => formatFacts(f, now, q, '');
+  assertStringIncludes(t('thu ngân nào thu nhiều nhất'), 'Lan 500.000đ (57,5%); Minh 370.000đ (42,5%)');
+  assertStringIncludes(t('ngày nào bán nhiều nhất'), 'cao nhất 3/11 490.000đ (6 đơn)');
+  assertStringIncludes(t('tháng này huỷ bao nhiêu'), '2 lượt, tổng 100.000đ (huỷ món 1, huỷ bàn 1)');
+  assertStringIncludes(t('có hủy bàn nhiều không'), 'Lan 2 lượt');
+  const khac = t('món nào bán chạy');
+  assert(!khac.includes('thu ngân') && !khac.includes('Theo ngày') && !khac.includes('Huỷ trong kỳ'), khac);
+  // "huy" trong từ khác, câu về chủ đề khác: không kéo số huỷ vào
+  assert(!t('kho hàng huyện này').includes('Huỷ trong kỳ'));
+  const m = parseModules({ nhan_su: { period: 'Tháng này', shifts: 5, total_hours: 40, staff_count: 2, late_total: 2, staff: [{ name: 'Lan', hours: 20, shifts: 3, late: 2, late_minutes: 25 }, { name: 'Minh', hours: 20, shifts: 2, late: 0, late_minutes: 0 }] } })!;
+  assertStringIncludes(formatModules(m, now, 'ai đi trễ nhiều'), 'Đi trễ: 2 ca (Lan 2 ca, tổng 25 phút)');
+  assert(!formatModules(m, now, 'ai làm nhiều giờ').includes('Đi trễ'));
+});

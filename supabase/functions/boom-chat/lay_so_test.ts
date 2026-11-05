@@ -156,7 +156,7 @@ const duLieu: Route = (bang, p, method) => {
       return [{ id: 1, product_id: 'p1', delta: -1.5, reason: 'waste' }, { id: 2, product_id: 'x', delta: -2, reason: 'expired' }];
     case 'staff_shifts':
       return [
-        { id: 1, user_id: 'u1', clock_in: '2026-11-01T01:00:00+00:00', clock_out: '2026-11-01T05:30:00.123456+00:00' },
+        { id: 1, user_id: 'u1', clock_in: '2026-11-01T01:00:00+00:00', clock_out: '2026-11-01T05:30:00.123456+00:00', is_late: true, late_minutes: 15 },
         // không có múi giờ = giờ VN (như Dart giờ máy): 08:00 VN → 10:00 VN = 2 giờ
         { id: 2, user_id: 'u2', clock_in: '2026-11-02 08:00:00', clock_out: '2026-11-02T03:00:00Z' },
         { id: 3, user_id: 'u2', clock_in: moTiengTruoc, clock_out: null },
@@ -226,7 +226,8 @@ Deno.test('docMuc quản lý: đủ 5 mục, đúng khoá / số, parseModules n
     shifts: 4,
     open_now: 1,
     forgot_clock_out: 1,
-    staff: [{ name: 'Lan', shifts: 2, hours: 4.5 }, { name: 'Nhân viên', shifts: 2, hours: 2 }],
+    late_total: 1,
+    staff: [{ name: 'Lan', shifts: 2, hours: 4.5, late: 1, late_minutes: 15 }, { name: 'Nhân viên', shifts: 2, hours: 2, late: 0, late_minutes: 0 }],
     payroll: [{ name: 'Tháng 10', status: 'paid', total: 12000000, from: '2026-10-01', to: '2026-10-31' }],
   });
   assertEquals(pm.khach, {

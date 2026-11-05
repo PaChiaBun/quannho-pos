@@ -156,19 +156,44 @@ async function goi(ctx: Ctx, path: string, init?: RequestInit): Promise<unknown>
   }
 }
 
+/** Số màn Báo cáo có mà RPC thô không có: phương thức thanh toán, thu ngân, theo ngày, huỷ. */
+export function soBaoCao(bao: Record<string, unknown> | null, ngay: Record<string, unknown>[] | null, huy: Record<string, unknown>[] | null) {
+  const out: Record<string, unknown> = {};
+  if (bao) {
+    out.by_pay = { cash: n(bao.cash_revenue), transfer: n(bao.transfer_revenue), card: n(bao.card_revenue) };
+    const cr = bao.cashier_revenue;
+    if (cr && typeof cr === 'object') out.cashiers = Object.entries(cr as Record<string, unknown>).map(([name, v]) => ({ name, revenue: n(v) }));
+  }
+  if (Array.isArray(ngay)) out.by_day = ngay.map((x) => ({ d: x.report_date, revenue: n(x.total_revenue), orders: n(x.total_orders) }));
+  if (Array.isArray(huy)) {
+    const nguoi = new Map<string, { name: string; count: number; amount: number }>(), loai: Record<string, number> = {};
+    let amount = 0;
+    for (const x of huy) {
+      amount += n(x.amount);
+      const t = String(x.void_type ?? 'void_item'); loai[t] = (loai[t] ?? 0) + 1;
+      const ten = String(x.requested_by_name ?? '').trim() || 'Không rõ', p = nguoi.get(ten) ?? { name: ten, count: 0, amount: 0 };
+      p.count++; p.amount += n(x.amount); nguoi.set(ten, p);
+    }
+    out.voids = { count: huy.length, amount, by_type: loai, by_person: [...nguoi.values()].sort((a, b) => b.amount - a.amount).slice(0, 8) };
+  }
+  return out;
+}
+
 /** Đọc số bán hàng của kỳ hỏi; lỗi / chưa có RPC → null (Boom vẫn trả lời bằng 5 mục). */
 export async function docBanHang(ctx: Ctx, ky: Ky): Promise<Record<string, unknown> | null> {
   const raw = (tu: string, den: string) =>
     goi(ctx, 'rpc/boom_sales_raw_v1', { method: 'POST', body: JSON.stringify({ p_store: ctx.storeId, p_from: tu, p_to: den }) }) as Promise<Tho>;
   try {
-    const [cur, prev, mons, bao] = await Promise.all([
+    const [cur, prev, mons, bao, ngay, huy] = await Promise.all([
       raw(ky.tu, ky.den),
       raw(ky.truocTu, ky.truocDen),
       goi(ctx, `products?select=id,name,category,sell_price,cost_price,cost_price_latest,is_topping,is_raw_material&store_id=eq.${ctx.storeId}&is_active=eq.true&is_deleted=eq.false`) as Promise<Mon[]>,
-      // cùng RPC với màn Báo cáo; lỗi thì chỉ thiếu dòng phương thức thanh toán, không mất cả số bán hàng
+      // các số dưới cùng nguồn màn Báo cáo; lỗi thì chỉ thiếu đúng số đó, không mất cả số bán hàng
       (goi(ctx, 'rpc/get_report_stats_for_range_v1', { method: 'POST', body: JSON.stringify({ p_store_id: ctx.storeId, p_from: ky.tu, p_to: ky.den }) }) as Promise<Record<string, unknown>>).catch(() => null),
+      (goi(ctx, 'rpc/get_daily_revenue_for_range_v1', { method: 'POST', body: JSON.stringify({ p_store_id: ctx.storeId, p_from: ky.tu, p_to: ky.den }) }) as Promise<Record<string, unknown>[]>).catch(() => null),
+      (goi(ctx, `void_audit_logs?select=void_type,requested_by_name,amount&store_id=eq.${ctx.storeId}&created_at=gte.${encodeURIComponent(ky.tu)}&created_at=lt.${encodeURIComponent(ky.den)}&limit=1000`) as Promise<Record<string, unknown>[]>).catch(() => null),
     ]);
-    return { ...dungFacts(ky, cur, prev, mons), ...(bao ? { by_pay: { cash: n(bao.cash_revenue), transfer: n(bao.transfer_revenue), card: n(bao.card_revenue) } } : {}) };
+    return { ...dungFacts(ky, cur, prev, mons), ...soBaoCao(bao, ngay, huy) };
   } catch {
     return null;
   }

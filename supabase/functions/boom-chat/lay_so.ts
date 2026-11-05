@@ -275,7 +275,7 @@ async function kho(ctx: Ctx, ky: Ky, withCost: boolean, signal: AbortSignal) {
 async function nhanSu(ctx: Ctx, ky: Ky, onlyUserId: string | null, signal: AbortSignal) {
   const s: Q = [['store_id', `eq.${ctx.storeId}`]];
   const shifts = await tatCa(ctx, 'staff_shifts', [
-    ['select', 'id,user_id,clock_in,clock_out'],
+    ['select', 'id,user_id,clock_in,clock_out,is_late,late_minutes'],
     ...s,
     ...trongKy('clock_in', ky.tu, ky.den),
     ...(onlyUserId !== null ? [['user_id', `eq.${onlyUserId}`] as [string, string]] : []),
@@ -527,13 +527,14 @@ export function soKho(products: Row[], purchases: Row[], waste: Row[], recipePro
 
 export function soNhanSu(shifts: Row[], users: Row[], payroll: Row[], period: string, now: Date, self: boolean) {
   const name = new Map(users.map((u) => [u.id, s0(u.name).trim()]));
-  const hours = new Map<unknown, number>(), count = new Map<unknown, number>();
+  const hours = new Map<unknown, number>(), count = new Map<unknown, number>(), late = new Map<unknown, number>(), lateMin = new Map<unknown, number>();
   let open = 0, forgot = 0;
   for (const s of shifts) {
     const a = ngay(s.clock_in);
     if (!a) continue;
     const b = ngay(s.clock_out);
     count.set(s.user_id, (count.get(s.user_id) ?? 0) + 1);
+    if (s.is_late === true) { late.set(s.user_id, (late.get(s.user_id) ?? 0) + 1); lateMin.set(s.user_id, (lateMin.get(s.user_id) ?? 0) + n(s.late_minutes)); }
     if (!b) {
       // Chưa chấm ra: quá 16 giờ coi là quên chấm ra (không cộng giờ)
       if (Math.trunc((now.getTime() - a.getTime()) / 3600e3) >= 16) forgot++;
@@ -544,7 +545,7 @@ export function soNhanSu(shifts: Row[], users: Row[], payroll: Row[], period: st
     if (h > 0 && h < 24) hours.set(s.user_id, (hours.get(s.user_id) ?? 0) + h);
   }
   const staff = giam(
-    [...count.keys()].map((u) => ({ name: name.get(u) || 'Nhân viên', shifts: count.get(u)!, hours: r2(hours.get(u) ?? 0) })),
+    [...count.keys()].map((u) => ({ name: name.get(u) || 'Nhân viên', shifts: count.get(u)!, hours: r2(hours.get(u) ?? 0), late: late.get(u) ?? 0, late_minutes: lateMin.get(u) ?? 0 })),
     (x) => x.hours,
   );
   return {
@@ -555,6 +556,7 @@ export function soNhanSu(shifts: Row[], users: Row[], payroll: Row[], period: st
     shifts: shifts.length,
     open_now: open,
     forgot_clock_out: forgot,
+    late_total: [...late.values()].reduce((x, y) => x + y, 0),
     staff: staff.slice(0, 12),
     ...(payroll.length
       ? {
