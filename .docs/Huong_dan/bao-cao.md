@@ -58,10 +58,10 @@ nguon:
 ### Xem lãi, xem lời ở đâu
 Xem lãi ở đâu, báo cáo lãi gộp xem ở đâu, đã nhập giá vốn sao báo cáo chưa thấy lời:
 - Lời cả quán: tab **Tài chính**, lấy từ Thu Chi (thu − chi), không dùng giá vốn món; phải ghi đủ khoản chi thì mới sát.
-- Lời từng món: Báo cáo chưa có cột này, kể cả khi đã nhập giá vốn. Hỏi Bé Boom "món nào lời nhất", Bé Boom tính theo giá vốn đã nhập. Món có công thức thì xem "Lãi gộp" ở Kho Chuyên Nghiệp, phần Công thức.
+- Lời từng món: Báo cáo chưa có cột này, kể cả khi đã nhập giá vốn. Hỏi Bé Boom, Bé Boom tính theo giá vốn đã nhập. Món có công thức thì xem "Lãi gộp" ở Kho Chuyên Nghiệp, phần Công thức.
 
 ### Xem doanh thu theo thứ
-Xem thứ mấy bán tốt nhất, doanh thu theo thứ trong tuần: Báo cáo có biểu đồ theo ngày, chưa gộp theo thứ. Hỏi Bé Boom "thứ mấy bán tốt nhất", Bé Boom tính sẵn theo thứ.
+Xem doanh thu theo thứ ở đâu: Báo cáo có biểu đồ theo ngày, chưa gộp theo thứ. Hỏi Bé Boom, Bé Boom tính sẵn theo thứ.
 
 ### Kho
 - Cần bật module Kho ("Module Kho đang tắt — Bật module Kho trong Cài đặt để xem báo cáo nhập hàng").

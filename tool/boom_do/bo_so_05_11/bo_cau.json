@@ -1,0 +1,80 @@
+{
+ "note": "Câu số sau khi thêm mục hướng dẫn 05/11: mục mới không được hút các câu này sang bài hướng dẫn trên app. Chạy trước khi đăng gói.",
+ "cases": [
+  {
+   "q": "món nào lời nhất",
+   "loai": "TU_VAN_SO",
+   "expect": []
+  },
+  {
+   "q": "thứ mấy bán thấp nhất",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "tháng này tiền mặt bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "hôm nay chuyển khoản được bao nhiêu",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "tháng này ngày nào bán cao nhất",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "tháng này huỷ bao nhiêu tiền",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "hủy bill có nhiều không",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "ai đi trễ nhiều nhất",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "ngày vắng nên làm gì",
+   "loai": "TU_VAN_SO",
+   "expect": []
+  },
+  {
+   "q": "thu chi tháng này so tháng trước",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "so với cả tháng trước bán sao",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "doanh thu hôm nay",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "hôm qua mấy đơn",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "món nào bán chạy nhất",
+   "loai": "SO_LIEU",
+   "expect": []
+  },
+  {
+   "q": "kho có gì sắp hết",
+   "loai": "SO_LIEU",
+   "expect": []
+  }
+ ]
+}

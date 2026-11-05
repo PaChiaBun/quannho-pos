@@ -1,6 +1,6 @@
 {
- "version": 202611050245,
- "hash": "02551cadaa4f7aa4386ffcf321c1bf84486e1d7a6a66bfe2f140d99d20f1526c",
+ "version": 202611050540,
+ "hash": "435f2ea96e3696e9874a4f3a5028dda4fd6ed612bb21b8b4abe96156db208933",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -488,7 +488,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Xem lãi, xem lời ở đâu",
-   "text": "Xem lãi ở đâu, báo cáo lãi gộp xem ở đâu, đã nhập giá vốn sao báo cáo chưa thấy lời:\n• Lời cả quán: tab Tài chính, lấy từ Thu Chi (thu − chi), không dùng giá vốn món; phải ghi đủ khoản chi thì mới sát.\n• Lời từng món: Báo cáo chưa có cột này, kể cả khi đã nhập giá vốn. Hỏi Bé Boom \"món nào lời nhất\", Bé Boom tính theo giá vốn đã nhập. Món có công thức thì xem \"Lãi gộp\" ở Kho Chuyên Nghiệp, phần Công thức."
+   "text": "Xem lãi ở đâu, báo cáo lãi gộp xem ở đâu, đã nhập giá vốn sao báo cáo chưa thấy lời:\n• Lời cả quán: tab Tài chính, lấy từ Thu Chi (thu − chi), không dùng giá vốn món; phải ghi đủ khoản chi thì mới sát.\n• Lời từng món: Báo cáo chưa có cột này, kể cả khi đã nhập giá vốn. Hỏi Bé Boom, Bé Boom tính theo giá vốn đã nhập. Món có công thức thì xem \"Lãi gộp\" ở Kho Chuyên Nghiệp, phần Công thức."
   },
   {
    "id": "bao-cao#tung-tab-xem-doanh-thu-theo-thu",
@@ -496,7 +496,7 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Xem doanh thu theo thứ",
-   "text": "Xem thứ mấy bán tốt nhất, doanh thu theo thứ trong tuần: Báo cáo có biểu đồ theo ngày, chưa gộp theo thứ. Hỏi Bé Boom \"thứ mấy bán tốt nhất\", Bé Boom tính sẵn theo thứ."
+   "text": "Xem doanh thu theo thứ ở đâu: Báo cáo có biểu đồ theo ngày, chưa gộp theo thứ. Hỏi Bé Boom, Bé Boom tính sẵn theo thứ."
   },
   {
    "id": "bao-cao#tung-tab-kho",
