@@ -145,6 +145,9 @@ Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — kh
 
 > Không thanh toán lại đơn đó trên máy khác trong lúc đang đối soát. Không có giao dịch dang dở thì app báo "Không có thanh toán đang chờ đối soát".
 
+### Tặng món cho khách
+Tặng món ghi sao: app chưa có nút tặng món và chưa có ô giảm giá tay. Muốn bớt tiền thì Chủ quán / Quản lý tạo mã giảm giá rồi áp lúc thanh toán; khách có điểm thì trừ tiền ở ô "Điểm thưởng" lúc thanh toán.
+
 ## Lỗi thường gặp
 | Thấy gì trên màn hình | Vì sao | Làm gì |
 |---|---|---|

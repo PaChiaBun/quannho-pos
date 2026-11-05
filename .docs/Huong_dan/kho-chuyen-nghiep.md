@@ -44,6 +44,9 @@ Muốn mỗi ly / phần bán ra tự trừ nguyên liệu (cà phê, sữa, th�
 
 > Mỗi lần **thanh toán** món đã gắn công thức (Bán hàng, Bàn, QR mang đi), máy chủ tự trừ từng nguyên liệu theo định lượng, có quy đổi đơn vị và hao phí. Gửi bếp chưa trừ.
 
+### 2a. Bớt phần ăn, sửa công thức
+Giảm định lượng món, bớt phần ăn: món đã có công thức thì ở tab **"Công thức"** mở menu ba chấm trên công thức → **"Chỉnh sửa"**, sửa **"Số lượng"** ở **"Định lượng nguyên liệu"** rồi lưu, giá vốn/phần tính lại. Món chưa có công thức thì việc cân lại phần ăn làm ở bếp, xong sửa ô "Giá vốn (đ)" của món ở Kho hàng.
+
 ### 3. Bán thành phẩm: pha cốt, nấu nước dùng (lệnh sản xuất)
 Ví dụ minh hoạ: nguyên liệu **Trà đen khô** (gói, 1 gói = 500 g) → pha **"Cốt trà"** (bán thành phẩm, ml): 1 mẻ = 10 lít từ 500 g trà. Món Trà chanh dùng 200 ml cốt.
 1. Kho hàng: tạo "Cốt trà", danh mục **Nguyên liệu**, đơn vị ml.

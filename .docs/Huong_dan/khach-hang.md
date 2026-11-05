@@ -81,8 +81,17 @@ nguon:
 3. **"Loại giảm giá"**: **"Phần trăm (%)"** hoặc **"Tiền mặt (đ)"** → **"Mức giảm"**.
 4. **"Đơn tối thiểu (đ)"**, **"Mức giảm tối đa (đ) - Để trống nếu không giới hạn"**, hạn dùng (**"Chọn ngày"**).
 5. Mã chỉ cho đơn trên 100k: điền "Đơn tối thiểu". Mã dùng chung cho mọi đơn, app chưa giới hạn theo từng khách hay số lần dùng.
-6. **"Lưu Voucher"**. Sửa / tắt / xoá mã trong danh sách (**"Xóa mã giảm giá"**).
+6. **"Lưu Voucher"**. Tắt / xoá mã trong danh sách (**"Xóa mã giảm giá"**); mã đã tạo chưa sửa được.
 7. Nhân viên áp mã khi thanh toán: **"Khuyến mãi / Voucher"** → **"Chọn mã"** → **"Áp dụng"**. Máy chủ kiểm lại mã còn hiệu lực, hạn dùng và đơn tối thiểu.
+
+### 6a. Tắt mã giảm giá, sửa mã
+Tắt mã giảm giá, tắt mã GIAM15, ngưng mã, bật lại mã: tab **"Khuyến mãi"** → gạt công tắc trên dòng mã. Mã đã tạo chưa sửa được; muốn đổi mức giảm thì tắt hoặc xoá mã cũ rồi tạo mã mới.
+Mã chỉ có **"Hạn dùng"** (ngày giờ hết hạn), chưa giới hạn theo giờ trong ngày như chỉ buổi chiều. Muốn dùng theo giờ thì tạo mã riêng và dặn nhân viên chỉ áp vào giờ đã định.
+
+### 7. Ưu đãi khách quen: x2 điểm, thẻ tích ly
+- x2 điểm: app chưa có x2 điểm theo ngày hay theo khách; mức tích dùng chung cho cả quán.
+- Thẻ tích ly mua 8 tặng 1: app chưa có, dùng thẻ giấy. Khách có điểm thì trừ tiền ở ô "Điểm thưởng" lúc thanh toán; danh sách "Thưởng" chỉ để tham khảo, chưa có nút đổi.
+- Nhắn ưu đãi cho khách quen: app chưa làm giúp việc này, quán tự nhắn ngoài app.
 
 ## Lỗi thường gặp
 | Thấy gì | Vì sao | Làm gì |

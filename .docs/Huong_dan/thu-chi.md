@@ -58,7 +58,7 @@ Tiền đi chợ mỗi sáng, mua đá, gas, tiền điện, tiền mặt bằng
 > Không ghi tay khoản nhập hàng hay bán hàng đã có ở module khác — sẽ bị **tính hai lần**. **Lương thì phải ghi tay** (danh mục "Lương nhân viên"): trả lương ở module Lương hiện **chưa** tự ghi chi.
 
 ### 1a. Ghi khoản chi ở đâu, chi phí ghi chỗ nào
-Ghi khoản chi, ghi tiền chợ hôm nay, ghi chi phí, tiền mặt bằng: mở **Thu Chi** → bấm **"− Ghi chi"** → nhập số tiền, chọn quỹ và danh mục → lưu. Từng bước xem việc "Ghi một khoản chi".
+Ghi khoản chi, ghi tiền chợ hôm nay, ghi chi phí, tiền mặt bằng: mở **Thu Chi** → bấm **"− Ghi chi"** → nhập số tiền, chọn quỹ và danh mục → lưu. Chiết khấu sàn giao hàng, phí Grab: chọn danh mục "Chi khác", ghi chú tên sàn. Từng bước xem việc "Ghi một khoản chi".
 
 ### 2. Xem theo khoảng thời gian
 1. Bấm **"Đổi ngày"** → **"Chọn thời gian báo cáo"**: Hôm nay, Hôm qua, 7 ngày qua, Tuần này, Tháng này, Tháng trước, hoặc **"📅 Chọn ngày tùy chỉnh..."**.

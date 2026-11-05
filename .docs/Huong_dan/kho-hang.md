@@ -70,6 +70,9 @@ Giá vốn nhập chỗ nào, nhập giá vốn ở đâu, điền giá vốn, m
 
 Giá vốn này để Bé Boom tính lời từng món. Lợi nhuận ở Báo cáo lấy từ Thu Chi nên không đổi khi nhập giá vốn.
 
+### 1d. Bán giá khác theo khung giờ
+Bán giá khác theo giờ, giá giờ vắng, happy hour: app chưa có giá tự đổi theo giờ. Muốn thử thì tạo một món hoặc combo riêng với giá đó ("Thêm sản phẩm") và dặn nhân viên chỉ bán trong giờ đã định.
+
 ### 1b. Tạo combo
 Thêm combo, tạo combo 2 ly, combo cơm nước có giá rẻ hơn mua lẻ: **"Thêm sản phẩm"** → danh mục **"Combo"** → đặt giá combo làm **"Giá bán (đ)"**.
 
@@ -95,6 +98,9 @@ Hết món / hết nguyên liệu tạm thời (vd hết trân châu thì tắt 
    - **QR**: khách **không thấy** món.
    - **Quản lý Bàn**: món có nhãn **"TẠM HẾT"**; nhân viên chọn sẽ được hỏi **"Món tạm hết"** → **"Vẫn thêm"** nếu chắc chắn còn.
    - **Bán hàng (quầy)**: món mờ, nhãn **"Tạm ngưng"**, bấm vào báo "<món> đang tạm ngưng bán" và **không thêm được**.
+
+### 5a. Đưa món lên đầu menu, đổi thứ tự món
+Đưa món lên đầu menu, đổi thứ tự món, sắp xếp lại menu, kéo món lên trên: app chưa có chỗ đổi thứ tự món. Muốn đẩy một món thì dặn nhân viên mời món đó, ghi lên bảng ở quầy hoặc menu in, thêm ảnh món ở "Sửa thông tin món".
 
 ### 6. Nhập kho nhanh một món
 1. Menu món → **"Nhập kho"** → bảng **"Nhập hàng"**.

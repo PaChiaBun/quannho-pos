@@ -1,6 +1,6 @@
 {
- "version": 202611050155,
- "hash": "e6088169b46a6b8879560477d2f5db6a0a22261a308f489d1fca5df840599f66",
+ "version": 202611050245,
+ "hash": "02551cadaa4f7aa4386ffcf321c1bf84486e1d7a6a66bfe2f140d99d20f1526c",
  "chunks": [
   {
    "id": "ban-hang#ban-hang-la-gi",
@@ -129,6 +129,14 @@
    "section": "Các việc thường làm",
    "title": "Đối soát thanh toán bị gián đoạn",
    "text": "Dùng khi đang thanh toán thì mất mạng, tắt app hoặc máy treo — không biết tiền đã ghi nhận chưa. Đơn đã hiện \"Thanh toán thành công!\" thì không cần đối soát, kể cả khi đóng màn đó bằng nút quay lại.\n1. Mở lại màn Bán hàng, bấm \"Thanh toán\" hoặc nút đồng hồ quay ngược (có chấm đỏ) trên thanh trên cùng — nút này chỉ hiện khi máy còn giao dịch dang dở.\n2. Nếu có giao dịch dang dở, app hiện \"Thanh toán chưa đối soát\" kèm số tiền, phương thức. Bấm \"Đối soát / tiếp tục đơn cũ\".\n3. App hỏi máy chủ: nếu đơn đã thu, chỉ lấy lại kết quả (\"Đã thanh toán: <số đơn>\") — không thu lần hai, không tự in lại. Nếu chưa, gửi lại đúng giao dịch cũ.\n4. Thành công thì giỏ đang hiển thị được xoá để tránh bán lại đơn cũ.\n\nKhông thanh toán lại đơn đó trên máy khác trong lúc đang đối soát. Không có giao dịch dang dở thì app báo \"Không có thanh toán đang chờ đối soát\"."
+  },
+  {
+   "id": "ban-hang#cac-viec-thuong-lam-tang-mon-cho-khach",
+   "module": "pos",
+   "module_name": "Bán hàng",
+   "section": "Các việc thường làm",
+   "title": "Tặng món cho khách",
+   "text": "Tặng món ghi sao: app chưa có nút tặng món và chưa có ô giảm giá tay. Muốn bớt tiền thì Chủ quán / Quản lý tạo mã giảm giá rồi áp lúc thanh toán; khách có điểm thì trừ tiền ở ô \"Điểm thưởng\" lúc thanh toán."
   },
   {
    "id": "ban-hang#loi-mon-khong-hien-o-ban-hang",
@@ -480,7 +488,15 @@
    "module_name": "Báo cáo",
    "section": "Từng tab",
    "title": "Xem lãi, xem lời ở đâu",
-   "text": "Xem lãi ở đâu, báo cáo lãi gộp xem ở đâu, nhập giá vốn rồi xem lời ở đâu, đã nhập giá vốn sao báo cáo chưa thấy lời:\n• Lời cả quán: tab Tài chính, lấy từ Thu Chi (thu − chi), không dùng giá vốn món; phải ghi đủ khoản chi thì mới sát.\n• Lời từng món: Báo cáo chưa có cột này, kể cả khi đã nhập giá vốn. Hỏi Bé Boom \"món nào lời nhất\", Bé Boom tính theo giá vốn đã nhập. Món có công thức thì xem \"Lãi gộp\" ở Kho Chuyên Nghiệp, phần Công thức."
+   "text": "Xem lãi ở đâu, báo cáo lãi gộp xem ở đâu, đã nhập giá vốn sao báo cáo chưa thấy lời:\n• Lời cả quán: tab Tài chính, lấy từ Thu Chi (thu − chi), không dùng giá vốn món; phải ghi đủ khoản chi thì mới sát.\n• Lời từng món: Báo cáo chưa có cột này, kể cả khi đã nhập giá vốn. Hỏi Bé Boom \"món nào lời nhất\", Bé Boom tính theo giá vốn đã nhập. Món có công thức thì xem \"Lãi gộp\" ở Kho Chuyên Nghiệp, phần Công thức."
+  },
+  {
+   "id": "bao-cao#tung-tab-xem-doanh-thu-theo-thu",
+   "module": "report",
+   "module_name": "Báo cáo",
+   "section": "Từng tab",
+   "title": "Xem doanh thu theo thứ",
+   "text": "Xem thứ mấy bán tốt nhất, doanh thu theo thứ trong tuần: Báo cáo có biểu đồ theo ngày, chưa gộp theo thứ. Hỏi Bé Boom \"thứ mấy bán tốt nhất\", Bé Boom tính sẵn theo thứ."
   },
   {
    "id": "bao-cao#tung-tab-kho",
@@ -1728,7 +1744,23 @@
    "module_name": "Khách hàng – Giảm giá – Khuyến mãi",
    "section": "Các việc thường làm",
    "title": "6. Tạo mã giảm giá (voucher) — Chủ quán / Quản lý",
-   "text": "1. Tab \"Khuyến mãi\" → \"Thêm mã mới\" → \"Thêm mã giảm giá mới\".\n2. \"Mã Voucher (Viết liền không dấu)\", \"Mô tả ngắn gọn\".\n3. \"Loại giảm giá\": \"Phần trăm (%)\" hoặc \"Tiền mặt (đ)\" → \"Mức giảm\".\n4. \"Đơn tối thiểu (đ)\", \"Mức giảm tối đa (đ) - Để trống nếu không giới hạn\", hạn dùng (\"Chọn ngày\").\n5. Mã chỉ cho đơn trên 100k: điền \"Đơn tối thiểu\". Mã dùng chung cho mọi đơn, app chưa giới hạn theo từng khách hay số lần dùng.\n6. \"Lưu Voucher\". Sửa / tắt / xoá mã trong danh sách (\"Xóa mã giảm giá\").\n7. Nhân viên áp mã khi thanh toán: \"Khuyến mãi / Voucher\" → \"Chọn mã\" → \"Áp dụng\". Máy chủ kiểm lại mã còn hiệu lực, hạn dùng và đơn tối thiểu."
+   "text": "1. Tab \"Khuyến mãi\" → \"Thêm mã mới\" → \"Thêm mã giảm giá mới\".\n2. \"Mã Voucher (Viết liền không dấu)\", \"Mô tả ngắn gọn\".\n3. \"Loại giảm giá\": \"Phần trăm (%)\" hoặc \"Tiền mặt (đ)\" → \"Mức giảm\".\n4. \"Đơn tối thiểu (đ)\", \"Mức giảm tối đa (đ) - Để trống nếu không giới hạn\", hạn dùng (\"Chọn ngày\").\n5. Mã chỉ cho đơn trên 100k: điền \"Đơn tối thiểu\". Mã dùng chung cho mọi đơn, app chưa giới hạn theo từng khách hay số lần dùng.\n6. \"Lưu Voucher\". Tắt / xoá mã trong danh sách (\"Xóa mã giảm giá\"); mã đã tạo chưa sửa được.\n7. Nhân viên áp mã khi thanh toán: \"Khuyến mãi / Voucher\" → \"Chọn mã\" → \"Áp dụng\". Máy chủ kiểm lại mã còn hiệu lực, hạn dùng và đơn tối thiểu."
+  },
+  {
+   "id": "khach-hang#cac-viec-thuong-lam-6a-tat-ma-giam-gia-sua-ma",
+   "module": "loyalty",
+   "module_name": "Khách hàng – Giảm giá – Khuyến mãi",
+   "section": "Các việc thường làm",
+   "title": "6a. Tắt mã giảm giá, sửa mã",
+   "text": "Tắt mã giảm giá, tắt mã GIAM15, ngưng mã, bật lại mã: tab \"Khuyến mãi\" → gạt công tắc trên dòng mã. Mã đã tạo chưa sửa được; muốn đổi mức giảm thì tắt hoặc xoá mã cũ rồi tạo mã mới.\nMã chỉ có \"Hạn dùng\" (ngày giờ hết hạn), chưa giới hạn theo giờ trong ngày như chỉ buổi chiều. Muốn dùng theo giờ thì tạo mã riêng và dặn nhân viên chỉ áp vào giờ đã định."
+  },
+  {
+   "id": "khach-hang#cac-viec-thuong-lam-7-uu-dai-khach-quen-x2-diem-the-tich-ly",
+   "module": "loyalty",
+   "module_name": "Khách hàng – Giảm giá – Khuyến mãi",
+   "section": "Các việc thường làm",
+   "title": "7. Ưu đãi khách quen: x2 điểm, thẻ tích ly",
+   "text": "• x2 điểm: app chưa có x2 điểm theo ngày hay theo khách; mức tích dùng chung cho cả quán.\n• Thẻ tích ly mua 8 tặng 1: app chưa có, dùng thẻ giấy. Khách có điểm thì trừ tiền ở ô \"Điểm thưởng\" lúc thanh toán; danh sách \"Thưởng\" chỉ để tham khảo, chưa có nút đổi.\n• Nhắn ưu đãi cho khách quen: app chưa làm giúp việc này, quán tự nhắn ngoài app."
   },
   {
    "id": "khach-hang#loi-khong-tim-thay-khach-hang-khi-thanh-toan",
@@ -1865,6 +1897,14 @@
    "section": "Các việc thường làm",
    "title": "2. Tạo công thức món",
    "text": "Muốn mỗi ly / phần bán ra tự trừ nguyên liệu (cà phê, sữa, thịt…) trong kho: tạo công thức cho món và gắn với món bán.\n1. Tab \"Công thức\" → \"Tạo công thức\".\n2. \"Thông tin món\": \"Tên món *\", mô tả, danh mục (Món chính, Khai vị, Tráng miệng, Đồ uống, Súp & Cháo, Khác), khẩu phần (số + đơn vị: phần, tô, đĩa, ly, g, kg, ml, lít).\n3. \"Gắn menu POS\" → \"Chọn sản phẩm bán hàng tương ứng\". Gắn rồi app ghi \"Khi bán \"<món>\" → tự động trừ kho\".\n4. \"Định lượng nguyên liệu\" → \"Thêm nguyên liệu\": chọn nguyên liệu, \"Số lượng\", \"Đơn vị\" (gram, kg, ml, lít, hộp, lon, chai, gói, chiếc, cái, muỗng, chén, phần, ly). App tính \"= <chi phí>\" từng dòng.\n5. \"Hao phí sơ chế\" (%): phần mất khi rửa, lặt, cắt gọt. Ví dụ công thức cần 200 g rau, hao phí 20% → kho trừ 200 ÷ 0,8 = 250 g. Bấm \"Hao phí sơ chế là gì?\" để xem bảng gợi ý (rau 15–25%, thịt 10–20%, tôm 35–45%…).\n6. Xem \"Giá vốn/phần\" → \"Lưu công thức\" (hoặc \"LƯU\" góc trên).\n\nMỗi lần thanh toán món đã gắn công thức (Bán hàng, Bàn, QR mang đi), máy chủ tự trừ từng nguyên liệu theo định lượng, có quy đổi đơn vị và hao phí. Gửi bếp chưa trừ."
+  },
+  {
+   "id": "kho-chuyen-nghiep#cac-viec-thuong-lam-2a-bot-phan-an-sua-cong-thuc",
+   "module": "kho_pro",
+   "module_name": "Kho Chuyên Nghiệp",
+   "section": "Các việc thường làm",
+   "title": "2a. Bớt phần ăn, sửa công thức",
+   "text": "Giảm định lượng món, bớt phần ăn: món đã có công thức thì ở tab \"Công thức\" mở menu ba chấm trên công thức → \"Chỉnh sửa\", sửa \"Số lượng\" ở \"Định lượng nguyên liệu\" rồi lưu, giá vốn/phần tính lại. Món chưa có công thức thì việc cân lại phần ăn làm ở bếp, xong sửa ô \"Giá vốn (đ)\" của món ở Kho hàng."
   },
   {
    "id": "kho-chuyen-nghiep#cac-viec-thuong-lam-3-ban-thanh-pham-pha-cot-nau-nuoc-dung-l",
@@ -2011,6 +2051,14 @@
    "text": "Giá vốn nhập chỗ nào, nhập giá vốn ở đâu, điền giá vốn, món chưa có giá vốn, tiền vốn mỗi món: làm ở đây.\n1. Ở Kho hàng, bấm \"Thao tác\" trên dòng món → \"Sửa thông tin món\".\n2. Điền ô \"Giá vốn (đ)\" là tiền vốn của một phần, rồi lưu. Món mới thì điền ngay khi \"Thêm sản phẩm\".\n3. Quán nhiều món: làm trước các món bán chạy nhất.\n\nGiá vốn này để Bé Boom tính lời từng món. Lợi nhuận ở Báo cáo lấy từ Thu Chi nên không đổi khi nhập giá vốn."
   },
   {
+   "id": "kho-hang#cac-viec-thuong-lam-1d-ban-gia-khac-theo-khung-gio",
+   "module": "kho",
+   "module_name": "Kho hàng",
+   "section": "Các việc thường làm",
+   "title": "1d. Bán giá khác theo khung giờ",
+   "text": "Bán giá khác theo giờ, giá giờ vắng, happy hour: app chưa có giá tự đổi theo giờ. Muốn thử thì tạo một món hoặc combo riêng với giá đó (\"Thêm sản phẩm\") và dặn nhân viên chỉ bán trong giờ đã định."
+  },
+  {
    "id": "kho-hang#cac-viec-thuong-lam-1b-tao-combo",
    "module": "kho",
    "module_name": "Kho hàng",
@@ -2049,6 +2097,14 @@
    "section": "Các việc thường làm",
    "title": "5. Bật / tắt bán (hết món tạm thời)",
    "text": "Hết món / hết nguyên liệu tạm thời (vd hết trân châu thì tắt món đó), muốn ẩn món đi, tạm ẩn món: khách quét QR không thấy món, nhân viên gọi món được báo món tạm hết:\n1. Bấm \"Chọn\" → chọn các món → \"Tắt bán\" (hoặc \"Bật bán\").\n2. Món tắt bán hiện \"Tạm ngưng bán\":\n   • QR: khách không thấy món.\n   • Quản lý Bàn: món có nhãn \"TẠM HẾT\"; nhân viên chọn sẽ được hỏi \"Món tạm hết\" → \"Vẫn thêm\" nếu chắc chắn còn.\n   • Bán hàng (quầy): món mờ, nhãn \"Tạm ngưng\", bấm vào báo \"<món> đang tạm ngưng bán\" và không thêm được."
+  },
+  {
+   "id": "kho-hang#cac-viec-thuong-lam-5a-dua-mon-len-dau-menu-doi-thu-tu-mon",
+   "module": "kho",
+   "module_name": "Kho hàng",
+   "section": "Các việc thường làm",
+   "title": "5a. Đưa món lên đầu menu, đổi thứ tự món",
+   "text": "Đưa món lên đầu menu, đổi thứ tự món, sắp xếp lại menu, kéo món lên trên: app chưa có chỗ đổi thứ tự món. Muốn đẩy một món thì dặn nhân viên mời món đó, ghi lên bảng ở quầy hoặc menu in, thêm ảnh món ở \"Sửa thông tin món\"."
   },
   {
    "id": "kho-hang#cac-viec-thuong-lam-6-nhap-kho-nhanh-mot-mon",
@@ -3216,7 +3272,7 @@
    "module_name": "Thu Chi",
    "section": "Các việc thường làm",
    "title": "1a. Ghi khoản chi ở đâu, chi phí ghi chỗ nào",
-   "text": "Ghi khoản chi, ghi tiền chợ hôm nay, ghi chi phí, tiền mặt bằng: mở Thu Chi → bấm \"− Ghi chi\" → nhập số tiền, chọn quỹ và danh mục → lưu. Từng bước xem việc \"Ghi một khoản chi\"."
+   "text": "Ghi khoản chi, ghi tiền chợ hôm nay, ghi chi phí, tiền mặt bằng: mở Thu Chi → bấm \"− Ghi chi\" → nhập số tiền, chọn quỹ và danh mục → lưu. Chiết khấu sàn giao hàng, phí Grab: chọn danh mục \"Chi khác\", ghi chú tên sàn. Từng bước xem việc \"Ghi một khoản chi\"."
   },
   {
    "id": "thu-chi#cac-viec-thuong-lam-2-xem-theo-khoang-thoi-gian",
