@@ -183,6 +183,8 @@ export interface ShopFacts {
   /** Doanh thu theo giờ (24 số, 0h–23h) và theo thứ (7 số, Thứ 2 … Chủ nhật) trong kỳ. */
   by_hour?: number[] | null;
   by_weekday?: number[] | null;
+  /** Theo phương thức thanh toán, cùng RPC với màn Báo cáo. */
+  by_pay?: { cash: number; transfer: number; card: number } | null;
   /** Món bán chạy (≤3) theo khung giờ: sáng 5–11h, trưa 11–14h, chiều 14–17h, tối 17h trở đi. */
   by_band?: { name: string; qty: number }[][] | null;
   /** Ngày đầu / ngày cuối có số của kỳ (YYYY-MM-DD, giờ VN) — tính số lần mỗi thứ, dự báo cuối tháng (giai đoạn 2). */
@@ -760,6 +762,7 @@ export function parseFacts(v: unknown): ShopFacts | null {
     items_revenue: itemsRevenue,
     by_hour: numList(f.by_hour, 24),
     by_weekday: numList(f.by_weekday, 7),
+    by_pay: f.by_pay && typeof f.by_pay === 'object' ? (([a, b, c]) => (a + b + c > 0 ? { cash: a, transfer: b, card: c } : null))(['cash', 'transfer', 'card'].map((k) => { const v = Number((f.by_pay as Record<string, unknown>)[k]); return Number.isFinite(v) && v > 0 ? v : 0; })) : null,
     by_band: parseBands(f.by_band),
     from: ymd(f.from),
     to: ymd(f.to),
@@ -1024,6 +1027,11 @@ export function formatFacts(f: ShopFacts, now: Date = new Date(), question = '',
           (hours.length >= 2 ? `Đông nhất: ${sorted.slice(0, Math.min(3, hours.length - 1)).map((x) => `${x.h}h`).join(', ')}; vắng nhất (trong giờ có bán): ${sorted.slice(Math.max(Math.min(3, hours.length - 1), hours.length - 3)).reverse().map((x) => `${x.h}h`).join(', ')}.` : ''),
       );
     }
+  }
+  // 05/11: Báo cáo có tiền mặt / chuyển khoản, Boom báo không có số. Chỉ thêm khi hỏi đúng chuyện này, câu khác khỏi dài
+  if (f.by_pay && /ti[eề]n m[aặ]t|chuy[eể]n kho[aả]n|qu[eẹ]t th[eẻ]|(?<!\p{L})k[eé]t(?!\p{L})|ph[uư][oơ]ng th[uứ]c/iu.test(question)) {
+    const { cash, transfer, card } = f.by_pay, tong = cash + transfer + card;
+    lines.push(`Theo phương thức thanh toán trong kỳ (cùng số với Báo cáo): tiền mặt ${vnd(cash)} (${pctTxt((cash / tong) * 100)}%), chuyển khoản ${vnd(transfer)} (${pctTxt((transfer / tong) * 100)}%), thẻ ${vnd(card)} (${pctTxt((card / tong) * 100)}%). Đây là tiền bán thu vào theo đơn, chưa trừ chi bằng tiền mặt nên chưa phải số tiền trong két. Hỏi tiền mặt / chuyển khoản mà không nói "chi" thì hiểu là tiền bán thu vào, nêu số này ở dòng đầu.`);
   }
   const cnt = weekdayCounts(f.from, f.to);
   if (f.by_weekday && f.by_weekday.some((v) => v > 0)) {

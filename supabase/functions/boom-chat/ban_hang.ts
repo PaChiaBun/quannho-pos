@@ -161,12 +161,14 @@ export async function docBanHang(ctx: Ctx, ky: Ky): Promise<Record<string, unkno
   const raw = (tu: string, den: string) =>
     goi(ctx, 'rpc/boom_sales_raw_v1', { method: 'POST', body: JSON.stringify({ p_store: ctx.storeId, p_from: tu, p_to: den }) }) as Promise<Tho>;
   try {
-    const [cur, prev, mons] = await Promise.all([
+    const [cur, prev, mons, bao] = await Promise.all([
       raw(ky.tu, ky.den),
       raw(ky.truocTu, ky.truocDen),
       goi(ctx, `products?select=id,name,category,sell_price,cost_price,cost_price_latest,is_topping,is_raw_material&store_id=eq.${ctx.storeId}&is_active=eq.true&is_deleted=eq.false`) as Promise<Mon[]>,
+      // cùng RPC với màn Báo cáo; lỗi thì chỉ thiếu dòng phương thức thanh toán, không mất cả số bán hàng
+      (goi(ctx, 'rpc/get_report_stats_for_range_v1', { method: 'POST', body: JSON.stringify({ p_store_id: ctx.storeId, p_from: ky.tu, p_to: ky.den }) }) as Promise<Record<string, unknown>>).catch(() => null),
     ]);
-    return dungFacts(ky, cur, prev, mons);
+    return { ...dungFacts(ky, cur, prev, mons), ...(bao ? { by_pay: { cash: n(bao.cash_revenue), transfer: n(bao.transfer_revenue), card: n(bao.card_revenue) } } : {}) };
   } catch {
     return null;
   }

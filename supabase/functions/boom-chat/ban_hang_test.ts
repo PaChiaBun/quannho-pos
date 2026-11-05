@@ -44,11 +44,16 @@ Deno.test('ban_hang: kỳ trước không có đơn → không gửi phần so; 
   const ctx = { sbUrl: 'http://x', anonKey: 'anon', jwt: 'nguoi-hoi', storeId: '11111111-1111-1111-1111-111111111111',
     userId: 'u', fetch: (async (u: string, i?: RequestInit) => {
       seen.push(`${(i?.headers as Record<string, string>).Authorization} ${String(u).split('/rest/v1/')[1].split('?')[0]}`);
+      if (String(u).includes('rpc/get_report')) return Response.json({ cash_revenue: 690000, transfer_revenue: 180000, card_revenue: 0 });
       if (String(u).includes('rpc/')) return Response.json(JSON.parse(String(i!.body)).p_from === KY.tu ? CUR : PREV);
       return Response.json(MONS);
     }) as typeof fetch };
   const r = await docBanHang(ctx, KY);
   assert(r && r.revenue === 1_000_000);
-  assertEquals(seen.sort(), ['Bearer nguoi-hoi products', 'Bearer nguoi-hoi rpc/boom_sales_raw_v1', 'Bearer nguoi-hoi rpc/boom_sales_raw_v1']);
+  assertEquals(seen.sort(), ['Bearer nguoi-hoi products', 'Bearer nguoi-hoi rpc/boom_sales_raw_v1', 'Bearer nguoi-hoi rpc/boom_sales_raw_v1', 'Bearer nguoi-hoi rpc/get_report_stats_for_range_v1']);
+  assertEquals(r!.by_pay, { cash: 690000, transfer: 180000, card: 0 });
+  // RPC báo cáo lỗi: chỉ thiếu phương thức thanh toán, vẫn có số bán hàng
+  const r2 = await docBanHang({ ...ctx, fetch: (async (u: string, i?: RequestInit) => String(u).includes('rpc/get_report') ? new Response('', { status: 404 }) : ctx.fetch!(u, i)) as typeof fetch }, KY);
+  assert(r2 && r2.revenue === 1_000_000 && !('by_pay' in r2));
   assertEquals(await docBanHang({ ...ctx, fetch: (async () => new Response('', { status: 404 })) as typeof fetch }, KY), null);
 });

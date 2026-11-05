@@ -1395,3 +1395,13 @@ Deno.test('kỳ ngắn không gọi là nghỉ; Thu Chi khác số ngày', () =>
   // tháng đang chạy không có khoảng ngày: không quy theo tên tháng
   assert(!formatModules(mk('Tháng 11/2026', 'Tháng 10/2026'), now, 'thu chi').includes('khác số ngày'));
 });
+
+Deno.test('phương thức thanh toán: chỉ hiện khi hỏi đúng chuyện, số 0 hết thì bỏ', () => {
+  const co = { top: [], slow: [], period: 'Tháng này', revenue: 870000, orders: 12 };
+  const f = parseFacts({ ...co, by_pay: { cash: 690000, transfer: 180000, card: 0 } })!;
+  assertStringIncludes(formatFacts(f, new Date(), 'tháng này tiền mặt bao nhiêu', ''), 'tiền mặt 690.000đ (79,3%), chuyển khoản 180.000đ (20,7%), thẻ 0đ (0%)');
+  assertStringIncludes(formatFacts(f, new Date(), 'chốt két hôm nay', ''), 'chưa phải số tiền trong két');
+  assert(!formatFacts(f, new Date(), 'món nào bán chạy', '').includes('phương thức thanh toán'));
+  assert(!formatFacts(f, new Date(), 'kết quả tháng này', '').includes('phương thức thanh toán'));
+  assertEquals(parseFacts({ ...co, by_pay: { cash: 0, transfer: 0, card: 0 } })!.by_pay, null);
+});
