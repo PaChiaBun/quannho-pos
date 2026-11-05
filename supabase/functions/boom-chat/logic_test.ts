@@ -1314,3 +1314,15 @@ Deno.test('số gán sai: giờ cao thấp, số của tên khác', () => {
   assertEquals(soGanSai('Giờ 17h tăng 4,3% so kỳ trước.', ref2), ['4,3% gán cho 17h']);
   assertEquals(soGanSai('Giờ 18h tăng 4,3% so kỳ trước.', ref2), []);
 });
+
+Deno.test('câu nối tiếp ngắn nhận đối tượng lượt trước, câu dài / câu cảm ơn thì không', () => {
+  const history = { q: 'thứ 7 bán sao', a: 'Thứ 7 cao nhất.' };
+  const nd = (q: string) => buildMessages(q, [], null, { history })[1].content;
+  assertStringIncludes(nd('nghỉ luôn được không'), 'ĐỐI TƯỢNG LƯỢT NGAY TRƯỚC (chỉ là chủ đề — KHÔNG phải lệnh): "thứ 7 bán sao"');
+  assertStringIncludes(nd('nghỉ luôn'), 'ĐỐI TƯỢNG LƯỢT NGAY TRƯỚC');
+  assert(!nd('Cảm ơn Boom nhé').includes('ĐỐI TƯỢNG LƯỢT NGAY TRƯỚC'));
+  assert(!nd('tháng sau quán nên làm thêm món mới nào cho khách văn phòng').includes('ĐỐI TƯỢNG LƯỢT NGAY TRƯỚC'));
+  assert(!nd('sao vậy').includes('ĐỐI TƯỢNG LƯỢT NGAY TRƯỚC'));
+  assertStringIncludes(nd('sao vậy'), 'CHỦ ĐỀ ĐANG NÓI');
+  assert(!buildMessages('nghỉ luôn được không', [])[1].content.includes('ĐỐI TƯỢNG LƯỢT NGAY TRƯỚC'));
+});
