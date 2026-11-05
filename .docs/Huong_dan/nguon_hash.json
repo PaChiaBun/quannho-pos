@@ -87,7 +87,7 @@
     },
     "luong.md": {
       ".docs/Ai_Boom/cac-module/quy-chuan-cham-cong-tinh-luong-chuan.md": "ac64501ae10b6158",
-      "lib/main.dart": "e185199696c93128",
+      "lib/main.dart": "0dd227ecce563d19",
       "lib/modules/tinhluong/repository/tinhluong_repository.dart": "e4ce4880dea03d47",
       "lib/modules/tinhluong/screens/dispute_sheet.dart": "8f7e1c48fec1a30a",
       "lib/modules/tinhluong/screens/my_payslip_screen.dart": "3391a374782da5cd",
