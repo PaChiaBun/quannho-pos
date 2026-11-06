@@ -1811,7 +1811,8 @@ export function loaiCau(question: string, hasHistory = false): LoaiCau {
     return 'noi_tiep';
   }
   if (hit(' (?:dự báo|ước (?:tính|chừng|khoảng|được)|cuối tháng|cuối năm|cứ đà này|có khả năng|đủ (?:dùng|bán)|đủ (?:\\S+ ){0,3}mấy ngày|sẽ được|chắc (?:\\S+ ){0,3}(?:được|tăng|giảm)|nên nhập (?:\\S+ ){0,3}bao nhiêu|thì doanh thu (?:\\S+ ){0,3}(?:giảm|tăng)|(?:tháng|tuần|năm) (?:sau|tới|\\d+) (?:\\S+ ){0,5}(?:có )?(?:tăng|giảm)) ')) return 'du_bao';
-  if (hit(' (?:so với|so sánh|so (?:tuần|tháng|năm|hôm|kỳ)|hơn hay|thua|khác gì|khác nhau|tăng hay giảm|tăng giảm|(?:lời|hiệu quả|chạy|ngon|đông) hơn|(?:món|nhóm|mã|ca|chi nhánh) nào (?:\\S+ ){0,3}(?:hơn|nhất)) ')) return 'so_sanh';
+  // bỏ dấu thì "doanh số tháng này" thành "doanh so thang nay", từng bị hiểu là so sánh
+  if (hit(' (?:so với|so sánh|(?<!(?:doanh|tổng) )so (?:tuần|tháng|năm|hôm|kỳ)|hơn hay|thua|khác gì|khác nhau|tăng hay giảm|tăng giảm|(?:lời|hiệu quả|chạy|ngon|đông) hơn|(?:món|nhóm|mã|ca|chi nhánh) nào (?:\\S+ ){0,3}(?:hơn|nhất)) ')) return 'so_sanh';
   if (hit(' (?:kế hoạch|lên kế hoạch|lên lịch|lộ trình|chiến lược|chương trình|nên làm gì|làm (?:\\S+ ){0,3}cho hiệu quả|làm gì (?:\\S+ ){0,3}(?:tháng|tuần) (?:sau|tới)) ')) return 'ke_hoach';
   if (hit(' (?:có nên|nên (?:\\S+ ){0,6}(?:không|ko|hông|k|chưa)|có đáng|được không|đc không|có sợ) ')) return 'quyet_dinh';
   if (hit(' (?:sao|vì sao|tại sao|do đâu|do khoản|nguyên nhân|giảm|ế|vắng|tụt|bất thường|cao quá|nhiều quá|(?:khách|đơn|doanh thu|bán) (?:\\S+ ){0,2}(?:ít|thấp)) ')) return 'chan_doan';
@@ -1927,6 +1928,13 @@ export function ngayHoi(question: string, now: Date, f?: ShopFacts | null): stri
 }
 
 // Lô D: so ca sai cơ sở (bộ v2: "ca sáng 6–11h" bỏ 11–13h, ca tối bỏ giờ 16h) → tính sẵn doanh thu theo KHỐI GIỜ MỞ thật; chỉ khi câu hỏi nói ca / buổi.
+const GO_TAT: [RegExp, string][] = [[/^tn\b/, 'tn = tháng này'], [/^tt\b/, 'tt = tháng trước'], [/\bdt\b/, 'dt = doanh thu'], [/\bds\b/, 'ds = doanh số'], [/\bck\b/, 'ck = chuyển khoản'], [/\btm\b/, 'tm = tiền mặt'], [/\bnv\b/, 'nv = nhân viên'], [/\bsl\b/, 'sl = số lượng'], [/\bt[2-7]\b/, 't2…t7 = thứ 2…thứ 7']];
+/** 06/11: "tn ban dc bn" có lượt Boom hỏi lại "tn là gì" dù đã đưa đúng số tháng này. */
+export function goTat(question: string): string {
+  const f = boDau(question), co = GO_TAT.filter(([re]) => re.test(f)).map(([, y]) => y);
+  return co.length ? `CÁCH GÕ TẮT TRONG CÂU: ${co.join(', ')}. Hiểu theo đó, không hỏi lại nghĩa.` : '';
+}
+
 /** 06/11: nhân viên hỏi doanh thu từng bị bảo "xem Báo cáo" (họ không mở được) hoặc "gửi số cho Bé Boom". */
 export function khongXemDuoc(muc: string[] | null | undefined, laChu = false): string {
   if (!muc?.length) return '';
@@ -2059,6 +2067,7 @@ export function buildMessages(
     caBan(extra?.facts, question),
     choXemSo(question),
     khongXemDuoc(extra?.khongXem, extra?.laChu),
+    goTat(question),
     ngayHoi(question, extra?.now ?? new Date(), extra?.facts),
     kichBanGia(extra?.facts, question),
     // lô E: bộ kín — "làm muốn chết" bị hiểu thành nguy cơ tự hại, mở đầu bằng lời khuyên khủng hoảng

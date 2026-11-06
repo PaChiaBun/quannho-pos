@@ -24,6 +24,7 @@ import {
   blockReason,
   buildMessages,
   choXemSo,
+  goTat,
   khongXemDuoc,
   ghiKy,
   loaiCau,
@@ -1510,4 +1511,15 @@ Deno.test('chấm công có cột đi trễ: không dặn "không kết luận";
   assertStringIncludes(t, 'Đi trễ: 1 ca (Lan 1 ca, tổng 12 phút)');
   assert(!t.includes('KHÔNG kết luận ai đi trễ'));
   assertStringIncludes(t, 'chính người đang hỏi');
+});
+
+Deno.test('loaiCau: doanh số không phải so sánh', () => {
+  for (const q of ['doanh số tháng này', 'doanh so thang nay', 'tổng số tuần này']) assertEquals(loaiCau(q), null, q);
+  for (const q of ['so tháng trước', 'so với tháng trước', 'món nào lời nhất']) assertEquals(loaiCau(q), 'so_sanh', q);
+});
+
+Deno.test('goTat: chỉ giải nghĩa khi câu có chữ tắt', () => {
+  assertStringIncludes(goTat('tn ban dc bn'), 'tn = tháng này');
+  assertStringIncludes(goTat('tt ck bn'), 'ck = chuyển khoản');
+  assertEquals(goTat('tháng này doanh thu bao nhiêu'), '');
 });
